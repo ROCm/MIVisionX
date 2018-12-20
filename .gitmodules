@@ -1,0 +1,3 @@
+[submodule "utilities/inference_generator/deps/NNEF-Tools"]
+	path = utilities/inference_generator/deps/NNEF-Tools
+	url = https://github.com/KhronosGroup/NNEF-Tools.git

@@ -1,0 +1,37 @@
+language: cpp
+sudo: required
+dist: trusty
+os:
+  - linux
+compiler:
+  - g++
+  
+services:
+  - docker
+
+branches:
+  - master
+
+install:
+  - sudo apt update
+  - sudo apt --yes install cmake git wget unzip libnuma-dev
+  - wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
+  - sudo sh -c 'echo deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main > /etc/apt/sources.list.d/rocm.list'
+  - sudo apt update
+  - sudo apt install rocm-dkms
+
+before_script:
+  - docker pull kiritigowda/mivisionx-ubuntu-16.04
+  - docker run -it -d --name mivisionx --network host kiritigowda/mivisionx-ubuntu-16.04 bash
+  - docker cp ../amdovx-modules mivisionx:/amdovx-modules
+
+script:
+  - docker exec mivisionx cmake -H/amdovx-modules -B/_build -DCMAKE_BUILD_TYPE=Release
+  - docker exec mivisionx cmake --build /_build
+
+after_success:
+
+notifications:
+  email:
+    - kiriti.nageshgowda@amd.com
+    - pavel.tcherniaev@amd.com

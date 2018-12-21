@@ -23,10 +23,10 @@ install:
 before_script:
   - docker pull kiritigowda/mivisionx-ubuntu-16.04
   - docker run -it -d --name mivisionx --network host kiritigowda/mivisionx-ubuntu-16.04 bash
-  - docker cp ../amdovx-modules mivisionx:/amdovx-modules
+  - docker cp ../MIVisionX mivisionx:/MIVisionX
 
 script:
-  - docker exec mivisionx cmake -H/amdovx-modules -B/_build -DCMAKE_BUILD_TYPE=Release
+  - docker exec mivisionx cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
   - docker exec mivisionx cmake --build /_build
 
 after_success:

@@ -137,7 +137,6 @@ make -j8
 MIVisionX provides developers with docker images for Ubuntu 16.04, Ubuntu 18.04, CentOS 7.5, & CentOS 7.6. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 ### MIVisionX Docker
-* [Ubuntu 14.04](https://hub.docker.com/r/kiritigowda/mivisionx-ubuntu-14.04)
 * [Ubuntu 16.04](https://hub.docker.com/r/kiritigowda/mivisionx-ubuntu-16.04)
 * [Ubuntu 18.04](https://hub.docker.com/r/kiritigowda/mivisionx-ubuntu-18.04)
 * [CentOS 7.5](https://hub.docker.com/r/kiritigowda/centos)

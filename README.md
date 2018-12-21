@@ -1,5 +1,5 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules.svg?branch=develop)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules)
+[![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
 # MIVisionX
 
@@ -218,14 +218,14 @@ Tensor Subtract|
 Upsample Nearest Neighborhood|
 
 ### Known issues
-* ROCm - 1.8.151 performance degradation
+* Package (.deb & .rpm) install requires OpenCV v3.3.0 to execute AMD OpenCV extensions
 
 ### Tested configurations
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `1.9.307`
+* ROCm: rocm-dkms - `2.0.89`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [1.6.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.6.0)
+* MIOpen - [1.7.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.0)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.3.0](https://github.com/opencv/opencv/releases/tag/3.3.0)
 * Dependencies for all the above packages

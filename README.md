@@ -89,9 +89,14 @@ For convenience of the developer, we here provide the setup script which will in
 usage:
 
 ````
-python MIVisionX-setup.py -s [sudo password - required] -d [setup directory - optional (default:~/)] -m [MIOpen Version - optional (default:1.6.0)]
-```` 
-Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki) page for developer instructions.
+python MIVisionX-setup.py -s [sudo password - required]
+                          -d [setup directory - optional]
+                          -l [Linux system install - optional (default:apt-get options:apt-get/yum)]
+                          -m [MIOpen Version - optional (default:1.6.0)]      
+````
+*Note:* use `-l yum` for CentOS
+
+##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki) page for developer instructions.
 
 ## Build MIVisionX
 
@@ -118,7 +123,15 @@ Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-
 ````
 git clone --recursive https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
 cd MIVisionX
-python MIVisionX-setup.py -s [sudo password - required] -d [setup directory - optional (default:~/)] -m [MIOpen Version - optional (default:1.6.0)]
+````
+````
+python MIVisionX-setup.py -s [sudo password - required]
+                          -d [setup directory - optional]
+                          -l [Linux system install - optional (default:apt-get options:apt-get/yum)]
+                          -m [MIOpen Version - optional (default:1.6.0)]      
+````
+*Note:* Use `-l yum` for CentOS
+````
 mkdir build
 cd build
 cmake ../

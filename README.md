@@ -93,8 +93,10 @@ python MIVisionX-setup.py -s [sudo password - required]
                           -d [setup directory - optional]
                           -l [Linux system install - optional (default:apt-get options:apt-get/yum)]
                           -m [MIOpen Version - optional (default:1.6.0)]      
-```` 
-Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki) page for developer instructions.
+````
+*Note:* use `-l yum` for CentOS
+
+##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki) page for developer instructions.
 
 ## Build MIVisionX
 
@@ -128,6 +130,7 @@ python MIVisionX-setup.py -s [sudo password - required]
                           -l [Linux system install - optional (default:apt-get options:apt-get/yum)]
                           -m [MIOpen Version - optional (default:1.6.0)]      
 ````
+*Note:* Use `-l yum` for CentOS
 ````
 mkdir build
 cd build

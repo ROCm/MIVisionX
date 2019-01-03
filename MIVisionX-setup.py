@@ -9,7 +9,6 @@ __status__      = "beta"
 import os
 import getopt
 import sys
-import subprocess
 from subprocess import call
  
 

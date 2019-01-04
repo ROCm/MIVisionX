@@ -25,7 +25,7 @@ MIOpenVersion = args.miopen
 sudoLocation = ''
 userName = ''
 status, sudoLocation = commands.getstatusoutput("which sudo")
-if status == 0 and sudoLocation == '':
+if sudoLocation != '/usr/bin/sudo':
 	status, userName = commands.getstatusoutput("whoami")
 
 if setupDir == '':

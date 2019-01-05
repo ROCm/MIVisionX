@@ -7,8 +7,8 @@ __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "beta"
 
 import argparse
+import commands
 import os
-import sys
 
 # Import arguments
 parser = argparse.ArgumentParser()
@@ -20,6 +20,13 @@ args = parser.parse_args()
 setupDir = args.directory
 linuxSystemInstall = args.installer
 MIOpenVersion = args.miopen
+
+# sudo requirement check
+sudoLocation = ''
+userName = ''
+status, sudoLocation = commands.getstatusoutput("which sudo")
+if sudoLocation != '/usr/bin/sudo':
+	status, userName = commands.getstatusoutput("whoami")
 
 if setupDir == '':
 	setupDir_deps = '~/deps'
@@ -35,7 +42,13 @@ if linuxSystemInstall == '' or linuxSystemInstall == 'apt-get':
 	linuxSystemInstall_check = '--allow-unauthenticated'
 	linuxCMake = 'cmake'
 	linuxFlag = '-S'
+	if userName == 'root':
+		os.system('apt -y update')
+		os.system('apt -y install sudo')
 else:
+	if userName == 'root':
+		os.system('yum -y update')
+		os.system('yum -y install sudo')
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel openssl-devel')
 

@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.1)
+set(CMAKE_CXX_STANDARD 14)
+project( ParseDigit )
+find_package( OpenCV REQUIRED )
+add_executable( ParseDigit main.cpp ParseDigit.cpp MSERDetector.cpp)
+target_link_libraries( ParseDigit ${OpenCV_LIBS} )

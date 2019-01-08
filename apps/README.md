@@ -6,6 +6,11 @@ MIVisionX has a number of applications built on top of OpenVX modules, it uses A
 
 [![Radeon Inference](../docs/images/inferenceVideo.png)](http://www.youtube.com/watch?v=0GLmnrpMSYs)
 
+## DG Test
+
+A simple application used to test handwritten mnist dataset using openvx.
+
+[![DGTest](../docs/images/DGtest.png)]
 
 ## External Application
 * [MIVisionX-Classifier](https://github.com/kiritigowda/MIVisionX-Classifier) - This application runs know CNN image classifiers on live/pre-recorded video stream.

@@ -8,9 +8,9 @@ MIVisionX has a number of applications built on top of OpenVX modules, it uses A
 
 ## DG Test
 
-A simple application used to test handwritten mnist dataset using openvx.
+A simple application used to test recognizing hand written digits using openvx.
 
-[![DGTest](../docs/images/DGtest.png)]
+![DGTest](../docs/images/DGtest.png)
 
 ## External Application
 * [MIVisionX-Classifier](https://github.com/kiritigowda/MIVisionX-Classifier) - This application runs know CNN image classifiers on live/pre-recorded video stream.

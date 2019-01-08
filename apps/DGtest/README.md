@@ -64,7 +64,7 @@ See the [OpenVX documentation](https://www.khronos.org/registry/OpenVX/specs/1.0
          The text file containing each images' directories. It is created by the img2tensor.py. 
             
 ### Guideline for Image Preparation & Converting it to tensor
-You can prepare your own handwritten digits by using the [ParseDigit](https://github.com/hansely/ParseDigit) program.
+You can prepare your own handwritten digits by using the ParseDigit application that is in this repository.
 After the image preparation is done, convert it to a tensor using the python script in this repository
 
     python img2tensor.py -d <image_directory> -i <imagetag.txt> -o <output_tensor.f32>

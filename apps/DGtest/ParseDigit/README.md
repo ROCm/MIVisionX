@@ -15,8 +15,6 @@ The detailed explanation of preprocessing the images can be found at http://open
     sudo apt-get install cmake git
 
 ### Build using Cmake on Linux (Ubuntu 16.04 64bit)
-     git clone https://github.com/hansely/ParseDigit.git
-     cd ParseDigit
      mkdir build
      cd build
      cmake ..

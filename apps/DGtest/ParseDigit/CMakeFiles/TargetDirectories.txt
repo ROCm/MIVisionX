@@ -1,0 +1,3 @@
+/home/hansel/MIVisionX/apps/ParseDigit/CMakeFiles/edit_cache.dir
+/home/hansel/MIVisionX/apps/ParseDigit/CMakeFiles/rebuild_cache.dir
+/home/hansel/MIVisionX/apps/ParseDigit/CMakeFiles/ParseDigit.dir

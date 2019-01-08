@@ -1,0 +1,1 @@
+/usr/bin/c++  -fPIC  -msse4.2 -std=c++11  -shared -Wl,-soname,libannmodule.so -o libannmodule.so CMakeFiles/annmodule.dir/annmodule.cpp.o  -L/opt/rocm/lib -lopenvx -lvx_nn -lpthread -Wl,-rpath,/opt/rocm/lib 

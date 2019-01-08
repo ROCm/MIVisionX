@@ -41,8 +41,6 @@ See the [OpenVX documentation](https://www.khronos.org/registry/OpenVX/specs/1.0
        sudo apt-get install cmake git
 
 ### Build using Cmake on Linux (Ubuntu 16.04 64bit)
-     git clone https://github.com/hansely/DGtest.git
-     cd DGtest
      mkdir build
      cd build
      cmake ..

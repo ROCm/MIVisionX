@@ -20,7 +20,7 @@
 
 import os, sys
 import onnx
-from onnx import onnx_pb2
+from onnx import onnx_pb
 from onnx import numpy_helper
 from nnir import *
 
@@ -174,7 +174,7 @@ def main():
     onnxFileName = sys.argv[1]
     outputFolder = sys.argv[2]
     print('loading ONNX model from %s ...' % (onnxFileName))
-    onnx_model_proto = onnx_pb2.ModelProto()
+    onnx_model_proto = onnx_pb.ModelProto()
     if not os.path.isfile(onnxFileName):
         print('ERROR: unable to open: ' + onnxFileName)
         sys.exit(1)

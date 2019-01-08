@@ -1,4 +1,0 @@
-/home/hansel/MIVisionX/apps/DGtest/CMakeFiles/edit_cache.dir
-/home/hansel/MIVisionX/apps/DGtest/CMakeFiles/rebuild_cache.dir
-/home/hansel/MIVisionX/apps/DGtest/CMakeFiles/DGTest.dir
-/home/hansel/MIVisionX/apps/DGtest/CMakeFiles/annmodule.dir

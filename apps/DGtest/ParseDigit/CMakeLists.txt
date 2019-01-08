@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 2.8)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 project( ParseDigit )
 find_package( OpenCV REQUIRED )
 add_executable( ParseDigit main.cpp ParseDigit.cpp MSERDetector.cpp)

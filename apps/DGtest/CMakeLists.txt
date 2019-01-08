@@ -20,7 +20,7 @@
 
 cmake_minimum_required (VERSION 2.8)
 project (annmodule)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCL REQUIRED)
 find_package(OpenCV QUIET)

@@ -91,6 +91,9 @@ You can test your own trained MNIST caffemodel using the [model compiler](https:
     3. Build the program again.
          make
          
+***Make sure that the batch size of weights.bin, input tensor and image tag matches.
+For example, when you trained your caffemodel with a batch size of 64 and convert it to weights.bin file, your input tensor should also have 64 images in it.***
+
 ### Example
     ./DGTest Examples/weights.bin Examples/input.f32 Examples/output.f32 Examples/labels.txt Examples/imagelist.txt 
     

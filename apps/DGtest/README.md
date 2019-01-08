@@ -94,7 +94,7 @@ You can test your own trained MNIST caffemodel using the [model compiler](https:
          make
          
 ### Example
-    ./DGtest ../Examples/image.jpg ../Examples/Cropped/ digits
+    ./DGTest Examples/weights.bin Examples/input.f32 Examples/output.f32 Examples/labels.txt Examples/imagelist.txt 
     
     The output images will be stored in ../Examples/Cropped folder as digits001-1.jpg, digits001-2.jpg, ... digits009-5.jpg.
     Make sure the destination folder is created before running the program.

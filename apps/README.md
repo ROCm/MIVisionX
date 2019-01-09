@@ -8,9 +8,11 @@ MIVisionX has a number of applications built on top of OpenVX modules, it uses A
 
 ## DG Test
 
-A simple application used to test recognizing hand written digits using openvx.
+A simple application used to recognize hand written digits using openvx.
 
+{: refdef: style="text-align: center;"}
 ![DGTest](../docs/images/digits1.png) ![DGTest](../docs/images/digits2.png)
+{: refdef}
 
 ![DGTest](../docs/images/DGtest.png)
 

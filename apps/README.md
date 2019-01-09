@@ -10,9 +10,10 @@ MIVisionX has a number of applications built on top of OpenVX modules, it uses A
 
 A simple application used to recognize hand written digits using openvx.
 
-{: refdef: style="text-align: center;"}
-![DGTest](../docs/images/digits1.png) ![DGTest](../docs/images/digits2.png)
-{: refdef}
+<p align="center">
+  <img src="../docs/images/digits1.png">
+  <img src="../docs/images/digits2.png">
+</p>
 
 ![DGTest](../docs/images/DGtest.png)
 

@@ -10,7 +10,7 @@ The detailed explanation of preprocessing the images can be found at http://open
 
 
 ### Pre-requisites
-##### 1. OpenCV 3.1 [download](https://opencv.org/opencv-3-1.html) or higher
+##### 1. OpenCV 3.3 [download](https://opencv.org/opencv-3-3.html) or higher
 ##### 2. cmake git 
     sudo apt-get install cmake git
 

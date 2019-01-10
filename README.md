@@ -37,8 +37,9 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 ## Applications
 MIVisionX has a number of applications (apps) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
 
-* Cloud Inference Application
-* External Applications
+* [Cloud Inference Application](apps#cloud-application)
+* [DGtest](apps#dg-test)
+* [External Applications](apps#external-application)
 
 ## Model Compiler
 [Model compiler](model_compiler#convert-onnx-models-into-amd-nnir-and-openvx-code) generates efficient inference libraries from pre-trained neural net models.

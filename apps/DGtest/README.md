@@ -75,11 +75,11 @@ After the image preparation is done, convert it to a tensor using the python scr
          3. <output_tensor>
               The name of the tensor that will be created.
      
-### Testing with your own Caffemodel
+### Testing with your own Caffe / ONNX model
 
-You can test your own trained MNIST caffemodel using the [model compiler](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/tree/develop/utils/model_compiler)
+You can test your own trained MNIST caffe / ONNX model using the [model compiler](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/model_compiler)
     
-    1. Convert your caffemodel->NNIR->openvx using the model compiler.
+    1. Convert your caffemodel->NNIR->openvx / ONNX->NNIR->openvx using the model compiler.
     2. From the generated files, copy 
         
          cmake folder
@@ -92,7 +92,7 @@ You can test your own trained MNIST caffemodel using the [model compiler](https:
          make
          
 ***Make sure that the batch size of weights.bin, input tensor and image tag matches.
-For example, when you trained your caffemodel with a batch size of 64 and convert it to weights.bin file, your input tensor should also have 64 images in it.***
+For example, when you trained your caffemodel/ONNX with a batch size of 64 and convert it to weights.bin file, your input tensor should also have 64 images in it.***
 
 ### Example
     ./DGTest Examples/weights.bin Examples/input.f32 Examples/output.f32 Examples/labels.txt Examples/imagelist.txt 

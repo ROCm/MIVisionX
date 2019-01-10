@@ -34,7 +34,7 @@ See the [OpenVX documentation](https://www.khronos.org/registry/OpenVX/specs/1.0
 2. [rocm supported hardware](https://rocm.github.io/hardware.html)
 3. [rocm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 4. [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) with OpenCL backend
-   Alternatively, you can simply run the [radeonInferenceInstaller](https://github.com/kiritigowda/help/tree/master/radeonInferenceInstaller#installer) which will install all the dependencies for MIOpen
+   Alternatively, you can simply run the [MIVisionX-Setup](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX) which will install all the dependencies for MIOpen
 5. [OpenCV 3.1](https://opencv.org/opencv-3-1.html) or higher
 6. cmake git
 

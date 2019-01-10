@@ -1,6 +1,6 @@
 # AMD DGtest
 
-The AMD DGtest is a tutorial program for those who are new to MIOpen & OpenVX. It runs inference on the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset using MIOpen & OpenVX.
+The AMD DGtest is a tutorial program for those who are new to [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX). It runs inference on the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset using MIVisionX.
 
 ### Explanation
 The program is divided into four parts:
@@ -34,8 +34,8 @@ See the [OpenVX documentation](https://www.khronos.org/registry/OpenVX/specs/1.0
 2. [rocm supported hardware](https://rocm.github.io/hardware.html)
 3. [rocm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 4. [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) with OpenCL backend
-   Alternatively, you can simply run the [MIVisionX-Setup](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX) which will install all the dependencies for MIOpen
-5. [OpenCV 3.1](https://opencv.org/opencv-3-1.html) or higher
+   Alternatively, you can simply run the [MIVisionX-Setup](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/blob/master/MIVisionX-setup.py) which will install all the dependencies for MIOpen
+5. [OpenCV 3.3](https://opencv.org/opencv-3-3.html) or higher
 6. cmake git
 
        sudo apt-get install cmake git

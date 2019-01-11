@@ -41,8 +41,11 @@ MIVisionX has a number of applications (apps) built on top of OpenVX modules, it
 * [DGtest](apps/DGtest#amd-dgtest)
 * External Applications
 
-## Model Compiler
-[Model compiler](model_compiler#convert-onnx-models-into-amd-nnir-and-openvx-code) generates efficient inference libraries from pre-trained neural net models.
+## Neural Net Model Compiler & Optimizer
+
+<p align="center"><img width="80%" src="docs/images/modelCompilerWorkflow.png" /></p>
+
+Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-net-model-compiler--optimizer)) converts pre-trained neural net models to MIVisionX runtime code.
 
 ## Toolkit
 

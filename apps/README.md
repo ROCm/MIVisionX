@@ -4,7 +4,9 @@ MIVisionX has a number of applications built on top of OpenVX modules, it uses A
 
 ## Cloud Application
 
-[![Radeon Inference](../docs/images/inferenceVideo.png)](http://www.youtube.com/watch?v=0GLmnrpMSYs)
+<p href="http://www.youtube.com/watch?v=0GLmnrpMSYs" align="center">
+  <img src="../docs/images/inferenceVideo.png">
+</p>
 
 ## DG Test
 
@@ -13,9 +15,8 @@ A simple application used to recognize hand written digits using openvx.
 <p align="center">
   <img src="../docs/images/digits1.png">
   <img src="../docs/images/digits2.png">
+  <img src="../docs/images/DGtest.png">
 </p>
-
-![DGTest](../docs/images/DGtest.png)
 
 ## External Application
 * [MIVisionX-Classifier](https://github.com/kiritigowda/MIVisionX-Classifier) - This application runs know CNN image classifiers on live/pre-recorded video stream.

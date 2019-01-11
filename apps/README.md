@@ -4,8 +4,8 @@ MIVisionX has a number of applications built on top of OpenVX modules, it uses A
 
 ## Cloud Application
 
-<p href="http://www.youtube.com/watch?v=0GLmnrpMSYs" align="center">
-  <img src="../docs/images/inferenceVideo.png">
+<p align="center">
+  <img href="http://www.youtube.com/watch?v=0GLmnrpMSYs" src="../docs/images/inferenceVideo.png">
 </p>
 
 ## DG Test

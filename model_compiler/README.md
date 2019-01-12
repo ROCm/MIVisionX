@@ -1,19 +1,22 @@
-# Neural Network Model Compiler
+# Neural Net Model Compiler & Optimizer
 
-## Convert Neural Net models into AMD NNIR and OpenVX Code
+<p align="center"><img width="80%" src="../docs/images/modelCompilerWorkflow.png" /></p>
 
-This tool converts [ONNX](https://onnx.ai/) or [Caffe](http://caffe.berkeleyvision.org/) models to AMD NNIR format and OpenVX code.
+Neural Net Model Compiler & Optimizer converts [ONNX](https://onnx.ai/) or [Caffe](http://caffe.berkeleyvision.org/) pre-trained models to MIVisionX runtime code. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR, the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted AMD hardware.
 
-You need MIVisionX libraries to be able to build and run the generated OpenVX code.
+<p align="center"><img width="100%" src="../docs/images/frameworks.png" /></p>
 
 ## Dependencies
+* MIVisionX libraries
 * numpy
 * onnx
 ````
 pip install onnx numpy
 ````
 
-## How to use?
+## Model Compiler & Optimizer Usage
+
+### Step 1 - Convert Pre-trained model to AMD NNIR
 
 To convert an ONNX model into AMD NNIR model:
 
@@ -26,26 +29,27 @@ To convert a caffemodel into AMD NNIR model:
 ```
 % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
 ```
+### Step 2 - Apply Optimizations
 
 To update batch size in AMD NNIR model:
 ````
-% python nnir-update.py --batch-size N nnirModelFolder nnirModelFolderN
+% python nnir_update.py --batch-size N nnirModelFolder nnirModelFolderN
 ````
 
 To fuse operations in AMD NNIR model (like batch normalization into convolution):
 ````
-% python nnir-update.py --fuse-ops 1 nnirModelFolderN nnirModelFolderFused
+% python nnir_update.py --fuse-ops 1 nnirModelFolderN nnirModelFolderFused
 ````
 
 To workaround groups using slice and concat operations in AMD NNIR model:
 ````
-% python nnir-update.py --slice-groups 1 nnirModelFolderFused nnirModelFolderSliced
+% python nnir_update.py --slice-groups 1 nnirModelFolderFused nnirModelFolderSliced
 ````
+### Step 3 - Convert AMD NNIR to OpenVX C code
 
 To convert an AMD NNIR model into OpenVX C code:
-
 ````
-% python --help
+% python nnir_to_openvx.py --help
 
 Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
@@ -65,13 +69,10 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     R0 G0 B0 A0
     R1 G1 B1 A1
     ...
-
 ````
 ## Sample workflow of Model Compiler
 
-### Trained Caffe Model conversion to Neural Net Intermediate Representation (NNIR) to OpenVX Graph
-
-![Figure 1](../docs/images/NetFlow.png "Inference Workflow")
+### Trained Caffe Model conversion to AMD NNIR to OpenVX Graph
 
 1. Convert net.caffemodel into NNIR model using the following command
    ````
@@ -82,11 +83,16 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 	    python nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
    ````
 3. cmake and make the project inside the nnirModelOutputFolder
-4. Run anntest application for testing inference with input and output tensor
+   ````
+	    cd nnirModelOutputFolder
+	    cmake .
+	    make
+   ````
+4. Run anntest application for testing the inference with input and output tensor
    ````
 	    ./anntest weights.bin
    ````
-5. The shared C library (libannmodule.so) can be used in customer application as well
+5. The shared C library (libannmodule.so) can be used in any customer application
 
 ## Here are few examples of OpenVX C code generation
 
@@ -175,15 +181,16 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 % ./anntest ../weights.bin input-%04d.png output-%04d.png,reference.rgb,0.01
 ...
 ````
-
 ## Currently supported
-### Models
-Support the below models from https://github.com/onnx/models with `release 1.1` tags
- - resnet
- - inception
- - alexnet
+###  Models tested
+Currently supporting below models from https://github.com/onnx/models with `release 1.1` tags
+ - resnet50
+ - googlenet
+ - inception_v2
+ - vgg19
  - densenet
  - sqeezenet
+ - zfnet
 
 ### Operators
 Supported ONNX operators are:

@@ -4,7 +4,7 @@
 
 Neural Net Model Compiler & Optimizer converts [ONNX](https://onnx.ai/) or [Caffe](http://caffe.berkeleyvision.org/) pre-trained models to MIVisionX runtime code. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR, the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted AMD hardware.
 
-<p align="center"><img width="80%" src="../docs/images/frameworks.png" /></p>
+<p align="center"><img width="100%" src="../docs/images/frameworks.png" /></p>
 
 ## Dependencies
 * MIVisionX libraries

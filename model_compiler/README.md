@@ -1,46 +1,30 @@
-# Model Compiler
+# Neural Network Model Compiler
 
-## Using Model Compiler
-
-### caffe2nnir & nnir2openvx - Trained Caffe Model conversion to Neural Net Intermediate Representation (NNIR) to OpenVX Graph
-
-![Figure 1](../docs/images/NetFlow.png "Inference Workflow")
-
-1. Convert net.caffemodel into NNIR model using the following command
-   ````
-	    python caffe2nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
-   ````
-2. Compile NNIR model into OpenVX C code with CMakelists.txt for compiling and building inference library
-   ````
-	    python nnir2openvx.py <nnirModelFolder> <nnirModelOutputFolder>
-   ````
-3. cmake and make the project inside the nnirModelOutputFolder
-4. Run anntest application for testing inference with input and output tensor
-5. The shared C library (libannmodule.so) can be used in customer application as well
-
-### Convert Neural Net models into AMD NNIR and OpenVX Code
+## Convert Neural Net models into AMD NNIR and OpenVX Code
 
 This tool converts [ONNX](https://onnx.ai/) or [Caffe](http://caffe.berkeleyvision.org/) models to AMD NNIR format and OpenVX code.
 
 You need MIVisionX libraries to be able to build and run the generated OpenVX code.
 
 ## Dependencies
-
 * numpy
-* onnx (0.2.1+)
+* onnx
+````
+pip install onnx numpy
+````
 
 ## How to use?
 
 To convert an ONNX model into AMD NNIR model:
 
 ```
-% python onnx2nnir.py model.pb nnirModelFolder
+% python onnx_to_nnir.py model.pb nnirModelFolder
 ```
 
 To convert a caffemodel into AMD NNIR model:
 
 ```
-% python caffe2nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
+% python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
 ```
 
 To update batch size in AMD NNIR model:
@@ -63,7 +47,7 @@ To convert an AMD NNIR model into OpenVX C code:
 ````
 % python --help
 
-Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
+Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
   OPTIONS:
     --argmax UINT8                    -- argmax at the end with 8-bit output
@@ -83,12 +67,32 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     ...
 
 ````
+## Sample workflow of Model Compiler
 
-### Here are few examples of OpenVX C code generation
+### Trained Caffe Model conversion to Neural Net Intermediate Representation (NNIR) to OpenVX Graph
+
+![Figure 1](../docs/images/NetFlow.png "Inference Workflow")
+
+1. Convert net.caffemodel into NNIR model using the following command
+   ````
+	    python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
+   ````
+2. Compile NNIR model into OpenVX C code with CMakelists.txt for compiling and building inference library
+   ````
+	    python nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
+   ````
+3. cmake and make the project inside the nnirModelOutputFolder
+4. Run anntest application for testing inference with input and output tensor
+   ````
+	    ./anntest weights.bin
+   ````
+5. The shared C library (libannmodule.so) can be used in customer application as well
+
+## Here are few examples of OpenVX C code generation
 
 Generate OpenVX and test code that can be used dump and compare raw tensor data:
 ````
-% python nnir2openvx.py nnirInputFolderFused openvxCodeFolder
+% python nnir_to_openvx.py nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
 % cmake ..
@@ -116,7 +120,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 
 Generate OpenVX and test code with argmax that can be used dump and compare 16-bit argmax output tensor:
 ````
-% python nnir2openvx.py --argmax UINT16 nnirInputFolderFused openvxCodeFolder
+% python nnir_to_openvx.py --argmax UINT16 nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
 % cmake ..
@@ -143,7 +147,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 
 Generate OpenVX and test code with argmax and LUT that is designed for semantic segmentation use cases. You can dump output in raw format or PNGs and additionally compare with reference data in raw format.
 ````
-% python nnir2openvx.py --argmax lut-rgb.txt nnirInputFolderFused openvxCodeFolder
+% python nnir_to_openvx.py --argmax lut-rgb.txt nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
 % cmake ..
@@ -174,7 +178,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 
 ## Currently supported
 ### Models
-Support the below models from https://github.com/onnx/models
+Support the below models from https://github.com/onnx/models with `release 1.1` tags
  - resnet
  - inception
  - alexnet

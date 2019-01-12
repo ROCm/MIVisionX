@@ -37,7 +37,8 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 ## Applications
 MIVisionX has a number of applications (apps) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
 
-* Cloud Inference Application
+* [Cloud Inference Application](apps/cloud_inference#cloud-inference-application)
+* [DGtest](apps/DGtest#amd-dgtest)
 * External Applications
 
 ## Model Compiler
@@ -84,17 +85,16 @@ For convenience of the developer, we here provide the setup script which will in
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
-**MIVisionX-setup.py** - This scipts builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If -d option for directory is not given the script will install deps folder in '~/' directory by default, else in the user specified folder.
+**MIVisionX-setup.py** - This scipts builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If --directory option is not given the script will install deps folder in '~/' directory by default, else in the user specified folder.
 
 usage:
 
 ````
-python MIVisionX-setup.py -s [sudo password - required]
-                          -d [setup directory - optional]
-                          -l [Linux system install - optional (default:apt-get options:apt-get/yum)]
-                          -m [MIOpen Version - optional (default:1.6.0)]      
+python MIVisionX-setup.py --directory [setup directory - optional]
+                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
 ````
-*Note:* use `-l yum` for CentOS
+*Note:* use `--installer yum` for CentOS
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki) page for developer instructions.
 
@@ -125,12 +125,11 @@ git clone --recursive https://github.com/GPUOpen-ProfessionalCompute-Libraries/M
 cd MIVisionX
 ````
 ````
-python MIVisionX-setup.py -s [sudo password - required]
-                          -d [setup directory - optional]
-                          -l [Linux system install - optional (default:apt-get options:apt-get/yum)]
-                          -m [MIOpen Version - optional (default:1.6.0)]      
+python MIVisionX-setup.py --directory [setup directory - optional]
+                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
 ````
-*Note:* Use `-l yum` for CentOS
+*Note:* Use `--installer yum` for CentOS
 ````
 mkdir build
 cd build

@@ -20,7 +20,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
 * [Pre-requisites](#pre-requisites)
-* [Build MIVisionX](#build-mivisionx)
+* [Build & Install MIVisionX](#build--install-mivisionx)
 * [Docker](#docker)
 * [Release Notes](#release-notes)
 
@@ -92,7 +92,52 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
-## Build MIVisionX
+## Build & Install MIVisionX
+
+## Using apt-get/yum
+
+### Prerequisites
+1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
+2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
+3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
+
+* Ubuntu
+````
+sudo apt-get install mivisionx
+````
+* CentOS
+````
+sudo yum install mivisionx
+````
+**Note:** 
+* source code will not available with apt-get/yum install
+* executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
+* OpenVX and module header files into `/opt/rocm/mivisionx/include`
+* model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+
+### Using Setup Script and CMake on Linux (Ubuntu 16.04/18.04 64-bit / CentOS 7.5/7.6) with ROCm
+* Install [ROCm](https://rocm.github.io/ROCmInstall.html)
+* Use the below commands to setup and build MIVisionX
+````
+git clone --recursive https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+cd MIVisionX
+````
+````
+python MIVisionX-setup.py --directory [setup directory - optional]
+                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
+````
+**Note:** Use `--installer yum` for CentOS
+````
+mkdir build
+cd build
+cmake ../
+make -j8
+sudo make install
+````
+**Note:**
+  * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
+  * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 
 ### Using CMake on Linux (Ubuntu 16.04/18.04 64-bit / CentOS 7.5/7.6) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
@@ -110,26 +155,6 @@ python MIVisionX-setup.py --directory [setup directory - optional]
   * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 * add the installed library path to LD_LIBRARY_PATH environment variable (default `/opt/rocm/mivisionx/lib`)
 * add the installed executable path to PATH environment variable (default `/opt/rocm/mivisionx/bin`)
-
-### Using Setup Script and CMake on Linux (Ubuntu 16.04/18.04 64-bit / CentOS 7.5/7.6) with ROCm
-* Install [ROCm](https://rocm.github.io/ROCmInstall.html)
-* Use the below commands to setup and build MIVisionX
-````
-git clone --recursive https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-cd MIVisionX
-````
-````
-python MIVisionX-setup.py --directory [setup directory - optional]
-                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
-````
-*Note:* Use `--installer yum` for CentOS
-````
-mkdir build
-cd build
-cmake ../
-make -j8
-````
 
 #### Build annInferenceApp using Qt Creator
 * build [annInferenceApp.pro](apps/cloud_inference/client_app/annInferenceApp.pro) using Qt Creator

@@ -27,29 +27,29 @@ pip install onnx numpy
 To convert an ONNX model into AMD NNIR model:
 
 ```
-% python onnx_to_nnir.py model.onnx nnirModelFolder
+% python onnx_to_nnir.py <model.onnx> <nnirModelFolder>
 ```
 
 To convert a caffemodel into AMD NNIR model:
 
 ```
-% python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
+% python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
 ```
 ### Step 2 - Apply Optimizations
 
 To update batch size in AMD NNIR model:
 ````
-% python nnir_update.py --batch-size N nnirModelFolder nnirModelFolderN
+% python nnir_update.py --batch-size <N> <nnirModelFolder> <nnirModelFolderN>
 ````
 
 To fuse operations in AMD NNIR model (like batch normalization into convolution):
 ````
-% python nnir_update.py --fuse-ops 1 nnirModelFolderN nnirModelFolderFused
+% python nnir_update.py --fuse-ops <1> <nnirModelFolderN> <nnirModelFolderFused>
 ````
 
 To workaround groups using slice and concat operations in AMD NNIR model:
 ````
-% python nnir_update.py --slice-groups 1 nnirModelFolderFused nnirModelFolderSliced
+% python nnir_update.py --slice-groups <1> <nnirModelFolderFused> <nnirModelFolderSliced>
 ````
 ### Step 3 - Convert AMD NNIR to OpenVX C code
 

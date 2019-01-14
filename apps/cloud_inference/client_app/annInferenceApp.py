@@ -157,7 +157,7 @@ def getConfig(host,port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((host, port))
-    except:
+    except Exception:
         print('ERROR: unable to connect to %s:%d' % (host,port))
         sys.exit(1)
     maxGPUs = 0
@@ -202,7 +202,7 @@ def uploadModel(host,port,uploadParams):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((host, port))
-    except:
+    except Exception:
         print('ERROR: unable to connect to %s:%d' % (host,port))
         sys.exit(1)
     par = uploadParams.split(',')
@@ -260,7 +260,7 @@ def runInference(host,port,GPUs,model,imageDirPath,imageFileList,synsetFileName,
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((host, port))
-    except:
+    except Exception:
         print('ERROR: unable to connect to %s:%d' % (host,port))
         sys.exit(1)
     sendCount = 0
@@ -398,7 +398,7 @@ def RunShadow(host,port,imageDirPath,shadowParams):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         sock.connect((host, port))
-    except:
+    except Exception:
         print('ERROR: unable to connect to %s:%d' % (host,port))
         sys.exit(1)
     checkFolderCount = 0

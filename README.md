@@ -5,18 +5,18 @@
 
 MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into a single toolkit.
 
-* [AMD OpenVX](amd_openvx#amd-openvx-amd_openvx)
-* [AMD OpenVX Extensions](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions)
-  * [Loom 360 Stitch Library](amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl)
+* [AMD OpenVX](#amd-openvx)
+* [AMD OpenVX Extensions](#amd-openvx-extensions)
+  * [Loom 360 Video Stitch Library](amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl)
   * [Neural Net Library](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
   * [OpenCV Extensions](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv)
-* [Applications](apps#applications)
-* [Neural Net Model Compiler](model_compiler#model-compiler)
+* [Applications](#applications)
+* [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 * [Samples](samples#samples)
-* [Toolkit](toolkit#mivisionx-toolkit)
-* [Utilities](utilities#utilities)
+* [Toolkit](#toolkit)
+* [Utilities](#utilities)
   * [Inference Generator](utilities/inference_generator#inference-generator)
-  * [Radeon Loom Shell](utilities/loom_shell#radeon-loomshell)
+  * [Loom Shell](utilities/loom_shell#radeon-loomshell)
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
 * [Pre-requisites](#pre-requisites)
@@ -25,7 +25,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 * [Release Notes](#release-notes)
 
 ## AMD OpenVX
-AMD OpenVX (amd_openvx) is a highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+AMD OpenVX ([amd_openvx](amd_openvx#amd-openvx-amd_openvx)) is a highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 ## AMD OpenVX Extensions
 The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX modules and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
@@ -35,11 +35,11 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
 
 ## Applications
-MIVisionX has a number of applications (apps) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
+MIVisionX has a number of applications ([apps](apps#applications)) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
 
 * [Cloud Inference Application](apps/cloud_inference#cloud-inference-application)
 * [DGtest](apps/DGtest#amd-dgtest)
-* External Applications
+* [External Applications](apps#external-application)
 
 ## Neural Net Model Compiler & Optimizer
 
@@ -49,7 +49,7 @@ Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-ne
 
 ## Toolkit
 
-MIVisionX Toolkit, is a comprehensive set of help tools for neural net creation, development, training and deployment. The Toolkit provides you with help tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
+[MIVisionX Toolkit](toolkit#mivisionx-toolkit), is a comprehensive set of help tools for neural net creation, development, training and deployment. The Toolkit provides you with help tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
 
 MIVisionX provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
@@ -58,14 +58,6 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
-
-If you're interested in Neural Network Inference, start with the sample cloud inference application in apps folder.
-
-Inference Application Development Workflow |  Sample Inference Application
-:-------------------------:|:-------------------------:
-[![Block-Diagram-Inference-Workflow](docs/images/block_diagram_inference_workflow.png)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki#neural-network-inference-workflow-for-caffe-users)  |  [![Block-Diagram-Inference-Sample](docs/images/block_diagram_inference_sample.png)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki#getting-started-with-neural-network-inference-sample)
-
-Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki) page for further details.
 
 ## Pre-requisites
 * CPU: SSE4.1 or above CPU, 64-bit
@@ -76,30 +68,29 @@ Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-
 * Qt Creator for [annInferenceApp](apps/cloud_inference/client_app/README.md)
 * [protobuf](https://github.com/google/protobuf) for [inference_generator](utilities/inference_generator#inference-generator)
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* OpenCV 3 (optional) [download](https://github.com/opencv/opencv/releases) for vx_opencv
+* OpenCV 3.3 (optional) [download](https://github.com/opencv/opencv/releases) for vx_opencv
   * Set OpenCV_DIR environment variable to OpenCV/build folder
   
 ### Pre-requisites setup script - MIVisionX-setup.py
 
-For convenience of the developer, we here provide the setup script which will install all the dependencies required by this project. 
+For convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
+
+**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If --directory option is not given the script will install deps folder in the home directory(~/) by default, else in the user specified folder.
 
 #### Prerequisites for running the scripts
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
-**MIVisionX-setup.py** - This scipts builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If --directory option is not given the script will install deps folder in '~/' directory by default, else in the user specified folder.
-
-usage:
-
+**usage:**
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
                           --miopen    [MIOpen Version - optional (default:1.7.0)]      
 ````
-*Note:* use `--installer yum` for CentOS
+**Note:** use `--installer yum` for CentOS
 
-##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki) page for developer instructions.
+##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
 ## Build MIVisionX
 

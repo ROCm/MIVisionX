@@ -554,7 +554,7 @@ def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
     graph = IrGraph()
     inputMap = extractInput(net_parameter, graph, input_dims)
     inputOutputMap = extractCaffeNodeInfo(net_parameter, graph, inputMap, verbose)
-    #outputList = extractOutput(graph, inputOutputMap, verbose)
+    outputList = extractOutput(graph, inputOutputMap, verbose)
     graph.updateLocals()
     return graph
 

@@ -10,10 +10,10 @@ __status__      = "Alpha"
 import os
 import getopt
 import sys
-import random
+#import random
 import collections
 import csv
-import numpy
+#import numpy
 import datetime
 
 opts, args = getopt.getopt(sys.argv[1:], 'i:o:f:l:g:d:t:')

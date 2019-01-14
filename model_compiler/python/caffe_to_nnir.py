@@ -2,7 +2,7 @@ import os
 import caffe_pb2
 from nnir import *
 import sys
-import argparse
+#import argparse
 import struct
 import math
 import collections
@@ -72,7 +72,7 @@ def caffe_node_to_ir_node(layer_type, layer_info_map):
     weight_map = {}
     scale_map_w = {}
     scale_map_b = {}
-    bias_map_b = {}
+    #bias_map_b = {}
     if ("scale_weights" in layer_info_map):
         scale_map_w = layer_info_map["scale_weights"]
     if ("scale_bias" in layer_info_map):
@@ -115,7 +115,7 @@ def extractBinary(layer_parameter, graph, verbose):
     blob_size = len(layer_parameter.blobs)
     if blob_size > 0:
         weight_blob_proto = layer_parameter.blobs[0]
-        weight_len = len(weight_blob_proto.data)
+        #weight_len = len(weight_blob_proto.data)
         weight_blob_name = caffe_name_to_ir_name(layer_name + '_w')
         if (verbose):
             print (weight_blob_name)
@@ -124,11 +124,11 @@ def extractBinary(layer_parameter, graph, verbose):
 
     if blob_size > 1:
         bias_blob_proto = layer_parameter.blobs[1]
-        bias_len = len(bias_blob_proto.data)
+        #bias_len = len(bias_blob_proto.data)
         bias_blob_name = caffe_name_to_ir_name(layer_name + '_b')
         if (verbose):
             print (bias_blob_name)
-        blob_data_type = "F032"
+        #blob_data_type = "F032"
         buf = convert_caffe_bin_to_ir_bin(bias_blob_proto.data)
         graph.addBinary(bias_blob_name, buf)
 
@@ -186,10 +186,10 @@ def extractCaffeAttrInfo(layer_param):
         stride_w = conv.stride_w if (conv.HasField('stride_w')) else (int(conv.stride[1]) if (len(conv.stride) > 1) else stride_h)
         kernel_h = conv.kernel_h if (conv.HasField('kernel_h')) else (int(conv.kernel_size[0]) if (len(conv.kernel_size) > 0) else 0)
         kernel_w = conv.kernel_w if (conv.HasField('kernel_w')) else (int(conv.kernel_size[1]) if (len(conv.kernel_size) > 1) else kernel_h)
-        num_out = conv.num_output
+        #num_out = conv.num_output
         dilation_h = conv.dilation[0] if (len(conv.dilation) > 0) else 1
         dilation_w = conv.dilation[1] if (len(conv.dilation) > 1) else dilation_h
-        bias_term = conv.bias_term
+        #bias_term = conv.bias_term
         groups = conv.group if (conv.HasField('group')) else 1
 
         attribute_map["strides"] = [stride_w, stride_h]
@@ -516,8 +516,8 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
         # add weights and biases if present.
         #add weights and biases info if present into the layer info.
         extractBinary(layer_param, graph, verbose)
-        weights = layer_name + '_w'
-        biases = layer_name +  '_b'
+        #weights = layer_name + '_w'
+        #biases = layer_name +  '_b'
         weights_map = {}
         bias_map = {}
         if "weights" in dimList:
@@ -554,7 +554,7 @@ def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
     graph = IrGraph()
     inputMap = extractInput(net_parameter, graph, input_dims)
     inputOutputMap = extractCaffeNodeInfo(net_parameter, graph, inputMap, verbose)
-    outputList = extractOutput(graph, inputOutputMap, verbose)
+    #outputList = extractOutput(graph, inputOutputMap, verbose)
     graph.updateLocals()
     return graph
 

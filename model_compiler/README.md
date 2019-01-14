@@ -21,7 +21,7 @@ pip install onnx numpy
 To convert an ONNX model into AMD NNIR model:
 
 ```
-% python onnx_to_nnir.py model.pb nnirModelFolder
+% python onnx_to_nnir.py model.onnx nnirModelFolder
 ```
 
 To convert a caffemodel into AMD NNIR model:

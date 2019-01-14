@@ -489,7 +489,7 @@ class IrGraph:
                     node.inputs = node.inputs[:3]
                     node.attr = IrAttr()
                 # run through fuse rules
-                if prevNode == None:
+                if prevNode is None:
                     prevSkipNode = None
                     prevNode = node
                     prevOutput = node.outputs[0]
@@ -588,7 +588,7 @@ class IrGraph:
                     prevOutput = node.outputs[0]
                     nodesToRemove.append(node)
                     fusedAnOp = True
-                elif prevSkipNode == None and prevNode.type == 'conv' and \
+                elif prevSkipNode is None and prevNode.type == 'conv' and \
                      prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 and \
                      (node.type == 'max_pool' or node.type == 'avg_pool' or node.type == 'global_avg_pool'):
                     prevSkipNode = node

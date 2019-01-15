@@ -19,7 +19,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
   * [Loom Shell](utilities/loom_shell#radeon-loomshell)
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
-* [Pre-requisites](#pre-requisites)
+* [Prerequisites](#prerequisites)
 * [Build & Install MIVisionX](#build--install-mivisionx)
 * [Docker](#docker)
 * [Release Notes](#release-notes)
@@ -59,7 +59,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
 
-## Pre-requisites
+## Prerequisites
 * CPU: SSE4.1 or above CPU, 64-bit
 * GPU: Radeon Instinct or Vega Family of Products (16GB recommended)
   * Linux: install [ROCm](https://rocm.github.io/ROCmInstall.html) with OpenCL development kit
@@ -72,13 +72,13 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [OpenCV 3.3+](https://github.com/opencv/opencv/releases) for vx_opencv
   * Set OpenCV_DIR environment variable to OpenCV/build folder
   
-### Pre-requisites setup script - MIVisionX-setup.py
+### Prerequisites setup script - `MIVisionX-setup.py`
 
 For convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If --directory option is not given the script will install deps folder in the home directory(~/) by default, else in the user specified folder.
+**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If directory option is not given, the script will install deps folder in the home directory(~/) by default, else in the user specified location.
 
-#### Prerequisites for running the scripts
+#### Prerequisites for running the script
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
@@ -102,11 +102,11 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
-**Ubuntu**
+##### Ubuntu
 ````
 sudo apt-get install mivisionx
 ````
-**CentOS**
+##### CentOS
 ````
 sudo yum install mivisionx
 ````

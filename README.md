@@ -45,7 +45,7 @@ MIVisionX has a number of applications ([apps](apps#applications)) built on top 
 
 <p align="center"><img width="80%" src="docs/images/modelCompilerWorkflow.png" /></p>
 
-Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-net-model-compiler--optimizer)) converts pre-trained neural net models to MIVisionX runtime code.
+Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-net-model-compiler--optimizer)) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
 ## Toolkit
 
@@ -109,11 +109,11 @@ sudo apt-get install mivisionx
 ````
 sudo yum install mivisionx
 ````
-**Note:** 
-* source code will not available with apt-get/yum install
-* executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
-* OpenVX and module header files into `/opt/rocm/mivisionx/include`
-* model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+ **Note:** 
+  * source code will not available with apt-get/yum install
+  * executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
+  * OpenVX and module header files into `/opt/rocm/mivisionx/include`
+  * model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
 
 ### Using Setup Script and CMake on Linux (Ubuntu 16.04/18.04 64-bit / CentOS 7.5/7.6) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)

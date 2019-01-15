@@ -2,7 +2,9 @@
 
 <p align="center"><img width="80%" src="../docs/images/modelCompilerWorkflow.png" /></p>
 
-Neural Net Model Compiler & Optimizer converts [ONNX](https://onnx.ai/) or [Caffe](http://caffe.berkeleyvision.org/) pre-trained models to MIVisionX runtime code. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR (AMD's internal open format), the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted AMD hardware.
+Neural Net Model Compiler & Optimizer converts pre-trained neural network models to MIVisionX runtime code for optimized inference.
+
+Pre-trained models in [ONNX](https://onnx.ai/) or [NNEF](https://www.khronos.org/nnef) or [Caffe](http://caffe.berkeleyvision.org/) formats are supported by the model compiler & optimizer. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR (AMD's internal open format), the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted AMD hardware.
 
 <p align="center"><img width="100%" src="../docs/images/frameworks.png" /></p>
 
@@ -12,12 +14,12 @@ MIVisionX allows [OpenVX vision fuctions](https://www.khronos.org/registry/OpenV
 
 <p align="center"><img width="100%" src="../docs/images/runtime.png" /></p>
 
-## Dependencies
+## Pre-requisites
 * MIVisionX libraries
 * numpy
 * onnx
 ````
-pip install onnx numpy
+% pip install onnx numpy
 ````
 
 ## Model Compiler & Optimizer Usage
@@ -82,21 +84,21 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
 1. Convert net.caffemodel into NNIR model using the following command
    ````
-	    python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
+	    % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
    ````
 2. Compile NNIR model into OpenVX C code with CMakelists.txt for compiling and building inference library
    ````
-	    python nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
+	    % python nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
    ````
 3. cmake and make the project inside the nnirModelOutputFolder
    ````
-	    cd nnirModelOutputFolder
-	    cmake .
-	    make
+	    % cd nnirModelOutputFolder
+	    % cmake .
+	    % make
    ````
 4. Run anntest application for testing the inference with input and output tensor
    ````
-	    ./anntest weights.bin
+	    % ./anntest weights.bin
    ````
 5. The shared C library (libannmodule.so) can be used in any customer application
 
@@ -187,7 +189,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 % ./anntest ../weights.bin input-%04d.png output-%04d.png,reference.rgb,0.01
 ...
 ````
-## Currently supported
+## Models & Operators currently supported
 ###  Models tested
 Currently supporting below models from https://github.com/onnx/models with `release 1.1` tags
  - resnet50
@@ -195,7 +197,7 @@ Currently supporting below models from https://github.com/onnx/models with `rele
  - inception_v2
  - vgg19
  - densenet
- - sqeezenet
+ - squeezenet
  - zfnet
 
 ### Operators

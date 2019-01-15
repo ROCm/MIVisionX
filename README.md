@@ -19,7 +19,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
   * [Loom Shell](utilities/loom_shell#radeon-loomshell)
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
-* [Pre-requisites](#pre-requisites)
+* [Prerequisites](#prerequisites)
 * [Build & Install MIVisionX](#build--install-mivisionx)
 * [Docker](#docker)
 * [Release Notes](#release-notes)
@@ -59,25 +59,26 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
 
-## Pre-requisites
+## Prerequisites
 * CPU: SSE4.1 or above CPU, 64-bit
 * GPU: Radeon Instinct or Vega Family of Products (16GB recommended)
   * Linux: install [ROCm](https://rocm.github.io/ROCmInstall.html) with OpenCL development kit
   * Windows: install the latest drivers and OpenCL SDK [download](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases)
+* ROCm CMake, MIOpenGEMM & MIOpen for Neural Net Extensions (vx_nn)
 * CMake 2.8 or newer [download](http://cmake.org/download/)
-* Qt Creator for [annInferenceApp](apps/cloud_inference/client_app/README.md)
-* [protobuf](https://github.com/google/protobuf) for [inference_generator](utilities/inference_generator#inference-generator)
+* Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
+* [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* OpenCV 3.3 (optional) [download](https://github.com/opencv/opencv/releases) for vx_opencv
+* [OpenCV 3.3+](https://github.com/opencv/opencv/releases) for vx_opencv
   * Set OpenCV_DIR environment variable to OpenCV/build folder
   
-### Pre-requisites setup script - MIVisionX-setup.py
+### Prerequisites setup script - `MIVisionX-setup.py`
 
 For convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If --directory option is not given the script will install deps folder in the home directory(~/) by default, else in the user specified folder.
+**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If directory option is not given, the script will install deps folder in the home directory(~/) by default, else in the user specified location.
 
-#### Prerequisites for running the scripts
+#### Prerequisites for running the script
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
@@ -94,18 +95,18 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 
 ## Build & Install MIVisionX
 
-## Using apt-get/yum
+### Using `apt-get`/`yum`
 
-### Prerequisites
+#### Prerequisites
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
-* Ubuntu
+##### Ubuntu
 ````
 sudo apt-get install mivisionx
 ````
-* CentOS
+##### CentOS
 ````
 sudo yum install mivisionx
 ````
@@ -115,7 +116,7 @@ sudo yum install mivisionx
   * OpenVX and module header files into `/opt/rocm/mivisionx/include`
   * model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
 
-### Using Setup Script and CMake on Linux (Ubuntu 16.04/18.04 64-bit / CentOS 7.5/7.6) with ROCm
+### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
 * Use the below commands to setup and build MIVisionX
 ````
@@ -139,7 +140,7 @@ sudo make install
   * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
   * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 
-### Using CMake on Linux (Ubuntu 16.04/18.04 64-bit / CentOS 7.5/7.6) with ROCm
+### Using `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
 * git clone, build and install other ROCm projects (using `cmake` and `% make install`) in the below order for vx_nn.
   * [rocm-cmake](https://github.com/RadeonOpenCompute/rocm-cmake)
@@ -156,11 +157,11 @@ sudo make install
 * add the installed library path to LD_LIBRARY_PATH environment variable (default `/opt/rocm/mivisionx/lib`)
 * add the installed executable path to PATH environment variable (default `/opt/rocm/mivisionx/bin`)
 
-#### Build annInferenceApp using Qt Creator
+#### Build `annInferenceApp` using `Qt Creator`
 * build [annInferenceApp.pro](apps/cloud_inference/client_app/annInferenceApp.pro) using Qt Creator
 * or use [annInferenceApp.py](apps/cloud_inference/client_app/annInferenceApp.py) for simple tests
 
-#### Build Radeon LOOM using Visual Studio Professional 2013 on 64-bit Windows 10/8.1/7
+#### Build `Radeon LOOM` using `Visual Studio Professional` on 64-bit Windows `10`/`8.1`/`7`
 * Use [loom.sln](amd_openvx_extensions/amd_loomsl/vx_loomsl.sln) to build x64 platform
 
 ## Docker

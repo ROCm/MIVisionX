@@ -41,7 +41,7 @@ sorttable = {
       for (var i=0; i<sortbottomrows.length; i++) {
         tfo.appendChild(sortbottomrows[i]);
       }
-      delete sortbottomrows;
+      //delete sortbottomrows;
     }
 
     var headrow = table.tHead.rows[0].cells;
@@ -112,7 +112,7 @@ sorttable = {
 	          tb.appendChild(row_array[j][1]);
 	        }
 
-	        delete row_array;
+	        //delete row_array;
 	      });
 	    }
     }
@@ -193,7 +193,7 @@ sorttable = {
     for (var i=newrows.length-1; i>=0; i--) {
        tbody.appendChild(newrows[i]);
     }
-    delete newrows;
+    //delete newrows;
   },
 
   sort_numeric: function(a,b) {

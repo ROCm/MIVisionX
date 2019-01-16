@@ -126,7 +126,7 @@ sorttable = {
         if (text.match(/^-?[£$¤]?[\d,.]+%?$/)) {
           return sorttable.sort_numeric;
         }
-        var possdate = text.match(sorttable.DATE_RE)
+        var possdate = text.match(sorttable.DATE_RE);
         if (possdate) {
           var first = parseInt(possdate[1]);
           var second = parseInt(possdate[2]);

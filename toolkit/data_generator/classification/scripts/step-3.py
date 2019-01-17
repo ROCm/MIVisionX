@@ -1,9 +1,9 @@
-import os
+#import os
 import getopt
 import sys
-from PIL import Image
-from itertools import izip
-import re
+#from PIL import Image
+#from itertools import izip
+#import re
 
 opts, args = getopt.getopt(sys.argv[1:], 'l:t:')
  

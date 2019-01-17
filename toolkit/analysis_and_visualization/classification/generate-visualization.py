@@ -10,10 +10,10 @@ __status__      = "Alpha"
 import os
 import getopt
 import sys
-import random
-import collections
+#import random
+#import collections
 import csv
-import numpy
+#import numpy
 import datetime
 
 opts, args = getopt.getopt(sys.argv[1:], 'i:d:l:h:o:f:m:')
@@ -109,7 +109,8 @@ fromDirectory = dir_path+'/icons';
 toDirectory = toolKit_dir+'/icons';
 copy_tree(fromDirectory, toDirectory)
 
-fromDirectory = dir_path+'/utils';
+new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+fromDirectory = new_path+'/utils';
 toDirectory = toolKit_dir+'/utils';
 copy_tree(fromDirectory, toDirectory)
 
@@ -332,7 +333,7 @@ print('Total mismatch -- '+str(totalMismatch));
 accuracyPer = float(totalMismatch);
 accuracyPer = (accuracyPer/netSummaryImages) * 100;
 print('Inference mismatch Percentage -- '+str(np.around(accuracyPer,decimals=2))+' %');
-print('Average mismatch Probability for Top 1 -- '+str(np.around(totalFailProb/totalMismatch,decimals=4)));
+print('Average mismatch Probability for Top 1 -- '+str(np.around(float(totalFailProb)/float(totalMismatch),decimals=4)));
 
 print("\n*****Top1*****");
 print('Top1 matches -- '+str(top1Count));  

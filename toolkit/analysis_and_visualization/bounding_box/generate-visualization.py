@@ -10,10 +10,10 @@ __status__      = "Alpha"
 import os
 import getopt
 import sys
-import random
+#import random
 import collections
 import csv
-import numpy
+#import numpy
 import datetime
 
 opts, args = getopt.getopt(sys.argv[1:], 'i:o:f:l:g:d:t:')
@@ -113,7 +113,8 @@ fromDirectory = dir_path+'/icons';
 toDirectory = toolKit_dir+'/icons';
 copy_tree(fromDirectory, toDirectory)
 #copy utils
-fromDirectory = dir_path+'/utils';
+new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+fromDirectory = new_path+'/utils';
 toDirectory = toolKit_dir+'/utils';
 copy_tree(fromDirectory, toDirectory)
 

@@ -1,7 +1,7 @@
 import os
 import getopt
 import sys
-from PIL import Image
+#from PIL import Image
 
 opts, args = getopt.getopt(sys.argv[1:], 'd:f:')
  

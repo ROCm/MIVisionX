@@ -44,3 +44,19 @@ usage:
 ````
 runvx -frames:live OpenCV_orb-LIVE.gdf
 ````
+
+## C_Samples - Sample codes in C language
+
+MIVisionX samples using cmake and c code
+
+### canny.cpp
+
+usage:
+
+````
+cd c_samples/canny/
+cmake .
+make
+
+Usage : ./cannyDetect <imageName>
+````

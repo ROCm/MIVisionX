@@ -209,7 +209,7 @@ sorttable = {
     return 1;
   },
   sort_ddmm: function(a,b) {
-    mtch = a[0].match(sorttable.DATE_RE);
+    var mtch = a[0].match(sorttable.DATE_RE);
     var y = mtch[3]; var m = mtch[2]; var d = mtch[1];
     if (m.length == 1) m = '0'+m;
     if (d.length == 1) d = '0'+d;
@@ -224,16 +224,16 @@ sorttable = {
     return 1;
   },
   sort_mmdd: function(a,b) {
-    mtch = a[0].match(sorttable.DATE_RE);
-    y = mtch[3]; d = mtch[2]; m = mtch[1];
+    var mtch = a[0].match(sorttable.DATE_RE);
+    var y = mtch[3]; var d = mtch[2]; var m = mtch[1];
     if (m.length == 1) m = '0'+m;
     if (d.length == 1) d = '0'+d;
-    dt1 = y+m+d;
+    var dt1 = y+m+d;
     mtch = b[0].match(sorttable.DATE_RE);
     y = mtch[3]; d = mtch[2]; m = mtch[1];
     if (m.length == 1) m = '0'+m;
     if (d.length == 1) d = '0'+d;
-    dt2 = y+m+d;
+    var dt2 = y+m+d;
     if (dt1==dt2) return 0;
     if (dt1<dt2) return -1;
     return 1;

@@ -37,7 +37,7 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 int main(int argc, char **argv)
 {
     if (argc < 2) {
-        printf("Usage: ./cannyDetect <imageName>\n");
+        printf("Usage: ./orbDetect <imageName>\n");
         return 0;
     }
     vx_context context = vxCreateContext();
@@ -47,14 +47,12 @@ int main(int argc, char **argv)
     vx_graph graph = vxCreateGraph(context);
     ERROR_CHECK_OBJECT(graph);
     
-    int width = 480, height = 360;
-    vx_image input_rgb_image = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
-    vx_image output_filtered_image = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+    int width = 1280, height = 720;
+    vx_image inter_luma = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
     ERROR_CHECK_OBJECT(input_rgb_image);
-    ERROR_CHECK_OBJECT(output_filtered_image);
 
+    VideoCapture cap(0);
     Mat input, *output;
-    string imageName = argv[1];
     input = imread(imageName);
     if (input.empty()) {
         printf("Image not found\n");

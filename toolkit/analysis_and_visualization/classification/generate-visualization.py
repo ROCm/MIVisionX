@@ -109,7 +109,8 @@ fromDirectory = dir_path+'/icons';
 toDirectory = toolKit_dir+'/icons';
 copy_tree(fromDirectory, toDirectory)
 
-fromDirectory = dir_path+'/utils';
+new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+fromDirectory = new_path+'/utils';
 toDirectory = toolKit_dir+'/utils';
 copy_tree(fromDirectory, toDirectory)
 

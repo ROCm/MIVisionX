@@ -45,16 +45,16 @@ usage:
 runvx -frames:live OpenCV_orb-LIVE.gdf
 ````
 
-## C_Samples - Sample codes in C language
+## C,C++ Samples - Sample codes in C/C++ language
 
-MIVisionX samples using cmake and c code
+MIVisionX samples using cmake and c/c++ code
 
 ### canny.cpp
 
 usage:
 
 ````
-cd c_samples/canny/
+cd canny/
 cmake .
 make
 

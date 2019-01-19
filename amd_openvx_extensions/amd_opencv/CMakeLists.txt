@@ -64,7 +64,7 @@ list (APPEND SOURCES
 	source/OpenCV_fastNlMeansDenoisingColored.cpp
 	source/OpenCV_filter2D.cpp
 	source/OpenCV_flip.cpp
-	source/OpenCV_gaussianblur.cpp
+	source/OpenCV_gaussianBlur.cpp
 	source/OpenCV_goodFeaturesToTrackDetector.cpp
 	source/OpenCV_integral.cpp
 	source/OpenCV_laplacian.cpp

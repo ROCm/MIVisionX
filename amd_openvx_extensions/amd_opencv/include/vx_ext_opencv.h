@@ -30,7 +30,6 @@ THE SOFTWARE.
 #include "opencv2/xfeatures2d.hpp"						
 #endif
 
-// a very useful macro
 #ifndef dimof
 #define dimof(x) (sizeof(x)/sizeof(x[0]))
 #endif
@@ -42,7 +41,7 @@ extern "C" {
 #endif
 
 	/*!***********************************************************************************************************
-											OpenCV VX_API_ENTRY NODE C Functions
+						OpenCV VX_API_ENTRY NODE C Functions
 	*************************************************************************************************************/
 
 	/*! \brief [Graph] Creates a OpenCV blur function node.

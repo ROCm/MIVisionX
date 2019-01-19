@@ -43,7 +43,7 @@ list (APPEND SOURCES
 	source/OpenCV_bitwiseOr.cpp
 	source/OpenCV_bitwiseXor.cpp
 	source/OpenCV_blur.cpp
-	source/OpenCV_boxfilter.cpp
+	source/OpenCV_boxFilter.cpp
 	source/OpenCV_briskCompute.cpp
 	source/OpenCV_briskDetector.cpp
 	source/OpenCV_buildOpticalFlowPyramid.cpp

@@ -22,93 +22,92 @@ cmake_minimum_required (VERSION 2.8)
 project (amd_opencv)
 
 set (CMAKE_CXX_STANDARD 11)
+cmake_policy(SET CMP0054 NEW)
 
 find_package (OpenCV REQUIRED)
-find_package (OpenCL)
 
+include_directories (include)
 include_directories (../../amd_openvx/openvx/include)
 
-list (APPEND SOURCES 
-	OpenCV_absdiff.cpp
-	OpenCV_adaptiveThreshold.cpp
-	OpenCV_add.cpp
-	OpenCV_AddWeighted.cpp
-	OpenCV_bilateralFilter.cpp
-	OpenCV_bitwise_and.cpp
-	OpenCV_bitwise_not.cpp
-	OpenCV_bitwise_or.cpp
-	OpenCV_bitwise_xor.cpp
-	OpenCV_Blur.cpp
-	OpenCV_Boxfilter.cpp
-	OpenCV_brisk_compute.cpp
-	OpenCV_BRISK_detector.cpp
-	OpenCV_buildOpticalFlowPyramid.cpp
-	OpenCV_buildPyramid.cpp
-	OpenCV_Canny.cpp
-	OpenCV_compare.cpp
-	OpenCV_convertScaleAbs.cpp
-	OpenCV_cornerHarris.cpp
-	OpenCV_cornerMinEigenVal.cpp
-	OpenCV_countNonZero.cpp
-	OpenCV_cvtColor.cpp
-	OpenCV_data_translator.cpp
-	OpenCV_dilate.cpp
-	OpenCV_distanceTransform.cpp
-	OpenCV_divide.cpp
-	OpenCV_erode.cpp
-	OpenCV_FAST_feature_detector.cpp
-	OpenCV_fastNlMeansDenoising.cpp
-	OpenCV_fastNlMeansDenoisingColored.cpp
-	OpenCV_filter2D.cpp
-	OpenCV_flip.cpp
-	OpenCV_Gaussianblur.cpp
-	OpenCV_Good_Features_to_Track_detector.cpp
-	OpenCV_integral.cpp
-	OpenCV_Laplacian.cpp
-	OpenCV_Medianblur.cpp
-	OpenCV_morphologyEx.cpp
-	OpenCV_MSER_feature_detector.cpp
-	OpenCV_multiply.cpp
-	OpenCV_norm.cpp
-	OpenCV_orb_compute.cpp
-	OpenCV_ORB_detector.cpp
-	OpenCV_pyrdown.cpp
-	OpenCV_pyrup.cpp
-	OpenCV_resize.cpp
-	OpenCV_Scharr.cpp
-	OpenCV_sepFilter2D.cpp
-	OpenCV_SIFT_Compute.cpp
-	OpenCV_SIFT_Detect.cpp
-	OpenCV_simple_blob_detector.cpp
-	OpenCV_Sobel.cpp
-	OpenCV_Star_feature_detector.cpp
-	OpenCV_subtract.cpp
-	OpenCV_SURF_Compute.cpp
-	OpenCV_SURF_Detect.cpp
-	OpenCV_threshold.cpp
-	OpenCV_transpose.cpp
-	OpenCV_VX_Nodes.cpp
-	OpenCV_warpAffine.cpp
-	OpenCV_warpPerspective.cpp
-	publishkernels.cpp
+list (APPEND SOURCES
+	source/internal_dataTranslator.cpp
+	source/internal_publishKernels.cpp
+	source/internal_vxNodes.cpp
+	source/OpenCV_absDiff.cpp
+	source/OpenCV_adaptiveThreshold.cpp
+	source/OpenCV_add.cpp
+	source/OpenCV_addWeighted.cpp
+	source/OpenCV_bilateralFilter.cpp
+	source/OpenCV_bitwiseAnd.cpp
+	source/OpenCV_bitwiseNot.cpp
+	source/OpenCV_bitwiseOr.cpp
+	source/OpenCV_bitwiseXor.cpp
+	source/OpenCV_blur.cpp
+	source/OpenCV_boxFilter.cpp
+	source/OpenCV_briskCompute.cpp
+	source/OpenCV_briskDetector.cpp
+	source/OpenCV_buildOpticalFlowPyramid.cpp
+	source/OpenCV_buildPyramid.cpp
+	source/OpenCV_canny.cpp
+	source/OpenCV_compare.cpp
+	source/OpenCV_convertScaleAbs.cpp
+	source/OpenCV_cornerHarris.cpp
+	source/OpenCV_cornerMinEigenVal.cpp
+	source/OpenCV_countNonZero.cpp
+	source/OpenCV_cvtColor.cpp
+	source/OpenCV_dilate.cpp
+	source/OpenCV_distanceTransform.cpp
+	source/OpenCV_divide.cpp
+	source/OpenCV_erode.cpp
+	source/OpenCV_fastFeatureDetector.cpp
+	source/OpenCV_fastNlMeansDenoising.cpp
+	source/OpenCV_fastNlMeansDenoisingColored.cpp
+	source/OpenCV_filter2D.cpp
+	source/OpenCV_flip.cpp
+	source/OpenCV_gaussianBlur.cpp
+	source/OpenCV_goodFeaturesToTrackdetector.cpp
+	source/OpenCV_integral.cpp
+	source/OpenCV_laplacian.cpp
+	source/OpenCV_medianBlur.cpp
+	source/OpenCV_morphologyEx.cpp
+	source/OpenCV_mserFeatureDetector.cpp
+	source/OpenCV_multiply.cpp
+	source/OpenCV_norm.cpp
+	source/OpenCV_orbCompute.cpp
+	source/OpenCV_orbDetector.cpp
+	source/OpenCV_pyrDown.cpp
+	source/OpenCV_pyrUp.cpp
+	source/OpenCV_resize.cpp
+	source/OpenCV_scharr.cpp
+	source/OpenCV_sepFilter2D.cpp
+	source/OpenCV_siftCompute.cpp
+	source/OpenCV_siftDetect.cpp
+	source/OpenCV_simpleBlobDetector.cpp
+	source/OpenCV_sobel.cpp
+	source/OpenCV_starFeatureDetector.cpp
+	source/OpenCV_subtract.cpp
+	source/OpenCV_surfCompute.cpp
+	source/OpenCV_surfDetect.cpp
+	source/OpenCV_threshold.cpp
+	source/OpenCV_transpose.cpp
+	source/OpenCV_warpAffine.cpp
+	source/OpenCV_warpPerspective.cpp
 	)
 
 add_library(vx_opencv SHARED ${SOURCES})
-target_link_libraries(vx_opencv openvx)
 
 include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
-install (TARGETS vx_opencv DESTINATION lib)
 
-if (OpenCL_FOUND)
-	include_directories(${OpenCL_INCLUDE_DIRS})
-	target_link_libraries(vx_opencv ${OpenCL_LIBRARIES})
-endif(OpenCL_FOUND)
+install (TARGETS vx_opencv DESTINATION lib)
+install (FILES include/vx_ext_opencv.h DESTINATION include)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	target_link_libraries(vx_opencv OpenVX)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
+	target_link_libraries(vx_opencv openvx)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdata-sections")
 endif()

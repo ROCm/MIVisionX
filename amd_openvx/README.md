@@ -31,8 +31,8 @@ This software is provided under a MIT-style license,  see the file COPYRIGHT.txt
 Build this project to generate AMD OpenVX library and RunVX executable. 
 * Refer to [openvx/include/VX](openvx/include/VX) for Khronos OpenVX standard header files.
 * Refer to [openvx/include/vx_ext_amd.h](openvx/include/vx_ext_amd.h) for vendor extensions in AMD OpenVX library.
-* Refer to [runvx/README.md](runvx/README.md) for RunVX details. 
-* Refer to [runcl/README.md](runcl/README.md) for RunCL details. 
+* Refer to [runvx/README.md](../utilities/runvx/README.md) for RunVX details. 
+* Refer to [runcl/README.md](../utilities/runcl/README.md) for RunCL details. 
 
 ### Build using `Visual Studio 2017` on 64-bit `Windows 10`
 * Install OpenCV with/without contrib [download](https://github.com/opencv/opencv/releases) for RunVX tool to support camera capture and image display (optional)

@@ -9,7 +9,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
   * [Loom 360 Video Stitch Library](amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl)
   * [Neural Net Library](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
-  * [OpenCV Extensions](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv)
+  * [OpenCV Extensions](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
 * [Applications](#applications)
 * [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 * [Samples](samples#samples)

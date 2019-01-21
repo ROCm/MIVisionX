@@ -108,12 +108,12 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 ### Windows
 
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
-* Install OpenCV with/without contrib [download](https://github.com/opencv/opencv/releases) for RunVX tool to support camera capture and image display (optional)
- * OpenCV_DIR environment variable should point to OpenCV/build folder
+* Install OpenCV with/without contrib [download](https://github.com/opencv/opencv/releases)  to support camera capture and image display
+  * OpenCV_DIR environment variable should point to OpenCV/build folder
 * If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in .vcxproj files
 * Use MIVisionX.sln to build for x64 platform
 
-**NOTE** - vx_nn is not supported in Windows
+**NOTE** - vx_nn is not supported on Windows in this release
 
 ### Linux
 

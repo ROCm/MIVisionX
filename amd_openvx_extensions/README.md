@@ -4,4 +4,4 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 * [amd_loomsl](../amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl): AMD Radeon LOOM stitching library for live 360 degree video applications
 * [amd_nn](../amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
-* [amd_opencv](../amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
+* [amd_opencv](../amd_openvx_extensions/amd_opencv#amd-opencv-extension): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels

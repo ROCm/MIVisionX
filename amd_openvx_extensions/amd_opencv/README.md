@@ -1,5 +1,5 @@
-﻿## AMD Module for OpenCV-interop from OpenVX (vx_opencv)
-The vx_opencv is an OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels. These kernels can be access from within OpenVX framework using OpenVX API call [vxLoadKernels](https://www.khronos.org/registry/vx/specs/1.0.1/html/da/d83/group__group__user__kernels.html#gae00b6343fbb0126e3bf0f587b09393a3)(context, "vx_opencv").
+# AMD OpenCV Extension
+The AMD OpenCV (vx_opencv) is an OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels. These kernels can be accessed from within OpenVX framework using OpenVX API call [vxLoadKernels](https://www.khronos.org/registry/vx/specs/1.0.1/html/da/d83/group__group__user__kernels.html#gae00b6343fbb0126e3bf0f587b09393a3)(context, "vx_opencv").
 
 ## List of OpenCV-interop kernels
 The following is a list of OpenCV functions that have been included in the vx_opencv module.
@@ -59,17 +59,19 @@ The following is a list of OpenCV functions that have been included in the vx_op
     Divide                      org.opencv.divide  
     WarpAffine                  org.opencv.warpaffine 
     WarpPerspective             org.opencv.warpperspective  
-    
+
+**NOTE** - For list of OpenVX API calls for OpenCV-interop refer include/[vx_ext_opencv.h](include/vx_ext_opencv.h)
+
 ## Build Instructions
 
-#### Pre-requisites
-* OpenCV 3 [download](https://github.com/opencv/opencv/releases).
+### Pre-requisites
+* AMD OpenVX library
+* OpenCV 3.4+ [download](https://github.com/opencv/opencv/releases/tag/3.4.0).
+    * OpenCV_DIR environment variable should point to OpenCV/build folder
 * CMake 2.8 or newer [download](http://cmake.org/download/).
-* Build amdovx-core project at the same level folder as amdovx-modules build folder
-* OpenCV_DIR environment variable should point to OpenCV/build folder
 
-#### Build using Visual Studio Professional 2013 on 64-bit Windows 10/8.1/7
-* Use amdovx-modules/vx_opencv/vx_opencv.sln to build for x64 platform
+### Build using `Visual Studio 2017` on 64-bit Windows 10
+* Use amd_openvx_extensions/amd_opencv/amd_opencv.sln to build for x64 platform
 
-#### Build using CMake on Linux (Ubuntu 15.10 64-bit)
+### Build using CMake on Linux
 * Use CMake to configure and generate Makefile

@@ -14,6 +14,7 @@
     <ProjectGuid>{E14F83E9-2295-466C-9647-7BD0D03ECE4B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>runvx</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

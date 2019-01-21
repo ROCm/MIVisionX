@@ -9,7 +9,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
   * [Loom 360 Video Stitch Library](amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl)
   * [Neural Net Library](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
-  * [OpenCV Extensions](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv)
+  * [OpenCV Extensions](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
 * [Applications](#applications)
 * [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 * [Samples](samples#samples)
@@ -62,23 +62,33 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 ## Prerequisites
 * CPU: SSE4.1 or above CPU, 64-bit
 * GPU: Radeon Instinct or Vega Family of Products (16GB recommended)
-  * Linux: install [ROCm](https://rocm.github.io/ROCmInstall.html) with OpenCL development kit
-  * Windows: install the latest drivers and OpenCL SDK [download](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases)
+
+### Windows
+* Windows 10
+* Windows SDK
+* Install the latest drivers and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
+  * Set OpenCV_DIR environment variable to OpenCV/build folder
+* Visual Studio 2017
+  * Visual Studio extension for C++/WinRT
+
+### Linux
+* Install [ROCm](https://rocm.github.io/ROCmInstall.html) 
 * ROCm CMake, MIOpenGEMM & MIOpen for Neural Net Extensions (vx_nn)
 * CMake 2.8 or newer [download](http://cmake.org/download/)
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* [OpenCV 3.3+](https://github.com/opencv/opencv/releases) for vx_opencv
+* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set OpenCV_DIR environment variable to OpenCV/build folder
   
-### Prerequisites setup script - `MIVisionX-setup.py`
+#### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
 For convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
 **MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If directory option is not given, the script will install deps folder in the home directory(~/) by default, else in the user specified location.
 
-#### Prerequisites for running the script
+##### Prerequisites for running the script
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
@@ -95,18 +105,30 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 
 ## Build & Install MIVisionX
 
-### Using `apt-get`/`yum`
+### Windows
 
-#### Prerequisites
+#### Using `Visual Studio 2017` on 64-bit `Windows 10`
+* Install [OpenCV](https://github.com/opencv/opencv/releases) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
+  * OpenCV_DIR environment variable should point to OpenCV/build folder
+* If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in .vcxproj files
+* Use MIVisionX.sln to build for x64 platform
+
+**NOTE:** vx_nn is not supported on Windows in this release
+
+### Linux
+
+#### Using `apt-get`/`yum`
+
+##### Prerequisites
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
 2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
 3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
-##### Ubuntu
+###### Ubuntu
 ````
 sudo apt-get install mivisionx
 ````
-##### CentOS
+###### CentOS
 ````
 sudo yum install mivisionx
 ````
@@ -116,7 +138,7 @@ sudo yum install mivisionx
   * OpenVX and module header files into `/opt/rocm/mivisionx/include`
   * model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
 
-### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
+#### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
 * Use the below commands to setup and build MIVisionX
 ````
@@ -140,7 +162,7 @@ sudo make install
   * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
   * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 
-### Using `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
+#### Using `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
 * git clone, build and install other ROCm projects (using `cmake` and `% make install`) in the below order for vx_nn.
   * [rocm-cmake](https://github.com/RadeonOpenCompute/rocm-cmake)
@@ -157,12 +179,9 @@ sudo make install
 * add the installed library path to LD_LIBRARY_PATH environment variable (default `/opt/rocm/mivisionx/lib`)
 * add the installed executable path to PATH environment variable (default `/opt/rocm/mivisionx/bin`)
 
-#### Build `annInferenceApp` using `Qt Creator`
+##### Build `annInferenceApp` using `Qt Creator`
 * build [annInferenceApp.pro](apps/cloud_inference/client_app/annInferenceApp.pro) using Qt Creator
 * or use [annInferenceApp.py](apps/cloud_inference/client_app/annInferenceApp.py) for simple tests
-
-#### Build `Radeon LOOM` using `Visual Studio Professional` on 64-bit Windows `10`/`8.1`/`7`
-* Use [loom.sln](amd_openvx_extensions/amd_loomsl/vx_loomsl.sln) to build x64 platform
 
 ## Docker
 
@@ -253,11 +272,12 @@ Upsample Nearest Neighborhood|
 * Package (.deb & .rpm) install requires OpenCV v3.3.0 to execute AMD OpenCV extensions
 
 ### Tested configurations
+* Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
 * ROCm: rocm-dkms - `2.0.89`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [1.7.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.0)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
-* OpenCV - [3.3.0](https://github.com/opencv/opencv/releases/tag/3.3.0)
+* OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "0.9.91"
+__version__     = "0.9.92"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "beta"
@@ -70,8 +70,8 @@ else:
 	os.system('(cd '+deps_dir+'; unzip '+MIOpenVersion+'.zip )')
 	os.system('(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v3.5.2.zip )')
 	os.system('(cd '+deps_dir+'; unzip v3.5.2.zip )')
-	os.system('(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/3.3.0.zip )')
-	os.system('(cd '+deps_dir+'; unzip 3.3.0.zip )')
+	os.system('(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/3.4.0.zip )')
+	os.system('(cd '+deps_dir+'; unzip 3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; mkdir build )')
 	os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen OpenCV )')
 	os.system('(cd '+deps_dir+'/build/rocm-cmake; '+linuxCMake+' ../../rocm-cmake )')
@@ -117,7 +117,7 @@ else:
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev')
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev')
-	os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake+' -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../../opencv-3.3.0 )')
+	os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake+' -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../../opencv-3.4.0 )')
 	os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install )')

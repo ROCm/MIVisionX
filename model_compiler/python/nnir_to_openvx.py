@@ -976,7 +976,9 @@ def generateTestCPP(graph,argmaxOutput,fileName):
 #include <chrono>
 #include <unistd.h>
 #include <math.h>
+#include <half.hpp>
 #include <immintrin.h>
+using half_float::half;
 
 #if ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
@@ -1152,16 +1154,25 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
         for(vx_size n = 0; n < N; n++) {
             for(vx_size y = 0; y < H; y++) {
                 for(vx_size x = 0; x < W; x++) {
-                    if (data_type == VX_TYPE_FLOAT32)
-                        float * pc = (float *)ptr + n * CHW + y * W + x;
-                    else
-                        float * pc = (flaot *)((short *)ptr + n * CHW + y * W + x);
                     vx_size best_c = 0;
-                    float best_v = *pc;
-                    for(vx_size c = 1; c < C; c++, pc += HW) {
-                        if(*pc > best_v) {
-                            best_v = *pc;
-                            best_c = c;
+                    float * pc = (float *)ptr + n * CHW + y * W + x;
+                    if (data_type == VX_TYPE_FLOAT32) {
+                        float best_v = *pc;
+                        for(vx_size c = 1; c < C; c++, pc += HW) {
+                            if(*pc > best_v) {
+                                best_v = *pc;
+                                best_c = c;
+                            }
+                        }
+                    }
+                    else if (data_type == VX_TYPE_FLOAT16) {
+                        half * pc = (half *)((short *)ptr + n * CHW + y * W + x);
+                        half best_v = *pc;
+                        for(vx_size c = 1; c < C; c++, pc += HW) {
+                            if(*pc > best_v) {
+                                best_v = *pc;
+                                best_c = c;
+                            }
                         }
                     }
                     *pb++ = g_lut__r[best_c];
@@ -1275,13 +1286,24 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
         for(vx_size n = 0; n < N; n++) {
             for(vx_size y = 0; y < H; y++) {
                 for(vx_size x = 0; x < W; x++) {
-                    float * pc = ptr + n * CHW + y * W + x;
                     vx_size best_c = 0;
-                    float best_v = *pc;
-                    for(vx_size c = 1; c < C; c++, pc += HW) {
-                        if(*pc > best_v) {
-                            best_v = *pc;
-                            best_c = c;
+                    if (data_type == VX_TYPE_FLOAT32) {
+                        float * pc = (float *)ptr + n * CHW + y * W + x;
+                        float best_v = *pc;
+                        for(vx_size c = 1; c < C; c++, pc += HW) {
+                            if(*pc > best_v) {
+                                best_v = *pc;
+                                best_c = c;
+                            }
+                        }
+                    }else {
+                        half * pc = (half *)ptr + n * CHW + y * W + x;
+                        half best_v = *pc;
+                        for(vx_size c = 1; c < C; c++, pc += HW) {
+                            if(*pc > best_v) {
+                                best_v = *pc;
+                                best_c = c;
+                            }
                         }
                     }
                     *pb++ = (%s)best_c;

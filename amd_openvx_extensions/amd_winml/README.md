@@ -1,10 +1,12 @@
 # AMD WinML Extension
 The AMD WinML (vx_winml) is an OpenVX module that implements a mechanism to access WinML functionality as OpenVX kernels. These kernels can be accessed from within OpenVX framework using OpenVX API call [vxLoadKernels](https://www.khronos.org/registry/vx/specs/1.0.1/html/da/d83/group__group__user__kernels.html#gae00b6343fbb0126e3bf0f587b09393a3)(context, "vx_winml").
 
+WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
+
 ## List of WinML-interop kernels
 The following is a list of WinML functions that have been included in the vx_winml module.
 
-    importONNXmodelAndRun             com.winml.import_onnx_model_and_run
+    importOnnxModelAndRun             com.winml.import_onnx_model_and_run
 
 
 **NOTE** - For the list of OpenVX API calls for WinML-interop refer include/[vx_ext_winml.h](include/vx_ext_winml.h)

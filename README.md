@@ -9,7 +9,8 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
   * [Loom 360 Video Stitch Library](amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl)
   * [Neural Net Library](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
-  * [OpenCV Extensions](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
+  * [OpenCV Extension](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
+  * [WinML Extension](amd_openvx_extensions/amd_winml#amd-winml-extension)
 * [Applications](#applications)
 * [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 * [Samples](samples#samples)
@@ -33,6 +34,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl): AMD Radeon LOOM stitching library for live 360 degree video applications
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
+* [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 ## Applications
 MIVisionX has a number of applications ([apps](apps#applications)) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
@@ -68,7 +70,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Windows SDK
 * Install the latest drivers and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
 * [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
-  * Set OpenCV_DIR environment variable to OpenCV/build folder
+  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * Visual Studio 2017
   * Visual Studio extension for C++/WinRT
 
@@ -80,7 +82,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
 * [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
-  * Set OpenCV_DIR environment variable to OpenCV/build folder
+  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   
 #### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
@@ -109,7 +111,7 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
 * Install [OpenCV](https://github.com/opencv/opencv/releases) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
-  * OpenCV_DIR environment variable should point to OpenCV/build folder
+  * `OpenCV_DIR` environment variable should point to `OpenCV/build` folder
 * If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in .vcxproj files
 * Use MIVisionX.sln to build for x64 platform
 
@@ -132,7 +134,8 @@ sudo apt-get install mivisionx
 ````
 sudo yum install mivisionx
 ````
- **Note:** 
+ **Note:**
+  * vx_winml is not supported on linux
   * source code will not available with apt-get/yum install
   * executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
   * OpenVX and module header files into `/opt/rocm/mivisionx/include`
@@ -158,9 +161,10 @@ cmake ../
 make -j8
 sudo make install
 ````
-**Note:**
-  * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
-  * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
+  **Note:**
+   * vx_winml is not supported on linux
+   * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
+   * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 
 #### Using `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)

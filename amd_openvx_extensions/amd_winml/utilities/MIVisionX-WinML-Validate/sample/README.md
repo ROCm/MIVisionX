@@ -2,7 +2,7 @@
 
 Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 
-Sample - SqeezeNet
+## Sample - SqeezeNet
 
 * Download the [SqueezeNet](https://s3.amazonaws.com/download.onnx/models/opset_8/squeezenet.tar.gz) ONNX Model
 * Use [Netron](https://lutzroeder.github.io/netron/) to open the model.onnx

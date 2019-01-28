@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 
 #include "VX/vx.h"
-#include "vx_opencv.h"
 #include <VX/vx_compatibility.h>
 
 #include "opencv2/opencv.hpp"

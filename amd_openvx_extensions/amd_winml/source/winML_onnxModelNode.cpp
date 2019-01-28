@@ -23,9 +23,17 @@ THE SOFTWARE.
 #include"internal_publishKernels.h"
 
 // Node Global variables
-string deviceName = "default";
+
+// deploy deive kinds
+const LearningModelDeviceKind deviceKindArray[5] =	{	LearningModelDeviceKind::Default,
+														LearningModelDeviceKind::Cpu,
+														LearningModelDeviceKind::DirectX,
+														LearningModelDeviceKind::DirectXHighPerformance,
+														LearningModelDeviceKind::DirectXMinPower
+													};
+
 LearningModel model = nullptr;
-LearningModelDeviceKind deviceKind = LearningModelDeviceKind::Default;
+LearningModelDeviceKind deviceKind = deviceKindArray[3];
 LearningModelSession session = nullptr;
 LearningModelBinding binding = nullptr;
 VideoFrame imageFrame = nullptr;
@@ -51,7 +59,7 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_InputValidator(vx_node 
                         printf("validate: ImportOnnxModelAndRun: #0 or #1 or #2 scalar type=%d (not VX_TYPE_STRING_AMD)\n", type);
                         return VX_ERROR_INVALID_TYPE;
                 }
-                vxReleaseScalar(&inputScalar);
+				STATUS_ERROR_CHECK(vxReleaseScalar(&inputScalar));
         }
         else if (index == 3)
         {
@@ -71,10 +79,26 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_InputValidator(vx_node 
                         printf("validate: ImportOnnxModelAndRun: #3 tensor type=%d (not float/float16)\n", type);
                         return VX_ERROR_INVALID_TYPE;
                 }
-                vxReleaseTensor(&inputTensor);
+				STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
         }
+		else if (index == 5)
+		{
+			if (param)
+			{
+				vx_enum type;
+				vx_scalar inputScalar;
+				STATUS_ERROR_CHECK(vxQueryParameter(param, VX_PARAMETER_ATTRIBUTE_REF, &inputScalar, sizeof(vx_scalar)));
+				STATUS_ERROR_CHECK(vxQueryScalar(inputScalar, VX_SCALAR_TYPE, &type, sizeof(type)));
+				if (type != VX_TYPE_INT32)
+				{
+					printf("validate: ImportOnnxModelAndRun: #5 scalar type=%d (not VX_TYPE_INT32)\n", type);
+					return VX_ERROR_INVALID_TYPE;
+				}
+				STATUS_ERROR_CHECK(vxReleaseScalar(&inputScalar));
+			}
+		}
 
-        vxReleaseParameter(&param);
+		STATUS_ERROR_CHECK(vxReleaseParameter(&param));
         return status;
 }
 
@@ -124,7 +148,7 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_OutputValidator(vx_node
         STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
         STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
 
-        vxReleaseTensor(&outputTensor);
+		STATUS_ERROR_CHECK(vxReleaseTensor(&outputTensor));
         }
         return status;
 }
@@ -140,17 +164,38 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Initialize(vx_node node
         vx_status status = VX_SUCCESS;
 		// Read scalar strings
 		string modelLocation, inputName, outputName;
+		int deviceKindIndex = 3;
 		vx_scalar modelLocationScalar = (vx_scalar)parameters[0];
 		vx_scalar inputNameScalar = (vx_scalar)parameters[1];
 		vx_scalar outputNameScalar = (vx_scalar)parameters[2];
+		vx_scalar deviceKindScalar = (vx_scalar)parameters[5];
 
-		vxReadScalarValue(modelLocationScalar, &modelLocation);
-		vxReadScalarValue(inputNameScalar, &inputName);
-		vxReadScalarValue(outputNameScalar, &outputName);
+		// read scalars
+		STATUS_ERROR_CHECK(vxReadScalarValue(modelLocationScalar, &modelLocation));
+		STATUS_ERROR_CHECK(vxReadScalarValue(inputNameScalar, &inputName));
+		STATUS_ERROR_CHECK(vxReadScalarValue(outputNameScalar, &outputName));
+		if(deviceKindScalar)
+			STATUS_ERROR_CHECK(vxReadScalarValue(deviceKindScalar, &deviceKindIndex));
 
-		vxReleaseScalar(&modelLocationScalar);
-		vxReleaseScalar(&inputNameScalar);
-		vxReleaseScalar(&outputNameScalar);
+		// get model location
+		wstring wModel(modelLocation.begin(), modelLocation.end());
+		hstring ModelLocation = wModel.c_str();
+
+		// get model input tensor name
+		wstring wInputName(inputName.begin(), inputName.end());
+		hstring ModelInputTensorName = wInputName.c_str();
+
+		// get model output tensor name
+		wstring wOutputName(outputName.begin(), outputName.end());
+		hstring ModelOutputTensorName = wOutputName.c_str();
+
+
+		// release scalars
+		STATUS_ERROR_CHECK(vxReleaseScalar(&modelLocationScalar));
+		STATUS_ERROR_CHECK(vxReleaseScalar(&inputNameScalar));
+		STATUS_ERROR_CHECK(vxReleaseScalar(&outputNameScalar));
+		if (deviceKindScalar)
+			STATUS_ERROR_CHECK(vxReleaseScalar(&deviceKindScalar));
 
         return status;
 }
@@ -204,6 +249,7 @@ vx_status  WINML_ImportOnnxModelAndRun_Register(vx_context context)
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
                 PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
         }
 

@@ -77,19 +77,21 @@ WinML importOnnxModelAndRun C Function
 VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRun
 (
         vx_graph graph,
-        vx_scalar ModelLocation,
+        vx_scalar modelLocation,
         vx_scalar inputTensorName,
         vx_scalar outputTensorName,
         vx_tensor inputTensor,
-        vx_tensor OutputTensor
+        vx_tensor outputTensor,
+		vx_scalar deviceKind
 )
 {
         vx_reference params[] = {
-                (vx_reference)ModelLocation,
+                (vx_reference)modelLocation,
                 (vx_reference)inputTensorName,
                 (vx_reference)outputTensorName,
                 (vx_reference)inputTensor,
-                (vx_reference)OutputTensor,
+                (vx_reference)outputTensor,
+				(vx_reference)deviceKind
         };
 
         return vxCreateNodeByStructure(graph,

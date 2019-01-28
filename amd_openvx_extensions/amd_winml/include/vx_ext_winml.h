@@ -48,16 +48,18 @@ extern "C" {
                  * \param [in] input_3 The ONNX Model Output Tensor Name in vx_scalar.
                  * \param [in] input_4 The Input Tensor in <tt>\ref VX_FLOAT32</tt> format.
                  * \param [out] output The output Tensor in <tt>\ref VX_FLOAT32</tt> format.
+				 * \param [in] input_5 WinML Deploy Device Kind in vx_scalar [optional] (default: 3).
                  * \return <tt>\ref vx_node</tt>.
                  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
                 VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRun
                 (
                         vx_graph graph,
-                        vx_scalar ModelLocation,
+                        vx_scalar modelLocation,
                         vx_scalar inputTensorName,
                         vx_scalar outputTensorName,
                         vx_tensor inputTensor,
-                        vx_tensor OutputTensor
+                        vx_tensor outputTensor,
+						vx_scalar deviceKind
                 );
 
 #ifdef __cplusplus

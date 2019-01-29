@@ -1,8 +1,6 @@
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
-#include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <vx_ext_opencv.h>
 
 using namespace cv;
 using namespace std;
@@ -85,7 +83,7 @@ int main(int argc, char **argv)
     ERROR_CHECK_STATUS( vxVerifyGraph( graph ) );
     
     string option = argv[1];
-    Mat input, *output;
+    Mat input;
 
     if (option == "--image") {
         input = imread(argv[2]);

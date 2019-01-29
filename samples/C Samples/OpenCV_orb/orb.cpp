@@ -1,8 +1,5 @@
 #include <VX/vx.h>
-#include <VX/vx_compatibility.h>
-#include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <vx_ext_opencv.h>
 
 using namespace cv;
 using namespace std;
@@ -36,60 +33,65 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 
 int main(int argc, char **argv)
 {
-    if (argc < 2) {
-        printf("Usage: ./orbDetect <imageName>\n");
+    if (argc < 1) {
+        printf("Usage: ./orbDetect\n");
         return 0;
     }
+
     vx_context context = vxCreateContext();
     ERROR_CHECK_OBJECT(context);
     vxRegisterLogCallback(context, log_callback, vx_false_e);
+    
+    vxLoadKernels(context, "vx_opencv");
     
     vx_graph graph = vxCreateGraph(context);
     ERROR_CHECK_OBJECT(graph);
     
     int width = 1280, height = 720;
-    vx_image inter_luma = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
-    ERROR_CHECK_OBJECT(input_rgb_image);
+    vx_image inter_luma = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+    ERROR_CHECK_OBJECT(inter_luma);
 
     VideoCapture cap(0);
-    Mat input, *output;
-    input = imread(imageName);
+    Mat input, output;
+    cap >> input;
+    cap >> output;
+    cvtColor(input, input, COLOR_RGB2GRAY);
+    
     if (input.empty()) {
         printf("Image not found\n");
     }
     cv::resize(input, input, Size(width, height));
-    imshow("inputWindow", input);
-
-    vx_rectangle_t cv_rgb_image_region;
-    cv_rgb_image_region.start_x    = 0;
-    cv_rgb_image_region.start_y    = 0;
-    cv_rgb_image_region.end_x      = width;
-    cv_rgb_image_region.end_y      = height;
-    vx_imagepatch_addressing_t cv_rgb_image_layout;
-    cv_rgb_image_layout.stride_x   = 3;
-    cv_rgb_image_layout.stride_y   = input.step;
-    vx_uint8 * cv_rgb_image_buffer = input.data;
-    ERROR_CHECK_STATUS( vxCopyImagePatch( input_rgb_image, &cv_rgb_image_region, 0,
-                                          &cv_rgb_image_layout, cv_rgb_image_buffer,
+    cv::resize(output, output, Size(width, height));
+    
+    vx_rectangle_t cv_image_region;
+    cv_image_region.start_x    = 0;
+    cv_image_region.start_y    = 0;
+    cv_image_region.end_x      = width;
+    cv_image_region.end_y      = height;
+    vx_imagepatch_addressing_t cv_image_layout;
+    cv_image_layout.stride_x   = 1;
+    cv_image_layout.stride_y   = input.step;
+    vx_uint8 * cv_image_buffer = input.data;
+    
+    ERROR_CHECK_STATUS( vxCopyImagePatch( inter_luma, &cv_image_region, 0,
+                                          &cv_image_layout, cv_image_buffer,
                                           VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST ) );
 
-    vx_image yuv_image  = vxCreateVirtualImage(graph, width, height, VX_DF_IMAGE_IYUV);
-    vx_image luma_image = vxCreateVirtualImage(graph, width, height, VX_DF_IMAGE_U8);
-    ERROR_CHECK_OBJECT(yuv_image);
-    ERROR_CHECK_OBJECT(luma_image);
-
-    vx_threshold hyst = vxCreateThreshold(context, VX_THRESHOLD_TYPE_RANGE, VX_TYPE_UINT8);
-    vx_int32 lower = 80, upper = 100;
-    vxSetThresholdAttribute(hyst, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, &lower, sizeof(lower));
-    vxSetThresholdAttribute(hyst, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, &upper, sizeof(upper));
-    ERROR_CHECK_OBJECT(hyst);
-    vx_int32 gradient_size = 3;
+    vx_array keypoints = vxCreateArray( context, VX_TYPE_KEYPOINT, 10000 );
+    ERROR_CHECK_OBJECT( keypoints );
+    
+    vx_int32 nFeatures = 1000;
+    vx_float32 scaleFactor = 1.2;
+    vx_int32 nlevels = 8;
+    vx_int32 edgeThreshold = 31;
+    vx_int32 firstLevel = 0;
+    vx_int32 WTA_K = 2;
+    vx_int32 scoreType = 0;
+    vx_int32 patchSize = 31;
 
     vx_node nodes[] =
     {
-        vxColorConvertNode(graph, input_rgb_image, yuv_image),
-        vxChannelExtractNode(graph, yuv_image, VX_CHANNEL_Y, luma_image),
-        vxCannyEdgeDetectorNode(graph, luma_image, hyst, gradient_size, VX_NORM_L1, output_filtered_image)
+        vxExtCvNode_orbDetect(graph, inter_luma, inter_luma, keypoints, nFeatures, scaleFactor, nlevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize)
     };
 
     for( vx_size i = 0; i < sizeof( nodes ) / sizeof( nodes[0] ); i++ )
@@ -101,22 +103,26 @@ int main(int argc, char **argv)
     ERROR_CHECK_STATUS( vxVerifyGraph( graph ) );
     ERROR_CHECK_STATUS( vxProcessGraph( graph ) );
 
-    vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-    vx_map_id map_id;
-    vx_imagepatch_addressing_t addr;
-    void * ptr;
-    ERROR_CHECK_STATUS( vxMapImagePatch( output_filtered_image, &rect, 0, &map_id, &addr, &ptr,
-                                         VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X ) );
-    Mat mat( height, width, CV_8U, ptr, addr.stride_y );
-    imshow( "CannyDetect", mat );
+    vx_size num_corners = 0;
+    ERROR_CHECK_STATUS(vxQueryArray (keypoints, VX_ARRAY_NUMITEMS, &num_corners, sizeof(num_corners)));
+    if (num_corners > 0) {
+        vx_size kp_stride;
+        vx_map_id kp_map;
+        vx_uint8 * kp_buf;
+        ERROR_CHECK_STATUS(vxMapArrayRange (keypoints, 0, num_corners, &kp_map, &kp_stride, (void **)&kp_buf, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
+        for (vx_size i = 0; i < num_corners; i++) {
+            vx_keypoint_t * kp = (vx_keypoint_t *) (kp_buf + i*kp_stride);
+            cv::Point center (kp->x, kp->y);
+            cv::circle (output, center, 1, cv::Scalar(0,255, 0),2);
+        }
+    }
+
+    imshow( "OrbDetect", output );
     waitKey(0);
 
-    ERROR_CHECK_STATUS( vxUnmapImagePatch( output_filtered_image, map_id ) );
     ERROR_CHECK_STATUS( vxReleaseGraph( &graph ) );
-    ERROR_CHECK_STATUS( vxReleaseImage( &yuv_image ) );
-    ERROR_CHECK_STATUS( vxReleaseImage( &luma_image ) );
-    ERROR_CHECK_STATUS( vxReleaseImage( &input_rgb_image ) );
-    ERROR_CHECK_STATUS( vxReleaseImage( &output_filtered_image ) );
+    ERROR_CHECK_STATUS( vxReleaseArray (&keypoints));
+    ERROR_CHECK_STATUS( vxReleaseImage( &inter_luma ) );
     ERROR_CHECK_STATUS( vxReleaseContext( &context ) );
     return 0;
 }

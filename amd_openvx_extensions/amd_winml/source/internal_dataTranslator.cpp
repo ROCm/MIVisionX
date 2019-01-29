@@ -23,32 +23,36 @@ THE SOFTWARE.
 
 #include"internal_winmlTunnel.h"
 
-vx_status VX_to_ML_tensor(vx_tensor inputTensor, TensorFloat outputTensor)
+TensorFloat VX_to_ML_tensor(vx_tensor inputTensor)
 {
 	vx_status status = VX_SUCCESS;
 
 	vx_enum usage = VX_READ_ONLY;
 	vx_size num_of_dims, inputDims[4] = { 1, 1, 1, 1 }, stride[4];
 	vx_map_id map_id;
+	float *ptr = nullptr;
 	vector<float> inputPtr;
-	STATUS_ERROR_CHECK(vxQueryTensor(inputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
-	STATUS_ERROR_CHECK(vxQueryTensor(inputTensor, VX_TENSOR_DIMS, &inputDims, sizeof(inputDims[0])*num_of_dims));
-	vx_size inputTensorSize = inputDims[0] * inputDims[1] * inputDims[2] * inputDims[3];
-	status = vxMapTensorPatch(inputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&inputPtr, usage, VX_MEMORY_TYPE_HOST, 0);
-	if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for inputTensor" << std::endl; return status; }
+	status = (vxQueryTensor(inputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+	if (status) { std::cerr << "ERROR: vxQueryTensor(VX_TENSOR_NUMBER_OF_DIMS) failed for inputTensor" << std::endl; return nullptr; }
+	status = (vxQueryTensor(inputTensor, VX_TENSOR_DIMS, &inputDims, sizeof(inputDims[0])*num_of_dims));
+	if (status) { std::cerr << "ERROR: vxQueryTensor(VX_TENSOR_DIMS) failed for inputTensor" << std::endl; return nullptr; }
 
-	vector<int64_t> inputShape({ (int64_t)inputDims[0],  (int64_t)inputDims[1],  (int64_t)inputDims[2],  (int64_t)inputDims[3] });
-	outputTensor.CreateFromIterable(inputShape, inputPtr);
+	status = vxMapTensorPatch(inputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+	if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for inputTensor" << std::endl; return nullptr; }
+
+	vx_size inputTensorSize = inputDims[0] * inputDims[1] * inputDims[2] * inputDims[3];
+	inputPtr.resize(inputTensorSize);
+	memcpy(&inputPtr.front(), ptr, inputTensorSize * sizeof(float));
 
 	status = vxUnmapTensorPatch(inputTensor, map_id);
-	if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for inputTensor" << std::endl; return status; }
+	if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for inputTensor" << std::endl; return nullptr; }
 
-	return status;
+	vector<int64_t> inputShape({ (int64_t)inputDims[3],  (int64_t)inputDims[2],  (int64_t)inputDims[1],  (int64_t)inputDims[0] });
+
+	return TensorFloat::CreateFromIterable(inputShape, inputPtr);;
 }
 
-
-
-vx_status ML_to_VX_tensor(TensorFloat inputTensor, vx_tensor outputTensor)
+vx_status ML_to_VX_tensor(IVectorView<float> inputTensor, vx_tensor outputTensor)
 {
 	vx_status status = VX_SUCCESS;
 
@@ -63,8 +67,7 @@ vx_status ML_to_VX_tensor(TensorFloat inputTensor, vx_tensor outputTensor)
 	status = vxMapTensorPatch(outputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&outputPtr, usage, VX_MEMORY_TYPE_HOST, 0);
 	if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for outputTensor" << std::endl; return status; }
 
-	IVectorView<float> outputValues = inputTensor.GetAsVectorView();
-	memcpy(outputPtr, &outputValues.First(), (outputTensorSize * sizeof(float)));
+	memcpy(outputPtr, &inputTensor.First(), (outputTensorSize * sizeof(float)));
 
 	status = vxUnmapTensorPatch(outputTensor, map_id);
 	if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for outputTensor" << std::endl; return status; }

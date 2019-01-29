@@ -22,8 +22,6 @@ THE SOFTWARE.
 
 #include"internal_publishKernels.h"
 
-// Node Global variables
-
 // deploy deive kinds
 const LearningModelDeviceKind deviceKindArray[5] =	{	LearningModelDeviceKind::Default,
 														LearningModelDeviceKind::Cpu,
@@ -31,17 +29,14 @@ const LearningModelDeviceKind deviceKindArray[5] =	{	LearningModelDeviceKind::De
 														LearningModelDeviceKind::DirectXHighPerformance,
 														LearningModelDeviceKind::DirectXMinPower
 													};
-
+// Node Global variables
 LearningModel model = nullptr;
 LearningModelSession session = nullptr;
 LearningModelBinding binding = nullptr;
-TensorFloat inputTensorElement = nullptr;
-TensorFloat outputTensorElement = nullptr;
 
 // load ONNX model to WinML
 static void LoadModelFromPath(hstring modelLocation)
 {
-	//printf("\n\nMIVisionX: Loading modelfile '%ws' on the '%s' device\n", modelLocation.c_str());
 	model = LearningModel::LoadFromFilePath(modelLocation);
 }
 
@@ -52,15 +47,14 @@ static void BindModel(hstring inputTensorName, hstring outputTensorName, int64_t
 	session = LearningModelSession{ model, LearningModelDevice(deviceKindArray[deviceIndex]) };
 	binding = LearningModelBinding{ session };
 
-	// bind the intput image
-	vector<int64_t> inputShape({ inputDim[0],  inputDim[1],  inputDim[2],  inputDim[3] });
-	inputTensorElement.Create(inputShape);
-	binding.Bind(inputTensorName, inputTensorElement);
+	// bind the intput image (bind input in kernel)
+	//vector<int64_t> inputShape({ inputDim[3],  inputDim[2],  inputDim[1],  inputDim[0] });
+	//inputTensorElement = TensorFloat::Create(inputShape);
+	//binding.Bind(inputTensorName, inputTensorElement);
 
 	// bind the output
-	vector<int64_t> outputShape({ outputDim[0],  outputDim[1],  outputDim[2],  outputDim[3] });
-	outputTensorElement.Create(outputShape);
-	binding.Bind(outputTensorName, outputTensorElement);
+	vector<int64_t> outputShape({ outputDim[3],  outputDim[2],  outputDim[1],  outputDim[0] });
+	binding.Bind(outputTensorName, TensorFloat::Create(outputShape));
 }
 
 // close and clear session
@@ -197,13 +191,13 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Initialize(vx_node node
         vx_status status = VX_SUCCESS;
 
 		// Read scalar strings
-		string modelLocation, inputName, outputName;
+		char modelFileLocation[1024], modelInputName[1024], modelOutputName[1024];
 		vx_scalar modelLocationScalar = (vx_scalar)parameters[0];
 		vx_scalar inputNameScalar = (vx_scalar)parameters[1];
 		vx_scalar outputNameScalar = (vx_scalar)parameters[2];
-		STATUS_ERROR_CHECK(vxReadScalarValue(modelLocationScalar, &modelLocation));
-		STATUS_ERROR_CHECK(vxReadScalarValue(inputNameScalar, &inputName));
-		STATUS_ERROR_CHECK(vxReadScalarValue(outputNameScalar, &outputName));
+		STATUS_ERROR_CHECK(vxReadScalarValue(modelLocationScalar, modelFileLocation));
+		STATUS_ERROR_CHECK(vxReadScalarValue(inputNameScalar, modelInputName));
+		STATUS_ERROR_CHECK(vxReadScalarValue(outputNameScalar, modelOutputName));
 		
 		// read optional device kind index
 		vx_int32 deviceKindIndex = 3;
@@ -212,13 +206,15 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Initialize(vx_node node
 			STATUS_ERROR_CHECK(vxReadScalarValue(deviceKindScalar, &deviceKindIndex));
 
 		// get model location
-		wstring wModel(modelLocation.begin(), modelLocation.end());
+		std::string Model(modelFileLocation);
+		wstring wModel(Model.begin(), Model.end());
 		hstring ModelLocation = wModel.c_str();
-
 		// get model input tensor name
+		std::string inputName(modelInputName);
 		wstring wInputName(inputName.begin(), inputName.end());
 		hstring ModelInputTensorName = wInputName.c_str();
 		// get model output tensor name
+		std::string outputName(modelOutputName);
 		wstring wOutputName(outputName.begin(), outputName.end());
 		hstring ModelOutputTensorName = wOutputName.c_str();
 		// get model input tensor dims
@@ -298,15 +294,38 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Kernel(vx_node node, co
 
 		// load input tensor into WinML TensorFloat
 		vx_tensor inputTensor = (vx_tensor)parameters[3];
-		STATUS_ERROR_CHECK(VX_to_ML_tensor(inputTensor, inputTensorElement));
+		TensorFloat inputTensorElement = VX_to_ML_tensor(inputTensor);
+
+		// get model input tensor name
+		char modelInputName[1024];
+		vx_scalar inputNameScalar = (vx_scalar)parameters[1];
+		STATUS_ERROR_CHECK(vxReadScalarValue(inputNameScalar, modelInputName));
+		std::string inputName(modelInputName);
+		wstring wInputtName(inputName.begin(), inputName.end());
+		hstring ModelInputTensorName = wInputtName.c_str();
+
+		// bind the intput image
+		binding.Bind(ModelInputTensorName, inputTensorElement);
 
 		// run inference
 		auto results = session.Evaluate(binding, L"RunId");
 
 		// load ouput tensor from WinML TensorFloat
 		vx_tensor outputTensor = (vx_tensor)parameters[4];
-		STATUS_ERROR_CHECK(ML_to_VX_tensor(outputTensorElement, outputTensor));
+		// get model output tensor name
+		char modelOutputName[1024];
+		vx_scalar outputNameScalar = (vx_scalar)parameters[2];
+		STATUS_ERROR_CHECK(vxReadScalarValue(outputNameScalar, modelOutputName));
+		std::string outputName(modelOutputName);
+		wstring wOutputName(outputName.begin(), outputName.end());
+		hstring ModelOutputTensorName = wOutputName.c_str();
+		auto resultTensor = results.Outputs().Lookup(ModelOutputTensorName).as<TensorFloat>();
+		auto resultVector = resultTensor.GetAsVectorView();
 
+		STATUS_ERROR_CHECK(ML_to_VX_tensor(resultVector, outputTensor));
+
+		// release scalar
+		STATUS_ERROR_CHECK(vxReleaseScalar(&outputNameScalar));
 		// release tensors
 		STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
 		STATUS_ERROR_CHECK(vxReleaseTensor(&outputTensor));

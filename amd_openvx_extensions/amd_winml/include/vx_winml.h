@@ -27,20 +27,18 @@ THE SOFTWARE.
 extern "C" {
 #endif
 
-        /*! \brief The AMD extension library for WinML */
-#define VX_LIBRARY_WINML         3
+ /*! \brief The AMD extension library for WinML */
+#define VX_LIBRARY_WINML 2
 
         /*!
          * \brief The list of available kernels in the WinML extension library.
          */
         enum vx_kernel_ext_amd_winml_e
         {
-
                 /*!
                  * \brief The WinML kernel. Kernel name is "com.winml.import_onnx_model_and_run".
                  */
-                VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x01,
-
+                VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x00,
         };
 
 #ifdef  __cplusplus

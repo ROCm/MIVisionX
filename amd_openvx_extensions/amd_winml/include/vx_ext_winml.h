@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef _VX_AMD_EXT_WINML_H_
 #define _VX_AMD_EXT_WINML_H_
 
-#include"VX/vx.h"
+#include "VX/vx.h"
 #include <VX/vx_compatibility.h>
 #include <vx_ext_amd.h>
 
@@ -42,6 +42,7 @@ extern "C" {
         *************************************************************************************************************/
 
                 /*! \brief [Graph] Creates a WinML import ONNX Model and run function node.
+				 * Kernel Name - com.winml.import_onnx_model_and_run
                  * \param [in] graph The reference to the graph.
                  * \param [in] input_1 The ONNX Model Location in vx_scalar.
                  * \param [in] input_2 The ONNX Model Input Tensor Name in vx_scalar.

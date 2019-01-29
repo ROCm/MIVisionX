@@ -33,10 +33,43 @@ const LearningModelDeviceKind deviceKindArray[5] =	{	LearningModelDeviceKind::De
 													};
 
 LearningModel model = nullptr;
-LearningModelDeviceKind deviceKind = deviceKindArray[3];
 LearningModelSession session = nullptr;
 LearningModelBinding binding = nullptr;
-VideoFrame imageFrame = nullptr;
+TensorFloat inputTensorElement = nullptr;
+TensorFloat outputTensorElement = nullptr;
+
+// load ONNX model to WinML
+static void LoadModelFromPath(hstring modelLocation)
+{
+	//printf("\n\nMIVisionX: Loading modelfile '%ws' on the '%s' device\n", modelLocation.c_str());
+	model = LearningModel::LoadFromFilePath(modelLocation);
+}
+
+// bind the ONNX model
+static void BindModel(hstring inputTensorName, hstring outputTensorName, int64_t * inputDim, int64_t *outputDim, int deviceIndex)
+{
+	// create a session and binding
+	session = LearningModelSession{ model, LearningModelDevice(deviceKindArray[deviceIndex]) };
+	binding = LearningModelBinding{ session };
+
+	// bind the intput image
+	vector<int64_t> inputShape({ inputDim[0],  inputDim[1],  inputDim[2],  inputDim[3] });
+	inputTensorElement.Create(inputShape);
+	binding.Bind(inputTensorName, inputTensorElement);
+
+	// bind the output
+	vector<int64_t> outputShape({ outputDim[0],  outputDim[1],  outputDim[2],  outputDim[3] });
+	outputTensorElement.Create(outputShape);
+	binding.Bind(outputTensorName, outputTensorElement);
+}
+
+// close and clear session
+static void closeWinmlNode()
+{
+	binding.Clear();
+	session.Close();
+	model.Close();
+}
 
 /************************************************************************************************************
 input parameter validator.
@@ -162,18 +195,19 @@ param [in] num.
 static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Initialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
         vx_status status = VX_SUCCESS;
+
 		// Read scalar strings
 		string modelLocation, inputName, outputName;
-		int deviceKindIndex = 3;
 		vx_scalar modelLocationScalar = (vx_scalar)parameters[0];
 		vx_scalar inputNameScalar = (vx_scalar)parameters[1];
 		vx_scalar outputNameScalar = (vx_scalar)parameters[2];
-		vx_scalar deviceKindScalar = (vx_scalar)parameters[5];
-
-		// read scalars
 		STATUS_ERROR_CHECK(vxReadScalarValue(modelLocationScalar, &modelLocation));
 		STATUS_ERROR_CHECK(vxReadScalarValue(inputNameScalar, &inputName));
 		STATUS_ERROR_CHECK(vxReadScalarValue(outputNameScalar, &outputName));
+		
+		// read optional device kind index
+		vx_int32 deviceKindIndex = 3;
+		vx_scalar deviceKindScalar = (vx_scalar)parameters[5];
 		if(deviceKindScalar)
 			STATUS_ERROR_CHECK(vxReadScalarValue(deviceKindScalar, &deviceKindIndex));
 
@@ -184,11 +218,44 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Initialize(vx_node node
 		// get model input tensor name
 		wstring wInputName(inputName.begin(), inputName.end());
 		hstring ModelInputTensorName = wInputName.c_str();
-
 		// get model output tensor name
 		wstring wOutputName(outputName.begin(), outputName.end());
 		hstring ModelOutputTensorName = wOutputName.c_str();
+		// get model input tensor dims
+		int64_t inputDims[4] = { 1 };
+		vx_size input_dims[4] = { 1, 1, 1, 1 };
+		vx_tensor inputTensor = (vx_tensor)parameters[3];
+		STATUS_ERROR_CHECK(vxQueryTensor(inputTensor, VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+		inputDims[0] = (int64_t)input_dims[0];
+		inputDims[1] = (int64_t)input_dims[1];
+		inputDims[2] = (int64_t)input_dims[2];
+		inputDims[3] = (int64_t)input_dims[3];
+		// get model output tensor dim
+		int64_t outputDims[4] = { 1 };
+		vx_size num_dims;
+		vx_size output_dims_2[2] = { 1, 1}, output_dims_4[4] = { 1, 1, 1, 1 };
+		vx_tensor outputTensor = (vx_tensor)parameters[4];
+		STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+		if (num_dims == 2)
+		{
+			STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, output_dims_2, sizeof(output_dims_2)));
+			outputDims[0] = output_dims_2[0];
+			outputDims[1] = output_dims_2[1];
+		}
+		else if (num_dims == 4)
+		{
+			STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, output_dims_4, sizeof(output_dims_4)))
+			outputDims[0] = output_dims_4[0];
+			outputDims[1] = output_dims_4[1];
+			outputDims[2] = output_dims_4[2];
+			outputDims[3] = output_dims_4[3];
+		}
+		
+		// load model location
+		LoadModelFromPath(ModelLocation);
 
+		// bind the model
+		BindModel(ModelInputTensorName, ModelOutputTensorName, inputDims, outputDims, deviceKindIndex);
 
 		// release scalars
 		STATUS_ERROR_CHECK(vxReleaseScalar(&modelLocationScalar));
@@ -196,6 +263,9 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Initialize(vx_node node
 		STATUS_ERROR_CHECK(vxReleaseScalar(&outputNameScalar));
 		if (deviceKindScalar)
 			STATUS_ERROR_CHECK(vxReleaseScalar(&deviceKindScalar));
+		// release tensors
+		STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
+		STATUS_ERROR_CHECK(vxReleaseTensor(&outputTensor));
 
         return status;
 }
@@ -210,6 +280,9 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Uninitialize(vx_node no
 {
         vx_status status = VX_SUCCESS;
 
+		// close and delete resources
+		closeWinmlNode();
+		
         return status;
 }
 
@@ -222,6 +295,51 @@ param [in] num.
 static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Kernel(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
         vx_status status = VX_SUCCESS;
+
+		// load input tensor into WinML TensorFloat
+		vx_tensor inputTensor = (vx_tensor)parameters[3];
+
+		vx_enum usage = VX_READ_ONLY;
+		vx_size num_of_dims, inputDims[4] = { 1, 1, 1, 1 }, stride[4];
+		vx_map_id map_id;
+		float * inputPtr;
+		STATUS_ERROR_CHECK(vxQueryTensor(inputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+		STATUS_ERROR_CHECK(vxQueryTensor(inputTensor, VX_TENSOR_DIMS, &inputDims, sizeof(inputDims[0])*num_of_dims));
+		vx_size inputTensorSize = inputDims[0] * inputDims[1] * inputDims[2] * inputDims[3];
+		status = vxMapTensorPatch(inputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&inputPtr, usage, VX_MEMORY_TYPE_HOST, 0);
+		if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for inputTensor" << std::endl; return status; }
+
+		//float *winML_input = &inputTensorElement.as<float>;
+		//memcpy(winML_input, inputPtr, (inputTensorSize * sizeof(float)));
+
+		status = vxUnmapTensorPatch(inputTensor, map_id);
+		if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for inputTensor" << std::endl; return status; }
+
+		// run inference
+		auto results = session.Evaluate(binding, L"RunId");
+
+		// load ouput tensor from WinML TensorFloat
+		vx_tensor outputTensor = (vx_tensor)parameters[4];
+
+		usage = VX_WRITE_ONLY;
+		vx_size outputDims[4] = { 1, 1, 1, 1 };
+		float * outputPtr;
+		STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+		STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, &outputDims, sizeof(outputDims[0])*num_of_dims));
+		vx_size outputTensorSize = outputDims[0] * outputDims[1] * outputDims[2] * outputDims[3];
+		status = vxMapTensorPatch(outputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&outputPtr, usage, VX_MEMORY_TYPE_HOST, 0);
+		if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for outputTensor" << std::endl; return status; }
+		IVectorView<float> outputValues = outputTensorElement.GetAsVectorView();
+
+		//float *winML_output = &outputValues.as<float>;
+		//memcpy(outputPtr, winML_output, (outputTensorSize * sizeof(float)));
+
+		status = vxUnmapTensorPatch(outputTensor, map_id);
+		if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for outputTensor" << std::endl; return status; }
+
+		// release tensors
+		STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
+		STATUS_ERROR_CHECK(vxReleaseTensor(&outputTensor));
 
         return status;
 }
@@ -236,7 +354,7 @@ vx_status  WINML_ImportOnnxModelAndRun_Register(vx_context context)
                 "com.winml.import_onnx_model_and_run",
                 VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN,
                 WINML_ImportOnnxModelAndRun_Kernel,
-                5,
+                6,
                 WINML_ImportOnnxModelAndRun_InputValidator,
                 WINML_ImportOnnxModelAndRun_OutputValidator,
                 WINML_ImportOnnxModelAndRun_Initialize,
@@ -255,7 +373,7 @@ vx_status  WINML_ImportOnnxModelAndRun_Register(vx_context context)
 
         if (status != VX_SUCCESS)
         {
-        exit:   vxRemoveKernel(kernel); return VX_FAILURE;
+        exit:   vxRemoveKernel(kernel);  std::cerr << "ERROR: vxAddParameterToKernel() failed for import_onnx_model_and_run" << std::endl; return VX_FAILURE;
         }
 
         return status;

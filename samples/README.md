@@ -44,3 +44,26 @@ usage:
 ````
 runvx -frames:live OpenCV_orb-LIVE.gdf
 ````
+
+## C / C++ Samples
+
+MIVisionX samples IN C / C++
+
+### Canny
+
+usage:
+
+````
+cmake .
+make
+./cannyDetect --image <imageName> 
+./cannyDetect --live
+````
+### Orb Detect
+usage:
+
+````
+cmake .
+make
+./orbDetect
+````

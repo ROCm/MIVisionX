@@ -59,6 +59,9 @@ using namespace std;
 #define PARAM_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) goto exit;}
 #define MAX_KERNELS 100
 
+vx_status VX_to_ML_tensor(vx_tensor inputTensor, TensorFloat outputTensor);
+vx_status ML_to_VX_tensor(TensorFloat inputTensor, vx_tensor outputTensor);
+
 class Kernellist
 {
 public:

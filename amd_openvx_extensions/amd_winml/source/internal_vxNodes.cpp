@@ -74,7 +74,7 @@ vx_node vxCreateNodeByStructure(vx_graph graph,
 /************************************************************************************************************
 WinML importOnnxModelAndRun C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRun
+VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRunNode
 (
         vx_graph graph,
         vx_scalar modelLocation,
@@ -98,4 +98,31 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRun
                 VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN,
                 params,
                 dimof(params));
+}
+
+/************************************************************************************************************
+WinML vxConvertImageToTensorNode C Function
+*************************************************************************************************************/
+VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensorNode
+(
+	vx_graph graph, 
+	vx_image input, 
+	vx_tensor output, 
+	vx_scalar a,
+	vx_scalar b,
+	vx_scalar reverse_channel_order
+)
+{
+		vx_reference params[] = {
+				(vx_reference)input,
+				(vx_reference)output,
+				(vx_reference)a,
+				(vx_reference)b,
+				(vx_reference)reverse_channel_order
+		};
+
+		return vxCreateNodeByStructure(graph,
+				VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR,
+				params, 
+				dimof(params));
 }

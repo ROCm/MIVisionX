@@ -98,6 +98,7 @@
     <ClCompile Include="source\internal_dataTranslator.cpp" />
     <ClCompile Include="source\internal_publishKernels.cpp" />
     <ClCompile Include="source\internal_vxNodes.cpp" />
+    <ClCompile Include="source\winML_imageToTensorConverter.cpp" />
     <ClCompile Include="source\winML_onnxModelNode.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -39,6 +39,11 @@ extern "C" {
                  * \brief The WinML kernel. Kernel name is "com.winml.import_onnx_model_and_run".
                  */
                 VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x00,
+
+				/*!
+				 * \brief The WinML kernel. Kernel name is "com.winml.convert_image_to_tensor".
+				 */
+				VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x01
         };
 
 #ifdef  __cplusplus

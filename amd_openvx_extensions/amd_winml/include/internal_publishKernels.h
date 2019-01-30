@@ -37,6 +37,7 @@ vx_status ADD_KERENEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
 
 vx_status WINML_ImportOnnxModelAndRun_Register(vx_context);
+vx_status WINML_ConvertImageToTensor_Register(vx_context);
 
 #define VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN_NAME     "com.winml.import_onnx_model_and_run"
 

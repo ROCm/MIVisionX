@@ -48,7 +48,7 @@ static void BindModel(hstring inputTensorName, hstring outputTensorName, int64_t
 	binding = LearningModelBinding{ session };
 
 	// bind the intput image (bind input in kernel)
-	//vector<int64_t> inputShape({ inputDim[3],  inputDim[2],  inputDim[1],  inputDim[0] });
+	vector<int64_t> inputShape({ inputDim[3],  inputDim[2],  inputDim[1],  inputDim[0] });
 	//inputTensorElement = TensorFloat::Create(inputShape);
 	//binding.Bind(inputTensorName, inputTensorElement);
 
@@ -358,6 +358,7 @@ vx_status  WINML_ImportOnnxModelAndRun_Register(vx_context context)
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
 				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
                 PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
+				PARAM_ERROR_CHECK(vxReleaseKernel(&kernel));
         }
 
         if (status != VX_SUCCESS)

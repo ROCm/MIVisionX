@@ -52,7 +52,7 @@ extern "C" {
 				 * \param [in] input_5 WinML Deploy Device Kind in vx_scalar [optional] (default: 3).
                  * \return <tt>\ref vx_node</tt>.
                  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-                VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRun
+                VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRunNode
                 (
                         vx_graph graph,
                         vx_scalar modelLocation,
@@ -62,6 +62,26 @@ extern "C" {
                         vx_tensor outputTensor,
 						vx_scalar deviceKind
                 );
+
+				/*! \brief [Graph] Creates a WinML convert image to tensor node.
+				 * Kernel Name - com.winml.convert_image_to_tensor
+				 * \param [in] graph The reference to the graph.
+				 * \param [in] input_1 input image vx_image.
+				 * \param [out]  The output Tensor in <tt>\ref VX_FLOAT32</tt> format.
+				 * \param [in] input_2 a in vx_scalar.
+				 * \param [in] input_3 b in vx_scalar.
+				 * \param [in] input_4 reverse channel order in vx_scalar.
+				 * \return <tt>\ref vx_node</tt>.
+				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
+				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensorNode
+				(
+					vx_graph graph,
+					vx_image input,
+					vx_tensor output,
+					vx_scalar a,
+					vx_scalar b,
+					vx_scalar reverse_channel_order
+				);
 
 #ifdef __cplusplus
 }

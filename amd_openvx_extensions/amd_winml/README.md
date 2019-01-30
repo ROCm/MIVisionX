@@ -39,5 +39,5 @@ This [utility](utilities/MIVisionX-WinML-Validate#mivisionx-onnx-model-validatio
 
 ## Samples
 
-[Samples](samples#sample) to run inference on a single image and on a live camera is provided in the samples folder.
+[Samples](samples#samples) to run inference on a single image and on a live camera is provided in the samples folder.
 

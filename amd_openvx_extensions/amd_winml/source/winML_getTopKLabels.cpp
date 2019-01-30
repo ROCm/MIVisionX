@@ -177,26 +177,29 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_Kernel(vx_node node, const vx_r
 		vx_size num_of_dims, inputDims[4] = { 1, 1, 1, 1 }, stride[4];
 		vx_map_id map_id;
 		float *ptr = nullptr;
-		vector<float> inputPtr;
+
 		status = (vxQueryTensor(inputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
 		if (status) { std::cerr << "ERROR: vxQueryTensor(VX_TENSOR_NUMBER_OF_DIMS) failed for inputTensor" << std::endl; return status; }
 		status = (vxQueryTensor(inputTensor, VX_TENSOR_DIMS, &inputDims, sizeof(inputDims[0])*num_of_dims));
 		if (status) { std::cerr << "ERROR: vxQueryTensor(VX_TENSOR_DIMS) failed for inputTensor" << std::endl; return status; }
+
 		status = vxMapTensorPatch(inputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
 		if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for inputTensor" << std::endl; return status; }
+
 		vx_size inputTensorSize = inputDims[0] * inputDims[1] * inputDims[2] * inputDims[3];
+		vector<float> inputPtr;
 		inputPtr.resize(inputTensorSize);
-		memcpy(&inputPtr.front(), ptr, inputTensorSize * sizeof(float));
+		memcpy(&inputPtr[0], ptr, (inputTensorSize * sizeof(float)));
 		status = vxUnmapTensorPatch(inputTensor, map_id);
 		if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for inputTensor" << std::endl; return status; }
 
-		// Find the top 3 probabilities
+		// Find the top K probabilities
 		vector<float> topProbabilities(3);
 		vector<int> topProbabilityLabelIndexes(3);
-		// list of 1000 options, with probabilities for each, loop through all
-		for (uint32_t i = 0; i < inputPtr.size(); i++)
+		// list of inputTensorSize options, with probabilities for each, loop through all
+		for (uint32_t i = 0; i < inputTensorSize; i++)
 		{
-			// is it one of the top 3?
+			// is it one of the top 3
 			for (int j = 0; j < 3; j++)
 			{
 				if (inputPtr[i] > topProbabilities[j])
@@ -210,11 +213,7 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_Kernel(vx_node node, const vx_r
 
 		// print final values
 		char outputBuffer[2048];
-		int n = sprintf(outputBuffer, "%s"
-			,labels[topProbabilityLabelIndexes[0]].c_str());
-		/*int n = sprintf(outputBuffer, "Top-%d: %s with confidence of %f\r\nTop-%d: %s with confidence of %f\r\nTop-%d: %s with confidence of %f\r\n"
-			,1, labels[topProbabilityLabelIndexes[0]].c_str(), topProbabilities[0], 2, labels[topProbabilityLabelIndexes[1]].c_str(), topProbabilities[1]
-			, 3, labels[topProbabilityLabelIndexes[2]].c_str(), topProbabilities[2]);*/
+		int n = sprintf(outputBuffer,"%s", labels[topProbabilityLabelIndexes[0]].c_str());
 
 		vx_scalar outputLabelScalar = (vx_scalar)parameters[2];
 		STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar, outputBuffer));
@@ -223,7 +222,6 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_Kernel(vx_node node, const vx_r
 		STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar));
 		// release tensors
 		STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
-
 
         return status;
 }

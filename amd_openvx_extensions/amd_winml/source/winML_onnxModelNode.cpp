@@ -322,6 +322,7 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Kernel(vx_node node, co
 		auto resultTensor = results.Outputs().Lookup(ModelOutputTensorName).as<TensorFloat>();
 		auto resultVector = resultTensor.GetAsVectorView();
 
+		// copy results to output
 		STATUS_ERROR_CHECK(ML_to_VX_tensor(resultVector, outputTensor));
 
 		// release scalar

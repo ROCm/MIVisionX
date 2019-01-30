@@ -67,7 +67,9 @@ vx_status ML_to_VX_tensor(IVectorView<float> inputTensor, vx_tensor outputTensor
 	status = vxMapTensorPatch(outputTensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&outputPtr, usage, VX_MEMORY_TYPE_HOST, 0);
 	if (status) { std::cerr << "ERROR: vxMapTensorPatch() failed for outputTensor" << std::endl; return status; }
 
-	memcpy(outputPtr, &inputTensor.First(), (outputTensorSize * sizeof(float)));
+	for (int i = 0; i < outputTensorSize; i++) {
+		outputPtr[i] = inputTensor.GetAt(i);
+	}
 
 	status = vxUnmapTensorPatch(outputTensor, map_id);
 	if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for outputTensor" << std::endl; return status; }

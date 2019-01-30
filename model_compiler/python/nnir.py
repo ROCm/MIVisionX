@@ -74,6 +74,7 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
+            , 'zoom_factor' : 2          # zoom_factor
         }
         self.dict_set = []
 
@@ -146,6 +147,7 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
+            'upsample' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -396,6 +398,17 @@ class IrGraph:
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['upsample']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    zoom_factor = node.attr.get('zoom_factor')
+                    if zoom_factor != 2:
+                        raise ValueError("upsample: unsupported zoom_factor: " + str(zoom_factor))
+                    shape = [input.shape[0], input.shape[1], input.shape[2]*zoom_factor, input.shape[3]*zoom_factor]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 
@@ -478,7 +491,9 @@ class IrGraph:
                 if node.type == 'batch_norm':
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
+                    #print('scale and offset read: ' + node.inputs[1] + ' ' + node.inputs[2])
                     mean = np.frombuffer(self.binaries[node.inputs[3]], dtype=npType)
+                    #print('after mean binary file: ' + node.inputs[3] + '.raw' + 'len: ' + str(len(self.binaries[node.inputs[3]])))
                     variance = np.frombuffer(self.binaries[node.inputs[4]], dtype=npType)
                     epsilon = node.attr.get('epsilon')
                     scale = scale / np.sqrt(variance + epsilon)
@@ -489,7 +504,7 @@ class IrGraph:
                     node.inputs = node.inputs[:3]
                     node.attr = IrAttr()
                 # run through fuse rules
-                if prevNode is None:
+                if prevNode == None:
                     prevSkipNode = None
                     prevNode = node
                     prevOutput = node.outputs[0]
@@ -588,7 +603,7 @@ class IrGraph:
                     prevOutput = node.outputs[0]
                     nodesToRemove.append(node)
                     fusedAnOp = True
-                elif prevSkipNode is None and prevNode.type == 'conv' and \
+                elif prevSkipNode == None and prevNode.type == 'conv' and \
                      prevOutput == node.inputs[0] and tensorReadCount[prevOutput] == 1 and \
                      (node.type == 'max_pool' or node.type == 'avg_pool' or node.type == 'global_avg_pool'):
                     prevSkipNode = node

@@ -43,7 +43,12 @@ extern "C" {
 				/*!
 				 * \brief The WinML kernel. Kernel name is "com.winml.convert_image_to_tensor".
 				 */
-				VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x01
+				VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x01,
+
+				/*!
+				* \brief The WinML kernel. Kernel name is "com.winml.get_top_k_label".
+				*/
+				VX_KERNEL_WINML_GET_TOP_K_LABEL = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x02
         };
 
 #ifdef  __cplusplus

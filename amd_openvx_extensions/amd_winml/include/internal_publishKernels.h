@@ -38,7 +38,10 @@ vx_status get_kernels_to_publish();
 
 vx_status WINML_ImportOnnxModelAndRun_Register(vx_context);
 vx_status WINML_ConvertImageToTensor_Register(vx_context);
+vx_status WINML_getTopKLabels_Register(vx_context);
 
-#define VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN_NAME     "com.winml.import_onnx_model_and_run"
+#define VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN_NAME					"com.winml.import_onnx_model_and_run"
+#define VX_KERNEL_WINML_IMPORT_VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR	"com.winml.convert_image_to_tensor"
+#define VX_KERNEL_WINML_VX_KERNEL_WINML_GET_TOP_K_LABEL					"com.winml.get_top_k_label"
 
 #endif

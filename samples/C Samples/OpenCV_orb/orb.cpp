@@ -82,7 +82,7 @@ int main(int argc, char **argv)
     
     vx_int32 nFeatures = 1000;
     vx_float32 scaleFactor = 1.2;
-    vx_int32 nlevels = 8;
+    vx_int32 nlevels = 2;
     vx_int32 edgeThreshold = 31;
     vx_int32 firstLevel = 0;
     vx_int32 WTA_K = 2;

@@ -12,7 +12,7 @@ Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 
 ### winML-image.gdf - Single Image Inference
 
-This sample is in [Graph Description Format](../../utilities/runvx#amd-runvx) (gdf)
+This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
 
 #### usage
 ````
@@ -39,7 +39,7 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\Labels.txt
 
 ### winML-Live.gdf - Live Inference using a camera
 
-This sample is in [Graph Description Format](../../utilities/runvx#amd-runvx) (gdf)
+This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
 
 #### usage
 ````

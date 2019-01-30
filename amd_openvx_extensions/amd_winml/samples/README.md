@@ -43,7 +43,7 @@ This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx)
 
 #### usage
 ````
-runvx.exe -v winML-Live.gdf
+runvx.exe -v -frames:LIVE winML-Live.gdf
 ````
 
 **NOTE:**

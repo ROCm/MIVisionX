@@ -428,6 +428,14 @@ class IrGraph:
             self.tensor_dict[tensor.name] = tensor
 
     def convertFp16(self):
+        keepAsFP32 = []
+
+        for node in self.nodes:
+           if node.type == 'batch_norm':
+                keepAsFP32.append(node.inputs[1])
+                keepAsFP32.append(node.inputs[2])
+                keepAsFP32.append(node.inputs[3])
+                keepAsFP32.append(node.inputs[4])
         if self.all_F032:
             for tensor in self.inputs:
                 tensor.type = 'F016'
@@ -442,12 +450,15 @@ class IrGraph:
                 self.tensor_types[tensor.name] = tensor.type
                 self.tensor_dict[tensor.name] = tensor
             for tensor in self.initializers:
-                tensor.type = 'F016'
-                self.tensor_types[tensor.name] = tensor.type
-                self.tensor_dict[tensor.name] = tensor
+                if tensor.name not in keepAsFP32:    
+                    tensor.type = 'F016'
+                    self.tensor_types[tensor.name] = tensor.type
+                    self.tensor_dict[tensor.name] = tensor
             for idx, binary in enumerate(self.binaries):
-                weight = np.frombuffer(self.binaries[binary], dtype=np.float32)
-                self.addBinary(binary, np.getbuffer(weight.astype(np.float16)))
+                if binary not in keepAsFP32:
+                    weight = np.frombuffer(self.binaries[binary], dtype=np.float32)
+                    self.addBinary(binary, np.getbuffer(weight.astype(np.float16)))
+
                 #print("Add binary %s of size %d at Idx: %d len: %d" %(binary, len(self.binaries[binary]), idx, len(self.binaries)))
             self.all_F032 = False
             self.all_F016 = True    
@@ -480,6 +491,10 @@ class IrGraph:
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
                     mean = np.frombuffer(self.binaries[node.inputs[3]], dtype=npType)
                     variance = np.frombuffer(self.binaries[node.inputs[4]], dtype=npType)
+                    #check names
+                    #scale_name = node.inputs[1]
+                    #print "DEBUG: scale_name = " + scale_name + "\n"
+
                     epsilon = node.attr.get('epsilon')
                     scale = scale / np.sqrt(variance + epsilon)
                     offset = offset - mean * scale

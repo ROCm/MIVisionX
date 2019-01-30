@@ -2,7 +2,7 @@
 
 ## MIVisionX WinML Validate
 
-This utility can be used to test and verify the ONNX model on the windows platform. If the ONNX model is supported by this utility, the amd_winml extension can import the ONNX model and add other OpenVX nodes for pre & post processing in a single OpenVX graph to run efficient inference.
+This utility can be used to test and verify the ONNX model on the Windows platform. If the ONNX model is supported by this utility, the amd_winml extension can import the ONNX model and add other OpenVX nodes for pre & post-processing in a single OpenVX graph to run efficient inference.
 
  ### Usage:
 
@@ -33,4 +33,4 @@ This utility can be used to test and verify the ONNX model on the windows platfo
 
         --h/--help      -- Show full help
 
-**NOTE:** Samples are available
+**NOTE:** [Samples](MIVisionX-WinML-Validate/sample#sample) are available

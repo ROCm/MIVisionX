@@ -1,4 +1,4 @@
-# Sample
+# Samples
 
 Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 

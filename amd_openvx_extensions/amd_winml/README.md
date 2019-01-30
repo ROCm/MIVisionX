@@ -11,6 +11,8 @@ WinML extension will allow developers to import a pre-trained ONNX model into an
 The following is a list of WinML functions that have been included in the vx_winml module.
 
     importOnnxModelAndRun             com.winml.import_onnx_model_and_run
+    convertImageToTensor              com.winml.convert_image_to_tensor
+    getTopKLabel                      com.winml.get_top_k_label
 
 
 **NOTE** - For the list of OpenVX API calls for WinML-interop refer include/[vx_ext_winml.h](include/vx_ext_winml.h)
@@ -26,3 +28,16 @@ The following is a list of WinML functions that have been included in the vx_win
 
 ### Build using `Visual Studio 2017` on 64-bit Windows 10
 * Use amd_openvx_extensions/amd_winml/amd_winml.sln to build for x64 platform
+
+## Utilities
+
+### MIVisionX WinML Validate
+
+This [utility](utilities/MIVisionX-WinML-Validate#mivisionx-onnx-model-validation) can be used to test and verify the ONNX model on the Windows platform. If the ONNX model is supported by this utility, the amd_winml extension can import the ONNX model and add other OpenVX nodes for pre & post-processing in a single OpenVX graph to run efficient inference.
+
+**NOTE:** [Samples](utilities/MIVisionX-WinML-Validate/sample#sample) are available
+
+## Samples
+
+[Samples](samples#sample) to run inference on a single image and on a live camera is provided in the samples folder.
+

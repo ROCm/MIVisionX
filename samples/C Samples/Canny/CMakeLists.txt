@@ -33,5 +33,5 @@ find_package(OpenCV REQUIRED)
 include_directories (/opt/rocm/mivisionx/include)
 link_directories    (/opt/rocm/mivisionx/lib)
 add_executable(cannyDetect canny.cpp)
-target_link_libraries(${PROJECT_NAME} openvx vx_nn ${OpenCV_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} openvx ${OpenCV_LIBRARIES})
 

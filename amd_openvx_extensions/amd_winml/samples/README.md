@@ -22,9 +22,9 @@ runvx.exe -v winML-image.gdf
 **NOTE:**
 Make the below changes in the `winML-image.gdf` file to run the inference
 
-* Add full path to the car.JPEG image provided in this folder in line 11
+* Add full path to the data\car.JPEG image provided in this folder in line 11
 ````
-read input_image FULL_PATH_TO\car.JPEG
+read input_image FULL_PATH_TO\data\car.JPEG
 ````
 
 * Add full path to the SqueezeNet ONNX model downloaded in line 21
@@ -32,29 +32,29 @@ read input_image FULL_PATH_TO\car.JPEG
 data modelLocation = scalar:STRING,FULL_PATH_TO\squeezenet\model.onnx:view,resultWindow
 ````
 
-* Add full path to the Labels.txt provided in this folder in line 34
+* Add full path to the data\Labels.txt provided in this folder in line 34
 ````
-data labelLocation = scalar:STRING,FULL_PATH_TO\Labels.txt
+data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 ````
 
-### winML-Live.gdf - Live Inference using a camera
+### winML-live.gdf - Live Inference using a camera
 
 This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
 
 #### usage
 ````
-runvx.exe -v -frames:LIVE winML-Live.gdf
+runvx.exe -frames:LIVE winML-live.gdf
 ````
 
 **NOTE:**
-Make the below changes in the `winML-Live.gdf` file to run the inference
+Make the below changes in the `winML-live.gdf` file to run the inference
 
 * Add full path to the SqueezeNet ONNX model downloaded in line 16
 ````
 data modelLocation = scalar:STRING,FULL_PATH_TO\squeezenet\model.onnx:view,resultWindow
 ````
 
-* Add full path to the Labels.txt provided in this folder in line 25
+* Add full path to the data\Labels.txt provided in this folder in line 25
 ````
-data labelLocation = scalar:STRING,FULL_PATH_TO\Labels.txt
+data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 ````

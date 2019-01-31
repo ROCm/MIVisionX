@@ -20,9 +20,9 @@ The following is a list of WinML functions that have been included in the vx_win
 ## Build Instructions
 
 ### Pre-requisites
-* Windows 10, version `1809` or later
+* Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
 * Windows SDK, build `17763` or later
-* Visual Studio 2017, version `15.7.4` or later
+* Visual Studio 2017, [version `15.7.4` or later](https://developer.microsoft.com/en-us/windows/downloads)
     * Visual Studio extension for C++/WinRT
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
 * [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)

@@ -22,7 +22,7 @@ data deviceKind = scalar:INT32,0
 # Use Import ONNX Node to run Inference
 node com.winml.import_onnx_model_and_run modelLocation modelInputName modelOutputName input_tensor output deviceKind
 
-data labelLocation = scalar:STRING,FULL_PATH_TO\Labels.txt
+data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 data topKResults = scalar:STRING,INITIALIZE:view,inputImageWindow
 
 # Use get top K label node to display results

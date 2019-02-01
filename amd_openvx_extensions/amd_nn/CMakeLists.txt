@@ -76,6 +76,8 @@ list(APPEND SOURCES
     src/upsample_nearest_layer.cpp
     src/tensor_table_lookup.cpp
     src/reshape_layer.cpp
+    src/permute_layer.cpp
+    src/prior_box_layer.cpp
     )
 
 add_library(vx_nn SHARED ${SOURCES})

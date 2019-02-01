@@ -178,7 +178,4 @@ VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input,
  */
 VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input_1, vx_tensor input_2, vx_float32 minSize, vx_array aspect_ratio, vx_int32 flip, vx_int32 clip, 
                                                  vx_float32 offset, vx_tensor output, vx_float32 maxSize, vx_array variance);
-
-VX_API_ENTRY vx_node VX_API_CALL vxRegionLayer(vx_graph graph, vx_tensor input, vx_int32 classes, vx_int32 coords, vx_int32 softmax, vx_int32 num, vx_tensor output);
-
 #endif

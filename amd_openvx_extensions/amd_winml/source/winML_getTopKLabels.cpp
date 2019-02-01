@@ -115,12 +115,29 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_OutputValidator(vx_node node, v
 			STATUS_ERROR_CHECK(vxQueryScalar(inputScalar, VX_SCALAR_TYPE, &type, sizeof(type)));
 			if (type != VX_TYPE_STRING_AMD)
 			{
-				printf("validate: getTopKLabels: #1 scalar type=%d (not VX_TYPE_STRING_AMD)\n", type);
+				printf("validate: getTopKLabels: #2 scalar type=%d (not VX_TYPE_STRING_AMD)\n", type);
 				return VX_ERROR_INVALID_TYPE;
 			}
 			STATUS_ERROR_CHECK(vxReleaseScalar(&inputScalar));
 
 			STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_SCALAR_TYPE, &type, sizeof(type)));
+		}
+		if (index == 3 || index == 4 || index == 5 || index == 6)
+		{
+			if (param) {
+				vx_enum type;
+				vx_scalar inputScalar;
+				STATUS_ERROR_CHECK(vxQueryParameter(param, VX_PARAMETER_ATTRIBUTE_REF, &inputScalar, sizeof(vx_scalar)));
+				STATUS_ERROR_CHECK(vxQueryScalar(inputScalar, VX_SCALAR_TYPE, &type, sizeof(type)));
+				if (type != VX_TYPE_STRING_AMD)
+				{
+					printf("validate: getTopKLabels: #3/#4/#5/#6 scalar type=%d (not VX_TYPE_STRING_AMD)\n", type);
+					return VX_ERROR_INVALID_TYPE;
+				}
+				STATUS_ERROR_CHECK(vxReleaseScalar(&inputScalar));
+
+				STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_SCALAR_TYPE, &type, sizeof(type)));
+			}
 		}
         return status;
 }
@@ -194,13 +211,13 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_Kernel(vx_node node, const vx_r
 		if (status) { std::cerr << "ERROR: vxUnmapTensorPatch() failed for inputTensor" << std::endl; return status; }
 
 		// Find the top K probabilities
-		vector<float> topProbabilities(3);
-		vector<int> topProbabilityLabelIndexes(3);
+		vector<float> topProbabilities(5);
+		vector<int> topProbabilityLabelIndexes(5);
 		// list of inputTensorSize options, with probabilities for each, loop through all
 		for (uint32_t i = 0; i < inputTensorSize; i++)
 		{
-			// is it one of the top 3
-			for (int j = 0; j < 3; j++)
+			// is it one of the top 5
+			for (int j = 0; j < 5; j++)
 			{
 				if (inputPtr[i] > topProbabilities[j])
 				{
@@ -213,10 +230,44 @@ static vx_status VX_CALLBACK WINML_getTopKLabels_Kernel(vx_node node, const vx_r
 
 		// print final values
 		char outputBuffer[2048];
-		int n = sprintf(outputBuffer,"%s", labels[topProbabilityLabelIndexes[0]].c_str());
+		int n = sprintf(outputBuffer,"%s - %.3f", labels[topProbabilityLabelIndexes[0]].c_str(), topProbabilities[0]);
 
 		vx_scalar outputLabelScalar = (vx_scalar)parameters[2];
 		STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar, outputBuffer));
+
+		vx_scalar outputLabelScalar_1 = (vx_scalar)parameters[3];
+		vx_scalar outputLabelScalar_2 = (vx_scalar)parameters[4];
+		vx_scalar outputLabelScalar_3 = (vx_scalar)parameters[5];
+		vx_scalar outputLabelScalar_4 = (vx_scalar)parameters[6];
+
+		if (outputLabelScalar_1) 
+		{
+			char outputBuffer_optional[2048];
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[1]].c_str(), topProbabilities[1]);
+			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_1, outputBuffer_optional));
+			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_1));
+		}
+		if (outputLabelScalar_2)
+		{
+			char outputBuffer_optional[2048];
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[2]].c_str(), topProbabilities[2]);
+			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_2, outputBuffer_optional));
+			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_2));
+		}
+		if (outputLabelScalar_3)
+		{
+			char outputBuffer_optional[2048];
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[3]].c_str(), topProbabilities[3]);
+			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_3, outputBuffer_optional));
+			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_3));
+		}
+		if (outputLabelScalar_4)
+		{
+			char outputBuffer_optional[2048];
+			int n = sprintf(outputBuffer_optional, "%s - %.3f", labels[topProbabilityLabelIndexes[4]].c_str(), topProbabilities[4]);
+			STATUS_ERROR_CHECK(vxWriteScalarValue(outputLabelScalar_4, outputBuffer_optional));
+			STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar_4));
+		}
 
 		// release scalar
 		STATUS_ERROR_CHECK(vxReleaseScalar(&outputLabelScalar));
@@ -233,10 +284,10 @@ vx_status  WINML_getTopKLabels_Register(vx_context context)
 {
         vx_status status = VX_SUCCESS;
         vx_kernel kernel = vxAddKernel(context,
-                "com.winml.get_top_k_label",
-                VX_KERNEL_WINML_GET_TOP_K_LABEL,
+                "com.winml.get_top_k_labels",
+                VX_KERNEL_WINML_GET_TOP_K_LABELS,
                 WINML_getTopKLabels_Kernel,
-                3,
+                7,
                 WINML_getTopKLabels_InputValidator,
                 WINML_getTopKLabels_OutputValidator,
                 WINML_getTopKLabels_Initialize,
@@ -247,13 +298,17 @@ vx_status  WINML_getTopKLabels_Register(vx_context context)
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
+				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_OUTPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
+				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_OUTPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
+				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_OUTPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
                 PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
 				PARAM_ERROR_CHECK(vxReleaseKernel(&kernel));
         }
 
         if (status != VX_SUCCESS)
         {
-        exit:   vxRemoveKernel(kernel);  std::cerr << "ERROR: vxAddParameterToKernel() failed for get_top_k_label" << std::endl; return VX_FAILURE;
+        exit:   vxRemoveKernel(kernel);  std::cerr << "ERROR: vxAddParameterToKernel() failed for get_top_k_labels" << std::endl; return VX_FAILURE;
         }
 
         return status;

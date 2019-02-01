@@ -72,9 +72,9 @@ vx_node vxCreateNodeByStructure(vx_graph graph,
 }
 
 /************************************************************************************************************
-WinML importOnnxModelAndRun C Function
+WinML vxExtWinMLNode_OnnxToMivisionX C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRunNode
+VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
 (
         vx_graph graph,
         vx_scalar modelLocation,
@@ -95,15 +95,15 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRunNode
         };
 
         return vxCreateNodeByStructure(graph,
-                VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN,
+                VX_KERNEL_WINML_ONNX_TO_MIVISIONX,
                 params,
                 dimof(params));
 }
 
 /************************************************************************************************************
-WinML vxConvertImageToTensorNode C Function
+WinML vxExtWinMLNode_ConvertImageToTensorNode C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensorNode
+VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
 (
 	vx_graph graph, 
 	vx_image input, 
@@ -125,4 +125,37 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensorNode
 				VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR,
 				params, 
 				dimof(params));
+}
+
+/************************************************************************************************************
+WinML vxExtWinMLNode_getTopKLabels C Function
+*************************************************************************************************************/
+
+VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_getTopKLabels
+(
+	vx_graph graph,
+	vx_tensor prob_tensor,
+	vx_scalar labelFile,
+	vx_scalar output_1,
+	vx_scalar output_2,
+	vx_scalar output_3,
+	vx_scalar output_4,
+	vx_scalar output_5
+)
+{
+
+	vx_reference params[] = {
+		(vx_reference)prob_tensor,
+		(vx_reference)labelFile,
+		(vx_reference)output_1,
+		(vx_reference)output_2,
+		(vx_reference)output_3,
+		(vx_reference)output_4,
+		(vx_reference)output_5
+	};
+
+	return vxCreateNodeByStructure(graph,
+		VX_KERNEL_WINML_GET_TOP_K_LABELS,
+		params,
+		dimof(params));
 }

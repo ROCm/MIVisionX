@@ -10,9 +10,9 @@ WinML extension will allow developers to import a pre-trained ONNX model into an
 ## List of WinML-interop kernels
 The following is a list of WinML functions that have been included in the vx_winml module.
 
-    importOnnxModelAndRun             com.winml.import_onnx_model_and_run
-    convertImageToTensor              com.winml.convert_image_to_tensor
-    getTopKLabel                      com.winml.get_top_k_label
+    onnxToMivisionX             com.winml.onnx_to_mivisionx
+    convertImageToTensor        com.winml.convert_image_to_tensor
+    getTopKLabels               com.winml.get_top_k_labels
 
 
 **NOTE** - For the list of OpenVX API calls for WinML-interop refer include/[vx_ext_winml.h](include/vx_ext_winml.h)

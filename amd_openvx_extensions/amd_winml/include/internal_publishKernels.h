@@ -36,12 +36,12 @@ extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context conte
 vx_status ADD_KERENEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
 
-vx_status WINML_ImportOnnxModelAndRun_Register(vx_context);
+vx_status WINML_OnnxToMivisionX_Register(vx_context);
 vx_status WINML_ConvertImageToTensor_Register(vx_context);
 vx_status WINML_getTopKLabels_Register(vx_context);
 
-#define VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN_NAME					"com.winml.import_onnx_model_and_run"
-#define VX_KERNEL_WINML_IMPORT_VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR	"com.winml.convert_image_to_tensor"
-#define VX_KERNEL_WINML_VX_KERNEL_WINML_GET_TOP_K_LABEL					"com.winml.get_top_k_label"
+#define VX_KERNEL_WINML_ONNX_TO_MIVISIONX_NAME				"com.winml.onnx_to_mivisionx"
+#define VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR_NAME		"com.winml.convert_image_to_tensor"
+#define VX_KERNEL_WINML_GET_TOP_K_LABELS_NAME				"com.winml.get_top_k_labels"
 
 #endif

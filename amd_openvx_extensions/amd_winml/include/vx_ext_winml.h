@@ -42,7 +42,7 @@ extern "C" {
         *************************************************************************************************************/
 
                 /*! \brief [Graph] Creates a WinML import ONNX Model and run function node.
-				 * Kernel Name - com.winml.import_onnx_model_and_run
+				 * Kernel Name - com.winml.onnx_to_mivisionx
                  * \param [in] graph The reference to the graph.
                  * \param [in] input_1 The ONNX Model Location in vx_scalar.
                  * \param [in] input_2 The ONNX Model Input Tensor Name in vx_scalar.
@@ -52,7 +52,7 @@ extern "C" {
 				 * \param [in] input_5 WinML Deploy Device Kind in vx_scalar [optional] (default: 3).
                  * \return <tt>\ref vx_node</tt>.
                  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-                VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_importOnnxModelAndRunNode
+                VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
                 (
                         vx_graph graph,
                         vx_scalar modelLocation,
@@ -73,7 +73,7 @@ extern "C" {
 				 * \param [in] input_4 reverse channel order in vx_scalar.
 				 * \return <tt>\ref vx_node</tt>.
 				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensorNode
+				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
 				(
 					vx_graph graph,
 					vx_image input,
@@ -81,6 +81,30 @@ extern "C" {
 					vx_scalar a,
 					vx_scalar b,
 					vx_scalar reverse_channel_order
+				);
+
+				/*! \brief [Graph] Creates a output tensor to Top K labels node.
+				 * Kernel Name - com.winml.get_top_k_labels
+				 * \param [in] graph The reference to the graph.
+				 * \param [in] input_1 probability tensor vx_tensor.
+				 * \param [in] input_2 label text file location vx_scalar.
+				 * \param [out] output_1 Top 1 in vx_scalar.
+				 * \param [out] output_2 Top 2 in vx_scalar. [optional]
+				 * \param [out] output_3 Top 3 in vx_scalar. [optional]
+				 * \param [out] output_4 Top 4 in vx_scalar. [optional]
+				 * \param [out] output_5 Top 5 in vx_scalar. [optional]
+				 * \return <tt>\ref vx_node</tt>.
+				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
+				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_getTopKLabels
+				(
+					vx_graph graph,
+					vx_tensor prob_tensor,
+					vx_scalar labelFile,
+					vx_scalar output_1,
+					vx_scalar output_2,
+					vx_scalar output_3,
+					vx_scalar output_4,
+					vx_scalar output_5
 				);
 
 #ifdef __cplusplus

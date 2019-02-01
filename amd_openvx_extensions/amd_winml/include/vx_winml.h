@@ -36,9 +36,9 @@ extern "C" {
         enum vx_kernel_ext_amd_winml_e
         {
                 /*!
-                 * \brief The WinML kernel. Kernel name is "com.winml.import_onnx_model_and_run".
+                 * \brief The WinML kernel. Kernel name is "com.winml.onnx_to_mivisionx".
                  */
-                VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x00,
+                VX_KERNEL_WINML_ONNX_TO_MIVISIONX = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x00,
 
 				/*!
 				 * \brief The WinML kernel. Kernel name is "com.winml.convert_image_to_tensor".
@@ -46,9 +46,9 @@ extern "C" {
 				VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x01,
 
 				/*!
-				* \brief The WinML kernel. Kernel name is "com.winml.get_top_k_label".
+				* \brief The WinML kernel. Kernel name is "com.winml.get_top_k_labels".
 				*/
-				VX_KERNEL_WINML_GET_TOP_K_LABEL = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x02
+				VX_KERNEL_WINML_GET_TOP_K_LABELS = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_WINML) + 0x02
         };
 
 #ifdef  __cplusplus

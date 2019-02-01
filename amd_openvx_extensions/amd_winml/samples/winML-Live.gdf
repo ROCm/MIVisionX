@@ -20,10 +20,14 @@ data output = tensor:4,{1,1,1000,1},VX_TYPE_FLOAT32,0
 data deviceKind = scalar:INT32,0
 
 # Use Import ONNX Node to run Inference
-node com.winml.import_onnx_model_and_run modelLocation modelInputName modelOutputName input_tensor output deviceKind
+node com.winml.onnx_to_mivisionx modelLocation modelInputName modelOutputName input_tensor output deviceKind
 
 data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
-data topKResults = scalar:STRING,INITIALIZE:view,inputImageWindow
+data top1 = scalar:STRING,TOPK:view,resultWindow:view,inputImageWindow
+data top2 = scalar:STRING,TOPK:view,resultWindow:view,inputImageWindow
+data top3 = scalar:STRING,TOPK:view,resultWindow:view,inputImageWindow
+data top4 = scalar:STRING,TOPK:view,resultWindow:view,inputImageWindow
+data top5 = scalar:STRING,TOPK:view,resultWindow:view,inputImageWindow
 
 # Use get top K label node to display results
-node com.winml.get_top_k_label output labelLocation topKResults
+node com.winml.get_top_k_labels output labelLocation top1 top2 top3 top4 top5

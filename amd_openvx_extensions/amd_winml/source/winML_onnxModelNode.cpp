@@ -70,7 +70,7 @@ input parameter validator.
 param [in] node The handle to the node.
 param [in] index The index of the parameter to validate.
 *************************************************************************************************************/
-static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_InputValidator(vx_node node, vx_uint32 index)
+static vx_status VX_CALLBACK WINML_OnnxToMivisionX_InputValidator(vx_node node, vx_uint32 index)
 {
         vx_status status = VX_SUCCESS;
         vx_parameter param = vxGetParameterByIndex(node, index);
@@ -83,7 +83,7 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_InputValidator(vx_node 
                 STATUS_ERROR_CHECK(vxQueryScalar(inputScalar, VX_SCALAR_TYPE, &type, sizeof(type)));
                 if (type != VX_TYPE_STRING_AMD)
                 {
-                        printf("validate: ImportOnnxModelAndRun: #0 or #1 or #2 scalar type=%d (not VX_TYPE_STRING_AMD)\n", type);
+                        printf("validate: OnnxToMivisionX: #0 or #1 or #2 scalar type=%d (not VX_TYPE_STRING_AMD)\n", type);
                         return VX_ERROR_INVALID_TYPE;
                 }
 				STATUS_ERROR_CHECK(vxReleaseScalar(&inputScalar));
@@ -98,12 +98,12 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_InputValidator(vx_node 
                 STATUS_ERROR_CHECK(vxQueryTensor(inputTensor, VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
                 if (num_dims != 4)
                 {
-                        printf("validate: ImportOnnxModelAndRun: #3 num_dims=%zd (must be 4)\n", num_dims);
+                        printf("validate: OnnxToMivisionX: #3 num_dims=%zd (must be 4)\n", num_dims);
                         return VX_ERROR_INVALID_DIMENSION;
                 }
                 if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16))
                 {
-                        printf("validate: ImportOnnxModelAndRun: #3 tensor type=%d (not float/float16)\n", type);
+                        printf("validate: OnnxToMivisionX: #3 tensor type=%d (not float/float16)\n", type);
                         return VX_ERROR_INVALID_TYPE;
                 }
 				STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
@@ -118,7 +118,7 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_InputValidator(vx_node 
 				STATUS_ERROR_CHECK(vxQueryScalar(inputScalar, VX_SCALAR_TYPE, &type, sizeof(type)));
 				if (type != VX_TYPE_INT32)
 				{
-					printf("validate: ImportOnnxModelAndRun: #5 scalar type=%d (not VX_TYPE_INT32)\n", type);
+					printf("validate: OnnxToMivisionX: #5 scalar type=%d (not VX_TYPE_INT32)\n", type);
 					return VX_ERROR_INVALID_TYPE;
 				}
 				STATUS_ERROR_CHECK(vxReleaseScalar(&inputScalar));
@@ -135,7 +135,7 @@ param [in] node The handle to the node.
 param [in] index The index of the parameter to validate.
 param [out] meta
 *************************************************************************************************************/
-static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_OutputValidator(vx_node node, vx_uint32 index, vx_meta_format meta)
+static vx_status VX_CALLBACK WINML_OnnxToMivisionX_OutputValidator(vx_node node, vx_uint32 index, vx_meta_format meta)
 {
         vx_status status = VX_SUCCESS;
         vx_parameter param = vxGetParameterByIndex(node, index);
@@ -162,13 +162,13 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_OutputValidator(vx_node
         }
         else
         {
-                printf("Output validate: ImportOnnxModelAndRun: #4 num_dims=%zd (must be 2/4)\n", num_dims);
+                printf("Output validate: OnnxToMivisionX: #4 num_dims=%zd (must be 2/4)\n", num_dims);
                 return VX_ERROR_INVALID_DIMENSION;
         }
 
         if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16))
         {
-                printf("Output validate: ImportOnnxModelAndRun: #4 tensor type=%d (not float/float16)\n", type);
+                printf("Output validate: OnnxToMivisionX: #4 tensor type=%d (not float/float16)\n", type);
                 return VX_ERROR_INVALID_TYPE;
         }
 
@@ -186,7 +186,7 @@ param [in] node The handle to the node.
 param [in] paramete.
 param [in] num.
 *************************************************************************************************************/
-static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Initialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
+static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Initialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
         vx_status status = VX_SUCCESS;
 
@@ -272,7 +272,7 @@ param [in] node The handle to the node.
 param [in] paramete.
 param [in] num.
 *************************************************************************************************************/
-static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Uninitialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
+static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Uninitialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
         vx_status status = VX_SUCCESS;
 
@@ -288,7 +288,7 @@ param [in] node The handle to the node.
 param [in] parameter.
 param [in] num.
 *************************************************************************************************************/
-static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Kernel(vx_node node, const vx_reference *parameters, vx_uint32 num)
+static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Kernel(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
         vx_status status = VX_SUCCESS;
 
@@ -337,18 +337,18 @@ static vx_status VX_CALLBACK WINML_ImportOnnxModelAndRun_Kernel(vx_node node, co
 /************************************************************************************************************
 Function to Register the Kernel for Publish
 *************************************************************************************************************/
-vx_status  WINML_ImportOnnxModelAndRun_Register(vx_context context)
+vx_status  WINML_OnnxToMivisionX_Register(vx_context context)
 {
         vx_status status = VX_SUCCESS;
         vx_kernel kernel = vxAddKernel(context,
-                "com.winml.import_onnx_model_and_run",
-                VX_KERNEL_WINML_IMPORT_ONNX_MODEL_AND_RUN,
-                WINML_ImportOnnxModelAndRun_Kernel,
+                "com.winml.onnx_to_mivisionx",
+                VX_KERNEL_WINML_ONNX_TO_MIVISIONX,
+                WINML_OnnxToMivisionX_Kernel,
                 6,
-                WINML_ImportOnnxModelAndRun_InputValidator,
-                WINML_ImportOnnxModelAndRun_OutputValidator,
-                WINML_ImportOnnxModelAndRun_Initialize,
-                WINML_ImportOnnxModelAndRun_Uninitialize);
+                WINML_OnnxToMivisionX_InputValidator,
+                WINML_OnnxToMivisionX_OutputValidator,
+                WINML_OnnxToMivisionX_Initialize,
+                WINML_OnnxToMivisionX_Uninitialize);
 
         if (kernel)
         {
@@ -364,7 +364,7 @@ vx_status  WINML_ImportOnnxModelAndRun_Register(vx_context context)
 
         if (status != VX_SUCCESS)
         {
-        exit:   vxRemoveKernel(kernel);  std::cerr << "ERROR: vxAddParameterToKernel() failed for import_onnx_model_and_run" << std::endl; return VX_FAILURE;
+        exit:   vxRemoveKernel(kernel);  std::cerr << "ERROR: vxAddParameterToKernel() failed for onnx_to_mivisionx" << std::endl; return VX_FAILURE;
         }
 
         return status;

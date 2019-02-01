@@ -43,7 +43,7 @@ vx_status get_kernels_to_publish()
 
         Kernel_List = new Kernellist(MAX_KERNELS);
 
-        STATUS_ERROR_CHECK(ADD_KERENEL(WINML_ImportOnnxModelAndRun_Register));
+        STATUS_ERROR_CHECK(ADD_KERENEL(WINML_OnnxToMivisionX_Register));
 		STATUS_ERROR_CHECK(ADD_KERENEL(WINML_ConvertImageToTensor_Register));
 		STATUS_ERROR_CHECK(ADD_KERENEL(WINML_getTopKLabels_Register));
 

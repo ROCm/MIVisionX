@@ -8,7 +8,7 @@ Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 * Use [Netron](https://lutzroeder.github.io/netron/) to open the model.onnx
 	* Look at Model Properties to find Input & Output Tensor Name (data_0 - input; softmaxout_1 - output)
 	* Look at output tensor dimensions (n,c,h,w  - [1,1000,1,1] for softmaxout_1)
-* Use the label file - [data\Labels.txt](data\Labels.txt) and sample image - data\car.JPEG to run samples
+* Use the label file - [data\Labels.txt](data/Labels.txt) and sample image - data\car.JPEG to run samples
 
 ### winML-image.gdf - Single Image Inference
 
@@ -32,7 +32,7 @@ read input_image FULL_PATH_TO\data\car.JPEG
 data modelLocation = scalar:STRING,FULL_PATH_TO\squeezenet\model.onnx:view,resultWindow
 ````
 
-* Add full path to the [data\Labels.txt](data\Labels.txt) provided in this folder in line 34
+* Add full path to the [data\Labels.txt](data/Labels.txt) provided in this folder in line 34
 ````
 data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 ````
@@ -54,7 +54,7 @@ Make the below changes in the `winML-live.gdf` file to run the inference
 data modelLocation = scalar:STRING,FULL_PATH_TO\squeezenet\model.onnx:view,resultWindow
 ````
 
-* Add full path to the [data\Labels.txt](data\Labels.txt) provided in this folder in line 25
+* Add full path to the [data\Labels.txt](data/Labels.txt) provided in this folder in line 25
 ````
 data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 ````

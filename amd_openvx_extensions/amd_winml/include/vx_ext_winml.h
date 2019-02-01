@@ -54,12 +54,12 @@ extern "C" {
 				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
 				(
-				    vx_graph graph,
-				    vx_scalar modelLocation,
-				    vx_scalar inputTensorName,
-				    vx_scalar outputTensorName,
-				    vx_tensor inputTensor,
-				    vx_tensor outputTensor,
+					vx_graph graph,
+					vx_scalar modelLocation,
+					vx_scalar inputTensorName,
+					vx_scalar outputTensorName,
+					vx_tensor inputTensor,
+					vx_tensor outputTensor,
 					vx_scalar deviceKind
 				);
 

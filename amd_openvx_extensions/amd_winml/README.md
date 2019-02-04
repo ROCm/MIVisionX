@@ -43,4 +43,9 @@ This [utility](utilities/MIVisionX-WinML-Validate#mivisionx-onnx-model-validatio
 ## Samples
 
 [Samples](samples#samples) to run inference on a single image and on a live camera is provided in the samples folder.
+* [SqueezeNet](samples#sample---squeezenet)
+    * [Single Image Inference](samples#winml-imagegdf---single-image-inference)
+    * [Live Inference](samples#winml-livegdf---live-inference-using-a-camera)
+* [FER+ Emotion Recognition](samples#sample---fer-emotion-recognition)
+* [VGG 19](samples#sample---vgg19)
 

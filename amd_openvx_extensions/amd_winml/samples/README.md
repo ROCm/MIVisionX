@@ -2,7 +2,7 @@
 
 Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 
-## Sample - SqeezeNet
+## Sample - SqueezeNet
 
 * Download the [SqueezeNet](https://s3.amazonaws.com/download.onnx/models/opset_8/squeezenet.tar.gz) ONNX Model
 * Use [Netron](https://lutzroeder.github.io/netron/) to open the model.onnx
@@ -13,6 +13,8 @@ Get ONNX models from [ONNX Model Zoo](https://github.com/onnx/models)
 ### winML-image.gdf - Single Image Inference
 
 This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+
+<p align="center"><img width="100%" src="data/squeezenet_results.PNG" /></p>
 
 #### usage
 ````
@@ -69,6 +71,8 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 
 This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
 
+<p align="center"><img width="100%" src="data/emotions_results.PNG" /></p>
+
 #### usage
 ````
 runvx.exe -frames:LIVE winML-live-emotions.gdf
@@ -96,6 +100,8 @@ data labelLocation = scalar:STRING,FULL_PATH_TO\data\emotions.txt
 * Use the label file - [data/Labels.txt](data/Labels.txt) to run sample
 
 This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+
+<p align="center"><img width="100%" src="data/vgg16_results.PNG" /></p>
 
 #### usage
 ````

@@ -142,4 +142,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxUpsampleNearestLayer(vx_graph graph, vx_tenso
  */
 VX_API_ENTRY vx_node VX_API_CALL vxReshapeLayer(vx_graph graph, vx_tensor input, vx_tensor output);
 
+VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor input2, vx_tensor output, vx_scalar offset1, vx_scalar offset2, vx_scalar offset3, vx_scalar offset4);
+
+VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor input2, vx_tensor output, vx_scalar offset1, vx_scalar offset2, vx_scalar offset3, vx_scalar offset4, vx_scalar scaleFactor, vx_scalar mode);
+
 #endif

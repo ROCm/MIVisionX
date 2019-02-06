@@ -12,38 +12,10 @@ static vx_status VX_CALLBACK validateCropLayer(vx_node node, const vx_reference 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type2, sizeof(type2)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
-    if ((type2 != VX_TYPE_FLOAT32) && (type2 != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, ref_dims, sizeof(ref_dims)));
-
-
-    vx_int32 axis;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if (axis > 4 || axis < 0) {
-        printf("initialize: crop: Wrong axis value\n");
-        return VX_ERROR_INVALID_PARAMETERS;
-    } 
-    
-    vx_size offset[4];
-    for (int i = 0; i < 4; i++) {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4+i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if ((int)(offset[i]) < 0) {
-            printf("initialize: crop: Offset should be larger than 0\n");
-            return VX_ERROR_INVALID_PARAMETERS;
-        } 
-        else if (((int)(offset[i] + ref_dims[i]) > (int)input_dims[i])) {
-            printf("initialize: crop: Offset out of bound\n");
-            return VX_ERROR_INVALID_PARAMETERS;
-        }
-    }
-
-    for (int i = 0; i < 4; i++) {
-        if (output_dims[i] != (i < axis) ? input_dims[i] : ref_dims[i]) {
-            printf("initialize: crop: Wrong output dimension. Please check the output dimension\n");
-            return VX_ERROR_INVALID_PARAMETERS;
-        }
-    }
+    if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
@@ -76,34 +48,31 @@ static vx_status VX_CALLBACK opencl_codegen(
 )
 {
     //get tensor dimensions
-    vx_size input_dims[4], ref_dims[4], output_dims[4];
+    vx_size input_dims[4], output_dims[4];
     vx_size num_of_dims;
     vx_enum type;
+    vx_uint32 width, height;
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, ref_dims, sizeof(ref_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    
     strcpy(opencl_kernel_function_name, "crop_layer");
 
     vx_uint32 input_dim_size = input_dims[0] * input_dims[1] * input_dims[2] * input_dims[3];
 
-    opencl_work_dim = 3;
-    opencl_global_work[0] = ref_dims[0];
-    opencl_global_work[1] = ref_dims[1];
-    opencl_global_work[2] = ref_dims[2];
+    opencl_work_dim = 2;
+    opencl_global_work[0] = input_dims[0];
+    opencl_global_work[1] = input_dims[1];
+    opencl_global_work[2] = input_dims[2];
 
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
-
     vx_size offset[4];
-    for (int i = 0; i < 4; i++) {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4+i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    }
-
     if (num_of_dims == 4) {
         char item[8192];
         if (type == VX_TYPE_FLOAT32) {
@@ -119,7 +88,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "       out += out_offset + get_global_id(0)*out_stride.s0 + get_global_id(1)*out_stride.s1 + get_global_id(2)*out_stride.s2 + (n-%d)*out_stride.s3;\n"
                 "       *(__global float *)&out[0] = value;\n"
                 "   }\n"
-                "}\n", opencl_kernel_function_name, (int)offset[3], (int)ref_dims[3], (int)offset[0], (int)offset[1], (int)offset[2], (int)offset[3]);
+                "}\n", opencl_kernel_function_name, (int)offset[3], (int)input_dims[3], (int)offset[0], (int)offset[1], (int)offset[2], (int)offset[3]);
         }
         else {
             sprintf(item,
@@ -134,7 +103,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "       out += get_global_id(0)*out_stride.s0 + get_global_id(1)*out_stride.s1 + get_global_id(2)*out_stride.s2 + (n-%d)*out_stride.s3;\n"
                 "       *(__global half *)&out[0] = value;\n"
                 "   }\n"
-                "}\n", opencl_kernel_function_name, (int)offset[3], (int)ref_dims[3], (int)offset[0], (int)offset[1], (int)offset[2], (int)offset[3]);
+                "}\n", opencl_kernel_function_name, (int)offset[3], (int)input_dims[3], (int)offset[0], (int)offset[1], (int)offset[2], (int)offset[3]);
         }
         opencl_kernel_code = item;
     }

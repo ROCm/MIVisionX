@@ -7,9 +7,10 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 
 * [AMD OpenVX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#amd-openvx)
 * [AMD OpenVX Extensions](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#amd-openvx-extensions)
-  * [Loom 360 Video Stitch Library](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_loomsl/#radeon-loom-stitching-library-vx_loomsl)
-  * [Neural Net Library](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_nn/#openvx-neural-network-extension-library-vx_nn)
-  * [OpenCV Extensions](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_opencv/#amd-module-for-opencv-interop-from-openvx-vx_opencv)
+  * [Loom 360 Video Stitch Library](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_loomsl/)
+  * [Neural Net Library](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_nn/)
+  * [OpenCV Extensions](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_opencv/)
+  * [WinML Extensions](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/amd_openvx_extensions/amd_winml/)
 * [Applications](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#applications)
 * [Neural Net Model Compiler & Optimizer](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#neural-net-model-compiler--optimizer)
 * [Samples](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/samples/#samples)

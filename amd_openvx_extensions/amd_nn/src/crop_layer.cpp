@@ -51,12 +51,14 @@ static vx_status VX_CALLBACK opencl_codegen(
     vx_size input_dims[4], output_dims[4];
     vx_size num_of_dims;
     vx_enum type;
-    vx_uint32 width, height;
+    vx_uint32 x_coord, y_coord, width, height;
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &x_coord, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &y_coord, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     
@@ -64,46 +66,42 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     vx_uint32 input_dim_size = input_dims[0] * input_dims[1] * input_dims[2] * input_dims[3];
 
-    opencl_work_dim = 2;
-    opencl_global_work[0] = input_dims[0];
-    opencl_global_work[1] = input_dims[1];
+    opencl_work_dim = 3;
+    opencl_global_work[0] = width;
+    opencl_global_work[1] = height;
     opencl_global_work[2] = input_dims[2];
 
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
-    vx_size offset[4];
+    
     if (num_of_dims == 4) {
         char item[8192];
         if (type == VX_TYPE_FLOAT32) {
         sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint offset1, uint offset2, uint offset3, uint offset4) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint x_coord, uint y_coord, uint width, uint height) \n"
                 "{ \n"
-                "   for (uint n = %d; n < %d; n++) {\n"
-                "       uint x = get_global_id(0) + %d;\n"
-                "       uint y = get_global_id(1) + %d;\n"
-                "       uint c = get_global_id(2) + %d;\n"
-                "       float value = *(__global float*)&in[in_offset + x*in_stride.s0 + y*in_stride.s1 + c*in_stride.s2 + n*in_stride.s3];\n"
-                "       out += out_offset + get_global_id(0)*out_stride.s0 + get_global_id(1)*out_stride.s1 + get_global_id(2)*out_stride.s2 + (n-%d)*out_stride.s3;\n"
-                "       *(__global float *)&out[0] = value;\n"
-                "   }\n"
-                "}\n", opencl_kernel_function_name, (int)offset[3], (int)input_dims[3], (int)offset[0], (int)offset[1], (int)offset[2], (int)offset[3]);
+                "   uint x = get_global_id(0) + %d;\n"
+                "   uint y = get_global_id(1) + %d;\n"
+                "   uint c = get_global_id(2);\n"
+                "   float value = *(__global float*)&in[in_offset + x*in_stride.s0 + y*in_stride.s1 + c*in_stride.s2];\n"
+                "   out += out_offset + get_global_id(0)*out_stride.s0 + get_global_id(1)*out_stride.s1 + get_global_id(2)*out_stride.s2;\n"
+                "   *(__global float *)&out[0] = value;\n"
+                "}\n", opencl_kernel_function_name, (int)x_coord, (int)y_coord);
         }
         else {
-            sprintf(item,
-               "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint offset1, uint offset2, uint offset3, uint offset4) \n"
+        sprintf(item,
+                "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint x_coord, uint y_coord, uint width, uint height) \n"
                 "{ \n"
-                "   for (uint n = %d; n < %d; n++) {\n"
-                "       uint x = get_global_id(0) + %d;\n"
-                "       uint y = get_global_id(1) + %d;\n"
-                "       uint c = get_global_id(2) + %d;\n"
-                "       half value = *(__global half*)&in[x*in_stride.s0 + y*in_stride.s1 + c*in_stride.s2 + n*in_stride.s3];\n"
-                "       out += get_global_id(0)*out_stride.s0 + get_global_id(1)*out_stride.s1 + get_global_id(2)*out_stride.s2 + (n-%d)*out_stride.s3;\n"
-                "       *(__global half *)&out[0] = value;\n"
-                "   }\n"
-                "}\n", opencl_kernel_function_name, (int)offset[3], (int)input_dims[3], (int)offset[0], (int)offset[1], (int)offset[2], (int)offset[3]);
+                "   uint x = get_global_id(0) + %d;\n"
+                "   uint y = get_global_id(1) + %d;\n"
+                "   uint c = get_global_id(2);\n"
+                "   half value = *(__global half*)&in[in_offset + x*in_stride.s0 + y*in_stride.s1 + c*in_stride.s2];\n"
+                "   out += out_offset + get_global_id(0)*out_stride.s0 + get_global_id(1)*out_stride.s1 + get_global_id(2)*out_stride.s2;\n"
+                "   *(__global half *)&out[0] = value;\n"
+                "}\n", opencl_kernel_function_name, (int)x_coord, (int)y_coord);
         }
         opencl_kernel_code = item;
     }

@@ -17,6 +17,30 @@ static vx_status VX_CALLBACK validateCropLayer(vx_node node, const vx_reference 
     if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
+    vx_int32 x_coord, y_coord, width, height;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &x_coord, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &y_coord, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if (x_coord < 0 || y_coord < 0 || x_coord > input_dims[0] || y_coord > input_dims[1]) {
+        printf("Coordinates out of bound\n");
+        return VX_ERROR_INVALID_PARAMETERS;
+    }
+
+    if (x_coord + width > input_dims[0] || y_coord + height > input_dims[1]) {
+        printf("Width/Height out of bound\n");
+        return VX_ERROR_INVALID_PARAMETERS;
+    }
+
+    if (width != output_dims[0] || height != output_dims[1]) {
+        printf("Output tensor's width/height should match the crop width/height\n");
+        return VX_ERROR_INVALID_PARAMETERS;
+    }
+    if (out_type != type) return VX_ERROR_INVALID_TYPE;
+    if (output_dims[2] != input_dims[2] || output_dims[3] != input_dims[3]) return VX_ERROR_INVALID_DIMENSION;
+    
+    out_type = type;
+    num_dims = 4;
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, &output_dims, sizeof(output_dims)));

@@ -49,6 +49,11 @@ To fuse operations in AMD NNIR model (like batch normalization into convolution)
 % python nnir_update.py --fuse-ops <1> <nnirModelFolderN> <nnirModelFolderFused>
 ````
 
+To quantize the model to float 16
+````
+% python nnir_update.py --convert-fp16 <1> <nnirModelFolderN> <nnirModelFolderFused>
+````
+
 To workaround groups using slice and concat operations in AMD NNIR model:
 ````
 % python nnir_update.py --slice-groups <1> <nnirModelFolderFused> <nnirModelFolderSliced>

@@ -8,12 +8,16 @@ MIVisionX samples using runvx with GDF
 
 ### skintonedetect.gdf
 
+<p align="center"><img width="90%" src="images/skinToneDetect_image.PNG" /></p>
+
 usage:
 
 ````
 runvx skintonedetect.gdf
 ````
 ### canny.gdf
+
+<p align="center"><img width="90%" src="images/canny_image.PNG" /></p>
 
 usage:
 

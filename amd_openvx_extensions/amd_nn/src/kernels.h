@@ -83,6 +83,7 @@ enum user_kernel_e
     VX_KERNEL_SCALE_LAYER_AMD                = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x008,
     VX_KERNEL_UPSAMPLE_NEAREST_LAYER_AMD     = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x009,
     VX_KERNEL_RESHAPE_LAYER                  = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00a,
+    VX_KERNEL_CROP_AND_RESIZE_LAYER          = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00d
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -126,6 +127,7 @@ vx_status publishUpsampleNearest(vx_context context);
 vx_status publishTensorTableLookup(vx_context context);
 vx_status publishTensorMatrixMultiply(vx_context context);
 vx_status publishReshapeLayer(vx_context context);
+vx_status publishCropAndResizeLayer(vx_context context);
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing/unpublishing kernels

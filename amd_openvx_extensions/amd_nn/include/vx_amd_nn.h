@@ -142,4 +142,22 @@ VX_API_ENTRY vx_node VX_API_CALL vxUpsampleNearestLayer(vx_graph graph, vx_tenso
  */
 VX_API_ENTRY vx_node VX_API_CALL vxReshapeLayer(vx_graph graph, vx_tensor input, vx_tensor output);
 
+/* \brief [Graph] Creates a Convolutional Network Crop_And_Resize Layer Node.
+ * \details Cropping and Resizing is done on the width and height dimensions of the <tt>\ref vx_tensor</tt>. Like Upsampling Layer Node, we use the term x for the width dimension and y for the height dimension.\n
+ * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
+ * There are two modes for the resize: NEAREST_NEIGHBOR(mode = 0, default) and BILINEAR_INTERPOLATION(mode = 1).
+ * \param [in] graph The handle to the graph.
+ * \param [in] inputs The input tensor data.
+ * \param [out] outputs The output tensor data. Output will have the same number of dimensions as input. Output tensor data type must be same as the inputs.
+ * \param [x_coord] x_coord The x coordinate of the upper left point that will be cropped.
+ * \param [y_coord] y_coord The y coordinate of the upper left point that will be cropped.
+ * \param [width] width The width of the area that will be cropped.
+ * \param [height] height The height of the are that will be cropped.
+ * \param [scaleFactor] scaleFactor The scale factor that will be used to resize the cropped tensor.
+ * \param [mode] mode The mode to decide which method will be used for the resize.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height, vx_scalar scaleFactor, vx_scalar mode);
 #endif

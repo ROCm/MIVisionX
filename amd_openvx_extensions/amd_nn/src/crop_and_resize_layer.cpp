@@ -192,7 +192,38 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "}\n", opencl_kernel_function_name, (int)x_coord, (int)y_coord);
             }
             else {
+            sprintf(item,
+                "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint x_coord, uint y_coord, uint width, uint height, uint scaleFactor, uint mode) \n"
+                "{ \n"
+                "   uint x = get_global_id(0);\n"
+                "   uint y = get_global_id(1);\n"
+                "   uint c = get_global_id(2);\n"
+                
+                "   uint px = (int)(x / scaleFactor);\n"
+                "   uint py = (int)(y / scaleFactor);\n"
 
+                "   uint nx = px + %d;\n"
+                "   uint ny = py + %d;\n"
+
+                "   half fx1 = (half)x / (half)scaleFactor - (half)px;\n"
+                "   half fx2 = 1 - fx1;\n"
+                "   half fy1 = (half)y / (half)scaleFactor - (half)py;\n"
+                "   half fy2 = 1 - fy1;\n"
+
+                "   half w1 = fx2 * fy2;\n"
+                "   half w2 = fx1 * fy2;\n"
+                "   half w3 = fx2 * fy1;\n"
+                "   half w4 = fx1 * fy1;\n"
+
+                "   half value1 = *(__global halft*)&in[in_offset + nx*in_stride.s0 + ny*in_stride.s1 + c*in_stride.s2];\n"
+                "   half value2 = *(__global half*)&in[in_offset + (nx+1)*in_stride.s0 + ny*in_stride.s1 + c*in_stride.s2];\n"
+                "   half value3 = *(__global half*)&in[in_offset + nx*in_stride.s0 + (ny+1)*in_stride.s1 + c*in_stride.s2];\n"
+                "   half value4 = *(__global half*)&in[in_offset + (nx+1)*in_stride.s0 + (ny+1)*in_stride.s1 + c*in_stride.s2];\n"
+
+                "   out += out_offset + get_global_id(0)*out_stride.s0 + get_global_id(1)*out_stride.s1 + get_global_id(2)*out_stride.s2;\n"
+                "   *(__global half *)&out[0] = w1*value1 + w2*value2 + w3*value3 + w4*value4;\n"
+                "}\n", opencl_kernel_function_name, (int)x_coord, (int)y_coord);
             }
         }
         opencl_kernel_code = item;

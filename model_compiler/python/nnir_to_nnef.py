@@ -80,7 +80,7 @@ graph nnir (%s) -> (%s) {
 """ % (node.outputs[0], node.type, node.inputs[0], node.inputs[1]))
             elif node.type == 'batch_norm':
                 f.write( \
-"""    %s = batch_normalization(%s, mean = %s, variance = %s, offset = %s, scale = %s, epsilon = %ef);
+"""    %s = batch_normalization(%s, %s, %s, %s, %s, epsilon = %e);
 """ % (node.outputs[0], node.inputs[0], node.inputs[3], node.inputs[4], node.inputs[2], node.inputs[1], node.attr.get('epsilon')))
             elif node.type == 'gemm':
                 f.write( \

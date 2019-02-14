@@ -319,9 +319,9 @@ class IrGraph:
                     shapeB = B.shape
                     if transA == 0 and transB == 0:
                         output_shape = [shapeA[0], shapeB[1], 1, 1]
-                    elif transA == 0 and transB != 0:
+                    elif transA == 0:
                         output_shape = [shapeA[0], shapeB[0], 1, 1]
-                    elif transA != 0 and transB == 0:
+                    elif transB == 0:
                         output_shape = [shapeA[1], shapeB[1], 1, 1]
                     else:
                         output_shape = [shapeA[1], shapeB[0], 1, 1]

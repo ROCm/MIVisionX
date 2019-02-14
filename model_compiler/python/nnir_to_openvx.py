@@ -584,6 +584,14 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'upsample':
+                f.write( \
+"""
+    { vx_node node = vxUpsampleNearestLayer(graph, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" % (node.inputs[0], node.outputs[0]))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \
@@ -621,13 +629,14 @@ def generatePythonH(graph, fileName):
 #include <VX/vx.h>
 
 ////
-// python interface handle
+// python interface handle: upto 8 outputs
 //
 typedef struct pyif_ann_handle_t {
     vx_context  context;
     vx_graph    graph;
     vx_tensor   input;
-    vx_tensor   output;
+    vx_tensor   output[8];
+    int         num_output;
 } * pyif_ann_handle;
 
 ////
@@ -638,7 +647,13 @@ extern "C" VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const cha
 extern "C" VX_API_ENTRY int             VX_API_CALL annReleaseInference(pyif_ann_handle handle);
 extern "C" VX_API_ENTRY int             VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, float * inp_ptr, size_t inp_size, bool is_nhwc);
 extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, float * out_ptr, size_t out_size);
-extern "C" VX_API_ENTRY int             VX_API_CALL annRunInference(pyif_ann_handle handle, int num_iterations);
+""")
+        for i in range(1, len(graph.outputs)):
+            f.write( \
+"""extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size);
+""" % (i))
+        f.write( \
+"""extern "C" VX_API_ENTRY int             VX_API_CALL annRunInference(pyif_ann_handle handle, int num_iterations);
 
 #endif
 """)
@@ -647,7 +662,7 @@ def generatePythonCPP(graph,fileName):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
-        if len(graph.inputs) != 1 or len(graph.outputs) != 1:
+        if len(graph.inputs) != 1: #or len(graph.outputs) != 1:
             f.write( \
 """
 #include "annpython.h"
@@ -674,11 +689,16 @@ VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, float * inp
 """)
         else:
             input_shape = graph.inputs[0].shape
-            output_shape = graph.outputs[0].shape
             input_buf_size = eval('*'.join([str(v) for v in input_shape])) * 4
-            output_buf_size = eval('*'.join([str(v) for v in output_shape])) * 4
-            config = 'input,' + graph.inputs[0].name + ',' + ','.join(str(v) for v in input_shape) + ';' + \
-                     'output,' + graph.outputs[0].name + ',' + ','.join(str(v) for v in output_shape)
+            output_shape = []
+            output_buf_size = []
+            output_str = []
+            config = 'input,' + graph.inputs[0].name + ',' + ','.join(str(v) for v in input_shape) + ';'
+            for i in range(len(graph.outputs)):
+                output_shape.append(graph.outputs[i].shape)
+                output_buf_size.append(eval('*'.join([str(v) for v in output_shape[i]])) * 4)
+                config += 'output' + str(i) + ',' +graph.outputs[i].name + ',' + ','.join(str(v) for v in output_shape[i])+';'
+                output_str.append('handle->output[' + str(i) + ']')
             f.write( \
 """
 #include "annpython.h"
@@ -734,12 +754,19 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                     printf("ERROR: vxCreateTensor(input:[%s]): failed (%%d)\\n", status);
                 }
                 else {
-                    vx_size out_dim[%d] = { %s };
-                    handle->output = vxCreateTensor(handle->context, %d, out_dim, VX_TYPE_FLOAT32, 0);
-                    if((status = vxGetStatus((vx_reference)handle->output)) != VX_SUCCESS) {
+                    handle->num_output = %d;
+""" % (', '.join([str(v) for v in reversed(input_shape)]), 'x'.join([str(v) for v in input_shape]),len(graph.outputs)))
+            for i in range(len(graph.outputs)):
+                f.write( \
+"""                    vx_size out_dim_%d[%d] = { %s };
+                    handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT32, 0);
+                    if((status = vxGetStatus((vx_reference)handle->output[%d])) != VX_SUCCESS) {
                         printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
                     }
-                    else if((status = annAddToGraph(handle->graph, handle->input, handle->output, binaryFilename)) != VX_SUCCESS) {
+""" % (i, len(output_shape[i]), ', '.join([str(v) for v in reversed(output_shape[i])]), i, \
+       len(output_shape[i]), i, i, 'x'.join([str(v) for v in output_shape[i]])))
+            f.write( \
+"""                    else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
                         printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
                     }
                     else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
@@ -760,22 +787,22 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                 vxReleaseGraph(&handle->graph);
             if(handle->input)
                 vxReleaseTensor(&handle->input);
-            if(handle->output)
-                vxReleaseTensor(&handle->output);
-            if(handle->context)
+""" %(', '.join(output_str)))
+            for i in range(len(graph.outputs)):
+                f.write( \
+"""            if(handle->output[%d])
+                vxReleaseTensor(&handle->output[%d]);
+""" % ( i, i))          
+            f.write( \
+"""            if(handle->context)
                 vxReleaseContext(&handle->context);
             delete handle;
             handle = nullptr;
         }
     }
-
     return handle;
 }
-""" % (', '.join([str(v) for v in reversed(input_shape)]), 'x'.join([str(v) for v in input_shape]), len(output_shape), \
-       ', '.join([str(v) for v in reversed(output_shape)]), len(output_shape), 'x'.join([str(v) for v in output_shape])))
 
-            f.write( \
-"""
 VX_API_ENTRY int VX_API_CALL annReleaseInference(pyif_ann_handle handle)
 {
     vx_status status = VX_SUCCESS;
@@ -789,10 +816,14 @@ VX_API_ENTRY int VX_API_CALL annReleaseInference(pyif_ann_handle handle)
     else if(handle->input && (status = vxReleaseTensor(&handle->input)) != VX_SUCCESS) {
         printf("ERROR: annReleaseInference: vxReleaseTensor(input): failed (%d)\\n", status);
     }
-    else if(handle->output && (status = vxReleaseTensor(&handle->output)) != VX_SUCCESS) {
-        printf("ERROR: annReleaseInference: vxReleaseTensor(output): failed (%d)\\n", status);
+    else {
+        for (int i=0; i<handle->num_output; i++) {
+            if(handle->output[i] && (status = vxReleaseTensor(&handle->output[i])) != VX_SUCCESS) {
+                printf("ERROR: annReleaseInference: vxReleaseTensor(output<%d>): failed (%d)\\n", i,status);
+            }
+        }
     }
-    else if(handle->context && (status = vxReleaseContext(&handle->context)) != VX_SUCCESS) {
+    if(handle->context && (status = vxReleaseContext(&handle->context)) != VX_SUCCESS) {
         printf("ERROR: annReleaseInference: vxReleaseContext: failed (%d)\\n", status);
     }
     else {
@@ -850,11 +881,12 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
 }
 """ % (input_shape[3]*4, input_shape[2]*input_shape[3]*4, input_shape[1]*input_shape[2]*input_shape[3]*4, \
        input_buf_size, input_buf_size, input_shape[0], input_shape[1], input_shape[2], input_shape[3]))
-
-            if len(output_shape) == 4:
-                tshape = [output_shape[0], output_shape[1], output_shape[2], output_shape[3]]
-            else:
-                tshape = [1, 1, output_shape[0], output_shape[1]]
+            tshape = []
+            for i in range(len(graph.outputs)):
+                if len(output_shape[i]) == 4:
+                    tshape.append([output_shape[i][0], output_shape[i][1], output_shape[i][2], output_shape[i][3]])
+                else:
+                    tshape.append([1, 1, output_shape[i][0], output_shape[i][1]])
             f.write( \
 """
 VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, float * out_ptr, size_t out_size)
@@ -869,15 +901,57 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, 
         status = VX_FAILURE;
         printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %d) -- got %%d\\n", (int)out_size);
     }
-    else if(handle->output && (status = vxCopyTensorPatch(handle->output, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+    else if(handle->output[0] && (status = vxCopyTensorPatch(handle->output[0], %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
         printf("ERROR: annCopyFromInferenceOutput: vxCopyTensorPatch: failed (%%d)\\n", status);
     }
     return status;
 }
-""" % (tshape[3]*4, tshape[2]*tshape[3]*4, tshape[1]*tshape[2]*tshape[3]*4, output_buf_size, output_buf_size, len(output_shape)))
-
+"""   % (tshape[0][3]*4, tshape[0][2]*tshape[0][3]*4, tshape[0][1]*tshape[0][2]*tshape[0][3]*4, output_buf_size[0], output_buf_size[0], len(output_shape[0])))
+            if (len(graph.outputs) > 1):
+                f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 4, %d, %d, %d };
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid handle\\n");
+    }
+    else if(out_size != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %d) -- got %%d\\n", (int)out_size);
+    }
+    else if(handle->output && (status = vxCopyTensorPatch(handle->output[1], %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+        printf("ERROR: annCopyFromInferenceOutput: vxCopyTensorPatch: failed (%%d)\\n", status);
+    }
+    return status;
+}
+"""   % (1, tshape[1][3]*4, tshape[1][2]*tshape[1][3]*4, tshape[1][1]*tshape[1][2]*tshape[1][3]*4, output_buf_size[1], output_buf_size[1], len(output_shape[1])))
+            if (len(graph.outputs) > 2):
+                f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 4, %d, %d, %d };
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid handle\\n");
+    }
+    else if(out_size != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %d) -- got %%d\\n", (int)out_size);
+    }
+    else if(handle->output && (status = vxCopyTensorPatch(handle->output[2], %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+        printf("ERROR: annCopyFromInferenceOutput: vxCopyTensorPatch: failed (%%d)\\n", status);
+    }
+    return status;
+}
+"""   % (2, tshape[2][3]*4, tshape[2][2]*tshape[2][3]*4, tshape[2][1]*tshape[2][2]*tshape[2][3]*4, output_buf_size[2], output_buf_size[2], len(output_shape[2])))
             f.write( \
 """
+
 VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, int num_iterations)
 {
     vx_status status = VX_SUCCESS;
@@ -1531,6 +1605,11 @@ int main(int argc, const char ** argv)
         printf("ERROR: vxCreateTensor() failed for %s\\n");
         return -1;
     }
+""" % (tensor.name, tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
+       tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], \
+       tensor.name, tensor.name))
+        f.write( \
+"""
     // build graph using annmodule
     int64_t freq = clockFrequency(), t0, t1;
     t0 = clockCounter();
@@ -1555,10 +1634,7 @@ int main(int argc, const char ** argv)
         return -1;
     }
     printf("OK: vxProcessGraph() took %%.3f msec (1st iteration)\\n", (float)(t1-t0)*1000.0f/(float)freq);
-""" % (tensor.name, tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
-       tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], \
-       tensor.name, tensor.name, \
-       ', '.join([tensor.name for tensor in graph.inputs]), \
+""" % (', '.join([tensor.name for tensor in graph.inputs]), \
        ', '.join([tensor.name for tensor in graph.outputs])))
         for tensor in graph.outputs:
             f.write( \
@@ -1684,6 +1760,8 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     print('reading IR model from ' + inputFolder + ' ...')
     graph = IrGraph()
     graph.fromFile(inputFolder)
+    for tensor in graph.outputs:
+        print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]));    
     print('creating C code in ' + outputFolder + ' ...')
     generateCode(graph,argmaxOutput,outputFolder)
 

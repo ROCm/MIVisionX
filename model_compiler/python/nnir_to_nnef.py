@@ -67,7 +67,7 @@ graph nnir (%s) -> (%s) {
                 strides = node.attr.get('strides')
                 dilations = node.attr.get('dilations')
                 f.write( \
-"""    %s = %s(%s, size=[1,1,%d,%d], stride=[%d,%d], dilation=[%d,%d], padding=[(0,0),(0,0),(%d,%d),(%d,%d)], border = 'ignore');
+"""    %s = %s(%s, size=[1,1,%d,%d], stride=[1,1,%d,%d], dilation=[1,1,%d,%d], padding=[(0,0),(0,0),(%d,%d),(%d,%d)], border = 'ignore');
 """ % (node.outputs[0], node.type, node.inputs[0], kernel_shape[0], kernel_shape[1], \
        strides[0], strides[1], dilations[0], dilations[1], pads[0], pads[1], pads[2], pads[3]))
             elif node.type == 'relu' or node.type == 'softmax':

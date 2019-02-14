@@ -74,7 +74,7 @@ graph nnir (%s) -> (%s) {
                 f.write( \
 """    %s = %s(%s);
 """ % (node.outputs[0], node.type, node.inputs[0]))
-            elif node.type == 'add':
+            elif node.type == 'sum':
                 f.write( \
 """    %s = %s(%s, %s);
 """ % (node.outputs[0], node.type, node.inputs[0], node.inputs[1]))

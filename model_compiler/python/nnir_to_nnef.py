@@ -60,7 +60,7 @@ graph nnir (%s) -> (%s) {
 """    %s = conv(%s, %s, %sstride=[%d,%d], dilation=[%d,%d], padding=[(%d,%d),(%d,%d)], groups=%d, border = 'ignore');
 """ % (node.outputs[0], node.inputs[0], node.inputs[1], node.inputs[2] + ', ' if len(node.inputs) == 3 else '', \
        strides[0], strides[1], dilations[0], dilations[1], pads[0], pads[1], pads[2], pads[3], group))
-            elif node.type == 'avg_pool' or 'max_pool':
+            elif node.type == 'avg_pool' or node.type == 'max_pool':
                 kernel_shape = node.attr.get('kernel_shape')
                 pads = node.attr.get('pads')
                 strides = node.attr.get('strides')
@@ -69,7 +69,7 @@ graph nnir (%s) -> (%s) {
 """    %s = %s(%s, size=[%d,%d], stride=[%d,%d], dilation=[%d,%d], padding=[(%d,%d),(%d,%d)], border = 'ignore');
 """ % (node.outputs[0], node.type, node.inputs[0], kernel_shape[0], kernel_shape[1], \
        strides[0], strides[1], dilations[0], dilations[1], pads[0], pads[1], pads[2], pads[3]))
-            elif node.type == 'relu' or 'softmax':
+            elif node.type == 'relu' or node.type == 'softmax':
                 f.write( \
 """    %s = %s(%s);
 """ % (node.outputs[0], node.type, node.inputs[0]))

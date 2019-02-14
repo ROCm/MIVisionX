@@ -142,6 +142,43 @@ VX_API_ENTRY vx_node VX_API_CALL vxUpsampleNearestLayer(vx_graph graph, vx_tenso
  */
 VX_API_ENTRY vx_node VX_API_CALL vxReshapeLayer(vx_graph graph, vx_tensor input, vx_tensor output);
 
+/*! \brief [Graph] Creates a Permute Layer Node.
+ * \details Permute is done if the output tensor dimensions change. Otherwise it will do a copy.\n
+ * This function supports 4D tensors as input and output.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The input tensor data.
+ * \param [in] order The required output tensor dimensions.
+ * \Order takes values: 
+ * \ '0' : 0,1,2,3 (eg:nchw->nchw) 
+ * \ '1' : 0,2,3,1 (eg:nchw->nhwc)
+ * \param [out] output The output tensor data. Output will have the same number of dimensions as input. Output tensor data type must be same as the inputs. The width, height, batch and channel dimensions of output can be rearranged, but value must be the same as input.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_int32 order, vx_tensor output);
+
+/*! \brief [Graph] Creates a Prior Box Layer Node.
+ * \details Prior box gives the coordinates of the bounding boxes for an image. 
+ * This function supports 4D tensors as input and 3D tensor as output.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input_1 The input tensor data (output of the previous layer)
+ * \param [in] input_2 The input tensor data (image data)
+ * \param [in] minSize The size for the first prior
+ * \param [in] aspect_ratio Array of floats for different bounding boxes, with varying aspect ratio
+ * \param [in] flip Input indicating whether aspect ratio can be flipped. Can take values 1(true)/0(false)
+ * \param [in] clip Input indicating whether bounding box coordinates should be within [0,1]. Can take values 1(true)/0(false)
+ * \param [in] offset Float value to give an offset for each bounding box
+ * \param [out] outputs The output tensor data. Output tensor data type must be float. The batch dimensions of output and input must be same. The channel dimensions of the output will be 2. The 3rd dimension will depend on number of boxes.
+ * \param [in] maxSize The size for the first prior (optional)
+ * \param [in] variance The variance of each prior (optional)
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input_1, vx_tensor input_2, vx_float32 minSize, vx_array aspect_ratio, vx_int32 flip, vx_int32 clip, 
+                                                 vx_float32 offset, vx_tensor output, vx_float32 maxSize, vx_array variance);
+
 /* \brief [Graph] Creates a Convolutional Network Crop_And_Resize Layer Node.
  * \details Cropping and Resizing is done on the width and height dimensions of the <tt>\ref vx_tensor</tt>. Like Upsampling Layer Node, we use the term x for the width dimension and y for the height dimension.\n
  * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
@@ -160,4 +197,5 @@ VX_API_ENTRY vx_node VX_API_CALL vxReshapeLayer(vx_graph graph, vx_tensor input,
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
 VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height, vx_scalar scaleFactor, vx_scalar mode);
+
 #endif

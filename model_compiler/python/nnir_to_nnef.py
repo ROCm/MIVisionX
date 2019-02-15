@@ -76,8 +76,8 @@ graph nnir (%s) -> (%s) {
 """ % (node.outputs[0], node.type, node.inputs[0]))
             elif node.type == 'sum':
                 f.write( \
-"""    %s = %s(%s, %s);
-""" % (node.outputs[0], node.type, node.inputs[0], node.inputs[1]))
+"""    %s = add(%s, %s);
+""" % (node.outputs[0], node.inputs[0], node.inputs[1]))
             elif node.type == 'batch_norm':
                 f.write( \
 """    %s = batch_normalization(%s, %s, %s, %s, %s, epsilon = %e);

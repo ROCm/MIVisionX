@@ -68,6 +68,8 @@ onnx2ir_data_type = [
     "STR_", "BOOL", "F016", "F064", "U032", "U064", "C064", "C128"
 ]
 
+
+
 def onnx_name_to_ir_name(name):
     return '_'.join(('_'.join(name.split('/')).split('-')))
 
@@ -123,25 +125,29 @@ def onnx_tensor_info_to_data(info):
     tensor.setInfo(onnx2ir_data_type[info.data_type], [int(x) for x in info.dims])
     return tensor
 
-def onnx_value_info_to_data(info):
+def onnx_value_info_to_data(info, dims):
     tensor = IrTensor()
     tensor.setName(onnx_name_to_ir_name(info.name))
-    tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x.dim_value) for x in info.type.tensor_type.shape.dim])
+    tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x) for x in dims])
     return tensor
 
-def onnx_graph_to_ir_graph(onnx_graph):
+def onnx_graph_to_ir_graph(onnx_graph, input_dims, output_dims):
     graph = IrGraph()
+
     initializerList = []
     for tensor in onnx_graph.initializer:
         tensorName = onnx_name_to_ir_name(tensor.name)
+        #print tensorName
         initializerList.append(tensorName)
         graph.addVariable(onnx_tensor_info_to_data(tensor))
         graph.addBinary(tensorName, tensor.raw_data)
     for tensor in onnx_graph.input:
         if not onnx_name_to_ir_name(tensor.name) in initializerList:
-            graph.addInput(onnx_value_info_to_data(tensor))
+            
+            graph.addInput(onnx_value_info_to_data(tensor, input_dims))
+
     for tensor in onnx_graph.output:
-        graph.addOutput(onnx_value_info_to_data(tensor))
+        graph.addOutput(onnx_value_info_to_data(tensor, output_dims))
     tensorAliasList = {}
     for onnx_node in onnx_graph.node:
         if onnx_node.op_type == 'Dropout':
@@ -152,10 +158,11 @@ def onnx_graph_to_ir_graph(onnx_graph):
                     onnx_node.input[i] = tensorAliasList[onnx_node.input[i]]
             node = onnx_node_to_ir_node(onnx_node)
             graph.addNode(node)
+    #print initializerList
     graph.updateLocals()
     return graph
 
-def onnx2ir(model, output_folder):
+def onnx2ir(model, input_dims, output_dims, output_folder):
     # get graph from ONNX model
     if isinstance(model, str):
         onnx_model = onnx.load(model)
@@ -164,15 +171,18 @@ def onnx2ir(model, output_folder):
     else:
         raise TypeError("Model must be file path to .onnx file or onnx loaded model")
     # convert ONNX graph to IR graph and save
-    graph = onnx_graph_to_ir_graph(onnx_model.graph)
+    graph = onnx_graph_to_ir_graph(onnx_model.graph, input_dims, output_dims)
     graph.toFile(output_folder)
 
 def main():
     if len(sys.argv) < 3:
-        print('Usage: python onnx2nnir.py <onnxModel> <nnirOutputFolder>')
+        print('Usage: python onnx2nnir.py <onnxModel> <nnirOutputFolder> --input-dims n,c,h,w --output-dims n,c,h,w')
         sys.exit(1)
     onnxFileName = sys.argv[1]
     outputFolder = sys.argv[2]
+    input_dims = sys.argv[4].split(',')
+    output_dims = sys.argv[6].split(',')
+
     print('loading ONNX model from %s ...' % (onnxFileName))
     onnx_model_proto = onnx_pb.ModelProto()
     if not os.path.isfile(onnxFileName):
@@ -180,7 +190,7 @@ def main():
         sys.exit(1)
     onnx_model_proto.ParseFromString(open(onnxFileName, 'rb').read())
     print('converting to IR model in %s ...' % (outputFolder))
-    onnx2ir(onnx_model_proto, outputFolder)
+    onnx2ir(onnx_model_proto, input_dims, output_dims, outputFolder)
 
 if __name__ == '__main__':
     main()

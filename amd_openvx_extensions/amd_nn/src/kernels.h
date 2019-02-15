@@ -130,6 +130,7 @@ vx_status publishTensorMatrixMultiply(vx_context context);
 vx_status publishReshapeLayer(vx_context context);
 vx_status publishPermuteLayer(vx_context context);
 vx_status publishPriorBoxLayer(vx_context context);
+vx_status publishCropAndResizeLayer(vx_context context);
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing/unpublishing kernels

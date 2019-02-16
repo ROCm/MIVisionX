@@ -51,10 +51,19 @@ def nnef2ir(inputFolder, outputFolder):
     graph = nnef_graph_to_ir_graph(inputFolder, attrs, ops)
     graph.toFile(output_folder)
 
+def test():
+    fileName = '/home/hansel/Downloads/NNEF/binary/gpu_0_pred_b_0.dat'
+    with open(fileName, 'rb') as f:
+        binary = nnef._read_tensor_provisional(f)
+        print(binary)
+
+
 def main ():
     if len(sys.argv) < 3:
         print('Usage: python nnef2nnir.py <nnefInputFolder> <outputFolder>')
         sys.exit(1)
+    test()
+    exit(1)
     inputFolder = sys.argv[1]
     outputFolder = sys.argv[2]
     print('reading NNEF model from ' + inputFolder + '...')

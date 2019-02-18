@@ -99,7 +99,7 @@ For convenience of the developer, we here provide the setup script which will in
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
+                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
 ````
 **Note:** use `--installer yum` for CentOS
 
@@ -151,7 +151,7 @@ cd MIVisionX
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
+                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
 ````
 **Note:** Use `--installer yum` for CentOS
 ````
@@ -278,10 +278,10 @@ Upsample Nearest Neighborhood|
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.0.89`
+* ROCm: rocm-dkms - `2.1.96`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [1.7.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.0)
+* MIOpen - [1.7.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.1)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

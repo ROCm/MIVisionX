@@ -248,32 +248,8 @@ sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/d
 
 ## Release Notes
 
-### Supported Neural Net Layers
-
-Layer name |					
-------|			
-Activation|				
-Argmax|			
-Batch Normalization|
-Concat|
-Convolution|			
-Deconvolution|			
-Fully Connected|			
-Local Response Normalization (LRN)|
-Pooling|
-Scale|
-Slice|
-Softmax|
-Tensor Add|
-Tensor Convert Depth|
-Tensor Convert from Image|
-Tensor Convert to Image|
-Tensor Multiply|
-Tensor Subtract|
-Upsample Nearest Neighborhood|
-
 ### Known issues
-* Package (.deb & .rpm) install requires OpenCV v3.3.0 to execute AMD OpenCV extensions
+* Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
 
 ### Tested configurations
 * Windows 10

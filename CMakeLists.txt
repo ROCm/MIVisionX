@@ -57,12 +57,12 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 
 # generate .deb or .rpm package
 if(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
-    message("-- Ubuntu detected, .deb package will be created")
+    message("-- Ubuntu detected -- .deb package will be created")
     set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "DEB")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl, protobuf-compiler, libopencv-dev, python-pip")
 else()
-    message("-- CentOS detected, .rpm package will be created")
+    message("-- CentOS detected -- .rpm package will be created")
     set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "RPM")
     set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl, protobuf, opencv, python-pip")

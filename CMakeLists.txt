@@ -34,7 +34,7 @@ add_subdirectory(utilities)
 install(DIRECTORY docs DESTINATION .)
 
 # set package information
-set(VERSION "1.0.0")
+set(VERSION "1.1.0")
 set(CPACK_PACKAGE_VERSION       ${VERSION})
 set(CPACK_PACKAGE_NAME          "mivisionx")
 set(CPACK_PACKAGE_RELEASE       1)

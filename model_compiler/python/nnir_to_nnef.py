@@ -64,7 +64,7 @@ graph nnir (%s) -> (%s) {
             elif node.type == 'avg_pool' or node.type == 'max_pool':
                 kernel_shape = node.attr.get('kernel_shape')
                 pads = node.attr.get('pads')
-                  padding = '(0,0),(0,0),(%d,%d),(%d,%d)' % (pads[0], pads[1], pads[2], pads[3]) if len(pads) != 0 else ''
+                padding = '(0,0),(0,0),(%d,%d),(%d,%d)' % (pads[0], pads[1], pads[2], pads[3]) if len(pads) != 0 else ''
                 strides = node.attr.get('strides')
                 stride = '1,1,%d,%d' % (strides[0], strides[1]) if len(strides) != 0 else ''
                 dilations = node.attr.get('dilations')

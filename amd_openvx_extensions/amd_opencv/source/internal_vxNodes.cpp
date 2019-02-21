@@ -74,7 +74,7 @@ vx_node vxCreateNodeByStructure(vx_graph graph,
 /************************************************************************************************************
 OpenCV Absdiff C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_absDiff(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_absDiff(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -92,7 +92,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_absDiff(vx_graph graph, vx_image in
 /************************************************************************************************************
 OpenCV Add C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_add(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_add(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -111,7 +111,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_add(vx_graph graph, vx_image input_
 /************************************************************************************************************
 OpenCV Subtract C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_subtract(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_subtract(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -130,7 +130,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_subtract(vx_graph graph, vx_image i
 /************************************************************************************************************
 OpenCV Bitwise_AND C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseAnd(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseAnd(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -149,7 +149,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseAnd(vx_graph graph, vx_image
 /************************************************************************************************************
 OpenCV Bitwise_NOT C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseNot(vx_graph graph, vx_image input_1, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseNot(vx_graph graph, vx_image input_1, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -167,7 +167,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseNot(vx_graph graph, vx_image
 /************************************************************************************************************
 OpenCV Bitwise_OR C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseOr(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseOr(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -186,7 +186,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseOr(vx_graph graph, vx_image 
 /************************************************************************************************************
 OpenCV Bitwise_XOR C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseXor(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseXor(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -205,7 +205,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseXor(vx_graph graph, vx_image
 /************************************************************************************************************
 OpenCV Transpose C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_transpose(vx_graph graph, vx_image input, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_transpose(vx_graph graph, vx_image input, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -223,7 +223,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_transpose(vx_graph graph, vx_image 
 /************************************************************************************************************
 OpenCV Compare C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_compare(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_int32 cmpop)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_compare(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_int32 cmpop)
 {
 
 	vx_scalar CMPOP = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &cmpop);
@@ -245,7 +245,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_compare(vx_graph graph, vx_image in
 /************************************************************************************************************
 OpenCV integral C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_integral(vx_graph graph, vx_image input, vx_image output, vx_int32 sdepth){
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_integral(vx_graph graph, vx_image input, vx_image output, vx_int32 sdepth){
 
 	vx_scalar Sdepth = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &sdepth);
 
@@ -265,7 +265,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_integral(vx_graph graph, vx_image i
 /************************************************************************************************************
 OpenCV NORM C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_norm(vx_graph graph, vx_image input, vx_float32 norm_value, vx_int32 norm_type){
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_norm(vx_graph graph, vx_image input, vx_float32 norm_value, vx_int32 norm_type){
 
 	vx_scalar Norm_value = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &norm_value);
 	vx_scalar Norm_type = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &norm_type);
@@ -286,7 +286,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_norm(vx_graph graph, vx_image input
 /************************************************************************************************************
 OpenCV countNonZero C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_countNonZero(vx_graph graph, vx_image input, vx_int32 non_zero){
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_countNonZero(vx_graph graph, vx_image input, vx_int32 non_zero){
 
 	vx_scalar Non_zero = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &non_zero);
 
@@ -304,7 +304,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_countNonZero(vx_graph graph, vx_ima
 /************************************************************************************************************
 OpenCV flip C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_flip(vx_graph graph, vx_image input, vx_image output, vx_int32 FlipCode)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_flip(vx_graph graph, vx_image input, vx_image output, vx_int32 FlipCode)
 {
 
 	vx_scalar FLIPCODE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &FlipCode);
@@ -325,7 +325,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_flip(vx_graph graph, vx_image input
 /************************************************************************************************************
 OpenCV MedianBlur C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_medianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 ksize)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_medianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 ksize)
 {
 
 	vx_scalar KSIZE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ksize);
@@ -346,7 +346,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_medianBlur(vx_graph graph, vx_image
 /************************************************************************************************************
 OpenCV Boxfilter C function.
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_boxFilter(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_bool Normalized, vx_int32 Bordertype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_boxFilter(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_bool Normalized, vx_int32 Bordertype)
 {
 
 	vx_scalar DDEPTH = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ddepth);
@@ -379,7 +379,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_boxFilter(vx_graph graph, vx_image 
 /************************************************************************************************************
 OpenCV Gaussian C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_gaussianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_float32 sigmaX, vx_float32 sigmaY, vx_int32 border_mode)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_gaussianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_float32 sigmaX, vx_float32 sigmaY, vx_int32 border_mode)
 {
 
 	vx_scalar KWIDTH = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &kwidth);
@@ -408,7 +408,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_gaussianBlur(vx_graph graph, vx_ima
 /************************************************************************************************************
 OpenCV Blur C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_blur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 Bordertype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_blur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 Bordertype)
 {
 
 	vx_scalar KWIDTH = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &kwidth);
@@ -437,7 +437,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_blur(vx_graph graph, vx_image input
 /************************************************************************************************************
 OpenCV Bilateral Filter C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bilateralFilter(vx_graph graph, vx_image input, vx_image output, vx_uint32 d, vx_float32 Sigma_Color, vx_float32 Sigma_Space, vx_int32 border_mode)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bilateralFilter(vx_graph graph, vx_image input, vx_image output, vx_uint32 d, vx_float32 Sigma_Color, vx_float32 Sigma_Space, vx_int32 border_mode)
 {
 
 	vx_scalar D = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &d);
@@ -464,7 +464,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bilateralFilter(vx_graph graph, vx_
 /************************************************************************************************************
 OpenCV Sobel C function.
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_sobel(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_int32 Ksize, vx_float32 scale, vx_float32 delta, vx_int32 bordertype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_sobel(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_int32 Ksize, vx_float32 scale, vx_float32 delta, vx_int32 bordertype)
 {
 
 	vx_scalar DDEPTH = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ddepth);
@@ -498,7 +498,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_sobel(vx_graph graph, vx_image inpu
  OpenCV convertScaleAbs C Function function.
  *************************************************************************************************************/
 
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_convertScaleAbs(vx_graph graph, vx_image image_in, vx_image image_out, vx_float32 alpha, vx_float32 beta)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_convertScaleAbs(vx_graph graph, vx_image image_in, vx_image image_out, vx_float32 alpha, vx_float32 beta)
 {
 
 	vx_scalar ALPHA = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &alpha);
@@ -522,7 +522,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_convertScaleAbs(vx_graph graph, vx_
 /************************************************************************************************************
 AddWeighted Node function.
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_addWeighted(vx_graph graph, vx_image imput_1, vx_float32 aplha, vx_image input_2, vx_float32 beta, vx_float32 gamma, vx_image output, vx_int32 dtype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_addWeighted(vx_graph graph, vx_image imput_1, vx_float32 aplha, vx_image input_2, vx_float32 beta, vx_float32 gamma, vx_image output, vx_int32 dtype)
 {
 
 	vx_scalar ALPHA = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &aplha);
@@ -551,7 +551,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_addWeighted(vx_graph graph, vx_imag
 /************************************************************************************************************
 Canny C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_canny(vx_graph graph, vx_image input, vx_image output, vx_float32 threshold1, vx_float32 threshold2, vx_int32 aperture_size, vx_bool L2_Gradient)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_canny(vx_graph graph, vx_image input, vx_image output, vx_float32 threshold1, vx_float32 threshold2, vx_int32 aperture_size, vx_bool L2_Gradient)
 {
 
 	vx_scalar THRESH1 = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &threshold1);
@@ -579,7 +579,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_canny(vx_graph graph, vx_image inpu
 /************************************************************************************************************
 cornerMinEigenVal C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cornerMinEigenVal(vx_graph graph, vx_image input, vx_image output, vx_uint32 blockSize, vx_uint32 ksize, vx_int32 border){
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_cornerMinEigenVal(vx_graph graph, vx_image input, vx_image output, vx_uint32 blockSize, vx_uint32 ksize, vx_int32 border){
 
 	vx_scalar BlockSize = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &blockSize);
 	vx_scalar KSIZE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &ksize);
@@ -603,7 +603,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cornerMinEigenVal(vx_graph graph, v
 /************************************************************************************************************
 cornerHarris C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cornerHarris(vx_graph graph, vx_image input, vx_image output, vx_int32 blocksize, vx_int32 ksize, vx_float32 k, vx_int32 border){
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_cornerHarris(vx_graph graph, vx_image input, vx_image output, vx_int32 blocksize, vx_int32 ksize, vx_float32 k, vx_int32 border){
 
 	vx_scalar Blocksize = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &blocksize);
 	vx_scalar KSIZE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ksize);
@@ -629,7 +629,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cornerHarris(vx_graph graph, vx_ima
 /************************************************************************************************************
 Laplacian C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_laplacian(vx_graph graph, vx_image input, vx_image output, vx_uint32 ddepth, vx_uint32 ksize, vx_float32 scale, vx_float32 delta, vx_int32 border_mode)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_laplacian(vx_graph graph, vx_image input, vx_image output, vx_uint32 ddepth, vx_uint32 ksize, vx_float32 scale, vx_float32 delta, vx_int32 border_mode)
 {
 
 	vx_scalar DDEPTH = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ddepth);
@@ -658,7 +658,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_laplacian(vx_graph graph, vx_image 
 /************************************************************************************************************
 Scharr C function.
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_scharr(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_float32 scale, vx_float32 delta, vx_int32 bordertype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_scharr(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_float32 scale, vx_float32 delta, vx_int32 bordertype)
 {
 
 	vx_scalar DDEPTH = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ddepth);
@@ -689,7 +689,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_scharr(vx_graph graph, vx_image inp
 /*!***********************************************************************************************************
 SIFT Detector C function Call.
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_siftDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_siftDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp,
 	vx_int32 nfeatures, vx_int32 nOctaveLayers, vx_float32 contrastThreshold, vx_float32 edgeThreshold, vx_float32 sigma)
 {
 
@@ -721,7 +721,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_siftDetect(vx_graph graph, vx_image
 /*!***********************************************************************************************************
 SURF function C call inside a graph
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_surfDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_surfDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
 	vx_float32 hessianThreshold, vx_int32 nOctaves, vx_int32 nOctaveLayers)
 {
 
@@ -749,7 +749,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_surfDetect(vx_graph graph, vx_image
 /*!***********************************************************************************************************
 SIFT_Compute  C call inside a graph
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_siftCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_siftCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
 	vx_int32 nfeatures, vx_int32 nOctaveLayers, vx_float32 contrastThreshold, vx_float32 edgeThreshold, vx_float32 sigma)
 {
 
@@ -782,7 +782,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_siftCompute(vx_graph graph, vx_imag
 /*!***********************************************************************************************************
 SURF_Compute function C call inside a graph
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_surfCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_surfCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
 	vx_float32 hessianThreshold, vx_int32 nOctaves, vx_int32 nOctaveLayers, vx_bool extended, vx_bool upright)
 {
 
@@ -815,7 +815,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_surfCompute(vx_graph graph, vx_imag
 /*!***********************************************************************************************************
 FAST Feature Detector OpenVX C function Call
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fast(vx_graph graph, vx_image input, vx_array output_kp, vx_int32 threshold, vx_bool nonmaxSuppression)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_fast(vx_graph graph, vx_image input, vx_array output_kp, vx_int32 threshold, vx_bool nonmaxSuppression)
 {
 
 	vx_scalar THRESHOLD = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &threshold);
@@ -839,7 +839,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fast(vx_graph graph, vx_image input
 /*!***********************************************************************************************************
 Good Features To Track C function Call
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_goodFeaturesToTrack(vx_graph graph, vx_image input, vx_array output_kp,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_goodFeaturesToTrack(vx_graph graph, vx_image input, vx_array output_kp,
 	vx_int32 maxCorners, vx_float32 qualityLevel, vx_float32 minDistance, vx_image mask, vx_int32 blockSize, vx_bool useHarrisDetector, vx_float32 k)
 {
 
@@ -873,7 +873,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_goodFeaturesToTrack(vx_graph graph,
 /*!***********************************************************************************************************
 Brisk Detector C function call.
 **************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_briskDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_briskDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp,
 	vx_int32 thresh, vx_int32 octaves, vx_float32 patternScale)
 {
 
@@ -902,7 +902,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_briskDetect(vx_graph graph, vx_imag
 /*!***********************************************************************************************************
 MSER feature detector C function call
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_mserDetect(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_mserDetect(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask,
 	vx_int32 delta, vx_int32 min_area, vx_int32 max_area, vx_float32 max_variation, vx_float32 min_diversity, vx_int32 max_evolution, vx_float32 area_threshold, vx_float32 min_margin, vx_int32 edge_blur_size)
 {
 
@@ -942,7 +942,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_mserDetect(vx_graph graph, vx_image
 /*!***********************************************************************************************************
 ORB function C call inside a graph
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_orbDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_orbDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp,
 	vx_int32 nfeatures, vx_float32 scaleFactor, vx_int32 nlevels, vx_int32 edgeThreshold, vx_int32 firstLevel, vx_int32 WTA_K, vx_int32 scoreType, vx_int32 patchSize)
 {
 
@@ -982,7 +982,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_orbDetect(vx_graph graph, vx_image 
 /*!***********************************************************************************************************
 Star feature detector C function call
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_starFeatureDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask, vx_int32 maxSize, vx_int32 responseThreshold, vx_int32 lineThresholdProjected, vx_int32 lineThresholdBinarized, vx_int32 suppressNonmaxSize){
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_starFeatureDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask, vx_int32 maxSize, vx_int32 responseThreshold, vx_int32 lineThresholdProjected, vx_int32 lineThresholdBinarized, vx_int32 suppressNonmaxSize){
 
 	vx_scalar MaxSize = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &maxSize);
 	vx_scalar ResponseThreshold = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &responseThreshold);
@@ -1011,7 +1011,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_starFeatureDetector(vx_graph graph,
 /*!***********************************************************************************************************
 SIMPLE BLOB feature detector C function call
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_simpleBlobDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_simpleBlobDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask)
 {
 
 	vx_reference params[] = {
@@ -1031,7 +1031,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_simpleBlobDetector(vx_graph graph, 
 /*!***********************************************************************************************************
 Brisk Compute C function call.
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_briskCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_briskCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
 	vx_int32 thresh, vx_int32 octaves, vx_float32 patternScale)
 {
 
@@ -1062,7 +1062,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_briskCompute(vx_graph graph, vx_ima
 /*!***********************************************************************************************************
 ORB function C call inside a graph
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_orbCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_orbCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des,
 	vx_int32 nfeatures, vx_float32 scaleFactor, vx_int32 nlevels, vx_int32 edgeThreshold, vx_int32 firstLevel, vx_int32 WTA_K, vx_int32 scoreType, vx_int32 patchSize)
 {
 
@@ -1103,7 +1103,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_orbCompute(vx_graph graph, vx_image
 /************************************************************************************************************
 multiply C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_multiply(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_multiply(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype)
 {
 
 	vx_scalar SCALE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &scale);
@@ -1128,7 +1128,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_multiply(vx_graph graph, vx_image i
 /************************************************************************************************************
 Divide C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_divide(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_divide(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype)
 {
 
 	vx_scalar SCALE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &scale);
@@ -1153,7 +1153,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_divide(vx_graph graph, vx_image inp
 /************************************************************************************************************
 adaptiveThreshold C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_adaptiveThreshold(vx_graph graph, vx_image input, vx_image output, vx_float32 maxValue, vx_int32 adaptiveMethod, vx_int32 thresholdType, vx_int32 blockSize, vx_float32 c)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_adaptiveThreshold(vx_graph graph, vx_image input, vx_image output, vx_float32 maxValue, vx_int32 adaptiveMethod, vx_int32 thresholdType, vx_int32 blockSize, vx_float32 c)
 {
 
 	vx_scalar MAXVALUE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &maxValue);
@@ -1183,7 +1183,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_adaptiveThreshold(vx_graph graph, v
 /************************************************************************************************************
 distanceTransform C Function
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_distanceTransform(vx_graph graph, vx_image input, vx_image output)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_distanceTransform(vx_graph graph, vx_image input, vx_image output)
 {
 
 	vx_reference params[] = {
@@ -1203,7 +1203,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_distanceTransform(vx_graph graph, v
 /************************************************************************************************************
 cvtColor C Function
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cvtColor(vx_graph graph, vx_image input, vx_image output, vx_uint32 CODE)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_cvtColor(vx_graph graph, vx_image input, vx_image output, vx_uint32 CODE)
 {
 
 	vx_scalar code = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &CODE);
@@ -1224,7 +1224,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cvtColor(vx_graph graph, vx_image i
 /************************************************************************************************************
 threshold C Function
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_threshold(vx_graph graph, vx_image input, vx_image output, vx_float32 thresh, vx_float32 maxVal, vx_int32 type)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_threshold(vx_graph graph, vx_image input, vx_image output, vx_float32 thresh, vx_float32 maxVal, vx_int32 type)
 {
 
 	vx_scalar Thresh = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &thresh);
@@ -1249,7 +1249,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_threshold(vx_graph graph, vx_image 
 /************************************************************************************************************
 fastNlMeansDenoising C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoising(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_int32 template_ws, vx_int32 search_ws)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoising(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_int32 template_ws, vx_int32 search_ws)
 {
 
 	vx_scalar H = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &h);
@@ -1274,7 +1274,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoising(vx_graph graph
 /************************************************************************************************************
 fastNlMeansDenoisingColored C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoisingColored(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_float32 h_color, vx_int32 template_ws, vx_int32 search_ws)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoisingColored(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_float32 h_color, vx_int32 template_ws, vx_int32 search_ws)
 {
 
 	vx_scalar H = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_FLOAT32, &h);
@@ -1301,7 +1301,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoisingColored(vx_grap
 /************************************************************************************************************
 pyrup C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_pyrUp(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_pyrUp(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype)
 {
 
 	vx_scalar W = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &Swidth);
@@ -1326,7 +1326,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_pyrUp(vx_graph graph, vx_image inpu
 /************************************************************************************************************
 pyrdown C Function
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_pyrDown(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_pyrDown(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype)
 {
 
 	vx_scalar W = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &Swidth);
@@ -1351,7 +1351,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_pyrDown(vx_graph graph, vx_image in
 /************************************************************************************************************
 filter2D C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_filter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_filter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border)
 {
 
 	vx_scalar D = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ddepth);
@@ -1381,7 +1381,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_filter2D(vx_graph graph, vx_image i
 /************************************************************************************************************
 sepFilter2D C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_sepFilter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix KernelX, vx_matrix KernelY, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_sepFilter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix KernelX, vx_matrix KernelY, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border)
 {
 
 	vx_scalar D = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &ddepth);
@@ -1412,7 +1412,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_sepFilter2D(vx_graph graph, vx_imag
 /************************************************************************************************************
 Dilate C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_dilate(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_dilate(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border)
 {
 
 	vx_scalar X = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &Anchor_X);
@@ -1440,7 +1440,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_dilate(vx_graph graph, vx_image inp
 /************************************************************************************************************
 Erode C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_erode(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_erode(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border)
 {
 
 	vx_scalar X = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &Anchor_X);
@@ -1468,7 +1468,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_erode(vx_graph graph, vx_image inpu
 /************************************************************************************************************
 WarpAffine C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_warpAffine(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_warpAffine(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border)
 {
 
 	vx_scalar X = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &Size_X);
@@ -1496,7 +1496,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_warpAffine(vx_graph graph, vx_image
 /************************************************************************************************************
 WarpPerspective C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_warpPerspective(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_warpPerspective(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border)
 {
 
 	vx_scalar X = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &Size_X);
@@ -1524,7 +1524,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_warpPerspective(vx_graph graph, vx_
 /************************************************************************************************************
 Resize C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_resize(vx_graph graph, vx_image input, vx_image output, vx_int32 Size_X, vx_int32 Size_Y, vx_float32 FX, vx_float32 FY, vx_int32 interpolation)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_resize(vx_graph graph, vx_image input, vx_image output, vx_int32 Size_X, vx_int32 Size_Y, vx_float32 FX, vx_float32 FY, vx_int32 interpolation)
 {
 
 	vx_scalar X = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &Size_X);
@@ -1553,7 +1553,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_resize(vx_graph graph, vx_image inp
 /************************************************************************************************************
 morphologyEX C function.
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_morphologyEX(vx_graph graph, vx_image input, vx_image output, vx_int32 OP, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_morphologyEX(vx_graph graph, vx_image input, vx_image output, vx_int32 OP, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border)
 {
 
 	vx_scalar op = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &OP);
@@ -1583,7 +1583,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_morphologyEX(vx_graph graph, vx_ima
 /************************************************************************************************************
 buildPyramid C Function
 ************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_buildPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 maxLevel, vx_uint32 border)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_buildPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 maxLevel, vx_uint32 border)
 {
 
 	vx_scalar ML = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &maxLevel);
@@ -1606,7 +1606,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_buildPyramid(vx_graph graph, vx_ima
 /************************************************************************************************************
 BuildOpticalFlow C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_buildOpticalFlowPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 S_width, vx_uint32 S_height, vx_int32 WinSize, vx_bool WithDerivatives, vx_int32 Pyr_border, vx_int32 derviBorder, vx_bool tryReuse)
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_buildOpticalFlowPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 S_width, vx_uint32 S_height, vx_int32 WinSize, vx_bool WithDerivatives, vx_int32 Pyr_border, vx_int32 derviBorder, vx_bool tryReuse)
 {
 
 	vx_scalar W = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_INT32, &S_width);

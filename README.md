@@ -68,11 +68,11 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 ### Windows
 * Windows 10
 * Windows SDK
-* Install the latest drivers and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
-  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * Visual Studio 2017
-  * Visual Studio extension for C++/WinRT
+* Install the latest drivers and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
 ### Linux
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html) 
@@ -81,7 +81,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   
 #### Prerequisites setup script for Linux - `MIVisionX-setup.py`
@@ -109,11 +109,17 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 
 ### Windows
 
+#### Using .msi packages
+
+* [MIVisionX-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX
+* [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX for WinML
+
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
-* Install [OpenCV](https://github.com/opencv/opencv/releases) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
-  * `OpenCV_DIR` environment variable should point to `OpenCV/build` folder
-* If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in .vcxproj files
-* Use MIVisionX.sln to build for x64 platform
+* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* Install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
+  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
+* Use `MIVisionX.sln` to build for x64 platform
 
 **NOTE:** vx_nn is not supported on Windows in this release
 

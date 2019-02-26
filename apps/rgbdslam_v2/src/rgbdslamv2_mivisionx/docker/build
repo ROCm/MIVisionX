@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Simple bash script to build rgbdslam pre-requisite image
+
+USERID="$(id -u)"
+sed -i "s/1000/$USERID/g" Dockerfile.rgbdslam
+docker build --no-cache -t mivisionx_rgbdslamv2 -f Dockerfile.rgbdslam .
+sed -i "s/$USERID/1000/g" Dockerfile.rgbdslam

@@ -19,12 +19,13 @@ This is an implementation of RGBDSLAM-V2 that leverages the parallel processing 
 * Dockerfile.rgbdslam builds an image with all the pre-requisites installed
 * Build
 ```bash
-cd Docker
+cd MIVisionX/apps/rgbdslam_v2/src/rgbdslam_mivisionx/docker
 ./build
 ```
 
 * Run
 ```bash
+cd MIVisionX/apps/rgbdslam_v2/src/rgbdslam_mivisionx/docker
 ./run
 ```
 

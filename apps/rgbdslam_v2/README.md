@@ -1,6 +1,6 @@
-# RGBDSLAM_V2-GPU
+# RGBDSLAM_V2 MIVisionX
 
-This is an implementation of RGBDSLAM-V2 that leverages the parallel processing power of AMD Radeon GPUs using OpenCL.
+This is an implementation of [RGBDSLAM_V2](https://github.com/felixendres/rgbdslam_v2) that utilizes MIVisionX for feature detection and ROCm OpenCL for offloading computations to Radeon GPUs.
 
 ## Prerequisites:
 

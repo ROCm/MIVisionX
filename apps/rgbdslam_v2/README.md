@@ -5,14 +5,14 @@ This is an implementation of [RGBDSLAM_V2](https://github.com/felixendres/rgbdsl
 ## Prerequisites:
 
 * Ubuntu 16.04
-* Radeon Open Compute (ROCm)
+* [Radeon Open Compute (ROCm)](https://rocm.github.io/ROCmInstall.html)
 * AMD MIVisionX
-* OpenCV 3
+* [OpenCV 3](https://github.com/opencv/opencv)
 * OpenVX
-* ROS Kinetic 
-* g2o
-* Eigen
-* PCL 1.8
+* [ROS Kinetic](http://wiki.ros.org/kinetic/Installation) 
+* Forked [g2o](https://github.com/felixendres/g2o)
+* [Eigen 3.2.10](https://bitbucket.org/eigen/eigen/src)
+* [PCL 1.8](https://github.com/PointCloudLibrary/pcl) following [these](https://github.com/felixendres/rgbdslam_v2/wiki/Instructions-for-Compiling-Rgbdslam-(V2)-on-a-Fresh-Ubuntu-16.04-Install-(Ros-Kinetic)-in-Virtualbox) instructions.
 
 ## Docker:
 

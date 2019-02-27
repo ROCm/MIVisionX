@@ -144,7 +144,7 @@ static vx_status VX_CALLBACK initializeScaleLayer(vx_node node, const vx_referen
         }
         else {
             cl_half pattern = 0;
-            data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(half)*input_dims[2], NULL, &err);
+            data->bnBias = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_half)*input_dims[2], NULL, &err);
             if (err) return VX_FAILURE;
             err = clEnqueueFillBuffer(data->handle->cmdq, data->bnBias, &pattern, sizeof(cl_half), 0, input_dims[2], 0, NULL, NULL);
         }

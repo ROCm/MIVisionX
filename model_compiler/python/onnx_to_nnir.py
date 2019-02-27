@@ -175,7 +175,7 @@ def onnx2ir(model, input_dims, output_dims, output_folder):
     graph.toFile(output_folder)
 
 def main():
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 7:
         print('Usage: python onnx2nnir.py <onnxModel> <nnirOutputFolder> --input-dims n,c,h,w --output-dims n,c,h,w')
         sys.exit(1)
     onnxFileName = sys.argv[1]

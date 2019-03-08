@@ -355,17 +355,13 @@ class IrGraph:
                 elif node.type in ['reshape']:
                     input = self.tensor_dict[node.inputs[0]]
                     param = node.attr.get('shape')
-                    print len(param), param
                     icount = 1
                     ocount = 1
                     #shape = [input.shape[0]]
                     shape = []
-                    print "shape = " , shape
                     for d in input.shape[1:]:
-                        print "i-d = " , d
                         icount = icount * d
                     for d in param:
-                        print "o-d = " , d
                         if d > 0:
                             ocount = ocount * d
                     index = 0
@@ -381,7 +377,6 @@ class IrGraph:
                         shape.append(1)
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
-                    print "o/p shape =", shape
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, shape)

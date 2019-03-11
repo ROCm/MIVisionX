@@ -32,7 +32,6 @@ To convert an ONNX model into AMD NNIR model:
 % python onnx_to_nnir.py <model.onnx> <nnirModelFolder> [OPTIONS]
 OPTIONS:
 	--input_dims n,c,h,w
-	--output_dims n,c,h,w
 ```
 
 To convert a caffemodel into AMD NNIR model:

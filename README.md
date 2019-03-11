@@ -198,10 +198,10 @@ sudo make install
 MIVisionX provides developers with docker images for Ubuntu 16.04, Ubuntu 18.04, CentOS 7.5, & CentOS 7.6. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 ### MIVisionX Docker
-* [Ubuntu 16.04](https://hub.docker.com/r/kiritigowda/mivisionx-ubuntu-16.04)
-* [Ubuntu 18.04](https://hub.docker.com/r/kiritigowda/mivisionx-ubuntu-18.04)
-* [CentOS 7.5](https://hub.docker.com/r/kiritigowda/centos)
-* [CentOS 7.6](https://hub.docker.com/r/kiritigowda/centos)
+* [Ubuntu 16.04](https://hub.docker.com/r/mivisionx/ubuntu-16.04)
+* [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04)
+* [CentOS 7.5](https://hub.docker.com/r/mivisionx/centos-7.5)
+* [CentOS 7.6](https://hub.docker.com/r/mivisionx/centos-7.6)
 
 ### Docker Workflow Sample on Ubuntu 16.04
 
@@ -238,18 +238,18 @@ sudo systemctl status docker
 
 * Step 3 - *Get Docker Image*
 ````
-sudo docker pull kiritigowda/mivisionx-ubuntu-16.04
+sudo docker pull mivisionx/ubuntu-16.04
 ````
 
 * Step 4 - *Run the docker image*
 ````
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host kiritigowda/mivisionx-ubuntu-16.04
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
 ````
   * Optional: Map localhost directory on the docker image
     * option to map the localhost directory with trained caffe models to be accessed on the docker image.
     * usage: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH} 
 ````
-sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host kiritigowda/mivisionx-ubuntu-16.04
+sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
 ````
 
 ## Release Notes

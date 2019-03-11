@@ -111,6 +111,7 @@ def onnx_value_info_to_data(info, dims):
 def onnx_graph_to_ir_graph(onnx_graph):
 	graph = IrGraph()
 	initializerList = []
+    	inputUser = False
 	for tensor in onnx_graph.initializer:
 		tensorName = onnx_name_to_ir_name(tensor.name)
 		initializerList.append(tensorName)
@@ -125,9 +126,14 @@ def onnx_graph_to_ir_graph(onnx_graph):
 			graph.addInput(onnx_value_info_to_data(tensor, input_dims))
 	for tensor in onnx_graph.output:
 		output_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]
+		if (x == 0 or x is None or x == '?' for x in output_dims):
+            		if inputUser == True:
+                		output_dims[0] = input_dims[0]
+		"""
 		if  (len(sys.argv) > 3) and (sys.argv[5] == "--output_dims"):
 			if (x == 0 or x is None or x == '?' for x in output_dims):
 				output_dims = sys.argv[6].split(',')
+		"""
 		graph.addOutput(onnx_value_info_to_data(tensor, output_dims))
 	tensorAliasList = {}
 	for onnx_node in onnx_graph.node:

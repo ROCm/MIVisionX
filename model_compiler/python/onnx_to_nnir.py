@@ -165,7 +165,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
             if inputUser == True:
                 output_dims[0] = input_dims[0]
         graph.addOutput(onnx_value_info_to_data(tensor, output_dims))
-    tensorAliasList = {}  
+    tensorAliasList = {} 
     for onnx_node in onnx_graph.node:
         if onnx_node.op_type == 'Dropout':
             tensorAliasList[onnx_node.output[0]] = onnx_node.input[0]

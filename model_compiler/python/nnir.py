@@ -74,6 +74,9 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
+            , 'zoom_factor' : 2          # zoom_factor
+            , 'scale' : 1.0              # scale value 
+            , 'biases' : []              # bias for ImageScaler operator
         }
         self.dict_set = []
 
@@ -109,8 +112,10 @@ class IrAttr:
             name = saL[0]
             value = saL[1]
             value_type = type(self.dict_values[name]).__name__
-            if value_type == 'list':
+            if value_type == 'list' and name != 'biases':
                 self.set(name, [int(x) for x in value.split(',')])
+            elif value_type == 'list' and name == 'biases':
+                self.set(name, [float(x) for x in value.split(',')])
             elif value_type == 'float':
                 self.set(name, float(value))
             elif value_type == 'str':
@@ -146,6 +151,8 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
+            'upsample' : 1,
+            'scale' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -358,7 +365,6 @@ class IrGraph:
                     param = input.shape
                     icount = 1
                     ocount = 1
-                    #shape = [input.shape[0]]
                     shape = []
                     for d in input.shape[1:]:
                         icount = icount * d
@@ -374,8 +380,9 @@ class IrGraph:
                             d = input.shape[index]
                         index += 1
                         shape.append(d)
-                    while len(shape) != 4:
-                        shape.append(1)
+                    if len(shape) < 4:
+                        while len(shape) != 4:
+                            shape.append(1)
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
                     local = IrTensor()
@@ -398,6 +405,26 @@ class IrGraph:
                     local.setFormat(format)
                     self.addLocal(local)
                 elif node.type in ['copy']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['upsample']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    zoom_factor = node.attr.get('zoom_factor')
+                    if zoom_factor != 2:
+                        raise ValueError("upsample: unsupported zoom_factor: " + str(zoom_factor))
+                    shape = [input.shape[0], input.shape[1], input.shape[2]*zoom_factor, input.shape[3]*zoom_factor]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)   
+                elif node.type in ['scale']:
+                    bias = node.attr.get('bias')
+                    scale = node.attr.get('scale')
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)

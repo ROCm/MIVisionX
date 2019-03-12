@@ -16,6 +16,14 @@ A simple application used to recognize hand written digits using openvx.
   <img src="../docs/images/DGtest.png">
 </p>
 
+## RGBDSLAM_v2
+
+A Visual SLAM framework used to create 3D maps for applications such as robotics, mapping terrain, and exploration of unknown territory. This particular implementation utilizes OpenVX and OpenCL to take advantage of AMD Radeon GPUs.
+
+RGBDSLAM_v2 original framework: https://github.com/felixendres/rgbdslam_v2
+
+[![MIVisionX RGBDSLAM_v2](../docs/images/mivisionx_rgbdslamv2.png)](https://youtu.be/zO-ZWHcFcFY)
+
 ## External Application
 * [MIVisionX-Classifier](https://github.com/kiritigowda/MIVisionX-Classifier) - This application runs know CNN image classifiers on live/pre-recorded video stream.
 * [YOLOv2](https://github.com/kiritigowda/YoloV2NCS) - Run tiny yolov2 (20 classes) with AMD's MIVisionX

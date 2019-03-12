@@ -423,8 +423,8 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)   
                 elif node.type in ['scale']:
-                    bias = node.attr.get('bias')
-                    scale = node.attr.get('scale')
+                    #bias = node.attr.get('bias')
+                    #scale = node.attr.get('scale')
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)

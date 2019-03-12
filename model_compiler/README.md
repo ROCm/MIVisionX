@@ -224,6 +224,8 @@ Supported ONNX operators are:
 - Softmax
 - Dropout
 - Reshape
+- Transpose
+- ImageScaler
 
 ## License
 Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.

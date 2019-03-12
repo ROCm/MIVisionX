@@ -602,7 +602,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """ % (node.inputs[0], node.outputs[0]))
             elif node.type == 'scale':
                 bias = node.attr.get('biases')
-                scale = node.attr.get('scale')
+                #scale = node.attr.get('scale')
                 f.write( \
 """
     { 

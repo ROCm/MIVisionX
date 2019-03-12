@@ -222,6 +222,7 @@ Supported ONNX operators are:
 - Mul
 - Softmax
 - Dropout
+- Reshape
 
 ## License
 Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.

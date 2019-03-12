@@ -158,6 +158,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
             if (len(sys.argv) > 3) and (sys.argv[3] == "--input_dims"):
                 if (x == 0 or x is None or x == '?' for x in input_dims):
                     input_dims = sys.argv[4].split(',')
+                    inputUser = True
             graph.addInput(onnx_value_info_to_data(tensor, input_dims))
     for tensor in onnx_graph.output:
         output_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]

@@ -577,13 +577,21 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy'or node.type == 'transpose':
+            elif node.type == 'copy'or node.type == 'transpose':  
+                if node.type == 'copy':
+                  order = 0
+                elif node.type == 'transpose':              
+                  if tensor.format == 'NHWC':
+                    order = 1
+                  if tensor.format == 'NCHW':
+                    order = 2
                 f.write( \
 """
+    { vx_node node = vxPermuteLayer(graph, %s, %d, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (node.inputs[0], node.outputs[0]))
+""" % (node.inputs[0], order, node.outputs[0]))
             elif node.type == 'upsample':
                 f.write( \
 """
@@ -592,6 +600,23 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }    
 """ % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'scale':
+                bias = node.attr.get('biases')
+                scale = node.attr.get('scale')
+                f.write( \
+"""
+    { 
+      vx_size dims_bias[1] = { %d };
+      vx_size dims_scale[1] = { %d };
+      vx_tensor tmp__tensor_bias = vxCreateVirtualTensor(graph, 1, dims_bias, %s, 0);
+      vx_tensor tmp__tensor_scale = vxCreateVirtualTensor(graph, 1, dims_scale, %s, 0);
+      vx_node node = vxScaleLayer(graph, %s,tmp__tensor_scale, tmp__tensor_bias, %s);
+      
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (len(bias), 1, tensor_type_nnir2openvx[tensor.type], tensor_type_nnir2openvx[tensor.type],\
+       node.inputs[0], node.outputs[0]))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \
@@ -1759,9 +1784,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
     graph = IrGraph()
-    graph.fromFile(inputFolder)
-    for tensor in graph.outputs:
-        print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]));    
+    graph.fromFile(inputFolder)   
     print('creating C code in ' + outputFolder + ' ...')
     generateCode(graph,argmaxOutput,outputFolder)
 

@@ -10,7 +10,7 @@ int main(int argc, char ** argv) {
 	if (argc < 5) {
 		cout << "Usage: YoloV2NCS.exe --image [image] --modelLoc [modelLocation]" << endl;
 		cout << "       YoloV2NCS.exe --capture 0     --modelLoc [modelLocation](Live Capture)" << endl;
-		cout << "       YoloV2NCS.exe --video [video] --modelLoc [modelLocation](Live Capture)" << endl;
+		cout << "       YoloV2NCS.exe --video [video] --modelLoc [modelLocation]" << endl;
 		return -1;
 	}
 
@@ -41,7 +41,7 @@ int main(int argc, char ** argv) {
 	else {
 		cout << "Usage: YoloV2NCS.exe --image [image] --modelLoc [modelLocation]" << endl;
 		cout << "       YoloV2NCS.exe --capture 0     --modelLoc [modelLocation](Live Capture)" << endl;
-		cout << "       YoloV2NCS.exe --video [video] --modelLoc [modelLocation](Live Capture)" << endl;
+		cout << "       YoloV2NCS.exe --video [video] --modelLoc [modelLocation]" << endl;
 		return -1;
 	}
 	return 0;

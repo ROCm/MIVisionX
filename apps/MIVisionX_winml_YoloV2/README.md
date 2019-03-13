@@ -19,8 +19,8 @@ ONNX version 1.3 is recommended.
 ### Step 3. Run tests
 ```	
 Usage: MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation]
-		   MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture)
-		   MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation]
+       MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture)
+       MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation]
 ```
 
 ### Update parameters

@@ -7,7 +7,8 @@
 ---
 
 ### Preliminaries
-Build [amd_winml](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/amd_openvx_extensions/amd_winml#build-using-visual-studio-2017-on-64-bit-windows-10)
+Install MIVisionX_WinML uing the [installer](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
+This will create a environment variable $MIVisionX_ROOT. 
 
 
 ### Step 1. Get ONNX model
@@ -17,6 +18,8 @@ ONNX version 1.3 is recommended.
 ### Step 2. Build the app using MIVisionX_winml_YoloV2.sln on Visual Studio.
 
 ### Step 3. Run tests
+In order to run the MIVisionX_winml_YolV2.exe, you need OpenVX.dll and vx_winml.dll files on the same directory. You can either copy it from $(MIVisionX_ROOT)\bin or add the $(MIVisionX_ROOT)\bin directory to the $PATH$ environment variable.
+
 ```	
 Usage: MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation]
        MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture)

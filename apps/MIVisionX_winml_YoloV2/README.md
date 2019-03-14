@@ -26,6 +26,16 @@ Usage: MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation]
        MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation]
 ```
 
+### Example
+
+MIVisionX_winml_YoloV2.exe --image image\cat.jpg --modelLoc model.onnx
+
+
+<p align="center">
+  <img src="./image/cat.jpg">
+  <img src="./image/cat-yolo.jpg">
+</p>
+
 ### Update parameters
 
 Please update parameters (biases, object names, etc) in /source/Region.cpp, and parameters (dim, blockwd, targetBlockwd, classe, etc) in /source/AnnieYoloDetect.cpp

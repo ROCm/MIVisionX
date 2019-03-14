@@ -20,11 +20,16 @@ ONNX version 1.3 is recommended.
 ### Step 3. Run tests
 In order to run the MIVisionX_winml_YolV2.exe, you need OpenVX.dll and vx_winml.dll files on the same directory. You can either copy it from $(MIVisionX_ROOT)\bin or add the $(MIVisionX_ROOT)\bin directory to the $PATH$ environment variable.
 
-```	
-Usage: MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation]
-       MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture)
-       MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation]
-```
+#### Usage:
+* Image
+
+      MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation]
+* Camera Capture
+
+      MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture)
+* Video
+
+      MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation]
 
 ### Example
 

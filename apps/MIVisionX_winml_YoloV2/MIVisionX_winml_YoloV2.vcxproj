@@ -97,11 +97,11 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include;$(OpenCV_DIR)\include;..\..\amd_openvx\openvx\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MIVisionX_ROOT)\include;$(OpenCV_DIR)\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\..\amd_openvx_extensions\x64\Debug;$(OpenCV_DIR)\x64\vc15\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MIVisionX_ROOT)\lib;$(OpenCV_DIR)\x64\vc15\lib;$(MIVisionX_ROOT)\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_world340d.lib;OpenVX.lib;vx_winml.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

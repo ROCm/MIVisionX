@@ -16,6 +16,12 @@ A simple application used to recognize hand written digits using openvx.
   <img src="../docs/images/DGtest.png">
 </p>
 
+# YOLOv2 using AMD winml (AMD NN Inference Engine)
+
+<p align="center">
+  <img src="./mivisionx_winml_yolov2/image/cat-yolo.jpg">
+</p>
+
 ## External Application
 * [MIVisionX-Classifier](https://github.com/kiritigowda/MIVisionX-Classifier) - This application runs know CNN image classifiers on live/pre-recorded video stream.
 * [YOLOv2](https://github.com/kiritigowda/YoloV2NCS) - Run tiny yolov2 (20 classes) with AMD's MIVisionX

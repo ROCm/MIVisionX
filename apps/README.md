@@ -16,7 +16,7 @@ A simple application used to recognize hand written digits using openvx.
   <img src="../docs/images/DGtest.png">
 </p>
 
-# YOLOv2 using AMD winml (AMD NN Inference Engine)
+## MIVisionX WinML YoloV2
 
 <p align="center">
   <img src="./mivisionx_winml_yolov2/image/cat-yolo.jpg">

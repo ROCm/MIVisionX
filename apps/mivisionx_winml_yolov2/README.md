@@ -1,6 +1,6 @@
 # YoloV2 using AMD WinML Extension
 
-*This project shows how to run tiny yolov2 (20 classes) with AMD's NN inference engine(Annie):*
+*This project shows how to run tiny yolov2 (20 classes) with MIVisionX RunTime:*
 + A c/c++ implementation for region layer of yolov2
 + A sample for running yolov2 with Annie
 

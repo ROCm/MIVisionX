@@ -51,12 +51,13 @@ static const std::string yoloClasses[20] = {
 
 class Visualize {
 public:
-	Visualize(cv::Mat &image, std::vector<DetectedObject> &results);
+	Visualize(cv::Mat &image, int confidence, std::vector<DetectedObject> &results);
 	~Visualize();
 	void show();
 	void LegendImage();
 
 private:
+	const int mConfidence;
 	const int mColorNum = 20;
 	const int mWidth = 416;
 	const int mHeight = 416;

@@ -13,7 +13,7 @@ int indexsort_comparator(const void *pa, const void *pb)
 
 float logistic_activate(float x)
 {
-    return 1./(1. + exp(-x));
+    return static_cast<float>(1./(1. + exp(-x)));
 }
 
 void transpose(float *src, float* tar, int k, int n)

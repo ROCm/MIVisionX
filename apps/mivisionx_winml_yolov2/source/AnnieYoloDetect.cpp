@@ -1,4 +1,5 @@
 #include "AnnieYoloDetect.h"
+#include <fstream>
 
 using namespace std; 
 using namespace cv;
@@ -19,8 +20,15 @@ using namespace cv;
         } \
 }
 
-AnnieYoloDetect::AnnieYoloDetect(string input, string modelLoc, int mode) : mInput(input), mModelLoc(modelLoc), mMode(mode) {
+AnnieYoloDetect::AnnieYoloDetect(string input, string modelLoc, int confidence, int mode) : mInput(input), mModelLoc(modelLoc), mConfidence(confidence), mMode(mode) {
 	mRegion = make_unique<Region>();
+	fstream file(modelLoc);
+	if (!file.is_open()) {
+		cout << "Unable to open the model " << mModelLoc << ". Please check the model directory." << endl;
+		file.close();
+		exit(1);
+	}
+	file.close();
 };
 
 AnnieYoloDetect::~AnnieYoloDetect() {};
@@ -96,8 +104,8 @@ void AnnieYoloDetect::detect() {
 	vx_map_id map_id;
 	vx_size stride[4];
 	int classes = 20;
-	float threshold = 0.18;
-	float nms = 0.4;
+	float threshold = static_cast<float>(0.18);
+	float nms = static_cast<float>(0.4);
 	int targetBlockwd = 13;
 
 	float * ptr = nullptr;
@@ -117,7 +125,7 @@ void AnnieYoloDetect::detect() {
 		cv_image_region.end_y = mHeight;
 		vx_imagepatch_addressing_t cv_image_layout;
 		cv_image_layout.stride_x = 3;
-		cv_image_layout.stride_y = input.step;
+		cv_image_layout.stride_y = (vx_int32)input.step;
 		vx_uint8 * cv_image_buffer = input.data;
 
 		ERROR_CHECK_STATUS(vxCopyImagePatch(input_image, &cv_image_region, 0,
@@ -129,9 +137,9 @@ void AnnieYoloDetect::detect() {
 		ERROR_CHECK_STATUS(vxQueryTensor(output, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
 		ERROR_CHECK_STATUS(vxMapTensorPatch(output, num_of_dims, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
 
-		mRegion->GetDetections(ptr, out_dim[2], out_dim[1], out_dim[0], classes, input.cols, input.rows, threshold, nms, targetBlockwd, results);
+		mRegion->GetDetections(ptr, (int)out_dim[2], (int)out_dim[1], (int)out_dim[0], classes, input.cols, input.rows, threshold, nms, targetBlockwd, results);
 		ERROR_CHECK_STATUS(vxUnmapTensorPatch(output, map_id));
-		mVisualize = make_unique<Visualize>(img_cp, results);
+		mVisualize = make_unique<Visualize>(img_cp, mConfidence, results);
 		mVisualize->show();
 		waitKey(0);
 	}
@@ -162,7 +170,7 @@ void AnnieYoloDetect::detect() {
 			cv_image_region.end_y = mHeight;
 			vx_imagepatch_addressing_t cv_image_layout;
 			cv_image_layout.stride_x = 3;
-			cv_image_layout.stride_y = input.step;
+			cv_image_layout.stride_y = (vx_int32)input.step;
 			vx_uint8 * cv_image_buffer = input.data;
 
 			ERROR_CHECK_STATUS(vxCopyImagePatch(input_image, &cv_image_region, 0,
@@ -173,9 +181,9 @@ void AnnieYoloDetect::detect() {
 			ERROR_CHECK_STATUS(vxQueryTensor(output, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
 			ERROR_CHECK_STATUS(vxMapTensorPatch(output, num_of_dims, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
 
-			mRegion->GetDetections(ptr, out_dim[2], out_dim[1], out_dim[0], classes, input.cols, input.rows, threshold, nms, targetBlockwd, results);
+			mRegion->GetDetections(ptr, (int)out_dim[2], (int)out_dim[1], (int)out_dim[0], classes, input.cols, input.rows, (float)threshold, nms, targetBlockwd, results);
 			ERROR_CHECK_STATUS(vxUnmapTensorPatch(output, map_id));
-			mVisualize = make_unique<Visualize>(img_cp, results);
+			mVisualize = make_unique<Visualize>(img_cp, mConfidence, results);
 			mVisualize->show();
 			mVisualize->LegendImage();
 			if (waitKey(30) >= 0) break;

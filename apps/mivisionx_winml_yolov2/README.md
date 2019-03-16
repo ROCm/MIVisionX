@@ -6,7 +6,7 @@
 
 ---
 
-### MIVisionX_WinML-installer.msi - Prerequisites
+### [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Prerequisites
 
 * Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
 * Windows SDK, [build `17763` or later](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)

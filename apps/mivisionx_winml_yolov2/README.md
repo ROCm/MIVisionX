@@ -1,4 +1,4 @@
-# YOLOv2 using AMD winml (AMD NN Inference Engine)
+# YoloV2 using AMD WinML Extension
 
 *This project shows how to run tiny yolov2 (20 classes) with AMD's NN inference engine(Annie):*
 + A c/c++ implementation for region layer of yolov2

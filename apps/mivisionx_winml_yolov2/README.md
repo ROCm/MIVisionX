@@ -6,16 +6,18 @@
 
 ---
 
-### [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Prerequisites
+## Pre-requisites
 
-* Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
-* Windows SDK, [build `17763` or later](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)
-* Visual Studio 2017, [version `15.7.4` or later](https://developer.microsoft.com/en-us/windows/downloads)
-    * Visual Studio extension for C++/WinRT
-* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
-  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
+### Option 1: Using pre-built installer
+[MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases) 
+
+* The pre-requisites and instructions are under the tab "Install Packages on Windows".
+
+### Option 2: Build MIVisionX winML extension library
+
+[MIVisionX winML extension library](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/amd_openvx_extensions/amd_winml#amd-winml-extension)
+
+* Use the above link for building instructions.
 
 ### Step 1. Get ONNX model
 Train your own YoloV2 ONNX model or get it from [onnx github](https://github.com/onnx/models/tree/master/tiny_yolov2).

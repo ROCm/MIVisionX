@@ -44,7 +44,7 @@ In order to run the MIVisionX_winml_YolV2.exe, you need OpenVX.dll and vx_winml.
       MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation] --confidence(default = 20)
 
 The confidence parameter is an optional parameter which sets the confidence level of detection.
-Please lower the confidence level if the detection is not good enough.
+Lower the confidence level if the detection is not good enough.
 
 ### Example
 
@@ -57,5 +57,5 @@ MIVisionX_winml_YoloV2.exe --image image\cat.jpg --modelLoc model.onnx
 
 ### Update parameters
 
-Please update parameters (biases, object names, etc) in /source/Region.cpp, and parameters (dim, blockwd, targetBlockwd, classe, etc) in /source/AnnieYoloDetect.cpp
+Please update parameters (biases, object names, etc) in /source/Region.cpp, and parameters (dim, blockwd, targetBlockwd, classes, etc) in /source/AnnieYoloDetect.cpp
 

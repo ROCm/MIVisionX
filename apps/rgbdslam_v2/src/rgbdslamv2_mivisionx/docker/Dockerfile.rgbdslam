@@ -6,8 +6,8 @@ MAINTAINER jeremiah.liou@icuro.com
 ############################################################
 
 # This ROCm-docker part is from the author below
-#FROM ubuntu:16.04
-#MAINTAINER Peng Sun <Peng.Sun@amd.com>
+# FROM ubuntu:16.04
+# MAINTAINER Peng Sun <Peng.Sun@amd.com>
 
 # Initialize the image
 # Modify to pre-install dev tools and ROCm packages
@@ -107,7 +107,6 @@ RUN /bin/bash -c " \
    echo \"bind j select-pane -D\" >> ~/.tmux.conf; \
    echo \"bind k select-pane -U\" >> ~/.tmux.conf; \
    echo \"bind l select-pane -R\" >> ~/.tmux.conf; \
-#   echo \"export LD_LIBRARY_PATH=/usr/local/cuda-9.0/lib64:/usr/lib/aarch64-linux-gnu/tegra:\" >> ~/.bashrc; \
    echo \"export LANG=\"en_US.UTF-8\"\" >> ~/.bashrc; \
    echo \"gsettings set org.gnome.Terminal.Legacy.Settings default-show-menubar false\" >> ~/.bashrc; \
    gconftool-2 --set \"/apps/gnome-terminal/profiles/Default/use_theme_background\" --type bool false; \
@@ -154,7 +153,7 @@ RUN sudo /bin/bash -c " \
        cd build; \
        sed -i '/SET(G2O_EIGEN3_INCLUDE\ \${EIGEN3_INCLUDE_DIR}/c\SET(G2O_EIGEN3_INCLUDE\ \"\/home\/boat\/deps\/eigen\"\ CACHE\ PATH\ \"Directory\ of\ Eigen3\")' /home/boat/deps/g2o/CMakeLists.txt; \
        cmake ../; \
-       make -j16; \
+       make -j$(nproc); \
        sudo make install; \
        sudo ldconfig; \
     # Install PCL 1.8
@@ -166,7 +165,7 @@ RUN sudo /bin/bash -c " \
        mkdir build; \
        cd build; \
        cmake ../; \
-       make -j8; \
+       make -j1; \
        sudo make install; \
        sudo ldconfig"
 
@@ -190,7 +189,7 @@ RUN /bin/bash -c " \
                            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev; \
    git clone https://github.com/opencv/opencv.git; \
    cd opencv; \
-   git checkout -b v3.3.1 3.3.1; \
+   git checkout -b v3.4.3 3.4.3; \
    cd ~/opencv; \
    mkdir build; \
    cd build; \
@@ -212,16 +211,14 @@ RUN /bin/bash -c " \
     -DWITH_FFMPEG=ON \
     -DWITH_GSTREAMER=ON \
     -DWITH_GSTREAMER_0_10=OFF \
-    -DWITH_CUDA=ON \
     -DWITH_GTK=ON \
     -DWITH_VTK=OFF \
     -DWITH_OPENVX=ON \
     -DWITH_TBB=ON \
     -DWITH_1394=OFF \
     -DWITH_OPENEXR=OFF \
-    -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-9.0 \
     ../; \
-   make -j16; \
+   make -j$(nproc); \
    sudo make install; \
    sudo ldconfig; \
    echo \"export CMAKE_PREFIX_PATH=/usr/local:$CMAKE_PREFIX_PATH\" >> ~/.bashrc; \
@@ -239,59 +236,8 @@ RUN /bin/bash -c " \
       sudo ln -s /opt/rocm/opencl/include/CL /usr/include; \
       sudo ln -s /opt/rocm/opencl/include/CL /usr/include/x86_64-linux-gnu; \
       cd ~; \
-   # Install OpenVX Pre-requisites
       sudo apt-get update; \
       sudo apt-get install -y libprotobuf-dev; \
-   # Install rocm-cmake
-      git clone https://github.com/RadeonOpenCompute/rocm-cmake.git; \
-      cd rocm-cmake; \
-      git checkout ac45c6e269d1fd1dbd5dfc81cfe47a7452c96daf; \
-      mkdir build; \
-      cd build; \
-      cmake ..; \
-      sudo cmake --build . --target install; \
-   # Install MIOpenGEMM
-      cd ~; \
-      git clone https://github.com/ROCmSoftwarePlatform/MIOpenGEMM.git; \
-      git checkout 9547fb9e8499a5a9f16da83b1e6b749de82dd9fb; \
-      cd MIOpenGEMM; \
-      mkdir build; \
-      cd build; \
-      cmake -DOPENCL_LIBRARIES=/opt/rocm/opencl/lib/x86_64/libOpenCL.so -DOPENCL_INCLUDE_DIRS=/opt/rocm/opencl/include/CL ..; \
-      make miopengemm; \
-      sudo make install; \
-      sudo ldconfig; \
-   # Install MIOpen Pre-requisites
-      cd ~; \
-      git clone https://github.com/RadeonOpenCompute/clang-ocl.git; \
-      cd clang-ocl; \
-      git checkout 799713643b5591a3b877c586ef2c7fbc012af819; \
-      mkdir build; \
-      cd build; \
-      cmake ..; \
-      sudo cmake --build . --target install; \
-   # Install Half
-      cd ~; \
-      mkdir half; \
-      cd half; \
-      wget https://versaweb.dl.sourceforge.net/project/half/half/1.12.0/half-1.12.0.zip; \
-      unzip half-1.12.0.zip; \
-   # Install rocBLAS
-      cd ~; \
-      sudo apt-get update; \
-      sudo apt-get install rocblas; \
-   # Install MIOpen Dependencies
-      cd ~; \
-      git clone https://github.com/ROCmSoftwarePlatform/MIOpen.git; \
-      git checkout f491e31070e636f2a57dc17bb974876aa084e5f3; \
-      cd MIOpen; \
-      sudo cmake -P install_deps.cmake; \
-   # Build MIOpen (Built with OpenCL)
-      mkdir build; \
-      cd build; \
-      cmake -DMIOPEN_BACKEND=OpenCL -DOPENCL_LIBRARIES=/opt/rocm/opencl/lib/x86_64/libOpenCL.so -DOPENCL_INCLUDE_DIRS=/opt/rocm/opencl/include/CL ..; \
-      make; \
-      sudo make install; \
    # Install MIVisionX
       sudo apt-get install -y mivisionx; \
       sudo ln -s /opt/rocm/mivisionx/lib/libopenvx.so /usr/lib; \

@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <VX/vx.h>
-#include "vx_opencv/OpenCV_Tunnel.h"
-#include "vx_opencv/OpenCV_VX_Functions.h"
-#include "vx_opencv/publishkernels.h"
-#include "vx_opencv/vx_opencv.h"
+// #include "vx_opencv/OpenCV_Tunnel.h"
+// #include "vx_opencv/OpenCV_VX_Functions.h"
+// #include "vx_opencv/publishkernels.h"
+// #include "vx_opencv/vx_opencv.h"
 #include "opencv2/imgproc.hpp"
+#include <vx_ext_opencv.h>
 
 extern vx_uint32 image_width;
 extern vx_uint32 image_height;

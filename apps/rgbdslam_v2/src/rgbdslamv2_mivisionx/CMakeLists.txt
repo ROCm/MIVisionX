@@ -221,7 +221,13 @@ qt5_wrap_cpp(QT_MOC_HPP ${QT_MOC} OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED -
 # OpenVX Headers
 ##############################################################################
 
-include_directories(/home/boat/amdovx-modules/deps/amdovx-core/openvx/include/VX)
+include_directories(/opt/rocm/mivisionx/include/VX)
+
+##############################################################################
+# MIVisionX Headers
+##############################################################################
+
+include_directories(/opt/rocm/mivisionx/include)
 
 ##############################################################################
 # Sources to Compile

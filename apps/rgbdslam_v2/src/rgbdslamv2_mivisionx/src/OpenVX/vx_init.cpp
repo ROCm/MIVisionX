@@ -90,7 +90,7 @@ vx_status init_openvx(){
                 vx_node nodes[] = {
                     vxColorConvertNode(graph_vx, input_rgb_image, yuv_image),
                     vxChannelExtractNode(graph_vx, yuv_image, VX_CHANNEL_Y, luma_image),
-                    vxExtCvNode_ORBdetect(graph_vx, luma_image, luma_image, currentKeypoints, features, scaleFactor, nlevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize)
+                    vxExtCvNode_orbDetect(graph_vx, luma_image, luma_image, currentKeypoints, features, scaleFactor, nlevels, edgeThreshold, firstLevel, WTA_K, scoreType, patchSize)
                 };
                 
                 for(vx_size i = 0; i < sizeof(nodes)/sizeof(nodes[0]); i++){

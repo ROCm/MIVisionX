@@ -67,10 +67,10 @@
 // OpenVX Headers
 #include <stdio.h>
 #include <VX/vx.h>
-#include "OpenVX/vx_opencv/OpenCV_Tunnel.h"
-#include "OpenVX/vx_opencv/OpenCV_VX_Functions.h"
-#include "OpenVX/vx_opencv/publishkernels.h"
-#include "OpenVX/vx_opencv/vx_opencv.h"
+// #include "OpenVX/vx_opencv/OpenCV_Tunnel.h"
+// #include "OpenVX/vx_opencv/OpenCV_VX_Functions.h"
+// #include "OpenVX/vx_opencv/publishkernels.h"
+// #include "OpenVX/vx_opencv/vx_opencv.h"
 
 #include "OpenVX/vx_init.h"
 

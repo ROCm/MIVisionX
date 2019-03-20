@@ -30,7 +30,7 @@ find_package(OpenCL REQUIRED)
 find_package(OpenCV REQUIRED)
 
 include_directories(../../../amd_openvx/openvx/include ../../../amd_openvx_extensions/amd_nn)
-
+include_directories(${OpenCL_INCLUDE_DIRS})
 list(APPEND SOURCES
 	common.cpp
 	arguments.cpp

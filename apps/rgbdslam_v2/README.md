@@ -12,7 +12,7 @@ This is an implementation of [RGBDSLAM_V2](https://github.com/felixendres/rgbdsl
 * [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * [ROS Kinetic](http://wiki.ros.org/kinetic/Installation)
 
-Follow these steps to clone and install the prerequisites of RGBDSLAM_v2 on ROS Kinetic: [Link](https://github.com/felixendres/rgbdslam_v2/wiki/Instructions-for-Compiling-Rgbdslam-(V2)-on-a-Fresh-Ubuntu-16.04-Install-(Ros-Kinetic)-in-Virtualbox)
+Follow these steps to clone and install the prerequisites of RGBDSLAM_v2 on ROS Kinetic: [Link](INSTRUCTIONS_PREREQUISITES.md)
 
 * Forked version of [g2o](https://github.com/felixendres/g2o)
 * [Eigen 3.2.10](https://bitbucket.org/eigen/eigen/src)

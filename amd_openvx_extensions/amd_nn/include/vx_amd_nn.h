@@ -180,18 +180,17 @@ VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input
                                                  vx_float32 offset, vx_tensor output, vx_float32 maxSize, vx_array variance);
 
 /* \brief [Graph] Creates a Convolutional Network Crop Layer Node.
- * \details Cropping is done on the width and height dimensions of the <tt>\ref vx_tensor</tt>. Like Upsampling Layer Node, we use the term x for the width dimension and y for the height dimension.\n
+ * \details Cropping is done on the dimensions of the input vx_tensor to fit the dimensions of the reference tensor. 
  * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
  * \param [in] graph The handle to the graph.
- * \param [in] inputs The input tensor data.
- * \param [out] outputs The output tensor data. Output will have the same number of dimensions as input. Output tensor data type must be same as the inputs.
- * \param [x_coord] x_coord The x coordinate of the upper left point that will be cropped.
- * \param [y_coord] y_coord The y coordinate of the upper left point that will be cropped.
- * \param [width] width The width of the area that will be cropped.
- * \param [height] height The height of the are that will be cropped.
+ * \param [in] input The input tensor data.
+ * \param [in] ref The reference tensor data.
+ * \param [out] output The cropped tensor data.
+ * \param [axis] The dimensions including and trailing 'axis' are cropped.
+ * \param [offset1] The offset to set the shift for all/each dimension. If only one offset is given, then all dimensions are offset by this amount. Otherwise, the number of offsets must equal the number of cropped axes.
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height);
+VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor ref, vx_tensor output, vx_int32 axis, vx_int32 offset1, vx_int32 offset2, vx_int32 offset3, vx_int32 offset4);
 #endif

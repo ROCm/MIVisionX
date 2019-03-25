@@ -400,8 +400,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['crop']:
                     input = self.tensor_dict[node.inputs[0]]
-                    axis = node.attr.get('axis')
-                    offset = node.attr.get('offset')
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)

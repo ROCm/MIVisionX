@@ -179,18 +179,21 @@ VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input,
 VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input_1, vx_tensor input_2, vx_float32 minSize, vx_array aspect_ratio, vx_int32 flip, vx_int32 clip, 
                                                  vx_float32 offset, vx_tensor output, vx_float32 maxSize, vx_array variance);
 
-/* \brief [Graph] Creates a Convolutional Network Crop Layer Node.
+/* \brief [Graph] Creates a Crop Layer Node.
  * \details Cropping is done on the dimensions of the input vx_tensor to fit the dimensions of the reference tensor. 
  * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
  * \param [in] graph The handle to the graph.
  * \param [in] input The input tensor data.
  * \param [in] ref The reference tensor data.
  * \param [out] output The cropped tensor data.
- * \param [axis] The dimensions including and trailing 'axis' are cropped.
- * \param [offset1] The offset to set the shift for all/each dimension. If only one offset is given, then all dimensions are offset by this amount. Otherwise, the number of offsets must equal the number of cropped axes.
+ * \param [axis] The dimensions including and trailing 'axis' are cropped. [n x c x h x w]
+ * \param [offset1] The offset to set the shift for dimension n. 
+ * \param [offset2] The offset to set the shift for dimension c. 
+ * \param [offset3] The offset to set the shift for dimension h. 
+ * \param [offset4] The offset to set the shift for dimension w.
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor ref, vx_tensor output, vx_int32 axis, vx_int32 offset1, vx_int32 offset2, vx_int32 offset3, vx_int32 offset4);
+VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor ref, vx_tensor output, vx_scalar axis, vx_scalar offset1, vx_scalar offset2, vx_scalar offset3, vx_scalar offset4);
 #endif

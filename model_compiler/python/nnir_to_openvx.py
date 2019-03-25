@@ -592,6 +592,28 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }    
 """ % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'crop':
+                offset = node.attr.get('offset')
+                f.write( \
+"""
+    { 
+      vx_int32 axis = %d;
+      vx_int32 offset1 = %d;
+      vx_int32 offset2 = %d;
+      vx_int32 offset3 = %d;
+      vx_int32 offset4 = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));      
+      vx_scalar s_offset1 = vxCreateScalarWithSize(context, VX_TYPE_INT32, &offset1, sizeof(offset1));
+      vx_scalar s_offset2 = vxCreateScalarWithSize(context, VX_TYPE_INT32, &offset2, sizeof(offset2));
+      vx_scalar s_offset3 = vxCreateScalarWithSize(context, VX_TYPE_INT32, &offset3, sizeof(offset3));
+      vx_scalar s_offset4 = vxCreateScalarWithSize(context, VX_TYPE_INT32, &offset4, sizeof(offset4));
+      vx_node node = vxCropLayer(graph, %s, %s, %s, s_axis, s_offset1, s_offset2, s_offset3, s_offset4);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.attr.get('axis'), offset[0], offset[1], offset[2], offset[3], node.inputs[0], node.inputs[1], node.outputs[0]))
+
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \

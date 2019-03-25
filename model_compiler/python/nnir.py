@@ -74,6 +74,7 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
+            , 'offset' : []               # list of offsets
         }
         self.dict_set = []
 
@@ -146,6 +147,7 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
+            'crop' : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -396,6 +398,16 @@ class IrGraph:
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['crop']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    axis = node.attr.get('axis')
+                    offset = node.attr.get('offset')
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

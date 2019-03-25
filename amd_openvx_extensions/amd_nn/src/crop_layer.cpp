@@ -29,64 +29,46 @@ static vx_status VX_CALLBACK validateCropLayer(vx_node node, const vx_reference 
     
     if (axis < 0 || axis > 3) {
         printf("validate: crop: Axis value should be 0~3\n");
+        printf("validate: crop: Axis = %d\n", axis);
         return VX_ERROR_INVALID_PARAMETERS;
-    }
-    vx_size offset_num = 0;
-    
-    // check number of offsets
-    for (int i = 4; i < 8; i++) {
-        if (parameters[i]) {
-            offset_num++;
-        }
-    }
+    } 
 
-    if (offset_num < 0 || offset_num > 4) {
-        printf("validate: crop: Offset size should be 1~4\n");
-        return VX_ERROR_INVALID_PARAMETERS;
-    }
+    vx_uint32 new_axis = 3 - axis;
 
-    // offset number + axis should equal 4 unless offset number is 1    
-    if (offset_num != 1 && offset_num + axis != 4) {
-        printf("validate: crop: Axis value + Offset size should equal 4\n");
-        return VX_ERROR_INVALID_PARAMETERS;
-    }
-    
-    
-    vx_size offset[4];
+    int offset[4];
 
-    if (offset_num == 1) {
-        for (int i = 0; i < 4; i++) {
-            ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));    
-        }
-    }
-    else {
-        for (int i = 0; i < offset_num; i++) {
-            ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3+offset_num-i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        }
-    }
+    for (int i = 0; i < 4; i++) {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[7-i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));  
     
-    //check boundary
-    for (int i = 0; i < offset_num; i++) {
         if ((int)(offset[i] < 0)) {
             printf("validate: crop: Offset should be larger than 0\n");
             return VX_ERROR_INVALID_PARAMETERS;
         } 
-        else if (((int)(offset[i] + input_dims2[i]) > (int)input_dims[i])) {
-            printf("validate: crop: Offset out of bound\n");
-            printf("%d + %d > %d\n", (int)offset[i], (int)input_dims2[i], (int)input_dims[i]);
+        if ((i > new_axis) && ((int)offset[i] != 0)) {
+            printf("validate: crop: Offset(s) before axis should equal 0\n");
+            printf("validate: crop: Axis = %d, Offset[%d] = %d\n", (int)axis, i, (int)offset[3-i]);
+            return VX_ERROR_INVALID_PARAMETERS;
+        }  
+
+        if (i <= new_axis) {
+            //check boundary
+            if ((int)(offset[i] + input_dims2[i]) > (int)input_dims[i]) {
+                printf("validate: crop: Offset out of bound\n");
+                printf("%d + %d > %d\n", (int)offset[i], (int)input_dims2[i], (int)input_dims[i]);
+                return VX_ERROR_INVALID_PARAMETERS;
+            }
+        }
+
+        vx_size val_dim = (i <= new_axis) ? input_dims2[i] : input_dims[i];
+        
+        //check output dimension
+        if (output_dims[i] != val_dim) {
+            printf("validate: crop: Output dimension should match the input dimension based on the axis\n");
+            printf("%d != %d\n", (int)output_dims[i], (int)val_dim);
             return VX_ERROR_INVALID_PARAMETERS;
         }
     }
         
-    //check output dimension
-    vx_uint32 new_axis = 3 - axis;
-    for (int i= 0; i < 4; i++) {
-        if (output_dims[i] != (i <= (new_axis) ? input_dims2[i] : input_dims[i])) {
-            printf("validate: crop: Output dimension should match the input dimension based on the axis\n");
-            return VX_ERROR_INVALID_PARAMETERS;
-        }
-    }
-
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, &output_dims, sizeof(output_dims)));
@@ -149,44 +131,11 @@ static vx_status VX_CALLBACK opencl_codegen(
     }
     int opencl_global_work_n = (3 < new_axis) ? input_dims2[3] : input_dims[3];
 
-    vx_size offset_num = 0;
-
-    // check number of offsets
-    for (int i = 4; i < 8; i++) {
-        if (parameters[i]) {
-            offset_num++;
-        }
-    }
-
     // set offset depending on the axis
     int offset[4];
-    int j = 4;
-    for (int i = 0; i < 4; i++) {
-        if (i < axis) {
-            offset[i] = 0;
-        }
-        else {
-            if (offset_num == 1) {
-                ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[j], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-            }
-            else {
-                ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[j], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-                j++;
-            }
-        }   
-    }
 
-    char offset_2[64];
-    if (offset_num >= 2) {
-        strcpy(offset_2, ", uint offset2");
-    }
-    char offset_3[64];
-    if (offset_num >= 3) {
-        strcpy(offset_3, ", uint offset3");
-    }
-    char offset_4[64];
-    if (offset_num >= 4) {
-        strcpy(offset_4, ", uint offset4");
+    for (int i = 0; i < 4; i++) {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4+i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
     
     if (num_of_dims == 4) {
@@ -194,7 +143,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         if (type == VX_TYPE_FLOAT32) {
         sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis, uint offset %s %s %s) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis, uint offset1, uint offset2, uint offset3, uint offset4) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
@@ -206,12 +155,12 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "       *(__global float *)&out[0] = value;\n"
                 "       out -= offset;\n"
                 "   }\n"
-                "}\n", opencl_kernel_function_name, offset_2, offset_3, offset_4, opencl_global_work_n, offset[3], offset[2], offset[1], offset[0]);
+                "}\n", opencl_kernel_function_name, opencl_global_work_n, offset[3], offset[2], offset[1], offset[0]);
         }
         else {
             sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis, uint offset %s %s %s) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis, uint offset1, uint offset2, uint offset3, uint offset4) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
@@ -223,7 +172,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "       *(__global half *)&out[0] = value;\n"
                 "       out -= offset;\n"
                 "   }\n"
-                "}\n", opencl_kernel_function_name, offset_2, offset_3, offset_4, opencl_global_work_n, offset[3], offset[2], offset[1], offset[0]);
+                "}\n", opencl_kernel_function_name, opencl_global_work_n, offset[3], offset[2], offset[1], offset[0]);
         }
         opencl_kernel_code = item;
     }
@@ -249,9 +198,9 @@ vx_status publishCropLayer(vx_context context) {
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
 
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
     ERROR_CHECK_STATUS(vxReleaseKernel(&kernel));

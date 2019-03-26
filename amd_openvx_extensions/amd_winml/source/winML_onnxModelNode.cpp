@@ -21,6 +21,7 @@ THE SOFTWARE.
 */
 
 #include"internal_publishKernels.h"
+#include "vx_winml.h"
 
 // deploy deive kinds
 const LearningModelDeviceKind deviceKindArray[5] =	{	LearningModelDeviceKind::Default,
@@ -29,23 +30,26 @@ const LearningModelDeviceKind deviceKindArray[5] =	{	LearningModelDeviceKind::De
 														LearningModelDeviceKind::DirectXHighPerformance,
 														LearningModelDeviceKind::DirectXMinPower
 													};
-// Node Global variables
-LearningModel model = nullptr;
-LearningModelSession session = nullptr;
-LearningModelBinding binding = nullptr;
+// Node Struct variables
+struct learning_model {
+	LearningModel model = nullptr;
+	LearningModelSession session = nullptr;
+	LearningModelBinding binding = nullptr;
+};
+
 
 // load ONNX model to WinML
-static void LoadModelFromPath(hstring modelLocation)
+static void LoadModelFromPath(hstring modelLocation, learning_model *models)
 {
-	model = LearningModel::LoadFromFilePath(modelLocation);
+	models->model = LearningModel::LoadFromFilePath(modelLocation);
 }
 
 // bind the ONNX model
-static void BindModel(hstring inputTensorName, hstring outputTensorName, int64_t * inputDim, int64_t *outputDim, int deviceIndex)
+static void BindModel(hstring inputTensorName, hstring outputTensorName, int64_t * inputDim, int64_t *outputDim, int deviceIndex, learning_model *models)
 {
 	// create a session and binding
-	session = LearningModelSession{ model, LearningModelDevice(deviceKindArray[deviceIndex]) };
-	binding = LearningModelBinding{ session };
+	models->session = LearningModelSession{ models->model, LearningModelDevice(deviceKindArray[deviceIndex]) };
+	models->binding = LearningModelBinding{ models->session };
 
 	// bind the intput image (bind input in kernel)
 	vector<int64_t> inputShape({ inputDim[3],  inputDim[2],  inputDim[1],  inputDim[0] });
@@ -54,15 +58,15 @@ static void BindModel(hstring inputTensorName, hstring outputTensorName, int64_t
 
 	// bind the output
 	vector<int64_t> outputShape({ outputDim[3],  outputDim[2],  outputDim[1],  outputDim[0] });
-	binding.Bind(outputTensorName, TensorFloat::Create(outputShape));
+	models->binding.Bind(outputTensorName, TensorFloat::Create(outputShape));
 }
 
 // close and clear session
-static void closeWinmlNode()
+static void closeWinmlNode(learning_model *models)
 {
-	binding.Clear();
-	session.Close();
-	model.Close();
+	models->binding.Clear();
+	models->session.Close();
+	models->model.Close();
 }
 
 /************************************************************************************************************
@@ -177,6 +181,7 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_OutputValidator(vx_node node,
 
 		STATUS_ERROR_CHECK(vxReleaseTensor(&outputTensor));
         }
+		
         return status;
 }
 
@@ -247,11 +252,28 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Initialize(vx_node node, cons
 			outputDims[3] = output_dims_4[3];
 		}
 		
-		// load model location
-		LoadModelFromPath(ModelLocation);
+		vx_array model_array = (vx_array)parameters[6];
 
+		vx_size size = 0;
+		
+		learning_model *models = new learning_model;
+		memset(models, 0, sizeof(*models));
+				
+		// load model location
+		LoadModelFromPath(ModelLocation, models);
+		
 		// bind the model
-		BindModel(ModelInputTensorName, ModelOutputTensorName, inputDims, outputDims, deviceKindIndex);
+		BindModel(ModelInputTensorName, ModelOutputTensorName, inputDims, outputDims, deviceKindIndex, models);
+		
+		void *model_ptr = &models;
+		
+		//vx_size size = 0;
+		vx_size size_p = 0, num_items = 0;
+		vxAddArrayItems(model_array, 1, model_ptr, sizeof(VX_TYPE_SIZE));
+		vxQueryArray(model_array, VX_ARRAY_ATTRIBUTE_ITEMSIZE, &size, sizeof(size));
+		
+		vxSetParameterByIndex(node, 6, (vx_reference)model_array);
+		vxCopyArrayRange(model_array, 0, size, 0, parameters[6], VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 
 		// release scalars
 		STATUS_ERROR_CHECK(vxReleaseScalar(&modelLocationScalar));
@@ -273,12 +295,12 @@ param [in] paramete.
 param [in] num.
 *************************************************************************************************************/
 static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Uninitialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
-{
+{	
+		void **model_ptr = NULL;
+		learning_model *model_struct = static_cast<learning_model *>(*model_ptr);
         vx_status status = VX_SUCCESS;
-
 		// close and delete resources
-		closeWinmlNode();
-		
+		closeWinmlNode(model_struct);
         return status;
 }
 
@@ -291,6 +313,22 @@ param [in] num.
 static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Kernel(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
         vx_status status = VX_SUCCESS;
+		
+		vx_array model_array = (vx_array)parameters[6];
+		vx_size size = 0, num_items = 0;
+		vx_enum type;
+
+		STATUS_ERROR_CHECK(vxQueryArray((vx_array)model_array, VX_ARRAY_ATTRIBUTE_ITEMSIZE, &size, sizeof(size)));
+		STATUS_ERROR_CHECK(vxQueryArray((vx_array)model_array, VX_ARRAY_ATTRIBUTE_ITEMTYPE, &type, sizeof(type)));
+		if (type != VX_TYPE_SIZE)  return VX_ERROR_INVALID_TYPE;
+		
+		void **model_ptr = NULL;
+		vx_size stride = 0ul;
+		STATUS_ERROR_CHECK(vxAccessArrayRange((vx_array)model_array, 0, 1, &stride, (void**)&model_ptr, VX_READ_ONLY));
+		STATUS_ERROR_CHECK(vxCommitArrayRange((vx_array)model_array, 0, 1, model_ptr));
+		
+		learning_model *model_struct = new learning_model;
+		model_struct = static_cast<learning_model *>(*model_ptr);
 
 		// load input tensor into WinML TensorFloat
 		vx_tensor inputTensor = (vx_tensor)parameters[3];
@@ -305,10 +343,9 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Kernel(vx_node node, const vx
 		hstring ModelInputTensorName = wInputtName.c_str();
 
 		// bind the intput image
-		binding.Bind(ModelInputTensorName, inputTensorElement);
-
+		model_struct->binding.Bind(ModelInputTensorName, inputTensorElement);
 		// run inference
-		auto results = session.Evaluate(binding, L"RunId");
+		auto results = model_struct->session.Evaluate(model_struct->binding, L"RunId");
 
 		// load ouput tensor from WinML TensorFloat
 		vx_tensor outputTensor = (vx_tensor)parameters[4];
@@ -330,7 +367,6 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Kernel(vx_node node, const vx
 		// release tensors
 		STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
 		STATUS_ERROR_CHECK(vxReleaseTensor(&outputTensor));
-
         return status;
 }
 
@@ -344,7 +380,7 @@ vx_status  WINML_OnnxToMivisionX_Register(vx_context context)
                 "com.winml.onnx_to_mivisionx",
                 VX_KERNEL_WINML_ONNX_TO_MIVISIONX,
                 WINML_OnnxToMivisionX_Kernel,
-                6,
+                7,
                 WINML_OnnxToMivisionX_InputValidator,
                 WINML_OnnxToMivisionX_OutputValidator,
                 WINML_OnnxToMivisionX_Initialize,
@@ -358,7 +394,8 @@ vx_status  WINML_OnnxToMivisionX_Register(vx_context context)
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
 				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
-                PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
+				PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_OPTIONAL));
+				PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
 				PARAM_ERROR_CHECK(vxReleaseKernel(&kernel));
         }
 

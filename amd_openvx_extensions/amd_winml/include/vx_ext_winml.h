@@ -56,7 +56,7 @@ extern "C" {
 				 * \param [in] input_4 The Input Tensor in <tt>\ref VX_FLOAT32</tt> format.
 				 * \param [in] input_5 The setup Array for each model in <tt>\ref VX_TYPE_SIZE</tt> format.
 				 * \param [out] output The output Tensor in <tt>\ref VX_FLOAT32</tt> format.
-				 * \param [in] input_6 WinML Deploy Device Kind in vx_scalar [optional] (default: 3).				 
+				 * \param [in] input_6 WinML Deploy Device Kind in vx_scalar [optional] (default: 0).				 
 				 * \return <tt>\ref vx_node</tt>.
 				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
 				extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX

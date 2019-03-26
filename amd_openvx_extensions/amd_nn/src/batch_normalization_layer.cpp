@@ -93,7 +93,7 @@ static vx_status VX_CALLBACK validateBatchNormalizationLayer(vx_node node, const
     }
 
     // output tensor configuration.
-    //type = VX_TYPE_FLOAT32;
+    out_type = type;        // should be same as input type
     num_dims = 4;
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[6], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));

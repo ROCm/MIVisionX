@@ -1759,9 +1759,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
     graph = IrGraph()
-    graph.fromFile(inputFolder)
-    for tensor in graph.outputs:
-        print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]));    
+    graph.fromFile(inputFolder)   
     print('creating C code in ' + outputFolder + ' ...')
     generateCode(graph,argmaxOutput,outputFolder)
 

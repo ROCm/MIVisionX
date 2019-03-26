@@ -329,7 +329,8 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
         //Finding best Convolution Algorithm.
         miopenConvAlgoPerf_t perf;
         int algo_count;
-        ERROR_CHECK_MIOPEN_STATUS(miopenFindConvolutionForwardAlgorithm(data->handle->miopen_handle, data->input_desc, data->input_mem, data->weight_desc, data->weight_mem,                                                                        data->conv_desc, data->output_desc, data->output_mem, 1, &algo_count, &perf, data->workspace, data->workspace_size, data->handle->exhaustiveSearch));
+        ERROR_CHECK_MIOPEN_STATUS(miopenFindConvolutionForwardAlgorithm(data->handle->miopen_handle, data->input_desc, data->input_mem, data->weight_desc, data->weight_mem,
+                                                                        data->conv_desc, data->output_desc, data->output_mem, 1, &algo_count, &perf, data->workspace, data->workspace_size, data->handle->exhaustiveSearch));
         data->algo = perf.fwd_algo;
     }
 

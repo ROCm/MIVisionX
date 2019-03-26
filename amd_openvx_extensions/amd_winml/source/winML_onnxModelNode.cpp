@@ -112,7 +112,17 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_InputValidator(vx_node node, 
                 }
 		STATUS_ERROR_CHECK(vxReleaseTensor(&inputTensor));
         }
-	else if (index == 5)
+	else if (index == 4)
+	{
+		vx_size size;
+		vx_enum type;
+		vx_array setupArray;
+		STATUS_ERROR_CHECK(vxQueryParameter(param, VX_PARAMETER_ATTRIBUTE_REF, &setupArray, sizeof(vx_array)));
+		STATUS_ERROR_CHECK(vxQueryArray(setupArray, VX_ARRAY_ATTRIBUTE_ITEMTYPE, &type, sizeof(type)));
+		if (type != VX_TYPE_SIZE)  return VX_ERROR_INVALID_TYPE;
+		STATUS_ERROR_CHECK(vxReleaseArray(&setupArray));
+	}
+	else if (index == 6)
 	{
 		if (param)
 		{
@@ -144,7 +154,7 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_OutputValidator(vx_node node,
         vx_status status = VX_SUCCESS;
         vx_parameter param = vxGetParameterByIndex(node, index);
 
-        if (index == 4)
+        if (index == 5)
         {
 		vx_size num_dims;
 		vx_enum type;
@@ -154,30 +164,30 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_OutputValidator(vx_node node,
 		STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
 		STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
 
-        	if (num_dims == 2)
-        	{
-                	STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, output_dims_2, sizeof(output_dims_2)));
-                	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_DIMS, output_dims_2, sizeof(output_dims_2)));
-        	}
-        	else if (num_dims == 4)
-        	{
-               		STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, output_dims_4, sizeof(output_dims_4)))
-                	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_DIMS, output_dims_4, sizeof(output_dims_4)))
-       		}
-        	else
-       		{
-               		printf("Output validate: OnnxToMivisionX: #4 num_dims=%zd (must be 2/4)\n", num_dims);
-                	return VX_ERROR_INVALID_DIMENSION;
-        	}
+		if (num_dims == 2)
+		{
+				STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, output_dims_2, sizeof(output_dims_2)));
+				STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_DIMS, output_dims_2, sizeof(output_dims_2)));
+		}
+		else if (num_dims == 4)
+		{
+				STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_DIMS, output_dims_4, sizeof(output_dims_4)))
+				STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_DIMS, output_dims_4, sizeof(output_dims_4)))
+		}
+		else
+		{
+				printf("Output validate: OnnxToMivisionX: #4 num_dims=%zd (must be 2/4)\n", num_dims);
+				return VX_ERROR_INVALID_DIMENSION;
+		}
 
-        	if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16))
-       		{
-                	printf("Output validate: OnnxToMivisionX: #4 tensor type=%d (not float/float16)\n", type);
-                	return VX_ERROR_INVALID_TYPE;
-        	}
+		if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16))
+		{
+				printf("Output validate: OnnxToMivisionX: #4 tensor type=%d (not float/float16)\n", type);
+				return VX_ERROR_INVALID_TYPE;
+		}
 
-        	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-       		STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+		STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+		STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(meta, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
 
 		STATUS_ERROR_CHECK(vxReleaseTensor(&outputTensor));
         }
@@ -206,7 +216,7 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Initialize(vx_node node, cons
 
 	// read optional device kind index
 	vx_int32 deviceKindIndex = 3;
-	vx_scalar deviceKindScalar = (vx_scalar)parameters[5];
+	vx_scalar deviceKindScalar = (vx_scalar)parameters[6];
 	if(deviceKindScalar)
 		STATUS_ERROR_CHECK(vxReadScalarValue(deviceKindScalar, &deviceKindIndex));
 
@@ -235,7 +245,7 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Initialize(vx_node node, cons
 	int64_t outputDims[4] = { 1 };
 	vx_size num_dims;
 	vx_size output_dims_2[2] = { 1, 1}, output_dims_4[4] = { 1, 1, 1, 1 };
-	vx_tensor outputTensor = (vx_tensor)parameters[4];
+	vx_tensor outputTensor = (vx_tensor)parameters[5];
 	STATUS_ERROR_CHECK(vxQueryTensor(outputTensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
 	if (num_dims == 2)
 	{
@@ -252,7 +262,8 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Initialize(vx_node node, cons
 		outputDims[3] = output_dims_4[3];
 	}
 
-	vx_array model_array = (vx_array)parameters[6];
+	vx_array model_array = (vx_array)parameters[4];
+
 	vx_size size = 0;
 
 	learning_model *models = new learning_model;
@@ -266,11 +277,13 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Initialize(vx_node node, cons
 
 	void *model_ptr = &models;
 
+	//vx_size size = 0;
+	vx_size size_p = 0, num_items = 0;
 	vxAddArrayItems(model_array, 1, model_ptr, sizeof(VX_TYPE_SIZE));
 	vxQueryArray(model_array, VX_ARRAY_ATTRIBUTE_ITEMSIZE, &size, sizeof(size));
 
-	vxSetParameterByIndex(node, 6, (vx_reference)model_array);
-	vxCopyArrayRange(model_array, 0, size, 0, parameters[6], VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+	vxSetParameterByIndex(node, 4, (vx_reference)model_array);
+	vxCopyArrayRange(model_array, 0, size, 0, parameters[4], VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 
 	// release scalars
 	STATUS_ERROR_CHECK(vxReleaseScalar(&modelLocationScalar));
@@ -296,7 +309,7 @@ param [in] num.
 static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Uninitialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {	
 	void **model_ptr = NULL;
-	vx_array model_array = (vx_array)parameters[6];
+	vx_array model_array = (vx_array)parameters[4];
 	vx_size stride = 0ul;
 	STATUS_ERROR_CHECK(vxAccessArrayRange((vx_array)model_array, 0, 1, &stride, (void**)&model_ptr, VX_READ_ONLY));
 	STATUS_ERROR_CHECK(vxCommitArrayRange((vx_array)model_array, 0, 1, model_ptr));
@@ -318,7 +331,7 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Kernel(vx_node node, const vx
 {
         vx_status status = VX_SUCCESS;
 		
-	vx_array model_array = (vx_array)parameters[6];
+	vx_array model_array = (vx_array)parameters[4];
 	vx_size size = 0, num_items = 0;
 	vx_enum type;
 
@@ -352,7 +365,7 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Kernel(vx_node node, const vx
 	auto results = model_struct->session.Evaluate(model_struct->binding, L"RunId");
 
 	// load ouput tensor from WinML TensorFloat
-	vx_tensor outputTensor = (vx_tensor)parameters[4];
+	vx_tensor outputTensor = (vx_tensor)parameters[5];
 	// get model output tensor name
 	char modelOutputName[1024];
 	vx_scalar outputNameScalar = (vx_scalar)parameters[2];
@@ -399,9 +412,9 @@ vx_status  WINML_OnnxToMivisionX_Register(vx_context context)
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
                 PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-                PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
-		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_OPTIONAL));
+		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
+                PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 5, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
 		PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
 		PARAM_ERROR_CHECK(vxReleaseKernel(&kernel));
         }

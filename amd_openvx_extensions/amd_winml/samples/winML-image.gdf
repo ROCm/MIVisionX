@@ -28,7 +28,7 @@ data setupArray = array:SIZE,1
 
 
 # Use Import ONNX Node to run Inference
-node com.winml.onnx_to_mivisionx modelLocation modelInputName modelOutputName input_tensor output deviceKind setupArray
+node com.winml.onnx_to_mivisionx modelLocation modelInputName modelOutputName input_tensor setupArray output deviceKind 
 
 # write output tensor
 write output output_tensor.f32

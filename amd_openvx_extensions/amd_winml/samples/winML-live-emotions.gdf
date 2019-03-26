@@ -22,7 +22,7 @@ data setupArray = array:SIZE,1
 
 
 # Use Import ONNX Node to run Inference
-node com.winml.onnx_to_mivisionx modelLocation modelInputName modelOutputName input_tensor output deviceKind setupArray
+node com.winml.onnx_to_mivisionx modelLocation modelInputName modelOutputName input_tensor setupArray output deviceKind 
 
 data labelLocation = scalar:STRING,FULL_PATH_TO\data\emotions.txt
 data top1 = scalar:STRING,INITIALIZE:view,inputImageWindow

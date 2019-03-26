@@ -92,8 +92,8 @@ extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
                 (vx_reference)outputTensorName,
                 (vx_reference)inputTensor,
                 (vx_reference)outputTensor,
-				(vx_reference)deviceKind,
-				(vx_reference)setupArray
+		(vx_reference)deviceKind,
+		(vx_reference)setupArray
         };
 
         return vxCreateNodeByStructure(graph,

@@ -82,8 +82,8 @@ extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
         vx_scalar outputTensorName,
         vx_tensor inputTensor,
         vx_tensor outputTensor,
-		vx_scalar deviceKind,
-		vx_array setupArray
+	vx_scalar deviceKind,
+	vx_array setupArray
 )
 {
         vx_reference params[] = {

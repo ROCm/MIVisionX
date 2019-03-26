@@ -23,10 +23,12 @@ data modelInputName = scalar:STRING,data_0
 data modelOutputName = scalar:STRING,softmaxout_1 
 data output = tensor:4,{1,1,1000,1},VX_TYPE_FLOAT32,0
 data deviceKind = scalar:INT32,0
+data setupArray = array:SIZE,1
+
 
 
 # Use Import ONNX Node to run Inference
-node com.winml.onnx_to_mivisionx modelLocation modelInputName modelOutputName input_tensor output deviceKind
+node com.winml.onnx_to_mivisionx modelLocation modelInputName modelOutputName input_tensor setupArray output deviceKind 
 
 # write output tensor
 write output output_tensor.f32

@@ -115,18 +115,18 @@ extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
 	vx_scalar reverse_channel_order
 )
 {
-		vx_reference params[] = {
-				(vx_reference)input,
-				(vx_reference)output,
-				(vx_reference)a,
-				(vx_reference)b,
-				(vx_reference)reverse_channel_order
-		};
+	vx_reference params[] = {
+			(vx_reference)input,
+			(vx_reference)output,
+			(vx_reference)a,
+			(vx_reference)b,
+			(vx_reference)reverse_channel_order
+	};
 
-		return vxCreateNodeByStructure(graph,
-				VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR,
-				params, 
-				dimof(params));
+	return vxCreateNodeByStructure(graph,
+			VX_KERNEL_WINML_CONVERT_IMAGE_TO_TENSOR,
+			params, 
+			dimof(params));
 }
 
 /************************************************************************************************************

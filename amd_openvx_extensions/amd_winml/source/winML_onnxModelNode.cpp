@@ -215,7 +215,7 @@ static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Initialize(vx_node node, cons
 	STATUS_ERROR_CHECK(vxReadScalarValue(outputNameScalar, modelOutputName));
 
 	// read optional device kind index
-	vx_int32 deviceKindIndex = 3;
+	vx_int32 deviceKindIndex = 0;
 	vx_scalar deviceKindScalar = (vx_scalar)parameters[6];
 	if(deviceKindScalar)
 		STATUS_ERROR_CHECK(vxReadScalarValue(deviceKindScalar, &deviceKindIndex));

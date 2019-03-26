@@ -296,11 +296,13 @@ param [in] num.
 *************************************************************************************************************/
 static vx_status VX_CALLBACK WINML_OnnxToMivisionX_Uninitialize(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {	
+        vx_status status = VX_SUCCESS;
+	
 		void **model_ptr = NULL;
 		learning_model *model_struct = static_cast<learning_model *>(*model_ptr);
-        vx_status status = VX_SUCCESS;
 		// close and delete resources
 		closeWinmlNode(model_struct);
+	
         return status;
 }
 

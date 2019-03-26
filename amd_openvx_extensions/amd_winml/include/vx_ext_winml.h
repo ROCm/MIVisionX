@@ -31,6 +31,12 @@ THE SOFTWARE.
 #define dimof(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
+#if _WIN32 
+#define SHARED_PUBLIC __declspec(dllexport)
+#else
+#define SHARED_PUBLIC __attribute__ ((visibility ("default")))
+#endif
+
 vx_node vxCreateNodeByStructure(vx_graph graph, vx_enum kernelenum, vx_reference params[], vx_uint32 num);
 
 #ifdef __cplusplus
@@ -38,7 +44,7 @@ extern "C" {
 #endif
 
         /*!***********************************************************************************************************
-                                                WinML VX_API_ENTRY NODE C Functions
+                                                WinML VX_API_ENTRY C Function NODE
         *************************************************************************************************************/
 
 				/*! \brief [Graph] Creates a WinML import ONNX Model and run function node.
@@ -50,9 +56,10 @@ extern "C" {
 				 * \param [in] input_4 The Input Tensor in <tt>\ref VX_FLOAT32</tt> format.
 				 * \param [out] output The output Tensor in <tt>\ref VX_FLOAT32</tt> format.
 				 * \param [in] input_5 WinML Deploy Device Kind in vx_scalar [optional] (default: 3).
+				 * \param [out] output The setup Array for each model in <tt>\ref VX_TYPE_SIZE</tt> format.
 				 * \return <tt>\ref vx_node</tt>.
 				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
+				extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
 				(
 					vx_graph graph,
 					vx_scalar modelLocation,
@@ -60,7 +67,8 @@ extern "C" {
 					vx_scalar outputTensorName,
 					vx_tensor inputTensor,
 					vx_tensor outputTensor,
-					vx_scalar deviceKind
+					vx_scalar deviceKind,
+					vx_array setupArray
 				);
 
 				/*! \brief [Graph] Creates a WinML convert image to tensor node.
@@ -73,7 +81,7 @@ extern "C" {
 				 * \param [in] input_4 reverse channel order in vx_scalar.
 				 * \return <tt>\ref vx_node</tt>.
 				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
+				extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
 				(
 					vx_graph graph,
 					vx_image input,
@@ -95,7 +103,7 @@ extern "C" {
 				 * \param [out] output_5 Top 5 in vx_scalar. [optional]
 				 * \return <tt>\ref vx_node</tt>.
 				 * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-				VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_getTopKLabels
+				extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_getTopKLabels
 				(
 					vx_graph graph,
 					vx_tensor prob_tensor,

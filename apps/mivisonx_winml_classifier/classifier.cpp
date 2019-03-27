@@ -38,16 +38,6 @@
 using namespace cv;
 using namespace std;
 
-
-#if ENABLE_OPENCV
-#include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#define CVUI_IMPLEMENTATION
-#include "cvui.h"
-using namespace cv;
-#endif
-
 #define MIVisionX_LEGEND "MIVisionX Image Classification"
 
 unsigned char colors[20][3] = {

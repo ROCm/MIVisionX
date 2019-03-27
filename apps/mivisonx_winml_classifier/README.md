@@ -42,6 +42,8 @@ This project shows how to run supported classification models with MIVisionX Run
  --label FULL_PATH_TO\\amd_openvx_extensions\\amd_winml\\samples\\data\\Labels.txt [REQUIRED]
  --capture 0  [REQUIRED]
 ```
+## MIVisionX Image Classification
+![MIVisionX Image Classification](images/MIVisionX-ImageClassification.png)
 
 ## MIVisionX Image Classification using WinML
 ![MIVisionX Image Classification using WinML](images/MIVisionX-ImageClassification-WinML.png)

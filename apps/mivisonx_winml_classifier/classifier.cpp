@@ -1,11 +1,6 @@
-#if _WIN32
 #include <vx_ext_amd.h>
 #include <vx_ext_winml.h>
 #include <vx_winml.h>
-#else
-#include <vx_ext_amd.h>
-#include <vx_amd_nn.h>
-#endif
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -14,11 +9,7 @@
 #include <string>
 #include <inttypes.h>
 #include <chrono>
-#if _WIN32
 #include <io.h>
-#else
-#include <unistd.h>
-#endif
 #include <math.h>
 #include <immintrin.h>
 #include <fstream>

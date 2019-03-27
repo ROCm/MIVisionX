@@ -32,14 +32,14 @@ This project shows how to run supported classification models with MIVisionX Run
 ### Usage:
 ```
  .\winml_classifier.exe
- --inception  <FULL_PATH_TO\\inception_v2\\model.onnx> [OPTIONAL]  
- --resnet50   <FULL_PATH_TO\\resnet50\\model.onnx>     [OPTIONAL] 
- --vgg19      <FULL_PATH_TO\\vgg19\\model.onnx>        [OPTIONAL] 
- --shufflenet <FULL_PATH_TO\\shufflenet\\model.onnx>   [OPTIONAL] 
- --squeezenet <FULL_PATH_TO\\squeezenet\\model.onnx>   [OPTIONAL] 
- --densenet   <FULL_PATH_TO\\densenet\\model.onnx>     [OPTIONAL] 
- --zfnet      <FULL_PATH_TO\\zfnet\\model.onnx>        [OPTIONAL] 
- --label FULL_PATH_TO\\amd_openvx_extensions\\amd_winml\\samples\\data\\Labels.txt [REQUIRED]
+ --inception  <FULL_PATH_TO\inception_v2\model.onnx> [OPTIONAL]  
+ --resnet50   <FULL_PATH_TO\resnet50\model.onnx>     [OPTIONAL] 
+ --vgg19      <FULL_PATH_TO\vgg19\model.onnx>        [OPTIONAL] 
+ --shufflenet <FULL_PATH_TO\shufflenet\model.onnx>   [OPTIONAL] 
+ --squeezenet <FULL_PATH_TO\squeezenet\model.onnx>   [OPTIONAL] 
+ --densenet   <FULL_PATH_TO\densenet\model.onnx>     [OPTIONAL] 
+ --zfnet      <FULL_PATH_TO\zfnet\model.onnx>        [OPTIONAL] 
+ --label FULL_PATH_TO\amd_openvx_extensions\amd_winml\samples\data\Labels.txt [REQUIRED]
  --capture 0  [REQUIRED]
 ```
 ## MIVisionX Image Classification
@@ -51,12 +51,12 @@ This project shows how to run supported classification models with MIVisionX Run
 Example:
 ```
  .\winml_classifier.exe
- --inception FULL_PATH_TO\\inception_v2\\model.onnx
+ --inception FULL_PATH_TO\inception_v2\model.onnx
  
- --resnet50  FULL_PATH_TO\\resnet50\\model.onnx 
+ --resnet50  FULL_PATH_TO\resnet50\model.onnx 
  ...
  ...
- --zfnet FULL_PATH_TO\\zfnet\\model.onnx 
- --label FULL_PATH_TO\\MIVisionX\\amd_openvx_extensions\\amd_winml\\samples\\data\\Labels.txt
+ --zfnet FULL_PATH_TO\zfnet\model.onnx 
+ --label FULL_PATH_TO\MIVisionX\amd_openvx_extensions\amd_winml\samples\data\Labels.txt
  --capture 0
  ```

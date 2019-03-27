@@ -44,7 +44,7 @@ This project shows how to run supported classification models with MIVisionX Run
 ```
 
 ## MIVisionX Image Classification using WinML
-[![MIVisionX Image Classification using WinML](MIVisionX-ImageClassification-WinML.png)](https://github.com/kiritigowda/MIVisionX-setup) 
+[![MIVisionX Image Classification using WinML](images/MIVisionX-ImageClassification-WinML.png)]
 
 Example:
 ```

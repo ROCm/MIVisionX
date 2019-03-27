@@ -43,6 +43,9 @@ This project shows how to run supported classification models with MIVisionX Run
  --capture 0  [REQUIRED]
 ```
 
+## MIVisionX Image Classification using WinML
+[![MIVisionX Image Classification using WinML](MIVisionX-ImageClassification-WinML.png)](https://github.com/kiritigowda/MIVisionX-setup) 
+
 Example:
 ```
  .\winml_classifier.exe

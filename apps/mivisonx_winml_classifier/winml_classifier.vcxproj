@@ -87,7 +87,7 @@
       <AdditionalIncludeDirectories>$(OpenCV_DIR)\include\;$(OCL_ROOT)\include;..\..\amd_openvx\openvx\include;..\..\amd_openvx_extensions\amd_winml\include;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>C:\work\opencv\build\x64\vc14\lib;$(OpenCV_DIR)\x64\lib;.\x64\Debug;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(OpenCV_DIR)\x64\vc14\lib;.\x64\Debug;</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_world340d.lib;OpenVX.lib;vx_winml.lib;vx_opencv.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

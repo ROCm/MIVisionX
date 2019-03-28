@@ -17,7 +17,7 @@ A simple application used to recognize hand written digits using openvx.
 </p>
 
 ## MIVisionX WinML Image Classification
-
+This application shows how to [run supported ONNX models](https://github.com/LakshmiKumar23/MIVisionX/blob/lk/winml_classiifer/apps/mivisonx_winml_classifier/README.md#image-clasiification-using-amd-winml-extension) with MIVisionX RunTime:
 <p align="center">
   <img src="./mivisonx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png">
 </p>

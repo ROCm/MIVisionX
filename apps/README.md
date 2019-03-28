@@ -19,7 +19,7 @@ A simple application used to recognize hand written digits using openvx.
 ## MIVisionX WinML Image Classification
 
 <p align="center">
-  <img src="./mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png">
+  <img src="./mivisonx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png">
 </p>
 
 ## MIVisionX WinML YoloV2

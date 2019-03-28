@@ -16,6 +16,12 @@ A simple application used to recognize hand written digits using openvx.
   <img src="../docs/images/DGtest.png">
 </p>
 
+## MIVisionX WinML Image Classification
+
+<p align="center">
+  <img src="./mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png">
+</p>
+
 ## MIVisionX WinML YoloV2
 
 <p align="center">

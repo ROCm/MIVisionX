@@ -213,10 +213,10 @@ static void show_usage()
 {
 	printf(
 		"\n"
-		"Usage: ./classifier \n"
+		"Usage: ./winml_classifier \n"
 		"--inception   <inceptionV2-model.onnx>  [optional]\n"
 		"--resnet50    <resnet50-model.onnx> [optional]\n"
-		"--vgg19	   <vgg19-model.onnx> [optional]\n"
+		"--vgg19       <vgg19-model.onnx> [optional]\n"
 		"--shufflenet  <shufflenet-model.onnx> [optional]\n"
 		"--squeezenet  <squeezenet-model.onnx> [optional]\n"
 		"--densenet    <densenet-model.onnx> [optional]\n"

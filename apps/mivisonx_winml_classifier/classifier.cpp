@@ -16,6 +16,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
+#include <algorithm>
 #define CVUI_IMPLEMENTATION
 #include "cvui.h"
 
@@ -213,7 +214,7 @@ static void show_usage()
 	printf(
 		"\n"
 		"Usage: ./classifier \n"
-		"--inception   <inceptionV4-model.onnx>  [optional]\n"
+		"--inception   <inceptionV2-model.onnx>  [optional]\n"
 		"--resnet50    <resnet50-model.onnx> [optional]\n"
 		"--vgg19	   <vgg19-model.onnx> [optional]\n"
 		"--shufflenet  <shufflenet-model.onnx> [optional]\n"
@@ -783,6 +784,7 @@ int main(int argc, const char ** argv)
 	t1 = clockCounter();
 	printf("OK: graph initialization with vxVerifyGraph() took %.3f msec\n", (float)(t1 - t0)*1000.0f / (float)freq);
 
+	/*
 	t0 = clockCounter();
 	ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
 	ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
@@ -794,8 +796,11 @@ int main(int argc, const char ** argv)
 
 	t1 = clockCounter();
 	printf("OK: vxProcessGraph() took %.3f msec (1st iteration)\n", (float)(t1 - t0)*1000.0f / (float)freq);
-	/*
-	int N = 100;
+	*/
+	
+	vector<float> modelTimes;
+
+	int N = 1;
 	float inceptionV2Time, resnet50Time, vgg19Time, shufflenetTime, squeezenetTime, densenetTime, zfnetTime;
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -805,6 +810,9 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	inceptionV2Time = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
+	
+	modelTimes.push_back(inceptionV2Time);
+
 	printf("OK: inceptionV2 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -814,6 +822,9 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	resnet50Time = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
+
+	modelTimes.push_back(resnet50Time);
+
 	printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -823,6 +834,8 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	vgg19Time = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
+	modelTimes.push_back(vgg19Time);
+
 	printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -832,6 +845,7 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	shufflenetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
+	modelTimes.push_back(shufflenetTime);
 	printf("OK: shufflenet took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -841,6 +855,7 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	squeezenetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
+	modelTimes.push_back(squeezenetTime);
 	printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -850,6 +865,7 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	densenetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
+	modelTimes.push_back(densenetTime);
 	printf("OK: densenet121 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -859,8 +875,48 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	zfnetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
+	modelTimes.push_back(zfnetTime);
 	printf("OK: zfnet512 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
-	*/
+	
+	auto min_value = std::min_element(modelTimes.begin(), modelTimes.end());
+	int min_index = std::distance(modelTimes.begin(), min_value);
+
+	if (min_index == 0) {
+		runInception = true; runResnet50 = false; runVgg19 = false;
+		runShufflenet = false; runSqueezenet = false;
+		runDensenet121 = false; runZfnet512 = false;
+	}
+	else if (min_index == 1) {
+		runInception = false; runResnet50 = true; runVgg19 = false;
+		runShufflenet = false; runSqueezenet = false;
+		runDensenet121 = false; runZfnet512 = false;
+	}
+	else if (min_index == 2) {
+		runInception = false; runResnet50 = false; runVgg19 = true;
+		runShufflenet = false; runSqueezenet = false;
+		runDensenet121 = false; runZfnet512 = false;
+	}
+	else if (min_index == 3) {
+		runInception = false; runResnet50 = false; runVgg19 = false;
+		runShufflenet = true; runSqueezenet = false;
+		runDensenet121 = false; runZfnet512 = false;
+	}
+	else if (min_index == 4) {
+		runInception = false; runResnet50 = false; runVgg19 = false;
+		runShufflenet = false; runSqueezenet = true;
+		runDensenet121 = false; runZfnet512 = false;
+	}
+	else if (min_index == 5) {
+		runInception = false; runResnet50 = false; runVgg19 = false;
+		runShufflenet = false; runSqueezenet = false;
+		runDensenet121 = true; runZfnet512 = false;
+	}
+	else if (min_index == 6) {
+		runInception = false; runResnet50 = false; runVgg19 = false;
+		runShufflenet = false; runSqueezenet = false;
+		runDensenet121 = false; runZfnet512 = true;
+	}
+
 	/***** OPENCV Additions *****/
 
 	// create display windows
@@ -1054,7 +1110,7 @@ int main(int argc, const char ** argv)
 			t0 = clockCounter();
 			cv::resize(frame, outputDisplay, cv::Size(outputImgWidth, outputImgHeight));
 			int l = 1;
-			std::string modelName1 = "InceptionV4 - ";
+			std::string modelName1 = "InceptionV2 - ";
 			std::string modelName2 = "Resnet50 - ";
 			std::string modelName3 = "VGG19 - ";
 			std::string modelName4 = "ShuffleNet - ";
@@ -1157,38 +1213,6 @@ int main(int argc, const char ** argv)
 	ERROR_CHECK_STATUS(vxReleaseTensor(&prob_densenet121));
 	ERROR_CHECK_STATUS(vxReleaseTensor(&prob_zfnet512));
 
-
-	//release nodes
-	/*
-	for (vx_size i = 0; i < sizeof(nodes_inception) / sizeof(nodes_inception[0]); i++)
-	{
-		ERROR_CHECK_STATUS(vxReleaseNode(&nodes_inception[i]));
-	}
-	for (vx_size i = 0; i < sizeof(nodes_resnet) / sizeof(nodes_resnet[0]); i++)
-	{
-		ERROR_CHECK_STATUS(vxReleaseNode(&nodes_resnet[i]));
-	}
-	for (vx_size i = 0; i < sizeof(nodes_vgg19) / sizeof(nodes_vgg19[0]); i++)
-	{
-		ERROR_CHECK_STATUS(vxReleaseNode(&nodes_vgg19[i]));
-	}
-	for (vx_size i = 0; i < sizeof(nodes_shufflenet) / sizeof(nodes_shufflenet[0]); i++)
-	{
-		ERROR_CHECK_STATUS(vxReleaseNode(&nodes_shufflenet[i]));
-	}
-	for (vx_size i = 0; i < sizeof(nodes_squeezenet) / sizeof(nodes_squeezenet[0]); i++)
-	{
-		ERROR_CHECK_STATUS(vxReleaseNode(&nodes_squeezenet[i]));
-	}
-	for (vx_size i = 0; i < sizeof(nodes_zfnet) / sizeof(nodes_zfnet[0]); i++)
-	{
-		ERROR_CHECK_STATUS(vxReleaseNode(&nodes_zfnet[i]));
-	}
-	for (vx_size i = 0; i < sizeof(nodes_densenet) / sizeof(nodes_densenet[0]); i++)
-	{
-		ERROR_CHECK_STATUS(vxReleaseNode(&nodes_densenet[i]));
-	}
-	*/
 	//release graphs
 	ERROR_CHECK_STATUS(vxReleaseGraph(&graph_inception));
 	ERROR_CHECK_STATUS(vxReleaseGraph(&graph_resnet));

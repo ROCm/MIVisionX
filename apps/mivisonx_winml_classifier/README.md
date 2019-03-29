@@ -30,6 +30,7 @@ This application is a sample for developing windows application using MIVisionX 
 ### Step 3. Run tests
 
 ### Usage:
+* Use Command Prompt or Windows Powershell to run the app
 ```
  .\winml_classifier.exe
  --inception  <FULL_PATH_TO\inception_v2\model.onnx> [OPTIONAL]  

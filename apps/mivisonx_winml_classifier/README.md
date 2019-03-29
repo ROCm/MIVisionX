@@ -1,8 +1,8 @@
 # Image Clasiification using AMD WinML Extension
 
-This application shows how to run supported ONNX models with MIVisionX RunTime:
+This application implements a method to run WinML supported ONNX models using MIVisionX RunTime. This c/c++ implementation does image classification on live camera capture or pre-recorded video stream.
 
-* A c/c++ implementation for image classification for live camera capture.
+This application is a sample for developing windows application using MIVisionX WinML extension.
 
 ## Build Instructions
 
@@ -22,10 +22,10 @@ This application shows how to run supported ONNX models with MIVisionX RunTime:
 ## Run
 
 ### Step 1. Get ONNX model
-* Train your own YoloV2 ONNX model or get it from [onnx github](https://github.com/onnx/models). ONNX version 1.3 is recommended.
+* Get the WinML supported Classification ONNX models from [onnx github](https://github.com/onnx/models). ONNX version 1.3 is recommended.
 * The supported models are: inceptionV2, resnet50, vgg19, shufflenet, squeezenet, densenet121, zfnet512. 
 
-### Step 2. Build the app using MIVisionX_winml_YoloV2.sln on Visual Studio.
+### Step 2. Build the app using winml_classifier.sln on Visual Studio.
 
 ### Step 3. Run tests
 

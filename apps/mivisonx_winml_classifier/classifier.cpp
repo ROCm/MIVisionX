@@ -34,25 +34,25 @@ using namespace std;
 
 unsigned char colors[20][3] = {
 	{ 0,255,0 },
-{ 0, 0,255 },
-{ 255, 0,0 },
-{ 250, 150, 70 },
-{ 102,102,156 },
-{ 190,153,153 },
-{ 0,  0,   0 },
-{ 250,170, 30 },
-{ 220,220,  0 },
-{ 0, 255, 0 },
-{ 152,251,152 },
-{ 135,206,250 },
-{ 220, 20, 60 },
-{ 255,  0,  0 },
-{ 0,  0,255 },
-{ 0,  0, 70 },
-{ 0, 60,100 },
-{ 0, 80,100 },
-{ 0,  0,230 },
-{ 119, 11, 32 }
+	{ 0, 0,255 },
+	{ 255, 0,0 },
+	{ 250, 150, 70 },
+	{ 102,102,156 },
+	{ 190,153,153 },
+	{ 0,  0,   0 },
+	{ 250,170, 30 },
+	{ 220,220,  0 },
+	{ 0, 255, 0 },
+	{ 152,251,152 },
+	{ 135,206,250 },
+	{ 220, 20, 60 },
+	{ 255,  0,  0 },
+	{ 0,  0,255 },
+	{ 0,  0, 70 },
+	{ 0, 60,100 },
+	{ 0, 80,100 },
+	{ 0,  0,230 },
+	{ 119, 11, 32 }
 };
 
 std::string classificationModels[20] = {
@@ -81,7 +81,7 @@ std::string classificationModels[20] = {
 // probability track bar
 const int threshold_slider_max = 100;
 int threshold_slider;
-double thresholdValue = 0.5;
+double thresholdValue = 0.2;
 void threshold_on_trackbar(int, void*) {
 	thresholdValue = (double)threshold_slider / threshold_slider_max;
 	return;
@@ -178,6 +178,9 @@ void createLegendImage()
 	l++; model++;
 
 	cvui::trackbar(legend, 100, (l * 40) + 10, 450, &threshold_slider, 0, 100);
+	l++;
+	bufferName = "Output Confidence";
+	putText(legend, bufferName, Point(250, (l * 40) + 30), fontFace, 0.75, Scalar::all(0), thickness, 5);
 
 	cvui::update();
 	cv::imshow(MIVisionX_LEGEND, legend);
@@ -213,10 +216,10 @@ static void show_usage()
 {
 	printf(
 		"\n"
-		"Usage: ./classifier \n"
+		"Usage: .\winml_classifier \n"
 		"--inception   <inceptionV2-model.onnx>  [optional]\n"
 		"--resnet50    <resnet50-model.onnx> [optional]\n"
-		"--vgg19	   <vgg19-model.onnx> [optional]\n"
+		"--vgg19       <vgg19-model.onnx> [optional]\n"
 		"--shufflenet  <shufflenet-model.onnx> [optional]\n"
 		"--squeezenet  <squeezenet-model.onnx> [optional]\n"
 		"--densenet    <densenet-model.onnx> [optional]\n"
@@ -434,7 +437,6 @@ int main(int argc, const char ** argv)
 	vx_size dims_prob_2[4] = { 1, 1, 1000, 1 };
 
 	char labelBuf[2048];
-	//labelFileName = "C:\\Users\\lakshmi\\work\\MIVisionX_winmlFix\\MIVisionX_winmlFix\\amd_openvx_extensions\\amd_winml\\samples\\data\\Labels.txt";
 	int n = sprintf_s(labelBuf, "%s", labelFileName.c_str());
 	vx_scalar labelDir = vxCreateScalar(context, VX_TYPE_STRING_AMD, &labelFileName);
 	ERROR_CHECK_STATUS(vxWriteScalarValue(labelDir, labelBuf));
@@ -681,8 +683,7 @@ int main(int argc, const char ** argv)
 		vx_node nodes_vgg19[] =
 		{
 			vxExtWinMLNode_convertImageToTensor(graph_vgg19, input_image, data_224x224_vgg19, a, b, rev),
-			vxExtWinMLNode_OnnxToMivisionX(graph_vgg19, modelLocation_vgg19, modelInputName_vgg19, modelOutputName_vgg19, data_224x224_vgg19, setup_array_vgg, prob_vgg19, deviceKind),
-			vxExtWinMLNode_getTopKLabels(graph_vgg19, prob_vgg19, labelDir, top1_vgg19, NULL, NULL, NULL, NULL)
+			vxExtWinMLNode_OnnxToMivisionX(graph_vgg19, modelLocation_vgg19, modelInputName_vgg19, modelOutputName_vgg19, data_224x224_vgg19, setup_array_vgg, prob_vgg19, deviceKind)
 		};
 
 		for (vx_size i = 0; i < sizeof(nodes_vgg19) / sizeof(nodes_vgg19[0]); i++)
@@ -695,8 +696,7 @@ int main(int argc, const char ** argv)
 		vx_node nodes_squeezenet[] =
 		{
 				vxExtWinMLNode_convertImageToTensor(graph_squeezenet, input_image, data_224x224_squeezenet, a, b, rev),
-				vxExtWinMLNode_OnnxToMivisionX(graph_squeezenet, modelLocation_squeezenet, modelInputName_squeezenet, modelOutputName_squeezenet, data_224x224_squeezenet, setup_array_squeezenet, prob_squeezenet, deviceKind),
-				vxExtWinMLNode_getTopKLabels(graph_squeezenet, prob_squeezenet, labelDir, top1_squeezenet, NULL, NULL, NULL, NULL)
+				vxExtWinMLNode_OnnxToMivisionX(graph_squeezenet, modelLocation_squeezenet, modelInputName_squeezenet, modelOutputName_squeezenet, data_224x224_squeezenet, setup_array_squeezenet, prob_squeezenet, deviceKind)
 		};
 
 		for (vx_size i = 0; i < sizeof(nodes_squeezenet) / sizeof(nodes_squeezenet[0]); i++)
@@ -709,8 +709,7 @@ int main(int argc, const char ** argv)
 		vx_node nodes_resnet[] =
 		{
 			   vxExtWinMLNode_convertImageToTensor(graph_resnet, input_image, data_224x224_resnet, a, b, rev),
-			   vxExtWinMLNode_OnnxToMivisionX(graph_resnet, modelLocation_resnet, modelInputName_resnet, modelOutputName_resnet, data_224x224_resnet, setup_array_resnet, prob_resnet, deviceKind),
-			   vxExtWinMLNode_getTopKLabels(graph_resnet, prob_resnet, labelDir, top1_resnet, NULL, NULL, NULL, NULL)
+			   vxExtWinMLNode_OnnxToMivisionX(graph_resnet, modelLocation_resnet, modelInputName_resnet, modelOutputName_resnet, data_224x224_resnet, setup_array_resnet, prob_resnet, deviceKind)
 		};
 
 		for (vx_size i = 0; i < sizeof(nodes_resnet) / sizeof(nodes_resnet[0]); i++)
@@ -723,8 +722,7 @@ int main(int argc, const char ** argv)
 		vx_node nodes_densenet[] =
 		{
 			   vxExtWinMLNode_convertImageToTensor(graph_densenet121, input_image, data_224x224_densenet121, a, b, rev),
-			   vxExtWinMLNode_OnnxToMivisionX(graph_densenet121, modelLocation_densenet, modelInputName_densenet, modelOutputName_densenet, data_224x224_densenet121, setup_array_densenet, prob_densenet121, deviceKind),
-			   vxExtWinMLNode_getTopKLabels(graph_densenet121, prob_densenet121, labelDir, top1_densenet, NULL, NULL, NULL, NULL)
+			   vxExtWinMLNode_OnnxToMivisionX(graph_densenet121, modelLocation_densenet, modelInputName_densenet, modelOutputName_densenet, data_224x224_densenet121, setup_array_densenet, prob_densenet121, deviceKind)
 		};
 
 		for (vx_size i = 0; i < sizeof(nodes_densenet) / sizeof(nodes_densenet[0]); i++)
@@ -737,8 +735,7 @@ int main(int argc, const char ** argv)
 		vx_node nodes_inception[] =
 		{
 			   vxExtWinMLNode_convertImageToTensor(graph_inception, input_image, data_224x224_inception, a_inception, b_inception, rev),
-			   vxExtWinMLNode_OnnxToMivisionX(graph_inception, modelLocation_inception, modelInputName_inception, modelOutputName_inception, data_224x224_inception, setup_array_inception, prob_inception, deviceKind),
-			   vxExtWinMLNode_getTopKLabels(graph_inception, prob_inception, labelDir, top1_inception, NULL, NULL, NULL, NULL)
+			   vxExtWinMLNode_OnnxToMivisionX(graph_inception, modelLocation_inception, modelInputName_inception, modelOutputName_inception, data_224x224_inception, setup_array_inception, prob_inception, deviceKind)
 		};
 
 		for (vx_size i = 0; i < sizeof(nodes_inception) / sizeof(nodes_inception[0]); i++)
@@ -751,8 +748,7 @@ int main(int argc, const char ** argv)
 		vx_node nodes_shufflenet[] =
 		{
 			   vxExtWinMLNode_convertImageToTensor(graph_shufflenet, input_image, data_224x224_shufflenet, a, b, rev),
-			   vxExtWinMLNode_OnnxToMivisionX(graph_shufflenet, modelLocation_shufflenet, modelInputName_shufflenet, modelOutputName_shufflenet, data_224x224_shufflenet, setup_array_shufflenet, prob_shufflenet, deviceKind),
-			   vxExtWinMLNode_getTopKLabels(graph_shufflenet, prob_shufflenet, labelDir, top1_shufflenet, NULL, NULL, NULL, NULL)
+			   vxExtWinMLNode_OnnxToMivisionX(graph_shufflenet, modelLocation_shufflenet, modelInputName_shufflenet, modelOutputName_shufflenet, data_224x224_shufflenet, setup_array_shufflenet, prob_shufflenet, deviceKind)
 		};
 
 		for (vx_size i = 0; i < sizeof(nodes_shufflenet) / sizeof(nodes_shufflenet[0]); i++)
@@ -765,8 +761,7 @@ int main(int argc, const char ** argv)
 		vx_node nodes_zfnet[] =
 		{
 			   vxExtWinMLNode_convertImageToTensor(graph_zfnet512, input_image, data_224x224_zfnet512, a, b, rev),
-			   vxExtWinMLNode_OnnxToMivisionX(graph_zfnet512, modelLocation_zfnet, modelInputName_zfnet, modelOutputName_zfnet, data_224x224_zfnet512, setup_array_zfnet, prob_zfnet512, deviceKind),
-			   vxExtWinMLNode_getTopKLabels(graph_zfnet512, prob_zfnet512, labelDir, top1_zfnet, NULL, NULL, NULL, NULL)
+			   vxExtWinMLNode_OnnxToMivisionX(graph_zfnet512, modelLocation_zfnet, modelInputName_zfnet, modelOutputName_zfnet, data_224x224_zfnet512, setup_array_zfnet, prob_zfnet512, deviceKind)
 		};
 
 		for (vx_size i = 0; i < sizeof(nodes_zfnet) / sizeof(nodes_zfnet[0]); i++)
@@ -786,20 +781,6 @@ int main(int argc, const char ** argv)
 
 	t1 = clockCounter();
 	printf("OK: graph initialization with vxVerifyGraph() took %.3f msec\n", (float)(t1 - t0)*1000.0f / (float)freq);
-
-	/*
-	t0 = clockCounter();
-	ERROR_CHECK_STATUS(vxProcessGraph(graph_vgg19));
-	ERROR_CHECK_STATUS(vxProcessGraph(graph_squeezenet));
-	ERROR_CHECK_STATUS(vxProcessGraph(graph_resnet));
-	ERROR_CHECK_STATUS(vxProcessGraph(graph_densenet121));
-	ERROR_CHECK_STATUS(vxProcessGraph(graph_inception));
-	ERROR_CHECK_STATUS(vxProcessGraph(graph_shufflenet));
-	ERROR_CHECK_STATUS(vxProcessGraph(graph_zfnet512));
-
-	t1 = clockCounter();
-	printf("OK: vxProcessGraph() took %.3f msec (1st iteration)\n", (float)(t1 - t0)*1000.0f / (float)freq);
-	*/
 	
 	float modelTimes[7];
 	for (int i = 0; i < 7; i++)
@@ -933,8 +914,7 @@ int main(int argc, const char ** argv)
 	cv::namedWindow("MIVisionX Image Classification - LIVE", cv::WINDOW_GUI_EXPANDED);
 
 	//create a probability track bar
-	threshold_slider = 50;
-	//cv::createTrackbar("Probability Threshold", MIVisionX_LEGEND, &threshold_slider, threshold_slider_max, threshold_on_trackbar);
+	threshold_slider = 20;
 
 	// create display legend image
 	createLegendImage();
@@ -951,6 +931,10 @@ int main(int argc, const char ** argv)
 	int fontFace = CV_FONT_HERSHEY_DUPLEX;
 	double fontScale = 1;
 	int thickness = 1.5;
+	float *outputBuffer[7];
+	for (int models = 0; models < 7; models++) {
+		outputBuffer[models] = new float[total_size];
+	}
 
 	int loopSeg = 1;
 
@@ -1010,8 +994,7 @@ int main(int argc, const char ** argv)
 			msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 			//printf("LIVE: OpenCV to OpenVX image copy time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
 
-			std::string inceptionText = "Unclassified", resnetText = "Unclassified", vggText = "Unclassified", shufflenetText = "Unclassified";
-			std::string squeezenetText = "Unclassified", densenetText = "Unclassified", zfnetText = "Unclassified";
+			
 
 			//process graph for the input
 			if (runVgg19)
@@ -1023,11 +1006,6 @@ int main(int argc, const char ** argv)
 				vgg19Time_g = (float)(t1 - t0)*1000.0f / (float)freq;
 				msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 				//printf("LIVE: Process VGG19 Classification Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
-
-				char top1_result[1024];
-				ERROR_CHECK_STATUS(vxReadScalarValue(top1_vgg19, top1_result));
-				vggText = top1_result;
-
 			}
 			if (runSqueezenet)
 			{
@@ -1038,11 +1016,6 @@ int main(int argc, const char ** argv)
 				squeezenetTime_g = (float)(t1 - t0)*1000.0f / (float)freq;
 				msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 				//printf("LIVE: Process squeezenet Classification Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
-
-				char top1_result[1024];
-				ERROR_CHECK_STATUS(vxReadScalarValue(top1_squeezenet, top1_result));
-				squeezenetText = (top1_result);
-
 			}
 			if (runDensenet121)
 			{
@@ -1053,10 +1026,6 @@ int main(int argc, const char ** argv)
 				densenet121Time_g = (float)(t1 - t0)*1000.0f / (float)freq;
 				msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 				//printf("LIVE: Process densenet121 Classification Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
-
-				char top1_result[1024];
-				ERROR_CHECK_STATUS(vxReadScalarValue(top1_densenet, top1_result));
-				densenetText = top1_result;
 			}
 			if (runInception)
 			{
@@ -1066,10 +1035,6 @@ int main(int argc, const char ** argv)
 				inceptionV2Time_g = (float)(t1 - t0)*1000.0f / (float)freq;
 				msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 				//printf("LIVE: Process inceptionV2 Classification Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
-
-				char top1_result[1024];
-				ERROR_CHECK_STATUS(vxReadScalarValue(top1_inception, top1_result));
-				inceptionText = top1_result;
 			}
 			if (runResnet50)
 			{
@@ -1080,10 +1045,6 @@ int main(int argc, const char ** argv)
 				resnet50Time_g = (float)(t1 - t0)*1000.0f / (float)freq;
 				msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 				//printf("LIVE: Process resnet50 Classification Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
-
-				char top1_result[1024];
-				ERROR_CHECK_STATUS(vxReadScalarValue(top1_resnet, top1_result));
-				resnetText = top1_result;
 			}
 			if (runShufflenet)
 			{
@@ -1093,10 +1054,6 @@ int main(int argc, const char ** argv)
 				shufflenetTime_g = (float)(t1 - t0)*1000.0f / (float)freq;
 				msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 				//printf("LIVE: Process shufflenet Classification Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
-
-				char top1_result[1024];
-				ERROR_CHECK_STATUS(vxReadScalarValue(top1_shufflenet, top1_result));
-				shufflenetText = top1_result;
 			}
 			if (runZfnet512)
 			{
@@ -1106,13 +1063,219 @@ int main(int argc, const char ** argv)
 				zfnet512Time_g = (float)(t1 - t0)*1000.0f / (float)freq;
 				msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
 				//printf("LIVE: Process zfnet Classification Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
-
-				char top1_result[1024];
-				ERROR_CHECK_STATUS(vxReadScalarValue(top1_zfnet, top1_result));
-				zfnetText = top1_result;
 			}
 
-			//printf("LIVE: Convert Image to Tensor Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
+			// copy output data into local buffer
+			t0 = clockCounter();
+			vx_enum usage = VX_READ_ONLY;
+			vx_enum data_type = VX_TYPE_FLOAT32;
+			vx_size num_of_dims = 4, dims[4] = { 1, 1, 1, 1 }, stride[4];
+			vx_map_id map_id;
+			float * ptr;
+			vx_size count;
+
+			// inception copy
+			if (runInception)
+			{
+				vxQueryTensor(prob_inception, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
+				vxQueryTensor(prob_inception, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
+				vxQueryTensor(prob_inception, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
+				if (data_type != VX_TYPE_FLOAT32) {
+					std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32: invalid for " << std::endl;
+					return -1;
+				}
+				count = dims[0] * dims[1] * dims[2] * dims[3];
+				status = vxMapTensorPatch(prob_inception, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				if (status) {
+					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+				memcpy(outputBuffer[0], ptr, (count * sizeof(float)));
+				status = vxUnmapTensorPatch(prob_inception, map_id);
+				if (status) {
+					std::cerr << "ERROR: vxUnmapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+			}
+			// resnet copy
+			if (runResnet50)
+			{
+				vxQueryTensor(prob_resnet, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
+				vxQueryTensor(prob_resnet, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
+				vxQueryTensor(prob_resnet, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
+				if (data_type != VX_TYPE_FLOAT32) {
+					std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32: invalid for " << std::endl;
+					return -1;
+				}
+				count = dims[0] * dims[1] * dims[2] * dims[3];
+				status = vxMapTensorPatch(prob_resnet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				if (status) {
+					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+				memcpy(outputBuffer[1], ptr, (count * sizeof(float)));
+				status = vxUnmapTensorPatch(prob_resnet, map_id);
+				if (status) {
+					std::cerr << "ERROR: vxUnmapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+			}
+			// vgg copy
+			if (runVgg19)
+			{
+				vxQueryTensor(prob_vgg19, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
+				vxQueryTensor(prob_vgg19, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
+				vxQueryTensor(prob_vgg19, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
+				if (data_type != VX_TYPE_FLOAT32) {
+					std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32: invalid for " << std::endl;
+					return -1;
+				}
+				count = dims[0] * dims[1] * dims[2] * dims[3];
+				status = vxMapTensorPatch(prob_vgg19, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				if (status) {
+					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+				memcpy(outputBuffer[2], ptr, (count * sizeof(float)));
+				status = vxUnmapTensorPatch(prob_vgg19, map_id);
+				if (status) {
+					std::cerr << "ERROR: vxUnmapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+			}
+			// shufflenet copy
+			if (runShufflenet)
+			{
+				vxQueryTensor(prob_shufflenet, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
+				vxQueryTensor(prob_shufflenet, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
+				vxQueryTensor(prob_shufflenet, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
+				if (data_type != VX_TYPE_FLOAT32) {
+					std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32: invalid for " << std::endl;
+					return -1;
+				}
+				count = dims[0] * dims[1] * dims[2] * dims[3];
+				status = vxMapTensorPatch(prob_shufflenet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				if (status) {
+					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+				memcpy(outputBuffer[3], ptr, (count * sizeof(float)));
+				status = vxUnmapTensorPatch(prob_shufflenet, map_id);
+				if (status) {
+					std::cerr << "ERROR: vxUnmapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+			}
+			// squeezenet copy
+			if (runSqueezenet)
+			{
+				vxQueryTensor(prob_squeezenet, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
+				vxQueryTensor(prob_squeezenet, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
+				vxQueryTensor(prob_squeezenet, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
+				if (data_type != VX_TYPE_FLOAT32) {
+					std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32: invalid for " << std::endl;
+					return -1;
+				}
+				count = dims[0] * dims[1] * dims[2] * dims[3];
+				status = vxMapTensorPatch(prob_squeezenet, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				if (status) {
+					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+				memcpy(outputBuffer[4], ptr, (count * sizeof(float)));
+				status = vxUnmapTensorPatch(prob_squeezenet, map_id);
+				if (status) {
+					std::cerr << "ERROR: vxUnmapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+			}
+			// densnet121 copy
+			if (runDensenet121)
+			{
+				vxQueryTensor(prob_densenet121, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
+				vxQueryTensor(prob_densenet121, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
+				vxQueryTensor(prob_densenet121, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
+				if (data_type != VX_TYPE_FLOAT32) {
+					std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32: invalid for " << std::endl;
+					return -1;
+				}
+				count = dims[0] * dims[1] * dims[2] * dims[3];
+				status = vxMapTensorPatch(prob_densenet121, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				if (status) {
+					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+				memcpy(outputBuffer[5], ptr, (count * sizeof(float)));
+				status = vxUnmapTensorPatch(prob_densenet121, map_id);
+				if (status) {
+					std::cerr << "ERROR: vxUnmapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+			}
+			// zfnet512 copy
+			if (runZfnet512)
+			{
+				vxQueryTensor(prob_zfnet512, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
+				vxQueryTensor(prob_zfnet512, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
+				vxQueryTensor(prob_zfnet512, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
+				if (data_type != VX_TYPE_FLOAT32) {
+					std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32: invalid for " << std::endl;
+					return -1;
+				}
+				count = dims[0] * dims[1] * dims[2] * dims[3];
+				status = vxMapTensorPatch(prob_zfnet512, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+				if (status) {
+					std::cerr << "ERROR: vxMapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+				memcpy(outputBuffer[6], ptr, (count * sizeof(float)));
+				status = vxUnmapTensorPatch(prob_zfnet512, map_id);
+				if (status) {
+					std::cerr << "ERROR: vxUnmapTensorPatch() failed for " << std::endl;
+					return -1;
+				}
+			}
+			
+			t1 = clockCounter();
+			msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
+			//printf("LIVE: Copy probability Output Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
+
+			// process probabilty
+			t0 = clockCounter();
+			threshold = (float)thresholdValue;
+			const int N = 1000;
+			int inceptionID, resnetID, vggID, shufflenetID, squeezenetID, densenetID, zfnetID;
+			if (runInception)
+			{
+				inceptionID = std::distance(outputBuffer[0], std::max_element(outputBuffer[0], outputBuffer[0] + N));
+			}
+			if (runResnet50)
+			{
+				resnetID = std::distance(outputBuffer[1], std::max_element(outputBuffer[1], outputBuffer[1] + N));
+			}
+			if (runVgg19)
+			{
+				vggID = std::distance(outputBuffer[2], std::max_element(outputBuffer[2], outputBuffer[2] + N));
+			}
+			if (runShufflenet)
+			{
+				shufflenetID = std::distance(outputBuffer[3], std::max_element(outputBuffer[3], outputBuffer[3] + N));
+			}
+			if (runSqueezenet)
+			{
+				squeezenetID = std::distance(outputBuffer[4], std::max_element(outputBuffer[4], outputBuffer[4] + N));
+			}
+			if (runDensenet121)
+			{
+				densenetID = std::distance(outputBuffer[5], std::max_element(outputBuffer[5], outputBuffer[5] + N));
+			}
+			if (runZfnet512)
+			{
+				zfnetID = std::distance(outputBuffer[6], std::max_element(outputBuffer[6], outputBuffer[6] + N));
+			}
+			t1 = clockCounter();
+			msFrame += (float)(t1 - t0)*1000.0f / (float)freq;
+			//printf("LIVE: Get Classification ID Time -- %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
 
 			// Write Output on Image
 			t0 = clockCounter();
@@ -1125,7 +1288,37 @@ int main(int argc, const char ** argv)
 			std::string modelName5 = "Squeezenet - ";
 			std::string modelName6 = "Densenet121 - ";
 			std::string modelName7 = "Zfnet512 - ";
+			std::string inceptionText = "Unclassified", resnetText = "Unclassified", vggText = "Unclassified", shufflenetText = "Unclassified";
+			std::string squeezenetText = "Unclassified", densenetText = "Unclassified", zfnetText = "Unclassified";
 
+			if (runInception)
+			{
+				if (outputBuffer[0][inceptionID] >= threshold) { inceptionText = labelText[inceptionID]; }
+			}
+			if (runResnet50)
+			{
+				if (outputBuffer[1][resnetID] >= threshold) { resnetText = labelText[resnetID]; }
+			}
+			if (runVgg19)
+			{
+				if (outputBuffer[2][vggID] >= threshold) { vggText = labelText[vggID]; }
+			}
+			if (runShufflenet)
+			{
+				if (outputBuffer[3][shufflenetID] >= threshold) { shufflenetText = labelText[shufflenetID]; }
+			}
+			if (runSqueezenet)
+			{
+				if (outputBuffer[4][squeezenetID] >= threshold) { squeezenetText = labelText[squeezenetID]; }
+			}
+			if (runDensenet121)
+			{
+				if (outputBuffer[5][densenetID] >= threshold) { densenetText = labelText[densenetID]; }
+			}
+			if (runZfnet512)
+			{
+				if (outputBuffer[6][zfnetID] >= threshold) { zfnetText = labelText[zfnetID]; }
+			}
 			modelName1 = modelName1 + inceptionText;
 			modelName2 = modelName2 + resnetText;
 			modelName3 = modelName3 + vggText;
@@ -1133,6 +1326,7 @@ int main(int argc, const char ** argv)
 			modelName5 = modelName5 + squeezenetText;
 			modelName6 = modelName6 + densenetText;
 			modelName7 = modelName7 + zfnetText;
+			
 			int red, green, blue;
 			if (runInception && binaryFilename_inception_str != "empty")
 			{

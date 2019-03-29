@@ -87,7 +87,7 @@ void threshold_on_trackbar(int, void*) {
 	return;
 }
 
-bool runInception, runResnet50, runVgg19, runShufflenet, runSqueezenet, runDensenet121, runZfnet512;
+bool runInception = false, runResnet50 = false, runVgg19 = false, runShufflenet = false, runSqueezenet = false, runDensenet121 = false, runZfnet512 = false;
 float inceptionV2Time_g, resnet50Time_g, vgg19Time_g, shufflenetTime_g, squeezenetTime_g, densenet121Time_g, zfnet512Time_g;
 
 void createLegendImage()
@@ -213,10 +213,10 @@ static void show_usage()
 {
 	printf(
 		"\n"
-		"Usage: ./winml_classifier.exe \n"
+		"Usage: ./classifier \n"
 		"--inception   <inceptionV2-model.onnx>  [optional]\n"
 		"--resnet50    <resnet50-model.onnx> [optional]\n"
-		"--vgg19       <vgg19-model.onnx> [optional]\n"
+		"--vgg19	   <vgg19-model.onnx> [optional]\n"
 		"--shufflenet  <shufflenet-model.onnx> [optional]\n"
 		"--squeezenet  <squeezenet-model.onnx> [optional]\n"
 		"--densenet    <densenet-model.onnx> [optional]\n"
@@ -642,10 +642,6 @@ int main(int argc, const char ** argv)
 	vx_scalar modelOutputName_zfnet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &outputTensor_zfnet);
 	ERROR_CHECK_STATUS(vxWriteScalarValue(modelOutputName_zfnet, outputTensor_zfnetBuf));
 
-	runInception = true; runResnet50 = true; runVgg19 = true;
-	runShufflenet = true; runSqueezenet = true;
-	runDensenet121 = true; runZfnet512 = true;
-
 	vx_graph graph_vgg19 = vxCreateGraph(context);
 	ERROR_CHECK_OBJECT(graph_vgg19);
 	vx_graph graph_squeezenet = vxCreateGraph(context);
@@ -693,6 +689,7 @@ int main(int argc, const char ** argv)
 		{
 			ERROR_CHECK_OBJECT(nodes_vgg19[i]);
 		}
+		runVgg19 = true;
 	}
 	if (binaryFilename_squeezenet_str != "empty") {
 		vx_node nodes_squeezenet[] =
@@ -706,6 +703,7 @@ int main(int argc, const char ** argv)
 		{
 			ERROR_CHECK_OBJECT(nodes_squeezenet[i]);
 		}
+		runSqueezenet = true;
 	}
 	if (binaryFilename_resnet_str != "empty") {
 		vx_node nodes_resnet[] =
@@ -719,6 +717,7 @@ int main(int argc, const char ** argv)
 		{
 			ERROR_CHECK_OBJECT(nodes_resnet[i]);
 		}
+		runResnet50 = true;
 	}
 	if (binaryFilename_densenet_str != "empty") {
 		vx_node nodes_densenet[] =
@@ -732,6 +731,7 @@ int main(int argc, const char ** argv)
 		{
 			ERROR_CHECK_OBJECT(nodes_densenet[i]);
 		}
+		runDensenet121 = true;
 	}
 	if (binaryFilename_inception_str != "empty") {
 		vx_node nodes_inception[] =
@@ -745,6 +745,7 @@ int main(int argc, const char ** argv)
 		{
 			ERROR_CHECK_OBJECT(nodes_inception[i]);
 		}
+		runInception = true;
 	}
 	if (binaryFilename_shufflenet_str != "empty") {
 		vx_node nodes_shufflenet[] =
@@ -758,6 +759,7 @@ int main(int argc, const char ** argv)
 		{
 			ERROR_CHECK_OBJECT(nodes_shufflenet[i]);
 		}
+		runShufflenet = true;
 	}
 	if (binaryFilename_zfnet_str != "empty") {
 		vx_node nodes_zfnet[] =
@@ -771,6 +773,7 @@ int main(int argc, const char ** argv)
 		{
 			ERROR_CHECK_OBJECT(nodes_zfnet[i]);
 		}
+		runZfnet512 = true;
 	}
 	//initialize graphs 
 	ERROR_CHECK_STATUS(vxVerifyGraph(graph_vgg19));
@@ -798,7 +801,9 @@ int main(int argc, const char ** argv)
 	printf("OK: vxProcessGraph() took %.3f msec (1st iteration)\n", (float)(t1 - t0)*1000.0f / (float)freq);
 	*/
 	
-	vector<float> modelTimes;
+	float modelTimes[7];
+	for (int i = 0; i < 7; i++)
+		modelTimes[i] = FLT_MAX;
 
 	int N = 1;
 	float inceptionV2Time, resnet50Time, vgg19Time, shufflenetTime, squeezenetTime, densenetTime, zfnetTime;
@@ -810,9 +815,8 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	inceptionV2Time = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
-	
-	modelTimes.push_back(inceptionV2Time);
-
+	if(runInception == true)
+		modelTimes[0] = inceptionV2Time;
 	printf("OK: inceptionV2 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -822,9 +826,8 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	resnet50Time = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
-
-	modelTimes.push_back(resnet50Time);
-
+	if (runResnet50 == true)
+		modelTimes[1] = resnet50Time;
 	printf("OK: resnet50 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -834,8 +837,8 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	vgg19Time = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
-	modelTimes.push_back(vgg19Time);
-
+	if (runVgg19 == true)
+		modelTimes[2] = vgg19Time;
 	printf("OK: vgg19 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -845,7 +848,8 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	shufflenetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
-	modelTimes.push_back(shufflenetTime);
+	if (runShufflenet == true)
+		modelTimes[3] = shufflenetTime;
 	printf("OK: shufflenet took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -855,7 +859,8 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	squeezenetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
-	modelTimes.push_back(squeezenetTime);
+	if (runSqueezenet == true)
+		modelTimes[4] = squeezenetTime;
 	printf("OK: squeezenet took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -865,7 +870,8 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	densenetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
-	modelTimes.push_back(densenetTime);
+	if (runDensenet121 == true)
+		modelTimes[5] = densenetTime;
 	printf("OK: densenet121 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	t0 = clockCounter();
 	for (int i = 0; i < N; i++) {
@@ -875,43 +881,45 @@ int main(int argc, const char ** argv)
 	}
 	t1 = clockCounter();
 	zfnetTime = (float)(t1 - t0)*1000.0f / (float)freq / (float)N;
-	modelTimes.push_back(zfnetTime);
+	if (runZfnet512 == true)
+		modelTimes[6] - zfnetTime;
+
 	printf("OK: zfnet512 took %.3f msec (average over %d iterations)\n", (float)(t1 - t0)*1000.0f / (float)freq / (float)N, N);
 	
-	auto min_value = std::min_element(modelTimes.begin(), modelTimes.end());
-	int min_index = std::distance(modelTimes.begin(), min_value);
-
-	if (min_index == 0) {
+	auto min_value = std::min_element(modelTimes, modelTimes+7);
+	int min_index = std::distance(modelTimes, min_value);
+	
+	if (min_index == 0 && runInception == true) {
 		runInception = true; runResnet50 = false; runVgg19 = false;
 		runShufflenet = false; runSqueezenet = false;
 		runDensenet121 = false; runZfnet512 = false;
 	}
-	else if (min_index == 1) {
+	else if (min_index == 1 && runResnet50 == true) {
 		runInception = false; runResnet50 = true; runVgg19 = false;
 		runShufflenet = false; runSqueezenet = false;
 		runDensenet121 = false; runZfnet512 = false;
 	}
-	else if (min_index == 2) {
+	else if (min_index == 2 && runVgg19 == true) {
 		runInception = false; runResnet50 = false; runVgg19 = true;
 		runShufflenet = false; runSqueezenet = false;
 		runDensenet121 = false; runZfnet512 = false;
 	}
-	else if (min_index == 3) {
+	else if (min_index == 3 && runShufflenet == true) {
 		runInception = false; runResnet50 = false; runVgg19 = false;
 		runShufflenet = true; runSqueezenet = false;
 		runDensenet121 = false; runZfnet512 = false;
 	}
-	else if (min_index == 4) {
+	else if (min_index == 4 && runSqueezenet == true) {
 		runInception = false; runResnet50 = false; runVgg19 = false;
 		runShufflenet = false; runSqueezenet = true;
 		runDensenet121 = false; runZfnet512 = false;
 	}
-	else if (min_index == 5) {
+	else if (min_index == 5 && runDensenet121 == true) {
 		runInception = false; runResnet50 = false; runVgg19 = false;
 		runShufflenet = false; runSqueezenet = false;
 		runDensenet121 = true; runZfnet512 = false;
 	}
-	else if (min_index == 6) {
+	else if (min_index == 6 && runZfnet512 == true) {
 		runInception = false; runResnet50 = false; runVgg19 = false;
 		runShufflenet = false; runSqueezenet = false;
 		runDensenet121 = false; runZfnet512 = true;

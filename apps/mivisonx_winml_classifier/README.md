@@ -41,7 +41,7 @@ This application is a sample for developing windows application using MIVisionX 
  --densenet   <FULL_PATH_TO\densenet\model.onnx>     [OPTIONAL] 
  --zfnet      <FULL_PATH_TO\zfnet\model.onnx>        [OPTIONAL] 
  --label FULL_PATH_TO\amd_openvx_extensions\amd_winml\samples\data\Labels.txt [REQUIRED]
- --capture 0  [REQUIRED]
+ --capture 0/ --video <video file>  [REQUIRED]
 ```
 ## MIVisionX Image Classification
 ![MIVisionX Image Classification](images/MIVisionX-ImageClassification.png)

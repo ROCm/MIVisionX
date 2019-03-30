@@ -21,7 +21,6 @@
 
 
 #ifdef _MSC_VER 
-//not #if defined(_WIN32) || defined(_WIN64) because we have strncasecmp in mingw
 #define strncasecmp _strnicmp
 #define strcasecmp _stricmp
 #endif
@@ -582,7 +581,6 @@ int main(int argc, const char ** argv)
 	ERROR_CHECK_STATUS(vxWriteScalarValue(modelOutputName_vgg19, outputTensor_vgg19Buf));
 
 	//squeezenet scalars
-
 	vx_scalar modelLocation_squeezenet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &binaryFilename_squeezenet);
 	ERROR_CHECK_STATUS(vxWriteScalarValue(modelLocation_squeezenet, model_squeezenetBuf));
 	vx_scalar modelInputName_squeezenet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &inputTensor_squeezenet);

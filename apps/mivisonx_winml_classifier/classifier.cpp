@@ -11,7 +11,6 @@
 #include <chrono>
 #include <io.h>
 #include <math.h>
-#include <immintrin.h>
 #include <fstream>
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.h>
@@ -452,16 +451,6 @@ int main(int argc, const char ** argv)
 	vx_scalar rev = vxCreateScalar(context, VX_TYPE_BOOL, &reverse);
 	vx_scalar deviceKind = vxCreateScalar(context, VX_TYPE_INT32, &device);
 
-
-	//top k (=1) answers
-	vx_scalar top1_vgg19 = vxCreateScalar(context, VX_TYPE_STRING_AMD, &top1_vgg19);
-	vx_scalar top1_squeezenet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &top1_squeezenet);
-	vx_scalar top1_shufflenet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &top1_shufflenet);
-	vx_scalar top1_densenet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &top1_densenet);
-	vx_scalar top1_resnet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &top1_resnet);
-	vx_scalar top1_inception = vxCreateScalar(context, VX_TYPE_STRING_AMD, &top1_inception);
-	vx_scalar top1_zfnet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &top1_zfnet);
-
 	char binaryFilename_inception[1024], binaryFilename_resnet[1024], binaryFilename_vgg[1024], binaryFilename_shufflenet[1024], binaryFilename_squeezenet[1024], binaryFilename_densenet[1024], binaryFilename_zfnet[1024];
 	strcpy_s(binaryFilename_inception, binaryFilename_inception_str.c_str());
 	strcpy_s(binaryFilename_resnet, binaryFilename_resnet_str.c_str());
@@ -602,7 +591,6 @@ int main(int argc, const char ** argv)
 	ERROR_CHECK_STATUS(vxWriteScalarValue(modelOutputName_squeezenet, outputTensor_squeezenetBuf));
 
 	//densenet scalars
-
 	vx_scalar modelLocation_densenet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &binaryFilename_densenet);
 	ERROR_CHECK_STATUS(vxWriteScalarValue(modelLocation_densenet, model_densenetBuf));
 	vx_scalar modelInputName_densenet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &inputTensor_densenet);
@@ -636,7 +624,6 @@ int main(int argc, const char ** argv)
 	ERROR_CHECK_STATUS(vxWriteScalarValue(modelOutputName_shufflenet, outputTensor_shufflenetBuf));
 
 	//zfnet512 scalars
-
 	vx_scalar modelLocation_zfnet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &binaryFilename_zfnet);
 	ERROR_CHECK_STATUS(vxWriteScalarValue(modelLocation_zfnet, model_zfnetBuf));
 	vx_scalar modelInputName_zfnet = vxCreateScalar(context, VX_TYPE_STRING_AMD, &inputTensor_zfnet);
@@ -1395,6 +1382,11 @@ int main(int argc, const char ** argv)
 
 			frameCount++;
 		}
+	}
+
+	//release resources
+	for (int models = 0; models < 7; models++) {
+		delete outputBuffer[models];
 	}
 
 	// release input data

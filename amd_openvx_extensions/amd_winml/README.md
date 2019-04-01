@@ -48,4 +48,5 @@ This [utility](utilities/MIVisionX-WinML-Validate#mivisionx-onnx-model-validatio
     * [Live Inference](samples#winml-livegdf---live-inference-using-a-camera)
 * [FER+ Emotion Recognition](samples#sample---fer-emotion-recognition)
 * [VGG 19](samples#sample---vgg19)
+* [Multiple Models](samples#winml-live-multiplemodelsgdf---live-inference-using-a-camera)
 

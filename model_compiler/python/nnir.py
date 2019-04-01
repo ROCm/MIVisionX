@@ -81,6 +81,7 @@ class IrAttr:
     def set(self,name,value):
         if not name in self.dict_values:
             raise ValueError("Unsupported IR attribute: {}".format(name))
+
         if type(value) != type(self.dict_values[name]):
             raise ValueError("Invalid IR attribute value type: {} for {}".format(type(value).__name__, name))
         self.dict_values[name] = value
@@ -405,7 +406,6 @@ class IrGraph:
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

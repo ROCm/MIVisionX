@@ -105,9 +105,18 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     else:
         print('ERROR: NNEF operation "%s" not supported yet' % (nnef_operation.name))
         sys.exit(1)
-    node.set(type, [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs], \
-                   [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs], \
-                   nnef_attr_to_ir_attr(nnef_operation.attribs))
+
+    inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
+    outputs = [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs]
+    if nnef_operation.name == 'conv':
+        filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
+        nnef_operation.attribs.update({'size': [filter_tensor.shape[2], filter_tensor.shape[3]]})
+    if nnef_operation.name == 'concat':
+        inputs_temp = inputs
+        inputs = [values for input_values in inputs_temp for values in input_values]
+    
+    node.set(type, inputs, outputs, nnef_attr_to_ir_attr(nnef_operation.attribs))
+
     return node
     
 def nnef_graph_to_ir_graph(nnef_graph):
@@ -140,10 +149,11 @@ def nnef_graph_to_ir_graph(nnef_graph):
                 graph.addLocal(nnef_tensor_to_ir_tensor(tensor))
                 node = nnef_op_to_ir_node(nnef_graph, operation)
                 graph.addNode(node)
-
+    graph.updateLocals()
     return graph
 
 def nnef2ir(inputFolder, outputFolder):
+    #nnef_graph = nnef.load_model('/home/hansel/Hansel/NNEF-Tools/parser/cpp/examples/googlenet_flat.txt')
     nnef_graph = nnef.load_model(inputFolder)
     graph = nnef_graph_to_ir_graph(nnef_graph)
     graph.toFile(outputFolder)

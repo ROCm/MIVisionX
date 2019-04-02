@@ -31,11 +31,12 @@ add_executable(caffe2openvx ${CAFFE_SOURCES})
 target_link_libraries(caffe2openvx ${PROTOBUF_LIBRARIES})
 install (TARGETS caffe2openvx DESTINATION bin)
 
-include_directories(deps/NNEF-Tools/parser/cpp)
-list(APPEND NNEF_SOURCES src/nnef2openvx.cpp)
-add_executable(nnef2openvx ${NNEF_SOURCES})
-target_link_libraries(nnef2openvx)
-install (TARGETS nnef2openvx DESTINATION bin)
+# NNEF Build turned off
+#include_directories(deps/NNEF-Tools/parser/cpp)
+#list(APPEND NNEF_SOURCES src/nnef2openvx.cpp)
+#add_executable(nnef2openvx ${NNEF_SOURCES})
+#target_link_libraries(nnef2openvx)
+#install (TARGETS nnef2openvx DESTINATION bin)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

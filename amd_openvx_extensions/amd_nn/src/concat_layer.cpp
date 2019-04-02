@@ -117,20 +117,20 @@ static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_referenc
 {
 
     //check tensor dims and type for input
-    vx_enum type;
+    vx_enum in_type, type;
     vx_size num_dims;
     vx_size input1_dims[4], input2_dims[4], output_dims[4], num_channels = 0;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &in_type, sizeof(in_type)));
     if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #1 num_dims=%ld (must be 4)\n", num_dims);
-    if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #1 type=%d (must be float)\n", type);
+    if ((in_type != VX_TYPE_FLOAT32) && (in_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #1 type=%d (must be float/float16)\n", in_type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input1_dims, sizeof(input1_dims)));
     num_channels = input1_dims[2];
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &in_type, sizeof(type)));
     if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #2 num_dims=%ld (must be 4)\n", num_dims);
-    if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #2 type=%d (must be float)\n", type);
+    if ((in_type != VX_TYPE_FLOAT32) && (in_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #2 type=%d (must be float/float16)\n", in_type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, input2_dims, sizeof(input2_dims)));
     if (input1_dims[3] != input2_dims[3] || input1_dims[1] != input2_dims[1] || input1_dims[0] != input2_dims[0])
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #2 dims input1[%ld,%ld,%ld,%ld] != dims_input2[%ld,%ld,%ld,%ld]\n",
@@ -141,9 +141,9 @@ static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_referenc
     while(parameters[i] && (i < 9)) {
         vx_size inputn_dims[4];
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_DATA_TYPE, &in_type, sizeof(type)));
         if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #%d num_dims=%ld (must be 4)\n", i, num_dims);
-        if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #%d type=%d (must be float)\n", i, type);
+        if ((in_type != VX_TYPE_FLOAT32) && (in_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #%d type=%d (must be float/float16)\n", i, in_type);
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_DIMS, inputn_dims, sizeof(inputn_dims)));
         if (input1_dims[3] != inputn_dims[3] || input1_dims[1] != inputn_dims[1] || input1_dims[0] != inputn_dims[0])
             return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #%d dims input1[%ld,%ld,%ld,%ld] != dims_input%d[%ld,%ld,%ld,%ld]\n", i,
@@ -158,7 +158,7 @@ static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_referenc
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #0 num_dims=%ld (must be 4)\n", num_dims);
-    if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #0 type=%d (must be float)\n", type);
+    if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #0 type=%d (must be float/float16)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     if((input1_dims[0] != output_dims[0]) || (input1_dims[1] != output_dims[1]) || (num_channels != output_dims[2]) || (input1_dims[3] != output_dims[3]))
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #all dims total input[%ld,%ld,%ld,%ld] != dims_output[%ld,%ld,%ld,%ld]\n",
@@ -166,7 +166,7 @@ static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_referenc
                     output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
 
     //output tensor configuration.
-    type = VX_TYPE_FLOAT32;
+    type = in_type;     // should be same as input
     num_dims = 4;
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
@@ -202,6 +202,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     )
 {
     //get tensor dimensions
+    vx_enum type;
     vx_size output_dims[4];
     vx_size ip_size_per_batch[8], batch_size = 0, op_batch_stride = 0;
     int num_inputs = 0;
@@ -220,6 +221,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     num_inputs = i-1;
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     batch_size = output_dims[3];
     op_batch_stride = output_dims[2] * output_dims[1] * output_dims[0];
 #if ENABLE_DEBUG_PRINT_DIMS
@@ -237,18 +239,36 @@ static vx_status VX_CALLBACK opencl_codegen(
     opencl_local_buffer_size_in_bytes = 0;
 
     char item[8192];
-    sprintf(item,
-        "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
-        "void %s(__global float * out, uint out_offset, uint4 out_stride" // opencl_kernel_function_name
-        , (int)opencl_local_work[0], opencl_kernel_function_name);
-    opencl_kernel_code = item;
-
-    for(int i = 0; i < num_inputs; i++) {
+    if (type == VX_TYPE_FLOAT32) {
         sprintf(item,
-            ",\n"
-            "                  __global float * in%d, uint in%d_offset, uint4 in%d_stride"  // i, i, i
-            , i, i, i);
-        opencl_kernel_code += item;
+            "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
+            "void %s(__global float * out, uint out_offset, uint4 out_stride" // opencl_kernel_function_name
+            , (int)opencl_local_work[0], opencl_kernel_function_name);
+        opencl_kernel_code = item;
+
+        for(int i = 0; i < num_inputs; i++) {
+            sprintf(item,
+                ",\n"
+                "                  __global float * in%d, uint in%d_offset, uint4 in%d_stride"  // i, i, i
+                , i, i, i);
+            opencl_kernel_code += item;
+        }
+    } else
+    {
+        sprintf(item,
+            "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
+            "__kernel __attribute__((reqd_work_group_size(%d, 1, 1)))\n"    // opencl_local_work[0]
+            "void %s(__global half * out, uint out_offset, uint4 out_stride" // opencl_kernel_function_name
+            , (int)opencl_local_work[0], opencl_kernel_function_name);
+        opencl_kernel_code = item;
+
+        for(int i = 0; i < num_inputs; i++) {
+            sprintf(item,
+                ",\n"
+                "                  __global half * in%d, uint in%d_offset, uint4 in%d_stride"  // i, i, i
+                , i, i, i);
+            opencl_kernel_code += item;
+        }
     }
     opencl_kernel_code += ")\n";
 

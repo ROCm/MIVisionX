@@ -21,13 +21,13 @@ The following is a list of WinML functions that have been included in the vx_win
 
 ### Pre-requisites
 * Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
-* Windows SDK, build `17763` or later
+* Windows SDK, [build `17763` or later](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)
 * Visual Studio 2017, [version `15.7.4` or later](https://developer.microsoft.com/en-us/windows/downloads)
     * Visual Studio extension for C++/WinRT
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-  * Add `OpenCV_DIR\x64\vc14\bin` or `OpenCV_DIR\x64\vc15\bin` to your `PATH`
+  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
 ### Build using `Visual Studio 2017` on 64-bit Windows 10
 * Use `amd_openvx_extensions/amd_winml.sln` to build for x64 platform
@@ -48,4 +48,5 @@ This [utility](utilities/MIVisionX-WinML-Validate#mivisionx-onnx-model-validatio
     * [Live Inference](samples#winml-livegdf---live-inference-using-a-camera)
 * [FER+ Emotion Recognition](samples#sample---fer-emotion-recognition)
 * [VGG 19](samples#sample---vgg19)
+* [Multiple Models](samples#winml-live-multiplemodelsgdf---live-inference-using-a-camera)
 

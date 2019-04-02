@@ -4,7 +4,6 @@
 + A c/c++ implementation for region layer of yolov2
 + A sample for running yolov2 with Annie
 
----
 
 ## Pre-requisites
 

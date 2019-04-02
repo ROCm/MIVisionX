@@ -51,7 +51,7 @@ include_directories(
     include
 	../../utilities/inference_generator
     )
-
+include_directories(${OpenCL_INCLUDE_DIRS})
 list(APPEND SOURCES
     src/kernels.cpp
     src/activation_layer.cpp

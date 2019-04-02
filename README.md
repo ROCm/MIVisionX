@@ -151,7 +151,7 @@ sudo yum install mivisionx
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
 * Use the below commands to setup and build MIVisionX
 ````
-git clone --recursive https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
 cd MIVisionX
 ````
 ````
@@ -180,7 +180,6 @@ sudo make install
   * [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) -- make sure to use `-DMIOPEN_BACKEND=OpenCL` option with cmake
 * install [protobuf](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.3.0)
-* git clone this project using `--recursive` option so that correct branch of the deps project is cloned automatically.
 * build and install (using `cmake` and `% make install`)
   * executables will be placed in `bin` folder
   * libraries will be placed in `lib` folder

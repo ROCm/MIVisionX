@@ -21,7 +21,7 @@ A simple application used to [recognize hand written digits](./dg_test#amd-dgtes
 This application shows how to [run supported ONNX models](./mivisonx_winml_classifier/README.md) with MIVisionX RunTime:
 
 <p align="center">
-  <img src="./mivisonx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png">
+  <img src="./mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png">
 </p>
 
 ## MIVisionX WinML YoloV2

@@ -18,7 +18,7 @@ A simple application used to [recognize hand written digits](./dg_test#amd-dgtes
 </p>
 
 ## MIVisionX WinML Image Classification
-This application shows how to [run supported ONNX models](./mivisonx_winml_classifier/README.md) with MIVisionX RunTime:
+This application shows how to [run supported ONNX models](./mivisionx_winml_classifier/README.md) with MIVisionX RunTime:
 
 <p align="center">
   <img src="./mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png">

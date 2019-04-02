@@ -8,16 +8,14 @@
 
 ## Pre-requisites
 
-### Option 1: Using pre-built installer
-[MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases) 
-
-* The pre-requisites and instructions are under the tab "Install Packages on Windows".
-
-### Option 2: Build MIVisionX winML extension library
-
-[MIVisionX winML extension library](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/amd_openvx_extensions/amd_winml#amd-winml-extension)
-
-* Use the above link for building instructions.
+* Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
+* Windows SDK, build `17763` or later
+* Visual Studio 2017, [version `15.7.4` or later](https://developer.microsoft.com/en-us/windows/downloads)
+    * Visual Studio extension for C++/WinRT
+* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
+  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  * Add `OpenCV_DIR\x64\vc14\bin` or `OpenCV_DIR\x64\vc15\bin` to your `PATH`
 
 
 ## Run
@@ -29,7 +27,6 @@ ONNX version 1.3 is recommended.
 ### Step 2. Build the app using MIVisionX_winml_YoloV2.sln on Visual Studio.
 
 ### Step 3. Run tests
-In order to run the MIVisionX_winml_YolV2.exe, you need OpenVX.dll and vx_winml.dll files on the same directory. You can either copy it from $(MIVisionX_ROOT)\bin or add the $(MIVisionX_ROOT)\bin directory to the $PATH$ environment variable.
 
 #### Usage:
 

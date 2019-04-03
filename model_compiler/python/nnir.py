@@ -361,8 +361,8 @@ class IrGraph:
                         self.addLocal(local)
                 elif node.type in ['reshape']:
                     input = self.tensor_dict[node.inputs[0]]
-                    #param = node.attr.get('shape')
-                    param = input.shape
+                    param = node.attr.get('shape')
+                    #param = input.shape
                     icount = 1
                     ocount = 1
                     shape = []

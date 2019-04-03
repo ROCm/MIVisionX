@@ -26,25 +26,25 @@ ONNX version 1.3 is recommended.
 ### Step 2. Build the app using MIVisionX_winml_YoloV2.sln on Visual Studio.
 
 ### Step 3. Run tests
-
+Open up the command line prompt and use the following commands to run the tests.
 #### Usage:
 
 * Image
 
-      MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation] --confidence(default = 20)
+      .\MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation] --confidence(default = 20)
 * Camera Capture
 
-      MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture) --confidence(default = 20)
+      .\MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture) --confidence(default = 20)
 * Video
 
-      MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation] --confidence(default = 20)
+      .\MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation] --confidence(default = 20)
 
 The confidence parameter is an optional parameter which sets the confidence level of detection.
 Lower the confidence level if the detection is not good enough.
 
 ### Example
 
-MIVisionX_winml_YoloV2.exe --image image\cat.jpg --modelLoc model.onnx
+.\MIVisionX_winml_YoloV2.exe --image image\cat.jpg --modelLoc model.onnx
 
 
 <p align="center">

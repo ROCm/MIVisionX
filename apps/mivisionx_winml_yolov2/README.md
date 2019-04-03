@@ -26,7 +26,7 @@ ONNX version 1.3 is recommended.
 ### Step 2. Build the app using MIVisionX_winml_YoloV2.sln on Visual Studio.
 
 ### Step 3. Run tests
-Open up the command line prompt and use the following commands to run the tests.
+Open up the command line prompt or Windows Powershell and use the following commands to run the tests.
 #### Usage:
 
 * Image

@@ -321,6 +321,8 @@ class IrGraph:
                     output_shape = [input_shape[0], k, \
                         (input_shape[2]-1)*strides[0] + (kernel_shape[0]-1)*dilations[0] + 1 - pads[0] - pads[2], \
                         (input_shape[3]-1)*strides[1] + (kernel_shape[1]-1)*dilations[1] + 1 - pads[1] - pads[3]]
+                    print('output shape')
+                    print(output_shape)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, output_shape)
@@ -333,6 +335,8 @@ class IrGraph:
                     transB = node.attr.get('transB')
                     shapeA = A.shape
                     shapeB = B.shape
+                    print(shapeA)
+                    print(shapeB)
                     if transA == 0 and transB == 0:
                         output_shape = [shapeA[0], shapeB[1], 1, 1]
                     elif transA == 0:
@@ -341,6 +345,7 @@ class IrGraph:
                         output_shape = [shapeA[1], shapeB[1], 1, 1]
                     else:
                         output_shape = [shapeA[1], shapeB[0], 1, 1]
+                    print(output_shape)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, output_shape)
@@ -372,26 +377,22 @@ class IrGraph:
                         self.addLocal(local)
                 elif node.type in ['reshape']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-                    shape = [input.shape[0]]
-                    for d in input.shape[1:]:
-                        icount = icount * d
-                    for d in param:
-                        if d > 0:
-                            ocount = ocount * d
-                    for d in param:
-                        if d < 1:
-                            d = icount // ocount
-                            ocount = ocount * d
-                        shape.append(d)
+                    for dim in range(len(input.shape)):
+                        icount *= input.shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] == 0:
+                            param[dim] = input.shape[dim]
+                        elif param[dim] == -1:
+                            param[dim] = icount / ocount
+                        ocount *= param[dim] 
                     if icount != ocount:
-                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
+                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, shape)
+                    local.setInfo(input.type, param)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['transpose']:

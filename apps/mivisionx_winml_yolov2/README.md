@@ -31,13 +31,14 @@ Open up the command line prompt or Windows Powershell and use the following comm
 
 * Image
 
-      .\MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation] --confidence(default = 20)
+      .\MIVisionX_winml_YoloV2.exe --image [image - required] --modelLoc [modelLocation - required] --confidence [1-100 - optional, default: 20]
 * Camera Capture
 
-      .\MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture) --confidence(default = 20)
+      .\MIVisionX_winml_YoloV2.exe --capture [0 - required] --modelLoc [modelLocation - required] --confidence [1-100 - optional, default: 20]
+
 * Video
 
-      .\MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation] --confidence(default = 20)
+      .\MIVisionX_winml_YoloV2.exe --video [video - required] --modelLoc [modelLocation - required] --confidence [1-100 - optional, default: 20]
 
 The confidence parameter is an optional parameter which sets the confidence level of detection.
 Lower the confidence level if the detection is not good enough.

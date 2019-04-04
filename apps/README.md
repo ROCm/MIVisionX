@@ -23,12 +23,12 @@ This [application](./mivisionx_openvx_classifier/README.md) shows how to run sup
 <p align="center"> <img src="./mivisionx_openvx_classifier/data/MIVisionX-ImageClassification.png"></p>
 
 ## MIVisionX WinML Classification
-This [application](./mivisionx_winml_classifier/README.md) shows how to run supported ONNX models with MIVisionX RunTime on Windows
+This [application](./mivisionx_winml_classifier/README.md) shows how to run supported ONNX models with MIVisionX RunTime on Windows.
 
 <p align="center"> <img src="./mivisionx_winml_classifier/images/MIVisionX-ImageClassification-WinML.png"> </p>
 
 ## MIVisionX WinML YoloV2
-This project shows how to [run tiny yolov2](./mivisionx_winml_yolov2#yolov2-using-amd-winml-extension) (20 classes) with MIVisionX RunTime
+This [application](./mivisionx_winml_yolov2#yolov2-using-amd-winml-extension) shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
 
 <p align="center"> <img src="./mivisionx_winml_yolov2/image/cat-yolo.jpg"> </p>
 

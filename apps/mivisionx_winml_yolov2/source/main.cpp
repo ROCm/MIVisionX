@@ -7,11 +7,11 @@ using namespace cv;
 void printUsage() {
 	cout << "Usage: " << endl;
 	cout << "  * Image" << endl;
-	cout << "       MIVisionX_winml_YoloV2.exe --image [image] --modelLoc [modelLocation] --confidence(default = 20)" << endl;
+	cout << "       .\MIVisionX_winml_YoloV2.exe --image [image - required] --modelLoc [modelLocation - required] --confidence [1-100 - optional, default: 20]" << endl;
 	cout << "  * Camera Capture" << endl;
-	cout << "       MIVisionX_winml_YoloV2.exe --capture 0     --modelLoc [modelLocation](Live Capture) --confidence(default = 20)" << endl;
+	cout << "       .\MIVisionX_winml_YoloV2.exe --capture [0 - required] --modelLoc [modelLocation - required] --confidence [1-100 - optional, default: 20]" << endl;
 	cout << "  * Video" << endl;
-	cout << "       MIVisionX_winml_YoloV2.exe --video [video] --modelLoc [modelLocation] --confidence(default = 20)" << endl;
+	cout << "       .\MIVisionX_winml_YoloV2.exe --video [video - required] --modelLoc [modelLocation - required] --confidence [1-100 - optional, default: 20]" << endl;
 }
 
 void convertBackSlash(string &modelLoc) {

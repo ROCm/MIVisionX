@@ -68,7 +68,7 @@ Here is the sample download [link](https://github.com/SnailTyan/caffe-model-zoo)
 	````
 	% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
 	````
-		**Sample:**
+		Sample:
 		````
 		% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel VGG16_NNIR --input-dims 1,3,224,224
 		````
@@ -78,18 +78,18 @@ Here is the sample download [link](https://github.com/SnailTyan/caffe-model-zoo)
 	````
 	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
 	````
-		**Sample:**:
+		Sample:
 		````
 		% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py VGG16_NNIR VGG16_OpenVX
 		````
 
 	**Note:** The weights.bin file will be generated inside the OpenVX folder and you can use that as an input for this project.
 
-#### --label <labels.txt file>
+#### --label <path to labels file>
 
 Use [labels.txt](data/labels.txt) or [simple_labels.txt](data/simple_labels.txt) file in the data folder
 
-#### --video <video file path>
+#### --video <path to video file>
 
 Run classification on pre-recorded video with this option.
 
@@ -99,18 +99,19 @@ Run classification on the live camera feed with this option.
 
 **Note:** --video and --capture options are not supported concurrently
 
-### Sample Run
+### Sample Runs
 
 #### Run VGG 16 Classification on Live Video
 
 * **Step 1:** Install all the Prerequisites
 
-**Note:** MIVisionX installs all the model compiler scripts in `/opt/rocm/mivisionx/model_compiler/python/` folder
+	**Note:** MIVisionX installs all the model compiler scripts in `/opt/rocm/mivisionx/model_compiler/python/` folder
 
 * **Step 2:** Download pre-trained VGG 16 caffe model - [VGG_ILSVRC_16_layers.caffemodel](http://www.robots.ox.ac.uk/~vgg/software/very_deep/caffe/VGG_ILSVRC_16_layers.caffemodel)
 
 * **Step 3:** Use MIVisionX Model Compiler to extract weights.bin file from the pre-trained caffe model
-    
+
+
 	* Convert .caffemodel to NNIR
 
 	````

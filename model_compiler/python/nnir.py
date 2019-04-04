@@ -356,8 +356,8 @@ class IrGraph:
                         self.addLocal(local)
                 elif node.type in ['reshape']:
                     input = self.tensor_dict[node.inputs[0]]
-                    #param = node.attr.get('shape')
-                    param = input.shape
+                    param = node.attr.get('shape')
+                    #param = input.shape
                     icount = 1
                     ocount = 1
                     #shape = [input.shape[0]]
@@ -376,8 +376,9 @@ class IrGraph:
                             d = input.shape[index]
                         index += 1
                         shape.append(d)
-                    while len(shape) != 4:
-                        shape.append(1)
+                    if len(shape) < 4:
+                        while len(shape) != 4:
+                            shape.append(1)
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
                     local = IrTensor()

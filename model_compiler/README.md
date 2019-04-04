@@ -203,6 +203,7 @@ Currently supporting below models from https://github.com/onnx/models with `rele
  - resnet50
  - googlenet
  - inception_v2
+ - inception_v1
  - vgg19
  - densenet
  - squeezenet
@@ -225,6 +226,7 @@ Supported ONNX operators are:
 - Mul
 - Softmax
 - Dropout
+- Reshape
 
 ## License
 Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.

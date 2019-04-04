@@ -63,27 +63,27 @@ Here is the sample download [link](https://github.com/SnailTyan/caffe-model-zoo)
 **Note:** MIVisionX installs all the model compiler scripts in `/opt/rocm/mivisionx/model_compiler/python/` folder
 
 
-* Convert the pre-trained caffemodel into AMD NNIR model:
+	* Convert the pre-trained caffemodel into AMD NNIR model:
 
-````
-% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
-````
-**Sample:**
-````
-% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel VGG16_NNIR --input-dims 1,3,224,224
-````
+	````
+	% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
+	````
+		**Sample:**
+		````
+		% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel VGG16_NNIR --input-dims 1,3,224,224
+		````
 
-* Convert an AMD NNIR model into OpenVX C code:
+	* Convert an AMD NNIR model into OpenVX C code:
 
-````
-% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
-````
-**Sample:**:
-````
-% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py VGG16_NNIR VGG16_OpenVX
-````
+	````
+	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
+	````
+		**Sample:**:
+		````
+		% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py VGG16_NNIR VGG16_OpenVX
+		````
 
-**Note:** The weights.bin file will be generated inside the OpenVX folder and you can use that as an input for this project.
+	**Note:** The weights.bin file will be generated inside the OpenVX folder and you can use that as an input for this project.
 
 #### --label <labels.txt file>
 
@@ -104,21 +104,26 @@ Run classification on the live camera feed with this option.
 #### Run VGG 16 Classification on Live Video
 
 * **Step 1:** Install all the Prerequisites
+
 **Note:** MIVisionX installs all the model compiler scripts in `/opt/rocm/mivisionx/model_compiler/python/` folder
 
 * **Step 2:** Download pre-trained VGG 16 caffe model - [VGG_ILSVRC_16_layers.caffemodel](http://www.robots.ox.ac.uk/~vgg/software/very_deep/caffe/VGG_ILSVRC_16_layers.caffemodel)
 
 * **Step 3:** Use MIVisionX Model Compiler to extract weights.bin file from the pre-trained caffe model
-    * Convert .caffemodel to NNIR
-````
-% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel VGG16_NNIR --input-dims 1,3,224,224
-````
-    * Convert NNIR to OpenVX
-````
-% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py VGG16_NNIR VGG16_OpenVX
-````
+    
+	* Convert .caffemodel to NNIR
 
-**Note:** Use weights.bin generated in VGG16_OpenVX folder to run the classifier on live video
+	````
+	% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel VGG16_NNIR --input-dims 1,3,224,224
+	````
+
+	* Convert NNIR to OpenVX
+
+	````
+	% python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py VGG16_NNIR VGG16_OpenVX
+	````
+
+	**Note:** Use weights.bin generated in VGG16_OpenVX folder to run the classifier on live video
 
 ```
 ./classifier    --label PATH_TO/labels.txt 

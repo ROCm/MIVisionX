@@ -80,13 +80,16 @@ void AnnieYoloDetect::detect() {
 
 	vx_int32 device = 0;
 	vx_scalar deviceKind = vxCreateScalar(context, VX_TYPE_INT32, &device);
+	
+	vx_array setup_array_yolo = vxCreateArray(context, VX_TYPE_SIZE, sizeof(VX_TYPE_SIZE));
+	ERROR_CHECK_OBJECT(setup_array_yolo);
 
 	vxLoadKernels(context, "vx_winml");
 
 	vx_node nodes[] =
 	{
 		vxExtWinMLNode_convertImageToTensor(graph, input_image, input_tensor, a, b, rev),
-		vxExtWinMLNode_OnnxToMivisionX(graph, modelLocation, modelInputName, modelOutputName, input_tensor, output, deviceKind),
+		vxExtWinMLNode_OnnxToMivisionX(graph, modelLocation, modelInputName, modelOutputName, input_tensor, setup_array_yolo, output, deviceKind),
 	};
 
 	for (vx_size i = 0; i < sizeof(nodes) / sizeof(nodes[0]); i++)

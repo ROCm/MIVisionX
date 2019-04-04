@@ -74,6 +74,7 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
+            , 'offset' : []               # list of offsets
         }
         self.dict_set = []
 
@@ -146,6 +147,7 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
+            'crop' : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -357,17 +359,24 @@ class IrGraph:
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-                    shape = [input.shape[0]]
+                    shape = []
                     for d in input.shape[1:]:
                         icount = icount * d
                     for d in param:
                         if d > 0:
                             ocount = ocount * d
+                    index = 0
                     for d in param:
-                        if d < 1:
+                        if d < 0:
                             d = icount // ocount
                             ocount = ocount * d
+                        elif d == 0:
+                            d = input.shape[index]
+                        index += 1
                         shape.append(d)
+                    if len(shape) < 4:
+                        while len(shape) != 4:
+                            shape.append(1)
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
                     local = IrTensor()
@@ -396,6 +405,14 @@ class IrGraph:
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['crop']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

@@ -57,6 +57,7 @@ static vx_status VX_CALLBACK validateFullyConnectedLayer(vx_node node, const vx_
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if(num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: FC: #0 num_dims=%ld (must be 4)\n", num_dims);
     if((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: FC: #0 type=%d (must be float)\n", type);
+    out_type = type;        // has to be same as input
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
@@ -84,7 +85,6 @@ static vx_status VX_CALLBACK validateFullyConnectedLayer(vx_node node, const vx_
             output_dims[3], output_dims[2], output_dims[1], output_dims[0]);
 
     // output tensor configuration
-    out_type = type;        // has to be same as input
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[5], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[5], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[5], VX_TENSOR_DIMS, &output_dims[4-num_dims], num_dims * sizeof(vx_size)));
@@ -163,9 +163,11 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
     if(parameters[2]) {
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_OPENCL, &data->bias_mem, sizeof(data->bias_mem)));
     }
+    data->alpha = 1;
+    data->beta = 0;
 
     //Workspace Size.
-    ERROR_CHECK_MIOPEN_STATUS(miopenConvolutionForwardGetWorkSpaceSize(data->handle->miopen_handle, data->weight_desc, data->input_desc, data->convdesc, data->output_desc, &data->workspace_size));
+    ERROR_CHECK_MIOPEN_STATUS(miopenConvolutionForwardGetWorkSpaceSize(data->handle->miopen_handle, data->weight_desc, data->input_desc, data->convdesc, data->output_desc, &data->workspace_size ));
     if (data->workspace_size > 0) {
         vx_context   vxContext = vxGetContext((vx_reference)node);
         cl_context context;
@@ -175,25 +177,15 @@ static vx_status VX_CALLBACK initializeFullyConnectedLayer(vx_node node, const v
         if (!data->workspace) {
             return VX_FAILURE;
         }
-        cl_int err;
-        if (data->data_type == miopenFloat){
-            cl_float pattern= 0;
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
-        }
-        else {
-            cl_half pattern= 0;
-            err = clEnqueueFillBuffer(data->handle->cmdq, data->workspace, &pattern, sizeof(cl_half), 0, data->workspace_size, 0, NULL, NULL);
-        }
+        cl_float pattern = 0;
+        cl_int err = 0;
+        err = clEnqueueFillBuffer(data->handle->cmdq, data->workspace, &pattern, sizeof(cl_float), 0, data->workspace_size, 0, NULL, NULL);
         if(err) return VX_FAILURE;
     }
-
-    //Algorithm.
-    data->alpha = 1;
-    data->beta = 0;
+    //Finding best Convolution Algorithm.
     miopenConvAlgoPerf_t perf;
     int algo_count;
-    ERROR_CHECK_MIOPEN_STATUS(miopenFindConvolutionForwardAlgorithm(data->handle->miopen_handle, data->input_desc, data->input_mem, data->weight_desc, data->weight_mem, data->convdesc,
-                                                                    data->output_desc, data->output_mem, 1, &algo_count, &perf, data->workspace, data->workspace_size, data->handle->exhaustiveSearch));
+    ERROR_CHECK_MIOPEN_STATUS(miopenFindConvolutionForwardAlgorithm(data->handle->miopen_handle, data->input_desc, data->input_mem, data->weight_desc, data->weight_mem, data->convdesc, data->output_desc, data->output_mem, 1, &algo_count, &perf, data->workspace, data->workspace_size, data->handle->exhaustiveSearch));
     data->algo = perf.fwd_algo;
 
 #if ENABLE_DEBUG_PRINT_DIMS

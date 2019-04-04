@@ -42,6 +42,7 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
+    'shape' : 'shape'
 }
 
 onnx2ir_op_type = {
@@ -60,7 +61,9 @@ onnx2ir_op_type = {
     'Concat'             : 'concat',
     'LeakyRelu'          : 'leaky_relu',
     'GlobalAveragePool'  : 'global_avg_pool',
-    'Softmax'            : 'softmax'
+    'Softmax'            : 'softmax',
+    'Reshape'            : 'reshape',
+    'Transpose'          : 'transpose'
 }
 
 onnx2ir_data_type = [
@@ -132,6 +135,7 @@ def onnx_value_info_to_data(info, dims):
 def onnx_graph_to_ir_graph(onnx_graph):
     graph = IrGraph()
     initializerList = []
+    inputUser = False
     for tensor in onnx_graph.initializer:
         tensorName = onnx_name_to_ir_name(tensor.name)
         initializerList.append(tensorName)
@@ -143,6 +147,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
             if (len(sys.argv) > 3) and (sys.argv[3] == "--input_dims"):
                 if (x == 0 or x is None or x == '?' for x in input_dims):
                     input_dims = sys.argv[4].split(',')
+                    inputUser = True
             graph.addInput(onnx_value_info_to_data(tensor, input_dims))
     for tensor in onnx_graph.output:
         output_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]

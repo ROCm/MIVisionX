@@ -29,7 +29,10 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 To convert an ONNX model into AMD NNIR model:
 
 ```
-% python onnx_to_nnir.py <model.onnx> <nnirModelFolder>
+% python onnx_to_nnir.py <model.onnx> <nnirModelFolder> [OPTIONS]
+
+OPTIONS:
+	--input_dims n,c,h,w
 ```
 
 To convert a caffemodel into AMD NNIR model:

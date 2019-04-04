@@ -130,6 +130,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         } else {
             sprintf(item,
                     "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
+                    "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
                     "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                     "{ \n"
                     "     uint x = get_global_id(0);\n"

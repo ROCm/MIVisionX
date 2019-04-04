@@ -80,7 +80,7 @@ static vx_status VX_CALLBACK validateDeconvolutionLayer(vx_node node, const vx_r
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     if(num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: deconv: #4 num_dims=%ld (must be 4)\n", num_dims);
-    if((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: deconv: #4 type=%d (must be float)\n", type);
+    if((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: deconv: #4 type=%d (must be float)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     if(output_dims[3] != input_dims[3] || input_dims[2] != weights_dims[2] || output_dims[2] != weights_dims[3] || type != out_type)
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: deconv: input[%ldx%ldx%ldx%ld]type[%d] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]type[%d]\n",
@@ -89,7 +89,7 @@ static vx_status VX_CALLBACK validateDeconvolutionLayer(vx_node node, const vx_r
             output_dims[3], output_dims[2], output_dims[1], output_dims[0], out_type);
 
     // output tensor configuration
-    //type = VX_TYPE_FLOAT32;
+    out_type = type;
     num_dims = 4;
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[4], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));

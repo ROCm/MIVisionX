@@ -74,15 +74,16 @@ vx_node vxCreateNodeByStructure(vx_graph graph,
 /************************************************************************************************************
 WinML vxExtWinMLNode_OnnxToMivisionX C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
 (
         vx_graph graph,
         vx_scalar modelLocation,
         vx_scalar inputTensorName,
         vx_scalar outputTensorName,
         vx_tensor inputTensor,
+	vx_array setupArray,
         vx_tensor outputTensor,
-		vx_scalar deviceKind
+	vx_scalar deviceKind		
 )
 {
         vx_reference params[] = {
@@ -90,8 +91,9 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
                 (vx_reference)inputTensorName,
                 (vx_reference)outputTensorName,
                 (vx_reference)inputTensor,
+		(vx_reference)setupArray,
                 (vx_reference)outputTensor,
-				(vx_reference)deviceKind
+		(vx_reference)deviceKind				
         };
 
         return vxCreateNodeByStructure(graph,
@@ -103,7 +105,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_OnnxToMivisionX
 /************************************************************************************************************
 WinML vxExtWinMLNode_ConvertImageToTensorNode C Function
 *************************************************************************************************************/
-VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
 (
 	vx_graph graph, 
 	vx_image input, 
@@ -114,11 +116,11 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
 )
 {
 		vx_reference params[] = {
-				(vx_reference)input,
-				(vx_reference)output,
-				(vx_reference)a,
-				(vx_reference)b,
-				(vx_reference)reverse_channel_order
+			(vx_reference)input,
+			(vx_reference)output,
+			(vx_reference)a,
+			(vx_reference)b,
+			(vx_reference)reverse_channel_order
 		};
 
 		return vxCreateNodeByStructure(graph,
@@ -130,8 +132,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_convertImageToTensor
 /************************************************************************************************************
 WinML vxExtWinMLNode_getTopKLabels C Function
 *************************************************************************************************************/
-
-VX_API_ENTRY vx_node VX_API_CALL vxExtWinMLNode_getTopKLabels
+extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtWinMLNode_getTopKLabels
 (
 	vx_graph graph,
 	vx_tensor prob_tensor,

@@ -61,6 +61,33 @@ data modelLocation = scalar:STRING,FULL_PATH_TO\squeezenet\model.onnx:view,resul
 data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
 ````
 
+### winML-Live-MultipleModels.gdf - Live Inference using a camera
+
+This sample is in [Graph Description Format](../../../utilities/runvx#amd-runvx) (gdf)
+
+#### usage
+````
+runvx.exe -frames:LIVE winML-Live-MultipleModels.gdf
+````
+
+**NOTE:**
+Make the below changes in the `winML-Live-MultipleModels.gdf` file to run the inference
+
+* Add full path to the VGG19 ONNX model downloaded in line 17
+````
+data modelLocation_vgg = scalar:STRING,FULL_PATH_TO\vgg19\model.onnx:view,resultWindow
+````
+
+* Add full path to the SqueezeNet ONNX model downloaded in line 31
+````
+data modelLocation_squeezenet = scalar:STRING,FULL_PATH_TO\squeezenet\model.onnx:view,resultWindow
+````
+
+* Add full path to the [data\Labels.txt](data/Labels.txt) provided in this folder in line 44
+````
+data labelLocation = scalar:STRING,FULL_PATH_TO\data\Labels.txt
+````
+
 ## Sample - FER+ Emotion Recognition
 
 * Download the [FER+ Emotion Recognition](https://onnxzoo.blob.core.windows.net/models/opset_8/emotion_ferplus/emotion_ferplus.tar.gz) ONNX Model

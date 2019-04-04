@@ -68,11 +68,11 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 ### Windows
 * Windows 10
 * Windows SDK
-* Install the latest drivers and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
-  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
 * Visual Studio 2017
-  * Visual Studio extension for C++/WinRT
+* Install the latest drivers and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
 ### Linux
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html) 
@@ -81,7 +81,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
-* [OpenCV 3.4+](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   
 #### Prerequisites setup script for Linux - `MIVisionX-setup.py`
@@ -99,7 +99,7 @@ For convenience of the developer, we here provide the setup script which will in
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
+                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
 ````
 **Note:** use `--installer yum` for CentOS
 
@@ -109,11 +109,17 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 
 ### Windows
 
+#### Using .msi packages
+
+* [MIVisionX-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX
+* [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX for WinML
+
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
-* Install [OpenCV](https://github.com/opencv/opencv/releases) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
-  * `OpenCV_DIR` environment variable should point to `OpenCV/build` folder
-* If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in .vcxproj files
-* Use MIVisionX.sln to build for x64 platform
+* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* Install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
+  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
+* Use `MIVisionX.sln` to build for x64 platform
 
 **NOTE:** vx_nn is not supported on Windows in this release
 
@@ -145,13 +151,13 @@ sudo yum install mivisionx
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
 * Use the below commands to setup and build MIVisionX
 ````
-git clone --recursive https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
 cd MIVisionX
 ````
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.0)]      
+                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
 ````
 **Note:** Use `--installer yum` for CentOS
 ````
@@ -174,7 +180,6 @@ sudo make install
   * [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) -- make sure to use `-DMIOPEN_BACKEND=OpenCL` option with cmake
 * install [protobuf](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.3.0)
-* git clone this project using `--recursive` option so that correct branch of the deps project is cloned automatically.
 * build and install (using `cmake` and `% make install`)
   * executables will be placed in `bin` folder
   * libraries will be placed in `lib` folder
@@ -192,10 +197,10 @@ sudo make install
 MIVisionX provides developers with docker images for Ubuntu 16.04, Ubuntu 18.04, CentOS 7.5, & CentOS 7.6. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
 ### MIVisionX Docker
-* [Ubuntu 16.04](https://hub.docker.com/r/kiritigowda/mivisionx-ubuntu-16.04)
-* [Ubuntu 18.04](https://hub.docker.com/r/kiritigowda/mivisionx-ubuntu-18.04)
-* [CentOS 7.5](https://hub.docker.com/r/kiritigowda/centos)
-* [CentOS 7.6](https://hub.docker.com/r/kiritigowda/centos)
+* [Ubuntu 16.04](https://hub.docker.com/r/mivisionx/ubuntu-16.04)
+* [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04)
+* [CentOS 7.5](https://hub.docker.com/r/mivisionx/centos-7.5)
+* [CentOS 7.6](https://hub.docker.com/r/mivisionx/centos-7.6)
 
 ### Docker Workflow Sample on Ubuntu 16.04
 
@@ -232,56 +237,32 @@ sudo systemctl status docker
 
 * Step 3 - *Get Docker Image*
 ````
-sudo docker pull kiritigowda/mivisionx-ubuntu-16.04
+sudo docker pull mivisionx/ubuntu-16.04
 ````
 
 * Step 4 - *Run the docker image*
 ````
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host kiritigowda/mivisionx-ubuntu-16.04
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
 ````
   * Optional: Map localhost directory on the docker image
     * option to map the localhost directory with trained caffe models to be accessed on the docker image.
     * usage: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH} 
 ````
-sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host kiritigowda/mivisionx-ubuntu-16.04
+sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
 ````
 
 ## Release Notes
 
-### Supported Neural Net Layers
-
-Layer name |					
-------|			
-Activation|				
-Argmax|			
-Batch Normalization|
-Concat|
-Convolution|			
-Deconvolution|			
-Fully Connected|			
-Local Response Normalization (LRN)|
-Pooling|
-Scale|
-Slice|
-Softmax|
-Tensor Add|
-Tensor Convert Depth|
-Tensor Convert from Image|
-Tensor Convert to Image|
-Tensor Multiply|
-Tensor Subtract|
-Upsample Nearest Neighborhood|
-
 ### Known issues
-* Package (.deb & .rpm) install requires OpenCV v3.3.0 to execute AMD OpenCV extensions
+* Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
 
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.0.89`
+* ROCm: rocm-dkms - `2.1.96`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [1.7.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.0)
+* MIOpen - [1.7.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.1)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

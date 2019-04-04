@@ -77,6 +77,7 @@ class IrAttr:
             , 'zoom_factor' : 2          # zoom_factor
             , 'scale' : 1.0              # scale value 
             , 'biases' : []              # bias for ImageScaler operator
+            , 'offset' : []               # list of 
         }
         self.dict_set = []
 
@@ -153,6 +154,7 @@ class IrNode:
             'copy' : 1,
             'upsample' : 1,
             'scale' : 1,
+            'crop' : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -425,6 +427,13 @@ class IrGraph:
                 elif node.type in ['scale']:
                     #bias = node.attr.get('bias')
                     #scale = node.attr.get('scale')
+                    input = self.tensor_dict[node.inputs[0]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['crop']:
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)

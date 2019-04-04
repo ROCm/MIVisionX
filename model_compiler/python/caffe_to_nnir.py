@@ -21,7 +21,8 @@ caffe2ir_op_type = {
     'Concat' : 'concat',
     'Softmax' : 'softmax',
     'SoftmaxWithLoss' : 'softmax',
-    'Interp' : 'upsample'
+    'Interp' : 'upsample',
+    'Crop' : 'crop'
 }
 
 # convert caffename to ir names.
@@ -257,7 +258,24 @@ def extractCaffeAttrInfo(layer_param):
         else:
             zoom_factor = 2  #default value
         attribute_map["zoom_factor"] = zoom_factor
-            
+    elif (layer_type == "Crop"):
+        crop = layer_param.crop_param
+        axis = crop.axis if (crop.HasField('axis')) else 2
+        offset = crop.offset
+        new_offset = []
+
+        for i in range(4):
+            if (i < axis):
+                new_offset.append(0)
+            else:
+                if (len(offset) == 1):
+                    new_offset.append(offset[0])    
+                else:
+                    new_offset.append(offset[i-axis])
+
+        attribute_map["axis"] = axis
+        attribute_map["offset"] = new_offset
+
     return attribute_map
 
 # calculate dimensions of the output of each layer.
@@ -363,6 +381,18 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         if (len(layer_param.blobs) > 1):
             bias_dims = [output_dims[1]]
             dimList["bias"] = bias_dims
+    
+    elif (layer_param.type == "Crop"):
+        inputs = input_map.keys()
+        axis = attribute_map["axis"]
+        new_axis = 3 - axis
+
+        for i in range(4):
+            if (i <= new_axis):
+                output_dims[i] = input_map[inputs[0]][i]
+            else:
+                output_dims[i] = input_map[inputs[1]][i]
+
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]
 

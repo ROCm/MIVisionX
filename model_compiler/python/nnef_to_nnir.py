@@ -44,6 +44,15 @@ nnef2ir_op_type = {
     'copy'                                  : 'copy'
 }
 
+def flatten(nested_list):
+    flatten_list = []
+    for values in nested_list:
+        if isinstance(values,list): 
+            flatten_list.extend(flatten(values))
+        else: 
+            flatten_list.append(values)
+    return flatten_list
+
 def nnef_name_to_ir_name(nnef_name):
     return '_'.join(('_'.join(nnef_name.split('/')).split('-')))
 
@@ -106,14 +115,23 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         print('ERROR: NNEF operation "%s" not supported yet' % (nnef_operation.name))
         sys.exit(1)
 
-    inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
-    outputs = [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs]
     if nnef_operation.name == 'conv':
+        bias = nnef_operation.inputs['bias']
+        if bias == 0.0:
+            del nnef_operation.inputs['bias']
+
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
         nnef_operation.attribs.update({'size': [filter_tensor.shape[2], filter_tensor.shape[3]]})
-    if nnef_operation.name == 'concat':
-        inputs_temp = inputs
-        inputs = [values for input_values in inputs_temp for values in input_values]
+
+    if nnef_operation.name == 'matmul':
+        nnef_operation.attribs.update({'beta': 0.0})
+
+    inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
+    outputs = [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs]    
+    
+    # flatten the lists
+    inputs = flatten(inputs)
+    outputs = flatten(outputs)
     
     node.set(type, inputs, outputs, nnef_attr_to_ir_attr(nnef_operation.attribs))
 

@@ -380,14 +380,35 @@ class IrGraph:
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-                    for dim in range(len(input.shape)):
-                        icount *= input.shape[dim]
-                    for dim in range(len(param)):
-                        if param[dim] == 0:
-                            param[dim] = input.shape[dim]
-                        elif param[dim] == -1:
-                            param[dim] = icount / ocount
-                        ocount *= param[dim] 
+
+                    # for dim in range(len(input.shape)):
+                    #     icount *= input.shape[dim]
+                    # for dim in range(len(param)):
+                    #     if param[dim] == 0:
+                    #         param[dim] = input.shape[dim]
+                    #     elif param[dim] == -1:
+                    #         param[dim] = icount / ocount
+                    #     ocount *= param[dim] 
+
+                    shape = []
+                    for d in input.shape[1:]:
+                        icount = icount * d
+                    for d in param:
+                        if d > 0:
+                            ocount = ocount * d
+                    index = 0
+                    for d in param:
+                        if d < 0:
+                            d = icount // ocount
+                            ocount = ocount * d
+                        elif d == 0:
+                            d = input.shape[index]
+                        index += 1
+                        shape.append(d)
+                    if len(shape) < 4:
+                        while len(shape) != 4:
+                            shape.append(1)
+
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()

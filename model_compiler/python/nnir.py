@@ -81,6 +81,7 @@ class IrAttr:
     def set(self,name,value):
         if not name in self.dict_values:
             raise ValueError("Unsupported IR attribute: {}".format(name))
+
         if type(value) != type(self.dict_values[name]):
             raise ValueError("Invalid IR attribute value type: {} for {}".format(type(value).__name__, name))
         self.dict_values[name] = value
@@ -255,8 +256,10 @@ class IrGraph:
 
     def updateLocals(self):
         self.locals = []
+        count = 0
         for node in self.nodes:
             for output in node.outputs:
+                count+=1
                 if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
@@ -359,29 +362,30 @@ class IrGraph:
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-                    shape = []
-                    for d in input.shape[1:]:
-                        icount = icount * d
-                    for d in param:
-                        if d > 0:
-                            ocount = ocount * d
-                    index = 0
-                    for d in param:
-                        if d < 0:
-                            d = icount // ocount
-                            ocount = ocount * d
-                        elif d == 0:
-                            d = input.shape[index]
-                        index += 1
-                        shape.append(d)
-                    if len(shape) < 4:
-                        while len(shape) != 4:
-                            shape.append(1)
+                    out_shape = []
+                    
+                    for dim in range(len(input.shape)):
+                        icount *= input.shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] > 0:
+                            out_shape.append(param[dim])
+                            ocount *= out_shape[dim]
+                        elif param[dim] == 0:
+                            out_shape.append(input.shape[dim])
+                            ocount *= out_shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] == -1:
+                            out_shape.append(icount // ocount)
+                            ocount *= out_shape[dim]
+                    if len(out_shape) < 4:
+                        while len(out_shape) != 4:
+                            out_shape.append(1)
+                    param = out_shape
                     if icount != ocount:
-                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
+                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, shape)
+                    local.setInfo(input.type, param)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['transpose']:
@@ -412,7 +416,6 @@ class IrGraph:
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

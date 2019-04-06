@@ -259,11 +259,9 @@ class IrGraph:
         count = 0
         for node in self.nodes:
             for output in node.outputs:
-                print('%d : '% count + node.type)
                 count+=1
                 if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
@@ -271,7 +269,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['global_avg_pool']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, [input.shape[0], input.shape[1], 1, 1])
@@ -279,8 +276,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['conv', 'avg_pool', 'max_pool', 'lrn']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print('convolution input:')
-                    print(input.shape)
                     pads = node.attr.get('pads')
                     strides = node.attr.get('strides')
                     dilations = node.attr.get('dilations')
@@ -299,11 +294,6 @@ class IrGraph:
                     output_shape = [input_shape[0], k, \
                         (pads[0] + input_shape[2] + pads[2] - ((kernel_shape[0] - 1) * dilations[0] + 1) + round0) // strides[0] + 1, \
                         (pads[1] + input_shape[3] + pads[3] - ((kernel_shape[1] - 1) * dilations[1] + 1) + round1) // strides[1] + 1]
-                    print('convolution output:')
-                    print(output_shape)
-                    print(pads)
-                    print(dilations)
-                    print(strides)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, output_shape)
@@ -311,7 +301,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['conv_transpose']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     pads = node.attr.get('pads')
                     strides = node.attr.get('strides')
                     dilations = node.attr.get('dilations')
@@ -321,8 +310,6 @@ class IrGraph:
                     output_shape = [input_shape[0], k, \
                         (input_shape[2]-1)*strides[0] + (kernel_shape[0]-1)*dilations[0] + 1 - pads[0] - pads[2], \
                         (input_shape[3]-1)*strides[1] + (kernel_shape[1]-1)*dilations[1] + 1 - pads[1] - pads[3]]
-                    print('output shape')
-                    print(output_shape)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, output_shape)
@@ -335,8 +322,6 @@ class IrGraph:
                     transB = node.attr.get('transB')
                     shapeA = A.shape
                     shapeB = B.shape
-                    print(shapeA)
-                    print(shapeB)
                     if transA == 0 and transB == 0:
                         output_shape = [shapeA[0], shapeB[1], 1, 1]
                     elif transA == 0:
@@ -345,7 +330,6 @@ class IrGraph:
                         output_shape = [shapeA[1], shapeB[1], 1, 1]
                     else:
                         output_shape = [shapeA[1], shapeB[0], 1, 1]
-                    print(output_shape)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, output_shape)
@@ -353,7 +337,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['concat']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     shape = [input.shape[0], 0, input.shape[2], input.shape[3]]
                     for name in node.inputs:
                         lshape = self.tensor_shapes[name]
@@ -367,7 +350,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['slice']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     shape = [input.shape[0], input.shape[1] // len(node.outputs), input.shape[2], input.shape[3]]
                     for name in node.outputs:
                         local = IrTensor()
@@ -380,35 +362,25 @@ class IrGraph:
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-
-                    # for dim in range(len(input.shape)):
-                    #     icount *= input.shape[dim]
-                    # for dim in range(len(param)):
-                    #     if param[dim] == 0:
-                    #         param[dim] = input.shape[dim]
-                    #     elif param[dim] == -1:
-                    #         param[dim] = icount / ocount
-                    #     ocount *= param[dim] 
-
-                    shape = []
-                    for d in input.shape[1:]:
-                        icount = icount * d
-                    for d in param:
-                        if d > 0:
-                            ocount = ocount * d
-                    index = 0
-                    for d in param:
-                        if d < 0:
-                            d = icount // ocount
-                            ocount = ocount * d
-                        elif d == 0:
-                            d = input.shape[index]
-                        index += 1
-                        shape.append(d)
-                    if len(shape) < 4:
-                        while len(shape) != 4:
-                            shape.append(1)
-
+                    out_shape = []
+                    
+                    for dim in range(len(input.shape)):
+                        icount *= input.shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] > 0:
+                            out_shape.append(param[dim])
+                            ocount *= out_shape[dim]
+                        elif param[dim] == 0:
+                            out_shape.append(input.shape[dim])
+                            ocount *= out_shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] == -1:
+                            out_shape.append(icount // ocount)
+                            ocount *= out_shape[dim]
+                    if len(out_shape) < 4:
+                        while len(out_shape) != 4:
+                            out_shape.append(1)
+                    param = out_shape
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()
@@ -418,7 +390,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['transpose']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     axes = node.attr.get('axes')
                     if input.format == 'NCHW' and axes == [0, 2, 3, 1]:
                         format = 'NHWC'
@@ -433,7 +404,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['copy']:
                     input = self.tensor_dict[node.inputs[0]]
-                    print(input.shape)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)

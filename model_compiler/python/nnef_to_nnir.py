@@ -29,6 +29,7 @@ nnef2ir_op_type = {
     'batch_normalization'                   : 'batch_norm',
     'avg_pool'                              : 'avg_pool',
     'max_pool'                              : 'max_pool',
+    'mean_reduce'                           : 'global_avg_pool',
     'relu'                                  : 'relu',
     'add'                                   : 'add',
     'mul'                                   : 'mul',
@@ -72,9 +73,9 @@ def nnef_attr_to_ir_attr(nnef_attribs):
                     padding = padding[4:]    
                 elif len(padding) == 0:
                     padding = [0, 0, 0, 0]
-                #print('padding')
-                #print(padding)
-                attr.set(nnef2ir_attr[attrib], padding)  
+
+                new_padding = [padding[2], padding[0], padding[3], padding[1]]
+                attr.set(nnef2ir_attr[attrib], new_padding)  
             elif attrib == 'stride':
                 stride = [stride for stride in nnef_attribs[attrib]]
                 if len(stride) == 4:
@@ -121,14 +122,22 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
             del nnef_operation.inputs['bias']
 
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
-        nnef_operation.attribs.update({'size': [filter_tensor.shape[2], filter_tensor.shape[3]]})
+        nnef_operation.attribs.update({'size': [filter_tensor.shape[3], filter_tensor.shape[2]]})
 
     if nnef_operation.name == 'matmul':
         nnef_operation.attribs.update({'beta': 0.0})
-
+        
     inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
     outputs = [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs]    
     
+    if nnef_operation.name == 'batch_normalization':
+        input_tensor = nnef_operation.inputs['input']
+        variance = nnef_operation.inputs['variance']
+        scale = nnef_operation.inputs['scale']
+        mean = nnef_operation.inputs['mean']
+        offset = nnef_operation.inputs['offset']
+        inputs = [input_tensor, scale, offset, mean, variance]
+        
     # flatten the lists
     inputs = flatten(inputs)
     outputs = flatten(outputs)

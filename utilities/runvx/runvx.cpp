@@ -277,15 +277,19 @@ int main(int argc, char * argv[])
                 c++;
             }
             int k = i - j;
+
             char *addToDir = new char[k];
             strncpy(addToDir, fileNameToParse, k);
+
             char *gdfName = new char[j];
             int a = 0;
             k++; //don't need to get the / before the gdf name
-            for(; k < i; k++){
+            for(int x = 0; x < j; x++){
                 gdfName[a] = fileNameToParse[k];
                 a++;
+                k++;
             }
+
             chdir_status = cd(addToDir);
             const char * fileName = RootDirUpdated(gdfName);
 
@@ -293,6 +297,8 @@ int main(int argc, char * argv[])
 			size_t size = strlen("include") + 1 + strlen(fileName) + 1;
 			fullText = new char[size];
 			sprintf(fullText, "include %s", fileName);
+            delete[] addToDir;
+            delete[] gdfName;
 		}
 
 		if (fullText) {

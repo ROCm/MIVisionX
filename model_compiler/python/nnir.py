@@ -74,12 +74,14 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
+            , 'offset' : []               # list of offsets
         }
         self.dict_set = []
 
     def set(self,name,value):
         if not name in self.dict_values:
             raise ValueError("Unsupported IR attribute: {}".format(name))
+
         if type(value) != type(self.dict_values[name]):
             raise ValueError("Invalid IR attribute value type: {} for {}".format(type(value).__name__, name))
         self.dict_values[name] = value
@@ -146,6 +148,7 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
+            'crop' : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -253,8 +256,10 @@ class IrGraph:
 
     def updateLocals(self):
         self.locals = []
+        count = 0
         for node in self.nodes:
             for output in node.outputs:
+                count+=1
                 if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
@@ -319,9 +324,9 @@ class IrGraph:
                     shapeB = B.shape
                     if transA == 0 and transB == 0:
                         output_shape = [shapeA[0], shapeB[1], 1, 1]
-                    elif transA == 0 and transB != 0:
+                    elif transA == 0:
                         output_shape = [shapeA[0], shapeB[0], 1, 1]
-                    elif transA != 0 and transB == 0:
+                    elif transB == 0:
                         output_shape = [shapeA[1], shapeB[1], 1, 1]
                     else:
                         output_shape = [shapeA[1], shapeB[0], 1, 1]
@@ -357,22 +362,30 @@ class IrGraph:
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-                    shape = [input.shape[0]]
-                    for d in input.shape[1:]:
-                        icount = icount * d
-                    for d in param:
-                        if d > 0:
-                            ocount = ocount * d
-                    for d in param:
-                        if d < 1:
-                            d = icount // ocount
-                            ocount = ocount * d
-                        shape.append(d)
+                    out_shape = []
+                    
+                    for dim in range(len(input.shape)):
+                        icount *= input.shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] > 0:
+                            out_shape.append(param[dim])
+                            ocount *= out_shape[dim]
+                        elif param[dim] == 0:
+                            out_shape.append(input.shape[dim])
+                            ocount *= out_shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] == -1:
+                            out_shape.append(icount // ocount)
+                            ocount *= out_shape[dim]
+                    if len(out_shape) < 4:
+                        while len(out_shape) != 4:
+                            out_shape.append(1)
+                    param = out_shape
                     if icount != ocount:
-                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
+                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, shape)
+                    local.setInfo(input.type, param)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['transpose']:
@@ -390,6 +403,13 @@ class IrGraph:
                     local.setFormat(format)
                     self.addLocal(local)
                 elif node.type in ['copy']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['crop']:
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)
@@ -428,6 +448,14 @@ class IrGraph:
             self.tensor_dict[tensor.name] = tensor
 
     def convertFp16(self):
+        keepAsFP32 = []
+
+        for node in self.nodes:
+           if node.type == 'batch_norm':
+                keepAsFP32.append(node.inputs[1])
+                keepAsFP32.append(node.inputs[2])
+                keepAsFP32.append(node.inputs[3])
+                keepAsFP32.append(node.inputs[4])
         if self.all_F032:
             for tensor in self.inputs:
                 tensor.type = 'F016'
@@ -442,12 +470,15 @@ class IrGraph:
                 self.tensor_types[tensor.name] = tensor.type
                 self.tensor_dict[tensor.name] = tensor
             for tensor in self.initializers:
-                tensor.type = 'F016'
-                self.tensor_types[tensor.name] = tensor.type
-                self.tensor_dict[tensor.name] = tensor
+                if tensor.name not in keepAsFP32:    
+                    tensor.type = 'F016'
+                    self.tensor_types[tensor.name] = tensor.type
+                    self.tensor_dict[tensor.name] = tensor
             for idx, binary in enumerate(self.binaries):
-                weight = np.frombuffer(self.binaries[binary], dtype=np.float32)
-                self.addBinary(binary, np.getbuffer(weight.astype(np.float16)))
+                if binary not in keepAsFP32:
+                    weight = np.frombuffer(self.binaries[binary], dtype=np.float32)
+                    self.addBinary(binary, np.getbuffer(weight.astype(np.float16)))
+
                 #print("Add binary %s of size %d at Idx: %d len: %d" %(binary, len(self.binaries[binary]), idx, len(self.binaries)))
             self.all_F032 = False
             self.all_F016 = True    
@@ -480,6 +511,10 @@ class IrGraph:
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
                     mean = np.frombuffer(self.binaries[node.inputs[3]], dtype=npType)
                     variance = np.frombuffer(self.binaries[node.inputs[4]], dtype=npType)
+                    #check names
+                    #scale_name = node.inputs[1]
+                    #print "DEBUG: scale_name = " + scale_name + "\n"
+
                     epsilon = node.attr.get('epsilon')
                     scale = scale / np.sqrt(variance + epsilon)
                     offset = offset - mean * scale

@@ -29,7 +29,10 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 To convert an ONNX model into AMD NNIR model:
 
 ```
-% python onnx_to_nnir.py <model.onnx> <nnirModelFolder>
+% python onnx_to_nnir.py <model.onnx> <nnirModelFolder> [OPTIONS]
+
+OPTIONS:
+	--input_dims n,c,h,w
 ```
 
 To convert a caffemodel into AMD NNIR model:
@@ -47,6 +50,11 @@ To update batch size in AMD NNIR model:
 To fuse operations in AMD NNIR model (like batch normalization into convolution):
 ````
 % python nnir_update.py --fuse-ops <1> <nnirModelFolderN> <nnirModelFolderFused>
+````
+
+To quantize the model to float 16
+````
+% python nnir_update.py --convert-fp16 <1> <nnirModelFolderN> <nnirModelFolderFused>
 ````
 
 To workaround groups using slice and concat operations in AMD NNIR model:
@@ -195,6 +203,7 @@ Currently supporting below models from https://github.com/onnx/models with `rele
  - resnet50
  - googlenet
  - inception_v2
+ - inception_v1
  - vgg19
  - densenet
  - squeezenet
@@ -217,6 +226,7 @@ Supported ONNX operators are:
 - Mul
 - Softmax
 - Dropout
+- Reshape
 
 ## License
 Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.

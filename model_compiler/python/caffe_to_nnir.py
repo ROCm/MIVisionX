@@ -20,7 +20,9 @@ caffe2ir_op_type = {
     'Eltwise' : 'sum',
     'Concat' : 'concat',
     'Softmax' : 'softmax',
-    'SoftmaxWithLoss' : 'softmax'
+    'SoftmaxWithLoss' : 'softmax',
+    'Interp' : 'upsample',
+    'Crop' : 'crop'
 }
 
 # convert caffename to ir names.
@@ -56,6 +58,8 @@ def caffe_attr_to_ir_attr(attribute_map):
                 attr.set(attr_names[i], [int(v) for v in (attributeInfo)])
             elif (type(attributeInfo[0]) is float):
                 attr.set(attr_names[i], [float(v) for v in (attributeInfo)])
+            elif (type(attributeInfo[0]) is long):
+                attr.set(attr_names[i], [long(v) for v in (attributeInfo)])
             else:
                 print ("ERROR: unsupported list attribute")
                 sys.exit(1)
@@ -72,7 +76,7 @@ def caffe_node_to_ir_node(layer_type, layer_info_map):
     weight_map = {}
     scale_map_w = {}
     scale_map_b = {}
-    #bias_map_b = {}
+
     if ("scale_weights" in layer_info_map):
         scale_map_w = layer_info_map["scale_weights"]
     if ("scale_bias" in layer_info_map):
@@ -115,7 +119,6 @@ def extractBinary(layer_parameter, graph, verbose):
     blob_size = len(layer_parameter.blobs)
     if blob_size > 0:
         weight_blob_proto = layer_parameter.blobs[0]
-        #weight_len = len(weight_blob_proto.data)
         weight_blob_name = caffe_name_to_ir_name(layer_name + '_w')
         if (verbose):
             print (weight_blob_name)
@@ -124,11 +127,9 @@ def extractBinary(layer_parameter, graph, verbose):
 
     if blob_size > 1:
         bias_blob_proto = layer_parameter.blobs[1]
-        #bias_len = len(bias_blob_proto.data)
         bias_blob_name = caffe_name_to_ir_name(layer_name + '_b')
         if (verbose):
             print (bias_blob_name)
-        #blob_data_type = "F032"
         buf = convert_caffe_bin_to_ir_bin(bias_blob_proto.data)
         graph.addBinary(bias_blob_name, buf)
 
@@ -160,19 +161,31 @@ def extractInput(net_parameter, graph, input_dims):
     return inputList
 
 # extraction of output from caffe network to ir output.
-def extractOutput(graph, inputOutputLayers, verbose):
+def extractOutput(graph, inputOutputLayers, output_list, verbose):
     outputList = {}
-    last_layer_index = len(inputOutputLayers) - 1
-    last_layer_info = inputOutputLayers[last_layer_index]
-    output_map = last_layer_info["outputs"]
-    output_name = output_map.keys()[0]
-    if (verbose):
-        print ("output name is : " + output_name)
-    output_dims = output_map[output_name]
-    graph.addOutput(caffe_blob_to_ir_tensor(output_name, "F032", output_dims))
-    outputList[output_name] = output_dims
+    if (len(output_list) == 1):
+        last_layer_index = len(inputOutputLayers) - 1
+        last_layer_info = inputOutputLayers[last_layer_index]
+        output_map = last_layer_info["outputs"]
+        output_name = output_map.keys()[0]
+        if (verbose):
+            print ("output name is : " + output_name)
+        output_dims = output_map[output_name]
+        graph.addOutput(caffe_blob_to_ir_tensor(output_name, "F032", output_dims))
+        outputList[output_name] = output_dims
+    else:
+        for i in range(len(output_list)):
+            if (verbose):
+                print ("output name at index: "+ str(i) + " " + output_name)
+            output_name = output_list[i]
+            for j in range(len(inputOutputLayers)):
+                if (output_name in inputOutputLayers[j]["layer_name"]):
+                    output_map = inputOutputLayers[j]["outputs"]
+                    output_dims = output_map[output_name]
+                    graph.addOutput(caffe_blob_to_ir_tensor(output_name, "F032", output_dims))
+                    outputList[output_name] = output_dims
+                    break
     return outputList
-
 
 # extract layer attribute information from caffe layers.
 def extractCaffeAttrInfo(layer_param):
@@ -186,10 +199,8 @@ def extractCaffeAttrInfo(layer_param):
         stride_w = conv.stride_w if (conv.HasField('stride_w')) else (int(conv.stride[1]) if (len(conv.stride) > 1) else stride_h)
         kernel_h = conv.kernel_h if (conv.HasField('kernel_h')) else (int(conv.kernel_size[0]) if (len(conv.kernel_size) > 0) else 0)
         kernel_w = conv.kernel_w if (conv.HasField('kernel_w')) else (int(conv.kernel_size[1]) if (len(conv.kernel_size) > 1) else kernel_h)
-        #num_out = conv.num_output
         dilation_h = conv.dilation[0] if (len(conv.dilation) > 0) else 1
         dilation_w = conv.dilation[1] if (len(conv.dilation) > 1) else dilation_h
-        #bias_term = conv.bias_term
         groups = conv.group if (conv.HasField('group')) else 1
 
         attribute_map["strides"] = [stride_w, stride_h]
@@ -240,7 +251,31 @@ def extractCaffeAttrInfo(layer_param):
         relu = layer_param.relu_param
         slope = relu.negative_slope
         attribute_map["alpha"] = slope
-            
+    elif (layer_type == "Interp"):
+        if layer_param.python_param.param_str != '':
+            python_param_str = eval(layer_param.python_param.param_str)
+            zoom_factor = int(python_param_str["zoom_factor"])
+        else:
+            zoom_factor = 2  #default value
+        attribute_map["zoom_factor"] = zoom_factor
+    elif (layer_type == "Crop"):
+        crop = layer_param.crop_param
+        axis = crop.axis if (crop.HasField('axis')) else 2
+        offset = crop.offset
+        new_offset = []
+
+        for i in range(4):
+            if (i < axis):
+                new_offset.append(0)
+            else:
+                if (len(offset) == 1):
+                    new_offset.append(offset[0])    
+                else:
+                    new_offset.append(offset[i-axis])
+
+        attribute_map["axis"] = axis
+        attribute_map["offset"] = new_offset
+
     return attribute_map
 
 # calculate dimensions of the output of each layer.
@@ -254,15 +289,10 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         dilations = attribute_map["dilations"]
         kernel_shape = attribute_map["kernel_shape"]
         n,c,h,w = input_map[inputs[0]]
-
-        #output_dims[3] = (pads[0] + int(w) + pads[2] - ((kernel_shape[0] - 1) * dilations[0] + 1)) // strides[0] + 1
-        #output_dims[2] = (pads[1] + int(h) + pads[3] - ((kernel_shape[1] - 1) * dilations[1] + 1)) // strides[1] + 1
-
         output_dims[3] = ((int(w) + 2 * pads[0] - kernel_shape[0] - (kernel_shape[0] - 1) * (dilations[0] - 1))// strides[0]) + 1
         output_dims[2] = ((int(h) + 2 * pads[1] - kernel_shape[1] - (kernel_shape[1] - 1) * (dilations[1] - 1))// strides[1]) + 1
         output_dims[1] = layer_param.convolution_param.num_output
         output_dims[0] = n
-
         weight_dims = [output_dims[1], c, kernel_shape[1], kernel_shape[0]]
         dimList["weights"] = weight_dims
         if (layer_param.convolution_param.bias_term):
@@ -280,7 +310,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[2] = strides[1] * (h - 1) + dilations[1] * (kernel_shape[1] - 1) + 1 - (2 * pads[1])
         output_dims[1] = layer_param.convolution_param.num_output
         output_dims[0] = n
-
         weight_dims = [output_dims[1], c, kernel_shape[1] , kernel_shape[0]]
         dimList["weights"] = weight_dims
         if (layer_param.convolution_param.bias_term):
@@ -292,7 +321,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         pads = attribute_map["pads"]
         kernel_shape = attribute_map["kernel_shape"]
         n,c,h,w = input_map[str(inputs[0])]
-
         if (layer_param.pooling_param.global_pooling):
             kernel_shape[1] = h
             kernel_shape[0] = w
@@ -300,8 +328,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             pads[1] = 0
             strides[0] = 1
             strides[1] = 1
-        #output_dims[3] = (pads[0] + int(w) + pads[2] - ((kernel_shape[0] - 1) * dilations[0] + 1)) // strides[0] + 1
-        #output_dims[2] = (pads[1] + int(h) + pads[3] - ((kernel_shape[1] - 1) * dilations[1] + 1)) // strides[1] + 1
 
         output_dims[3] = int(math.ceil(float(w + 2 * pads[0] + strides[0] - kernel_shape[0])/strides[0]))
         output_dims[2] = int(math.ceil(float(h + 2 * pads[1] + strides[1] - kernel_shape[1])/strides[1]))
@@ -311,7 +337,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         if (pads[0] > 0):
             if (output_dims[3] - 1) * strides[0] >= (w + pads[0]):
                 output_dims[3] = output_dims[3] - 1
-
         output_dims[1] = c
         output_dims[0] = n
 
@@ -321,7 +346,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[2] = 1
         output_dims[1] = layer_param.inner_product_param.num_output
         output_dims[0] = n
-
         weight_dims = [output_dims[1], c, h, w]
         dimList["weights"] = weight_dims
         if (layer_param.inner_product_param.bias_term):
@@ -336,6 +360,19 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[0] = n
         output_dims[2] = h
         output_dims[3] = w
+
+    elif (layer_param.type == "Interp"):
+        inputs = input_map.keys()
+        zoom_factor = attribute_map["zoom_factor"]
+        for i in range(len(inputs)):
+            n,c,h,w = input_map[inputs[i]]
+        n,c,h,w = input_map[inputs[0]]
+        output_dims[0] = n
+        output_dims[1] = c
+        output_dims[2] = h*zoom_factor
+        output_dims[3] = w*zoom_factor
+        #print('INFO: Found Layertype Interp with zoom '+ str(zoom_factor))
+
     elif (layer_param.type == "BatchNorm" or layer_param.type == "Scale"):
         output_dims[0], output_dims[1], output_dims[2], output_dims[3] = input_map[str(inputs[0])]
         if (len(layer_param.blobs) > 0):
@@ -344,6 +381,18 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         if (len(layer_param.blobs) > 1):
             bias_dims = [output_dims[1]]
             dimList["bias"] = bias_dims
+    
+    elif (layer_param.type == "Crop"):
+        inputs = input_map.keys()
+        axis = attribute_map["axis"]
+        new_axis = 3 - axis
+
+        for i in range(4):
+            if (i <= new_axis):
+                output_dims[i] = input_map[inputs[0]][i]
+            else:
+                output_dims[i] = input_map[inputs[1]][i]
+
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]
 
@@ -360,6 +409,7 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
     inputsMap = {}
     outputsMap = {}
     count = 0
+    _output_name = {}
 
     layers = net_parameter.layer
 
@@ -373,6 +423,17 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
         # ignoring the input/data layer as input is already obtained in previous step.
         if (layer_type == "Data" or layer_type == "ImageData" or layer_type == "Input"):
             continue
+        # find out all the outputs and store names
+        for k in range(len(layer_param.bottom)):
+            if layer_param.bottom[k] in _output_name:
+                _output_name[layer_param.bottom[k]]['count'] = _output_name[layer_param.bottom[k]]['count']+1
+            else:
+                _output_name[layer_param.bottom[k]] = {'count':0}
+        for k in range(len(layer_param.top)):
+            if layer_param.top[k] in _output_name:
+                _output_name[layer_param.top[k]]['count'] = _output_name[layer_param.top[k]]['count']+1
+            else:
+                _output_name[layer_param.top[k]] = {'count':0, 'name':layer_name}
 
         # dropout layer is copy layer in inference, hence aliasing the input for dropout layer for next layer.
         if (layer_type == "Dropout"):
@@ -404,46 +465,57 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
         #fusing scale layer to batchnorm layer.
         #adding scale weights and biases into the batchnorm, else fusing scale to mul or muladd operator.
         elif layer_type == "Scale":
+            scale_fused = 0
+            if (verbose):
+                print ("Info: Found scale layer  " + str(layer_name))
             if (count > 0 and (count < len(layers))):
-                prev_layer_info = inputOutputMap[count-1]
-                prev_layer_type = prev_layer_info["layer_type"]
-                if (prev_layer_type == "batch_norm"):
-                    modified_out_info_map = {}
-                    scale_weights_map = {}
-                    scale_bias_map = {}
-                    extractBinary(layer_param, graph, verbose)
-                    prev_input_map = prev_layer_info["inputs"]
-                    prev_attribute_map = prev_layer_info["attributes"]
-                    dimList = calculateTensorDims(layer_param, prev_input_map, prev_attribute_map)
-                    modified_out_info_map[layer_name] = dimList["output"]
-                    outputsMap.update(modified_out_info_map)
-                    prev_layer_info["outputs"] = modified_out_info_map
-                    if ("weights" in dimList):
-                        scale_weights = layer_name + "_w"
-                        scale_weights_map[scale_weights] = dimList["weights"]
-                        prev_layer_info["scale_weights"] = scale_weights_map
-                        graph.addVariable(caffe_blob_to_ir_tensor(scale_weights, "F032", dimList["weights"]))
-                    if ("bias" in dimList):
-                        scale_bias = layer_name + "_b"
-                        scale_bias_map[scale_bias] = dimList["bias"]
-                        prev_layer_info["scale_bias"] = scale_bias_map
-                        graph.addVariable(caffe_blob_to_ir_tensor(scale_bias, "F032", dimList["bias"]))
-                    if(layer_name != caffe_name_to_ir_name(str(outputs[0]))):
-                        outputNameAliasMap[caffe_name_to_ir_name(str(outputs[0]))] = layer_name
-                    prev_layer_info["layer_name"] = layer_name
-                    inputOutputMap[count - 1] = prev_layer_info
+                in_name = caffe_name_to_ir_name(str(inputs[0]))
+                for j in range(count-1, 0, -1):
+                    prev_layer_info = inputOutputMap[j]
+                    prev_layer_type = prev_layer_info["layer_type"]
+                    prev_output_map = prev_layer_info["outputs"]
                     if (verbose):
-                        print (prev_layer_info)
-                    node = caffe_node_to_ir_node(prev_layer_info["layer_type"], prev_layer_info)
-                    graph.addNode(node)
-                    if (verbose):
-                        print ("OK: fusing scale to batch_norm")
-                    continue
-                else:
+                        print("prev_type " + str(prev_layer_type) + " " + str(in_name) + " " + str(prev_output_map))
+                    if (prev_layer_type == "batch_norm" and ((in_name in prev_output_map) or (in_name in outputNameAliasMap))):
+                        modified_out_info_map = {}
+                        scale_weights_map = {}
+                        scale_bias_map = {}
+                        extractBinary(layer_param, graph, verbose)
+                        prev_input_map = prev_layer_info["inputs"]
+                        prev_attribute_map = prev_layer_info["attributes"]
+                        dimList = calculateTensorDims(layer_param, prev_input_map, prev_attribute_map)
+                        modified_out_info_map[layer_name] = dimList["output"]
+                        outputsMap.update(modified_out_info_map)
+                        prev_layer_info["outputs"] = modified_out_info_map
+                        if ("weights" in dimList):
+                            scale_weights = layer_name + "_w"
+                            scale_weights_map[scale_weights] = dimList["weights"]
+                            prev_layer_info["scale_weights"] = scale_weights_map
+                            graph.addVariable(caffe_blob_to_ir_tensor(scale_weights, "F032", dimList["weights"]))
+                        if ("bias" in dimList):
+                            scale_bias = layer_name + "_b"
+                            scale_bias_map[scale_bias] = dimList["bias"]
+                            prev_layer_info["scale_bias"] = scale_bias_map
+                            graph.addVariable(caffe_blob_to_ir_tensor(scale_bias, "F032", dimList["bias"]))
+                        if(layer_name != caffe_name_to_ir_name(str(outputs[0]))):
+                            outputNameAliasMap[caffe_name_to_ir_name(str(outputs[0]))] = layer_name
+                        prev_layer_name = prev_layer_info["layer_name"]
+                        prev_layer_info["layer_name"] = layer_name
+                        inputOutputMap[j] = prev_layer_info
+                        if (verbose):
+                            print (prev_layer_info)
+                        node = caffe_node_to_ir_node(prev_layer_info["layer_type"], prev_layer_info)
+                        graph.addNode(node)
+                        if (verbose):
+                            print ("OK: fusing scale" + str(layer_name) + "to batch_norm" + str(prev_layer_name))
+                        scale_fused = 1
+                        break
+                if scale_fused == 0:
                     scale_layer_type = 'mul' if len(layer_param.blobs) == 1 else 'muladd'
                     if (verbose):
                         print ("OK: Fusing scale to : " + scale_layer_type)
                     layer_info_map["layer_type"] = scale_layer_type
+                continue
         else:
             print ("ERROR: caffe operation %s is not supported yet." % (layer_type))
             sys.exit(1)
@@ -513,11 +585,8 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
         layer_info_map["inputs"] = input_info_map
         layer_info_map["outputs"] = output_info_map
 
-        # add weights and biases if present.
         #add weights and biases info if present into the layer info.
         extractBinary(layer_param, graph, verbose)
-        #weights = layer_name + '_w'
-        #biases = layer_name +  '_b'
         weights_map = {}
         bias_map = {}
         if "weights" in dimList:
@@ -535,26 +604,33 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
 
         inputOutputMap[count] = layer_info_map
         count += 1
-
-        if(layer_info_map["layer_type"] == "batch_norm" and (i < len(layers) - 1)):
-            next_layer_param = layers[i+1]
-            if(next_layer_param.type == "Scale"):
-                continue
+        if(layer_type == "BatchNorm" and (i < len(layers) - 1)):
+            for j in range(i+1, len(layers)-1):
+                next_layer_param = layers[j]
+                if(next_layer_param.type == "Scale" and str(next_layer_param.bottom[0]) ==  str(outputs[0])):
+                    #scaleLayerInputMap[caffe_name_to_ir_name(str(next_layer_param.name))] = caffe_name_to_ir_name(str(outputs[0]))
+                    break
+            continue
 
         if (verbose):
             print (layer_info_map)
-        node = caffe_node_to_ir_node(layer_info_map["layer_type"], layer_info_map)
+        node = caffe_node_to_ir_node(layer_info_map["layer_type"], layer_info_map)        
         graph.addNode(node)
+    #add all outputs to graph    
+    output_name = []
+    for i in _output_name:
+        if 'name' in _output_name[i] and _output_name[i]['count'] == 0:
+            output_name.append(_output_name[i]['name']) 
 
-    return inputOutputMap
+    return inputOutputMap, output_name
 
 
 # convert caffe graph to ir graph.
 def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
     graph = IrGraph()
     inputMap = extractInput(net_parameter, graph, input_dims)
-    inputOutputMap = extractCaffeNodeInfo(net_parameter, graph, inputMap, verbose)
-    outputList = extractOutput(graph, inputOutputMap, verbose)
+    inputOutputMap, output_name = extractCaffeNodeInfo(net_parameter, graph, inputMap, verbose)
+    outputList = extractOutput(graph, inputOutputMap, output_name, verbose)
     graph.updateLocals()
     return graph
 

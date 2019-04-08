@@ -22,7 +22,6 @@ THE SOFTWARE.
 
 
 #include "VX/vx.h"
-#include "vx_opencv.h"
 #include <VX/vx_compatibility.h>
 
 #include "opencv2/opencv.hpp"
@@ -34,6 +33,12 @@ THE SOFTWARE.
 #define dimof(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
+#if _WIN32 
+#define SHARED_PUBLIC __declspec(dllexport)
+#else
+#define SHARED_PUBLIC __attribute__ ((visibility ("default")))
+#endif
+
 vx_node vxCreateNodeByStructure(vx_graph graph, vx_enum kernelenum, vx_reference params[], vx_uint32 num);
 
 #ifdef __cplusplus
@@ -41,7 +46,7 @@ extern "C" {
 #endif
 
 	/*!***********************************************************************************************************
-						OpenCV VX_API_ENTRY NODE C Functions
+						OpenCV VX_API_ENTRY C Function NODE
 	*************************************************************************************************************/
 
 	/*! \brief [Graph] Creates a OpenCV blur function node.
@@ -55,7 +60,7 @@ extern "C" {
 	* \param [in] Border_Type The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set borderType.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_blur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 Bordertype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_blur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 Bordertype);
 
 	/*! \brief [Graph] Creates a OpenCV boxFilter function node.
 	* \param [in] graph The reference to the graph.
@@ -66,7 +71,7 @@ extern "C" {
 	* \param [in] kheight The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set box filter height.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_boxFilter(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_bool Normalized, vx_int32 Bordertype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_boxFilter(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_uint32 kwidth, vx_uint32 kheight, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_bool Normalized, vx_int32 Bordertype);
 
 	/*! \brief [Graph] Creates a OpenCV GaussianBlur function node.
 	* \param [in] graph The reference to the graph.
@@ -79,7 +84,7 @@ extern "C" {
 	* \param [in] border_mode The input <tt>\ref VX_TYPE_ENUM</tt> scalar to set border mode.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_gaussianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_float32 sigmaX, vx_float32 sigmaY, vx_int32 border_mode);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_gaussianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_float32 sigmaX, vx_float32 sigmaY, vx_int32 border_mode);
 
 	/*! \brief [Graph] Creates a OpenCV medianBlur function node.
 	* \param [in] graph The reference to the graph.
@@ -88,7 +93,7 @@ extern "C" {
 	* \param [in] ksize The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set the aperture linear size.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_medianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 ksize);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_medianBlur(vx_graph graph, vx_image input, vx_image output, vx_uint32 ksize);
 
 	/*! \brief [Graph] Creates a OpenCV filter2D function node.
 	* \param [in] graph The reference to the graph.
@@ -102,7 +107,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_filter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_filter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV sepFilter2D function node.
 	* \param [in] graph The reference to the graph.
@@ -117,20 +122,19 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_sepFilter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix KernelX, vx_matrix KernelY, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_sepFilter2D(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_matrix KernelX, vx_matrix KernelY, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_float32 delta, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV BilateralFilter function node.
 	* \param [in] graph The reference to the graph.
 	* \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt>  format.
 	* \param [out] output The output image is as same size and type of input.
-	* \param [in] kwidth The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set K width.
-	* \param [in] kheight The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set K height.
-	* \param [in] sigmaX The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaX.
-	* \param [in] sigmaY The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaY.
+	* \param [in] d The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set K width.
+	* \param [in] sigmaColor The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaX.
+	* \param [in] sigmaSpace The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set sigmaY.
 	* \param [in] Border mode The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set border mode.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bilateralFilter(vx_graph graph, vx_image input, vx_image output, vx_uint32 kwidth, vx_uint32 kheight, vx_float32 sigmaX, vx_float32 sigmaY, vx_int32 border_mode);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bilateralFilter(vx_graph graph, vx_image input, vx_image output, vx_uint32 d, vx_float32 Sigma_Color, vx_float32 Sigma_Space, vx_int32 border_mode);
 
 	/*! \brief [Graph] Creates a OpenCV BRISK compute node to detect keypoints and optionally compute descriptors.
 	* \param [in] graph The reference to the graph.
@@ -143,7 +147,7 @@ extern "C" {
 	* \param [in] patternScale The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for patternScale argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_briskCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_int32 thresh, vx_int32 octaves, vx_float32 patternScale);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_briskCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_int32 thresh, vx_int32 octaves, vx_float32 patternScale);
 
 	/*! \brief [Graph] Creates a OpenCV BRISK detector node to detect keypoints and optionally compute descriptors.
 	* \param [in] graph The reference to the graph.
@@ -155,7 +159,7 @@ extern "C" {
 	* \param [in] patternScale The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for patternScale argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_briskDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_int32 thresh, vx_int32 octaves, vx_float32 patternScale);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_briskDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_int32 thresh, vx_int32 octaves, vx_float32 patternScale);
 
 	/*! \brief [Graph] Creates a OpenCV FAST feature detector node.
 	* \param [in] graph The reference to the graph.
@@ -165,7 +169,7 @@ extern "C" {
 	* \param [in] nonmaxSuppression The input <tt>\ref VX_TYPE_BOOL</tt> scalar for nonmaxSuppression argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fast(vx_graph graph, vx_image input, vx_array output_kp, vx_int32 threshold, vx_bool nonmaxSuppression);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_fast(vx_graph graph, vx_image input, vx_array output_kp, vx_int32 threshold, vx_bool nonmaxSuppression);
 
 	/*! \brief [Graph] Creates a OpenCV GoodFeaturesToTrack detector node.
 	* \param [in] graph The reference to the graph.
@@ -180,7 +184,7 @@ extern "C" {
 	* \param [in] k The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for k argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_goodFeaturesToTrack(vx_graph graph, vx_image input, vx_array output_kp, vx_int32 maxCorners, vx_float32 qualityLevel, vx_float32 minDistance, vx_image mask, vx_int32 blockSize, vx_bool useHarrisDetector, vx_float32 k);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_goodFeaturesToTrack(vx_graph graph, vx_image input, vx_array output_kp, vx_int32 maxCorners, vx_float32 qualityLevel, vx_float32 minDistance, vx_image mask, vx_int32 blockSize, vx_bool useHarrisDetector, vx_float32 k);
 
 	/*! \brief [Graph] Creates a OpenCV MSER feature detector node.
 	* \param [in] graph The reference to the graph.
@@ -198,7 +202,7 @@ extern "C" {
 	* \param [in] edge_blur_size The input <tt>\ref VX_TYPE_INT32</tt> scalar for max_area argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_mserDetect(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask, vx_int32 delta, vx_int32 min_area, vx_int32 max_area, vx_float32 max_variation, vx_float32 min_diversity, vx_int32 max_evolution, vx_float32 area_threshold, vx_float32 min_margin, vx_int32 edge_blur_size);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_mserDetect(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask, vx_int32 delta, vx_int32 min_area, vx_int32 max_area, vx_float32 max_variation, vx_float32 min_diversity, vx_int32 max_evolution, vx_float32 area_threshold, vx_float32 min_margin, vx_int32 edge_blur_size);
 
 	/*! \brief [Graph] Creates a OpenCV ORB Compute node to detect keypoints and optionally compute descriptors.
 	* \param [in] graph The reference to the graph.
@@ -213,7 +217,7 @@ extern "C" {
 	* \param [in] patchSize The input <tt>\ref VX_TYPE_INT32</tt> scalar for patchSize argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_orbCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_int32 nfeatures, vx_float32 scaleFactor, vx_int32 nlevels, vx_int32 edgeThreshold, vx_int32 firstLevel, vx_int32 WTA_K, vx_int32 scoreType, vx_int32 patchSize);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_orbCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_int32 nfeatures, vx_float32 scaleFactor, vx_int32 nlevels, vx_int32 edgeThreshold, vx_int32 firstLevel, vx_int32 WTA_K, vx_int32 scoreType, vx_int32 patchSize);
 
 	/*! \brief [Graph] Creates a OpenCV ORB detector node to detect keypoints and optionally compute descriptors.
 	* \param [in] graph The reference to the graph.
@@ -231,7 +235,7 @@ extern "C" {
 	* \param [in] patchSize The input <tt>\ref VX_TYPE_INT32</tt> scalar for patchSize argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_orbDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_int32 nfeatures, vx_float32 scaleFactor, vx_int32 nlevels, vx_int32 edgeThreshold, vx_int32 firstLevel, vx_int32 WTA_K, vx_int32 scoreType, vx_int32 patchSize);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_orbDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_int32 nfeatures, vx_float32 scaleFactor, vx_int32 nlevels, vx_int32 edgeThreshold, vx_int32 firstLevel, vx_int32 WTA_K, vx_int32 scoreType, vx_int32 patchSize);
 
 	/*! \brief [Graph] Creates a OpenCV SIFT Compute node to compute descriptor from specified keypoints.
 	* \param [in] graph The reference to the graph.
@@ -242,7 +246,7 @@ extern "C" {
 	* \param [in] sigma The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for sigma argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_siftCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_int32 nfeatures, vx_int32 nOctaveLayers, vx_float32 contrastThreshold, vx_float32 edgeThreshold, vx_float32 sigma);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_siftCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_int32 nfeatures, vx_int32 nOctaveLayers, vx_float32 contrastThreshold, vx_float32 edgeThreshold, vx_float32 sigma);
 
 	/*! \brief [Graph] Creates a OpenCV SIFT detector node to detect keypoints and optionally compute descriptors.
 	* \param [in] graph The reference to the graph.
@@ -257,7 +261,7 @@ extern "C" {
 	* \param [in] sigma The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar for sigma argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_siftDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_int32 nfeatures, vx_int32 nOctaveLayers, vx_float32 contrastThreshold, vx_float32 edgeThreshold, vx_float32 sigma);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_siftDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_int32 nfeatures, vx_int32 nOctaveLayers, vx_float32 contrastThreshold, vx_float32 edgeThreshold, vx_float32 sigma);
 
 	/*! \brief [Graph] Creates a OpenCV Simple Blob detector node.
 	* \param [in] graph The reference to the graph.
@@ -266,7 +270,7 @@ extern "C" {
 	* \param [in] mask The mask image in <tt>\ref VX_DF_IMAGE_U8</tt> format (optional).
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_simpleBlobDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_simpleBlobDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask);
 
 	/*! \brief [Graph] Creates a OpenCV Star feature detector node.
 	* \param [in] graph The reference to the graph.
@@ -280,7 +284,7 @@ extern "C" {
 	* \param [in] suppressNonmaxSize The input <tt>\ref VX_TYPE_INT32</tt> scalar for suppressNonmaxSize argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_starFeatureDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask, vx_int32 maxSize, vx_int32 responseThreshold, vx_int32 lineThresholdProjected, vx_int32 lineThresholdBinarized, vx_int32 suppressNonmaxSize);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_starFeatureDetector(vx_graph graph, vx_image input, vx_array output_kp, vx_image mask, vx_int32 maxSize, vx_int32 responseThreshold, vx_int32 lineThresholdProjected, vx_int32 lineThresholdBinarized, vx_int32 suppressNonmaxSize);
 
 	/*! \brief [Graph] Creates a OpenCV SURF Compute node to compute descriptor from specified keypoints.
 	* \param [in] graph The reference to the graph.
@@ -291,7 +295,7 @@ extern "C" {
 	* \param [in] upright The input <tt>\ref VX_TYPE_BOOL</tt> scalar for upright argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_surfCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_float32 hessianThreshold, vx_int32 nOctaves, vx_int32 nOctaveLayers, vx_bool extended, vx_bool upright);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_surfCompute(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_float32 hessianThreshold, vx_int32 nOctaves, vx_int32 nOctaveLayers, vx_bool extended, vx_bool upright);
 
 	/*! \brief [Graph] Creates a OpenCV SURF detector node to detect keypoints and optionally compute descriptors.
 	* \param [in] graph The reference to the graph.
@@ -306,7 +310,7 @@ extern "C" {
 	* \param [in] upright The input <tt>\ref VX_TYPE_BOOL</tt> scalar for upright argument.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_surfDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_float32 hessianThreshold, vx_int32 nOctaves, vx_int32 nOctaveLayers);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_surfDetect(vx_graph graph, vx_image input, vx_image mask, vx_array output_kp, vx_array output_des, vx_float32 hessianThreshold, vx_int32 nOctaves, vx_int32 nOctaveLayers);
 
 	/*! \brief [Graph] Creates a OpenCV Flip function node.
 	* \param [in] graph The reference to the graph.
@@ -315,7 +319,7 @@ extern "C" {
 	* \param [in] FlipCode The input <tt>\ref VX_TYPE_INT32</tt> scalar to set FlipCode.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_flip(vx_graph graph, vx_image input, vx_image output, vx_int32 FlipCode);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_flip(vx_graph graph, vx_image input, vx_image output, vx_int32 FlipCode);
 
 	/*! \brief [Graph] Creates a OpenCV transpose function node.
 	* \param [in] graph The reference to the graph.
@@ -323,7 +327,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_transpose(vx_graph graph, vx_image input, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_transpose(vx_graph graph, vx_image input, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV integral function node.
 	* \param [in] graph The reference to the graph.
@@ -332,7 +336,7 @@ extern "C" {
 	* \param [in] sdepth The input <tt>\ref VX_TYPE_INT32</tt> scalar to set sdepth.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_integral(vx_graph graph, vx_image input, vx_image output, vx_int32 sdepth);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_integral(vx_graph graph, vx_image input, vx_image output, vx_int32 sdepth);
 
 	/*! \brief [Graph] Creates a OpenCV norm function node.
 	* \param [in] graph The reference to the graph.
@@ -341,7 +345,7 @@ extern "C" {
 	* \param [in] sdepth The input <tt>\ref VX_TYPE_INT32</tt> scalar to set sdepth.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_norm(vx_graph graph, vx_image input, vx_float32 norm_value, vx_int32 norm_type);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_norm(vx_graph graph, vx_image input, vx_float32 norm_value, vx_int32 norm_type);
 
 	/*! \brief [Graph] Creates a OpenCV countNonZero function node.
 	* \param [in] graph The reference to the graph.
@@ -349,7 +353,7 @@ extern "C" {
 	* \param [out] non_zero The output <tt>\ref VX_TYPE_INT32</tt> scalar non_zero.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_countNonZero(vx_graph graph, vx_image input, vx_int32 non_zero);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_countNonZero(vx_graph graph, vx_image input, vx_int32 non_zero);
 
 	/*! \brief [Graph] Creates a OpenCV Multiply function node.
 	* \param [in] graph The reference to the graph.
@@ -360,7 +364,7 @@ extern "C" {
 	* \param [in] dtype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set dtype.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_multiply(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_multiply(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype);
 
 	/*! \brief [Graph] Creates a OpenCV Divide function node.
 	* \param [in] graph The reference to the graph.
@@ -371,7 +375,7 @@ extern "C" {
 	* \param [in] dtype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set dtype.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_divide(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_divide(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_float32 scale, vx_int32 dtype);
 
 	/*! \brief [Graph] Creates a OpenCV ADD function node.
 	* \param [in] graph The reference to the graph.
@@ -380,7 +384,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_add(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_add(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV Subtract function node.
 	* \param [in] graph The reference to the graph.
@@ -389,7 +393,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_subtract(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_subtract(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV absdiff function node.
 	* \param [in] graph The reference to the graph.
@@ -398,7 +402,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_absDiff(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_absDiff(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV addWeighted function node.
 	* \param [in] graph The reference to the graph.
@@ -411,7 +415,7 @@ extern "C" {
 	* \param [in] dtype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set dtype.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_addWeighted(vx_graph graph, vx_image imput_1, vx_float32 aplha, vx_image input_2, vx_float32 beta, vx_float32 gamma, vx_image output, vx_int32 dtype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_addWeighted(vx_graph graph, vx_image imput_1, vx_float32 aplha, vx_image input_2, vx_float32 beta, vx_float32 gamma, vx_image output, vx_int32 dtype);
 
 	/*! \brief [Graph] Creates a OpenCV adaptiveThreshold function node.
 	* \param [in] graph The reference to the graph.
@@ -424,7 +428,7 @@ extern "C" {
 	* \param [in] c The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set c.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_adaptiveThreshold(vx_graph graph, vx_image input, vx_image output, vx_float32 maxValue, vx_int32 adaptiveMethod, vx_int32 thresholdType, vx_int32 blockSize, vx_float32 c);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_adaptiveThreshold(vx_graph graph, vx_image input, vx_image output, vx_float32 maxValue, vx_int32 adaptiveMethod, vx_int32 thresholdType, vx_int32 blockSize, vx_float32 c);
 
 	/*! \brief [Graph] Creates a OpenCV threshold function node.
 	* \param [in] graph The reference to the graph.
@@ -435,7 +439,7 @@ extern "C" {
 	* \param [in] type The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set type.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_threshold(vx_graph graph, vx_image input, vx_image output, vx_float32 thresh, vx_float32 maxVal, vx_int32 type);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_threshold(vx_graph graph, vx_image input, vx_image output, vx_float32 thresh, vx_float32 maxVal, vx_int32 type);
 
 	/*! \brief [Graph] Creates a OpenCV distanceTransform function node.
 	* \param [in] graph The reference to the graph.
@@ -443,7 +447,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_distanceTransform(vx_graph graph, vx_image input, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_distanceTransform(vx_graph graph, vx_image input, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV cvtColor function node.
 	* \param [in] graph The reference to the graph.
@@ -452,7 +456,7 @@ extern "C" {
 	* \param [in] CODE The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set FlipCode.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cvtColor(vx_graph graph, vx_image input, vx_image output, vx_uint32 CODE);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_cvtColor(vx_graph graph, vx_image input, vx_image output, vx_uint32 CODE);
 
 	/*! \brief [Graph] Creates a OpenCV fastNlMeansDenoising function node.
 	* \param [in] graph The reference to the graph.
@@ -463,7 +467,7 @@ extern "C" {
 	* \param [in] search_ws The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set search_ws.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoising(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_int32 template_ws, vx_int32 search_ws);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoising(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_int32 template_ws, vx_int32 search_ws);
 
 	/*! \brief [Graph] Creates a OpenCV fastNlMeansDenoisingColored function node.
 	* \param [in] graph The reference to the graph.
@@ -475,7 +479,7 @@ extern "C" {
 	* \param [in] search_ws The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set search_ws.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoisingColored(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_float32 h_color, vx_int32 template_ws, vx_int32 search_ws);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_fastNlMeansDenoisingColored(vx_graph graph, vx_image input, vx_image output, vx_float32 h, vx_float32 h_color, vx_int32 template_ws, vx_int32 search_ws);
 
 	/*! \brief [Graph] Creates a OpenCV Resize function node.
 	* \param [in] graph The reference to the graph.
@@ -488,7 +492,7 @@ extern "C" {
 	* \param [in] interpolation The input <tt>\ref VX_TYPE_INT32</tt> scalar to set interpolation.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_resize(vx_graph graph, vx_image input, vx_image output, vx_int32 Size_X, vx_int32 Size_Y, vx_float32 FX, vx_float32 FY, vx_int32 interpolation);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_resize(vx_graph graph, vx_image input, vx_image output, vx_int32 Size_X, vx_int32 Size_Y, vx_float32 FX, vx_float32 FY, vx_int32 interpolation);
 
 	/*! \brief [Graph] Creates a OpenCV pyrup function node.
 	* \param [in] graph The reference to the graph.
@@ -499,7 +503,7 @@ extern "C" {
 	* \param [in] bordertype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set bordertype.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_pyrUp(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_pyrUp(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype);
 
 	/*! \brief [Graph] Creates a OpenCV pyrdown function node.
 	* \param [in] graph The reference to the graph.
@@ -510,7 +514,7 @@ extern "C" {
 	* \param [in] bordertype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set bordertype.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_pyrDown(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_pyrDown(vx_graph graph, vx_image input, vx_image output, vx_uint32 Swidth, vx_uint32 Sheight, vx_int32 bordertype);
 
 	/*! \brief [Graph] Creates a OpenCV buildPyramid function node.
 	* \param [in] graph The reference to the graph.
@@ -521,7 +525,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_UINT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_buildPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 maxLevel, vx_uint32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_buildPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 maxLevel, vx_uint32 border);
 
 	/*! \brief [Graph] Creates a OpenCV buildOpticalFlowPyramid function node.
 	* \param [in] graph The reference to the graph.
@@ -536,7 +540,7 @@ extern "C" {
 	* \param [in] tryReuseInputImage The input <tt>\ref VX_TYPE_BOOL</tt> scalar to set tryReuseInputImage.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_buildOpticalFlowPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 S_width, vx_uint32 S_height, vx_int32 WinSize, vx_bool WithDerivatives, vx_int32 Pyr_border, vx_int32 derviBorder, vx_bool tryReuse);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_buildOpticalFlowPyramid(vx_graph graph, vx_image input, vx_pyramid output, vx_uint32 S_width, vx_uint32 S_height, vx_int32 WinSize, vx_bool WithDerivatives, vx_int32 Pyr_border, vx_int32 derviBorder, vx_bool tryReuse);
 
 	/*! \brief [Graph] Creates a OpenCV Dilate function node.
 	* \param [in] graph The reference to the graph.
@@ -549,7 +553,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_dilate(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_dilate(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV Erode function node.
 	* \param [in] graph The reference to the graph.
@@ -562,7 +566,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_erode(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_erode(vx_graph graph, vx_image input, vx_image output, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV warpAffine function node.
 	* \param [in] graph The reference to the graph.
@@ -575,7 +579,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_warpAffine(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_warpAffine(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV warpPerspective function node.
 	* \param [in] graph The reference to the graph.
@@ -588,7 +592,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_warpPerspective(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_warpPerspective(vx_graph graph, vx_image input, vx_image output, vx_matrix M, vx_int32 Size_X, vx_int32 Size_Y, vx_int32 flags, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV morphologyEX function node.
 	* \param [in] graph The reference to the graph.
@@ -602,7 +606,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_morphologyEX(vx_graph graph, vx_image input, vx_image output, vx_int32 OP, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_morphologyEX(vx_graph graph, vx_image input, vx_image output, vx_int32 OP, vx_matrix Kernel, vx_int32 Anchor_X, vx_int32 Anchor_Y, vx_int32 iterations, vx_int32 border);
 	
 	/*! \brief [Graph] Creates a OpenCV Bitwise And function node.
 	* \param [in] graph The reference to the graph.
@@ -611,7 +615,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseAnd(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseAnd(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV Bitwise NOT function node.
 	* \param [in] graph The reference to the graph.
@@ -619,7 +623,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseNot(vx_graph graph, vx_image input, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseNot(vx_graph graph, vx_image input, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV Bitwise OR function node.
 	* \param [in] graph The reference to the graph.
@@ -628,7 +632,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseOr(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseOr(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV Bitwise XOR function node.
 	* \param [in] graph The reference to the graph.
@@ -637,7 +641,7 @@ extern "C" {
 	* \param [out] output The output image is as same size and type of input.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_bitwiseXor(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_bitwiseXor(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
 
 	/*! \brief [Graph] Creates a OpenCV Canny function node.
 	* \param [in] graph The reference to the graph.
@@ -649,16 +653,17 @@ extern "C" {
 	* \param [in] L2_Gradient The input <tt>\ref VX_BOOL</tt> scalar to set L2_Gradient.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_canny(vx_graph graph, vx_image input, vx_image output, vx_float32 threshold1, vx_float32 threshold2, vx_int32 aperture_size, vx_bool L2_Gradient);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_canny(vx_graph graph, vx_image input, vx_image output, vx_float32 threshold1, vx_float32 threshold2, vx_int32 aperture_size, vx_bool L2_Gradient);
 
 	/*! \brief [Graph] Creates a OpenCV Compare function node.
 	* \param [in] graph The reference to the graph.
 	* \param [in] input_1 The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt> format.
 	* \param [in] input_2 The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt> format.
 	* \param [out] output The output image is as same size and type of input.
+	* \param [in] cmpop The input value in vx_int32 format.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_compare(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_compare(vx_graph graph, vx_image input_1, vx_image input_2, vx_image output, vx_int32 cmpop);
 
 	/*! \brief [Graph] Creates a OpenCV convertScaleAbs function node.
 	* \param [in] graph The reference to the graph.
@@ -668,7 +673,7 @@ extern "C" {
 	* \param [in] beta The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar to set beta.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_convertScaleAbs(vx_graph graph, vx_image image_in, vx_image image_out, vx_float32 alpha, vx_float32 beta);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_convertScaleAbs(vx_graph graph, vx_image image_in, vx_image image_out, vx_float32 alpha, vx_float32 beta);
 
 	/*! \brief [Graph] Creates a OpenCV cornerHarris function node.
 	* \param [in] graph The reference to the graph.
@@ -680,7 +685,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cornerHarris(vx_graph graph, vx_image input, vx_image output, vx_int32 blocksize, vx_int32 ksize, vx_float32 k, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_cornerHarris(vx_graph graph, vx_image input, vx_image output, vx_int32 blocksize, vx_int32 ksize, vx_float32 k, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV cornerMinEigenVal function node.
 	* \param [in] graph The reference to the graph.
@@ -691,7 +696,7 @@ extern "C" {
 	* \param [in] border The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_cornerMinEigenVal(vx_graph graph, vx_image input, vx_image output, vx_uint32 blockSize, vx_uint32 ksize, vx_int32 border);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_cornerMinEigenVal(vx_graph graph, vx_image input, vx_image output, vx_uint32 blockSize, vx_uint32 ksize, vx_int32 border);
 
 	/*! \brief [Graph] Creates a OpenCV Laplacian function node.
 	* \param [in] graph The reference to the graph.
@@ -704,7 +709,7 @@ extern "C" {
 	* \param [in] border_mode The input <tt>\ref VX_TYPE_INT32</tt> scalar to set border_mode.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_laplacian(vx_graph graph, vx_image input, vx_image output, vx_uint32 ddepth, vx_uint32 ksize, vx_float32 scale, vx_float32 delta, vx_int32 border_mode);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_laplacian(vx_graph graph, vx_image input, vx_image output, vx_uint32 ddepth, vx_uint32 ksize, vx_float32 scale, vx_float32 delta, vx_int32 border_mode);
 
 	/*! \brief [Graph] Creates a OpenCV Scharr function node.
 	* \param [in] graph The reference to the graph.
@@ -718,7 +723,7 @@ extern "C" {
 	* \param [in] bordertype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set bordertype.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_scharr(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_float32 scale, vx_float32 delta, vx_int32 bordertype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_scharr(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_float32 scale, vx_float32 delta, vx_int32 bordertype);
 
 	/*! \brief [Graph] Creates a OpenCV Sobel function node.
 	* \param [in] graph The reference to the graph.
@@ -733,7 +738,7 @@ extern "C" {
 	* \param [in] bordertype The input <tt>\ref VX_TYPE_INT32</tt> scalar to set bordertype.
 	* \return <tt>\ref vx_node</tt>.
 	* \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>*/
-	VX_API_ENTRY vx_node VX_API_CALL vxExtCvNode_sobel(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_int32 Ksize, vx_float32 scale, vx_float32 delta, vx_int32 bordertype);
+	extern "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtCvNode_sobel(vx_graph graph, vx_image input, vx_image output, vx_int32 ddepth, vx_int32  dx, vx_int32 dy, vx_int32 Ksize, vx_float32 scale, vx_float32 delta, vx_int32 bordertype);
 
 
 #ifdef __cplusplus

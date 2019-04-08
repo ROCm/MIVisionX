@@ -9,6 +9,7 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Batch Normalization|vxBatchNormalizationLayer|com.amd.nn_extension.batch_normalization_layer |
 | Concat|vxConcatLayer|com.amd.nn_extension.concat_layer |
 | Convolution|vxConvolutionLayer|org.khronos.nn_extension.convolution_layer |
+| Crop|vxCropLayer|com.amd.nn_extension.crop_layer |
 | Deconvolution|vxDeconvolutionLayer|org.khronos.nn_extension.deconvolution_layer |
 | Fully Connected|vxFullyConnectedLayer|org.khronos.nn_extension.fully_connected_layer |
 | Local Response Normalization|vxNormalizationLayer|org.khronos.nn_extension.normalization_layer |

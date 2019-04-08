@@ -42,6 +42,7 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
+    'shape' : 'shape'
 }
 
 onnx2ir_op_type = {
@@ -60,7 +61,9 @@ onnx2ir_op_type = {
     'Concat'             : 'concat',
     'LeakyRelu'          : 'leaky_relu',
     'GlobalAveragePool'  : 'global_avg_pool',
-    'Softmax'            : 'softmax'
+    'Softmax'            : 'softmax',
+    'Reshape'            : 'reshape',
+    'Transpose'          : 'transpose'
 }
 
 onnx2ir_data_type = [
@@ -123,7 +126,7 @@ def onnx_tensor_info_to_data(info):
     tensor.setInfo(onnx2ir_data_type[info.data_type], [int(x) for x in info.dims])
     return tensor
 
-def onnx_value_info_to_data(info):
+def onnx_value_info_to_data(info, dims):
     tensor = IrTensor()
     tensor.setName(onnx_name_to_ir_name(info.name))
     tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x.dim_value) for x in info.type.tensor_type.shape.dim])
@@ -132,6 +135,7 @@ def onnx_value_info_to_data(info):
 def onnx_graph_to_ir_graph(onnx_graph):
     graph = IrGraph()
     initializerList = []
+    inputUser = False
     for tensor in onnx_graph.initializer:
         tensorName = onnx_name_to_ir_name(tensor.name)
         initializerList.append(tensorName)
@@ -139,9 +143,18 @@ def onnx_graph_to_ir_graph(onnx_graph):
         graph.addBinary(tensorName, tensor.raw_data)
     for tensor in onnx_graph.input:
         if not onnx_name_to_ir_name(tensor.name) in initializerList:
-            graph.addInput(onnx_value_info_to_data(tensor))
+            input_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]
+            if (len(sys.argv) > 3) and (sys.argv[3] == "--input_dims"):
+                if (x == 0 or x is None or x == '?' for x in input_dims):
+                    input_dims = sys.argv[4].split(',')
+                    inputUser = True
+            graph.addInput(onnx_value_info_to_data(tensor, input_dims))
     for tensor in onnx_graph.output:
-        graph.addOutput(onnx_value_info_to_data(tensor))
+        output_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]
+        if (x == 0 or x is None or x == '?' for x in output_dims):
+            if inputUser == True:
+                output_dims[0] = input_dims[0]
+        graph.addOutput(onnx_value_info_to_data(tensor, output_dims))
     tensorAliasList = {}
     for onnx_node in onnx_graph.node:
         if onnx_node.op_type == 'Dropout':
@@ -169,7 +182,7 @@ def onnx2ir(model, output_folder):
 
 def main():
     if len(sys.argv) < 3:
-        print('Usage: python onnx2nnir.py <onnxModel> <nnirOutputFolder>')
+        print('Usage: python onnx2nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]')
         sys.exit(1)
     onnxFileName = sys.argv[1]
     outputFolder = sys.argv[2]

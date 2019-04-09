@@ -74,7 +74,15 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
-            , 'offset' : []               # list of offsets
+            , 'offset' : []              # list of offsets
+            , 'order'  : []              # order for permute
+            , 'min_size' : 0.0             # minimum size of prior
+            , 'max_size' : 0.0             # maximum size of prior
+            , 'aspect_ratio' : []        # aspect ratios for bounding boxes
+            , 'flip' : 0                 # flip bounding boxes (true/false)
+            , 'clip' : 0                 # normalize bounding boxes (true/false)
+            , 'variance' : []            # variance for priors
+            , 'prior_offset' : 0.0       # offset for priors
         }
         self.dict_set = []
 
@@ -112,7 +120,8 @@ class IrAttr:
             value = saL[1]
             value_type = type(self.dict_values[name]).__name__
             if value_type == 'list':
-                self.set(name, [int(x) for x in value.split(',')])
+                list_type = value.split(',')
+                self.set(name, [int(x) for x in list_type] if (list_type[0].isdigit()) else [float(x) for x in list_type])
             elif value_type == 'float':
                 self.set(name, float(value))
             elif value_type == 'str':
@@ -148,7 +157,11 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
-            'crop' : 1
+            'crop' : 1,
+            'permute' : 1,
+            'prior_box' : 1,
+            'flatten'  : 1,
+            'detection_output' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -337,12 +350,21 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['concat']:
                     input = self.tensor_dict[node.inputs[0]]
-                    shape = [input.shape[0], 0, input.shape[2], input.shape[3]]
-                    for name in node.inputs:
-                        lshape = self.tensor_shapes[name]
-                        if shape[0:1] + shape[2:] != lshape[0:1] + lshape[2:]:
-                            raise ValueError("concat: mismatch detected: " + node.inputs[0] + ":" + str(shape) + " " + name + ":" + str(lshape))
-                        shape[1] = shape[1] + lshape[1]
+                    axis = node.attr.get('axis')
+                    if axis == 1:
+                        shape = [input.shape[0], 0, input.shape[2], input.shape[3]]
+                        for name in node.inputs:
+                            lshape = self.tensor_shapes[name]
+                            if shape[0:1] + shape[2:] != lshape[0:1] + lshape[2:]:
+                                raise ValueError("concat: mismatch detected: " + node.inputs[0] + ":" + str(shape) + " " + name + ":" + str(lshape))
+                            shape[1] = shape[1] + lshape[1]
+                    elif axis == 2:
+                        shape = [input.shape[0], input.shape[1], 0, input.shape[3]]
+                        for name in node.inputs:
+                            lshape = self.tensor_shapes[name]
+                            if shape[0:2] + shape[3:] != lshape[0:2] + lshape[3:]:
+                                raise ValueError("concat: mismatch detected: " + node.inputs[0] + ":" + str(shape) + " " + name + ":" + str(lshape))
+                            shape[2] = shape[2] + lshape[2]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, shape)
@@ -392,13 +414,15 @@ class IrGraph:
                     axes = node.attr.get('axes')
                     if input.format == 'NCHW' and axes == [0, 2, 3, 1]:
                         format = 'NHWC'
+                        shape = [input.shape[0], input.shape[2], input.shape[3], input.shape[1]]
                     elif input.format == 'NHWC' and axes == [0, 3, 1, 2]:
                         format = 'NCHW'
+                        shape = [input.shape[0], input.shape[3], input.shape[1], input.shape[2]]
                     else:
                         raise ValueError("transpose: unsupported transpose: " + input.toString() + " " + str(axes))
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, input.shape)
+                    local.setInfo(input.type, shape)
                     local.setFormat(format)
                     self.addLocal(local)
                 elif node.type in ['copy']:
@@ -410,21 +434,62 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['crop']:
                     input = self.tensor_dict[node.inputs[0]]
-                    reference = self.tensor_dict[node.inputs[1]]
-                    axis = node.attr.get('axis')
-                    out_shape = []
-                    for i in range(4):
-                        if i < axis:
-                            out_shape.append(input.shape[i])
-                        else:
-                            out_shape.append(reference.shape[i])
-                    print(out_shape)
-                    exit(1)
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, out_shape)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)       
+                elif node.type in ['permute']:
+                    input = self.tensor_dict[node.inputs[0]]    
+                    order = node.attr.get("order")   
+                    if input.format == 'NCHW' and order == [0, 2, 3, 1]:
+                        format = 'NHWC'
+                        shape = [input.shape[0], input.shape[2], input.shape[3], input.shape[1]]
+                    elif input.format == 'NHWC' and order == [0, 3, 1, 2]:
+                        format = 'NCHW'
+                        shape = [input.shape[0], input.shape[3], input.shape[1], input.shape[2]]
+                    else:
+                        raise ValueError("permute: unsupported permute: " + input.toString() + " " + str(axes))
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['flatten']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    axis = node.attr.get("axis")
+                    if axis == 1:
+                        shape = [input.shape[0], input.shape[1]*input.shape[2]*input.shape[3], 1, 1]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['prior_box']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    dim = 1 #for min_size
+                    if node.attr.get("max_size") > 0:
+                        dim += 1
+                    dim += len(node.attr.get("aspect_ratio"))
+                    if (node.attr.get("flip")) == 1:
+                        dim += len(node.attr.get("aspect_ratio"))
+                    h = input.shape[2]
+                    w = input.shape[3]
+                    shape = [1, 2, h*w*dim*4, 1]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['detection_output']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    shape = [1, 1, 1, 7]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                    
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

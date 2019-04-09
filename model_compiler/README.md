@@ -15,16 +15,39 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 <p align="center"><img width="100%" src="../docs/images/runtime.png" /></p>
 
 ## Pre-requisites
+
+### ONNX
 * MIVisionX libraries
 * numpy
 * onnx
+
 ````
 % pip install onnx numpy
+````
+
+### NNEF
+* MIVisionX libraries
+* numpy
+* [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser/cpp)
+
+````
+cd <NNEF parser root directory>/python
+python setup.py install
 ````
 
 ## Model Compiler & Optimizer Usage
 
 ### Step 1 - Convert Pre-trained model to AMD NNIR
+
+#### Caffe
+
+To convert a caffemodel into AMD NNIR model:
+
+```
+% python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
+```
+
+#### ONNX
 
 To convert an ONNX model into AMD NNIR model:
 
@@ -34,12 +57,16 @@ To convert an ONNX model into AMD NNIR model:
 OPTIONS:
 	--input_dims n,c,h,w
 ```
+#### NNEF
 
-To convert a caffemodel into AMD NNIR model:
+If you want to create NNEF model from caffe or tensorflow model, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools/tree/master/converter/nnef_converters)
+
+To convert a NNEF model into AMD NNIR model:
 
 ```
-% python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
+% python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
 ```
+
 ### Step 2 - Apply Optimizations
 
 To update batch size in AMD NNIR model:
@@ -227,6 +254,32 @@ Supported ONNX operators are:
 - Softmax
 - Dropout
 - Reshape
+
+Supported NNEF operators are:
+
+- Conv
+- Deconv
+- Relu
+- MaxPool
+- AveragePool
+- GlobalAveragePool
+- MeanReduce
+- LRN
+- BatchNormalization
+- Concat
+- Sum
+- Add
+- Sub
+- Mul
+- Matmul
+- Softmax
+- Dropout
+- Reshape
+- Slice
+- Transpose
+- Concat
+- Leaky_Relu
+- Copy
 
 ## License
 Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.

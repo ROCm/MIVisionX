@@ -22,12 +22,7 @@ caffe2ir_op_type = {
     'Softmax' : 'softmax',
     'SoftmaxWithLoss' : 'softmax',
     'Interp' : 'upsample',
-    'Crop' : 'crop',
-    'Permute' : 'permute',
-    'PriorBox' : 'prior_box',
-    'Flatten' : 'flatten',
-    'Reshape' : 'reshape',
-    'DetectionOutput' : 'detection_output',
+    'Crop' : 'crop'
 }
 
 # convert caffename to ir names.
@@ -57,7 +52,7 @@ def caffe_attr_to_ir_attr(attribute_map):
         elif type(attributeInfo) is int:
             attr.set(attr_names[i], int(attributeInfo))
         elif type(attributeInfo) is str:
-            attr.set(attr_names[i], str(attributeInfo)) 
+            attr.set(attr_names[i], str(attributeInfo))
         elif type(attributeInfo) == type([]):
             if (type(attributeInfo[0]) is int):
                 attr.set(attr_names[i], [int(v) for v in (attributeInfo)])
@@ -180,9 +175,9 @@ def extractOutput(graph, inputOutputLayers, output_list, verbose):
         outputList[output_name] = output_dims
     else:
         for i in range(len(output_list)):
-            output_name = output_list[i]
             if (verbose):
                 print ("output name at index: "+ str(i) + " " + output_name)
+            output_name = output_list[i]
             for j in range(len(inputOutputLayers)):
                 if (output_name in inputOutputLayers[j]["layer_name"]):
                     output_map = inputOutputLayers[j]["outputs"]
@@ -281,16 +276,6 @@ def extractCaffeAttrInfo(layer_param):
         attribute_map["axis"] = axis
         attribute_map["offset"] = new_offset
 
-    elif (layer_param.type == "Reshape"):
-        reshape = layer_param.reshape_param
-        shape = reshape.shape.dim
-        new_shape = [int(z) for z in shape]
-        attribute_map["shape"] = new_shape
-
-    elif (layer_param.type == "Concat"):
-        concat = layer_param.concat_param
-        axis = concat.axis
-        attribute_map["axis"] = axis
     return attribute_map
 
 # calculate dimensions of the output of each layer.
@@ -368,23 +353,13 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
 
     elif (layer_param.type == "Concat"):
         inputs = input_map.keys()
-        axis = attribute_map["axis"]
-        if axis == 1:
-            for i in range(len(inputs)):
-                n,c,h,w = input_map[inputs[i]]
-                output_dims[1] += c
-            n,c,h,w = input_map[inputs[0]]
-            output_dims[0] = n
-            output_dims[2] = h
-            output_dims[3] = w
-        elif axis == 2:
-            for i in range(len(inputs)):
-                n,c,h,w = input_map[inputs[i]]
-                output_dims[2] += h
-            n,c,h,w = input_map[inputs[0]]
-            output_dims[0] = n
-            output_dims[1] = c
-            output_dims[3] = w
+        for i in range(len(inputs)):
+            n,c,h,w = input_map[inputs[i]]
+            output_dims[1] += c
+        n,c,h,w = input_map[inputs[0]]
+        output_dims[0] = n
+        output_dims[2] = h
+        output_dims[3] = w
 
     elif (layer_param.type == "Interp"):
         inputs = input_map.keys()
@@ -418,98 +393,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             else:
                 output_dims[i] = input_map[inputs[1]][i]
 
-    elif (layer_param.type == "Permute"):
-        permute = layer_param.permute_param
-        order = permute.order        
-        order = [int(i) for i in order]
-        attribute_map["order"] = order
-        n,c,h,w = input_map[str(inputs[0])]
-        if order == [0, 2, 3, 1]:
-            output_dims[0] = n
-            output_dims[1] = h
-            output_dims[2] = w
-            output_dims[3] = c
-        if order == [0, 1, 2, 3]:
-            output_dims[0] = n
-            output_dims[1] = c
-            output_dims[2] = h
-            output_dims[3] = w
-
-    elif (layer_param.type == "PriorBox"):
-        n,c,h,w = input_map[str(inputs[0])]
-        prior_box = layer_param.prior_box_param
-        min_size = prior_box.min_size[0]
-        attribute_map["min_size"] = min_size
-        max_size = prior_box.max_size[0] if prior_box.max_size else 0.0
-        attribute_map["max_size"] = max_size
-        aspect_ratio = []
-        for i in range(len(prior_box.aspect_ratio)):
-            aspect_ratio.append(prior_box.aspect_ratio[i])
-        attribute_map["aspect_ratio"] = aspect_ratio
-        flip = int(prior_box.flip)
-        attribute_map["flip"] = flip
-        clip = int(prior_box.clip)
-        attribute_map["clip"] = clip
-        variance = []
-        for i in range(len(prior_box.variance)):
-            variance.append(prior_box.variance[i])
-        attribute_map["variance"] = variance
-        offset = float(prior_box.offset)
-        attribute_map["prior_offset"] = offset
-        dim = 1 #for min_size
-        dim += len(aspect_ratio)
-        if max_size > 0:
-            dim += 1
-        if flip == 1:
-            dim += len(aspect_ratio)
-        output_dims[0] = 1
-        output_dims[1] = 2 #for mean and variance values
-        output_dims[2] = h * w * dim * 4 
-        output_dims[3] = 1
-
-    elif (layer_param.type == "Flatten"):
-        flatten = layer_param.flatten_param 
-        axis = flatten.axis
-        attribute_map["axis"] = axis
-        n,c,h,w = input_map[str(inputs[0])]
-        output_dims[0] = n
-        output_dims[1] = c*h*w
-        output_dims[2] = 1
-        output_dims[3] = 1
-    elif (layer_param.type == "Reshape"):
-        shape = attribute_map["shape"]
-        input_shape = input_map[str(inputs[0])]
-        input_shape = [int(z) for z in input_shape]
-        
-        icount = 1
-        ocount = 1
-
-        for dim in range(len(input_shape)):
-            icount *= input_shape[dim]
-        for dim in range(len(shape)):
-            if shape[dim] > 0:
-                output_dims[dim] = shape[dim]
-                ocount *= output_dims[dim]
-            elif shape[dim] == 0:
-                output_dims[dim] = input_shape[dim]
-                ocount *= output_dims[dim]
-            
-        
-        for dim in range(len(shape)):
-            if shape[dim] == -1:
-                output_dims[dim] = icount// ocount
-                ocount *= output_dims[dim]
-
-        for i in range(len(output_dims)):       
-            if output_dims[i] == 0:     
-                output_dims[i] = 1
-    elif (layer_param.type == "DetectionOutput"):
-
-        output_dims[0] = 1
-        output_dims[1] = 1
-        output_dims[2] = 1
-        output_dims[3] = 7  
-    
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]
 
@@ -649,9 +532,6 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
                 in_name = caffe_name_to_ir_name(str(inputs[k]))
                 if str(inputs[k]) in inputsInfo:
                     input_info_map[in_name] = inputsInfo[in_name]
-                elif str(inputs[k]) in splitLayerMap:
-                    inp_name = splitLayerMap[in_name]
-                    input_info_map[inp_name] = inputsInfo[inp_name]
                 else:
                     print ("ERROR: unable to get the input dimensions for the layer %s" % (layer_name))
                     sys.exit(1)
@@ -682,8 +562,6 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
                     input_info_map[dropoutLayerMap[input_name]] = outputsMap[dropoutLayerMap[input_name]]
                 elif input_name in splitLayerMap:
                     input_info_map[splitLayerMap[input_name]] = prevOutMap[splitLayerMap[input_name]]
-                elif input_name in inputsInfo:
-                    input_info_map[input_name] = inputsInfo[input_name]
                 else:
                     if (((layer_type == "Softmax") or (layer_type == "SoftmaxWithLoss")) and k != 0):
                         break
@@ -694,6 +572,7 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
                         sys.exit(1)
 
         inputsMap.update(input_info_map)
+
         #calculate output,weight and bias dimensions.
         dimList = calculateTensorDims(layer_param, input_info_map, attribute_map)
         if (len(outputs) > 0) and caffe_name_to_ir_name(str(layer_name)) != caffe_name_to_ir_name(str(outputs[0])):

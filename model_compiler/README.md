@@ -17,7 +17,8 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 ## Pre-requisites
 
 * Ubuntu 16.04/18.04 or CentOS 7.5/7.6
-* [MIVisionX libraries](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
+* [MIVisionX libraries](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX  
+**Note:** MIVisionX installs all the model compiler scripts at ```/opt/rocm/mivisionx/model_compiler/python/```
 
 ### ONNX
 * numpy

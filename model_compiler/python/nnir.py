@@ -362,24 +362,23 @@ class IrGraph:
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-                    out_shape = []
-                    
+                    out_shape = [0,0,0,0]                    
                     for dim in range(len(input.shape)):
                         icount *= input.shape[dim]
                     for dim in range(len(param)):
                         if param[dim] > 0:
-                            out_shape.append(param[dim])
+                            out_shape[dim] = param[dim]
                             ocount *= out_shape[dim]
                         elif param[dim] == 0:
-                            out_shape.append(input.shape[dim])
+                            out_shape[dim] = input.shape[dim]
                             ocount *= out_shape[dim]
                     for dim in range(len(param)):
                         if param[dim] == -1:
-                            out_shape.append(icount // ocount)
+                            out_shape[dim] = icount // ocount
                             ocount *= out_shape[dim]
-                    if len(out_shape) < 4:
-                        while len(out_shape) != 4:
-                            out_shape.append(1)
+                    for i in range(len(out_shape)):       
+                        if out_shape[i] == 0:     
+                            out_shape[i] = 1
                     param = out_shape
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))

@@ -74,6 +74,8 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
+            , 'scale' : 1                # scale attribute
+            , 'coord' : [0, 0]           # [x,y]
             , 'offset' : []               # list of offsets
         }
         self.dict_set = []
@@ -148,7 +150,8 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
-            'crop' : 1
+            'crop' : 1,
+            'crop_and_resize': 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -244,10 +247,10 @@ class IrGraph:
         self.binaries[tensorName] = binary
 
     def removeTensor(self,name):
-        tensor = self.tensor_dict[name]
-        if tensor in self.initializers:
-            self.initializers.remove(tensor)
-            del self.binaries[tensor.name]
+        tensor = self.t            , 'scale' : 1                # scale attributeensor_dict[name]
+        if tensor in se            , 'scale' : 1                # scale attributelf.initializers:
+            self.initia            , 'scale' : 1                # scale attributelizers.remove(tensor)
+            del self.bi            , 'scale' : 1                # scale attributenaries[tensor.name]
         elif tensor in self.locals:
             self.locals.remove(tensor)
         else:
@@ -415,6 +418,19 @@ class IrGraph:
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['crop_and_resize']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    shape = node.attr.get('shape')
+                    scaleFactor = node.attr.get('scale')
+                    width = shape[0]
+                    height = shape[1]
+                    out_shape = [input.shape[0], input.shape[1], height*scaleFactor, width*scaleFactor]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

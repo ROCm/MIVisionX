@@ -29,12 +29,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 ### NNEF
 * numpy
-* [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser/cpp)
-
-````
-cd <NNEF parser root directory>/python
-python setup.py install
-````
+* [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser/cpp) - Build the nnef python module
 
 ## Model Compiler & Optimizer Usage
 

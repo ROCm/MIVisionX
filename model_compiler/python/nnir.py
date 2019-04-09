@@ -247,10 +247,10 @@ class IrGraph:
         self.binaries[tensorName] = binary
 
     def removeTensor(self,name):
-        tensor = self.t            , 'scale' : 1                # scale attributeensor_dict[name]
-        if tensor in se            , 'scale' : 1                # scale attributelf.initializers:
-            self.initia            , 'scale' : 1                # scale attributelizers.remove(tensor)
-            del self.bi            , 'scale' : 1                # scale attributenaries[tensor.name]
+        tensor = self.tensor_dict[name]
+        if tensor in self.initializers:
+            self.initializers.remove(tensor)
+            del self.binaries[tensor.name]
         elif tensor in self.locals:
             self.locals.remove(tensor)
         else:

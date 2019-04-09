@@ -180,14 +180,13 @@ def nnef_graph_to_ir_graph(nnef_graph):
     return graph
 
 def nnef2ir(inputFolder, outputFolder):
-    #nnef_graph = nnef.load_model('/home/hansel/Hansel/NNEF-Tools/parser/cpp/examples/googlenet_flat.txt')
     nnef_graph = nnef.load_model(inputFolder)
     graph = nnef_graph_to_ir_graph(nnef_graph)
     graph.toFile(outputFolder)
 
 def main ():
     if len(sys.argv) < 3:
-        print('Usage: python nnef2nnir.py <nnefInputFolder> <outputFolder>')
+        print('Usage: python nnef_to_nnir.py <nnefInputFolder> <outputFolder>')
         sys.exit(1)
     inputFolder = sys.argv[1]
     outputFolder = sys.argv[2]

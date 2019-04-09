@@ -16,8 +16,10 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 ## Pre-requisites
 
+* Ubuntu 16.04/18.04 or CentOS 7.5/7.6
+* [MIVisionX libraries](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx)
+
 ### ONNX
-* MIVisionX libraries
 * numpy
 * onnx
 
@@ -26,7 +28,6 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 ````
 
 ### NNEF
-* MIVisionX libraries
 * numpy
 * [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser/cpp)
 
@@ -41,7 +42,7 @@ python setup.py install
 
 #### Caffe
 
-To convert a caffemodel into AMD NNIR model:
+To convert a pre-trained caffemodel into AMD NNIR model:
 
 ```
 % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]

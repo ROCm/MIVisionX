@@ -179,7 +179,25 @@ VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input,
 VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input_1, vx_tensor input_2, vx_float32 minSize, vx_array aspect_ratio, vx_int32 flip, vx_int32 clip, 
                                                  vx_float32 offset, vx_tensor output, vx_float32 maxSize, vx_array variance);
 
-/* \brief [Graph] Creates a Convolutional Network Crop_And_Resize Layer Node.
+/* \brief [Graph] Creates a Crop Layer Node.
+ * \details Cropping is done on the dimensions of the input vx_tensor to fit the dimensions of the reference tensor. 
+ * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The input tensor data.
+ * \param [in] ref The reference tensor data.
+ * \param [out] output The cropped tensor data.
+ * \param [axis] The dimensions including and trailing 'axis' are cropped. [n x c x h x w]
+ * \param [offset1] The offset to set the shift for dimension n. 
+ * \param [offset2] The offset to set the shift for dimension c. 
+ * \param [offset3] The offset to set the shift for dimension h. 
+ * \param [offset4] The offset to set the shift for dimension w.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height, vx_scalar scaleFactor, vx_scalar mode);
+
+/* \brief [Graph] Creates a Crop_And_Resize Layer Node.
  * \details Cropping and Resizing is done on the width and height dimensions of the <tt>\ref vx_tensor</tt>. Like Upsampling Layer Node, we use the term x for the width dimension and y for the height dimension.\n
  * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
  * There are two modes for the resize: NEAREST_NEIGHBOR(mode = 0, default) and BILINEAR_INTERPOLATION(mode = 1).
@@ -196,5 +214,5 @@ VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height, vx_scalar scaleFactor, vx_scalar mode);
+VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor ref, vx_tensor output, vx_scalar axis, vx_scalar offset1, vx_scalar offset2, vx_scalar offset3, vx_scalar offset4);
 #endif

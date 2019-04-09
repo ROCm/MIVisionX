@@ -24,12 +24,21 @@ THE SOFTWARE.
 #include "vxParamHelper.h"
 #include "vxEngineUtil.h"
 #include "vxEngine.h"
+#include <iostream>
+#include "unistd.h"
 
+char buf[4096];
 // program and version
 #define RUNVX_VERSION "0.9.9"
 #if _WIN32
+#include <direct.h>
+#define cwd _getcwd
+#define cd _chdir
 #define RUNVX_PROGRAM "runvx.exe"
 #else
+#include "unistd.h"
+#define cwd getcwd
+#define cd chdir
 #define RUNVX_PROGRAM "runvx"
 #endif
 
@@ -247,7 +256,40 @@ int main(int argc, char * argv[])
 					ReportError("ERROR: missing file name on command-line (see help for details)\n");
 				arg++;
 			}
-			const char * fileName = RootDirUpdated(argv[arg]);
+
+            char * fileNameToParse = argv[arg];
+            int chdir_status = 0;
+
+            //Separate the path from the GDF name
+            char *c = fileNameToParse;
+            int i = 0;
+            int j = 0;
+            while(*c != '\0'){
+                if(*c == '/'){
+                    j = 0;
+                    i++;
+                    j++;
+                }
+                else{
+                    i++;
+                    j++;
+                }
+                c++;
+            }
+            int k = i - j;
+            char *addToDir = new char[k];
+            strncpy(addToDir, fileNameToParse, k);
+            char *gdfName = new char[j];
+            int a = 0;
+            k++; //don't need to get the / before the gdf name
+            for(; k < i; k++){
+                gdfName[a] = fileNameToParse[k];
+                a++;
+            }
+            chdir_status = cd(addToDir);
+            const char * fileName = RootDirUpdated(gdfName);
+
+
 			size_t size = strlen("include") + 1 + strlen(fileName) + 1;
 			fullText = new char[size];
 			sprintf(fullText, "include %s", fileName);

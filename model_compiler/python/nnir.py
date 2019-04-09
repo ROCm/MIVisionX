@@ -74,12 +74,14 @@ class IrAttr:
             , 'dim_round_mode' : 'floor' # rounding mode for output dim calculation: floor, ceil
             , 'mode' : 0                 # attribute to differentiate layer modes.
             , 'shape' : []               # shape attribute
+            , 'offset' : []               # list of offsets
         }
         self.dict_set = []
 
     def set(self,name,value):
         if not name in self.dict_values:
             raise ValueError("Unsupported IR attribute: {}".format(name))
+
         if type(value) != type(self.dict_values[name]):
             raise ValueError("Invalid IR attribute value type: {} for {}".format(type(value).__name__, name))
         self.dict_values[name] = value
@@ -146,6 +148,7 @@ class IrNode:
             'reshape' : 1,
             'transpose' : 1,
             'copy' : 1,
+            'crop' : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -253,8 +256,10 @@ class IrGraph:
 
     def updateLocals(self):
         self.locals = []
+        count = 0
         for node in self.nodes:
             for output in node.outputs:
+                count+=1
                 if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
@@ -357,22 +362,29 @@ class IrGraph:
                     param = node.attr.get('shape')
                     icount = 1
                     ocount = 1
-                    shape = [input.shape[0]]
-                    for d in input.shape[1:]:
-                        icount = icount * d
-                    for d in param:
-                        if d > 0:
-                            ocount = ocount * d
-                    for d in param:
-                        if d < 1:
-                            d = icount // ocount
-                            ocount = ocount * d
-                        shape.append(d)
+                    out_shape = [0,0,0,0]                    
+                    for dim in range(len(input.shape)):
+                        icount *= input.shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] > 0:
+                            out_shape[dim] = param[dim]
+                            ocount *= out_shape[dim]
+                        elif param[dim] == 0:
+                            out_shape[dim] = input.shape[dim]
+                            ocount *= out_shape[dim]
+                    for dim in range(len(param)):
+                        if param[dim] == -1:
+                            out_shape[dim] = icount // ocount
+                            ocount *= out_shape[dim]
+                    for i in range(len(out_shape)):       
+                        if out_shape[i] == 0:     
+                            out_shape[i] = 1
+                    param = out_shape
                     if icount != ocount:
-                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(shape))
+                        raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, shape)
+                    local.setInfo(input.type, param)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['transpose']:
@@ -390,6 +402,13 @@ class IrGraph:
                     local.setFormat(format)
                     self.addLocal(local)
                 elif node.type in ['copy']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['crop']:
                     input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)

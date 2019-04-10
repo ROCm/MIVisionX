@@ -27,7 +27,6 @@ caffe2ir_op_type = {
     'PriorBox' : 'prior_box',
     'Flatten' : 'flatten',
     'Reshape' : 'reshape',
-    'DetectionOutput' : 'detection_output',
 }
 
 # convert caffename to ir names.
@@ -503,13 +502,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         for i in range(len(output_dims)):       
             if output_dims[i] == 0:     
                 output_dims[i] = 1
-    elif (layer_param.type == "DetectionOutput"):
-
-        output_dims[0] = 1
-        output_dims[1] = 1
-        output_dims[2] = 1
-        output_dims[3] = 7  
-    
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]
 

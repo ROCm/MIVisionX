@@ -418,8 +418,6 @@ class IrGraph:
                             out_shape.append(input.shape[i])
                         else:
                             out_shape.append(reference.shape[i])
-                    print(out_shape)
-                    exit(1)
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)

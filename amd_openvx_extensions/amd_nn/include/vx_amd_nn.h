@@ -195,7 +195,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height, vx_scalar scaleFactor, vx_scalar mode);
+VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor ref, vx_tensor output, vx_scalar axis, vx_scalar offset1, vx_scalar offset2, vx_scalar offset3, vx_scalar offset4);
 
 /* \brief [Graph] Creates a Crop_And_Resize Layer Node.
  * \details Cropping and Resizing is done on the width and height dimensions of the <tt>\ref vx_tensor</tt>. Like Upsampling Layer Node, we use the term x for the width dimension and y for the height dimension.\n
@@ -214,5 +214,5 @@ VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor 
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx_tensor ref, vx_tensor output, vx_scalar axis, vx_scalar offset1, vx_scalar offset2, vx_scalar offset3, vx_scalar offset4);
+VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height, vx_scalar scaleFactor, vx_scalar mode);
 #endif

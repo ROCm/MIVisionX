@@ -161,7 +161,6 @@ class IrNode:
             'permute' : 1,
             'prior_box' : 1,
             'flatten'  : 1,
-            'detection_output' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):

@@ -569,7 +569,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'reshape':
+            elif node.type == 'reshape' or node.type == 'flatten':
                 f.write( \
 """
     { vx_node node = vxReshapeLayer(graph, %s, %s);
@@ -577,13 +577,53 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy'or node.type == 'transpose':
+            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute':  
+                if node.type == 'copy':
+                    order = 0
+                elif node.type == 'transpose':
+                    axes = node.attr.get('axes')            
+                    if axes == [0, 2, 3, 1]:
+                        order = 1
+                    elif axes == [0, 3, 1, 2]:
+                        order = 2
+                elif node.type == 'permute':
+                    order_list = node.attr.get('order')            
+                    if order_list == [0, 2, 3, 1]:
+                        order = 1
+                    elif order_list == [0, 3, 1, 2]:
+                        order = 2
                 f.write( \
 """
+    { vx_node node = vxPermuteLayer(graph, %s, %d, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (node.inputs[0], node.outputs[0]))
+""" % (node.inputs[0], order, node.outputs[0]))
+            elif node.type == 'prior_box':
+                aspect_ratio = node.attr.get('aspect_ratio')
+                aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
+                variance = node.attr.get('variance')
+                variance_str = ','.join(str(e) for e in variance)
+                f.write( \
+"""
+    { 
+      vx_float32 min_size = %f;
+      vx_float32 max_size = %f;
+      vx_int32 flip = %d;
+      vx_int32 clip = %d;
+      vx_float32 offset = %f;
+      
+      vx_scalar s_min_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &min_size, sizeof(min_size));
+      vx_scalar s_max_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &max_size, sizeof(max_size));    
+      vx_scalar s_flip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &flip, sizeof(flip));
+      vx_scalar s_clip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &clip, sizeof(clip));
+      vx_scalar s_offset = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &offset, sizeof(offset));
+      vx_node node = vxPriorBoxLayer(graph, %s, %s, s_min_size, %s , s_flip, s_clip, s_offset, %s , s_max_size, %s );
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.attr.get('min_size'), node.attr.get('max_size'), node.attr.get('flip'), node.attr.get('clip'), \
+       node.attr.get('prior_offset'), node.inputs[0], node.inputs[1], aspect_ratio_str, node.outputs[0], variance_str))
             elif node.type == 'upsample':
                 f.write( \
 """

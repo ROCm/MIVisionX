@@ -460,7 +460,7 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, shape)
-                    local.setFormat(input.format)
+                    local.setFormat(format)
                     self.addLocal(local)
                 elif node.type in ['flatten']:
                     input = self.tensor_dict[node.inputs[0]]

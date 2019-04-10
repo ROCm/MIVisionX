@@ -16,11 +16,11 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 ## Pre-requisites
 
-* Ubuntu 16.04/18.04 or CentOS 7.5/7.6
-* [MIVisionX libraries](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX  
-**Note:** MIVisionX installs all the model compiler scripts at ```/opt/rocm/mivisionx/model_compiler/python/```
+* Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
+* [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX  
+**Note:** MIVisionX installs model compiler scripts at `/opt/rocm/mivisionx/model_compiler/python/`
 
-### ONNX
+#### ONNX
 * numpy
 * onnx
 
@@ -28,9 +28,13 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 % pip install onnx numpy
 ````
 
-### NNEF
+#### NNEF
 * numpy
 * [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser/cpp) - Build the nnef python module
+	
+````
+% pip install numpy
+````
 
 ## Model Compiler & Optimizer Usage
 
@@ -56,13 +60,12 @@ OPTIONS:
 ```
 #### NNEF
 
-If you want to create NNEF model from caffe or tensorflow model, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools/tree/master/converter/nnef_converters)
-
 To convert a NNEF model into AMD NNIR model:
 
 ```
 % python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
 ```
+**Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools/tree/master/converter/nnef_converters)
 
 ### Step 2 - Apply Optimizations
 
@@ -278,7 +281,6 @@ Supported NNEF operators are:
 - Leaky_Relu
 - Copy
 
-## License
-Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
+## Contributing to Model Compiler
 
-Use of this source code is governed by the MIT License that can be found in the LICENSE file.
+We welcome contributions to Model Compiler to extend the functionalities and add support to more layers and models. When contributing to this repository, please first discuss the changes you wish to make via issues and then submit a pull request.

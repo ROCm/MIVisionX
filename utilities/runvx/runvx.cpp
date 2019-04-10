@@ -256,50 +256,37 @@ int main(int argc, char * argv[])
 					ReportError("ERROR: missing file name on command-line (see help for details)\n");
 				arg++;
 			}
+            unsigned int lengthOfArgv = strlen(argv[arg]);
+            char * fileNameToParse = new char[lengthOfArgv];
+            std::string fileNameToParse_s;
+            std::string addToDir_s;
+            std::string gdfName_s;
+            std::string delimiter = "/";
 
-       char * fileNameToParse = argv[arg];
-       int chdir_status = 0;
+            fileNameToParse_s.assign(argv[arg]);
 
-       //Separate the path from the GDF name
-       char *c = fileNameToParse;
-       int i = 0;
-       int j = 0;
-       while(*c != '\0'){
-          if(*c == '/'){
-              j = 0;
-              i++;
-              j++;
-           }
-           else{
-              i++;
-              j++;
-           }
-           c++;
-        }
-       int k = i - j;
+            int pos = 0;
+            std::string token;
+            while((pos = fileNameToParse_s.find(delimiter)) != std::string::npos){
+                token = fileNameToParse_s.substr(0, pos);
+                addToDir_s.append(token);
+                addToDir_s.append("/");
+                fileNameToParse_s.erase(0, pos + delimiter.length());
+            }
+            gdfName_s.assign(fileNameToParse_s);
+            printf("DEBUG: addToDir_s = %s\n", addToDir_s.c_str());
+            printf("DEBUG: gdfName_s = %s\n", gdfName_s.c_str());
 
-       char *addToDir = new char[k];
-       strncpy(addToDir, fileNameToParse, k);
+            strcpy(fileNameToParse, argv[arg]);
 
-       char *gdfName = new char[j];
-       int a = 0;
-       k++; //don't need to get the / before the gdf name
-       for(int x = 0; x < j; x++){
-          gdfName[a] = fileNameToParse[k];
-          a++;
-          k++;
-       }
+            int chdir_status = 0;
 
-
-      chdir_status = cd(addToDir);
-      const char * fileName = RootDirUpdated(gdfName);
-
+            chdir_status = cd(addToDir_s.c_str());
+            const char * fileName = RootDirUpdated(gdfName_s.c_str());
 
 			size_t size = strlen("include") + 1 + strlen(fileName) + 1;
 			fullText = new char[size];
 			sprintf(fullText, "include %s", fileName);
-            delete[] addToDir;
-            delete[] gdfName;
 		}
 
 		if (fullText) {

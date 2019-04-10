@@ -29,7 +29,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 AMD OpenVX ([amd_openvx](amd_openvx#amd-openvx-amd_openvx)) is a highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 ## AMD OpenVX Extensions
-The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX modules and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl#radeon-loom-stitching-library-vx_loomsl): AMD Radeon LOOM stitching library for live 360 degree video applications
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
@@ -37,10 +37,13 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 ## Applications
-MIVisionX has a number of applications ([apps](apps#applications)) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
+MIVisionX has a number of [applications](apps#applications)) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
 
-* [Cloud Inference Application](apps/cloud_inference#cloud-inference-application)
-* [DGtest](apps/DGtest#amd-dgtest)
+* [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
+* [Digit Test](apps/DGtest#amd-dgtest): This sample application is used to recognize hand written digits.
+* [MIVisionX OpenVX Classsification](apps#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
+* [MIVisionX WinML Classification](apps#mivisionx-winml-classification): This sample application shows how to run supported ONNX models with MIVisionX RunTime on Windows.
+* [MIVisionX WinML YoloV2](apps#mivisionx-winml-yolov2): This sample application shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
 * [External Applications](apps#external-application)
 
 ## Neural Net Model Compiler & Optimizer
@@ -63,7 +66,10 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ## Prerequisites
 * CPU: SSE4.1 or above CPU, 64-bit
-* GPU: Radeon Instinct or Vega Family of Products (16GB recommended)
+* GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
+* APU: Carrizo or above [optional]
+
+**Note:** Some modules in MIVisionX can be build for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or AMD APUs.
 
 ### Windows
 * Windows 10
@@ -259,7 +265,7 @@ sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/d
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.1.96`
+* ROCm: rocm-dkms - `2.2.31`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [1.7.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.1)

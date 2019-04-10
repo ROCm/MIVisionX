@@ -481,15 +481,6 @@ class IrGraph:
                     local.setInfo(input.type, shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-                elif node.type in ['detection_output']:
-                    input = self.tensor_dict[node.inputs[0]]
-                    shape = [1, 1, 1, 7]
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo(input.type, shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
-                    
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

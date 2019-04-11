@@ -39,7 +39,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 #### NNEF
 * numpy
-* [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools/tree/master/parser/cpp) - Build the nnef python module
+* [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools) - Build the nnef python module
 	
 ````
 % pip install numpy
@@ -74,7 +74,7 @@ To convert a NNEF model into AMD NNIR model:
 ```
 % python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
 ```
-**Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools/tree/master/converter/nnef_converters)
+**Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools)
 
 ### Step 2 - Apply Optimizations
 
@@ -241,19 +241,19 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |AlexNet|&#9745;|||			
 |DenseNet||&#9745;||			
 |Emotion-Ferplus||||			
-|Googlenet|&#9745;|&#9745;||		
+|Googlenet|&#9745;|&#9745;|&#9745;|		
 |Inception-V1||&#9745;||			
 |Inception-V2||&#9745;||			
 |Inception-V3||||			
-|Inception-V4|&#9745;|||			
+|Inception-V4|&#9745;||&#9745;|			
 |MNIST|&#9745;|||			
-|ResNet-50|&#9745;|&#9745;||			
-|ResNet-101|&#9745;|||			
-|ResNet-152|&#9745;|||			
-|Squeezenet|&#9745;|||			
+|ResNet-50|&#9745;|&#9745;|&#9745;|			
+|ResNet-101|&#9745;||&#9745;|			
+|ResNet-152|&#9745;||&#9745;|			
+|Squeezenet||&#9745;||			
 |Tiny-Yolo-V2|&#9745;|||			
-|VGGNet-16|&#9745;|||			
-|VGGNet-19|&#9745;|&#9745;||			
+|VGGNet-16|&#9745;||&#9745;|			
+|VGGNet-19|&#9745;|&#9745;|&#9745;|			
 |Yolo-V3|&#9745;|||			
 |ZFNet||&#9745;||
 

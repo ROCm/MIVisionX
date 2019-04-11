@@ -234,16 +234,31 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 ...
 ````
 ## Models & Operators currently supported
-###  Models tested
-Currently supporting below models from https://github.com/onnx/models with `release 1.1` tags
- - resnet50
- - googlenet
- - inception_v2
- - inception_v1
- - vgg19
- - densenet
- - squeezenet
- - zfnet
+###  Models
+
+|Networks|Caffe|ONNX|NNEF|
+|--------|-----|----|----|
+|AlexNet|&#9745;|||			
+|DenseNet||&#9745;||			
+|Emotion-Ferplus||||			
+|Googlenet|&#9745;|&#9745;||		
+|Inception-V1||&#9745;||			
+|Inception-V2||&#9745;||			
+|Inception-V3||||			
+|Inception-V4|&#9745;|||			
+|MNIST|&#9745;|||			
+|ResNet-50|&#9745;|&#9745;||			
+|ResNet-101|&#9745;|||			
+|ResNet-152|&#9745;|||			
+|Squeezenet|&#9745;|||			
+|Tiny-Yolo-V2|&#9745;|||			
+|VGGNet-16|&#9745;|||			
+|VGGNet-19|&#9745;|&#9745;||			
+|Yolo-V3|&#9745;|||			
+|ZFNet||&#9745;||
+
+**Note:**
+* Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` tags
 
 ### Operators
 

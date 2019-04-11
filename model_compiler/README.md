@@ -237,49 +237,47 @@ Currently supporting below models from https://github.com/onnx/models with `rele
  - zfnet
 
 ### Operators
-Supported ONNX operators are:
 
-- Conv
-- Relu
-- MaxPool
-- AveragePool
-- GlobalAveragePool
-- LRN
-- BatchNormalization
-- Concat
-- Sum
-- Add
-- Sub
-- Mul
-- Softmax
-- Dropout
-- Reshape
+|Layers|Caffe|ONNX|NNEF|
+|-------|----|----|----|
+|Add||&#9745;|&#9745;|
+|AveragePool||&#9745;|&#9745;|
+|BatchNormalization|&#9745;|&#9745;|&#9745;|
+|Concat|&#9745;|&#9745;|&#9745;|
+|Conv|&#9745;|&#9745;|&#9745;|
+|ConvTranspose|&#9745;|&#9745;|&#9745;|
+|Copy|||&#9745;|
+|Crop|&#9745;|||
+|CropAndResize||||
+|Deconv|&#9745;|&#9745;|&#9745;|
+|Dropout||||
+|Eltwise|&#9745;|||
+|Flatten|&#9745;|||
+|GEMM|&#9745;|&#9745;|&#9745;|
+|GlobalAveragePool||&#9745;|&#9745;|
+|InnerProduct|&#9745;|||
+|Interp|&#9745;|||
+|LeakyRelu||&#9745;|&#9745;|
+|LRN|&#9745;|&#9745;|&#9745;|
+|Matmul|||&#9745;|
+|MaxPool||&#9745;|&#9745;|
+|MeanReduce|||&#9745;|
+|Mul||&#9745;|&#9745;|
+|MulAdd||||
+|Permute|&#9745;|||
+|PriorBox|&#9745;|||
+|Relu|&#9745;|&#9745;|&#9745;|
+|Reshape|&#9745;|&#9745;|&#9745;|
+|Slice|||&#9745;|
+|Split|&#9745;|||
+|Softmax|&#9745;|&#9745;|&#9745;|
+|SoftmaxWithLoss|&#9745;|||
+|Sub||&#9745;|&#9745;|
+|Sum||&#9745;||
+|Transpose||&#9745;|&#9745;|
+|Upsample|&#9745;|||
 
-Supported NNEF operators are:
 
-- Conv
-- Deconv
-- Relu
-- MaxPool
-- AveragePool
-- GlobalAveragePool
-- MeanReduce
-- LRN
-- BatchNormalization
-- Concat
-- Sum
-- Add
-- Sub
-- Mul
-- Matmul
-- Softmax
-- Dropout
-- Reshape
-- Slice
-- Transpose
-- Concat
-- Leaky_Relu
-- Copy
 
 ## Contributing to Model Compiler
 

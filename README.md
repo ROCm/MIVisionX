@@ -22,6 +22,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
   * [RunVX](utilities/runvx#amd-runvx)
 * [Prerequisites](#prerequisites)
 * [Build & Install MIVisionX](#build--install-mivisionx)
+* [Verify the Installation](#verify-the-installation)
 * [Docker](#docker)
 * [Release Notes](#release-notes)
 
@@ -190,7 +191,7 @@ sudo make install
   * executables will be placed in `bin` folder
   * libraries will be placed in `lib` folder
   * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
-  * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
+  * the installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
 * add the installed library path to LD_LIBRARY_PATH environment variable (default `/opt/rocm/mivisionx/lib`)
 * add the installed executable path to PATH environment variable (default `/opt/rocm/mivisionx/bin`)
 
@@ -198,6 +199,24 @@ sudo make install
 * build [annInferenceApp.pro](apps/cloud_inference/client_app/annInferenceApp.pro) using Qt Creator
 * or use [annInferenceApp.py](apps/cloud_inference/client_app/annInferenceApp.py) for simple tests
 
+## Verify the Installation
+
+### Linux
+* The installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
+* The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
+* Apps, Samples, Documents, Model Compiler and Toolkit are placed into `/opt/rocm/mivisionx`
+* Run samples to verify the installation
+  * **Canny Edge Detection**
+  
+  <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
+  
+  ````
+  export PATH=$PATH:/opt/rocm/mivisionx/bin
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+  runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+  ````
+**Note:** More samples are available [here](samples#samples)
+       
 ## Docker
 
 MIVisionX provides developers with docker images for Ubuntu 16.04, Ubuntu 18.04, CentOS 7.5, & CentOS 7.6. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.

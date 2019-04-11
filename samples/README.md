@@ -4,7 +4,20 @@ MIVisionX samples using OpenVX and OpenVX extension libraries
 
 ## GDF - Graph Description Format
 
-MIVisionX samples using runvx with GDF
+MIVisionX samples using [RunVX](../utilities/runvx#amd-runvx)
+
+**Note:** 
+* To run the samples we need to put MIVisionX executables and libraries into the system path
+
+````
+export PATH=$PATH:/opt/rocm/mivisionx/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+````
+* To get help on RunVX, use `-h` option
+
+````
+runvx -h
+````
 
 ### skintonedetect.gdf
 
@@ -13,7 +26,7 @@ MIVisionX samples using runvx with GDF
 usage:
 
 ````
-runvx skintonedetect.gdf
+runvx gdf/skintonedetect.gdf
 ````
 ### canny.gdf
 
@@ -22,7 +35,7 @@ runvx skintonedetect.gdf
 usage:
 
 ````
-runvx canny.gdf
+runvx gdf/canny.gdf
 ````
 ### skintonedetect-LIVE.gdf
 Using live camera
@@ -30,7 +43,7 @@ Using live camera
 usage:
 
 ````
-runvx -frames:live skintonedetect-LIVE.gdf
+runvx -frames:live gdf/skintonedetect-LIVE.gdf
 ````
 ### canny-LIVE.gdf
 Using live camera
@@ -38,7 +51,7 @@ Using live camera
 usage:
 
 ````
-runvx -frames:live canny-LIVE.gdf
+runvx -frames:live gdf/canny-LIVE.gdf
 ````
 ### OpenCV_orb-LIVE.gdf
 Using live camera
@@ -46,7 +59,7 @@ Using live camera
 usage:
 
 ````
-runvx -frames:live OpenCV_orb-LIVE.gdf
+runvx -frames:live gdf/OpenCV_orb-LIVE.gdf
 ````
 
 ## C / C++ Samples

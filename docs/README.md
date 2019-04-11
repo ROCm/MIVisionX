@@ -22,5 +22,6 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
   * [RunVX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/utilities/runvx/#amd-runvx)
 * [Prerequisites](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#prerequisites)
 * [Build & Install MIVisionX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#build--install-mivisionx)
+* [Verify the Installation](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#verify-the-installation)
 * [Docker](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#docker)
 * [Release Notes](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/#release-notes)

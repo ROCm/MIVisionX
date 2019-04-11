@@ -274,9 +274,6 @@ int main(int argc, char * argv[])
                 fileNameToParse_s.erase(0, pos + delimiter.length());
             }
             gdfName_s.assign(fileNameToParse_s);
-            printf("DEBUG: addToDir_s = %s\n", addToDir_s.c_str());
-            printf("DEBUG: gdfName_s = %s\n", gdfName_s.c_str());
-
             strcpy(fileNameToParse, argv[arg]);
 
             int chdir_status = 0;

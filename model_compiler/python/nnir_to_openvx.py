@@ -653,7 +653,16 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.attr.get('axis'), offset[0], offset[1], offset[2], offset[3], node.inputs[0], node.inputs[1], node.outputs[0]))
-
+            elif node.type == 'crop_and_resize':
+                f.write( \
+"""
+    { 
+      vx_node node = vxCropAndResizeLayer(graph, %s, %s, %d, %d, %d, %d, %d, %d);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \

@@ -36,6 +36,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 ````
 % pip install onnx numpy
 ````
+**Note:** ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
 
 #### NNEF
 * numpy
@@ -44,6 +45,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 ````
 % pip install numpy
 ````
+**Note:** NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
 
 ## Model Compiler & Optimizer Usage
 
@@ -74,7 +76,7 @@ To convert a NNEF model into AMD NNIR model:
 ```
 % python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
 ```
-**Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools)
+**Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools) or try NNEF models at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
 
 ### Step 2 - Apply Optimizations
 
@@ -236,6 +238,8 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 ## Models & Operators currently supported
 ###  Models
 
+<p align="center"><img width="60%" src="../docs/images/modelTrainedFrameWorks.png" /></p>
+
 |Networks|Caffe|ONNX|NNEF|
 |--------|-----|----|----|
 |AlexNet|&#9745;|||			
@@ -261,6 +265,8 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 * Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` tags
 
 ### Operators
+
+<p align="center"><img width="60%" src="../docs/images/modelCompilerFrameWorks.png" /></p>
 
 |Layers|Caffe|ONNX|NNEF|
 |-------|----|----|----|

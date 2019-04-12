@@ -236,6 +236,8 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 ## Models & Operators currently supported
 ###  Models
 
+<p align="center"><img width="60%" src="../docs/images/modelTrainedFrameWorks.png" /></p>
+
 |Networks|Caffe|ONNX|NNEF|
 |--------|-----|----|----|
 |AlexNet|&#9745;|||			
@@ -261,6 +263,8 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 * Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` tags
 
 ### Operators
+
+<p align="center"><img width="60%" src="../docs/images/modelCompilerFrameWorks.png" /></p>
 
 |Layers|Caffe|ONNX|NNEF|
 |-------|----|----|----|

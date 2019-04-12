@@ -384,6 +384,8 @@ class IrGraph:
                 elif node.type in ['reshape']:
                     input = self.tensor_dict[node.inputs[0]]
                     param = node.attr.get('shape')
+                    if not param:
+                        param = input.shape
                     icount = 1
                     ocount = 1
                     out_shape = [0,0,0,0]                    
@@ -468,8 +470,12 @@ class IrGraph:
                 elif node.type in ['flatten']:
                     input = self.tensor_dict[node.inputs[0]]
                     axis = node.attr.get("axis")
-                    if axis == 1:
+                    if axis == 0:
+                        shape = [1, input.shape[0]*input.shape[1]*input.shape[2]*input.shape[3], 1, 1]
+                    elif axis == 1:
                         shape = [input.shape[0], input.shape[1]*input.shape[2]*input.shape[3], 1, 1]
+                    else:
+                        raise ValueError("Flatten: unsupoorted flatten: " + str(axis))
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, shape)

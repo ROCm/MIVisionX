@@ -63,7 +63,8 @@ onnx2ir_op_type = {
     'GlobalAveragePool'  : 'global_avg_pool',
     'Softmax'            : 'softmax',
     'Reshape'            : 'reshape',
-    'Transpose'          : 'transpose'
+    'Transpose'          : 'transpose',
+    'Flatten'            : 'flatten'
 }
 
 onnx2ir_data_type = [

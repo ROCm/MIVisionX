@@ -811,9 +811,6 @@ def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
 
 # convert caffe representation to ir representation.
 def caffe2ir(net_parameter, input_dims, outputFolder, verbose):
-    #if (len(net_parameter.layer) == 0):
-    #    print ("ERROR: unsupported caffemodel, kindly upgrade your caffemodel.")
-    #    sys.exit(1)
     graph = caffe_graph_to_ir_graph(net_parameter, input_dims, verbose)
     graph.toFile(outputFolder)
     print ("OK: graph successfully formed.")

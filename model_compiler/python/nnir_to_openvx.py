@@ -1088,7 +1088,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                         }
                     } else
                     {
-                        short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 2);
+                        short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);
                         short * dstG = dstR + (stride[2] >> 2);
                         short * dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
@@ -1119,7 +1119,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 return -1;
                             }
                         } else {
-                            short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 2);
+                            short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 1);
                             vx_size n = fread(ptrY, sizeof(short), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(short) << "], but got less in " << fileName << std::endl;

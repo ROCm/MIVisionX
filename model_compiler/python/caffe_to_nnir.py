@@ -140,7 +140,10 @@ def extractBinary(layer_parameter, graph, verbose):
 # extracting input from caffe network and converting into ir input.
 def extractInput(net_parameter, graph, input_dims):
     inputList = {}
-    layers = net_parameter.layer
+    if (len(net_parameter.layer) == 0):
+        layers = net_parameter.layers
+    else:
+        layers = net_parameter.layer
     first_layer_param = layers[0]
     first_layer_param_type = first_layer_param.type
     input_name = ""
@@ -193,7 +196,10 @@ def extractOutput(graph, inputOutputLayers, output_list, verbose):
 
 # extract layer attribute information from caffe layers.
 def extractCaffeAttrInfo(layer_param):
-    layer_type = layer_param.type
+    if(type(layer_param) == caffe_pb2.V1LayerParameter):
+        layer_type = convertV1LayerTypeToString(layer_param)
+    else:
+        layer_type = layer_param.type
     attribute_map = {}
     if (layer_type == "Convolution" or layer_type == "Deconvolution"):
         conv = layer_param.convolution_param
@@ -297,7 +303,12 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
     dimList = {}
     output_dims = [0, 0, 0, 0]
     inputs = input_map.keys()
-    if(layer_param.type == "Convolution"):
+    if(type(layer_param) == caffe_pb2.V1LayerParameter):
+        layer_type = convertV1LayerTypeToString(layer_param)
+    else:
+        layer_type = layer_param.type
+    
+    if(layer_type == "Convolution"):
         strides = attribute_map["strides"]
         pads = attribute_map["pads"]
         dilations = attribute_map["dilations"]
@@ -313,7 +324,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             bias_dims = [weight_dims[0]]
             dimList["bias"] = bias_dims
 
-    elif (layer_param.type == "Deconvolution"):
+    elif (layer_type == "Deconvolution"):
         strides = attribute_map["strides"]
         pads = attribute_map["pads"]
         dilations = attribute_map["dilations"]
@@ -330,7 +341,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             bias_dims = [weight_dims[0]]
             dimList["bias"] = bias_dims
 
-    elif (layer_param.type == "Pooling"):
+    elif (layer_type == "Pooling"):
         strides = attribute_map["strides"]
         pads = attribute_map["pads"]
         kernel_shape = attribute_map["kernel_shape"]
@@ -354,7 +365,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[1] = c
         output_dims[0] = n
 
-    elif (layer_param.type == "InnerProduct"):
+    elif (layer_type == "InnerProduct"):
         n,c,h,w = input_map[str(inputs[0])]
         output_dims[3] = 1
         output_dims[2] = 1
@@ -365,7 +376,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         if (layer_param.inner_product_param.bias_term):
             dimList["bias"] = [weight_dims[0]]
 
-    elif (layer_param.type == "Concat"):
+    elif (layer_type == "Concat"):
         inputs = input_map.keys()
         axis = attribute_map["axis"]
         if axis == 1:
@@ -385,7 +396,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             output_dims[1] = c
             output_dims[3] = w
 
-    elif (layer_param.type == "Interp"):
+    elif (layer_type == "Interp"):
         inputs = input_map.keys()
         zoom_factor = attribute_map["zoom_factor"]
         for i in range(len(inputs)):
@@ -397,7 +408,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[3] = w*zoom_factor
         #print('INFO: Found Layertype Interp with zoom '+ str(zoom_factor))
 
-    elif (layer_param.type == "BatchNorm" or layer_param.type == "Scale"):
+    elif (layer_type == "BatchNorm" or layer_param.type == "Scale"):
         output_dims[0], output_dims[1], output_dims[2], output_dims[3] = input_map[str(inputs[0])]
         if (len(layer_param.blobs) > 0):
             weight_dims = [output_dims[1]]
@@ -406,7 +417,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             bias_dims = [output_dims[1]]
             dimList["bias"] = bias_dims
     
-    elif (layer_param.type == "Crop"):
+    elif (layer_type == "Crop"):
         inputs = input_map.keys()
         axis = attribute_map["axis"]
         new_axis = 3 - axis
@@ -417,7 +428,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             else:
                 output_dims[i] = input_map[inputs[1]][i]
 
-    elif (layer_param.type == "Permute"):
+    elif (layer_type == "Permute"):
         permute = layer_param.permute_param
         order = permute.order        
         order = [int(i) for i in order]
@@ -434,7 +445,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             output_dims[2] = h
             output_dims[3] = w
 
-    elif (layer_param.type == "PriorBox"):
+    elif (layer_type == "PriorBox"):
         n,c,h,w = input_map[str(inputs[0])]
         prior_box = layer_param.prior_box_param
         min_size = prior_box.min_size[0]
@@ -466,7 +477,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[2] = h * w * dim * 4 
         output_dims[3] = 1
 
-    elif (layer_param.type == "Flatten"):
+    elif (layer_type == "Flatten"):
         flatten = layer_param.flatten_param 
         axis = flatten.axis
         attribute_map["axis"] = axis
@@ -475,7 +486,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[1] = c*h*w
         output_dims[2] = 1
         output_dims[3] = 1
-    elif (layer_param.type == "Reshape"):
+    elif (layer_type == "Reshape"):
         shape = attribute_map["shape"]
         input_shape = input_map[str(inputs[0])]
         input_shape = [int(z) for z in input_shape]
@@ -502,12 +513,57 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         for i in range(len(output_dims)):       
             if output_dims[i] == 0:     
                 output_dims[i] = 1
+        
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]
 
     dimList["output"] = output_dims
 
     return dimList
+
+
+def convertV1LayerTypeToString(layer_param):
+    EnumDescriptor = caffe_pb2.V1LayerParameter.LayerType.items()
+    for item in EnumDescriptor:
+        if layer_param.type == item[1]:
+            layer_type_V1 = item[0]
+    if layer_type_V1 == "CONCAT":
+        layer_type = "Concat"
+    elif layer_type_V1 == "CONVOLUTION":
+        layer_type = "Convolution"
+    elif layer_type_V1 == "DATA":
+        layer_type = "Data"
+    elif layer_type_V1 == "DECONVOLUTION":
+        layer_type = "Deconvolution"
+    elif layer_type_V1 == "DROPOUT":
+        layer_type = "Dropout"   
+    elif layer_type_V1 == "ELTWISE":
+        layer_type = "Eltwise"
+    elif layer_type_V1 == "FLATTEN":
+        layer_type = "Flatten"
+    elif layer_type_V1 == "IMAGE_DATA":
+        layer_type = "ImageData"
+    elif layer_type_V1 == "INNER_PRODUCT":
+        layer_type = "InnerProduct" 
+    elif layer_type_V1 == "LRN":
+        layer_type = "LRN"
+    elif layer_type_V1 == "POOLING":
+        layer_type = "Pooling" 
+    elif layer_type_V1 == "RELU":
+        layer_type = "ReLU" 
+    elif layer_type_V1 == "SOFTMAX":
+        layer_type = "Softmax"    
+    elif layer_type_V1 == "SOFTMAX_LOSS":
+        layer_type = "SoftmaxWithLoss"
+    elif layer_type_V1 == "SPLIT":
+        layer_type = "Split"
+    elif layer_type_V1 == "SLICE":
+        layer_type = "Slice"
+    elif layer_type_V1 == "SCALE":
+        layer_type = "Scale"
+    else:
+        layer_type = "Unknown V1 Layer Type"
+    return layer_type
 
 # extract caffe node information into ir nodes.
 def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
@@ -520,15 +576,21 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
     count = 0
     _output_name = {}
 
-    layers = net_parameter.layer
+    if (len(net_parameter.layer) == 0):
+        layers = net_parameter.layers
+    else:
+        layers = net_parameter.layer
 
     for i in range(len(layers)):
         layer_param = layers[i]
         layer_name = caffe_name_to_ir_name(str(layer_param.name))
-        layer_type = str(layer_param.type)
+        if(type(layer_param) == caffe_pb2.V1LayerParameter):
+            layer_type = convertV1LayerTypeToString(layer_param)
+        else:
+            layer_type = str(layer_param.type)
+    
         inputs = layer_param.bottom
         outputs = layer_param.top
-
         # ignoring the input/data layer as input is already obtained in previous step.
         if (layer_type == "Data" or layer_type == "ImageData" or layer_type == "Input"):
             continue
@@ -749,9 +811,6 @@ def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
 
 # convert caffe representation to ir representation.
 def caffe2ir(net_parameter, input_dims, outputFolder, verbose):
-    if (len(net_parameter.layer) == 0):
-        print ("ERROR: unsupported caffemodel, kindly upgrade your caffemodel.")
-        sys.exit(1)
     graph = caffe_graph_to_ir_graph(net_parameter, input_dims, verbose)
     graph.toFile(outputFolder)
     print ("OK: graph successfully formed.")

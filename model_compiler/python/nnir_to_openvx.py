@@ -27,7 +27,8 @@ tensor_type_nnir2openvx = {
     'F016' : 'VX_TYPE_FLOAT16',
     'U016' : 'VX_TYPE_UINT16',
     'I016' : 'VX_TYPE_INT16',
-    'U008' : 'VX_TYPE_UINT8'
+    'U008' : 'VX_TYPE_UINT8',
+    'I064' : 'VX_TYPE_INT64',
 }
 
 def generateLicenseForCPP(f):
@@ -243,6 +244,9 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }
     else if(data_type == VX_TYPE_UINT16 || data_type == VX_TYPE_INT16 || data_type == VX_TYPE_FLOAT16) {
         itemsize = sizeof(vx_uint16);
+    }
+    else if(data_type == VX_TYPE_INT64) {
+        itemsize = sizeof(vx_int64);
     }
     vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
 
@@ -653,16 +657,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.attr.get('axis'), offset[0], offset[1], offset[2], offset[3], node.inputs[0], node.inputs[1], node.outputs[0]))
-            elif node.type == 'crop_and_resize':
-                f.write( \
-"""
-    { 
-      vx_node node = vxCropAndResizeLayer(graph, %s, %s, %d, %d, %d, %d, %d, %d);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }    
-""" 
-    % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
+
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \
@@ -1233,7 +1228,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                         }
                     } else
                     {
-                        short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);
+                        short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 2);
                         short * dstG = dstR + (stride[2] >> 2);
                         short * dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
@@ -1264,7 +1259,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 return -1;
                             }
                         } else {
-                            short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 1);
+                            short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 2);
                             vx_size n = fread(ptrY, sizeof(short), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(short) << "], but got less in " << fileName << std::endl;

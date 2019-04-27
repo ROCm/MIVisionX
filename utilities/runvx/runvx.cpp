@@ -24,12 +24,21 @@ THE SOFTWARE.
 #include "vxParamHelper.h"
 #include "vxEngineUtil.h"
 #include "vxEngine.h"
+#include <iostream>
+#include "unistd.h"
 
+char buf[4096];
 // program and version
 #define RUNVX_VERSION "0.9.9"
 #if _WIN32
+#include <direct.h>
+#define cwd _getcwd
+#define cd _chdir
 #define RUNVX_PROGRAM "runvx.exe"
 #else
+#include "unistd.h"
+#define cwd getcwd
+#define cd chdir
 #define RUNVX_PROGRAM "runvx"
 #endif
 
@@ -247,7 +256,31 @@ int main(int argc, char * argv[])
 					ReportError("ERROR: missing file name on command-line (see help for details)\n");
 				arg++;
 			}
-			const char * fileName = RootDirUpdated(argv[arg]);
+            unsigned int lengthOfArgv = strlen(argv[arg]);
+            char * fileNameToParse = new char[lengthOfArgv];
+            std::string fileNameToParse_s;
+            std::string addToDir_s;
+            std::string gdfName_s;
+            std::string delimiter = "/";
+
+            fileNameToParse_s.assign(argv[arg]);
+
+            int pos = 0;
+            std::string token;
+            while((pos = fileNameToParse_s.find(delimiter)) != std::string::npos){
+                token = fileNameToParse_s.substr(0, pos);
+                addToDir_s.append(token);
+                addToDir_s.append("/");
+                fileNameToParse_s.erase(0, pos + delimiter.length());
+            }
+            gdfName_s.assign(fileNameToParse_s);
+            strcpy(fileNameToParse, argv[arg]);
+
+            int chdir_status = 0;
+
+            chdir_status = cd(addToDir_s.c_str());
+            const char * fileName = RootDirUpdated(gdfName_s.c_str());
+
 			size_t size = strlen("include") + 1 + strlen(fileName) + 1;
 			fullText = new char[size];
 			sprintf(fullText, "include %s", fileName);

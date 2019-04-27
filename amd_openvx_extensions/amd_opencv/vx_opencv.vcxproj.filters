@@ -1,242 +1,212 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+      <UniqueIdentifier>{35A8B371-9706-3F50-8E83-CAF0D2A23BF2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Header Files\VX">
-      <UniqueIdentifier>{b1b82705-135d-43d0-b61a-4d8e24837075}</UniqueIdentifier>
+      <UniqueIdentifier>{35A8B371-9706-3F50-8E83-CAF0D2A23BF2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OpenCV_Boxfilter.cpp">
+    <ClCompile Include="source\internal_dataTranslator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Medianblur.cpp">
+    <ClCompile Include="source\internal_publishKernels.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_data_translator.cpp">
+    <ClCompile Include="source\internal_vxNodes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="publishkernels.cpp">
+    <ClCompile Include="source\OpenCV_absDiff.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Gaussianblur.cpp">
+    <ClCompile Include="source\OpenCV_adaptiveThreshold.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Blur.cpp">
+    <ClCompile Include="source\OpenCV_add.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_FAST_feature_detector.cpp">
+    <ClCompile Include="source\OpenCV_addWeighted.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_BRISK_detector.cpp">
+    <ClCompile Include="source\OpenCV_bilateralFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Good_Features_to_Track_detector.cpp">
+    <ClCompile Include="source\OpenCV_bitwiseAnd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_ORB_detector.cpp">
+    <ClCompile Include="source\OpenCV_bitwiseNot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_simple_blob_detector.cpp">
+    <ClCompile Include="source\OpenCV_bitwiseOr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Star_feature_detector.cpp">
+    <ClCompile Include="source\OpenCV_bitwiseXor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_MSER_feature_detector.cpp">
+    <ClCompile Include="source\OpenCV_blur.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Sobel.cpp">
+    <ClCompile Include="source\OpenCV_boxFilter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_AddWeighted.cpp">
+    <ClCompile Include="source\OpenCV_briskCompute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_convertScaleAbs.cpp">
+    <ClCompile Include="source\OpenCV_briskDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_SURF_Detect.cpp">
+    <ClCompile Include="source\OpenCV_buildOpticalFlowPyramid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_SIFT_Detect.cpp">
+    <ClCompile Include="source\OpenCV_buildPyramid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Canny.cpp">
+    <ClCompile Include="source\OpenCV_canny.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_bilateralFilter.cpp">
+    <ClCompile Include="source\OpenCV_compare.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Laplacian.cpp">
+    <ClCompile Include="source\OpenCV_convertScaleAbs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_morphologyEx.cpp">
+    <ClCompile Include="source\OpenCV_cornerHarris.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_Scharr.cpp">
+    <ClCompile Include="source\OpenCV_cornerMinEigenVal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_flip.cpp">
+    <ClCompile Include="source\OpenCV_countNonZero.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_cornerHarris.cpp">
+    <ClCompile Include="source\OpenCV_cvtColor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_transpose.cpp">
+    <ClCompile Include="source\OpenCV_dilate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_absdiff.cpp">
+    <ClCompile Include="source\OpenCV_distanceTransform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_add.cpp">
+    <ClCompile Include="source\OpenCV_divide.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_bitwise_and.cpp">
+    <ClCompile Include="source\OpenCV_erode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_bitwise_not.cpp">
+    <ClCompile Include="source\OpenCV_fastFeatureDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_bitwise_or.cpp">
+    <ClCompile Include="source\OpenCV_fastNlMeansDenoising.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_bitwise_xor.cpp">
+    <ClCompile Include="source\OpenCV_fastNlMeansDenoisingColored.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_SIFT_Compute.cpp">
+    <ClCompile Include="source\OpenCV_filter2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_SURF_Compute.cpp">
+    <ClCompile Include="source\OpenCV_flip.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_brisk_compute.cpp">
+    <ClCompile Include="source\OpenCV_gaussianBlur.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_orb_compute.cpp">
+    <ClCompile Include="source\OpenCV_goodFeaturesToTrackdetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_subtract.cpp">
+    <ClCompile Include="source\OpenCV_integral.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_compare.cpp">
+    <ClCompile Include="source\OpenCV_laplacian.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_cornerMinEigenVal.cpp">
+    <ClCompile Include="source\OpenCV_medianBlur.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_VX_Nodes.cpp">
+    <ClCompile Include="source\OpenCV_morphologyEx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_multiply.cpp">
+    <ClCompile Include="source\OpenCV_mserFeatureDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_divide.cpp">
+    <ClCompile Include="source\OpenCV_multiply.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_adaptiveThreshold.cpp">
+    <ClCompile Include="source\OpenCV_norm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_distanceTransform.cpp">
+    <ClCompile Include="source\OpenCV_orbCompute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_cvtColor.cpp">
+    <ClCompile Include="source\OpenCV_orbDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_threshold.cpp">
+    <ClCompile Include="source\OpenCV_pyrDown.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_fastNlMeansDenoising.cpp">
+    <ClCompile Include="source\OpenCV_pyrUp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_fastNlMeansDenoisingColored.cpp">
+    <ClCompile Include="source\OpenCV_resize.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_pyrup.cpp">
+    <ClCompile Include="source\OpenCV_scharr.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_pyrdown.cpp">
+    <ClCompile Include="source\OpenCV_sepFilter2D.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_filter2D.cpp">
+    <ClCompile Include="source\OpenCV_siftCompute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_sepFilter2D.cpp">
+    <ClCompile Include="source\OpenCV_siftDetect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_dilate.cpp">
+    <ClCompile Include="source\OpenCV_simpleBlobDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_erode.cpp">
+    <ClCompile Include="source\OpenCV_sobel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_warpAffine.cpp">
+    <ClCompile Include="source\OpenCV_starFeatureDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_warpPerspective.cpp">
+    <ClCompile Include="source\OpenCV_subtract.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_resize.cpp">
+    <ClCompile Include="source\OpenCV_surfCompute.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_buildPyramid.cpp">
+    <ClCompile Include="source\OpenCV_surfDetect.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_buildOpticalFlowPyramid.cpp">
+    <ClCompile Include="source\OpenCV_threshold.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_integral.cpp">
+    <ClCompile Include="source\OpenCV_transpose.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_countNonZero.cpp">
+    <ClCompile Include="source\OpenCV_warpAffine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenCV_norm.cpp">
+    <ClCompile Include="source\OpenCV_warpPerspective.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="publishkernels.h">
+    <ClInclude Include="include\internal_opencvTunnel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\VX\vx.h">
-      <Filter>Header Files\VX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\VX\vx_api.h">
-      <Filter>Header Files\VX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\VX\vx_kernels.h">
-      <Filter>Header Files\VX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\VX\vx_nodes.h">
-      <Filter>Header Files\VX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\VX\vx_types.h">
-      <Filter>Header Files\VX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\VX\vx_vendors.h">
-      <Filter>Header Files\VX</Filter>
-    </ClInclude>
-    <ClInclude Include="include\VX\vxu.h">
-      <Filter>Header Files\VX</Filter>
-    </ClInclude>
-    <ClInclude Include="OpenCV_Tunnel.h">
+    <ClInclude Include="include\internal_publishKernels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OpenCV_VX_Functions.h">
+    <ClInclude Include="include\vx_ext_opencv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="vx_opencv.h">
+    <ClInclude Include="include\vx_opencv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

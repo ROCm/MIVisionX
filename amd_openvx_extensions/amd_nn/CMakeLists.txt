@@ -41,7 +41,7 @@ endif()
 list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)
 
 if(Protobuf_FOUND)
-	message("Found Protobuf -- installing inference generator.")
+	message("-- Found Protobuf -- installing inference generator.")
 	add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
 endif()
 
@@ -51,7 +51,7 @@ include_directories(
     include
 	../../utilities/inference_generator
     )
-
+include_directories(${OpenCL_INCLUDE_DIRS})
 list(APPEND SOURCES
     src/kernels.cpp
     src/activation_layer.cpp
@@ -76,6 +76,10 @@ list(APPEND SOURCES
     src/upsample_nearest_layer.cpp
     src/tensor_table_lookup.cpp
     src/reshape_layer.cpp
+    src/permute_layer.cpp
+    src/prior_box_layer.cpp
+    src/crop_layer.cpp
+    src/crop_and_resize_layer.cpp
     )
 
 add_library(vx_nn SHARED ${SOURCES})
@@ -85,6 +89,7 @@ install (TARGETS vx_nn DESTINATION lib)
 install (FILES include/vx_amd_nn.h DESTINATION include)
 install (DIRECTORY ../../model_compiler DESTINATION .)
 install (DIRECTORY ../../toolkit DESTINATION .)
+install (DIRECTORY ../../apps DESTINATION .)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

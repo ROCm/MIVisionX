@@ -4,6 +4,15 @@
 
 Neural Net Model Compiler & Optimizer converts pre-trained neural network models to MIVisionX runtime code for optimized inference.
 
+* [MIVisionX RunTime](#mivisionx-runtime)
+* [Pre-requisites](#pre-requisites)
+* [Model Compiler & Optimizer Usage](#model-compiler--optimizer-usage)
+* [Sample workflow for Model Compiler](#sample-workflow-for-model-compiler)
+* [Examples for OpenVX C code generation](#examples-for-openvx-c-code-generation)
+* [Models & Operators currently supported](#models--operators-currently-supported)
+* [Contributing to Model Compiler](#contributing-to-model-compiler)
+
+
 Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/nnef), & [Caffe](http://caffe.berkeleyvision.org/) formats are supported by the model compiler & optimizer. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR (AMD's internal open format), the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted AMD hardware.
 
 <p align="center"><img width="100%" src="../docs/images/frameworks.png" /></p>
@@ -15,28 +24,60 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 <p align="center"><img width="100%" src="../docs/images/runtime.png" /></p>
 
 ## Pre-requisites
-* MIVisionX libraries
+
+* Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
+* [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX  
+**Note:** MIVisionX installs model compiler scripts at `/opt/rocm/mivisionx/model_compiler/python/`
+
+#### ONNX
 * numpy
 * onnx
+
 ````
 % pip install onnx numpy
 ````
+**Note:** ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
+
+#### NNEF
+* numpy
+* [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools) - Build the nnef python module
+	
+````
+% pip install numpy
+````
+**Note:** NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
 
 ## Model Compiler & Optimizer Usage
 
 ### Step 1 - Convert Pre-trained model to AMD NNIR
 
-To convert an ONNX model into AMD NNIR model:
+#### Caffe
 
-```
-% python onnx_to_nnir.py <model.onnx> <nnirModelFolder>
-```
-
-To convert a caffemodel into AMD NNIR model:
+To convert a pre-trained caffemodel into AMD NNIR model:
 
 ```
 % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
 ```
+
+#### ONNX
+
+To convert an ONNX model into AMD NNIR model:
+
+```
+% python onnx_to_nnir.py <model.onnx> <nnirModelFolder> [OPTIONS]
+
+OPTIONS:
+	--input_dims n,c,h,w
+```
+#### NNEF
+
+To convert a NNEF model into AMD NNIR model:
+
+```
+% python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
+```
+**Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools) or try NNEF models at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
+
 ### Step 2 - Apply Optimizations
 
 To update batch size in AMD NNIR model:
@@ -47,6 +88,11 @@ To update batch size in AMD NNIR model:
 To fuse operations in AMD NNIR model (like batch normalization into convolution):
 ````
 % python nnir_update.py --fuse-ops <1> <nnirModelFolderN> <nnirModelFolderFused>
+````
+
+To quantize the model to float 16
+````
+% python nnir_update.py --convert-fp16 <1> <nnirModelFolderN> <nnirModelFolderFused>
 ````
 
 To workaround groups using slice and concat operations in AMD NNIR model:
@@ -78,7 +124,7 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     R1 G1 B1 A1
     ...
 ````
-## Sample workflow of Model Compiler
+## Sample workflow for Model Compiler
 
 ### Trained Caffe Model conversion to AMD NNIR to OpenVX Graph
 
@@ -102,7 +148,7 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
    ````
 5. The shared C library (libannmodule.so) can be used in any customer application
 
-## Here are few examples of OpenVX C code generation
+## Examples for OpenVX C code generation
 
 Generate OpenVX and test code that can be used dump and compare raw tensor data:
 ````
@@ -190,35 +236,79 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 ...
 ````
 ## Models & Operators currently supported
-###  Models tested
-Currently supporting below models from https://github.com/onnx/models with `release 1.1` tags
- - resnet50
- - googlenet
- - inception_v2
- - vgg19
- - densenet
- - squeezenet
- - zfnet
+###  Models
+
+<p align="center"><img width="60%" src="../docs/images/modelTrainedFrameWorks.png" /></p>
+
+|Networks|Caffe|ONNX|NNEF|
+|--------|-----|----|----|
+|AlexNet|&#9745;|||			
+|DenseNet||&#9745;||			
+|Emotion-Ferplus||||			
+|Googlenet|&#9745;|&#9745;|&#9745;|		
+|Inception-V1||&#9745;||			
+|Inception-V2||&#9745;||			
+|Inception-V3||||			
+|Inception-V4|&#9745;||&#9745;|			
+|MNIST|&#9745;|||			
+|ResNet-50|&#9745;|&#9745;|&#9745;|			
+|ResNet-101|&#9745;||&#9745;|			
+|ResNet-152|&#9745;||&#9745;|			
+|Squeezenet||&#9745;||			
+|Tiny-Yolo-V2|&#9745;|||			
+|VGGNet-16|&#9745;||&#9745;|			
+|VGGNet-19|&#9745;|&#9745;|&#9745;|			
+|Yolo-V3|&#9745;|||			
+|ZFNet||&#9745;||
+
+**Note:**
+* Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` tags
 
 ### Operators
-Supported ONNX operators are:
 
-- Conv
-- Relu
-- MaxPool
-- AveragePool
-- GlobalAveragePool
-- LRN
-- BatchNormalization
-- Concat
-- Sum
-- Add
-- Sub
-- Mul
-- Softmax
-- Dropout
+<p align="center"><img width="60%" src="../docs/images/modelCompilerFrameWorks.png" /></p>
 
-## License
-Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
+|Layers|Caffe|ONNX|NNEF|
+|-------|----|----|----|
+|Add||&#9745;|&#9745;|
+|AveragePool||&#9745;|&#9745;|
+|BatchNormalization|&#9745;|&#9745;|&#9745;|
+|Concat|&#9745;|&#9745;|&#9745;|
+|Conv|&#9745;|&#9745;|&#9745;|
+|ConvTranspose|&#9745;|&#9745;|&#9745;|
+|Copy|||&#9745;|
+|Crop|&#9745;|||
+|CropAndResize||||
+|Deconv|&#9745;|&#9745;|&#9745;|
+|Dropout||||
+|Eltwise|&#9745;|||
+|Flatten|&#9745;|||
+|GEMM|&#9745;|&#9745;|&#9745;|
+|GlobalAveragePool||&#9745;|&#9745;|
+|InnerProduct|&#9745;|||
+|Interp|&#9745;|||
+|LeakyRelu||&#9745;|&#9745;|
+|LRN|&#9745;|&#9745;|&#9745;|
+|Matmul|||&#9745;|
+|MaxPool||&#9745;|&#9745;|
+|MeanReduce|||&#9745;|
+|Mul||&#9745;|&#9745;|
+|MulAdd||||
+|Permute|&#9745;|||
+|PriorBox|&#9745;|||
+|Relu|&#9745;|&#9745;|&#9745;|
+|Reshape|&#9745;|&#9745;|&#9745;|
+|Slice|||&#9745;|
+|Split|&#9745;|||
+|Softmax|&#9745;|&#9745;|&#9745;|
+|SoftmaxWithLoss|&#9745;|||
+|Sub||&#9745;|&#9745;|
+|Sum||&#9745;||
+|Transpose||&#9745;|&#9745;|
+|Upsample|&#9745;|||
 
-Use of this source code is governed by the MIT License that can be found in the LICENSE file.
+
+
+## Contributing to Model Compiler
+
+We welcome contributions to Model Compiler to extend the functionalities and add support to more layers and models. When contributing to this repository, please first discuss the changes you wish to make via issues and then submit a pull request.

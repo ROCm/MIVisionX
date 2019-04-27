@@ -20,11 +20,14 @@
 
 cmake_minimum_required (VERSION 2.8)
 project (MIVisionX)
+set(VERSION "1.2.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_INSTALL_PREFIX /opt/rocm/mivisionx)
+
+message("-- MIVisionX Version - ${VERSION}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
@@ -34,7 +37,6 @@ add_subdirectory(utilities)
 install(DIRECTORY docs DESTINATION .)
 
 # set package information
-set(VERSION "1.0.0")
 set(CPACK_PACKAGE_VERSION       ${VERSION})
 set(CPACK_PACKAGE_NAME          "mivisionx")
 set(CPACK_PACKAGE_RELEASE       1)
@@ -55,12 +57,12 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
 
 # generate .deb or .rpm package
 if(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
-    message("Ubuntu detected, .deb package will be created")
+    message("-- Ubuntu detected -- .deb package will be created")
     set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "DEB")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl, protobuf-compiler, libopencv-dev, python-pip")
 else()
-    message("CentOS detected, .rpm package will be created")
+    message("-- CentOS detected -- .rpm package will be created")
     set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "RPM")
     set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl, protobuf, opencv, python-pip")

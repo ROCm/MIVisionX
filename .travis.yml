@@ -21,8 +21,8 @@ install:
   - sudo apt install rocm-dkms
 
 before_script:
-  - docker pull kiritigowda/mivisionx-ubuntu-16.04
-  - docker run -it -d --name mivisionx --network host kiritigowda/mivisionx-ubuntu-16.04 bash
+  - docker pull mivisionx/ubuntu-16.04
+  - docker run -it -d --name mivisionx --network host mivisionx/ubuntu-16.04 bash
   - docker cp ../MIVisionX mivisionx:/MIVisionX
 
 script:

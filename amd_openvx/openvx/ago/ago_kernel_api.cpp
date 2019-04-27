@@ -19013,11 +19013,11 @@ int agoKernel_Copy_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
 		size_t num_work_items = node->paramList[0]->size / 4;
 		char code[1024];
 		sprintf(code,
-			"__kernel __attribute__((reqd_work_group_size(%ld, 1, 1)))\n"
+			"__kernel __attribute__((reqd_work_group_size(%zd, 1, 1)))\n"
 			"void %s(__global char * dst_buf, uint dst_offset, uint4 dst_stride, __global char * src_buf, uint src_offset, uint4 src_stride)\n"
 			"{\n"
 			"    uint id = get_global_id(0);\n"
-			"    if(id < %ld) ((__global float *)(dst_buf + dst_offset))[id] =  ((__global float *)(src_buf + src_offset))[id];\n"
+			"    if(id < %zd) ((__global float *)(dst_buf + dst_offset))[id] =  ((__global float *)(src_buf + src_offset))[id];\n"
 			"}\n", work_group_size, NODE_OPENCL_KERNEL_NAME, num_work_items);
 		node->opencl_code = code;
 		// use completely separate kernel

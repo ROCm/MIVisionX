@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
@@ -14,18 +14,19 @@
     <ProjectGuid>{E14F83E9-2295-466C-9647-7BD0D03ECE4B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>runvx</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -55,15 +56,15 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\openvx\include;$(AMDAPPSDKROOT)\include;$(OpenCV_DIR)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\amd_openvx\openvx\include;$(OCL_ROOT)\include;$(OpenCV_DIR)\include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OpenVX.lib;IlmImfd.lib;ippicvmt.lib;zlibd.lib;libwebpd.lib;libjpegd.lib;libtiffd.lib;libpngd.lib;libjasperd.lib;vfw32.lib;opencv_imgcodecs300d.lib;opencv_hal300d.lib;opencv_core300d.lib;opencv_highgui300d.lib;opencv_imgproc300d.lib;opencv_videoio300d.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc12\staticlib;$(AMDAPPSDKROOT)lib\x86_64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenVX.lib;opencv_world340d.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc14\lib;$(OCL_ROOT)\lib\x86_64;%(AdditionalLibraryDirectories);..\$(Platform)\$(Configuration)\;..\..\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -76,7 +77,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\openvx\include;$(AMDAPPSDKROOT)\include;$(OpenCV_DIR)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\amd_openvx\openvx\include;$(OCL_ROOT)\include;$(OpenCV_DIR)\include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -85,8 +86,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>OpenVX.lib;IlmImf.lib;ippicvmt.lib;zlib.lib;libwebp.lib;libjpeg.lib;libtiff.lib;libpng.lib;libjasper.lib;vfw32.lib;opencv_imgcodecs300.lib;opencv_hal300.lib;opencv_core300.lib;opencv_highgui300.lib;opencv_imgproc300.lib;opencv_videoio300.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc12\staticlib;$(AMDAPPSDKROOT)lib\x86_64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenVX.lib;opencv_world340.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc14\lib;$(OCL_ROOT)\lib\x86_64;%(AdditionalLibraryDirectories);..\$(Platform)\$(Configuration)\;..\..\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

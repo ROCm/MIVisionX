@@ -76,7 +76,6 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                 if len(padding) == 8:
                     padding = padding[4:]    
                 elif len(padding) == 0:
-                    print('hi')
                     input_tensor = nnef_tensor[nnef_operation.inputs['input']]
                     if 'filter' in nnef_operation.inputs:
                         filter_tensor = nnef_tensor[nnef_operation.inputs['filter']]
@@ -172,7 +171,7 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     if nnef_operation.name == 'squeeze':
         input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
         axes = nnef_operation.attribs['axes']
-        output_shape = [input_shape[i] for i in range(len(input_shape)) if i in axes]
+        output_shape = [input_shape[i] for i in range(len(input_shape)) if i not in axes]
         del nnef_operation.attribs['axes']
         nnef_operation.attribs.update({'shape': output_shape})
     
@@ -208,7 +207,7 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
 def nnef_graph_to_ir_graph(nnef_graph):
 
     graph = IrGraph()
-    
+
     # add input(s)
     for tensor_name in nnef_graph.inputs:
         tensor = nnef_graph.tensors[tensor_name]
@@ -217,7 +216,11 @@ def nnef_graph_to_ir_graph(nnef_graph):
     # add output(s)
     for tensor_name in nnef_graph.outputs:
         tensor = nnef_graph.tensors[tensor_name]
+        while len(tensor.shape) < 4:
+            tensor.shape.append(1)
         graph.addOutput(nnef_tensor_to_ir_tensor(tensor))
+
+    scalarCount = 0
 
     for operation in nnef_graph.operations:
         if operation.name == 'external':
@@ -226,15 +229,32 @@ def nnef_graph_to_ir_graph(nnef_graph):
         if operation.name == 'variable':
             tensor_name = operation.outputs['output']
             tensor = nnef_graph.tensors[tensor_name]
-            print(operation)
-            exit(1)
             graph.addVariable(nnef_tensor_to_ir_tensor(tensor))
             graph.addBinary(tensor_name, tensor.data)
         else:
             # add node(s)
             for name in operation.outputs:
-                tensor = nnef_graph.tensors[operation.outputs[name]]
-                graph.addLocal(nnef_tensor_to_ir_tensor(tensor))
+                output_tensor = nnef_graph.tensors[operation.outputs[name]]
+                graph.addLocal(nnef_tensor_to_ir_tensor(output_tensor))
+                # handle 0-d tensor(s)
+                for input in operation.inputs:
+                    if isinstance(operation.inputs[input], float):
+                        scalarCount += 1
+                        tensor = IrTensor()
+                        name = 'scalar_' + str(scalarCount)
+                        shape = output_tensor.shape
+                        if len(output_tensor.shape) == 1:
+                            shape = [1, output_tensor.shape[0]]
+                        while len(shape) < 4:
+                            shape.append(1)
+                        scalar_tensor = IrTensor()
+                        scalar_tensor.setName(name)
+                        scalar_tensor.setInfo('F032', shape)
+                        tensor_data = np.full(shape, operation.inputs[input], dtype=np.float32)
+                        graph.addVariable(scalar_tensor)                    
+                        graph.addBinary(name, tensor_data)
+                        operation.inputs[input] = name
+
                 node = nnef_op_to_ir_node(nnef_graph, operation)
                 graph.addNode(node)
     graph.updateLocals()

@@ -1830,7 +1830,14 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
     graph = IrGraph()
-    graph.fromFile(inputFolder)   
+    graph.fromFile(inputFolder)
+    for tensor in graph.outputs:
+        if len(tensor.shape) == 1:
+            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], 1, 1, 1));    
+        elif len(tensor.shape) == 2:
+            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], 1, 1));
+        elif len(tensor.shape) == 4:
+            print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]));
     print('creating C code in ' + outputFolder + ' ...')
     generateCode(graph,argmaxOutput,outputFolder)
 

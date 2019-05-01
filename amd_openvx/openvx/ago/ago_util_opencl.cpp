@@ -1590,7 +1590,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		AgoData * data = supernode->dataList[index];
 	}
 	// generate code: node functions in OpenCL
-	char item[256];
+	char item[512];
 	std::string code = OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -1749,7 +1749,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		else if (node->akernel->opencl_codegen_callback_f) {
 			// generation function declaration
 			std::string code2;
-			char item[256];
+			char item[512];
 			sprintf(item, "void %s(", node->opencl_name); code2 = item;
 			for (vx_uint32 i = 0; i < node->paramCount; i++) {
 				AgoData * data = node->paramList[i];

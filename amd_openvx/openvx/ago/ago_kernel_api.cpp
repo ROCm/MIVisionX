@@ -8062,7 +8062,7 @@ int agoKernel_AbsDiff_S16_S16S16_Sat(AgoNode * node, AgoKernelCommand cmd)
 		agoCodeGenOpenCL_AbsDiff_S16_S16S16_Sat(node->opencl_code);
 		AgoData * iImg0 = node->paramList[1];
 		AgoData * iImg1 = node->paramList[2];
-		char item[128];
+		char item[512];
 		if (iImg1->u.img.isUniform && !iImg0->u.img.isUniform) {
 			// avoid having to read constant uniform image for AbsDiff (users might do this for Abs operation)
 			node->opencl_param_discard_mask = (1 << 2);
@@ -8624,7 +8624,7 @@ int agoKernel_Magnitude_S16_S16S16(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
 		status = VX_SUCCESS;
 		node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
-		char textBuffer[2048];
+		char textBuffer[4096];
 		sprintf(textBuffer, OPENCL_FORMAT(
 			"void %s (S16x8 * p0, S16x8 p1, S16x8 p2)\n"
 			"{\n"

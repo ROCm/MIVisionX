@@ -242,7 +242,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 
 |Networks|Caffe|ONNX|NNEF|
 |--------|-----|----|----|
-|AlexNet|&#9745;|||			
+|AlexNet||&#9745;||			
 |DenseNet||&#9745;||			
 |Emotion-Ferplus||||			
 |Googlenet|&#9745;|&#9745;|&#9745;|		
@@ -262,7 +262,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |ZFNet||&#9745;||
 
 **Note:**
-* Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` tags
+* Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` and `release 1.3` tags
 
 ### Operators
 

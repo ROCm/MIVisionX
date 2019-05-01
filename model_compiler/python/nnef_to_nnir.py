@@ -156,12 +156,8 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     else:
         print('ERROR: NNEF operation "%s" not supported yet' % (nnef_operation.name))
         sys.exit(1)
-    
-    if nnef_operation.name == 'conv':
-        bias = nnef_operation.inputs['bias']
-        if bias == 0.0:
-            del nnef_operation.inputs['bias']
 
+    if nnef_operation.name == 'conv':
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
         nnef_operation.attribs.update({'size': [filter_tensor.shape[3], filter_tensor.shape[2]]})
 
@@ -179,9 +175,13 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
         axes = nnef_operation.attribs['axes']
         output_shape = input_shape
-        for i in range(len(axes)):
-            output_shape.insert(axes[i], 1)
-
+        if len(output_shape) < 4:
+            for i in range(len(axes)):
+                output_shape.insert(axes[i], 1)
+        print(input_shape)
+        print(nnef_graph.tensors[nnef_operation.inputs['input']].name)
+        print(output_shape)
+        exit(1)
         del nnef_operation.attribs['axes']
         nnef_operation.attribs.update({'shape': output_shape})
 
@@ -208,18 +208,6 @@ def nnef_graph_to_ir_graph(nnef_graph):
 
     graph = IrGraph()
 
-    # add input(s)
-    for tensor_name in nnef_graph.inputs:
-        tensor = nnef_graph.tensors[tensor_name]
-        graph.addInput(nnef_tensor_to_ir_tensor(tensor))
-
-    # add output(s)
-    for tensor_name in nnef_graph.outputs:
-        tensor = nnef_graph.tensors[tensor_name]
-        while len(tensor.shape) < 4:
-            tensor.shape.append(1)
-        graph.addOutput(nnef_tensor_to_ir_tensor(tensor))
-
     scalarCount = 0
 
     for operation in nnef_graph.operations:
@@ -232,6 +220,20 @@ def nnef_graph_to_ir_graph(nnef_graph):
             graph.addVariable(nnef_tensor_to_ir_tensor(tensor))
             graph.addBinary(tensor_name, tensor.data)
         else:
+            print('\n')
+            print(operation.name)
+            print('input:')
+            for name in operation.inputs:
+                if isinstance(operation.inputs[name], float):
+                    print(nnef_graph.tensors[operation.inputs['x']])
+                    break
+                print(nnef_graph.tensors[operation.inputs[name]])
+                break
+            #print(nnef_graph.tensors[operation.inputs]].shape)
+            print('output:')
+            for name in operation.outputs:
+                print(nnef_graph.tensors[operation.outputs[name]])
+                break
             # add node(s)
             for name in operation.outputs:
                 output_tensor = nnef_graph.tensors[operation.outputs[name]]
@@ -242,11 +244,16 @@ def nnef_graph_to_ir_graph(nnef_graph):
                         scalarCount += 1
                         tensor = IrTensor()
                         name = 'scalar_' + str(scalarCount)
-                        shape = output_tensor.shape
-                        if len(output_tensor.shape) == 1:
-                            shape = [1, output_tensor.shape[0]]
-                        while len(shape) < 4:
-                            shape.append(1)
+                        if input == 'bias':
+                            filter_tensor = tensor = nnef_graph.tensors[operation.inputs['filter']]
+                            shape = [1, filter_tensor.shape[0]]
+                        elif input == 'x' or input == 'y' or input == 'z':                            
+                            shape = output_tensor.shape
+                            if len(output_tensor.shape) == 1:
+                                shape = [1, output_tensor.shape[0]]
+                            while len(shape) < 4:
+                                shape.append(1)
+                        nnef_graph.tensors[operation.inputs[input]].shape = shape
                         scalar_tensor = IrTensor()
                         scalar_tensor.setName(name)
                         scalar_tensor.setInfo('F032', shape)
@@ -257,6 +264,17 @@ def nnef_graph_to_ir_graph(nnef_graph):
 
                 node = nnef_op_to_ir_node(nnef_graph, operation)
                 graph.addNode(node)
+
+    # add input(s)
+    for tensor_name in nnef_graph.inputs:
+        tensor = nnef_graph.tensors[tensor_name]
+        graph.addInput(nnef_tensor_to_ir_tensor(tensor))
+
+    # add output(s)
+    for tensor_name in nnef_graph.outputs:
+        tensor = nnef_graph.tensors[tensor_name]
+        graph.addOutput(nnef_tensor_to_ir_tensor(tensor))
+
     graph.updateLocals()
     return graph
 

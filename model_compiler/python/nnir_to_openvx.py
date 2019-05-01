@@ -27,7 +27,8 @@ tensor_type_nnir2openvx = {
     'F016' : 'VX_TYPE_FLOAT16',
     'U016' : 'VX_TYPE_UINT16',
     'I016' : 'VX_TYPE_INT16',
-    'U008' : 'VX_TYPE_UINT8'
+    'U008' : 'VX_TYPE_UINT8',
+    'I064' : 'VX_TYPE_INT64',
 }
 
 def generateLicenseForCPP(f):
@@ -243,6 +244,9 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }
     else if(data_type == VX_TYPE_UINT16 || data_type == VX_TYPE_INT16 || data_type == VX_TYPE_FLOAT16) {
         itemsize = sizeof(vx_uint16);
+    }
+    else if(data_type == VX_TYPE_INT64) {
+        itemsize = sizeof(vx_int64);
     }
     vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
 

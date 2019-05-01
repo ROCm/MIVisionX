@@ -217,7 +217,7 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     }  
     
     if(input_dims[2] != (weights_dims[2] * groupCount))
-        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: conv: input[%ldx%ldx%ldx%ld] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]\n",
+        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "initialize: conv: input[%ldx%ldx%ldx%ld] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]\n",
             input_dims[3], input_dims[2], input_dims[1], input_dims[0],
             weights_dims[3], weights_dims[2], weights_dims[1], weights_dims[0],
             output_dims[3], output_dims[2], output_dims[1], output_dims[0]);

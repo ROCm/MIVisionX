@@ -107,7 +107,7 @@ static vx_status VX_CALLBACK validateConvolutionLayer(vx_node node, const vx_ref
     if((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #4 type=%d (must be float/float16)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
-    if(output_dims[3] != input_dims[3] || input_dims[2] != weights_dims[2] || output_dims[2] != weights_dims[3])
+    if(output_dims[3] != input_dims[3] || output_dims[2] != weights_dims[3])
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: conv: input[%ldx%ldx%ldx%ld] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]\n",
             input_dims[3], input_dims[2], input_dims[1], input_dims[0],
             weights_dims[3], weights_dims[2], weights_dims[1], weights_dims[0],
@@ -173,7 +173,9 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
 
     vx_size pad_h, pad_w;
     vx_size dilation_w, dilation_h;
+    vx_size groupCount;
     vx_enum downscale_size_rounding, overflow_policy, rounding_policy;
+    
 
     pad_h = params.padding_y; pad_w = params.padding_x;
     downscale_size_rounding = params.down_scale_size_rounding;
@@ -181,7 +183,16 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     rounding_policy = params.rounding_policy;
     dilation_h = params.dilation_y + 1;
     dilation_w = params.dilation_x + 1;
-    miopenConvolutionMode_t mode = miopenConvolution;
+    groupCount = params.group;
+    miopenConvolutionMode_t mode;
+    if(groupCount == 1)
+    {
+        mode = miopenConvolution;
+    }
+    else
+    {
+        mode = miopenGroupConv;
+    }
 
     // override default cbr_mode by NN_MIOPEN_CBR_MODE environment variable.
     vx_int32 nn_cbr_mode = getEnvironmentVariable("NN_MIOPEN_CBR_MODE");
@@ -203,7 +214,13 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
         vx_size num_dims;
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(vx_size)));
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, bias_dims, num_dims * sizeof(vx_size)));
-    }
+    }  
+    
+    if(input_dims[2] != (weights_dims[2] * groupCount))
+        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "initialize: conv: input[%ldx%ldx%ldx%ld] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]\n",
+            input_dims[3], input_dims[2], input_dims[1], input_dims[0],
+            weights_dims[3], weights_dims[2], weights_dims[1], weights_dims[0],
+            output_dims[3], output_dims[2], output_dims[1], output_dims[0]);
 
     vx_size stride_h, stride_w;
     vx_size kernel_h, kernel_w;
@@ -250,6 +267,9 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     //Convolution Descriptor.
     ERROR_CHECK_MIOPEN_STATUS(miopenCreateConvolutionDescriptor(&data->conv_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenInitConvolutionDescriptor(data->conv_desc, mode, pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w));
+
+    //Grouped Convolution
+    ERROR_CHECK_MIOPEN_STATUS(miopenSetConvolutionGroupCount(data->conv_desc, groupCount));
 
     //Memory Declaration.
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));

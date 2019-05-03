@@ -186,6 +186,7 @@ typedef struct _vx_nn_convolution_params_t
     vx_enum down_scale_size_rounding; /*!< \brief Rounding method for calculating output dimensions. See <tt>\ref vx_nn_rounding_type_e</tt> */
     vx_size dilation_x;            /*!< \brief “inflate” the kernel by inserting zeros between the kernel elements in the x direction. The value is the number of zeros to insert.*/
     vx_size dilation_y;            /*!< \brief “inflate” the kernel by inserting zeros between the kernel elements in the y direction. The value is the number of zeros to insert.*/
+    vx_size group;                 /*!< \brief Count for grouped Convolution. */
 } vx_nn_convolution_params_t;
 
 

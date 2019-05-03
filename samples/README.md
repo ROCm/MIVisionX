@@ -108,7 +108,7 @@ usage:
 
 * Get Data for the stitch
 ````
-cd /loom_360_stitch/sample-1/
+cd loom_360_stitch/sample-1/
 python loomStitch-sample1-get-data.py
 ````
 * Run Loom Shell Script to generate the 360 Image
@@ -122,7 +122,7 @@ usage:
 
 * Get Data for the stitch
 ````
-cd /loom_360_stitch/sample-2/
+cd loom_360_stitch/sample-2/
 python loomStitch-sample2-get-data.py
 ````
 * Run Loom Shell Script to generate the 360 Image
@@ -136,7 +136,7 @@ usage:
 
 * Get Data for the stitch
 ````
-cd /loom_360_stitch/sample-3/
+cd loom_360_stitch/sample-3/
 python loomStitch-sample3-get-data.py
 ````
 * Run Loom Shell Script to generate the 360 Image

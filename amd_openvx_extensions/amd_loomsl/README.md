@@ -23,6 +23,14 @@ This software is provided under a MIT-style license,  see the file COPYRIGHT.txt
 * Support for 3rd party *LoomIO* plug-ins for camera capture and stitched output
 * Support PtGui project export/import for camera calibration
 
+## Samples
+
+[Samples](../../samples#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360 degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
+
+* [Sample - 1](../../samples#sample---1)
+* [Sample - 2](../../samples#sample---2)
+* [Sample - 3](../../samples#sample---3)
+
 ## Live Stitch API: Simple Example
 Let's consider a 360 rig that has 3 1080p cameras with Circular FishEye lenses. 
 The below example demonstrates how to stitch images from these cameras into a 4K Equirectangular buffer.

@@ -1,3 +1,5 @@
+<p align="center"><img width="50%" src="../../docs/images/loom-1.jpg" /></p>
+
 # Radeon Loom Stitching Library (vx_loomsl)
 Radeon Loom Stitching Library (beta preview) is a highly optimized library for 360 degree video stitching applications. This library consists of:
 * *Live Stitch API*: stitching framework built on top of OpenVX kernels (see [live_stitch_api.h](live_stitch_api.h) for API)
@@ -7,7 +9,12 @@ The [loom_shell](../../utilities/loom_shell/README.md) command-line tool can be 
 
 This software is provided under a MIT-style license,  see the file COPYRIGHT.txt for details.
 
+[![Loom Stitch](../../docs/images/loom-4.png)](https://youtu.be/E8pPU04iZjw)
+
 ## Features
+
+<p align="center"><img width="80%" src="../../docs/images/loom-2.jpg" /></p>
+
 * Real-time live 360 degree video stitching optimized for Radeon Pro Graphics
 * Upto 31 cameras
 * Upto 7680x3840 output resolution
@@ -15,6 +22,14 @@ This software is provided under a MIT-style license,  see the file COPYRIGHT.txt
 * Overlay other videos on top of stitched video
 * Support for 3rd party *LoomIO* plug-ins for camera capture and stitched output
 * Support PtGui project export/import for camera calibration
+
+## Samples
+
+[Samples](../../samples#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360 degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
+
+* [Sample - 1](../../samples#sample---1)
+* [Sample - 2](../../samples#sample---2)
+* [Sample - 3](../../samples#sample---3)
 
 ## Live Stitch API: Simple Example
 Let's consider a 360 rig that has 3 1080p cameras with Circular FishEye lenses. 

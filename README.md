@@ -153,6 +153,7 @@ sudo yum install mivisionx
   * executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
   * OpenVX and module header files into `/opt/rocm/mivisionx/include`
   * model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+  * Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
 
 #### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)

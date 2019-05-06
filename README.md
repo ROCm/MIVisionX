@@ -176,7 +176,7 @@ make -j8
 sudo make install
 ````
   **Note:**
-   * vx_winml is not supported on linux
+   * vx_winml is not supported on Linux
    * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
    * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 

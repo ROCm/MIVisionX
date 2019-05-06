@@ -1,4 +1,4 @@
-<p align="center"><img width="50%" src="../../docs/images/loom-1.jpg" /></p>
+<p align="center"><img src="../../docs/images/LOOM_LOGO_250X125.png" /></p>
 
 # Radeon Loom Stitching Library (vx_loomsl)
 Radeon Loom Stitching Library (beta preview) is a highly optimized library for 360 degree video stitching applications. This library consists of:
@@ -30,6 +30,8 @@ This software is provided under a MIT-style license,  see the file COPYRIGHT.txt
 * [Sample - 1](../../samples#sample---1)
 * [Sample - 2](../../samples#sample---2)
 * [Sample - 3](../../samples#sample---3)
+
+**Note:** The output stitched image is saved as LoomOutputStitch.bmp
 
 ## Live Stitch API: Simple Example
 Let's consider a 360 rig that has 3 1080p cameras with Circular FishEye lenses. 

@@ -38,7 +38,7 @@ usage:
 runvx gdf/canny.gdf
 ````
 ### skintonedetect-LIVE.gdf
-Using live camera
+Using a live camera
 
 usage:
 
@@ -46,7 +46,7 @@ usage:
 runvx -frames:live gdf/skintonedetect-LIVE.gdf
 ````
 ### canny-LIVE.gdf
-Using live camera
+Using a live camera
 
 usage:
 
@@ -118,6 +118,40 @@ python loomStitch-sample1-get-data.py
 ````
 loom_shell loomStitch-sample1.txt
 ````
+
+* Expected Output
+```
+loom_shell loomStitch-sample1.txt 
+loom_shell 0.9.8 [loomsl 0.9.8]
+... processing commands from loomStitch-sample1.txt
+..ls_context context[1] created
+..lsCreateContext: created context context[0]
+..lsSetOutputConfig: successful for context[0]
+..lsSetCameraConfig: successful for context[0]
+OK: OpenVX using GPU device#0 (gfx906+sram-ecc) [OpenCL 2.0 ] [SvmCaps 0 0]
+..lsInitialize: successful for context[0] (1380.383 ms)
+..cl_mem mem[2] created
+..cl_context opencl_context[1] created
+..lsGetOpenCLContext: get OpenCL context opencl_context[0] from context[0]
+OK: loaded cam00.bmp
+OK: loaded cam01.bmp
+OK: loaded cam02.bmp
+OK: loaded cam03.bmp
+..lsSetCameraBuffer: set OpenCL buffer mem[0] for context[0]
+..lsSetOutputBuffer: set OpenCL buffer mem[1] for context[0]
+OK: run: executed for 100 frames
+OK: run: Time:   0.919 ms (min);   1.004 ms (avg);   1.238 ms (max);   1.212 ms (1st-frame) of 100 frames
+OK: created LoomOutputStitch.bmp
+> stitch graph profile
+ COUNT,tmp(ms),avg(ms),min(ms),max(ms),DEV,KERNEL
+   100,  0.965,  1.005,  0.918,  1.237,CPU,GRAPH
+   100,  0.959,  0.999,  0.915,  1.234,GPU,com.amd.loomsl.warp
+   100,  0.955,  0.994,  0.908,  1.232,GPU,com.amd.loomsl.merge
+OK: OpenCL buffer usage: 324221600, 9/9
+..lsReleaseContext: released context context[0]
+... exit from loomStitch-sample1.txt
+```
+**Note:** The stitched output image is saved as LoomOutputStitch.bmp
 
 ### Sample - 2
 

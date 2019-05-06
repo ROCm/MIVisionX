@@ -55,7 +55,7 @@ Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-ne
 
 ## Toolkit
 
-[MIVisionX Toolkit](toolkit#mivisionx-toolkit), is a comprehensive set of help tools for neural net creation, development, training and deployment. The Toolkit provides you with help tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
+[MIVisionX Toolkit](toolkit#mivisionx-toolkit), is a comprehensive set of help tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
 
 MIVisionX provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
@@ -70,7 +70,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
 * APU: Carrizo or above [optional]
 
-**Note:** Some modules in MIVisionX can be build for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or AMD APUs.
+**Note:** Some modules in MIVisionX can be built for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or AMD APUs.
 
 ### Windows
 * Windows 10
@@ -93,7 +93,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   
 #### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
-For convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
+For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
 **MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If directory option is not given, the script will install deps folder in the home directory(~/) by default, else in the user specified location.
 
@@ -153,6 +153,7 @@ sudo yum install mivisionx
   * executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
   * OpenVX and module header files into `/opt/rocm/mivisionx/include`
   * model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+  * Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
 
 #### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
@@ -175,7 +176,7 @@ make -j8
 sudo make install
 ````
   **Note:**
-   * vx_winml is not supported on linux
+   * vx_winml is not supported on Linux
    * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
    * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 

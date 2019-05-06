@@ -1,9 +1,9 @@
 <p align="center"><img src="../../docs/images/LOOM_LOGO_250X125.png" /></p>
 
-# Radeon Loom Stitching Library (vx_loomsl)
-Radeon Loom Stitching Library (beta preview) is a highly optimized library for 360 degree video stitching applications. This library consists of:
-* *Live Stitch API*: stitching framework built on top of OpenVX kernels (see [live_stitch_api.h](live_stitch_api.h) for API)
-* *OpenVX module* [***vx_loomsl***]: additional OpenVX kernels needed for 360 degree video stitching
+# Radeon Loom Stitching Library
+Radeon Loom Stitching Library (beta preview) is a highly optimized library for 360-degree video stitching applications. This library consists of:
+* **Live Stitch API**: stitching framework built on top of OpenVX kernels. Look into [live_stitch_api.h](live_stitch_api.h) for information on the API.
+* **vx_loomsl**: additional OpenVX kernels needed for 360 degree video stitching
 
 The [loom_shell](../../utilities/loom_shell/README.md) command-line tool can be used to build your application quickly. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 

@@ -7,7 +7,7 @@ Radeon Loom Stitching Library (beta preview) is a highly optimized library for 3
 
 The [loom_shell](../../utilities/loom_shell/README.md) command-line tool can be used to build your application quickly. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 
-This software is provided under a MIT-style license,  see the file COPYRIGHT.txt for details.
+This software is provided under an MIT-style license,  see the file COPYRIGHT.txt for details.
 
 [![Loom Stitch](../../docs/images/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
@@ -15,17 +15,17 @@ This software is provided under a MIT-style license,  see the file COPYRIGHT.txt
 
 <p align="center"><img width="80%" src="../../docs/images/loom-2.jpg" /></p>
 
-* Real-time live 360 degree video stitching optimized for Radeon Pro Graphics
-* Upto 31 cameras
-* Upto 7680x3840 output resolution
+* Real-time live 360-degree video stitching optimized for Radeon Pro Graphics
+* Up to 31 cameras
+* Up to 7680x3840 output resolution
 * RGB and YUV 4:2:2 image formats
-* Overlay other videos on top of stitched video
+* Overlay other videos on top of the stitched video
 * Support for 3rd party *LoomIO* plug-ins for camera capture and stitched output
 * Support PtGui project export/import for camera calibration
 
 ## Samples
 
-[Samples](../../samples#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360 degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
+[Samples](../../samples#loom-360-stitch---radeon-loom-360-stitch-samples) to run 360 stitch on calibrated images is provided in the samples folder. The samples use [Loom Shell](../../utilities/loom_shell#radeon-loomshell), an interpreter that enables stitching 360-degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 
 * [Sample - 1](../../samples#sample---1)
 * [Sample - 2](../../samples#sample---2)

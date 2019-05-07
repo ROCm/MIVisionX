@@ -121,10 +121,10 @@ def onnx_node_to_ir_node(onnx_node):
                    onnx_node_to_ir_attr(onnx_node))
     return node
 
-def onnx_tensor_info_to_data(info):
+def onnx_tensor_info_to_data(info, dims):
     tensor = IrTensor()
     tensor.setName(onnx_name_to_ir_name(info.name))
-    tensor.setInfo(onnx2ir_data_type[info.data_type], [int(x) for x in info.dims])
+    tensor.setInfo(onnx2ir_data_type[info.data_type], [int(x) for x in dims])
     return tensor
 
 def onnx_value_info_to_data(info, dims):
@@ -140,7 +140,10 @@ def onnx_graph_to_ir_graph(onnx_graph):
     for tensor in onnx_graph.initializer:
         tensorName = onnx_name_to_ir_name(tensor.name)
         initializerList.append(tensorName)
-        graph.addVariable(onnx_tensor_info_to_data(tensor))
+        if onnx2ir_data_type[tensor.data_type] == 'I064':
+            graph.addVariable(onnx_tensor_info_to_data(tensor,numpy_helper.to_array(tensor)))
+        else:
+            graph.addVariable(onnx_tensor_info_to_data(tensor, tensor.dims))
         graph.addBinary(tensorName, tensor.raw_data)
     for tensor in onnx_graph.input:
         if not onnx_name_to_ir_name(tensor.name) in initializerList:

@@ -1088,7 +1088,7 @@ if __name__ == '__main__':
     inputTensorFile = sys.argv[3]
     outputTensorFile = sys.argv[4]
     api = AnnAPI(annlibPythonName)
-    input_info,output_info = api.annQueryInference().decode("utf-8").split(';')
+    input_info,output_info,temp = api.annQueryInference().decode("utf-8").split(';')
     input,name,ni,ci,hi,wi = input_info.split(',')
     hdl = api.annCreateInference(weightsFile)
     im = np.fromfile(inputTensorFile, dtype=np.float32)

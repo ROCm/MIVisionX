@@ -14,17 +14,17 @@ The cloud inference app is designed as a server and a client inference modules, 
 The server application is built along with MIVisionX and placed in `/opt/rocm/mivisionx/bin` when MIVisionX is installed. The server application has a command line interface.
 
 usage:
-```
-inference_server_app  [-p port - default 26262] 
-                      [-b default-batch-size - default 32]
-                      [-gpu <comma-separated-list-of-GPUs>]
-                      [-q <max-pending-batches>]
-                      [-fp16 <0/1> - default 0]
-                      [-w <server-work-folder>]
-                      [-s <local-shadow-folder-full-path>]
-                      [-n <model-compiler-path>]
-                      [-t num_cpu_dec_threads<2-64>]
-```
+````
+inference_server_app    [-p port - default:26262]
+                        [-b default-batch-size - default:64]
+                        [-n <model-compiler-path> - default:/opt/rocm/mivisionx/model_compiler/python]
+                        [-fp16 <0/1> - default:0]
+                        [-w server-working-directory> - default:~]
+                        [-t num_cpu_dec_threads<2-64> - default:1]
+                        [-gpu <comma-separated-list-of-GPUs>]
+                        [-q <max-pending-batches>]
+                        [-s <local-shadow-folder-full-path>]
+````
 
 ## Client Application - client_app
 
@@ -42,7 +42,6 @@ inference_server_app
 ````
 * Expected output
 ```
-./inference_server_app 
 INFO: using OpenCL platform#0 with 1 GPU devices ...
 INFO: listening on port 28282 for annInferenceApp connections ...
 ```
@@ -65,12 +64,12 @@ The client application section Inference Compiler needs to be completed as shown
 
 <p align="center"><img width="80%" src="../../docs/images/client_app_2.png" /></p>
 
-  * CNN Model: upload or select preloaded models. (User needs to save models are preloaded on the server)
-  * CxHxW(inp): enter the height and width of the input images to the model
+  * CNN Model: upload or select published model from drop-down menu. (User needs to save models on the server using Publishas feature)
+  * CxHxW(inp): channels x height x width of model input
   * Prototxt: give the location of the model .prototxt
   * CaffeModel: give the location of the pretrained caffe model .caffemodel
   * Options: BGR/RGB - model trained with RGB or BGR images
-  * Publishas: Model Name 
+  * Publishas: name_tag for published compiled model
   * password: radeon ( To load the models to the server)
 
 **Step 5** - Load Image DataBase - Now you can run a simple test inference using the AMD-tinyDataSet provided in this project within the MIVisionX/toolkit/analysis_and_visualization/classification/sample folder. 

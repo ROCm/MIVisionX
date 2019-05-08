@@ -216,16 +216,16 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
     } else
     {
         // run nnir model_compiler
-        // step-1.1: run python caffe2nnir <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
+        // step-1.1: run python caffe_to_nnir <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
         command = "python ";
-        command += args->getModelCompilerPath() + "/" + "caffe2nnir.py weights.caffemodel nnir-output --input-dims";
+        command += args->getModelCompilerPath() + "/" + "caffe_to_nnir.py weights.caffemodel nnir-output --input-dims";
         command += " " + std::to_string(args->getBatchSize())
                 +  "," + std::to_string(dimInput[2])
                 +  "," + std::to_string(dimInput[1])
                 +  "," + std::to_string(dimInput[0]);
         info("executing: %% %s", command.c_str());
         status = system(command.c_str());
-        sprintf(cmdUpdate.message, "python caffe2nnir weights.caffemodel completed (%d)", status);
+        sprintf(cmdUpdate.message, "python caffe_to_nnir weights.caffemodel completed (%d)", status);
         cmdUpdate.data[0] = (status != 0) ? -2 : 0;
         cmdUpdate.data[1] = 25;
         ERRCHK(sendCommand(sock, cmdUpdate, clientName));
@@ -233,9 +233,9 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         if(status) {
             return error_close(sock, "command-failed(%d): %s", status, command.c_str());
         }
-        // steo-1.2: todo:: nnir-update
+        // steo-1.2: todo:: nnir_update
         command = "python ";
-        command += args->getModelCompilerPath() + "/" + "nnir-update.py --fuse-ops 1";  // --fuse-ops is required to fuse batch-norm at NNIR. Workaround for FP16 MIOPen bug with batchnorm
+        command += args->getModelCompilerPath() + "/" + "nnir_update.py --fuse-ops 1";  // --fuse-ops is required to fuse batch-norm at NNIR. Workaround for FP16 MIOPen bug with batchnorm
         if (args->fp16Inference())
         {
             command += " --convert-fp16 1";
@@ -243,7 +243,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         command += " nnir-output nnir-output_1";
         info("executing: %% %s", command.c_str());
         status = system(command.c_str());
-        sprintf(cmdUpdate.message, "python nnir-update.py fuse-ops 1 <--convert-fp16 1> nnir-output nnir-output_1 completed (%d)", status);
+        sprintf(cmdUpdate.message, "python nnir_update.py fuse-ops 1 <--convert-fp16 1> nnir-output nnir-output_1 completed (%d)", status);
         cmdUpdate.data[0] = (status != 0) ? -3 : 0;
         cmdUpdate.data[1] = 50;
         ERRCHK(sendCommand(sock, cmdUpdate, clientName));
@@ -252,15 +252,15 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
             return error_close(sock, "command-failed(%d): %s", status, command.c_str());
         }
 
-        // step-1.3: nnir2openvx
+        // step-1.3: nnir_to_openvx
         command = "python ";
-        command += args->getModelCompilerPath() + "/" + "nnir2openvx.py nnir-output_1 ."
+        command += args->getModelCompilerPath() + "/" + "nnir_to_openvx.py nnir-output_1 ."
                 +  " >>caffe2openvx.log";
         info("executing: %% %s", command.c_str());
         status = system(command.c_str());
         cmdUpdate.data[0] = (status != 0) ? -4 : 0;
         cmdUpdate.data[1] = 75;
-        sprintf(cmdUpdate.message, "caffe2openvx deploy.prototxt completed (%d)", status);
+        sprintf(cmdUpdate.message, "python nnir_to_openvx completed (%d)", status);
         ERRCHK(sendCommand(sock, cmdUpdate, clientName));
         ERRCHK(recvCommand(sock, cmdUpdate, clientName, INFCOM_CMD_COMPILER_STATUS));
         if(status) {

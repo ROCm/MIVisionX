@@ -216,7 +216,7 @@ vx_status InferenceEngine::DecodeScaleAndConvertToTensor(vx_size width, vx_size 
         RGB_resize(matOrig.data, data_resize, matOrig.cols, matOrig.rows, matOrig.step, width, height);
         img = data_resize;
     }
-    PROFILER_START(AnnInferenceServer, workRGBtoTensor);
+    PROFILER_START(inference_server_app, workRGBtoTensor);
 
     __m128i mask_B, mask_G, mask_R;
     if (reverseInputChannelOrder)
@@ -346,7 +346,7 @@ vx_status InferenceEngine::DecodeScaleAndConvertToTensor(vx_size width, vx_size 
             }
         }
     }
-    PROFILER_STOP(AnnInferenceServer, workRGBtoTensor);
+    PROFILER_STOP(inference_server_app, workRGBtoTensor);
     if (data_resize != nullptr) delete[] data_resize;
 #else
     cv::Mat matScaled;
@@ -1148,7 +1148,7 @@ void InferenceEngine::workMasterInputQ()
     int totalInputCount = 0;
     int inputCountInBatch = 0, gpu = 0;
     for(;;) {
-        PROFILER_START(AnnInferenceServer, workMasterInputQ);
+        PROFILER_START(inference_server_app, workMasterInputQ);
          // get next item from the input queue
         std::tuple<int,char*,int> input;
         inputQ.dequeue(input);
@@ -1165,7 +1165,7 @@ void InferenceEngine::workMasterInputQ()
         std::tuple<char*,int> image(byteStream,size);
         queueDeviceTagQ[gpu]->enqueue(tag);
         queueDeviceImageQ[gpu]->enqueue(image);
-        PROFILER_STOP(AnnInferenceServer, workMasterInputQ);
+        PROFILER_STOP(inference_server_app, workMasterInputQ);
 
         // at the end of Batch pick another device
         inputCountInBatch++;
@@ -1213,7 +1213,7 @@ void InferenceEngine::workDeviceInputCopy(int gpu)
 
     int totalBatchCounter = 0, totalImageCounter = 0;
     for(bool endOfSequenceReached = false; !endOfSequenceReached; ) {
-        PROFILER_START(AnnInferenceServer, workDeviceInputCopyBatch);
+        PROFILER_START(inference_server_app, workDeviceInputCopyBatch);
         // get an empty OpenCL buffer and lock the buffer for writing
         cl_mem mem = nullptr;
         queueDeviceInputMemIdle[gpu]->dequeue(mem);
@@ -1249,7 +1249,7 @@ void InferenceEngine::workDeviceInputCopy(int gpu)
                 batch_q.push_back(image);
             }
             if (inputCount){
-                PROFILER_START(AnnInferenceServer, workDeviceInputCopyJpegDecode);
+                PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
                 if (inputCount < batchSize)
                 {
                     sub_batch_size = (inputCount+numT-1)/numT;
@@ -1270,7 +1270,7 @@ void InferenceEngine::workDeviceInputCopy(int gpu)
                 {
                     dec_threads[t].join();
                 }
-                PROFILER_STOP(AnnInferenceServer, workDeviceInputCopyJpegDecode);
+                PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
             }
         } else {
             for(; inputCount < batchSize; inputCount++) {
@@ -1290,9 +1290,9 @@ void InferenceEngine::workDeviceInputCopy(int gpu)
                 else
                     buf = (float *) mapped_ptr + dimInput[0] * dimInput[1] * dimInput[2] * inputCount;
 
-                PROFILER_START(AnnInferenceServer, workDeviceInputCopyJpegDecode);
+                PROFILER_START(inference_server_app, workDeviceInputCopyJpegDecode);
                 DecodeScaleAndConvertToTensor(dimInput[0], dimInput[1], size, (unsigned char *)byteStream, buf, useFp16);
-                PROFILER_STOP(AnnInferenceServer, workDeviceInputCopyJpegDecode);
+                PROFILER_STOP(inference_server_app, workDeviceInputCopyJpegDecode);
                 // release byteStream
                 delete[] byteStream;
             }
@@ -1318,7 +1318,7 @@ void InferenceEngine::workDeviceInputCopy(int gpu)
             // add the input back to idle queue
             queueDeviceInputMemIdle[gpu]->enqueue(mem);
         }
-        PROFILER_STOP(AnnInferenceServer, workDeviceInputCopyBatch);
+        PROFILER_STOP(inference_server_app, workDeviceInputCopyBatch);
     }
     // release OpenCL command queue
     clReleaseCommandQueue(cmdq);
@@ -1365,9 +1365,9 @@ void InferenceEngine::workDeviceProcess(int gpu)
             fatal("workDeviceProcess: vxSwapTensorHandle(output#%d) failed(%d)", gpu, status);
         }
 #if !DONOT_RUN_INFERENCE
-        PROFILER_START(AnnInferenceServer, workDeviceProcess);
+        PROFILER_START(inference_server_app, workDeviceProcess);
         status = vxProcessGraph(openvx_graph[gpu]);
-        PROFILER_STOP(AnnInferenceServer, workDeviceProcess);
+        PROFILER_STOP(inference_server_app, workDeviceProcess);
         if(status != VX_SUCCESS) {
             fatal("workDeviceProcess: vxProcessGraph(#%d) failed(%d)", gpu, status);
         }
@@ -1417,7 +1417,7 @@ void InferenceEngine::workDeviceOutputCopy(int gpu)
         if(mem == nullptr) {
             break;
         }
-        PROFILER_START(AnnInferenceServer, workDeviceOutputCopy);
+        PROFILER_START(inference_server_app, workDeviceOutputCopy);
         cl_int err;
         void * mapped_ptr = (float *)clEnqueueMapBuffer(cmdq, mem, CL_TRUE, CL_MAP_READ, 0, outputSizeInBytes, 0, NULL, NULL, &err);
         if(err) {
@@ -1515,7 +1515,7 @@ void InferenceEngine::workDeviceOutputCopy(int gpu)
 
         // add the output back to idle queue
         queueDeviceOutputMemIdle[gpu]->enqueue(mem);
-        PROFILER_STOP(AnnInferenceServer, workDeviceOutputCopy);
+        PROFILER_STOP(inference_server_app, workDeviceOutputCopy);
 
         // update counter
         if(outputCount > 0) {

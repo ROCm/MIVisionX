@@ -239,15 +239,15 @@ static void show_usage()
     printf("\n");
     printf("Usage:\n");
     printf("\tinference_server_app");
-    printf("\t[-p port - default 26262]\n");
-    printf("\t\t\t\t[-b default-batch-size - default 32]\n");
+    printf("\t[-p port - default:26262]\n");
+    printf("\t\t\t\t[-b default-batch-size - default:64]\n");
+    printf("\t\t\t\t[-n <model-compiler-path> - default:/opt/rocm/mivisionx/model_compiler/python]\n");
+    printf("\t\t\t\t[-fp16 <0/1> - default:0]\n");
+    printf("\t\t\t\t[-w server-working-directory> - default:~]\n");
+    printf("\t\t\t\t[-t num_cpu_dec_threads<2-64> - default:1]\n");
     printf("\t\t\t\t[-gpu <comma-separated-list-of-GPUs>]\n");
     printf("\t\t\t\t[-q <max-pending-batches>]\n");
-    printf("\t\t\t\t[-fp16 <0/1> - default 0]\n");
-    printf("\t\t\t\t[-w server-working-directory> -default <.inference_server_app.dir>]\n");
-    printf("\t\t\t\t[-s <local-shadow-folder-full-path>]\n");
-    printf("\t\t\t\t[-n <model-compiler-path>]\n");
-    printf("\t\t\t\t[-t num_cpu_dec_threads<2-64>]\n\n");
+    printf("\t\t\t\t[-s <local-shadow-folder-full-path>]\n\n");
 }
 
 int Arguments::initializeConfig(int argc, char * argv[])

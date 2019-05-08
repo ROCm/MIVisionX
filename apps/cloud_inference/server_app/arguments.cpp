@@ -9,6 +9,7 @@
 Arguments::Arguments()
         : workFolder{ "~" }, modelFileDownloadCounter{ 0 },
           password{ "radeon" },
+          modelCompilerPath{ "/opt/rocm/mivisionx/model_compiler/python" },
           port{ 28282 }, batchSize{ 64 }, maxPendingBatches{ 4 }, numGPUs{ 1 }, gpuIdList{ 0 },
           maxGpuId{ 0 }, platform_id{ NULL }, num_devices{ 0 }, device_id{ NULL }, deviceUseCount{ 0 }
 {

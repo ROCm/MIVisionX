@@ -16,7 +16,7 @@ Arguments::Arguments()
     /// \brief set default configuration file
     ///
     configurationFile = getenv("HOME");
-    configurationFile += "/.annInferenceServer.txt";
+    configurationFile += "/.inference_server_app.txt";
 
     ////////
     /// \brief get AMD OpenCL platform (if available)
@@ -95,7 +95,7 @@ void Arguments::setConfigurationDir()
     // generate configuration directory
     if(workFolder == "~") {
         configurationDir = getenv("HOME");
-        configurationDir += "/.annInferenceServer.dir";
+        configurationDir += "/.inference_server_app.dir";
     }
     else {
         configurationDir = workFolder;
@@ -238,7 +238,7 @@ int Arguments::initializeConfig(int argc, char * argv[])
     /// \brief process command-lines
     ///
     const char * usage =
-            "Usage: annInferenceServer [-p port] [-b default-batch-size]"
+            "Usage: inference_server_app [-p port] [-b default-batch-size]"
                                      " [-gpu <comma-separated-list-of-GPUs>] [-q <max-pending-batches>] [-fp16 <0/1>]"
                                      " [-w <server-work-folder>] [-s <local-shadow-folder-full-path>] [-n <model-compiler-path>] [-t num_cpu_dec_threads<2-64>]";
     while(argc > 2) {

@@ -232,7 +232,6 @@ void Arguments::getPreConfiguredModels()
     closedir(dir);
 }
 
-
 //usage information
 static void show_usage()
 {
@@ -322,11 +321,11 @@ int Arguments::initializeConfig(int argc, char * argv[])
         }
         else if(!strcmp(argv[1], "-n")) {
             if (!strcmp(argv[2],"")) {
-                error("invalid model_compiler folder name %s", argv[2]);
+                error("invalid Model Compiler folder name %s", argv[2]);
                 return -1;
             }else {
                 setModelCompilerPath(argv[2]);
-                printf("Set shadow folder to %s\n", modelCompilerPath.c_str());
+                printf("Set Model Compiler folder to %s\n", modelCompilerPath.c_str());
             }
             argc -= 2;
             argv += 2;

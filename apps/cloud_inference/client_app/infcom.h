@@ -93,7 +93,7 @@ typedef struct {
     int magic;
     int command;
     int data[14];
-    char message[64];
+    char message[128];
 } InfComCommand;
 
 #endif

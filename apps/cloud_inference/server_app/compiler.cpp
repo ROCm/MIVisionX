@@ -233,9 +233,9 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         if(status) {
             return error_close(sock, "command-failed(%d): %s", status, command.c_str());
         }
-        // steo-1.2: todo:: nnir-update
+        // steo-1.2: todo:: nnir_update
         command = "python ";
-        command += args->getModelCompilerPath() + "/" + "nnir-update.py --fuse-ops 1";  // --fuse-ops is required to fuse batch-norm at NNIR. Workaround for FP16 MIOPen bug with batchnorm
+        command += args->getModelCompilerPath() + "/" + "nnir_update.py --fuse-ops 1";  // --fuse-ops is required to fuse batch-norm at NNIR. Workaround for FP16 MIOPen bug with batchnorm
         if (args->fp16Inference())
         {
             command += " --convert-fp16 1";
@@ -243,7 +243,7 @@ int runCompiler(int sock, Arguments * args, std::string& clientName, InfComComma
         command += " nnir-output nnir-output_1";
         info("executing: %% %s", command.c_str());
         status = system(command.c_str());
-        sprintf(cmdUpdate.message, "python nnir-update.py fuse-ops 1 <--convert-fp16 1> nnir-output nnir-output_1 completed (%d)", status);
+        sprintf(cmdUpdate.message, "python nnir_update.py fuse-ops 1 <--convert-fp16 1> nnir-output nnir-output_1 completed (%d)", status);
         cmdUpdate.data[0] = (status != 0) ? -3 : 0;
         cmdUpdate.data[1] = 50;
         ERRCHK(sendCommand(sock, cmdUpdate, clientName));

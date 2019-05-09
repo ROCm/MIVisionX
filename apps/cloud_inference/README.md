@@ -2,7 +2,7 @@
 
 Inference Application Development Workflow |  Sample Cloud Inference Application
 :-------------------------:|:-------------------------:
-[![Block-Diagram-Inference-Workflow](../../docs/images/block_diagram_inference_workflow.png)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki#neural-network-inference-workflow-for-caffe-users)  |  [![Block-Diagram-Inference-Sample](../../docs/images/block_diagram_inference_sample.png)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/wiki#getting-started-with-neural-network-inference-sample)
+| <p> <img width="80%" src="../../docs/images/block_diagram_inference_workflow.png"/> </p> | <p> <img width="80%" src="../../docs/images/block_diagram_inference_sample.png"/></p> |
 
 
 ## Cloud Inference Engine
@@ -11,7 +11,7 @@ The cloud inference app is designed as a server and a client inference modules, 
 
 ## Inference Server Application - inference_server_app
 
-The server application is built along with MIVisionX and placed in `/opt/rocm/mivisionx/bin` when MIVisionX is installed. The server application has a command line interface.
+The [server application](server_app#mivisionx-inference-server) is built along with MIVisionX and placed in `/opt/rocm/mivisionx/bin` when MIVisionX is installed. The server application has a command line interface.
 
 usage:
 ````
@@ -28,7 +28,7 @@ inference_server_app    [-p port - default:26262]
 
 ## Client Application - client_app
 
-The client app needs to be built by the user using QT Creator. The client application has a GUI interface to connect with the server.
+The [client application](client_app#anninferenceapp---client-application) needs to be built by the user using QT Creator. The client application has a GUI interface to connect with the server.
 
 <p align="center"><img width="60%" src="../../docs/images/client_app.png" /></p>
 

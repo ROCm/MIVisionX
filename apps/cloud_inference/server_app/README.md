@@ -7,15 +7,15 @@ This Sample Inference Server supports:
 
 Command-line usage:
 ````
-inference_server_app    [-p port - default:26262]
-                        [-b default-batch-size - default:64]
-                        [-n <model-compiler-path> - default:/opt/rocm/mivisionx/model_compiler/python]
-                        [-fp16 <0/1> - default:0]
-                        [-w server-working-directory> - default:~]
-                        [-t num_cpu_dec_threads<2-64> - default:1]
-                        [-gpu <comma-separated-list-of-GPUs>]
-                        [-q <max-pending-batches>]
-                        [-s <local-shadow-folder-full-path>]
+  inference_server_app  [-p     <port>                           default:26262]
+                        [-b     <batch size>                     default:64]
+                        [-n     <model compiler path>            default:/opt/rocm/mivisionx/model_compiler/python]
+                        [-fp16  <ON:1 or OFF:0>                  default:0]
+                        [-w     <server working directory>       default:~/]
+                        [-t     <num cpu decoder threads [2-64]> default:1]
+                        [-gpu   <comma separated list of GPUs>]
+                        [-q     <max pending batches>]
+                        [-s     <local shadow folder full path>]
 ````
 
 Make sure that all executables and libraries are in `PATH` and `LD_LIBRARY_PATH` environment variables.

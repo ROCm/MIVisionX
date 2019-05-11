@@ -704,7 +704,6 @@ void inference_viewer::mouseReleaseEvent(QMouseEvent * event)
                 (y >= state->perfButtonRect.y()) &&
                 (y < (state->perfButtonRect.y() + state->perfButtonRect.height())))
         {
-            //TBD Function
             showPerfResults();
         }
         else if((x >= state->graphButtonRect.x()) &&
@@ -713,7 +712,6 @@ void inference_viewer::mouseReleaseEvent(QMouseEvent * event)
                 (y < (state->graphButtonRect.y() + state->graphButtonRect.height())))
         {
             showChartResults();
-            //TBD Function
         }
         state->exitButtonPressed = false;
         state->saveButtonPressed = false;

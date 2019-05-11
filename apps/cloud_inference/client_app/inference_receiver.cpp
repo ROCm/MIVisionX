@@ -225,6 +225,7 @@ void inference_receiver::run()
             }
             else {
                 progress->errorCode = -1;
+                progress->message.sprintf("ERROR: got invalid command 0x%08x", cmd.command);
                 break;
             }
         }

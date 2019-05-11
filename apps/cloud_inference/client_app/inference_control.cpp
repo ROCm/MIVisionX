@@ -28,7 +28,7 @@ inference_control::inference_control(int operationMode_, QWidget *parent)
     : QWidget(parent), connectionSuccessful{ false }, modelType{ 0 }, numModelTypes{ 0 }, dataLabels{ nullptr }, dataHierarchy{ nullptr },
       lastPreprocessMpy{ "1", "1", "1" }, lastPreprocessAdd{ "0", "0", "0" }
 {
-    setWindowTitle("MIVision Client Application");
+    setWindowTitle("AMD MIVisionX Inference Client Application");
     setMinimumWidth(800);
 
     maxGPUs = 1;

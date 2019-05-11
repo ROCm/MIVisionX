@@ -72,6 +72,7 @@ void inference_receiver::run()
     //    - when results are received add the results to imageIndex, imageLabel, imageSummary queues
 
     progress->images_sent = 0;
+    progress->images_received = 0;
     progress->completed_send = false;
     progress->completed = false;
 
@@ -85,6 +86,7 @@ void inference_receiver::run()
                 break;
             if(cmd.magic != INFCOM_MAGIC) {
                 progress->errorCode = -1;
+                progress->message.sprintf("ERROR: got invalid magic 0x%08x", cmd.magic);
                 break;
             }
             else if(cmd.command == INFCOM_CMD_DONE) {
@@ -111,6 +113,7 @@ void inference_receiver::run()
                 connection->sendCmd(reply);
             }
             else if(cmd.command == INFCOM_CMD_SEND_IMAGES) {
+                progress->message = "";
                 int count_requested = cmd.data[0];
                 int count = progress->completed_send ? -1 :
                                 std::min(imageCount - nextImageToSend, count_requested);
@@ -229,8 +232,8 @@ void inference_receiver::run()
     }
     else {
         progress->errorCode = -1;
+        progress->message.sprintf("ERROR: Unable to connect to %s:%d", serverHost.toStdString().c_str(), serverPort);
     }
-
 
     if(abortRequsted)
         progress->message += "[stopped]";
@@ -241,7 +244,6 @@ void inference_receiver::run()
     if(progress->errorCode) {
         qDebug("inference_receiver::run() terminated: errorCode=%d", progress->errorCode);
     }
-    printf("hi1\n");
 }
 
 float inference_receiver::getPerfImagesPerSecond()

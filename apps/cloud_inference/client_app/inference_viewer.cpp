@@ -1046,7 +1046,7 @@ void inference_viewer::paintEvent(QPaintEvent *)
             imageRows = imageCount / numCols;
             imageCols = imageCount % numCols;
         }
-
+        // get received image/rate
         float imagesPerSec = state->receiver_worker->getPerfImagesPerSecond();
         int E_secs = state->timerElapsed.elapsed() / 1000;
         int E_mins = (E_secs / 60) % 60;
@@ -1056,7 +1056,6 @@ void inference_viewer::paintEvent(QPaintEvent *)
         state->performance.updateElapsedTime(state->elapsedTime);
         state->performance.updateFPSValue(imagesPerSec);
         state->performance.updateTotalImagesValue(progress.images_received);
-
         state->chart.updateFPSValue(imagesPerSec);
         if(imagesPerSec > 0) {
             QString text;

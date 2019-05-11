@@ -235,6 +235,7 @@ void inference_receiver::run()
         progress->errorCode = -1;
         progress->message.sprintf("ERROR: Unable to connect to %s:%d", serverHost.toStdString().c_str(), serverPort);
     }
+
     if(abortRequsted)
         progress->message += "[stopped]";
     connection->close();

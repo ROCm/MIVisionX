@@ -704,7 +704,6 @@ void inference_viewer::mouseReleaseEvent(QMouseEvent * event)
                 (y >= state->perfButtonRect.y()) &&
                 (y < (state->perfButtonRect.y() + state->perfButtonRect.height())))
         {
-            //TBD Function
             showPerfResults();
         }
         else if((x >= state->graphButtonRect.x()) &&
@@ -713,7 +712,6 @@ void inference_viewer::mouseReleaseEvent(QMouseEvent * event)
                 (y < (state->graphButtonRect.y() + state->graphButtonRect.height())))
         {
             showChartResults();
-            //TBD Function
         }
         state->exitButtonPressed = false;
         state->saveButtonPressed = false;
@@ -1048,7 +1046,7 @@ void inference_viewer::paintEvent(QPaintEvent *)
             imageRows = imageCount / numCols;
             imageCols = imageCount % numCols;
         }
-
+        // get received image/rate
         float imagesPerSec = state->receiver_worker->getPerfImagesPerSecond();
         int E_secs = state->timerElapsed.elapsed() / 1000;
         int E_mins = (E_secs / 60) % 60;
@@ -1058,7 +1056,6 @@ void inference_viewer::paintEvent(QPaintEvent *)
         state->performance.updateElapsedTime(state->elapsedTime);
         state->performance.updateFPSValue(imagesPerSec);
         state->performance.updateTotalImagesValue(progress.images_received);
-
         state->chart.updateFPSValue(imagesPerSec);
         if(imagesPerSec > 0) {
             QString text;

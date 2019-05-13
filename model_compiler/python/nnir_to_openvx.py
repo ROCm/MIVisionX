@@ -340,7 +340,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             if node.type == 'conv':
                 pads = node.attr.get('pads')
                 dilations = node.attr.get('dilations')
-                groupCount = node.attr.get('group')
                 f.write( \
 """
     { vx_nn_convolution_params_t conv_params = { 0 };
@@ -351,10 +350,9 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       conv_params.down_scale_size_rounding = VX_NN_DS_SIZE_ROUNDING_FLOOR;
       conv_params.dilation_x = %d;
       conv_params.dilation_y = %d;
-      conv_params.group = %d;
       vx_node node = vxConvolutionLayer(graph, %s, %s, %s, &conv_params, sizeof(conv_params), %s);
       ERROR_CHECK_OBJECT(node);
-""" % (pads[0], pads[1], dilations[0] - 1, dilations[1] - 1, groupCount, \
+""" % (pads[0], pads[1], dilations[0] - 1, dilations[1] - 1, \
       node.inputs[0], node.inputs[1], node.inputs[2] if len(node.inputs) == 3 else 'NULL', node.outputs[0]))
                 if (node.attr.get('mode') != 0):
                     f.write( \
@@ -363,6 +361,14 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 5, (vx_reference) s_alpha));
       ERROR_CHECK_STATUS(vxReleaseScalar(&s_alpha));
 """)
+                if (node.attr.get('group') > 1):
+                    group = node.attr.get('group');
+                    f.write( \
+"""      vx_int32 groupCount = %d;
+      vx_scalar s_groupCount = vxCreateScalarWithSize(context, VX_TYPE_INT32, &groupCount, sizeof(groupCount));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 6, (vx_reference) s_groupCount));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_groupCount));
+""" % (group))
                 f.write( \
 """      ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }

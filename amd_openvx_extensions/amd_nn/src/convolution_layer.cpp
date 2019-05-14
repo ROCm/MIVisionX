@@ -77,7 +77,6 @@ static vx_status VX_CALLBACK validateConvolutionLayer(vx_node node, const vx_ref
         if(type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #5 type=%d (must be VX_TYPE_FLOAT32)\n", type);
         vx_float32 leaky_alpha = 1.0f;
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &leaky_alpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if(leaky_alpha < 0 || leaky_alpha > 1) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #5 leaky_alpha=%f (must be between 0 to 1.)\n", leaky_alpha);
     }
 
     if(parameters[6]) {
@@ -85,7 +84,6 @@ static vx_status VX_CALLBACK validateConvolutionLayer(vx_node node, const vx_ref
         if(type != VX_TYPE_INT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #6 type=%d (must be VX_TYPE_INT32)\n", type);
         vx_int32 groupCount = 1;
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[6], &groupCount, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if(groupCount < 1) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #6 groupCount=%d (must be equal to or greater than 1)\n", groupCount);
     }
 
     // check tensor dimensions

@@ -227,7 +227,6 @@ def nnef_graph_to_ir_graph(nnef_graph):
                 if isinstance(operation.inputs[name], float):
                     print(nnef_graph.tensors[operation.inputs['x']])
                     break
-                print(nnef_graph.tensors[operation.inputs[name]])
                 break
             #print(nnef_graph.tensors[operation.inputs]].shape)
             print('output:')
@@ -279,8 +278,8 @@ def nnef_graph_to_ir_graph(nnef_graph):
     return graph
 
 def nnef2ir(inputFolder, outputFolder):
-    nnef_graph = nnef.load_model(inputFolder)
-    #nnef.infer_shapes(nnef_graph)
+    nnef_graph = nnef.load_graph(inputFolder)
+    nnef.infer_shapes(nnef_graph)
     graph = nnef_graph_to_ir_graph(nnef_graph)
     graph.toFile(outputFolder)
 

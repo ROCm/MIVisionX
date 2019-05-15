@@ -242,7 +242,8 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 
 |Networks|Caffe|ONNX|NNEF|
 |--------|-----|----|----|
-|AlexNet||&#9745;||			
+|AlexNet||&#9745;||
+|Caffenet||&#9745;||
 |DenseNet||&#9745;||			
 |Emotion-Ferplus||||			
 |Googlenet|&#9745;|&#9745;|&#9745;|		

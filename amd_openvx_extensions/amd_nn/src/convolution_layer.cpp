@@ -57,6 +57,7 @@ struct ConvolutionLayerLocalData {
     miopenActivationDescriptor_t activation_desc;
     vx_int32 bias_activ_mode;
     vx_float32 leaky_alpha;
+    vx_int32 groupCount;
     vx_bool fusion_possible;
     miopenFusionPlanDescriptor_t fusePlanDesc;
     miopenFusionOpDescriptor_t convoOp;
@@ -76,7 +77,13 @@ static vx_status VX_CALLBACK validateConvolutionLayer(vx_node node, const vx_ref
         if(type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #5 type=%d (must be VX_TYPE_FLOAT32)\n", type);
         vx_float32 leaky_alpha = 1.0f;
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &leaky_alpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if(leaky_alpha < 0 || leaky_alpha > 1) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #5 leaky_alpha=%f (must be between 0 to 1.)\n", leaky_alpha);
+    }
+
+    if(parameters[6]) {
+        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[6], VX_SCALAR_TYPE, &type, sizeof(type)));
+        if(type != VX_TYPE_INT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #6 type=%d (must be VX_TYPE_INT32)\n", type);
+        vx_int32 groupCount = 1;
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[6], &groupCount, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
 
     // check tensor dimensions
@@ -107,7 +114,7 @@ static vx_status VX_CALLBACK validateConvolutionLayer(vx_node node, const vx_ref
     if((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: conv: #4 type=%d (must be float/float16)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
-    if(output_dims[3] != input_dims[3] || input_dims[2] != weights_dims[2] || output_dims[2] != weights_dims[3])
+    if(output_dims[3] != input_dims[3] || output_dims[2] != weights_dims[3])
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: conv: input[%ldx%ldx%ldx%ld] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]\n",
             input_dims[3], input_dims[2], input_dims[1], input_dims[0],
             weights_dims[3], weights_dims[2], weights_dims[1], weights_dims[0],
@@ -181,7 +188,25 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     rounding_policy = params.rounding_policy;
     dilation_h = params.dilation_y + 1;
     dilation_w = params.dilation_x + 1;
-    miopenConvolutionMode_t mode = miopenConvolution;
+    
+    data->groupCount = 1;
+    if(parameters[6])
+    {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[6], &data->groupCount, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    }
+    if(data->groupCount < 1)
+    {
+        data->groupCount = 1;
+    }
+    miopenConvolutionMode_t mode;
+    if(data->groupCount == 1)
+    {
+        mode = miopenConvolution;
+    }
+    else
+    {
+        mode = miopenGroupConv;
+    }
 
     // override default cbr_mode by NN_MIOPEN_CBR_MODE environment variable.
     vx_int32 nn_cbr_mode = getEnvironmentVariable("NN_MIOPEN_CBR_MODE");
@@ -203,7 +228,13 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
         vx_size num_dims;
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(vx_size)));
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, bias_dims, num_dims * sizeof(vx_size)));
-    }
+    }  
+    
+    if(input_dims[2] != (weights_dims[2] * data->groupCount))
+        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "initialize: conv: input[%ldx%ldx%ldx%ld] weights[%ldx%ldx%ldx%ld] output[%ldx%ldx%ldx%ld]\n",
+            input_dims[3], input_dims[2], input_dims[1], input_dims[0],
+            weights_dims[3], weights_dims[2], weights_dims[1], weights_dims[0],
+            output_dims[3], output_dims[2], output_dims[1], output_dims[0]);
 
     vx_size stride_h, stride_w;
     vx_size kernel_h, kernel_w;
@@ -250,6 +281,9 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     //Convolution Descriptor.
     ERROR_CHECK_MIOPEN_STATUS(miopenCreateConvolutionDescriptor(&data->conv_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenInitConvolutionDescriptor(data->conv_desc, mode, pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w));
+
+    //Grouped Convolution
+    ERROR_CHECK_MIOPEN_STATUS(miopenSetConvolutionGroupCount(data->conv_desc, data->groupCount));
 
     //Memory Declaration.
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
@@ -380,7 +414,7 @@ static vx_status VX_CALLBACK uninitializeConvolutionLayer(vx_node node, const vx
 vx_status publishConvolutionLayer(vx_context context)
 {
     // add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.khronos.nn_extension.convolution_layer", VX_KERNEL_CONVOLUTION_LAYER, processConvolutionLayer, 6, validateConvolutionLayer, initializeConvolutionLayer, uninitializeConvolutionLayer);
+    vx_kernel kernel = vxAddUserKernel(context, "org.khronos.nn_extension.convolution_layer", VX_KERNEL_CONVOLUTION_LAYER, processConvolutionLayer, 7, validateConvolutionLayer, initializeConvolutionLayer, uninitializeConvolutionLayer);
     ERROR_CHECK_OBJECT(kernel);
 
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
@@ -394,6 +428,7 @@ vx_status publishConvolutionLayer(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
 
     // finalize and release kernel object
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));

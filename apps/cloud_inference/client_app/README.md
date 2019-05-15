@@ -1,10 +1,11 @@
-# annInferenceApp
+# annInferenceApp - Client Application
 
 This Sample Inference Application supports:
-* connect to [annInferenceServer](../annInferenceServer/README.md) 
+
+* connect to [inference_server_app](../server_app#mivisionx-inference-server) 
   * queries number of GPUs on the server
   * queries pre-loaded neural network models on the server
-* upload pre-trained CAFFE models (optional)
+  * upload pre-trained CAFFE models (optional)
   * specify input width and height dimensions
   * browse and pick deploy.prototxt and weights.caffemodel files
   * specify input preprocesor values for normalization (if needed)
@@ -12,8 +13,10 @@ This Sample Inference Application supports:
   * optionally, you can publish your neural network for use by others
     * select "PublishAs"
     * give a name to your model
-    * type password (default passowrd of `annInferenceServer` is "**radeon**")
+    * type password (default passowrd of `inference_server_app` is "**radeon**")
+    
 * pick a CNN model, if upload option is not used
+
 * run inference on images from a folder
   * browse and pick labels (i.e., synset words for each output label)
   * browse and pick input images to be classified

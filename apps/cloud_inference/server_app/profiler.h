@@ -16,12 +16,12 @@
 
 #define PROFILER_DEFINE_EVENT_ENUM(g,e) ePROFILER_EVENT_ENUM_ ## g ## e,
 enum ProfilerEventEnum {
-	PROFILER_DEFINE_EVENT_ENUM(AnnInferenceServer, workMasterInputQ)
-    PROFILER_DEFINE_EVENT_ENUM(AnnInferenceServer, workDeviceInputCopyBatch)
-    PROFILER_DEFINE_EVENT_ENUM(AnnInferenceServer, workDeviceInputCopyJpegDecode)
-    PROFILER_DEFINE_EVENT_ENUM(AnnInferenceServer, workDeviceProcess)
-    PROFILER_DEFINE_EVENT_ENUM(AnnInferenceServer, workDeviceOutputCopy)
-    PROFILER_DEFINE_EVENT_ENUM(AnnInferenceServer, workRGBtoTensor)
+    PROFILER_DEFINE_EVENT_ENUM(inference_server_app, workMasterInputQ)
+    PROFILER_DEFINE_EVENT_ENUM(inference_server_app, workDeviceInputCopyBatch)
+    PROFILER_DEFINE_EVENT_ENUM(inference_server_app, workDeviceInputCopyJpegDecode)
+    PROFILER_DEFINE_EVENT_ENUM(inference_server_app, workDeviceProcess)
+    PROFILER_DEFINE_EVENT_ENUM(inference_server_app, workDeviceOutputCopy)
+    PROFILER_DEFINE_EVENT_ENUM(inference_server_app, workRGBtoTensor)
 	PROFILER_NUM_EVENTS
 };
 void __stdcall PROFILER_INITIALIZE();

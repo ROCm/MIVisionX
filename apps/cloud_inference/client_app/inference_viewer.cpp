@@ -18,7 +18,7 @@
 #include <sstream>
 #include <QElapsedTimer>
 
-#define WINDOW_TITLE             "MIVision Viewer"
+#define WINDOW_TITLE             "AMD MIVisionX Inference Viewer"
 #define ICON_SIZE                64
 #define ICON_STRIDE              (ICON_SIZE + 8)
 #define INFCOM_RUNTIME_OPTIONS   ""
@@ -69,6 +69,9 @@ inference_state::inference_state()
     perfButtonPressed = false;
     startTime =  "";
     elapsedTime = "";
+    // graph results
+    graphButtonRect = QRect(0, 0, 0, 0);
+    graphButtonPressed = false;
 }
 
 inference_viewer::inference_viewer(QString serverHost, int serverPort, QString modelName,
@@ -169,6 +172,8 @@ void inference_viewer::terminate()
             QThread::msleep(100);
         }
     }
+    state->performance.closePerformanceView();
+    state->chart.closeChartView();
     close();
 }
 
@@ -179,6 +184,12 @@ void inference_viewer::showPerfResults()
     state->performance.setNumGPU(state->GPUs);
     state->performance.show();
 
+}
+
+void inference_viewer::showChartResults()
+{
+    state->chart.setGPUs(state->GPUs);
+    state->chart.show();
 }
 
 void inference_viewer::saveResults()
@@ -652,6 +663,15 @@ void inference_viewer::mousePressEvent(QMouseEvent * event)
         {
             state->perfButtonPressed = true;
         }
+        // check graph button
+        state->graphButtonPressed = false;
+        if((x >= state->graphButtonRect.x()) &&
+           (x < (state->graphButtonRect.x() + state->graphButtonRect.width())) &&
+           (y >= state->graphButtonRect.y()) &&
+           (y < (state->graphButtonRect.y() + state->graphButtonRect.height())))
+        {
+            state->graphButtonPressed = true;
+        }
     }
 }
 
@@ -684,12 +704,19 @@ void inference_viewer::mouseReleaseEvent(QMouseEvent * event)
                 (y >= state->perfButtonRect.y()) &&
                 (y < (state->perfButtonRect.y() + state->perfButtonRect.height())))
         {
-            //TBD Function
             showPerfResults();
+        }
+        else if((x >= state->graphButtonRect.x()) &&
+                (x < (state->graphButtonRect.x() + state->graphButtonRect.width())) &&
+                (y >= state->graphButtonRect.y()) &&
+                (y < (state->graphButtonRect.y() + state->graphButtonRect.height())))
+        {
+            showChartResults();
         }
         state->exitButtonPressed = false;
         state->saveButtonPressed = false;
         state->perfButtonPressed = false;
+        state->graphButtonPressed = false;
         // abort loading
         if(!state->imageLoadDone &&
            (x >= state->statusBarRect.x()) &&
@@ -731,6 +758,9 @@ void inference_viewer::keyReleaseEvent(QKeyEvent * event)
     else if(event->key() == Qt::Key_P) {
         showPerfResults();
     }
+    else if(event->key() == Qt::Key_C) {
+        showChartResults();
+    }
 }
 
 void inference_viewer::paintEvent(QPaintEvent *)
@@ -744,16 +774,21 @@ void inference_viewer::paintEvent(QPaintEvent *)
     QString exitButtonText = " Close ";
     QString saveButtonText = " Save ";
     QString perfButtonText = "Performance";
+    QString graphButtonText = " Graph ";
     QFontMetrics fontMetrics(state->statusBarFont);
-    int buttonTextWidth = fontMetrics.width(perfButtonText);
-    int statusBarX = 8 + 3*(10 + buttonTextWidth + 10 + 8), statusBarY = 8;
+    int buttonExitTextWidth = fontMetrics.width(exitButtonText);
+    int buttonSaveTextWidth = fontMetrics.width(saveButtonText);
+    int buttonPerfTextWidth = fontMetrics.width(perfButtonText);
+    int buttonGraphTextWidth = fontMetrics.width(graphButtonText);
+    int statusBarX = 8 + (55 + buttonSaveTextWidth + buttonExitTextWidth + buttonPerfTextWidth + buttonGraphTextWidth + 55), statusBarY = 8;
     int statusBarWidth = width() - 8 - statusBarX;
     int statusBarHeight = fontMetrics.height() + 16;
     int imageX = 8;
     int imageY = statusBarY + statusBarHeight + 8;
-    state->saveButtonRect = QRect(8, statusBarY, 10 + buttonTextWidth + 10, statusBarHeight);
-    state->exitButtonRect = QRect(8 + (10 + buttonTextWidth + 10 + 8), statusBarY, 10 + buttonTextWidth + 10, statusBarHeight);
-    state->perfButtonRect = QRect(8 + (70 + buttonTextWidth + 65 + 16), statusBarY, 10 + buttonTextWidth + 10, statusBarHeight);
+    state->saveButtonRect = QRect(8, statusBarY, 5 + buttonSaveTextWidth + 5, statusBarHeight);
+    state->exitButtonRect = QRect(8 + (10 + buttonSaveTextWidth + 10 ), statusBarY, 10 + buttonExitTextWidth + 10, statusBarHeight);
+    state->perfButtonRect = QRect(8 + (25 + buttonSaveTextWidth + buttonExitTextWidth + 25), statusBarY, 10 + buttonPerfTextWidth + 10, statusBarHeight);
+    state->graphButtonRect = QRect(8 + (40 + buttonSaveTextWidth + buttonExitTextWidth + buttonPerfTextWidth + 40), statusBarY, 10 + buttonGraphTextWidth + 10, statusBarHeight);
     state->statusBarRect = QRect(statusBarX, statusBarY, statusBarWidth, statusBarHeight);
     QColor statusBarColorBackground(192, 192, 192);
     QColor statusBarColorLoad(255, 192, 64);
@@ -866,7 +901,7 @@ void inference_viewer::paintEvent(QPaintEvent *)
             if(state->sendFileName){
                 // extract only the last folder and filename for shadow
                 QStringList fileNameList = fileName.split("/");
-                QString subFileName = fileNameList.at(fileNameList.size()- 2) + "/" + fileNameList.last();
+                QString subFileName = fileNameList.at(fileNameList.size() - 2) + "/" + fileNameList.last();
                 //printf("Inference viewer adding file %s to shadow array of size %d\n", subFileName.toStdString().c_str(), byteArray.size());
                 state->shadowFileBuffer.push_back(subFileName);
             }
@@ -1021,6 +1056,7 @@ void inference_viewer::paintEvent(QPaintEvent *)
         state->performance.updateElapsedTime(state->elapsedTime);
         state->performance.updateFPSValue(imagesPerSec);
         state->performance.updateTotalImagesValue(progress.images_received);
+        state->chart.updateFPSValue(imagesPerSec);
         if(imagesPerSec > 0) {
             QString text;
             text.sprintf("... %.1f images/sec", imagesPerSec);
@@ -1035,10 +1071,12 @@ void inference_viewer::paintEvent(QPaintEvent *)
     painter.drawRoundedRect(state->exitButtonRect, 4, 4);
     painter.drawRoundedRect(state->saveButtonRect, 4, 4);
     painter.drawRoundedRect(state->perfButtonRect, 4, 4);
+    painter.drawRoundedRect(state->graphButtonRect, 4, 4);
     painter.setPen(buttonTextColor);
     painter.drawText(state->exitButtonRect, Qt::AlignCenter, exitButtonText);
     painter.drawText(state->saveButtonRect, Qt::AlignCenter, saveButtonText);
     painter.drawText(state->perfButtonRect, Qt::AlignCenter, perfButtonText);
+    painter.drawText(state->graphButtonRect, Qt::AlignCenter, graphButtonText);
 
     // in case fatal error, replace status text with the error message
     if(fatalError.length() > 0)
@@ -1277,7 +1315,7 @@ void inference_viewer::paintEvent(QPaintEvent *)
         else
             text.sprintf("classified as [label=%d] ", resultLabel);
         text += resultSummary;
-        painter.drawText(QRect(x + 4 + ICON_SIZE * 2 + 4, y + 4 + fontMetrics.height() + 8, w - 8, fontMetrics.height()), Qt::AlignLeft | Qt::AlignTop, text);       
+        painter.drawText(QRect(x + 4 + ICON_SIZE * 2 + 4, y + 4 + fontMetrics.height() + 8, w - 8, fontMetrics.height()), Qt::AlignLeft | Qt::AlignTop, text);
         if(truthLabel >= 0) {
             font.setItalic(true);
             setFont(font);

@@ -3,7 +3,7 @@ The AMD WinML (vx_winml) is an OpenVX module that implements a mechanism to acce
 
 <p align="center"><img width="80%" src="../../docs/images/winmlFrameWorks.png" /></p>
 
-WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
+The WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 <p align="center"><img width="100%" src="../../docs/images/winmlRuntime.png" /></p>
 

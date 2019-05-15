@@ -3,6 +3,7 @@
 
 #include "inference_receiver.h"
 #include "perf_graph.h"
+#include "perf_chart.h"
 #include <QWidget>
 #include <QFont>
 #include <QThread>
@@ -83,9 +84,13 @@ public:
     QRect perfButtonRect;
     bool perfButtonPressed;
     perf_graph performance;
+    perf_chart chart;
     QString startTime;
     QElapsedTimer timerElapsed;
     QString elapsedTime;
+    // performance graph
+    QRect graphButtonRect;
+    bool graphButtonPressed;
 };
 
 class inference_viewer : public QWidget
@@ -114,6 +119,7 @@ private:
     void startReceiver();
     void saveResults();
     void showPerfResults();
+    void showChartResults();
     void terminate();
 
 private:

@@ -19,12 +19,12 @@
 
 #define PROFILER_DEFINE_EVENT_NAME_ENUM(g,e) #g "-" #e,
 const char * ProfilerEventName[] = {
-    PROFILER_DEFINE_EVENT_NAME_ENUM(AnnInferenceServer, workMasterInputQ)
-    PROFILER_DEFINE_EVENT_NAME_ENUM(AnnInferenceServer, workDeviceInputCopyBatch)
-    PROFILER_DEFINE_EVENT_NAME_ENUM(AnnInferenceServer, workDeviceInputCopyJpegDecode)
-    PROFILER_DEFINE_EVENT_NAME_ENUM(AnnInferenceServer, workDeviceProcess)
-    PROFILER_DEFINE_EVENT_NAME_ENUM(AnnInferenceServer, workDeviceOutputCopy)
-    PROFILER_DEFINE_EVENT_NAME_ENUM(AnnInferenceServer, workRGBtoTensor)
+    PROFILER_DEFINE_EVENT_NAME_ENUM(inference_server_app, workMasterInputQ)
+    PROFILER_DEFINE_EVENT_NAME_ENUM(inference_server_app, workDeviceInputCopyBatch)
+    PROFILER_DEFINE_EVENT_NAME_ENUM(inference_server_app, workDeviceInputCopyJpegDecode)
+    PROFILER_DEFINE_EVENT_NAME_ENUM(inference_server_app, workDeviceProcess)
+    PROFILER_DEFINE_EVENT_NAME_ENUM(inference_server_app, workDeviceOutputCopy)
+    PROFILER_DEFINE_EVENT_NAME_ENUM(inference_server_app, workRGBtoTensor)
     ""
 };
 
@@ -81,7 +81,7 @@ const char * footer =
 "alt = \"RadeonLoom\" style=\"float:center; width:160px; height:60px; \"></td>\n"
 "</tr>\n"
 "<tr>\n"
-"<th><b><strong>AnnInferenceServer</strong> Visual Profiling</b></th>\n"
+"<th><b><strong>inference_server_app</strong> Visual Profiling</b></th>\n"
 "</tr>\n"
 "</table>\n"
 "<body onload='load()'>\n"
@@ -108,11 +108,11 @@ static void dump_profile_log()
     CreateDirectory("AnnInfereceServer-Visual-Profile", NULL);
 #else
 	struct stat st = {0};
-    if (stat("AnnInferenceServer-Visual-Profile", &st) == -1) {	mkdir("AnnInferenceServer-Visual-Profile", 0700); }
+    if (stat("inference_server_app-Visual-Profile", &st) == -1) {	mkdir("inference_server_app-Visual-Profile", 0700); }
 #endif
-    char profiler[1024] = "AnnInferenceServer-Visual-Profile/AnnInfereceServer-profile";
+    char profiler[1024] = "inference_server_app-Visual-Profile/AnnInfereceServer-profile";
 	char textBuffer[1024];
-    if (ls_getEnvironmentVariable("VISUAL_PROFILER_LOCATION", textBuffer, sizeof(textBuffer))){sprintf(profiler, "%s/AnnInferenceServer-profile", textBuffer);}
+    if (ls_getEnvironmentVariable("VISUAL_PROFILER_LOCATION", textBuffer, sizeof(textBuffer))){sprintf(profiler, "%s/inference_server_app-profile", textBuffer);}
 	char plogfile[1024]; sprintf(plogfile, "%s-data.log", profiler);
 	char phtmfile[1024]; sprintf(phtmfile, "%s-visual.html", profiler);
     FILE * fp = fopen(plogfile, "w"); if (!fp) { error("ERROR: unable to create '%s'\n", plogfile); return; }
@@ -230,7 +230,7 @@ static void dump_profile_log()
 	height = 60 + nidlist * 50 + 100;
 	fprintf(fh, footer, xstart - 30, width - xstart + 50, height);
 	fclose(fh);
-    info("AnnInferenceServer Visual Profile:Dumped profiler log from %d events into %s and %s\n", profiler_count, plogfile, phtmfile);
+    info("inference_server_app Visual Profile:Dumped profiler log from %d events into %s and %s\n", profiler_count, plogfile, phtmfile);
 }
 
 void __stdcall _PROFILER_START(ProfilerEventEnum e)
@@ -266,7 +266,7 @@ void __stdcall _PROFILER_DATA(ProfilerEventEnum e, __int64 value)
 
 void __stdcall PROFILER_INITIALIZE()
 {
-    info("AnnInferenceServer Visual Profile:Start\n");
+    info("inference_server_app Visual Profile:Start\n");
 	if (profiler_init++ == 0)
 	{
 		int EnableProfiler = 16000;
@@ -282,7 +282,7 @@ void __stdcall PROFILER_INITIALIZE()
 
 void __stdcall PROFILER_SHUTDOWN()
 {
-    info("AnnInferenceServer Visual Profile:Stop \n");
+    info("inference_server_app Visual Profile:Stop \n");
 	if (--profiler_init == 0)
 	{
 		if (profiler_data)

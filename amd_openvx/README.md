@@ -10,7 +10,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
 * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
 
-This software is provided under a MIT-style license,  see the file COPYRIGHT.txt for details.
+This software is provided under an MIT-style license,  see the file COPYRIGHT.txt for details.
 
 ## Features
 * The code is highly optimized for both x86 CPU and OpenCL for GPU

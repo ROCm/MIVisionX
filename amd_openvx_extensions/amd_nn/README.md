@@ -14,7 +14,9 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Deconvolution|vxDeconvolutionLayer|org.khronos.nn_extension.deconvolution_layer |
 | Fully Connected|vxFullyConnectedLayer|org.khronos.nn_extension.fully_connected_layer |
 | Local Response Normalization|vxNormalizationLayer|org.khronos.nn_extension.normalization_layer |
+| Permute|vxPermuteLayer|com.amd.nn_extension.permute_layer |
 | Pooling|vxPoolingLayer|org.khronos.nn_extension.pooling_layer |
+| Prior Box|vxPriorBoxLayer|com.amd.nn_extension.prior_box_layer|
 | ROI Pooling|vxROIPoolingLayer|org.khronos.nn_extension.roi_pooling_layer |
 | Scale|vxScaleLayer|com.amd.nn_extension.scale_layer |
 | Slice|vxSliceLayer|com.amd.nn_extension.slice_layer |

@@ -183,7 +183,7 @@ def onnx2ir(model, output_folder):
 
 def main():
     if len(sys.argv) < 3:
-        print('Usage: python onnx2nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]')
+        print('Usage: python onnx_to_nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]')
         sys.exit(1)
     onnxFileName = sys.argv[1]
     outputFolder = sys.argv[2]

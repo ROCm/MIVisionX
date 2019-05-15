@@ -27,7 +27,7 @@ tensor_type_nnir2openvx = {
     'F016' : 'VX_TYPE_FLOAT16',
     'U016' : 'VX_TYPE_UINT16',
     'I016' : 'VX_TYPE_INT16',
-    'U008' : 'VX_TYPE_UINT8',    
+    'U008' : 'VX_TYPE_UINT8',
     'I064' : 'VX_TYPE_INT64'
 }
 

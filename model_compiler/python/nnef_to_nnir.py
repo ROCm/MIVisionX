@@ -86,25 +86,25 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                         f_W = 0
                     output_tensor = nnef_tensor[nnef_operation.outputs['output']]
                     stride = nnef_attribs['stride']
-                    stride = [stride for stride in nnef_attribs[attrib]]
-                    if len(stride) == 4:
-                        stride = stride[2:]
-                    elif len(stride) == 0:
-                        stride = [1, 1]
+                    strides = [stride for stride in nnef_attribs[attrib]]
+                    if len(strides) == 4:
+                        strides = strides[2:]
+                    elif len(strides) == 0:
+                        strides = [1, 1]
                     dilation = nnef_attribs['dilation']
-                    dilation = [dilation for dilation in nnef_attribs[attrib]]
-                    if len(dilation) == 4:
-                        dilation = dilation[2:]
-                    elif len(dilation) == 0:
-                        dilation = [1, 1]
+                    dilations = [dilation for dilation in nnef_attribs[attrib]]
+                    if len(dilations) == 4:
+                        dilations = dilations[2:]
+                    elif len(dilations) == 0:
+                        dilations = [1, 1]
                     in_H = input_tensor.shape[2]
                     in_W = input_tensor.shape[3]
                     out_H = output_tensor.shape[2]
                     out_W = output_tensor.shape[3]
-                    s_H = stride[0]
-                    s_W = stride[1]
-                    d_H = dilation[0]
-                    d_W = dilation[1]
+                    s_H = strides[0]
+                    s_W = strides[1]
+                    d_H = dilations[0]
+                    d_W = dilations[1]
                     fd_H = (f_H - 1) * d_H + 1
                     fd_W = (f_W - 1) * d_W + 1
                     tp_H = ((out_H - 1) * s_H + fd_H - in_H) / 2
@@ -223,10 +223,9 @@ def nnef_graph_to_ir_graph(nnef_graph):
                 for input in operation.inputs:
                     if isinstance(operation.inputs[input], float):
                         scalarCount += 1
-                        tensor = IrTensor()
                         name = 'scalar_' + str(scalarCount)
                         if input == 'bias':
-                            filter_tensor = tensor = nnef_graph.tensors[operation.inputs['filter']]
+                            filter_tensor = nnef_graph.tensors[operation.inputs['filter']]
                             shape = [1, filter_tensor.shape[0]]
                         elif input == 'x' or input == 'y' or input == 'z':                            
                             shape = output_tensor.shape

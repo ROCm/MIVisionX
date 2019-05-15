@@ -194,7 +194,10 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     {
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[6], &data->groupCount, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
-    
+    if(data->groupCount < 1)
+    {
+        data->groupCount = 1;
+    }
     miopenConvolutionMode_t mode;
     if(data->groupCount == 1)
     {

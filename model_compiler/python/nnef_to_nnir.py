@@ -178,10 +178,6 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         if len(output_shape) < 4:
             for i in range(len(axes)):
                 output_shape.insert(axes[i], 1)
-        print(input_shape)
-        print(nnef_graph.tensors[nnef_operation.inputs['input']].name)
-        print(output_shape)
-        exit(1)
         del nnef_operation.attribs['axes']
         nnef_operation.attribs.update({'shape': output_shape})
 
@@ -220,20 +216,6 @@ def nnef_graph_to_ir_graph(nnef_graph):
             graph.addVariable(nnef_tensor_to_ir_tensor(tensor))
             graph.addBinary(tensor_name, tensor.data)
         else:
-            print('\n')
-            print(operation.name)
-            print('input:')
-            for name in operation.inputs:
-                if isinstance(operation.inputs[name], float):
-                    print(nnef_graph.tensors[operation.inputs['x']])
-                    break
-                break
-            #print(nnef_graph.tensors[operation.inputs]].shape)
-            print('output:')
-            for name in operation.outputs:
-                print(nnef_graph.tensors[operation.outputs[name]])
-                break
-            # add node(s)
             for name in operation.outputs:
                 output_tensor = nnef_graph.tensors[operation.outputs[name]]
                 graph.addLocal(nnef_tensor_to_ir_tensor(output_tensor))
@@ -252,7 +234,7 @@ def nnef_graph_to_ir_graph(nnef_graph):
                                 shape = [1, output_tensor.shape[0]]
                             while len(shape) < 4:
                                 shape.append(1)
-                        nnef_graph.tensors[operation.inputs[input]].shape = shape
+
                         scalar_tensor = IrTensor()
                         scalar_tensor.setName(name)
                         scalar_tensor.setInfo('F032', shape)

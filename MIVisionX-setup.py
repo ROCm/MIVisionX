@@ -14,7 +14,7 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', type=str, default='',        help='Setup home directory - optional (default:~/)')
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
-parser.add_argument('--miopen',    type=str, default='1.7.1',   help='MIOpen Version - optional (default:1.7.1)')
+parser.add_argument('--miopen',    type=str, default='1.8.1',   help='MIOpen Version - optional (default:1.8.1)')
 args = parser.parse_args()
 
 setupDir = args.directory

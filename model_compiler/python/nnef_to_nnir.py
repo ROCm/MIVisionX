@@ -160,6 +160,9 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     if nnef_operation.name == 'conv':
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
         nnef_operation.attribs.update({'size': [filter_tensor.shape[3], filter_tensor.shape[2]]})
+    
+    if nnef_operation.name == 'add' or nnef_operation.name == 'sub' or nnef_operation.name == 'mul':
+        output_tensor = nnef_graph.tensors[nnef_operation.outputs['z']]
 
     if nnef_operation.name == 'matmul':
         nnef_operation.attribs.update({'beta': 0.0})
@@ -173,12 +176,15 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     
     if nnef_operation.name == 'unsqueeze':
         input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
+        print 'unsqueeze'
+        print input_shape
         axes = nnef_operation.attribs['axes']
         output_shape = input_shape
         if len(output_shape) < 4:
             for i in range(len(axes)):
                 output_shape.insert(axes[i], 1)
         del nnef_operation.attribs['axes']
+        print output_shape
         nnef_operation.attribs.update({'shape': output_shape})
 
     inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
@@ -253,6 +259,8 @@ def nnef_graph_to_ir_graph(nnef_graph):
     # add output(s)
     for tensor_name in nnef_graph.outputs:
         tensor = nnef_graph.tensors[tensor_name]
+        while len(tensor.shape) < 4:
+            tensor.shape.append(1)
         graph.addOutput(nnef_tensor_to_ir_tensor(tensor))
 
     graph.updateLocals()

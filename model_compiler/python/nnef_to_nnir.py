@@ -1,4 +1,3 @@
-import os, sys
 import nnef
 import numpy as np
 import math
@@ -160,9 +159,6 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     if nnef_operation.name == 'conv':
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
         nnef_operation.attribs.update({'size': [filter_tensor.shape[3], filter_tensor.shape[2]]})
-    
-    if nnef_operation.name == 'add' or nnef_operation.name == 'sub' or nnef_operation.name == 'mul':
-        output_tensor = nnef_graph.tensors[nnef_operation.outputs['z']]
 
     if nnef_operation.name == 'matmul':
         nnef_operation.attribs.update({'beta': 0.0})

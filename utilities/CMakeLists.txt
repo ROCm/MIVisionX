@@ -32,12 +32,13 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_INSTALL_PREFIX /opt/rocm/mivisionx)
 
-
 if(OpenCL_FOUND)
     add_subdirectory(runvx)
     add_subdirectory (runcl)
     add_subdirectory (loom_shell)
-    if(FFMPEG_FOUND)
-        add_subdirectory (loom_io_media)
-    endif(FFMPEG_FOUND)
+    add_subdirectory (mv_deploy)
 endif(OpenCL_FOUND)
+
+install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION include)
+install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION model_compiler)
+install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION model_compiler)

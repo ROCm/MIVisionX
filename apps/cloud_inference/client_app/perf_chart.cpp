@@ -19,6 +19,7 @@ perf_chart::~perf_chart()
 void perf_chart::initGraph()
 {
     ui->CustomPlot->addGraph();
+    ui->CustomPlot->graph(0)->setPen(QPen(Qt::darkCyan, 4));
 
     QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
     timeTicker->setTimeFormat("%h:%m:%s");

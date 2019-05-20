@@ -5,8 +5,6 @@
 #include <QTimer>
 #include <QtWidgets>
 
-static const Qt::GlobalColor colors[4] = {Qt::blue, Qt::green, Qt::red, Qt::yellow};
-
 namespace Ui {
 class perf_chart;
 }

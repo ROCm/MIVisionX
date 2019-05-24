@@ -28,7 +28,6 @@ nnef2ir_op_type = {
     'avg_pool'                              : 'avg_pool',
     'max_pool'                              : 'max_pool',
     'mean_reduce'                           : 'global_avg_pool',
-    'argmax_reduce'                         : 'global_avg_pool',
     'relu'                                  : 'relu',
     'add'                                   : 'add',
     'mul'                                   : 'mul',

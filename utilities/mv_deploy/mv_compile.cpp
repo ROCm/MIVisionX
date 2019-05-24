@@ -197,13 +197,13 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
 }
 
 void printUsage() {
-    printf("Usage: mvcompile --model <model_name> --install_folder <install_folder> --input_dims <input_dims> --backend <backend> --fuse_cba <fuse_cba> --quant_mode <quant_mode> \n"
-        "   --model <model_name> : name of the trained model with path\n"
-        "   --install_folder <install_folder> : the location for compiled model\n"
-        "   --input_dims <n,c,h,w> : dimension of input for the model given in format (n,c,h,w)\n"
-        "   --backend <backend>: optional (default:OpenVX_Rocm_OpenCL) is the name of the backend for compilation \n"
-        "   --fuse_cba <0/1> : optional(default:0): enable or disable Convolution_bias_activation fuse mode (0/1)\n"
-        "   --quant_mode <fp32/fp16/int8> : optional(default:fp32) quantization_mode for the model: if enabled the model and weights would be converted.\n"
+    printf("Usage: mv_compile options..\n"
+        "\t--model <model_name> : name of the trained model with full path    \t\t[required]\n"
+        "\t--install_folder <install_folder> : the location for compiled model\t\t[required]\n"
+        "\t--input_dims <n,c,h,w>: dimension of input for the model given in format NCHW\t[required]\n"
+        "\t--backend <backend>: is the name of the backend for compilation\t\t\t[optional-default:OpenVX_Rocm_OpenCL]\n"
+        "\t--fuse_cba <0/1> :enable or disable Convolution_bias_activation fuse mode(0/1)\t[optional-default:0]\n"
+        "\t--quant_mode <fp32/fp16>: quant_mode for the model, if enabled the model and weights are converted to FP16\t[optional(default:fp32)]\n"
         "\n"
     );
 }

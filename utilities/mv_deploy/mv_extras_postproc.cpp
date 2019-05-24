@@ -78,7 +78,7 @@ MIVID_API_ENTRY void MIVID_API_CALL mv_postproc_shutdown(mivid_session session)
 MIVID_API_ENTRY mv_status MIVID_API_CALL mv_postproc_argmax(void *data, void *output, int topK, int n, int c, int h, int w)
 {
     for (int b=0; b < n; b++) {
-        float *out_data = (float*)data + n*c;
+        float *out_data = (float*)data + b*(c*h*w);
         std::vector<float>  prob_vec(out_data, out_data + c);
         std::vector<size_t> idx(prob_vec.size());
         std::iota(idx.begin(), idx.end(), 0);		// index vector from 0 to #classes

@@ -1213,7 +1213,7 @@ mvDeployAPI::mvDeployAPI(const char *library_name)
     libHandle = dlopen(library_name, RTLD_NOW | RTLD_LOCAL);
     if (!libHandle)
     {
-        printf("ERROR: couldn't load MIVisionX deployment lib %s\\n", library_name);
+        printf("ERROR: couldn't load MIVisionX deployment lib %s errorcode: %s \\n", library_name, dlerror());
         mvQueryInference_f          = nullptr;
         mvSetLogCallback_f          = nullptr;
         mvSetPreProcessCallback_f   = nullptr;
@@ -1580,6 +1580,7 @@ def generateTestCPP(graph,argmaxOutput,fileName):
 """
 #include "mvdeploy.h"
 #include "vx_amd_media.h"
+#include <iterator>
 
 // callback function for adding preprocessing nodes
 // the module should output in the outp_tensor passed by the callback function
@@ -1596,29 +1597,8 @@ inline int64_t clockFrequency()
 static vx_status MIVID_CALLBACK preprocess_addnodes_callback_fn(mivid_session inf_session, vx_tensor outp_tensor, const char *inp_string, float a, float b)
 {
     if (inf_session) {
-        mivid_handle hdl = (mivid_handle) inf_session;
-        vx_context context = hdl->context;
-        vx_graph graph   = hdl->graph;
-        ERROR_CHECK_OBJECT(context);
-        ERROR_CHECK_OBJECT(graph);
-        ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_amd_media"));
-        // query outp_tensor for dims
-        vx_size num_dims, tens_dims[4] = { 1, 1, 1, 1 };
-        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)outp_tensor, VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-        if (num_dims != 4) {
-            printf("preprocess_addnodes_callback_fn:: outp_tensor num_dims=%ld (must be 4)\\n", num_dims);
-            return VX_ERROR_INVALID_DIMENSION;
-        }
-        ERROR_CHECK_STATUS(vxQueryTensor(outp_tensor, VX_TENSOR_DIMS, tens_dims, sizeof(tens_dims))); 
-        vx_image dec_image = vxCreateImage(context, tens_dims[0], tens_dims[1]*tens_dims[3], VX_DF_IMAGE_RGB);   // todo:: add support for batch (height is tens_dims[1]*tens_dims[3])
-        vx_node node_decoder = amdMediaDecoderNode(graph, inp_string, dec_image, (vx_array)nullptr);
-        ERROR_CHECK_OBJECT(node_decoder);
-        vx_node node_img_tensor = vxConvertImageToTensorNode(graph, dec_image, outp_tensor, a, b, 0);
-        ERROR_CHECK_OBJECT(node_img_tensor);
-        ERROR_CHECK_STATUS(vxReleaseNode(&node_decoder));
-        ERROR_CHECK_STATUS(vxReleaseNode(&node_img_tensor));
-        hdl->inp_image = dec_image;
-        return VX_SUCCESS;
+        // add your preprocessing OpenVX nodes here. Output of preprocessing goes to outp_tensor 
+        return MV_ERROR_NOT_IMPLEMENTED;
     } else {
         printf("preprocess_addnodes_callback_fn:: inf_session not valid\\n");
         return VX_FAILURE;
@@ -1626,25 +1606,15 @@ static vx_status MIVID_CALLBACK preprocess_addnodes_callback_fn(mivid_session in
 }
 
 void printUsage() {
-    printf("Usage: mvdeploy <options>\\n"
-        "   <input-data-file>: : is filename(s) to initialize input tensor OR - to run with empty input\\n"
-""")
-        f.write( \
-"""#if ENABLE_OPENCV
-        "   .jpg or .png: decode and copy to raw_data file or .mp4 or .m4v for video input\\n"
-#endif
-""")
-        f.write( \
-"""         "   other: initialize tensor with raw data from the file\\n"
-""")
-        f.write( \
-"""         "   <output-data-file> for video all frames will be output to single file OR - for no output\\n"
-        "   --install_folder <install_folder> : the location for compiled model\\n"
-        "   --backend <backend>: optional (default:OpenVX_Rocm_OpenCL) is the name of the backend for compilation\\n"
-        "   --frames <#num/eof> : num of frames to process inference for cases like video\\n"
-        "   --argmax <UNIT/Lut> : give argmax output in UINT or LUT\\n"
-        "   --t <num of interations> to run for performance\\n"
-        "   --vaapi :use vaapi for decoding\\n"
+    printf("Usage: mvtestdeploy <options>\\n"
+        "\t<input-data-file>: is raw tensor file OR .jpg/.png file OR <-> for empty input\t[required]\\n"
+        "\t<output-data-file>: output file for inference output OR <-> for no output     \t[required]\\n"
+        "\t--install_folder <install_folder>: location of the compiled model binary      \t[optional: default-current folder]\\n"
+        "\t--backend <backend>: the name of the backend for compilation                  \t[optional: default-OpenVX_Rocm_OpenCL]\\n"
+        "\t--t <num of interations>: to run for performance                              \t[optional: default 1]\\n"
+        "\t--argmax <UINT/Lut>: give argmax output in UINT or LUT                        \t[optional: default no argmax]\\n"
+        "\t--label <labels.txt>: labels file for classes                                 \t[optional: default no class detected]\\n"        
+        "\t--preprocess <pmul, padd>: prepeocess multiply and add in floats              \t[optional: default (1.f, 0.f)]\\n"        
     );
 }
 
@@ -1665,9 +1635,11 @@ int main(int argc, const char ** argv)
     mivid_backend backend = OpenVX_Rocm_OpenCL;
     std::string inpFileName  = std::string(argv[1]);
     std::string outFileName  = std::string(argv[2]);
-    int bPeformanceRun = 0, numIterations = 0, bVaapi = 0;
-    int  argmaxOutput = 0;
-    int useMultiFrameInput = 0, capture_till_eof = 0, start_frame=0, end_frame = 0;
+    int bPeformanceRun = 0, numIterations = 1;
+    int  argmaxOutput = 0, gotLabels = 0;
+    std::string labelText[1000];       // to read labels file
+    float padd = 0.f, pmul = 1.f;
+
     for (int arg = 3; arg < argc; arg++) {
         if (!strcmp(argv[arg], "--install_folder")) {
             arg++;
@@ -1678,22 +1650,10 @@ int main(int argc, const char ** argv)
             arg++;
             backend = (mivid_backend)atoi(argv[arg]);
         } 
-        if (!strcmp(argv[arg], "--frames")) {
-            arg++;
-            useMultiFrameInput = 1;
-            if (!strcmp(argv[arg], "eof")) {
-                capture_till_eof = 1;
-            }else {
-                end_frame = atoi(argv[arg]);
-            }
-        }
         if (!strcmp(argv[arg], "--t")) {
             arg++;
             numIterations = atoi(argv[arg]);
         }
-        if (!strcmp(argv[arg], "--vaapi")) {
-            bVaapi = atoi(argv[arg]);
-        }        
         if (!strcmp(argv[arg], "--argmax")) {
             arg++;
             if (!strcmp(argv[arg], "UINT")) {
@@ -1702,6 +1662,34 @@ int main(int argc, const char ** argv)
             else if (!strcmp(argv[arg], "LUT")) {
                 argmaxOutput = 2;
             }
+        }
+        if (!strcmp(argv[arg], "--label")) {
+            if ((arg + 1) == argc)
+            {
+                printf("ERROR: missing label.txt file on command-line (see help for details)\\n");
+                return -1;
+            }            
+            arg++;
+            std::string labelFileName = argv[arg];
+            std::string line;
+            std::ifstream out(labelFileName);
+            int lineNum = 0;
+            while(getline(out, line)) {
+                labelText[lineNum] = line;
+                lineNum++;
+            }
+            out.close(); 
+            gotLabels = 1;           
+        }                
+        if (!strcmp(argv[arg], "--preprocess")) {
+            if ((arg + 2) == argc)
+            {
+                printf("ERROR: missing pmul and padd parameters on command-line (see help for details)\\n");
+                return -1;
+            }
+            arg++;
+            pmul = atof(argv[arg++]);
+            padd = atof(argv[arg]);
         }
     }
     // initialize deployment
@@ -1788,7 +1776,7 @@ int main(int argc, const char ** argv)
         // create input tensor memory for swaphandle
         size_t inputSizeInBytes = 4 *inp_dims[0] * inp_dims[1] * inp_dims[2] * inp_dims[3];
 
-        // check if the input file is .mp4 if yes, add preprocess callback
+        // read input and call mvSetInputDataFromMemory
         if ((strcmp(inpFileName.c_str(), "-") != 0)) {
             inpMem = (float *)new char[inputSizeInBytes];
             size_t istride[4] = { 4, (size_t)4 * inp_dims[0], (size_t)4 * inp_dims[0] * inp_dims[1], (size_t)4 * inp_dims[0] * inp_dims[1] * inp_dims[2] };
@@ -1813,9 +1801,9 @@ int main(int argc, const char ** argv)
                         float * dstG = dstR + (istride[2] >> 2);
                         float * dstB = dstG + (istride[2] >> 2);
                         for(vx_size x = 0; x < inp_dims[0]; x++, src += 3) {
-                            *dstR++ = src[2];
-                            *dstG++ = src[1];
-                            *dstB++ = src[0];
+                            *dstR++ = src[2]*pmul + padd;
+                            *dstG++ = src[1]*pmul + padd;
+                            *dstB++ = src[0]*pmul + padd;
                         }
                     }
                 }
@@ -1847,6 +1835,7 @@ int main(int argc, const char ** argv)
                 return -1;
             }
         }
+        // allocate output buffer corresponding to the first output
         size_t outputSizeInBytes = 4 *out_dims[0]*out_dims[1]*out_dims[2]*out_dims[3];
         outMem = (float *)new char[outputSizeInBytes];
         FILE *fp = nullptr;
@@ -1859,17 +1848,17 @@ int main(int argc, const char ** argv)
                 return -1;
             }
         }
-        int64_t freq = clockFrequency(), t0, t1, total_time = 0;
-        float time_in_ms;
-        t0 = clockCounter();
+        int64_t freq = clockFrequency(), t0, t1;
+        if (numIterations == 1) t0 = clockCounter();
+
         if ((status = mvRunInference(infSession, &time_in_millisec, numIterations))) {
             printf("ERROR: mvRunInference terminated with status(%d) \\n", status);
             return -1;
         }
-        t1 = clockCounter();
-        total_time += (t1-t0);
-
-        // allocate output buffer corresponding to the first output
+        if (numIterations == 1) {
+            t1 = clockCounter();
+            time_in_millisec = (float)(t1-t0)*1000.0f/(float)freq;
+        }
 
         // get output
         if ((status = mvGetOutputData(infSession, 0, (void *) outMem, outputSizeInBytes)) != MV_SUCCESS) {
@@ -1880,8 +1869,16 @@ int main(int argc, const char ** argv)
             fwrite(outMem, sizeof(float), outputSizeInBytes>>2, fp);
         }
         if (fp) fclose(fp);
-        time_in_ms = (float)total_time*1000.0f/(float)freq;
-        printf("OK: mvRunInference() took %.3f msec for numIterations: %d\\n", time_in_ms, numIterations);
+        printf("OK: mvRunInference() took %.3f msec (average over %d iterations)\\n", time_in_millisec, numIterations);
+
+        if (argmaxOutput) {
+            float *out_elements = (float*)outMem;
+            int classID = std::distance(out_elements, std::max_element(out_elements, (out_elements + out_dims[1])));
+            if (gotLabels)
+                printf("Argmax output is %d with label: %s\\n", classID, labelText[classID].c_str());
+            else
+                printf("Argmax output is %d \\n", classID);
+        }
         // Relese Inference
         mvReleaseInferenceSession(infSession);
         printf("OK: Inference Deploy Successful \\n");

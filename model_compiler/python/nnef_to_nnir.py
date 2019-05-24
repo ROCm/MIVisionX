@@ -28,6 +28,7 @@ nnef2ir_op_type = {
     'avg_pool'                              : 'avg_pool',
     'max_pool'                              : 'max_pool',
     'mean_reduce'                           : 'global_avg_pool',
+    'argmax_reduce'                         : 'global_avg_pool',
     'relu'                                  : 'relu',
     'add'                                   : 'add',
     'mul'                                   : 'mul',
@@ -79,8 +80,10 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                         f_H = filter_tensor.shape[2]
                         f_W = filter_tensor.shape[3]
                     else:
-                        f_H = 0
-                        f_W = 0
+                        size = nnef_attribs['size']
+                        f_H = size[2]
+                        f_W = size[3]
+
                     output_tensor = nnef_tensor[nnef_operation.outputs['output']]
                     temp_stride = nnef_attribs['stride']
                     strides = [temp_stride for temp_stride in nnef_attribs[attrib]]
@@ -106,10 +109,10 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                     fd_W = (f_W - 1) * d_W + 1
                     tp_H = ((out_H - 1) * s_H + fd_H - in_H) / 2
                     tp_W = ((out_W - 1) * s_W + fd_W - in_W) / 2
-                    p_H = math.floor(tp_H)
-                    q_H = math.ceil(tp_H)
-                    p_W = math.floor(tp_W)
-                    q_W = math.ceil(tp_W)
+                    p_H = (int)(math.floor(tp_H))
+                    q_H = (int)(math.ceil(tp_H))
+                    p_W = (int)(math.floor(tp_W))
+                    q_W = (int)(math.ceil(tp_W))
                     padding = [p_H, q_H, p_W, q_W]
 
                 new_padding = [padding[2], padding[0], padding[3], padding[1]]

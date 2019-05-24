@@ -41,7 +41,7 @@ public:
     void getReceivedList(QVector<int>& indexQ, QVector<int>& labelQ, QVector<QString>& summaryQ,
                          QVector<QVector<int> >& labelTopK, QVector<QVector<float> >& probTopK);
     float getPerfImagesPerSecond();
-
+    
 signals:
     void finished();
     void error(QString err);

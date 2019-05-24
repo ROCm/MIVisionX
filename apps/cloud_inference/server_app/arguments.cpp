@@ -9,6 +9,7 @@
 Arguments::Arguments()
         : workFolder{ "~" }, modelFileDownloadCounter{ 0 },
           password{ "radeon" },
+          modelCompilerPath{ "/opt/rocm/mivisionx/model_compiler/python" },
           port{ 28282 }, batchSize{ 64 }, maxPendingBatches{ 4 }, numGPUs{ 1 }, gpuIdList{ 0 },
           maxGpuId{ 0 }, platform_id{ NULL }, num_devices{ 0 }, device_id{ NULL }, deviceUseCount{ 0 }
 {
@@ -16,7 +17,7 @@ Arguments::Arguments()
     /// \brief set default configuration file
     ///
     configurationFile = getenv("HOME");
-    configurationFile += "/.annInferenceServer.txt";
+    configurationFile += "/.inference_server_app.txt";
 
     ////////
     /// \brief get AMD OpenCL platform (if available)
@@ -95,7 +96,7 @@ void Arguments::setConfigurationDir()
     // generate configuration directory
     if(workFolder == "~") {
         configurationDir = getenv("HOME");
-        configurationDir += "/.annInferenceServer.dir";
+        configurationDir += "/.inference_server_app.dir";
     }
     else {
         configurationDir = workFolder;
@@ -232,15 +233,28 @@ void Arguments::getPreConfiguredModels()
     closedir(dir);
 }
 
+//usage information
+static void show_usage()
+{
+    printf("\n");
+    printf("Usage:\n");
+    printf("\tinference_server_app");
+    printf("\t[-p \t<port>\t\t\t\t default:26262]\n");
+    printf("\t\t\t\t[-b \t<batch size>\t\t\t default:64]\n");
+    printf("\t\t\t\t[-n \t<model compiler path>\t\t default:/opt/rocm/mivisionx/model_compiler/python]\n");
+    printf("\t\t\t\t[-fp16 \t<ON:1 or OFF:0>\t\t\t default:0]\n");
+    printf("\t\t\t\t[-w \t<server working directory>\t default:~/]\n");
+    printf("\t\t\t\t[-t \t<num cpu decoder threads [2-64]> default:1]\n");
+    printf("\t\t\t\t[-gpu \t<comma separated list of GPUs>]\n");
+    printf("\t\t\t\t[-q \t<max pending batches>]\n");
+    printf("\t\t\t\t[-s \t<local shadow folder full path>]\n\n");
+}
+
 int Arguments::initializeConfig(int argc, char * argv[])
 {
     ////////
     /// \brief process command-lines
     ///
-    const char * usage =
-            "Usage: annInferenceServer [-p port] [-b default-batch-size]"
-                                     " [-gpu <comma-separated-list-of-GPUs>] [-q <max-pending-batches>] [-fp16 <0/1>]"
-                                     " [-w <server-work-folder>] [-s <local-shadow-folder-full-path>] [-n <model-compiler-path>] [-t num_cpu_dec_threads<2-64>]";
     while(argc > 2) {
         if(!strcmp(argv[1], "-p")) {
             port = atoi(argv[2]);
@@ -270,7 +284,7 @@ int Arguments::initializeConfig(int argc, char * argv[])
                 }
                 else {
                     error("invalid GPU-list: %s", argv[2]);
-                    printf("%s\n", usage);
+                    show_usage();
                     return -1;
                 }
             }
@@ -308,11 +322,11 @@ int Arguments::initializeConfig(int argc, char * argv[])
         }
         else if(!strcmp(argv[1], "-n")) {
             if (!strcmp(argv[2],"")) {
-                error("invalid model_compiler folder name %s", argv[2]);
+                error("invalid Model Compiler folder name %s", argv[2]);
                 return -1;
             }else {
                 setModelCompilerPath(argv[2]);
-                printf("Set shadow folder to %s\n", modelCompilerPath.c_str());
+                printf("Set Model Compiler folder to %s\n", modelCompilerPath.c_str());
             }
             argc -= 2;
             argv += 2;
@@ -329,7 +343,7 @@ int Arguments::initializeConfig(int argc, char * argv[])
     if(argc > 1) {
         if(strcmp(argv[1], "-h") != 0)
             error("invalid option: %s", argv[1]);
-        printf("%s\n", usage);
+        show_usage();
         return -1;
     }
 

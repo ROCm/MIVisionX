@@ -6,7 +6,7 @@
 
 QT     += core gui network
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 # With C++11 support
 CONFIG += c++11
@@ -26,31 +26,36 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    main.cpp \
-    inference_viewer.cpp \
-    inference_receiver.cpp \
-    inference_control.cpp \
-    inference_compiler.cpp \
-    assets.cpp \
-    tcpconnection.cpp \
-    inference_panel.cpp \
-    perf_graph.cpp
+        main.cpp \
+        inference_viewer.cpp \
+        inference_receiver.cpp \
+        inference_control.cpp \
+        inference_compiler.cpp \
+        assets.cpp \
+        tcpconnection.cpp \
+        inference_panel.cpp \
+        perf_graph.cpp \
+        perf_chart.cpp \
+        qcustomplot.cpp
 
 HEADERS += \
-    inference_viewer.h \
-    inference_receiver.h \
-    inference_control.h \
-    inference_compiler.h \
-    infcom.h \
-    assets.h \
-    tcpconnection.h \
-    inference_panel.h \
-    perf_graph.h
+        inference_viewer.h \
+        inference_receiver.h \
+        inference_control.h \
+        inference_compiler.h \
+        infcom.h \
+        assets.h \
+        tcpconnection.h \
+        inference_panel.h \
+        perf_graph.h \
+        perf_chart.h \
+        qcustomplot.h
 
 FORMS += \
-    inference_viewer.ui \
-    inference_panel.ui \
-    perf_graph.ui
+        inference_viewer.ui \
+        inference_panel.ui \
+        perf_graph.ui \
+        perf_chart.ui
 
 RESOURCES += \
     resources.qrc

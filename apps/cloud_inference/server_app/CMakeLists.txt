@@ -32,18 +32,18 @@ find_package(OpenCV REQUIRED)
 include_directories(../../../amd_openvx/openvx/include ../../../amd_openvx_extensions/amd_nn)
 include_directories(${OpenCL_INCLUDE_DIRS})
 list(APPEND SOURCES
-	common.cpp
-	arguments.cpp
-	netutil.cpp
-	configure.cpp
-	compiler.cpp
-	inference.cpp
-	server.cpp
-	main.cpp
-        profiler.cpp
-        region.cpp
-        shadow.cpp
-)
+		common.cpp
+		arguments.cpp
+		netutil.cpp
+		configure.cpp
+		compiler.cpp
+		inference.cpp
+		server.cpp
+		main.cpp
+		profiler.cpp
+		region.cpp
+		shadow.cpp
+	)
 
 add_executable(inference_server_app ${SOURCES})
 target_link_libraries(inference_server_app vx_nn openvx pthread)

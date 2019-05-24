@@ -1,7 +1,5 @@
-import os, sys
 import nnef
-import numpy as np
-from collections import OrderedDict
+import math
 from nnir import *
 
 nnef2ir_attr = {
@@ -41,6 +39,8 @@ nnef2ir_op_type = {
     'concat'                                : 'concat',
     'leaky_relu'                            : 'leaky_relu',
     'reshape'                               : 'reshape',
+    'squeeze'                               : 'reshape',
+    'unsqueeze'                             : 'reshape',
     'transpose'                             : 'transpose',
     'copy'                                  : 'copy'
 }
@@ -57,7 +57,8 @@ def flatten(nested_list):
 def nnef_name_to_ir_name(nnef_name):
     return '_'.join(('_'.join(nnef_name.split('/')).split('-')))
 
-def nnef_attr_to_ir_attr(nnef_attribs):
+def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
+    nnef_attribs = nnef_operation.attribs
     global nnef2ir_attr
     attr = IrAttr()
     for attrib in nnef_attribs:
@@ -72,7 +73,46 @@ def nnef_attr_to_ir_attr(nnef_attribs):
                 if len(padding) == 8:
                     padding = padding[4:]    
                 elif len(padding) == 0:
-                    padding = [0, 0, 0, 0]
+                    input_tensor = nnef_tensor[nnef_operation.inputs['input']]
+                    if 'filter' in nnef_operation.inputs:
+                        filter_tensor = nnef_tensor[nnef_operation.inputs['filter']]
+                        f_H = filter_tensor.shape[2]
+                        f_W = filter_tensor.shape[3]
+                    else:
+                        size = nnef_attribs['size']
+                        f_H = size[2]
+                        f_W = size[3]
+
+                    output_tensor = nnef_tensor[nnef_operation.outputs['output']]
+                    temp_stride = nnef_attribs['stride']
+                    strides = [temp_stride for temp_stride in nnef_attribs[attrib]]
+                    if len(strides) == 4:
+                        strides = strides[2:]
+                    elif len(strides) == 0:
+                        strides = [1, 1]
+                    temp_dilation = nnef_attribs['dilation']
+                    dilations = [temp_dilation for temp_dilation in nnef_attribs[attrib]]
+                    if len(dilations) == 4:
+                        dilations = dilations[2:]
+                    elif len(dilations) == 0:
+                        dilations = [1, 1]
+                    in_H = input_tensor.shape[2]
+                    in_W = input_tensor.shape[3]
+                    out_H = output_tensor.shape[2]
+                    out_W = output_tensor.shape[3]
+                    s_H = strides[0]
+                    s_W = strides[1]
+                    d_H = dilations[0]
+                    d_W = dilations[1]
+                    fd_H = (f_H - 1) * d_H + 1
+                    fd_W = (f_W - 1) * d_W + 1
+                    tp_H = ((out_H - 1) * s_H + fd_H - in_H) / 2
+                    tp_W = ((out_W - 1) * s_W + fd_W - in_W) / 2
+                    p_H = (int)(math.floor(tp_H))
+                    q_H = (int)(math.ceil(tp_H))
+                    p_W = (int)(math.floor(tp_W))
+                    q_W = (int)(math.ceil(tp_W))
+                    padding = [p_H, q_H, p_W, q_W]
 
                 new_padding = [padding[2], padding[0], padding[3], padding[1]]
                 attr.set(nnef2ir_attr[attrib], new_padding)  
@@ -117,19 +157,32 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         sys.exit(1)
 
     if nnef_operation.name == 'conv':
-        bias = nnef_operation.inputs['bias']
-        if bias == 0.0:
-            del nnef_operation.inputs['bias']
-
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
         nnef_operation.attribs.update({'size': [filter_tensor.shape[3], filter_tensor.shape[2]]})
 
     if nnef_operation.name == 'matmul':
         nnef_operation.attribs.update({'beta': 0.0})
-        
+    
+    if nnef_operation.name == 'squeeze':
+        input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
+        axes = nnef_operation.attribs['axes']
+        output_shape = [input_shape[i] for i in range(len(input_shape)) if i not in axes]
+        del nnef_operation.attribs['axes']
+        nnef_operation.attribs.update({'shape': output_shape})
+    
+    if nnef_operation.name == 'unsqueeze':
+        input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
+        axes = nnef_operation.attribs['axes']
+        output_shape = input_shape
+        if len(output_shape) < 4:
+            for i in range(len(axes)):
+                output_shape.insert(axes[i], 1)
+        del nnef_operation.attribs['axes']
+        nnef_operation.attribs.update({'shape': output_shape})
+
     inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
     outputs = [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs]    
-    
+
     if nnef_operation.name == 'batch_normalization':
         input_tensor = nnef_operation.inputs['input']
         variance = nnef_operation.inputs['variance']
@@ -142,23 +195,15 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     inputs = flatten(inputs)
     outputs = flatten(outputs)
     
-    node.set(type, inputs, outputs, nnef_attr_to_ir_attr(nnef_operation.attribs))
+    node.set(type, inputs, outputs, nnef_attr_to_ir_attr(nnef_graph.tensors, nnef_operation))
 
     return node
     
 def nnef_graph_to_ir_graph(nnef_graph):
 
     graph = IrGraph()
-    
-    # add input(s)
-    for tensor_name in nnef_graph.inputs:
-        tensor = nnef_graph.tensors[tensor_name]
-        graph.addInput(nnef_tensor_to_ir_tensor(tensor))
 
-    # add output(s)
-    for tensor_name in nnef_graph.outputs:
-        tensor = nnef_graph.tensors[tensor_name]
-        graph.addOutput(nnef_tensor_to_ir_tensor(tensor))
+    scalarCount = 0
 
     for operation in nnef_graph.operations:
         if operation.name == 'external':
@@ -170,17 +215,53 @@ def nnef_graph_to_ir_graph(nnef_graph):
             graph.addVariable(nnef_tensor_to_ir_tensor(tensor))
             graph.addBinary(tensor_name, tensor.data)
         else:
-            # add node(s)
             for name in operation.outputs:
-                tensor = nnef_graph.tensors[operation.outputs[name]]
-                graph.addLocal(nnef_tensor_to_ir_tensor(tensor))
+                output_tensor = nnef_graph.tensors[operation.outputs[name]]
+                graph.addLocal(nnef_tensor_to_ir_tensor(output_tensor))
+                # handle 0-d tensor(s)
+                for input in operation.inputs:
+                    if isinstance(operation.inputs[input], float):
+                        scalarCount += 1
+                        name = 'scalar_' + str(scalarCount)
+                        if input == 'bias':
+                            filter_tensor = nnef_graph.tensors[operation.inputs['filter']]
+                            shape = [1, filter_tensor.shape[0]]
+                        elif input == 'x' or input == 'y' or input == 'z':                            
+                            shape = output_tensor.shape
+                            if len(output_tensor.shape) == 1:
+                                shape = [1, output_tensor.shape[0]]
+                            while len(shape) < 4:
+                                shape.append(1)
+
+                        scalar_tensor = IrTensor()
+                        scalar_tensor.setName(name)
+                        scalar_tensor.setInfo('F032', shape)
+                        tensor_data = np.full(shape, operation.inputs[input], dtype=np.float32)
+                        graph.addVariable(scalar_tensor)                    
+                        graph.addBinary(name, tensor_data)
+                        operation.inputs[input] = name
+
                 node = nnef_op_to_ir_node(nnef_graph, operation)
                 graph.addNode(node)
+
+    # add input(s)
+    for tensor_name in nnef_graph.inputs:
+        tensor = nnef_graph.tensors[tensor_name]
+        graph.addInput(nnef_tensor_to_ir_tensor(tensor))
+
+    # add output(s)
+    for tensor_name in nnef_graph.outputs:
+        tensor = nnef_graph.tensors[tensor_name]
+        while len(tensor.shape) < 4:
+            tensor.shape.append(1)
+        graph.addOutput(nnef_tensor_to_ir_tensor(tensor))
+
     graph.updateLocals()
     return graph
 
 def nnef2ir(inputFolder, outputFolder):
-    nnef_graph = nnef.load_model(inputFolder)
+    nnef_graph = nnef.load_graph(inputFolder)
+    nnef.infer_shapes(nnef_graph)
     graph = nnef_graph_to_ir_graph(nnef_graph)
     graph.toFile(outputFolder)
 

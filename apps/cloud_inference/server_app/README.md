@@ -1,17 +1,21 @@
-# annInferenceServer
+# MIVisionX Inference Server
 
 This Sample Inference Server supports:
-* convert and maintain a database of pre-trained CAFFE models using [caffe2openvx](../inference_generator/README.md)
+* convert and maintain a database of pre-trained CAFFE models using [Model Compiler](../../../model_compiler#neural-net-model-compiler--optimizer)
 * allow multiple TCP/IP client connections for inference work submissions
 * multi-GPU high-throughput live streaming batch scheduler
 
 Command-line usage:
 ````
-% annInferenceServer [-p port]
-                     [-b default-batch-size]
-                     [-gpu <comma-separated-list-of-GPUs>]
-                     [-q <max-pending-batches>]
-                     [-w <server-work-folder>]
+  inference_server_app  [-p     <port>                           default:26262]
+                        [-b     <batch size>                     default:64]
+                        [-n     <model compiler path>            default:/opt/rocm/mivisionx/model_compiler/python]
+                        [-fp16  <ON:1 or OFF:0>                  default:0]
+                        [-w     <server working directory>       default:~/]
+                        [-t     <num cpu decoder threads [2-64]> default:1]
+                        [-gpu   <comma separated list of GPUs>]
+                        [-q     <max pending batches>]
+                        [-s     <local shadow folder full path>]
 ````
 
 Make sure that all executables and libraries are in `PATH` and `LD_LIBRARY_PATH` environment variables.
@@ -20,6 +24,6 @@ Make sure that all executables and libraries are in `PATH` and `LD_LIBRARY_PATH`
 % export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
 ````
 
-The `annInferenceServer` works with [annInferenceApp](../annInferenceApp/README.md).
-* Execute `annInferenceServer` on the server machine with Radeon Instinct GPUs
-* Execute `annInferenceApp` on one or more workstations: connect to the server and classify images using any pre-trained neural network
+The `inference_server_app` works with [Client Application](../client_app/README.md).
+* Execute `inference_server_app` on the server machine with Radeon Instinct GPUs
+* Execute `Client Application` on one or more workstations: connect to the server and classify images using any pre-trained neural network

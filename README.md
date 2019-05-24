@@ -277,6 +277,19 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
 ````
 
+**Note:** **Display option with docker**
+* Using host display
+````
+xhost +local:root
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:latest
+````
+* Test display with MIVisionX sample
+````
+export PATH=$PATH:/opt/rocm/mivisionx/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+````
+
 ## Release Notes
 
 ### Known issues
@@ -285,10 +298,10 @@ sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/d
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.3.14`
+* ROCm: rocm-dkms - `2.4.25`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [1.7.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.1)
+* MIOpen - [1.8.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.1)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

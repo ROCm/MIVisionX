@@ -388,7 +388,6 @@ class IrGraph:
                         param = self.tensor_dict[node.inputs[1]].shape
                         node.attr.set('shape', param)
                         self.removeTensor(node.inputs[1])
-                    #print node.attr.get('shape')
                     icount = 1
                     ocount = 1
                     out_shape = [0,0,0,0]                    

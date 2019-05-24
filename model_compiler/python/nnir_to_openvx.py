@@ -27,7 +27,7 @@ tensor_type_nnir2openvx = {
     'F016' : 'VX_TYPE_FLOAT16',
     'U016' : 'VX_TYPE_UINT16',
     'I016' : 'VX_TYPE_INT16',
-    'U008' : 'VX_TYPE_UINT8',    
+    'U008' : 'VX_TYPE_UINT8',
     'I064' : 'VX_TYPE_INT64',
 }
 
@@ -245,12 +245,11 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     else if(data_type == VX_TYPE_UINT16 || data_type == VX_TYPE_INT16 || data_type == VX_TYPE_FLOAT16) {
         itemsize = sizeof(vx_uint16);
     }
-    vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
-    if(data_type == VX_TYPE_INT64) {
+    else if(data_type == VX_TYPE_INT64) {
         itemsize = sizeof(vx_int64);
-        count = num_of_dims;
     }
-    
+    vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
+
     vx_uint32 h[2] = { 0 };
     fread(h, 1, sizeof(h), fp);
     if(h[0] != 0xf00dd1e1 || (vx_size)h[1] != (count*itemsize)) {
@@ -341,7 +340,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             if node.type == 'conv':
                 pads = node.attr.get('pads')
                 dilations = node.attr.get('dilations')
-                groupCount = node.attr.get('group')
                 f.write( \
 """
     { vx_nn_convolution_params_t conv_params = { 0 };
@@ -352,10 +350,9 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       conv_params.down_scale_size_rounding = VX_NN_DS_SIZE_ROUNDING_FLOOR;
       conv_params.dilation_x = %d;
       conv_params.dilation_y = %d;
-      conv_params.group = %d;
       vx_node node = vxConvolutionLayer(graph, %s, %s, %s, &conv_params, sizeof(conv_params), %s);
       ERROR_CHECK_OBJECT(node);
-""" % (pads[0], pads[1], dilations[0] - 1, dilations[1] - 1, groupCount, \
+""" % (pads[0], pads[1], dilations[0] - 1, dilations[1] - 1, \
       node.inputs[0], node.inputs[1], node.inputs[2] if len(node.inputs) == 3 else 'NULL', node.outputs[0]))
                 if (node.attr.get('mode') != 0):
                     f.write( \
@@ -364,6 +361,14 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 5, (vx_reference) s_alpha));
       ERROR_CHECK_STATUS(vxReleaseScalar(&s_alpha));
 """)
+                if (node.attr.get('group') > 1):
+                    group = node.attr.get('group');
+                    f.write( \
+"""      vx_int32 groupCount = %d;
+      vx_scalar s_groupCount = vxCreateScalarWithSize(context, VX_TYPE_INT32, &groupCount, sizeof(groupCount));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 6, (vx_reference) s_groupCount));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_groupCount));
+""" % (group))
                 f.write( \
 """      ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
@@ -1089,7 +1094,7 @@ if __name__ == '__main__':
     inputTensorFile = sys.argv[3]
     outputTensorFile = sys.argv[4]
     api = AnnAPI(annlibPythonName)
-    input_info,output_info = api.annQueryInference().decode("utf-8").split(';')
+    input_info,output_info,temp = api.annQueryInference().decode("utf-8").split(';')
     input,name,ni,ci,hi,wi = input_info.split(',')
     hdl = api.annCreateInference(weightsFile)
     im = np.fromfile(inputTensorFile, dtype=np.float32)
@@ -1430,7 +1435,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
         }
         else if(num_of_dims == 4) {
             W = dims[0], H = dims[1], C = dims[2], N = dims[3];
-        }		
+        }
         vx_size HW = H * W;
         vx_size NHW = N * HW;
         vx_size CHW = C * HW;

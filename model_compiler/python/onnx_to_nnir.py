@@ -136,17 +136,25 @@ def onnx_value_info_to_data(info, dims):
 def onnx_graph_to_ir_graph(onnx_graph):
     graph = IrGraph()
     initializerList = []
+    shapeList = []
     inputUser = False
+                
+    for onnx_node in onnx_graph.node:
+        for tensor in onnx_graph.initializer:
+            if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and ("DUMMY" in onnx_name_to_ir_name(tensor.name)):
+                tensorName = onnx_name_to_ir_name(tensor.name)
+                if tensorName not in shapeList:
+                    shapeList.append(tensorName)
+                    graph.addVariable(onnx_tensor_info_to_data(tensor,numpy_helper.to_array(tensor)))
+                    graph.addBinary(tensorName, tensor.raw_data)
     for tensor in onnx_graph.initializer:
-        tensorName = onnx_name_to_ir_name(tensor.name)
-        initializerList.append(tensorName)
-        if onnx2ir_data_type[tensor.data_type] == 'I064':
-            graph.addVariable(onnx_tensor_info_to_data(tensor,numpy_helper.to_array(tensor)))
-        else:
+        if not onnx_name_to_ir_name(tensor.name) in shapeList:
+            tensorName = onnx_name_to_ir_name(tensor.name)
+            initializerList.append(tensorName)
             graph.addVariable(onnx_tensor_info_to_data(tensor, tensor.dims))
-        graph.addBinary(tensorName, tensor.raw_data)
+            graph.addBinary(tensorName, tensor.raw_data)
     for tensor in onnx_graph.input:
-        if not onnx_name_to_ir_name(tensor.name) in initializerList:
+        if not onnx_name_to_ir_name(tensor.name) in initializerList and not onnx_name_to_ir_name(tensor.name) in shapeList:
             input_dims = [int(x.dim_value) for x in tensor.type.tensor_type.shape.dim]
             if (len(sys.argv) > 3) and (sys.argv[3] == "--input_dims"):
                 if (x == 0 or x is None or x == '?' for x in input_dims):
@@ -180,7 +188,6 @@ def onnx2ir(model, output_folder):
         onnx_model = model
     else:
         raise TypeError("Model must be file path to .onnx file or onnx loaded model")
-    # convert ONNX graph to IR graph and save
     graph = onnx_graph_to_ir_graph(onnx_model.graph)
     graph.toFile(output_folder)
 

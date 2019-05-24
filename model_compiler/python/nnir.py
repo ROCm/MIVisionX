@@ -383,10 +383,12 @@ class IrGraph:
                         self.addLocal(local)
                 elif node.type in ['reshape']:
                     input = self.tensor_dict[node.inputs[0]]
-                    if len(node.inputs) == 1:
-                        param = node.attr.get('shape')        
-                    else:
+                    param = node.attr.get('shape')
+                    if not param:
                         param = self.tensor_dict[node.inputs[1]].shape
+                        node.attr.set('shape', param)
+                        self.removeTensor(node.inputs[1])
+                    #print node.attr.get('shape')
                     icount = 1
                     ocount = 1
                     out_shape = [0,0,0,0]                    

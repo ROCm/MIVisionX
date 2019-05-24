@@ -33,6 +33,7 @@ nnef2ir_op_type = {
     'mul'                                   : 'mul',
     'sub'                                   : 'sub',
     'matmul'                                : 'gemm',
+    'linear'                                : 'gemm',
     'softmax'                               : 'softmax',
     'local_response_normalization'          : 'lrn',
     'slice'                                 : 'slice',
@@ -180,6 +181,9 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         del nnef_operation.attribs['axes']
         nnef_operation.attribs.update({'shape': output_shape})
 
+    if nnef_operation.name == 'linear':
+        nnef_operation.attribs.update({'transposeB': true})
+        
     inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
     outputs = [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs]    
 

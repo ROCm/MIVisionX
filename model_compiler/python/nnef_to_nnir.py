@@ -1,7 +1,5 @@
 import nnef
-import numpy as np
 import math
-from collections import OrderedDict
 from nnir import *
 
 nnef2ir_attr = {
@@ -81,17 +79,19 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                         f_H = filter_tensor.shape[2]
                         f_W = filter_tensor.shape[3]
                     else:
-                        f_H = 0
-                        f_W = 0
+                        size = nnef_attribs['size']
+                        f_H = size[2]
+                        f_W = size[3]
+
                     output_tensor = nnef_tensor[nnef_operation.outputs['output']]
-                    stride = nnef_attribs['stride']
-                    strides = [stride for stride in nnef_attribs[attrib]]
+                    temp_stride = nnef_attribs['stride']
+                    strides = [temp_stride for temp_stride in nnef_attribs[attrib]]
                     if len(strides) == 4:
                         strides = strides[2:]
                     elif len(strides) == 0:
                         strides = [1, 1]
-                    dilation = nnef_attribs['dilation']
-                    dilations = [dilation for dilation in nnef_attribs[attrib]]
+                    temp_dilation = nnef_attribs['dilation']
+                    dilations = [temp_dilation for temp_dilation in nnef_attribs[attrib]]
                     if len(dilations) == 4:
                         dilations = dilations[2:]
                     elif len(dilations) == 0:
@@ -108,10 +108,10 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                     fd_W = (f_W - 1) * d_W + 1
                     tp_H = ((out_H - 1) * s_H + fd_H - in_H) / 2
                     tp_W = ((out_W - 1) * s_W + fd_W - in_W) / 2
-                    p_H = math.floor(tp_H)
-                    q_H = math.ceil(tp_H)
-                    p_W = math.floor(tp_W)
-                    q_W = math.ceil(tp_W)
+                    p_H = (int)(math.floor(tp_H))
+                    q_H = (int)(math.ceil(tp_H))
+                    p_W = (int)(math.floor(tp_W))
+                    q_W = (int)(math.ceil(tp_W))
                     padding = [p_H, q_H, p_W, q_W]
 
                 new_padding = [padding[2], padding[0], padding[3], padding[1]]
@@ -172,15 +172,12 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     
     if nnef_operation.name == 'unsqueeze':
         input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
-        print 'unsqueeze'
-        print input_shape
         axes = nnef_operation.attribs['axes']
         output_shape = input_shape
         if len(output_shape) < 4:
             for i in range(len(axes)):
                 output_shape.insert(axes[i], 1)
         del nnef_operation.attribs['axes']
-        print output_shape
         nnef_operation.attribs.update({'shape': output_shape})
 
     inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]

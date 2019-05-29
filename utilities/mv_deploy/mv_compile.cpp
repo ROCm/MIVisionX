@@ -89,7 +89,6 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
         // step-1: run python caffe_to_nnir.py <.caffemodel> nnir_output --input-dims <args->getBatchSize(),dimOutput[2], dimOutput[1], dimOutput[0]>
         std::string model_extension = std::string(strchr(model_name, '.'));
         if (!model_extension.compare(".caffemodel")) {
-            printf("Got caffemodel: converting to nnir\n");
             command = "python ";
             command += compiler_path + "/python" + "/caffe_to_nnir.py";
             command += " " + std::string(model_name);
@@ -119,12 +118,12 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
                 bUpdateModel = true;
             }
             if (update_params->fused_convolution_bias_activation) {
-                command += " --fuse-ops 1";                 
+                sub_command += " --fuse-ops 1";
                 bUpdateModel = true;
             }
             if (update_params->quantize_model) {
                 if (update_params->quantization_mode == quant_fp16) {
-                    command += " --convert-fp16 1";
+                    sub_command += " --convert-fp16 1";
                     bUpdateModel = true;
                 }
                 else {
@@ -135,22 +134,19 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
             if (bUpdateModel) {
                 command = "python "+ compiler_path + "/python/nnir_update.py";
                 command += sub_command;
-                command += " nnir-output nnir-output_1";
+                command += " nnir-output nnir-output";
                 info("executing: %% %s", command.c_str());
                 status = system(command.c_str());
-                info("python nnir-update.py %s nnir-output nnir-output_1 completed (%d)", sub_command.c_str(), status);
+                info("python nnir-update.py %s nnir-output nnir-output completed (%d)", sub_command.c_str(), status);
                 if (status) {
                     return MV_FAILURE;
                 }
-                // step-3: run nnir_to_clib.py for generating OpenVX code for the inference deployment
-                command = "python "+ compiler_path + "/python/nnir_to_clib.py nnir-output_1 ";                
-            } else {
-                // step-3: run nnir_to_clib.py for generating OpenVX code for the inference deployment
-                command = "python "+ compiler_path + "/python/nnir_to_clib.py nnir-output ";                
             }
-
+            // step-3: run nnir_to_clib.py for generating OpenVX code for the inference deployment
+            command = "python "+ compiler_path + "/python/nnir_to_clib.py nnir-output ";
         }
         else {
+            printf("Not Update Model\n");
             // step-3: run nnir_to_clib.py for generating OpenVX code for the inference deployment
             command = "python "+ compiler_path + "/python/" + "nnir_to_clib.py nnir-output ";
         }

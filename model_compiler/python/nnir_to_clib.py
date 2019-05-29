@@ -1754,14 +1754,14 @@ int main(int argc, const char ** argv)
             }
         }
 
-        inp_dims[0] = std::get<0>(input_dims[0]);
-        inp_dims[1] = std::get<1>(input_dims[0]);
-        inp_dims[2] = std::get<2>(input_dims[0]);
-        inp_dims[3] = std::get<3>(input_dims[0]);
-        out_dims[0] = std::get<0>(output_dims[0]);
-        out_dims[1] = std::get<1>(output_dims[0]);
-        out_dims[2] = std::get<2>(output_dims[0]);
-        out_dims[3] = std::get<3>(output_dims[0]);
+        inp_dims[3] = std::get<0>(input_dims[0]);
+        inp_dims[2] = std::get<1>(input_dims[0]);
+        inp_dims[1] = std::get<2>(input_dims[0]);
+        inp_dims[0] = std::get<3>(input_dims[0]);
+        out_dims[3] = std::get<0>(output_dims[0]);
+        out_dims[2] = std::get<1>(output_dims[0]);
+        out_dims[1] = std::get<2>(output_dims[0]);
+        out_dims[0] = std::get<3>(output_dims[0]);
 
         status = mvCreateInferenceSession(&infSession, install_folder.c_str(), mv_mem_type_host);
         if (status != MV_SUCCESS)

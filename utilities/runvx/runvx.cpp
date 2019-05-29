@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 char buf[4096];
 // program and version
-#define RUNVX_VERSION "0.9.9"
+#define RUNVX_VERSION "1.0.0"
 #if _WIN32
 #include <direct.h>
 #define cwd _getcwd

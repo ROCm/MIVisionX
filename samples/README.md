@@ -196,5 +196,5 @@ In this [sample](model_compiler_samples#mivisionx-model-compiler-samples), we wi
 
 ### [Sample-3: Classification Using Pre-Trained NNEF Model](model_compiler_samples#sample-3---classification-using-pre-trained-nnef-model)
 
-### [Sample-4: Classification Using Pre-Trained NNEF Model](model_compiler_samples#sample-4---classification-using-pre-trained-caffe-model)
+### [Sample-4: Classification Using Pre-Trained Caffe Model](model_compiler_samples#sample-4---classification-using-pre-trained-caffe-model)
 

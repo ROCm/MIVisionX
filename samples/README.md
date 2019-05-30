@@ -156,7 +156,7 @@ OK: OpenCL buffer usage: 324221600, 9/9
 ..lsReleaseContext: released context context[0]
 ... exit from loomStitch-sample1.txt
 ```
-**Note:** The stitched output image is saved as LoomOutputStitch.bmp
+**Note:** The stitched output image is saved as **LoomOutputStitch.bmp**
 
 ### Sample - 2
 

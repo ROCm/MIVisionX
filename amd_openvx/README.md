@@ -9,8 +9,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * **vx_loomsl**: Radeon LOOM stitching library for live 360 degree video applications
 * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
 * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
-
-This software is provided under an MIT-style license,  see the file COPYRIGHT.txt for details.
+* **vx_winml**: OpenVX module that implemented a mechanism to access Windows Machine Learning(WinML) functionality as OpenVX kernels
 
 ## Features
 * The code is highly optimized for both x86 CPU and OpenCL for GPU

@@ -33,7 +33,7 @@ THE SOFTWARE.
 #include <CL/cl_ext.h>
 #endif
 
-#define VERSION          "0.9.8"
+#define VERSION          "0.9.9"
 #define SCRIPT_EXTENSION ".lss"
 #if _WIN32
 #define PROGRAM_NAME     "loom_shell.exe"

@@ -1,5 +1,7 @@
 # Radeon LoomShell
 
+<p align="center"><img src="../../docs/images/LOOM_LOGO_250X125.png" /></p>
+
 ## DESCRIPTION
 LoomShell is an interpreter that enables stitching 360 degree videos using a script. It provides direct access to 
 Live Stitch API by encapsulating the calls to enable rapid prototyping.

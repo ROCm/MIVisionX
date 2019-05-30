@@ -8,7 +8,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ## Analysis & Visualization
 
-The toolset is available for both classification and object detetction. Features such as hierarchy, label , image summary etc can be viewed using this toolset.
+The toolset is available for both [classification](analysis_and_visualization/classification#mivisionx---classification-visualization) and [detetction](analysis_and_visualization/bounding_box#mivisionx---object-detection-visualization). Features such as hierarchy, label , image summary etc can be viewed using this toolset.
 
 ![picture alt](img/summary-classification.png "Classification Summary")
 

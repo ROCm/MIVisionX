@@ -251,20 +251,20 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 
 |Networks|Caffe|ONNX|NNEF|
 |--------|-----|----|----|
-|AlexNet||&#9745;||
+|AlexNet||&#9745;|&#9745;|
 |Caffenet||&#9745;||
 |DenseNet||&#9745;||			
 |Emotion-Ferplus||||			
 |Googlenet|&#9745;|&#9745;|&#9745;|		
-|Inception-V1||&#9745;||			
-|Inception-V2||&#9745;||			
+|Inception-V1||&#9745;|&#9745;|			
+|Inception-V2||&#9745;|&#9745;|			
 |Inception-V3||||			
-|Inception-V4|&#9745;||&#9745;|			
-|MNIST|&#9745;|||			
+|Inception-V4|&#9745;|||			
+|MNIST|&#9745;||&#9745;|			
 |ResNet-50|&#9745;|&#9745;|&#9745;|			
 |ResNet-101|&#9745;||&#9745;|			
 |ResNet-152|&#9745;||&#9745;|			
-|Squeezenet||&#9745;||			
+|Squeezenet||&#9745;|&#9745;|			
 |Tiny-Yolo-V2|&#9745;|||			
 |VGGNet-16|&#9745;||&#9745;|			
 |VGGNet-19|&#9745;|&#9745;|&#9745;|			
@@ -304,7 +304,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |MeanReduce|||&#9745;|
 |Mul||&#9745;|&#9745;|
 |MulAdd||||
-|Permute|&#9745;|||
+|Permute|&#9745;||&#9745;|
 |PriorBox|&#9745;|||
 |Relu|&#9745;|&#9745;|&#9745;|
 |Reshape|&#9745;|&#9745;|&#9745;|
@@ -315,7 +315,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Sub||&#9745;|&#9745;|
 |Sum||&#9745;||
 |Transpose||&#9745;|&#9745;|
-|Upsample|&#9745;|||
+|Upsample|&#9745;||&#9745;|
 
 
 

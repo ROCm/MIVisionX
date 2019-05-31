@@ -25,11 +25,10 @@ THE SOFTWARE.
 #include "vxEngineUtil.h"
 #include "vxEngine.h"
 #include <iostream>
-#include "unistd.h"
 
 char buf[4096];
 // program and version
-#define RUNVX_VERSION "0.9.9"
+#define RUNVX_VERSION "1.0.0"
 #if _WIN32
 #include <direct.h>
 #define cwd _getcwd
@@ -256,7 +255,7 @@ int main(int argc, char * argv[])
 					ReportError("ERROR: missing file name on command-line (see help for details)\n");
 				arg++;
 			}
-            unsigned int lengthOfArgv = strlen(argv[arg]);
+            unsigned int lengthOfArgv = (int)(strlen(argv[arg]));
             char * fileNameToParse = new char[lengthOfArgv];
             std::string fileNameToParse_s;
             std::string addToDir_s;
@@ -267,7 +266,7 @@ int main(int argc, char * argv[])
 
             int pos = 0;
             std::string token;
-            while((pos = fileNameToParse_s.find(delimiter)) != std::string::npos){
+            while((pos = (int)(fileNameToParse_s.find(delimiter))) != std::string::npos){
                 token = fileNameToParse_s.substr(0, pos);
                 addToDir_s.append(token);
                 addToDir_s.append("/");

@@ -22,11 +22,12 @@ import sys
 from nnir import *
 
 def main():
-    usage = 'Usage: python nnir-update.py [--batch-size <n>] [--fuse-ops 0|1] [--slice-groups 0|1] [--convert-fp16 0|1] <nnirInputFolder> <nnirOutputFolder>'
+    usage = 'Usage: python nnir-update.py [--batch-size <n>] [--fuse-ops 0|1] [--slice-groups 0|1] [--convert-fp16 0|1] [--convert-fp32 0|1] <nnirInputFolder> <nnirOutputFolder>'
     batchSize = 0
     fuseOps = False
     sliceGroups = False
     convertFp16 = False
+    convertFp32 = False
     pos = 1
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--batch-size':
@@ -40,6 +41,9 @@ def main():
             pos = pos + 2
         elif sys.argv[pos] == '--convert-fp16':
             convertFp16 = False if int(sys.argv[pos+1]) == 0 else True
+            pos = pos + 2
+        elif sys.argv[pos] == '--convert-fp32':
+            convertFp32 = False if int(sys.argv[pos+1]) == 0 else True
             pos = pos + 2
         else:
             print('ERROR: invalid option: %s' % (sys.argv[pos]))
@@ -61,6 +65,8 @@ def main():
         graph.fuseOps()
     if  convertFp16:
         graph.convertFp16()   
+    if  convertFp32:
+        graph.convertFp32()   
     print('writing IR model into ' + outputFolder + ' ...')
     graph.toFile(outputFolder)
 

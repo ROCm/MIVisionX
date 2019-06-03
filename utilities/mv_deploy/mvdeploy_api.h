@@ -127,9 +127,17 @@ typedef struct mivid_update_model_params_t
 typedef void *mv_deploy;
 typedef int mivid_status;
 typedef void * mivid_session;
+
+//! \brief Parameters required to be passed from preprocess callback function
+typedef struct mv_preprocess_callback_args_t
+{
+    const char *inp_string_decoder;         // input for amd_video_decoder node
+    int loop_decode;                        // indicate to loop at eof
+    float preproc_a, preproc_b;       // proprocess multiply and add factor for image to tensor node
+}mv_preprocess_callback_args;
 //! \brief The log callback function
 typedef void(*mivid_log_callback_f)(const char * message);
-typedef vx_status(*mivid_add_preprocess_callback_f)(mivid_session inf_session, vx_tensor outp_tensor, const char *inp_string, float preproc_a, float preproc_b);
+typedef vx_status(*mivid_add_preprocess_callback_f)(mivid_session inf_session, vx_tensor outp_tensor, mv_preprocess_callback_args *preproc_args);
 typedef vx_status(*mivid_add_postprocess_callback_f)(mivid_session inf_session, vx_tensor inp_tensor);
 
 
@@ -151,7 +159,7 @@ MIVID_API_ENTRY void MIVID_API_CALL SetLogCallback(mivid_log_callback_f callback
 //! \brief: load and add preprocessing module/nodes to graph if needed.
 // need to call this before calling CreateInferenceSession
 // output of the preprocessing node should be same as input tensor NN module
-MIVID_API_ENTRY void MIVID_API_CALL SetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, const char *inp_str, float preproc_a = 1.f, float preproc_b = 0.f);
+MIVID_API_ENTRY void MIVID_API_CALL SetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, mv_preprocess_callback_args *preproc_args);
 
 //! \brief: load and add postprocessing modules/nodes to graph if needed.
 // need to call this before calling CreateInferenceSession

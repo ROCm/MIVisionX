@@ -71,6 +71,7 @@ public:
 	~CLoomIoMediaDecoder();
 	vx_status Initialize();
 	vx_status ProcessFrame(vx_image output, vx_array aux_data);
+    vx_status SetRepeatMode(vx_int32 bRepeat);
 protected:
 	typedef enum { cmd_abort, cmd_decode } command;
 	void DecodeLoop(int mediaIndex);
@@ -115,6 +116,7 @@ private:
 	std::vector<bool> eof;
 	std::vector<int> decodeFrameCount;
 	int outputFrameCount;
+    std::vector<int> LoopDec;
 };
 
 static enum AVPixelFormat hwPixelFormat;
@@ -215,7 +217,7 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
       inputMediaFileName(mediaCount_), inputMediaFormatContext(mediaCount_), inputMediaFormat(mediaCount_),
       videoCodecContext(mediaCount_), conversionContext(mediaCount_), videoStreamIndex(mediaCount_),
 	  mutexCmd(mediaCount_), cvCmd(mediaCount_), queueCmd(mediaCount_), mutexAck(mediaCount_), cvAck(mediaCount_), queueAck(mediaCount_),
-      thread(mediaCount_), eof(mediaCount_), decodeFrameCount(mediaCount_), useVaapi(mediaCount_), mutexFrame(mediaCount_), cvFrame(mediaCount_), queueFrames(mediaCount_)
+      thread(mediaCount_), eof(mediaCount_), decodeFrameCount(mediaCount_), useVaapi(mediaCount_), mutexFrame(mediaCount_), cvFrame(mediaCount_), queueFrames(mediaCount_), LoopDec(mediaCount_)
 {
 #if DECODE_ENABLE_OPENCL
 	memset(mem, 0, sizeof(mem));
@@ -226,6 +228,7 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
         inputMediaFormat[mediaIndex] = NULL;
         videoCodecContext[mediaIndex] = NULL;
         inputMediaFormatContext[mediaIndex] = NULL;
+        LoopDec[mediaIndex] = 0;
     }
     // initialize freq inside GetTimeInMicroseconds()
 	GetTimeInMicroseconds();
@@ -272,6 +275,14 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 #if DUMP_DECODED_FRAME
     if (fpIn) fclose(fpIn);
 #endif
+}
+
+vx_status CLoomIoMediaDecoder::SetRepeatMode(vx_int32 bRepeat)
+{
+    for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
+        LoopDec[mediaIndex] = bRepeat;
+    }
+    return VX_SUCCESS;
 }
 
 vx_status CLoomIoMediaDecoder::Initialize()
@@ -618,13 +629,19 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
 			for (;;) {
 				status = av_read_frame(inputMediaFormatContext[mediaIndex], &avpkt);
 				if (status < 0) {
+                    if ((status == AVERROR_EOF) && LoopDec[mediaIndex]) {
+                        auto stream = inputMediaFormatContext[mediaIndex]->streams[videoStreamIndex[mediaIndex]];
+                        avio_seek(inputMediaFormatContext[mediaIndex]->pb, 0, SEEK_SET);
+                        avformat_seek_file(inputMediaFormatContext[mediaIndex], videoStreamIndex[mediaIndex], 0, 0, stream->duration, 0);
+                        //printf("Reached EOF: Looping\n");
+                        continue;
+                    }
                     // no more packets: need to still flush decoder till we get eof
 				    avpkt.data = NULL;
 				    avpkt.size = 0;
 				    status = avcodec_send_packet(videoCodecContext[mediaIndex], &avpkt);
 				    if (status < 0) {
                         vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: Sending packet to video decoder");
-                       // return;
 				    }
                     eof[mediaIndex] = true;
                     PushAck(mediaIndex, -1);
@@ -739,8 +756,14 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
 		return VX_ERROR_INVALID_VALUE;
 	}
 	if (*s == ',') s++;
-	CLoomIoMediaDecoder * decoder = new CLoomIoMediaDecoder(node, mediaCount, s, width, height, format, stride, offset);
+    int loop = 0;
+    if (parameters[3]) ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &loop, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    CLoomIoMediaDecoder * decoder = new CLoomIoMediaDecoder(node, mediaCount, s, width, height, format, stride, offset);
 	ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &decoder, sizeof(decoder)));
+    if (parameters[3]){
+        ERROR_CHECK_STATUS(decoder->SetRepeatMode(loop));
+    }
 	ERROR_CHECK_STATUS(decoder->Initialize());
 
 	return VX_SUCCESS;
@@ -808,7 +831,7 @@ vx_status amd_media_decode_publish(vx_context context)
 {
 	// add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "com.amd.amd_media.decode", AMDOVX_KERNEL_AMD_MEDIA_DECODE,
-                            amd_media_decode_kernel, 3, amd_media_decode_validate,
+                            amd_media_decode_kernel, 4, amd_media_decode_validate,
                             amd_media_decode_initialize, amd_media_decode_deinitialize);
 	ERROR_CHECK_OBJECT(kernel);
 
@@ -816,6 +839,7 @@ vx_status amd_media_decode_publish(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED)); // media config+filename: mediaCount,mediaList.txt|media%d.mp4|{file1.mp4:useVaapi,file2.mp4:useVaapi,...}
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED)); // output image
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_OPTIONAL)); // output auxiliary data (optional)
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input repeat decoding at eof (optional)
 
 	// finalize and release kernel object
 	ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
@@ -824,20 +848,23 @@ vx_status amd_media_decode_publish(vx_context context)
 	return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data)
+VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_scalar s_input = vxCreateScalar(context, VX_TYPE_STRING_AMD, input_str);
+        vx_scalar s_loop = vxCreateScalar(context, VX_TYPE_INT32, &loop_decode);
         vx_reference params[] = {
             (vx_reference)s_input,
             (vx_reference)output,
             (vx_reference)aux_data,
+            (vx_reference)s_loop,
         };
         if (vxGetStatus((vx_reference)s_input) == VX_SUCCESS) {
             node = createMediaNode(graph, "com.amd.amd_media.decode", params, sizeof(params) / sizeof(params[0])); // added node to graph
             vxReleaseScalar(&s_input);
+            vxReleaseScalar(&s_loop);
         }
     }
     return node;

@@ -248,7 +248,7 @@ MIVID_API_ENTRY void MIVID_API_CALL mvSetLogCallback(mivid_log_callback_f log_ca
     return;
 }
 
-MIVID_API_ENTRY void MIVID_API_CALL mvSetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, const char *inp_str, float preproc_a, float preproc_b)
+MIVID_API_ENTRY void MIVID_API_CALL mvSetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, mv_preprocess_callback_args *preproc_args)
 {
     return;
 }
@@ -333,8 +333,7 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvReleaseInference(mivid_handle handle)
 static mivid_log_callback_f g_mv_log_message_callback = nullptr;
 static mivid_add_preprocess_callback_f g_mv_preprocess_callback = nullptr;
 static mivid_add_postprocess_callback_f g_mv_postprocess_callback = nullptr;
-static std::string g_mv_preproc_inp_str;
-static float g_preproc_a, g_preproc_b;
+static mv_preprocess_callback_args *g_mv_preproc_args = nullptr;
 
 inline int64_t clockCounter()
 {
@@ -365,7 +364,7 @@ static void MIVID_CALLBACK log_callback(vx_context context, vx_reference ref, vx
 static mv_status MIVID_CALLBACK preprocess_callback(mivid_session session, vx_tensor inp_tensor)
 {
     if (g_mv_preprocess_callback) {
-        return (mv_status)g_mv_preprocess_callback(session, inp_tensor, g_mv_preproc_inp_str.c_str(), g_preproc_a, g_preproc_b);
+        return (mv_status)g_mv_preprocess_callback(session, inp_tensor, g_mv_preproc_args);
     }else
     {
         printf("ERROR: preprocess callback function is not set by user \\n");
@@ -432,12 +431,10 @@ MIVID_API_ENTRY void MIVID_API_CALL mvSetLogCallback(mivid_log_callback_f log_ca
 //! \brief: load and add preprocessing module/nodes to graph if needed.
 // need to call this before calling CreateInferenceSession
 // output of the preprocessing node should be same as input tensor NN module
-MIVID_API_ENTRY void MIVID_API_CALL mvSetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, const char *inp_str, float a, float b)
+MIVID_API_ENTRY void MIVID_API_CALL mvSetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, mv_preprocess_callback_args *preproc_args)
 {
     g_mv_preprocess_callback = preproc_f;
-    g_mv_preproc_inp_str = std::string(inp_str);
-    g_preproc_a = a;
-    g_preproc_b = b;
+    g_mv_preproc_args = preproc_args;
 }
 
 //! \brief: load and add postprocessing modules/nodes to graph if needed.
@@ -1326,9 +1323,9 @@ void MIVID_API_CALL SetLogCallback(mivid_log_callback_f log_callback_f)
 //! \\brief: load and add preprocessing module/nodes to graph if needed.
 // need to call this before calling CreateInferenceSession
 // output of the preprocessing node should be same as input tensor NN module
-MIVID_API_ENTRY void MIVID_API_CALL SetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, const char* inp_str, float preproc_a, float preproc_b)
+MIVID_API_ENTRY void MIVID_API_CALL SetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, mv_preprocess_callback_args *preproc_args)
 {
-    if (mvDeploy) mvDeploy->mvSetPreProcessCallback_f(preproc_f, inp_str, preproc_a, preproc_b);
+    if (mvDeploy) mvDeploy->mvSetPreProcessCallback_f(preproc_f, preproc_args);
 }
 
 //! \\brief: load and add postprocessing modules/nodes to graph if needed.
@@ -1500,7 +1497,7 @@ typedef struct mivid_handle_t {
 """//
 extern "C" {
     MIVID_API_ENTRY void MIVID_API_CALL mvSetLogCallback(mivid_log_callback_f log_callback_f);
-    MIVID_API_ENTRY void MIVID_API_CALL mvSetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, const char *inp_str, float a, float b);
+    MIVID_API_ENTRY void MIVID_API_CALL mvSetPreProcessCallback(mivid_add_preprocess_callback_f preproc_f, mv_preprocess_callback_args *preproc_args);
     MIVID_API_ENTRY void MIVID_API_CALL mvSetPostProcessCallback(mivid_add_postprocess_callback_f postproc_f);
     MIVID_API_ENTRY const char * MIVID_API_CALL mvQueryInference(int *num_inputs, int *num_outputs);
     MIVID_API_ENTRY mivid_handle MIVID_API_CALL mvCreateInference(const char * binaryFilename, int mem_type);
@@ -1519,7 +1516,7 @@ extern "C" {
     typedef MIVID_API_ENTRY mv_status (MIVID_API_CALL *mvGetVersion_t)();
     typedef MIVID_API_ENTRY const char * (MIVID_API_CALL *mvQueryInference_t)(int *num_inputs, int *num_outputs);
     typedef MIVID_API_ENTRY mv_status (MIVID_API_CALL *mvSetLogCallback_t)(mivid_log_callback_f log_callback_f);
-    typedef MIVID_API_ENTRY void (MIVID_API_CALL *mvSetPreProcessCallback_t)(mivid_add_preprocess_callback_f preproc_f, const char *inp_str, float a, float b);
+    typedef MIVID_API_ENTRY void (MIVID_API_CALL *mvSetPreProcessCallback_t)(mivid_add_preprocess_callback_f preproc_f, mv_preprocess_callback_args *preproc_args);
     typedef MIVID_API_ENTRY void (MIVID_API_CALL *mvSetPostProcessCallback_t)(mivid_add_postprocess_callback_f postproc_f);
     typedef MIVID_API_ENTRY mivid_handle (MIVID_API_CALL *mvCreateInference_t)(const char * binaryFilename, int mem_type);
     typedef MIVID_API_ENTRY mv_status (MIVID_API_CALL *mvReleaseInference_t)(mivid_handle handle);    

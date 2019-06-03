@@ -331,6 +331,7 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['gemm']:
+                    input = self.tensor_dict[node.inputs[0]]
                     A = self.tensor_dict[node.inputs[0]]
                     B = self.tensor_dict[node.inputs[1]]
                     transA = node.attr.get('transA')

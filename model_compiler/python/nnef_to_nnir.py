@@ -33,6 +33,7 @@ nnef2ir_op_type = {
     'mul'                                   : 'mul',
     'sub'                                   : 'sub',
     'matmul'                                : 'gemm',
+    'linear'                                : 'gemm',
     'softmax'                               : 'softmax',
     'local_response_normalization'          : 'lrn',
     'slice'                                 : 'slice',
@@ -43,6 +44,16 @@ nnef2ir_op_type = {
     'unsqueeze'                             : 'reshape',
     'transpose'                             : 'transpose',
     'copy'                                  : 'copy'
+}
+  
+nnef2ir_data_type = {
+    'float16' : 'F016',
+    'float32' : 'F032',
+    'float64' : 'F064',
+    'uint8'   : 'U008',
+    'uint16'  : 'U016',
+    'int16'   : 'I016',
+    'int32'   : 'I032'
 }
 
 def flatten(nested_list):
@@ -135,6 +146,9 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                     attr.set(nnef2ir_attr[attrib], 1)
                 else:
                     attr.set(nnef2ir_attr[attrib], 0)
+            elif attrib == 'groups' and nnef_attribs[attrib] == 0:
+                    input_tensor = nnef_tensor[nnef_operation.inputs['input']]
+                    attr.set(nnef2ir_attr[attrib], input_tensor.shape[1])
             else:
                 attr.set(nnef2ir_attr[attrib], nnef_attribs[attrib])
         else:
@@ -144,7 +158,15 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
 def nnef_tensor_to_ir_tensor(nnef_tensor):
     nnir_tensor = IrTensor()
     nnir_tensor.setName(nnef_tensor.name)
-    nnir_tensor.setInfo('F032', nnef_tensor.shape)
+    if len(nnef_tensor.shape) == 0:
+        nnef_tensor.shape.append(1)
+    if hasattr(nnef_tensor.data, 'dtype'):
+        if str(nnef_tensor.data.dtype) in nnef2ir_data_type:
+            nnir_tensor.setInfo(nnef2ir_data_type[str(nnef_tensor.data.dtype)], nnef_tensor.shape)    
+        else:
+            raise ValueError("ERROR: Data type {} not supported yet".format(nnef_tensor.data.dtype))
+    else:
+        nnir_tensor.setInfo('F032', nnef_tensor.shape)    
     return nnir_tensor
 
 def nnef_op_to_ir_node(nnef_graph, nnef_operation):
@@ -153,8 +175,7 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     if nnef_operation.name in nnef2ir_op_type:
         type = nnef2ir_op_type[nnef_operation.name]
     else:
-        print('ERROR: NNEF operation "%s" not supported yet' % (nnef_operation.name))
-        sys.exit(1)
+        raise ValueError("ERROR: NNEF operation {} not supported yet".format(nnef_operation.name))
 
     if nnef_operation.name == 'conv':
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
@@ -180,6 +201,9 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         del nnef_operation.attribs['axes']
         nnef_operation.attribs.update({'shape': output_shape})
 
+    if nnef_operation.name == 'linear':
+        nnef_operation.attribs.update({'transposeB': 1})
+        
     inputs = [nnef_operation.inputs[nnef_name_to_ir_name(name)] for name in nnef_operation.inputs]
     outputs = [nnef_operation.outputs[nnef_name_to_ir_name(name)] for name in nnef_operation.outputs]    
 
@@ -204,6 +228,8 @@ def nnef_graph_to_ir_graph(nnef_graph):
     graph = IrGraph()
 
     scalarCount = 0
+    hasFP64 = False
+    hasINT32 = False
 
     for operation in nnef_graph.operations:
         if operation.name == 'external':
@@ -212,6 +238,11 @@ def nnef_graph_to_ir_graph(nnef_graph):
         if operation.name == 'variable':
             tensor_name = operation.outputs['output']
             tensor = nnef_graph.tensors[tensor_name]
+            dtype = tensor.data.dtype
+            if dtype == 'float64':
+                hasFP64 = True
+            elif dtype == 'int32':
+                hasINT32 = True
             graph.addVariable(nnef_tensor_to_ir_tensor(tensor))
             graph.addBinary(tensor_name, tensor.data)
         else:
@@ -222,7 +253,7 @@ def nnef_graph_to_ir_graph(nnef_graph):
                 for input in operation.inputs:
                     if isinstance(operation.inputs[input], float):
                         scalarCount += 1
-                        name = 'scalar_' + str(scalarCount)
+                        scalar_name = 'scalar_' + str(scalarCount)
                         if input == 'bias':
                             filter_tensor = nnef_graph.tensors[operation.inputs['filter']]
                             shape = [1, filter_tensor.shape[0]]
@@ -232,14 +263,15 @@ def nnef_graph_to_ir_graph(nnef_graph):
                                 shape = [1, output_tensor.shape[0]]
                             while len(shape) < 4:
                                 shape.append(1)
-
+                        else:
+                            shape = output_tensor.shape
                         scalar_tensor = IrTensor()
-                        scalar_tensor.setName(name)
+                        scalar_tensor.setName(scalar_name)
                         scalar_tensor.setInfo('F032', shape)
                         tensor_data = np.full(shape, operation.inputs[input], dtype=np.float32)
                         graph.addVariable(scalar_tensor)                    
-                        graph.addBinary(name, tensor_data)
-                        operation.inputs[input] = name
+                        graph.addBinary(scalar_name, tensor_data)
+                        operation.inputs[input] = scalar_name
 
                 node = nnef_op_to_ir_node(nnef_graph, operation)
                 graph.addNode(node)
@@ -257,6 +289,14 @@ def nnef_graph_to_ir_graph(nnef_graph):
         graph.addOutput(nnef_tensor_to_ir_tensor(tensor))
 
     graph.updateLocals()
+
+    if hasFP64:
+        print('This nnir graph contains float64 bit tensors. Quantizing to float32 bit tensors ...')
+        graph.convertFp32()
+    
+    if hasINT32:
+        print('This nnir graph contains int32 bit tensors. Converting to float32 bit tensors ...')
+        graph.convertFp32()
     return graph
 
 def nnef2ir(inputFolder, outputFolder):

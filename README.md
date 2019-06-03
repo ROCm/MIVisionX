@@ -91,6 +91,8 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
 * [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+* [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
+  * FFMPEG is required for amd_media & mv_deploy modules
   
 #### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
@@ -107,7 +109,8 @@ For the convenience of the developer, we here provide the setup script which wil
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
+                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
 ````
 **Note:** use `--installer yum` for CentOS
 
@@ -166,7 +169,8 @@ cd MIVisionX
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
+                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]    
 ````
 **Note:** Use `--installer yum` for CentOS
 ````
@@ -189,6 +193,7 @@ sudo make install
   * [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) -- make sure to use `-DMIOPEN_BACKEND=OpenCL` option with cmake
 * install [protobuf](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.3.0)
+* install [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
 * build and install (using `cmake` and `% make install`)
   * executables will be placed in `bin` folder
   * libraries will be placed in `lib` folder
@@ -196,10 +201,6 @@ sudo make install
   * the installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
 * add the installed library path to LD_LIBRARY_PATH environment variable (default `/opt/rocm/mivisionx/lib`)
 * add the installed executable path to PATH environment variable (default `/opt/rocm/mivisionx/bin`)
-
-##### Build `annInferenceApp` using `Qt Creator`
-* build [annInferenceApp.pro](apps/cloud_inference/client_app/annInferenceApp.pro) using Qt Creator
-* or use [annInferenceApp.py](apps/cloud_inference/client_app/annInferenceApp.py) for simple tests
 
 ## Verify the Installation
 

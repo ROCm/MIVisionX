@@ -633,9 +633,10 @@ class IrGraph:
         for idx, binary in enumerate(self.binaries):
             if binary in convertFromFP64:
                 weight = np.frombuffer(self.binaries[binary], dtype=np.float64)
+                self.addBinary(binary, np.getbuffer(weight.astype(np.float32)))
             elif binary in convertFromINT32:
                 weight = np.frombuffer(self.binaries[binary], dtype=np.int32)
-            self.addBinary(binary, np.getbuffer(weight.astype(np.float32)))
+                self.addBinary(binary, np.getbuffer(weight.astype(np.float32)))
         self.all_F032 = True
         self.all_F016 = False
 

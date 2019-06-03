@@ -96,7 +96,11 @@ else()
   
   if(_FFMPEG_AVCODEC_VERSION VERSION_LESS 58.18.100 OR _FFMPEG_AVFORMAT_VERSION VERSION_LESS 58.12.100 OR _FFMPEG_AVUTIL_VERSION VERSION_LESS 56.14.100)
     set(FFMPEG_FOUND FALSE)
-    message("-- FFMPEG Not Found - MIVisionX Modules requiring FFMPEG turned off")
+    message("-- AVCODEC  min version - 58.18.100")
+    message("-- AVFORMAT min version - 58.12.100")
+    message("-- AVUTIL   min version - 56.14.100")
+    message("-- FFMPEG   min version - 4.0.4")
+    message("-- FFMPEG Marked Not Found - MIVisionX Modules requiring FFMPEG turned off")
   endif()
   
   if(FFMPEG_FOUND)

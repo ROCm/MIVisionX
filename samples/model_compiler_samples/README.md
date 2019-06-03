@@ -14,7 +14,7 @@ In this sample, we will learn how to run inference efficiently using [OpenVX](ht
 * [Sample-1: Classification Using Pre-Trained ONNX Model](#sample-1---classification-using-pre-trained-onnx-model)
 * [Sample-2: Detection Using Pre-Trained Caffe Model](#sample-2---detection-using-pre-trained-caffe-model)
 * [Sample-3: Classification Using Pre-Trained NNEF Model](#sample-3---classification-using-pre-trained-nnef-model)
-* [Sample-4: Classification Using Pre-Trained NNEF Model](#sample-4---classification-using-pre-trained-caffe-model)
+* [Sample-4: Classification Using Pre-Trained Caffe Model](#sample-4---classification-using-pre-trained-caffe-model)
 
 [Neural Net Model Compiler & Optimizer](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/master/model_compiler#neural-net-model-compiler--optimizer) converts pre-trained neural network models to MIVisionX runtime code for optimized inference.
 

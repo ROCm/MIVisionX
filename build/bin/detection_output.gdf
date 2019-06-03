@@ -1,0 +1,36 @@
+import vx_nn
+
+data input_tensor_0 = tensor:4,{1,7668,1,1},FLOAT32,0
+read input_tensor_0 mbox_loc.f32
+
+data input_tensor_1 = tensor:4,{1,40257,1,1},FLOAT32,0
+read input_tensor_1 mbox_conf_flatten.f32
+
+data input_tensor_2 = tensor:4,{1,2,7668,1},FLOAT32,0
+read input_tensor_2 mbox_priorbox.f32
+
+data num_classes = scalar:INT32,21
+
+data share_location = scalar:INT32,1
+
+data background_label_id = scalar:INT32,0
+
+data nms_threshold = scalar:FLOAT32,0.45
+
+data top_k = scalar:INT32,100
+
+data code_type = scalar:string,CENTER_SIZE
+
+data keep_top_k = scalar:INT32,100
+
+data confidence_threshold = scalar:FLOAT32,0.25
+
+data variance_encoded_in_target = scalar:INT32,0
+
+data output_tensor = tensor:4,{1,1,100,7},FLOAT32,0
+
+data eta = scalar:FLOAT32, 1
+
+node com.amd.nn_extension.detection_output input_tensor_0 input_tensor_1 input_tensor_2 num_classes share_location background_label_id nms_threshold top_k code_type keep_top_k confidence_threshold variance_encoded_in_target output_tensor eta
+
+write output_tensor out_runvx.bin

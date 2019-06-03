@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC  -msse4.2 -mf16c -std=c++11 -msse4.2 -mf16c -std=c++11  -shared -Wl,-soname,libannpython.so -o libannpython.so CMakeFiles/annpython.dir/annpython.cpp.o  -L/opt/rocm/mivisionx/lib -Wl,-rpath,/opt/rocm/mivisionx/lib:/home/lakshmi/Downloads/lk/MIVisionX/ssd-ovx libannmodule.so -lopenvx -lvx_nn -lpthread 

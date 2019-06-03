@@ -172,6 +172,7 @@ def extractInput(net_parameter, graph, input_dims):
 def extractOutput(graph, inputOutputLayers, output_list, verbose):
     outputList = {}
     if (len(output_list) == 1):
+        print "in o/p list 1"
         last_layer_index = len(inputOutputLayers) - 1
         last_layer_info = inputOutputLayers[last_layer_index]
         output_map = last_layer_info["outputs"]
@@ -297,6 +298,33 @@ def extractCaffeAttrInfo(layer_param):
         concat = layer_param.concat_param
         axis = concat.axis
         attribute_map["axis"] = axis
+
+    elif (layer_param.type == "DetectionOutput"):
+        print "in detection o/p"
+        detection_output = layer_param.detection_output_param
+        num_classes = detection_output.num_classes
+        share_location = detection_output.share_location
+        background_label_id = detection_output.background_label_id
+        nms_threshold = detection_output.nms_param.nms_threshold
+        top_k = detection_output.nms_param.top_k
+        code_type = detection_output.code_type
+        variance_encoded_in_target = detection_output.variance_encoded_in_target
+        keep_top_k = detection_output.keep_top_k
+        confidence_threshold = detection_output.confidence_threshold
+        visualize = detection_output.visualize
+        visualize_threshold = detection_output.visualize_threshold
+        save_file = detection_output.save_file
+
+        attribute_map["num_classes"] = num_classes
+        attribute_map["share_location"] = 1 if share_location == True else 0
+        attribute_map["background_label_id"] = background_label_id
+        attribute_map["nms_threshold"] = nms_threshold
+        attribute_map["top_k"] = top_k
+        attribute_map["code_type"] = code_type
+        attribute_map["variance_encoded_in_target"] = 1 if variance_encoded_in_target == True else 0
+        attribute_map["keep_top_k"] = keep_top_k
+        attribute_map["confidence_threshold"] = confidence_threshold
+
     return attribute_map
 
 # calculate dimensions of the output of each layer.
@@ -517,7 +545,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
     elif (layer_param.type == "DetectionOutput"):
         output_dims[0] = 1
         output_dims[1] = 1
-        output_dims[2] = 1
+        output_dims[2] = 5
         output_dims[3] = 7      
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]
@@ -593,7 +621,6 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
             layer_type = convertV1LayerTypeToString(layer_param)
         else:
             layer_type = str(layer_param.type)
-    
         inputs = layer_param.bottom
         outputs = layer_param.top
         # ignoring the input/data layer as input is already obtained in previous step.

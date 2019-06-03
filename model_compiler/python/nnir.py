@@ -85,6 +85,16 @@ class IrAttr:
             , 'clip' : 0                 # normalize bounding boxes (true/false)
             , 'variance' : []            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
+            , 'num_classes' : 0          #attributes for detection output layer
+            , 'share_location' : 1
+            , 'background_label_id' : 0
+            , 'nms_threshold' : 0.0
+            , 'top_k' : -1
+            , 'code_type' : 1
+            , 'variance_encoded_in_target' : 0
+            , 'keep_top_k' : -1
+            , 'confidence_threshold' : 0.0
+            , 'eta' : 0.0
         }
         self.dict_set = []
 
@@ -163,7 +173,8 @@ class IrNode:
             'crop_and_resize': 1,
             'permute' : 1,
             'prior_box' : 1,
-            'flatten'  : 1
+            'flatten'  : 1,
+            'detection_output' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -509,6 +520,15 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['detection_output']:
+                    input_loc = self.tensor_dict[node.inputs[0]]
+                    input_conf = self.tensor_dict[node.inputs[1]]
+                    input_prior = self.tensor_dict[node.inputs[2]]
+                    out_shape = [1,1,5,7]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
 
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))

@@ -1,0 +1,2 @@
+# Hashes of file build rules.
+730d4954a6c7820fe0950b44080aaa9b amd_openvx_extensions/amd_nn/bin/caffe.pb.cc

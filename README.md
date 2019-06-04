@@ -1,10 +1,9 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
-
 <p align="center"><img width="60%" src="docs/images/MIVisionX.png" /></p>
 
-MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open source implementation of the Khronos OpenVX™ and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos NNEF™ exchange formats. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open source implementation of the Khronos OpenVX™ and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos NNEF™ exchange formats. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
@@ -31,7 +30,7 @@ MIVisionX toolkit is a comprehensive computer vision and machine intelligence li
 AMD OpenVX ([amd_openvx](amd_openvx#amd-openvx-amd_openvx)) is a highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 ## AMD OpenVX Extensions
-The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
+The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl): AMD Radeon Loom stitching library for live 360 degree video applications
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
@@ -91,6 +90,8 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   * install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
 * [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+* [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
+  * FFMPEG is required for amd_media & mv_deploy modules
   
 #### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
@@ -107,9 +108,10 @@ For the convenience of the developer, we here provide the setup script which wil
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
+                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
 ````
-**Note:** use `--installer yum` for CentOS
+**Note:** use `--installer yum` for **CentOS**
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
@@ -166,9 +168,10 @@ cd MIVisionX
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.7.1)]      
+                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]    
 ````
-**Note:** Use `--installer yum` for CentOS
+**Note:** Use `--installer yum` for **CentOS**
 ````
 mkdir build
 cd build
@@ -189,6 +192,7 @@ sudo make install
   * [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) -- make sure to use `-DMIOPEN_BACKEND=OpenCL` option with cmake
 * install [protobuf](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.3.0)
+* install [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
 * build and install (using `cmake` and `% make install`)
   * executables will be placed in `bin` folder
   * libraries will be placed in `lib` folder
@@ -196,10 +200,6 @@ sudo make install
   * the installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
 * add the installed library path to LD_LIBRARY_PATH environment variable (default `/opt/rocm/mivisionx/lib`)
 * add the installed executable path to PATH environment variable (default `/opt/rocm/mivisionx/bin`)
-
-##### Build `annInferenceApp` using `Qt Creator`
-* build [annInferenceApp.pro](apps/cloud_inference/client_app/annInferenceApp.pro) using Qt Creator
-* or use [annInferenceApp.py](apps/cloud_inference/client_app/annInferenceApp.py) for simple tests
 
 ## Verify the Installation
 

@@ -1472,7 +1472,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
         }
         else if(num_of_dims == 4) {
             W = dims[0], H = dims[1], C = dims[2], N = dims[3];
-        }		
+        }
         vx_size HW = H * W;
         vx_size NHW = N * HW;
         vx_size CHW = C * HW;

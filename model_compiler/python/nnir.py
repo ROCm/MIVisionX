@@ -286,22 +286,20 @@ class IrGraph:
         for node in self.nodes:
             for output in node.outputs:
                 count+=1
+                input = self.tensor_dict[node.inputs[0]]
                 if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
-                    input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['global_avg_pool']:
-                    input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, [input.shape[0], input.shape[1], 1, 1])
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['conv', 'avg_pool', 'max_pool', 'lrn']:
-                    input = self.tensor_dict[node.inputs[0]]
                     pads = node.attr.get('pads')
                     strides = node.attr.get('strides')
                     dilations = node.attr.get('dilations')
@@ -326,7 +324,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['conv_transpose']:
-                    input = self.tensor_dict[node.inputs[0]]
                     pads = node.attr.get('pads')
                     strides = node.attr.get('strides')
                     dilations = node.attr.get('dilations')
@@ -362,7 +359,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['concat']:
-                    input = self.tensor_dict[node.inputs[0]]
                     axis = node.attr.get('axis')
                     if axis == 1:
                         shape = [input.shape[0], 0, input.shape[2], input.shape[3]]
@@ -384,7 +380,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['slice']:
-                    input = self.tensor_dict[node.inputs[0]]
                     shape = [input.shape[0], input.shape[1] // len(node.outputs), input.shape[2], input.shape[3]]
                     for name in node.outputs:
                         local = IrTensor()
@@ -393,7 +388,6 @@ class IrGraph:
                         local.setFormat(input.format)
                         self.addLocal(local)
                 elif node.type in ['reshape']:
-                    input = self.tensor_dict[node.inputs[0]]
                     param = node.attr.get('shape')
                     if not param:
                         param = self.tensor_dict[node.inputs[1]].shape
@@ -428,7 +422,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['transpose']:
-                    input = self.tensor_dict[node.inputs[0]]
                     axes = node.attr.get('axes')
                     if axes == [0, 2, 3, 1]:
                         format = 'NHWC'
@@ -444,14 +437,12 @@ class IrGraph:
                     local.setFormat(format)
                     self.addLocal(local)
                 elif node.type in ['copy']:
-                    input = self.tensor_dict[node.inputs[0]]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['crop']:
-                    input = self.tensor_dict[node.inputs[0]]
                     reference = self.tensor_dict[node.inputs[1]]
                     axis = node.attr.get('axis')
                     out_shape = []
@@ -466,7 +457,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)       
                 elif node.type in ['permute']:
-                    input = self.tensor_dict[node.inputs[0]]    
                     order = node.attr.get("order")   
                     if input.format == 'NCHW' and order == [0, 2, 3, 1]:
                         format = 'NHWC'
@@ -482,7 +472,6 @@ class IrGraph:
                     local.setFormat(format)
                     self.addLocal(local)
                 elif node.type in ['flatten']:
-                    input = self.tensor_dict[node.inputs[0]]
                     axis = node.attr.get("axis")
                     if axis == 0:
                         shape = [1, input.shape[0]*input.shape[1]*input.shape[2]*input.shape[3], 1, 1]
@@ -496,7 +485,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['prior_box']:
-                    input = self.tensor_dict[node.inputs[0]]
                     dim = 1 #for min_size
                     if node.attr.get("max_size") > 0:
                         dim += 1
@@ -512,7 +500,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['crop_and_resize']:
-                    input = self.tensor_dict[node.inputs[0]]
                     shape = node.attr.get('shape')
                     scaleFactor = node.attr.get('scale')
                     width = shape[0]

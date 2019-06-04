@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11  -rdynamic CMakeFiles/caffe2openvx.dir/src/caffe2openvx.cpp.o CMakeFiles/caffe2openvx.dir/caffe.pb.cc.o  -o ../../../bin/caffe2openvx -Wl,-rpath,/usr/local/lib: /usr/local/lib/libprotobuf.so -lpthread -lpthread 

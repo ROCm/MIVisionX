@@ -1,1 +1,0 @@
-/usr/bin/c++ -fPIC  -msse4.2 -mf16c -std=c++11 -msse4.2 -mf16c -std=c++11  -shared -Wl,-soname,libannmodule.so -o libannmodule.so CMakeFiles/annmodule.dir/annmodule.cpp.o  -L/opt/rocm/mivisionx/lib -Wl,-rpath,/opt/rocm/mivisionx/lib -lopenvx -lvx_nn -lpthread 

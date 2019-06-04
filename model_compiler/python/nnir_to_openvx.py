@@ -675,43 +675,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
-            elif node.type == 'detection_output':
-                f.write( \
-"""
-    { vx_node node = vxDetectionOutputLayer(graph, %s, %s, %s, %d, %d, %d, %f, %s, %d, %d, %s);
-      ERROR_CHECK_OBJECT(node);     
-        
-"""
-    % (node.inputs[0], node.inputs[1], node.inputs[2], node.attr.get('num_classes'), node.attr.get('share_location'), node.attr.get('background_label_id'), \
-         node.attr.get('nms_threshold'), node.attr.get('code_type'), node.attr.get('keep_top_k'), node.attr.get('variance_encoded_in_target'), node.outputs[0]))
-                if (node.attr.get('top_k') > -1):
-                    top_k = node.attr.get('top_k');
-                    f.write( \
-"""      vx_int32 top_k = %d;
-      vx_scalar s_topK = vxCreateScalarWithSize(context, VX_TYPE_INT32, &top_k, sizeof(top_k));
-      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 12, (vx_reference) s_topK));
-      ERROR_CHECK_STATUS(vxReleaseScalar(&s_topK));
-""" % (top_k))
-                if (node.attr.get('confidence_threshold') > -sys.float_info.max):
-                    confidence_threshold = node.attr.get('confidence_threshold');
-                    f.write( \
-"""      vx_float32 confidence_threshold = %f;
-      vx_scalar s_confidence_threshold = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &confidence_threshold, sizeof(confidence_threshold));
-      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 13, (vx_reference) s_confidence_threshold));
-      ERROR_CHECK_STATUS(vxReleaseScalar(&s_confidence_threshold));
-""" % (confidence_threshold))
-                if (node.attr.get('eta') > 0.0 and node.attr.get('eta') <= 1.0):
-                    eta = node.attr.get('eta');
-                    f.write( \
-"""      vx_float32 eta = %f;
-      vx_scalar s_eta = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &eta, sizeof(eta));
-      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 11, (vx_reference) s_eta));
-      ERROR_CHECK_STATUS(vxReleaseScalar(&s_eta));
-""" % (eta))
-                f.write( \
-"""     ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-""")
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \

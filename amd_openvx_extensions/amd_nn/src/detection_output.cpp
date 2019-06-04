@@ -3,25 +3,18 @@
 #include <string.h>
 #include <map>
 #include <vector>
-#include <cmath>
 #include <utility>
 #include <algorithm>
 #include <assert.h>
 #include <vx_ext_amd.h>
 using namespace std;
 
-class NormalizedBBox
+struct NormalizedBBox
 {
-    float size_;
-
-    public:
-    bool has_size;
     float xmin, ymin,xmax,ymax;
-    bool set_size(float value){size_ = value;}
-    float size() const {return size_;}
+    bool has_size;
 };
 
-typedef std::map<int, std::vector<NormalizedBBox> > LabelBBox;
 static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[])
 {
     // check tensor dims.
@@ -71,63 +64,56 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[6], &nms_threshold, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if(nms_threshold < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #7 scalar type=%f (must be greater than 0)\n", nms_threshold);
 
-    vx_int32 code_type; 
-    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[7], &code_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if(code_type < 1 || code_type > 3) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #8 code type=%d \n", code_type);
+    if(parameters[7])
+    {
+        vx_int32 top_k;
+        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[7], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+        if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[7], &top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        if(top_k < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #8 scalar type=%d (must be greater than 0)\n", top_k);    
+    }
+    
+
+    char* code_type; 
+    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if(scalar_type != VX_TYPE_STRING_AMD) return VX_ERROR_INVALID_TYPE;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[8], &code_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     vx_int32 keep_top_k;
-    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[8], &keep_top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if(keep_top_k < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #9 scalar type=%d (must be greater than 0)\n", keep_top_k);
-
-    vx_int32 variance_encoded_in_target;
     ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[9], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &variance_encoded_in_target, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if(variance_encoded_in_target < 0 || variance_encoded_in_target > 1) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #10 scalar type=%d (must be 1(true)/0(false))\n", variance_encoded_in_target);
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &keep_top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if(keep_top_k < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #10 scalar type=%d (must be greater than 0)\n", keep_top_k);
 
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[10], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[10], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    if(parameters[10])
+    {
+        vx_float32 confidence_threshold;
+        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[10], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+        if(scalar_type != VX_TYPE_FLOAT32) return VX_ERROR_INVALID_TYPE;
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[10], &confidence_threshold, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        if(confidence_threshold < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #11 scalar type=%f (must be greater than 0)\n", confidence_threshold);        
+    }
+
+    vx_int32 variance_encoded_in_target;
+    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[11], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[11], &variance_encoded_in_target, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if(variance_encoded_in_target < 0 || variance_encoded_in_target > 1) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #12 scalar type=%d (must be 1(true)/0(false))\n", variance_encoded_in_target);
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[12], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[12], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
     if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[10], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[12], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     // output tensor configuration
     type = VX_TYPE_FLOAT32;
     num_dims = 4;
-    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[10], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[10], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[10], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[12], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[12], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[12], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     
-    if(parameters[11])
-    {
-        vx_float32 eta;
-        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[11], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-        if(scalar_type != VX_TYPE_FLOAT32) return VX_ERROR_INVALID_TYPE;
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[11], &eta, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if(eta <= 0 || eta > 1) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #12 scalar type=%f (must be greater than 0)\n", eta);        
-    }
 
-    if(parameters[12])
-    {
-        vx_int32 top_k;
-        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[12], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-        if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[12], &top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if(top_k < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #13 scalar type=%d (must be greater than 0)\n", top_k);    
-    }
-    
-    if(parameters[13])
-    {
-        vx_float32 confidence_threshold;
-        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[13], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-        if(scalar_type != VX_TYPE_FLOAT32) return VX_ERROR_INVALID_TYPE;
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[13], &confidence_threshold, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if(confidence_threshold < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #14 scalar type=%f (must be greater than 0)\n", confidence_threshold);        
-    }
     printf("DEBUG: Validate Success!!!\n");
     return VX_SUCCESS;
 
@@ -145,6 +131,53 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     return VX_SUCCESS;
 }
 
+static void GetConfidenceScores(float* confData, const int num, const int numPriors, const int num_classes, vector<map<int, vector<float> > >* allConfidenceScores)
+{
+    allConfidenceScores->resize(num);
+    for (int i = 0; i < num; i++)
+    {
+        map<int, vector<float> >&label_scores = (*allConfidenceScores)[i];
+        for(int p = 0; p < numPriors; p++)
+        {
+           
+            int start_index = p * num_classes;
+            for(int c = 0; c < num_classes; c++)
+            {
+                printf("DEBUG VALUE: %d , %f   ", start_index+c,  confData[start_index+c]);
+                label_scores[c].push_back(confData[start_index+c]);
+            }
+            
+        }
+        confData += num_classes * numPriors;
+    }
+}
+
+template <typename T>
+static inline bool SortScorePairDescend(const std::pair<float, T>& pair1,
+                          const std::pair<float, T>& pair2)
+{
+    return pair1.first > pair2.first;
+}
+
+
+void GetMaxScoreIndex(const std::vector<float>& scores, const float threshold, const int top_k, std::vector<std::pair<float, int> >& score_index_vec)
+{
+    for(int i = 0; i < scores.size(); i++)
+    {
+        if(scores[i] > threshold)
+        {
+            score_index_vec.push_back(std::make_pair(scores[i], i));
+        }
+    }
+
+    std::stable_sort(score_index_vec.begin() , score_index_vec.end(), SortScorePairDescend<int>);
+
+    if (top_k > 0 && top_k < (int)score_index_vec.size())
+    {
+        score_index_vec.resize(top_k);
+    }
+}
+
 static float BBoxSize(const NormalizedBBox& bbox, bool normalized)
 {
     if (bbox.xmax < bbox.xmin || bbox.ymax < bbox.ymin)
@@ -155,7 +188,7 @@ static float BBoxSize(const NormalizedBBox& bbox, bool normalized)
     {
         if (bbox.has_size == true)
         {
-            return bbox.size();
+            return bbox.has_size;
         }
         else
         {
@@ -173,234 +206,6 @@ static float BBoxSize(const NormalizedBBox& bbox, bool normalized)
         }
     }
 }
-
-
-
-static void GetLocPredictions(const float* locData, const int num,
-                           const int numPriors, const int num_loc_classes,
-                           const bool share_location, std::vector<LabelBBox>* locPreds)
-{
-    locPreds->clear();
-    if (share_location) 
-    {
-        assert(num_loc_classes == 1);
-    }
-    locPreds->resize(num);
-    for (int i = 0; i < num; ++i) 
-    {
-        LabelBBox& label_bbox = (*locPreds)[i];
-        for (int p = 0; p < numPriors; ++p) 
-        {
-            int startIdx = p * num_loc_classes * 4;
-            for (int c = 0; c < num_loc_classes; ++c) 
-            {
-                int label = share_location ? -1 : c;
-                //printf("label in locpred = %d\n", label);
-                if (label_bbox.find(label) == label_bbox.end()) 
-                {
-                    label_bbox[label].resize(numPriors);
-                    //printf("numPriors in locpred = %d\n", numPriors);
-                }
-                label_bbox[label][p].xmin = locData[startIdx + c * 4];
-                label_bbox[label][p].ymin = locData[startIdx + c * 4 + 1];
-                label_bbox[label][p].xmax = locData[startIdx + c * 4 + 2];
-                label_bbox[label][p].ymax = locData[startIdx + c * 4 + 3];
-                //printf("label_bbox data in locpred =  %f %f %f %f\n", label_bbox[label][p].xmin , label_bbox[label][p].ymin, label_bbox[label][p].xmax, label_bbox[label][p].ymax  );
-            }
-        }
-        locData += numPriors * num_loc_classes * 4;
-    }
-}
-
-static void GetConfidenceScores(float* confData, const int num, const int numPriors, const int num_classes, vector<map<int, vector<float> > >* allConfidenceScores)
-{
-    allConfidenceScores->clear();
-    allConfidenceScores->resize(num);
-    for (int i = 0; i < num; i++)
-    {
-        map<int, vector<float> >&label_scores = (*allConfidenceScores)[i];
-        for(int p = 0; p < numPriors; p++)
-        {
-           
-            int start_index = p * num_classes;
-            for(int c = 0; c < num_classes; c++)
-            {   
-                label_scores[c].push_back(confData[start_index+c]);
-            }
-            
-        }
-        //printf("label_score size  = %lu\n", label_scores[0].size());
-        confData += num_classes * numPriors;
-    }
-}
-
-static void GetPriorBBoxes(float* priorData, const int numPriors, vector<NormalizedBBox>* priorBBoxes, vector<vector<float> >* priorVariances)
-{
-    priorBBoxes->clear();
-    priorVariances->clear();
-    //priorBBoxes->resize(numPriors);
-    //priorVariances->resize(numPriors);
-
-    for (int i = 0; i < numPriors; ++i)
-    {
-        int startIdx = i * 4;
-        NormalizedBBox bbox;
-        bbox.xmin = priorData[startIdx];
-        bbox.ymin = priorData[startIdx + 1];
-        bbox.xmax = priorData[startIdx + 2];
-        bbox.ymax = priorData[startIdx + 3];
-        float bbox_size = BBoxSize(bbox, false);
-        bbox.set_size(bbox_size);
-        priorBBoxes->push_back(bbox);        
-    }
-
-    for (int i = 0; i < numPriors; ++i)
-    {
-        int startIdx = (numPriors + i) * 4;
-        vector<float> var;
-        for (int j = 0; j < 4; ++j)
-        {
-            var.push_back(priorData[startIdx + j]);
-        }
-        priorVariances->push_back(var);
-    }
-
-}
-
-
-void DecodeBBox(const NormalizedBBox& priorBBox, const vector<float>& priorVariance, string code_type, const bool variance_encoded_in_target, const bool clip_bbox, 
-                const NormalizedBBox& bbox, NormalizedBBox* decode_bbox)
-{
-    if(code_type == "CORNER")
-    {
-        if(variance_encoded_in_target)
-        {
-            decode_bbox->xmin = priorBBox.xmin + bbox.xmin;
-            decode_bbox->ymin = priorBBox.ymin + bbox.ymin;
-            decode_bbox->xmax = priorBBox.xmax + bbox.xmax;
-            decode_bbox->ymax = priorBBox.ymax + bbox.ymax;
-        }
-        else
-        {
-            decode_bbox->xmin = priorBBox.xmin + priorVariance[0]*bbox.xmin;
-            decode_bbox->ymin = priorBBox.ymin + priorVariance[1]*bbox.ymin;
-            decode_bbox->xmax = priorBBox.xmax + priorVariance[2]*bbox.xmax;
-            decode_bbox->ymax = priorBBox.ymax + priorVariance[3]*bbox.ymax;
-        }
-    }
-    else if(code_type == "CENTER_SIZE")
-    {
-        float prior_width = priorBBox.xmax - priorBBox.xmin;
-        assert(prior_width > 0);
-        float prior_height = priorBBox.ymax - priorBBox.ymin;
-        assert(prior_height > 0);
-        float prior_center_x = (priorBBox.xmin + priorBBox.xmax)/2;
-        float prior_center_y = (priorBBox.ymin + priorBBox.ymax)/2;
-
-        float decode_bbox_center_x, decode_bbox_center_y;
-        float decode_bbox_width, decode_bbox_height;
-        if(variance_encoded_in_target)
-        {
-            decode_bbox_center_x = bbox.xmin * prior_width + prior_center_x;
-            decode_bbox_center_y = bbox.ymin * prior_height + prior_center_y;
-            decode_bbox_width = exp(bbox.xmax) * prior_width;
-            decode_bbox_height = exp(bbox.ymax) * prior_height;
-        }
-        else
-        {
-            decode_bbox_center_x = priorVariance[0] * bbox.xmin * prior_width + prior_center_x;
-            decode_bbox_center_y = priorVariance[1] * bbox.ymin * prior_height + prior_center_y;
-            decode_bbox_width = exp(priorVariance[2] * bbox.xmax) * prior_width;
-            decode_bbox_height = exp(priorVariance[3] * bbox.ymax) * prior_height;
-        }
-
-        decode_bbox->xmin = decode_bbox_center_x - decode_bbox_width/2;
-        decode_bbox->ymin = decode_bbox_center_y - decode_bbox_height/2;
-        decode_bbox->xmax = decode_bbox_center_x + decode_bbox_width/2;
-        decode_bbox->ymax = decode_bbox_center_y + decode_bbox_height/2;
-        float bbox_size = BBoxSize(*decode_bbox, false);
-        decode_bbox->set_size(bbox_size);
-    }
-}
-
-void DecodeBBoxes(const vector<NormalizedBBox>& priorBBoxes, const vector<vector<float> >& priorVariances, string code_type, const bool variance_encoded_in_target, const bool clip_bbox, 
-                    const vector<NormalizedBBox>& bboxes, vector<NormalizedBBox>* decode_bboxes)
-{
-    assert(priorBBoxes.size() == priorVariances.size());
-    assert(priorBBoxes.size() == bboxes.size());
-
-    int numBBoxes = priorBBoxes.size();
-    if(numBBoxes >= 1)
-    {
-        assert(priorVariances[0].size() == 4);
-    }
-
-    decode_bboxes->clear();
-    for(int i = 0; i < numBBoxes; i++)
-    {
-        NormalizedBBox decode_bbox;
-        DecodeBBox(priorBBoxes[i], priorVariances[i], code_type, variance_encoded_in_target, clip_bbox, bboxes[i], &decode_bbox);
-        decode_bboxes->push_back(decode_bbox);
-    }
-
-}
-
-void DecodeBBoxesAll(const vector<LabelBBox>& allLocPreds, const vector<NormalizedBBox>& priorBBoxes, const vector<vector<float> >& priorVariances, const int num, const bool share_location,
-                    const int num_loc_classes, const int background_label_id, string code_type, const bool variance_encoded_in_target, const bool clip, vector<LabelBBox>* all_decode_bboxes)
-{
-    assert(allLocPreds.size() == num);
-    all_decode_bboxes->clear();
-    all_decode_bboxes->resize(num);
-
-    for(int i = 0; i < num; i++)
-    {
-        // Decode predictions into bboxes.
-        LabelBBox& decode_bboxes = (*all_decode_bboxes)[i];
-        for (int c = 0; c < num_loc_classes; ++c) 
-        {
-            int label = share_location ? -1 : c;
-            if (label == background_label_id) 
-            {
-                // Ignore background class.
-                continue;
-            }
-
-            if(allLocPreds[i].find(label) == allLocPreds[i].end())
-            {
-                ERRMSG(VX_ERROR_INVALID_VALUE, "decodeBBoxesAll: could not find location predictions for label %d\n", label);
-            }
-            const vector<NormalizedBBox>& label_loc_preds = allLocPreds[i].find(label)->second;
-            DecodeBBoxes(priorBBoxes, priorVariances, code_type, variance_encoded_in_target, clip, label_loc_preds, &(decode_bboxes[label]));
-        }
-    }
-
-}
-
-template <typename T>
-static inline bool SortScorePairDescend(const std::pair<float, T>& pair1,
-                          const std::pair<float, T>& pair2)
-{
-    return pair1.first > pair2.first;
-}
-
-void GetMaxScoreIndex(const std::vector<float>& scores, const float threshold, const int top_k, std::vector<std::pair<float, int> >* score_index_vec)
-{
-    for(int i = 0; i < scores.size(); i++)
-    {
-        if(scores[i] > threshold)
-        {
-            score_index_vec->push_back(std::make_pair(scores[i], i));
-        }
-    }
-
-    std::stable_sort(score_index_vec->begin() , score_index_vec->end(), SortScorePairDescend<int>);
-
-    if (top_k > -1 && top_k < score_index_vec->size())
-    {
-        score_index_vec->resize(top_k);
-    }
-}
-
 
 
 static float JaccardOverlap(const NormalizedBBox& bbox1, const NormalizedBBox& bbox2, const bool normalized)
@@ -424,55 +229,51 @@ static float JaccardOverlap(const NormalizedBBox& bbox1, const NormalizedBBox& b
     }
 }
 
-void ApplyNMSFast(const vector<NormalizedBBox>& bboxes, const vector<float>& scores, const float score_threshold, const float nms_threshold, const int top_k, vector<int>* indices, const float eta)
+void ApplyNMSFast(const vector<NormalizedBBox>& bboxes, const vector<float>& scores, const float score_threshold, const float nms_threshold, const int top_k, vector<int>* indices)
 {
 
     assert(bboxes.size() == scores.size());
-    //printf("score size, bboxes size = %lu, %lu\n", scores.size(), bboxes.size());
     std::vector<std::pair<float, int> > score_index_vec;
-    GetMaxScoreIndex(scores, score_threshold, top_k, &score_index_vec);
-    /*for(int i =0; i < score_index_vec.size(); i++)
-    {
-        printf("score_index_vec[i] = %f , %d\n", score_index_vec[i].first, score_index_vec[i].second);
-    }*/
+    GetMaxScoreIndex(scores, score_threshold, top_k, score_index_vec);
 
     float adaptive_threshold = nms_threshold;
     indices->clear();
+    //printf("len of vec = %lu\n", score_index_vec.size());
 
-    while(score_index_vec.size() != 0)
+    for(int i = 0; i < score_index_vec.size(); i++)
     {
-        const int idx = score_index_vec.front().second;
-        //printf ("idx at nms fast = %d\n",idx);
+        const int idx = score_index_vec[i].second;
         bool keep = true;
-        for(int k = 0; k < indices->size() && keep; k++)
+        for(int k = 0; k < (int)indices->size() && keep; k++)
         {
-            if(keep)
-            {
-                const int kept_idx = (*indices)[k];
-                float overlap = JaccardOverlap(bboxes[idx], bboxes[kept_idx], false);
-                keep = overlap <= adaptive_threshold;
-            }
-            else
-            {
-                break;
-            }
+            const int kept_idx = (*indices)[k];
+            float overlap = JaccardOverlap(bboxes[idx], bboxes[kept_idx], false);
+            keep = overlap <= adaptive_threshold;
         }
 
         if (keep)
             indices->push_back(idx);
-        //printf("indices%d\n", (*indices)[0]);
-
-        //printf("len of indices = %lu\n", indices->size());
-        score_index_vec.erase(score_index_vec.begin());
-        if(keep && adaptive_threshold > 0.5 && eta < 1)
-            adaptive_threshold *= eta;
+        printf("indices%d\n", (*indices)[0]);
     }
 }
 
-static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_reference * parameters, vx_uint32 num)
-{
 
-    printf("DEBUG: In process function\n");
+static vx_status VX_CALLBACK opencl_codegen(
+    vx_node node,                                  // [input] node
+    const vx_reference parameters[],               // [input] parameters
+    vx_uint32 num,                                 // [input] number of parameters
+    bool opencl_load_function,                     // [input]  false: normal OpenCL kernel; true: reserved
+    char opencl_kernel_function_name[64],          // [output] kernel_name for clCreateKernel()
+    std::string& opencl_kernel_code,               // [output] string for clCreateProgramWithSource()
+    std::string& opencl_build_options,             // [output] options for clBuildProgram()
+    vx_uint32& opencl_work_dim,                    // [output] work_dim for clEnqueueNDRangeKernel()
+    vx_size opencl_global_work[],                  // [output] global_work[] for clEnqueueNDRangeKernel()
+    vx_size opencl_local_work[],                   // [output] local_work[] for clEnqueueNDRangeKernel()
+    vx_uint32& opencl_local_buffer_usage_mask,     // [output] reserved: must be ZERO
+    vx_uint32& opencl_local_buffer_size_in_bytes   // [output] reserved: must be ZERO
+)
+{
+    printf("DEBUG: In codegen\n");
     //get tensor dimensions
     vx_size input_dims_0[4], input_dims_1[4], input_dims_2[4], output_dims[4];
     vx_size num_of_dims;
@@ -487,175 +288,331 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, input_dims_2, sizeof(input_dims_2)));
     
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[12], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[12], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+
     vx_int32 num_classes, share_location, background_label_id, top_k, keep_top_k, variance_encoded_in_target;
-    vx_float32 nms_threshold, confidence_threshold, eta;
+    vx_float32 nms_threshold, confidence_threshold;
     //vx_scalar code_type;
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &num_classes, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &share_location, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &background_label_id, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[6], &nms_threshold, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-    vx_int32 code_type;
-    string s_code_type; 
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[7], &code_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if(code_type == 1) s_code_type = "CORNER";
-    else if(code_type == 2) s_code_type = "CENTER_SIZE";
-    else ERRMSG(VX_ERROR_INVALID_VALUE, "processDetectionOutput: code_type not supported %d\n", code_type);
-
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[8], &keep_top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &variance_encoded_in_target, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[10], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[10], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-
-    if(parameters[11])
+    if(parameters[7])
     {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[11], &eta, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));    
-    }
-    else
-    {
-        eta = 1;
-    }
-
-    if(parameters[12])
-    {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[12], &top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[7], &top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     }
     else
     {
         top_k = -1;
     }
-    
-    if(parameters[13])
+
+    char* code_type = new char[15]; 
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[8], code_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    /*if((strcmp(code_type, "CENTER_SIZE") != 0) && (strcmp(code_type, "CORNER") != 0))
+        return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: detection_output: #9 code type=%s \n", code_type);
+    */
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &keep_top_k, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if(parameters[10])
     {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[13], &confidence_threshold, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));    
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[10], &confidence_threshold, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));    
     }
     else
     {
         confidence_threshold = -FLT_MAX;
     }
     
-    
+    if(parameters[11])
+    {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[11], &variance_encoded_in_target, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    }
+    else
+    {
+        variance_encoded_in_target = 0;
+    }
 
     vx_int32 num_loc_classes = share_location ? 1:num_classes;
     vx_int32 num_priors = input_dims_2[2] / 4;
     if ((num_priors * num_loc_classes * 4) != input_dims_0[1])
     {
-        printf("processDetectionOutput: detection_output: Number of priors must match number of location predictions\n");
+        printf("codegen: detection_output: Number of priors must match number of location predictions\n");
         exit(0);
     }            
     if((num_priors * num_classes) != input_dims_1[1])   
     {
-        printf("processDetectionOutput: detection_output: Number of priors must match number of confidence predictions\n");  
+        printf("codegen: detection_output: Number of priors must match number of confidence predictions\n");  
         exit(0);
-    }  
-    int num_batches = input_dims_0[0];
+    }             
+    
+
+    int num_batches = input_dims_1[0];
     int numPriors = input_dims_2[2]/4;
 
-    //printf("DEBUG: in here 1!!!!\n");
-    //get memory pointers for all inputs
     vx_map_id map_id;
-    vx_size stride[4]; //= {4,input_dims_1[0]*4,input_dims_1[0]*input_dims_1[1]*4,input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*4};
+    vx_size stride[4]= {4,input_dims_1[0]*4,input_dims_1[0]*input_dims_1[1]*4,input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*4};
     float * ptr;
     vx_enum usage = VX_READ_ONLY;
     vx_status status;
-    vx_size count_tensor_loc = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
-    vx_size count_tensor_conf = input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*input_dims_1[3];
-    vx_size count_tensor_prior = input_dims_2[0]*input_dims_2[1]*input_dims_2[2]*input_dims_2[3];
+    vx_size count_tensor = input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*input_dims_1[3];
     
-    float *locData = new float[count_tensor_loc];
-    float *confData = new float[count_tensor_conf];
-    float *priorData = new float[count_tensor_prior];
+    float *confData = new float[count_tensor];
 
-    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    /*status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for "  << std::endl;
         return -1;
     }
 
-    //printf("value at ptr = %f\n", ptr[10]);
-    memcpy(locData, ptr, (count_tensor_loc*sizeof(float)));
-
-    status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for "  << std::endl;
-        return -1;
-    }
-
-    //for(int i = 0; i < input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3]; i++)
-    //    printf(" %f  ", locData[i]);
-
-    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
-    if(status)
-    {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for "  << std::endl;
-        return -1;
-    }
-
-    //printf("value at ptr = %f\n", ptr[10]);
-    memcpy(confData, ptr, (count_tensor_conf*sizeof(float)));
+    printf("value at ptr = %f\n", ptr[10]);
+    memcpy(confData, ptr, (count_tensor*sizeof(float)));
 
     status = vxUnmapTensorPatch((vx_tensor)parameters[1], map_id);
     if(status) {
         std::cerr << "ERROR: vxUnmapTensorPatch() failed for "  << std::endl;
         return -1;
     }
-    
+    */
     //for(int i = 0; i < input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*input_dims_1[3]; i++)
     //    printf(" %f  ", confData[i]);
 
-    status = vxMapTensorPatch((vx_tensor)parameters[2], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
-    if(status)
+    status = vxCopyTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, stride, confData, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    if(status != VX_SUCCESS)
     {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for "  << std::endl;
+        std::cerr << "ERROR: vxCopyTensorPatch() failed for input parameters[1] = "  << status << std::endl; 
         return -1;
     }
 
-    //printf("value at ptr = %f\n", ptr[10]);
-    memcpy(priorData, ptr, (count_tensor_prior*sizeof(float)));
+    
 
-    status = vxUnmapTensorPatch((vx_tensor)parameters[2], map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for "  << std::endl;
-        return -1;
-    }
-
-    //for(int i = 0; i < input_dims_2[0]*input_dims_2[1]*input_dims_2[2]*input_dims_2[3]; i++)
-    //    printf(" %f  ", priorData[i]);
-
-    // Retrieve all location predictions.
-    vector<LabelBBox> allLocPreds;
-    GetLocPredictions(locData, num_batches, numPriors, num_loc_classes,
-                    share_location, &allLocPreds);
-
-
-    // Retrieve all confidences.
     vector<map<int, vector<float> > > allConfidenceScores;
     GetConfidenceScores(confData, num_batches, numPriors, num_classes, &allConfidenceScores);
 
-    // Retrieve all prior bboxes. It is same within a batch since we assume all
-    // images in a batch are of same dimension.
-    vector<NormalizedBBox> priorBBoxes;
-    vector<vector<float> > priorVariances;
-    GetPriorBBoxes(priorData, numPriors, &priorBBoxes, &priorVariances);
+    strcpy(opencl_kernel_function_name, "detection_output");
 
-    //printf("\nDEBUG: In here 2\n");
+    opencl_work_dim = 1;
+    //opencl_global_work[0] = input_dims_1[0];
+    opencl_global_work[0] = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
+    //opencl_global_work[1] = input_dims_2[2]/4;
+    //opencl_global_work[0] = output_dims[2] * output_dims[3];
+
+    // Setting variables required by the interface
+    opencl_local_buffer_usage_mask = 0;
+    opencl_local_buffer_size_in_bytes = 0;
+
+    if (num_of_dims == 4) {
+        char item[8192];
+        if(strcmp(code_type ,"CENTER_SIZE") == 0)
+        {
+            printf("in here 1\n");
+            sprintf(item,
+                "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
+                "__kernel void %s(__global uchar * in_0, uint in_0_offset, uint4 in_0_stride, __global uchar * in_1, uint in_1_offset, uint4 in_1_stride, __global uchar * in_2, uint in_2_offset, uint4 in_2_stride, "\
+                "                 const int s_num_classes, const int s_share_location, const int s_background_label_id, const float s_nms_threshold, const int s_top_k, const int code_type, const int s_keep_top_k, " \
+                "                 const float s_confidence_threshold , const int s_variance_encoded_in_target, __global uchar * out, uint out_offset, uint4 out_stride)\n"
+                "{ \n" 
+                "   const int num_classes = %d; \n"
+                "   const int share_location = %d; \n"
+                "   const int background_label_id = %d; \n"
+                "   const float nms_threshold = %f; \n"
+                "   const int top_k = %d; \n"
+                "   const int keep_top_k = %d; \n"
+                "   const float confidence_threshold = %f; \n"
+                "   const int variance_encoded_in_target = %d; \n"
+                "   int num = get_global_size(0); \n"
+                "   int numPriors = %d; \n"
+                "   int num_loc_classes = share_location ? 1 : num_classes; \n"
+                "   float bbox_xmin, bbox_ymin, bbox_xmax, bbox_ymax; \n"
+                "   int index = get_global_id(0); \n"
+                "   int i = (index) %% 4; \n"
+                //"   i *= sizeof(float); \n"
+                "   int p = (((index) / 4 / num_loc_classes) %% numPriors) * 4; \n"
+                //"   p *= sizeof(float); \n"
+                "   int c = ((index) / 4) %% num_loc_classes; \n"
+                //"   c *= sizeof(float); \n"
+                "   int label = share_location ? -1 : c; \n"
+
+                "   if(label == background_label_id) \n"
+                "   { \n"
+                "       return; \n"
+                "   } \n"
+                "   const int startIndex = numPriors * 4 + p; \n"
+                "   __global uchar* prior_variance = in_2 + startIndex*sizeof(float); \n"
+
+                "   bbox_xmin = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 0*sizeof(float)]) : ((__global float *)(prior_variance))[0] * (*(__global float *)&in_0[index - i + 0*sizeof(float)]); \n"
+                "   bbox_ymin = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 1*sizeof(float)]) : ((__global float *)(prior_variance))[1] * (*(__global float *)&in_0[index - i + 1*sizeof(float)]); \n"
+                "   bbox_xmax = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 2*sizeof(float)]) : ((__global float *)(prior_variance))[2] * (*(__global float *)&in_0[index - i + 2*sizeof(float)]); \n"
+                "   bbox_ymax = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 3*sizeof(float)]) : ((__global float *)(prior_variance))[3] * (*(__global float *)&in_0[index - i + 3*sizeof(float)]); \n"
+                "   float val; \n"
+
+                "   float prior_width = (*(__global float *)&in_2[p+2*sizeof(float)]) - (*(__global float *)&in_2[p+0*sizeof(float)]); \n"
+                "   float prior_height = (*(__global float *)&in_2[p+3*sizeof(float)]) - (*(__global float *)&in_2[p+1*sizeof(float)]); \n"
+                "   float prior_center_x = ((*(__global float *)&in_2[p+0*sizeof(float)]) + (*(__global float *)&in_2[p+2*sizeof(float)]))*0.5; \n"
+                "   float prior_center_y = ((*(__global float *)&in_2[p+1*sizeof(float)]) + (*(__global float *)&in_2[p+3*sizeof(float)]))*0.5; \n"
+
+                "   float decode_bbox_center_x = bbox_xmin * prior_width + prior_center_x; \n"
+                "   float decode_bbox_center_y = bbox_ymin * prior_height + prior_center_y; \n"
+                "   float decode_bbox_width = exp(bbox_xmax) * prior_width; \n"
+                "   float decode_bbox_height = exp(bbox_ymax) * prior_height; \n"
+        
+                "   switch(i) \n"
+                "   { \n"
+                "       case 0:  \n"
+                "           val = decode_bbox_center_x - decode_bbox_width * 0.5; \n"
+                "           break; \n"
+                "       case 1: \n"
+                "           val = decode_bbox_center_y - decode_bbox_height * 0.5; \n"
+                "           break; \n"
+                "       case 2: \n"
+                "           val = decode_bbox_center_x + decode_bbox_width * 0.5; \n"
+                "           break; \n"
+                "       case 3: \n"
+                "           val = decode_bbox_center_y + decode_bbox_height * 0.5; \n"
+                "           break; \n"
+                "   }   \n"  
+        
+                "   out += index*sizeof(float); \n"
+                "   *(__global float *)&out[0] = val; \n"
+                "}\n", opencl_kernel_function_name, num_classes, share_location, background_label_id, nms_threshold, top_k, keep_top_k, confidence_threshold, variance_encoded_in_target, numPriors);
+            opencl_kernel_code = item;
+        }
+        else if (strcmp(code_type ,"CORNER") == 0)
+        {
+            sprintf(item,
+                "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
+                             "__kernel void %s(__global uchar * in_0, uint in_0_offset, uint4 in_0_stride, __global uchar * in_1, uint in_1_offset, uint4 in_1_stride, __global uchar * in_2, uint in_2_offset, uint4 in_2_stride, "\
+                "                 const int s_num_classes, const int s_share_location, const int s_background_label_id, const float s_nms_threshold, const int s_top_k, const int code_type, const int s_keep_top_k, " \
+                "                 const float s_confidence_threshold , const int s_variance_encoded_in_target, __global uchar * out, uint out_offset, uint4 out_stride)\n"
+                "{ \n" 
+                "   const int num_classes = %d; \n"
+                "   const int share_location = %d; \n"
+                "   const int background_label_id = %d; \n"
+                "   const float nms_threshold = %f; \n"
+                "   const int top_k = %d; \n"
+                "   const int keep_top_k = %d; \n"
+                "   const float confidence_threshold = %f; \n"
+                "   const int variance_encoded_in_target = %d; \n"
+                "   int num = get_global_size(0); \n"
+                "   int numPriors = %d; \n"
+                "   int num_loc_classes = share_location ? 1 : num_classes; \n"
+                "   float bbox_xmin, bbox_ymin, bbox_xmax, bbox_ymax; \n"
+                "   int index = get_global_id(0); \n"
+                "   int i = (index) %% 4; \n"
+                //"   i *= sizeof(float); \n"
+                "   int p = (((index) / 4 / num_loc_classes) %% numPriors) * 4; \n"
+                //"   p *= sizeof(float); \n"
+                "   int c = ((index) / 4) %% num_loc_classes; \n"
+                //"   c *= sizeof(float); \n"
+                "   int label = share_location ? -1 : c; \n"
+
+                "   if(label == background_label_id) \n"
+                "   { \n"
+                "       return; \n"
+                "   } \n"
+                "   const int startIndex = numPriors * 4 + p; \n"
+                "   __global uchar* prior_variance = in_2 + startIndex*sizeof(float); \n"
+
+                "   bbox_xmin = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 0*sizeof(float)]) : ((__global float *)(prior_variance))[0] * (*(__global float *)&in_0[index - i + 0*sizeof(float)]); \n"
+                "   bbox_ymin = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 1*sizeof(float)]) : ((__global float *)(prior_variance))[1] * (*(__global float *)&in_0[index - i + 1*sizeof(float)]); \n"
+                "   bbox_xmax = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 2*sizeof(float)]) : ((__global float *)(prior_variance))[2] * (*(__global float *)&in_0[index - i + 2*sizeof(float)]); \n"
+                "   bbox_ymax = variance_encoded_in_target ? (*(__global float *)&in_0[index - i + 3*sizeof(float)]) : ((__global float *)(prior_variance))[3] * (*(__global float *)&in_0[index - i + 3*sizeof(float)]); \n"
+                "   float val; \n"
+
+                "   switch(i) \n"
+                "   { \n"
+                "       case 0:  \n"
+                "           val = (*(__global float *)&in_2[p+0*sizeof(float)]) + bbox_xmin; \n"
+                "           break; \n"
+                "       case 1: \n"
+                "           val = (*(__global float *)&in_2[p+1*sizeof(float)]) + bbox_ymin; \n"
+                "           break; \n"
+                "       case 2: \n"
+                "           val = (*(__global float *)&in_2[p+2*sizeof(float)]) + bbox_xmax; \n"
+                "           break; \n"
+                "       case 3: \n"
+                "           val = (*(__global float *)&in_2[p+3*sizeof(float)]) + bbox_ymax; \n"
+                "           break; \n"
+                "   }   \n"  
+        
+                "   out += index*sizeof(float); \n"
+                "   *(__global float *)&out[0] = val; \n"
+                "}\n", opencl_kernel_function_name, num_classes, share_location, background_label_id, nms_threshold, top_k, keep_top_k, confidence_threshold, variance_encoded_in_target, numPriors);
+            opencl_kernel_code = item;
+        }
+        
+    }
+    
+    
+    vx_size count_output_opencl = output_dims[0]*output_dims[1]*output_dims[2]*output_dims[3];
+    float *decode_data = new float[count_output_opencl];
+    vx_size stride_output_opencl[4] = {4, output_dims[0]*4, output_dims[0]*output_dims[1]*4, output_dims[0]*output_dims[1]*output_dims[2]*4};
+
+    //printf("%lu  %lu %lu %lu  %lu\n", stride_output_opencl[0], stride_output_opencl[1], stride_output_opencl[2], stride_output_opencl[3],count_output_opencl);
+    status = vxCopyTensorPatch((vx_tensor)parameters[12], num_of_dims, nullptr, nullptr, stride_output_opencl, decode_data, usage, VX_MEMORY_TYPE_HOST);
+    if(status != VX_SUCCESS)
+    {
+        std::cerr << "ERROR: vxCopyTensorPatch() failed for output opencl = "  << status << std::endl; 
+        return -1;
+    }
+    
+    /*for(int i= 0 ; i < count_output_opencl; i++)
+    {
+        printf("  %f  ", decode_data[i]);
+    }
+    
+    status = vxMapTensorPatch((vx_tensor)parameters[12], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    if(status)
+    {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for decode_data"  << std::endl;
+        return -1;
+    }
+
+    memcpy(decode_data, ptr, (count_output*sizeof(float)));
+    
+    status = vxUnmapTensorPatch((vx_tensor)parameters[12], map_id);
+    if(status) {
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for decode_data"  << std::endl;
+        return -1;
+    }
+    
+    */
+    printf("\nDEBUG: HEre 2\n");
+    typedef std::map<int, std::vector<NormalizedBBox> > LabelBBox;
     std::vector<LabelBBox> allDecodedBBoxes;
-    const bool clip_bbox = false;
-    DecodeBBoxesAll(allLocPreds, priorBBoxes, priorVariances, num_batches,
-                            share_location, num_loc_classes, background_label_id,
-                            s_code_type, variance_encoded_in_target, clip_bbox, &allDecodedBBoxes);
+    allDecodedBBoxes.clear();
+    allDecodedBBoxes.resize(num_batches);
 
+    for(int i = 0; i < num_batches; i++)
+    {
+        LabelBBox& decode_bboxes = allDecodedBBoxes[i];
+        for (int c = 0; c < num_loc_classes; ++c)
+        {
+            int label = share_location ? -1 : c;
+            decode_bboxes[label].resize(numPriors);
+            for(int p = 0; p < numPriors; p++)
+            {
+                int startIndex = p * num_loc_classes * 4;
+                //printf("startIndex , c == %d %d \n",startIndex, c );
+                NormalizedBBox bbox = decode_bboxes[label][p];
+                bbox.xmin = decode_data[startIndex + c * 4];
+                bbox.ymin = decode_data[startIndex + c * 4 + 1];
+                bbox.xmax = decode_data[startIndex + c * 4 + 2];
+                bbox.ymax = decode_data[startIndex + c * 4 + 3];
+                //printf("%f %f %f %f\n", decode_data[startIndex + c * 4], decode_data[startIndex + c * 4 +1], decode_data[startIndex + c * 4 + 2], decode_data[startIndex + c * 4+3]);
+            } 
 
-    //printf("\nDEBUG: HEre 3\n");
-    //printf("num batches = %d\n", num_batches);
-    int numKept = 0;
+        }
+
+    }   
+      
+    printf("\nDEBUG: HEre 3\n");
+    
+    size_t numKept = 0;
     std::vector<std::map<int, std::vector<int> > > allIndices;
     for (int i = 0; i < num_batches; i++)
     {
-        const LabelBBox &decode_bboxes = allDecodedBBoxes[i];
-        std::map<int, std::vector<float> > &confidenceScores = allConfidenceScores[i];
+        LabelBBox decode_bboxes = allDecodedBBoxes[i];
+        std::map<int, std::vector<float> > confidenceScores = allConfidenceScores[i];
         std::map<int, std::vector<int> > indices;
         int num_det = 0;
         for(int c = 0; c < num_classes; c++)
@@ -663,21 +620,20 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
             if(c == background_label_id)
                 continue;
             if(confidenceScores.find(c) == confidenceScores.end())
-                ERRMSG(VX_ERROR_INVALID_VALUE, "processDetectionOutput: could not find confidence predictions for label %d\n", c);
+                ERRMSG(VX_ERROR_INVALID_VALUE, "codegen: could not find confidence predictions for label %d\n", c);
 
             const vector<float>& scores = confidenceScores.find(c)->second;
             int label = share_location ? -1 : c;
             if (decode_bboxes.find(label) == decode_bboxes.end()) {
-                ERRMSG(VX_ERROR_INVALID_VALUE, "processDetectionOutput: could not find location predictions for label %d\n", label);
-                continue;
+                ERRMSG(VX_ERROR_INVALID_VALUE, "codegen: could not find location predictions for label %d\n", label);
             }
-            const vector<NormalizedBBox> &bboxes = decode_bboxes.find(label)->second;
-            ApplyNMSFast(bboxes, scores, confidence_threshold, nms_threshold, top_k, &(indices[c]), eta);
+            const vector<NormalizedBBox> bboxes = decode_bboxes.find(label)->second;
+            ApplyNMSFast(bboxes, scores, confidence_threshold, nms_threshold, top_k, &(indices[c]));
 
             num_det += indices[c].size();   
             //printf("num_det = %d\n", num_det );   
         }
-        
+
         if (keep_top_k > -1 && num_det > keep_top_k)
         {
             std::vector<std::pair<float, std::pair<int, int> > > scoreIndexPairs;
@@ -687,7 +643,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
                 const std::vector<int>& labelIndices = it->second;
                 if (confidenceScores.find(label) == confidenceScores.end())
                 {
-                    ERRMSG(VX_ERROR_INVALID_VALUE, "processDetectionOutput: could not find location predictions for label %d", label);
+                    ERRMSG(VX_ERROR_INVALID_VALUE, "codegen: could not find location predictions for label %d", label);
                     continue;
                 }   
                 const std::vector<float>& scores = confidenceScores.find(label)->second;
@@ -698,7 +654,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
                     scoreIndexPairs.push_back(std::make_pair(scores[idx], std::make_pair(label, idx)));
                 }
             }
-            // Keep top k results per image.
+
             std::sort(scoreIndexPairs.begin(), scoreIndexPairs.end(), SortScorePairDescend<pair<int, int> >);
             scoreIndexPairs.resize(keep_top_k);
             // Store the new indices.
@@ -717,21 +673,13 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
             allIndices.push_back(indices);
             numKept += num_det;
         }
-        //printf("num kept, num det , keep_top_k =  %d, %d, %d\n", numKept, num_det, keep_top_k);
     }
-
-    //printf("numkept = %lu\n", numKept);
-    //printf("DEBUG: HEre 4\n");
+    printf("numkept = %lu\n", numKept);
+    printf("DEBUG: HEre 4\n");
     
-    
-    output_dims[0] = 1;
-    output_dims[1] = 1;
-    printf("output dims before  = %lu\n", output_dims[2]);
-    output_dims[2] = numKept;
-    printf("output dims after  = %lu\n", output_dims[2]);
-    output_dims[3] = 7;
-    int count_output_final = output_dims[0]*output_dims[1]*output_dims[2]*output_dims[3];
-    vx_size stride_output_final[4] = {sizeof(float), output_dims[0]*sizeof(float), output_dims[0]*output_dims[1]*sizeof(float), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(float) }; 
+    vx_size outputShape[4] = {1, 1, (vx_size)numKept, 7};
+    vx_size count_output_final = outputShape[0]*outputShape[1]*outputShape[2]*outputShape[3];
+    vx_size stride_output_final[4] = {4, outputShape[0]*4, outputShape[0]*outputShape[1]*4, outputShape[0]*outputShape[1]*outputShape[2]*4};    
     float * outputData = new float[count_output_final];
     if(numKept == 0)
     {
@@ -743,7 +691,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
         }
         return VX_SUCCESS;
     }
-    //printf("DEBUG: HEre 5\n");
+    printf("DEBUG: HEre 5\n");
     int count = 0;
     for (int i = 0; i < num_batches; i++)
     {
@@ -781,24 +729,41 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
                 outputData[count * 7 + 4] = bbox.ymin;
                 outputData[count * 7 + 5] = bbox.xmax;
                 outputData[count * 7 + 6] = bbox.ymax;
-                ++count;
+                count++;
             }
         }           
     }
-    assert(count == numKept);
 
-    //ptr_out = outputData;
-    //printf("DEBUG: HEre 6\n");
     printf("%f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
-    status =  vxCopyTensorPatch((vx_tensor)parameters[10], 4, nullptr, nullptr, stride_output_final, outputData, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    if(status)
+
+    //vxCopyTensorPatch((vx_tensor)parameters[12], num_of_dims, 0, (const vx_size *)outputShape, stride, outputData, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+
+   
+    //printf("%lu  %lu %lu %lu  %lu\n", stride_output_final[0], stride_output_final[1], stride_output_final[2], stride_output_final[3],count_output_final);
+    status = vxCopyTensorPatch((vx_tensor)parameters[12], num_of_dims, nullptr, nullptr, stride_output_final, decode_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    if(status != VX_SUCCESS)
     {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor"  << std::endl;
+        std::cerr << "ERROR: vxCopyTensorPatch() failed for final output = "  << status << std::endl; 
         return -1;
     }
-    printf("DEBUG: process detection output Success!!!\n");
-    return VX_SUCCESS;
+    /*status = vxMapTensorPatch((vx_tensor)parameters[12], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status)
+    {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for "  << std::endl;
+        return -1;
+    }
 
+    memcpy((vx_tensor)parameters[12], ptr, (outputShape[0]*outputShape[1]*outputShape[2]*outputShape[3]*sizeof(float)));
+    
+    status = vxUnmapTensorPatch((vx_tensor)parameters[12], map_id);
+    if(status) {
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for "  << std::endl;
+        return -1;
+    }
+    */
+    printf("DEBUG: OpenCL codegen Success!!!\n");
+    delete [] confData;
+    return VX_SUCCESS;
 }
 
 
@@ -811,8 +776,13 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
 //! \brief The kernel publisher.
 vx_status publishDetectionOutputLayer(vx_context context)
 {
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.detection_output", VX_KERNEL_DETECTION_OUTPUT_LAYER_AMD, processDetectionOutput, 14, validate, nullptr, nullptr);
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.detection_output", VX_KERNEL_DETECTION_OUTPUT_LAYER_AMD, host_kernel, 13, validate, nullptr, nullptr);
     ERROR_CHECK_OBJECT(kernel);
+
+    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
+    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
+    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
+    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK, &opencl_codegen_callback_f, sizeof(opencl_codegen_callback_f)));
 
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
@@ -822,13 +792,12 @@ vx_status publishDetectionOutputLayer(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 10, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 10, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 11, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 12, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 13, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 12, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
 
     //finalize and release kernel object.
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
@@ -839,7 +808,7 @@ vx_status publishDetectionOutputLayer(vx_context context)
 
 
 VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_int32 num_classes, vx_int32 share_location, vx_int32 background_label_id, vx_float32 nms_threshold,
-                                                        vx_int32 code_type, vx_int32 keep_top_k, vx_int32 variance_encoded_in_target, vx_tensor output)
+                                                        vx_int32 top_k, vx_scalar code_type, vx_int32 keep_top_k, vx_float32 confidence_threshold, vx_int32 variance_encoded_in_target, vx_tensor output)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -848,8 +817,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tenso
         vx_scalar s_share_location = vxCreateScalarWithSize(context, VX_TYPE_INT32, &s_share_location, sizeof(s_share_location));
         vx_scalar s_background_label_id = vxCreateScalarWithSize(context, VX_TYPE_INT32, &s_background_label_id, sizeof(s_background_label_id));
         vx_scalar s_nms_threshold = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &s_nms_threshold, sizeof(s_nms_threshold));
-        vx_scalar s_code_type = vxCreateScalarWithSize(context, VX_TYPE_INT32, &s_code_type, sizeof(s_code_type));
+        vx_scalar s_top_k = vxCreateScalarWithSize(context, VX_TYPE_INT32, &s_top_k, sizeof(s_top_k));
+        vx_scalar s_code_type = vxCreateScalarWithSize(context, VX_TYPE_STRING_AMD, &s_code_type, sizeof(s_code_type));
         vx_scalar s_keep_top_k = vxCreateScalarWithSize(context, VX_TYPE_INT32, &s_keep_top_k, sizeof(s_keep_top_k));
+        vx_scalar s_confidence_threshold = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &s_confidence_threshold, sizeof(s_confidence_threshold));
         vx_scalar s_variance_encoded_in_target = vxCreateScalarWithSize(context, VX_TYPE_INT32, &s_variance_encoded_in_target, sizeof(s_variance_encoded_in_target));
 
 
@@ -861,8 +832,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tenso
             (vx_reference)s_share_location,
             (vx_reference)s_background_label_id,
             (vx_reference)s_nms_threshold,
+            (vx_reference)s_top_k,
             (vx_reference)s_code_type,
             (vx_reference)s_keep_top_k,
+            (vx_reference)s_confidence_threshold,
             (vx_reference)s_variance_encoded_in_target,
             (vx_reference)output,
         };

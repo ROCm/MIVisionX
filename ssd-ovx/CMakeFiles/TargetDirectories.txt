@@ -1,5 +1,0 @@
-/home/lakshmi/Downloads/lk/MIVisionX/ssd-ovx/CMakeFiles/rebuild_cache.dir
-/home/lakshmi/Downloads/lk/MIVisionX/ssd-ovx/CMakeFiles/edit_cache.dir
-/home/lakshmi/Downloads/lk/MIVisionX/ssd-ovx/CMakeFiles/annpython.dir
-/home/lakshmi/Downloads/lk/MIVisionX/ssd-ovx/CMakeFiles/annmodule.dir
-/home/lakshmi/Downloads/lk/MIVisionX/ssd-ovx/CMakeFiles/anntest.dir

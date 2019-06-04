@@ -20,6 +20,7 @@
 
 import os, sys, struct
 import datetime, pytz
+from ctypes import *
 from nnir import *
 
 tensor_type_nnir2openvx = {
@@ -613,29 +614,26 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """ % (node.inputs[0], order, node.outputs[0]))
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
+                if len(aspect_ratio) == 1:
+                  aspect_ratio.append(0.0)
                 aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
                 variance = node.attr.get('variance')
                 variance_str = ','.join(str(e) for e in variance)
                 f.write( \
 """
     { 
-      vx_float32 min_size = %f;
-      vx_float32 max_size = %f;
-      vx_int32 flip = %d;
-      vx_int32 clip = %d;
-      vx_float32 offset = %f;
-      
-      vx_scalar s_min_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &min_size, sizeof(min_size));
-      vx_scalar s_max_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &max_size, sizeof(max_size));    
-      vx_scalar s_flip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &flip, sizeof(flip));
-      vx_scalar s_clip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &clip, sizeof(clip));
-      vx_scalar s_offset = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &offset, sizeof(offset));
-      vx_node node = vxPriorBoxLayer(graph, %s, %s, s_min_size, %s , s_flip, s_clip, s_offset, %s , s_max_size, %s );
+      vx_float32 asp_ratio_value[2] = {%f,%f}; 
+      vx_float32 var_value[4] = {%f,%f,%f,%f}; 
+      vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 2);
+      vx_array variance =  vxCreateArray(context, VX_TYPE_FLOAT32, 4); 
+      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 2, &asp_ratio_value[0], 0));
+      ERROR_CHECK_STATUS(vxAddArrayItems(variance, 4, &var_value[0], 0));
+      vx_node node = vxPriorBoxLayer(graph, %s, %s, %f, aspect_ratio , %d, %d, %f, %s , %f, variance);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (node.attr.get('min_size'), node.attr.get('max_size'), node.attr.get('flip'), node.attr.get('clip'), \
-       node.attr.get('prior_offset'), node.inputs[0], node.inputs[1], aspect_ratio_str, node.outputs[0], variance_str))
+""" % (aspect_ratio[0], aspect_ratio[1], variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'), node.attr.get('clip'), node.attr.get('prior_offset'), \
+        node.outputs[0], node.attr.get('max_size')))
             elif node.type == 'upsample':
                 f.write( \
 """
@@ -709,7 +707,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseScalar(&s_eta));
 """ % (eta))
                 f.write( \
-"""     ERROR_CHECK_STATUS(vxReleaseNode(&node));
+"""      ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """)
             else:

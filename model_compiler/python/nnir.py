@@ -80,10 +80,10 @@ class IrAttr:
             , 'order'  : []              # order for permute
             , 'min_size' : 0.0             # minimum size of prior
             , 'max_size' : 0.0             # maximum size of prior
-            , 'aspect_ratio' : []        # aspect ratios for bounding boxes
+            , 'aspect_ratio' : [0.0, 0.0]        # aspect ratios for bounding boxes
             , 'flip' : 0                 # flip bounding boxes (true/false)
             , 'clip' : 0                 # normalize bounding boxes (true/false)
-            , 'variance' : []            # variance for priors
+            , 'variance' : [0.1, 0.1, 0.1, 0.1]            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
             , 'num_classes' : 0          #attributes for detection output layer
             , 'share_location' : 1

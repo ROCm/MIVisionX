@@ -7,7 +7,7 @@
 #include <utility>
 #include <algorithm>
 #include <assert.h>
-#include <vx_ext_amd.h>
+//#include <vx_ext_amd.h>
 using namespace std;
 
 class NormalizedBBox

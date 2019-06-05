@@ -299,7 +299,6 @@ def extractCaffeAttrInfo(layer_param):
         attribute_map["axis"] = axis
 
     elif (layer_param.type == "DetectionOutput"):
-        print "in detection o/p"
         detection_output = layer_param.detection_output_param
         num_classes = detection_output.num_classes
         share_location = detection_output.share_location
@@ -340,12 +339,13 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         pads = attribute_map["pads"]
         dilations = attribute_map["dilations"]
         kernel_shape = attribute_map["kernel_shape"]
+        group = attribute_map["group"]
         n,c,h,w = input_map[inputs[0]]
         output_dims[3] = ((int(w) + 2 * pads[0] - kernel_shape[0] - (kernel_shape[0] - 1) * (dilations[0] - 1))// strides[0]) + 1
         output_dims[2] = ((int(h) + 2 * pads[1] - kernel_shape[1] - (kernel_shape[1] - 1) * (dilations[1] - 1))// strides[1]) + 1
         output_dims[1] = layer_param.convolution_param.num_output
         output_dims[0] = n
-        weight_dims = [output_dims[1], c, kernel_shape[1], kernel_shape[0]]
+        weight_dims = [output_dims[1], int(c)/group, kernel_shape[1], kernel_shape[0]]
         dimList["weights"] = weight_dims
         if (layer_param.convolution_param.bias_term):
             bias_dims = [weight_dims[0]]
@@ -503,7 +503,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[1] = 2 #for mean and variance values
         output_dims[2] = h * w * dim * 4 
         output_dims[3] = 1
-
+        
     elif (layer_type == "Flatten"):
         flatten = layer_param.flatten_param 
         axis = flatten.axis

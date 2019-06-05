@@ -570,10 +570,20 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """
     { vx_node node = vxConcatLayer(graph, %s, %s, %s);
       ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
 """ % (node.outputs[0], ', '.join([name for name in node.inputs]), \
        ', '.join(['NULL' for i in range(8 - len(node.inputs))])))
+                if (node.attr.get('axis') != 1):
+                    print "axis in nnir to openvx = ",node.attr.get('axis')
+                    f.write( \
+"""   vx_int32 axis = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 9, (vx_reference) s_axis));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_axis));
+""" % (node.attr.get('axis')))
+                f.write( \
+"""   ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""")                        
             elif node.type == 'softmax':
                 f.write( \
 """
@@ -622,18 +632,28 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                 f.write( \
 """
     { 
-      vx_float32 asp_ratio_value[2] = {%f,%f}; 
-      vx_float32 var_value[4] = {%f,%f,%f,%f}; 
+      float asp_ratio_value[2] = {%f,%f}; 
+      float var_value[4] = {%f,%f,%f,%f}; 
       vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 2);
       vx_array variance =  vxCreateArray(context, VX_TYPE_FLOAT32, 4); 
-      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 2, &asp_ratio_value[0], 0));
-      ERROR_CHECK_STATUS(vxAddArrayItems(variance, 4, &var_value[0], 0));
-      vx_node node = vxPriorBoxLayer(graph, %s, %s, %f, aspect_ratio , %d, %d, %f, %s , %f, variance);
+      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 2, (void*)&aspect_ratio, 0));
+      ERROR_CHECK_STATUS(vxAddArrayItems(variance, 4, (void*)&variance, 0));
+      vx_node node = vxPriorBoxLayer(graph, %s, %s, %f, aspect_ratio , %d, %d, %f, %s, variance);
       ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+""" % (aspect_ratio[0], aspect_ratio[1], variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'),\
+        node.attr.get('clip'), node.attr.get('prior_offset'), node.outputs[0]))
+                if (node.attr.get('max_size') > 0):
+                    max_size = node.attr.get('max_size');
+                    f.write( \
+"""      vx_float32 max_size = %f;
+      vx_scalar s_max_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &max_size, sizeof(max_size));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 9, (vx_reference) s_max_size));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_max_size));
+""" % (max_size))
+                f.write( \
+"""      ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (aspect_ratio[0], aspect_ratio[1], variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'), node.attr.get('clip'), node.attr.get('prior_offset'), \
-        node.outputs[0], node.attr.get('max_size')))
+""")
             elif node.type == 'upsample':
                 f.write( \
 """

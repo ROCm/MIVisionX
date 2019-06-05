@@ -22,8 +22,10 @@ class NormalizedBBox
 };
 
 typedef std::map<int, std::vector<NormalizedBBox> > LabelBBox;
+
 static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[])
 {
+    printf("in validate d/o\n");
     // check tensor dims.
     vx_enum type;
     vx_size num_dims;

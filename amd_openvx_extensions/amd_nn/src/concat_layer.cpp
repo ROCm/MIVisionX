@@ -304,6 +304,8 @@ static vx_status VX_CALLBACK opencl_codegen(
                 , i, i, i);
             opencl_kernel_code += item;
         }
+        sprintf(item, ", const int axis");
+        opencl_kernel_code += item;
     } else
     {
         sprintf(item,
@@ -320,6 +322,8 @@ static vx_status VX_CALLBACK opencl_codegen(
                 , i, i, i);
             opencl_kernel_code += item;
         }
+        sprintf(item, ", const int axis");
+        opencl_kernel_code += item;
     }
     opencl_kernel_code += ")\n";
 
@@ -370,11 +374,12 @@ vx_status publishConcatLayer(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8)
+VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8, vx_int32 axis)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
         vx_reference params[] = {
             (vx_reference)output,
             (vx_reference)input1,
@@ -384,7 +389,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output,
             (vx_reference)input5,
             (vx_reference)input6,
             (vx_reference)input7,
-            (vx_reference)input8
+            (vx_reference)input8,
+            (vx_reference)s_axis,
         };
         node = createNode(graph, VX_KERNEL_CONCAT_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
     }

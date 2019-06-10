@@ -39,8 +39,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &flip, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if(flip < 0 || flip > 1) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: priorbox: #5 scalar value=%d (flip must be 1(true)/0(false))\n", flip);
-    
-    
+     
     vx_int32 clip;
     ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[5], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
     if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
@@ -68,13 +67,11 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[8], VX_ARRAY_ITEMSIZE, &itemsize, sizeof(itemsize)));
     if(itemsize != sizeof(float)) return VX_ERROR_INVALID_TYPE;
     
-    if(parameters[9]) {
-        vx_float32 maxSize;
-        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[9], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-        if(scalar_type != VX_TYPE_FLOAT32) return VX_ERROR_INVALID_TYPE;
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &maxSize, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        if(maxSize < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: priorbox: #8 scalar type=%f (max_size must be positive)\n", maxSize);  
-    }
+    vx_float32 maxSize;
+    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[9], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+    if(scalar_type != VX_TYPE_FLOAT32) return VX_ERROR_INVALID_TYPE;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &maxSize, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if(maxSize < 0) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: priorbox: #10 scalar type=%f (max_size must be positive)\n", maxSize);  
 
     // output tensor configuration
     num_dims = 4;
@@ -112,10 +109,8 @@ static vx_status VX_CALLBACK opencl_codegen(
     vx_uint32& opencl_local_buffer_size_in_bytes   // [output] reserved: must be ZERO
 )
 {
-    
-
     //get tensor dimensions
-    vx_size input_dims_1[4], input_dims_2[4], output_dims[3];
+    vx_size input_dims_1[4], input_dims_2[4], output_dims[4];
     vx_size num_of_dims;
     vx_enum type;
 
@@ -135,17 +130,8 @@ static vx_status VX_CALLBACK opencl_codegen(
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &flip, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[5], &clip, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[6], &offset, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    
-    if(parameters[9])
-    {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &maxSize, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    }
-    else
-    {
-        maxSize = 0.0;
-    }
-    printf("max size = %f\n", maxSize);
-   
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &maxSize, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
     vx_array aspect_ratio_buf;
     vx_size aspect_ratio_cap, aspect_ratio_numitems;
     aspect_ratio_buf = (vx_array)parameters[3];
@@ -153,17 +139,14 @@ static vx_status VX_CALLBACK opencl_codegen(
     ERROR_CHECK_STATUS(vxQueryArray(aspect_ratio_buf, VX_ARRAY_NUMITEMS, &aspect_ratio_numitems, sizeof(aspect_ratio_numitems)));
     ERROR_CHECK_STATUS(vxReleaseArray(&aspect_ratio_buf));
     
-    
-       
     vx_array variance_buf;
     vx_size var_capacity, var_numitems;
     variance_buf = (vx_array)parameters[8];
     ERROR_CHECK_STATUS(vxQueryArray(variance_buf, VX_ARRAY_CAPACITY, &var_capacity, sizeof(var_capacity)));
     ERROR_CHECK_STATUS(vxQueryArray(variance_buf, VX_ARRAY_NUMITEMS, &var_numitems, sizeof(var_numitems)));
     ERROR_CHECK_STATUS(vxReleaseArray(&variance_buf));
-        
+
     strcpy(opencl_kernel_function_name, "prior_box_layer");
-    
 
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
@@ -173,14 +156,13 @@ static vx_status VX_CALLBACK opencl_codegen(
     const int layer_width = input_dims_1[3];
     const int img_height = input_dims_2[2];
     const int img_width = input_dims_2[3];
-    
-    const int output_num = output_dims[0] * output_dims[1] * output_dims[2];
-    const int output_dims_ch2 = output_dims[2];
+
+    const int output_num = output_dims[0] * output_dims[1] * output_dims[2]*output_dims[3];
+    const int output_dims_ch2 = output_dims[2]*output_dims[3];
 
     opencl_work_dim = 2;
     opencl_global_work[0] = layer_width;
     opencl_global_work[1] = layer_height;
-
 
     if (num_of_dims == 4)
     {
@@ -189,7 +171,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
             "__kernel void %s(__global uchar * in_1, uint in_1_offset, uint4 in_1_stride, __global uchar * in_2, uint in_2_offset, uint4 in_2_stride, const float s_minSize,"\
             "                 __global uchar * aspect_ratio_buf, uint aspect_ratio_offset, uint aspect_ratio_num, const uint s_flip, const uint s_clip, const float s_offset,"\
-            "                 __global uchar * out, uint out_offset, uint4 out_stride, __global uchar * variance_buf, uint variance_offset, uint variance_num) \n"
+            "                 __global uchar * out, uint out_offset, uint4 out_stride, __global uchar * variance_buf, uint variance_offset, uint variance_num, const float s_maxSize) \n"
             "{   \n"
             "   __global uchar* out_ptr = out; \n"
             "   const int imgWidth = %d;"
@@ -213,22 +195,22 @@ static vx_status VX_CALLBACK opencl_codegen(
             "   box_width = minSize; \n"
             "   box_height = minSize; \n"
             "   *(__global float *)&out[0] = (center_x - box_width / 2.) / imgWidth; \n"
-            "   out += out_stride.s0; \n"
+            "   out += out_stride.s1; \n"
             "   *(__global float *)&out[0] = (center_y - box_height / 2.) / imgHeight; \n"
-            "   out += out_stride.s0; \n"
+            "   out += out_stride.s1; \n"
             "   *(__global float *)&out[0] = (center_x + box_width / 2.) / imgWidth; \n"
-            "   out += out_stride.s0; \n"
+            "   out += out_stride.s1; \n"
             "   *(__global float *)&out[0] = (center_y + box_height / 2.) / imgHeight; \n"
             "   if(maxSize > 0) {"
             "       box_width = sqrt((float)(minSize * maxSize)); \n"
             "       box_height = sqrt((float)(minSize * maxSize)); \n"
-            "       out += out_stride.s0; \n" 
+            "       out += out_stride.s1; \n" 
             "       *(__global float *)&out[0] = (center_x - box_width / 2.) / imgWidth; \n"
-            "       out += out_stride.s0; \n"
+            "       out += out_stride.s1; \n"
             "       *(__global float *)&out[0] = (center_y - box_height / 2.) / imgHeight; \n"
-            "       out += out_stride.s0; \n"
+            "       out += out_stride.s1; \n"
             "       *(__global float *)&out[0] = (center_x + box_width / 2.) / imgWidth; \n"
-            "       out += out_stride.s0; \n"
+            "       out += out_stride.s1; \n"
             "       *(__global float *)&out[0] = (center_y + box_height / 2.) / imgHeight; \n"
             "   } \n"
             "   int r = 0; \n"
@@ -241,13 +223,13 @@ static vx_status VX_CALLBACK opencl_codegen(
             "       } \n"
             "       box_width = minSize * sqrt(ar); \n"
             "       box_height = minSize / sqrt(ar); \n"
-            "       out += out_stride.s0; \n"
+            "       out += out_stride.s1; \n"
             "       *(__global float *)&out[0] = (center_x - box_width / 2.) / imgWidth; \n"
-            "       out += out_stride.s0; \n"
+            "       out += out_stride.s1; \n"
             "       *(__global float *)&out[0] = (center_y - box_height / 2.) / imgHeight; \n"
-            "       out += out_stride.s0; \n"
+            "       out += out_stride.s1; \n"
             "       *(__global float *)&out[0] = (center_x + box_width / 2.) / imgWidth; \n"
-            "       out += out_stride.s0; \n"
+            "       out += out_stride.s1; \n"
             "       *(__global float *)&out[0] = (center_y + box_height / 2.) / imgHeight; \n"
             "       if(flip == 1) \n"
             "       { \n"
@@ -258,13 +240,13 @@ static vx_status VX_CALLBACK opencl_codegen(
             "           } \n"
             "           box_width = minSize * sqrt(ar_flip); \n"
             "           box_height = minSize / sqrt(ar_flip); \n"
-            "           out += out_stride.s0; \n"
+            "           out += out_stride.s1; \n"
             "           *(__global float *)&out[0] = (center_x - box_width / 2.) / imgWidth; \n"
-            "           out += out_stride.s0; \n"
+            "           out += out_stride.s1; \n"
             "           *(__global float *)&out[0] = (center_y - box_height / 2.) / imgHeight; \n"
-            "           out += out_stride.s0; \n"
+            "           out += out_stride.s1; \n"
             "           *(__global float *)&out[0] = (center_x + box_width / 2.) / imgWidth; \n"
-            "           out += out_stride.s0; \n"
+            "           out += out_stride.s1; \n"
             "           *(__global float *)&out[0] = (center_y + box_height / 2.) / imgHeight; \n"
             "       }"
             "       r++; \n"
@@ -289,7 +271,6 @@ static vx_status VX_CALLBACK opencl_codegen(
             "}\n", opencl_kernel_function_name, img_width, img_height, layer_width, layer_height, minSize, maxSize, clip, flip, offset, output_num, output_dims_ch2);
         opencl_kernel_code = item;
     }
-
     return VX_SUCCESS;
 }
 
@@ -305,7 +286,6 @@ vx_status publishPriorBoxLayer(vx_context context)
 {
     vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.prior_box_layer", VX_KERNEL_PRIOR_BOX_LAYER_AMD, host_kernel, 10, validate, nullptr, nullptr);
     ERROR_CHECK_OBJECT(kernel);
-
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
     amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
@@ -321,7 +301,7 @@ vx_status publishPriorBoxLayer(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 7, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
 
     //finalize and release kernel object.
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
@@ -334,7 +314,7 @@ vx_status publishPriorBoxLayer(vx_context context)
 *second prior: aspect_ratio = 1; size = sqrt(min_size * max_size) 
 */
 VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input_1, vx_tensor input_2, vx_float32 minSize, vx_array aspect_ratio, vx_int32 flip, vx_int32 clip, 
-                                                 vx_float32 offset, vx_tensor output, vx_array variance)
+                                                 vx_float32 offset, vx_tensor output, vx_array variance, vx_float32 maxSize)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
@@ -343,6 +323,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input
         vx_scalar s_flip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &flip, sizeof(flip));
         vx_scalar s_clip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &clip, sizeof(clip));
         vx_scalar s_offset = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &offset, sizeof(offset));
+        vx_scalar s_maxSize = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &maxSize, sizeof(maxSize));
 
         vx_reference params[] = {
             (vx_reference)input_1,
@@ -354,6 +335,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input
             (vx_reference)s_offset,
             (vx_reference)output,
             (vx_reference)variance,
+            (vx_reference)s_maxSize,
         };
         node = createNode(graph, VX_KERNEL_PRIOR_BOX_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
     }

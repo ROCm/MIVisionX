@@ -511,10 +511,8 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['detection_output']:
-                    input_loc = self.tensor_dict[node.inputs[0]]
-                    input_conf = self.tensor_dict[node.inputs[1]]
-                    input_prior = self.tensor_dict[node.inputs[2]]
-                    out_shape = [1,1,5,7]
+                    input = self.tensor_dict[node.inputs[0]]
+                    out_shape = [1,1,1,7]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)

@@ -543,7 +543,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
     elif (layer_param.type == "DetectionOutput"):
         output_dims[0] = 1
         output_dims[1] = 1
-        output_dims[2] = 5
+        output_dims[2] = 1
         output_dims[3] = 7      
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]

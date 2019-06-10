@@ -1778,7 +1778,7 @@ int main(int argc, const char ** argv)
             inpMem = (float *)new char[inputSizeInBytes];
             size_t istride[4] = { 4, (size_t)4 * inp_dims[0], (size_t)4 * inp_dims[0] * inp_dims[1], (size_t)4 * inp_dims[0] * inp_dims[1] * inp_dims[2] };
     #if ENABLE_OPENCV
-            if(inp_dims[1] == 3 && inpFileName.size() > 4 && (inpFileName.substr(inpFileName.size()-4, 4) == ".png" || inpFileName.substr(inpFileName.size()-4, 4) == ".jpg" ||
+            if(inp_dims[2] == 3 && inpFileName.size() > 4 && (inpFileName.substr(inpFileName.size()-4, 4) == ".png" || inpFileName.substr(inpFileName.size()-4, 4) == ".jpg" ||
                                                              inpFileName.substr(inpFileName.size()-4, 4) == ".PNG" || inpFileName.substr(inpFileName.size()-4, 4) == ".JPG"))
             {
                 for(size_t n = 0; n < inp_dims[3]; n++) {

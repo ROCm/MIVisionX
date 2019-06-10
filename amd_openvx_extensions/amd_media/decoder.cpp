@@ -37,7 +37,6 @@ THE SOFTWARE.
 // OpenCL configuration
 #define DECODE_ENABLE_OPENCL       0         // enable use of OpenCL buffers
 #define DUMP_DECODED_FRAME         0
-#define ENABLE_SCALING_WITH_DECODING    0
 
 #if DUMP_DECODED_FRAME
 FILE *fpIn;
@@ -90,7 +89,7 @@ private:
 	int height;
 	vx_df_image format;
 	int decoderImageHeight;
-    int clStride;
+    int clStride, clOffset;
     int offset;
     AVPixelFormat outputFormat, decoderFormat;
 	vx_uint8 * decodeBuffer[DECODE_BUFFER_POOL_SIZE];
@@ -115,7 +114,7 @@ private:
 	std::vector<std::thread *> thread;
 	std::vector<bool> eof;
 	std::vector<int> decodeFrameCount;
-	int outputFrameCount;
+    int outputFrameCount;
     std::vector<int> LoopDec;
 };
 
@@ -212,7 +211,7 @@ AVFrame * CLoomIoMediaDecoder::PopFrame(int mediaIndex)
 
 CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, const char inputMediaFiles_[], vx_uint32 width_, vx_uint32 height_, vx_df_image format_, vx_uint32 stride_, vx_uint32 offset_)
 	: node{ node_ }, inputMediaFiles(inputMediaFiles_), mediaCount{ static_cast<int>(mediaCount_) }, width{ static_cast<int>(width_) },
-	  height{ static_cast<int>(height_) }, format{ format_ }, stride{ static_cast<int>(stride_) }, offset{ static_cast<int>(offset_) },
+      height{ static_cast<int>(height_) }, format{ format_ }, clStride{ static_cast<int>(stride_) }, clOffset{ static_cast<int>(offset_) },
       decoderImageHeight{ static_cast<int>(height_ / ((mediaCount_ <= 1) ? 1 : mediaCount_)) }, outputFormat{ AV_PIX_FMT_UYVY422 }, outputFrameCount{ 0 },
       inputMediaFileName(mediaCount_), inputMediaFormatContext(mediaCount_), inputMediaFormat(mediaCount_),
       videoCodecContext(mediaCount_), conversionContext(mediaCount_), videoStreamIndex(mediaCount_),
@@ -231,7 +230,7 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
         LoopDec[mediaIndex] = 0;
     }
     // initialize freq inside GetTimeInMicroseconds()
-	GetTimeInMicroseconds();
+	GetTimeInMicroseconds();    
 #if DUMP_DECODED_FRAME
     fpIn = fopen("decoder_dump.yuv", "wb");
 #endif
@@ -488,21 +487,8 @@ vx_status CLoomIoMediaDecoder::Initialize()
 #endif
 	ERROR_CHECK_NULLPTR(cmdq);
 	for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-		mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, offset + stride * height, nullptr, nullptr);
+        mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, clOffset + clStride * height, nullptr, nullptr);
 		ERROR_CHECK_NULLPTR(mem[i]);
-	}
-#endif
-
-#if  ENABLE_SCALING_WITH_DECODING
-	// allocate and align buffer
-	for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-        if (format == VX_DF_IMAGE_NV12) {
-            // allocate for Y and UV planes
-            decodeBuffer[i] = aligned_alloc(offset + (stride * height) + (stride*(height>>1)));
-        } else {
-            decodeBuffer[i] = aligned_alloc(offset + stride * height);
-        }
-		ERROR_CHECK_NULLPTR(decodeBuffer[i]);
 	}
 #endif
 
@@ -560,8 +546,8 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
     // set the output buffer
     int bufId = outputFrameCount % DECODE_BUFFER_POOL_SIZE; outputFrameCount++;
     ERROR_CHECK_STATUS(vxSetImageAttribute(output, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &mem[bufId], sizeof(cl_mem)));
-    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE, &clStride, sizeof(clStride)));
-    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET, &clOffset, sizeof(clOffset)));
+    ERROR_CHECK_STATUS(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE, &clStride, sizeof(clStride)));
+    ERROR_CHECK_STATUS(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET, &clOffset, sizeof(clOffset)));
 #else
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         AVFrame *frame = PopFrame(mediaIndex);       // assuming only one stream to decode
@@ -694,18 +680,66 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                 tmp_frame = frame;
                 av_frame_free(&sw_frame);
             }
-            PushFrame(mediaIndex, tmp_frame);
 #if DECODE_ENABLE_OPENCL
-            // copy the buffer slice to OpenCL
-            cl_int err = clEnqueueWriteBuffer(cmdq, mem[bufId], CL_TRUE, offset + mediaIndex * decoderImageHeight * stride, decoderImageHeight * stride, decodedSlice, 0, nullptr, nullptr);
-            if (err < 0) {
-                vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
-                eof[mediaIndex] = true;
-                PushAck(mediaIndex, -1);
-                return;
+            // do sw_scale for destination format
+            int bufId = decodeFrameCount[mediaIndex] % DECODE_BUFFER_POOL_SIZE;
+
+            if (conversionContext[mediaIndex] != NULL) {
+                vx_rectangle_t rect = { 0, (vx_uint32)(mediaIndex * decoderImageHeight), (vx_uint32)width, (vx_uint32)(mediaIndex * decoderImageHeight + decoderImageHeight) };
+                vx_map_id map_id, map_id1;
+                vx_imagepatch_addressing_t addr = {0};
+                uint8_t * ptr = nullptr;
+                int mapHeight = (outputFormat == AV_PIX_FMT_NV12)? (decoderImageHeight + (decoderImageHeight>>1)) : decoderImageHeight;
+
+                cl_int err;
+                void * mapped_ptr = (void *)clEnqueueMapBuffer(cmdq, mem[bufId], CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, clOffset + mediaIndex * mapHeight * clStride, mapHeight * clStride, 0, NULL, NULL, &err);
+                if(err) {
+                    fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", err);
+                    continue;
+                }
+
+                uint8_t *dst_data[4] = {0};
+                int dst_linesize[4] = {0};
+                dst_data[0] = mapped_ptr;
+                dst_linesize[0] = clStride;
+                if (outputFormat == AV_PIX_FMT_NV12) {
+                    dst_data[1] = mapped_ptr + decoderImageHeight*clStride;
+                    dst_linesize[1]  = clStride;
+                }
+                // do sws_scale
+                int ret = sws_scale(conversionContext[mediaIndex], tmp_frame->data, tmp_frame->linesize, 0, tmp_frame->height, dst_data, dst_linesize);
+                if (ret < decoderImageHeight) {
+                    fprintf(stderr, "Error in output image scaling using sws_scale\n");
+                    continue;
+                }
+                #if DUMP_DECODED_FRAME
+                if (fpIn){
+                    fwrite(dst_data[0], 1, decoderImageHeight*dst_linesize[0], fpIn);
+                    if (outputFormat == AV_PIX_FMT_NV12)
+                        fwrite(dst_data[1], 1, (decoderImageHeight>>1)*dst_linesize[1], fpIn);
+                }
+                #endif
+                // commit image patch
+                err = clEnqueueUnmapMemObject(cmdq, mem, mapped_ptr, 0, NULL, NULL);
+                if(err) {
+                    fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", gpu, err);
+                    continue;
+                }
+                err = clFinish(cmdq);
+                if(err) {
+                    fprintf(stderr,"map output for sw_scale: clFinish(#%d) failed (%d)", gpu, err);
+                }
+            } else {
+                // copy AV frame to output
+                cl_int err = clEnqueueWriteBuffer(cmdq, mem[bufId], CL_TRUE, clOffset + mediaIndex * decoderImageHeight * clStride, decoderImageHeight * clStride, tmp_frame->data, 0, nullptr, nullptr);
+                if (err < 0) {
+                    vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
+                    continue;
+                }
+                clFinish(cmdq);
             }
-            clFinish(cmdq);
 #endif
+            PushFrame(mediaIndex, tmp_frame);
             // update decoded frame count and send ACK
             decodeFrameCount[mediaIndex]++;
             PushAck(mediaIndex, 0);

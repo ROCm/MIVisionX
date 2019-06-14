@@ -9,5 +9,6 @@
         <file>images/amd-logo-150x150.jpg</file>
         <file>images/small_radeon_logo.png</file>
         <file>images/small_amd_logo.png</file>
+        <file>images/rocm_logo.png</file>
     </qresource>
 </RCC>

@@ -160,8 +160,9 @@ static vx_status VX_CALLBACK processConvolutionLayer(vx_node node, const vx_refe
 
         // activation (in-place in output_mem)
         if (data->bias_activ_mode == ACTIVATION_ONLY_SEPERATE || data->bias_activ_mode == BIAS_ACTIVATION_SEPERATE) {
-            ERROR_CHECK_MIOPEN_STATUS(miopenActivationForward(data->handle->miopen_handle, data->activation_desc, &data->activation_alpha, data->output_desc, data->output_mem,
-                                                              &data->activation_beta, data->output_desc, data->output_mem));
+            float alpha = 1.0f, beta = 0.0f;
+            ERROR_CHECK_MIOPEN_STATUS(miopenActivationForward(data->handle->miopen_handle, data->activation_desc, &alpha, data->output_desc, data->output_mem,
+                                                              &beta, data->output_desc, data->output_mem));
         }
     }
 
@@ -310,8 +311,8 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
             else {
                 ERROR_CHECK_MIOPEN_STATUS(miopenCreateOpActivationForward(data->fusePlanDesc, &data->activOp, miopenActivationLEAKYRELU));
             }
-            data->activation_alpha = 1.0;
-            data->activation_beta = data->leaky_alpha;
+            data->activation_alpha = data->leaky_alpha;
+            data->activation_beta = 1.0;
             data->activation_power = 1.0;
             miopenSetOpArgsActivForward(data->fusionArgs, data->activOp, &data->conv_alpha, &data->conv_beta, data->activation_alpha, data->activation_beta, data->activation_power);
         }
@@ -335,8 +336,8 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
         data->activation_mode = miopenActivationPASTHRU;
         if (data->bias_activ_mode == ACTIVATION_ONLY_SEPERATE || data->bias_activ_mode == BIAS_ACTIVATION_SEPERATE) {
             data->activation_mode = data->leaky_alpha? miopenActivationLEAKYRELU:miopenActivationRELU;
-            data->activation_alpha = 1.0;
-            data->activation_beta = data->leaky_alpha;
+            data->activation_alpha = data->leaky_alpha;
+            data->activation_beta = 1.0;
             data->activation_power = 1.0;
             ERROR_CHECK_MIOPEN_STATUS(miopenCreateActivationDescriptor(&data->activation_desc));
             ERROR_CHECK_MIOPEN_STATUS(miopenSetActivationDescriptor(data->activation_desc, data->activation_mode, data->activation_alpha, data->activation_beta, data->activation_power));

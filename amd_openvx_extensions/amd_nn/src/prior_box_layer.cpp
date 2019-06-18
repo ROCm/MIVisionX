@@ -152,13 +152,13 @@ static vx_status VX_CALLBACK opencl_codegen(
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
 
-    const int layer_height = input_dims_1[2];
-    const int layer_width = input_dims_1[3];
-    const int img_height = input_dims_2[2];
-    const int img_width = input_dims_2[3];
+    const int layer_height = input_dims_1[1];
+    const int layer_width = input_dims_1[0];
+    const int img_height = input_dims_2[1];
+    const int img_width = input_dims_2[0];
 
     const int output_num = output_dims[0] * output_dims[1] * output_dims[2]*output_dims[3];
-    const int output_dims_ch2 = output_dims[2]*output_dims[3];
+    const int output_dims_ch2 = output_dims[0]*output_dims[1];
 
     opencl_work_dim = 2;
     opencl_global_work[0] = layer_width;

@@ -329,7 +329,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
-    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
+    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
     ERROR_CHECK_OBJECT(%s);
 """ %(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
       tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
@@ -606,11 +606,17 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                         order = 2
                 f.write( \
 """
-    { vx_node node = vxPermuteLayer(graph, %s, %d, %s);
+    { 
+      int order_value[4] = {%d,%d,%d,%d}; 
+      vx_array order =  vxCreateArray(context, VX_TYPE_INT32, 4);
+      ERROR_CHECK_STATUS(vxTruncateArray(order,0));
+      int *order_ptr = &order_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(order, 4, order_ptr, sizeof(int)));
+      vx_node node = vxPermuteLayer(graph, %s, order, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (node.inputs[0], order, node.outputs[0]))
+""" % (order_list[0],order_list[1],order_list[2],order_list[3],node.inputs[0], node.outputs[0]))
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
                 if len(aspect_ratio) == 1:
@@ -628,8 +634,8 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       vx_array variance =  vxCreateArray(context, VX_TYPE_FLOAT32, 4); 
       ERROR_CHECK_STATUS(vxTruncateArray(aspect_ratio,0));
       ERROR_CHECK_STATUS(vxTruncateArray(variance,0));
-      float *variance_ptr = &aspect_ratio_value[0];
-      float *aspect_ratio_ptr = &variance_value[0];
+      float *aspect_ratio_ptr = &aspect_ratio_value[0];
+      float *variance_ptr = &variance_value[0];
       ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 2, aspect_ratio_ptr, sizeof(float)));
       ERROR_CHECK_STATUS(vxAddArrayItems(variance, 4, variance_ptr, sizeof(float)));
       vx_node node = vxPriorBoxLayer(graph, %s, %s, %f, aspect_ratio , %d, %d, %f, %s, variance, %f);

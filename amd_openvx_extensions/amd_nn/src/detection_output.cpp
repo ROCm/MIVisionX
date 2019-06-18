@@ -130,17 +130,6 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     return VX_SUCCESS;
 }
 
-//! \brief The kernel target support callback.
-static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-    vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-    vx_uint32& supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
-    )
-{
-
-    supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
-    return VX_SUCCESS;
-}
-
 static float BBoxSize(const NormalizedBBox& bbox, bool normalized)
 {
     if (bbox.xmax < bbox.xmin || bbox.ymax < bbox.ymin)
@@ -544,7 +533,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
 
     //get memory pointers for all inputs
     vx_map_id map_id;
-    vx_size stride[4]; //= {4,input_dims_1[0]*4,input_dims_1[0]*input_dims_1[1]*4,input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*4};
+    vx_size stride[4];
     float * ptr;
     vx_enum usage = VX_READ_ONLY;
     vx_status status;
@@ -559,7 +548,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
     {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 "  << std::endl;
+        std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
         return -1;
     }
 
@@ -567,14 +556,14 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
 
     status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
     if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#1"  << std::endl;
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
         return -1;
     }
 
     status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
     {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for input#2"  << std::endl;
+        std::cerr << "ERROR: vxMapTensorPatch() failed for input#2(" << status << ")" << std::endl;
         return -1;
     }
 
@@ -582,14 +571,14 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
 
     status = vxUnmapTensorPatch((vx_tensor)parameters[1], map_id);
     if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#2"  << std::endl;
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#2(" << status << ")" << std::endl;
         return -1;
     }
 
     status = vxMapTensorPatch((vx_tensor)parameters[2], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
     {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for input#3"  << std::endl;
+        std::cerr << "ERROR: vxMapTensorPatch() failed for input#3(" << status << ")" << std::endl;
         return -1;
     }
 
@@ -597,10 +586,15 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
 
     status = vxUnmapTensorPatch((vx_tensor)parameters[2], map_id);
     if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#3"  << std::endl;
-        return -1;
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#3(" << status << ")" << std::endl;
     }
-
+    
+    /*for(int i = 0; i < 10; i++)
+    {
+        std::cout << locData[i] << " ";
+    }
+    std::cout << std::endl;
+    */ 
     // Retrieve all location predictions.
     vector<LabelBBox> allLocPreds;
     GetLocPredictions(locData, num_batches, numPriors, num_loc_classes,
@@ -752,16 +746,30 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     }
     assert(count == numKept);
 
-    //printf("%f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
+    printf("%f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
     status =  vxCopyTensorPatch((vx_tensor)parameters[10], 4, nullptr, nullptr, stride_output_final, outputData, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor"  << std::endl;
         return -1;
     }
+    delete locData;
+    delete confData;
+    delete priorData;
     return VX_SUCCESS;
 
 }
+
+//! \brief The kernel target support callback.
+static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
+    vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
+    vx_uint32& supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
+    )
+{
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+    return VX_SUCCESS;
+}
+
 
 //! \brief The kernel publisher.
 vx_status publishDetectionOutputLayer(vx_context context)
@@ -769,6 +777,9 @@ vx_status publishDetectionOutputLayer(vx_context context)
     vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.detection_output", VX_KERNEL_DETECTION_OUTPUT_LAYER_AMD, processDetectionOutput, 14, validate, nullptr, nullptr);
     ERROR_CHECK_OBJECT(kernel);
 
+    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
+    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
+    
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));

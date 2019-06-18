@@ -402,7 +402,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                 hasBias = False
                 if beta == 1.0 and len(node.inputs) == 3 and len(graph.tensor_shapes[node.inputs[2]]) <= 2:
                     hasBias = True
-                if alpha == 1.0 and transA == 0 and transB == 1 and (beta == 0.0 or hasBias):
+                if alpha == 1.0 and transA == 0 and (beta == 0.0 or hasBias):
                     f.write( \
 """
     { vx_node node = vxFullyConnectedLayer(graph, %s, %s, %s, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, %s);

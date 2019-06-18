@@ -56,6 +56,7 @@ onnx2ir_op_type = {
     'Add'                : 'add',
     'Sub'                : 'sub',
     'Mul'                : 'mul',
+    'MatMul'             : 'gemm',
     'Gemm'               : 'gemm',
     'LRN'                : 'lrn',
     'Concat'             : 'concat',
@@ -63,6 +64,8 @@ onnx2ir_op_type = {
     'GlobalAveragePool'  : 'global_avg_pool',
     'Softmax'            : 'softmax',
     'Reshape'            : 'reshape',
+    'Squeeze'            : 'squeeze',
+    'Unsqueeze'          : 'unsqueeze',
     'Transpose'          : 'transpose',
     'Flatten'            : 'flatten'
 }

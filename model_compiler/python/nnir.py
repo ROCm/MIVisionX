@@ -157,6 +157,8 @@ class IrNode:
             'global_avg_pool' : 1,
             'leaky_relu' : 1,
             'reshape' : 1,
+            'squeeze' : 1,
+            'unsqueeze' : 1,
             'transpose' : 1,
             'copy' : 1,
             'crop' : 1,
@@ -334,6 +336,11 @@ class IrGraph:
                     transB = node.attr.get('transB')
                     shapeA = A.shape
                     shapeB = B.shape
+                    if transB == 0:
+                        B.shape[0], B.shape[1] = B.shape[1], B.shape[0]
+                        shapeB = B.shape
+                        node.attr.set('transB', 1)
+                        transB = 1
                     if transA == 0 and transB == 0:
                         output_shape = [shapeA[0], shapeB[1], 1, 1]
                     elif transA == 0:
@@ -376,6 +383,20 @@ class IrGraph:
                         local.setInfo(input.type, shape)
                         local.setFormat(input.format)
                         self.addLocal(local)
+                elif node.type in ['squeeze']:
+                    axes = node.attr.get('axes')
+                    
+                    print axes
+                    print input.shape
+                    out_shape = np.squeeze(input.shape)
+                    #out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
+                    print out_shape
+                    exit(1)
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['reshape']:
                     param = node.attr.get('shape')
                     if not param:

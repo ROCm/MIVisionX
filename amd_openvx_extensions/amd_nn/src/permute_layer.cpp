@@ -35,8 +35,6 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     return VX_SUCCESS;
-
-
 }
 
 //! \brief The kernel target support callback.
@@ -69,12 +67,15 @@ static vx_status VX_CALLBACK opencl_codegen(
     vx_size input_dims[4], output_dims[4];
     vx_size num_of_dims;
     vx_enum type;
+    vx_size input_stride[4], output_stride[4];
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_OPENCL, input_stride, sizeof(input_stride)));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_OPENCL, output_stride, sizeof(output_stride)));
 
     vx_array order_buf;
     vx_size order_cap, order_numitems;
@@ -84,16 +85,12 @@ static vx_status VX_CALLBACK opencl_codegen(
     ERROR_CHECK_STATUS(vxReleaseArray(&order_buf));
 
     strcpy(opencl_kernel_function_name, "permute_layer");
-    //vx_uint32 input_dim_size = input_dims[0] * input_dims[1] * input_dims[2] * input_dims[3];
 
     opencl_work_dim = 3;
     opencl_global_work[0] = output_dims[0];
     opencl_global_work[1] = output_dims[1];
     opencl_global_work[2] = output_dims[2]*output_dims[3];
 
-    //printf("input_dims 0-3 = %lu,%lu,%lu,%lu\n", input_dims[0],input_dims[1],input_dims[2],input_dims[3]);
-    //printf("output_dims 0-3 = %lu,%lu,%lu,%lu\n", output_dims[0],output_dims[1],output_dims[2],output_dims[3]);
-    
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
@@ -109,28 +106,22 @@ static vx_status VX_CALLBACK opencl_codegen(
             "   uint x = get_global_id(1); \n "
             "   uint y = get_global_id(2); \n "
             "   int num_axis = %d; \n"
-            //"   uchar * index_in = (uchar *)&in_stride; \n"
-            //"   uchar * index_out = (uchar *)&out_stride; \n"
             "   int i = y*out_stride.s2 + x*out_stride.s1 + c*out_stride.s0; \n"
             "   int old_idx = 0; \n"
             "   int idx = i; \n"
-            "   for(int j = 0; j < num_axis; j++) { \n"
-            //"       int order = (3) - ((__global int *)(order_buf+order_offset))[j]; \n"
-            "       int order = (*(global int *)&order_buf[j]); \n"
-            "       old_idx += (idx/out_stride[j]) * in_stride[order]; \n" 
-            "       idx %= out_stride[j]; \n"
-            //"       old_idx += (idx/out_stride[index_out[j]]) * in_stride[index_in[order]]; \n" 
-            //"       idx %= out_stride[index_out[j]]; \n"
+            "   for(int k = num_axis-1, j = 0; k >= 0; k--, j++) {  \n"
+            "       int order = 3- ((__global int *)(order_buf+order_offset))[j]; \n"
+            "       old_idx += (idx/out_stride[k]) * (in_stride[order]);  \n"
+            "       idx %= (out_stride[k]);  \n"
             "   } \n"
-            "   out += i; \n"
-            "   *(__global float *)&out[0] = *(__global float *)&in[old_idx]; \n"
+            "   out += out_offset + i; \n"
+            "   in += in_offset + old_idx; \n"
+            "   *(__global float *)&out[0] = *(__global float *)&in[0];  \n"
             "}\n", opencl_kernel_function_name, (int)order_cap);
         opencl_kernel_code = item;
     }
-
     return VX_SUCCESS;
 }
-
 
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
@@ -160,11 +151,6 @@ vx_status publishPermuteLayer(vx_context context)
     return VX_SUCCESS;
 }
 
-
-/*order value  |     function
-*     0        |  order: 0,1,2,3 (doesn't permute)
-*     1        |  order: 0,2,3,1 ([n,c,h,w] --> [n,h,w,c])
-*/
 VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_array order, vx_tensor output)
 {
     vx_node node = NULL;

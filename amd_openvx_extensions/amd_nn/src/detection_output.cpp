@@ -594,7 +594,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
         std::cout << locData[i] << " ";
     }
     std::cout << std::endl;
-    */ 
+     */
     // Retrieve all location predictions.
     vector<LabelBBox> allLocPreds;
     GetLocPredictions(locData, num_batches, numPriors, num_loc_classes,
@@ -746,7 +746,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     }
     assert(count == numKept);
 
-    printf("%f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
+    //printf("%f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
     status =  vxCopyTensorPatch((vx_tensor)parameters[10], 4, nullptr, nullptr, stride_output_final, outputData, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status)
     {

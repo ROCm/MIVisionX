@@ -619,8 +619,9 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """ % (order_list[0],order_list[1],order_list[2],order_list[3],node.inputs[0], node.outputs[0]))
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
-                if len(aspect_ratio) == 1:
-                  aspect_ratio.append(0.0)
+                aspect_ratio_len = len(aspect_ratio)
+                #if len(aspect_ratio) == 1:
+                #  aspect_ratio.append(0.0)
                 aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
                 variance = node.attr.get('variance')
                 variance_str = ','.join(str(e) for e in variance)
@@ -628,21 +629,37 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                 f.write( \
 """
     { 
-      float aspect_ratio_value[2] = {%f,%f}; 
-      float variance_value[4] = {%f,%f,%f,%f}; 
+""")
+                if(aspect_ratio_len == 2):
+                  f.write( \
+"""     
+      float aspect_ratio_value[2] = {%f,%f};
       vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 2);
-      vx_array variance =  vxCreateArray(context, VX_TYPE_FLOAT32, 4); 
       ERROR_CHECK_STATUS(vxTruncateArray(aspect_ratio,0));
-      ERROR_CHECK_STATUS(vxTruncateArray(variance,0));
       float *aspect_ratio_ptr = &aspect_ratio_value[0];
-      float *variance_ptr = &variance_value[0];
       ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 2, aspect_ratio_ptr, sizeof(float)));
+""" %(aspect_ratio[0], aspect_ratio[1])) 
+                elif aspect_ratio_len == 1:
+                  f.write( \
+"""     
+      float aspect_ratio_value[1] = {%f};
+      vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 1);
+      ERROR_CHECK_STATUS(vxTruncateArray(aspect_ratio,0));
+      float *aspect_ratio_ptr = &aspect_ratio_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 1, aspect_ratio_ptr, sizeof(float)));
+""" %(aspect_ratio[0])) 
+                f.write( \
+"""
+      float variance_value[4] = {%f,%f,%f,%f}; 
+      vx_array variance =  vxCreateArray(context, VX_TYPE_FLOAT32, 4); 
+      ERROR_CHECK_STATUS(vxTruncateArray(variance,0));
+      float *variance_ptr = &variance_value[0];
       ERROR_CHECK_STATUS(vxAddArrayItems(variance, 4, variance_ptr, sizeof(float)));
       vx_node node = vxPriorBoxLayer(graph, %s, %s, %f, aspect_ratio , %d, %d, %f, %s, variance, %f);
       ERROR_CHECK_OBJECT(node); 
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (aspect_ratio[0], aspect_ratio[1], variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'),\
+""" % (variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'),\
         node.attr.get('clip'), node.attr.get('prior_offset'), node.outputs[0], max_size))
             elif node.type == 'upsample':
                 f.write( \

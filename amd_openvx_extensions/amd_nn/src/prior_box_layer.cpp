@@ -30,7 +30,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[3], VX_ARRAY_ITEMTYPE, &type, sizeof(type)));
     if(type != VX_TYPE_FLOAT32) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[3], VX_ARRAY_CAPACITY, &aspect_ratio_cap, sizeof(aspect_ratio_cap)));
-    if(aspect_ratio_cap != 2) return VX_ERROR_INVALID_DIMENSION;
+    if(aspect_ratio_cap != 1 && aspect_ratio_cap != 2) return VX_ERROR_INVALID_DIMENSION;
     ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[3], VX_ARRAY_ITEMSIZE, &itemsize, sizeof(itemsize)));
     if(itemsize != sizeof(float)) return VX_ERROR_INVALID_TYPE;
   
@@ -113,15 +113,19 @@ static vx_status VX_CALLBACK opencl_codegen(
     vx_size input_dims_1[4], input_dims_2[4], output_dims[4];
     vx_size num_of_dims;
     vx_enum type;
+    vx_size input_stride_1[4], input_stride_2[4], output_stride[4];
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_1, sizeof(input_dims_1)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_OPENCL, input_stride_1, sizeof(input_stride_1)));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_2, sizeof(input_dims_2)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_STRIDE_OPENCL, input_stride_2, sizeof(input_stride_2)));
     
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[7], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[7], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[7], VX_TENSOR_STRIDE_OPENCL, output_stride, sizeof(output_stride)));
 
     vx_int32 clip, flip;
     vx_float32 minSize, maxSize, offset;
@@ -164,6 +168,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     opencl_global_work[0] = layer_width;
     opencl_global_work[1] = layer_height;
 
+    int num_bytes_for_each_prior = (output_dims[1]*sizeof(float))/(layer_width*layer_height);
     if (num_of_dims == 4)
     {
         char item[8192];
@@ -194,6 +199,8 @@ static vx_status VX_CALLBACK opencl_codegen(
             "   float box_width, box_height; \n"
             "   box_width = minSize; \n"
             "   box_height = minSize; \n"
+            "   int num_bytes_for_each_prior = %d; \n"
+            "   out += out_offset + y*get_global_size(0)*num_bytes_for_each_prior + x*num_bytes_for_each_prior; \n"
             "   *(__global float *)&out[0] = (center_x - box_width / 2.) / imgWidth; \n"
             "   out += out_stride.s1; \n"
             "   *(__global float *)&out[0] = (center_y - box_height / 2.) / imgHeight; \n"
@@ -217,9 +224,10 @@ static vx_status VX_CALLBACK opencl_codegen(
             "   while(r < aspect_ratio_num) \n"
             "   { \n"
             "       float ar = ((__global float *)(aspect_ratio_buf+aspect_ratio_offset))[r]; \n" 
-            "       if(fabs(ar - (float)1.) < 1e-6) \n"
+            "       if(ar== 0.0 || fabs(ar - (float)1.) < 1e-6) \n"
             "       { \n"
-            "           continue;"
+            "           r++; \n"
+            "           continue;\n"
             "       } \n"
             "       box_width = minSize * sqrt(ar); \n"
             "       box_height = minSize / sqrt(ar); \n"
@@ -234,9 +242,10 @@ static vx_status VX_CALLBACK opencl_codegen(
             "       if(flip == 1) \n"
             "       { \n"
             "           float ar_flip=  1/ar; \n" 
-            "           if(fabs(ar_flip - (float)1.) < 1e-6) \n"
+            "           if(isinf(ar_flip) || fabs(ar_flip - (float)1.) < 1e-6) \n"
             "           { \n"
-            "               continue;"
+            "               r++; \n"
+            "               continue;\n"
             "           } \n"
             "           box_width = minSize * sqrt(ar_flip); \n"
             "           box_height = minSize / sqrt(ar_flip); \n"
@@ -268,7 +277,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             "   ((__global float *)(out+out_offset))[count++] = ((__global float *)(variance_buf+variance_offset))[2];\n" 
             "   ((__global float *)(out+out_offset))[count++] = ((__global float *)(variance_buf+variance_offset))[3];\n"
             "   }\n"
-            "}\n", opencl_kernel_function_name, img_width, img_height, layer_width, layer_height, minSize, maxSize, clip, flip, offset, output_num, output_dims_ch2);
+            "}\n", opencl_kernel_function_name, img_width, img_height, layer_width, layer_height, minSize, maxSize, clip, flip, offset, output_num, output_dims_ch2, num_bytes_for_each_prior);
         opencl_kernel_code = item;
     }
     return VX_SUCCESS;

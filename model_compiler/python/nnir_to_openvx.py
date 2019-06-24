@@ -589,10 +589,8 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute':  
-                if node.type == 'copy':
-                    order = 0
-                elif node.type == 'transpose':
+            elif node.type == 'transpose' or node.type == 'permute':  
+                if node.type == 'transpose':
                     axes = node.attr.get('axes')            
                     if axes == [0, 2, 3, 1]:
                         order = 1
@@ -602,6 +600,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                     order_list = node.attr.get('order')            
                     if order_list == [0, 2, 3, 1]:
                         order = 1
+                        
                     elif order_list == [0, 3, 1, 2]:
                         order = 2
                 f.write( \
@@ -611,6 +610,14 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], order, node.outputs[0]))
+            elif node.type == 'copy':
+                f.write( \
+"""
+    { vx_node node = vxCopyNode(graph, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], node.outputs[0]))
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
                 aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)

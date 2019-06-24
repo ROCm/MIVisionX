@@ -41,7 +41,7 @@ nnef2ir_op_type = {
     'leaky_relu'                            : 'leaky_relu',
     'reshape'                               : 'reshape',
     'squeeze'                               : 'squeeze',
-    'unsqueeze'                             : 'reshape',
+    'unsqueeze'                             : 'unsqueeze',
     'transpose'                             : 'transpose',
     'copy'                                  : 'copy'
 }
@@ -184,16 +184,6 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     if nnef_operation.name == 'matmul':
         nnef_operation.attribs.update({'beta': 0.0})
     
-    if nnef_operation.name == 'unsqueeze':
-        input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
-        axes = nnef_operation.attribs['axes']
-        output_shape = input_shape
-        if len(output_shape) < 4:
-            for i in range(len(axes)):
-                output_shape.insert(axes[i], 1)
-        del nnef_operation.attribs['axes']
-        nnef_operation.attribs.update({'shape': output_shape})
-
     if nnef_operation.name == 'linear':
         nnef_operation.attribs.update({'transposeB': 1})
         

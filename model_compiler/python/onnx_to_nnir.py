@@ -67,7 +67,9 @@ onnx2ir_op_type = {
     'Squeeze'            : 'squeeze',
     'Unsqueeze'          : 'unsqueeze',
     'Transpose'          : 'transpose',
-    'Flatten'            : 'flatten'
+    'Flatten'            : 'flatten',
+    'Identity'           : 'copy',
+    'ReduceMean'         : 'global_avg_pool'
 }
 
 onnx2ir_data_type = [
@@ -117,6 +119,7 @@ def onnx_node_to_ir_node(onnx_node):
     if onnx_node.op_type in onnx2ir_op_type:
         type = onnx2ir_op_type[onnx_node.op_type]
     else:
+        print onnx_node
         print('ERROR: ONNX operation "%s" not supported yet' % (onnx_node.op_type))
         sys.exit(1)
     node.set(type, [onnx_name_to_ir_name(name) for name in onnx_node.input], \
@@ -144,7 +147,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
                 
     for onnx_node in onnx_graph.node:
         for tensor in onnx_graph.initializer:
-            if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and ("DUMMY" in onnx_name_to_ir_name(tensor.name)):
+            if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and (tensor.name == onnx_node.input[1]):
                 tensorName = onnx_name_to_ir_name(tensor.name)
                 if tensorName not in shapeList:
                     shapeList.append(tensorName)

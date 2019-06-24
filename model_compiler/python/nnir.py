@@ -385,18 +385,30 @@ class IrGraph:
                         self.addLocal(local)
                 elif node.type in ['squeeze']:
                     axes = node.attr.get('axes')
-                    
-                    print axes
-                    print input.shape
-                    out_shape = np.squeeze(input.shape)
-                    #out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
-                    print out_shape
-                    exit(1)
+                    out_shape = []
+                    if len(axes) == 0:
+                        for i in range(len(input.shape)):
+                            if input.shape[i] != 1:
+                                out_shape.append(input.shape[i])
+                    else:
+                        out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['unsqueeze']:
+                    axes = node.attr.get('axes')
+                    out_shape = input.shape
+                    if len(out_shape) < 4:
+                        for i in range(len(axes)):
+                            out_shape.insert(axes[i], 1)
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                
                 elif node.type in ['reshape']:
                     param = node.attr.get('shape')
                     if not param:

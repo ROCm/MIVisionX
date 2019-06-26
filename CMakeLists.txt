@@ -27,7 +27,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_INSTALL_PREFIX /opt/rocm/mivisionx)
 
-message("-- MIVisionX Version - ${VERSION}")
+message("-- ${Blue}MIVisionX Version - ${VERSION}${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

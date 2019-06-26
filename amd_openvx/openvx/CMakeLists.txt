@@ -72,7 +72,7 @@ if (OpenCL_FOUND)
 	message("-- AMD OpenVX - OpenVX built with OpenCL Support")
 else(OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
-	message("-- AMD OpenVX - OpenVX built for CPU only")
+	message("-- WARNING:OpenCL Not Found - OpenVX built for CPU only")
 endif(OpenCL_FOUND)
 
 install (TARGETS openvx DESTINATION lib)

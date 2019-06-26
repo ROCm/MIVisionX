@@ -30,20 +30,18 @@ if(POLICY CMP0054)
 endif()
 
 find_package(OpenCL     REQUIRED)
-find_package(miopengemm PATHS /opt/rocm)
-find_package(miopen     PATHS /opt/rocm)
-find_package(Protobuf)
-
-if(NOT miopen_FOUND OR NOT miopengemm_FOUND)
-    message(FATAL_ERROR "ERROR: couldn't find MIOpen and MIOpenGEMM -- make sure to install them")
-endif()
+find_package(miopengemm PATHS /opt/rocm REQUIRED)
+find_package(miopen     PATHS /opt/rocm REQUIRED)
+find_package(Protobuf QUIET)
 
 list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)
 
 if(Protobuf_FOUND)
-	message("-- Found Protobuf -- installing inference generator.")
 	add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
-endif()
+	message("-- Protobuf Found -- Inference Generator module added")
+else(Protobuf_FOUND)
+	message("-- Protobuf Not Found -- Inference Generator module excluded")	
+endif(Protobuf_FOUND)
 
 include_directories(
     ../../amd_openvx/openvx/include

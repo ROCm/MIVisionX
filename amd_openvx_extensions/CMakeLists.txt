@@ -39,7 +39,7 @@ if(OpenCL_FOUND)
         message("-- ${Red}WARNING:FFMPEG Not Found -- amd_media module excluded${ColourReset}")
     endif(FFMPEG_FOUND)
 else()
-    message("-- ${Red}WARNING:OpenCL Not Found -- amd_loomsl, amd_media, & amd_nn modules excluded${ColourReset}")
+    message("-- ${Red}WARNING:OpenCL/FFMPEG Not Found -- amd_loomsl, & amd_media modules excluded${ColourReset}")
 endif(OpenCL_FOUND)
 
 if(OpenCL_FOUND AND miopengemm_FOUND AND miopen_FOUND)

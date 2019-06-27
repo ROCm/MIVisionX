@@ -46,7 +46,7 @@ if(OpenCL_FOUND AND miopengemm_FOUND AND miopen_FOUND)
     add_subdirectory (amd_nn)
     message("-- ${Green}AMD OpenVX Neural Network Extension -- amd_nn module added${ColourReset}")
 else()
-    message("-- ${Red}WARNING:MIOpen & MIOpenGEMM Not Found -- amd_nn module excluded${ColourReset}")
+    message("-- ${Red}WARNING:MIOpen/MIOpenGEMM Not Found -- amd_nn module excluded${ColourReset}")
 endif()
 
 if(OpenCV_FOUND)

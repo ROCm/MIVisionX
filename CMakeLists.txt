@@ -36,7 +36,7 @@ if(NOT WIN32)
   set(Blue        "${Esc}[34m")
   set(BoldBlue    "${Esc}[1;34m")
 endif()
-message("-- ${BoldBlue}MIVisionX Version - ${VERSION}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

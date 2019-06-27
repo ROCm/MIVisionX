@@ -86,7 +86,9 @@ enum user_kernel_e
     VX_KERNEL_PERMUTE_LAYER_AMD              = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00b,
     VX_KERNEL_PRIOR_BOX_LAYER_AMD            = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00c,
     VX_KERNEL_CROP_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00d,
-    VX_KERNEL_CROP_AND_RESIZE_LAYER_AMD      = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00e
+    VX_KERNEL_CROP_AND_RESIZE_LAYER_AMD      = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00e,
+    VX_KERNEL_TENSOR_MIN_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00f,
+    VX_KERNEL_TENSOR_MAX_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00g,
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -134,6 +136,8 @@ vx_status publishPermuteLayer(vx_context context);
 vx_status publishPriorBoxLayer(vx_context context);
 vx_status publishCropLayer(vx_context context);
 vx_status publishCropAndResizeLayer(vx_context context);
+vx_status publishTensorMin(vx_context context);
+vx_status publishTensorMax(vx_context context);
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing/unpublishing kernels

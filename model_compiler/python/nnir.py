@@ -165,7 +165,9 @@ class IrNode:
             'crop_and_resize': 1,
             'permute' : 1,
             'prior_box' : 1,
-            'flatten'  : 1
+            'flatten'  : 1,
+            'min' : 1,
+            'max' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -278,7 +280,7 @@ class IrGraph:
             for output in node.outputs:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
-                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
+                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)

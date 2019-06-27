@@ -229,7 +229,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor 
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxTensorMinLayer(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
+VX_API_ENTRY vx_node VX_API_CALL vxTensorMinNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
 
 /* \brief [Graph] Creates a Tensor_Max Layer Node.
  * \details Performs element-wise max on element values in the input <tt>\ref vx_tensor</tt>.
@@ -244,5 +244,5 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMinLayer(vx_graph graph, vx_tensor inpu
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxLayer(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
+VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
 #endif

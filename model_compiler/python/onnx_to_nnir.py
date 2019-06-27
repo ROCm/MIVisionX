@@ -68,7 +68,9 @@ onnx2ir_op_type = {
     'Unsqueeze'          : 'unsqueeze',
     'Transpose'          : 'transpose',
     'Flatten'            : 'flatten',
-    'Identity'           : 'copy'
+    'Identity'           : 'copy',
+    'Min'                : 'min',
+    'Max'                : 'max',
     #'ReduceMean'         : 'global_avg_pool'
 }
 

@@ -38,9 +38,9 @@ list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)
 
 if(Protobuf_FOUND)
 	add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
-	message("-- ${Green}Inference Generator -- caffe2openvx module added${ColourReset}")
+	message("-- ${Green}Inference Generator -- utilities/inference_generator module added${ColourReset}")
 else(Protobuf_FOUND)
-	message("-- ${Red}WARNING:Protobuf Not Found -- caffe2openvx module excluded${ColourReset}")	
+	message("-- ${Red}WARNING:Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")	
 endif(Protobuf_FOUND)
 
 include_directories(

@@ -20,7 +20,6 @@
 
 import os, sys, struct
 import datetime, pytz
-from ctypes import *
 from nnir import *
 
 tensor_type_nnir2openvx = {
@@ -329,7 +328,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
-    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
+    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
     ERROR_CHECK_OBJECT(%s);
 """ %(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
       tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
@@ -578,9 +577,19 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """
     { vx_node node = vxSoftmaxLayer(graph, %s, %s);
       ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
 """ % (node.inputs[0], node.outputs[0]))
+                if (node.attr.get('axis') > 1):
+                    axis = node.attr.get('axis');
+                    f.write( \
+"""      vx_int32 axis = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 2, (vx_reference) s_axis));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_axis));
+""" % (axis))
+                f.write( \
+"""      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""")
             elif node.type == 'reshape' or node.type == 'flatten':
                 f.write( \
 """
@@ -620,8 +629,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
                 aspect_ratio_len = len(aspect_ratio)
-                #if len(aspect_ratio) == 1:
-                #  aspect_ratio.append(0.0)
                 aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
                 variance = node.attr.get('variance')
                 variance_str = ','.join(str(e) for e in variance)

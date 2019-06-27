@@ -322,6 +322,12 @@ def extractCaffeAttrInfo(layer_param):
         attribute_map["variance_encoded_in_target"] = 1 if variance_encoded_in_target == True else 0
         attribute_map["keep_top_k"] = keep_top_k
         attribute_map["confidence_threshold"] = confidence_threshold
+        
+    elif (layer_param.type == "Softmax"):
+        softmax = layer_param.softmax_param
+        axis = softmax.axis
+        attribute_map["axis"] = axis
+        
     return attribute_map
 
 # calculate dimensions of the output of each layer.
@@ -333,7 +339,6 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         layer_type = convertV1LayerTypeToString(layer_param)
     else:
         layer_type = layer_param.type
-    
     if(layer_type == "Convolution"):
         strides = attribute_map["strides"]
         pads = attribute_map["pads"]
@@ -544,7 +549,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[0] = 1
         output_dims[1] = 1
         output_dims[2] = 1
-        output_dims[3] = 7      
+        output_dims[3] = 7
     else:
         output_dims[0],output_dims[1],output_dims[2],output_dims[3] = input_map[str(inputs[0])]
 

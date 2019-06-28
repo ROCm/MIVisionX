@@ -71,6 +71,8 @@ onnx2ir_op_type = {
     'Identity'           : 'copy',
     'Min'                : 'min',
     'Max'                : 'max',
+    'Cast'               : 'add',
+    'Div'                : 'div'
     #'ReduceMean'         : 'global_avg_pool'
 }
 
@@ -121,7 +123,6 @@ def onnx_node_to_ir_node(onnx_node):
     if onnx_node.op_type in onnx2ir_op_type:
         type = onnx2ir_op_type[onnx_node.op_type]
     else:
-        print onnx_node
         print('ERROR: ONNX operation "%s" not supported yet' % (onnx_node.op_type))
         sys.exit(1)
     node.set(type, [onnx_name_to_ir_name(name) for name in onnx_node.input], \

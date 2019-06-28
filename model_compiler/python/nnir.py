@@ -149,6 +149,9 @@ class IrNode:
             'mul' : 1,
             'muladd' : 1,
             'sub' : 1,
+            'div' : 1,
+            'min' : 1,
+            'max' : 1,
             'gemm' : 1,
             'softmax' : 1,
             'lrn' : 1,
@@ -165,9 +168,7 @@ class IrNode:
             'crop_and_resize': 1,
             'permute' : 1,
             'prior_box' : 1,
-            'flatten'  : 1,
-            'min' : 1,
-            'max' : 1,
+            'flatten'  : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -394,6 +395,8 @@ class IrGraph:
                                 out_shape.append(input.shape[i])
                     else:
                         out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
+
+                    node.type = 'reshape'
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
@@ -405,12 +408,23 @@ class IrGraph:
                     if len(out_shape) < 4:
                         for i in range(len(axes)):
                             out_shape.insert(axes[i], 1)
+                    node.type = 'reshape'
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-                
+                elif node.type in ['div']:
+                    if node.inputs[1] not in self.binaries:
+                        raise ValueError("div: division by local tensor is unsupported: " + node.inputs[1])
+                    weight = np.frombuffer(self.binaries[node.inputs[1]], dtype=np.float32)
+                    self.binaries[node.inputs[1]] = np.reciprocal(weight)
+                    node.type = 'mul'
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['reshape']:
                     param = node.attr.get('shape')
                     if not param:

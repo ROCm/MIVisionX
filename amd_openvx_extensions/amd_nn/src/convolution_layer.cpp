@@ -133,7 +133,6 @@ static vx_status VX_CALLBACK processConvolutionLayer(vx_node node, const vx_refe
 {
     ConvolutionLayerLocalData * data= NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->weight_mem, sizeof(data->weight_mem)));
@@ -163,7 +162,13 @@ static vx_status VX_CALLBACK processConvolutionLayer(vx_node node, const vx_refe
             ERROR_CHECK_MIOPEN_STATUS(miopenActivationForward(data->handle->miopen_handle, data->activation_desc, &data->activation_alpha, data->output_desc, data->output_mem,
                                                               &data->activation_beta, data->output_desc, data->output_mem));
         }
-    }
+    }  
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("conv_%04d.bin", (vx_tensor)parameters[4]);
+    #endif  
 
     return VX_SUCCESS;
 }
@@ -209,7 +214,8 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     }
 
     // override default cbr_mode by NN_MIOPEN_CBR_MODE environment variable.
-    vx_int32 nn_cbr_mode = getEnvironmentVariable("NN_MIOPEN_CBR_MODE");
+    char textBuffer[1024];
+    vx_int32 nn_cbr_mode = getEnvironmentVariable("NN_MIOPEN_CBR_MODE", textBuffer, sizeof(textBuffer));
     if (nn_cbr_mode < 0) nn_cbr_mode = 0; // default cbr_mode
 
     // initialize the bias activ mode

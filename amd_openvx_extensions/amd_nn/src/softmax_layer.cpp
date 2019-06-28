@@ -85,6 +85,13 @@ static vx_status VX_CALLBACK processSoftmaxLayer(vx_node node, const vx_referenc
 
     ERROR_CHECK_STATUS(miopenSoftmaxForward(miopenHandle, &data->alpha, data->input_desc, data->input_mem, &data->beta, data->output_desc, data->output_mem));
 
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("softmax_%04d.bin", (vx_tensor)parameters[1]);
+    #endif  
+
     return VX_SUCCESS;
 }
 

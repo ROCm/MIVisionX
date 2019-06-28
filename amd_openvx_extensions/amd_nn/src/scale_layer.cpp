@@ -97,6 +97,11 @@ static vx_status VX_CALLBACK processScaleLayer(vx_node node, const vx_reference 
     ERROR_CHECK_MIOPEN_STATUS(miopenBatchNormalizationForwardInference(miopenHandle, miopenBNSpatial, &data->alpha, &data->beta, data->input_desc, data->input_mem,
                                                                        data->output_desc, data->output_mem, data->bnScaleBiasMeanVarDesc, data->bnScale, data->bnBias, nullptr, nullptr, 0));
 
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("scale_%04d.bin", (vx_tensor)parameters[3]);
+    #endif
     return VX_SUCCESS;
 }
 

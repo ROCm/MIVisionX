@@ -121,6 +121,12 @@ static vx_status VX_CALLBACK processPoolingLayer(vx_node node, const vx_referenc
         ERROR_CHECK_MIOPEN_STATUS(miopenActivationForward(data->handle->miopen_handle, data->activation_desc, &alpha, data->output_desc, data->output_mem, &beta, data->output_desc, data->output_mem));
     }
 
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("pooling_%04d.bin", (vx_tensor)parameters[7]);
+    #endif
+
     return VX_SUCCESS;
 }
 

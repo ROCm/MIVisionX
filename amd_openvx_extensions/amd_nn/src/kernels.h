@@ -45,6 +45,13 @@ THE SOFTWARE.
 #else
 #include <CL/cl.h>
 #endif
+#if _WIN32
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <ctype.h>
+#endif
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The macro for error checking from OpenVX status.
@@ -66,6 +73,10 @@ THE SOFTWARE.
 #define ENABLE_DEBUG_PRINT_DIMS 0
 #endif
 
+// Debug Dump Layer outputs : disabled unless enabled explicitly by setting ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS=1
+#ifndef ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+#define ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS 1
+#endif
 //////////////////////////////////////////////////////////////////////
 //! user kernels
 enum nn_additional_library
@@ -105,7 +116,8 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
 vx_reference getNodeParameterByIndex(vx_node node, vx_uint32 index);
 vx_status createGraphHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle);
 vx_status releaseGraphHandle(vx_node node, NeuralNetworkCommonHandle * handle);
-int getEnvironmentVariable(const char* name);
+int getEnvironmentVariable(const char* name, char * value, size_t valueSize);
+void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor);
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The kernel publish functions

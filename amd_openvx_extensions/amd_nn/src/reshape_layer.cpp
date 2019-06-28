@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 #include "kernels.h"
 
+#include <stdio.h>
+#include <sys/stat.h>
 struct ReshapeLayerLocalData {
     NeuralNetworkCommonHandle * handle;
     cl_mem input_mem;

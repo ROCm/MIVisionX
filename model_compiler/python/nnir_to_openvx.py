@@ -216,7 +216,7 @@ extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, 
 """ % (', '.join(['vx_tensor ' + tensor.name for tensor in graph.inputs]), \
        ', '.join(['vx_tensor ' + tensor.name for tensor in graph.outputs])))
 
-def generateModuleCPP(graph,fileName):
+def generateModuleCPP(graph,fileName,virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
@@ -328,10 +328,19 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
-    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
-    ERROR_CHECK_OBJECT(%s);
-""" %(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
-      tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
+"""%(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)])))
+                if virtual_tensor_flag == 1:
+                    f.write( \
+"""    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
+"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
+                elif virtual_tensor_flag == 0:
+                    f.write( \
+"""    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
+"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
+                f.write( \
+"""    ERROR_CHECK_OBJECT(%s);
+"""%(tensor.name))
+      
         f.write( \
 """
     // create nodes in graph
@@ -1846,12 +1855,12 @@ def generateBinary(graph,fileName):
             f.write(binary)
         f.write(struct.pack('I', VARIABLES_EOFF_MAGIC))
 
-def generateCode(graph,argmaxOutput,outputFolder):
+def generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag):
     if not os.path.isdir(outputFolder):
         os.mkdir(outputFolder)
     generateCMakeFiles(graph,outputFolder)
     generateModuleH(graph,outputFolder + '/annmodule.h')
-    generateModuleCPP(graph,outputFolder + '/annmodule.cpp')
+    generateModuleCPP(graph,outputFolder + '/annmodule.cpp',virtual_tensor_flag)
     generateBinary(graph,outputFolder + '/weights.bin')
     generateTestCPP(graph,argmaxOutput,outputFolder + '/anntest.cpp')
     generatePythonH(graph,outputFolder + '/annpython.h')
@@ -1863,6 +1872,7 @@ def main():
 Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
   OPTIONS:
+    --virtual_tensor 1                -- to make tensors virtual  (default: 0)               
     --argmax UINT8                    -- argmax at the end with 8-bit output
     --argmax UINT16                   -- argmax at the end with 16-bit output
     --argmax <fileNamePrefix>rgb.txt  -- argmax at the end with RGB color mapping using LUT
@@ -1882,6 +1892,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 """
     pos = 1;
     argmaxOutput = None
+    virtual_tensor_flag = 0;
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--argmax':
             argmaxOutput = sys.argv[pos+1]
@@ -1898,6 +1909,8 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
                         argmaxOutput = np.reshape(np.array([int(v) for v in f.read().split()]), [-1, 4]).transpose()
                     else:
                         argmaxOutput = np.reshape(np.array([int(v) for v in f.read().split()]), [-1, 3]).transpose()
+        elif sys.argv[pos] == '--virtual_tensor':
+            virtual_tensor_flag = sys.argv[pos+1]
         else:
             if sys.argv[pos] != '--help':
                 print('ERROR: invalid option: %s' % (sys.argv[pos]))
@@ -1920,7 +1933,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
         elif len(tensor.shape) == 4:
             print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]));
     print('creating C code in ' + outputFolder + ' ...')
-    generateCode(graph,argmaxOutput,outputFolder)
+    generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag)
 
 if __name__ == '__main__':
     main()

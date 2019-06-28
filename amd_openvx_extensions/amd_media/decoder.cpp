@@ -319,23 +319,24 @@ vx_status CLoomIoMediaDecoder::Initialize()
 		// read media filenames from text file
         std::ifstream infile(inputMediaFiles.c_str());
         std::string line;
-        mediaCount = 0;
-        while(std::getline(infile, line)) {
+        int mCount = 0;
+        while(std::getline(infile, line) && mCount < mediaCount) {
             std::vector<std::string> streaminfo = split(line, ':');
             if (streaminfo.size() != 2) {
                 vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: invalid input file format");
                 return VX_ERROR_INVALID_LINK;
             }
-            inputMediaFileName[mediaCount] = streaminfo[0];
-            useVaapi[mediaCount++]         = atoi(streaminfo[1].c_str());
+            inputMediaFileName[mCount] = streaminfo[0];
+            useVaapi[mCount++]         = atoi(streaminfo[1].c_str());
         }
 	}
     else if (!inputMediaFiles.empty()) {
 		// generate media filenames
         // split the string using ','
         std::vector<std::string> mediainfo = split(inputMediaFiles, ',');
-        mediaCount = mediainfo.size();
-        for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
+        unsigned int mCount = mediainfo.size();
+        if (mCount > mediaCount) mCount = mediaCount;
+        for (int mediaIndex = 0; mediaIndex < mCount; mediaIndex++) {
             std::vector<std::string> streaminfo = split(mediainfo[mediaIndex], ':');
             if (streaminfo.size() != 2) {
                 vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: invalid input file format");
@@ -601,13 +602,12 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
             if (outputFormat == AV_PIX_FMT_NV12) ERROR_CHECK_STATUS(vxUnmapImagePatch(output, map_id1));
         } else {
             // copy AV frame to output
-            vx_rectangle_t rect = { 0, (vx_uint32)(mediaIndex * decoderImageHeight), (vx_uint32)width, (vx_uint32)decoderImageHeight };
-            vx_rectangle_t rect1 = { 0, (vx_uint32)(mediaIndex * (decoderImageHeight>>1)), (vx_uint32)width, (vx_uint32)(decoderImageHeight) }; // UV
+            vx_rectangle_t rect = { 0, (vx_uint32)(mediaIndex * decoderImageHeight), (vx_uint32)width, (vx_uint32)(mediaIndex * decoderImageHeight + decoderImageHeight) };
             vx_imagepatch_addressing_t addr = { 0 };
             addr.stride_x = stride / width;
             addr.stride_y = stride;
             ERROR_CHECK_STATUS(vxCopyImagePatch(output, &rect, 0, &addr, frame->data[0], VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
-            ERROR_CHECK_STATUS(vxCopyImagePatch(output, &rect1, 1, &addr, frame->data[1], VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+            ERROR_CHECK_STATUS(vxCopyImagePatch(output, &rect, 1, &addr, frame->data[1], VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
         }
         av_frame_free(&frame);
     }

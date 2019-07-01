@@ -73,7 +73,7 @@ onnx2ir_op_type = {
     'Max'                : 'max',
     'Cast'               : 'add',
     'Div'                : 'div'
-    #'ReduceMean'         : 'global_avg_pool'
+    'ReduceMean'         : 'global_avg_pool'
 }
 
 onnx2ir_data_type = [
@@ -115,6 +115,8 @@ def onnx_node_to_ir_attr(node):
             raise ValueError("Unsupported ONNX value for output_padding attribute")
         dilations = [output_padding[0] / (kernel_shape[0] - 1) + 1, output_padding[1] / (kernel_shape[1] - 1) + 1]
         attr.set('dilations', dilations)
+    if onnx_node.op_type == 'Matmul':
+        attr.set('beta', 0.0)
     return attr
 
 def onnx_node_to_ir_node(onnx_node):

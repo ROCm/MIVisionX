@@ -141,7 +141,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
                 
     for onnx_node in onnx_graph.node:
         for tensor in onnx_graph.initializer:
-            if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and ("DUMMY" in onnx_name_to_ir_name(tensor.name)):
+            if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and tensor.name == onnx_node.input[1]:
                 tensorName = onnx_name_to_ir_name(tensor.name)
                 if tensorName not in shapeList:
                     shapeList.append(tensorName)

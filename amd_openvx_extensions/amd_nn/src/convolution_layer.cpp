@@ -126,11 +126,13 @@ static vx_status VX_CALLBACK validateConvolutionLayer(vx_node node, const vx_ref
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[4], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[4], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+
     return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK processConvolutionLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Convolution_Layer)
     ConvolutionLayerLocalData * data= NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
@@ -164,7 +166,7 @@ static vx_status VX_CALLBACK processConvolutionLayer(vx_node node, const vx_refe
                                                               &data->activation_beta, data->output_desc, data->output_mem));
         }
     }
-
+PROFILER_STOP(VX_NN, Convolution_Layer)
     return VX_SUCCESS;
 }
 

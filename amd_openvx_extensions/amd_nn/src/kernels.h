@@ -46,6 +46,9 @@ THE SOFTWARE.
 #include <CL/cl.h>
 #endif
 
+// Visual Profiler (enabled by setting PROFILER_MODE=1 in profiler.h)
+#include "profiler.h"
+
 //////////////////////////////////////////////////////////////////////
 //! \brief The macro for error checking from OpenVX status.
 #define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS){ vxAddLogEntry(NULL, status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}

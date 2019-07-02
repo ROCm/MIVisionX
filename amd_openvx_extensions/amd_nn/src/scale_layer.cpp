@@ -86,6 +86,7 @@ static vx_status VX_CALLBACK validateScaleLayer(vx_node node, const vx_reference
 
 static vx_status VX_CALLBACK processScaleLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Scale_Layer)
     ScaleLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -96,7 +97,7 @@ static vx_status VX_CALLBACK processScaleLayer(vx_node node, const vx_reference 
     //miopen batch norm inference is combined for scale and  batchnorm. Scale is batchnorm withe null tensors for mean and variance.
     ERROR_CHECK_MIOPEN_STATUS(miopenBatchNormalizationForwardInference(miopenHandle, miopenBNSpatial, &data->alpha, &data->beta, data->input_desc, data->input_mem,
                                                                        data->output_desc, data->output_mem, data->bnScaleBiasMeanVarDesc, data->bnScale, data->bnBias, nullptr, nullptr, 0));
-
+PROFILER_STOP(VX_NN, Scale_Layer)
     return VX_SUCCESS;
 }
 

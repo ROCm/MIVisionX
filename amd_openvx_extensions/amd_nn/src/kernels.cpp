@@ -132,6 +132,7 @@ vx_status releaseGraphHandle(vx_node node, NeuralNetworkCommonHandle * handle)
 //! \brief The module entry point for publishing kernel.
 SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 {
+    PROFILER_INITIALIZE();
     // set command-queue properties to be CL_QUEUE_PROFILING_ENABLE needed by MIOpen (default)
     const char * searchEnvName = "NN_MIOPEN_CL_QUEUE_PROPERTIES";
     cl_command_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
@@ -196,5 +197,6 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 //! \brief The module entry point for unpublishing kernel.
 SHARED_PUBLIC vx_status VX_API_CALL vxUnpublishKernels(vx_context context)
 {
+    PROFILER_SHUTDOWN();
     return VX_SUCCESS;
 }

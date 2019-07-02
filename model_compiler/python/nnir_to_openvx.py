@@ -629,9 +629,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
                 aspect_ratio_len = len(aspect_ratio)
-                aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
                 variance = node.attr.get('variance')
-                variance_str = ','.join(str(e) for e in variance)
                 max_size = node.attr.get('max_size')
                 f.write( \
 """

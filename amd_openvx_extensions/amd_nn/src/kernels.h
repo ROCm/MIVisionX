@@ -75,7 +75,7 @@ THE SOFTWARE.
 
 // Debug Dump Layer outputs : disabled unless enabled explicitly by setting ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS=1
 #ifndef ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
-#define ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS 1
+#define ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS 0
 #endif
 //////////////////////////////////////////////////////////////////////
 //! user kernels

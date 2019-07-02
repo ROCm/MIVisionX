@@ -608,19 +608,10 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }
 """ % (node.inputs[0], node.outputs[0]))
             elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute':  
-                if node.type == 'copy':
-                    order = 0
-                elif node.type == 'transpose':
-                    axes = node.attr.get('axes')            
-                    if axes == [0, 2, 3, 1]:
-                        order = 1
-                    elif axes == [0, 3, 1, 2]:
-                        order = 2
+                if node.type == 'transpose':
+                    order_list = node.attr.get('axes')       
                 elif node.type == 'permute':
-                    order_list = node.attr.get('order')            
-                    if order_list == [0, 2, 3, 1]:
-                        order = 1
-                    elif order_list == [0, 3, 1, 2]:
+                    order_list = node.attr.get('order')   
                         order = 2
                 f.write( \
 """
@@ -638,9 +629,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
                 aspect_ratio_len = len(aspect_ratio)
-                aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
                 variance = node.attr.get('variance')
-                variance_str = ','.join(str(e) for e in variance)
                 max_size = node.attr.get('max_size')
                 f.write( \
 """

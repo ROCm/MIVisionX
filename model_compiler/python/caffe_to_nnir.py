@@ -309,9 +309,6 @@ def extractCaffeAttrInfo(layer_param):
         variance_encoded_in_target = detection_output.variance_encoded_in_target
         keep_top_k = detection_output.keep_top_k
         confidence_threshold = detection_output.confidence_threshold
-        visualize = detection_output.visualize
-        visualize_threshold = detection_output.visualize_threshold
-        save_file = detection_output.save_file
 
         attribute_map["num_classes"] = num_classes
         attribute_map["share_location"] = 1 if share_location == True else 0

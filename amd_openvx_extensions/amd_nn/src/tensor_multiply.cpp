@@ -91,6 +91,7 @@ static vx_status VX_CALLBACK validateTensorMultiply(vx_node node, const vx_refer
 
 static vx_status VX_CALLBACK processTensorMultiply(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Tensor_Multiply_Layer)
     TensorMultiplyLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -101,7 +102,7 @@ static vx_status VX_CALLBACK processTensorMultiply(vx_node node, const vx_refere
 
     //miopen multiply call.
     ERROR_CHECK_MIOPEN_STATUS(miopenOpTensor(miopenHandle, data->operation, &data->alpha1, data->input1, data->input1_mem, &data->alpha2, data->input2, data->input2_mem, &data->beta, data->output, data->output_mem));
-
+ PROFILER_STOP(VX_NN, Tensor_Multiply_Layer)
     return VX_SUCCESS;
 }
 

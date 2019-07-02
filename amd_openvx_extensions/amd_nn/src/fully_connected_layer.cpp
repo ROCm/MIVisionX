@@ -93,6 +93,7 @@ static vx_status VX_CALLBACK validateFullyConnectedLayer(vx_node node, const vx_
 
 static vx_status VX_CALLBACK processFullyConnectedLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Fully_Connected_Layer)
     FullyConnectedLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopen_handle = data->handle->miopen_handle;
@@ -109,7 +110,7 @@ static vx_status VX_CALLBACK processFullyConnectedLayer(vx_node node, const vx_r
 	    ERROR_CHECK_MIOPEN_STATUS(miopenConvolutionForwardBias(data->handle->miopen_handle, &data->alpha, data->bias_desc, data->bias_mem,
                                                            &data->beta, data->output_desc, data->output_mem));
 	}
-    
+PROFILER_STOP(VX_NN, Fully_Connected_Layer)
     return VX_SUCCESS;
 }
 

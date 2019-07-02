@@ -78,6 +78,7 @@ list(APPEND SOURCES
     src/prior_box_layer.cpp
     src/crop_layer.cpp
     src/crop_and_resize_layer.cpp
+    src/profiler.cpp
     )
 
 add_library(vx_nn SHARED ${SOURCES})

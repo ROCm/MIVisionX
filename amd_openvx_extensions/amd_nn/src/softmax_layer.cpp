@@ -67,6 +67,7 @@ static vx_status VX_CALLBACK validateSoftmaxLayer(vx_node node, const vx_referen
 
 static vx_status VX_CALLBACK processSoftmaxLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Softmax_Layer)
     SoftmaxLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -75,7 +76,7 @@ static vx_status VX_CALLBACK processSoftmaxLayer(vx_node node, const vx_referenc
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
 
     ERROR_CHECK_STATUS(miopenSoftmaxForward(miopenHandle, &data->alpha, data->input_desc, data->input_mem, &data->beta, data->output_desc, data->output_mem));
-
+PROFILER_STOP(VX_NN, Softmax_Layer)
     return VX_SUCCESS;
 }
 

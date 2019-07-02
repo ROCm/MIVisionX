@@ -85,6 +85,7 @@ class IrAttr:
             , 'clip' : 0                 # normalize bounding boxes (true/false)
             , 'variance' : []            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
+            , 'keepdims' : 1             # no change in output dimensions 
         }
         self.dict_set = []
 
@@ -168,7 +169,8 @@ class IrNode:
             'crop_and_resize': 1,
             'permute' : 1,
             'prior_box' : 1,
-            'flatten'  : 1
+            'flatten'  : 1,
+            'argmax' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -335,6 +337,8 @@ class IrGraph:
                 elif node.type in ['gemm']:
                     A = self.tensor_dict[node.inputs[0]]
                     B = self.tensor_dict[node.inputs[1]]
+                    print A.shape
+                    print B.shape
                     transA = node.attr.get('transA')
                     transB = node.attr.get('transB')
                     shapeA = A.shape
@@ -388,6 +392,7 @@ class IrGraph:
                         self.addLocal(local)
                 elif node.type in ['squeeze']:
                     axes = node.attr.get('axes')
+                    print "axes = ", axes 
                     out_shape = []
                     if len(axes) == 0:
                         for i in range(len(input.shape)):
@@ -395,7 +400,8 @@ class IrGraph:
                                 out_shape.append(input.shape[i])
                     else:
                         out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
-
+                    node.attr.set('shape', out_shape)
+                    print "out_shape = ", out_shape
                     node.type = 'reshape'
                     local = IrTensor()
                     local.setName(output)
@@ -408,6 +414,7 @@ class IrGraph:
                     if len(out_shape) < 4:
                         for i in range(len(axes)):
                             out_shape.insert(axes[i], 1)
+                    node.attr.set('shape', out_shape)
                     node.type = 'reshape'
                     local = IrTensor()
                     local.setName(output)
@@ -548,7 +555,17 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-
+                elif node.type in ['argmax']:
+                    axis = node.attr.get('axis')
+                    keepdims = node.attr.get('keepdims')
+                    output_type = 'I064'
+                    if axis == 0 and keepdims == 1:
+                        output_shape = [input.shape[0], 1, input.shape[2], input.shape[3]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

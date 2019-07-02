@@ -26,6 +26,7 @@ from nnir import *
 
 onnx2ir_attr = {
     'axis' : 'axis',
+    'axes'  : 'axes',
     'perm' : 'axes',
     'broadcast' : 'broadcast',
     'keepdims' : 'keepdims',
@@ -42,10 +43,11 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
-    'shape' : 'shape'
+    'shape' : 'shape',
 }
 
-onnx2ir_op_type = {
+onnx2ir_op_type = {    
+    'ArgMax'             : 'argmax',
     'Conv'               : 'conv',
     'ConvTranspose'      : 'conv_transpose',
     'BatchNormalization' : 'batch_norm',
@@ -72,8 +74,8 @@ onnx2ir_op_type = {
     'Min'                : 'min',
     'Max'                : 'max',
     'Cast'               : 'add',
-    'Div'                : 'div'
-    'ReduceMean'         : 'global_avg_pool'
+    'Div'                : 'div',
+    'ReduceMean'         : 'global_avg_pool',
 }
 
 onnx2ir_data_type = [
@@ -82,9 +84,10 @@ onnx2ir_data_type = [
 ]
 
 def onnx_name_to_ir_name(name):
-    return '_'.join(('_'.join(name.split('/')).split('-')))
+    return '_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':'))
 
 def onnx_node_to_ir_attr(node):
+
     global onnx2ir_attr
     attr = IrAttr()
     for item in node.attribute:
@@ -114,8 +117,8 @@ def onnx_node_to_ir_attr(node):
            ((output_padding[1] % (kernel_shape[1] - 1)) != 0):
             raise ValueError("Unsupported ONNX value for output_padding attribute")
         dilations = [output_padding[0] / (kernel_shape[0] - 1) + 1, output_padding[1] / (kernel_shape[1] - 1) + 1]
-        attr.set('dilations', dilations)
-    if onnx_node.op_type == 'Matmul':
+        attr.set('dilations', dilations)       
+    if node.op_type == 'MatMul':
         attr.set('beta', 0.0)
     return attr
 
@@ -141,7 +144,7 @@ def onnx_tensor_info_to_data(info, dims):
 def onnx_value_info_to_data(info, dims):
     tensor = IrTensor()
     tensor.setName(onnx_name_to_ir_name(info.name))
-    tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x.dim_value) for x in info.type.tensor_type.shape.dim])
+    tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x) for x in dims])
     return tensor
 
 def onnx_graph_to_ir_graph(onnx_graph):
@@ -177,6 +180,8 @@ def onnx_graph_to_ir_graph(onnx_graph):
         if (x == 0 or x is None or x == '?' for x in output_dims):
             if inputUser == True:
                 output_dims[0] = input_dims[0]
+        while len(output_dims) != 4:
+            output_dims.append(1)
         graph.addOutput(onnx_value_info_to_data(tensor, output_dims))
     tensorAliasList = {}
     for onnx_node in onnx_graph.node:

@@ -612,7 +612,9 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }
 """ % (node.inputs[0], node.outputs[0]))
             elif node.type == 'transpose' or node.type == 'permute':  
-                if node.type == 'transpose':
+                if node.type == 'copy':
+                    order = 0
+                elif node.type == 'transpose':
                     axes = node.attr.get('axes')            
                     if axes == [0, 2, 3, 1]:
                         order = 1
@@ -622,7 +624,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                     order_list = node.attr.get('order')            
                     if order_list == [0, 2, 3, 1]:
                         order = 1
-                        
                     elif order_list == [0, 3, 1, 2]:
                         order = 2
                 f.write( \
@@ -635,7 +636,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             elif node.type == 'copy':
                 f.write( \
 """
-    { vx_node node = vxCopyNode(graph, %s, %s);
+    { vx_node node = vxCopyNode(graph, (vx_reference)%s, (vx_reference)%s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
@@ -704,6 +705,16 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
+            elif node.type == 'argmax':
+                f.write( \
+"""
+    { 
+      vx_node node = vxArgmaxLayer(graph, %s, (vx_reference)%s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.outputs[0]))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \

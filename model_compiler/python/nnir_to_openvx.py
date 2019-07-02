@@ -402,7 +402,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                 hasBias = False
                 if beta == 1.0 and len(node.inputs) == 3 and len(graph.tensor_shapes[node.inputs[2]]) <= 2:
                     hasBias = True
-                if alpha == 1.0 and transA == 0 and transB == 1 and (beta == 0.0 or hasBias):
+                if alpha == 1.0 and transA == 0 and (beta == 0.0 or hasBias):
                     f.write( \
 """
     { vx_node node = vxFullyConnectedLayer(graph, %s, %s, %s, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, %s);
@@ -529,6 +529,28 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }
 """ % (len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), len(tensor.shape), \
        tensor_type_nnir2openvx[tensor.type], node.inputs[0], node.inputs[1], node.inputs[2], node.outputs[0]))
+            elif node.type == 'min':
+                if len(node.inputs) == 2:
+                    f.write( \
+"""
+    { vx_node node = vxTensorMinNode(graph, %s, %s, VX_CONVERT_POLICY_SATURATE, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], node.inputs[1], node.outputs[0]))
+                else:
+                    raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
+            elif node.type == 'max':
+                if len(node.inputs) == 2:
+                    f.write( \
+"""
+    { vx_node node = vxTensorMaxNode(graph, %s, %s, VX_CONVERT_POLICY_SATURATE, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], node.inputs[1], node.outputs[0]))
+                else:
+                    raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
             elif node.type == 'batch_norm':
                 f.write( \
 """
@@ -589,7 +611,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute':  
+            elif node.type == 'transpose' or node.type == 'permute':  
                 if node.type == 'copy':
                     order = 0
                 elif node.type == 'transpose':
@@ -611,6 +633,14 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], order, node.outputs[0]))
+            elif node.type == 'copy':
+                f.write( \
+"""
+    { vx_node node = vxCopyNode(graph, (vx_reference)%s, (vx_reference)%s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], node.outputs[0]))
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
                 aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
@@ -675,6 +705,16 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
+            elif node.type == 'argmax':
+                f.write( \
+"""
+    { 
+      vx_node node = vxArgmaxLayer(graph, %s, (vx_reference)%s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.outputs[0]))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \

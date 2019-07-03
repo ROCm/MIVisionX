@@ -104,6 +104,7 @@ static vx_status VX_CALLBACK validateBatchNormalizationLayer(vx_node node, const
 
 static vx_status VX_CALLBACK processBatchNormalizationLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Batch_Normalization_Layer)
     BatchNormLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -121,6 +122,7 @@ static vx_status VX_CALLBACK processBatchNormalizationLayer(vx_node node, const 
         nn_layer_test_dumpBuffer("bn_%04d.bin", (vx_tensor)parameters[6]);
     #endif  
 
+PROFILER_STOP(VX_NN, Batch_Normalization_Layer)
     return VX_SUCCESS;
 }
 

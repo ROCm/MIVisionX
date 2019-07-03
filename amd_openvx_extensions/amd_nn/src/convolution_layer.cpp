@@ -171,7 +171,6 @@ PROFILER_START(VX_NN, Convolution_Layer)
         //dump the output layer
         nn_layer_test_dumpBuffer("conv_%04d.bin", (vx_tensor)parameters[4]);
     #endif  
-    }
 PROFILER_STOP(VX_NN, Convolution_Layer)
     return VX_SUCCESS;
 }

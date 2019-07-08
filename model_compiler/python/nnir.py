@@ -770,10 +770,15 @@ class IrGraph:
                      (node.type == 'max_pool' or node.type == 'avg_pool' or node.type == 'global_avg_pool'):
                     prevSkipNode = node
                     prevOutput = node.outputs[0]
-                elif node.type == 'relu' and \
+                elif (node.type == 'relu' or node.type == 'leaky_relu') and \
                      (prevNode.type == 'conv' or prevNode.type == 'max_pool' or \
                      prevNode.type == 'avg_pool' or prevNode.type == 'global_avg_pool'):
+                    if node.type == 'leaky_relu':
+                        leaky_alpha = node.attr.get('alpha')
+                    else:
+                        leaky_alpha = 0.0
                     prevNode.attr.set('mode', 1)
+                    prevNode.attr.set('alpha', leaky_alpha)
                     if prevSkipNode != None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:

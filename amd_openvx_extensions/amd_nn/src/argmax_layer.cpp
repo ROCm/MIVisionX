@@ -57,8 +57,8 @@ static vx_status VX_CALLBACK validateKernel(vx_node node, const vx_reference par
             return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validation: argmax: #1 top_k=%ld (must be 1 or 2)\n", output_dims[2]);
         if(type == VX_TYPE_UINT8 && input_dims[2] > 256)
             return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: argmax: #1 tensor U8 with input_dims[2](=%ld) > 256\n", input_dims[2]);
-        if(type != VX_TYPE_UINT8 && type != VX_TYPE_UINT16 && type != VX_TYPE_INT16)
-            return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: argmax: #1 tensor output type=%d (must be U8/U16/I16)\n", type);
+        if(type != VX_TYPE_UINT8 && type != VX_TYPE_UINT16 && type != VX_TYPE_INT16 && type != VX_TYPE_INT64)
+            return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: argmax: #1 tensor output type=%d (must be U8/U16/I16/I64)\n", type);
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &output_num_dims, sizeof(output_num_dims)));
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, &output_dims[4-output_num_dims], sizeof(output_dims[0])*output_num_dims));

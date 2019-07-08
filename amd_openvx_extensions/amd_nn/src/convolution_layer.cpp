@@ -161,8 +161,9 @@ PROFILER_START(VX_NN, Convolution_Layer)
 
         // activation (in-place in output_mem)
         if (data->bias_activ_mode == ACTIVATION_ONLY_SEPERATE || data->bias_activ_mode == BIAS_ACTIVATION_SEPERATE) {
-            ERROR_CHECK_MIOPEN_STATUS(miopenActivationForward(data->handle->miopen_handle, data->activation_desc, &data->activation_alpha, data->output_desc, data->output_mem,
-                                                              &data->activation_beta, data->output_desc, data->output_mem));
+            float alpha = 1.0f, beta = 0.0f;
+            ERROR_CHECK_MIOPEN_STATUS(miopenActivationForward(data->handle->miopen_handle, data->activation_desc, &alpha, data->output_desc, data->output_mem,
+                                                              &beta, data->output_desc, data->output_mem));
         }
     }  
 
@@ -218,7 +219,7 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     // override default cbr_mode by NN_MIOPEN_CBR_MODE environment variable.
     char textBuffer[1024];
     vx_int32 nn_cbr_mode = getEnvironmentVariable("NN_MIOPEN_CBR_MODE", textBuffer, sizeof(textBuffer));
-    if (nn_cbr_mode < 0) nn_cbr_mode = 0; // default cbr_mode
+    if (nn_cbr_mode < 0) nn_cbr_mode = 1; // default cbr_mode
 
     // initialize the bias activ mode
     data->conv_alpha = 1.0; data->conv_beta = 0.0;
@@ -254,7 +255,7 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
 
     data->bias_activ_mode = NONE;
     data->fusion_possible = nn_cbr_mode && (stride_w == 1) && (stride_h == 1) && (dilation_w == 1) && (dilation_h == 1) && (pad_w <=1) && (pad_h <=1);   // MIOpen only support stride 1 for fusion
-    data->fusion_possible &= (kernel_h > 1) && (kernel_w > 1);
+    data->fusion_possible &= (data->data_type == miopenFloat) && (kernel_h > 1) && (kernel_w > 1); // only supported for FP32 and there is a crash with 1x1 kernels
     if (parameters[2]) {
         data->bias_activ_mode = data->fusion_possible? BIAS_ONLY_FUSED : BIAS_ONLY_SEPERATE;
     }
@@ -318,8 +319,8 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
             else {
                 ERROR_CHECK_MIOPEN_STATUS(miopenCreateOpActivationForward(data->fusePlanDesc, &data->activOp, miopenActivationLEAKYRELU));
             }
-            data->activation_alpha = 1.0;
-            data->activation_beta = data->leaky_alpha;
+            data->activation_alpha = data->leaky_alpha;
+            data->activation_beta = 1.0;
             data->activation_power = 1.0;
             miopenSetOpArgsActivForward(data->fusionArgs, data->activOp, &data->conv_alpha, &data->conv_beta, data->activation_alpha, data->activation_beta, data->activation_power);
         }
@@ -342,9 +343,9 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
         //initialize activation parameters if bias_activ_mode is ACTIVATION_ONLY or BIAS_ACTIVATION_SEPERATE.
         data->activation_mode = miopenActivationPASTHRU;
         if (data->bias_activ_mode == ACTIVATION_ONLY_SEPERATE || data->bias_activ_mode == BIAS_ACTIVATION_SEPERATE) {
-            data->activation_mode = data->leaky_alpha? miopenActivationLEAKYRELU:miopenActivationRELU;
-            data->activation_alpha = 1.0;
-            data->activation_beta = data->leaky_alpha;
+            data->activation_mode = data->leaky_alpha? miopenActivationLEAKYRELU : miopenActivationRELU;
+            data->activation_alpha = data->leaky_alpha;
+            data->activation_beta = 0.0;
             data->activation_power = 1.0;
             ERROR_CHECK_MIOPEN_STATUS(miopenCreateActivationDescriptor(&data->activation_desc));
             ERROR_CHECK_MIOPEN_STATUS(miopenSetActivationDescriptor(data->activation_desc, data->activation_mode, data->activation_alpha, data->activation_beta, data->activation_power));
@@ -385,7 +386,7 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
     if (data->bias_activ_mode > BIAS_ONLY_FUSED) {
             std::cout << "activation alpha : " << data->activation_alpha << " activation beta:" << data->activation_beta << " ";
     }
-    std::cout << "Bias Mode : " << data->bias_activ_mode << " ";
+    std::cout << " Mode : " << data->activation_mode << " ";
     std::cout << "weights " << weights_dims[0] << " " << weights_dims[1] << " "<< weights_dims[2] <<" " <<  weights_dims[3] << " ";
     std::cout << "bias " << bias_dims[0] << " ";
     std::cout << "stride " << stride_h << " " << stride_w << " " << "pad " << pad_h << " " << pad_w;

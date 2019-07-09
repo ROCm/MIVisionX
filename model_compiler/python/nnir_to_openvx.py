@@ -216,7 +216,7 @@ extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, 
 """ % (', '.join(['vx_tensor ' + tensor.name for tensor in graph.inputs]), \
        ', '.join(['vx_tensor ' + tensor.name for tensor in graph.outputs])))
 
-def generateModuleCPP(graph,fileName):
+def generateModuleCPP(graph,fileName,virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
@@ -328,10 +328,19 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
-    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
-    ERROR_CHECK_OBJECT(%s);
-""" %(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), \
-      tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name))
+"""%(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)])))
+                if virtual_tensor_flag == 1:
+                    f.write( \
+"""    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
+"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
+                elif virtual_tensor_flag == 0:
+                    f.write( \
+"""    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
+"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
+                f.write( \
+"""    ERROR_CHECK_OBJECT(%s);
+"""%(tensor.name))
+      
         f.write( \
 """
     // create nodes in graph
@@ -402,7 +411,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                 hasBias = False
                 if beta == 1.0 and len(node.inputs) == 3 and len(graph.tensor_shapes[node.inputs[2]]) <= 2:
                     hasBias = True
-                if alpha == 1.0 and transA == 0 and (beta == 0.0 or hasBias):
+                if alpha == 1.0 and transA == 0 and transB == 1 and (beta == 0.0 or hasBias):
                     f.write( \
 """
     { vx_node node = vxFullyConnectedLayer(graph, %s, %s, %s, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, %s);
@@ -529,28 +538,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }
 """ % (len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), len(tensor.shape), \
        tensor_type_nnir2openvx[tensor.type], node.inputs[0], node.inputs[1], node.inputs[2], node.outputs[0]))
-            elif node.type == 'min':
-                if len(node.inputs) == 2:
-                    f.write( \
-"""
-    { vx_node node = vxTensorMinNode(graph, %s, %s, VX_CONVERT_POLICY_SATURATE, %s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-""" % (node.inputs[0], node.inputs[1], node.outputs[0]))
-                else:
-                    raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
-            elif node.type == 'max':
-                if len(node.inputs) == 2:
-                    f.write( \
-"""
-    { vx_node node = vxTensorMaxNode(graph, %s, %s, VX_CONVERT_POLICY_SATURATE, %s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-""" % (node.inputs[0], node.inputs[1], node.outputs[0]))
-                else:
-                    raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
             elif node.type == 'batch_norm':
                 f.write( \
 """
@@ -589,20 +576,29 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             elif node.type == 'concat':
                 f.write( \
 """
-    { vx_node node = vxConcatLayer(graph, %s, %s, %s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    { vx_node node = vxConcatLayer(graph, %s, %s, %s, %d);
+      ERROR_CHECK_OBJECT(node);ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.outputs[0], ', '.join([name for name in node.inputs]), \
-       ', '.join(['NULL' for i in range(8 - len(node.inputs))])))
+       ', '.join(['NULL' for i in range(8 - len(node.inputs))]), node.attr.get('axis')))                    
             elif node.type == 'softmax':
                 f.write( \
 """
     { vx_node node = vxSoftmaxLayer(graph, %s, %s);
       ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
 """ % (node.inputs[0], node.outputs[0]))
+                if (node.attr.get('axis') > 1):
+                    axis = node.attr.get('axis');
+                    f.write( \
+"""      vx_int32 axis = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 2, (vx_reference) s_axis));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_axis));
+""" % (axis))
+                f.write( \
+"""      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""")
             elif node.type == 'reshape' or node.type == 'flatten':
                 f.write( \
 """
@@ -612,60 +608,72 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }
 """ % (node.inputs[0], node.outputs[0]))
             elif node.type == 'transpose' or node.type == 'permute':  
-                if node.type == 'copy':
-                    order = 0
-                elif node.type == 'transpose':
-                    axes = node.attr.get('axes')            
-                    if axes == [0, 2, 3, 1]:
-                        order = 1
-                    elif axes == [0, 3, 1, 2]:
-                        order = 2
+                print node.type
+                if node.type == 'transpose':
+                    order_list = node.attr.get('axes')       
                 elif node.type == 'permute':
-                    order_list = node.attr.get('order')            
-                    if order_list == [0, 2, 3, 1]:
-                        order = 1
-                    elif order_list == [0, 3, 1, 2]:
-                        order = 2
-                f.write( \
-"""
-    { vx_node node = vxPermuteLayer(graph, %s, %d, %s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-""" % (node.inputs[0], order, node.outputs[0]))
-            elif node.type == 'copy':
-                f.write( \
-"""
-    { vx_node node = vxCopyNode(graph, (vx_reference)%s, (vx_reference)%s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-""" % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'prior_box':
-                aspect_ratio = node.attr.get('aspect_ratio')
-                aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
-                variance = node.attr.get('variance')
-                variance_str = ','.join(str(e) for e in variance)
+                    order_list = node.attr.get('order')
                 f.write( \
 """
     { 
-      vx_float32 min_size = %f;
-      vx_float32 max_size = %f;
-      vx_int32 flip = %d;
-      vx_int32 clip = %d;
-      vx_float32 offset = %f;
-      
-      vx_scalar s_min_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &min_size, sizeof(min_size));
-      vx_scalar s_max_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &max_size, sizeof(max_size));    
-      vx_scalar s_flip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &flip, sizeof(flip));
-      vx_scalar s_clip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &clip, sizeof(clip));
-      vx_scalar s_offset = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &offset, sizeof(offset));
-      vx_node node = vxPriorBoxLayer(graph, %s, %s, s_min_size, %s , s_flip, s_clip, s_offset, %s , s_max_size, %s );
+      int order_value[4] = {%d,%d,%d,%d}; 
+      vx_array order =  vxCreateArray(context, VX_TYPE_INT32, 4);
+      ERROR_CHECK_STATUS(vxTruncateArray(order,0));
+      int *order_ptr = &order_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(order, 4, order_ptr, sizeof(int)));
+      vx_node node = vxPermuteLayer(graph, %s, order, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (node.attr.get('min_size'), node.attr.get('max_size'), node.attr.get('flip'), node.attr.get('clip'), \
-       node.attr.get('prior_offset'), node.inputs[0], node.inputs[1], aspect_ratio_str, node.outputs[0], variance_str))
+""" % (order_list[0],order_list[1],order_list[2],order_list[3],node.inputs[0], node.outputs[0]))
+            elif node.type == 'copy':
+                f.write( \
+"""
+    { vx_node node = vxCopyNode(graph, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+"""% (node.inputs[0], node.outputs[0]))
+            elif node.type == 'prior_box':
+                aspect_ratio = node.attr.get('aspect_ratio')
+                aspect_ratio_len = len(aspect_ratio)
+                variance = node.attr.get('variance')
+                max_size = node.attr.get('max_size')
+                f.write( \
+"""
+    { 
+""")
+                if(aspect_ratio_len == 2):
+                  f.write( \
+"""     
+      float aspect_ratio_value[2] = {%f,%f};
+      vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 2);
+      ERROR_CHECK_STATUS(vxTruncateArray(aspect_ratio,0));
+      float *aspect_ratio_ptr = &aspect_ratio_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 2, aspect_ratio_ptr, sizeof(float)));
+""" %(aspect_ratio[0], aspect_ratio[1])) 
+                elif aspect_ratio_len == 1:
+                  f.write( \
+"""     
+      float aspect_ratio_value[1] = {%f};
+      vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 1);
+      ERROR_CHECK_STATUS(vxTruncateArray(aspect_ratio,0));
+      float *aspect_ratio_ptr = &aspect_ratio_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 1, aspect_ratio_ptr, sizeof(float)));
+""" %(aspect_ratio[0])) 
+                f.write( \
+"""
+      float variance_value[4] = {%f,%f,%f,%f}; 
+      vx_array variance =  vxCreateArray(context, VX_TYPE_FLOAT32, 4); 
+      ERROR_CHECK_STATUS(vxTruncateArray(variance,0));
+      float *variance_ptr = &variance_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(variance, 4, variance_ptr, sizeof(float)));
+      vx_node node = vxPriorBoxLayer(graph, %s, %s, %f, aspect_ratio , %d, %d, %f, %s, variance, %f);
+      ERROR_CHECK_OBJECT(node); 
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'),\
+        node.attr.get('clip'), node.attr.get('prior_offset'), node.outputs[0], max_size))
             elif node.type == 'upsample':
                 f.write( \
 """
@@ -715,6 +723,43 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'detection_output':
+                f.write( \
+"""
+    { vx_node node = vxDetectionOutputLayer(graph, %s, %s, %s, %d, %d, %d, %f, %s, %d, %d, %s);
+      ERROR_CHECK_OBJECT(node);     
+        
+"""
+    % (node.inputs[0], node.inputs[1], node.inputs[2], node.attr.get('num_classes'), node.attr.get('share_location'), node.attr.get('background_label_id'), \
+         node.attr.get('nms_threshold'), node.attr.get('code_type'), node.attr.get('keep_top_k'), node.attr.get('variance_encoded_in_target'), node.outputs[0]))
+                if (node.attr.get('top_k') > -1):
+                    top_k = node.attr.get('top_k');
+                    f.write( \
+"""      vx_int32 top_k = %d;
+      vx_scalar s_topK = vxCreateScalarWithSize(context, VX_TYPE_INT32, &top_k, sizeof(top_k));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 12, (vx_reference) s_topK));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_topK));
+""" % (top_k))
+                if (node.attr.get('confidence_threshold') > -sys.float_info.max):
+                    confidence_threshold = node.attr.get('confidence_threshold');
+                    f.write( \
+"""      vx_float32 confidence_threshold = %f;
+      vx_scalar s_confidence_threshold = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &confidence_threshold, sizeof(confidence_threshold));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 13, (vx_reference) s_confidence_threshold));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_confidence_threshold));
+""" % (confidence_threshold))
+                if (node.attr.get('eta') > 0.0 and node.attr.get('eta') <= 1.0):
+                    eta = node.attr.get('eta');
+                    f.write( \
+"""      vx_float32 eta = %f;
+      vx_scalar s_eta = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &eta, sizeof(eta));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 11, (vx_reference) s_eta));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_eta));
+""" % (eta))
+                f.write( \
+"""      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""")
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \
@@ -758,6 +803,7 @@ typedef struct pyif_ann_handle_t {
     vx_context  context;
     vx_graph    graph;
     vx_tensor   input;
+    vx_tensor   local[500];
     vx_tensor   output[8];
     int         num_output;
 } * pyif_ann_handle;
@@ -774,6 +820,10 @@ extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput(p
         for i in range(1, len(graph.outputs)):
             f.write( \
 """extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size);
+""" % (i))
+        for i in range(len(graph.locals)):
+            f.write( \
+"""extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceLocal_%d(pyif_ann_handle handle, float * local_ptr, size_t local_size);
 """ % (i))
         f.write( \
 """extern "C" VX_API_ENTRY int             VX_API_CALL annRunInference(pyif_ann_handle handle, int num_iterations);
@@ -822,6 +872,14 @@ VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, float * inp
                 output_buf_size.append(eval('*'.join([str(v) for v in output_shape[i]])) * 4)
                 config += 'output' + str(i) + ',' +graph.outputs[i].name + ',' + ','.join(str(v) for v in output_shape[i])+';'
                 output_str.append('handle->output[' + str(i) + ']')
+            local_shape = []
+            local_buf_size = []
+            local_str = []
+            for i in range(len(graph.locals)):
+                local_shape.append(graph.locals[i].shape)
+                local_buf_size.append(eval('*'.join([str(v) for v in local_shape[i]])) * 4)
+                config += 'local' + str(i) + ',' +graph.locals[i].name + ',' + ','.join(str(v) for v in local_shape[i])+';'
+                local_str.append('handle->local[' + str(i) + ']')
             f.write( \
 """
 #include "annpython.h"
@@ -977,7 +1035,7 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
     }
     else if(!is_nhwc) {
         if((status = vxCopyTensorPatch(handle->input, 4, nullptr, nullptr, stride, inp_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
-            printf("ERROR: annCopyFromInferenceOutput: vxCopyTensorPatch: failed (%%d)\\n", status);
+            printf("ERROR: annCopyToInferenceInput: vxCopyTensorPatch: failed (%%d)\\n", status);
         }
     }
     else if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS) {
@@ -1072,6 +1130,32 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     return status;
 }
 """   % (2, tshape[2][3]*4, tshape[2][2]*tshape[2][3]*4, tshape[2][1]*tshape[2][2]*tshape[2][3]*4, output_buf_size[2], output_buf_size[2], len(output_shape[2])))
+            lshape = []
+            for i in range(len(graph.locals)):
+                if len(local_shape[i]) == 4:
+                    lshape.append([local_shape[i][0], local_shape[i][1], local_shape[i][2], local_shape[i][3]])
+                else:
+                    lshape.append([1, 1, local_shape[i][0], local_shape[i][1]])
+                f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal_%d(pyif_ann_handle handle, float * local_ptr, size_t local_size)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 4, %d, %d, %d };
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceLocal_%d: invalid handle\\n");
+    }
+    else if(local_size != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceLocal_%d: invalid local buffer size (must be %d) -- got %%d\\n", (int)local_size);
+    }
+    else if(handle->local[%d] && (status = vxCopyTensorPatch(handle->local[%d], %d, nullptr, nullptr, stride, local_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+        printf("ERROR: annCopyFromInferenceLocal_%d: vxCopyTensorPatch: failed (%%d)\\n", status);
+    }
+    return status;
+}
+"""   % (i, lshape[i][3]*4, lshape[i][2]*lshape[i][3]*4, lshape[i][1]*lshape[i][2]*lshape[i][3]*4, i, local_buf_size[i], i, local_buf_size[i], i, i, len(local_shape[i]), i))
             f.write( \
 """
 
@@ -1120,6 +1204,16 @@ class AnnAPI:
         self.annCopyFromInferenceOutput = self.lib.annCopyFromInferenceOutput
         self.annCopyFromInferenceOutput.restype = ctypes.c_int
         self.annCopyFromInferenceOutput.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
+""")
+        for i in range(len(graph.locals)):
+            f.write( \
+"""
+        self.annCopyFromInferenceLocal_%d = self.lib.annCopyFromInferenceLocal_%d
+        self.annCopyFromInferenceLocal_%d.restype = ctypes.c_int
+        self.annCopyFromInferenceLocal_%d.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
+"""%(i,i,i,i))
+        f.write( \
+"""        
         self.annRunInference = self.lib.annRunInference
         self.annRunInference.restype = ctypes.c_int
         self.annRunInference.argtypes = [ctypes.c_void_p, ctypes.c_int]
@@ -1132,26 +1226,39 @@ if __name__ == '__main__':
     annlibPythonName = sys.argv[1]
     weightsFile = sys.argv[2]
     inputTensorFile = sys.argv[3]
-    outputTensorFile = sys.argv[4]
     api = AnnAPI(annlibPythonName)
-    input_info,output_info,temp = api.annQueryInference().decode("utf-8").split(';')
-    input,name,ni,ci,hi,wi = input_info.split(',')
-    hdl = api.annCreateInference(weightsFile)
-    im = np.fromfile(inputTensorFile, dtype=np.float32)
-    inp_size = int(ni)*int(ci)*int(hi)*int(wi)*4
-    status = api.annCopyToInferenceInput(hdl, np.ascontiguousarray(im, dtype=np.float32), inp_size, 0)
-    print('INFO: annCopyToInferenceInput status %d'  %(status))
-    status = api.annRunInference(hdl, 1)
-    print('INFO: annRunInference status %d ' %(status))
-    output,name,n,c,h,w = output_info.split(',')
-    out_size = int(n)*int(c)*int(h)*int(w)*4
-    out_buf = bytearray(out_size)
-    out = np.frombuffer(out_buf, dtype=np.float32)
-    status = api.annCopyFromInferenceOutput(hdl, np.ascontiguousarray(out, dtype=np.float32), out_size)
-    print('INFO: annCopyFromInferenceOutput status %d' %(status))
-    fid = open(outputTensorFile, 'wb')
-    fid.write(out.tobytes())
-    fid.close()
+    if not os.path.exists("dumpBuffers"):
+        os.makedirs("dumpBuffers")
+    outputTensorFile = "dumpBuffers/" + sys.argv[4]
+    for each in filter(None,api.annQueryInference().decode("utf-8").split(';')):
+        types,name,n,c,h,w = each.split(',')
+        if types[0:5] == "input":
+            hdl = api.annCreateInference(weightsFile)
+            im = np.fromfile(inputTensorFile, dtype=np.float32)
+            inp_size = int(n)*int(c)*int(h)*int(w)*4
+            status = api.annCopyToInferenceInput(hdl, np.ascontiguousarray(im, dtype=np.float32), inp_size, 0)
+            print('INFO: annCopyToInferenceInput status %d'  %(status))
+            status = api.annRunInference(hdl, 1)
+            print('INFO: annRunInference status %d ' %(status))
+        elif types[0:6] == "output":
+            out_size = int(n)*int(c)*int(h)*int(w)*4
+            out_buf = bytearray(out_size)
+            out = np.frombuffer(out_buf, dtype=np.float32)
+            status = api.annCopyFromInferenceOutput(hdl, np.ascontiguousarray(out, dtype=np.float32), out_size)
+            print('INFO: annCopyFromInferenceOutput status %d' %(status))
+            fid = open(outputTensorFile, 'wb')
+            fid.write(out.tobytes())
+            fid.close()
+        elif types[0:5] == "local":
+            local_size = int(n)*int(c)*int(h)*int(w)*4
+            local_buf = bytearray(local_size)
+            local = np.frombuffer(local_buf, dtype=np.float32)
+            local_str = 'api.annCopyFromInferenceLocal_{}'.format(types[5:])
+            status = eval(local_str)(hdl, np.ascontiguousarray(out, dtype=np.float32), local_size)
+            print('INFO: annCopyFromInferenceLocal status %d' %(status))
+            fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
+            fid.write(local.tobytes())
+            fid.close()
 """)
 
 def generateTestCPP(graph,argmaxOutput,fileName):
@@ -1817,12 +1924,12 @@ def generateBinary(graph,fileName):
             f.write(binary)
         f.write(struct.pack('I', VARIABLES_EOFF_MAGIC))
 
-def generateCode(graph,argmaxOutput,outputFolder):
+def generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag):
     if not os.path.isdir(outputFolder):
         os.mkdir(outputFolder)
     generateCMakeFiles(graph,outputFolder)
     generateModuleH(graph,outputFolder + '/annmodule.h')
-    generateModuleCPP(graph,outputFolder + '/annmodule.cpp')
+    generateModuleCPP(graph,outputFolder + '/annmodule.cpp',virtual_tensor_flag)
     generateBinary(graph,outputFolder + '/weights.bin')
     generateTestCPP(graph,argmaxOutput,outputFolder + '/anntest.cpp')
     generatePythonH(graph,outputFolder + '/annpython.h')
@@ -1834,6 +1941,7 @@ def main():
 Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
   OPTIONS:
+    --virtual_tensor 1                -- to make tensors virtual  (default: 0)               
     --argmax UINT8                    -- argmax at the end with 8-bit output
     --argmax UINT16                   -- argmax at the end with 16-bit output
     --argmax <fileNamePrefix>rgb.txt  -- argmax at the end with RGB color mapping using LUT
@@ -1853,6 +1961,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 """
     pos = 1;
     argmaxOutput = None
+    virtual_tensor_flag = 0;
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--argmax':
             argmaxOutput = sys.argv[pos+1]
@@ -1869,6 +1978,8 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
                         argmaxOutput = np.reshape(np.array([int(v) for v in f.read().split()]), [-1, 4]).transpose()
                     else:
                         argmaxOutput = np.reshape(np.array([int(v) for v in f.read().split()]), [-1, 3]).transpose()
+        elif sys.argv[pos] == '--virtual_tensor':
+            virtual_tensor_flag = sys.argv[pos+1]
         else:
             if sys.argv[pos] != '--help':
                 print('ERROR: invalid option: %s' % (sys.argv[pos]))
@@ -1891,7 +2002,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
         elif len(tensor.shape) == 4:
             print('#OUTPUT-TENSOR: %s %d %d %d %d ' %(tensor.name, tensor.shape[0], tensor.shape[1], tensor.shape[2], tensor.shape[3]));
     print('creating C code in ' + outputFolder + ' ...')
-    generateCode(graph,argmaxOutput,outputFolder)
+    generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag)
 
 if __name__ == '__main__':
     main()

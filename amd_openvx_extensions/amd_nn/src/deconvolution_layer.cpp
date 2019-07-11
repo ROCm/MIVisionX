@@ -99,6 +99,7 @@ static vx_status VX_CALLBACK validateDeconvolutionLayer(vx_node node, const vx_r
 
 static vx_status VX_CALLBACK processDeconvolutionLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Deconvolution_Layer)
     DeconvolutionLayerLocalData * data= NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
@@ -113,7 +114,7 @@ static vx_status VX_CALLBACK processDeconvolutionLayer(vx_node node, const vx_re
 	    ERROR_CHECK_MIOPEN_STATUS(miopenConvolutionForwardBias(data->handle->miopen_handle, &data->alpha, data->bias_desc, data->bias_mem,
                                                            &data->beta, data->output_desc, data->output_mem));
     }
-
+PROFILER_STOP(VX_NN, Deconvolution_Layer)
     return VX_SUCCESS;
 }
 

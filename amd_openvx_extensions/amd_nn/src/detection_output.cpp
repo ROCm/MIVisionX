@@ -595,10 +595,6 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     vector<map<int, vector<float> > > allConfidenceScores;
     GetConfidenceScores(confData, num_batches, numPriors, num_classes, &allConfidenceScores);
 
-    // Retrieve all confidences.
-    vector<map<int, vector<float> > > allConfidenceScores;
-    GetConfidenceScores(confData, num_batches, numPriors, num_classes, &allConfidenceScores);
-
     // Retrieve all prior bboxes. It is same within a batch since we assume all
     // images in a batch are of same dimension.
     vector<NormalizedBBox> priorBBoxes;

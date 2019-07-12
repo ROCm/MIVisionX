@@ -24,8 +24,6 @@ THE SOFTWARE.
 #include <math.h>
 #include <sstream>
 
-#define ENABLE_DEBUG_DUMP_OPENVX_BUFFERS                      0
-
 // global locks
 static vx_bool g_cs_context_initialized = vx_false_e;
 static CRITICAL_SECTION g_cs_context;

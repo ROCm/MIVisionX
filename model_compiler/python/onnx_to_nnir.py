@@ -44,6 +44,8 @@ onnx2ir_attr = {
     'size' : 'size',
     'split' : 'split',
     'shape' : 'shape',
+    'min' : 'min',
+    'max' : 'max'
 }
 
 onnx2ir_op_type = {    
@@ -73,9 +75,11 @@ onnx2ir_op_type = {
     'Identity'           : 'copy',
     'Min'                : 'min',
     'Max'                : 'max',
-    'Cast'               : 'add',
     'Div'                : 'div',
     'ReduceMean'         : 'global_avg_pool',
+    'Clip'               : 'clamp',
+    'Cast' : 'add',
+    'Shape' : 'add'
 }
 
 onnx2ir_data_type = [
@@ -87,7 +91,6 @@ def onnx_name_to_ir_name(name):
     return '_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':'))
 
 def onnx_node_to_ir_attr(node):
-
     global onnx2ir_attr
     attr = IrAttr()
     for item in node.attribute:

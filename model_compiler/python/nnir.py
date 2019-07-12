@@ -86,6 +86,8 @@ class IrAttr:
             , 'variance' : []            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
             , 'keepdims' : 1             # no change in output dimensions 
+            , 'max' : 0.0                 # max_value
+            , 'min' : 0.0                 # min_value 
         }
         self.dict_set = []
 
@@ -171,6 +173,7 @@ class IrNode:
             'prior_box' : 1,
             'flatten'  : 1,
             'argmax' : 1,
+            'clamp' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -566,6 +569,27 @@ class IrGraph:
                     local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['clamp']:
+                    min_value = node.attr.get('min')
+                    min_tensor = IrTensor()
+                    min_tensor.setName("min_tensor")
+                    min_tensor.setInfo(input.type, input.shape)
+                    min_data = np.full(input.shape, min_value, dtype=np.float32)
+                    self.addVariable(min_tensor)                    
+                    self.addBinary("min_tensor", min_data)
+                    node.inputs.append("min_tensor")
+                    
+                    max_value = node.attr.get('max')
+                    max_tensor = IrTensor()
+                    max_tensor.setName("max_tensor")
+                    max_tensor.setInfo(input.type, input.shape)
+                    max_data = np.full(input.shape, max_value, dtype=np.float32)
+                    self.addVariable(max_tensor)                    
+                    self.addBinary("max_tensor", max_data)
+                    node.inputs.append("max_tensor")
+
+                    print node.inputs
+                    exit(1)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

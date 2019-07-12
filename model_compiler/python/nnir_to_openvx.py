@@ -551,6 +551,25 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """ % (node.inputs[0], node.inputs[1], node.outputs[0]))
                 else:
                     raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
+            elif node.type == 'clamp':
+                if len(node.inputs) == 3:
+                    tensor = graph.tensor_dict[node.inputs[0]]
+                    f.write( \
+"""
+    { vx_size dims[%d] = { %s };
+      vx_tensor tmp__tensor = vxCreateVirtualTensor(graph, %d, dims, %s, 0);
+      ERROR_CHECK_OBJECT(tmp__tensor);
+      vx_node node = vxTensorMinNode(graph, %s, %s, VX_CONVERT_POLICY_SATURATE, tmp__tensor);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+      node = vxTensorMaxNode(graph, tmp__tensor, %s, VX_CONVERT_POLICY_SATURATE, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), len(tensor.shape), \
+       tensor_type_nnir2openvx[tensor.type], node.inputs[0], node.inputs[1], node.inputs[2], node.outputs[0]))
+                else:
+                    raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
             elif node.type == 'batch_norm':
                 f.write( \
 """

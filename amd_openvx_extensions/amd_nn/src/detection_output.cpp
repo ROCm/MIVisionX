@@ -435,7 +435,7 @@ void ApplyNMSFast(const vector<NormalizedBBox>& bboxes, const vector<float>& sco
                 keep = overlap <= adaptive_threshold;
             }
             else
-            {   
+            {
                 break;
             }
         }
@@ -594,6 +594,11 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     // Retrieve all confidences.
     vector<map<int, vector<float> > > allConfidenceScores;
     GetConfidenceScores(confData, num_batches, numPriors, num_classes, &allConfidenceScores);
+
+    // Retrieve all confidences.
+    vector<map<int, vector<float> > > allConfidenceScores;
+    GetConfidenceScores(confData, num_batches, numPriors, num_classes, &allConfidenceScores);
+
     // Retrieve all prior bboxes. It is same within a batch since we assume all
     // images in a batch are of same dimension.
     vector<NormalizedBBox> priorBBoxes;
@@ -632,6 +637,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
 
             num_det += indices[c].size();
         }
+      
         if (keep_top_k > -1 && num_det > keep_top_k)
         {
             std::vector<std::pair<float, std::pair<int, int> > > scoreIndexPairs;
@@ -672,6 +678,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
             numKept += num_det;
         }
     }
+
     output_dims[3] = 1;
     output_dims[2] = 1;
     output_dims[1] = numKept;
@@ -743,13 +750,13 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     delete locData;
     delete confData;
     delete priorData;
-
+  
     /*DUMP LAYER BUFFER*/
     #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
         //dump the output layer
         nn_layer_test_dumpBuffer("detection_output_%04d.bin", (vx_tensor)parameters[10]);
     #endif 
-
+  
     return VX_SUCCESS;
 
 }

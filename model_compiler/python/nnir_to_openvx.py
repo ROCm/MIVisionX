@@ -608,9 +608,9 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute':  
+            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute': 
                 if node.type == 'transpose':
-                    order_list = node.attr.get('axes')       
+                    order_list = node.attr.get('axes')      
                 elif node.type == 'permute':
                     order_list = node.attr.get('order')
                 f.write( \

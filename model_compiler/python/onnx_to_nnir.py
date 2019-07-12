@@ -77,9 +77,7 @@ onnx2ir_op_type = {
     'Max'                : 'max',
     'Div'                : 'div',
     'ReduceMean'         : 'global_avg_pool',
-    'Clip'               : 'clamp',
-    'Cast' : 'add',
-    'Shape' : 'add'
+    'Clip'               : 'clip'
 }
 
 onnx2ir_data_type = [

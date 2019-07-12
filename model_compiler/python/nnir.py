@@ -173,6 +173,7 @@ class IrNode:
             'prior_box' : 1,
             'flatten'  : 1,
             'argmax' : 1,
+            'clip' : 1,
             'clamp' : 1,
         }
 
@@ -569,7 +570,7 @@ class IrGraph:
                     local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-                elif node.type in ['clamp']:
+                elif node.type in ['clip']:
                     min_value = node.attr.get('min')
                     min_tensor = IrTensor()
                     min_tensor.setName("min_tensor")
@@ -587,9 +588,12 @@ class IrGraph:
                     self.addVariable(max_tensor)                    
                     self.addBinary("max_tensor", max_data)
                     node.inputs.append("max_tensor")
-
-                    print node.inputs
-                    exit(1)
+                    
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

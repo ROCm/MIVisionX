@@ -551,7 +551,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """ % (node.inputs[0], node.inputs[1], node.outputs[0]))
                 else:
                     raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
-            elif node.type == 'clamp':
+            elif node.type == 'clamp' or node.type == 'clip':
                 if len(node.inputs) == 3:
                     tensor = graph.tensor_dict[node.inputs[0]]
                     f.write( \

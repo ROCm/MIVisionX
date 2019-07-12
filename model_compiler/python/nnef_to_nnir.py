@@ -46,7 +46,8 @@ nnef2ir_op_type = {
     'squeeze'                               : 'squeeze',
     'unsqueeze'                             : 'unsqueeze',
     'transpose'                             : 'transpose',
-    'copy'                                  : 'copy'
+    'copy'                                  : 'copy',
+    'clamp'                                 : 'clamp'
 }
   
 nnef2ir_data_type = {

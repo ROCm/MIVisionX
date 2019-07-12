@@ -33,7 +33,6 @@ struct ActivationLayerLocalData {
     miopenActivationDescriptor_t activationDesc;
     cl_mem input_mem;
     cl_mem output_mem;
-
 };
 
 static vx_status VX_CALLBACK validateActivationLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])

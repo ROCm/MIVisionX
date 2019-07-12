@@ -568,20 +568,29 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             elif node.type == 'concat':
                 f.write( \
 """
-    { vx_node node = vxConcatLayer(graph, %s, %s, %s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    { vx_node node = vxConcatLayer(graph, %s, %s, %s, %d);
+      ERROR_CHECK_OBJECT(node);ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.outputs[0], ', '.join([name for name in node.inputs]), \
-       ', '.join(['NULL' for i in range(8 - len(node.inputs))])))
+       ', '.join(['NULL' for i in range(8 - len(node.inputs))]), node.attr.get('axis')))                    
             elif node.type == 'softmax':
                 f.write( \
 """
     { vx_node node = vxSoftmaxLayer(graph, %s, %s);
       ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
 """ % (node.inputs[0], node.outputs[0]))
+                if (node.attr.get('axis') > 1):
+                    axis = node.attr.get('axis');
+                    f.write( \
+"""      vx_int32 axis = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 2, (vx_reference) s_axis));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_axis));
+""" % (axis))
+                f.write( \
+"""      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""")
             elif node.type == 'reshape' or node.type == 'flatten':
                 f.write( \
 """
@@ -590,53 +599,64 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute':  
-                if node.type == 'copy':
-                    order = 0
-                elif node.type == 'transpose':
-                    axes = node.attr.get('axes')            
-                    if axes == [0, 2, 3, 1]:
-                        order = 1
-                    elif axes == [0, 3, 1, 2]:
-                        order = 2
+            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute': 
+                if node.type == 'transpose':
+                    order_list = node.attr.get('axes')
                 elif node.type == 'permute':
-                    order_list = node.attr.get('order')            
-                    if order_list == [0, 2, 3, 1]:
-                        order = 1
-                    elif order_list == [0, 3, 1, 2]:
-                        order = 2
-                f.write( \
-"""
-    { vx_node node = vxPermuteLayer(graph, %s, %d, %s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-""" % (node.inputs[0], order, node.outputs[0]))
-            elif node.type == 'prior_box':
-                aspect_ratio = node.attr.get('aspect_ratio')
-                aspect_ratio_str = ','.join(str(e) for e in aspect_ratio)
-                variance = node.attr.get('variance')
-                variance_str = ','.join(str(e) for e in variance)
+                    order_list = node.attr.get('order')
                 f.write( \
 """
     { 
-      vx_float32 min_size = %f;
-      vx_float32 max_size = %f;
-      vx_int32 flip = %d;
-      vx_int32 clip = %d;
-      vx_float32 offset = %f;
-      
-      vx_scalar s_min_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &min_size, sizeof(min_size));
-      vx_scalar s_max_size = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &max_size, sizeof(max_size));    
-      vx_scalar s_flip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &flip, sizeof(flip));
-      vx_scalar s_clip = vxCreateScalarWithSize(context, VX_TYPE_INT32, &clip, sizeof(clip));
-      vx_scalar s_offset = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &offset, sizeof(offset));
-      vx_node node = vxPriorBoxLayer(graph, %s, %s, s_min_size, %s , s_flip, s_clip, s_offset, %s , s_max_size, %s );
+      int order_value[4] = {%d,%d,%d,%d}; 
+      vx_array order =  vxCreateArray(context, VX_TYPE_INT32, 4);
+      ERROR_CHECK_STATUS(vxTruncateArray(order,0));
+      int *order_ptr = &order_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(order, 4, order_ptr, sizeof(int)));
+      vx_node node = vxPermuteLayer(graph, %s, order, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
-""" % (node.attr.get('min_size'), node.attr.get('max_size'), node.attr.get('flip'), node.attr.get('clip'), \
-       node.attr.get('prior_offset'), node.inputs[0], node.inputs[1], aspect_ratio_str, node.outputs[0], variance_str))
+""" % (order_list[0],order_list[1],order_list[2],order_list[3],node.inputs[0], node.outputs[0]))
+            elif node.type == 'prior_box':
+                aspect_ratio = node.attr.get('aspect_ratio')
+                aspect_ratio_len = len(aspect_ratio)
+                variance = node.attr.get('variance')
+                max_size = node.attr.get('max_size')
+                f.write( \
+"""
+    { 
+""")
+                if(aspect_ratio_len == 2):
+                  f.write( \
+"""     
+      float aspect_ratio_value[2] = {%f,%f};
+      vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 2);
+      ERROR_CHECK_STATUS(vxTruncateArray(aspect_ratio,0));
+      float *aspect_ratio_ptr = &aspect_ratio_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 2, aspect_ratio_ptr, sizeof(float)));
+""" %(aspect_ratio[0], aspect_ratio[1])) 
+                elif aspect_ratio_len == 1:
+                  f.write( \
+"""     
+      float aspect_ratio_value[1] = {%f};
+      vx_array aspect_ratio =  vxCreateArray(context, VX_TYPE_FLOAT32, 1);
+      ERROR_CHECK_STATUS(vxTruncateArray(aspect_ratio,0));
+      float *aspect_ratio_ptr = &aspect_ratio_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(aspect_ratio, 1, aspect_ratio_ptr, sizeof(float)));
+""" %(aspect_ratio[0])) 
+                f.write( \
+"""
+      float variance_value[4] = {%f,%f,%f,%f}; 
+      vx_array variance =  vxCreateArray(context, VX_TYPE_FLOAT32, 4); 
+      ERROR_CHECK_STATUS(vxTruncateArray(variance,0));
+      float *variance_ptr = &variance_value[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(variance, 4, variance_ptr, sizeof(float)));
+      vx_node node = vxPriorBoxLayer(graph, %s, %s, %f, aspect_ratio , %d, %d, %f, %s, variance, %f);
+      ERROR_CHECK_OBJECT(node); 
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'),\
+        node.attr.get('clip'), node.attr.get('prior_offset'), node.outputs[0], max_size))
             elif node.type == 'upsample':
                 f.write( \
 """
@@ -676,6 +696,43 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
+            elif node.type == 'detection_output':
+                f.write( \
+"""
+    { vx_node node = vxDetectionOutputLayer(graph, %s, %s, %s, %d, %d, %d, %f, %s, %d, %d, %s);
+      ERROR_CHECK_OBJECT(node);     
+        
+"""
+    % (node.inputs[0], node.inputs[1], node.inputs[2], node.attr.get('num_classes'), node.attr.get('share_location'), node.attr.get('background_label_id'), \
+         node.attr.get('nms_threshold'), node.attr.get('code_type'), node.attr.get('keep_top_k'), node.attr.get('variance_encoded_in_target'), node.outputs[0]))
+                if (node.attr.get('top_k') > -1):
+                    top_k = node.attr.get('top_k');
+                    f.write( \
+"""      vx_int32 top_k = %d;
+      vx_scalar s_topK = vxCreateScalarWithSize(context, VX_TYPE_INT32, &top_k, sizeof(top_k));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 12, (vx_reference) s_topK));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_topK));
+""" % (top_k))
+                if (node.attr.get('confidence_threshold') > -sys.float_info.max):
+                    confidence_threshold = node.attr.get('confidence_threshold');
+                    f.write( \
+"""      vx_float32 confidence_threshold = %f;
+      vx_scalar s_confidence_threshold = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &confidence_threshold, sizeof(confidence_threshold));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 13, (vx_reference) s_confidence_threshold));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_confidence_threshold));
+""" % (confidence_threshold))
+                if (node.attr.get('eta') > 0.0 and node.attr.get('eta') <= 1.0):
+                    eta = node.attr.get('eta');
+                    f.write( \
+"""      vx_float32 eta = %f;
+      vx_scalar s_eta = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &eta, sizeof(eta));
+      ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 11, (vx_reference) s_eta));
+      ERROR_CHECK_STATUS(vxReleaseScalar(&s_eta));
+""" % (eta))
+                f.write( \
+"""      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""")
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \

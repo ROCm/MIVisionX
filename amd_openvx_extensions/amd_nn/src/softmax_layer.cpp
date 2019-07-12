@@ -85,7 +85,17 @@ PROFILER_START(VX_NN, Softmax_Layer)
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
 
     ERROR_CHECK_STATUS(miopenSoftmaxForward(miopenHandle, &data->alpha, data->input_desc, data->input_mem, &data->beta, data->output_desc, data->output_mem));
+
+
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("softmax_%04d.bin", (vx_tensor)parameters[1]);
+    #endif  
+
 PROFILER_STOP(VX_NN, Softmax_Layer)
+
     return VX_SUCCESS;
 }
 

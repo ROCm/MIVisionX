@@ -33,9 +33,7 @@ struct ActivationLayerLocalData {
     miopenActivationDescriptor_t activationDesc;
     cl_mem input_mem;
     cl_mem output_mem;
-
 };
-
 
 static vx_status VX_CALLBACK validateActivationLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
@@ -89,6 +87,12 @@ PROFILER_START(VX_NN, Activation_Layer)
     float alpha = 1.0f, beta = 0.0f;
     //miopen activation forward call.
     ERROR_CHECK_MIOPEN_STATUS((miopenActivationForward(miopenHandle, data->activationDesc, &alpha, data->inputDescriptor, data->input_mem, &beta, data->outputDescriptor, data->output_mem)));
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("activation_%04d.bin", (vx_tensor)parameters[4]);
+    #endif  
 PROFILER_STOP(VX_NN, Activation_Layer)
     return VX_SUCCESS;
 }

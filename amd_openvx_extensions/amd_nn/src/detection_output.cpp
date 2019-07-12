@@ -7,7 +7,6 @@
 #include <utility>
 #include <algorithm>
 #include <assert.h>
-//#include <vx_ext_amd.h>
 using namespace std;
 
 class NormalizedBBox
@@ -418,13 +417,11 @@ static float JaccardOverlap(const NormalizedBBox& bbox1, const NormalizedBBox& b
 
 void ApplyNMSFast(const vector<NormalizedBBox>& bboxes, const vector<float>& scores, const float score_threshold, const float nms_threshold, const int top_k, vector<int>* indices, const float eta)
 {
-
     assert(bboxes.size() == scores.size());
     std::vector<std::pair<float, int> > score_index_vec;
     GetMaxScoreIndex(scores, score_threshold, top_k, &score_index_vec);
     float adaptive_threshold = nms_threshold;
     indices->clear();
-
     while(score_index_vec.size() != 0)
     {
         const int idx = score_index_vec.front().second;
@@ -589,17 +586,10 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
         std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#3(" << status << ")" << std::endl;
     }
     
-    /*for(int i = 0; i < 10; i++)
-    {
-        std::cout << locData[i] << " ";
-    }
-    std::cout << std::endl;
-     */
     // Retrieve all location predictions.
     vector<LabelBBox> allLocPreds;
     GetLocPredictions(locData, num_batches, numPriors, num_loc_classes,
                     share_location, &allLocPreds);
-
 
     // Retrieve all confidences.
     vector<map<int, vector<float> > > allConfidenceScores;
@@ -643,7 +633,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
 
             num_det += indices[c].size();
         }
-        
+      
         if (keep_top_k > -1 && num_det > keep_top_k)
         {
             std::vector<std::pair<float, std::pair<int, int> > > scoreIndexPairs;
@@ -746,16 +736,23 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     }
     assert(count == numKept);
 
-    //printf("%f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
+    //printf("output = %f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
     status =  vxCopyTensorPatch((vx_tensor)parameters[10], 4, nullptr, nullptr, stride_output_final, outputData, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status)
     {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for output tensor"  << std::endl;
+        std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
         return -1;
     }
     delete locData;
     delete confData;
     delete priorData;
+  
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("detection_output_%04d.bin", (vx_tensor)parameters[10]);
+    #endif 
+  
     return VX_SUCCESS;
 
 }

@@ -349,6 +349,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
             if node.type == 'conv':
                 pads = node.attr.get('pads')
                 dilations = node.attr.get('dilations')
+                alpha = node.attr.get('alpha')
                 f.write( \
 """
     { vx_nn_convolution_params_t conv_params = { 0 };
@@ -365,11 +366,11 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       node.inputs[0], node.inputs[1], node.inputs[2] if len(node.inputs) == 3 else 'NULL', node.outputs[0]))
                 if (node.attr.get('mode') != 0):
                     f.write( \
-"""      vx_float32 alpha = 0;
+"""      vx_float32 alpha = %f;
       vx_scalar s_alpha = vxCreateScalarWithSize(context, VX_TYPE_FLOAT32, &alpha, sizeof(alpha));
       ERROR_CHECK_STATUS(vxSetParameterByIndex(node, 5, (vx_reference) s_alpha));
       ERROR_CHECK_STATUS(vxReleaseScalar(&s_alpha));
-""")
+""" %(alpha))
                 if (node.attr.get('group') > 1):
                     group = node.attr.get('group');
                     f.write( \

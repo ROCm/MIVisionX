@@ -84,6 +84,7 @@ static vx_status VX_CALLBACK validateNormalizationLayer(vx_node node, const vx_r
 
 static vx_status VX_CALLBACK processNormalizationLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Normalization_Layer)
     NormalizationLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -100,7 +101,7 @@ static vx_status VX_CALLBACK processNormalizationLayer(vx_node node, const vx_re
         //dump the output layer
         nn_layer_test_dumpBuffer("normalization_%04d.bin", (vx_tensor)parameters[5]);
     #endif
-
+PROFILER_STOP(VX_NN, Normalization_Layer)
     return VX_SUCCESS;
 }
 

@@ -20,11 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 #include <math.h>
 #include <sstream>
-
 
 #define ENABLE_DEBUG_DUMP_OPENVX_BUFFERS                      0
 

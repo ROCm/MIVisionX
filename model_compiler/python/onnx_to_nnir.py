@@ -46,7 +46,7 @@ onnx2ir_attr = {
     'shape' : 'shape',
 }
 
-onnx2ir_op_type = {    
+onnx2ir_op_type = {
     'Conv'               : 'conv',
     'ConvTranspose'      : 'conv_transpose',
     'BatchNormalization' : 'batch_norm',

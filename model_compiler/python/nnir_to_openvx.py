@@ -1881,7 +1881,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 """
     pos = 1;
     argmaxOutput = None
-    virtual_tensor_flag = 0;
+    virtual_tensor_flag = 1;
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--argmax':
             argmaxOutput = sys.argv[pos+1]

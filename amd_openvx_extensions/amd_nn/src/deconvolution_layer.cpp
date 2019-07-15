@@ -114,6 +114,12 @@ PROFILER_START(VX_NN, Deconvolution_Layer)
 	    ERROR_CHECK_MIOPEN_STATUS(miopenConvolutionForwardBias(data->handle->miopen_handle, &data->alpha, data->bias_desc, data->bias_mem,
                                                            &data->beta, data->output_desc, data->output_mem));
     }
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("deconv_%04d.bin", (vx_tensor)parameters[4]);
+    #endif
 PROFILER_STOP(VX_NN, Deconvolution_Layer)
     return VX_SUCCESS;
 }

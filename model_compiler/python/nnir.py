@@ -80,12 +80,21 @@ class IrAttr:
             , 'order'  : []              # order for permute
             , 'min_size' : 0.0             # minimum size of prior
             , 'max_size' : 0.0             # maximum size of prior
-            , 'aspect_ratio' : []        # aspect ratios for bounding boxes
+            , 'aspect_ratio' : [0.0, 0.0]        # aspect ratios for bounding boxes
             , 'flip' : 0                 # flip bounding boxes (true/false)
             , 'clip' : 0                 # normalize bounding boxes (true/false)
-            , 'variance' : []            # variance for priors
+            , 'variance' : [0.1, 0.1, 0.1, 0.1]            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
-            , 'keepdims' : 1             # no change in output dimensions 
+            , 'num_classes' : 0          #attributes for detection output layer
+            , 'share_location' : 1
+            , 'background_label_id' : 0
+            , 'nms_threshold' : 0.0
+            , 'top_k' : -1
+            , 'code_type' : 1
+            , 'variance_encoded_in_target' : 0
+            , 'keep_top_k' : -1
+            , 'confidence_threshold' : 0.0
+            , 'eta' : 0.0
         }
         self.dict_set = []
 
@@ -170,7 +179,7 @@ class IrNode:
             'permute' : 1,
             'prior_box' : 1,
             'flatten'  : 1,
-            'argmax' : 1,
+            'detection_output' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -555,17 +564,13 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-                elif node.type in ['argmax']:
-                    axis = node.attr.get('axis')
-                    keepdims = node.attr.get('keepdims')
-                    output_type = 'I064'
-                    if axis == 0 and keepdims == 1:
-                        output_shape = [input.shape[0], 1, input.shape[2], input.shape[3]]
+                elif node.type in ['detection_output']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    out_shape = [1,1,1,7]
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(output_type, output_shape)
+                    local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
-                    self.addLocal(local)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

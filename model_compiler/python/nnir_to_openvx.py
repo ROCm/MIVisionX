@@ -608,10 +608,9 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.outputs[0]))
-            elif node.type == 'transpose' or node.type == 'permute':  
-                print node.type
+            elif node.type == 'copy'or node.type == 'transpose' or node.type == 'permute': 
                 if node.type == 'transpose':
-                    order_list = node.attr.get('axes')       
+                    order_list = node.attr.get('axes')
                 elif node.type == 'permute':
                     order_list = node.attr.get('order')
                 f.write( \
@@ -714,16 +713,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
-            elif node.type == 'argmax':
-                f.write( \
-"""
-    { 
-      vx_node node = vxArgmaxLayer(graph, %s, (vx_reference)%s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }    
-""" 
-    % (node.inputs[0], node.outputs[0]))
             elif node.type == 'detection_output':
                 f.write( \
 """

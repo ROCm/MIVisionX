@@ -98,7 +98,17 @@ PROFILER_START(VX_NN, Tensor_Substract_Layer)
 
     //miopen elementwise addition call.
     ERROR_CHECK_MIOPEN_STATUS(miopenOpTensor(miopenHandle, data->operation, &data->alpha1, data->input1, data->input1_mem, &data->alpha2, data->input2, data->input2_mem, &data->beta, data->output, data->output_mem));
+
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("tensor_sub_%04d.bin", (vx_tensor)parameters[3]);
+    #endif
+
+
 PROFILER_STOP(VX_NN, Tensor_Substract_Layer)
+
     return VX_SUCCESS;
 }
 

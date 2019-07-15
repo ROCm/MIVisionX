@@ -626,14 +626,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (order_list[0],order_list[1],order_list[2],order_list[3],node.inputs[0], node.outputs[0]))
-            elif node.type == 'copy':
-                f.write( \
-"""
-    { vx_node node = vxCopyNode(graph, %s, %s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-"""% (node.inputs[0], node.outputs[0]))
             elif node.type == 'prior_box':
                 aspect_ratio = node.attr.get('aspect_ratio')
                 aspect_ratio_len = len(aspect_ratio)

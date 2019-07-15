@@ -47,7 +47,6 @@ onnx2ir_attr = {
 }
 
 onnx2ir_op_type = {    
-    'ArgMax'             : 'argmax',
     'Conv'               : 'conv',
     'ConvTranspose'      : 'conv_transpose',
     'BatchNormalization' : 'batch_norm',
@@ -58,7 +57,6 @@ onnx2ir_op_type = {
     'Add'                : 'add',
     'Sub'                : 'sub',
     'Mul'                : 'mul',
-    'MatMul'             : 'gemm',
     'Gemm'               : 'gemm',
     'LRN'                : 'lrn',
     'Concat'             : 'concat',
@@ -66,16 +64,8 @@ onnx2ir_op_type = {
     'GlobalAveragePool'  : 'global_avg_pool',
     'Softmax'            : 'softmax',
     'Reshape'            : 'reshape',
-    'Squeeze'            : 'squeeze',
-    'Unsqueeze'          : 'unsqueeze',
     'Transpose'          : 'transpose',
     'Flatten'            : 'flatten',
-    'Identity'           : 'copy',
-    'Min'                : 'min',
-    'Max'                : 'max',
-    'Cast'               : 'add',
-    'Div'                : 'div',
-    'ReduceMean'         : 'global_avg_pool',
 }
 
 onnx2ir_data_type = [
@@ -117,9 +107,7 @@ def onnx_node_to_ir_attr(node):
            ((output_padding[1] % (kernel_shape[1] - 1)) != 0):
             raise ValueError("Unsupported ONNX value for output_padding attribute")
         dilations = [output_padding[0] / (kernel_shape[0] - 1) + 1, output_padding[1] / (kernel_shape[1] - 1) + 1]
-        attr.set('dilations', dilations)       
-    if node.op_type == 'MatMul':
-        attr.set('beta', 0.0)
+        attr.set('dilations', dilations)
     return attr
 
 def onnx_node_to_ir_node(onnx_node):

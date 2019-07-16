@@ -3982,9 +3982,9 @@ int HafCpu_Threshold_U1_U8_Binary
 			pixelmask = 0;
 			for (int i = 0; i < 8; i++, width++)
 			{
+				pixelmask >>= 1;
 				if (*pLocalSrc++ > threshold)
-					pixelmask |= 1;
-				pixelmask <<= 1;
+					pixelmask |= 0x80;
 			}
 			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
 		}

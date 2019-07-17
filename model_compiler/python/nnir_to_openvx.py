@@ -1199,7 +1199,8 @@ class AnnAPI:
         self.annRunInference = self.lib.annRunInference
         self.annRunInference.restype = ctypes.c_int
         self.annRunInference.argtypes = [ctypes.c_void_p, ctypes.c_int]
-        print('OK: AnnAPI found "' + self.annQueryInference().decode("utf-8") + '" as configuration in ' + library)
+        config_list = self.annQueryInference().split(';')
+        print('OK: AnnAPI found "') , config_list[:2] , ('" as configuration in ' + library)
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:

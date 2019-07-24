@@ -2049,10 +2049,10 @@ def generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag):
 
 def main():
     usage = """
-Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
+Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
   OPTIONS:
-    --virtual_tensor 1                -- to make tensors virtual  (default: 0)               
+    --virtual_tensor 1                -- to make tensors virtual  (default: 1)               
     --argmax UINT8                    -- argmax at the end with 8-bit output
     --argmax UINT16                   -- argmax at the end with 16-bit output
     --argmax <fileNamePrefix>rgb.txt  -- argmax at the end with RGB color mapping using LUT

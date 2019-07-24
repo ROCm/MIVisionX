@@ -777,6 +777,8 @@ def generatePythonH(graph, fileName):
 #define included_file_annpython_h
 
 #include <VX/vx.h>
+#include <half.hpp>
+using half_float::half;
 
 ////
 // python interface handle: upto 8 outputs
@@ -839,14 +841,21 @@ VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, float * inp
 """)
         else:
             input_shape = graph.inputs[0].shape
-            input_buf_size = eval('*'.join([str(v) for v in input_shape])) * 4
+            input_data_type = graph.inputs[0].type
+            if input_data_type == "F032":
+                input_buf_size = eval('*'.join([str(v) for v in input_shape])) * 4
+            elif input_data_type == "F016":
+                input_buf_size = eval('*'.join([str(v) for v in input_shape])) * 2
             output_shape = []
             output_buf_size = []
             output_str = []
             config = 'input,' + graph.inputs[0].name + ',' + ','.join(str(v) for v in input_shape) + ';'
             for i in range(len(graph.outputs)):
                 output_shape.append(graph.outputs[i].shape)
-                output_buf_size.append(eval('*'.join([str(v) for v in output_shape[i]])) * 4)
+                if input_data_type == "F032":
+                    output_buf_size.append(eval('*'.join([str(v) for v in output_shape[i]])) * 4)
+                if input_data_type == "F016":
+                    output_buf_size.append(eval('*'.join([str(v) for v in output_shape[i]])) * 2)
                 config += 'output' + str(i) + ',' +graph.outputs[i].name + ',' + ','.join(str(v) for v in output_shape[i])+';'
                 output_str.append('handle->output[' + str(i) + ']')
             f.write( \
@@ -899,22 +908,39 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
             }
             else {
                 vx_size inp_dim[4] = { %s };
-                handle->input = vxCreateTensor(handle->context, 4, inp_dim, VX_TYPE_FLOAT32, 0);
-                if((status = vxGetStatus((vx_reference)handle->input)) != VX_SUCCESS) {
+""" %(', '.join([str(v) for v in reversed(input_shape)])))
+            if input_data_type == "F032":
+                f.write( \
+"""                 handle->input = vxCreateTensor(handle->context, 4, inp_dim, VX_TYPE_FLOAT32, 0); 
+""" )                 
+            elif input_data_type == "F016":
+                f.write( \
+"""             handle->input = vxCreateTensor(handle->context, 4, inp_dim, VX_TYPE_FLOAT16, 0);
+""")
+            f.write( \
+"""                if((status = vxGetStatus((vx_reference)handle->input)) != VX_SUCCESS) {
                     printf("ERROR: vxCreateTensor(input:[%s]): failed (%%d)\\n", status);
                 }
                 else {
                     handle->num_output = %d;
-""" % (', '.join([str(v) for v in reversed(input_shape)]), 'x'.join([str(v) for v in input_shape]),len(graph.outputs)))
+""" % ('x'.join([str(v) for v in input_shape]),len(graph.outputs)))
             for i in range(len(graph.outputs)):
                 f.write( \
-"""                    vx_size out_dim_%d[%d] = { %s };
-                    handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT32, 0);
-                    if((status = vxGetStatus((vx_reference)handle->output[%d])) != VX_SUCCESS) {
+"""                     vx_size out_dim_%d[%d] = { %s };
+""" %(i, len(output_shape[i]), ', '.join([str(v) for v in reversed(output_shape[i])])))
+                if input_data_type == "F032":
+                    f.write( \
+"""                    handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT32, 0);
+"""% (i, len(output_shape[i]), i))
+                elif input_data_type =="F016":
+                    f.write( \
+"""                 handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT16, 0);
+"""% (i, len(output_shape[i]), i))
+                f.write( \
+"""                    if((status = vxGetStatus((vx_reference)handle->output[%d])) != VX_SUCCESS) {
                         printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
                     }
-""" % (i, len(output_shape[i]), ', '.join([str(v) for v in reversed(output_shape[i])]), i, \
-       len(output_shape[i]), i, i, 'x'.join([str(v) for v in output_shape[i]])))
+""" % ( i, 'x'.join([str(v) for v in output_shape[i]])))
             f.write( \
 """                    else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
                         printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
@@ -982,8 +1008,8 @@ VX_API_ENTRY int VX_API_CALL annReleaseInference(pyif_ann_handle handle)
     return status;
 }
 """)
-
-            f.write( \
+            if input_data_type == "F032":
+                f.write( \
 """
 VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, float * inp_ptr, size_t inp_size, bool is_nhwc)
 {
@@ -1031,13 +1057,73 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
 }
 """ % (input_shape[3]*4, input_shape[2]*input_shape[3]*4, input_shape[1]*input_shape[2]*input_shape[3]*4, \
        input_buf_size, input_buf_size, input_shape[0], input_shape[1], input_shape[2], input_shape[3]))
+            elif input_data_type == "F016":
+                f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, float * inp_ptr, size_t inp_size, bool is_nhwc)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 2, %d, %d, %d };
+    vx_map_id map_id;
+    half * ptr = nullptr;
+    int writeSize = %d*%d*%d;
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyToInferenceInput: invalid handle\\n");
+    }
+    else if(inp_size/2 != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyToInferenceInput: invalid input buffer size (must be %d) -- got %%d\\n", (int)inp_size);
+    }
+    else if(handle->input == nullptr) {
+        printf("ERROR: annCopyToInferenceInput: input is not valid\\n");
+    }
+    else if(!is_nhwc) {
+        if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
+        {
+            printf("ERROR: annCopyToInferenceInput: vxMapTensorPatch: failed (%%d)\\n", status);
+        }
+        memset(ptr, 0, writeSize*2);
+        for(int i = 0; i < writeSize; i++)
+        {
+            ptr[i] = static_cast<half>(inp_ptr[i]);
+        }
+        if ((status = vxUnmapTensorPatch(handle->input, map_id)) != VX_SUCCESS) {
+            printf("ERROR: annCopyToInferenceInput: vxUnmapTensorPatch: failed (%%d)\\n", status);
+        }
+    }
+    else if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS) {
+        printf("ERROR: annCopyToInferenceInput: vxMapTensorPatch: failed (%%d)\\n", status);
+    }
+    else {
+        size_t N = %d, C = %d, H = %d, W = %d;
+        for(size_t n = 0; n < N; n++) {
+            for(size_t c = 0; c < C; c++) {
+                for(size_t y = 0; y < H; y++) {
+                    size_t tpos = n * C*H*W + c * H*W + y * W;
+                    size_t ipos = n * H*W*C + y * W*C + c;
+                    for(size_t x = 0; x < W; x++, tpos++, ipos += C) {
+                        ptr[tpos] = static_cast<half>(inp_ptr[ipos]);
+                    }
+                }
+            }
+        }
+        if ((status = vxUnmapTensorPatch(handle->input, map_id)) != VX_SUCCESS) {
+            printf("ERROR: annCopyToInferenceInput: vxUnmapTensorPatch: failed (%%d)\\n", status);
+        }
+    }
+    return status;
+}
+""" % (input_shape[3]*2, input_shape[2]*input_shape[3]*2, input_shape[1]*input_shape[2]*input_shape[3]*2, input_shape[1], input_shape[2], input_shape[3],\
+       input_buf_size, input_buf_size, input_shape[0], input_shape[1], input_shape[2], input_shape[3]))           
             tshape = []
             for i in range(len(graph.outputs)):
                 if len(output_shape[i]) == 4:
                     tshape.append([output_shape[i][0], output_shape[i][1], output_shape[i][2], output_shape[i][3]])
                 else:
                     tshape.append([1, 1, output_shape[i][0], output_shape[i][1]])
-            f.write( \
+            if input_data_type == "F032":
+                f.write( \
 """
 VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, float * out_ptr, size_t out_size)
 {
@@ -1057,8 +1143,42 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, 
     return status;
 }
 """   % (tshape[0][3]*4, tshape[0][2]*tshape[0][3]*4, tshape[0][1]*tshape[0][2]*tshape[0][3]*4, output_buf_size[0], output_buf_size[0], len(output_shape[0])))
-            if (len(graph.outputs) > 1):
+            elif input_data_type == "F016":
                 f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, float * out_ptr, size_t out_size)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 2, %d, %d, %d };
+    vx_map_id map_id;
+    half* ptr;
+    int writeSize = %d * %d * %d;
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid handle\\n");
+    }
+    else if(out_size/2 != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %d) -- got %%d\\n", (int)out_size);
+    }
+    else if(handle->output[0])
+    {
+        if((status = vxMapTensorPatch(handle->output[0], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS) {
+            printf("ERROR: annCopyFromInferenceOutput: vxMapTensorPatch: failed (%%d)\\n", status);
+        }
+        for(int i = 0; i < writeSize; i++) {
+            out_ptr[i] = static_cast<float>(ptr[i]);
+        }
+        if ((status = vxUnmapTensorPatch(handle->output[0], map_id)) != VX_SUCCESS) {
+            printf("ERROR: annCopyFromInferenceOutput: vxUnmapTensorPatch: failed (%%d)\\n", status);
+        }
+    }
+    return status;
+}
+""" % (tshape[0][3]*2, tshape[0][2]*tshape[0][3]*2, tshape[0][1]*tshape[0][2]*tshape[0][3]*2, output_shape[i][1], output_shape[i][2], output_shape[i][3], output_buf_size[0], output_buf_size[0], len(output_shape[0])))
+            if (len(graph.outputs) > 1):
+                if input_data_type == "F032":
+                    f.write( \
 """
 VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size)
 {
@@ -1078,8 +1198,44 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     return status;
 }
 """   % (1, tshape[1][3]*4, tshape[1][2]*tshape[1][3]*4, tshape[1][1]*tshape[1][2]*tshape[1][3]*4, output_buf_size[1], output_buf_size[1], len(output_shape[1])))
+                elif input_data_type == "F016":
+                    f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 2, %d, %d, %d };
+    vx_map_id map_id;
+    half* ptr;
+    int writeSize = %d*%d*%d;
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid handle\\n");
+    }
+    else if(out_size/2 != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %d) -- got %%d\\n", (int)out_size);
+    }
+    else if(handle->output)
+    {
+        if((status = vxMapTensorPatch(handle->output[1], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
+        {
+            printf("ERROR: annCopyFromInferenceOutput: vxMapTensorPatch: failed (%%d)\\n", status);
+        }
+        for(int i = 0; i < writeSize; i++)
+        {
+            out_ptr[i] = static_cast<float>(ptr[i]);
+        }
+        if ((status = vxUnmapTensorPatch(handle->output[1], map_id)) != VX_SUCCESS) {
+            printf("ERROR: annCopyFromInferenceOutput: vxUnmapTensorPatch: failed (%%d)\\n", status);
+        }
+    }
+    return status;
+}
+"""   % (1, tshape[1][3]*2, tshape[1][2]*tshape[1][3]*2, tshape[1][1]*tshape[1][2]*tshape[1][3]*2, output_shape[i][1],output_shape[i][2],output_shape[i][3],output_buf_size[1], output_buf_size[1], len(output_shape[1])))
             if (len(graph.outputs) > 2):
-                f.write( \
+                if input_data_type == "F032":
+                    f.write( \
 """
 VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size)
 {
@@ -1099,6 +1255,41 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     return status;
 }
 """   % (2, tshape[2][3]*4, tshape[2][2]*tshape[2][3]*4, tshape[2][1]*tshape[2][2]*tshape[2][3]*4, output_buf_size[2], output_buf_size[2], len(output_shape[2])))
+                elif input_data_type == "F016":
+                    f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 2, %d, %d, %d };
+    vx_map_id map_id;
+    half* ptr;
+    int writeSize = %d*%d*%d;
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid handle\\n");
+    }
+    else if(out_size/2 != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %d) -- got %%d\\n", (int)out_size);
+    }
+    else if(handle->output)
+    {
+        if((status = vxMapTensorPatch(handle->output[2], 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
+        {
+            printf("ERROR: annCopyFromInferenceOutput: vxMapTensorPatch: failed (%%d)\\n", status);
+        }
+        for(int i = 0; i < writeSize; i++)
+        {
+            out_ptr[i] = static_cast<float>(ptr[i]);
+        }
+        if ((status = vxUnmapTensorPatch(handle->output[2], map_id)) != VX_SUCCESS) {
+            printf("ERROR: annCopyFromInferenceOutput: vxUnmapTensorPatch: failed (%%d)\\n", status);
+        }
+    }
+    return status;
+}
+"""   % (2, tshape[2][3]*2, tshape[2][2]*tshape[2][3]*2, tshape[2][1]*tshape[2][2]*tshape[2][3]*2, output_shape[i][1],output_shape[i][2],output_shape[i][3],output_buf_size[2], output_buf_size[2], len(output_shape[2])))
             f.write( \
 """
 

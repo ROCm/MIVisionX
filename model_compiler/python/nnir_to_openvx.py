@@ -1175,7 +1175,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, 
     }
     return status;
 }
-""" % (tshape[0][3]*2, tshape[0][2]*tshape[0][3]*2, tshape[0][1]*tshape[0][2]*tshape[0][3]*2, output_shape[i][1], output_shape[i][2], output_shape[i][3], output_buf_size[0], output_buf_size[0], len(output_shape[0])))
+""" % (tshape[0][3]*2, tshape[0][2]*tshape[0][3]*2, tshape[0][1]*tshape[0][2]*tshape[0][3]*2, tshape[i][1], tshape[i][2], tshape[i][3], output_buf_size[0], output_buf_size[0], len(output_shape[0])))
             if (len(graph.outputs) > 1):
                 if input_data_type == "F032":
                     f.write( \
@@ -1232,7 +1232,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     }
     return status;
 }
-"""   % (1, tshape[1][3]*2, tshape[1][2]*tshape[1][3]*2, tshape[1][1]*tshape[1][2]*tshape[1][3]*2, output_shape[i][1],output_shape[i][2],output_shape[i][3],output_buf_size[1], output_buf_size[1], len(output_shape[1])))
+"""   % (1, tshape[1][3]*2, tshape[1][2]*tshape[1][3]*2, tshape[1][1]*tshape[1][2]*tshape[1][3]*2, tshape[i][1],tshape[i][2],tshape[i][3],output_buf_size[1], output_buf_size[1], len(output_shape[1])))
             if (len(graph.outputs) > 2):
                 if input_data_type == "F032":
                     f.write( \
@@ -1275,7 +1275,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     }
     else if(handle->output)
     {
-        if((status = vxMapTensorPatch(handle->output[2], 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
+        if((status = vxMapTensorPatch(handle->output[2], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
         {
             printf("ERROR: annCopyFromInferenceOutput: vxMapTensorPatch: failed (%%d)\\n", status);
         }
@@ -1289,7 +1289,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     }
     return status;
 }
-"""   % (2, tshape[2][3]*2, tshape[2][2]*tshape[2][3]*2, tshape[2][1]*tshape[2][2]*tshape[2][3]*2, output_shape[i][1],output_shape[i][2],output_shape[i][3],output_buf_size[2], output_buf_size[2], len(output_shape[2])))
+"""   % (2, tshape[2][3]*2, tshape[2][2]*tshape[2][3]*2, tshape[2][1]*tshape[2][2]*tshape[2][3]*2, tshape[i][1],tshape[i][2],tshape[i][3],output_buf_size[2], output_buf_size[2], len(output_shape[2])))
             f.write( \
 """
 

@@ -933,7 +933,7 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
 """ %(', '.join([str(v) for v in reversed(input_shape)])))
             if input_data_type == "F032":
                 f.write( \
-"""                 handle->input = vxCreateTensor(handle->context, 4, inp_dim, VX_TYPE_FLOAT32, 0); 
+"""                handle->input = vxCreateTensor(handle->context, 4, inp_dim, VX_TYPE_FLOAT32, 0); 
 """ )                 
             elif input_data_type == "F016":
                 f.write( \

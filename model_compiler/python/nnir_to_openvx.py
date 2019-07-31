@@ -798,10 +798,12 @@ typedef struct pyif_ann_handle_t {
 // python interface functions
 //
 extern "C" VX_API_ENTRY const char *    VX_API_CALL annQueryInference();
+extern "C" VX_API_ENTRY const char *    VX_API_CALL annQueryLocals();
 extern "C" VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryFilename);
 extern "C" VX_API_ENTRY int             VX_API_CALL annReleaseInference(pyif_ann_handle handle);
 extern "C" VX_API_ENTRY int             VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, float * inp_ptr, size_t inp_size, bool is_nhwc);
-extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size);
+extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, float * out_ptr, size_t out_size);
+extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size);
 extern "C" VX_API_ENTRY int             VX_API_CALL annRunInference(pyif_ann_handle handle, int num_iterations);
 
 #endif
@@ -851,10 +853,11 @@ VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, float * inp
             local_shape = []
             local_buf_size = []
             local_str = []
+            configLocals = ''
             for i in range(len(graph.locals)):
                 local_shape.append(graph.locals[i].shape)
                 local_buf_size.append(eval('*'.join([str(v) for v in local_shape[i]])) * 4)
-                config += 'local' + str(i) + ',' +graph.locals[i].name + ',' + ','.join(str(v) for v in local_shape[i])+';'
+                configLocals += 'local' + str(i) + ',' +graph.locals[i].name + ',' + ','.join(str(v) for v in local_shape[i])+';'
                 local_str.append('handle->local[' + str(i) + ']')
             f.write( \
 """
@@ -880,7 +883,13 @@ VX_API_ENTRY const char * VX_API_CALL annQueryInference()
 {
     return "%s";
 }
-""" % (config));
+
+VX_API_ENTRY const char * VX_API_CALL annQueryLocals()
+{
+    return "%s";
+}
+
+""" % (config, configLocals));
 
             f.write( \
 """
@@ -1068,9 +1077,37 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
                     tshape.append([output_shape[i][0], output_shape[i][1], output_shape[i][2], output_shape[i][3]])
                 else:
                     tshape.append([1, 1, output_shape[i][0], output_shape[i][1]])
+                f.write( \
+"""
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, float * out_ptr, size_t out_size)
+{
+    vx_status status = VX_SUCCESS;
+    vx_size stride[4] = { 4, %d, %d, %d };
+    if(!handle) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid handle\\n");
+    }
+    else if(out_size != %d) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %d) -- got %%d\\n", (int)out_size);
+    }
+    else if(handle->output[0] && (status = vxCopyTensorPatch(handle->output[0], %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+        printf("ERROR: annCopyFromInferenceOutput: vxCopyTensorPatch: failed (%%d)\\n", status);
+    }
+    return status;
+}
+"""   % (tshape[0][3]*4, tshape[0][2]*tshape[0][3]*4, tshape[0][1]*tshape[0][2]*tshape[0][3]*4, output_buf_size[0], output_buf_size[0], len(output_shape[0])))
+            lshape = []
+            for i in range(len(graph.locals)):
+                """
+                if len(output_shape[i]) == 4:
+                    lshape.append([local_shape[i][0], local_shape[i][1], local_shape[i][2], local_shape[i][3]])
+                else:
+                    lshape.append([1, 1, local_shape[i][0], local_shape[i][1]])
+                """
             f.write( \
 """
-VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size)
+VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size)
 {
     vx_status status = VX_SUCCESS;
     std::string tensorName_str = tensorName;
@@ -1078,22 +1115,22 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, 
     vx_size dims[4];
     status = vxQueryTensor((vx_tensor)it->second, VX_TENSOR_DIMS, dims, sizeof(dims));
     if(status != VX_SUCCESS)
-        printf("ERROR: annCopyFromInferenceOutput: vxQueryTensor: failed (%%d)\\n", status);
+        printf("ERROR: annCopyFromInferenceLocal: vxQueryTensor: failed (%%d)\\n", status);
     vx_size stride[4] = { 4, dims[0]*4, dims[0]*dims[1]*4, dims[0]*dims[1]*dims[2]*4 };
     if(!handle) {
         status = VX_FAILURE;
-        printf("ERROR: annCopyFromInferenceOutput: invalid handle\\n");
+        printf("ERROR: annCopyFromInferenceLocal: invalid handle\\n");
     }
     else if(out_size != stride[3]) {
         status = VX_FAILURE;
-        printf("ERROR: annCopyFromInferenceOutput: invalid output buffer size (must be %%d) -- got %%d\\n", (int)stride[3],(int)out_size);
+        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %%d) -- got %%d\\n", (int)stride[3],(int)out_size);
     }
     else if(it->second && (status = vxCopyTensorPatch(it->second, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
-        printf("ERROR: annCopyFromInferenceOutput: vxCopyTensorPatch: failed (%%d)\\n", status);
+        printf("ERROR: annCopyFromInferenceLocal: vxCopyTensorPatch: failed (%%d)\\n", status);
     }
     return status;
 }
-"""   % (len(output_shape[0])))
+"""   % (len(local_shape[i])))
             f.write( \
 """
 
@@ -1130,6 +1167,9 @@ class AnnAPI:
         self.annQueryInference = self.lib.annQueryInference
         self.annQueryInference.restype = ctypes.c_char_p
         self.annQueryInference.argtypes = []
+        self.annQueryLocals = self.lib.annQueryLocals
+        self.annQueryLocals.restype = ctypes.c_char_p
+        self.annQueryLocals.argtypes = []
         self.annCreateInference = self.lib.annCreateInference
         self.annCreateInference.restype = ctypes.c_void_p
         self.annCreateInference.argtypes = [ctypes.c_char_p]
@@ -1141,12 +1181,14 @@ class AnnAPI:
         self.annCopyToInferenceInput.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t, ctypes.c_bool]
         self.annCopyFromInferenceOutput = self.lib.annCopyFromInferenceOutput
         self.annCopyFromInferenceOutput.restype = ctypes.c_int
-        self.annCopyFromInferenceOutput.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
+        self.annCopyFromInferenceOutput.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
+        self.annCopyFromInferenceLocal = self.lib.annCopyFromInferenceLocal
+        self.annCopyFromInferenceLocal.restype = ctypes.c_int
+        self.annCopyFromInferenceLocal.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
         self.annRunInference = self.lib.annRunInference
         self.annRunInference.restype = ctypes.c_int
-        self.annRunInference.argtypes = [ctypes.c_void_p, ctypes.c_int]
-        config_list = self.annQueryInference().split(';')
-        print('OK: AnnAPI found "') , config_list[:2] , ('" as configuration in ' + library)
+        self.annRunInference.argtypes = [ctypes.c_void_p, ctypes.c_int]        
+        print('OK: AnnAPI found "' + self.annQueryInference().decode("utf-8") + '" as configuration in ' + library)
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
@@ -1169,22 +1211,26 @@ if __name__ == '__main__':
             print('INFO: annCopyToInferenceInput status %d'  %(status))
             status = api.annRunInference(hdl, 1)
             print('INFO: annRunInference status %d ' %(status))
-        elif types[0:6] == "output" or  types[0:5] == "local":
+        elif types[0:6] == "output":
             out_size = int(n)*int(c)*int(h)*int(w)*4
             out_buf = bytearray(out_size)
             out = np.frombuffer(out_buf, dtype=np.float32)
-            if types[0:6] == "output":
-                out_str = 'handle->output[{}]'.format(types[6:])
-            elif types[0:5] == "local":
-                out_str = 'handle->local[{}]'.format(types[5:])
-            status = api.annCopyFromInferenceOutput(hdl, out_str, np.ascontiguousarray(out, dtype=np.float32), out_size)
-            if types[0:6] == "output":
-                print('INFO: annCopyFromInferenceOutput status %d' %(status))
-            elif types[0:5] == "local":
-                print('INFO: annCopyFromInferenceLocal status %d' %(status))
+            status = api.annCopyFromInferenceOutput(hdl, np.ascontiguousarray(out, dtype=np.float32), out_size)
+            print('INFO: annCopyFromInferenceOutput status %d' %(status))
             fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
             fid.write(out.tobytes())
             fid.close()
+    for each in filter(None,api.annQueryLocals().decode("utf-8").split(';')):
+        types,name,n,c,h,w = each.split(',')
+        local_size = int(n)*int(c)*int(h)*int(w)*4
+        local_buf = bytearray(local_size)
+        local = np.frombuffer(local_buf, dtype=np.float32)
+        local_str = 'handle->local[{}]'.format(types[5:])
+        status = api.annCopyFromInferenceLocal(hdl, local_str, np.ascontiguousarray(local, dtype=np.float32), local_size)
+        print('INFO: annCopyFromInferenceLocal status %d' %(status))
+        fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
+        fid.write(local.tobytes())
+        fid.close()
 """)
 
 def generateTestCPP(graph,argmaxOutput,fileName):
@@ -1887,7 +1933,7 @@ Usage: python nnir2openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 """
     pos = 1;
     argmaxOutput = None
-    virtual_tensor_flag = 1;
+    virtual_tensor_flag = 0;
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--argmax':
             argmaxOutput = sys.argv[pos+1]

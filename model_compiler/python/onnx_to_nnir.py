@@ -26,7 +26,6 @@ from nnir import *
 
 onnx2ir_attr = {
     'axis' : 'axis',
-    'axes'  : 'axes',
     'perm' : 'axes',
     'broadcast' : 'broadcast',
     'keepdims' : 'keepdims',
@@ -43,7 +42,7 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
-    'shape' : 'shape',
+    'shape' : 'shape'
 }
 
 onnx2ir_op_type = {
@@ -65,7 +64,7 @@ onnx2ir_op_type = {
     'Softmax'            : 'softmax',
     'Reshape'            : 'reshape',
     'Transpose'          : 'transpose',
-    'Flatten'            : 'flatten',
+    'Flatten'            : 'flatten'
 }
 
 onnx2ir_data_type = [
@@ -74,10 +73,9 @@ onnx2ir_data_type = [
 ]
 
 def onnx_name_to_ir_name(name):
-    return '_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':'))
+    return '_'.join(('_'.join(name.split('/')).split('-')))
 
 def onnx_node_to_ir_attr(node):
-
     global onnx2ir_attr
     attr = IrAttr()
     for item in node.attribute:
@@ -132,7 +130,7 @@ def onnx_tensor_info_to_data(info, dims):
 def onnx_value_info_to_data(info, dims):
     tensor = IrTensor()
     tensor.setName(onnx_name_to_ir_name(info.name))
-    tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x) for x in dims])
+    tensor.setInfo(onnx2ir_data_type[info.type.tensor_type.elem_type], [int(x.dim_value) for x in info.type.tensor_type.shape.dim])
     return tensor
 
 def onnx_graph_to_ir_graph(onnx_graph):
@@ -168,8 +166,6 @@ def onnx_graph_to_ir_graph(onnx_graph):
         if (x == 0 or x is None or x == '?' for x in output_dims):
             if inputUser == True:
                 output_dims[0] = input_dims[0]
-        while len(output_dims) != 4:
-            output_dims.append(1)
         graph.addOutput(onnx_value_info_to_data(tensor, output_dims))
     tensorAliasList = {}
     for onnx_node in onnx_graph.node:

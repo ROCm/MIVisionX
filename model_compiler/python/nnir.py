@@ -517,6 +517,7 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
+                    
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

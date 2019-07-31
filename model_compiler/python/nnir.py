@@ -80,11 +80,21 @@ class IrAttr:
             , 'order'  : []              # order for permute
             , 'min_size' : 0.0             # minimum size of prior
             , 'max_size' : 0.0             # maximum size of prior
-            , 'aspect_ratio' : []        # aspect ratios for bounding boxes
+            , 'aspect_ratio' : [0.0, 0.0]        # aspect ratios for bounding boxes
             , 'flip' : 0                 # flip bounding boxes (true/false)
             , 'clip' : 0                 # normalize bounding boxes (true/false)
-            , 'variance' : []            # variance for priors
+            , 'variance' : [0.1, 0.1, 0.1, 0.1]            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
+            , 'num_classes' : 0          #attributes for detection output layer
+            , 'share_location' : 1
+            , 'background_label_id' : 0
+            , 'nms_threshold' : 0.0
+            , 'top_k' : -1
+            , 'code_type' : 1
+            , 'variance_encoded_in_target' : 0
+            , 'keep_top_k' : -1
+            , 'confidence_threshold' : 0.0
+            , 'eta' : 0.0
         }
         self.dict_set = []
 
@@ -163,7 +173,8 @@ class IrNode:
             'crop_and_resize': 1,
             'permute' : 1,
             'prior_box' : 1,
-            'flatten'  : 1
+            'flatten'  : 1,
+            'detection_output' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -499,6 +510,13 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['detection_output']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    out_shape = [1,1,1,7]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
 
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
@@ -770,10 +788,15 @@ class IrGraph:
                      (node.type == 'max_pool' or node.type == 'avg_pool' or node.type == 'global_avg_pool'):
                     prevSkipNode = node
                     prevOutput = node.outputs[0]
-                elif node.type == 'relu' and \
+                elif (node.type == 'relu' or node.type == 'leaky_relu') and \
                      (prevNode.type == 'conv' or prevNode.type == 'max_pool' or \
                      prevNode.type == 'avg_pool' or prevNode.type == 'global_avg_pool'):
+                    if node.type == 'leaky_relu':
+                        leaky_alpha = node.attr.get('alpha')
+                    else:
+                        leaky_alpha = 0.0
                     prevNode.attr.set('mode', 1)
+                    prevNode.attr.set('alpha', leaky_alpha)
                     if prevSkipNode != None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:

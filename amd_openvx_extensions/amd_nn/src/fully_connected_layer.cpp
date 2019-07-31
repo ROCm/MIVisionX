@@ -93,6 +93,7 @@ static vx_status VX_CALLBACK validateFullyConnectedLayer(vx_node node, const vx_
 
 static vx_status VX_CALLBACK processFullyConnectedLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Fully_Connected_Layer)
     FullyConnectedLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopen_handle = data->handle->miopen_handle;
@@ -110,6 +111,13 @@ static vx_status VX_CALLBACK processFullyConnectedLayer(vx_node node, const vx_r
                                                            &data->beta, data->output_desc, data->output_mem));
 	}
     
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("conv_%04d.bin", (vx_tensor)parameters[5]);
+    #endif
+
+PROFILER_STOP(VX_NN, Fully_Connected_Layer)
     return VX_SUCCESS;
 }
 

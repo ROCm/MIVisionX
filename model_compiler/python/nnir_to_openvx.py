@@ -950,7 +950,7 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
 """% (i, len(output_shape[i]), i))
                 elif input_data_type =="F016":
                     f.write( \
-"""                 handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT16, 0);
+"""                    handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT16, 0);
 """% (i, len(output_shape[i]), i))
                 f.write( \
 """                    handle->tensorMap.insert(std::pair<std::string, vx_tensor>("%s", handle->output[%d]));                    
@@ -1132,7 +1132,7 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
             printf("ERROR: annCopyToInferenceInput: vxMapTensorPatch: failed (%%d)\\n", status);
         }
         memset(ptr, 0, writeSize*2);
-        for(int i = 0; i < writeSize; i++)
+        for(int i = 0; i < writeSize/2; i++)
         {
             ptr[i] = static_cast<half>(inp_ptr[i]);
         }
@@ -1347,18 +1347,40 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, c
     auto it = handle->tensorMap.find(tensorName_str);
     vx_size dims[4];
     status = vxQueryTensor((vx_tensor)it->second, VX_TENSOR_DIMS, dims, sizeof(dims));
-    if(status != VX_SUCCESS)
-        printf("ERROR: annCopyFromInferenceLocal: vxQueryTensor: failed (%%d)\\n", status);
-    vx_size stride[4] = { 4, dims[0]*4, dims[0]*dims[1]*4, dims[0]*dims[1]*dims[2]*4 };
-    if(!handle) {
+    if(status != VX_SUCCESS){
+        printf("ERROR: annCopyFromInferenceLocal: vxQueryTensor: failed (%d)\\n", status);
+    }
+""")
+            if input_data_type == "F032":
+                f.write( \
+"""    vx_size stride[4] = { 4, dims[0]*4, dims[0]*dims[1]*4, dims[0]*dims[1]*dims[2]*4 };
+""")
+            elif input_data_type == "F016":
+                f.write( \
+"""    vx_size stride[4] = { 2, dims[0]*2, dims[0]*dims[1]*2, dims[0]*dims[1]*dims[2]*2 };
+""")
+            f.write( \
+"""    if(!handle) {
         status = VX_FAILURE;
         printf("ERROR: annCopyFromInferenceLocal: invalid handle\\n");
     }
-    else if(out_size != stride[3]) {
+""" )
+            if input_data_type == "F032":
+                f.write(\
+"""     else if(out_size != stride[3]) {
         status = VX_FAILURE;
-        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %%d) -- got %%d\\n", (int)stride[3],(int)out_size);
+        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %d) -- got %d\\n", (int)stride[3],(int)out_size);
     }
-    else if(it->second && (status = vxCopyTensorPatch(it->second, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+""" )
+            elif input_data_type == "F016":
+                f.write (\
+"""     else if(out_size/2 != stride[3]) {
+        status = VX_FAILURE;
+        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %d) -- got %d\\n", (int)stride[3],(int)out_size);
+    }
+""" )
+            f.write (\
+"""    else if(it->second && (status = vxCopyTensorPatch(it->second, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
         printf("ERROR: annCopyFromInferenceLocal: vxCopyTensorPatch: failed (%%d)\\n", status);
     }
     return status;

@@ -217,7 +217,7 @@ extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, 
        ', '.join(['vx_tensor ' + tensor.name for tensor in graph.outputs])))
 
 def generateModuleCPP(graph,fileName,virtual_tensor_flag):
-    print('creating ' + fileName + ' ...')
+    print('creating ' + fileName + ' ...' + 'virtual_tensor_flag = ' + str(virtual_tensor_flag))
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
         f.write( \
@@ -329,11 +329,11 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
 """%(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)])))
-                if virtual_tensor_flag == 1:
+                if int(virtual_tensor_flag) == 1:
                     f.write( \
 """    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
 """%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
-                elif virtual_tensor_flag == 0:
+                elif int(virtual_tensor_flag) == 0:
                     f.write( \
 """    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
 """%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
@@ -767,7 +767,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 }
 """)
 
-def generatePythonH(graph, fileName):
+def generatePythonH(graph, fileName, virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
@@ -800,8 +800,13 @@ typedef struct pyif_ann_handle_t {
 // python interface functions
 //
 extern "C" VX_API_ENTRY const char *    VX_API_CALL annQueryInference();
-extern "C" VX_API_ENTRY const char *    VX_API_CALL annQueryLocals();
-extern "C" VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryFilename);
+""")
+        if int(virtual_tensor_flag) == 0:
+        	f.write( \
+"""extern "C" VX_API_ENTRY const char *    VX_API_CALL annQueryLocals();
+""")
+        f.write( \
+"""extern "C" VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryFilename);
 extern "C" VX_API_ENTRY int             VX_API_CALL annReleaseInference(pyif_ann_handle handle);
 extern "C" VX_API_ENTRY int             VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, float * inp_ptr, size_t inp_size, bool is_nhwc);
 extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, float * out_ptr, size_t out_size);
@@ -810,14 +815,17 @@ extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput(p
             f.write( \
 """extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size);
 """ % (i))
-        f.write( \
+        if int(virtual_tensor_flag) == 0:
+        	f.write( \
 """extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size);
-extern "C" VX_API_ENTRY int             VX_API_CALL annRunInference(pyif_ann_handle handle, int num_iterations);
+""")
+        f.write( \
+"""extern "C" VX_API_ENTRY int             VX_API_CALL annRunInference(pyif_ann_handle handle, int num_iterations);
 
 #endif
 """)
 
-def generatePythonCPP(graph,fileName):
+def generatePythonCPP(graph,fileName, virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
@@ -963,28 +971,45 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                     if((status = vxGetStatus((vx_reference)handle->output[%d])) != VX_SUCCESS) {
                         printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
                     }
-                    else {
+"""% ('handle->output[{}]'.format(i), i, i, 'x'.join([str(v) for v in output_shape[i]])))
+                if int(virtual_tensor_flag) == 0:
+                	f.write( \
+"""                    else {
                         handle->num_local = %d;
-""" % ('handle->output[{}]'.format(i), i, i, 'x'.join([str(v) for v in output_shape[i]]), len(graph.locals)))
-            for i in range(len(graph.locals)):
-                f.write( \
+""" %(len(graph.locals)))
+                elif int(virtual_tensor_flag) == 1:
+                	f.write( \
+"""					else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
+                            printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
+                        }
+                        else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
+                            printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
+                        }
+                        else {
+                            printf("OK: annCreateInference: successful\\n");
+                            successful = true;
+                        }
+""" %(', '.join(output_str)))
+            if int(virtual_tensor_flag) == 0:
+            	for i in range(len(graph.locals)):
+                	f.write( \
 """                        vx_size local_dim_%d[%d] = { %s };
 """ %(i, len(local_shape[i]), ', '.join([str(v) for v in reversed(local_shape[i])])))
-                if input_data_type == "F032":
-                    f.write( \
+                	if input_data_type == "F032":
+                		f.write( \
 """                        handle->local[%d] = vxCreateTensor(handle->context, %d, local_dim_%d, VX_TYPE_FLOAT32, 0);
 """ % (i, len(local_shape[i]), i))
-                elif input_data_type =="F016":
-                    f.write( \
+	                elif input_data_type =="F016":
+	                    f.write( \
 """                        handle->local[%d] = vxCreateTensor(handle->context, %d, local_dim_%d, VX_TYPE_FLOAT16, 0);
 """ % (i, len(local_shape[i]), i))
-                f.write( \
+                	f.write( \
 """                        handle->tensorMap.insert(std::pair<std::string, vx_tensor>("%s", handle->local[%d]));                            
                         if((status = vxGetStatus((vx_reference)handle->local[%d])) != VX_SUCCESS) {
                             printf("ERROR: vxCreateTensor(local:[%s]): failed (%%d)\\n", status);
                         }
 """ % ('handle->local[{}]'.format(i), i, i, 'x'.join([str(v) for v in local_shape[i]])))
-            f.write( \
+                f.write( \
 """                        else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
                             printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
                         }
@@ -996,25 +1021,28 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                             successful = true;
                         }
                     }
-                }
+""" % (', '.join(output_str)))
+            f.write( \
+"""                        
+				}
             }
         }
     }
-
     if(!successful) {
         if(handle) {
             if(handle->graph)
                 vxReleaseGraph(&handle->graph);
             if(handle->input)
                 vxReleaseTensor(&handle->input);
-""" %(', '.join(output_str)))
+""" )
             for i in range(len(graph.outputs)):
                 f.write( \
 """            if(handle->output[%d])
                 vxReleaseTensor(&handle->output[%d]);
 """ % ( i, i))
-            for i in range(len(graph.locals)):
-                f.write( \
+            if int(virtual_tensor_flag) == 0:
+            	for i in range(len(graph.locals)):
+                	f.write( \
 """            if(handle->local[%d])
                 vxReleaseTensor(&handle->local[%d]);
 """ % ( i, i))                    
@@ -1047,13 +1075,18 @@ VX_API_ENTRY int VX_API_CALL annReleaseInference(pyif_ann_handle handle)
                 printf("ERROR: annReleaseInference: vxReleaseTensor(output<%d>): failed (%d)\\n", i,status);
             }
         }
-        for (int i=0; i<handle->num_local; i++) {
+""" )
+            if int(virtual_tensor_flag) == 0:
+            	f.write( \
+"""        for (int i=0; i<handle->num_local; i++) {
             if(handle->local[i] && (status = vxReleaseTensor(&handle->local[i])) != VX_SUCCESS) {
                 printf("ERROR: annReleaseInference: vxReleaseTensor(local<%d>): failed (%d)\\n", i,status);
             }
         }
-    }      
-    if(handle->context && (status = vxReleaseContext(&handle->context)) != VX_SUCCESS) {
+""")
+            f.write( \
+""" }   
+		if(handle->context && (status = vxReleaseContext(&handle->context)) != VX_SUCCESS) {
         printf("ERROR: annReleaseInference: vxReleaseContext: failed (%d)\\n", status);
     }
     else {
@@ -1344,7 +1377,8 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     return status;
 }
 """   % (2, tshape[2][3]*2, tshape[2][2]*tshape[2][3]*2, tshape[2][1]*tshape[2][2]*tshape[2][3]*2, tshape[i][1],tshape[i][2],tshape[i][3],output_buf_size[2], output_buf_size[2], len(output_shape[2])))
-            f.write( \
+            if int(virtual_tensor_flag) == 0:
+            	f.write( \
 """
 VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size)
 {
@@ -1357,35 +1391,35 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, c
         printf("ERROR: annCopyFromInferenceLocal: vxQueryTensor: failed (%d)\\n", status);
     }
 """)
-            if input_data_type == "F032":
-                f.write( \
+            	if input_data_type == "F032":
+                	f.write( \
 """    vx_size stride[4] = { 4, dims[0]*4, dims[0]*dims[1]*4, dims[0]*dims[1]*dims[2]*4 };
 """)
-            elif input_data_type == "F016":
-                f.write( \
+            	elif input_data_type == "F016":
+                	f.write( \
 """    vx_size stride[4] = { 2, dims[0]*2, dims[0]*dims[1]*2, dims[0]*dims[1]*dims[2]*2 };
 """)
-            f.write( \
+            	f.write( \
 """    if(!handle) {
         status = VX_FAILURE;
         printf("ERROR: annCopyFromInferenceLocal: invalid handle\\n");
     }
 """ )
-            if input_data_type == "F032":
-                f.write(\
+            	if input_data_type == "F032":
+                	f.write(\
 """     else if(out_size != stride[3]) {
         status = VX_FAILURE;
         printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %d) -- got %d\\n", (int)stride[3],(int)out_size);
     }
 """ )
-            elif input_data_type == "F016":
-                f.write (\
+                elif input_data_type == "F016":
+	                f.write (\
 """     else if(out_size/2 != stride[3]) {
         status = VX_FAILURE;
         printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %d) -- got %d\\n", (int)stride[3],(int)out_size);
     }
 """ )
-            f.write (\
+            	f.write (\
 """    else if(it->second && (status = vxCopyTensorPatch(it->second, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
         printf("ERROR: annCopyFromInferenceLocal: vxCopyTensorPatch: failed (%%d)\\n", status);
     }
@@ -1412,7 +1446,7 @@ VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, int num_ite
 }
 """)
 
-def generatePythonScriptSample(graph,fileName):
+def generatePythonScriptSample(graph,fileName, virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForScript(f)
@@ -1428,10 +1462,15 @@ class AnnAPI:
         self.annQueryInference = self.lib.annQueryInference
         self.annQueryInference.restype = ctypes.c_char_p
         self.annQueryInference.argtypes = []
-        self.annQueryLocals = self.lib.annQueryLocals
+""")
+        if int(virtual_tensor_flag) == 0:
+        	f.write( \
+"""        self.annQueryLocals = self.lib.annQueryLocals
         self.annQueryLocals.restype = ctypes.c_char_p
         self.annQueryLocals.argtypes = []
-        self.annCreateInference = self.lib.annCreateInference
+""")
+        f.write( \
+"""        self.annCreateInference = self.lib.annCreateInference
         self.annCreateInference.restype = ctypes.c_void_p
         self.annCreateInference.argtypes = [ctypes.c_char_p]
         self.annReleaseInference = self.lib.annReleaseInference
@@ -1443,10 +1482,15 @@ class AnnAPI:
         self.annCopyFromInferenceOutput = self.lib.annCopyFromInferenceOutput
         self.annCopyFromInferenceOutput.restype = ctypes.c_int
         self.annCopyFromInferenceOutput.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
-        self.annCopyFromInferenceLocal = self.lib.annCopyFromInferenceLocal
+""")
+        if int(virtual_tensor_flag) == 0:
+        	f.write( \
+"""        self.annCopyFromInferenceLocal = self.lib.annCopyFromInferenceLocal
         self.annCopyFromInferenceLocal.restype = ctypes.c_int
         self.annCopyFromInferenceLocal.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
-        self.annRunInference = self.lib.annRunInference
+""")
+        f.write( \
+"""        self.annRunInference = self.lib.annRunInference
         self.annRunInference.restype = ctypes.c_int
         self.annRunInference.argtypes = [ctypes.c_void_p, ctypes.c_int]        
         print('OK: AnnAPI found "' + self.annQueryInference().decode("utf-8") + '" as configuration in ' + library)
@@ -1481,7 +1525,10 @@ if __name__ == '__main__':
             fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
             fid.write(out.tobytes())
             fid.close()
-    for each in filter(None,api.annQueryLocals().decode("utf-8").split(';')):
+""")
+        if int(virtual_tensor_flag) == 0:
+        	f.write( \
+"""    for each in filter(None,api.annQueryLocals().decode("utf-8").split(';')):
         types,name,n,c,h,w = each.split(',')
         local_size = int(n)*int(c)*int(h)*int(w)*4
         local_buf = bytearray(local_size)
@@ -2165,9 +2212,9 @@ def generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag):
     generateModuleCPP(graph,outputFolder + '/annmodule.cpp',virtual_tensor_flag)
     generateBinary(graph,outputFolder + '/weights.bin')
     generateTestCPP(graph,argmaxOutput,outputFolder + '/anntest.cpp')
-    generatePythonH(graph,outputFolder + '/annpython.h')
-    generatePythonCPP(graph,outputFolder + '/annpython.cpp')
-    generatePythonScriptSample(graph,outputFolder + '/anntest.py')
+    generatePythonH(graph,outputFolder + '/annpython.h', virtual_tensor_flag)
+    generatePythonCPP(graph,outputFolder + '/annpython.cpp', virtual_tensor_flag)
+    generatePythonScriptSample(graph,outputFolder + '/anntest.py', virtual_tensor_flag)
 
 def main():
     usage = """

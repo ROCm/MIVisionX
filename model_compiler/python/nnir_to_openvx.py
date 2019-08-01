@@ -793,8 +793,13 @@ typedef struct pyif_ann_handle_t {
     vx_tensor   output[8];
     int         num_output;
     int         num_local;
-    std::map<std::string, vx_tensor> tensorMap;
-} * pyif_ann_handle;
+""")
+        if int(virtual_tensor_flag) == 0:
+            f.write( \
+"""    std::map<std::string, vx_tensor> tensorMap;
+""")
+        f.write( \
+"""} * pyif_ann_handle;
 
 ////
 // python interface functions
@@ -906,13 +911,14 @@ VX_API_ENTRY const char * VX_API_CALL annQueryInference()
 {
     return "%s";
 }
-
-VX_API_ENTRY const char * VX_API_CALL annQueryLocals()
+""" % (config))
+            if int(virtual_tensor_flag) == 0:
+                f.write( \
+"""VX_API_ENTRY const char * VX_API_CALL annQueryLocals()
 {
     return "%s";
 }
-
-""" % (config, configLocals));
+""" % (configLocals));
 
             f.write( \
 """
@@ -966,12 +972,15 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                     f.write( \
 """                    handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT16, 0);
 """% (i, len(output_shape[i]), i))
+                if int(virtual_tensor_flag) == 0:
+                    f.write( \
+"""                    handle->tensorMap.insert(std::pair<std::string, vx_tensor>("%s", handle->output[%d]));
+"""% ('handle->output[{}]'.format(i), i))
                 f.write( \
-"""                    handle->tensorMap.insert(std::pair<std::string, vx_tensor>("%s", handle->output[%d]));                    
-                    if((status = vxGetStatus((vx_reference)handle->output[%d])) != VX_SUCCESS) {
+"""                    if((status = vxGetStatus((vx_reference)handle->output[%d])) != VX_SUCCESS) {
                         printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
                     }
-"""% ('handle->output[{}]'.format(i), i, i, 'x'.join([str(v) for v in output_shape[i]])))
+"""% (i, 'x'.join([str(v) for v in output_shape[i]])))
                 if int(virtual_tensor_flag) == 0:
                 	f.write( \
 """                    else {
@@ -980,15 +989,15 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                 elif int(virtual_tensor_flag) == 1:
                 	f.write( \
 """					else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
-                            printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
-                        }
-                        else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
-                            printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
-                        }
-                        else {
-                            printf("OK: annCreateInference: successful\\n");
-                            successful = true;
-                        }
+                        printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
+                    }
+                    else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
+                        printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
+                    }
+                    else {
+                        printf("OK: annCreateInference: successful\\n");
+                        successful = true;
+                    }
 """ %(', '.join(output_str)))
             if int(virtual_tensor_flag) == 0:
             	for i in range(len(graph.locals)):
@@ -1023,8 +1032,7 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                     }
 """ % (', '.join(output_str)))
             f.write( \
-"""                        
-				}
+"""                }
             }
         }
     }
@@ -1085,8 +1093,8 @@ VX_API_ENTRY int VX_API_CALL annReleaseInference(pyif_ann_handle handle)
         }
 """)
             f.write( \
-""" }   
-		if(handle->context && (status = vxReleaseContext(&handle->context)) != VX_SUCCESS) {
+"""    }   
+	if(handle->context && (status = vxReleaseContext(&handle->context)) != VX_SUCCESS) {
         printf("ERROR: annReleaseInference: vxReleaseContext: failed (%d)\\n", status);
     }
     else {
@@ -1171,7 +1179,7 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
             printf("ERROR: annCopyToInferenceInput: vxMapTensorPatch: failed (%%d)\\n", status);
         }
         memset(ptr, 0, writeSize*2);
-        for(int i = 0; i < writeSize/2; i++)
+        for(int i = 0; i < writeSize; i++)
         {
             ptr[i] = static_cast<half>(inp_ptr[i]);
         }

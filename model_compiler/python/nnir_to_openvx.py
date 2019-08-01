@@ -217,7 +217,7 @@ extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, 
        ', '.join(['vx_tensor ' + tensor.name for tensor in graph.outputs])))
 
 def generateModuleCPP(graph,fileName,virtual_tensor_flag):
-    print('creating ' + fileName + ' ...' + 'virtual_tensor_flag = ' + str(virtual_tensor_flag))
+    print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
         f.write( \

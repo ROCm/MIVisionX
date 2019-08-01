@@ -112,7 +112,7 @@ static vx_status VX_CALLBACK opencl_codegen(
             "   for(int k = num_axis-1, j = 0; k >= 0; k--, j++) {  \n"
             "       int order = 3- ((__global int *)(order_buf+order_offset))[j]; \n"
             "       old_idx += (idx/out_stride[k]) * (in_stride[order]);  \n"
-            "       idx %= (out_stride[k]);  \n"
+            "       idx %%= (out_stride[k]);  \n"
             "   } \n"
             "   out += out_offset + i; \n"
             "   in += in_offset + old_idx; \n"

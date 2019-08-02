@@ -2229,7 +2229,7 @@ def main():
 Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
   OPTIONS:
-    --virtual_tensor 1                -- to make tensors virtual  (default: 1)               
+    --virtual_tensor 1                -- to make tensors non-virtual  (default: 1)               
     --argmax UINT8                    -- argmax at the end with 8-bit output
     --argmax UINT16                   -- argmax at the end with 16-bit output
     --argmax <fileNamePrefix>rgb.txt  -- argmax at the end with RGB color mapping using LUT

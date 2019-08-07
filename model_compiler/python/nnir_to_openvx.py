@@ -2267,7 +2267,7 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
                     else:
                         argmaxOutput = np.reshape(np.array([int(v) for v in f.read().split()]), [-1, 3]).transpose()
         elif sys.argv[pos] == '--virtual_tensor':
-            virtual_tensor_flag = sys.argv[pos+1]
+            virtual_tensor_flag = int(sys.argv[pos+1])
         else:
             if sys.argv[pos] != '--help':
                 print('ERROR: invalid option: %s' % (sys.argv[pos]))

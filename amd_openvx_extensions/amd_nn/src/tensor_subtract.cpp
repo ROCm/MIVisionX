@@ -87,6 +87,7 @@ static vx_status VX_CALLBACK validateTensorSub(vx_node node, const vx_reference 
 
 static vx_status VX_CALLBACK processTensorSub(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Tensor_Substract_Layer)
     TensorSubLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -97,6 +98,16 @@ static vx_status VX_CALLBACK processTensorSub(vx_node node, const vx_reference *
 
     //miopen elementwise addition call.
     ERROR_CHECK_MIOPEN_STATUS(miopenOpTensor(miopenHandle, data->operation, &data->alpha1, data->input1, data->input1_mem, &data->alpha2, data->input2, data->input2_mem, &data->beta, data->output, data->output_mem));
+
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("tensor_sub_%04d.bin", (vx_tensor)parameters[3]);
+    #endif
+
+
+PROFILER_STOP(VX_NN, Tensor_Substract_Layer)
 
     return VX_SUCCESS;
 }

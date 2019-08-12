@@ -103,7 +103,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxConvertTensorToImageNode(vx_graph graph, vx_t
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8);
+VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8, vx_int32 axis);
 
 /*! \brief [Graph] Creates a Slice Layer Node.
  * \param [in] graph The handle to the graph.
@@ -156,7 +156,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxReshapeLayer(vx_graph graph, vx_tensor input,
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_int32 order, vx_tensor output);
+VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_array order, vx_tensor output);
 
 /*! \brief [Graph] Creates a Prior Box Layer Node.
  * \details Prior box gives the coordinates of the bounding boxes for an image. 
@@ -177,7 +177,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input,
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
 VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input_1, vx_tensor input_2, vx_float32 minSize, vx_array aspect_ratio, vx_int32 flip, vx_int32 clip, 
-                                                 vx_float32 offset, vx_tensor output, vx_float32 maxSize, vx_array variance);
+                                                 vx_float32 offset, vx_tensor output, vx_array variance, vx_float32 maxSize);
 
 /* \brief [Graph] Creates a Crop Layer Node.
  * \details Cropping is done on the dimensions of the input vx_tensor to fit the dimensions of the reference tensor. 
@@ -245,4 +245,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMinNode(vx_graph graph, vx_tensor input
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
+
+VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_int32 num_classes, vx_int32 share_location, vx_int32 background_label_id, vx_float32 nms_threshold,
+                                                        vx_int32 code_type, vx_int32 keep_top_k, vx_int32 variance_encoded_in_target, vx_tensor output);
 #endif

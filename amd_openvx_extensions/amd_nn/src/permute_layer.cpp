@@ -12,12 +12,14 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     if ((type != VX_TYPE_FLOAT32) && (type!= VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
 
-    vx_enum scalar_type;
-    vx_int32 scalar_value;
-    ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[1], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
-    if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &scalar_value, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if(scalar_value > 1) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: permute: #2 scalar type=%d (not supported yet)\n", scalar_value);
+    vx_size order_cap = 0;
+    vx_size itemsize = 0;
+    ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ITEMTYPE, &type, sizeof(type)));
+    if(type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
+    ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[1], VX_ARRAY_CAPACITY, &order_cap, sizeof(order_cap)));
+    if(order_cap != 4) return VX_ERROR_INVALID_DIMENSION;
+    ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ITEMSIZE, &itemsize, sizeof(itemsize)));
+    if(itemsize != sizeof(int)) return VX_ERROR_INVALID_TYPE;
 
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
@@ -33,8 +35,6 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     return VX_SUCCESS;
-
-
 }
 
 //! \brief The kernel target support callback.
@@ -66,84 +66,62 @@ static vx_status VX_CALLBACK opencl_codegen(
     //get tensor dimensions
     vx_size input_dims[4], output_dims[4];
     vx_size num_of_dims;
-    vx_int32 scalar_value;
     vx_enum type;
-
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &scalar_value, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
+    vx_size input_stride[4], output_stride[4];
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_STRIDE_OPENCL, input_stride, sizeof(input_stride)));
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_OPENCL, output_stride, sizeof(output_stride)));
+
+    vx_array order_buf;
+    vx_size order_cap, order_numitems;
+    order_buf = (vx_array)parameters[1];
+    ERROR_CHECK_STATUS(vxQueryArray(order_buf, VX_ARRAY_CAPACITY, &order_cap, sizeof(order_cap)));
+    ERROR_CHECK_STATUS(vxQueryArray(order_buf, VX_ARRAY_NUMITEMS, &order_numitems, sizeof(order_numitems)));
+    ERROR_CHECK_STATUS(vxReleaseArray(&order_buf));
 
     strcpy(opencl_kernel_function_name, "permute_layer");
-    //vx_uint32 input_dim_size = input_dims[0] * input_dims[1] * input_dims[2] * input_dims[3];
 
     opencl_work_dim = 3;
-    opencl_global_work[0] = output_dims[1];
-    opencl_global_work[1] = output_dims[2];
-    opencl_global_work[2] = output_dims[3];
-    
+    opencl_global_work[0] = output_dims[0];
+    opencl_global_work[1] = output_dims[1];
+    opencl_global_work[2] = output_dims[2]*output_dims[3];
+
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
 
     if (num_of_dims == 4) {
         char item[8192];
-        if (type == VX_TYPE_FLOAT32) {
         sprintf(item,
-                "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, uint s_value,"\
-                "                 __global uchar * out, uint out_offset, uint4 out_stride)\n"
-                "{   \n"
-                "   uint x = get_global_id(0); \n "
-                "   uint y = get_global_id(1); \n "
-                "   uint c = get_global_id(2); \n "
-                "   int scalar_value = %d; \n"
-                "   if(scalar_value == 0) \n"
-                "   { \n"
-                "      float value = *(__global float *)&in[c*in_stride.s3 + y*in_stride.s2 + x*in_stride.s1]; \n"
-                "      out += c*out_stride.s3 + y*out_stride.s2 + x*out_stride.s1; \n"
-                "      *(__global float *)&out[0] = value; \n"
-                "   } \n"
-                "   if(scalar_value == 1)\n"
-                "   {  \n"
-                "      float value = *(__global float *)&in[c*get_global_size(0)*get_global_size(1)*sizeof(float) + y*get_global_size(0)*sizeof(float) + x*sizeof(float)]; \n"
-                "      out += y*get_global_size(0)*get_global_size(2)*sizeof(float) + x*get_global_size(2)*sizeof(float) + c*sizeof(float); \n"
-                "      *(__global float *)&out[0] = value; \n"
-                "   } \n"
-                "}\n", opencl_kernel_function_name, scalar_value);
-        } else {
-            sprintf(item,
-                "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, uint s_value,"\
-                "                 __global uchar * out, uint out_offset, uint4 out_stride)\n"
-                "{   \n"
-                "   uint x = get_globaloutid(0); \n "
-                "   uint y = get_global_id(1); \n "
-                "   uint c = get_global_id(2); \n "
-                "   int scalar_value = %d; \n"
-                "   if(scalar_value == 0) \n"
-                "   { \n"
-                "      half value = *(__global half *)&in[c*in_stride.s3 + y*in_stride.s2 + x*in_stride.s1]; \n"
-                "      out += c*out_stride.s3 + y*out_stride.s2 + x*out_stride.s1; \n"
-                "      *(__global half *)&out[0] = value; \n"
-                "   } \n"
-                "   if(scalar_value == 1)\n"
-                "   {  \n"
-                "      half value = *(__global half *)&in[c*get_global_size(0)*get_global_size(1)*sizeof(float) + y*get_global_size(0)*sizeof(float) + x*sizeof(float)]; \n"
-                "      out += y*get_global_size(0)*get_global_size(2)*sizeof(float) + x*get_global_size(2)*sizeof(float) + c*sizeof(float); \n"
-                "      *(__global half *)&out[0] = value; \n"
-                "   } \n"
-                "}\n", opencl_kernel_function_name, scalar_value);
-        }
+            "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
+            "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * order_buf, uint order_offset, uint order_num,"\
+            "                 __global uchar * out, uint out_offset, uint4 out_stride)\n"
+            "{   \n"
+            "   uint c = get_global_id(0); \n "
+            "   uint x = get_global_id(1); \n "
+            "   uint y = get_global_id(2); \n "
+            "   int num_axis = %d; \n"
+            "   int i = y*out_stride.s2 + x*out_stride.s1 + c*out_stride.s0; \n"
+            "   int old_idx = 0; \n"
+            "   int idx = i; \n"
+            "   for(int k = num_axis-1, j = 0; k >= 0; k--, j++) {  \n"
+            "       int order = 3- ((__global int *)(order_buf+order_offset))[j]; \n"
+            "       old_idx += (idx/out_stride[k]) * (in_stride[order]);  \n"
+            "       idx %%= (out_stride[k]);  \n"
+            "   } \n"
+            "   out += out_offset + i; \n"
+            "   in += in_offset + old_idx; \n"
+            "   *(__global float *)&out[0] = *(__global float *)&in[0];  \n"
+            "}\n", opencl_kernel_function_name, (int)order_cap);
         opencl_kernel_code = item;
     }
-
     return VX_SUCCESS;
 }
-
 
 //! \brief The kernel execution.
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num)
@@ -164,7 +142,7 @@ vx_status publishPermuteLayer(vx_context context)
 
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
 
     //finalize and release kernel object.
@@ -173,21 +151,14 @@ vx_status publishPermuteLayer(vx_context context)
     return VX_SUCCESS;
 }
 
-
-/*order value  |     function
-*     0        |  order: 0,1,2,3 (doesn't permute)
-*     1        |  order: 0,2,3,1 ([n,c,h,w] --> [n,h,w,c])
-*/
-VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_int32 order, vx_tensor output)
+VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_array order, vx_tensor output)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
-        vx_scalar s_order = vxCreateScalarWithSize(context, VX_TYPE_INT32, &order, sizeof(order));
-
         vx_reference params[] = {
             (vx_reference)input,
-            (vx_reference)s_order,
+            (vx_reference)order,
             (vx_reference)output,
         };
         node = createNode(graph, VX_KERNEL_PERMUTE_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));

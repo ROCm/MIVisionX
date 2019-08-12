@@ -33,6 +33,7 @@ struct SoftmaxLayerLocalData {
     cl_mem output_mem;
     int dim_in;
     int dim_out;
+    vx_int32 axis;
 };
 
 static vx_status VX_CALLBACK validateSoftmaxLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -62,11 +63,20 @@ static vx_status VX_CALLBACK validateSoftmaxLayer(vx_node node, const vx_referen
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, &output_dims[4-num_dims], num_dims*sizeof(vx_size)));
+
+    if(parameters[2]) {
+        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[2], VX_SCALAR_TYPE, &type, sizeof(type)));
+        if(type != VX_TYPE_INT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: softmax: #3 type=%d (must be VX_TYPE_INT32)\n", type);
+        vx_int32 axis = 1;
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    }
+
     return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK processSoftmaxLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Softmax_Layer)
     SoftmaxLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -75,6 +85,16 @@ static vx_status VX_CALLBACK processSoftmaxLayer(vx_node node, const vx_referenc
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
 
     ERROR_CHECK_STATUS(miopenSoftmaxForward(miopenHandle, &data->alpha, data->input_desc, data->input_mem, &data->beta, data->output_desc, data->output_mem));
+
+
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("softmax_%04d.bin", (vx_tensor)parameters[1]);
+    #endif  
+
+PROFILER_STOP(VX_NN, Softmax_Layer)
 
     return VX_SUCCESS;
 }
@@ -97,9 +117,23 @@ static vx_status VX_CALLBACK initializeSoftmaxLayer(vx_node node, const vx_refer
 
     ERROR_CHECK_MIOPEN_STATUS(miopenCreateTensorDescriptor(&data->input_desc));
     ERROR_CHECK_MIOPEN_STATUS(miopenCreateTensorDescriptor(&data->output_desc));
-    ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->input_desc, data->data_type, input_dims[3], input_dims[2], input_dims[1], input_dims[0]));
-    ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->output_desc, data->data_type, output_dims[3], output_dims[2], output_dims[1], output_dims[0]));
 
+    data->axis = 1;
+    if(parameters[2])
+    {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &data->axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    }
+    if(data->axis == 1)
+    {
+        ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->input_desc, data->data_type, input_dims[3], input_dims[2], input_dims[1], input_dims[0]));
+        ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->output_desc, data->data_type, output_dims[3], output_dims[2], output_dims[1], output_dims[0]));
+    }
+    else if(data->axis == 2)
+    {
+        ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->input_desc, data->data_type, input_dims[3]*input_dims[2], input_dims[1], input_dims[0], 1));
+        ERROR_CHECK_MIOPEN_STATUS(miopenSet4dTensorDescriptor(data->output_desc, data->data_type, output_dims[3]*output_dims[2], output_dims[1], output_dims[0],1));
+    }
+    
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_BUFFER_OPENCL, &data->input_mem, sizeof(data->input_mem)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_BUFFER_OPENCL, &data->output_mem, sizeof(data->output_mem)));
     
@@ -131,7 +165,7 @@ static vx_status VX_CALLBACK uninitializeSoftmaxLayer(vx_node node, const vx_ref
 vx_status publishSoftmaxLayer(vx_context context)
 {
     // add kernel to the context with callbacks
-    vx_kernel kernel = vxAddUserKernel(context, "org.khronos.nn_extension.softmax_layer", VX_KERNEL_SOFTMAX_LAYER, processSoftmaxLayer, 2, validateSoftmaxLayer, initializeSoftmaxLayer, uninitializeSoftmaxLayer);
+    vx_kernel kernel = vxAddUserKernel(context, "org.khronos.nn_extension.softmax_layer", VX_KERNEL_SOFTMAX_LAYER, processSoftmaxLayer, 3, validateSoftmaxLayer, initializeSoftmaxLayer, uninitializeSoftmaxLayer);
     ERROR_CHECK_OBJECT(kernel);
 
     // enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
@@ -141,6 +175,7 @@ vx_status publishSoftmaxLayer(vx_context context)
     // set kernel parameters
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
 
     // finalize and release kernel object
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));

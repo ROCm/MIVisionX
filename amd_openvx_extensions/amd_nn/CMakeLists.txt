@@ -30,20 +30,18 @@ if(POLICY CMP0054)
 endif()
 
 find_package(OpenCL     REQUIRED)
-find_package(miopengemm PATHS /opt/rocm)
-find_package(miopen     PATHS /opt/rocm)
-find_package(Protobuf)
-
-if(NOT miopen_FOUND OR NOT miopengemm_FOUND)
-    message(FATAL_ERROR "ERROR: couldn't find MIOpen and MIOpenGEMM -- make sure to install them")
-endif()
+find_package(miopengemm PATHS /opt/rocm REQUIRED)
+find_package(miopen     PATHS /opt/rocm REQUIRED)
+find_package(Protobuf QUIET)
 
 list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)
 
 if(Protobuf_FOUND)
-	message("-- Found Protobuf -- installing inference generator.")
 	add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
-endif()
+	message("-- ${Green}Inference Generator -- utilities/inference_generator module added${ColourReset}")
+else(Protobuf_FOUND)
+	message("-- ${Red}WARNING:Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")	
+endif(Protobuf_FOUND)
 
 include_directories(
     ../../amd_openvx/openvx/include
@@ -80,6 +78,8 @@ list(APPEND SOURCES
     src/prior_box_layer.cpp
     src/crop_layer.cpp
     src/crop_and_resize_layer.cpp
+    src/detection_output.cpp
+    src/profiler.cpp
     )
 
 add_library(vx_nn SHARED ${SOURCES})

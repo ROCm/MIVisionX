@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 #include "kernels.h"
 
+#include <stdio.h>
+#include <sys/stat.h>
 struct ReshapeLayerLocalData {
     NeuralNetworkCommonHandle * handle;
     cl_mem input_mem;
@@ -66,6 +68,7 @@ static vx_status VX_CALLBACK validateReshapeLayer(vx_node node, const vx_referen
 
 static vx_status VX_CALLBACK processReshapeLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Reshape_Layer)
     ReshapeLayerLocalData * data= NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 
@@ -82,7 +85,7 @@ static vx_status VX_CALLBACK processReshapeLayer(vx_node node, const vx_referenc
         std::cout << "Reshape Layer: using aliased buffer "<< std::endl;
 #endif
     }
-
+PROFILER_STOP(VX_NN, Reshape_Layer)
     return VX_SUCCESS;
 }
 

@@ -106,6 +106,7 @@ static vx_status VX_CALLBACK validatePoolingLayer(vx_node node, const vx_referen
 
 static vx_status VX_CALLBACK processPoolingLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Pooling_Layer)
     PoolingLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -120,6 +121,15 @@ static vx_status VX_CALLBACK processPoolingLayer(vx_node node, const vx_referenc
         float alpha = 1.0f, beta = 0.0f;
         ERROR_CHECK_MIOPEN_STATUS(miopenActivationForward(data->handle->miopen_handle, data->activation_desc, &alpha, data->output_desc, data->output_mem, &beta, data->output_desc, data->output_mem));
     }
+
+
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("pooling_%04d.bin", (vx_tensor)parameters[7]);
+    #endif
+
+PROFILER_STOP(VX_NN, Pooling_Layer)
 
     return VX_SUCCESS;
 }

@@ -20,6 +20,7 @@
 
 import sys, os, os.path
 import numpy as np
+import re
 
 class IrTensor:
     def __init__(self):
@@ -80,14 +81,23 @@ class IrAttr:
             , 'order'  : []              # order for permute
             , 'min_size' : 0.0             # minimum size of prior
             , 'max_size' : 0.0             # maximum size of prior
-            , 'aspect_ratio' : []        # aspect ratios for bounding boxes
+            , 'aspect_ratio' : [0.0, 0.0]        # aspect ratios for bounding boxes
             , 'flip' : 0                 # flip bounding boxes (true/false)
             , 'clip' : 0                 # normalize bounding boxes (true/false)
-            , 'variance' : []            # variance for priors
+            , 'variance' : [0.1, 0.1, 0.1, 0.1]            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
-            , 'keepdims' : 1             # no change in output dimensions 
             , 'max' : 0.0                 # max_value
             , 'min' : 0.0                 # min_value 
+            , 'num_classes' : 0          #attributes for detection output layer
+            , 'share_location' : 1
+            , 'background_label_id' : 0
+            , 'nms_threshold' : 0.0
+            , 'top_k' : -1
+            , 'code_type' : 1
+            , 'variance_encoded_in_target' : 0
+            , 'keep_top_k' : -1
+            , 'confidence_threshold' : 0.0
+            , 'eta' : 0.0
         }
         self.dict_set = []
 
@@ -175,6 +185,7 @@ class IrNode:
             'argmax' : 1,
             'clip' : 1,
             'clamp' : 1,
+            'detection_output' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -594,6 +605,14 @@ class IrGraph:
                     local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['detection_output']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    out_shape = [1,1,1,7]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 
@@ -864,10 +883,15 @@ class IrGraph:
                      (node.type == 'max_pool' or node.type == 'avg_pool' or node.type == 'global_avg_pool'):
                     prevSkipNode = node
                     prevOutput = node.outputs[0]
-                elif node.type == 'relu' and \
+                elif (node.type == 'relu' or node.type == 'leaky_relu') and \
                      (prevNode.type == 'conv' or prevNode.type == 'max_pool' or \
                      prevNode.type == 'avg_pool' or prevNode.type == 'global_avg_pool'):
+                    if node.type == 'leaky_relu':
+                        leaky_alpha = node.attr.get('alpha')
+                    else:
+                        leaky_alpha = 0.0
                     prevNode.attr.set('mode', 1)
+                    prevNode.attr.set('alpha', leaky_alpha)
                     if prevSkipNode != None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:
@@ -1078,12 +1102,14 @@ class IrGraph:
     def toFile(self,outputFolder):
         if not os.path.isdir(outputFolder):
             os.mkdir(outputFolder)
-        irDescFile = outputFolder + '/graph.nnir'
+        irDescFile = outputFolder + '/old_graph.nnir'
+        irDescFileNew = outputFolder + '/graph.nnir'
         print('OK: creating IR description in ' + irDescFile + ' ...')
         with open(irDescFile, 'w') as f:
             for tensor in self.inputs:
                 f.write('input|' + tensor.toString() + '\n')
             for tensor in self.outputs:
+                print tensor.shape
                 f.write('output|' + tensor.toString() + '\n')
             for tensor in self.initializers:
                 f.write('initializer|' + tensor.toString() + '\n')
@@ -1091,6 +1117,7 @@ class IrGraph:
                 f.write('local|' + tensor.toString() + '\n')
             for node in self.nodes:
                 f.write(node.toString() + '\n')
+        f.close()
         binaryFolder = outputFolder + '/binary'
         print('OK: creating IR binaries in ' + binaryFolder + ' ...')
         if not os.path.isdir(binaryFolder):
@@ -1099,6 +1126,57 @@ class IrGraph:
             binaryFile = binaryFolder + '/' + binary + '.raw'
             with open(binaryFile, 'wb') as f:
                 f.write(self.binaries[binary])
+        name_dict = {}
+        with open(irDescFile, 'r') as f_read: 
+            for line in f_read:
+                line = line.strip()
+                s = line.split('|')
+                if s[0] == 'node':
+                    node_type = s[1]
+                    node_output = s[3]
+                    node_output = node_type + "_" + node_output
+                    name_dict[s[3]] = node_output
+        f_read.close()
+        with open(irDescFile, 'r') as f_read, open(irDescFileNew, 'w') as f_write:
+            for line in f_read:
+                line = line.strip()
+                s = line.split('|')
+                if s[0] == 'input':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'output':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'initializer':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'local':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'node':
+                    if s[3] in name_dict:
+                        s[3] = name_dict[s[3]]
+                    inputs = re.split(',', s[2])
+                    for i in range(len(inputs)):
+                        if inputs[i] in name_dict:
+                            inputs[i] = name_dict[inputs[i]]
+                            s[2] = ','.join(inputs)
+                    f_write.write('|'.join(s) + '\n')
+        f_read.close()
+        f_write.close()
+        os.remove(outputFolder + "/old_graph.nnir")
 
     def fromFile(self,inputFolder):
         irDescFile = inputFolder + '/graph.nnir'

@@ -182,7 +182,6 @@ class IrNode:
             'permute' : 1,
             'prior_box' : 1,
             'flatten'  : 1,
-            'argmax' : 1,
             'clip' : 1,
             'clamp' : 1,
             'detection_output' : 1,
@@ -564,17 +563,6 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
-                elif node.type in ['argmax']:
-                    axis = node.attr.get('axis')
-                    keepdims = node.attr.get('keepdims')
-                    output_type = 'I064'
-                    if axis == 0 and keepdims == 1:
-                        output_shape = [input.shape[0], 1, input.shape[2], input.shape[3]]
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['clip']:

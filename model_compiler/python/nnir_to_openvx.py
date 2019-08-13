@@ -754,17 +754,6 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
     }    
 """ 
     % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
-"""
-            elif node.type == 'argmax':
-                f.write( \
-"""
-    { 
-      vx_node node = vxArgmaxLayer(graph, %s, (vx_reference)%s);
-      ERROR_CHECK_OBJECT(node);
-      ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }    
-""" 
-    % (node.inputs[0], node.outputs[0]))
             elif node.type == 'detection_output':
                 f.write( \
 """

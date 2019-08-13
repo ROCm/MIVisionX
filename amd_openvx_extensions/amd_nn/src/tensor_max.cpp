@@ -196,7 +196,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input
                 (vx_reference)s_policy,
                 (vx_reference)output
             };
-            node = createNode(graph, VX_KERNEL_TENSOR_MIN, params, sizeof(params) / sizeof(params[0]));
+            node = createNode(graph, VX_KERNEL_TENSOR_MAX_AMD, params, sizeof(params) / sizeof(params[0]));
             vxReleaseScalar(&s_policy);
         }
     }

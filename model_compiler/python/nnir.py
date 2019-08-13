@@ -352,8 +352,6 @@ class IrGraph:
                 elif node.type in ['gemm']:
                     A = self.tensor_dict[node.inputs[0]]
                     B = self.tensor_dict[node.inputs[1]]
-                    print A.shape
-                    print B.shape
                     transA = node.attr.get('transA')
                     transB = node.attr.get('transB')
                     shapeA = A.shape
@@ -407,7 +405,6 @@ class IrGraph:
                         self.addLocal(local)
                 elif node.type in ['squeeze']:
                     axes = node.attr.get('axes')
-                    print "axes = ", axes 
                     out_shape = []
                     if len(axes) == 0:
                         for i in range(len(input.shape)):
@@ -416,7 +413,6 @@ class IrGraph:
                     else:
                         out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
                     node.attr.set('shape', out_shape)
-                    print "out_shape = ", out_shape
                     node.type = 'reshape'
                     local = IrTensor()
                     local.setName(output)
@@ -1109,7 +1105,6 @@ class IrGraph:
             for tensor in self.inputs:
                 f.write('input|' + tensor.toString() + '\n')
             for tensor in self.outputs:
-                print tensor.shape
                 f.write('output|' + tensor.toString() + '\n')
             for tensor in self.initializers:
                 f.write('initializer|' + tensor.toString() + '\n')

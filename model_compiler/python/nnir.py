@@ -172,6 +172,7 @@ class IrNode:
             'concat' : 1,
             'global_avg_pool' : 1,
             'leaky_relu' : 1,
+            'sigmoid' : 1,
             'reshape' : 1,
             'squeeze' : 1,
             'unsqueeze' : 1,
@@ -297,7 +298,7 @@ class IrGraph:
             for output in node.outputs:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
-                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
+                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax']:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
@@ -596,7 +597,6 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
-
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

@@ -482,6 +482,14 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
        ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """ % (node.inputs[0], node.attr.get('alpha'), node.outputs[0]))
+            elif node.type == 'sigmoid':
+                f.write( \
+"""
+    { vx_node node = vxActivationLayer(graph, %s, VX_NN_ACTIVATION_LOGISTIC, 0.0f, 0.0f, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], node.outputs[0]))
             elif node.type == 'add' or node.type == 'sum':
                 if len(node.inputs) == 2:
                     f.write( \

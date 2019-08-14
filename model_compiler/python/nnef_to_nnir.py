@@ -42,6 +42,7 @@ nnef2ir_op_type = {
     'slice'                                 : 'slice',
     'concat'                                : 'concat',
     'leaky_relu'                            : 'leaky_relu',
+    'sigmoid'                               : 'sigmoid',
     'reshape'                               : 'reshape',
     'squeeze'                               : 'squeeze',
     'unsqueeze'                             : 'unsqueeze',
@@ -100,7 +101,7 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
 
                     output_tensor = nnef_tensor[nnef_operation.outputs['output']]
                     temp_stride = nnef_attribs['stride']
-                    strides = [temp_stride for temp_stride in nnef_attribs[attrib]]
+                    strides = [temp_stride for temp_stride in temp_stride]
                     if len(strides) == 4:
                         strides = strides[2:]
                     elif len(strides) == 0:

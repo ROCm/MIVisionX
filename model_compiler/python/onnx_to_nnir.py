@@ -64,6 +64,7 @@ onnx2ir_op_type = {
     'LRN'                : 'lrn',
     'Concat'             : 'concat',
     'LeakyRelu'          : 'leaky_relu',
+    'Sigmoid'            : 'sigmoid',
     'GlobalAveragePool'  : 'global_avg_pool',
     'Softmax'            : 'softmax',
     'Reshape'            : 'reshape',

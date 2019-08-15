@@ -196,6 +196,7 @@ def generateModuleH(graph,fileName):
 #define included_file_annmodule_h
 
 #include <VX/vx.h>
+#include <map>
 
 ////
 // initialize graph neural network for inference
@@ -210,7 +211,7 @@ def generateModuleH(graph,fileName):
 """ % (tensor.name, ', '.join([str(v) for v in reversed(tensor.shape)])))
         f.write( \
 """//
-extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const char * binaryFilename);
+extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::map<std::string, vx_tensor> &tensorMap, const char * binaryFilename);
 
 #endif
 """ % (', '.join(['vx_tensor ' + tensor.name for tensor in graph.inputs]), \
@@ -270,7 +271,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const char * binaryFilename)
+VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::map<std::string, vx_tensor> &tensorMap, const char * binaryFilename)
 {
     vx_context context = vxGetContext((vx_reference)graph);
     ERROR_CHECK_OBJECT(context);
@@ -336,7 +337,8 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
                 elif int(virtual_tensor_flag) == 0:
                     f.write( \
 """    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
-"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
+    tensorMap.insert(std::pair<std::string, vx_tensor>("%s", %s));        
+"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor.name))
                 f.write( \
 """    ERROR_CHECK_OBJECT(%s);
 """%(tensor.name))
@@ -744,13 +746,14 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const c
 """)
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
-        f.write( \
+        if int(virtual_tensor_flag) == 1:
+            f.write( \
 """
     // release local tensors
 """)
-        for idx, tensor in enumerate(graph.locals):
-            if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
-                f.write( \
+            for idx, tensor in enumerate(graph.locals):
+                if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
+                    f.write( \
 """    ERROR_CHECK_STATUS(vxReleaseTensor(&%s));
 """ %(tensor.name))
         f.write( \
@@ -789,10 +792,8 @@ typedef struct pyif_ann_handle_t {
     vx_context  context;
     vx_graph    graph;
     vx_tensor   input;
-    vx_tensor   local[500];
     vx_tensor   output[8];
     int         num_output;
-    int         num_local;
 """)
         if int(virtual_tensor_flag) == 0:
             f.write( \
@@ -972,23 +973,13 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                     f.write( \
 """                    handle->output[%d] = vxCreateTensor(handle->context, %d, out_dim_%d, VX_TYPE_FLOAT16, 0);
 """% (i, len(output_shape[i]), i))
-                if int(virtual_tensor_flag) == 0:
-                    f.write( \
-"""                    handle->tensorMap.insert(std::pair<std::string, vx_tensor>("%s", handle->output[%d]));
-"""% ('handle->output[{}]'.format(i), i))
                 f.write( \
 """                    if((status = vxGetStatus((vx_reference)handle->output[%d])) != VX_SUCCESS) {
                         printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
                     }
 """% (i, 'x'.join([str(v) for v in output_shape[i]])))
-                if int(virtual_tensor_flag) == 0:
-                	f.write( \
-"""                    else {
-                        handle->num_local = %d;
-""" %(len(graph.locals)))
-                elif int(virtual_tensor_flag) == 1:
-                	f.write( \
-"""					else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
+                f.write( \
+"""					else if((status = annAddToGraph(handle->graph, handle->input, %s, handle->tensorMap, binaryFilename)) != VX_SUCCESS) {
                         printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
                     }
                     else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
@@ -999,38 +990,6 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                         successful = true;
                     }
 """ %(', '.join(output_str)))
-            if int(virtual_tensor_flag) == 0:
-            	for i in range(len(graph.locals)):
-                	f.write( \
-"""                        vx_size local_dim_%d[%d] = { %s };
-""" %(i, len(local_shape[i]), ', '.join([str(v) for v in reversed(local_shape[i])])))
-                	if input_data_type == "F032":
-                		f.write( \
-"""                        handle->local[%d] = vxCreateTensor(handle->context, %d, local_dim_%d, VX_TYPE_FLOAT32, 0);
-""" % (i, len(local_shape[i]), i))
-	                elif input_data_type =="F016":
-	                    f.write( \
-"""                        handle->local[%d] = vxCreateTensor(handle->context, %d, local_dim_%d, VX_TYPE_FLOAT16, 0);
-""" % (i, len(local_shape[i]), i))
-                	f.write( \
-"""                        handle->tensorMap.insert(std::pair<std::string, vx_tensor>("%s", handle->local[%d]));                            
-                        if((status = vxGetStatus((vx_reference)handle->local[%d])) != VX_SUCCESS) {
-                            printf("ERROR: vxCreateTensor(local:[%s]): failed (%%d)\\n", status);
-                        }
-""" % ('handle->local[{}]'.format(i), i, i, 'x'.join([str(v) for v in local_shape[i]])))
-                f.write( \
-"""                        else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
-                            printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
-                        }
-                        else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
-                            printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
-                        }
-                        else {
-                            printf("OK: annCreateInference: successful\\n");
-                            successful = true;
-                        }
-                    }
-""" % (', '.join(output_str)))
             f.write( \
 """                }
             }
@@ -1047,13 +1006,7 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                 f.write( \
 """            if(handle->output[%d])
                 vxReleaseTensor(&handle->output[%d]);
-""" % ( i, i))
-            if int(virtual_tensor_flag) == 0:
-            	for i in range(len(graph.locals)):
-                	f.write( \
-"""            if(handle->local[%d])
-                vxReleaseTensor(&handle->local[%d]);
-""" % ( i, i))                    
+""" % ( i, i))             
             f.write( \
 """            if(handle->context)
                 vxReleaseContext(&handle->context);
@@ -1084,14 +1037,6 @@ VX_API_ENTRY int VX_API_CALL annReleaseInference(pyif_ann_handle handle)
             }
         }
 """ )
-            if int(virtual_tensor_flag) == 0:
-            	f.write( \
-"""        for (int i=0; i<handle->num_local; i++) {
-            if(handle->local[i] && (status = vxReleaseTensor(&handle->local[i])) != VX_SUCCESS) {
-                printf("ERROR: annReleaseInference: vxReleaseTensor(local<%d>): failed (%d)\\n", i,status);
-            }
-        }
-""")
             f.write( \
 """    }   
 	if(handle->context && (status = vxReleaseContext(&handle->context)) != VX_SUCCESS) {
@@ -1428,7 +1373,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, c
     }
 """ )
             	f.write (\
-"""    else if(it->second && (status = vxCopyTensorPatch(it->second, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+"""    else if((vx_tensor)it->second && (status = vxCopyTensorPatch((vx_tensor)it->second, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
         printf("ERROR: annCopyFromInferenceLocal: vxCopyTensorPatch: failed (%%d)\\n", status);
     }
     return status;
@@ -1541,12 +1486,13 @@ if __name__ == '__main__':
         local_size = int(n)*int(c)*int(h)*int(w)*4
         local_buf = bytearray(local_size)
         local = np.frombuffer(local_buf, dtype=np.float32)
-        local_str = 'handle->local[{}]'.format(types[5:])
-        status = api.annCopyFromInferenceLocal(hdl, local_str, np.ascontiguousarray(local, dtype=np.float32), local_size)
+        status = api.annCopyFromInferenceLocal(hdl, name, np.ascontiguousarray(local, dtype=np.float32), local_size)
         print('INFO: annCopyFromInferenceLocal status %d' %(status))
         fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
         fid.write(local.tobytes())
         fid.close()
+    status = api.annReleaseInference(hdl)
+    print('INFO: annReleaseInference status %d' %(status))
 """)
 
 def generateTestCPP(graph,argmaxOutput,fileName):
@@ -1570,6 +1516,7 @@ def generateTestCPP(graph,argmaxOutput,fileName):
 #include <math.h>
 #include <half.hpp>
 #include <immintrin.h>
+#include <map>
 using half_float::half;
 
 #if ENABLE_OPENCV
@@ -1649,7 +1596,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
     }
     vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
     vx_map_id map_id;
-    void * ptr;
+    float * ptr;
     vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for " << fileName << std::endl;
@@ -1953,9 +1900,9 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                 return -1;
             }
             if (data_type == VX_TYPE_FLOAT32)
-                fwrite(ptr, sizeof(float), count, fp);
+                fwrite((void **)&ptr, sizeof(float), count, fp);
             else
-                fwrite(ptr, sizeof(short), count, fp);                
+                fwrite((void **)&ptr, sizeof(short), count, fp);                
             fclose(fp);
         }
         if(argList.size() >= 2) {
@@ -2128,10 +2075,11 @@ int main(int argc, const char ** argv)
        tensor.name, tensor.name))
         f.write( \
 """
+    std::map<std::string, vx_tensor> tensorMap;
     // build graph using annmodule
     int64_t freq = clockFrequency(), t0, t1;
     t0 = clockCounter();
-    status = annAddToGraph(graph, %s, %s, binaryFilename);
+    status = annAddToGraph(graph, %s, %s, tensorMap, binaryFilename);
     if(status) {
         printf("ERROR: annAddToGraph() failed (%%d)\\n", status);
         return -1;

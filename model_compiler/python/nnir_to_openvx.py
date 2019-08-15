@@ -330,11 +330,11 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::ma
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
 """%(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)])))
-                if int(virtual_tensor_flag) == 1:
+                if virtual_tensor_flag == 1:
                     f.write( \
 """    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
 """%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
-                elif int(virtual_tensor_flag) == 0:
+                elif virtual_tensor_flag == 0:
                     f.write( \
 """    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
     tensorMap.insert(std::pair<std::string, vx_tensor>("%s", %s));        
@@ -746,7 +746,7 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::ma
 """)
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
-        if int(virtual_tensor_flag) == 1:
+        if virtual_tensor_flag == 1:
             f.write( \
 """
     // release local tensors
@@ -795,7 +795,7 @@ typedef struct pyif_ann_handle_t {
     vx_tensor   output[8];
     int         num_output;
 """)
-        if int(virtual_tensor_flag) == 0:
+        if virtual_tensor_flag == 0:
             f.write( \
 """    std::map<std::string, vx_tensor> tensorMap;
 """)
@@ -807,7 +807,7 @@ typedef struct pyif_ann_handle_t {
 //
 extern "C" VX_API_ENTRY const char *    VX_API_CALL annQueryInference();
 """)
-        if int(virtual_tensor_flag) == 0:
+        if virtual_tensor_flag == 0:
         	f.write( \
 """extern "C" VX_API_ENTRY const char *    VX_API_CALL annQueryLocals();
 """)
@@ -821,7 +821,7 @@ extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput(p
             f.write( \
 """extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handle, float * out_ptr, size_t out_size);
 """ % (i))
-        if int(virtual_tensor_flag) == 0:
+        if virtual_tensor_flag == 0:
         	f.write( \
 """extern "C" VX_API_ENTRY int             VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size);
 """)
@@ -911,7 +911,7 @@ VX_API_ENTRY const char * VX_API_CALL annQueryInference()
     return "%s";
 }
 """ % (config))
-            if int(virtual_tensor_flag) == 0:
+            if virtual_tensor_flag == 0:
                 f.write( \
 """VX_API_ENTRY const char * VX_API_CALL annQueryLocals()
 {
@@ -1328,7 +1328,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     return status;
 }
 """   % (2, tshape[2][3]*2, tshape[2][2]*tshape[2][3]*2, tshape[2][1]*tshape[2][2]*tshape[2][3]*2, tshape[i][1],tshape[i][2],tshape[i][3],output_buf_size[2], output_buf_size[2], len(output_shape[2])))
-            if int(virtual_tensor_flag) == 0:
+            if virtual_tensor_flag == 0:
             	f.write( \
 """
 VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, const char *tensorName, float * out_ptr, size_t out_size)
@@ -1414,7 +1414,7 @@ class AnnAPI:
         self.annQueryInference.restype = ctypes.c_char_p
         self.annQueryInference.argtypes = []
 """)
-        if int(virtual_tensor_flag) == 0:
+        if virtual_tensor_flag == 0:
         	f.write( \
 """        self.annQueryLocals = self.lib.annQueryLocals
         self.annQueryLocals.restype = ctypes.c_char_p
@@ -1434,7 +1434,7 @@ class AnnAPI:
         self.annCopyFromInferenceOutput.restype = ctypes.c_int
         self.annCopyFromInferenceOutput.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_size_t]
 """)
-        if int(virtual_tensor_flag) == 0:
+        if virtual_tensor_flag == 0:
         	f.write( \
 """        self.annCopyFromInferenceLocal = self.lib.annCopyFromInferenceLocal
         self.annCopyFromInferenceLocal.restype = ctypes.c_int
@@ -1477,7 +1477,7 @@ if __name__ == '__main__':
             fid.write(out.tobytes())
             fid.close()
 """)
-        if int(virtual_tensor_flag) == 0:
+        if virtual_tensor_flag == 0:
         	f.write( \
 """    for each in filter(None,api.annQueryLocals().decode("utf-8").split(';')):
         types,name,n,c,h,w = each.split(',')

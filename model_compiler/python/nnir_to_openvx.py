@@ -1358,7 +1358,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, c
 """ )
             	if input_data_type == "F032":
                 	f.write(\
-"""     else if(out_size != stride[3]) {
+"""    else if(out_size != stride[3]) {
         status = VX_FAILURE;
         printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %d) -- got %d\\n", (int)stride[3],(int)out_size);
     }

@@ -41,7 +41,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 MIVisionX has a number of [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
 
 * [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
-* [Digit Test](apps/DGtest#amd-dgtest): This sample application is used to recognize hand written digits.
+* [Digit Test](apps/dg_test#amd-dgtest): This sample application is used to recognize hand written digits.
 * [MIVisionX OpenVX Classsification](apps#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
 * [MIVisionX WinML Classification](apps#mivisionx-winml-classification): This sample application shows how to run supported ONNX models with MIVisionX RunTime on Windows.
 * [MIVisionX WinML YoloV2](apps#mivisionx-winml-yolov2): This sample application shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
@@ -299,10 +299,10 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.4.25`
+* ROCm: rocm-dkms - `2.6.22`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [1.8.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.7.1)
+* MIOpen - [2.0.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.0.0)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

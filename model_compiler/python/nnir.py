@@ -435,7 +435,24 @@ class IrGraph:
                 elif node.type in ['div']:
                     if node.inputs[1] not in self.binaries:
                         raise ValueError("div: division by local tensor is unsupported: " + node.inputs[1])
-                    weight = np.frombuffer(self.binaries[node.inputs[1]], dtype=np.float32)
+                    if self.tensor_types[node.inputs[1]] == 'F064':
+                        npType = np.float64
+                    elif self.tensor_types[node.inputs[1]] == 'F032':
+                        npType = np.float32
+                    elif self.tensor_types[node.inputs[1]] == 'F016':
+                        npType = np.float16
+                    elif self.tensor_types[node.inputs[1]] == 'I032':
+                        npType = np.int32    
+                    elif self.tensor_types[node.inputs[1]] == 'I016':
+                        npType = np.int16
+                    elif self.tensor_types[node.inputs[1]] == 'U016':
+                        npType = np.uint16
+                    elif self.tensor_types[node.inputs[1]] == 'U008':
+                        npType = np.uint8
+                    else:
+                        raise ValueError("div: Tensor type not supported: " + self.tensor_types[node.inputs[1]])
+                    
+                    weight = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     self.binaries[node.inputs[1]] = np.reciprocal(weight)
                     node.type = 'mul'
                     local = IrTensor()
@@ -511,7 +528,7 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
-                    self.addLocal(local)       
+                    self.addLocal(local)
                 elif node.type in ['permute']:
                     order = node.attr.get("order")   
                     if input.format == 'NCHW' and order == [0, 2, 3, 1]:

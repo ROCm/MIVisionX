@@ -881,13 +881,11 @@ VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, float * inp
                 output_str.append('handle->output[' + str(i) + ']')
             local_shape = []
             local_buf_size = []
-            local_str = []
             configLocals = ''
             for i in range(len(graph.locals)):
                 local_shape.append(graph.locals[i].shape)
                 local_buf_size.append(eval('*'.join([str(v) for v in local_shape[i]])) * 4)
                 configLocals += 'local' + str(i) + ',' +graph.locals[i].name + ',' + ','.join(str(v) for v in local_shape[i])+';'
-                local_str.append('handle->local[' + str(i) + ']')
             f.write( \
 """
 #include "annpython.h"

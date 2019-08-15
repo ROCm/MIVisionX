@@ -186,7 +186,7 @@ if( NOT OPENCL_FOUND )
 endif()
 """)
 
-def generateModuleH(graph,fileName):
+def generateModuleH(graph,fileName,virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
@@ -209,9 +209,18 @@ def generateModuleH(graph,fileName):
             f.write( \
 """//   %s -- dims[] = { %s, } (output)
 """ % (tensor.name, ', '.join([str(v) for v in reversed(tensor.shape)])))
-        f.write( \
+        if virtual_tensor_flag == 0:
+            f.write( \
 """//
 extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::map<std::string, vx_tensor> &tensorMap, const char * binaryFilename);
+
+#endif
+""" % (', '.join(['vx_tensor ' + tensor.name for tensor in graph.inputs]), \
+       ', '.join(['vx_tensor ' + tensor.name for tensor in graph.outputs])))
+        else:
+            f.write( \
+"""//
+extern "C" VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const char * binaryFilename);
 
 #endif
 """ % (', '.join(['vx_tensor ' + tensor.name for tensor in graph.inputs]), \
@@ -270,8 +279,21 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 
     return VX_SUCCESS;
 }
+""" )
+        if virtual_tensor_flag == 0:
+            f.write( \
+"""VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::map<std::string, vx_tensor> &tensorMap, const char * binaryFilename)
+{
+    vx_context context = vxGetContext((vx_reference)graph);
+    ERROR_CHECK_OBJECT(context);
+    ERROR_CHECK_STATUS(vxLoadKernels(context, "vx_nn"));
 
-VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::map<std::string, vx_tensor> &tensorMap, const char * binaryFilename)
+    // create variables
+""" % (', '.join(['vx_tensor ' + tensor.name for tensor in graph.inputs]), \
+       ', '.join(['vx_tensor ' + tensor.name for tensor in graph.outputs])))
+        else:
+            f.write( \
+"""VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, const char * binaryFilename)
 {
     vx_context context = vxGetContext((vx_reference)graph);
     ERROR_CHECK_OBJECT(context);
@@ -330,15 +352,15 @@ VX_API_ENTRY vx_status VX_API_CALL annAddToGraph(vx_graph graph, %s, %s, std::ma
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
 """%(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)])))
-                if virtual_tensor_flag == 1:
-                    f.write( \
-"""    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
-"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
-                elif virtual_tensor_flag == 0:
+                if virtual_tensor_flag == 0:
                     f.write( \
 """    vx_tensor %s = vxCreateTensor(context, %d, dims_%s, %s, 0);
     tensorMap.insert(std::pair<std::string, vx_tensor>("%s", %s));        
 """%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type], tensor.name, tensor.name))
+                else:
+                    f.write( \
+"""    vx_tensor %s = vxCreateVirtualTensor(graph, %d, dims_%s, %s, 0);
+"""%(tensor.name, len(tensor.shape), tensor.name, tensor_type_nnir2openvx[tensor.type]))
                 f.write( \
 """    ERROR_CHECK_OBJECT(%s);
 """%(tensor.name))
@@ -976,18 +998,27 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                         printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
                     }
 """% (i, 'x'.join([str(v) for v in output_shape[i]])))
-                f.write( \
+                if virtual_tensor_flag == 0:
+                    f.write( \
 """					else if((status = annAddToGraph(handle->graph, handle->input, %s, handle->tensorMap, binaryFilename)) != VX_SUCCESS) {
                         printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
                     }
-                    else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
-                        printf("ERROR: vxVerifyGraph: failed (%%d)\\n", status);
+"""  %(', '.join(output_str)))
+                else:
+                    f.write( \
+"""                    else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
+                        printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
+                    }
+""" %(', '.join(output_str)))
+                f.write( \
+"""                    else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
+                        printf("ERROR: vxVerifyGraph: failed (%d)\\n", status);
                     }
                     else {
                         printf("OK: annCreateInference: successful\\n");
                         successful = true;
                     }
-""" %(', '.join(output_str)))
+""" )
             f.write( \
 """                }
             }
@@ -1493,7 +1524,7 @@ if __name__ == '__main__':
     print('INFO: annReleaseInference status %d' %(status))
 """)
 
-def generateTestCPP(graph,argmaxOutput,fileName):
+def generateTestCPP(graph,argmaxOutput,fileName,virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
     with open(fileName, 'w') as f:
         generateLicenseForCPP(f)
@@ -2073,33 +2104,43 @@ int main(int argc, const char ** argv)
        tensor.name, tensor.name))
         f.write( \
 """
-    std::map<std::string, vx_tensor> tensorMap;
     // build graph using annmodule
     int64_t freq = clockFrequency(), t0, t1;
     t0 = clockCounter();
+""")
+        if virtual_tensor_flag == 0:
+            f.write( \
+"""    std::map<std::string, vx_tensor> tensorMap;
     status = annAddToGraph(graph, %s, %s, tensorMap, binaryFilename);
-    if(status) {
-        printf("ERROR: annAddToGraph() failed (%%d)\\n", status);
+""" % (', '.join([tensor.name for tensor in graph.inputs]), \
+       ', '.join([tensor.name for tensor in graph.outputs])))
+        else:
+            f.write( \
+"""    status = annAddToGraph(graph, %s, %s, binaryFilename);
+""" % (', '.join([tensor.name for tensor in graph.inputs]), \
+       ', '.join([tensor.name for tensor in graph.outputs])))
+        f.write( \
+"""    if(status) {
+        printf("ERROR: annAddToGraph() failed (%d)\\n", status);
         return -1;
     }
     status = vxVerifyGraph(graph);
     if(status) {
-        printf("ERROR: vxVerifyGraph(...) failed (%%d)\\n", status);
+        printf("ERROR: vxVerifyGraph(...) failed (%d)\\n", status);
         return -1;
     }
     t1 = clockCounter();
-    printf("OK: graph initialization with annAddToGraph() took %%.3f msec\\n", (float)(t1-t0)*1000.0f/(float)freq);
+    printf("OK: graph initialization with annAddToGraph() took %.3f msec\\n", (float)(t1-t0)*1000.0f/(float)freq);
 
     t0 = clockCounter();
     status = vxProcessGraph(graph);
     t1 = clockCounter();
     if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%%d)\\n", status);
+        printf("ERROR: vxProcessGraph() failed (%d)\\n", status);
         return -1;
     }
-    printf("OK: vxProcessGraph() took %%.3f msec (1st iteration)\\n", (float)(t1-t0)*1000.0f/(float)freq);
-""" % (', '.join([tensor.name for tensor in graph.inputs]), \
-       ', '.join([tensor.name for tensor in graph.outputs])))
+    printf("OK: vxProcessGraph() took %.3f msec (1st iteration)\\n", (float)(t1-t0)*1000.0f/(float)freq);
+""" )
         for tensor in graph.outputs:
             f.write( \
 """
@@ -2162,10 +2203,10 @@ def generateCode(graph,argmaxOutput,outputFolder,virtual_tensor_flag):
     if not os.path.isdir(outputFolder):
         os.mkdir(outputFolder)
     generateCMakeFiles(graph,outputFolder)
-    generateModuleH(graph,outputFolder + '/annmodule.h')
+    generateModuleH(graph,outputFolder + '/annmodule.h', virtual_tensor_flag)
     generateModuleCPP(graph,outputFolder + '/annmodule.cpp',virtual_tensor_flag)
     generateBinary(graph,outputFolder + '/weights.bin')
-    generateTestCPP(graph,argmaxOutput,outputFolder + '/anntest.cpp')
+    generateTestCPP(graph,argmaxOutput,outputFolder + '/anntest.cpp', virtual_tensor_flag)
     generatePythonH(graph,outputFolder + '/annpython.h', virtual_tensor_flag)
     generatePythonCPP(graph,outputFolder + '/annpython.cpp', virtual_tensor_flag)
     generatePythonScriptSample(graph,outputFolder + '/anntest.py', virtual_tensor_flag)

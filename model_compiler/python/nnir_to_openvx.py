@@ -1625,7 +1625,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
     }
     vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
     vx_map_id map_id;
-    float * ptr;
+    void * ptr;
     vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for " << fileName << std::endl;
@@ -1929,9 +1929,9 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                 return -1;
             }
             if (data_type == VX_TYPE_FLOAT32)
-                fwrite((void **)&ptr, sizeof(float), count, fp);
+                fwrite(ptr, sizeof(float), count, fp);
             else
-                fwrite((void **)&ptr, sizeof(short), count, fp);                
+                fwrite(ptr, sizeof(short), count, fp);                
             fclose(fp);
         }
         if(argList.size() >= 2) {

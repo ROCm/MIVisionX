@@ -20,6 +20,7 @@
 
 import sys, os, os.path
 import numpy as np
+import re
 
 class IrTensor:
     def __init__(self):
@@ -1007,12 +1008,14 @@ class IrGraph:
     def toFile(self,outputFolder):
         if not os.path.isdir(outputFolder):
             os.mkdir(outputFolder)
-        irDescFile = outputFolder + '/graph.nnir'
+        irDescFile = outputFolder + '/old_graph.nnir'
+        irDescFileNew = outputFolder + '/graph.nnir'
         print('OK: creating IR description in ' + irDescFile + ' ...')
         with open(irDescFile, 'w') as f:
             for tensor in self.inputs:
                 f.write('input|' + tensor.toString() + '\n')
             for tensor in self.outputs:
+                print tensor.shape
                 f.write('output|' + tensor.toString() + '\n')
             for tensor in self.initializers:
                 f.write('initializer|' + tensor.toString() + '\n')
@@ -1020,6 +1023,7 @@ class IrGraph:
                 f.write('local|' + tensor.toString() + '\n')
             for node in self.nodes:
                 f.write(node.toString() + '\n')
+        f.close()
         binaryFolder = outputFolder + '/binary'
         print('OK: creating IR binaries in ' + binaryFolder + ' ...')
         if not os.path.isdir(binaryFolder):
@@ -1028,6 +1032,57 @@ class IrGraph:
             binaryFile = binaryFolder + '/' + binary + '.raw'
             with open(binaryFile, 'wb') as f:
                 f.write(self.binaries[binary])
+        name_dict = {}
+        with open(irDescFile, 'r') as f_read: 
+            for line in f_read:
+                line = line.strip()
+                s = line.split('|')
+                if s[0] == 'node':
+                    node_type = s[1]
+                    node_output = s[3]
+                    node_output = node_type + "_" + node_output
+                    name_dict[s[3]] = node_output
+        f_read.close()
+        with open(irDescFile, 'r') as f_read, open(irDescFileNew, 'w') as f_write:
+            for line in f_read:
+                line = line.strip()
+                s = line.split('|')
+                if s[0] == 'input':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'output':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'initializer':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'local':
+                    name,fp_type,size,storage_format = s[1].split(';')
+                    if name in name_dict:
+                        name = name_dict[name]
+                        s[1] = name + ';' + fp_type + ';' + size + ';' + storage_format
+                    f_write.write('|'.join(s) + '\n')
+                elif s[0] == 'node':
+                    if s[3] in name_dict:
+                        s[3] = name_dict[s[3]]
+                    inputs = re.split(',', s[2])
+                    for i in range(len(inputs)):
+                        if inputs[i] in name_dict:
+                            inputs[i] = name_dict[inputs[i]]
+                            s[2] = ','.join(inputs)
+                    f_write.write('|'.join(s) + '\n')
+        f_read.close()
+        f_write.close()
+        os.remove(outputFolder + "/old_graph.nnir")
 
     def fromFile(self,inputFolder):
         irDescFile = inputFolder + '/graph.nnir'

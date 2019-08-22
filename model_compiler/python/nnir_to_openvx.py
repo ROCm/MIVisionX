@@ -997,19 +997,19 @@ VX_API_ENTRY pyif_ann_handle VX_API_CALL annCreateInference(const char * binaryF
                         printf("ERROR: vxCreateTensor(output:[%s]): failed (%%d)\\n", status);
                     }
 """% (i, 'x'.join([str(v) for v in output_shape[i]])))
-                if virtual_tensor_flag == 0:
-                    f.write( \
+            if virtual_tensor_flag == 0:
+                f.write( \
 """					else if((status = annAddToGraph(handle->graph, handle->input, %s, handle->tensorMap, binaryFilename)) != VX_SUCCESS) {
                         printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
                     }
 """  %(', '.join(output_str)))
-                else:
-                    f.write( \
+            else:
+                f.write( \
 """                    else if((status = annAddToGraph(handle->graph, handle->input, %s, binaryFilename)) != VX_SUCCESS) {
                         printf("ERROR: annAddToGraph: failed (%%d)\\n", status);
                     }
 """ %(', '.join(output_str)))
-                f.write( \
+            f.write( \
 """                    else if((status = vxVerifyGraph(handle->graph)) != VX_SUCCESS) {
                         printf("ERROR: vxVerifyGraph: failed (%d)\\n", status);
                     }

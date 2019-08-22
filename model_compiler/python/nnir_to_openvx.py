@@ -1419,6 +1419,7 @@ VX_API_ENTRY int VX_API_CALL annRunInference(pyif_ann_handle handle, int num_ite
 
 def generatePythonScriptSample(graph,fileName, virtual_tensor_flag):
     print('creating ' + fileName + ' ...')
+    input_data_type = graph.inputs[0].type
     with open(fileName, 'w') as f:
         generateLicenseForScript(f)
         f.write( \
@@ -1493,7 +1494,13 @@ if __name__ == '__main__':
             out = np.frombuffer(out_buf, dtype=np.float32)
             status = api.annCopyFromInferenceOutput(hdl, np.ascontiguousarray(out, dtype=np.float32), out_size)
             print('INFO: annCopyFromInferenceOutput status %d' %(status))
-            fid = open('%s.bin' %tensorOutputFile, 'wb+') 
+""" )
+        if input_data_type == "F016":
+            f.write( \
+"""            out = out.astype(np.float16)
+""")
+        f.write( \
+"""            fid = open('%s' %tensorOutputFile, 'wb+') 
             fid.write(out.tobytes())
             fid.close()
 """)
@@ -1506,7 +1513,13 @@ if __name__ == '__main__':
         local = np.frombuffer(local_buf, dtype=np.float32)
         status = api.annCopyFromInferenceLocal(hdl, name, np.ascontiguousarray(local, dtype=np.float32), local_size)
         print('INFO: annCopyFromInferenceLocal status %d' %(status))
-        fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
+""" )
+            if input_data_type == "F016":
+                f.write( \
+"""        local = local.astype(np.float16)
+""" )
+            f.write( \
+"""        fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
         fid.write(local.tobytes())
         fid.close()
     status = api.annReleaseInference(hdl)

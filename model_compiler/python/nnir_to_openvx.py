@@ -1378,18 +1378,18 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceLocal(pyif_ann_handle handle, c
 """ )
             	if input_data_type == "F032":
                 	f.write(\
-"""    else if(out_size != stride[3]) {
+"""    else if(out_size/%d != stride[3]) {
         status = VX_FAILURE;
-        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %d) -- got %d\\n", (int)stride[3],(int)out_size);
+        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %%d) -- got %%d\\n", (int)stride[3],(int)out_size);
     }
-""" )
+""" % (input_shape[0]))
                 elif input_data_type == "F016":
 	                f.write (\
-"""     else if(out_size/2 != stride[3]) {
+"""     else if(out_size/(2*%d) != stride[3]) {
         status = VX_FAILURE;
-        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %d) -- got %d\\n", (int)stride[3],(int)out_size);
+        printf("ERROR: annCopyFromInferenceLocal: invalid output buffer size (must be %%d) -- got %%d\\n", (int)stride[3],(int)out_size);
     }
-""" )
+""" % (input_shape[0]))
             	f.write (\
 """    else if((vx_tensor)it->second && (status = vxCopyTensorPatch((vx_tensor)it->second, %d, nullptr, nullptr, stride, out_ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
         printf("ERROR: annCopyFromInferenceLocal: vxCopyTensorPatch: failed (%%d)\\n", status);

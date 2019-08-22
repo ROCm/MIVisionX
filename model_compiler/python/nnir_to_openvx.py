@@ -768,14 +768,13 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 """)
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
-        if virtual_tensor_flag == 1:
-            f.write( \
+        f.write( \
 """
     // release local tensors
 """)
-            for idx, tensor in enumerate(graph.locals):
-                if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
-                    f.write( \
+        for idx, tensor in enumerate(graph.locals):
+            if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
+                f.write( \
 """    ERROR_CHECK_STATUS(vxReleaseTensor(&%s));
 """ %(tensor.name))
         f.write( \
@@ -1135,7 +1134,6 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
     vx_size stride[4] = { 2, %d, %d, %d };
     vx_map_id map_id;
     half * ptr = nullptr;
-    int writeSize = %d*%d*%d;
     if(!handle) {
         status = VX_FAILURE;
         printf("ERROR: annCopyToInferenceInput: invalid handle\\n");
@@ -1148,17 +1146,8 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
         printf("ERROR: annCopyToInferenceInput: input is not valid\\n");
     }
     else if(!is_nhwc) {
-        if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
-        {
-            printf("ERROR: annCopyToInferenceInput: vxMapTensorPatch: failed (%%d)\\n", status);
-        }
-        memset(ptr, 0, writeSize*2);
-        for(int i = 0; i < writeSize; i++)
-        {
-            ptr[i] = static_cast<half>(inp_ptr[i]);
-        }
-        if ((status = vxUnmapTensorPatch(handle->input, map_id)) != VX_SUCCESS) {
-            printf("ERROR: annCopyToInferenceInput: vxUnmapTensorPatch: failed (%%d)\\n", status);
+        if((status = vxCopyTensorPatch(handle->input, 4, nullptr, nullptr, stride, inp_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
+            printf("ERROR: annCopyToInferenceInput: vxCopyTensorPatch: failed (%%d)\\n", status);
         }
     }
     else if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS) {
@@ -1183,7 +1172,7 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
     }
     return status;
 }
-""" % (input_shape[3]*2, input_shape[2]*input_shape[3]*2, input_shape[1]*input_shape[2]*input_shape[3]*2, input_shape[1], input_shape[2], input_shape[3],\
+""" % (input_shape[3]*2, input_shape[2]*input_shape[3]*2, input_shape[1]*input_shape[2]*input_shape[3]*2, \
        input_buf_size, input_buf_size, input_shape[0], input_shape[1], input_shape[2], input_shape[3]))           
             tshape = []
             for i in range(len(graph.outputs)):

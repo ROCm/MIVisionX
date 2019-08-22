@@ -1493,7 +1493,7 @@ if __name__ == '__main__':
             out = np.frombuffer(out_buf, dtype=np.float32)
             status = api.annCopyFromInferenceOutput(hdl, np.ascontiguousarray(out, dtype=np.float32), out_size)
             print('INFO: annCopyFromInferenceOutput status %d' %(status))
-            fid = open('%s.bin' %tensorOutputFile, 'wb+') 
+            fid = open('%s' %tensorOutputFile, 'wb+') 
             fid.write(out.tobytes())
             fid.close()
 """)

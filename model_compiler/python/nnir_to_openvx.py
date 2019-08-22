@@ -1476,7 +1476,7 @@ if __name__ == '__main__':
     api = AnnAPI(annlibPythonName)
     if not os.path.exists("dumpBuffers"):
         os.makedirs("dumpBuffers")
-    outputTensorFile = "dumpBuffers/" + sys.argv[4]
+    tensorOutputFile = sys.argv[4]
     for each in filter(None,api.annQueryInference().decode("utf-8").split(';')):
         types,name,n,c,h,w = each.split(',')
         if types[0:5] == "input":
@@ -1493,7 +1493,7 @@ if __name__ == '__main__':
             out = np.frombuffer(out_buf, dtype=np.float32)
             status = api.annCopyFromInferenceOutput(hdl, np.ascontiguousarray(out, dtype=np.float32), out_size)
             print('INFO: annCopyFromInferenceOutput status %d' %(status))
-            fid = open('dumpBuffers/%s.bin' %name, 'wb+') 
+            fid = open('%s.bin' %tensorOutputFile, 'wb+') 
             fid.write(out.tobytes())
             fid.close()
 """)

@@ -1505,7 +1505,7 @@ if __name__ == '__main__':
             fid.close()
 """)
         if virtual_tensor_flag == 0:
-        	f.write( \
+            f.write( \
 """    for each in filter(None,api.annQueryLocals().decode("utf-8").split(';')):
         types,name,n,c,h,w = each.split(',')
         local_size = int(n)*int(c)*int(h)*int(w)*4

@@ -528,6 +528,16 @@ int main(int argc, const char ** argv)
         printf("ERROR: vxCreateTensor() failed for prob\n");
         return -1;
     }
+    vx_tensor prob_googlenet1 = vxCreateTensor(context, 4, dims_prob, VX_TYPE_FLOAT32, 0);
+    if(vxGetStatus((vx_reference)prob_googlenet1)) {
+        printf("ERROR: vxCreateTensor() failed for prob\n");
+        return -1;
+    }
+    vx_tensor prob_googlenet2 = vxCreateTensor(context, 4, dims_prob, VX_TYPE_FLOAT32, 0);
+    if(vxGetStatus((vx_reference)prob_googlenet2)) {
+        printf("ERROR: vxCreateTensor() failed for prob\n");
+        return -1;
+    }
     vx_tensor prob_resnet101 = vxCreateTensor(context, 4, dims_prob, VX_TYPE_FLOAT32, 0);
     if(vxGetStatus((vx_reference)prob_resnet101)) {
         printf("ERROR: vxCreateTensor() failed for prob\n");
@@ -599,7 +609,7 @@ int main(int argc, const char ** argv)
     }
     
     if(binaryFilename_googlenet_str != "empty"){
-    	status = annAddToGraph_googleNet(graph_googlenet, data_224x224, prob_googlenet, binaryFilename_googlenet);
+    	status = annAddToGraph_googleNet(graph_googlenet, data_224x224, prob_googlenet, prob_googlenet1, prob_googlenet2, binaryFilename_googlenet);
 	    if(status) {
 	        printf("ERROR: googlenet annAddToGraph() failed (%d)\n", status);
 	        return -1;

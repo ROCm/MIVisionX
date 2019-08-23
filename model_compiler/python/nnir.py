@@ -183,7 +183,6 @@ class IrNode:
             'permute' : 1,
             'prior_box' : 1,
             'flatten'  : 1,
-            'clip' : 1,
             'clamp' : 1,
             'detection_output' : 1,
         }
@@ -298,7 +297,7 @@ class IrGraph:
             for output in node.outputs:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
-                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax']:
+                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
@@ -509,12 +508,6 @@ class IrGraph:
                     local.setInfo(input.type, shape)
                     local.setFormat(format)
                     self.addLocal(local)
-                elif node.type in ['copy']:
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo(input.type, input.shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
                 elif node.type in ['crop']:
                     reference = self.tensor_dict[node.inputs[1]]
                     axis = node.attr.get('axis')
@@ -581,30 +574,6 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
-                elif node.type in ['clip']:
-                    min_value = node.attr.get('min')
-                    min_tensor = IrTensor()
-                    min_tensor.setName("min_tensor")
-                    min_tensor.setInfo(input.type, input.shape)
-                    min_data = np.full(input.shape, min_value, dtype=np.float32)
-                    self.addVariable(min_tensor)                    
-                    self.addBinary("min_tensor", min_data)
-                    node.inputs.append("min_tensor")
-                    
-                    max_value = node.attr.get('max')
-                    max_tensor = IrTensor()
-                    max_tensor.setName("max_tensor")
-                    max_tensor.setInfo(input.type, input.shape)
-                    max_data = np.full(input.shape, max_value, dtype=np.float32)
-                    self.addVariable(max_tensor)                    
-                    self.addBinary("max_tensor", max_data)
-                    node.inputs.append("max_tensor")
-                    
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['detection_output']:

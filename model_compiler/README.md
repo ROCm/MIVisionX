@@ -261,7 +261,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Inception-V4|&#9745;|||			
 |MNIST|&#9745;||&#9745;|		
 |Mobilenet|||&#9745;|		
-|MobilenetV2|||&#9745;|		
+|MobilenetV2|||&#9745;|
 |ResNet-18|||&#9745;|			
 |ResNet-34|||&#9745;|			
 |ResNet-50|&#9745;|&#9745;|&#9745;|			
@@ -299,6 +299,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Crop|&#9745;|||
 |CropAndResize||||
 |Deconv|&#9745;|&#9745;|&#9745;|
+|DetectionOutput|&#9745;|||
 |Div||&#9745;|&#9745;|
 |Dropout||||
 |Eltwise|&#9745;|||

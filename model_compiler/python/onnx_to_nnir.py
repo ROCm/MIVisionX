@@ -43,11 +43,13 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
-    'shape' : 'shape',
+    'shape' : 'shape',  
+    'ArgMax' : 'argmax',
+    'min' : 'min',
+    'max' : 'max'
 }
 
-onnx2ir_op_type = {    
-    'ArgMax'             : 'argmax',
+onnx2ir_op_type = { 
     'Conv'               : 'conv',
     'ConvTranspose'      : 'conv_transpose',
     'BatchNormalization' : 'batch_norm',
@@ -63,6 +65,7 @@ onnx2ir_op_type = {
     'LRN'                : 'lrn',
     'Concat'             : 'concat',
     'LeakyRelu'          : 'leaky_relu',
+    'Sigmoid'            : 'sigmoid',
     'GlobalAveragePool'  : 'global_avg_pool',
     'Softmax'            : 'softmax',
     'Reshape'            : 'reshape',
@@ -76,6 +79,7 @@ onnx2ir_op_type = {
     'Cast'               : 'add',
     'Div'                : 'div',
     'ReduceMean'         : 'global_avg_pool',
+    'Clip'               : 'clamp'
 }
 
 onnx2ir_data_type = [
@@ -155,7 +159,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
                 
     for onnx_node in onnx_graph.node:
         for tensor in onnx_graph.initializer:
-            if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and (tensor.name == onnx_node.input[1]):
+            if onnx_node.op_type == 'Reshape' and len(onnx_node.input) == 2 and tensor.name == onnx_node.input[1]:
                 tensorName = onnx_name_to_ir_name(tensor.name)
                 if tensorName not in shapeList:
                     shapeList.append(tensorName)

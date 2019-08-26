@@ -103,7 +103,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxConvertTensorToImageNode(vx_graph graph, vx_t
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8);
+VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8, vx_int32 axis);
 
 /*! \brief [Graph] Creates a Slice Layer Node.
  * \param [in] graph The handle to the graph.
@@ -156,7 +156,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxReshapeLayer(vx_graph graph, vx_tensor input,
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_int32 order, vx_tensor output);
+VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input, vx_array order, vx_tensor output);
 
 /*! \brief [Graph] Creates a Prior Box Layer Node.
  * \details Prior box gives the coordinates of the bounding boxes for an image. 
@@ -177,7 +177,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxPermuteLayer(vx_graph graph, vx_tensor input,
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
 VX_API_ENTRY vx_node VX_API_CALL vxPriorBoxLayer(vx_graph graph, vx_tensor input_1, vx_tensor input_2, vx_float32 minSize, vx_array aspect_ratio, vx_int32 flip, vx_int32 clip, 
-                                                 vx_float32 offset, vx_tensor output, vx_float32 maxSize, vx_array variance);
+                                                 vx_float32 offset, vx_tensor output, vx_array variance, vx_float32 maxSize);
 
 /* \brief [Graph] Creates a Crop Layer Node.
  * \details Cropping is done on the dimensions of the input vx_tensor to fit the dimensions of the reference tensor. 
@@ -215,4 +215,37 @@ VX_API_ENTRY vx_node VX_API_CALL vxCropLayer(vx_graph graph, vx_tensor input, vx
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
 VX_API_ENTRY vx_node VX_API_CALL vxCropAndResizeLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_scalar x_coord, vx_scalar y_coord, vx_scalar width, vx_scalar height, vx_scalar scaleFactor, vx_scalar mode);
+
+/* \brief [Graph] Creates a Tensor_Min Layer Node.
+ * \details Performs element-wise min on element values in the input <tt>\ref vx_tensor</tt>.
+ * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The first input tensor data.
+ * \param [in] input2 The second input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1. 
+ *                    In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1, and data was duplicated on all terms in that dimension. 
+ *                    After this expansion, the dimensions will be equal. The data type must match the data type of input1.
+ * \param [in] policy A vx_convert_policy_e enumeration.
+ * \param [out] output The output tensor data with the same dimensions as the input tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTensorMinNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
+
+/* \brief [Graph] Creates a Tensor_Max Layer Node.
+ * \details Performs element-wise max on element values in the input <tt>\ref vx_tensor</tt>.
+ * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The first input tensor data.
+ * \param [in] input2 The second input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1. 
+ *                    In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1, and data was duplicated on all terms in that dimension. 
+ *                    After this expansion, the dimensions will be equal. The data type must match the data type of input1.
+ * \param [in] policy A vx_convert_policy_e enumeration.
+ * \param [out] output The output tensor data with the same dimensions as the input tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
+
+VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_int32 num_classes, vx_int32 share_location, vx_int32 background_label_id, vx_float32 nms_threshold,
+                                                        vx_int32 code_type, vx_int32 keep_top_k, vx_int32 variance_encoded_in_target, vx_tensor output);
 #endif

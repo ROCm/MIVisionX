@@ -290,13 +290,16 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Add||&#9745;|&#9745;|
 |AveragePool||&#9745;|&#9745;|
 |BatchNormalization|&#9745;|&#9745;|&#9745;|
+|Clamp|||&#9745;|
+|Clip||&#9745;||
 |Concat|&#9745;|&#9745;|&#9745;|
 |Conv|&#9745;|&#9745;|&#9745;|
 |ConvTranspose|&#9745;|&#9745;|&#9745;|
-|Copy|||&#9745;|
+|Copy||&#9745;|&#9745;|
 |Crop|&#9745;|||
 |CropAndResize||||
 |Deconv|&#9745;|&#9745;|&#9745;|
+|Div||&#9745;|&#9745;|
 |Dropout||||
 |Eltwise|&#9745;|||
 |Flatten|&#9745;|||
@@ -308,23 +311,26 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Linear|||&#9745;|
 |LRN|&#9745;|&#9745;|&#9745;|
 |Matmul|||&#9745;|
+|Max||&#9745;|&#9745;|
 |MaxPool||&#9745;|&#9745;|
 |MeanReduce|||&#9745;|
+|Min||&#9745;|&#9745;|
 |Mul||&#9745;|&#9745;|
 |MulAdd||||
 |Permute|&#9745;||&#9745;|
 |PriorBox|&#9745;|||
 |Relu|&#9745;|&#9745;|&#9745;|
 |Reshape|&#9745;|&#9745;|&#9745;|
+|Sigmoid||&#9745;|&#9745;
 |Slice|||&#9745;|
 |Split|&#9745;|||
 |Softmax|&#9745;|&#9745;|&#9745;|
 |SoftmaxWithLoss|&#9745;|||
-|Squeeze||&#9745;|
+|Squeeze||&#9745;|&#9745;|
 |Sub||&#9745;|&#9745;|
 |Sum||&#9745;||
 |Transpose||&#9745;|&#9745;|
-|Unsqueeze|||&#9745;|
+|Unsqueeze||&#9745;|&#9745;|
 |Upsample|&#9745;||&#9745;|
 
 

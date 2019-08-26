@@ -86,6 +86,8 @@ class IrAttr:
             , 'clip' : 0                 # normalize bounding boxes (true/false)
             , 'variance' : [0.1, 0.1, 0.1, 0.1]            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
+            , 'max' : 0.0                 # max_value
+            , 'min' : 0.0                 # min_value 
             , 'num_classes' : 0          #attributes for detection output layer
             , 'share_location' : 1
             , 'background_label_id' : 0
@@ -160,6 +162,9 @@ class IrNode:
             'mul' : 1,
             'muladd' : 1,
             'sub' : 1,
+            'div' : 1,
+            'min' : 1,
+            'max' : 1,
             'gemm' : 1,
             'softmax' : 1,
             'lrn' : 1,
@@ -167,7 +172,10 @@ class IrNode:
             'concat' : 1,
             'global_avg_pool' : 1,
             'leaky_relu' : 1,
+            'sigmoid' : 1,
             'reshape' : 1,
+            'squeeze' : 1,
+            'unsqueeze' : 1,
             'transpose' : 1,
             'copy' : 1,
             'crop' : 1,
@@ -175,6 +183,7 @@ class IrNode:
             'permute' : 1,
             'prior_box' : 1,
             'flatten'  : 1,
+            'clamp' : 1,
             'detection_output' : 1,
         }
 
@@ -288,7 +297,7 @@ class IrGraph:
             for output in node.outputs:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
-                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'batch_norm', 'relu', 'leaky_relu', 'softmax']:
+                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
@@ -346,6 +355,11 @@ class IrGraph:
                     transB = node.attr.get('transB')
                     shapeA = A.shape
                     shapeB = B.shape
+                    if transB == 0:
+                        B.shape[0], B.shape[1] = B.shape[1], B.shape[0]
+                        shapeB = B.shape
+                        node.attr.set('transB', 1)
+                        transB = 1
                     if transA == 0 and transB == 0:
                         output_shape = [shapeA[0], shapeB[1], 1, 1]
                     elif transA == 0:
@@ -388,6 +402,63 @@ class IrGraph:
                         local.setInfo(input.type, shape)
                         local.setFormat(input.format)
                         self.addLocal(local)
+                elif node.type in ['squeeze']:
+                    axes = node.attr.get('axes')
+                    out_shape = []
+                    if len(axes) == 0:
+                        for i in range(len(input.shape)):
+                            if input.shape[i] != 1:
+                                out_shape.append(input.shape[i])
+                    else:
+                        out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
+                    node.attr.set('shape', out_shape)
+                    node.type = 'reshape'
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['unsqueeze']:
+                    axes = node.attr.get('axes')
+                    out_shape = input.shape
+                    if len(out_shape) < 4:
+                        for i in range(len(axes)):
+                            out_shape.insert(axes[i], 1)
+                    node.attr.set('shape', out_shape)
+                    node.type = 'reshape'
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['div']:
+                    if node.inputs[1] not in self.binaries:
+                        raise ValueError("div: division by local tensor is unsupported: " + node.inputs[1])
+                    if self.tensor_types[node.inputs[1]] == 'F064':
+                        npType = np.float64
+                    elif self.tensor_types[node.inputs[1]] == 'F032':
+                        npType = np.float32
+                    elif self.tensor_types[node.inputs[1]] == 'F016':
+                        npType = np.float16
+                    elif self.tensor_types[node.inputs[1]] == 'I032':
+                        npType = np.int32    
+                    elif self.tensor_types[node.inputs[1]] == 'I016':
+                        npType = np.int16
+                    elif self.tensor_types[node.inputs[1]] == 'U016':
+                        npType = np.uint16
+                    elif self.tensor_types[node.inputs[1]] == 'U008':
+                        npType = np.uint8
+                    else:
+                        raise ValueError("div: Tensor type not supported: " + self.tensor_types[node.inputs[1]])
+                    
+                    weight = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
+                    self.binaries[node.inputs[1]] = np.reciprocal(weight)
+                    node.type = 'mul'
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['reshape']:
                     param = node.attr.get('shape')
                     if not param:
@@ -437,12 +508,6 @@ class IrGraph:
                     local.setInfo(input.type, shape)
                     local.setFormat(format)
                     self.addLocal(local)
-                elif node.type in ['copy']:
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo(input.type, input.shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
                 elif node.type in ['crop']:
                     reference = self.tensor_dict[node.inputs[1]]
                     axis = node.attr.get('axis')
@@ -456,7 +521,7 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
-                    self.addLocal(local)       
+                    self.addLocal(local)
                 elif node.type in ['permute']:
                     order = node.attr.get("order")   
                     if input.format == 'NCHW' and order == [0, 2, 3, 1]:
@@ -518,7 +583,6 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
-
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 
@@ -1015,7 +1079,6 @@ class IrGraph:
             for tensor in self.inputs:
                 f.write('input|' + tensor.toString() + '\n')
             for tensor in self.outputs:
-                print tensor.shape
                 f.write('output|' + tensor.toString() + '\n')
             for tensor in self.initializers:
                 f.write('initializer|' + tensor.toString() + '\n')

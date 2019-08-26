@@ -32,6 +32,9 @@ nnef2ir_op_type = {
     'add'                                   : 'add',
     'mul'                                   : 'mul',
     'sub'                                   : 'sub',
+    'div'                                   : 'div',
+    'min'                                   : 'min',
+    'max'                                   : 'max',
     'matmul'                                : 'gemm',
     'linear'                                : 'gemm',
     'softmax'                               : 'softmax',
@@ -39,11 +42,13 @@ nnef2ir_op_type = {
     'slice'                                 : 'slice',
     'concat'                                : 'concat',
     'leaky_relu'                            : 'leaky_relu',
+    'sigmoid'                               : 'sigmoid',
     'reshape'                               : 'reshape',
-    'squeeze'                               : 'reshape',
-    'unsqueeze'                             : 'reshape',
+    'squeeze'                               : 'squeeze',
+    'unsqueeze'                             : 'unsqueeze',
     'transpose'                             : 'transpose',
-    'copy'                                  : 'copy'
+    'copy'                                  : 'copy',
+    'clamp'                                 : 'clamp'
 }
   
 nnef2ir_data_type = {
@@ -77,7 +82,7 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
             if attrib == 'size':
                 size = [size for size in nnef_attribs[attrib]]
                 if len(size) == 4:
-                    size = size[2:]
+                    size = size[2:] 
                 attr.set(nnef2ir_attr[attrib], size)  
             elif attrib == 'padding':
                 padding = [pad for pads in nnef_attribs[attrib] for pad in pads]
@@ -93,10 +98,9 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                         size = nnef_attribs['size']
                         f_H = size[2]
                         f_W = size[3]
-
                     output_tensor = nnef_tensor[nnef_operation.outputs['output']]
                     temp_stride = nnef_attribs['stride']
-                    strides = [temp_stride for temp_stride in nnef_attribs[attrib]]
+                    strides = [temp_stride for temp_stride in temp_stride]
                     if len(strides) == 4:
                         strides = strides[2:]
                     elif len(strides) == 0:
@@ -117,14 +121,13 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                     d_W = dilations[1]
                     fd_H = (f_H - 1) * d_H + 1
                     fd_W = (f_W - 1) * d_W + 1
-                    tp_H = ((out_H - 1) * s_H + fd_H - in_H) / 2
-                    tp_W = ((out_W - 1) * s_W + fd_W - in_W) / 2
+                    tp_H = (float)((out_H - 1) * s_H + fd_H - in_H) / 2
+                    tp_W = (float)((out_W - 1) * s_W + fd_W - in_W) / 2
                     p_H = (int)(math.floor(tp_H))
                     q_H = (int)(math.ceil(tp_H))
                     p_W = (int)(math.floor(tp_W))
                     q_W = (int)(math.ceil(tp_W))
                     padding = [p_H, q_H, p_W, q_W]
-
                 new_padding = [padding[2], padding[0], padding[3], padding[1]]
                 attr.set(nnef2ir_attr[attrib], new_padding)  
             elif attrib == 'stride':
@@ -158,8 +161,6 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
 def nnef_tensor_to_ir_tensor(nnef_tensor):
     nnir_tensor = IrTensor()
     nnir_tensor.setName(nnef_tensor.name)
-    if len(nnef_tensor.shape) == 0:
-        nnef_tensor.shape.append(1)
     if hasattr(nnef_tensor.data, 'dtype'):
         if str(nnef_tensor.data.dtype) in nnef2ir_data_type:
             nnir_tensor.setInfo(nnef2ir_data_type[str(nnef_tensor.data.dtype)], nnef_tensor.shape)    
@@ -167,6 +168,7 @@ def nnef_tensor_to_ir_tensor(nnef_tensor):
             raise ValueError("ERROR: Data type {} not supported yet".format(nnef_tensor.data.dtype))
     else:
         nnir_tensor.setInfo('F032', nnef_tensor.shape)    
+
     return nnir_tensor
 
 def nnef_op_to_ir_node(nnef_graph, nnef_operation):
@@ -184,23 +186,6 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     if nnef_operation.name == 'matmul':
         nnef_operation.attribs.update({'beta': 0.0})
     
-    if nnef_operation.name == 'squeeze':
-        input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
-        axes = nnef_operation.attribs['axes']
-        output_shape = [input_shape[i] for i in range(len(input_shape)) if i not in axes]
-        del nnef_operation.attribs['axes']
-        nnef_operation.attribs.update({'shape': output_shape})
-    
-    if nnef_operation.name == 'unsqueeze':
-        input_shape = nnef_graph.tensors[nnef_operation.inputs['input']].shape
-        axes = nnef_operation.attribs['axes']
-        output_shape = input_shape
-        if len(output_shape) < 4:
-            for i in range(len(axes)):
-                output_shape.insert(axes[i], 1)
-        del nnef_operation.attribs['axes']
-        nnef_operation.attribs.update({'shape': output_shape})
-
     if nnef_operation.name == 'linear':
         nnef_operation.attribs.update({'transposeB': 1})
         
@@ -272,10 +257,20 @@ def nnef_graph_to_ir_graph(nnef_graph):
                         graph.addVariable(scalar_tensor)                    
                         graph.addBinary(scalar_name, tensor_data)
                         operation.inputs[input] = scalar_name
+                    else:
+                        if input == 'y':
+                            input_tensor = nnef_graph.tensors[operation.inputs[input]]
+                            input_shape = graph.tensor_shapes[input_tensor.name]
+                            if len(input_shape) == 0:
+                                for dim in output_tensor.shape:
+                                    input_shape.append(dim)
+                                while len(input_shape) < 4:
+                                    input_shape.append(1)
+                                tensor_data = np.full(input_shape, nnef_graph.tensors[input_tensor.name].data, dtype=input_tensor.data.dtype)
+                                graph.addBinary(input_tensor.name, tensor_data)
 
                 node = nnef_op_to_ir_node(nnef_graph, operation)
                 graph.addNode(node)
-
     # add input(s)
     for tensor_name in nnef_graph.inputs:
         tensor = nnef_graph.tensors[tensor_name]

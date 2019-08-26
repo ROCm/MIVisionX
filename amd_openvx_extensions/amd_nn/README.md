@@ -25,6 +25,8 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Tensor Convert Depth|vxTensorConvertDepthNode|org.khronos.openvx.tensor_convert_depth |
 | Tensor Convert from Image|vxConvertImageToTensorNode|com.amd.nn_extension.convert_image_to_tensor |
 | Tensor Convert to Image|vxConvertTensorToImageNode|com.amd.nn_extension.convert_tensor_to_image |
+| Tensor Max|vxTensorMaxNode|com.amd.nn_extension.tensor_max |
+| Tensor Min|vxTensorMinNode|com.amd.nn_extension.tensor_min |
 | Tensor Multiply|vxTensorMultiplyNode|org.khronos.openvx.tensor_multiply |
 | Tensor Subtract|vxTensorSubtractNode|org.khronos.openvx.tensor_subtract |
 | Upsample Nearest Neighborhood|vxUpsampleNearestLayer|com.amd.nn_extension.upsample_nearest_layer |

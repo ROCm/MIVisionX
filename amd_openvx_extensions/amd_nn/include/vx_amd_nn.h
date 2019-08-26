@@ -248,7 +248,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input
 
 /* \brief [Graph] Creates a Detection Output Layer Node.
  * \details Gives the details of the detected ouutputs in an image with their label, confidence and the bounding box coordinates.
- * This function supports three 4D tensors as input and one 4D tensor as ouput. The type of the tensor can be either float32.
+ * This function supports three 4D tensors as input and one 4D tensor as ouput. The type of the tensor can be either float32 or float16.
  * \param [in] graph The handle to the graph.
  * \param [in] input1 The first input tensor data (location values).
  * \param [in] input2 The second input tensor data (confidence values). 

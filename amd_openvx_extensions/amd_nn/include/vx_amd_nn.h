@@ -246,6 +246,24 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMinNode(vx_graph graph, vx_tensor input
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input, vx_tensor input2, vx_enum policy, vx_tensor output);
 
+/* \brief [Graph] Creates a Detection Output Layer Node.
+ * \details Gives the details of the detected ouutputs in an image with their label, confidence and the bounding box coordinates.
+ * This function supports three 4D tensors as input and one 4D tensor as ouput. The type of the tensor can be either float32 or float16.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input1 The first input tensor data (location values).
+ * \param [in] input2 The second input tensor data (confidence values). 
+ * \param [in] input3 The third input tensor data (prior box values).
+ * \param [in] num_classes Integer value: Number of output classes. (example: tiny yolo = 20 classes)
+ * \param [in] share_location Integer value: Label values change based on this
+ * \param [in] background_label_id Integer value: Ignores the background classes
+ * \param [in] nms_threshold Float value: NMS-Threshold for output boxes
+ * \param [in] code_type Integer value: Decides if the bounding boxes are Center-type or Corner-type
+ * \param [in] keep_top_k Integer value: Tells the number of output boxes to keep
+ * \param [in] variance_encoded_in_target Integer value: Helps calculate the bounding box coordinates
+ * \param [out] output The output tensor data with the same dimensions as the input tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
 VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_int32 num_classes, vx_int32 share_location, vx_int32 background_label_id, vx_float32 nms_threshold,
                                                         vx_int32 code_type, vx_int32 keep_top_k, vx_int32 variance_encoded_in_target, vx_tensor output);
 #endif

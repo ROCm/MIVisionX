@@ -299,10 +299,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Crop|&#9745;|||
 |CropAndResize||||
 |Deconv|&#9745;|&#9745;|&#9745;|
-<<<<<<< HEAD
-=======
 |DetectionOutput|&#9745;|||
->>>>>>> upstream/master
 |Div||&#9745;|&#9745;|
 |Dropout||||
 |Eltwise|&#9745;|||

@@ -601,10 +601,10 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     { vx_size dims[%d] = { %s };
       vx_tensor tmp__tensor = vxCreateVirtualTensor(graph, %d, dims, %s, 0);
       ERROR_CHECK_OBJECT(tmp__tensor);
-      vx_node node = vxTensorMinNode(graph, %s, %s, VX_CONVERT_POLICY_SATURATE, tmp__tensor);
+      vx_node node = vxTensorMaxNode(graph, %s, %s, VX_CONVERT_POLICY_SATURATE, tmp__tensor);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
-      node = vxTensorMaxNode(graph, tmp__tensor, %s, VX_CONVERT_POLICY_SATURATE, %s);
+      node = vxTensorMinNode(graph, tmp__tensor, %s, VX_CONVERT_POLICY_SATURATE, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }

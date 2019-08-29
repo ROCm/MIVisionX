@@ -120,6 +120,7 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     // compute global work
     bool input_width_multiple_of_4 = (input_dims[0] & 3) ? false : true;
+    printf("input_width_multiple_of_4 = %d \n", input_width_multiple_of_4);
     opencl_work_dim = 3;
     opencl_local_work[0] = 8;
     opencl_local_work[1] = 8;
@@ -127,6 +128,10 @@ static vx_status VX_CALLBACK opencl_codegen(
     opencl_global_work[0] = ((input_width_multiple_of_4 ? ((input_dims[0] + 3) / 4) : input_dims[0]) + opencl_local_work[0] - 1) & ~(opencl_local_work[0] - 1);
     opencl_global_work[1] = (input_dims[1] + opencl_local_work[1] - 1) & ~(opencl_local_work[1] - 1);
     opencl_global_work[2] = N;
+
+    printf("input dims:0-3 %lu %lu %lu %lu\n", input_dims[0], input_dims[1], input_dims[2], input_dims[3]);
+    printf("local work[0,1,2] = %lu %lu %lu\n", opencl_local_work[0], opencl_local_work[1], opencl_local_work[2]);
+    printf("global work[0,1,2] = %lu %lu %lu\n", opencl_global_work[0], opencl_global_work[1], opencl_global_work[2]);
 
     // generate OpenCL C code
     strcpy(opencl_kernel_function_name, "argmax");
@@ -310,6 +315,38 @@ static vx_status VX_CALLBACK opencl_codegen(
             }
         }
     }
+    else if(output_data_type == VX_TYPE_INT64) {
+        if(output_obj_type == VX_TYPE_IMAGE) {
+            sprintf(item, "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x * 2;\n" , input_dims[1]);
+            opencl_kernel_code += item;
+        }
+        else {
+            opencl_kernel_code +=
+                "        o0_buf += o0_offset + z * o0_stride.s3 + y * o0_stride.s1 + x * o0_stride.s0;\n";
+        }
+        if(input_width_multiple_of_4) {
+            opencl_kernel_code +=
+                "        uint2 imax;\n"
+                "        imax.s0 = cmax.s0 + (cmax.s1 << 64);\n"
+                "        imax.s1 = cmax.s2 + (cmax.s3 << 64);\n"
+                "        *(__global uint2 *)o0_buf = imax;\n";
+            if(top_k == 2) {
+                opencl_kernel_code +=
+                    "        uint2 imax1;\n"
+                    "        imax1.s0 = cmax1.s0 + (cmax1.s1 << 64);\n"
+                    "        imax1.s1 = cmax1.s2 + (cmax1.s3 << 64);\n"
+                    "        *(__global uint2 *)&o0_buf[o0_stride.s2] = imax1;\n";
+            }
+        }
+        else {
+            opencl_kernel_code +=
+                "        *(__global ushort *)o0_buf = (ushort)cmax;\n";
+            if(top_k == 2) {
+                opencl_kernel_code +=
+                    "        *(__global ushort *)&o0_buf[o0_stride.s2] = cmax1;\n";
+            }
+        }
+    }
     opencl_kernel_code +=
         "    }\n"
         "}\n";
@@ -317,7 +354,6 @@ static vx_status VX_CALLBACK opencl_codegen(
 #if ENABLE_DEBUG_PRINT_DIMS
     std::cout << "KERNEL argmax_layer output " << input_dims[0] << "x" << input_dims[1] << " " << std::endl;
 #endif
-
     return VX_SUCCESS;
 }
 

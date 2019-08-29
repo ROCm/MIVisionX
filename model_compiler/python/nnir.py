@@ -353,8 +353,6 @@ class IrGraph:
                 elif node.type in ['gemm']:
                     A = self.tensor_dict[node.inputs[0]]
                     B = self.tensor_dict[node.inputs[1]]
-                    print A.shape
-                    print B.shape
                     transA = node.attr.get('transA')
                     transB = node.attr.get('transB')
                     shapeA = A.shape
@@ -583,9 +581,27 @@ class IrGraph:
                 elif node.type in ['argmax']:
                     axis = node.attr.get('axis')
                     keepdims = node.attr.get('keepdims')
+                    #print 'axis = ', axis, 'keepdims = ', keepdims
+                    #print input.shape[0], input.shape[1], input.shape[2], input.shape[3]
                     output_type = 'I064'
-                    if axis == 0 and keepdims == 1:
-                        output_shape = [input.shape[0], 1, input.shape[2], input.shape[3]]
+                    if keepdims == 1:
+                        if axis == 0:
+                            output_shape = [1, input.shape[1], input.shape[2], input.shape[3]]
+                        elif axis == 1:
+                            output_shape = [input.shape[0], 1, input.shape[2], input.shape[3]]
+                        elif axis == 2:
+                            output_shape = [input.shape[0], input.shape[1], 1, input.shape[3]]
+                        elif axis == 3:
+                            output_shape = [input.shape[0], input.shape[1], input.shape[2], 1]
+                    if keepdims == 0:
+                        if axis == 0:
+                            output_shape = [input.shape[1], input.shape[2], input.shape[3], 1]
+                        elif axis == 1:
+                            output_shape = [input.shape[0],input.shape[2], input.shape[3], 1]
+                        elif axis == 2:
+                            output_shape = [input.shape[0], input.shape[1], input.shape[3], 1]
+                        elif axis == 3:
+                            output_shape = [input.shape[0], input.shape[1], input.shape[2], 1]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(output_type, output_shape)

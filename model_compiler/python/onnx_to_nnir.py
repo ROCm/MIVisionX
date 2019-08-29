@@ -43,8 +43,7 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
-    'shape' : 'shape',  
-    'ArgMax' : 'argmax',
+    'shape' : 'shape', 
     'min' : 'min',
     'max' : 'max'
 }
@@ -79,7 +78,8 @@ onnx2ir_op_type = {
     'Cast'               : 'add',
     'Div'                : 'div',
     'ReduceMean'         : 'global_avg_pool',
-    'Clip'               : 'clamp'
+    'Clip'               : 'clamp',     
+    'ArgMax'             : 'argmax',
 }
 
 onnx2ir_data_type = [

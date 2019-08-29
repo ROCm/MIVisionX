@@ -1688,8 +1688,8 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
     vxQueryTensor(tensor, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
     vxQueryTensor(tensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
     vxQueryTensor(tensor, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
-    if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16)) {
-        std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16: invalid for " << fileName << std::endl;
+    if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16 && (data_type != VX_TYPE_INT64))) {
+        std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT64: invalid for " << fileName << std::endl;
         return -1;
     }
     vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
@@ -1723,11 +1723,21 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                             *dstG++ = src[1];
                             *dstB++ = src[0];
                         }
-                    } else
+                    } else if(data_type == VX_TYPE_FLOAT16)
                     {
                         short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);
                         short * dstG = dstR + (stride[2] >> 2);
                         short * dstB = dstG + (stride[2] >> 2);                    
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = src[2];
+                            *dstG++ = src[1];
+                            *dstB++ = src[0];
+                        }
+                    } else if(data_type == VX_TYPE_INT64)
+                    {
+                        long int* dstR = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
+                        long int* dstG = dstR + (stride[2] >> 2);
+                        long int* dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
                             *dstR++ = src[2];
                             *dstG++ = src[1];
@@ -1755,11 +1765,19 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 std::cerr << "ERROR: expected char[" << count*sizeof(float) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
-                        } else {
+                        } else if(data_type == VX_TYPE_FLOAT16){
                             short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 1);
                             vx_size n = fread(ptrY, sizeof(short), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(short) << "], but got less in " << fileName << std::endl;
+                                return -1;
+                            }
+                        }
+                        else if(data_type == VX_TYPE_INT64){
+                            long int * ptrY = (long int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
+                            vx_size n = fread(ptrY, sizeof(long int), dims[0], fp);
+                            if(n != dims[0]) {
+                                std::cerr << "ERROR: expected char[" << count*sizeof(long int) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
                         }
@@ -1805,6 +1823,16 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                     else if (data_type == VX_TYPE_FLOAT16) {
                         half * pc = (half *)((short *)ptr + n * CHW + y * W + x);
                         half best_v = *pc;
+                        for(vx_size c = 1; c < C; c++, pc += HW) {
+                            if(*pc > best_v) {
+                                best_v = *pc;
+                                best_c = c;
+                            }
+                        }
+                    }
+                    else if (data_type == VX_TYPE_INT64) {
+                        long int * pc = (long int *)((short *)ptr + n * CHW + y * W + x);
+                        long int best_v = *pc;
                         for(vx_size c = 1; c < C; c++, pc += HW) {
                             if(*pc > best_v) {
                                 best_v = *pc;
@@ -1999,8 +2027,10 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
             }
             if (data_type == VX_TYPE_FLOAT32)
                 fwrite(ptr, sizeof(float), count, fp);
-            else
-                fwrite(ptr, sizeof(short), count, fp);                
+            else if (data_type == VX_TYPE_FLOAT16)
+                fwrite(ptr, sizeof(short), count, fp);
+            else if (data_type == VX_TYPE_INT64)
+                fwrite(ptr, sizeof(long int), count, fp);               
             fclose(fp);
         }
         if(argList.size() >= 2) {
@@ -2032,10 +2062,20 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                     if(!(err < maxError)) maxError = err;
                 }
             }
-            else
+            else if(data_type == VX_TYPE_FLOAT16)
             {
                 for(size_t i = 0; i < count; i++) {
                     float src = _cvtsh_ss(((unsigned short*)ptr)[i]);
+                    float err = src - gold[i];
+                    if(err < 0) err = -err;
+                    sqrError += err * err;
+                    if(!(err < maxError)) maxError = err;
+                }
+            }
+            else if(data_type == VX_TYPE_INT64)
+            {
+                for(size_t i = 0; i < count; i++) {
+                    float src = (float)((long int*)ptr)[i];
                     float err = src - gold[i];
                     if(err < 0) err = -err;
                     sqrError += err * err;

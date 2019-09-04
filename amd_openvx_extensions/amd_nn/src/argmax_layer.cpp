@@ -120,7 +120,6 @@ static vx_status VX_CALLBACK opencl_codegen(
 
     // compute global work
     bool input_width_multiple_of_4 = (input_dims[0] & 3) ? false : true;
-    printf("input_width_multiple_of_4 = %d \n", input_width_multiple_of_4);
     opencl_work_dim = 3;
     opencl_local_work[0] = 8;
     opencl_local_work[1] = 8;
@@ -128,10 +127,6 @@ static vx_status VX_CALLBACK opencl_codegen(
     opencl_global_work[0] = ((input_width_multiple_of_4 ? ((input_dims[0] + 3) / 4) : input_dims[0]) + opencl_local_work[0] - 1) & ~(opencl_local_work[0] - 1);
     opencl_global_work[1] = (input_dims[1] + opencl_local_work[1] - 1) & ~(opencl_local_work[1] - 1);
     opencl_global_work[2] = N;
-
-    printf("input dims:0-3 %lu %lu %lu %lu\n", input_dims[0], input_dims[1], input_dims[2], input_dims[3]);
-    printf("local work[0,1,2] = %lu %lu %lu\n", opencl_local_work[0], opencl_local_work[1], opencl_local_work[2]);
-    printf("global work[0,1,2] = %lu %lu %lu\n", opencl_global_work[0], opencl_global_work[1], opencl_global_work[2]);
 
     // generate OpenCL C code
     strcpy(opencl_kernel_function_name, "argmax");

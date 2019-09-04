@@ -59,7 +59,7 @@ onnx2ir_op_type = {
     'Add'                : 'add',
     'Sub'                : 'sub',
     'Mul'                : 'mul',
-    'MatMul'             : 'gemm',
+    'MatMul'             : 'matmul',
     'Gemm'               : 'gemm',
     'LRN'                : 'lrn',
     'Concat'             : 'concat',

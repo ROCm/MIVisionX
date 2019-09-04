@@ -447,6 +447,23 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
         node.inputs[0], node.inputs[1], node.inputs[2] if hasBias else 'NULL', node.outputs[0]))
                 else:
                     raise ValueError("Unsupported gemm configuration by OpenVX: alpha={} beta={} transA={} transB={}".format(alpha, beta, transA, transB))
+            elif node.type == 'matmul':
+                alpha = node.attr.get('alpha')
+                beta = node.attr.get('beta')
+                transA = node.attr.get('transA')
+                transB = node.attr.get('transB')
+                f.write( \
+"""
+    { _vx_tensor_matrix_multiply_params_t matrix_mul_params = { 0 };
+      matrix_mul_params.transpose_input1 = %d;
+      matrix_mul_params.transpose_input2 = %d;
+      matrix_mul_params.transpose_input3 = %d;
+      vx_node node = vxTensorMatrixMultiplyNode(graph, %s, %s, %s, &matrix_mul_params, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % ( \
+        1 if transA else 0, 1 if transB else 0, 0, node.inputs[0], node.inputs[1], node.inputs[2] if beta else 'NULL', node.outputs[0]))
             elif node.type == 'max_pool' or node.type == 'avg_pool':
                 f.write( \
 """

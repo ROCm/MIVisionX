@@ -86,7 +86,6 @@ class IrAttr:
             , 'clip' : 0                 # normalize bounding boxes (true/false)
             , 'variance' : [0.1, 0.1, 0.1, 0.1]            # variance for priors
             , 'prior_offset' : 0.0       # offset for priors
-            , 'keepdims' : 1             # no change in output dimensions 
             , 'max' : 0.0                 # max_value
             , 'min' : 0.0                 # min_value 
             , 'num_classes' : 0          #attributes for detection output layer

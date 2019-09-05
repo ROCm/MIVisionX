@@ -43,6 +43,7 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
+    'shape' : 'shape',
     'min' : 'min',
     'max' : 'max'
 }

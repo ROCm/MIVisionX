@@ -43,7 +43,7 @@ onnx2ir_attr = {
     'bias' : 'bias',
     'size' : 'size',
     'split' : 'split',
-    'shape' : 'shape', 
+    'shape' : 'shape',
     'min' : 'min',
     'max' : 'max'
 }
@@ -91,7 +91,6 @@ def onnx_name_to_ir_name(name):
     return '_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':'))
 
 def onnx_node_to_ir_attr(node):
-
     global onnx2ir_attr
     attr = IrAttr()
     for item in node.attribute:

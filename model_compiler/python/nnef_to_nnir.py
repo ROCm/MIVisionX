@@ -18,7 +18,8 @@ nnef2ir_attr = {
     'bias' : 'bias',
     'border' : 'border_mode',
     'shape' : 'shape',
-    'offset' : 'offset'
+    'offset' : 'offset',
+    'factor' : 'factor'
 }
 
 nnef2ir_op_type = {
@@ -48,7 +49,8 @@ nnef2ir_op_type = {
     'unsqueeze'                             : 'unsqueeze',
     'transpose'                             : 'transpose',
     'copy'                                  : 'copy',
-    'clamp'                                 : 'clamp'
+    'clamp'                                 : 'clamp',
+    'nearest_upsample'                      : 'upsample'
 }
   
 nnef2ir_data_type = {
@@ -258,7 +260,7 @@ def nnef_graph_to_ir_graph(nnef_graph):
                         graph.addBinary(scalar_name, tensor_data)
                         operation.inputs[input] = scalar_name
                     else:
-                        if input == 'y':
+                        if input == 'x' or input == 'y':
                             input_tensor = nnef_graph.tensors[operation.inputs[input]]
                             input_shape = graph.tensor_shapes[input_tensor.name]
                             if len(input_shape) == 0:

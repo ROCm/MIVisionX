@@ -748,13 +748,17 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 """ % (variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'),\
         node.attr.get('clip'), node.attr.get('prior_offset'), node.outputs[0], max_size))
             elif node.type == 'upsample':
-                f.write( \
+                factor = node.attr.get('factor')
+                if factor[0] == 2 and factor[1] == 2:
+                    f.write( \
 """
     { vx_node node = vxUpsampleNearestLayer(graph, %s, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }    
 """ % (node.inputs[0], node.outputs[0]))
+                else:
+                    raise ValueError("Unsupported scaling factor: {}".format(factor))
             elif node.type == 'crop':
                 offset = node.attr.get('offset')
                 f.write( \

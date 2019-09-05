@@ -155,6 +155,8 @@ enum vx_image_attribute_amd_e {
 	VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x03,
 	/*! \brief OpenCL buffer stride. Use a <tt>\ref cl_uint</tt> parameter.*/
 	VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x04,
+    /*! \brief sync with user specified host buffer. Use a <tt>\ref cl_mem</tt> parameter.*/
+	VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER               = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x05,
 };
 
 /*! \brief tensor Data attributes.
@@ -170,6 +172,15 @@ enum vx_tensor_attribute_amd_e {
     /*! \brief Queries memory type if created using vxCreateTensorFromHandle. If vx_tensor was not created using
         vxCreateTensorFromHandle, VX_MEMORY_TYPE_NONE is returned. Use a <tt>\ref vx_memory_type_e</tt> parameter. */
 	VX_TENSOR_MEMORY_TYPE     = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x8,
+};
+
+//! \brief array Data attributes.
+
+enum vx_array_attribute_amd_e {
+	/*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
+	VX_ARRAY_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x9,
+	VX_ARRAY_BUFFER_HIP   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x10,
+        VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11
 };
 
 /*! \brief These enumerations are given to the \c vxDirective API to enable/disable

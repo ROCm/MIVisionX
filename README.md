@@ -11,6 +11,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   * [Neural Net Library](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
   * [OpenCV Extension](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
   * [WinML Extension](amd_openvx_extensions/amd_winml#amd-winml-extension)
+  * [RPP Extension](amd_openvx_extensions/amd_rpp)
 * [Applications](#applications)
 * [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 * [Samples](samples#samples)
@@ -20,6 +21,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   * [Loom Shell](utilities/loom_shell#radeon-loomshell)
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
+* [RALI](#rali)
 * [Prerequisites](#prerequisites)
 * [Build & Install MIVisionX](#build--install-mivisionx)
 * [Verify the Installation](#verify-the-installation)
@@ -36,6 +38,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
 * [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
+* [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (Radeon Performance Primitives) functions. This extension is used to enable [RALI](rali/README.md) to perform image augmentation.
 
 ## Applications
 MIVisionX has a number of [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
@@ -64,6 +67,9 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
+
+## RALI
+The Radeon Augmentation Library [RALI](rali/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
 
 ## Prerequisites
 * CPU: SSE4.1 or above CPU, 64-bit
@@ -110,6 +116,7 @@ python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
                           --miopen    [MIOpen Version - optional (default:1.8.1)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
+                          --rpp       [RPP Installation - optional (default:yes) [options:Install rpp -yes]]
 ````
 **Note:** use `--installer yum` for **CentOS**
 

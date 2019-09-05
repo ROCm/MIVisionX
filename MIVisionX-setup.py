@@ -16,12 +16,14 @@ parser.add_argument('--directory', type=str, default='',        help='Setup home
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--miopen',    type=str, default='2.0.0',   help='MIOpen Version - optional (default:2.0.0)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options: Install ffmpeg - yes')
+parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options: Install rpp - yes]')
 args = parser.parse_args()
 
 setupDir = args.directory
 linuxSystemInstall = args.installer
 MIOpenVersion = args.miopen
 ffmpegInstall = args.ffmpeg
+rppInstall = args.rpp
 
 # sudo requirement check
 sudoLocation = ''
@@ -137,6 +139,8 @@ else:
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install qt5-default qtcreator')
+	if rppInstall == 'yes':
+		os.system('(cd '+deps_dir+'; git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
 	# Install ffmpeg
 	if ffmpegInstall == 'yes':
 		if linuxSystemInstall == 'apt-get':

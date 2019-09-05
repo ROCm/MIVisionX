@@ -99,6 +99,7 @@ class IrAttr:
             , 'keep_top_k' : -1
             , 'confidence_threshold' : 0.0
             , 'eta' : 0.0
+            , 'factor' : []
         }
         self.dict_set = []
 
@@ -188,6 +189,7 @@ class IrNode:
             'clamp' : 1,
             'detection_output' : 1,
             'matmul' : 1,
+            'upsample' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -516,6 +518,15 @@ class IrGraph:
                     local.setInfo(input.type, param)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['upsample']:
+                    factor = node.attr.get('factor')
+                    if len(factor) == 2:
+                        out_shape = [input.shape[0], input.shape[1], input.shape[2]*factor[0], input.shape[3]*factor[1]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['transpose']:
                     axes = node.attr.get('axes')
                     if axes == [0, 2, 3, 1]:
@@ -627,7 +638,6 @@ class IrGraph:
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['detection_output']:
-                    input = self.tensor_dict[node.inputs[0]]
                     out_shape = [1,1,1,7]
                     local = IrTensor()
                     local.setName(output)

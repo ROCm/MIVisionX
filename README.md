@@ -302,14 +302,15 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 
 ### Known issues
 * Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
+* Latest MIOpen versions with OpenCL backend has linking errors with MIOpenGEMM. If you are facing problems with MIOpen revert back to V1.8.1 or rerun the MIVisionX-setup script.
 
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.6.22`
+* ROCm: rocm-dkms - `2.7.22`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [2.0.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.0.0)
+* MIOpen - [1.8.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.8.1)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

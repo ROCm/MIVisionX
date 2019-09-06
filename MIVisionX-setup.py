@@ -16,7 +16,7 @@ parser.add_argument('--directory', type=str, default='',        help='Setup home
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--miopen',    type=str, default='2.0.0',   help='MIOpen Version - optional (default:2.0.0)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options: Install ffmpeg - yes')
-parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options: Install rpp - yes]')
+parser.add_argument('--rpp',       type=str, default='no',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options: Install rpp - yes]')
 args = parser.parse_args()
 
 setupDir = args.directory

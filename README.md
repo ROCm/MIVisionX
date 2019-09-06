@@ -116,7 +116,7 @@ python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
                           --miopen    [MIOpen Version - optional (default:1.8.1)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
-                          --rpp       [RPP Installation - optional (default:yes) [options:Install rpp -yes]]
+                          --rpp       [RPP Installation - optional (default:no) [options:Install rpp -yes]]
 ````
 **Note:** use `--installer yum` for **CentOS**
 

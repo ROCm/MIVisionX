@@ -24,11 +24,9 @@
 #
 ################################################################################
 
-cmake_minimum_required (VERSION 2.8)
 
 project (rali)
-# Rali uses C++ 17 features
-set (CMAKE_CXX_STANDARD 17)
+
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
@@ -40,28 +38,36 @@ find_package(TurboJpeg QUIET)
 if(OpenCL_FOUND)
 	if(AMDRPP_FOUND)
 		if(TurboJpeg_FOUND)
-			message("-- rali library is included (All dependencies found)")
+			if(CMAKE_VERSION VERSION_GREATER "3.10")
+				if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 7.1)
+					# Rali uses C++ 17 features
+					set (CMAKE_CXX_STANDARD 17)
+					message("-- rali library is included (All dependencies found)")
+					install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h DESTINATION ./include/)
+					include_directories (
+							${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
+							${TurboJpeg_INCLUDE_DIRS}
+							../amd_openvx/openvx/include/
+							../amd_openvx_extensions/amd_rpp/include/
+							../amd_openvx_extensions/amd_media/include/
+							./include)
 
-			install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h DESTINATION ./include/)
+					link_directories   ( ${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR})
 
-			include_directories (
-					${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
-					${TurboJpeg_INCLUDE_DIRS}
-					../amd_openvx/openvx/include/
-					../amd_openvx_extensions/amd_rpp/include/
-					../amd_openvx_extensions/amd_media/include/
-					./include)
+					file(GLOB SOURCES "./source/*.cpp")
 
-			link_directories   ( ${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR})
+					add_library(${PROJECT_NAME} SHARED ${SOURCES})
 
-			file(GLOB SOURCES "./source/*.cpp")
+					set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall ")
+					target_link_libraries(${PROJECT_NAME} -fPIC turbojpeg openvx vx_rpp )
 
-			add_library(${PROJECT_NAME} SHARED ${SOURCES})
-			set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall ")
-			target_link_libraries(${PROJECT_NAME} -fPIC turbojpeg openvx vx_rpp )
-
-			install (TARGETS rali DESTINATION lib)
-
+					install (TARGETS rali DESTINATION lib)
+				else()
+					message("-- ${Red} rali library requires g++ version greater than or equal to 7.1, rali build is excluded${ColourReset}")
+				endif()
+			else()
+				message("-- ${Red} rali library requires cmake version greater than or equal to 3.10, rali build is excluded${ColourReset}")
+			endif()
 		else()
 			message("-- ${Red}WARNING:TurboJpeg Not Found -- rali library is excluded${ColourReset}")
 		endif()

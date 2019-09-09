@@ -66,6 +66,6 @@ make -j 4
 sudo make install      
 ```
 
-## Samples
-[Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of moifications.
-[Augmentation unit tests](../apps/augmentation_unittest) can be used to test RALI's API individually.
+## Sample and test applications
+*  [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of moifications.
+*  [Augmentation unit tests](../apps/augmentation_unittest) can be used to test RALI's API individually.

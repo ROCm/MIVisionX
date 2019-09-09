@@ -33,6 +33,13 @@ RALI can be currently used to perform the following operations either with rando
 *  OpenVX (including RPP and Media extension)
 *  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or later
 
+
+## Build instructions
+Rali builds and installs as part of the MIVisonX toolkit. RALI depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for RALI to build. RALI also needs Turbo JPEG library to decode input JPEG images.  
+1. Make sure to have the AMD's RPP library installed. Please refer to the [RPP's page](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp) for instructions of how to install RPP.
+2. Make sure you've installed the Turbo JPEG library version 2.0 or later, refer to the section below.
+3. Refer to the [MIVisonX](../README.md) page and follow build an installation steps ([Build & Install MIVisionX](../README.md#build--install-mivisionx)).
+
 ## Turbo JPEG installation
 Turbo JPEG library is a SIMD optimized library which currently RALI uses to decode input JPEG images. It needs to be built from the host and installed in the default path for libraries and include headers. You can follow the instruction below to download the source and install it.
 Note: Make sure you have installed nasm debian package before installation, it's the dependency required by libturbo-jpeg.
@@ -57,11 +64,6 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
 make -j 4
 sudo make install      
 ```
-## Build instructions
-Rali builds and installs as part of the MIVisonX toolkit. RALI depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for RALI to build. RALI also needs Turbo JPEG library to decode input JPEG images.  
-1. Make sure to have the AMD's RPP library installed. Please refer to the [RPP's page](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp) for instructions of how to install RPP.
-2. Make sure you've installed the Turbo JPEG library version 2.0 or later.
-3. Refer to the [MIVisonX](../README.md) page and follow build an installation steps ([Build & Install MIVisionX](../README.md#build--install-mivisionx)).
 
 ## Samples
 [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of moifications.

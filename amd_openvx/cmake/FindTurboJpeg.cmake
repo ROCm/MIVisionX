@@ -27,7 +27,6 @@ find_path(TurboJpeg_INCLUDE_DIRS
     NAMES turbojpeg.h
     PATHS
     /usr/include/
-    /opt/libjpeg-turbo/include/
     )
     
 
@@ -37,7 +36,6 @@ find_library( TurboJpeg_LIBRARIES
     NAMES libturbojpeg.so
     PATHS
     /usr/lib
-    /opt/libjpeg-turbo/lib64
     )
 
 mark_as_advanced( TurboJpeg_LIBRARIES_DIR )
@@ -46,7 +44,6 @@ find_path(TurboJpeg_LIBRARIES_DIR
     NAMES libturbojpeg.so
     PATHS
     /usr/lib
-    /opt/libjpeg-turbo/lib64
     )
     
 

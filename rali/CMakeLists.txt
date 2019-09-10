@@ -34,8 +34,10 @@ find_package(OpenCL QUIET)
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
 
+
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
+
 set(BUILD_RALI true)
 
 if(NOT OpenCL_FOUND)

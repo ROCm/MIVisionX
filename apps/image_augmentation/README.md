@@ -12,7 +12,6 @@ This application demonstrates a basic usage of RALI's C API to load JPEG images 
 
 ### build
   ````
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/libjpeg-turbo/lib64
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/rpp/lib
   mkdir build

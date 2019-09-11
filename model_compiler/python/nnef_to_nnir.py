@@ -50,7 +50,9 @@ nnef2ir_op_type = {
     'transpose'                             : 'transpose',
     'copy'                                  : 'copy',
     'clamp'                                 : 'clamp',
-    'nearest_upsample'                      : 'upsample'
+    'nearest_upsample'                      : 'upsample',
+    'exp': 'copy',
+    'log': 'copy'
 }
   
 nnef2ir_data_type = {
@@ -180,7 +182,9 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         type = nnef2ir_op_type[nnef_operation.name]
     else:
         raise ValueError("ERROR: NNEF operation {} not supported yet".format(nnef_operation.name))
-
+    if nnef_operation.name == 'reshape':
+        print operation.name
+        exit(1)
     if nnef_operation.name == 'conv':
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
         nnef_operation.attribs.update({'size': [filter_tensor.shape[3], filter_tensor.shape[2]]})
@@ -218,11 +222,24 @@ def nnef_graph_to_ir_graph(nnef_graph):
     hasFP64 = False
     hasINT32 = False
 
+    scalarTensorList = []
     for operation in nnef_graph.operations:
         if operation.name == 'external':
             continue
         # add variable(s)
         if operation.name == 'variable':
+            if len(operation.attribs['shape']) == 0:
+                scalarTensorList.append(operation.outputs['output'])
+                #var_tensor = operation.outputs['output']
+                #var_tensor = nnef_graph.tensors[var_tensor]
+                #var_shape = graph.tensor_shapes[input_tensor.name]
+                # if len(input_shape) == 0:
+                #     for dim in output_tensor.shape:
+                #         input_shape.append(dim)
+                #         while len(input_shape) < 4:
+                #             input_shape.append(1)
+                #             tensor_data = np.full(input_shape, nnef_graph.tensors[input_tensor.name].data, dtype=input_tensor.data.dtype)
+                #             graph.addBinary(input_tensor.name, tensor_data)
             tensor_name = operation.outputs['output']
             tensor = nnef_graph.tensors[tensor_name]
             dtype = tensor.data.dtype
@@ -233,8 +250,8 @@ def nnef_graph_to_ir_graph(nnef_graph):
             graph.addVariable(nnef_tensor_to_ir_tensor(tensor))
             graph.addBinary(tensor_name, tensor.data)
         else:
-            for name in operation.outputs:
-                output_tensor = nnef_graph.tensors[operation.outputs[name]]
+            for tensor in operation.outputs:
+                output_tensor = nnef_graph.tensors[operation.outputs[tensor]]
                 graph.addLocal(nnef_tensor_to_ir_tensor(output_tensor))
                 # handle 0-d tensor(s)
                 for input in operation.inputs:
@@ -259,17 +276,16 @@ def nnef_graph_to_ir_graph(nnef_graph):
                         graph.addVariable(scalar_tensor)                    
                         graph.addBinary(scalar_name, tensor_data)
                         operation.inputs[input] = scalar_name
-                    else:
-                        if input == 'x' or input == 'y':
-                            input_tensor = nnef_graph.tensors[operation.inputs[input]]
-                            input_shape = graph.tensor_shapes[input_tensor.name]
-                            if len(input_shape) == 0:
-                                for dim in output_tensor.shape:
-                                    input_shape.append(dim)
-                                while len(input_shape) < 4:
-                                    input_shape.append(1)
-                                tensor_data = np.full(input_shape, nnef_graph.tensors[input_tensor.name].data, dtype=input_tensor.data.dtype)
-                                graph.addBinary(input_tensor.name, tensor_data)
+                    elif input in scalarTensorList:
+                        exit(1)
+                        input_tensor = nnef_graph.tensors[operation.inputs[input]]
+                        input_shape = graph.tensor_shapes[input_tensor.name]
+                        for dim in output_tensor.shape:
+                            input_shape.append(dim)
+                        while len(input_shape) < 4:
+                            input_shape.append(1)
+                        tensor_data = np.full(input_shape, nnef_graph.tensors[input_tensor.name].data, dtype=input_tensor.data.dtype)
+                        graph.addBinary(input_tensor.name, tensor_data)
 
                 node = nnef_op_to_ir_node(nnef_graph, operation)
                 graph.addNode(node)

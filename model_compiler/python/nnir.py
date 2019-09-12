@@ -99,6 +99,7 @@ class IrAttr:
             , 'confidence_threshold' : 0.0
             , 'eta' : 0.0
             , 'factor' : []
+            , 'count' : -1
         }
         self.dict_set = []
 
@@ -467,32 +468,32 @@ class IrGraph:
                         param = self.tensor_dict[node.inputs[1]].shape
                         node.attr.set('shape', param)
                         self.removeTensor(node.inputs[1])
+                    axis_start = node.attr.get('axis')
+                    axis_count = node.attr.get('count')
+                    if axis_count == -1:
+                        axis_count = len(input.shape)
+                    axis_end = axis_start + axis_count
                     icount = 1
                     ocount = 1
-                    out_shape = [0,0,0,0]                    
-                    for dim in range(len(input.shape)):
+                    out_shape = [1,1,1,1]                    
+                    for dim in range(axis_start, axis_end):
                         icount *= input.shape[dim]
                     for dim in range(len(param)):
                         if param[dim] > 0:
-                            out_shape[dim] = param[dim]
-                            ocount *= out_shape[dim]
+                            out_shape[dim+axis_start] = param[dim]
+                            ocount *= out_shape[dim+axis_start]
                         elif param[dim] == 0:
-                            out_shape[dim] = input.shape[dim]
-                            ocount *= out_shape[dim]
+                            out_shape[dim+axis_start] = input.shape[dim]
+                            ocount *= out_shape[dim+axis_start]
                     for dim in range(len(param)):
                         if param[dim] == -1:
-                            out_shape[dim] = icount // ocount
-                            ocount *= out_shape[dim]
-                    for i in range(len(out_shape)):       
-                        if out_shape[i] == 0:     
-                            out_shape[i] = 1
-                        out_shape[i] = (int)(out_shape[i])
-                    param = out_shape
+                            out_shape[dim+axis_start] = (int)(icount // ocount)
+                            ocount *= out_shape[dim+axis_start]
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, param)
+                    local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['upsample']:

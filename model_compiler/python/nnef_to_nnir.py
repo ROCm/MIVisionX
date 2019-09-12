@@ -193,6 +193,9 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     if nnef_operation.name == 'matmul':
         nnef_operation.attribs.update({'beta': 0.0})
 
+    if nnef_operation.name == 'linear':
+        nnef_operation.attribs.update({'transposeB' : 1})
+        
     if nnef_operation.name == 'batch_normalization':
         input_tensor = nnef_operation.inputs['input']
         variance = nnef_operation.inputs['variance']

@@ -167,6 +167,8 @@ class IrNode:
             'div' : 1,
             'min' : 1,
             'max' : 1,
+            'exp' : 1,
+            'log' : 1,
             'gemm' : 1,
             'softmax' : 1,
             'lrn' : 1,
@@ -301,7 +303,7 @@ class IrGraph:
             for output in node.outputs:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
-                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
+                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'exp', 'log', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)

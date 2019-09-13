@@ -182,9 +182,7 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
         type = nnef2ir_op_type[nnef_operation.name]
     else:
         raise ValueError("ERROR: NNEF operation {} not supported yet".format(nnef_operation.name))
-    if nnef_operation.name == 'reshape':
-        print operation.name
-        exit(1)
+        
     if nnef_operation.name == 'conv':
         filter_tensor = nnef_graph.tensors[nnef_operation.inputs['filter']]
         nnef_operation.attribs.update({'size': [filter_tensor.shape[3], filter_tensor.shape[2]]})

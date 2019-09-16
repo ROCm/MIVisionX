@@ -1852,7 +1852,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                         }
                     }
                     else if (data_type == VX_TYPE_INT64) {
-                        long int * pc = (long int *)((short *)ptr + n * CHW + y * W + x);
+                        long int * pc = (long int *)((long int *)ptr + n * CHW + y * W + x);
                         long int best_v = *pc;
                         for(vx_size c = 1; c < C; c++, pc += HW) {
                             if(*pc > best_v) {

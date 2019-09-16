@@ -95,32 +95,32 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
 
     // check the matrix dimensions for the multiply
     if(params.transpose_input1) {
-        if (input1_dims[2] == 1 && input1_dims[3] == 1) {
+        if (input1_dims[2]&input1_dims[3]) {
             std::swap(input1_dims[0], input1_dims[1]);
         }
-        else if (input1_dims[0] == 1 && input1_dims[1] == 1) {
+        else if (input1_dims[0]&input1_dims[1]) {
             std::swap(input1_dims[2], input1_dims[3]);
         }
     }
     if(params.transpose_input2) {
-        if (input2_dims[2] == 1 && input2_dims[3] == 1) {
+        if (input2_dims[2]&input2_dims[3]) {
             std::swap(input2_dims[0], input2_dims[1]);
         }
-        else if (input2_dims[0] == 1 && input2_dims[1] == 1) {
+        else if (input2_dims[0]&input2_dims[1]) {
             std::swap(input2_dims[2], input2_dims[3]);
         }
     }
     if(params.transpose_input3) {
-        if (input3_dims[2] == 1 && input3_dims[3] == 1) {
+        if (input3_dims[2]&input3_dims[3]) {
             std::swap(input3_dims[0], input3_dims[1]);
         }
-        else if (input3_dims[0] == 1 && input3_dims[1] == 1) {
+        else if (input3_dims[0]&input3_dims[1]) {
             std::swap(input3_dims[2], input3_dims[3]);
         }
     }
-    if(((input1_dims[0] != input2_dims[1] ||
-       input1_dims[1] != output_dims[1] || input2_dims[0] != output_dims[0]) && (input1_dims[2] != input2_dims[1] ||
-       input1_dims[3] != output_dims[3] || input2_dims[0] != output_dims[2])) ||
+    if (input1_dims[2]&input1_dims[3]) {
+        if(input1_dims[0] != input2_dims[1] ||
+       input1_dims[1] != output_dims[1] || input2_dims[0] != output_dims[0] ||
        (parameters[2] && (input3_dims[0] != output_dims[0] || input3_dims[1] != output_dims[1])))
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: transpose=[%d %d %d] dims input1[%ld,%ld,%ld,%ld] input2[%ld,%ld,%ld,%ld] input3[%ld,%ld,%ld,%ld] output[%ld,%ld,%ld,%ld]\n",
                     params.transpose_input1, params.transpose_input2, params.transpose_input3,
@@ -128,7 +128,17 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
                     input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3],
                     input3_dims[0], input3_dims[1], input3_dims[2], input2_dims[3],
                     output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
-
+    }
+    else if(input1_dims[0]&input1_dims[1]) {
+        if (input1_dims[2] != input2_dims[1] ||
+       input1_dims[3] != output_dims[3] || input2_dims[0] != output_dims[2])) 
+        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: transpose=[%d %d %d] dims input1[%ld,%ld,%ld,%ld] input2[%ld,%ld,%ld,%ld] input3[%ld,%ld,%ld,%ld] output[%ld,%ld,%ld,%ld]\n",
+                    params.transpose_input1, params.transpose_input2, params.transpose_input3,
+                    input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3],
+                    input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3],
+                    input3_dims[0], input3_dims[1], input3_dims[2], input2_dims[3],
+                    output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
+    }
     return VX_SUCCESS;
 }
 

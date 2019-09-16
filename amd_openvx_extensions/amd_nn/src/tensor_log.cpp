@@ -112,7 +112,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "     half value = *(__global half *)&in[in_offset + x * in_stride.s0 + y * in_stride.s1 + c * in_stride.s2];\n"
                 "     out += out_offset + x  * out_stride.s0 + y * out_stride.s1 + c * out_stride.s2;\n"
                 "     // read 1 value and calculate its natural log\n"
-                "     *(__global half *)&out[0] = log(value);\n"
+                "     *(__global half *)&out[0] = half_log(value);\n"
                     " }\n", opencl_kernel_function_name);
         }
         opencl_kernel_code = item;

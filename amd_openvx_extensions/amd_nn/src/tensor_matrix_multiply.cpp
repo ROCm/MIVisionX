@@ -131,7 +131,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
     }
     else if(input1_dims[0]&input1_dims[1]) {
         if (input1_dims[2] != input2_dims[1] ||
-       input1_dims[3] != output_dims[3] || input2_dims[0] != output_dims[2])) 
+       input1_dims[3] != output_dims[3] || input2_dims[0] != output_dims[2]) 
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: transpose=[%d %d %d] dims input1[%ld,%ld,%ld,%ld] input2[%ld,%ld,%ld,%ld] input3[%ld,%ld,%ld,%ld] output[%ld,%ld,%ld,%ld]\n",
                     params.transpose_input1, params.transpose_input2, params.transpose_input3,
                     input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3],

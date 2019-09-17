@@ -57,8 +57,8 @@ static vx_status VX_CALLBACK validateKernel(vx_node node, const vx_reference par
             return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validation: argmax: #1 top_k=%ld (must be 1 or 2)\n", output_dims[2]);
         if(type == VX_TYPE_UINT8 && input_dims[2] > 256)
             return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: argmax: #1 tensor U8 with input_dims[2](=%ld) > 256\n", input_dims[2]);
-        if(type != VX_TYPE_UINT8 && type != VX_TYPE_UINT16 && type != VX_TYPE_INT16)
-            return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: argmax: #1 tensor output type=%d (must be U8/U16/I16)\n", type);
+        if(type != VX_TYPE_UINT8 && type != VX_TYPE_UINT16 && type != VX_TYPE_INT16 && type != VX_TYPE_INT64)
+            return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: argmax: #1 tensor output type=%d (must be U8/U16/I16/I64)\n", type);
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &output_num_dims, sizeof(output_num_dims)));
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, &output_dims[4-output_num_dims], sizeof(output_dims[0])*output_num_dims));
@@ -310,6 +310,38 @@ static vx_status VX_CALLBACK opencl_codegen(
             }
         }
     }
+    else if(output_data_type == VX_TYPE_INT64) {
+        if(output_obj_type == VX_TYPE_IMAGE) {
+            sprintf(item, "        o0_buf += o0_offset + (z * %ld + y) * o0_stride + x * 2;\n" , input_dims[1]);
+            opencl_kernel_code += item;
+        }
+        else {
+            opencl_kernel_code +=
+                "        o0_buf += o0_offset + z * o0_stride.s3 + y * o0_stride.s1 + x * o0_stride.s0;\n";
+        }
+        if(input_width_multiple_of_4) {
+            opencl_kernel_code +=
+                "        uint2 imax;\n"
+                "        imax.s0 = cmax.s0 + (cmax.s1 << 64);\n"
+                "        imax.s1 = cmax.s2 + (cmax.s3 << 64);\n"
+                "        *(__global uint2 *)o0_buf = imax;\n";
+            if(top_k == 2) {
+                opencl_kernel_code +=
+                    "        uint2 imax1;\n"
+                    "        imax1.s0 = cmax1.s0 + (cmax1.s1 << 64);\n"
+                    "        imax1.s1 = cmax1.s2 + (cmax1.s3 << 64);\n"
+                    "        *(__global uint2 *)&o0_buf[o0_stride.s2] = imax1;\n";
+            }
+        }
+        else {
+            opencl_kernel_code +=
+                "        *(__global ushort *)o0_buf = (ushort)cmax;\n";
+            if(top_k == 2) {
+                opencl_kernel_code +=
+                    "        *(__global ushort *)&o0_buf[o0_stride.s2] = cmax1;\n";
+            }
+        }
+    }
     opencl_kernel_code +=
         "    }\n"
         "}\n";
@@ -317,7 +349,6 @@ static vx_status VX_CALLBACK opencl_codegen(
 #if ENABLE_DEBUG_PRINT_DIMS
     std::cout << "KERNEL argmax_layer output " << input_dims[0] << "x" << input_dims[1] << " " << std::endl;
 #endif
-
     return VX_SUCCESS;
 }
 

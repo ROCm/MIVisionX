@@ -448,6 +448,23 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
         node.inputs[0], node.inputs[1], node.inputs[2] if hasBias else 'NULL', node.outputs[0]))
                 else:
                     raise ValueError("Unsupported gemm configuration by OpenVX: alpha={} beta={} transA={} transB={}".format(alpha, beta, transA, transB))
+            elif node.type == 'matmul':
+                alpha = node.attr.get('alpha')
+                beta = node.attr.get('beta')
+                transA = node.attr.get('transA')
+                transB = node.attr.get('transB')
+                f.write( \
+"""
+    { _vx_tensor_matrix_multiply_params_t matrix_mul_params = { 0 };
+      matrix_mul_params.transpose_input1 = %d;
+      matrix_mul_params.transpose_input2 = %d;
+      matrix_mul_params.transpose_input3 = %d;
+      vx_node node = vxTensorMatrixMultiplyNode(graph, %s, %s, %s, &matrix_mul_params, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % ( \
+        1 if transA else 0, 1 if transB else 0, 0, node.inputs[0], node.inputs[1], node.inputs[2] if beta else 'NULL', node.outputs[0]))
             elif node.type == 'max_pool' or node.type == 'avg_pool':
                 f.write( \
 """
@@ -835,8 +852,17 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }    
-""" 
-    % (node.inputs[0], to, node.outputs[0]))
+""" % (node.inputs[0], to, node.outputs[0]))
+            elif node.type == 'argmax':
+                f.write( \
+"""
+    { 
+      vx_node node = vxArgmaxLayer(graph, %s, (vx_reference)%s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+"""  
+    % (node.inputs[0], node.outputs[0]))
             elif node.type == 'detection_output':
                 f.write( \
 """
@@ -1794,6 +1820,16 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                             *dstG++ = src[1];
                             *dstB++ = src[0];
                         }
+                    } else if(data_type == VX_TYPE_INT64)
+                    {
+                        long int* dstR = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
+                        long int* dstG = dstR + (stride[2] >> 2);
+                        long int* dstB = dstG + (stride[2] >> 2);                    
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = src[2];
+                            *dstG++ = src[1];
+                            *dstB++ = src[0];
+                        }
                     }
                 }
             }
@@ -1835,6 +1871,14 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                             vx_size n = fread(ptrY, sizeof(int), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(int) << "], but got less in " << fileName << std::endl;
+                                return -1;
+                            }
+                        }
+                        else if(data_type == VX_TYPE_INT64){
+                            long int * ptrY = (long int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
+                            vx_size n = fread(ptrY, sizeof(long int), dims[0], fp);
+                            if(n != dims[0]) {
+                                std::cerr << "ERROR: expected char[" << count*sizeof(long int) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
                         }
@@ -2099,7 +2143,8 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
             else if (data_type == VX_TYPE_INT64)
                 fwrite(ptr, sizeof(long int), count, fp); 
             else if (data_type == VX_TYPE_INT32)
-                fwrite(ptr, sizeof(int), count, fp);                
+                fwrite(ptr, sizeof(int), count, fp); 
+                fwrite(ptr, sizeof(long int), count, fp); 
             fclose(fp);
         }
         if(argList.size() >= 2) {

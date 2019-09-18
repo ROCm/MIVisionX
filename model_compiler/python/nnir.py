@@ -100,6 +100,7 @@ class IrAttr:
             , 'eta' : 0.0
             , 'factor' : []
             , 'to' : 1
+            , 'count' : -1
         }
         self.dict_set = []
 
@@ -186,8 +187,10 @@ class IrNode:
             'permute' : 1,
             'prior_box' : 1,
             'flatten'  : 1,
+            'argmax' : 1,
             'clamp' : 1,
             'detection_output' : 1,
+            'matmul' : 1,
             'upsample' : 1,
             'cast' : 1
         }
@@ -381,6 +384,26 @@ class IrGraph:
                     local.setInfo(input.type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['matmul']:
+                    A = self.tensor_dict[node.inputs[0]]
+                    B = self.tensor_dict[node.inputs[1]]
+                    transA = node.attr.get('transA')
+                    transB = node.attr.get('transB')
+                    shapeA = A.shape
+                    shapeB = B.shape 
+                    if transA == 0 and transB == 0:
+                        output_shape = [shapeA[0], shapeB[1], 1, 1]
+                    elif transA == 0:
+                        output_shape = [shapeA[0], shapeB[0], 1, 1]
+                    elif transB == 0:
+                        output_shape = [shapeA[1], shapeB[1], 1, 1]
+                    else:
+                        output_shape = [shapeA[1], shapeB[0], 1, 1]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['concat']:
                     axis = node.attr.get('axis')
                     if axis == 1:
@@ -476,32 +499,32 @@ class IrGraph:
                             param = self.tensor_dict[node.inputs[1]].shape
                         node.attr.set('shape', param)
                         self.removeTensor(node.inputs[1])
+                    axis_start = node.attr.get('axis')
+                    axis_count = node.attr.get('count')
+                    if axis_count == -1:
+                        axis_count = len(input.shape)
+                    axis_end = axis_start + axis_count
                     icount = 1
                     ocount = 1
-                    out_shape = [0,0,0,0]
-                    for dim in range(len(input.shape)):
+                    out_shape = [1,1,1,1]                    
+                    for dim in range(axis_start, axis_end):
                         icount *= input.shape[dim]
                     for dim in range(len(param)):
                         if param[dim] > 0:
-                            out_shape[dim] = param[dim]
-                            ocount *= out_shape[dim]
+                            out_shape[dim+axis_start] = param[dim]
+                            ocount *= out_shape[dim+axis_start]
                         elif param[dim] == 0:
-                            out_shape[dim] = input.shape[dim]
-                            ocount *= out_shape[dim]
+                            out_shape[dim+axis_start] = input.shape[dim]
+                            ocount *= out_shape[dim+axis_start]
                     for dim in range(len(param)):
                         if param[dim] == -1:
-                            out_shape[dim] = icount // ocount
-                            ocount *= out_shape[dim]
-                    for i in range(len(out_shape)):       
-                        if out_shape[i] == 0:     
-                            out_shape[i] = 1
-                        out_shape[i] = (int)(out_shape[i])
-                    param = out_shape
+                            out_shape[dim+axis_start] = (int)(icount // ocount)
+                            ocount *= out_shape[dim+axis_start]
                     if icount != ocount:
                         raise ValueError("reshape: mismatch detected: " + node.inputs[0] + ":" + str(input.shape) + " " + node.outputs[0] + ":" + str(param))
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(input.type, param)
+                    local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['shape']:
@@ -627,7 +650,33 @@ class IrGraph:
                     local.setInfo(output_type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-
+                elif node.type in ['argmax']:
+                    axis = node.attr.get('axis')
+                    keepdims = node.attr.get('keepdims')
+                    output_type = 'I064'
+                    if keepdims == 1:
+                        if axis == 0:
+                            output_shape = [1, input.shape[1], input.shape[2], input.shape[3]]
+                        elif axis == 1:
+                            output_shape = [input.shape[0], 1, input.shape[2], input.shape[3]]
+                        elif axis == 2:
+                            output_shape = [input.shape[0], input.shape[1], 1, input.shape[3]]
+                        elif axis == 3:
+                            output_shape = [input.shape[0], input.shape[1], input.shape[2], 1]
+                    if keepdims == 0:
+                        if axis == 0:
+                            output_shape = [input.shape[1], input.shape[2], input.shape[3], 1]
+                        elif axis == 1:
+                            output_shape = [input.shape[0],input.shape[2], input.shape[3], 1]
+                        elif axis == 2:
+                            output_shape = [input.shape[0], input.shape[1], input.shape[3], 1]
+                        elif axis == 3:
+                            output_shape = [input.shape[0], input.shape[1], input.shape[2], 1]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['detection_output']:
                     out_shape = [1,1,1,7]
                     local = IrTensor()

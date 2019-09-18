@@ -49,7 +49,7 @@ onnx2ir_attr = {
     'to' : 'to', 
 }
 
-onnx2ir_op_type = {    
+onnx2ir_op_type = { 
     'Conv'               : 'conv',
     'ConvTranspose'      : 'conv_transpose',
     'BatchNormalization' : 'batch_norm',
@@ -60,7 +60,7 @@ onnx2ir_op_type = {
     'Add'                : 'add',
     'Sub'                : 'sub',
     'Mul'                : 'mul',
-    'MatMul'             : 'gemm',
+    'MatMul'             : 'matmul',
     'Gemm'               : 'gemm',
     'LRN'                : 'lrn',
     'Concat'             : 'concat',
@@ -76,11 +76,13 @@ onnx2ir_op_type = {
     'Identity'           : 'copy',
     'Min'                : 'min',
     'Max'                : 'max',
+    'Cast'               : 'add',
     'Div'                : 'div',
     'ReduceMean'         : 'global_avg_pool',
     'Clip'               : 'clamp',
     'Cast'               : 'cast',
-    'Shape'              : 'shape'
+    'Shape'              : 'shape'   
+    'ArgMax'             : 'argmax',
 }
 
 onnx2ir_data_type = [

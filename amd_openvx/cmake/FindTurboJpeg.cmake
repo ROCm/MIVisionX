@@ -27,17 +27,15 @@ find_path(TurboJpeg_INCLUDE_DIRS
     NAMES turbojpeg.h
     PATHS
     /usr/include/
-    /opt/libjpeg-turbo/include/
     )
     
 
 mark_as_advanced( TurboJpeg_INCLUDE_DIRS )
 
 find_library( TurboJpeg_LIBRARIES
-    NAMES turbojpeg
+    NAMES libturbojpeg.so
     PATHS
     /usr/lib
-    /opt/libjpeg-turbo/lib64
     )
 
 mark_as_advanced( TurboJpeg_LIBRARIES_DIR )
@@ -46,7 +44,6 @@ find_path(TurboJpeg_LIBRARIES_DIR
     NAMES libturbojpeg.so
     PATHS
     /usr/lib
-    /opt/libjpeg-turbo/lib64
     )
     
 
@@ -55,7 +52,8 @@ find_package_handle_standard_args( TurboJpeg
     FOUND_VAR  TurboJpeg_FOUND 
     REQUIRED_VARS
         TurboJpeg_LIBRARIES 
-        TurboJpeg_INCLUDE_DIRS 
+        TurboJpeg_INCLUDE_DIRS
+        TurboJpeg_LIBRARIES_DIR
     )
 
 set(TurboJpeg_FOUND ${TurboJpeg_FOUND} CACHE INTERNAL "")

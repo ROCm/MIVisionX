@@ -350,7 +350,6 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
             outputList.append(tensor.name)
         for idx, tensor in enumerate(graph.locals):
             if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
-                print (tensor.shape)
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
 """%(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)])))

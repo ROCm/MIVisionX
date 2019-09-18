@@ -81,7 +81,7 @@ onnx2ir_op_type = {
     'ReduceMean'         : 'global_avg_pool',
     'Clip'               : 'clamp',
     'Cast'               : 'cast',
-    'Shape'              : 'shape'   
+    'Shape'              : 'shape',  
     'ArgMax'             : 'argmax',
 }
 

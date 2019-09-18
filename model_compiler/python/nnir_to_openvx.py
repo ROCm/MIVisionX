@@ -350,6 +350,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
             outputList.append(tensor.name)
         for idx, tensor in enumerate(graph.locals):
             if (not tensor.name in outputList) and (not tensor.name in localList[:idx]):
+                print (tensor.shape)
                 f.write( \
 """    vx_size dims_%s[%d] = { %s };
 """%(tensor.name, len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)])))
@@ -1812,19 +1813,9 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                         }
                     } else if(data_type == VX_TYPE_INT32)
                     {
-                        int* dstR = (int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
+                        int* dstR = (int*)ptr + ((n * stride[3] + y * stride[1]) >> 2);
                         int* dstG = dstR + (stride[2] >> 2);
                         int* dstB = dstG + (stride[2] >> 2);                    
-                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                            *dstR++ = src[2];
-                            *dstG++ = src[1];
-                            *dstB++ = src[0];
-                        }
-                    } else if(data_type == VX_TYPE_INT64)
-                    {
-                        long int* dstR = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
-                        long int* dstG = dstR + (stride[2] >> 2);
-                        long int* dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
                             *dstR++ = src[2];
                             *dstG++ = src[1];
@@ -1871,14 +1862,6 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                             vx_size n = fread(ptrY, sizeof(int), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(int) << "], but got less in " << fileName << std::endl;
-                                return -1;
-                            }
-                        }
-                        else if(data_type == VX_TYPE_INT64){
-                            long int * ptrY = (long int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
-                            vx_size n = fread(ptrY, sizeof(long int), dims[0], fp);
-                            if(n != dims[0]) {
-                                std::cerr << "ERROR: expected char[" << count*sizeof(long int) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
                         }
@@ -2144,7 +2127,6 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                 fwrite(ptr, sizeof(long int), count, fp); 
             else if (data_type == VX_TYPE_INT32)
                 fwrite(ptr, sizeof(int), count, fp); 
-                fwrite(ptr, sizeof(long int), count, fp); 
             fclose(fp);
         }
         if(argList.size() >= 2) {

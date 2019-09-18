@@ -45,7 +45,8 @@ onnx2ir_attr = {
     'split' : 'split',
     'shape' : 'shape',
     'min' : 'min',
-    'max' : 'max'
+    'max' : 'max',
+    'to' : 'to', 
 }
 
 onnx2ir_op_type = {    
@@ -77,7 +78,9 @@ onnx2ir_op_type = {
     'Max'                : 'max',
     'Div'                : 'div',
     'ReduceMean'         : 'global_avg_pool',
-    'Clip'               : 'clamp'
+    'Clip'               : 'clamp',
+    'Cast'               : 'cast',
+    'Shape'              : 'shape'
 }
 
 onnx2ir_data_type = [

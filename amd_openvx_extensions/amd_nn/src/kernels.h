@@ -104,6 +104,7 @@ enum user_kernel_e
     VX_KERNEL_DETECTION_OUTPUT_LAYER_AMD     = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00f,
     VX_KERNEL_TENSOR_MIN_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x010,
     VX_KERNEL_TENSOR_MAX_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x011,
+    VX_KERNEL_CAST_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x012,
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -154,6 +155,7 @@ vx_status publishCropLayer(vx_context context);
 vx_status publishCropAndResizeLayer(vx_context context);
 vx_status publishTensorMin(vx_context context);
 vx_status publishTensorMax(vx_context context);
+vx_status publishCastLayer(vx_context context);
 vx_status publishDetectionOutputLayer(vx_context context);
 
 //////////////////////////////////////////////////////////////////////

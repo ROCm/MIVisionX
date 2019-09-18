@@ -266,4 +266,17 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMaxNode(vx_graph graph, vx_tensor input
  */
 VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_int32 num_classes, vx_int32 share_location, vx_int32 background_label_id, vx_float32 nms_threshold,
                                                         vx_int32 code_type, vx_int32 keep_top_k, vx_int32 variance_encoded_in_target, vx_tensor output);
+
+/*! \brief [Graph] Creates a Cast Layer Node.
+ * \details Converts all the elements of the input tensor to the data type specified by input_2 of the node.\n
+ * This function supports 2D or 4D tensors as input and output.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The input tensor data. Can be VX_TYPE_FLOAT32, VX_TYPE_INT32, VX_TYPE_INT64.
+ * \param [in] to The required output tensor data type. Integer value between 0-13.
+ * \param [out] output The output tensor data. Output will have the same number of dimensions as input. Output tensor data type will be that specified by 'to'. 
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxCastLayer(vx_graph graph, vx_tensor input, vx_int32 to, vx_tensor output);
 #endif

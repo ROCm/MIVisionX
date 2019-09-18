@@ -29,6 +29,7 @@ tensor_type_nnir2openvx = {
     'I016' : 'VX_TYPE_INT16',
     'U008' : 'VX_TYPE_UINT8',
     'I064' : 'VX_TYPE_INT64',
+    'I032' : 'VX_TYPE_INT32',
 }
 
 def generateLicenseForCPP(f):
@@ -238,8 +239,8 @@ def generateModuleCPP(graph,fileName,virtual_tensor_flag):
 #include <vx_ext_amd.h>
 #include <stdio.h>
 
-#define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%%d) at " __FILE__ "#%%d\\n", status, __LINE__); return status; } }
-#define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status, "ERROR: failed with status = (%%d) at " __FILE__ "#%%d\\n", status, __LINE__); return status; } }
+#define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\\n", status, __LINE__); return status; } }
+#define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\\n", status, __LINE__); return status; } }
 
 static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * fp, const char * binaryFilename)
 {
@@ -610,6 +611,41 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }
 """ % (len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), len(tensor.shape), \
        tensor_type_nnir2openvx[tensor.type], node.inputs[0], node.inputs[1], node.inputs[2], node.outputs[0]))
+                elif len(node.inputs) == 1:
+                    tensor = graph.tensor_dict[node.inputs[0]]
+                    max_value = node.attr.get('max')
+                    min_value = node.attr.get('min')
+                    f.write( \
+"""
+    { vx_size tensor_dims[%d] = { %s };
+      vx_tensor max_tensor = vxCreateTensor(context, 4, tensor_dims, VX_TYPE_FLOAT32, 0);
+      ERROR_CHECK_OBJECT(max_tensor);
+      vx_tensor min_tensor = vxCreateTensor(context, 4, tensor_dims, VX_TYPE_FLOAT32, 0);
+      ERROR_CHECK_OBJECT(min_tensor);
+      float *max_data = new float[tensor_dims[0]*tensor_dims[1]*tensor_dims[2]*tensor_dims[3]];
+      float *min_data = new float[tensor_dims[0]*tensor_dims[1]*tensor_dims[2]*tensor_dims[3]];
+      for(int i = 0; i < tensor_dims[0]*tensor_dims[1]*tensor_dims[2]*tensor_dims[3]; i++)
+      {
+      	max_data[i] = %f;
+      	min_data[i] = %f;
+      }
+      vx_size stride[4] = { sizeof(float), sizeof(float)*tensor_dims[0] , sizeof(float)*tensor_dims[0]*tensor_dims[1], sizeof(float)*tensor_dims[0]*tensor_dims[1]*tensor_dims[2]  };
+      ERROR_CHECK_STATUS(vxCopyTensorPatch(max_tensor, 4, nullptr, nullptr, stride, max_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+      ERROR_CHECK_STATUS(vxCopyTensorPatch(min_tensor, 4, nullptr, nullptr, stride, min_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+      vx_tensor tmp__tensor = vxCreateVirtualTensor(graph, %d, tensor_dims, %s, 0);
+      ERROR_CHECK_OBJECT(tmp__tensor);
+      vx_node node = vxTensorMinNode(graph, %s, max_tensor, VX_CONVERT_POLICY_SATURATE, tmp__tensor);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+      node = vxTensorMaxNode(graph, tmp__tensor, min_tensor, VX_CONVERT_POLICY_SATURATE, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+      
+      delete [] max_data;
+      delete [] min_data;
+    }
+""" % (len(tensor.shape), ', '.join([str(v) for v in reversed(tensor.shape)]), max_value, min_value, len(tensor.shape), \
+       tensor_type_nnir2openvx[tensor.type], node.inputs[0], node.outputs[0]))
                 else:
                     raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
             elif node.type == 'batch_norm':
@@ -790,6 +826,17 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """ 
     % (node.inputs[0], node.outputs[0], node.attr.get('coord')[0], node.attr.get('coord')[1], node.attr.get('shape')[0], node.attr.get('shape')[1], node.attr.get('scale'), node.attr.get('mode')))
+            elif node.type == 'cast':
+                to = node.attr.get('to')
+                f.write( \
+"""
+    { 
+      vx_node node = vxCastLayer(graph, %s, %d, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], to, node.outputs[0]))
             elif node.type == 'detection_output':
                 f.write( \
 """
@@ -1682,8 +1729,8 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
     vxQueryTensor(tensor, VX_TENSOR_DATA_TYPE, &data_type, sizeof(data_type));
     vxQueryTensor(tensor, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims));
     vxQueryTensor(tensor, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*num_of_dims);
-    if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16)) {
-        std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16: invalid for " << fileName << std::endl;
+    if((data_type != VX_TYPE_FLOAT32) && (data_type != VX_TYPE_FLOAT16) && (data_type != VX_TYPE_INT64) && (data_type != VX_TYPE_INT32)) {
+        std::cerr << "ERROR: copyTensor() supports only VX_TYPE_FLOAT32 or VX_TYPE_FLOAT16 or VX_TYPE_INT64 or VX_TYPE_INT32: invalid for " << fileName << std::endl;
         return -1;
     }
     vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
@@ -1717,11 +1764,31 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                             *dstG++ = src[1];
                             *dstB++ = src[0];
                         }
-                    } else
+                    } else if(data_type == VX_TYPE_FLOAT16)
                     {
                         short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);
                         short * dstG = dstR + (stride[2] >> 2);
                         short * dstB = dstG + (stride[2] >> 2);                    
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = src[2];
+                            *dstG++ = src[1];
+                            *dstB++ = src[0];
+                       	}
+                    } else if(data_type == VX_TYPE_INT64)
+                    {
+                        long int* dstR = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
+                        long int* dstG = dstR + (stride[2] >> 2);
+                        long int* dstB = dstG + (stride[2] >> 2);                    
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = src[2];
+                            *dstG++ = src[1];
+                            *dstB++ = src[0];
+                        }
+                    } else if(data_type == VX_TYPE_INT32)
+                    {
+                        int* dstR = (int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
+                        int* dstG = dstR + (stride[2] >> 2);
+                        int* dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
                             *dstR++ = src[2];
                             *dstG++ = src[1];
@@ -1749,11 +1816,25 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 std::cerr << "ERROR: expected char[" << count*sizeof(float) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
-                        } else {
+                        } else if(data_type == VX_TYPE_FLOAT16){
                             short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 1);
                             vx_size n = fread(ptrY, sizeof(short), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(short) << "], but got less in " << fileName << std::endl;
+                                return -1;
+                            }
+                        } else if(data_type == VX_TYPE_INT64){
+                            long int * ptrY = (long int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
+                            vx_size n = fread(ptrY, sizeof(long int), dims[0], fp);
+                            if(n != dims[0]) {
+                                std::cerr << "ERROR: expected char[" << count*sizeof(long int) << "], but got less in " << fileName << std::endl;
+                                return -1;
+                            }
+                        } else if(data_type == VX_TYPE_INT32){
+                            int * ptrY = (int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
+                            vx_size n = fread(ptrY, sizeof(int), dims[0], fp);
+                            if(n != dims[0]) {
+                                std::cerr << "ERROR: expected char[" << count*sizeof(int) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
                         }
@@ -1799,6 +1880,26 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                     else if (data_type == VX_TYPE_FLOAT16) {
                         half * pc = (half *)((short *)ptr + n * CHW + y * W + x);
                         half best_v = *pc;
+                        for(vx_size c = 1; c < C; c++, pc += HW) {
+                            if(*pc > best_v) {
+                                best_v = *pc;
+                                best_c = c;
+                            }
+                        }
+                    }
+                    else if (data_type == VX_TYPE_INT64) {
+                        long int * pc = (long int *)((long int *)ptr + n * CHW + y * W + x);
+                        long int best_v = *pc;
+                        for(vx_size c = 1; c < C; c++, pc += HW) {
+                            if(*pc > best_v) {
+                                best_v = *pc;
+                                best_c = c;
+                            }
+                        }
+                    }
+                    else if (data_type == VX_TYPE_INT32) {
+                        int * pc = (int *)((int *)ptr + n * CHW + y * W + x);
+                        int best_v = *pc;
                         for(vx_size c = 1; c < C; c++, pc += HW) {
                             if(*pc > best_v) {
                                 best_v = *pc;
@@ -1993,8 +2094,12 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
             }
             if (data_type == VX_TYPE_FLOAT32)
                 fwrite(ptr, sizeof(float), count, fp);
-            else
-                fwrite(ptr, sizeof(short), count, fp);                
+            else if (data_type == VX_TYPE_FLOAT16)
+                fwrite(ptr, sizeof(short), count, fp);
+            else if (data_type == VX_TYPE_INT64)
+                fwrite(ptr, sizeof(long int), count, fp); 
+            else if (data_type == VX_TYPE_INT32)
+                fwrite(ptr, sizeof(int), count, fp);                
             fclose(fp);
         }
         if(argList.size() >= 2) {
@@ -2026,7 +2131,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                     if(!(err < maxError)) maxError = err;
                 }
             }
-            else
+            else if(data_type == VX_TYPE_FLOAT16)
             {
                 for(size_t i = 0; i < count; i++) {
                     float src = _cvtsh_ss(((unsigned short*)ptr)[i]);
@@ -2218,6 +2323,17 @@ int main(int argc, const char ** argv)
         argv++;
     }
 """ % (tensor.name, tensor.name, tensor.name, tensor.name))
+        if virtual_tensor_flag == 0:
+            for tensor in graph.locals:
+            	f.write( \
+"""
+    // save tensor %s
+    auto it_%s = tensorMap.find("%s");
+   	if(copyTensor("%s", it_%s->second, "%s", VX_READ_ONLY) < 0) {
+        return -1;
+    }
+    printf("OK: wrote tensor '%s' into %s\\n");
+""" % (tensor.name, tensor.name, tensor.name, tensor.name, tensor.name, tensor.name, tensor.name,tensor.name))
         f.write( \
 """
     t0 = clockCounter();

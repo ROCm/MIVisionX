@@ -99,6 +99,7 @@ class IrAttr:
             , 'confidence_threshold' : 0.0
             , 'eta' : 0.0
             , 'factor' : []
+            , 'to' : 1
         }
         self.dict_set = []
 
@@ -175,6 +176,7 @@ class IrNode:
             'leaky_relu' : 1,
             'sigmoid' : 1,
             'reshape' : 1,
+            'shape' : 1,
             'squeeze' : 1,
             'unsqueeze' : 1,
             'transpose' : 1,
@@ -187,6 +189,7 @@ class IrNode:
             'clamp' : 1,
             'detection_output' : 1,
             'upsample' : 1,
+            'cast' : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -280,6 +283,9 @@ class IrGraph:
 
     def addBinary(self,tensorName,binary):
         self.binaries[tensorName] = binary
+
+    def readBinary(self,tensorName):
+        return self.binaries[tensorName]
 
     def removeTensor(self,name):
         tensor = self.tensor_dict[name]
@@ -464,12 +470,15 @@ class IrGraph:
                 elif node.type in ['reshape']:
                     param = node.attr.get('shape')
                     if not param:
-                        param = self.tensor_dict[node.inputs[1]].shape
+                        if self.tensor_dict[node.inputs[1]] in self.locals:
+                            param = (self.readBinary(tensor_name)).tolist()
+                        else:
+                            param = self.tensor_dict[node.inputs[1]].shape
                         node.attr.set('shape', param)
                         self.removeTensor(node.inputs[1])
                     icount = 1
                     ocount = 1
-                    out_shape = [0,0,0,0]                    
+                    out_shape = [0,0,0,0]
                     for dim in range(len(input.shape)):
                         icount *= input.shape[dim]
                     for dim in range(len(param)):
@@ -493,6 +502,24 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, param)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['shape']:
+                    node.type = 'copy'
+                    tensor_name = 'shape_' + node.inputs[0]
+                    shape_data = np.array(input.shape)
+                    shape_data.astype(np.int64)
+                    
+                    shape_tensor = IrTensor()
+                    shape_tensor.setName(tensor_name)
+                    shape_tensor.setInfo('I064', np.shape(shape_data))
+                    self.addVariable(shape_tensor)                    
+                    self.addBinary(tensor_name, shape_data)
+                    node.inputs[0] = tensor_name
+
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo('I064', shape_tensor.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['upsample']:
@@ -587,6 +614,20 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['cast']:
+                    to = node.attr.get('to')
+                    if to == 6:
+                        output_type = 'I032'
+                    elif to == 7:
+                        output_type = 'I064'
+                    else:
+                        raise ValueError("Unsupported cast attribute(to): {}".format(to))
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+
                 elif node.type in ['detection_output']:
                     out_shape = [1,1,1,7]
                     local = IrTensor()

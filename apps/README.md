@@ -31,6 +31,15 @@ This sample [application](./mivisionx_winml_yolov2#yolov2-using-amd-winml-extens
 
 <p align="center"> <img src="./mivisionx_winml_yolov2/image/cat-yolo.jpg"> </p>
 
+## MIVisionX rali-unittests
+Simple application for running unit tests for RALI library.
+Usage: rali-unittests input-image-folder output-image-name augmentation-number display-on-off gpu-or-cpu rgb-or-grayscale
+Example: rali-unittests input-images/ output-image-test.png 0 1 1 1
+The above example will run the first augmentation in the app on the image located in input-images and output the result to
+output-image-test.png. It will be shown in the OpenCV display window, it will use the GPU and it will be in color. 
+Example 2: rali-unittests input-images/ output-image-test2.png 0 1 0 0
+Same as the first example but the processing will be done on the CPU and the image will be in grayscale.
+
 ## External Application
 
 * [MIVisionX-Classifier](https://github.com/kiritigowda/MIVisionX-Classifier) - This application runs know CNN image classifiers on live/pre-recorded video stream.

@@ -34,11 +34,6 @@ class PyTorchIterator:
             raise StopIteration
 
         self.pipe.copyToNPArrayFloat(self.out)
-        return self.out
-
-
-
-
 
         return torch.from_numpy(self.out), self.labels_tensor
 

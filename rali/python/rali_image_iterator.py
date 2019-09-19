@@ -1,8 +1,8 @@
-import torch
+
 from  rali_common import *
 import numpy as np
 
-class PyTorchIterator:
+class ImageIterator:
     def __init__(self, pipeline):
         self.pipe = pipeline
         if pipeline.build() != 0:
@@ -11,17 +11,13 @@ class PyTorchIterator:
         self.h = pipeline.getOutputHeight()
         self.b = pipeline.getBatchSize()
         self.n = pipeline.getOutputImageCount()
-        color_format = pipeline.getOutputColorFormat()
+        color_format = self.pipe.getOutputColorFormat()
         self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
+        height = self.h*self.b*self.n
+        #print ('h = ', h, 'w = ', self.pipe.w)
+        self.out_image = np.zeros((height, self.w, self.p), dtype = "uint8")
+        self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h, self.w,), dtype = "float32")
 
-        self.out = np.zeros(( self.b*self.n, self.p, self.h, self.w,), dtype = "float32")
-
-        labels = []
-        for image in self.pipe.output_images:
-            labels.append(image.label)
-
-        self.labels_tensor = torch.LongTensor(labels)
-            
     def next(self):
         return self.__next__()
 
@@ -33,14 +29,9 @@ class PyTorchIterator:
         if self.pipe.run() != 0:
             raise StopIteration
 
-        self.pipe.copyToNPArrayFloat(self.out)
-        return self.out
-
-
-
-
-
-        return torch.from_numpy(self.out), self.labels_tensor
+        self.pipe.copyToNPArray(self.out_image)
+        self.pipe.copyToNPArrayFloat(self.out_tensor)
+        return self.out_image , self.out_tensor
 
     def reset(self):
         self.pipe.reset()

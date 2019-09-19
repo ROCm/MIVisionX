@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from rali import *
+from rali_image_iterator import *
 import cv2
 import time
 
@@ -58,7 +59,7 @@ def main():
     start = time.time()
 
 
-    for i, image_batch in enumerate(imageIterator, 0):
+    for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
         cv2.imshow('image', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
         cv2.waitKey(100)
 

@@ -350,44 +350,4 @@ class RaliGraph():
         out = np.frombuffer(array, dtype=array.dtype)
         self._lib.copyToOutputFloat(self.handle, np.ascontiguousarray(out, dtype=array.dtype), array.size)
 
-class ImageIterator:
-    def __init__(self, pipeline):
-        self.pipe = pipeline
-        if pipeline.build() != 0:
-            raise Exception('Failed to build the augmentation graph')
-
-        self.w = pipeline.getOutputWidth()
-        self.h = pipeline.getOutputHeight()
-        self.b = pipeline.getBatchSize()
-        self.n = pipeline.getOutputImageCount()
-
-        color_format = self.pipe.getOutputColorFormat()
-        self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
-        height = self.h*self.b*self.n
-        #print ('h = ', h, 'w = ', self.pipe.w)
-        self.out = np.zeros((height, self.w, self.p), dtype = "uint8")
-        
-    def next(self):
-        return self.__next__()
-
-    def __next__(self):
-        
-        if self.pipe.getReaminingImageCount() <= 0:
-            raise StopIteration
-
-        if self.pipe.run() != 0:
-            raise StopIteration
-
-        self.pipe.copyToNPArray(self.out)
-        return self.out
-        
-    def reset(self):
-        self.pipe.reset()
-
-    def __iter__(self):
-        self.pipe.reset()
-        return self
-
-    def imageCount(self):
-        return self.pipe.getReaminingImageCount()
 

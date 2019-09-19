@@ -31,7 +31,7 @@ This sample [application](./mivisionx_winml_yolov2#yolov2-using-amd-winml-extens
 
 <p align="center"> <img src="./mivisionx_winml_yolov2/image/cat-yolo.jpg"> </p>
 
-## MIVisionX rali-unittests
+## rali-unittests
 Simple application for running unit tests for RALI library.
 Usage: rali-unittests input-image-folder output-image-name augmentation-number display-on-off gpu-or-cpu rgb-or-grayscale
 Example: rali-unittests input-images/ output-image-test.png 0 1 1 1

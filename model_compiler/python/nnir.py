@@ -556,24 +556,6 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-                elif node.type in ['shape']:
-                    node.type = 'copy'
-                    tensor_name = 'shape_' + node.inputs[0]
-                    shape_data = np.array(input.shape)
-                    shape_data.astype(np.int64)
-
-                    shape_tensor = IrTensor()
-                    shape_tensor.setName(tensor_name)
-                    shape_tensor.setInfo('I064', np.shape(shape_data))
-                    self.addVariable(shape_tensor)                    
-                    self.addBinary(tensor_name, shape_data)
-                    node.inputs[0] = tensor_name
-
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo('I064', shape_tensor.shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
                 elif node.type in ['upsample']:
                     factor = node.attr.get('factor')
                     if len(factor) == 2:

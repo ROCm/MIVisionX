@@ -31,6 +31,11 @@ size_t FileSourceReader::open()
     auto file_path = m_file_names[m_curr_file_idx++];// Get next file name 
 
     _last_id= file_path;
+    unsigned last_slash_idx = _last_id.find_last_of("\\/");
+    if (std::string::npos != last_slash_idx)
+    {
+        _last_id.erase(0, last_slash_idx + 1);
+    }
     
     m_current_fPtr = fopen(file_path.c_str(), "rb");// Open the file, 
     

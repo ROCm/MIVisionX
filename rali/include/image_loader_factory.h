@@ -28,6 +28,7 @@ public:
     //! Loads a decompressed batch of images into the buffer indicated by buff
     LoaderModuleStatus load(
         unsigned char* buff,
+        std::vector<std::string>& names,
         unsigned batch_size,
         unsigned output_width,
         unsigned output_height,

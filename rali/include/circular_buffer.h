@@ -21,8 +21,8 @@ public:
     CIRCULAR_BUFFER_STATUS sync();
     void cancel_reading();
     void cancel_writing();
-    void done_writing();
-    void done_reading();
+    void push();
+    void pop();
     cl_mem get_read_buffer_dev();
     unsigned char* get_read_buffer_host();
     unsigned char*  get_write_buffer();

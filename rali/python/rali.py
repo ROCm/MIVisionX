@@ -89,13 +89,13 @@ class RaliGraph():
 
     """ rali_api_data_loader.h """
 
-    def jpegFileInput(self, path, color_format,  is_output, label,  max_width = 0, max_height= 0, num_threads = 1):
+    def jpegFileInput(self, path, color_format,  is_output,  max_width = 0, max_height= 0, num_threads = 1):
         if max_width > 0 and max_height > 0:
             out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, self.ImageSizeEvaluationPolicy['USER_GIVEN_SIZE'], max_width, max_height, 0)
         else:
             out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, self.ImageSizeEvaluationPolicy['MOST_FREQUENT_SIZE'], 0, 0, 0)
 
-        out_img = RaliImage(out, label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -109,7 +109,7 @@ class RaliGraph():
 
     def resize(self, input, dest_width, dest_height, is_output):
         out = self._lib.raliResize(self.handle, input.obj, dest_width,dest_height, is_output)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -119,7 +119,7 @@ class RaliGraph():
         param_x_drift = self.validateFloatParameter( x_center_drift)
         param_y_drift = self.validateFloatParameter( y_center_drift)
         out = self._lib.raliCropResize(self.handle, input.obj,dest_width,dest_height, is_output, param_area, param_x_drift, param_y_drift)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -130,7 +130,7 @@ class RaliGraph():
             out = self._lib.raliRotate(self.handle, input.obj, is_output, param_angle, dest_width, dest_height)
         else:
             out = self._lib.raliRotate(self.handle, input.obj, is_output, param_angle, 0, 0)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -138,7 +138,7 @@ class RaliGraph():
     def hue(self, input, is_output, shift = None):
         param_shift = self.validateFloatParameter(shift)
         out = self._lib.raliHue(self.handle, input.obj, is_output, param_shift)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -147,7 +147,7 @@ class RaliGraph():
         alpha_param = self.validateFloatParameter( alpha)
         beta_param = self.validateFloatParameter( beta)
         out = self._lib.raliBrightness(self.handle, input.obj, is_output, alpha_param, beta_param)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -155,7 +155,7 @@ class RaliGraph():
     def gamma(self, input, is_output, alpha = None):
         param_alpha = self.validateFloatParameter(alpha)
         out = self._lib.raliGamma(self.handle, input.obj, is_output, param_alpha)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -164,7 +164,7 @@ class RaliGraph():
         min_param = self.validateIntParameter(min)
         max_param = self.validateIntParameter(max)
         out = self._lib.raliContrast(self.handle, input.obj, is_output, min_param, max_param)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -172,14 +172,14 @@ class RaliGraph():
     def saturation(self, input, is_output, shift = None):
         param_shift = self.validateFloatParameter(shift)
         out = self._lib.raliSaturation(self.handle, input.obj, is_output, param_shift)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
     def flip(self, input, is_output, flip_axis = 0):
         out = self._lib.raliFlip(self.handle, input.obj, flip_axis, is_output)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -187,18 +187,16 @@ class RaliGraph():
     def blur(self, input, is_output, sdev = None):
         param_sdev = self.validateFloatParameter(sdev)
         out = self._lib.raliBlur(self.handle, input.obj, is_output, param_sdev)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
     def blend(self, input1, input2, is_output, ratio = None):
-        if input1.label != input2.label:
-            raise Exception('input1 and input2 images to the blend function should have the same label')
 
         param_ratio = self.validateFloatParameter(ratio)
         out = self._lib.raliBlend(self.handle, input1.obj,input2.obj, is_output, param_ratio)
-        out_img = RaliImage(out, input1.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -214,14 +212,14 @@ class RaliGraph():
             out = self._lib.raliWarpAffine(self.handle, input.obj, is_output, x0, x1, y0, y1, o0, o1, dest_width, dest_height)
         else:
             out = self._lib.raliWarpAffine(self.handle, input.obj, is_output, x0, x1, y0, y1, o0, o1, 0, 0)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
     def fishEye(self, input, is_output):
         out = self._lib.raliFishEye(self.handle, input.obj, is_output)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -229,7 +227,7 @@ class RaliGraph():
     def vignette(self, input, is_output, sdev = None):
         param_sdev = self.validateFloatParameter(sdev)
         out = self._lib.raliVignette(self.handle, input.obj, is_output, param_sdev)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -238,7 +236,7 @@ class RaliGraph():
         min_param = self.validateIntParameter(min)
         max_param = self.validateIntParameter(max)
         out = self._lib.raliJitter(self.handle, input.obj, is_output, min_param, max_param)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -246,7 +244,7 @@ class RaliGraph():
     def SnPNoise(self, input, is_output, sdev = None):
         param_sdev = self.validateFloatParameter(sdev)
         out = self._lib.raliSnPNoise(self.handle, input.obj, is_output, param_sdev)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -254,7 +252,7 @@ class RaliGraph():
     def snow(self, input, is_output, sdev = None):
         param_sdev = self.validateFloatParameter(sdev)
         out = self._lib.raliSnow(self.handle, input.obj, is_output, param_sdev)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -262,7 +260,7 @@ class RaliGraph():
     def rain(self, input, is_output, rain_value = None):
         param_rain = self.validateFloatParameter(rain_value)
         out = self._lib.raliRain(self.handle, input.obj, is_output, param_rain)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -270,7 +268,7 @@ class RaliGraph():
     def colorTemp(self, input, is_output, adj_value = None):
         adj_value = self.validateIntParameter(adj_value)
         out = self._lib.raliColorTemp(self.handle, input.obj, is_output, adj_value)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -278,7 +276,7 @@ class RaliGraph():
     def fog(self, input, is_output, fog_value = None):
         param_fog = self.validateFloatParameter(fog_value)
         out = self._lib.raliFog(self.handle, input.obj, is_output, param_fog)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -287,21 +285,21 @@ class RaliGraph():
         strength_param = self.validateFloatParameter(strength)
         zoom_param = self.validateFloatParameter(zoom)
         out = self._lib.raliLensCorrection(self.handle, input.obj, is_output, strength_param, zoom_param)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
     def pixelate(self, input, is_output):
         out = self._lib.raliPixelate(self.handle, input.obj, is_output)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
     def histogramBalance(self, input, is_output):
         out = self._lib.raliHistogramBalance(self.handle, input.obj, is_output)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
@@ -309,7 +307,7 @@ class RaliGraph():
     def exposure(self, input, is_output, shift = None):
         param_shift = self.validateFloatParameter(shift)
         out = self._lib.raliExposure(self.handle, input.obj, is_output, param_shift)
-        out_img = RaliImage(out, input.label)
+        out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img

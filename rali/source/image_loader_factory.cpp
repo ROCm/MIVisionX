@@ -97,6 +97,7 @@ ImageLoaderFactory::count()
 
 LoaderModuleStatus 
 ImageLoaderFactory::load(unsigned char* buff,
+                         std::vector<std::string>& names,
                          unsigned batch_size,
                          unsigned output_width,
                          unsigned output_height,
@@ -133,6 +134,7 @@ ImageLoaderFactory::load(unsigned char* buff,
         }
 
         _reader->read(_compressed_buff.data(), fsize);
+        auto image_name = _reader->id();
         _reader->close();
         _file_load_time.end();// Debug timing
 
@@ -153,7 +155,7 @@ ImageLoaderFactory::load(unsigned char* buff,
             continue;
         }
         _decode_time.end();// Debug timing
-
+        names[file_counter] = image_name;
         file_counter++;	
     }
 

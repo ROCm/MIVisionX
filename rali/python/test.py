@@ -34,6 +34,8 @@ class DataLoader(RaliGraph):
         self.rotate_img = self.rotate(self.input, False)
         self.jitter_img = self.jitter(self.rotate_img, True)
 
+    def get_input_name(self, idx):
+        return self.jpg_img.name(idx)
 
 #%%
 
@@ -61,6 +63,7 @@ def main():
 
     for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
         cv2.imshow('image', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
+        print loader.get_input_name(0)
         cv2.waitKey(100)
 
     end = time.time()

@@ -83,13 +83,13 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::sync()
     return CIRCULAR_BUFFER_STATUS::OK;
 }
 
-void CircularBuffer::done_writing() 
+void CircularBuffer::push()
 {
     sync();
     increment_write_ptr();
 }
 
-void CircularBuffer::done_reading() 
+void CircularBuffer::pop()
 {
     increment_read_ptr();
 }

@@ -212,7 +212,7 @@ MasterGraph::output_image_count()
 RaliColorFormat
 MasterGraph::output_color_format()
 {
-    return _output_image_info.color_fmt;
+    return _output_image_info.color_format();
 }
 
 size_t
@@ -236,7 +236,7 @@ MasterGraph::allocate_output_tensor()
                                       _output_image_info.color_plane_count() *
                                       _output_images.size();
 
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         cl_int ret = CL_SUCCESS;
         _output_tensor = nullptr;
@@ -261,7 +261,7 @@ MasterGraph::allocate_output_tensor()
 MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
         clReleaseMemObject(std::get<cl_mem>(_output_tensor) );
 
     return Status::OK;
@@ -354,7 +354,7 @@ MasterGraph::copy_output(
         size_t out_size)
 {
     _convert_time.start();
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
 
     }
@@ -374,7 +374,7 @@ MasterGraph::copy_output(
 {
     _convert_time.start();
     // Copies to the output context given by the user
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         // OCL device memory
         // TODO: Handle multiple planes
@@ -456,9 +456,8 @@ MasterGraph::copy_output(
 
     size_t dest_buf_offset = 0;
 
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
-        cl_int status;
         //NOTE: the CL_TRUE flag is only used on the last buffer read call,
         // to avoid unnecessary sequence of synchronizations
 

@@ -27,14 +27,14 @@ vx_enum vx_mem_type(RaliMemType mem)
 } 
     
 ImageInfo::ImageInfo():
+        _type(Type::UNKNOWN),
         _width(0),
         _height(0),
-        color_planes(1),
-        batch_size(1),
-        data_size(0),
-        mem_type(RaliMemType::HOST),
-        _type(Type::UNKNOWN),
-        color_fmt(RaliColorFormat::U8){}
+        _color_planes(1),
+        _batch_size(1),
+        _data_size(0),
+        _mem_type(RaliMemType::HOST),
+        _color_fmt(RaliColorFormat::U8){}
 
 ImageInfo::ImageInfo(
     unsigned width_,
@@ -43,22 +43,22 @@ ImageInfo::ImageInfo(
     unsigned planes,
     RaliMemType mem_type_, 
     RaliColorFormat col_fmt_):
+        _type(Type::UNKNOWN),
         _width(width_),
         _height(height_),
-        color_planes(planes),
-        batch_size(batches),
-        data_size(width_* height_ * batch_size * planes),
-        mem_type(mem_type_),
-        _type(Type::UNKNOWN),
-        color_fmt(col_fmt_) {}
+        _color_planes(planes),
+        _batch_size(batches),
+        _data_size(width_ * height_ * _batch_size * planes),
+        _mem_type(mem_type_),
+        _color_fmt(col_fmt_) {}
 
 bool ImageInfo::operator==(const ImageInfo& other)
 {
     return (width() == other._width &&
             height_batch() == other._height &&
-            mem_type == other.mem_type && 
-            color_fmt == other.color_fmt && 
-            color_planes == other.color_planes);
+            _mem_type == other._mem_type &&
+            _color_fmt == other._color_fmt &&
+            _color_planes == other._color_planes);
 }    
 
 //Image::Image() {}
@@ -71,7 +71,7 @@ Image::~Image()
     if(buf == nullptr) 
         return;
 
-    if(_info.mem_type == RaliMemType::OCL) 
+    if(_info._mem_type == RaliMemType::OCL)
     {    
         clReleaseMemObject((cl_mem)buf);
     } 
@@ -142,21 +142,21 @@ int Image::create_from_handle(vx_context context, ImageBufferAllocation policy)
 
     vx_uint32 alignpixels = 32;
 
-    addr_in.stride_x = _info.color_planes;
+    addr_in.stride_x = _info._color_planes;
 
     if (alignpixels == 0)
         addr_in.stride_y = addr_in.dim_x *addr_in.stride_x;
     else
         addr_in.stride_y = ((addr_in.dim_x + alignpixels - 1) & ~(alignpixels - 1))*addr_in.stride_x;
 
-    if(_info.height_batch() == 0 || _info.width() == 0 || _info.color_planes == 0)
-        THROW("Invalid image dimension " + TOSTR(_info.height_batch()) + " x " + TOSTR(_info.width()) + " x " + TOSTR(_info.color_planes));
+    if(_info.height_batch() == 0 || _info.width() == 0 || _info._color_planes == 0)
+        THROW("Invalid image dimension " + TOSTR(_info.height_batch()) + " x " + TOSTR(_info.width()) + " x " + TOSTR(_info._color_planes));
 
     vx_status status;
     vx_size size = (addr_in.dim_y+0) * (addr_in.stride_y+0);
     if(policy == ImageBufferAllocation::external)
     {
-        if(_info.mem_type == RaliMemType::OCL) 
+        if(_info._mem_type == RaliMemType::OCL)
         {
             cl_context opencl_context = nullptr;
             // allocate opencl buffer with required dim
@@ -183,18 +183,18 @@ int Image::create_from_handle(vx_context context, ImageBufferAllocation policy)
         }
         buf = ptr[0];
     }
-    vx_df_image vx_color_format = interpret_color_fmt(_info.color_fmt);
-    img = vxCreateImageFromHandle(context, vx_color_format , &addr_in, ptr, vx_mem_type(_info.mem_type));
+    vx_df_image vx_color_format = interpret_color_fmt(_info._color_fmt);
+    img = vxCreateImageFromHandle(context, vx_color_format , &addr_in, ptr, vx_mem_type(_info._mem_type));
     if((status = vxGetStatus((vx_reference)img)) != VX_SUCCESS)
         THROW("Error: vxCreateImageFromHandle(input:[" + TOSTR(_info.width()) + "x" + TOSTR(_info.height_batch()) + "]): failed " + TOSTR(status))
 
     _info._type = ImageInfo::Type::HANDLE;
-    _info.data_size = size;
+    _info._data_size = size;
     return 0;
 }
 int Image::create(vx_context context) {
     vx_status status;
-    vx_df_image vx_color_format = interpret_color_fmt(_info.color_fmt);
+    vx_df_image vx_color_format = interpret_color_fmt(_info._color_fmt);
     img = vxCreateImage( context, _info.width(), _info.height_batch(), vx_color_format);
     if((status = vxGetStatus((vx_reference)img)) != VX_SUCCESS)
         THROW("Error: vxCreateImage(input:[" + TOSTR(_info.width()) + "x" + TOSTR(_info.height_batch()) + "]): failed " + TOSTR(status))
@@ -216,7 +216,7 @@ unsigned Image::copy_data(unsigned char* user_buffer, bool sync)
                     _info.height_batch() *
                     _info.color_plane_count();
 
-    if(_info.mem_type == RaliMemType::OCL)
+    if(_info._mem_type == RaliMemType::OCL)
     {
 
         cl_int status;

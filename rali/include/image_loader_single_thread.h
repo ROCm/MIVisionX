@@ -1,5 +1,5 @@
 #pragma once 
-
+#include <queue>
 #include <string>
 #include <thread>
 #include <vector>
@@ -24,7 +24,7 @@ private:
     bool is_out_of_data();
     void de_init();
     std::shared_ptr<ImageLoaderFactory> _image_loader;
-    LoaderModuleStatus swap_buffers();
+    LoaderModuleStatus update_output_image();
     LoaderModuleStatus load_routine();
     void start_loading();
     Image* _output_image;
@@ -33,6 +33,8 @@ private:
     int _batch_size;
     RaliMemType _mem_type;
     CircularBuffer _circ_buff;
+    std::queue<std::vector<std::string>> _circ_buff_names;//!< Stores the loaded images names (data is stored in the _circ_buff)
+    std::vector<std::string> _image_names;
     bool _is_initialized;
     bool _ready;
     size_t _load_offset = 0;

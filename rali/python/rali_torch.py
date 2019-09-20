@@ -18,7 +18,7 @@ class PyTorchIterator:
 
         labels = []
         for image in self.pipe.output_images:
-            labels.append(image.label)
+            labels.append(image.label())
 
         self.labels_tensor = torch.LongTensor(labels)
             

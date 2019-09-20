@@ -65,7 +65,7 @@ ImageLoaderSingleThread::load_next()
     if(!_ready) 
         return LoaderModuleStatus::NOT_INITIALIZED;
 
-    return swap_buffers();
+    return update_output_image();
 }
 
 LoaderModuleStatus 
@@ -75,7 +75,7 @@ ImageLoaderSingleThread::set_output_image (Image* output_image)
         THROW("set_output_image should be called after create function is called")
 
     _output_image = output_image;
-    _output_mem_size = _output_image->info().data_size;
+    _output_mem_size = _output_image->info().data_size();
     if(_circ_buff.init(_mem_type, _output_mem_size) != CIRCULAR_BUFFER_STATUS::OK)
         return LoaderModuleStatus::INTERNAL_BUFFER_INITIALIZATION_FAILED;
 
@@ -102,7 +102,7 @@ ImageLoaderSingleThread::create(LoaderModuleConfig* desc)
         de_init();
         THROW("ERROR, couldn't initialize the loader module");
     }
-    
+    _image_names.resize(_batch_size);
     _is_initialized = true;
     LOG("Loader module initialized");
     return status;
@@ -128,21 +128,24 @@ ImageLoaderSingleThread::load_routine()
             break;
 
         auto load_status = LoaderModuleStatus::NO_MORE_DATA_TO_READ;
-        {   // load from image loader and calling done_writing() on the circular buffer
+        {   // load from image loader and calling push() on the circular buffer
             // should be atomic with respect to call to the count() function, since
             // count function return the summation of the level of the circular buffer
             // and the image loader.
             std::unique_lock<std::mutex> lock(_lock);
+
             load_status = _image_loader->load(data,
-                                               _output_image->info().batch_size,
-                                               _output_image->info().width(),
-                                               _output_image->info().height_batch(),
-                                               _output_image->info().color_fmt );
+                                              _image_names,
+                                              _output_image->info().batch_size(),
+                                              _output_image->info().width(),
+                                              _output_image->info().height_batch(),
+                                              _output_image->info().color_format() );
 
             if(load_status == LoaderModuleStatus::OK)
             {
-                _circ_buff.done_writing();
-                _image_counter += _output_image->info().batch_size;
+                _circ_buff.push();
+                _image_counter += _output_image->info().batch_size();
+                _circ_buff_names.push(_image_names);
             }
         }
         if(load_status != LoaderModuleStatus::OK)
@@ -181,7 +184,7 @@ ImageLoaderSingleThread::is_out_of_data()
     return (count() == 0) ;
 }
 LoaderModuleStatus 
-ImageLoaderSingleThread::swap_buffers()
+ImageLoaderSingleThread::update_output_image()
 {
     LoaderModuleStatus status = LoaderModuleStatus::OK;
     vx_status vxstatus;
@@ -220,8 +223,9 @@ ImageLoaderSingleThread::swap_buffers()
         // user might want to copy directly using it
         _output_image->buf = _circ_buff.get_read_buffer_host();
     }
-
-    _circ_buff.done_reading();
+    _output_image->set_names(_circ_buff_names.front());
+    _circ_buff_names.pop();
+    _circ_buff.pop();
 
     return status;
 }

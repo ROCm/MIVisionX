@@ -426,9 +426,10 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         size_t dest_buf_offset = 0;
         for( auto&& out_image: _output_images)
         {
+            auto in_buffer = (unsigned char*)out_image->buf;
             if(format == RaliTensorFormat::NHWC)
             {
-                memcpy(out_ptr+dest_buf_offset, out_image->buf, single_output_image_size );
+                memcpy(out_ptr+dest_buf_offset, in_buffer, single_output_image_size );
 
             }
             if(format == RaliTensorFormat::NCHW)
@@ -438,8 +439,7 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
                 {
                     unsigned plane_idx = i % c;
                     unsigned plane_offset = plane_idx * plane_size;
-                    out_ptr[(i%plane_size)+plane_offset+dest_buf_offset] =
-                            multiplier*2*(((float)(((unsigned char*)out_image->buf)[i]))/255.0 - 0.5)+offset;
+                    out_ptr[(i%plane_size)+plane_offset+dest_buf_offset] = multiplier*((float) in_buffer[i]) + offset;
                 }
             }
             dest_buf_offset += single_output_image_size;

@@ -666,6 +666,28 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
        tensor_type_nnir2openvx[tensor.type], node.inputs[0], node.outputs[0]))
                 else:
                     raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
+            elif node.type == 'exp':
+                if len(node.inputs) == 1:
+                    f.write( \
+"""
+    { vx_node node = vxTensorExpNode(graph, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], node.outputs[0]))
+                else:
+                    raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
+            elif node.type == 'log':
+                if len(node.inputs) == 1:
+                    f.write( \
+"""
+    { vx_node node = vxTensorLogNode(graph, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], node.outputs[0]))
+                else:
+                    raise ValueError("Unsupported number of input arguments by OpenVX: {}".format(node.type))
             elif node.type == 'batch_norm':
                 f.write( \
 """

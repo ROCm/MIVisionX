@@ -279,4 +279,27 @@ VX_API_ENTRY vx_node VX_API_CALL vxDetectionOutputLayer(vx_graph graph, vx_tenso
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
 VX_API_ENTRY vx_node VX_API_CALL vxCastLayer(vx_graph graph, vx_tensor input, vx_int32 to, vx_tensor output);
+
+/* \brief [Graph] Creates a Tensor_Exp Layer Node.
+ * \details Calculates the element-wise exponential of the element values in the input <tt>\ref vx_tensor</tt>.
+ * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The input tensor data.
+ * \param [out] output The output tensor data with the same dimensions as the input tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTensorExpNode(vx_graph graph, vx_tensor input, vx_tensor output);
+
+/* \brief [Graph] Creates a Tensor_Log Layer Node.
+ * \details Calculates the element-wise natural log of the element values in the input <tt>\ref vx_tensor</tt>.
+ * This function supports 4D tensors as input and ouput. The type of the tensor can be either float32 or float16.
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The input tensor data.
+ * \param [out] output The output tensor data with the same dimensions as the input tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTensorLogNode(vx_graph graph, vx_tensor input, vx_tensor output);
+
 #endif

@@ -38,6 +38,8 @@ nnef2ir_op_type = {
     'div'                                   : 'div',
     'min'                                   : 'min',
     'max'                                   : 'max',
+    'exp'                                   : 'exp',
+    'log'                                   : 'log',
     'matmul'                                : 'gemm',
     'linear'                                : 'gemm',
     'softmax'                               : 'softmax',

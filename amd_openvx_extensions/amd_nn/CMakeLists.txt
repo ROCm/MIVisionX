@@ -71,6 +71,8 @@ list(APPEND SOURCES
     src/tensor_matrix_multiply.cpp
     src/tensor_min.cpp
     src/tensor_max.cpp
+    src/tensor_exp.cpp
+    src/tensor_log.cpp
     src/argmax_layer.cpp
     src/scale_layer.cpp
     src/upsample_nearest_layer.cpp

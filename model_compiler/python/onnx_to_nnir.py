@@ -77,6 +77,8 @@ onnx2ir_op_type = {
     'Min'                : 'min',
     'Max'                : 'max',
     'Div'                : 'div',
+    'Exp'                : 'exp',
+    'Log'                : 'log',
     'ReduceMean'         : 'global_avg_pool',
     'Clip'               : 'clamp',
     'Cast'               : 'cast',

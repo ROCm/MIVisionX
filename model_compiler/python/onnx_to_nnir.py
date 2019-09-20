@@ -76,7 +76,6 @@ onnx2ir_op_type = {
     'Identity'           : 'copy',
     'Min'                : 'min',
     'Max'                : 'max',
-    'Cast'               : 'add',
     'Div'                : 'div',
     'ReduceMean'         : 'global_avg_pool',
     'Clip'               : 'clamp',

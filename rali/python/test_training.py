@@ -7,31 +7,33 @@ from rali import *
 
 class DataLoader(RaliGraph):
 
-	def graph(self, input):
+	def graph(self, input, batch_size):
 		warped = self.warpAffine(input,False)
 		pixelate_img = self.pixelate(warped, False)
 		temp_img = self.colorTemp(pixelate_img, False)
 		vignette_img = self.vignette(temp_img, False)
 		out0 = self.jitter(vignette_img, True)
-
+		out0.set_labels(0)
 		contrast_img = self.contrast(input,False)
 		blur_img = self.blur(contrast_img, False)
 		gamma_img = self.gamma(blur_img, False, 1.5)
 		rotate_img = self.rotate(gamma_img, False)
 		out1 = self.SnPNoise(rotate_img, True, 0.05)
+		out1.set_labels(1)
 		return out0, out1
 
 	def __init__(self, class_0_path,class_1_path, batch_size, input_color_format, affinity):
 		RaliGraph.__init__(self, batch_size, affinity)
 		self.setSeed(0)
 
-		jpg_class_0 = self.jpegFileInput(class_0_path, input_color_format, False, 0)
+		jpg_class_0 = self.jpegFileInput(class_0_path, input_color_format, False)
 		input0 = self.cropResize(jpg_class_0, 224, 224, False, 0.6, -1, -1)
-		out0 = self.graph(input0)
+		out0 = self.graph(input0, batch_size)
 
-		jpg_class_1 = self.jpegFileInput(class_1_path, input_color_format, False, 1)
+
+		jpg_class_1 = self.jpegFileInput(class_1_path, input_color_format, False)
 		input1 = self.cropResize(jpg_class_1, 224, 224, False, 0.6, -1, -1)
-		out1 = self.graph(input1)
+		out1 = self.graph(input1, batch_size)
 
 		self.out = out0, out1
 

@@ -344,8 +344,10 @@ class RaliGraph():
         out = np.frombuffer(array, dtype=array.dtype)
         self._lib.copyToOutput(self.handle, np.ascontiguousarray(out, dtype=array.dtype), array.size)
 
-    def copyToNPArrayFloat(self , array):
+    def copyToTensorNHWC(self, array, multiplier, offset):
         out = np.frombuffer(array, dtype=array.dtype)
-        self._lib.copyToOutputFloat(self.handle, np.ascontiguousarray(out, dtype=array.dtype), array.size)
+        self._lib.copyToOutputFloat(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier, offset)
 
-
+    def copyToTensorNCHW(self, array, multiplier, offset):
+        out = np.frombuffer(array, dtype=array.dtype)
+        self._lib.copyToOutputFloat(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier, offset)

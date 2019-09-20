@@ -23,7 +23,7 @@ class RaliImage:
         self.get_name_size = self.lib.raliGetImageNameLen
         self.get_name_size.restype = ctypes.c_uint
         self.get_name_size.argtypes = [ctypes.c_void_p, ctypes.c_uint]
-
+        self.labels = []
         self.obj = obj
 
     def shape(self):
@@ -35,5 +35,8 @@ class RaliImage:
         self.get_name(self.obj, ret, idx)
         return ret.value
 
-    def label(self, idx):
-        return 0
+    def get_labels(self):
+        return self.labels
+
+    def set_labels(self, labels):
+        self.labels = labels

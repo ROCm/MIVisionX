@@ -3,8 +3,11 @@ from  rali_common import *
 import numpy as np
 
 class ImageIterator:
-    def __init__(self, pipeline):
+    def __init__(self, pipeline,tensor_layout = TensorLayout.NCHW, multiplier = 1.0, offset = 0.0):
         self.pipe = pipeline
+        self.tensor_format =tensor_layout
+        self.multiplier = multiplier
+        self.offset = offset
         if pipeline.build() != 0:
             raise Exception('Failed to build the augmentation graph')
         self.w = pipeline.getOutputWidth()
@@ -30,7 +33,11 @@ class ImageIterator:
             raise StopIteration
 
         self.pipe.copyToNPArray(self.out_image)
-        self.pipe.copyToNPArrayFloat(self.out_tensor)
+        if(TensorLayout.NCHW == self.tensor_format):
+            self.pipe.copyToTensorNCHW(self.out_tensor, self.multiplier, self.offset)
+        else:
+            self.pipe.copyToTensorNHWC(self.out_tensor, self.multiplier, self.offset)
+
         return self.out_image , self.out_tensor
 
     def reset(self):

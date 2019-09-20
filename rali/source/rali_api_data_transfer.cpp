@@ -4,14 +4,13 @@
 #include "CL/cl.h"
 
 RaliStatus RALI_API_CALL
-raliCopyToOutputFloat(
-        RaliContext rali_context,
-        float * out_ptr,
-        size_t out_size)
+raliCopyToOutputTensor(RaliContext rali_context, float *out_ptr, RaliTensorLayout tensor_format, float multiplier,
+                       float offset)
 {
     try
     {
-        rali_context->master_graph->copy_output(out_ptr, out_size);
+        auto tensor_layout = (tensor_format == RALI_NHWC) ?  RaliTensorFormat::NHWC : RaliTensorFormat::NCHW;
+        rali_context->master_graph->copy_out_tensor(out_ptr, tensor_layout, multiplier, offset);
     }
     catch(const std::exception& e)
     {
@@ -49,7 +48,7 @@ raliCopyToOutput(
 {
     try
     {
-        rali_context->master_graph->copy_output(out_ptr, out_size);
+        rali_context->master_graph->copy_output(out_ptr);
     }
     catch(const std::exception& e)
     {

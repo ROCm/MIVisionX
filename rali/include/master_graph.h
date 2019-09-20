@@ -15,8 +15,9 @@ public:
     ~MasterGraph();
     Status reset_loaders();
     size_t remaining_images_count();
-    Status copy_output(unsigned char * out_ptr, size_t out_size);
-    Status copy_output(float * out_ptr, size_t out_size);
+    MasterGraph::Status copy_output(unsigned char *out_ptr);
+    MasterGraph::Status
+    copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier = 1.0, float offset = 0.0);
     Status copy_output(cl_mem out_ptr, size_t out_size);
     size_t output_width();
     size_t output_height();
@@ -43,7 +44,7 @@ private:
     std::list<std::shared_ptr<Node>> _nodes;
     std::list<std::shared_ptr<Node>> _root_nodes;
     std::map<Image*, std::shared_ptr<Node>> _image_map;
-    std::variant<std::vector<float>, cl_mem> _output_tensor;//!< Depending on the output memory type either host or device pointer
+    cl_mem _output_tensor;//!< Depending on the output memory type either host or device pointer
     std::shared_ptr<Graph> _graph;
     DeviceManager   _device;
     RaliAffinity _affinity;

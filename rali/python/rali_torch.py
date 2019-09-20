@@ -3,8 +3,11 @@ from  rali_common import *
 import numpy as np
 
 class PyTorchIterator:
-    def __init__(self, pipeline):
+    def __init__(self, pipeline, tensor_layout = TensorLayout.NCHW, multiplier = 1.0, offset = 0.0):
         self.pipe = pipeline
+        self.tensor_format =tensor_layout
+        self.multiplier = multiplier
+        self.offset = offset
         if pipeline.build() != 0:
             raise Exception('Failed to build the augmentation graph')
         self.w = pipeline.getOutputWidth()
@@ -18,7 +21,7 @@ class PyTorchIterator:
 
         labels = []
         for image in self.pipe.output_images:
-            labels.append(image.label())
+            labels.append(image.get_labels())
 
         self.labels_tensor = torch.LongTensor(labels)
             
@@ -33,7 +36,10 @@ class PyTorchIterator:
         if self.pipe.run() != 0:
             raise StopIteration
 
-        self.pipe.copyToNPArrayFloat(self.out)
+        if(TensorLayout.NCHW == self.tensor_format):
+            self.pipe.copyToTensorNCHW(self.out, self.multiplier, self.offset)
+        else:
+            self.pipe.copyToTensorNHWC(self.out, self.multiplier, self.offset)
 
         return torch.from_numpy(self.out), self.labels_tensor
 

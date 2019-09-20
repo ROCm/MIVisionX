@@ -251,10 +251,6 @@ MasterGraph::allocate_output_tensor()
 
         _output_tensor = clImgFloat;
     }
-    else
-    {
-        _output_tensor = std::vector<float>(0,output_float_buffer_size);
-    }
     return Status::OK;
 }
 
@@ -262,7 +258,7 @@ MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
     if(_output_image_info.mem_type() == RaliMemType::OCL)
-        clReleaseMemObject(std::get<cl_mem>(_output_tensor) );
+        clReleaseMemObject(_output_tensor );
 
     return Status::OK;
 }
@@ -368,47 +364,42 @@ MasterGraph::copy_output(
 }
 
 MasterGraph::Status
-MasterGraph::copy_output(
-        float* out_ptr,
-        size_t out_size)
+MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier, float offset)
 {
     _convert_time.start();
     // Copies to the output context given by the user
+    size_t w = _output_image_info.width();
+    size_t h = _output_image_info.height_batch();
+    size_t c = _output_image_info.color_plane_count();
+
+    size_t single_output_image_size = w * h * c;
+
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         // OCL device memory
         // TODO: Handle multiple planes
         cl_int status;
 
-        size_t single_output_image_size = _output_image_info.width() *
-                                          _output_image_info.height_batch() *
-                                          _output_image_info.color_plane_count();
-
         size_t global_work_size = single_output_image_size;
         size_t local_work_size = 256;
 
         // TODO: Use the runKernel function instead
         int argIdx = 0;
-
-        cl_kernel kernel = _device["utility"]["copyInt8ToFloat"];
+        auto kernel_name = (format == RaliTensorFormat::NHWC)? "copyInt8ToNHWC" : "copyInt8ToNCHW";
+        cl_kernel kernel = _device["utility"][kernel_name];
         auto queue = _device.resources().cmd_queue;
         size_t dest_buf_offset = 0;
 
         for( auto&& out_image: _output_images)
         {
             clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& out_image->buf);
-            if(_output_tensor.index() == 0)
-            {
-                const float * buf = (std::get<0>(_output_tensor)).data();
-                clSetKernelArg( kernel, argIdx++, sizeof(float*), (void*)& buf );
-            }
-            else
-            {
-                cl_mem buf = std::get<1>(_output_tensor);
-                clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&buf );
-            }
+            clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&_output_tensor );
             clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& dest_buf_offset);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& single_output_image_size);
+            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& w);
+            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& h);
+            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& c);
+            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& multiplier);
+            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& offset);
             dest_buf_offset += single_output_image_size;
 
             if((status = clEnqueueNDRangeKernel(queue,
@@ -418,38 +409,51 @@ MasterGraph::copy_output(
                                                 &global_work_size,
                                                 &local_work_size,
                                                 0 , nullptr, nullptr)) != CL_SUCCESS)
-                THROW("clEnqueueNDRangeKernel failed on kernel copyInt8ToFloat error " + TOSTR(status))
-
-
-            if((status = clEnqueueReadBuffer(queue,
-                                             std::get<cl_mem>(_output_tensor),
-                                             CL_TRUE,
-                                             0,
-                                             out_size,
-                                             out_ptr,
-                                             0 , nullptr, nullptr)) != CL_SUCCESS)
-                THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
+                THROW("clEnqueueNDRangeKernel failed on kernel "+STR(kernel_name)+" error " + TOSTR(status))
         }
-    } else {
-        // host memory
-        //TODO: write the conversion function (int to float)
-        //memcpy(out_ptr, _output_image.buf, out_size);
+
+        if((status = clEnqueueReadBuffer(queue,
+                                         _output_tensor,
+                                         CL_TRUE,
+                                         0,
+                                         single_output_image_size*_output_images.size(),
+                                         out_ptr,
+                                         0 , nullptr, nullptr)) != CL_SUCCESS)
+            THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
+    }
+    if(_output_image_info.mem_type() == RaliMemType::HOST)
+    {
+        size_t dest_buf_offset = 0;
+        for( auto&& out_image: _output_images)
+        {
+            if(format == RaliTensorFormat::NHWC)
+            {
+                memcpy(out_ptr+dest_buf_offset, out_image->buf, single_output_image_size );
+
+            }
+            if(format == RaliTensorFormat::NCHW)
+            {
+                unsigned plane_size = h*w;
+                for(unsigned i = 0; i < single_output_image_size; i++)
+                {
+                    unsigned plane_idx = i % c;
+                    unsigned plane_offset = plane_idx * plane_size;
+                    out_ptr[(i%plane_size)+plane_offset+dest_buf_offset] =
+                            multiplier*2*(((float)(((unsigned char*)out_image->buf)[i]))/255.0 - 0.5)+offset;
+                }
+            }
+            dest_buf_offset += single_output_image_size;
+        }
     }
     _convert_time.end();
     return Status::OK;
 }
 
 MasterGraph::Status
-MasterGraph::copy_output(
-        unsigned char * out_ptr,
-        size_t out_size)
+MasterGraph::copy_output(unsigned char *out_ptr)
 {
     _convert_time.start();
     // Copies to the output context given by the user
-    size_t total_output_size = 0;// TODO: Calculate it here
-    if(out_size < total_output_size)
-        THROW("Buffer's user too small " + TOSTR(out_size))
-
     size_t size = _output_image_info.width() *
                   _output_image_info.height_batch() *
                   _output_image_info.color_plane_count();

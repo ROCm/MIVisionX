@@ -9,3 +9,7 @@ class ColorFormat(Enum):
 class Affinity(Enum):
     PROCESS_GPU = 0
     PROCESS_CPU = 1
+
+class TensorLayout(Enum):
+    NHWC = 0
+    NCHW = 1

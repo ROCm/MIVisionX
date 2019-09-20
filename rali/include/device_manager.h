@@ -3,7 +3,7 @@
 #include <map>
 #include <CL/cl.h>
 #include <memory>
-#include "device_utility_code.h"
+#include "device_data_transfer_code.h"
 
 struct OCLResources {
     cl_command_queue cmd_queue;

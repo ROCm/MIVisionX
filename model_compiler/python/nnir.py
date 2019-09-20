@@ -167,6 +167,8 @@ class IrNode:
             'div' : 1,
             'min' : 1,
             'max' : 1,
+            'exp' : 1,
+            'log' : 1,
             'gemm' : 1,
             'softmax' : 1,
             'lrn' : 1,
@@ -176,6 +178,7 @@ class IrNode:
             'leaky_relu' : 1,
             'sigmoid' : 1,
             'reshape' : 1,
+            'shape' : 1,
             'squeeze' : 1,
             'unsqueeze' : 1,
             'transpose' : 1,
@@ -302,7 +305,7 @@ class IrGraph:
             for output in node.outputs:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
-                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
+                if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'exp', 'log', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, input.shape)
@@ -516,6 +519,33 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['upsample']:
+                    factor = node.attr.get('factor')
+                    if len(factor) == 2:
+                        out_shape = [input.shape[0], input.shape[1], input.shape[2]*factor[0], input.shape[3]*factor[1]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['shape']:
+                    node.type = 'copy'
+                    tensor_name = 'shape_' + node.inputs[0]
+                    shape_data = np.array(input.shape)
+                    shape_data.astype(np.int64)
+
+                    shape_tensor = IrTensor()
+                    shape_tensor.setName(tensor_name)
+                    shape_tensor.setInfo('I064', np.shape(shape_data))
+                    self.addVariable(shape_tensor)                    
+                    self.addBinary(tensor_name, shape_data)
+                    node.inputs[0] = tensor_name
+
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo('I064', shape_tensor.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['upsample']:

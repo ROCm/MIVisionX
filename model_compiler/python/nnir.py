@@ -534,7 +534,7 @@ class IrGraph:
                     tensor_name = 'shape_' + node.inputs[0]
                     shape_data = np.array(input.shape)
                     shape_data.astype(np.int64)
-                    
+          
                     shape_tensor = IrTensor()
                     shape_tensor.setName(tensor_name)
                     shape_tensor.setInfo('I064', np.shape(shape_data))

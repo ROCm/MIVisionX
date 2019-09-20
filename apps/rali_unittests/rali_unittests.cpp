@@ -43,7 +43,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 int main(int argc, const char ** argv)
 {
     // check command-line usage
-    const size_t MIN_ARG_COUNT = 3;
+    const size_t MIN_ARG_COUNT = 2;
     printf( "Usage: image_augmentation <image-dataset-folder> output_image_name test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
     if(argc < MIN_ARG_COUNT)
         return -1;
@@ -80,7 +80,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     int inputBatchSize = 1;
     int decode_max_width = 0;
     int decode_max_height = 0;
-    printf("DEBUG: path = %s\n", path);
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , "<< (rgb ? " Color ":" Grayscale ")<< std::endl;
 
@@ -390,9 +389,10 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             cv::imwrite(outName, mat_color, compression_params);
         } else {
             cv::imshow("output", mat_output);
+            cv::imwrite(outName, mat_output, compression_params);
 
         }
-        cv::waitKey(1000);
+        cv::waitKey(100);
         col_counter = (col_counter + 1) % number_of_cols;
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();

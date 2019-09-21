@@ -32,6 +32,8 @@ MasterGraph::~MasterGraph()
 
 MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
         _affinity(affinity),
+        _output_tensor(nullptr),
+        _graph(nullptr),
         _gpu_id(gpu_id),
         _convert_time("Conversion Time"),
         _batch_size(batch_size),
@@ -177,7 +179,9 @@ void MasterGraph::release()
 {
     _graph_verfied = false;
     vx_status status;
-    _graph->release();
+    if(_graph != nullptr)
+        _graph->release();
+
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseContext " + TOSTR(status))
 
@@ -257,7 +261,7 @@ MasterGraph::allocate_output_tensor()
 MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
-    if(_output_image_info.mem_type() == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL && _output_tensor != nullptr)
         clReleaseMemObject(_output_tensor );
 
     return Status::OK;

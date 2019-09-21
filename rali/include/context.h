@@ -11,7 +11,7 @@ struct Context
     batch_size(batch_size),
     affinity(affinity)
     {
-        //rali_graph = std::make_shared<Graph>(batch_size, affinity, gpu_id);
+        LOG("Processing on " + STR(((affinity == RaliAffinity::CPU)?" CPU": " GPU")))
         master_graph = std::make_shared<MasterGraph>(batch_size, affinity, gpu_id, cpu_thread_count);
     }
     ~Context()

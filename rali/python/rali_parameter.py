@@ -22,7 +22,7 @@ class RaliIntParameter:
         if(ret != 0):
             raise Exception('FAILED updating the random variable')
 
-    def get_latest_generated(self):
+    def get(self):
         return self.latest_gen(self.obj)
 
 
@@ -47,7 +47,7 @@ class RaliFloatParameter:
         if(ret != 0):
             raise Exception('FAILED updating the random variable')
 
-    def get_latest_generated(self):
+    def get(self):
         return self.latest_gen(self.obj)
 
 
@@ -72,7 +72,7 @@ class RaliIntUniformRand:
         if(ret != 0):
             raise Exception('FAILED updating the random variable')
 
-    def get_latest_generated(self):
+    def get(self):
         return self.latest_gen(self.obj)
 
 
@@ -97,5 +97,5 @@ class RaliFloatUniformRand:
         if(ret != 0):
             raise Exception('FAILED updating the random variable')
 
-    def get_latest_generated(self):
+    def get(self):
         return self.latest_gen(self.obj)

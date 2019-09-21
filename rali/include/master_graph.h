@@ -45,7 +45,7 @@ private:
     std::list<std::shared_ptr<Node>> _root_nodes;
     std::map<Image*, std::shared_ptr<Node>> _image_map;
     cl_mem _output_tensor;//!< Depending on the output memory type either host or device pointer
-    std::shared_ptr<Graph> _graph;
+    std::shared_ptr<Graph> _graph = nullptr;
     DeviceManager   _device;
     RaliAffinity _affinity;
     int _gpu_id;

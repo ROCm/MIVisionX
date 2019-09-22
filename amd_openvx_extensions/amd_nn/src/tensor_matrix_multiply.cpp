@@ -49,10 +49,10 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
 
     // check tensor dimensions
     vx_size num_dims;
-    vx_size input1_dims[4] = { 0, 0, 1, 1 };
-    vx_size input2_dims[4] = { 0, 0, 1, 1 };
-    vx_size input3_dims[4] = { 0, 0, 1, 1 };
-    vx_size output_dims[4] = { 0, 0, 1, 1 };
+    vx_size input1_dims[4] = { 1, 1, 1, 1 };
+    vx_size input2_dims[4] = { 1, 1, 1, 1 };
+    vx_size input3_dims[4] = { 1, 1, 1, 1 };
+    vx_size output_dims[4] = { 1, 1, 1, 1 };
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims < 2) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: #0 num_dims=%ld (must >= 2)\n", num_dims);
@@ -83,10 +83,10 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[4], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     // check that tensors are 2D
-    if (input1_dims[3] != 1 || input1_dims[2] != 1 ||
-        input2_dims[3] != 1 || input2_dims[2] != 1 ||
-        input3_dims[3] != 1 || input3_dims[2] != 1 ||
-        output_dims[3] != 1 || output_dims[2] != 1)
+    if (((input1_dims[3]&input1_dims[2]) != 1) && ((input1_dims[1]&input1_dims[0]) != 1) ||
+       ((input2_dims[3]&input2_dims[2]) != 1) && ((input2_dims[1]&input2_dims[0]) != 1) ||
+       ((input3_dims[3]&input3_dims[2]) != 1) && ((input3_dims[1]&input3_dims[0]) != 1) ||
+       ((output_dims[3]&output_dims[2]) != 1) && ((output_dims[1]&output_dims[0]) != 1))
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: dims input1[%ld,%ld,%ld,%ld] input2[%ld,%ld,%ld,%ld] input3[%ld,%ld,%ld,%ld] output[%ld,%ld,%ld,%ld]\n",
                     input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3],
                     input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3],
@@ -95,15 +95,31 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
 
     // check the matrix dimensions for the multiply
     if(params.transpose_input1) {
-        std::swap(input1_dims[0], input1_dims[1]);
+        if (input1_dims[2]&input1_dims[3]) {
+            std::swap(input1_dims[0], input1_dims[1]);
+        }
+        else if (input1_dims[0]&input1_dims[1]) {
+            std::swap(input1_dims[2], input1_dims[3]);
+        }
     }
     if(params.transpose_input2) {
-        std::swap(input2_dims[0], input2_dims[1]);
+        if (input2_dims[2]&input2_dims[3]) {
+            std::swap(input2_dims[0], input2_dims[1]);
+        }
+        else if (input2_dims[0]&input2_dims[1]) {
+            std::swap(input2_dims[2], input2_dims[3]);
+        }
     }
     if(params.transpose_input3) {
-        std::swap(input3_dims[0], input3_dims[1]);
+        if (input3_dims[2]&input3_dims[3]) {
+            std::swap(input3_dims[0], input3_dims[1]);
+        }
+        else if (input3_dims[0]&input3_dims[1]) {
+            std::swap(input3_dims[2], input3_dims[3]);
+        }
     }
-    if(input1_dims[0] != input2_dims[1] ||
+    if (input1_dims[2]&input1_dims[3]) {
+        if(input1_dims[0] != input2_dims[1] ||
        input1_dims[1] != output_dims[1] || input2_dims[0] != output_dims[0] ||
        (parameters[2] && (input3_dims[0] != output_dims[0] || input3_dims[1] != output_dims[1])))
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: transpose=[%d %d %d] dims input1[%ld,%ld,%ld,%ld] input2[%ld,%ld,%ld,%ld] input3[%ld,%ld,%ld,%ld] output[%ld,%ld,%ld,%ld]\n",
@@ -112,7 +128,17 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference parameter
                     input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3],
                     input3_dims[0], input3_dims[1], input3_dims[2], input2_dims[3],
                     output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
-
+    }
+    else if(input1_dims[0]&input1_dims[1]) {
+        if (input1_dims[2] != input2_dims[1] ||
+       input1_dims[3] != output_dims[3] || input2_dims[0] != output_dims[2]) 
+        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: matmul: transpose=[%d %d %d] dims input1[%ld,%ld,%ld,%ld] input2[%ld,%ld,%ld,%ld] input3[%ld,%ld,%ld,%ld] output[%ld,%ld,%ld,%ld]\n",
+                    params.transpose_input1, params.transpose_input2, params.transpose_input3,
+                    input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3],
+                    input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3],
+                    input3_dims[0], input3_dims[1], input3_dims[2], input2_dims[3],
+                    output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
+    }
     return VX_SUCCESS;
 }
 
@@ -124,10 +150,10 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
 
     // get input and output dimensions
     vx_size num_dims;
-    vx_size input1_dims[4] = { 0, 0, 1, 1 };
-    vx_size input2_dims[4] = { 0, 0, 1, 1 };
-    vx_size input3_dims[4] = { 0, 0, 1, 1 };
-    vx_size output_dims[4] = { 0, 0, 1, 1 };
+    vx_size input1_dims[4] = { 1, 1, 1, 1 };
+    vx_size input2_dims[4] = { 1, 1, 1, 1 };
+    vx_size input3_dims[4] = { 1, 1, 1, 1 };
+    vx_size output_dims[4] = { 1, 1, 1, 1 };
     vx_enum type;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
@@ -161,9 +187,20 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
     data->tA = params.transpose_input1 ? true : false;
     data->tB = params.transpose_input2 ? true : false;
     data->tI = params.transpose_input3 ? true : false;
-    data->k = input1_dims[params.transpose_input1 ? 1 : 0];
-    data->m = input1_dims[params.transpose_input1 ? 0 : 1];
-    data->n = input2_dims[params.transpose_input2 ? 1 : 0];
+   if (input1_dims[2]&input1_dims[3]) {
+        data->k = input1_dims[params.transpose_input1 ? 1 : 0];
+        data->m = input1_dims[params.transpose_input1 ? 0 : 1];
+    }
+    else if(input1_dims[0]&input1_dims[1]) {
+        data->k = input1_dims[params.transpose_input1 ? 3 : 2];
+        data->m = input1_dims[params.transpose_input1 ? 2 : 3];
+    }
+    if (input2_dims[2]&input2_dims[3]) {
+        data->n = input2_dims[params.transpose_input2 ? 1 : 0];
+    }
+    else if (input2_dims[0]&input2_dims[1]) {
+        data->n = input2_dims[params.transpose_input2 ? 3 : 2];
+    }
 
     // get buffer offsets and stride
     vx_size a_stride[4], b_stride[4], c_stride[4];
@@ -176,9 +213,24 @@ static vx_status VX_CALLBACK initialize(vx_node node, const vx_reference *parame
     data->a_offset >>= 2;
     data->b_offset >>= 2;
     data->c_offset >>= 2;
-    data->lda = a_stride[data->tA ? 2 : 1] >> 2;
-    data->ldb = b_stride[data->tB ? 2 : 1] >> 2;
-    data->ldc = c_stride[1] >> 2;
+    if (input1_dims[2]&input1_dims[3]) {
+        data->lda = a_stride[data->tA ? 2 : 1] >> 2;
+    }
+    else if(input1_dims[0]&input1_dims[1]) {   
+        data->lda = a_stride[3] >> 2;
+    }
+    if (input2_dims[2]&input2_dims[3]) {
+        data->ldb = b_stride[data->tB ? 2 : 1] >> 2;
+    }
+    else if(input1_dims[0]&input1_dims[1]) {
+        data->ldb = b_stride[3] >> 2;
+    }
+    if (output_dims[2] == 1 && output_dims[3] ==1) {
+        data->ldc = c_stride[1] >> 2;
+    }
+    else if (output_dims[0] == 1 && output_dims[1] == 1) {
+        data->ldc = c_stride[3] >> 2;
+    }
     if(parameters[2]) {
         vx_size i_stride[4];
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_STRIDE_OPENCL, i_stride, sizeof(c_stride)));

@@ -302,7 +302,7 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_BUFFER_OPENCL, &data->bias_mem, sizeof(data->bias_mem)));
     }
 
-    if ((data->bias_activ_mode == BIAS_ONLY_FUSED) || (data->bias_activ_mode == ACTIVATION_ONLY_FUSED) || (data->bias_activ_mode == BIAS_ACTIVATION_FUSED)) {
+    if (/*(data->bias_activ_mode == BIAS_ONLY_FUSED) || (data->bias_activ_mode == ACTIVATION_ONLY_FUSED) ||*/ (data->bias_activ_mode == BIAS_ACTIVATION_FUSED)) {
         ERROR_CHECK_MIOPEN_STATUS(miopenCreateFusionPlan(&data->fusePlanDesc, miopenVerticalFusion, data->input_desc));
         ERROR_CHECK_MIOPEN_STATUS(miopenCreateOperatorArgs(&data->fusionArgs));
         ERROR_CHECK_MIOPEN_STATUS(miopenCreateOpConvForward(data->fusePlanDesc, &data->convoOp, data->conv_desc, data->weight_desc));

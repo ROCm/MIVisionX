@@ -1,4 +1,4 @@
-import sys,os,ctypes
+import ctypes
 from numpy.ctypeslib import ndpointer
 from rali_common import *
 

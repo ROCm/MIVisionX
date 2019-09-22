@@ -1,4 +1,4 @@
-import sys,os,ctypes
+import ctypes
 
 from rali_common import *
 class RaliImage:

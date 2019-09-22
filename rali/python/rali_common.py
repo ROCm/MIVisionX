@@ -1,4 +1,3 @@
-"""/opt/rocm/mivisionx/lib/"""
 RALI_LIB_NAME = 'librali.so'
 from enum import Enum
 class ColorFormat(Enum):

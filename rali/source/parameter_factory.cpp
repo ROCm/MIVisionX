@@ -77,6 +77,17 @@ ParameterFactory::~ParameterFactory() {
                 rand_obj);
 }
 
+void ParameterFactory::renew_parameters()
+{
+    for(auto&& rand_obj : _parameters)
+        std::visit(
+                [](auto&& arg)
+                {
+                    arg->renew();
+                },
+                rand_obj);
+}
+
 unsigned long long 
 ParameterFactory::get_seed()
 {   

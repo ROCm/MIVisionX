@@ -3,6 +3,7 @@
 #include <VX/vx_types.h>
 #include <cstring>
 #include "master_graph.h"
+#include "parameter_factory.h"
 
 auto get_ago_affinity_info = []
     (RaliAffinity rali_affinity,
@@ -31,9 +32,9 @@ MasterGraph::~MasterGraph()
 }
 
 MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
-        _affinity(affinity),
         _output_tensor(nullptr),
         _graph(nullptr),
+        _affinity(affinity),
         _gpu_id(gpu_id),
         _convert_time("Conversion Time"),
         _batch_size(batch_size),
@@ -81,6 +82,9 @@ MasterGraph::run()
 {
     if(!_graph_verfied)
         THROW("Graph not verified")
+
+    // Randomize parameters
+    ParameterFactory::instance()->renew_parameters();
 
     _process_time.start();
     for(auto&& loader_module: _loader_modules)

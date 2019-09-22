@@ -17,10 +17,6 @@ public:
     {
         return _val;
     }
-    T most_recent_used() const override
-    {
-        return _val;
-    }
     int update(T new_val)
     {
         _val = new_val;

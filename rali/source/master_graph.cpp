@@ -125,10 +125,12 @@ MasterGraph::build()
         THROW("No output images are there, cannot create the pipeline")
 
     // Verify all output images have the same dimension, otherwise creating a unified tensor from them is not supported
-
+    _output_image_info = _output_images.front()->info();
     for(auto&& output_image : _output_images)
-        if(!(output_image->info() == _output_images.front()->info()))
+        if(!(output_image->info() == _output_image_info))
             THROW("Dimension of the output images do not match")
+
+
 
     allocate_output_tensor();
     create_single_graph();

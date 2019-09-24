@@ -5,12 +5,12 @@
 
 RaliStatus RALI_API_CALL
 raliCopyToOutputTensor(RaliContext rali_context, float *out_ptr, RaliTensorLayout tensor_format, float multiplier,
-                       float offset)
+                       float offset, bool reverse_channels)
 {
     try
     {
         auto tensor_layout = (tensor_format == RALI_NHWC) ?  RaliTensorFormat::NHWC : RaliTensorFormat::NCHW;
-        rali_context->master_graph->copy_out_tensor(out_ptr, tensor_layout, multiplier, offset);
+        rali_context->master_graph->copy_out_tensor(out_ptr, tensor_layout, multiplier, offset, reverse_channels);
     }
     catch(const std::exception& e)
     {

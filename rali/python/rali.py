@@ -81,8 +81,8 @@ class RaliGraph():
     def run(self):
         return self._lib.run(self.handle)
 
-    def __del__(self):
-        self._lib.release(self.handle)
+    #def __del__(self):
+        #self._lib.release(self.handle)
 
     def build(self):
         return self._lib.build(self.handle)
@@ -344,10 +344,10 @@ class RaliGraph():
         out = np.frombuffer(array, dtype=array.dtype)
         self._lib.copyToOutput(self.handle, np.ascontiguousarray(out, dtype=array.dtype), array.size)
 
-    def copyToTensorNHWC(self, array, multiplier, offset):
+    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels):
         out = np.frombuffer(array, dtype=array.dtype)
-        self._lib.copyToOutputFloat(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier, offset)
+        self._lib.copyToOutputTensor(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier, offset, (1 if reverse_channels else 0))
 
-    def copyToTensorNCHW(self, array, multiplier, offset):
+    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels):
         out = np.frombuffer(array, dtype=array.dtype)
-        self._lib.copyToOutputFloat(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier, offset)
+        self._lib.copyToOutputTensor(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier, offset, (1 if reverse_channels else 0))

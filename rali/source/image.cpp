@@ -52,7 +52,7 @@ ImageInfo::ImageInfo(
         _mem_type(mem_type_),
         _color_fmt(col_fmt_) {}
 
-bool ImageInfo::operator==(const ImageInfo& other)
+bool ImageInfo::operator==(const ImageInfo& other) const
 {
     return (width() == other._width &&
             height_batch() == other._height &&

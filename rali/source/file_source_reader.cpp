@@ -119,5 +119,6 @@ Reader::Status FileSourceReader::open_folder()
         THROW("Could not find any file in "+m_folder_path)
 
     m_curr_file_idx = 0;
+    closedir(m_src_dir);
     return Reader::Status::OK;
 }

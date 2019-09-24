@@ -109,7 +109,7 @@ raliResetLoaders(RaliContext rali_context)
 {
     try
     {
-        rali_context->master_graph->reset_loaders();
+        //rali_context->master_graph->reset_loaders();
     }
     catch(const std::exception& e)
     {

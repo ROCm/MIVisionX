@@ -197,7 +197,7 @@ void MasterGraph::release()
 
 
     deallocate_output_tensor();
-    _loader_modules.clear();
+    //_loader_modules.clear();
     _root_nodes.clear();
     _image_map.clear();
 }
@@ -371,8 +371,11 @@ MasterGraph::copy_output(
     return Status::OK;
 }
 
+#define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
+
 MasterGraph::Status
-MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier, float offset)
+MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier, float offset,
+                             bool reverse_channels)
 {
     _convert_time.start();
     // Copies to the output context given by the user
@@ -392,23 +395,26 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         size_t local_work_size = 256;
 
         // TODO: Use the runKernel function instead
-        int argIdx = 0;
+
         auto kernel_name = (format == RaliTensorFormat::NHWC)? "copyInt8ToNHWC" : "copyInt8ToNCHW";
         cl_kernel kernel = _device["utility"][kernel_name];
         auto queue = _device.resources().cmd_queue;
-        size_t dest_buf_offset = 0;
+        unsigned dest_buf_offset = 0;
 
         for( auto&& out_image: _output_images)
         {
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& out_image->buf);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&_output_tensor );
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& dest_buf_offset);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& w);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& h);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& c);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& multiplier);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& offset);
-            dest_buf_offset += single_output_image_size;
+            int argIdx = 0;
+            unsigned reverse_chnl = reverse_channels ? 1 : 0;
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& (out_image->buf)))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&_output_tensor ))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& dest_buf_offset))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& w))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& h))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& c))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& reverse_chnl))
+
 
             if((status = clEnqueueNDRangeKernel(queue,
                                                 kernel,
@@ -418,13 +424,16 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
                                                 &local_work_size,
                                                 0 , nullptr, nullptr)) != CL_SUCCESS)
                 THROW("clEnqueueNDRangeKernel failed on kernel "+STR(kernel_name)+" error " + TOSTR(status))
+
+            dest_buf_offset += single_output_image_size;
         }
 
+        int read_size = single_output_image_size*_output_images.size()*sizeof(cl_float);
         if((status = clEnqueueReadBuffer(queue,
                                          _output_tensor,
                                          CL_TRUE,
                                          0,
-                                         single_output_image_size*_output_images.size(),
+                                         read_size,
                                          out_ptr,
                                          0 , nullptr, nullptr)) != CL_SUCCESS)
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
@@ -438,17 +447,15 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
             if(format == RaliTensorFormat::NHWC)
             {
                 memcpy(out_ptr+dest_buf_offset, in_buffer, single_output_image_size );
-
             }
             if(format == RaliTensorFormat::NCHW)
             {
-                unsigned plane_size = h*w;
-                for(unsigned i = 0; i < single_output_image_size; i++)
-                {
-                    unsigned plane_idx = i % c;
-                    unsigned plane_offset = plane_idx * plane_size;
-                    out_ptr[(i%plane_size)+plane_offset+dest_buf_offset] = multiplier*((float) in_buffer[i]) + offset;
-                }
+                auto channel_size  = w * h;
+                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                    for(unsigned i = 0; i < channel_size; i++)
+                        out_ptr[dest_buf_offset+channel_idx*channel_size + i] = (reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+
+
             }
             dest_buf_offset += single_output_image_size;
         }

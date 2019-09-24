@@ -17,7 +17,8 @@ public:
     size_t remaining_images_count();
     MasterGraph::Status copy_output(unsigned char *out_ptr);
     MasterGraph::Status
-    copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier = 1.0, float offset = 0.0);
+    copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier, float offset,
+                    bool reverse_channels);
     Status copy_output(cl_mem out_ptr, size_t out_size);
     size_t output_width();
     size_t output_height();

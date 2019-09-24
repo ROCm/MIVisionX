@@ -8,9 +8,6 @@
 enum class CIRCULAR_BUFFER_STATUS {
     OK = 0,
     BUFFER_TOO_SHALLOW,
-    OPENCL_BUFFER_ALLOCATION_FAILED,
-    OPENCL_MAP_BUFFER_FAILED,
-    OCL_INFO_MISSING
 };
 
 class CircularBuffer {
@@ -41,7 +38,8 @@ private:
      *  or the regular host memory buffers in the CPU affinity case.
      */
     std::vector<cl_mem> _dev_buffer;// Actual memory allocated on the device (in the case of GPU affinity)
-    std::vector<unsigned char*> _host_buffer;
+    std::vector<unsigned char*> _host_buffer_ptrs;
+    std::vector<std::vector<unsigned char>> _actual_host_buffers;
     std::condition_variable _wait_for_load;
     std::condition_variable _wait_for_unload;
     std::mutex _lock;

@@ -11,6 +11,6 @@ extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutput(RaliContext context, uns
 */
 extern "C"  RaliStatus   RALI_API_CALL raliCopyToOutputTensor(RaliContext rali_context, float *out_ptr,
                                                               RaliTensorLayout tensor_format, float multiplier,
-                                                              float offset);
+                                                              float offset, bool reverse_channels);
 
 #endif //MIVISIONX_RALI_API_DATA_TRANSFER_H

@@ -63,19 +63,19 @@ struct ImageInfo
         RaliMemType mem_type, 
         RaliColorFormat color_format);
     
-    bool operator==(const ImageInfo& other);
-    unsigned width() { return _width; }
-    unsigned height_batch() {return _height * _batch_size; }
-    unsigned height_single() { return _height; }
-    unsigned color_plane_count() { return _color_planes; }
+    bool operator==(const ImageInfo& other) const;
+    unsigned width() const { return _width; }
+    unsigned height_batch() const {return _height * _batch_size; }
+    unsigned height_single() const { return _height; }
+    unsigned color_plane_count() const { return _color_planes; }
     void width(unsigned width) { _width = width; }
     void height(unsigned height) { _height = height; }
-    Type type() { return _type; }
-    const std::string& get_name(unsigned idx) { if(idx < _image_names.size()) return _image_names[idx]; else return _empty_str;}
-    unsigned batch_size() {return _batch_size;}
-    RaliMemType mem_type() { return _mem_type; }
-    unsigned data_size() { return _data_size; }
-    RaliColorFormat color_format() {return _color_fmt; }
+    Type type() const { return _type; }
+    const std::string& get_name(unsigned idx) const { if(idx < _image_names.size()) return _image_names[idx]; else return _empty_str;}
+    unsigned batch_size() const {return _batch_size;}
+    RaliMemType mem_type() const { return _mem_type; }
+    unsigned data_size() const { return _data_size; }
+    RaliColorFormat color_format() const {return _color_fmt; }
 private:
     Type _type = Type::UNKNOWN;//!< image type, whether is virtual image, created from handle or is a regular image
     unsigned _width;//!< image width for a single image in the batch
@@ -98,7 +98,7 @@ struct Image
     void* buf = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
     vx_image img = 0;//!< The OpenVX image
 
-    ImageInfo info() { return _info; }
+    const ImageInfo& info() { return _info; }
     //! Default constructor 
     Image() = delete;
 

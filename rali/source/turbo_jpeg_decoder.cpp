@@ -67,8 +67,8 @@ Decoder::Status TJDecoder::decode(unsigned char* input_buffer,
                         desired_width, 
                         desired_width*planes, 
                         desired_height, 
-                        tjpf, 
-                        TJFLAG_FASTDCT) != 0)
+                        tjpf,
+                      TJFLAG_ACCURATEDCT) != 0)
     {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
         return Status::CONTENT_DECODE_FAILED;

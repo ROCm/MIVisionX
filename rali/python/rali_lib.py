@@ -95,7 +95,7 @@ class RaliLib:
 
         self.raliBlend = self.lib.raliBlend
         self.raliBlend.restype = ctypes.c_void_p
-        self.raliBlend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
+        self.raliBlend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         self.raliBlendFixed = self.lib.raliBlendFixed
         self.raliBlendFixed.restype = ctypes.c_void_p

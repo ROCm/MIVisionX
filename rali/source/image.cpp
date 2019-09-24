@@ -24,8 +24,16 @@ vx_enum vx_mem_type(RaliMemType mem)
             throw std::runtime_error("Memory type not valid");
     }
     
-} 
-    
+}
+bool operator==(const ImageInfo& rhs, const ImageInfo& lhs)
+{
+    return (rhs.width() == lhs.width() &&
+            rhs.height_batch() == lhs.height_batch() &&
+            rhs.mem_type() == lhs.mem_type() &&
+            rhs.color_format() == lhs.color_format() &&
+            rhs.color_plane_count() == lhs.color_plane_count());
+}
+
 ImageInfo::ImageInfo():
         _type(Type::UNKNOWN),
         _width(0),
@@ -52,14 +60,6 @@ ImageInfo::ImageInfo(
         _mem_type(mem_type_),
         _color_fmt(col_fmt_) {}
 
-bool ImageInfo::operator==(const ImageInfo& other) const
-{
-    return (width() == other._width &&
-            height_batch() == other._height &&
-            _mem_type == other._mem_type &&
-            _color_fmt == other._color_fmt &&
-            _color_planes == other._color_planes);
-}    
 
 //Image::Image() {}
 

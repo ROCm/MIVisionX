@@ -39,6 +39,8 @@ struct ROI {
 // |
 // V Y directoin
 
+
+
 /*! \brief Holds the information about an OpenVX image */
 struct ImageInfo
 {
@@ -62,8 +64,7 @@ struct ImageInfo
         unsigned color_planes_count,
         RaliMemType mem_type, 
         RaliColorFormat color_format);
-    
-    bool operator==(const ImageInfo& other) const;
+
     unsigned width() const { return _width; }
     unsigned height_batch() const {return _height * _batch_size; }
     unsigned height_single() const { return _height; }
@@ -88,6 +89,8 @@ private:
     std::vector<std::string> _image_names;//!< image name/ids that are stores in the buffer
     std::string _empty_str;
 };
+bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
+
 /*! \brief Holds an OpenVX image and it's info 
 *
 * Keeps the information about the image that can be queried using OVX API as well,

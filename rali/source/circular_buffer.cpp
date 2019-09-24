@@ -130,6 +130,7 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::init(RaliMemType output_mem_type, size_t 
                                                                              0, NULL, NULL, &err );
             if(err)
                 THROW("clEnqueueMapBuffer of size" + TOSTR(_output_mem_size)+  "failed " + TOSTR(err));
+            clRetainMemObject(_dev_buffer[buffIdx]);
 
 
         }
@@ -213,9 +214,9 @@ CircularBuffer::~CircularBuffer()
         }
     }
 
-    //_dev_buffer.clear();
-    //_host_buffer_ptrs.clear();
-    //_actual_host_buffers.clear();
+    _dev_buffer.clear();
+    _host_buffer_ptrs.clear();
+    _actual_host_buffers.clear();
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;

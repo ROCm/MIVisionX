@@ -31,17 +31,17 @@ private:
     int _output_mem_size;
     int _running;
     int _batch_size;
+    std::mutex _lock;
+    std::thread _load_thread;
     RaliMemType _mem_type;
-    CircularBuffer _circ_buff;
     std::queue<std::vector<std::string>> _circ_buff_names;//!< Stores the loaded images names (data is stored in the _circ_buff)
     std::vector<std::string> _image_names;
+    CircularBuffer _circ_buff;
     bool _is_initialized;
     bool _ready;
     size_t _load_offset = 0;
     size_t _load_interval = 1;
-    std::thread _load_thread;
     const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;
-    std::mutex _lock;
 };
 

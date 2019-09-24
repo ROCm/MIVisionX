@@ -38,16 +38,15 @@ private:
     Status update_parameters();
     Status allocate_output_tensor();
     Status deallocate_output_tensor();
-    Status init_opencl();
+    DeviceManager   _device;
     ImageInfo _output_image_info;
     std::list<Image*> _output_images;//!< Keeps the ovx images that are used to store the augmented output (there is an image per augmentation branch)
     std::list<Image*> _internal_images;//!< Keeps all the ovx images (virtual/non-virtual) either intermediate images, or input images that feed the graph
     std::list<std::shared_ptr<Node>> _nodes;
     std::list<std::shared_ptr<Node>> _root_nodes;
     std::map<Image*, std::shared_ptr<Node>> _image_map;
-    cl_mem _output_tensor;//!< Depending on the output memory type either host or device pointer
+    cl_mem _output_tensor;
     std::shared_ptr<Graph> _graph = nullptr;
-    DeviceManager   _device;
     RaliAffinity _affinity;
     int _gpu_id;
     std::list<pLoaderModule> _loader_modules; //<! Keeps the loader modules used to feed the input the images of the graph

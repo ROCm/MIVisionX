@@ -68,7 +68,7 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
             WRN("Cannot load AMD's OpenVX media extension, video decode functionality will not be available")
 
         if(_affinity == RaliAffinity::GPU)
-            init_opencl();
+            _device.init_ocl(_context);
     }
     catch(const std::exception& e)
     {
@@ -267,42 +267,6 @@ MasterGraph::deallocate_output_tensor()
 {
     if(_output_image_info.mem_type() == RaliMemType::OCL && _output_tensor != nullptr)
         clReleaseMemObject(_output_tensor );
-
-    return Status::OK;
-}
-
-MasterGraph::Status
-MasterGraph::init_opencl()
-{
-    cl_int clerr;
-    cl_context clcontext;
-    cl_device_id dev_id;
-    cl_command_queue cmd_queue;
-    vx_status vxstatus = vxQueryContext(_context, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &clcontext, sizeof(clcontext));
-
-    if (vxstatus != VX_SUCCESS)
-        THROW("vxQueryContext failed " + TOSTR(vxstatus))
-
-
-    cl_int clstatus = clGetContextInfo(clcontext, CL_CONTEXT_DEVICES, sizeof(dev_id), &dev_id, nullptr);
-
-    if (clstatus != CL_SUCCESS)
-        THROW("clGetContextInfo failed " + TOSTR(clstatus))
-
-#if defined(CL_VERSION_2_0)
-    cmd_queue = clCreateCommandQueueWithProperties(clcontext, dev_id, nullptr, &clerr);
-#else
-    cmd_queue = clCreateCommandQueue(opencl_context, dev_id, 0, &clerr);
-#endif
-    if(clerr != CL_SUCCESS)
-        THROW("clCreateCommandQueue failed " + TOSTR(clerr))
-
-    _device.set_resources(cmd_queue, clcontext, dev_id);
-
-    // Build CL kernels
-    _device.initialize();
-
-    LOG("OpenCL initialized ...")
 
     return Status::OK;
 }

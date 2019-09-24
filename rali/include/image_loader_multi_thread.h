@@ -19,10 +19,10 @@ public:
     std::vector<long long unsigned> timing() override;
 private:
     void increment_loader_idx();
+    const OCLResources& _ocl;
     bool _created = false;
     std::vector<std::shared_ptr<ImageLoaderSingleThread>> _loaders;
     size_t _loader_idx;
     constexpr static size_t MIN_NUM_THREADS = 1;
     size_t THREAD_COUNT = MIN_NUM_THREADS;
-    const OCLResources _ocl;
 };

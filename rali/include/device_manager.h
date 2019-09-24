@@ -2,14 +2,14 @@
 
 #include <map>
 #include <CL/cl.h>
+#include <vx_ext_amd.h>
+#include <VX/vx_types.h>
 #include <memory>
 #include "device_data_transfer_code.h"
-
 struct OCLResources {
-    cl_command_queue cmd_queue;
     cl_context context;
     cl_device_id device_id;
-    OCLResources( cl_context _context, cl_device_id _device_id, cl_command_queue _queue): cmd_queue (_queue), context(_context), device_id(_device_id) {}
+    cl_command_queue cmd_queue;
     OCLResources() {cmd_queue = nullptr; context = nullptr; device_id = nullptr; }
 };
 
@@ -42,21 +42,13 @@ class DeviceManager {
 public:
     DeviceManager(){};
 
-    DeviceManager(cl_command_queue queue, cl_context context, cl_device_id device): _resources(context, device, queue) {}
-
-    void set_resources(cl_command_queue queue, cl_context context, cl_device_id device) 
-    {
-        _resources.cmd_queue = queue;
-        _resources.context = context;
-        _resources.device_id = device;
-    };
-
     cl_int initialize();
     
     OCLResources resources();
 
     const CLProgram& operator[](const std::string& prog_name);
 
+    void init_ocl(vx_context context);
 
     ~DeviceManager();
 

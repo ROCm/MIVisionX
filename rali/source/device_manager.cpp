@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vx_ext_amd.h>
 #include "device_manager.h"
 #include "commons.h"
 
@@ -6,11 +7,14 @@ DeviceManager::~DeviceManager()
 {
     if(_resources.cmd_queue != nullptr)
         clReleaseCommandQueue(_resources.cmd_queue);
+    if(_resources.device_id != nullptr)
+        clReleaseDevice(_resources.device_id);
     if(_resources.context != nullptr)
         clReleaseContext(_resources.context);
 
     _resources.cmd_queue = nullptr;
     _resources.context = nullptr;
+    _resources.device_id = nullptr;
     LOG("OCL context and command queue resources released")
 }
 
@@ -94,6 +98,44 @@ cl_int DeviceManager::initialize() {
 OCLResources DeviceManager::resources() 
 {
     return _resources;
+}
+
+void
+DeviceManager::init_ocl(vx_context context)
+{
+    cl_int clerr;
+    cl_context clcontext;
+    cl_device_id dev_id;
+    cl_command_queue cmd_queue;
+    vx_status vxstatus = vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &clcontext, sizeof(clcontext));
+
+    if (vxstatus != VX_SUCCESS)
+        THROW("vxQueryContext failed " + TOSTR(vxstatus))
+
+
+    cl_int clstatus = clGetContextInfo(clcontext, CL_CONTEXT_DEVICES, sizeof(dev_id), &dev_id, nullptr);
+
+    if (clstatus != CL_SUCCESS)
+        THROW("clGetContextInfo failed " + TOSTR(clstatus))
+
+#if defined(CL_VERSION_2_0)
+    cmd_queue = clCreateCommandQueueWithProperties(clcontext, dev_id, nullptr, &clerr);
+#else
+    cmd_queue = clCreateCommandQueue(opencl_context, dev_id, 0, &clerr);
+#endif
+    if(clerr != CL_SUCCESS)
+        THROW("clCreateCommandQueue failed " + TOSTR(clerr))
+
+    _resources.cmd_queue = cmd_queue;
+    _resources.context = clcontext;
+    _resources.device_id = dev_id;
+    clRetainCommandQueue(_resources.cmd_queue);
+    clRetainContext(_resources.context);
+    clRetainDevice(_resources.device_id);
+    // Build CL kernels
+    initialize();
+
+    LOG("OpenCL initialized ...")
 }
 
 const CLProgram& DeviceManager::operator[](const std::string& prog_name)  

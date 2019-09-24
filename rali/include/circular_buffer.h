@@ -37,6 +37,9 @@ private:
      *  Pinned memory allocated on the host used for fast host to device memory transactions,
      *  or the regular host memory buffers in the CPU affinity case.
      */
+    cl_command_queue _cl_cmdq = nullptr;
+    cl_context _cl_context = nullptr;
+    cl_device_id _device_id = nullptr;
     std::vector<cl_mem> _dev_buffer;// Actual memory allocated on the device (in the case of GPU affinity)
     std::vector<unsigned char*> _host_buffer_ptrs;
     std::vector<std::vector<unsigned char>> _actual_host_buffers;
@@ -49,7 +52,4 @@ private:
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;
-    cl_command_queue _cl_cmdq = nullptr;
-    cl_context _cl_context = nullptr;
-    cl_device_id _device_id = nullptr;
 };

@@ -81,8 +81,8 @@ class RaliGraph():
     def run(self):
         return self._lib.run(self.handle)
 
-    #def __del__(self):
-        #self._lib.release(self.handle)
+    def __del__(self):
+        self._lib.release(self.handle)
 
     def build(self):
         return self._lib.build(self.handle)
@@ -135,14 +135,6 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def hue(self, input, is_output, shift = None):
-        param_shift = self.validateFloatParameter(shift)
-        out = self._lib.raliHue(self.handle, input.obj, is_output, param_shift)
-        out_img = RaliImage(out)
-        if is_output:
-            self.output_images.append(out_img)
-        return out_img
-
     def brightness(self, input, is_output, alpha = None, beta = None):
         alpha_param = self.validateFloatParameter( alpha)
         beta_param = self.validateFloatParameter( beta)
@@ -164,14 +156,6 @@ class RaliGraph():
         min_param = self.validateIntParameter(min)
         max_param = self.validateIntParameter(max)
         out = self._lib.raliContrast(self.handle, input.obj, is_output, min_param, max_param)
-        out_img = RaliImage(out)
-        if is_output:
-            self.output_images.append(out_img)
-        return out_img
-
-    def saturation(self, input, is_output, shift = None):
-        param_shift = self.validateFloatParameter(shift)
-        out = self._lib.raliSaturation(self.handle, input.obj, is_output, param_shift)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)

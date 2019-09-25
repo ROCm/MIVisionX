@@ -288,7 +288,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Layers|Caffe|ONNX|NNEF|
 |-------|----|----|----|
 |Add||&#9745;|&#9745;|
-|Argmax||&#9745;||
+|Argmax||&#9745;|&#9745;|
 |AveragePool||&#9745;|&#9745;|
 |BatchNormalization|&#9745;|&#9745;|&#9745;|
 |Cast||&#9745;||
@@ -305,7 +305,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Div||&#9745;|&#9745;|
 |Dropout||||
 |Eltwise|&#9745;|||
-|Exp||&#9745;||
+|Exp||&#9745;|&#9745;|
 |Flatten|&#9745;|||
 |GEMM|&#9745;|&#9745;|&#9745;|
 |GlobalAveragePool||&#9745;|&#9745;|
@@ -313,7 +313,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Interp|&#9745;|||
 |LeakyRelu||&#9745;|&#9745;|
 |Linear|||&#9745;|
-|Log||&#9745;||
+|Log||&#9745;|&#9745;|
 |LRN|&#9745;|&#9745;|&#9745;|
 |Matmul||&#9745;|&#9745;|
 |Max||&#9745;|&#9745;|

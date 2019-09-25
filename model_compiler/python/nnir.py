@@ -691,6 +691,11 @@ class IrGraph:
                 self.removeTensor(name)
 
     def updateBatchSize(self,batchSize):
+        for node in self.nodes:
+            if node.type in ['reshape']:
+                param = node.attr.get('shape')
+                param[0] = batchSize
+                node.attr.set('shape', param)
         for tensor in self.inputs:
             tensor.shape[0] = batchSize
             self.tensor_shapes[tensor.name] = tensor.shape

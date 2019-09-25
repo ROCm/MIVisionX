@@ -317,7 +317,10 @@ import numpy as np
 netSummaryImages =  imageDataSize - totalNoGroundTruth;
 passProb = top1TotProb+top2TotProb+top3TotProb+top4TotProb+top5TotProb;
 passCount = top1Count+top2Count+top3Count+top4Count+top5Count;
-avgPassProb = float(passProb/passCount);
+if passCount > 0:
+    avgPassProb = float(passProb/passCount);
+else:
+    avgPassProb = 0
 
 print('Images with Ground Truth -- '+str(netSummaryImages));
 print('Images without Ground Truth -- '+str(totalNoGroundTruth));
@@ -333,7 +336,10 @@ print('Total mismatch -- '+str(totalMismatch));
 accuracyPer = float(totalMismatch);
 accuracyPer = (accuracyPer/netSummaryImages) * 100;
 print('Inference mismatch Percentage -- '+str(np.around(accuracyPer,decimals=2))+' %');
-print('Average mismatch Probability for Top 1 -- '+str(np.around(float(totalFailProb)/float(totalMismatch),decimals=4)));
+if totalMismatch > 0:
+    print('Average mismatch Probability for Top 1 -- '+str(np.around(float(totalFailProb)/float(totalMismatch),decimals=4)));
+else:
+    print('Average mismatch Probability for Top 1 -- 0');
 
 print("\n*****Top1*****");
 print('Top1 matches -- '+str(top1Count));  
@@ -1218,7 +1224,10 @@ print("\t</tr>\n<tr>");
 print("\t<td><font color=\"black\" size=\"4\">Average Pass Confidence for Top %d</font></td>"%(topKValue));
 print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%((avgPassProb*100)));
 print("\t<td><font color=\"black\" size=\"4\">Average mismatch Confidence for Top 1</font></td>");
-print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%(((totalFailProb/totalMismatch)*100)));
+if totalMismatch > 0:
+    print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%(((totalFailProb/totalMismatch)*100)));
+else:
+    print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%(((0)*100)));
 print("\t</tr>\n</table>\n<br><br><br>");
 #topK result
 print("\t<table align=\"center\" style=\"width: 40%\">");

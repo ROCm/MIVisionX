@@ -260,7 +260,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Inception-V3||||			
 |Inception-V4|&#9745;|||			
 |MNIST|&#9745;||&#9745;|		
-|Mobilenet|||&#9745;|		
+|Mobilenet||&#9745;|&#9745;|		
 |MobilenetV2|||&#9745;|
 |ResNet-18|||&#9745;|			
 |ResNet-34|||&#9745;|			
@@ -288,8 +288,10 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Layers|Caffe|ONNX|NNEF|
 |-------|----|----|----|
 |Add||&#9745;|&#9745;|
+|Argmax||&#9745;||
 |AveragePool||&#9745;|&#9745;|
 |BatchNormalization|&#9745;|&#9745;|&#9745;|
+|Cast||&#9745;||
 |Clamp|||&#9745;|
 |Clip||&#9745;||
 |Concat|&#9745;|&#9745;|&#9745;|
@@ -303,6 +305,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Div||&#9745;|&#9745;|
 |Dropout||||
 |Eltwise|&#9745;|||
+|Exp||&#9745;||
 |Flatten|&#9745;|||
 |GEMM|&#9745;|&#9745;|&#9745;|
 |GlobalAveragePool||&#9745;|&#9745;|
@@ -310,8 +313,9 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Interp|&#9745;|||
 |LeakyRelu||&#9745;|&#9745;|
 |Linear|||&#9745;|
+|Log||&#9745;||
 |LRN|&#9745;|&#9745;|&#9745;|
-|Matmul|||&#9745;|
+|Matmul||&#9745;|&#9745;|
 |Max||&#9745;|&#9745;|
 |MaxPool||&#9745;|&#9745;|
 |MeanReduce|||&#9745;|
@@ -322,7 +326,8 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |PriorBox|&#9745;|||
 |Relu|&#9745;|&#9745;|&#9745;|
 |Reshape|&#9745;|&#9745;|&#9745;|
-|Sigmoid||&#9745;|&#9745;
+|Shape||&#9745;||
+|Sigmoid||&#9745;|&#9745;|
 |Slice|||&#9745;|
 |Split|&#9745;|||
 |Softmax|&#9745;|&#9745;|&#9745;|

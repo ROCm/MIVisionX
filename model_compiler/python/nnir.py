@@ -306,11 +306,14 @@ class IrGraph:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
                 if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'exp', 'log', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
+                    #print "input... " ,input.name , input.shape
                     local = IrTensor()
                     local.setName(output)
+                    #local.setInfo(input.type, input.shape[:])
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                    #print "local...",local.name, local.shape
                 elif node.type in ['global_avg_pool']:
                     local = IrTensor()
                     local.setName(output)
@@ -323,6 +326,7 @@ class IrGraph:
                     dilations = node.attr.get('dilations')
                     kernel_shape = node.attr.get('kernel_shape')
                     dim_round_mode = node.attr.get('dim_round_mode')
+                    #input_shape = input.shape[:]
                     input_shape = input.shape
                     k = input_shape[1]
                     if node.type == 'conv':
@@ -346,6 +350,7 @@ class IrGraph:
                     strides = node.attr.get('strides')
                     dilations = node.attr.get('dilations')
                     kernel_shape = node.attr.get('kernel_shape')
+                    #input_shape = input.shape[:]
                     input_shape = input.shape
                     k = self.tensor_shapes[node.inputs[1]][0]
                     output_shape = [input_shape[0], k, \
@@ -448,6 +453,7 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['unsqueeze']:
                     axes = node.attr.get('axes')
+                    #out_shape = input.shape[:]
                     out_shape = input.shape
                     if len(out_shape) < 4:
                         for i in range(len(axes)):
@@ -484,6 +490,7 @@ class IrGraph:
                     node.type = 'mul'
                     local = IrTensor()
                     local.setName(output)
+                    #local.setInfo(input.type, input.shape[:])
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
@@ -500,7 +507,9 @@ class IrGraph:
                     axis_end = axis_start + axis_count
                     icount = 1
                     ocount = 1
-                    out_shape = [1,1,1,1]                    
+                    out_shape = [1,1,1,1]
+                    #print axis_start, axis_end
+                    #print self.tensor_dict[node.inputs[0]].name, self.tensor_dict[node.inputs[0]].shape                  
                     for dim in range(axis_start, axis_end):
                         icount *= input.shape[dim]
                     for dim in range(len(param)):
@@ -583,6 +592,7 @@ class IrGraph:
                             out_shape.append(reference.shape[i])
                     local = IrTensor()
                     local.setName(output)
+                    #local.setInfo(input.type, input.shape[:])
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
@@ -1169,7 +1179,7 @@ class IrGraph:
             os.mkdir(outputFolder)
         irDescFile = outputFolder + '/old_graph.nnir'
         irDescFileNew = outputFolder + '/graph.nnir'
-        print('OK: creating IR description in ' + irDescFile + ' ...')
+        print('OK: creating IR description in ' + irDescFileNew + ' ...')
         with open(irDescFile, 'w') as f:
             for tensor in self.inputs:
                 f.write('input|' + tensor.toString() + '\n')
@@ -1267,6 +1277,7 @@ class IrGraph:
                 elif s[0] == 'local':
                     tensor = IrTensor()
                     tensor.fromString(s[1])
+                    #print s
                     self.addLocal(tensor)
                 elif s[0] == 'node':
                     node = IrNode()

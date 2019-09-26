@@ -13,11 +13,11 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     if ((type != VX_TYPE_FLOAT32) && (type!= VX_TYPE_INT32) && (type!= VX_TYPE_INT64)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: cast: #1 input tensor data type=%d not supprted yet\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
 
-    vx_int32 to;
+    vx_int32 output_data_type;
     ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[1], VX_SCALAR_TYPE, &type, sizeof(type)));
     if(type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &to, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if(to < 0 || to > 13) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: cast: #2 scalar type=%d ('to' must be between 0-13)\n", to);
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &output_data_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    if(output_data_type < 0 || output_data_type > 13) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: cast: #2 scalar type=%d ('to' must be between 0-13)\n", output_data_type);
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
@@ -67,8 +67,8 @@ static vx_status VX_CALLBACK opencl_codegen(
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_type, sizeof(input_type)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
 
-    vx_int32 to;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &to, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    vx_int32 output_data_type;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &output_data_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &output_type, sizeof(output_type)));
@@ -102,7 +102,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         char item[8192];
         sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, const int to, __global uchar * out, uint out_offset, uint4 out_stride) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, const int output_data_type, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
                 "    uint x = get_global_id(0) * %d;\n"
 		        "    uint y = get_global_id(1);\n"
@@ -224,15 +224,15 @@ vx_status publishCastLayer(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxCastLayer(vx_graph graph, vx_tensor input, vx_int32 to, vx_tensor output)
+VX_API_ENTRY vx_node VX_API_CALL vxCastLayer(vx_graph graph, vx_tensor input, vx_int32 output_data_type, vx_tensor output)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
-    	vx_scalar s_to = vxCreateScalarWithSize(context, VX_TYPE_INT32, &to, sizeof(to));
+    	vx_scalar s_output_data_type = vxCreateScalarWithSize(context, VX_TYPE_INT32, &output_data_type, sizeof(output_data_type));
         vx_reference params[] = {
             (vx_reference)input,
-            (vx_reference)s_to,
+            (vx_reference)s_output_data_type,
             (vx_reference)output,
         };
         node = createNode(graph, VX_KERNEL_CAST_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));

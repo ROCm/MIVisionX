@@ -5,7 +5,7 @@
 class ImageLoaderMultiThread : public LoaderModule
 {
 public:
-    explicit ImageLoaderMultiThread(OCLResources ocl);
+    explicit ImageLoaderMultiThread(DeviceResources ocl);
     ~ImageLoaderMultiThread() override;
     LoaderModuleStatus load_next() override;
     LoaderModuleStatus
@@ -22,7 +22,7 @@ public:
     std::vector<long long unsigned> timing() override;
 private:
     void increment_loader_idx();
-    const OCLResources _ocl;
+    const DeviceResources _ocl;
     bool _created = false;
     std::vector<std::shared_ptr<ImageLoaderSingleThread>> _loaders;
     size_t _loader_idx;

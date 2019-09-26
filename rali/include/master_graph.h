@@ -87,9 +87,8 @@ std::shared_ptr<T> MasterGraph::add_node(const std::vector<Image*>& inputs, cons
  */
 template<> inline std::shared_ptr<JpegFileNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
 {
-    auto loader_module = std::make_shared<ImageLoaderMultiThread>(_device.resources());
-    auto node = std::make_shared<JpegFileNode>(outputs[0], loader_module,  _mem_type, _batch_size);
-    _loader_modules.push_back(loader_module);
+    auto node = std::make_shared<JpegFileNode>(outputs[0], _device.resources(),  _mem_type, _batch_size);
+    _loader_modules.push_back(node->get_loader_module());
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));

@@ -7,7 +7,7 @@
 
 class CircularBuffer {
 public:
-    CircularBuffer( OCLResources ocl, size_t buffer_depth );
+    CircularBuffer(DeviceResources ocl, size_t buffer_depth );
     ~CircularBuffer();
     void init(RaliMemType output_mem_type, size_t output_mem_size);
     void sync();

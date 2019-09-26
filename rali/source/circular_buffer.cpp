@@ -1,6 +1,6 @@
 #include "circular_buffer.h"
 #include "log.h"
-CircularBuffer::CircularBuffer( OCLResources ocl,  size_t buffer_depth):
+CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
         BUFF_DEPTH(buffer_depth),
         _dev_buffer(BUFF_DEPTH, nullptr),
         _host_buffer_ptrs(BUFF_DEPTH, nullptr),

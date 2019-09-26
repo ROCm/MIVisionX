@@ -95,7 +95,7 @@ cl_int DeviceManager::initialize() {
     return status;
 }
 
-OCLResources DeviceManager::resources() 
+DeviceResources DeviceManager::resources()
 {
     return _resources;
 }

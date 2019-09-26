@@ -9,7 +9,7 @@
 
 class ImageLoaderSingleThread : public LoaderModule {
 public:
-    explicit ImageLoaderSingleThread(OCLResources ocl);
+    explicit ImageLoaderSingleThread(DeviceResources ocl);
     ~ImageLoaderSingleThread() override;
     LoaderModuleStatus load_next() override;
     LoaderModuleStatus

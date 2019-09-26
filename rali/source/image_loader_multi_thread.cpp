@@ -1,6 +1,6 @@
 #include "image_loader_multi_thread.h"
 
-ImageLoaderMultiThread::ImageLoaderMultiThread(OCLResources ocl):
+ImageLoaderMultiThread::ImageLoaderMultiThread(DeviceResources ocl):
 _ocl(ocl)
 {
     _loader_idx = 0;

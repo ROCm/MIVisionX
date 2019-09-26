@@ -5,7 +5,7 @@
 #include "image_loader_factory.h"
 #include "vx_ext_amd.h"
 
-ImageLoaderSingleThread::ImageLoaderSingleThread(OCLResources ocl):
+ImageLoaderSingleThread::ImageLoaderSingleThread(DeviceResources ocl):
 _circ_buff(ocl, CIRC_BUFFER_DEPTH)
 {
     _running = 0;

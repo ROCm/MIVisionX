@@ -53,8 +53,9 @@ public:
 class LoaderModule 
 {
 public:
-    virtual LoaderModuleStatus create(LoaderModuleConfig* desc) = 0;
-    virtual LoaderModuleStatus set_output_image(Image* output_image) = 0;
+    virtual LoaderModuleStatus
+    create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) = 0;
+    virtual void set_output_image(Image* output_image) = 0;
     virtual LoaderModuleStatus load_next() = 0;//swapBuffers();
     virtual void reset() = 0; // Resets the loader to load from the beginning of the media
     virtual size_t count() = 0; // Returns the number of available images to be loaded

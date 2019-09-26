@@ -15,14 +15,13 @@ VideoLoaderModule::load_next()
     return LoaderModuleStatus::OK;
 }
 
-LoaderModuleStatus 
+void
 VideoLoaderModule::set_output_image (Image* output_image)
 {
-    return LoaderModuleStatus::OK;
 }
 
 LoaderModuleStatus 
-VideoLoaderModule::create( LoaderModuleConfig* desc)
+VideoLoaderModule::create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size)
 {
 #if 0    
     // Currently only files as storage and FFMEG OpenVX decoding is supported

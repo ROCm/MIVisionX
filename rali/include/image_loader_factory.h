@@ -23,7 +23,7 @@ public:
     ~ImageLoaderFactory();
     size_t count();
     void reset();
-    LoaderModuleStatus create(LoaderModuleConfig* desc, size_t load_interval = 1, size_t load_offset = 0);
+    LoaderModuleStatus create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size, const std::string& path, size_t load_interval = 1, size_t load_offset = 0);
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     LoaderModuleStatus load(

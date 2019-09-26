@@ -12,9 +12,12 @@ _circ_buff(ocl, CIRC_BUFFER_DEPTH)
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
-    _ready = false; 
+    _ready = false;
 }
-
+void ImageLoaderSingleThread::set_path(const std::string& image_folder)
+{
+    _image_folder = image_folder;
+}
 void ImageLoaderSingleThread::set_load_offset(size_t offset)
 {
     _load_offset = offset;
@@ -62,42 +65,32 @@ ImageLoaderSingleThread::de_init()
 LoaderModuleStatus
 ImageLoaderSingleThread::load_next()
 {
-    if(!_ready) 
+    if(!_ready)
         return LoaderModuleStatus::NOT_INITIALIZED;
 
     return update_output_image();
 }
 
-LoaderModuleStatus 
+void
 ImageLoaderSingleThread::set_output_image (Image* output_image)
 {
-    if(!_is_initialized)
-        THROW("set_output_image should be called after create function is called")
-
     _output_image = output_image;
     _output_mem_size = _output_image->info().data_size();
-    if(_circ_buff.init(_mem_type, _output_mem_size) != CIRCULAR_BUFFER_STATUS::OK)
-        return LoaderModuleStatus::INTERNAL_BUFFER_INITIALIZATION_FAILED;
-
-    _ready = true;
-    start_loading();
-    
-    return LoaderModuleStatus::OK;
-
 }
 
 LoaderModuleStatus 
-ImageLoaderSingleThread::create(LoaderModuleConfig* desc)
+ImageLoaderSingleThread::create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
+                                unsigned batch_size)
 {
     if(_is_initialized)
         WRN("Create function is already called and loader module is initialized")
 
-    _mem_type = desc->_mem_type;
-    _batch_size = desc->_batch_size;
+    _mem_type = mem_type;
+    _batch_size = batch_size;
 
     LoaderModuleStatus status = LoaderModuleStatus::OK;
     _image_loader = std::make_shared<ImageLoaderFactory>();
-    if((status= _image_loader->create(desc, _load_offset,  _load_interval)) != LoaderModuleStatus::OK) 
+    if((status= _image_loader->create(storage_type, decoder_type, mem_type, batch_size, _image_folder, _load_interval, _load_offset  )) != LoaderModuleStatus::OK)
     {
         de_init();
         THROW("ERROR, couldn't initialize the loader module");
@@ -108,11 +101,16 @@ ImageLoaderSingleThread::create(LoaderModuleConfig* desc)
     return status;
 }
 
-void 
+LoaderModuleStatus
 ImageLoaderSingleThread::start_loading()
 {
-     _running = 1;
-     _load_thread = std::thread(&ImageLoaderSingleThread::load_routine, this);
+    if(!_is_initialized)
+        THROW("start_loading() should be called after create function is called")
+    _circ_buff.init(_mem_type, _output_mem_size);
+    _ready = true;
+    _running = 1;
+    _load_thread = std::thread(&ImageLoaderSingleThread::load_routine, this);
+    return LoaderModuleStatus::OK;
 }
 
 

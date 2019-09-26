@@ -22,11 +22,8 @@ find_max_image_size (RaliImageSizeEvaluationPolicy decode_size_policy, const std
     };
 
     ImageSourceEvaluator source_evaluator;
-    JpegFileLoaderConfig config(1, RaliMemType::HOST, source_path);
-
     source_evaluator.set_size_evaluation_policy(translate_image_size_policy(decode_size_policy));
-
-    if(source_evaluator.create(&config) != ImageSourceEvaluatorStatus::OK)
+    if(source_evaluator.create(StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path) != ImageSourceEvaluatorStatus::OK)
         THROW("Initializing file source input evaluator failed ")
     auto max_width = source_evaluator.max_width();
     auto max_height = source_evaluator.max_height();

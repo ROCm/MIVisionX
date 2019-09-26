@@ -17,7 +17,7 @@ size_t ImageSourceEvaluator::max_height()
 }  
 
 ImageSourceEvaluatorStatus 
-ImageSourceEvaluator::create(LoaderModuleConfig* desc) 
+ImageSourceEvaluator::create(StorageType storage_type, DecoderType decoder_type, const std::string &path)
 {
     ImageSourceEvaluatorStatus status = ImageSourceEvaluatorStatus::OK;
 
@@ -25,7 +25,7 @@ ImageSourceEvaluator::create(LoaderModuleConfig* desc)
     
 
     _header_buff.resize(COMPRESSED_SIZE);
-    switch(desc->decoder_type()) 
+    switch(decoder_type)
     {
         case DecoderType::TURBO_JPEG:
         {
@@ -34,24 +34,20 @@ ImageSourceEvaluator::create(LoaderModuleConfig* desc)
         break;
         default:
         {
-            THROW("Unsupported decoder type "+ TOSTR(desc->storage_type()))
+            THROW("Unsupported decoder type "+ TOSTR(decoder_type))
         }
-
-
-
     }
-    switch(desc->storage_type()) 
+    switch(storage_type)
     {
         case StorageType::FILE_SYSTEM:
         {
-            auto file_src_desc= dynamic_cast<JpegFileLoaderConfig*>(desc);
-            auto reader_desc = FileSourceReaderConfig(file_src_desc->path);
+            auto reader_desc = FileSourceReaderConfig(path);
             _reader = create_reader(&reader_desc);
         }
         break;
         default:
         {
-            THROW("Unsupported storage type "+ TOSTR(desc->storage_type()));
+            THROW("Unsupported storage type "+ TOSTR(storage_type));
         }
     }
     find_max_dimension();

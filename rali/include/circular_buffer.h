@@ -5,17 +5,12 @@
 #include "device_manager.h"
 #include "commons.h"
 
-enum class CIRCULAR_BUFFER_STATUS {
-    OK = 0,
-    BUFFER_TOO_SHALLOW,
-};
-
 class CircularBuffer {
 public:
     CircularBuffer( OCLResources ocl, size_t buffer_depth );
     ~CircularBuffer();
-    CIRCULAR_BUFFER_STATUS init(RaliMemType output_mem_type, size_t output_mem_size);
-    CIRCULAR_BUFFER_STATUS sync();
+    void init(RaliMemType output_mem_type, size_t output_mem_size);
+    void sync();
     void cancel_reading();
     void cancel_writing();
     void push();

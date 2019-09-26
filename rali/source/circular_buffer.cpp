@@ -49,7 +49,7 @@ unsigned char*  CircularBuffer::get_write_buffer()
     return(_host_buffer_ptrs[_write_ptr]);
 }
 
-CIRCULAR_BUFFER_STATUS CircularBuffer::sync()
+void CircularBuffer::sync()
 {
     cl_int err = CL_SUCCESS;
     if(_output_mem_type== RaliMemType::OCL) 
@@ -81,7 +81,6 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::sync()
         // For the host processing no copy is needed, since data is already loaded in the host buffers
         // and handle will be swaped on it
     }
-    return CIRCULAR_BUFFER_STATUS::OK;
 }
 
 void CircularBuffer::push()
@@ -94,12 +93,12 @@ void CircularBuffer::pop()
 {
     increment_read_ptr();
 }
-CIRCULAR_BUFFER_STATUS CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size) 
+void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
 {
     _output_mem_type = output_mem_type;
     _output_mem_size = output_mem_size;
     if(BUFF_DEPTH < 2)
-        return CIRCULAR_BUFFER_STATUS::BUFFER_TOO_SHALLOW;
+        THROW ("Error internal buffer size for the circular buffer should be greater than one")
     
     // Allocating buffers
     if(_output_mem_type== RaliMemType::OCL) 
@@ -145,8 +144,6 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::init(RaliMemType output_mem_type, size_t 
 
 
     }
-
-    return CIRCULAR_BUFFER_STATUS::OK;
 }
 
 bool CircularBuffer::empty()

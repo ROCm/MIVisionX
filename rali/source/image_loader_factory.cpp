@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <cstring> 
 #include "image_loader_factory.h"
-#include "image_loader_configs.h"
-
 
 #define DBG_TIMING 1 // Enables timings for debug purposes, timings will get printed after loading all the files
 
@@ -50,32 +48,31 @@ ImageLoaderFactory::~ImageLoaderFactory()
 }   
 
 LoaderModuleStatus 
-ImageLoaderFactory::create(LoaderModuleConfig* desc, size_t load_interval, size_t load_offset)
+ImageLoaderFactory::create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size, const std::string& path, size_t load_interval, size_t load_offset)
 {
     LoaderModuleStatus status = LoaderModuleStatus::OK;
 
     // Can initialize it to any decoder types if needed
     _compressed_buff.resize(MAX_COMPRESSED_SIZE);
-    switch(desc->decoder_type()) 
+    switch(decoder_type)
     {
         case DecoderType::TURBO_JPEG:
             _decoder = std::make_shared<TJDecoder>();
         break;
         default:
-            THROW("Unsupported decoder type "+ TOSTR(desc->storage_type()));
+            THROW("Unsupported decoder type "+ TOSTR(storage_type));
     }
-    switch(desc->storage_type()) 
+    switch(storage_type)
     {
         case StorageType::FILE_SYSTEM:
         {
-            auto file_src_desc= dynamic_cast<JpegFileLoaderConfig*>(desc);
-            auto reader_desc = FileSourceReaderConfig(file_src_desc->path, load_interval, load_offset);
+            auto reader_desc = FileSourceReaderConfig(path, load_offset, load_interval);
             _reader = create_reader(&reader_desc);
         }
         break;
         default:
         {
-            THROW("Unsupported storage type " + TOSTR(desc->storage_type()));
+            THROW("Unsupported storage type " + TOSTR(storage_type));
         }
     }
 

@@ -1,14 +1,18 @@
 #include "image_loader_multi_thread.h"
 
-ImageLoaderMultiThread::ImageLoaderMultiThread(const OCLResources& ocl):
+ImageLoaderMultiThread::ImageLoaderMultiThread(OCLResources ocl):
 _ocl(ocl)
 {
     _loader_idx = 0;
     for(size_t i = 0; i< MIN_NUM_THREADS; i++)
     {
-        auto loader = std::make_shared<ImageLoaderSingleThread>(ocl);
+        auto loader = std::make_shared<ImageLoaderSingleThread>(_ocl);
         _loaders.push_back(loader);
     }
+}
+void ImageLoaderMultiThread::set_path(const std::string& image_folder)
+{
+    _image_folder = image_folder;
 }
 
 ImageLoaderMultiThread::~ImageLoaderMultiThread()
@@ -21,7 +25,9 @@ LoaderModuleStatus ImageLoaderMultiThread::load_next()
     increment_loader_idx();
     return ret;
 }
-LoaderModuleStatus ImageLoaderMultiThread::create(LoaderModuleConfig* desc)
+LoaderModuleStatus
+ImageLoaderMultiThread::create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
+                               unsigned batch_size)
 {
     auto ret = LoaderModuleStatus::OK;
 
@@ -32,23 +38,23 @@ LoaderModuleStatus ImageLoaderMultiThread::create(LoaderModuleConfig* desc)
     {
         _loaders[idx]->set_load_interval(THREAD_COUNT);
         _loaders[idx]->set_load_offset(idx);
-        ret = _loaders[idx]->create(desc);
+        _loaders[idx]->set_path(_image_folder);
+        ret = _loaders[idx]->create(storage_type, decoder_type, mem_type, batch_size);
         if(ret != LoaderModuleStatus::OK)
             return ret;
     }
     _created = true;
     return ret;
 }
-LoaderModuleStatus ImageLoaderMultiThread::set_output_image (Image* output_image)
+void ImageLoaderMultiThread::start_loading()
 {
-    auto ret = LoaderModuleStatus::OK;
     for(auto& loader: _loaders)
-    {
-        ret = loader->set_output_image(output_image);
-        if(ret != LoaderModuleStatus::OK)
-            return ret;
-    }
-    return ret;
+        loader->start_loading();
+}
+void ImageLoaderMultiThread::set_output_image (Image* output_image)
+{
+    for(auto& loader: _loaders)
+        loader->set_output_image(output_image);
 }
 size_t ImageLoaderMultiThread::count()
 {

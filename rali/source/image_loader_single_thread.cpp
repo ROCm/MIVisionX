@@ -2,7 +2,7 @@
 #include <chrono> 
 #include <CL/cl_ext.h>
 #include "image_loader_single_thread.h"
-#include "image_loader_factory.h"
+#include "image_read_and_decode.h"
 #include "vx_ext_amd.h"
 
 ImageLoaderSingleThread::ImageLoaderSingleThread(DeviceResources ocl):
@@ -52,9 +52,8 @@ ImageLoaderSingleThread::de_init()
 {
     if(!_ready) return;
     reset();
+    // Set running to 0 and wait for the internal thread to join
     _running = 0;
-    _circ_buff.cancel_reading();
-    _circ_buff.cancel_writing();
     _load_thread.join();
     _output_mem_size = 0;
     _batch_size = 1;
@@ -78,27 +77,29 @@ ImageLoaderSingleThread::set_output_image (Image* output_image)
     _output_mem_size = _output_image->info().data_size();
 }
 
-LoaderModuleStatus 
-ImageLoaderSingleThread::create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
-                                unsigned batch_size)
+void
+ImageLoaderSingleThread::initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
+                                    unsigned batch_size)
 {
     if(_is_initialized)
         WRN("Create function is already called and loader module is initialized")
 
     _mem_type = mem_type;
     _batch_size = batch_size;
-
-    LoaderModuleStatus status = LoaderModuleStatus::OK;
-    _image_loader = std::make_shared<ImageLoaderFactory>();
-    if((status= _image_loader->create(storage_type, decoder_type, mem_type, batch_size, _image_folder, _load_interval, _load_offset  )) != LoaderModuleStatus::OK)
+    _image_loader = std::make_shared<ImageReadAndDecode>();
+    auto reader_config = FileSourceReaderConfig(_image_folder, _load_offset, _load_interval);
+    auto decoder_config = TurboJpegDecoderConfig();
+    try
+    {
+        _image_loader->create(&reader_config, &decoder_config);
+    } catch(const std::exception& e)
     {
         de_init();
-        THROW("ERROR, couldn't initialize the loader module");
+        throw;
     }
     _image_names.resize(_batch_size);
     _is_initialized = true;
     LOG("Loader module initialized");
-    return status;
 }
 
 LoaderModuleStatus
@@ -185,42 +186,21 @@ LoaderModuleStatus
 ImageLoaderSingleThread::update_output_image()
 {
     LoaderModuleStatus status = LoaderModuleStatus::OK;
-    vx_status vxstatus;
 
-    if(_mem_type== RaliMemType::OCL) 
+    if(is_out_of_data())
+        return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
+
+    if(_mem_type== RaliMemType::OCL)
     {
-        void*  ptr_in[] = { _circ_buff.get_read_buffer_dev()};
-
-        if(is_out_of_data())
-            return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
-
-        if((vxstatus= vxSwapImageHandle(_output_image->img,ptr_in,nullptr, 1)) != VX_SUCCESS)
-        {
-            ERR("Swap handles failed "+TOSTR(vxstatus));
-            status= LoaderModuleStatus::OCL_BUFFER_SWAP_FAILED;
-        }
-
-        // Updating the buffer pointer as well,
-        // user might want to copy directly using it
-        _output_image->buf = _circ_buff.get_read_buffer_dev();
+        if(_output_image->swap_handle(_circ_buff.get_read_buffer_dev())!= 0)
+            return LoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED;
     } 
     else 
     {
-        void*  ptr_in[] = {_circ_buff.get_read_buffer_host()}; 
-
-        if(is_out_of_data())
-            return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
-
-        if((vxstatus= vxSwapImageHandle(_output_image->img,ptr_in,nullptr, 1)) != VX_SUCCESS)
-        {
-            ERR("Swap handles failed "+TOSTR(vxstatus));
-            status= LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
-        }
-
-        // Updating the buffer pointer as well,
-        // user might want to copy directly using it
-        _output_image->buf = _circ_buff.get_read_buffer_host();
+        if(_output_image->swap_handle(_circ_buff.get_read_buffer_host()) != 0)
+            return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
     }
+
     _output_image->set_names(_circ_buff_names.front());
     _circ_buff_names.pop();
     _circ_buff.pop();

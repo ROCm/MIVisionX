@@ -11,7 +11,4 @@ public:
     FisheyeNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
     FisheyeNode() = delete;
     void update_parameters() override;
-
-private:
-    vx_node _node = nullptr;
 };

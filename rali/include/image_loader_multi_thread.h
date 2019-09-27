@@ -8,8 +8,7 @@ public:
     explicit ImageLoaderMultiThread(DeviceResources ocl);
     ~ImageLoaderMultiThread() override;
     LoaderModuleStatus load_next() override;
-    LoaderModuleStatus
-    create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) override;
+    void initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) override;
     void set_path(const std::string& image_folder);
     void set_output_image (Image* output_image) override;
     size_t count() override;

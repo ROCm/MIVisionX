@@ -15,7 +15,6 @@ public:
     void update_parameters() override;
 private:
     ParameterVX<float> _angle;
-    vx_node _node = nullptr;
     constexpr static unsigned ROTATE_ANGLE_OVX_PARAM_IDX = 4;
     constexpr static float ROTATE_ANGLE_RANGE [2] = {0, 180};
 

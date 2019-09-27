@@ -18,7 +18,6 @@ private:
 
     ParameterVX<float> _alpha;
     ParameterVX<int> _beta;
-    vx_node _node = nullptr;
 
     constexpr static float ALPHA_RANGE [2] = {0.1, 1.95};
     constexpr static int   BETA_RANGE [2] = {0, 25};

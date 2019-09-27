@@ -12,6 +12,5 @@ public:
     void update_parameters() override;
 
 private:
-    vx_node _node = nullptr;
     int _axis;
 };

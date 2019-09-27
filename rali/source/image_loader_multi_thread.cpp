@@ -25,26 +25,21 @@ LoaderModuleStatus ImageLoaderMultiThread::load_next()
     increment_loader_idx();
     return ret;
 }
-LoaderModuleStatus
-ImageLoaderMultiThread::create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
-                               unsigned batch_size)
+void
+ImageLoaderMultiThread::initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
+                                   unsigned batch_size)
 {
-    auto ret = LoaderModuleStatus::OK;
-
     if(_created)
-        return ret;
+        return;
 
     for(size_t idx = 0; idx < THREAD_COUNT; idx++)
     {
         _loaders[idx]->set_load_interval(THREAD_COUNT);
         _loaders[idx]->set_load_offset(idx);
         _loaders[idx]->set_path(_image_folder);
-        ret = _loaders[idx]->create(storage_type, decoder_type, mem_type, batch_size);
-        if(ret != LoaderModuleStatus::OK)
-            return ret;
+        _loaders[idx]->initialize(storage_type, decoder_type, mem_type, batch_size);
     }
     _created = true;
-    return ret;
 }
 void ImageLoaderMultiThread::start_loading()
 {

@@ -10,7 +10,10 @@ public:
 
     JpegFileNode(Image *output, DeviceResources device_resources,
                  RaliMemType mem_type, unsigned batch_size);
-
+    ~JpegFileNode()
+    {
+        _loader_module = nullptr;
+    }
     JpegFileNode() = delete;
     void init(const std::string& source_path, size_t num_threads = NUM_THREADS);
     void update_parameters() override  {};

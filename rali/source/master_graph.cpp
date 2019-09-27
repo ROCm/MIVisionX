@@ -158,6 +158,8 @@ MasterGraph::create_loader_output_image(const ImageInfo &info, bool is_output)
 
     if(is_output)
         _output_images.push_back(output);
+    else
+        _internal_images.push_back(output);
 
     return output;
 }
@@ -190,17 +192,14 @@ void MasterGraph::release()
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseContext " + TOSTR(status))
 
-    for(auto&& image: _internal_images)
+    for(auto& image: _internal_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
 
-    for(auto&& image: _output_images)
+    for(auto& image: _output_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
 
 
     deallocate_output_tensor();
-    //_loader_modules.clear();
-    _root_nodes.clear();
-    _image_map.clear();
 }
 
 MasterGraph::Status
@@ -370,7 +369,8 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         {
             int argIdx = 0;
             unsigned reverse_chnl = reverse_channels ? 1 : 0;
-            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& (out_image->buf)))
+            auto img_buffer = out_image->buffer();
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& (img_buffer)))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&_output_tensor ))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& dest_buf_offset))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& w))
@@ -408,7 +408,7 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         size_t dest_buf_offset = 0;
         for( auto&& out_image: _output_images)
         {
-            auto in_buffer = (unsigned char*)out_image->buf;
+            auto in_buffer = (unsigned char*)out_image->buffer();
             if(format == RaliTensorFormat::NHWC)
             {
                 memcpy(out_ptr+dest_buf_offset, in_buffer, single_output_image_size );
@@ -458,7 +458,7 @@ MasterGraph::copy_output(unsigned char *out_ptr)
         // host memory
         for( auto&& output: _output_images)
         {
-            memcpy(out_ptr+dest_buf_offset, output->buf, size);
+            memcpy(out_ptr+dest_buf_offset, output->buffer(), size);
             dest_buf_offset += size;
         }
     }

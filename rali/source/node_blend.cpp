@@ -19,7 +19,7 @@ void BlendNode::create(std::shared_ptr<Graph> graph)
     if(_inputs.size() < 2 || _outputs.empty())
         THROW("Uninitialized input/output arguments")
 
-    _node = vxExtrppNode_Blend(_graph->get(), _inputs[0]->img, _inputs[1]->img, _outputs[0]->img, _ratio.default_value());
+    _node = vxExtrppNode_Blend(_graph->get(), _inputs[0]->handle(), _inputs[1]->handle(), _outputs[0]->handle(), _ratio.default_value());
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)

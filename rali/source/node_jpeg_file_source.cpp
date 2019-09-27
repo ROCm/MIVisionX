@@ -19,11 +19,12 @@ void JpegFileNode::init( const std::string& source_path, size_t num_threads)
     if(!_loader_module)
         THROW("ERROR: loader module is not set for JpegFileNode, cannot initialize")
 
-    LoaderModuleStatus status;
     _loader_module->set_thread_count(num_threads);
     _loader_module->set_path(source_path);
     _loader_module->set_output_image(_outputs[0]);
-    if((status = _loader_module->create(StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, _mem_type, _batch_size)) != LoaderModuleStatus::OK)
-        THROW("Adding file source input failed " + TOSTR(status))
+    //auto reader_config = FileSourceReaderConfig(source_path, );
+     _loader_module->initialize(StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG,
+             _mem_type,
+             _batch_size);
     _loader_module->start_loading();
 }

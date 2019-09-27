@@ -5,15 +5,13 @@
 #include <dirent.h>
 #include "reader.h"
 
-
-class FileSourceReaderConfig : public ReaderConfig {
-    public:
+struct FileSourceReaderConfig : public ReaderConfig {
     explicit FileSourceReaderConfig(const std::string& folder_path_, size_t read_offset_ = 0, size_t read_interval_ = 1): 
     folder_path(folder_path_), 
     read_interval(read_interval_), 
     read_offset(read_offset_) 
     {}
-    ReaderType type() override { return ReaderType::FILE_SOURCE;}
+    StorageType type() override { return StorageType::FILE_SYSTEM;}
     std::string folder_path;
     size_t read_interval;
     size_t read_offset;

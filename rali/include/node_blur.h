@@ -16,7 +16,6 @@ public:
 
 private:
     ParameterVX<float> _sdev;
-    vx_node _node = nullptr;
     constexpr static float SDEV_RANGE [2] = {0.3, 5.0};
     constexpr static unsigned SDEV_OVX_PARAM_IDX = 2;
 };

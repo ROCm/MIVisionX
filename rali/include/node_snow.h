@@ -16,7 +16,6 @@ public:
 
 private:
     ParameterVX<float> _shift;
-    vx_node _node = nullptr;
     constexpr static float SNOW_VALUE_RANGE [2] = {0.1, 0.8};
     constexpr static unsigned SNOW_VALUE_OVX_PARAM_IDX = 2;
 };

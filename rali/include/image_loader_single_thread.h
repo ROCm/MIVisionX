@@ -5,15 +5,14 @@
 #include <vector>
 #include "commons.h"
 #include "circular_buffer.h"
-#include "image_loader_factory.h"
+#include "image_read_and_decode.h"
 
 class ImageLoaderSingleThread : public LoaderModule {
 public:
     explicit ImageLoaderSingleThread(DeviceResources ocl);
     ~ImageLoaderSingleThread() override;
     LoaderModuleStatus load_next() override;
-    LoaderModuleStatus
-    create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) override;
+    void initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) override;
     void set_output_image (Image* output_image) override;
     size_t count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
@@ -25,7 +24,7 @@ public:
 private:
     bool is_out_of_data();
     void de_init();
-    std::shared_ptr<ImageLoaderFactory> _image_loader;
+    std::shared_ptr<ImageReadAndDecode> _image_loader;
     LoaderModuleStatus update_output_image();
     LoaderModuleStatus load_routine();
     Image* _output_image;

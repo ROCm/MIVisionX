@@ -17,7 +17,6 @@ public:
 private:
     ParameterVX<int> _min;
     ParameterVX<int> _max;
-    vx_node _node = nullptr;
     constexpr static int   CONTRAST_MIN_RANGE [2] = {0, 60};
     constexpr static int   CONTRAST_MAX_RANGE [2] = {90, 250};
     constexpr static unsigned CONTRAST_MIN_OVX_PARAM_IDX = 2;

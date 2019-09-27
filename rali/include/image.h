@@ -98,13 +98,13 @@ bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 */
 struct Image
 {
-    void* buf = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
-    vx_image img = 0;//!< The OpenVX image
+    int swap_handle(void* handle);
 
     const ImageInfo& info() { return _info; }
     //! Default constructor 
     Image() = delete;
-
+    void* buffer() { return _mem_handle; }
+    vx_image handle() { return vx_handle; }
     unsigned copy_data(unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_mem user_buffer, bool sync);
     void set_names(const std::vector<std::string> names)
@@ -125,6 +125,8 @@ struct Image
     int create_virtual(vx_context context, vx_graph graph);
 
 private:
+    vx_image vx_handle = 0;//!< The OpenVX image
+    void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
     cl_command_queue _queue = nullptr;
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
 

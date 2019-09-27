@@ -207,7 +207,10 @@ CircularBuffer::~CircularBuffer()
     {
         if(_output_mem_type== RaliMemType::OCL) 
         {
-            clReleaseMemObject(_dev_buffer[buffIdx]);
+            if(clEnqueueUnmapMemObject(_cl_cmdq, _dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0, NULL, NULL) != CL_SUCCESS)
+                ERR("Could not unmap ocl memory")
+            if(clReleaseMemObject(_dev_buffer[buffIdx]) != CL_SUCCESS)
+                ERR("Could not release ocl memory in the circular buffer")
         }
     }
 

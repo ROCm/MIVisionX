@@ -1,10 +1,3 @@
-/*
- * folderSourceInputModule.h
- *
- *  Created on: Jan 21, 2019
- *      Author: root
- */
-
 #pragma once
 #include <dirent.h>
 #include <vector>
@@ -16,14 +9,14 @@
 #include "loader_module.h"
 
 
-class ImageLoaderFactory
+class ImageReadAndDecode
 {
 public:
-    ImageLoaderFactory();
-    ~ImageLoaderFactory();
+    ImageReadAndDecode();
+    ~ImageReadAndDecode();
     size_t count();
     void reset();
-    LoaderModuleStatus create(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size, const std::string& path, size_t load_interval = 1, size_t load_offset = 0);
+    void create(ReaderConfig *reader_config, DecoderConfig *decoder_config);
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     LoaderModuleStatus load(

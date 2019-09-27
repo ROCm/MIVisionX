@@ -10,7 +10,7 @@
 class MasterGraph
 {
 public:
-    enum class Status { OK = 0, GRAPH_NOT_VERIFIED = 1 };
+    enum class Status { OK = 0,  NOT_IMPLEMENTED };
     MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads);
     ~MasterGraph();
     Status reset_loaders();

@@ -61,14 +61,13 @@ ImageInfo::ImageInfo(
         _color_fmt(col_fmt_) {}
 
 
-//Image::Image() {}
-
-
 Image::~Image()
 {  
     vxReleaseImage(&vx_handle);
 
     if(_mem_handle == nullptr)
+        return;
+    if(!_mem_internally_allocated)
         return;
 
     if(_info._mem_type == RaliMemType::OCL)
@@ -185,6 +184,7 @@ int Image::create_from_handle(vx_context context, ImageBufferAllocation policy)
             ptr[0] = hostImage;
         }
         _mem_handle = ptr[0];
+        _mem_internally_allocated = true;
     }
     vx_df_image vx_color_format = interpret_color_fmt(_info._color_fmt);
     vx_handle = vxCreateImageFromHandle(context, vx_color_format , &addr_in, ptr, vx_mem_type(_info._mem_type));
@@ -205,15 +205,10 @@ int Image::create(vx_context context) {
     return 0;
 }
 
-unsigned Image::copy_data(unsigned char* user_buffer, bool sync)
+unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync)
 {
     if(_info._type != ImageInfo::Type::HANDLE)
         return 0;
-    if(!_queue)
-    {
-        ERR("Command queue not initialized for the image\n")
-        return 0;
-    }
 
     unsigned size = _info.width() *
                     _info.height_batch() *
@@ -223,7 +218,7 @@ unsigned Image::copy_data(unsigned char* user_buffer, bool sync)
     {
 
         cl_int status;
-        if((status = clEnqueueReadBuffer(_queue,
+        if((status = clEnqueueReadBuffer(queue,
                                          (cl_mem) _mem_handle,
                                          sync?(CL_TRUE):CL_FALSE,
                                          0,
@@ -238,7 +233,7 @@ unsigned Image::copy_data(unsigned char* user_buffer, bool sync)
     }
     return size;
 }
-unsigned Image::copy_data(cl_mem user_buffer, bool sync)
+unsigned Image::copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync)
 {
     return 0;
 }

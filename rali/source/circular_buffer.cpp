@@ -2,15 +2,15 @@
 #include "log.h"
 CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
         BUFF_DEPTH(buffer_depth),
+        _cl_cmdq(ocl.cmd_queue),
+        _cl_context(ocl.context),
+        _device_id(ocl.device_id),
         _dev_buffer(BUFF_DEPTH, nullptr),
         _host_buffer_ptrs(BUFF_DEPTH, nullptr),
         _actual_host_buffers(BUFF_DEPTH),
         _write_ptr(0),
         _read_ptr(0),
-        _level(0),
-        _cl_cmdq(ocl.cmd_queue),
-        _cl_context(ocl.context),
-        _device_id(ocl.device_id)
+        _level(0)
 {
     for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
         _dev_buffer[bufIdx] = nullptr;

@@ -154,7 +154,6 @@ MasterGraph::create_loader_output_image(const ImageInfo &info, bool is_output)
 
     if( output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
         THROW("Creating output image for JPEG loader failed");
-    output->set_command_queue(_device.resources().cmd_queue);
 
     if(is_output)
         _output_images.push_back(output);
@@ -174,7 +173,6 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
         if (output->create_from_handle(_context, ImageBufferAllocation::external) != 0)
             THROW("Cannot create the image from handle")
 
-        output->set_command_queue(_device.resources().cmd_queue);
         _output_images.push_back(output);
     }
 
@@ -321,16 +319,8 @@ MasterGraph::copy_output(
         cl_mem out_ptr,
         size_t out_size)
 {
+    return Status::NOT_IMPLEMENTED;
     _convert_time.start();
-    if(_output_image_info.mem_type() == RaliMemType::OCL)
-    {
-
-    }
-    else
-    {
-
-    }
-
     _convert_time.end();
     return Status::OK;
 }
@@ -352,7 +342,6 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         // OCL device memory
-        // TODO: Handle multiple planes
         cl_int status;
 
         size_t global_work_size = single_output_image_size;
@@ -449,7 +438,7 @@ MasterGraph::copy_output(unsigned char *out_ptr)
         for( auto& output_image : _output_images)
         {
             bool sync_flag = (--out_image_idx == 0) ? CL_TRUE : CL_FALSE;
-            output_image->copy_data(out_ptr+dest_buf_offset, sync_flag);
+            output_image->copy_data(_device.resources().cmd_queue, out_ptr+dest_buf_offset, sync_flag);
             dest_buf_offset += size;
         }
     }

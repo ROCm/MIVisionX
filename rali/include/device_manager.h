@@ -18,6 +18,8 @@ class CLProgram {
 public:
     CLProgram(const DeviceResources* ocl, const DeviceCode& ocl_code): m_ocl(ocl), m_code(ocl_code) {}
 
+    ~CLProgram();
+
     cl_int runKernel(const std::string& kernel_name, const std::vector<void*>&  args, const std::vector<size_t>& argSize, const std::vector<size_t>& globalWorkSize, const std::vector<size_t>& localWorkSize);
 
     cl_int buildAll();

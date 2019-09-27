@@ -87,7 +87,7 @@ private:
     RaliMemType _mem_type;//!< memory type, currently either OpenCL or Host
     RaliColorFormat _color_fmt;//!< color format of the image
     std::vector<std::string> _image_names;//!< image name/ids that are stores in the buffer
-    std::string _empty_str;
+    std::string _empty_str = "";
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
@@ -105,8 +105,8 @@ struct Image
     Image() = delete;
     void* buffer() { return _mem_handle; }
     vx_image handle() { return vx_handle; }
-    unsigned copy_data(unsigned char* user_buffer, bool sync);
-    unsigned copy_data(cl_mem user_buffer, bool sync);
+    unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
+    unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
     void set_names(const std::vector<std::string> names)
     {
         _info._image_names = names;
@@ -121,13 +121,11 @@ struct Image
     int create(vx_context context);
 
     int create_from_handle(vx_context context, ImageBufferAllocation policy);
-    void set_command_queue(cl_command_queue queue) { _queue = queue; }
     int create_virtual(vx_context context, vx_graph graph);
 
 private:
+    bool _mem_internally_allocated = false;
     vx_image vx_handle = 0;//!< The OpenVX image
     void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
-    cl_command_queue _queue = nullptr;
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
-
 };

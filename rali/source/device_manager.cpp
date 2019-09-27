@@ -17,7 +17,13 @@ DeviceManager::~DeviceManager()
     _resources.device_id = nullptr;
     LOG("OCL context and command queue resources released")
 }
-
+CLProgram::~CLProgram()
+{
+    for(auto& kernel_pair : m_kernels)
+        if(clReleaseKernel(kernel_pair.second)  != CL_SUCCESS)
+            ERR("Could not release "+STR(kernel_pair.first))
+    m_kernels.clear();
+}
 cl_int CLProgram::runKernel(const std::string& kernel_name, const std::vector<void*>&  args, const std::vector<size_t>& argSize, const std::vector<size_t>& globalWorkSize, const std::vector<size_t>& localWorkSize) {
     cl_int status;
     if(argSize.size() != args.size()) return -1;
@@ -56,7 +62,7 @@ cl_int CLProgram::buildAll() {
 
     for(unsigned i =0; i < kernel_names.size(); ++i) {
         auto kernel = clCreateKernel(m_prog, kernel_names[i].c_str(), &clerr);
-
+        clRetainKernel(kernel);
         if(clerr != CL_SUCCESS) 
             THROW("Building kernel" + kernel_names[i] + "failed");
 

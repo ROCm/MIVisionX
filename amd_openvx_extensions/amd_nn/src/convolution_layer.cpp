@@ -335,6 +335,8 @@ static vx_status VX_CALLBACK initializeConvolutionLayer(vx_node node, const vx_r
         }
     }else
     {
+        if (data->bias_activ_mode == BIAS_ONLY_FUSED) data->bias_activ_mode = BIAS_ONLY_SEPERATE;
+        if (data->bias_activ_mode == ACTIVATION_ONLY_FUSED) data->bias_activ_mode = ACTIVATION_ONLY_SEPERATE;
         data->fusion_possible = false;
     }
 

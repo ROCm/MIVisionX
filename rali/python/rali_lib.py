@@ -225,4 +225,4 @@ class RaliLib:
 
         self.copyToOutputTensor = self.lib.raliCopyToOutputTensor
         self.copyToOutputTensor.restype = ctypes.c_int
-        self.copyToOutputTensor.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_uint, ctypes.c_float, ctypes.c_float, ctypes.c_uint]
+        self.copyToOutputTensor.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_uint, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_uint]

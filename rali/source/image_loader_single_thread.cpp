@@ -54,6 +54,8 @@ ImageLoaderSingleThread::de_init()
     reset();
     // Set running to 0 and wait for the internal thread to join
     _running = 0;
+    _circ_buff.cancel_reading();
+    _circ_buff.cancel_writing();
     _load_thread.join();
     _output_mem_size = 0;
     _batch_size = 1;

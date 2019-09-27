@@ -64,7 +64,7 @@ cl_int CLProgram::buildAll() {
         auto kernel = clCreateKernel(m_prog, kernel_names[i].c_str(), &clerr);
         clRetainKernel(kernel);
         if(clerr != CL_SUCCESS) 
-            THROW("Building kernel" + kernel_names[i] + "failed");
+            THROW("Building kernel" + kernel_names[i] + " failed");
 
         m_kernels.insert(std::make_pair(kernel_names[i], kernel)); 	
     }

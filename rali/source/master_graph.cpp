@@ -328,8 +328,8 @@ MasterGraph::copy_output(
 #define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
 
 MasterGraph::Status
-MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier, float offset,
-                             bool reverse_channels)
+MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
+                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels)
 {
     _convert_time.start();
     // Copies to the output context given by the user
@@ -365,8 +365,12 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& w))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& h))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& c))
-            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier))
-            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier0))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier1))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier2))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset0))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset1))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset2))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& reverse_chnl))
 
 
@@ -394,20 +398,27 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
     }
     if(_output_image_info.mem_type() == RaliMemType::HOST)
     {
+        float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
+        float offset[3] = {offset0, offset1, offset2 };
         size_t dest_buf_offset = 0;
         for( auto&& out_image: _output_images)
         {
             auto in_buffer = (unsigned char*)out_image->buffer();
             if(format == RaliTensorFormat::NHWC)
             {
-                memcpy(out_ptr+dest_buf_offset, in_buffer, single_output_image_size );
+                auto channel_size  = w * h;
+                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                    for(unsigned i = 0; i < channel_size; i++)
+                        out_ptr[dest_buf_offset+channel_idx+ i*c] =
+                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
             }
             if(format == RaliTensorFormat::NCHW)
             {
                 auto channel_size  = w * h;
                 for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                     for(unsigned i = 0; i < channel_size; i++)
-                        out_ptr[dest_buf_offset+channel_idx*channel_size + i] = (reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                        out_ptr[dest_buf_offset+channel_idx*channel_size + i] =
+                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
 
 
             }

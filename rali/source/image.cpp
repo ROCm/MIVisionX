@@ -256,4 +256,5 @@ int Image::swap_handle(void* handle)
     // Updating the buffer pointer as well,
     // user might want to copy directly using it
     _mem_handle = handle;
+    return 0;
 }

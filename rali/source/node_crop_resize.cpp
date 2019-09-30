@@ -25,7 +25,7 @@ void CropResizeNode::create(std::shared_ptr<Graph> graph)
         THROW("Uninitialized destination dimension")
 
 
-    _node = vxExtrppNode_ResizeCrop(_graph->get(), _inputs[0]->img, _outputs[0]->img, _dest_width, _dest_height,
+    _node = vxExtrppNode_ResizeCrop(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _dest_width, _dest_height,
                                     _crop_param->x1, _crop_param->y1, _crop_param->x2, _crop_param->y2);
 
     vx_status status;

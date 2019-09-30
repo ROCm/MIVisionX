@@ -17,6 +17,7 @@ public:
     UniformRand(T start, T end)
     {
         update(start, end);
+        renew();
     }
 
     explicit UniformRand(T start):
@@ -29,18 +30,19 @@ public:
 
     T get() override
     {
+        return _updated_val;
+    };
+    void renew() override
+    {
         if(single_value())
         {
             // If there is only a single value possible for the random variable
             // don't waste time on calling the rand function , just return it.
-            return _start;
+            _updated_val = _start;
+        } else {
+            _updated_val = static_cast<T>(
+                    ((double) std::rand() / (double) RAND_MAX) * ((double) _end - (double) _start) + (double) _start);
         }
-        _updated_val = static_cast<T>(((double)std::rand() / (double)RAND_MAX) * ((double)_end - (double)_start) + (double)_start);
-        return _updated_val;
-    };
-    T most_recent_used() const override
-    {
-        return _updated_val;
     }
     int update(T start, T end) {
         if(end < start)
@@ -74,13 +76,8 @@ struct CustomRand: public Parameter<T>
         size_t size)
     {
         update(values, frequencies, size);
+        renew();
     }
-
-    T most_recent_used() const override
-    {
-        return _updated_val;
-    }
-
     int update
     (
         const T values[],
@@ -131,27 +128,29 @@ struct CustomRand: public Parameter<T>
     {
         return static_cast<T>(_mean);
     }
-
-    T get() override
+    void renew() override
     {
         if(single_value())
         {
             // If there is only a single value possible for the random variable
             // don't waste time on calling the rand function , just return it.
             _updated_val =  _values[0];
-            return _values[0];
         }
-        // Generate a value between [0 1]
-        double rand_val = (double)rand()/(double)RAND_MAX;
+        else {
+            // Generate a value between [0 1]
+            double rand_val = (double) rand() / (double) RAND_MAX;
 
-        // Find the iterators pointing to the first element bigger than idx
-        auto it = std::upper_bound(_comltv_dist.begin(), _comltv_dist.end(), rand_val);
+            // Find the iterators pointing to the first element bigger than idx
+            auto it = std::upper_bound(_comltv_dist.begin(), _comltv_dist.end(), rand_val);
 
-        // Get the index and return the associated value
-        unsigned idx = std::distance(_comltv_dist.begin(), it);
+            // Get the index and return the associated value
+            unsigned idx = std::distance(_comltv_dist.begin(), it);
 
-        _updated_val =  _values[idx];
-
+            _updated_val = _values[idx];
+        }
+    }
+    T get() override
+    {
         return _updated_val;
     };
 

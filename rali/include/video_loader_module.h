@@ -10,8 +10,8 @@ class VideoLoaderModule : public LoaderModule
 public:
     VideoLoaderModule(vx_graph ovx_graph);
     LoaderModuleStatus load_next() override;
-    LoaderModuleStatus create( LoaderModuleConfig* desc) override;
-    LoaderModuleStatus set_output_image (Image* output_image) override;
+    void initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) override;
+    void set_output_image (Image* output_image) override;
     size_t count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
     std::vector<long long unsigned> timing() override {return {0}; }

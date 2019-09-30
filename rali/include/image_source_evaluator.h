@@ -4,7 +4,7 @@
 #include "turbo_jpeg_decoder.h"
 #include "reader_factory.h"
 #include "timing_debug.h"
-#include "image_loader_configs.h"
+#include "loader_module.h"
 enum class ImageSourceEvaluatorStatus
 {
     OK = 0,
@@ -20,7 +20,7 @@ enum class MaxSizeEvaluationPolicy
 class ImageSourceEvaluator
 {
 public:
-    ImageSourceEvaluatorStatus create(LoaderModuleConfig* desc);
+    ImageSourceEvaluatorStatus create(StorageType storage_type, DecoderType decoder_type, const std::string &path);
     void find_max_dimension();
     void set_size_evaluation_policy(MaxSizeEvaluationPolicy arg);
     size_t max_width();

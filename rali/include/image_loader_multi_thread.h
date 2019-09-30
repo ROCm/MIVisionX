@@ -5,13 +5,15 @@
 class ImageLoaderMultiThread : public LoaderModule
 {
 public:
-    explicit ImageLoaderMultiThread(const OCLResources& ocl);
+    explicit ImageLoaderMultiThread(DeviceResources ocl);
     ~ImageLoaderMultiThread() override;
     LoaderModuleStatus load_next() override;
-    LoaderModuleStatus create( LoaderModuleConfig* desc) override;
-    LoaderModuleStatus set_output_image (Image* output_image) override;
+    void initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) override;
+    void set_path(const std::string& image_folder);
+    void set_output_image (Image* output_image) override;
     size_t count() override;
     void reset() override;
+    void start_loading();
     /*!
      *  This function is only effective if called before the create function is called
      */
@@ -19,10 +21,11 @@ public:
     std::vector<long long unsigned> timing() override;
 private:
     void increment_loader_idx();
+    const DeviceResources _ocl;
     bool _created = false;
     std::vector<std::shared_ptr<ImageLoaderSingleThread>> _loaders;
     size_t _loader_idx;
+    std::string _image_folder;
     constexpr static size_t MIN_NUM_THREADS = 1;
     size_t THREAD_COUNT = MIN_NUM_THREADS;
-    const OCLResources _ocl;
 };

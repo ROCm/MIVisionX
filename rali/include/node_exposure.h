@@ -16,7 +16,6 @@ public:
 
 private:
     ParameterVX<float> _shift;
-    vx_node _node = nullptr;
     constexpr static float SHIFT_RANGE [2] = {0.15, 0.95};
     constexpr static unsigned SHIFT_OVX_PARAM_IDX = 2;
 };

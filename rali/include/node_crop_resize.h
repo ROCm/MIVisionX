@@ -20,7 +20,6 @@ private:
 
     size_t _dest_width;
     size_t _dest_height;
-    vx_node _node = nullptr;
     std::shared_ptr<RandomCropResizeParam> _crop_param;
 };
 

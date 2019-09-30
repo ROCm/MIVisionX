@@ -21,21 +21,29 @@ extern "C" int RALI_API_CALL raliGetOutputColorFormat(RaliContext rali_context);
 /// \return
 extern "C"  size_t  RALI_API_CALL raliGetRemainingImages(RaliContext rali_context);
 
-/// Returned value valid only after raliVerifyPipeline is called
+/// Returned value valid only after raliVerify is called
 /// \param image
 /// \return Width of the graph output image
 extern "C" size_t RALI_API_CALL raliGetImageWidth(RaliImage image);
 
-/// Returned value valid only after raliVerifyPipeline is called
+/// Returned value valid only after raliVerify is called
 /// \param image
 /// \return Height of the pipeline output image, includes all images in the batch
 extern "C" size_t RALI_API_CALL raliGetImageHeight(RaliImage image);
 
 
-/// Returned value valid only after raliVerifyPipeline is called
+/// Returned value valid only after raliVerify is called
 /// \param image
 /// \return Color format of the pipeline output image,
 extern "C" size_t RALI_API_CALL raliGetImagePlanes(RaliImage image);
+
+/// Returned value valid only after raliRun is called
+/// \param image
+/// \param image_idx Index for the image in the batch
+/// \return pointer to the start of buffer storing the image name currently loaded into the batch,
+extern "C" void RALI_API_CALL raliGetImageName(RaliImage image, char* buf, unsigned image_idx);
+
+extern "C" unsigned RALI_API_CALL raliGetImageNameLen(RaliImage image,  unsigned image_idx);
 
 ///
 /// \param rali_context

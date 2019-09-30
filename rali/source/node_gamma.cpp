@@ -21,7 +21,7 @@ void GammaNode::create(std::shared_ptr<Graph> graph)
     if(_outputs.empty() || _inputs.empty())
         THROW("Uninitialized input/output arguments")
 
-    _node = vxExtrppNode_GammaCorrection(_graph->get(), _inputs[0]->img, _outputs[0]->img, _shift.default_value());
+    _node = vxExtrppNode_GammaCorrection(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _shift.default_value());
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)

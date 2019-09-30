@@ -3,6 +3,7 @@
 #include <VX/vx_types.h>
 #include <cstring>
 #include "master_graph.h"
+#include "parameter_factory.h"
 
 auto get_ago_affinity_info = []
     (RaliAffinity rali_affinity,
@@ -31,6 +32,8 @@ MasterGraph::~MasterGraph()
 }
 
 MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
+        _output_tensor(nullptr),
+        _graph(nullptr),
         _affinity(affinity),
         _gpu_id(gpu_id),
         _convert_time("Conversion Time"),
@@ -65,7 +68,7 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
             WRN("Cannot load AMD's OpenVX media extension, video decode functionality will not be available")
 
         if(_affinity == RaliAffinity::GPU)
-            init_opencl();
+            _device.init_ocl(_context);
     }
     catch(const std::exception& e)
     {
@@ -79,6 +82,9 @@ MasterGraph::run()
 {
     if(!_graph_verfied)
         THROW("Graph not verified")
+
+    // Randomize parameters
+    ParameterFactory::instance()->renew_parameters();
 
     _process_time.start();
     for(auto&& loader_module: _loader_modules)
@@ -120,10 +126,11 @@ MasterGraph::build()
 
     // Verify all output images have the same dimension, otherwise creating a unified tensor from them is not supported
     _output_image_info = _output_images.front()->info();
-
     for(auto&& output_image : _output_images)
         if(!(output_image->info() == _output_image_info))
             THROW("Dimension of the output images do not match")
+
+
 
     allocate_output_tensor();
     create_single_graph();
@@ -147,10 +154,11 @@ MasterGraph::create_loader_output_image(const ImageInfo &info, bool is_output)
 
     if( output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
         THROW("Creating output image for JPEG loader failed");
-    output->set_command_queue(_device.resources().cmd_queue);
 
     if(is_output)
         _output_images.push_back(output);
+    else
+        _internal_images.push_back(output);
 
     return output;
 }
@@ -165,7 +173,6 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
         if (output->create_from_handle(_context, ImageBufferAllocation::external) != 0)
             THROW("Cannot create the image from handle")
 
-        output->set_command_queue(_device.resources().cmd_queue);
         _output_images.push_back(output);
     }
 
@@ -177,21 +184,20 @@ void MasterGraph::release()
 {
     _graph_verfied = false;
     vx_status status;
-    _graph->release();
+    if(_graph != nullptr)
+        _graph->release();
+
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseContext " + TOSTR(status))
 
-    for(auto&& image: _internal_images)
+    for(auto& image: _internal_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
 
-    for(auto&& image: _output_images)
+    for(auto& image: _output_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
 
 
     deallocate_output_tensor();
-    _loader_modules.clear();
-    _root_nodes.clear();
-    _image_map.clear();
 }
 
 MasterGraph::Status
@@ -212,7 +218,7 @@ MasterGraph::output_image_count()
 RaliColorFormat
 MasterGraph::output_color_format()
 {
-    return _output_image_info.color_fmt;
+    return _output_image_info.color_format();
 }
 
 size_t
@@ -236,7 +242,7 @@ MasterGraph::allocate_output_tensor()
                                       _output_image_info.color_plane_count() *
                                       _output_images.size();
 
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         cl_int ret = CL_SUCCESS;
         _output_tensor = nullptr;
@@ -251,54 +257,14 @@ MasterGraph::allocate_output_tensor()
 
         _output_tensor = clImgFloat;
     }
-    else
-    {
-        _output_tensor = std::vector<float>(0,output_float_buffer_size);
-    }
     return Status::OK;
 }
 
 MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
-    if(_output_image_info.mem_type == RaliMemType::OCL)
-        clReleaseMemObject(std::get<cl_mem>(_output_tensor) );
-
-    return Status::OK;
-}
-
-MasterGraph::Status
-MasterGraph::init_opencl()
-{
-    cl_int clerr;
-    cl_context clcontext;
-    cl_device_id dev_id;
-    cl_command_queue cmd_queue;
-    vx_status vxstatus = vxQueryContext(_context, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &clcontext, sizeof(clcontext));
-
-    if (vxstatus != VX_SUCCESS)
-        THROW("vxQueryContext failed " + TOSTR(vxstatus))
-
-
-    cl_int clstatus = clGetContextInfo(clcontext, CL_CONTEXT_DEVICES, sizeof(dev_id), &dev_id, nullptr);
-
-    if (clstatus != CL_SUCCESS)
-        THROW("clGetContextInfo failed " + TOSTR(clstatus))
-
-#if defined(CL_VERSION_2_0)
-    cmd_queue = clCreateCommandQueueWithProperties(clcontext, dev_id, nullptr, &clerr);
-#else
-    cmd_queue = clCreateCommandQueue(opencl_context, dev_id, 0, &clerr);
-#endif
-    if(clerr != CL_SUCCESS)
-        THROW("clCreateCommandQueue failed " + TOSTR(clerr))
-
-    _device.set_resources(cmd_queue, clcontext, dev_id);
-
-    // Build CL kernels
-    _device.initialize();
-
-    LOG("OpenCL initialized ...")
+    if(_output_image_info.mem_type() == RaliMemType::OCL && _output_tensor != nullptr)
+        clReleaseMemObject(_output_tensor );
 
     return Status::OK;
 }
@@ -353,63 +319,60 @@ MasterGraph::copy_output(
         cl_mem out_ptr,
         size_t out_size)
 {
+    return Status::NOT_IMPLEMENTED;
     _convert_time.start();
-    if(_output_image_info.mem_type == RaliMemType::OCL)
-    {
-
-    }
-    else
-    {
-
-    }
-
     _convert_time.end();
     return Status::OK;
 }
 
+#define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
+
 MasterGraph::Status
-MasterGraph::copy_output(
-        float* out_ptr,
-        size_t out_size)
+MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
+                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels)
 {
     _convert_time.start();
     // Copies to the output context given by the user
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    size_t w = _output_image_info.width();
+    size_t h = _output_image_info.height_batch();
+    size_t c = _output_image_info.color_plane_count();
+
+    size_t single_output_image_size = w * h * c;
+
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         // OCL device memory
-        // TODO: Handle multiple planes
         cl_int status;
-
-        size_t single_output_image_size = _output_image_info.width() *
-                                          _output_image_info.height_batch() *
-                                          _output_image_info.color_plane_count();
 
         size_t global_work_size = single_output_image_size;
         size_t local_work_size = 256;
 
         // TODO: Use the runKernel function instead
-        int argIdx = 0;
 
-        cl_kernel kernel = _device["utility"]["copyInt8ToFloat"];
+        auto kernel_name = (format == RaliTensorFormat::NHWC)? "copyInt8ToNHWC" : "copyInt8ToNCHW";
+        cl_kernel kernel = _device["utility"][kernel_name];
         auto queue = _device.resources().cmd_queue;
-        size_t dest_buf_offset = 0;
+        unsigned dest_buf_offset = 0;
 
         for( auto&& out_image: _output_images)
         {
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& out_image->buf);
-            if(_output_tensor.index() == 0)
-            {
-                const float * buf = (std::get<0>(_output_tensor)).data();
-                clSetKernelArg( kernel, argIdx++, sizeof(float*), (void*)& buf );
-            }
-            else
-            {
-                cl_mem buf = std::get<1>(_output_tensor);
-                clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&buf );
-            }
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& dest_buf_offset);
-            clSetKernelArg( kernel, argIdx++, sizeof(cl_int), (void*)& single_output_image_size);
-            dest_buf_offset += single_output_image_size;
+            int argIdx = 0;
+            unsigned reverse_chnl = reverse_channels ? 1 : 0;
+            auto img_buffer = out_image->buffer();
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& (img_buffer)))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&_output_tensor ))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& dest_buf_offset))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& w))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& h))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& c))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier0))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier1))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& multiplier2))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset0))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset1))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset2))
+            CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& reverse_chnl))
+
 
             if((status = clEnqueueNDRangeKernel(queue,
                                                 kernel,
@@ -418,47 +381,67 @@ MasterGraph::copy_output(
                                                 &global_work_size,
                                                 &local_work_size,
                                                 0 , nullptr, nullptr)) != CL_SUCCESS)
-                THROW("clEnqueueNDRangeKernel failed on kernel copyInt8ToFloat error " + TOSTR(status))
+                THROW("clEnqueueNDRangeKernel failed on kernel "+STR(kernel_name)+" error " + TOSTR(status))
 
-
-            if((status = clEnqueueReadBuffer(queue,
-                                             std::get<cl_mem>(_output_tensor),
-                                             CL_TRUE,
-                                             0,
-                                             out_size,
-                                             out_ptr,
-                                             0 , nullptr, nullptr)) != CL_SUCCESS)
-                THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
+            dest_buf_offset += single_output_image_size;
         }
-    } else {
-        // host memory
-        //TODO: write the conversion function (int to float)
-        //memcpy(out_ptr, _output_image.buf, out_size);
+
+        int read_size = single_output_image_size*_output_images.size()*sizeof(cl_float);
+        if((status = clEnqueueReadBuffer(queue,
+                                         _output_tensor,
+                                         CL_TRUE,
+                                         0,
+                                         read_size,
+                                         out_ptr,
+                                         0 , nullptr, nullptr)) != CL_SUCCESS)
+            THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
+    }
+    if(_output_image_info.mem_type() == RaliMemType::HOST)
+    {
+        float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
+        float offset[3] = {offset0, offset1, offset2 };
+        size_t dest_buf_offset = 0;
+        for( auto&& out_image: _output_images)
+        {
+            auto in_buffer = (unsigned char*)out_image->buffer();
+            if(format == RaliTensorFormat::NHWC)
+            {
+                auto channel_size  = w * h;
+                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                    for(unsigned i = 0; i < channel_size; i++)
+                        out_ptr[dest_buf_offset+channel_idx+ i*c] =
+                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+            }
+            if(format == RaliTensorFormat::NCHW)
+            {
+                auto channel_size  = w * h;
+                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                    for(unsigned i = 0; i < channel_size; i++)
+                        out_ptr[dest_buf_offset+channel_idx*channel_size + i] =
+                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+
+
+            }
+            dest_buf_offset += single_output_image_size;
+        }
     }
     _convert_time.end();
     return Status::OK;
 }
 
 MasterGraph::Status
-MasterGraph::copy_output(
-        unsigned char * out_ptr,
-        size_t out_size)
+MasterGraph::copy_output(unsigned char *out_ptr)
 {
     _convert_time.start();
     // Copies to the output context given by the user
-    size_t total_output_size = 0;// TODO: Calculate it here
-    if(out_size < total_output_size)
-        THROW("Buffer's user too small " + TOSTR(out_size))
-
     size_t size = _output_image_info.width() *
                   _output_image_info.height_batch() *
                   _output_image_info.color_plane_count();
 
     size_t dest_buf_offset = 0;
 
-    if(_output_image_info.mem_type == RaliMemType::OCL)
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
-        cl_int status;
         //NOTE: the CL_TRUE flag is only used on the last buffer read call,
         // to avoid unnecessary sequence of synchronizations
 
@@ -466,7 +449,7 @@ MasterGraph::copy_output(
         for( auto& output_image : _output_images)
         {
             bool sync_flag = (--out_image_idx == 0) ? CL_TRUE : CL_FALSE;
-            output_image->copy_data(out_ptr+dest_buf_offset, sync_flag);
+            output_image->copy_data(_device.resources().cmd_queue, out_ptr+dest_buf_offset, sync_flag);
             dest_buf_offset += size;
         }
     }
@@ -475,7 +458,7 @@ MasterGraph::copy_output(
         // host memory
         for( auto&& output: _output_images)
         {
-            memcpy(out_ptr+dest_buf_offset, output->buf, size);
+            memcpy(out_ptr+dest_buf_offset, output->buffer(), size);
             dest_buf_offset += size;
         }
     }

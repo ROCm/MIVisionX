@@ -15,10 +15,7 @@ public:
     void update_parameters() override;
 
 private:
-
-    vx_node _node = nullptr;
     ParameterVX<int> _adj_value_param;
-
     constexpr static int ADJUSTMENT_RANGE [2] = {-99, 99};
     constexpr static unsigned ADJUSTMENT_OVX_PARAM_IDX = 2;
 };

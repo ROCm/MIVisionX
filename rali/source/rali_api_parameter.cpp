@@ -17,13 +17,13 @@ raliGetSeed()
 int RALI_API_CALL
 raliGetIntValue(RaliIntParam obj)
 {
-    return obj->core->most_recent_used();
+    return obj->core->get();
 }
 
 float RALI_API_CALL
 raliGetFloatValue(RaliFloatParam obj)
 {
-    return obj->core->most_recent_used();
+    return obj->core->get();
 }
 
 RaliIntParam  RALI_API_CALL

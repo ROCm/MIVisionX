@@ -72,24 +72,6 @@ extern "C"  RaliImage  RALI_API_CALL raliRotateFixed(RaliContext context, RaliIm
 /// \param context
 /// \param input
 /// \param is_output
-/// \param shift
-/// \return
-extern "C"  RaliImage  RALI_API_CALL raliHue(RaliContext context,
-                                                RaliImage input, bool is_output,
-                                                RaliFloatParam shift = NULL);
-
-/// Accepts U8 and RGB24 inputs
-/// \param context
-/// \param input
-/// \param is_output
-/// \param shift
-/// \return
-extern "C"  RaliImage  RALI_API_CALL raliHueFixed(RaliContext context, RaliImage input, float shift, bool is_output);
-
-/// Accepts U8 and RGB24 inputs
-/// \param context
-/// \param input
-/// \param is_output
 /// \param alpha
 /// \param beta
 /// \return
@@ -146,23 +128,6 @@ extern "C"  RaliImage  RALI_API_CALL raliContrastFixed(RaliContext context, Rali
                                                         unsigned min, unsigned max,
                                                         bool is_output);
 
-/// Accepts U8 and RGB24 inputs.
-/// \param context
-/// \param input
-/// \param is_output
-/// \param shift
-/// \return
-extern "C"  RaliImage  RALI_API_CALL raliSaturation(RaliContext context, RaliImage input, bool is_output,
-                                                    RaliFloatParam shift = NULL);
-
-/// Accepts U8 and RGB24 inputs.
-/// \param context
-/// \param input
-/// \param shift
-/// \param is_output
-/// \return
-extern "C"  RaliImage  RALI_API_CALL raliSaturationFixed(RaliContext context, RaliImage input, float shift,
-                                                            bool is_output);
 
 ///
 /// \param context

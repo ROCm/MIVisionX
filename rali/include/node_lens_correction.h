@@ -18,7 +18,6 @@ public:
 private:
     ParameterVX<float> _strength;
     ParameterVX<float> _zoom;
-    vx_node _node = nullptr;
     constexpr static float STRENGTH_RANGE [2] = {0.05, 3.0};
     constexpr static float   ZOOM_RANGE [2] = {1.0, 1.3};
     constexpr static unsigned STRENGTH_OVX_PARAM_IDX = 2;

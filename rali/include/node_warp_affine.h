@@ -14,7 +14,6 @@ public:
     void init(FloatParam* x0, FloatParam* x1, FloatParam* y0, FloatParam* y1, FloatParam* o0, FloatParam* o1);
     void update_parameters() override;
 private:
-    vx_node _node = nullptr;
     ParameterVX<float> _x0;
     ParameterVX<float> _x1;
     ParameterVX<float> _y0;

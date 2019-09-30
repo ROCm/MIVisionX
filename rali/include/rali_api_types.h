@@ -59,5 +59,9 @@ enum RaliImageSizeEvaluationPolicy
     RALI_USE_MOST_FREQUENT_SIZE = 2,
 };
 
-
+enum RaliTensorLayout
+{
+    RALI_NHWC = 0,
+    RALI_NCHW = 1
+};
 #endif //MIVISIONX_RALI_API_TYPES_H

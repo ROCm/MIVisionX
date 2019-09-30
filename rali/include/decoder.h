@@ -2,6 +2,22 @@
 
 #include <cstddef>
 
+enum class DecoderType
+{
+    TURBO_JPEG = 0,//!< Can only decode
+    OPEN_CV = 1,//!< OpenCV can decode compressed images of different type
+    OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
+};
+
+
+
+
+class DecoderConfig {
+public:
+    virtual DecoderType type() = 0;
+};
+
+
 class Decoder {
 public:
 
@@ -17,7 +33,6 @@ public:
         RGB, 
         BGR
     };
-    
     //! Decodes the header of the Jpeg compressed data and returns basic info about the compressed image
     /*!
      \param input_buffer  User provided buffer containig the encoded image

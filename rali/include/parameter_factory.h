@@ -52,6 +52,7 @@ class ParameterFactory {
 public:
     static ParameterFactory* instance();
     ~ParameterFactory();
+    void renew_parameters();
     void set_seed(long long unsigned seed);
     unsigned long long get_seed();
 

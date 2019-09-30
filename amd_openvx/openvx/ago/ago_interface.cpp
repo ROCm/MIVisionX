@@ -22,7 +22,9 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include <mutex>
 
+#if _WIN32
 static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
 {
 	AgoGraph * graph = (AgoGraph *)graph_;
@@ -42,10 +44,30 @@ static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
 	ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
 	return 0;
 }
+#else
+static void agoGraphThreadFunction(void *graph_)
+{
+    AgoGraph * graph = (AgoGraph *)graph_;
+    while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
+        if (graph->threadThreadTerminationState)
+            break;
+
+        // execute graph
+        graph->status = agoProcessGraph(graph);
+
+        // inform caller
+        graph->threadExecuteCount++;
+        ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
+    }
+    // inform caller about termination
+    graph->threadThreadTerminationState = 2;
+    ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
+}
+#endif
 
 AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
 {
-	CAgoLockGlobalContext lock;
+    CAgoLockGlobalContext lock;
 
 	// check if CPU hardware supports
 	bool isHardwareSupported = agoIsCpuHardwareSupported();

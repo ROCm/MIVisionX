@@ -306,14 +306,11 @@ class IrGraph:
                 count+=1
                 input = self.tensor_dict[node.inputs[0]]
                 if node.type in ['sum', 'add', 'sub', 'mul', 'muladd', 'min', 'max', 'clamp', 'exp', 'log', 'batch_norm', 'relu', 'leaky_relu', 'sigmoid', 'softmax', 'copy']:
-                    #print "input... " ,input.name , input.shape
                     local = IrTensor()
                     local.setName(output)
-                    #local.setInfo(input.type, input.shape[:])
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-                    #print "local...",local.name, local.shape
                 elif node.type in ['global_avg_pool']:
                     local = IrTensor()
                     local.setName(output)
@@ -326,7 +323,6 @@ class IrGraph:
                     dilations = node.attr.get('dilations')
                     kernel_shape = node.attr.get('kernel_shape')
                     dim_round_mode = node.attr.get('dim_round_mode')
-                    #input_shape = input.shape[:]
                     input_shape = input.shape
                     k = input_shape[1]
                     if node.type == 'conv':
@@ -453,7 +449,6 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['unsqueeze']:
                     axes = node.attr.get('axes')
-                    #out_shape = input.shape[:]
                     out_shape = input.shape
                     if len(out_shape) < 4:
                         for i in range(len(axes)):
@@ -490,7 +485,6 @@ class IrGraph:
                     node.type = 'mul'
                     local = IrTensor()
                     local.setName(output)
-                    #local.setInfo(input.type, input.shape[:])
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
@@ -592,7 +586,6 @@ class IrGraph:
                             out_shape.append(reference.shape[i])
                     local = IrTensor()
                     local.setName(output)
-                    #local.setInfo(input.type, input.shape[:])
                     local.setInfo(input.type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
@@ -1272,7 +1265,6 @@ class IrGraph:
                 elif s[0] == 'local':
                     tensor = IrTensor()
                     tensor.fromString(s[1])
-                    #print s
                     self.addLocal(tensor)
                 elif s[0] == 'node':
                     node = IrNode()

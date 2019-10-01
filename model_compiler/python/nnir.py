@@ -346,7 +346,6 @@ class IrGraph:
                     strides = node.attr.get('strides')
                     dilations = node.attr.get('dilations')
                     kernel_shape = node.attr.get('kernel_shape')
-                    #input_shape = input.shape[:]
                     input_shape = input.shape
                     k = self.tensor_shapes[node.inputs[1]][0]
                     output_shape = [input_shape[0], k, \
@@ -501,9 +500,7 @@ class IrGraph:
                     axis_end = axis_start + axis_count
                     icount = 1
                     ocount = 1
-                    out_shape = [1,1,1,1]
-                    #print axis_start, axis_end
-                    #print self.tensor_dict[node.inputs[0]].name, self.tensor_dict[node.inputs[0]].shape                  
+                    out_shape = [1,1,1,1]                
                     for dim in range(axis_start, axis_end):
                         icount *= input.shape[dim]
                     for dim in range(len(param)):

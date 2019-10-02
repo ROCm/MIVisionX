@@ -1164,7 +1164,7 @@ class IrGraph:
             os.mkdir(outputFolder)
         irDescFile = outputFolder + '/old_graph.nnir'
         irDescFileNew = outputFolder + '/graph.nnir'
-        print('OK: creating IR description in ' + irDescFileNew + ' ...')
+        print('OK: creating IR description in ' + irDescFile + ' ...')
         with open(irDescFile, 'w') as f:
             for tensor in self.inputs:
                 f.write('input|' + tensor.toString() + '\n')

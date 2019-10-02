@@ -500,7 +500,7 @@ class IrGraph:
                     axis_end = axis_start + axis_count
                     icount = 1
                     ocount = 1
-                    out_shape = [1,1,1,1]                    
+                    out_shape = [1,1,1,1]                
                     for dim in range(axis_start, axis_end):
                         icount *= input.shape[dim]
                     for dim in range(len(param)):

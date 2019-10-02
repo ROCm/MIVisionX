@@ -32,7 +32,7 @@ public:
     template <typename T>
     std::shared_ptr<T> add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
     Image *create_image(const ImageInfo &info, bool is_output);
-    Image *create_loader_output_image(const ImageInfo &info, bool is_output);
+    Image *create_loader_output_image(const ImageInfo &info);
 
 private:
     Status update_parameters();

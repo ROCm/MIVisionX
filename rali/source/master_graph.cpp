@@ -138,7 +138,7 @@ MasterGraph::build()
     return Status::OK;
 }
 Image *
-MasterGraph::create_loader_output_image(const ImageInfo &info, bool is_output)
+MasterGraph::create_loader_output_image(const ImageInfo &info)
 {
     /*
     *   NOTE: Output image for a source node needs to be created as a regular (non-virtual)
@@ -155,10 +155,7 @@ MasterGraph::create_loader_output_image(const ImageInfo &info, bool is_output)
     if( output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
         THROW("Creating output image for JPEG loader failed");
 
-    if(is_output)
-        _output_images.push_back(output);
-    else
-        _internal_images.push_back(output);
+    _internal_images.push_back(output);
 
     return output;
 }

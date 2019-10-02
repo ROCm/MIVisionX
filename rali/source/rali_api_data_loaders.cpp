@@ -4,7 +4,8 @@
 #include "context.h"
 #include "node_jpeg_file_source.h"
 #include "image_source_evaluator.h"
-
+#include "node_fisheye.h"
+#include "node_copy.h"
 std::tuple<unsigned, unsigned>
 find_max_image_size (RaliImageSizeEvaluationPolicy decode_size_policy, const std::string& source_path)
 {
@@ -87,9 +88,15 @@ raliJpegFileSource(
                               rali_context->master_graph->mem_type(),
                               color_format );
 
-        output = rali_context->master_graph->create_loader_output_image(info, is_output);
+        output = rali_context->master_graph->create_loader_output_image(info);
 
         rali_context->master_graph->add_node<JpegFileNode>({}, {output})->init( source_path, num_threads);
+
+        if(is_output)
+        {
+            auto actual_output = rali_context->master_graph->create_image(info, is_output);
+            rali_context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
 
     }
     catch(const std::exception& e)

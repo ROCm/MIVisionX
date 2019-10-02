@@ -9,36 +9,46 @@ AMD MIVision is a comprehensive set of help tools for neural net creation, devel
 MIVision Toolset provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
 ## Usage
-### Visualization Tool Generation Script:
+### Visualization Tool Generation Script Usage:
+
+### Script Help 
 ````
-python generate-visualization.py
+python generate-visualization.py -h
 ````
+
 ### Script Inputs:
 ````
--i [input Result CSV File     - required]
--d [input Image Directory     - required]
--l [input Label File          - required]
--h [input Hierarchy File        - optional]
--m [input neural net model name - optional]
--o [output Directory - required]
--f [output file name - required]
+usage: generate-visualization.py  [-h] 
+                                  --inference_results INFERENCE_RESULTS
+                                  --image_dir IMAGE_DIR 
+                                  --label LABEL
+                                  [--hierarchy HIERARCHY]
+                                  [--model_name MODEL_NAME] 
+                                  --output_dir OUTPUT_DIR 
+                                  --output_name OUTPUT_NAME
 ````
-* -i : **Result CSV File**
+#### Input Help
+````
+  -h, --help            show this help message and exit
+  --inference_results   input inference results CSV file [required] (File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)
+  --image_dir           input image directory used in inference [required]
+  --label LABEL         input labels text file [required]
+  --hierarchy           input AMD proprietary hierarchical file [optional]
+  --model_name          input inferece model name [optional]
+  --output_dir          output dir to store ADAT results [required]
+  --output_name         output ADAT file name [required]
+````
+
+* --inference_results : **Result CSV File**
 
 | Image File Name | Ground Truth Label | Output Label 1 | Output Label 2 | Output Label 3 | Output Label 4 | Output Label 5 | Prob 1 | Prob 2 | Prob 3 | Prob 4 | Prob 5 |
 | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- | -- |
 
-* -d    : **Input Image Directory**
-* -l    : **Input Label File**
-* -h    : **Input Hierarchy File**
-* -m    : **Input Model Name**
-* -o    : **Output Directory**
-* -f    : **Output File Name**
 
 ## Sample 
 
 ````
-python generate-visualization.py -i sample/inceptionV4-results.csv -d sample/AMD-tinyDataSet -l sample/labels.txt -h sample/hierarchy.csv -m inceptionV4 -o outputFolder -f classificationVisualized 
+python generate-visualization.py --inference_results sample/inceptionV4-results.csv --image_dir sample/AMD-tinyDataSet --label sample/labels.txt --hierarchy sample/hierarchy.csv --model_name inceptionV4 --output_dir outputFolder --output_name classificationVisualized 
 ````
 
 ## List of Features Available in this release

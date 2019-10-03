@@ -91,9 +91,21 @@ static vx_status VX_CALLBACK opencl_codegen(
 
 	strcpy(opencl_kernel_function_name, "cast_layer");
 
-    opencl_work_dim = 2;
-    opencl_global_work[0] = input_dims[0];
-    opencl_global_work[1] = input_dims[1];
+    opencl_local_work[0] = 8;
+    opencl_local_work[1] = 8;
+    opencl_local_work[2] = 1;
+
+    if (num_dims == 2) { 
+        opencl_work_dim = 2;
+        opencl_global_work[0] = input_dims[0];
+        opencl_global_work[1] = input_dims[1];
+    } 
+    else if (num_dims == 4) {
+        opencl_work_dim = 3;
+        opencl_global_work[0] = input_dims[0];
+        opencl_global_work[1] = input_dims[1];
+        opencl_global_work[2] = input_dims[2] * input_dims[3];
+    }
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
@@ -102,14 +114,30 @@ static vx_status VX_CALLBACK opencl_codegen(
         char item[8192];
         sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
+                "__kernel __attribute__((reqd_work_group_size(%ld, %ld, 1)))\n" // opencl_local_work[0] opencl_local_work[1]
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, const int output_data_type, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
+                , opencl_local_work[0] , opencl_local_work[1], opencl_kernel_function_name);
+        opencl_kernel_code = item;
+        if (num_dims == 2) {
+                sprintf(item,
                 "    uint x = get_global_id(0) * %d;\n"
 		        "    uint y = get_global_id(1);\n"
 		        "    in += in_offset + y * in_stride.s1 + x * in_stride.s0;\n"
 		        "    out += out_offset + y * out_stride.s1 + x * out_stride.s0;\n"
-                , opencl_kernel_function_name, input_element_count_multiple_of_4 ? 4 : 1);
-        opencl_kernel_code = item;
+                , input_element_count_multiple_of_4 ? 4 : 1);
+            opencl_kernel_code += item;
+        }
+        else if (num_dims == 4){
+            sprintf(item,
+                "   uint x = get_global_id(0) * %d;\n"
+                "   uint y = get_global_id(1);\n"
+                "   uint c = get_global_id(2);\n"
+                "   in += in_offset + c * in_stride.s2 + y * in_stride.s1 + x * in_stride.s0;\n"
+                "   out += out_offset + c * out_stride.s2 + y * out_stride.s1 + x * out_stride.s0;\n"
+                , input_element_count_multiple_of_4 ? 4 : 1);
+            opencl_kernel_code += item;
+        }
         if(input_element_count_multiple_of_4) {
         	if(input_type == VX_TYPE_FLOAT32) {
         		if(output_type == VX_TYPE_INT32) {

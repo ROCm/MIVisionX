@@ -303,21 +303,27 @@ def nnef_graph_to_ir_graph(nnef_graph):
         graph.convertFp32()
     return graph
 
-def nnef2ir(inputFolder, outputFolder):
+def nnef2ir(inputFolder, outputFolder, node_type_append):
     nnef_graph = nnef.load_graph(inputFolder)
     nnef.infer_shapes(nnef_graph)
     graph = nnef_graph_to_ir_graph(nnef_graph)
-    graph.toFile(outputFolder)
+    graph.toFile(outputFolder, node_type_append)
 
 def main ():
     if len(sys.argv) < 3:
-        print('Usage: python nnef_to_nnir.py <nnefInputFolder> <outputFolder>')
+        print('Usage: python nnef_to_nnir.py <nnefInputFolder> <outputFolder> [--node_type_append 0/1 (optional: appends node type to output tensor name)]')
         sys.exit(1)
     inputFolder = sys.argv[1]
     outputFolder = sys.argv[2]
 
+    #appends node type to output tensor name. 
+    node_type_append = 0
+    if (len(sys.argv) > 3):
+        if (sys.argv[3] == "--node_type_append"):
+            node_type_append = sys.argv[4]
+
     print('reading NNEF model from ' + inputFolder + '...')
-    nnef2ir(inputFolder, outputFolder)
+    nnef2ir(inputFolder, outputFolder, node_type_append)
     print('Done')
     
 if __name__ == '__main__':

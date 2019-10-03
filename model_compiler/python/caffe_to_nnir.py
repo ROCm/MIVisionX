@@ -842,25 +842,37 @@ def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
     return graph
 
 # convert caffe representation to ir representation.
-def caffe2ir(net_parameter, input_dims, outputFolder, verbose):
+def caffe2ir(net_parameter, input_dims, outputFolder, verbose,node_type_append):
     graph = caffe_graph_to_ir_graph(net_parameter, input_dims, verbose)
-    graph.toFile(outputFolder)
+    graph.toFile(outputFolder,node_type_append)
     print ("OK: graph successfully formed.")
 
 def main():
     if len(sys.argv) < 4:
-        print ("Usage : python caffe2nnir.py <caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]")
+        print ("Usage : python caffe2nnir.py <caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1] [--node_type_append 0/1 (optional: appends node type to output tensor name)]")
         sys.exit(1)
     caffeFileName = sys.argv[1]
     outputFolder = sys.argv[2]
     input_dims = sys.argv[4].split(',')
 
     verbose = 0
-    if(len(sys.argv) > 5):
+    """if(len(sys.argv) > 5):
         verbose = 1 if int(sys.argv[6]) else 0
         if (verbose):
             print ("OK: verbose enabled.")
-
+    """
+    #appends node type to output tensor name.
+    node_type_append = 0
+    pos = 3
+    while len(sys.argv[pos:]) >= 3 and sys.argv[pos][:2] == '--':
+        if sys.argv[pos] == '--node_type_append':
+            node_type_append = int(sys.argv[pos+1])
+            pos = pos + 2
+        elif sys.argv[pos] == 'verbose':
+            verbose = int(sys.argv[pos+1])
+            pos = pos + 2
+            if (verbose):
+                print ("OK: verbose enabled.")
     print ("OK: loading caffemodel from %s ..." % (caffeFileName))
     net_parameter = caffe_pb2.NetParameter()
     if not os.path.isfile(caffeFileName):
@@ -875,7 +887,7 @@ def main():
     if (verbose):
         print ("input parameters obtained are : " + str(input_dims[0]) + " " + str(input_dims[1]) + " " + str(input_dims[2]) + " " + str(input_dims[3]))
 
-    caffe2ir(net_parameter, input_dims, outputFolder, verbose)
+    caffe2ir(net_parameter, input_dims, outputFolder, verbose, node_type_append)
 
 if __name__ == '__main__':
     main()

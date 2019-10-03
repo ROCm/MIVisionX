@@ -99,6 +99,7 @@ class IrAttr:
             , 'confidence_threshold' : 0.0
             , 'eta' : 0.0
             , 'factor' : []
+            , 'to' : 1
             , 'count' : -1
         }
         self.dict_set = []
@@ -193,6 +194,7 @@ class IrNode:
             'detection_output' : 1,
             'matmul' : 1,
             'upsample' : 1,
+            'cast' : 1
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -286,6 +288,9 @@ class IrGraph:
 
     def addBinary(self,tensorName,binary):
         self.binaries[tensorName] = binary
+
+    def readBinary(self,tensorName):
+        return self.binaries[tensorName]
 
     def removeTensor(self,name):
         tensor = self.tensor_dict[name]
@@ -490,7 +495,10 @@ class IrGraph:
                 elif node.type in ['reshape']:
                     param = node.attr.get('shape')
                     if not param:
-                        param = self.tensor_dict[node.inputs[1]].shape
+                        if self.tensor_dict[node.inputs[1]] in self.locals:
+                            param = (self.readBinary(tensor_name)).tolist()
+                        else:
+                            param = self.tensor_dict[node.inputs[1]].shape
                         node.attr.set('shape', param)
                         self.removeTensor(node.inputs[1])
                     axis_start = node.attr.get('axis')
@@ -521,21 +529,12 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
-                elif node.type in ['upsample']:
-                    factor = node.attr.get('factor')
-                    if len(factor) == 2:
-                        out_shape = [input.shape[0], input.shape[1], input.shape[2]*factor[0], input.shape[3]*factor[1]]
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo(input.type, out_shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
                 elif node.type in ['shape']:
                     node.type = 'copy'
                     tensor_name = 'shape_' + node.inputs[0]
                     shape_data = np.array(input.shape)
                     shape_data.astype(np.int64)
-
+          
                     shape_tensor = IrTensor()
                     shape_tensor.setName(tensor_name)
                     shape_tensor.setInfo('I064', np.shape(shape_data))
@@ -546,6 +545,15 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo('I064', shape_tensor.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['upsample']:
+                    factor = node.attr.get('factor')
+                    if len(factor) == 2:
+                        out_shape = [input.shape[0], input.shape[1], input.shape[2]*factor[0], input.shape[3]*factor[1]]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['upsample']:
@@ -638,6 +646,19 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['cast']:
+                    to = node.attr.get('to')
+                    if to == 6:
+                        output_type = 'I032'
+                    elif to == 7:
+                        output_type = 'I064'
+                    else:
+                        raise ValueError("Unsupported cast attribute(to): {}".format(to))
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, input.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['argmax']:

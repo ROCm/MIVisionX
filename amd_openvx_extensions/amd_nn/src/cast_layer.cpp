@@ -91,10 +91,6 @@ static vx_status VX_CALLBACK opencl_codegen(
 
 	strcpy(opencl_kernel_function_name, "cast_layer");
 
-    opencl_local_work[0] = 8;
-    opencl_local_work[1] = 8;
-    opencl_local_work[2] = 1;
-
     if (num_dims == 2) { 
         opencl_work_dim = 2;
         opencl_global_work[0] = input_dims[0];
@@ -114,10 +110,9 @@ static vx_status VX_CALLBACK opencl_codegen(
         char item[8192];
         sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel __attribute__((reqd_work_group_size(%ld, %ld, 1)))\n" // opencl_local_work[0] opencl_local_work[1]
                 "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, const int output_data_type, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
-                , opencl_local_work[0] , opencl_local_work[1], opencl_kernel_function_name);
+                , opencl_kernel_function_name);
         opencl_kernel_code = item;
         if (num_dims == 2) {
                 sprintf(item,

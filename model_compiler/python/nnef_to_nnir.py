@@ -320,7 +320,7 @@ def main ():
     node_type_append = 0
     if (len(sys.argv) > 3):
         if (sys.argv[3] == "--node_type_append"):
-            node_type_append = sys.argv[4]
+            node_type_append = int(sys.argv[4])
 
     print('reading NNEF model from ' + inputFolder + '...')
     nnef2ir(inputFolder, outputFolder, node_type_append)

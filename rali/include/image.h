@@ -106,19 +106,10 @@ struct Image
     vx_image handle() { return vx_handle; }
     unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
-    void set_names(const std::vector<std::string> names)
-    {
-        _info._image_names.push( names);
-    }
-    std::vector<std::string> get_name()
-    {
-        std::vector<std::string> ret = {""};
-        if(_info._image_names.empty())
-            return ret;
-        ret = _info._image_names.front();
-        _info._image_names.pop();
-        return ret;
-    }
+    void set_names(const std::vector<std::string> names);
+    std::vector<std::string> get_name();
+    std::vector<std::string> peak_name();
+
     //! Default destructor
     /*! Releases the OpenVX image */
     ~Image();

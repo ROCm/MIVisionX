@@ -281,13 +281,6 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def histogramBalance(self, input, is_output):
-        out = self._lib.raliHistogramBalance(self.handle, input.obj, is_output)
-        out_img = RaliImage(out)
-        if is_output:
-            self.output_images.append(out_img)
-        return out_img
-
     def exposure(self, input, is_output, shift = None):
         param_shift = self.validateFloatParameter(shift)
         out = self._lib.raliExposure(self.handle, input.obj, is_output, param_shift)

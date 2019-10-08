@@ -4,6 +4,7 @@
 #include <variant>
 #include <map>
 #include "graph.h"
+#include "ring_buffer.h"
 #include "timing_debug.h"
 #include "node.h"
 #include "node_jpeg_file_source.h"
@@ -35,12 +36,18 @@ public:
     Image *create_loader_output_image(const ImageInfo &info);
 
 private:
-    Status update_parameters();
+    Status update_node_parameters();
     Status allocate_output_tensor();
     Status deallocate_output_tensor();
+    void create_single_graph();
+    void start_processing();
+    void stop_processing();
+    void output_routine();
+    RingBuffer _ring_buffer;
+    std::thread _output_thread;
     DeviceManager   _device;
     ImageInfo _output_image_info;
-    std::list<Image*> _output_images;//!< Keeps the ovx images that are used to store the augmented output (there is an image per augmentation branch)
+    std::vector<Image*> _output_images;//!< Keeps the ovx images that are used to store the augmented output (there is an image per augmentation branch)
     std::list<Image*> _internal_images;//!< Keeps all the ovx images (virtual/non-virtual) either intermediate images, or input images that feed the graph
     std::list<std::shared_ptr<Node>> _nodes;
     std::list<std::shared_ptr<Node>> _root_nodes;
@@ -56,8 +63,9 @@ private:
     vx_context _context;
     RaliMemType _mem_type;
     TimingDBG _process_time;
-    bool _graph_verfied = false;
-    void create_single_graph();
+    bool _first_run = true;
+    bool _processing;
+    const static unsigned OUTPUT_RING_BUFFER_DEPTH = 3;
 };
 
 template <typename T>

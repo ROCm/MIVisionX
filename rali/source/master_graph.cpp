@@ -28,10 +28,12 @@ auto get_ago_affinity_info = []
 
 MasterGraph::~MasterGraph()
 {
+    stop_processing();
     release();
 }
 
 MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
+        _first_run(true),
         _output_tensor(nullptr),
         _graph(nullptr),
         _affinity(affinity),
@@ -40,7 +42,7 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _batch_size(batch_size),
         _cpu_threads(cpu_threads),
         _process_time("Process Time"),
-        _graph_verfied(false)
+        _ring_buffer(OUTPUT_RING_BUFFER_DEPTH)
 {
     try {
         vx_status status;
@@ -80,19 +82,12 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 MasterGraph::Status
 MasterGraph::run()
 {
-    if(!_graph_verfied)
-        THROW("Graph not verified")
+    if(_first_run)
+        _first_run = false;
+    else
+        _ring_buffer.pop(); // Pop previously stored output from the ring buffer
 
-    // Randomize parameters
-    ParameterFactory::instance()->renew_parameters();
-
-    _process_time.start();
-    for(auto&& loader_module: _loader_modules)
-        if(loader_module->load_next() != LoaderModuleStatus::OK)
-            THROW("Loader module failed to laod next batch of images")
-    _graph->process();
-    update_parameters();
-    _process_time.end();
+    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
 
     return MasterGraph::Status::OK;
 }
@@ -120,7 +115,6 @@ MasterGraph::create_single_graph()
 MasterGraph::Status
 MasterGraph::build()
 {
-    _graph_verfied = false;
     if(_output_images.empty())
         THROW("No output images are there, cannot create the pipeline")
 
@@ -133,20 +127,19 @@ MasterGraph::build()
 
 
     allocate_output_tensor();
+    size_t w = _output_image_info.width();
+    size_t h = _output_image_info.height_batch();
+    size_t c = _output_image_info.color_plane_count();
+    _ring_buffer.init(_mem_type, _device.resources(), w * h * c,_output_images.size());
     create_single_graph();
-    _graph_verfied = true;
+    start_processing();
     return Status::OK;
 }
 Image *
 MasterGraph::create_loader_output_image(const ImageInfo &info)
 {
     /*
-    *   NOTE: Output image for a source node needs to be created as a regular (non-virtual)
-    *         image, no matter is_output is true or not
-    *   NOTE: Output image cannot be a virtual image since it's going to be used for
-    *         swapping context
-    *   NOTE: No external allocation of image buffers are needed for the image passed
-    *         to the loader module (output image),
+    *   NOTE: Output image for a source node needs to be created as a regular (non-virtual) image
     *   NOTE: allocate flag is not set for the create_from_handle function here since image's
     *       context will be swapped with the loader_module's internal buffer
     */
@@ -167,7 +160,7 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
     if(is_output)
     {
-        if (output->create_from_handle(_context, ImageBufferAllocation::external) != 0)
+        if (output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
             THROW("Cannot create the image from handle")
 
         _output_images.push_back(output);
@@ -179,7 +172,7 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
 void MasterGraph::release()
 {
-    _graph_verfied = false;
+    stop_processing();
     vx_status status;
     if(_graph != nullptr)
         _graph->release();
@@ -198,7 +191,7 @@ void MasterGraph::release()
 }
 
 MasterGraph::Status
-MasterGraph::update_parameters()
+MasterGraph::update_node_parameters()
 {
     for(auto& node: _nodes)
         node->update_parameters();
@@ -269,8 +262,11 @@ MasterGraph::deallocate_output_tensor()
 MasterGraph::Status
 MasterGraph::reset_loaders()
 {
+
     for(auto& loader_module: _loader_modules)
         loader_module->reset();
+
+    _first_run = true;
 
     return Status::OK;
 }
@@ -461,4 +457,56 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     }
     _convert_time.end();
     return Status::OK;
+}
+
+void MasterGraph::output_routine() {
+    while(_processing)
+    {
+        if(remaining_images_count() <= 0)
+        {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            continue;
+        }
+
+        // Randomize parameters
+        ParameterFactory::instance()->renew_parameters();
+
+        _process_time.start();
+        // Swap handles on the input images, so that new image is loaded to be processed
+        for (auto &&loader_module: _loader_modules)
+            if (loader_module->load_next() != LoaderModuleStatus::OK)
+                THROW("Loader module failed to laod next batch of images")
+
+        auto write_buffers = _ring_buffer.get_write_buffers();
+
+        // Swap handles on the output images, so that new processed image will be written to the a new buffer
+        for (size_t idx = 0; idx<  _output_images.size(); idx++)
+            _output_images[idx]->swap_handle(write_buffers[idx]);
+
+        if(!_processing)
+            break;
+        update_node_parameters();
+        _graph->process();
+        _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
+        _process_time.end();
+    }
+}
+
+void MasterGraph::start_processing() {
+
+    _processing = true;
+    _output_thread = std::thread(&MasterGraph::output_routine, this);
+}
+
+void MasterGraph::stop_processing() {
+    _processing = false;
+    _ring_buffer.cancel_reading();
+    _ring_buffer.cancel_writing();
+    try
+    {
+        _output_thread.join();
+    } catch(...)
+    {
+
+    }
 }

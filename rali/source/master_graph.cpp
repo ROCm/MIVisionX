@@ -84,11 +84,16 @@ MasterGraph::Status
 MasterGraph::run()
 {
     if(_first_run)
+    {
         _first_run = false;
-    else
+    } else {
         _ring_buffer.pop(); // Pop previously stored output from the ring buffer
+        for (auto &&loader_image : _loader_image)
+            loader_image->pop_name();
+    }
 
-    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
+    _ring_buffer.get_read_buffer();// make sure read buffers are ready, it'll wait here otherwise
+
 
     return MasterGraph::Status::OK;
 }
@@ -481,7 +486,6 @@ void MasterGraph::output_routine()
         for (auto &&loader_module: _loader_modules)
             if (loader_module->load_next() != LoaderModuleStatus::OK)
                 THROW("Loader module failed to laod next batch of images")
-
         auto write_buffers = _ring_buffer.get_write_buffers();
 
         // Swap handles on the output images, so that new processed image will be written to the a new buffer

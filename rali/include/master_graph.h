@@ -49,6 +49,7 @@ private:
     ImageInfo _output_image_info;
     std::vector<Image*> _output_images;//!< Keeps the ovx images that are used to store the augmented output (there is an image per augmentation branch)
     std::list<Image*> _internal_images;//!< Keeps all the ovx images (virtual/non-virtual) either intermediate images, or input images that feed the graph
+    std::list<Image*> _loader_image;//!< keeps images that used in the loader modules to update the input to the graph
     std::list<std::shared_ptr<Node>> _nodes;
     std::list<std::shared_ptr<Node>> _root_nodes;
     std::map<Image*, std::shared_ptr<Node>> _image_map;
@@ -96,6 +97,7 @@ std::shared_ptr<T> MasterGraph::add_node(const std::vector<Image*>& inputs, cons
 template<> inline std::shared_ptr<JpegFileNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
 {
     auto node = std::make_shared<JpegFileNode>(outputs[0], _device.resources(),  _mem_type, _batch_size);
+    _loader_image.push_back(outputs[0]);
     _loader_modules.push_back(node->get_loader_module());
     _root_nodes.push_back(node);
     for(auto& output: outputs)

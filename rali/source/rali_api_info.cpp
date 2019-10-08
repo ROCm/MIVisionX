@@ -24,7 +24,7 @@ void RALI_API_CALL raliGetImageName(RaliImage image, char* buf, unsigned image_i
 
 unsigned RALI_API_CALL raliGetImageNameLen(RaliImage image,  unsigned image_idx)
 {
-    auto ret = image->peak_name();
+    auto ret = image->get_name();
     return ret[image_idx].size();
 }
 int RALI_API_CALL raliGetOutputWidth(RaliContext rali_context)

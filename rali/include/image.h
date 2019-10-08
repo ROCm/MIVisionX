@@ -108,7 +108,7 @@ struct Image
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
     void set_names(const std::vector<std::string> names);
     std::vector<std::string> get_name();
-    std::vector<std::string> peak_name();
+    void pop_name();
 
     //! Default destructor
     /*! Releases the OpenVX image */

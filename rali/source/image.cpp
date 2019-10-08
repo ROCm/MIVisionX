@@ -258,17 +258,14 @@ void Image::set_names(const std::vector<std::string> names)
 {
     _info._image_names.push( names);
 }
-std::vector<std::string> Image::get_name()
+void Image::pop_name()
 {
-    std::vector<std::string> ret = {""};
     if(_info._image_names.empty())
-        return ret;
-    ret = _info._image_names.front();
+        return ;
     _info._image_names.pop();
-    return ret;
 }
 
-std::vector<std::string> Image::peak_name()
+std::vector<std::string> Image::get_name()
 {
     std::vector<std::string> ret = {""};
     if(_info._image_names.empty())

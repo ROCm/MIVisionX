@@ -19,12 +19,13 @@ void RALI_API_CALL raliGetImageName(RaliImage image, char* buf, unsigned image_i
 {
 
     auto ret = image->get_name();
-    memcpy((void*)buf, ret[image_idx].c_str(), ret.size());
+    memcpy((void*)buf, ret[image_idx].c_str(), ret[image_idx].size());
 }
 
 unsigned RALI_API_CALL raliGetImageNameLen(RaliImage image,  unsigned image_idx)
 {
-    return (image->get_name())[image_idx].size();
+    auto ret = image->get_name();
+    return ret[image_idx].size();
 }
 int RALI_API_CALL raliGetOutputWidth(RaliContext rali_context)
 {

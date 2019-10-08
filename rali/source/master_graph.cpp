@@ -2,6 +2,7 @@
 #include <vx_ext_amd.h>
 #include <VX/vx_types.h>
 #include <cstring>
+#include <sched.h>
 #include "master_graph.h"
 #include "parameter_factory.h"
 
@@ -64,11 +65,11 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         // loading OpenVX RPP modules
         if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)
             THROW("Cannot load OpenVX augmentation extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
-
+#ifdef RALI_VIDEO
         // loading video decoder modules
         if ((status = vxLoadKernels(_context, "vx_media")) != VX_SUCCESS)
             WRN("Cannot load AMD's OpenVX media extension, video decode functionality will not be available")
-
+#endif
         if(_affinity == RaliAffinity::GPU)
             _device.init_ocl(_context);
     }
@@ -449,11 +450,14 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     else
     {
         // host memory
+        memcpy(out_ptr, _ring_buffer.get_read_buffer(), size*_output_images.size());
+#if 0
         for( auto&& output: _output_images)
         {
             memcpy(out_ptr+dest_buf_offset, output->buffer(), size);
             dest_buf_offset += size;
         }
+#endif
     }
     _convert_time.end();
     return Status::OK;
@@ -464,7 +468,7 @@ void MasterGraph::output_routine() {
     {
         if(remaining_images_count() <= 0)
         {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
@@ -496,6 +500,12 @@ void MasterGraph::start_processing() {
 
     _processing = true;
     _output_thread = std::thread(&MasterGraph::output_routine, this);
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#else
+    struct sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    pthread_setschedparam(_output_thread.native_handle(), SCHED_FIFO, &params);
+#endif
 }
 
 void MasterGraph::stop_processing() {

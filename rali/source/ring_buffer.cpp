@@ -37,6 +37,15 @@ std::vector<void*> RingBuffer::get_read_buffers()
     return _host_sub_buffers[_read_ptr];
 }
 
+void *RingBuffer::get_read_buffer() {
+    wait_if_empty();
+    if(_mem_type == RaliMemType::OCL)
+        return _dev_master_buffer[_read_ptr];
+
+    return _host_master_buffers[_read_ptr].data();
+}
+
+
 std::vector<void*> RingBuffer::get_write_buffers()
 {
     wait_if_full();
@@ -175,3 +184,4 @@ void RingBuffer::increment_write_ptr()
     // Wake up the reader thread (in case waiting) since there is a new load to be read
     _wait_for_load.notify_all();
 }
+

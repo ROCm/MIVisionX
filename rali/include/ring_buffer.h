@@ -13,6 +13,7 @@ public:
     size_t level();
     void init(RaliMemType mem_type, DeviceResources dev, unsigned buffer_size, unsigned sub_buffer_count);
     std::vector<void*> get_read_buffers() ;
+    void* get_read_buffer();
     std::vector<void*> get_write_buffers();
     void pop();
     void push();

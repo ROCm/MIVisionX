@@ -463,7 +463,8 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     return Status::OK;
 }
 
-void MasterGraph::output_routine() {
+void MasterGraph::output_routine()
+{
     while(_processing)
     {
         if(remaining_images_count() <= 0)
@@ -496,7 +497,8 @@ void MasterGraph::output_routine() {
     }
 }
 
-void MasterGraph::start_processing() {
+void MasterGraph::start_processing()
+{
 
     _processing = true;
     _output_thread = std::thread(&MasterGraph::output_routine, this);
@@ -508,7 +510,8 @@ void MasterGraph::start_processing() {
 #endif
 }
 
-void MasterGraph::stop_processing() {
+void MasterGraph::stop_processing()
+{
     _processing = false;
     _ring_buffer.cancel_reading();
     _ring_buffer.cancel_writing();

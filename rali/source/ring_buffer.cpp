@@ -5,7 +5,10 @@ RingBuffer::RingBuffer(unsigned buffer_depth):
         BUFF_DEPTH(buffer_depth),
         _dev_sub_buffer(buffer_depth),
         _dev_master_buffer(buffer_depth),
-        _host_master_buffers(BUFF_DEPTH)
+        _host_master_buffers(BUFF_DEPTH),
+        _write_ptr(0),
+        _read_ptr(0),
+        _level(0)
 {
 
 }

@@ -18,13 +18,13 @@ size_t RALI_API_CALL raliGetImagePlanes(RaliImage image)
 void RALI_API_CALL raliGetImageName(RaliImage image, char* buf, unsigned image_idx)
 {
 
-    auto ret = image->info().get_name(image_idx);
-    memcpy((void*)buf, ret.c_str(), ret.size());
+    auto ret = image->get_name();
+    memcpy((void*)buf, ret[image_idx].c_str(), ret.size());
 }
 
 unsigned RALI_API_CALL raliGetImageNameLen(RaliImage image,  unsigned image_idx)
 {
-    return image->info().get_name(image_idx).size();
+    return (image->get_name())[image_idx].size();
 }
 int RALI_API_CALL raliGetOutputWidth(RaliContext rali_context)
 {

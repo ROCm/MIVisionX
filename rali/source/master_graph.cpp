@@ -352,12 +352,12 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         cl_kernel kernel = _device["utility"][kernel_name];
         auto queue = _device.resources().cmd_queue;
         unsigned dest_buf_offset = 0;
-
-        for( auto&& out_image: _output_images)
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        for( auto&& out_image: output_buffers)
         {
             int argIdx = 0;
             unsigned reverse_chnl = reverse_channels ? 1 : 0;
-            auto img_buffer = out_image->buffer();
+            auto img_buffer = out_image;
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& (img_buffer)))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&_output_tensor ))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& dest_buf_offset))
@@ -400,9 +400,11 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
         float offset[3] = {offset0, offset1, offset2 };
         size_t dest_buf_offset = 0;
-        for( auto&& out_image: _output_images)
+
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        for( auto&& out_image: output_buffers)
         {
-            auto in_buffer = (unsigned char*)out_image->buffer();
+            auto in_buffer = (unsigned char*)out_image;
             if(format == RaliTensorFormat::NHWC)
             {
                 auto channel_size  = w * h;
@@ -456,13 +458,6 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     {
         // host memory
         memcpy(out_ptr, _ring_buffer.get_read_buffer(), size*_output_images.size());
-#if 0
-        for( auto&& output: _output_images)
-        {
-            memcpy(out_ptr+dest_buf_offset, output->buffer(), size);
-            dest_buf_offset += size;
-        }
-#endif
     }
     _convert_time.end();
     return Status::OK;

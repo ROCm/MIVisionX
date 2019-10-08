@@ -3984,6 +3984,9 @@ int HafCpu_Threshold_U1_U8_Binary
 			pixelmask = 0;
 			for (int i = 0; i < 8; i++, width++)
 			{
+				if (width == postfixWidth)
+					break;
+
 				pixelmask >>= 1;
 				if (*pLocalSrc++ > threshold)
 					pixelmask |= 0x80;

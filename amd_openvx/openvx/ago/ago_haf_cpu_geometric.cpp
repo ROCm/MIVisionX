@@ -2460,15 +2460,10 @@ vx_uint32     srcImageStrideInBytes
 
 			while (dst < dstLast)
 			{
-				*dst = *src;
-				*dst++;
-				*dst = *src;
-				*dst++;
-
-				*dstNext = *src;
-				*dstNext++;
-				*dstNext = *src++;
-				*dstNext++;
+				*dst++ = *src;
+				*dst++ = *src;
+				*dstNext++ = *src;
+				*dstNext++ = *src++;
 			}
 		}
 

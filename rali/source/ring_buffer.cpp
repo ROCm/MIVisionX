@@ -90,7 +90,10 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
 
 
             if(err)
+            {
+                _dev_master_buffer.clear();
                 THROW("clEnqueueMapBuffer of size" + TOSTR(master_mem_size) + "failed " + TOSTR(err));
+            }
             clRetainMemObject(_dev_master_buffer[buffIdx]);
             _dev_sub_buffer[buffIdx].resize(_sub_buffer_count);
             for(unsigned sub_idx = 0; sub_idx < _sub_buffer_count; sub_idx++)
@@ -105,7 +108,12 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
                         CL_BUFFER_CREATE_TYPE_REGION, &cl_buffer_region, &err);
 
                 if(err)
-                    THROW("clCreateSubBuffer of size " + TOSTR(sub_buffer_size) + " index " + TOSTR(sub_idx) +" failed " + TOSTR(err));
+                {
+                    _dev_master_buffer.clear();
+                    _dev_sub_buffer.clear();
+                    THROW("clCreateSubBuffer of size " + TOSTR(sub_buffer_size) + " index " + TOSTR(sub_idx) +
+                          " failed " + TOSTR(err));
+                }
 
                 clRetainMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_idx]);
             }
@@ -140,15 +148,16 @@ RingBuffer::~RingBuffer()
     if(_mem_type!= RaliMemType::OCL)
         return;
 
-    for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+    for(size_t buffIdx = 0; buffIdx < _dev_master_buffer.size(); buffIdx++)
     {
-        for(unsigned sub_buf_idx = 0; sub_buf_idx < _sub_buffer_count; sub_buf_idx++)
-            if(clReleaseMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
-                ERR("Could not release sub ocl memory in the ring buffer")
+        for(unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
+            if(_dev_sub_buffer[buffIdx][sub_buf_idx])
+                if(clReleaseMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
+                    ERR("Could not release sub ocl memory in the ring buffer")
 
-
-        if(clReleaseMemObject(_dev_master_buffer[buffIdx]) != CL_SUCCESS)
-            ERR("Could not release master ocl memory in the ring buffer")
+        if(_dev_master_buffer[buffIdx])
+            if(clReleaseMemObject(_dev_master_buffer[buffIdx]) != CL_SUCCESS)
+                ERR("Could not release master ocl memory in the ring buffer")
 
     }
 }

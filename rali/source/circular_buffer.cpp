@@ -55,7 +55,7 @@ void CircularBuffer::sync()
     if(_output_mem_type== RaliMemType::OCL) 
     {
 #if 0
-        if(clEnqueueWriteBuffer(_cl_cmdq, _dev_buffer[_write_ptr], CL_TRUE, 0, _output_mem_size, _host_buffer_ptrs[_write_ptr], 0, NULL, NULL) != CL_SUCCESS)
+        if(clEnqueueWriteBuffer(_cl_cmdq, _dev_sub_buffer[_write_ptr], CL_TRUE, 0, _output_mem_size, _host_buffer_ptrs[_write_ptr], 0, NULL, NULL) != CL_SUCCESS)
             THROW("clEnqueueMapBuffer of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
 
 #else        

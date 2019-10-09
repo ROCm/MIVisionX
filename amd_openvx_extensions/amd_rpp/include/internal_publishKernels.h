@@ -29,7 +29,7 @@ THE SOFTWARE.
 extern "C" SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context);
 vx_status ADD_KERENEL(std::function<vx_status(vx_context)>);
 vx_status get_kernels_to_publish();
-
+vx_status Copy_Register(vx_context);
 vx_status Brightness_Register(vx_context);
 vx_status Contrast_Register(vx_context);
 vx_status Blur_Register(vx_context);
@@ -52,7 +52,7 @@ vx_status Rain_Register(vx_context);
 vx_status Fog_Register(vx_context);
 vx_status NoiseSnp_Register(vx_context);
 
-
+#define VX_KERNEL_RPP_COPY_NAME                         "org.rpp.Copy"
 #define VX_KERNEL_RPP_BRIGHTNESS_NAME                   "org.rpp.Brightness"
 #define VX_KERNEL_RPP_CONTRAST_NAME                     "org.rpp.Contrast"
 #define VX_KERNEL_RPP_BLUR_NAME                         "org.rpp.Blur"

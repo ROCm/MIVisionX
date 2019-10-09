@@ -265,7 +265,7 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def lendCorrection(self, input, is_output, strength = None, zoom = None):
+    def lensCorrection(self, input, is_output, strength = None, zoom = None):
         strength_param = self.validateFloatParameter(strength)
         zoom_param = self.validateFloatParameter(zoom)
         out = self._lib.raliLensCorrection(self.handle, input.obj, is_output, strength_param, zoom_param)
@@ -276,13 +276,6 @@ class RaliGraph():
 
     def pixelate(self, input, is_output):
         out = self._lib.raliPixelate(self.handle, input.obj, is_output)
-        out_img = RaliImage(out)
-        if is_output:
-            self.output_images.append(out_img)
-        return out_img
-
-    def histogramBalance(self, input, is_output):
-        out = self._lib.raliHistogramBalance(self.handle, input.obj, is_output)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)

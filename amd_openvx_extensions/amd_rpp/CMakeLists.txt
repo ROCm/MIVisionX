@@ -60,6 +60,7 @@ list (APPEND SOURCES
 		source/rain.cpp
 		source/fog.cpp
 		source/snp_noise.cpp
+		source/copy.cpp
 		)
 
 link_directories(${AMDRPP_LIBRARIES_DIR})

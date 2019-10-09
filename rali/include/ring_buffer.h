@@ -28,7 +28,7 @@ public:
         // Wake up the writer thread in case it's waiting for an unload
         _wait_for_unload.notify_one();
     }
-
+    RaliMemType mem_type() { return _mem_type; }
 private:
     void wait_if_empty();
     void wait_if_full();

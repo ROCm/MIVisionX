@@ -119,7 +119,7 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
         {
             _host_master_buffers[buffIdx].resize(master_mem_size);
             _host_sub_buffers[buffIdx].resize(_sub_buffer_count);
-            for(int sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
+            for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
                 _host_sub_buffers[buffIdx][sub_buff_idx] = _host_master_buffers[buffIdx].data() + _sub_buffer_size * sub_buff_idx;
         }
     }

@@ -34,7 +34,7 @@ MasterGraph::~MasterGraph()
 }
 
 MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
-        _first_run(true),
+        _ring_buffer(OUTPUT_RING_BUFFER_DEPTH),
         _output_tensor(nullptr),
         _graph(nullptr),
         _affinity(affinity),
@@ -43,7 +43,9 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _batch_size(batch_size),
         _cpu_threads(cpu_threads),
         _process_time("Process Time"),
-        _ring_buffer(OUTPUT_RING_BUFFER_DEPTH)
+        _first_run(true),
+        _processing(false),
+        _in_process_count(0)
 {
     try {
         vx_status status;
@@ -92,8 +94,13 @@ MasterGraph::run()
             loader_image->pop_name();
     }
 
-    _ring_buffer.get_read_buffer();// make sure read buffers are ready, it'll wait here otherwise
+    {
+        std::unique_lock<std::mutex> lock(_count_lock);
+        if (_in_process_count > 0)
+            _in_process_count--;
+    }
 
+    _ring_buffer.get_read_buffer();// make sure read buffers are ready, it'll wait here otherwise
 
     return MasterGraph::Status::OK;
 }
@@ -136,7 +143,7 @@ MasterGraph::build()
     size_t w = _output_image_info.width();
     size_t h = _output_image_info.height_batch();
     size_t c = _output_image_info.color_plane_count();
-    _ring_buffer.init(_mem_type, _device.resources(), w * h * c,_output_images.size());
+    _ring_buffer.init(_mem_type, _device.resources(), w * h * c, _output_images.size());
     create_single_graph();
     start_processing();
     return Status::OK;
@@ -278,7 +285,7 @@ MasterGraph::reset_loaders()
 }
 
 size_t
-MasterGraph::remaining_images_count()
+MasterGraph::internal_image_count()
 {
     int ret = -1;
     for(auto& loader_module: _loader_modules) {
@@ -286,6 +293,13 @@ MasterGraph::remaining_images_count()
         ret = (ret == -1 ) ? thisLoaderCount :
               ((thisLoaderCount < ret ) ? thisLoaderCount : ret);
     }
+    return ret;
+}
+size_t
+MasterGraph::remaining_images_count()
+{
+    std::unique_lock<std::mutex> lock(_count_lock);
+    size_t ret = internal_image_count() + _in_process_count;
     return ret;
 }
 
@@ -447,17 +461,36 @@ MasterGraph::copy_output(unsigned char *out_ptr)
         // to avoid unnecessary sequence of synchronizations
 
         auto out_image_idx = _output_images.size();
-        for( auto& output_image : _output_images)
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        for( auto&& output_handle: output_buffers)
         {
             bool sync_flag = (--out_image_idx == 0) ? CL_TRUE : CL_FALSE;
-            output_image->copy_data(_device.resources().cmd_queue, out_ptr+dest_buf_offset, sync_flag);
+            {
+                if(_ring_buffer.mem_type() == RaliMemType::OCL)
+                {
+
+                    cl_int status;
+                    if((status = clEnqueueReadBuffer(_device.resources().cmd_queue,
+                                                     (cl_mem) output_handle,
+                                                     sync_flag?(CL_TRUE):CL_FALSE,
+                                                     0,
+                                                     size,
+                                                     out_ptr+dest_buf_offset,
+                                                     0 , nullptr, nullptr)) != CL_SUCCESS)
+                        THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
+
+                } else
+                {
+                    memcpy(out_ptr+dest_buf_offset, output_handle, size);
+                }
+            }
             dest_buf_offset += size;
         }
     }
     else
     {
         // host memory
-        memcpy(out_ptr, _ring_buffer.get_read_buffer(), size*_output_images.size());
+        memcpy(out_ptr, _ring_buffer.get_read_buffer(), size * _output_images.size());
     }
     _convert_time.end();
     return Status::OK;
@@ -467,7 +500,7 @@ void MasterGraph::output_routine()
 {
     while(_processing)
     {
-        if(remaining_images_count() <= 0)
+        if(internal_image_count() <= 0)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
@@ -475,23 +508,29 @@ void MasterGraph::output_routine()
 
         // Randomize parameters
         ParameterFactory::instance()->renew_parameters();
-
         _process_time.start();
-        // Swap handles on the input images, so that new image is loaded to be processed
-        for (auto &&loader_module: _loader_modules)
-            if (loader_module->load_next() != LoaderModuleStatus::OK)
-                THROW("Loader module failed to laod next batch of images")
+        {
+            std::unique_lock<std::mutex> lock(_count_lock);
+
+            // Swap handles on the input images, so that new image is loaded to be processed
+            for (auto &&loader_module: _loader_modules)
+                if (loader_module->load_next() != LoaderModuleStatus::OK)
+                    THROW("Loader module failed to laod next batch of images")
+
+            _in_process_count++;
+        }
         auto write_buffers = _ring_buffer.get_write_buffers();
 
         // Swap handles on the output images, so that new processed image will be written to the a new buffer
-        for (size_t idx = 0; idx<  _output_images.size(); idx++)
+        for (size_t idx = 0; idx < _output_images.size(); idx++)
             _output_images[idx]->swap_handle(write_buffers[idx]);
 
-        if(!_processing)
+        if (!_processing)
             break;
         update_node_parameters();
         _graph->process();
         _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
+
         _process_time.end();
     }
 }

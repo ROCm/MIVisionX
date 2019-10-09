@@ -67,6 +67,9 @@ private:
     bool _first_run = true;
     bool _processing;
     const static unsigned OUTPUT_RING_BUFFER_DEPTH = 3;
+    std::mutex _count_lock;
+    unsigned _in_process_count;
+    size_t internal_image_count();
 };
 
 template <typename T>

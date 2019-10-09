@@ -460,8 +460,9 @@ MasterGraph::copy_output(unsigned char *out_ptr)
         //NOTE: the CL_TRUE flag is only used on the last buffer read call,
         // to avoid unnecessary sequence of synchronizations
 
-        auto out_image_idx = _output_images.size();
+
         auto output_buffers =_ring_buffer.get_read_buffers();
+        auto out_image_idx = output_buffers.size();
         for( auto&& output_handle: output_buffers)
         {
             bool sync_flag = (--out_image_idx == 0) ? CL_TRUE : CL_FALSE;

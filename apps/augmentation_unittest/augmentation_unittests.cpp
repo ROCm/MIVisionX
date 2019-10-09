@@ -148,7 +148,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int display  )
             break;
         case 2: {
             std::cout << ">>>>>>> Running " << "raliCropResizeFixed" << std::endl;
-            image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true, NULL, NULL, NULL);
+            image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true, 0.8, 0.6, -0.4);
         }
             break;
         case 3: {

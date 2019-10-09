@@ -13,7 +13,7 @@ public:
     size_t level();
     void init(RaliMemType mem_type, DeviceResources dev, unsigned buffer_size, unsigned sub_buffer_count);
     std::vector<void*> get_read_buffers() ;
-    void* get_read_buffer();
+    void* get_host_master_read_buffer();
     std::vector<void*> get_write_buffers();
     void pop();
     void push();
@@ -42,7 +42,6 @@ private:
     std::mutex _lock;
     std::condition_variable _wait_for_load;
     std::condition_variable _wait_for_unload;
-    std::vector<cl_mem> _dev_master_buffer;
     std::vector<std::vector<void*>> _dev_sub_buffer;
     std::vector<std::vector<unsigned char>> _host_master_buffers;
     std::vector<std::vector<void*>> _host_sub_buffers;

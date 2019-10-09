@@ -4,7 +4,6 @@
 RingBuffer::RingBuffer(unsigned buffer_depth):
         BUFF_DEPTH(buffer_depth),
         _dev_sub_buffer(buffer_depth),
-        _dev_master_buffer(buffer_depth),
         _host_master_buffers(BUFF_DEPTH),
         _write_ptr(0),
         _read_ptr(0),
@@ -40,10 +39,10 @@ std::vector<void*> RingBuffer::get_read_buffers()
     return _host_sub_buffers[_read_ptr];
 }
 
-void *RingBuffer::get_read_buffer() {
+void *RingBuffer::get_host_master_read_buffer() {
     wait_if_empty();
     if(_mem_type == RaliMemType::OCL)
-        return _dev_master_buffer[_read_ptr];
+        return nullptr;
 
     return _host_master_buffers[_read_ptr].data();
 }
@@ -65,7 +64,6 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
     _mem_type = mem_type;
     _dev = dev;
     _sub_buffer_size = sub_buffer_size;
-    unsigned master_mem_size = sub_buffer_size * sub_buffer_count;
     _sub_buffer_count = sub_buffer_count;
     if(BUFF_DEPTH < 2)
         THROW ("Error internal buffer size for the ring buffer should be greater than one")
@@ -81,37 +79,16 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
             cl_mem_flags flags = CL_MEM_READ_ONLY;
-            _dev_master_buffer[buffIdx] = clCreateBuffer(_dev.context,
-                                                         flags,
-                                                         master_mem_size, NULL, &err);
 
-            if (!_dev_master_buffer[buffIdx]  || err)
-                THROW("clCreateBuffer of size" + TOSTR(master_mem_size) + "failed " + TOSTR(err));
-
-
-            if(err)
-            {
-                _dev_master_buffer.clear();
-                THROW("clEnqueueMapBuffer of size" + TOSTR(master_mem_size) + "failed " + TOSTR(err));
-            }
-            clRetainMemObject(_dev_master_buffer[buffIdx]);
             _dev_sub_buffer[buffIdx].resize(_sub_buffer_count);
             for(unsigned sub_idx = 0; sub_idx < _sub_buffer_count; sub_idx++)
             {
-                struct _cl_buffer_region
-                {
-                    size_t origin;
-                    size_t size;
-                } cl_buffer_region {sub_idx*sub_buffer_size, sub_buffer_size};
-
-                _dev_sub_buffer[buffIdx][sub_idx] = clCreateSubBuffer(_dev_master_buffer[buffIdx], flags,
-                        CL_BUFFER_CREATE_TYPE_REGION, &cl_buffer_region, &err);
+                _dev_sub_buffer[buffIdx][sub_idx] =  clCreateBuffer(_dev.context, flags, sub_buffer_size, NULL, &err);
 
                 if(err)
                 {
-                    _dev_master_buffer.clear();
                     _dev_sub_buffer.clear();
-                    THROW("clCreateSubBuffer of size " + TOSTR(sub_buffer_size) + " index " + TOSTR(sub_idx) +
+                    THROW("clCreateBuffer of size " + TOSTR(sub_buffer_size) + " index " + TOSTR(sub_idx) +
                           " failed " + TOSTR(err));
                 }
 
@@ -125,7 +102,7 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
         _host_sub_buffers.resize(BUFF_DEPTH);
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
-            _host_master_buffers[buffIdx].resize(master_mem_size);
+            _host_master_buffers[buffIdx].resize(sub_buffer_size * sub_buffer_count);
             _host_sub_buffers[buffIdx].resize(_sub_buffer_count);
             for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
                 _host_sub_buffers[buffIdx][sub_buff_idx] = _host_master_buffers[buffIdx].data() + _sub_buffer_size * sub_buff_idx;
@@ -148,16 +125,13 @@ RingBuffer::~RingBuffer()
     if(_mem_type!= RaliMemType::OCL)
         return;
 
-    for(size_t buffIdx = 0; buffIdx < _dev_master_buffer.size(); buffIdx++)
+    for(size_t buffIdx = 0; buffIdx <_dev_sub_buffer.size(); buffIdx++)
     {
         for(unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
             if(_dev_sub_buffer[buffIdx][sub_buf_idx])
                 if(clReleaseMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
-                    ERR("Could not release sub ocl memory in the ring buffer")
+                    ERR("Could not release ocl memory in the ring buffer")
 
-        if(_dev_master_buffer[buffIdx])
-            if(clReleaseMemObject(_dev_master_buffer[buffIdx]) != CL_SUCCESS)
-                ERR("Could not release master ocl memory in the ring buffer")
 
     }
 }

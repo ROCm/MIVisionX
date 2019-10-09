@@ -100,7 +100,7 @@ MasterGraph::run()
             _in_process_count--;
     }
 
-    _ring_buffer.get_read_buffer();// make sure read buffers are ready, it'll wait here otherwise
+    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
 
     return MasterGraph::Status::OK;
 }
@@ -490,7 +490,7 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     else
     {
         // host memory
-        memcpy(out_ptr, _ring_buffer.get_read_buffer(), size * _output_images.size());
+        memcpy(out_ptr, _ring_buffer.get_host_master_read_buffer(), size * _output_images.size());
     }
     _convert_time.end();
     return Status::OK;

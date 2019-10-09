@@ -465,25 +465,15 @@ MasterGraph::copy_output(unsigned char *out_ptr)
         for( auto&& output_handle: output_buffers)
         {
             bool sync_flag = (--out_image_idx == 0) ? CL_TRUE : CL_FALSE;
-            {
-                if(_ring_buffer.mem_type() == RaliMemType::OCL)
-                {
-
-                    cl_int status;
-                    if((status = clEnqueueReadBuffer(_device.resources().cmd_queue,
-                                                     (cl_mem) output_handle,
-                                                     sync_flag?(CL_TRUE):CL_FALSE,
-                                                     0,
-                                                     size,
-                                                     out_ptr+dest_buf_offset,
-                                                     0 , nullptr, nullptr)) != CL_SUCCESS)
-                        THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
-
-                } else
-                {
-                    memcpy(out_ptr+dest_buf_offset, output_handle, size);
-                }
-            }
+            cl_int status;
+            if((status = clEnqueueReadBuffer(_device.resources().cmd_queue,
+                                             (cl_mem) output_handle,
+                                             sync_flag?(CL_TRUE):CL_FALSE,
+                                             0,
+                                             size,
+                                             out_ptr+dest_buf_offset,
+                                             0 , nullptr, nullptr)) != CL_SUCCESS)
+                THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
             dest_buf_offset += size;
         }
     }

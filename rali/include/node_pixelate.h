@@ -12,7 +12,4 @@ public:
     PixelateNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
     PixelateNode() = delete;
     void update_parameters() override;
-
-private:
-    vx_node _node = nullptr;
 };

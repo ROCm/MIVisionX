@@ -3,6 +3,10 @@
 #include "decoder.h"
 #include <turbojpeg.h>
 
+struct TurboJpegDecoderConfig : public DecoderConfig {
+    DecoderType type() override { return DecoderType ::TURBO_JPEG;}
+};
+
 class TJDecoder : public Decoder {
 public:
     //! Default constructor

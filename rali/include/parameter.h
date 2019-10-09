@@ -8,9 +8,10 @@ public:
     ///
     /// \return returns the updated value of the parameter
     virtual T get()  = 0;
-    ///
-    /// \return most recent value returned by calling the get function, does not return the updated value
-    virtual T most_recent_used() const = 0;
+
+    /// used to internally renew state of the parameter if needed (for random parameters)
+    virtual void renew() {};
+
     virtual ~Parameter() {}
     ///
     /// \return returns if this parameter takes a single value (vs a range of values or many values)

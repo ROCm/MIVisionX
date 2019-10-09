@@ -25,7 +25,7 @@ void WarpAffineNode::create(std::shared_ptr<Graph> graph)
     if(_outputs.empty() || _inputs.empty())
         THROW("Uninitialized input/output arguments")
 
-    _node = vxExtrppNode_WarpAffine(_graph->get(), _inputs[0]->img, _outputs[0]->img, _outputs[0]->info().width(), _outputs[0]->info().height_batch(),
+    _node = vxExtrppNode_WarpAffine(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _outputs[0]->info().width(), _outputs[0]->info().height_batch(),
                                     _x0.default_value(), _y0.default_value(), _o0.default_value(), _x1.default_value(), _y1.default_value(), _o1.default_value());
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
@@ -42,7 +42,7 @@ void WarpAffineNode::create(std::shared_ptr<Graph> graph)
 void WarpAffineNode::init(float x0, float x1, float y0, float y1, float o0, float o1)
 {
     _x0.set_param(x0);
-    _x1.set_param(y1);
+    _x1.set_param(x1);
     _y0.set_param(y0);
     _y1.set_param(y1);
     _o0.set_param(o0);
@@ -52,7 +52,7 @@ void WarpAffineNode::init(float x0, float x1, float y0, float y1, float o0, floa
 void WarpAffineNode::init(FloatParam* x0, FloatParam* x1, FloatParam* y0, FloatParam* y1, FloatParam* o0, FloatParam* o1)
 {
     _x0.set_param(core(x0));
-    _x1.set_param(core(y1));
+    _x1.set_param(core(x1));
     _y0.set_param(core(y0));
     _y1.set_param(core(y1));
     _o0.set_param(core(o0));

@@ -22,7 +22,7 @@ void LensCorrectionNode::create(std::shared_ptr<Graph> graph)
     if(_outputs.empty() || _inputs.empty())
         THROW("Uninitialized input/output arguments")
 
-    _node = vxExtrppNode_LensCorrection(_graph->get(), _inputs[0]->img, _outputs[0]->img, _strength.default_value(), _zoom.default_value());
+    _node = vxExtrppNode_LensCorrection(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _strength.default_value(), _zoom.default_value());
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)

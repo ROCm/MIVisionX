@@ -16,7 +16,6 @@ public:
 
 private:
     ParameterVX<int> _kernel_size;
-    vx_node _node = nullptr;
     constexpr static int   KERNEL_SIZE [2] =  {2, 5};
     constexpr static unsigned KERNEL_SIZE_OVX_PARAM_IDX = 2;
 };

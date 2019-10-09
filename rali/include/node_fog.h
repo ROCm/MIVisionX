@@ -18,7 +18,6 @@ public:
 
 private:
     ParameterVX<float> _fog_param;
-    vx_node _node = nullptr;
     constexpr static unsigned FOG_VALUE_OVX_PARAM_IDX = 2;
     constexpr static float FOG_VALUE_RANGE [2] = {0.2, 0.8};
 };

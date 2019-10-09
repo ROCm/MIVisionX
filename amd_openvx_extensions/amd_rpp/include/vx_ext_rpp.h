@@ -35,7 +35,7 @@ THE SOFTWARE.
 	/*!***********************************************************************************************************
 						RPP VX_API_ENTRY C Function NODE
 	*************************************************************************************************************/
-
+VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copy(vx_graph graph, vx_image pSrc, vx_image pDst);
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_brightness(vx_graph graph, vx_image pSrc, vx_image pDst, vx_float32 alpha, vx_int32 beta);
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_contrast(vx_graph graph, vx_image pSrc, vx_image pDst, vx_uint32 max, vx_uint32 min);
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_blur(vx_graph graph, vx_image pSrc, vx_image pDst, vx_float32 sdev);

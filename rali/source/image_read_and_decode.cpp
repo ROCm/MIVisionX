@@ -1,11 +1,8 @@
 
-#include <fstream>
 #include <iterator>
-#include <stdio.h>
-#include <cstring> 
-#include "image_loader_factory.h"
-#include "image_loader_configs.h"
-
+#include <cstring>
+#include "decoder_factory.h"
+#include "image_read_and_decode.h"
 
 #define DBG_TIMING 1 // Enables timings for debug purposes, timings will get printed after loading all the files
 
@@ -31,77 +28,60 @@ interpret_color_format(RaliColorFormat color_format )
 
 
 std::vector<long long unsigned>
-ImageLoaderFactory::timing()
+ImageReadAndDecode::timing()
 {
     return {  _file_load_time.get_timing() , _decode_time.get_timing()};
 }
 
-ImageLoaderFactory::ImageLoaderFactory():
+ImageReadAndDecode::ImageReadAndDecode():
     _file_load_time("FileLoadTime", DBG_TIMING ),
     _decode_time("DecodeTime", DBG_TIMING)
 {
     _compressed_size = 0;
 }
 
-ImageLoaderFactory::~ImageLoaderFactory()
+ImageReadAndDecode::~ImageReadAndDecode()
 {
     _reader = nullptr;
     _decoder = nullptr;
 }   
 
-LoaderModuleStatus 
-ImageLoaderFactory::create(LoaderModuleConfig* desc, size_t load_interval, size_t load_offset)
+void
+ImageReadAndDecode::create(ReaderConfig *reader_config, DecoderConfig *decoder_config)
 {
-    LoaderModuleStatus status = LoaderModuleStatus::OK;
-
     // Can initialize it to any decoder types if needed
     _compressed_buff.resize(MAX_COMPRESSED_SIZE);
-    switch(desc->decoder_type()) 
-    {
-        case DecoderType::TURBO_JPEG:
-            _decoder = std::make_shared<TJDecoder>();
-        break;
-        default:
-            THROW("Unsupported decoder type "+ TOSTR(desc->storage_type()));
-    }
-    switch(desc->storage_type()) 
-    {
-        case StorageType::FILE_SYSTEM:
-        {
-            auto file_src_desc= dynamic_cast<JpegFileLoaderConfig*>(desc);
-            auto reader_desc = FileSourceReaderConfig(file_src_desc->path, load_interval, load_offset);
-            _reader = create_reader(&reader_desc);
-        }
-        break;
-        default:
-        {
-            THROW("Unsupported storage type " + TOSTR(desc->storage_type()));
-        }
-    }
-
-    return status;
+    _decoder = create_decoder(decoder_config);
+    _reader = create_reader(reader_config);
 }
 
 void 
-ImageLoaderFactory::reset()
+ImageReadAndDecode::reset()
 {
     // TODO: Reload images from the folder if needed
     _reader->reset();
 }
 
 size_t
-ImageLoaderFactory::count()
+ImageReadAndDecode::count()
 {
     return _reader->count();
 }
 
 LoaderModuleStatus 
-ImageLoaderFactory::load(unsigned char* buff,
+ImageReadAndDecode::load(unsigned char* buff,
+                         std::vector<std::string>& names,
                          unsigned batch_size,
                          unsigned output_width,
                          unsigned output_height,
                          RaliColorFormat output_color_format )
 {
+    if(output_width == 0 || output_height == 0 )
+        THROW("Zero image dimension is not valid")
+    if(batch_size == 0)
+        THROW("Batch size 0 is not valid")
+    if(!buff)
+        THROW("Null pointer passed as output buffer")
     if(_reader->count() < batch_size)
         return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
     // load images/frames from the disk and push them as a large image onto the buff
@@ -133,6 +113,7 @@ ImageLoaderFactory::load(unsigned char* buff,
         }
 
         _reader->read(_compressed_buff.data(), fsize);
+        auto image_name = _reader->id();
         _reader->close();
         _file_load_time.end();// Debug timing
 
@@ -153,14 +134,14 @@ ImageLoaderFactory::load(unsigned char* buff,
             continue;
         }
         _decode_time.end();// Debug timing
-
+        names[file_counter] = image_name;
         file_counter++;	
     }
 
     return LoaderModuleStatus::OK;
 }
 
-LoaderModuleStatus ImageLoaderFactory::decode(unsigned char* input_buff,
+LoaderModuleStatus ImageReadAndDecode::decode(unsigned char* input_buff,
                                               size_t size,
                                               unsigned char *output_buff,
                                               int output_width,

@@ -1,12 +1,14 @@
 #pragma once
 
-enum class ReaderType {
-    FILE_SOURCE= 0
+enum class StorageType
+{
+    FILE_SYSTEM = 0,
+    RECORDIO,
+    TFRecord
 };
 
-class ReaderConfig {
-    public:
-    virtual ReaderType type() = 0;
+struct ReaderConfig {
+    virtual StorageType type() = 0;
 };
 
 class Reader {

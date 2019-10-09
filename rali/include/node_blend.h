@@ -15,7 +15,6 @@ public:
 
 private:
     ParameterVX<float> _ratio;
-    vx_node _node = nullptr;
     constexpr static float RATIO_RANGE [2] = {0.1, 0.9};
     constexpr static unsigned RATIO_OVX_PARAM_IDX = 3;
 };

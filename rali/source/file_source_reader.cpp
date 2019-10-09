@@ -31,6 +31,11 @@ size_t FileSourceReader::open()
     auto file_path = m_file_names[m_curr_file_idx++];// Get next file name 
 
     _last_id= file_path;
+    unsigned last_slash_idx = _last_id.find_last_of("\\/");
+    if (std::string::npos != last_slash_idx)
+    {
+        _last_id.erase(0, last_slash_idx + 1);
+    }
     
     m_current_fPtr = fopen(file_path.c_str(), "rb");// Open the file, 
     
@@ -114,5 +119,6 @@ Reader::Status FileSourceReader::open_folder()
         THROW("Could not find any file in "+m_folder_path)
 
     m_curr_file_idx = 0;
+    closedir(m_src_dir);
     return Reader::Status::OK;
 }

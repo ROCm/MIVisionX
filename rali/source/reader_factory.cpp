@@ -5,7 +5,7 @@
 
 std::shared_ptr<Reader> create_reader(ReaderConfig* config) {
     switch(config->type()) {
-        case ReaderType::FILE_SOURCE:
+        case StorageType ::FILE_SYSTEM:
         {
             auto ret = std::make_shared<FileSourceReader>();
             if(ret->initialize(config) != Reader::Status::OK)

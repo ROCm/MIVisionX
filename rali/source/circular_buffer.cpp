@@ -1,15 +1,16 @@
 #include "circular_buffer.h"
 #include "log.h"
-CircularBuffer::CircularBuffer( OCLResources ocl,  size_t buffer_depth):
-    BUFF_DEPTH(buffer_depth),
-    _dev_buffer(BUFF_DEPTH, nullptr),
-    _host_buffer(BUFF_DEPTH, nullptr),
-    _write_ptr(0),
-    _read_ptr(0),
-    _level(0),
-    _cl_cmdq(ocl.cmd_queue),
-    _cl_context(ocl.context),
-    _device_id(ocl.device_id)
+CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
+        BUFF_DEPTH(buffer_depth),
+        _cl_cmdq(ocl.cmd_queue),
+        _cl_context(ocl.context),
+        _device_id(ocl.device_id),
+        _dev_buffer(BUFF_DEPTH, nullptr),
+        _host_buffer_ptrs(BUFF_DEPTH, nullptr),
+        _actual_host_buffers(BUFF_DEPTH),
+        _write_ptr(0),
+        _read_ptr(0),
+        _level(0)
 {
     for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
         _dev_buffer[bufIdx] = nullptr;
@@ -39,22 +40,22 @@ cl_mem CircularBuffer::get_read_buffer_dev()
 unsigned char* CircularBuffer::get_read_buffer_host()
 {
     wait_if_empty();
-    return _host_buffer[_read_ptr];
+    return _host_buffer_ptrs[_read_ptr];
 }
 
 unsigned char*  CircularBuffer::get_write_buffer()
 {
     wait_if_full();
-    return(_host_buffer[_write_ptr]);
+    return(_host_buffer_ptrs[_write_ptr]);
 }
 
-CIRCULAR_BUFFER_STATUS CircularBuffer::sync()
+void CircularBuffer::sync()
 {
     cl_int err = CL_SUCCESS;
     if(_output_mem_type== RaliMemType::OCL) 
     {
 #if 0
-        if(clEnqueueWriteBuffer(_cl_cmdq, _dev_buffer[_write_ptr], CL_TRUE, 0, _output_mem_size, _host_buffer[_write_ptr], 0, NULL, NULL) != CL_SUCCESS)
+        if(clEnqueueWriteBuffer(_cl_cmdq, _dev_sub_buffer[_write_ptr], CL_TRUE, 0, _output_mem_size, _host_buffer_ptrs[_write_ptr], 0, NULL, NULL) != CL_SUCCESS)
             THROW("clEnqueueMapBuffer of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
 
 #else        
@@ -62,14 +63,14 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::sync()
         // an unmap/map cen be done to make sure data is copied from the host to device, it's fast
         //NOTE: Using clEnqueueUnmapMemObject/clEnqueuenmapMemObject when buffer is allocated with 
         // CL_MEM_ALLOC_HOST_PTR adds almost no overhead
-        clEnqueueUnmapMemObject(_cl_cmdq, _dev_buffer[_write_ptr], _host_buffer[_write_ptr], 0, NULL, NULL);
-        _host_buffer[_write_ptr] = (unsigned char*) clEnqueueMapBuffer(_cl_cmdq, 
-                                                                    _dev_buffer[_write_ptr] , 
-                                                                    CL_FALSE, 
-                                                                    CL_MAP_WRITE, 
-                                                                    0, 
-                                                                    _output_mem_size, 
-                                                                    0, NULL, NULL, &err );
+        clEnqueueUnmapMemObject(_cl_cmdq, _dev_buffer[_write_ptr], _host_buffer_ptrs[_write_ptr], 0, NULL, NULL);
+        _host_buffer_ptrs[_write_ptr] = (unsigned char*) clEnqueueMapBuffer(_cl_cmdq,
+                                                                            _dev_buffer[_write_ptr] ,
+                                                                            CL_FALSE,
+                                                                            CL_MAP_WRITE,
+                                                                            0,
+                                                                            _output_mem_size,
+                                                                            0, NULL, NULL, &err );
         if(err)
             THROW("clEnqueueUnmapMemObject of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
 
@@ -80,25 +81,24 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::sync()
         // For the host processing no copy is needed, since data is already loaded in the host buffers
         // and handle will be swaped on it
     }
-    return CIRCULAR_BUFFER_STATUS::OK;
 }
 
-void CircularBuffer::done_writing() 
+void CircularBuffer::push()
 {
     sync();
     increment_write_ptr();
 }
 
-void CircularBuffer::done_reading() 
+void CircularBuffer::pop()
 {
     increment_read_ptr();
 }
-CIRCULAR_BUFFER_STATUS CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size) 
+void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
 {
     _output_mem_type = output_mem_type;
     _output_mem_size = output_mem_size;
     if(BUFF_DEPTH < 2)
-        return CIRCULAR_BUFFER_STATUS::BUFFER_TOO_SHALLOW;
+        THROW ("Error internal buffer size for the circular buffer should be greater than one")
     
     // Allocating buffers
     if(_output_mem_type== RaliMemType::OCL) 
@@ -121,14 +121,15 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::init(RaliMemType output_mem_type, size_t 
 
             //TODO: we don't need to map the buffers to host here if the output of the output of this
             //  loader_module is not required by the user to be part of the augmented output
-            _host_buffer[buffIdx] = (unsigned char*) clEnqueueMapBuffer(_cl_cmdq,
-                                                                        _dev_buffer[buffIdx] , 
-                                                                        CL_TRUE, CL_MAP_WRITE, 
-                                                                        0, 
-                                                                        _output_mem_size, 
-                                                                        0, NULL, NULL, &err );
+            _host_buffer_ptrs[buffIdx] = (unsigned char*) clEnqueueMapBuffer(_cl_cmdq,
+                                                                             _dev_buffer[buffIdx] ,
+                                                                             CL_TRUE, CL_MAP_WRITE,
+                                                                             0,
+                                                                             _output_mem_size,
+                                                                             0, NULL, NULL, &err );
             if(err)
                 THROW("clEnqueueMapBuffer of size" + TOSTR(_output_mem_size)+  "failed " + TOSTR(err));
+            clRetainMemObject(_dev_buffer[buffIdx]);
 
 
         }
@@ -136,10 +137,13 @@ CIRCULAR_BUFFER_STATUS CircularBuffer::init(RaliMemType output_mem_type, size_t 
     else 
     {
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
-            _host_buffer[buffIdx] = new unsigned char[_output_mem_size];
-    }
+        {
+            _actual_host_buffers[buffIdx].resize(_output_mem_size);
+            _host_buffer_ptrs[buffIdx] = _actual_host_buffers[buffIdx].data();
+        }
 
-    return CIRCULAR_BUFFER_STATUS::OK;
+
+    }
 }
 
 bool CircularBuffer::empty()
@@ -203,16 +207,16 @@ CircularBuffer::~CircularBuffer()
     {
         if(_output_mem_type== RaliMemType::OCL) 
         {
-            clReleaseMemObject(_dev_buffer[buffIdx]);
-        } 
-        else
-        {
-            delete[] _host_buffer[buffIdx];
+            if(clEnqueueUnmapMemObject(_cl_cmdq, _dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0, NULL, NULL) != CL_SUCCESS)
+                ERR("Could not unmap ocl memory")
+            if(clReleaseMemObject(_dev_buffer[buffIdx]) != CL_SUCCESS)
+                ERR("Could not release ocl memory in the circular buffer")
         }
     }
 
     _dev_buffer.clear();
-    _host_buffer.clear();
+    _host_buffer_ptrs.clear();
+    _actual_host_buffers.clear();
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;

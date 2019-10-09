@@ -26,6 +26,9 @@ THE SOFTWARE.
 
 #if _WIN32
 static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
+#else
+static void agoGraphThreadFunction(LPVOID graph_)
+#endif
 {
 	AgoGraph * graph = (AgoGraph *)graph_;
 	while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
@@ -42,28 +45,10 @@ static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
 	// inform caller about termination
 	graph->threadThreadTerminationState = 2;
 	ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
-	return 0;
-}
-#else
-static void agoGraphThreadFunction(void *graph_)
-{
-    AgoGraph * graph = (AgoGraph *)graph_;
-    while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
-        if (graph->threadThreadTerminationState)
-            break;
-
-        // execute graph
-        graph->status = agoProcessGraph(graph);
-
-        // inform caller
-        graph->threadExecuteCount++;
-        ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
-    }
-    // inform caller about termination
-    graph->threadThreadTerminationState = 2;
-    ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
-}
+#if _WIN32
+    return 0;
 #endif
+}
 
 AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
 {

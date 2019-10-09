@@ -14,6 +14,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   * [RPP Extension](amd_openvx_extensions/amd_rpp)
 * [Applications](#applications)
 * [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+* [RALI](#rali)
 * [Samples](samples#samples)
 * [Toolkit](#toolkit)
 * [Utilities](#utilities)
@@ -21,7 +22,6 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   * [Loom Shell](utilities/loom_shell#radeon-loomshell)
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
-* [RALI](#rali)
 * [Prerequisites](#prerequisites)
 * [Build & Install MIVisionX](#build--install-mivisionx)
 * [Verify the Installation](#verify-the-installation)
@@ -56,6 +56,9 @@ MIVisionX has a number of [applications](apps#applications) built on top of Open
 
 Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-net-model-compiler--optimizer)) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
+## RALI
+The Radeon Augmentation Library [RALI](rali/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
+
 ## Toolkit
 
 [MIVisionX Toolkit](toolkit#mivisionx-toolkit), is a comprehensive set of help tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
@@ -67,9 +70,6 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
-
-## RALI
-The Radeon Augmentation Library [RALI](rali/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
 
 ## Prerequisites
 * CPU: SSE4.1 or above CPU, 64-bit
@@ -304,8 +304,9 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 ## Release Notes
 
 ### Known issues
-* Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
-* Latest MIOpen versions with OpenCL backend has linking errors with MIOpenGEMM. If you are facing problems with MIOpen revert back to V1.8.1 or rerun the MIVisionX-setup script.
+* Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
+* Latest **MIOpen** versions with OpenCL backend has linking errors with **MIOpenGEMM**. If you are facing problems with MIOpen revert back to `1.8.1` or rerun the MIVisionX-setup script.
+* **ROCm `2.8`** and above is know to stall MIVisionX Neural Net Workflow, use **ROCm `2.7.22`** with MIVisionX till the issue is solved. Use [MIVisionX Dockers](https://hub.docker.com/u/mivisionx) with ROCm `2.7.22` if you cannot downgrade ROCm on your machine.
 
 ### Tested configurations
 * Windows 10

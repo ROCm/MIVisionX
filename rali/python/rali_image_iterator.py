@@ -17,10 +17,10 @@ class ImageIterator:
         self.n = pipeline.getOutputImageCount()
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
-        height = self.h*self.b*self.n
-        #print ('h = ', h, 'w = ', self.loader.w)
+        height = self.h*self.n
+        #print ('h = ', height, 'w = ', self.w, 'p = ', self.p)
         self.out_image = np.zeros((height, self.w, self.p), dtype = "uint8")
-        self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h, self.w,), dtype = "float32")
+        self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float32")
     def next(self):
         return self.__next__()
 

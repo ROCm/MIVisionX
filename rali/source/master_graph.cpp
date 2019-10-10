@@ -296,7 +296,6 @@ MasterGraph::internal_image_count()
 size_t
 MasterGraph::remaining_images_count()
 {
-
     std::unique_lock<std::mutex> lock(_count_lock);
     size_t ret = internal_image_count() + _in_process_count;
     return ret;

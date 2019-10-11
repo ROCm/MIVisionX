@@ -17,7 +17,7 @@ class PyTorchIterator:
         color_format = pipeline.getOutputColorFormat()
         self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
 
-        self.out = np.zeros(( self.b*self.n, self.p, self.h, self.w,), dtype = "float32")
+        self.out = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float32")
 
         labels = []
         for image in self.pipe.output_images:

@@ -94,14 +94,12 @@ MasterGraph::run()
             loader_image->pop_name();
     }
 
+    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
     {
         std::unique_lock<std::mutex> lock(_count_lock);
         if (_in_process_count > 0)
             _in_process_count--;
     }
-
-    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
-
     return MasterGraph::Status::OK;
 }
 

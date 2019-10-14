@@ -39,18 +39,20 @@ using namespace cv;
 #define DISPLAY
 using namespace std::chrono;
 
-int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display );
+int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display, int width, int height);
 int main(int argc, const char ** argv)
 {
     // check command-line usage
     const size_t MIN_ARG_COUNT = 2;
-    printf( "Usage: image_augmentation <image-dataset-folder> output_image_name test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
+    printf( "Usage: image_augmentation <image-dataset-folder> output_image_name <width> <height> test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
     if(argc < MIN_ARG_COUNT)
         return -1;
 
     int argIdx = 0;
     const char * path = argv[++argIdx];
     const char * outName = argv[++argIdx];
+    int width = atoi(argv[++argIdx]);
+    int height = atoi(argv[++argIdx]);
 
     bool display = 1;// Display the images
     int rgb = 1;// process color images
@@ -69,12 +71,12 @@ int main(int argc, const char ** argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
 
-    test(test_case, path, outName, rgb, gpu, display);
+    test(test_case, path, outName, rgb, gpu, display, width, height);
 
     return 0;
 }
 
-int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display  )
+int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display, int width, int height)
 {
     size_t num_threads = 1;
     int inputBatchSize = 1;
@@ -126,7 +128,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     }
 
 
-    int resize_w = 224, resize_h = 224;
+    int resize_w = width, resize_h = height;
 
     RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
     RaliImage image0_b = raliRotateFixed(handle, image0, 30, false);
@@ -406,4 +408,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     raliRelease(handle);
     mat_input.release();
     mat_output.release();
+
+    return 0;
 }

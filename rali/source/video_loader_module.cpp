@@ -21,7 +21,7 @@ VideoLoaderModule::set_output_image (Image* output_image)
 }
 
 void
-VideoLoaderModule::initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size)
+VideoLoaderModule::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
 {
 #if 0    
     // Currently only files as storage and FFMEG OpenVX decoding is supported

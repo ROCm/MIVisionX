@@ -16,7 +16,7 @@ public:
     ~ImageReadAndDecode();
     size_t count();
     void reset();
-    void create(ReaderConfig *reader_config, DecoderConfig *decoder_config);
+    void create(ReaderConfig reader_config, DecoderConfig decoder_config);
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     LoaderModuleStatus load(
@@ -37,18 +37,17 @@ private:
      * or closest desired size
     */ 
     LoaderModuleStatus decode(
-        unsigned char* input_buff,
-        size_t size,
-        unsigned char *output_buff,
-        int output_width, 
-        int output_height, 
-        Decoder::ColorFormat color_format, 
-        int output_planes);
+            unsigned char* input_buff,
+            size_t size,
+            unsigned char *output_buff,
+            unsigned int output_width,
+            unsigned int output_height,
+            Decoder::ColorFormat color_format,
+            unsigned int output_planes);
 
     std::shared_ptr<Decoder> _decoder;
     std::shared_ptr<Reader> _reader;
     std::vector<unsigned char> _compressed_buff;
-    unsigned _compressed_size;
     static const size_t MAX_COMPRESSED_SIZE = 2*1024*1024; // 2 Meg
     TimingDBG _file_load_time, _decode_time;
 };

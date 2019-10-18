@@ -4,101 +4,115 @@
 
 FileSourceReader::FileSourceReader() 
 {
-    m_src_dir = nullptr;
-    m_entity = nullptr;
-    m_curr_file_idx = 0;
-    m_current_file_size = 0;
-    m_current_fPtr = nullptr;
+    _src_dir = nullptr;
+    _entity = nullptr;
+    _curr_file_idx = 0;
+    _current_file_size = 0;
+    _current_fPtr = nullptr;
+    _loop = false;
 }
 
 unsigned FileSourceReader::count() 
 {
-    int ret = ((int)m_file_names.size() - m_curr_file_idx);
+    if(_loop)
+        return _file_names.size();
+
+    int ret = ((int)_file_names.size() -_read_counter);
     return ((ret < 0) ? 0 : ret);
 }
 
-Reader::Status FileSourceReader::initialize(ReaderConfig* desc) 
+Reader::Status FileSourceReader::initialize(ReaderConfig desc)
 {
-    auto file_reader_desc = dynamic_cast<FileSourceReaderConfig*>(desc);
-    m_folder_path = file_reader_desc->folder_path;
-    _read_offset = file_reader_desc->read_offset;
-    _read_interval = file_reader_desc->read_interval;
+    _folder_path = desc.path();
+    _read_offset = desc.offset();
+    _read_interval = desc.interval();
+    _loop = desc.loop();
     return open_folder();
 }
-
+void FileSourceReader::incremenet_read_ptr()
+{
+    _read_counter++;
+    _curr_file_idx = (_curr_file_idx + 1) % _file_names.size();
+}
 size_t FileSourceReader::open() 
 {
-    auto file_path = m_file_names[m_curr_file_idx++];// Get next file name 
-
+    auto file_path = _file_names[_curr_file_idx];// Get next file name
+    incremenet_read_ptr();
     _last_id= file_path;
-    unsigned last_slash_idx = _last_id.find_last_of("\\/");
+    auto last_slash_idx = _last_id.find_last_of("\\/");
     if (std::string::npos != last_slash_idx)
     {
         _last_id.erase(0, last_slash_idx + 1);
     }
+
+    _current_fPtr = fopen(file_path.c_str(), "rb");// Open the file,
     
-    m_current_fPtr = fopen(file_path.c_str(), "rb");// Open the file, 
-    
-    if(!m_current_fPtr) // Check if it is ready for reading
+    if(!_current_fPtr) // Check if it is ready for reading
         return 0;
     
-    fseek(m_current_fPtr, 0 , SEEK_END);// Take the file read pointer to the end
+    fseek(_current_fPtr, 0 , SEEK_END);// Take the file read pointer to the end
 
-    m_current_file_size = ftell(m_current_fPtr);// Check how many bytes are there between and the current read pointer position (end of the file)
+    _current_file_size = ftell(_current_fPtr);// Check how many bytes are there between and the current read pointer position (end of the file)
     
-    if(m_current_file_size == 0) 
+    if(_current_file_size == 0)
     { // If file is empty continue
-        fclose(m_current_fPtr);
-        m_current_fPtr = 0;
+        fclose(_current_fPtr);
+        _current_fPtr = nullptr;
         return 0;
     }
     
-    fseek(m_current_fPtr, 0 , SEEK_SET);// Take the file pointer back to the start
+    fseek(_current_fPtr, 0 , SEEK_SET);// Take the file pointer back to the start
 
-    return m_current_file_size;
+    return _current_file_size;
 }
 
 size_t FileSourceReader::read(unsigned char* buf, size_t read_size)
 {
-    if(!m_current_fPtr)
+    if(!_current_fPtr)
         return 0;
 
     // Requested read size bigger than the file size? just read as many bytes as the file size
-    read_size = (read_size > m_current_file_size) ? m_current_file_size: read_size;
+    read_size = (read_size > _current_file_size) ? _current_file_size : read_size;
 
-    size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, m_current_fPtr);
+    size_t actual_read_size = fread(buf, sizeof(unsigned char), read_size, _current_fPtr);
     return actual_read_size;
 }
 
 int FileSourceReader::close() 
 {
-    if(!m_current_fPtr)
-        return 0;
-    fclose(m_current_fPtr);
-    m_current_fPtr = 0;
-    return 0;
+    return release();
 }
 
 FileSourceReader::~FileSourceReader() 
 {
-    close();
+    release();
 }
 
+int
+FileSourceReader::release()
+{
+    if(!_current_fPtr)
+        return 0;
+    fclose(_current_fPtr);
+    _current_fPtr = nullptr;
+    return 0;
+}
 
 void FileSourceReader::reset() 
 {
-    m_curr_file_idx = 0;
+    _read_counter = 0;
+    _curr_file_idx = 0;
 }
 
 Reader::Status FileSourceReader::open_folder()
 {
-    if ((m_src_dir = opendir (m_folder_path.c_str())) == NULL)
-        THROW("ERROR: Failed opening the directory at " +m_folder_path);
+    if ((_src_dir = opendir (_folder_path.c_str())) == nullptr)
+        THROW("ERROR: Failed opening the directory at " + _folder_path);
 
     size_t read_counter = 0;
-    while((m_entity = readdir (m_src_dir)) != NULL)
+    while((_entity = readdir (_src_dir)) != nullptr)
     {
-        if(m_entity->d_type != DT_REG)
+        if(_entity->d_type != DT_REG)
             continue;
             
         if(++read_counter <= _read_offset)
@@ -106,19 +120,18 @@ Reader::Status FileSourceReader::open_folder()
         
         if((read_counter - _read_offset - 1)% _read_interval != 0)
             continue;
-        //TODO: Add checking type, just files, not directories are needed
 
-        std::string file_path = m_folder_path;
+        std::string file_path = _folder_path;
         file_path.append("/");
-        file_path.append(m_entity->d_name);
-        m_file_names.push_back(file_path);
+        file_path.append(_entity->d_name);
+        _file_names.push_back(file_path);
     }
-    if(m_file_names.size() > 0 )
-        LOG("Total of "+TOSTR(m_file_names.size())+" images loaded from "+ m_folder_path )
+    if(!_file_names.empty())
+        LOG("Total of " + TOSTR(_file_names.size()) + " images loaded from " + _folder_path )
     else
-        THROW("Could not find any file in "+m_folder_path)
+        THROW("Could not find any file in " + _folder_path)
 
-    m_curr_file_idx = 0;
-    closedir(m_src_dir);
+    _curr_file_idx = 0;
+    closedir(_src_dir);
     return Reader::Status::OK;
 }

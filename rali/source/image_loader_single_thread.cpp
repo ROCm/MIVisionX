@@ -5,27 +5,18 @@
 #include "image_read_and_decode.h"
 #include "vx_ext_amd.h"
 
-ImageLoaderSingleThread::ImageLoaderSingleThread(DeviceResources ocl):
-_circ_buff(ocl, CIRC_BUFFER_DEPTH)
+ImageLoaderSingleThread::ImageLoaderSingleThread(DeviceResources dev_resources):
+_circ_buff(dev_resources, CIRC_BUFFER_DEPTH)
 {
+    _output_image = nullptr;
+    _mem_type = RaliMemType::HOST;
     _running = 0;
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
     _ready = false;
 }
-void ImageLoaderSingleThread::set_path(const std::string& image_folder)
-{
-    _image_folder = image_folder;
-}
-void ImageLoaderSingleThread::set_load_offset(size_t offset)
-{
-    _load_offset = offset;
-}
-void ImageLoaderSingleThread::set_load_interval(size_t interval)
-{ 
-    _load_interval = interval;  
-}
+
 ImageLoaderSingleThread::~ImageLoaderSingleThread()
 {
     de_init();
@@ -80,8 +71,7 @@ ImageLoaderSingleThread::set_output_image (Image* output_image)
 }
 
 void
-ImageLoaderSingleThread::initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
-                                    unsigned batch_size)
+ImageLoaderSingleThread::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
 {
     if(_is_initialized)
         WRN("Create function is already called and loader module is initialized")
@@ -89,12 +79,11 @@ ImageLoaderSingleThread::initialize(StorageType storage_type, DecoderType decode
     _mem_type = mem_type;
     _batch_size = batch_size;
     _image_loader = std::make_shared<ImageReadAndDecode>();
-    auto reader_config = FileSourceReaderConfig(_image_folder, _load_offset, _load_interval);
-    auto decoder_config = TurboJpegDecoderConfig();
     try
     {
-        _image_loader->create(&reader_config, &decoder_config);
-    } catch(const std::exception& e)
+        _image_loader->create(reader_cfg, decoder_cfg);
+    }
+    catch(const std::exception& e)
     {
         de_init();
         throw;

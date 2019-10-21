@@ -36,6 +36,7 @@ private:
     CircularBuffer _circ_buff;
     bool _is_initialized;
     bool _ready;
+    bool _loop;
     const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;
 

@@ -27,6 +27,10 @@ ImageLoaderSingleThread::count()
 {
     // see load_routine() function for details on the need for the mutex used here
     std::unique_lock<std::mutex> lock(_lock);
+    
+    if(_loop)
+        return _image_loader->count();
+
     return _image_loader->count() + _circ_buff.level();
 }
 
@@ -78,6 +82,7 @@ ImageLoaderSingleThread::initialize(ReaderConfig reader_cfg, DecoderConfig decod
 
     _mem_type = mem_type;
     _batch_size = batch_size;
+    _loop = reader_cfg.loop();
     _image_loader = std::make_shared<ImageReadAndDecode>();
     try
     {

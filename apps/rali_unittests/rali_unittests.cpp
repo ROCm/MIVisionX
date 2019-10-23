@@ -99,6 +99,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
 
+    raliSetSeed(0);
+
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
     RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);
     RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
@@ -358,7 +360,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format == RaliImageColor::RALI_COLOR_RGB24) ? 3 : 1);
-    const unsigned number_of_cols = 1920 / w;
+    const unsigned number_of_cols = 1;
     auto cv_color_format = ((color_format == RaliImageColor::RALI_COLOR_RGB24) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);

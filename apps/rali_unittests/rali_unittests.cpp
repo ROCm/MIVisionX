@@ -117,9 +117,9 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     if (decode_max_height <= 0 || decode_max_width <= 0)
-        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false);
+        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false);
     else
-        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false,
+        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 
     if (raliGetStatus(handle) != RALI_OK) {
@@ -358,7 +358,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format == RaliImageColor::RALI_COLOR_RGB24) ? 3 : 1);
-    const unsigned number_of_cols = 1920 / w;
+    const unsigned number_of_cols = 1;//1920 / w;
     auto cv_color_format = ((color_format == RaliImageColor::RALI_COLOR_RGB24) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);

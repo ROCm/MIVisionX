@@ -5,20 +5,22 @@
 enum class DecoderType
 {
     TURBO_JPEG = 0,//!< Can only decode
-    OPEN_CV = 1,//!< OpenCV can decode compressed images of different type
     OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
 };
 
 
 
-
-class DecoderConfig {
+class DecoderConfig
+{
 public:
-    virtual DecoderType type() = 0;
+    explicit DecoderConfig(DecoderType type):_type(type){}
+    virtual DecoderType type() {return _type; };
+    DecoderType _type = DecoderType::TURBO_JPEG;
 };
 
 
-class Decoder {
+class Decoder
+{
 public:
 
     enum class Status {

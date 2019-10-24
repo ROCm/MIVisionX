@@ -29,7 +29,7 @@ class RaliLib:
 
         self.raliJpegFileInput = self.lib.raliJpegFileSource
         self.raliJpegFileInput.restype = ctypes.c_void_p
-        self.raliJpegFileInput.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_uint, ctypes.c_bool, ctypes.c_int, ctypes.c_uint, ctypes.c_uint]
+        self.raliJpegFileInput.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int, ctypes.c_uint, ctypes.c_bool, ctypes.c_bool, ctypes.c_int, ctypes.c_uint, ctypes.c_uint]
 
         self.startOver = self.lib.raliResetLoaders
         self.startOver.restype = ctypes.c_int

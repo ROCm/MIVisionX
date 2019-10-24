@@ -89,11 +89,11 @@ class RaliGraph():
 
     """ rali_api_data_loader.h """
 
-    def jpegFileInput(self, path, color_format,  is_output,  max_width = 0, max_height= 0, num_threads = 1):
+    def jpegFileInput(self, path, color_format,  is_output, loop = False, max_width = 0, max_height= 0, num_threads = 1):
         if max_width > 0 and max_height > 0:
-            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, self.ImageSizeEvaluationPolicy['USER_GIVEN_SIZE'], max_width, max_height, 0)
+            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, loop, self.ImageSizeEvaluationPolicy['USER_GIVEN_SIZE'], max_width, max_height, 0)
         else:
-            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, self.ImageSizeEvaluationPolicy['MOST_FREQUENT_SIZE'], 0, 0, 0)
+            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, loop, self.ImageSizeEvaluationPolicy['MOST_FREQUENT_SIZE'], 0, 0, 0)
 
         out_img = RaliImage(out)
         if is_output:

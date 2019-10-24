@@ -9,16 +9,13 @@
 
 class ImageLoaderSingleThread : public LoaderModule {
 public:
-    explicit ImageLoaderSingleThread(DeviceResources ocl);
+    explicit ImageLoaderSingleThread(DeviceResources dev_resources);
     ~ImageLoaderSingleThread() override;
     LoaderModuleStatus load_next() override;
-    void initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type, unsigned batch_size) override;
+    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size) override;
     void set_output_image (Image* output_image) override;
     size_t count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
-    void set_load_offset(size_t offset);
-    void set_load_interval(size_t interval);
-    void set_path(const std::string &image_folder);
     std::vector<long long unsigned> timing() override;
     LoaderModuleStatus start_loading();
 private:
@@ -28,9 +25,9 @@ private:
     LoaderModuleStatus update_output_image();
     LoaderModuleStatus load_routine();
     Image* _output_image;
-    int _output_mem_size;
+    size_t _output_mem_size;
     int _running;
-    int _batch_size;
+    size_t _batch_size;
     std::mutex _lock;
     std::thread _load_thread;
     RaliMemType _mem_type;
@@ -39,9 +36,7 @@ private:
     CircularBuffer _circ_buff;
     bool _is_initialized;
     bool _ready;
-    std::string _image_folder;
-    size_t _load_offset = 0;
-    size_t _load_interval = 1;
+    bool _loop;
     const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;
 

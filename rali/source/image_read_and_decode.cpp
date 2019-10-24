@@ -37,7 +37,6 @@ ImageReadAndDecode::ImageReadAndDecode():
     _file_load_time("FileLoadTime", DBG_TIMING ),
     _decode_time("DecodeTime", DBG_TIMING)
 {
-    _compressed_size = 0;
 }
 
 ImageReadAndDecode::~ImageReadAndDecode()
@@ -47,7 +46,7 @@ ImageReadAndDecode::~ImageReadAndDecode()
 }   
 
 void
-ImageReadAndDecode::create(ReaderConfig *reader_config, DecoderConfig *decoder_config)
+ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_config)
 {
     // Can initialize it to any decoder types if needed
     _compressed_buff.resize(MAX_COMPRESSED_SIZE);
@@ -144,10 +143,10 @@ ImageReadAndDecode::load(unsigned char* buff,
 LoaderModuleStatus ImageReadAndDecode::decode(unsigned char* input_buff,
                                               size_t size,
                                               unsigned char *output_buff,
-                                              int output_width,
-                                              int output_height,
+                                              unsigned output_width,
+                                              unsigned output_height,
                                               Decoder::ColorFormat color_format,
-                                              int output_planes)
+                                              unsigned output_planes)
 {
 
 
@@ -159,7 +158,7 @@ LoaderModuleStatus ImageReadAndDecode::decode(unsigned char* input_buff,
         return LoaderModuleStatus::DECODE_FAILED;
 
     
-    if(wd != output_width || ht != output_height) {
+    if((unsigned)wd != output_width || (unsigned)ht != output_height) {
         // Seeting the whole buffer to zero in case resizing to exact output dimension is not possible.
         // It's optional in case the image padding does not matter to be 0 value.
         // TODO: make padding and it's value an input option to this class

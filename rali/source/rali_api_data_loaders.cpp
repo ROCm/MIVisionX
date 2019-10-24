@@ -24,7 +24,7 @@ find_max_image_size (RaliImageSizeEvaluationPolicy decode_size_policy, const std
 
     ImageSourceEvaluator source_evaluator;
     source_evaluator.set_size_evaluation_policy(translate_image_size_policy(decode_size_policy));
-    if(source_evaluator.create(StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path) != ImageSourceEvaluatorStatus::OK)
+    if(source_evaluator.create(ReaderConfig(StorageType::FILE_SYSTEM, source_path), DecoderConfig(DecoderType::TURBO_JPEG)) != ImageSourceEvaluatorStatus::OK)
         THROW("Initializing file source input evaluator failed ")
     auto max_width = source_evaluator.max_width();
     auto max_height = source_evaluator.max_height();
@@ -59,6 +59,7 @@ raliJpegFileSource(
         RaliImageColor rali_color_format,
         unsigned num_threads,
         bool is_output,
+        bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height)
@@ -90,7 +91,7 @@ raliJpegFileSource(
 
         output = rali_context->master_graph->create_loader_output_image(info);
 
-        rali_context->master_graph->add_node<JpegFileNode>({}, {output})->init( source_path, num_threads);
+        rali_context->master_graph->add_node<JpegFileNode>({}, {output})->init(num_threads, source_path, loop);
 
         if(is_output)
         {

@@ -99,6 +99,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
 
+    raliSetSeed(0);
+
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
     RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);
     RaliIntParam color_temp_adj = raliCreateIntParameter(-50);

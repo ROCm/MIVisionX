@@ -50,7 +50,7 @@ bool validate_uniform_rand_param(pParam  rand_obj)
 
 ParameterFactory::ParameterFactory()
 {
-    m_seed = std::time(nullptr);
+    m_seed = 0;
     std::srand(m_seed);
 }
 

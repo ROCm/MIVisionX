@@ -29,6 +29,7 @@ private:
     int _running;
     size_t _batch_size;
     std::mutex _lock;
+    std::mutex _names_buff_lock;
     std::thread _load_thread;
     RaliMemType _mem_type;
     std::queue<std::vector<std::string>> _circ_buff_names;//!< Stores the loaded images names (data is stored in the _circ_buff)

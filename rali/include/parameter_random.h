@@ -7,6 +7,7 @@
 #include <numeric>// std::inner_product, std::accumulate
 #include <algorithm> // std::remove_if
 #include <vector>
+#include <thread>
 #include "parameter.h"
 
 template <typename T>
@@ -138,7 +139,7 @@ struct CustomRand: public Parameter<T>
         }
         else {
             // Generate a value between [0 1]
-            double rand_val = (double) rand() / (double) RAND_MAX;
+            double rand_val = (double) std::rand() / (double) RAND_MAX;
 
             // Find the iterators pointing to the first element bigger than idx
             auto it = std::upper_bound(_comltv_dist.begin(), _comltv_dist.end(), rand_val);

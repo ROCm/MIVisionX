@@ -138,8 +138,10 @@ ImageLoaderSingleThread::load_routine()
 
             if(load_status == LoaderModuleStatus::OK)
             {
+                std::unique_lock<std::mutex> lock(_names_buff_lock);
+                // Pushing to the _circ_buff and _circ_buff_names must happen all at the same time
                 _circ_buff.push();
-                _image_counter += _output_image->info().batch_size();
+                 _image_counter += _output_image->info().batch_size();
                 _circ_buff_names.push(_image_names);
             }
         }
@@ -196,10 +198,15 @@ ImageLoaderSingleThread::update_output_image()
         if(_output_image->swap_handle(_circ_buff.get_read_buffer_host()) != 0)
             return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
     }
+    {
+        // Pop from _circ_buff and _circ_buff_names happens at the same time
+        std::unique_lock<std::mutex> lock(_names_buff_lock);
+        _output_image->set_names(_circ_buff_names.front());
+        _circ_buff_names.pop();
+        _circ_buff.pop();
+    }
 
-    _output_image->set_names(_circ_buff_names.front());
-    _circ_buff_names.pop();
-    _circ_buff.pop();
+
 
     return status;
 }

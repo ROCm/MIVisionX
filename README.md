@@ -114,7 +114,7 @@ For the convenience of the developer, we here provide the setup script which wil
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --miopen    [MIOpen Version - optional (default:2.1.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
@@ -176,7 +176,7 @@ cd MIVisionX
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --miopen    [MIOpen Version - optional (default:2.1.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
@@ -305,16 +305,14 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 
 ### Known issues
 * Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
-* Latest **MIOpen** versions with OpenCL backend has linking errors with **MIOpenGEMM**. If you are facing problems with MIOpen revert back to `1.8.1` or rerun the MIVisionX-setup script.
-* **ROCm `2.8`** and above is know to stall MIVisionX Neural Net Workflow, use **ROCm `2.7.22`** with MIVisionX till the issue is solved. Use [MIVisionX Dockers](https://hub.docker.com/u/mivisionx) with ROCm `2.7.22` if you cannot downgrade ROCm on your machine.
 
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.7.22`
+* ROCm: rocm-dkms - `2.9.6`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [1.8.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.8.1)
+* MIOpen - [2.1.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.1.0)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

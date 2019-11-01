@@ -84,7 +84,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     int decode_max_height = 0;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , "<< (rgb ? " Color ":" Grayscale ")<< std::endl;
-
+    raliSetSeed(0);
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24
                                              : RaliImageColor::RALI_COLOR_U8;
 
@@ -99,7 +99,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
 
-    raliSetSeed(0);
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
     RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);

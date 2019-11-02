@@ -204,6 +204,10 @@ void MasterGraph::release()
 MasterGraph::Status
 MasterGraph::update_node_parameters()
 {
+    // Randomize random parameters
+    ParameterFactory::instance()->renew_parameters();
+
+    // Apply renewed parameters to VX parameters used in augmentation
     for(auto& node: _nodes)
         node->update_parameters();
 
@@ -495,8 +499,7 @@ void MasterGraph::output_routine()
             continue;
         }
 
-        // Randomize parameters
-        ParameterFactory::instance()->renew_parameters();
+
         _process_time.start();
         {
             std::unique_lock<std::mutex> lock(_count_lock);

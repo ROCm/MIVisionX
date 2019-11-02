@@ -58,7 +58,7 @@ public:
 
     template<typename T>
     Parameter<T>* create_uniform_rand_param(T start, T end){
-        auto gen = new UniformRand<T>(start, end);
+        auto gen = new UniformRand<T>(start, end, _seed);
         _parameters.insert(gen);
         return gen;
     }
@@ -82,7 +82,7 @@ public:
     IntParam* create_single_value_int_param(int value);
     FloatParam* create_single_value_float_param(float value);
 private:
-    long long unsigned m_seed; 
+    long long unsigned _seed;
     std::set<pParamCore> _parameters; //<! Keeps the random generators used to randomized the augmentation parameters
     static ParameterFactory* _instance;
     static std::mutex _mutex; 

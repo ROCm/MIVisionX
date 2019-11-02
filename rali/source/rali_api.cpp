@@ -24,7 +24,6 @@ THE SOFTWARE.
 #include <string>
 #include <exception>
 #include <parameter_factory.h>
-
 #include "commons.h"
 #include "context.h"
 #include "rali_api.h"

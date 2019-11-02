@@ -3,7 +3,6 @@
 #include "node.h"
 #include "graph.h"
 
-
 class FisheyeNode : public Node
 {
 public:

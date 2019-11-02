@@ -108,10 +108,10 @@ MasterGraph::create_single_graph()
 {
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations
     _graph = std::make_shared<Graph>(_context, _affinity, 0, _gpu_id);
-    for(auto node: _nodes)
+    for(auto& node: _nodes)
     {
         // Any image not yet created can be created as virtual image
-        for(auto image: node->output())
+        for(auto& image: node->output())
             if(image->info().type() == ImageInfo::Type::UNKNOWN)
             {
                 image->create_virtual(_context, _graph->get());

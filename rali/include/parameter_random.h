@@ -36,6 +36,7 @@ public:
     };
     void renew() override
     {
+        std::unique_lock<std::mutex> lock(_lock);
         auto val =_generator();
 
         if(single_value())
@@ -49,6 +50,7 @@ public:
         }
     }
     int update(T start, T end) {
+        std::unique_lock<std::mutex> lock(_lock);
         if(end < start)
             end = start;
 
@@ -65,7 +67,7 @@ private:
     T _end;
     T _updated_val;
     std::mt19937 _generator;
-
+    std::mutex _lock;
 };
 
 
@@ -90,6 +92,8 @@ struct CustomRand: public Parameter<T>
         size_t size
     )
     {
+        std::unique_lock<std::mutex> lock(_lock);
+
         if(size == 0)
             return -1;
 
@@ -135,6 +139,7 @@ struct CustomRand: public Parameter<T>
     }
     void renew() override
     {
+        std::unique_lock<std::mutex> lock(_lock);
         if(single_value())
         {
             // If there is only a single value possible for the random variable
@@ -170,4 +175,5 @@ private:
     double _mean;
     T _updated_val;
     std::mt19937 _generator;
+    std::mutex _lock;
 };

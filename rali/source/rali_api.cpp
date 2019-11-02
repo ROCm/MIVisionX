@@ -60,6 +60,7 @@ raliCreate(
         };
         rali_context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
         // Reset seed in case it's being randomized during context creation
+        ParameterFactory::instance()->set_seed(ParameterFactory::instance()->get_seed());
     }
     catch(const std::exception& e)
     {

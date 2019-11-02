@@ -50,7 +50,8 @@ bool validate_uniform_rand_param(pParam  rand_obj)
 
 ParameterFactory::ParameterFactory()
 {
-    _seed = 0;
+    m_seed = 0;
+    std::srand(m_seed);
 }
 
 ParameterFactory* ParameterFactory::instance() {
@@ -90,18 +91,19 @@ void ParameterFactory::renew_parameters()
 unsigned long long 
 ParameterFactory::get_seed()
 {   
-    return _seed;
+    return m_seed; 
 }
 
 void 
 ParameterFactory::set_seed(long long unsigned seed)
-{
-    _seed = seed;
+{ 
+    m_seed = seed;
+    std::srand(m_seed); 
 }
 
 IntParam* ParameterFactory::create_uniform_int_rand_param(int start, int end)
 {
-    auto gen = new UniformRand<int>(start, end, _seed);
+    auto gen = new UniformRand<int>(start, end);
     auto ret = new IntParam(gen, RaliParameterType::RANDOM_UNIFORM);
     _parameters.insert(gen);
     return ret;
@@ -109,7 +111,7 @@ IntParam* ParameterFactory::create_uniform_int_rand_param(int start, int end)
 
 FloatParam* ParameterFactory::create_uniform_float_rand_param(float start, float end)
 {
-    auto gen = new UniformRand<float>(start, end, _seed);
+    auto gen = new UniformRand<float>(start, end);
     auto ret = new FloatParam(gen, RaliParameterType::RANDOM_UNIFORM);
     _parameters.insert(gen);
     return ret;
@@ -118,7 +120,7 @@ FloatParam* ParameterFactory::create_uniform_float_rand_param(float start, float
 
 IntParam* ParameterFactory::create_custom_int_rand_param(const int *value, const double *frequencies, size_t size)
 {
-    auto gen = new CustomRand<int>(value, frequencies, size, _seed);
+    auto gen = new CustomRand<int>(value, frequencies, size);
     auto ret = new IntParam(gen, RaliParameterType::RANDOM_CUSTOM);
     _parameters.insert(gen);
     return ret;
@@ -126,7 +128,7 @@ IntParam* ParameterFactory::create_custom_int_rand_param(const int *value, const
 
 FloatParam* ParameterFactory::create_custom_float_rand_param(const float *value, const double *frequencies, size_t size)
 {
-    auto gen = new CustomRand<float>(value, frequencies, size, _seed);
+    auto gen = new CustomRand<float>(value, frequencies, size);
     auto ret = new FloatParam(gen, RaliParameterType::RANDOM_CUSTOM);
     _parameters.insert(gen);
     return ret;

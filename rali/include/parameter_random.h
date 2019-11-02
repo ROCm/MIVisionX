@@ -11,7 +11,6 @@
 #include <random>
 #include "parameter.h"
 #include "log.h"
-#include <iostream>
 template <typename T>
 class UniformRand: public Parameter<T>
 {

@@ -3,12 +3,12 @@
 #include "parameter_factory.h"
 
 void RALI_API_CALL 
-raliSetSeed(long long unsigned seed) 
+raliSetSeed(unsigned seed)
 {
     ParameterFactory::instance()->set_seed(seed);
 }
 
-long long unsigned RALI_API_CALL
+unsigned RALI_API_CALL
 raliGetSeed() 
 {
     return ParameterFactory::instance()->get_seed();

@@ -22,8 +22,8 @@ public:
         renew();
     }
 
-    explicit UniformRand(T start):
-            UniformRand(start, start) {}
+    explicit UniformRand(T start, unsigned seed = 0):
+            UniformRand(start, start, seed) {}
 
     T default_value() const override
     {

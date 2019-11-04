@@ -87,14 +87,14 @@ void ParameterFactory::renew_parameters()
                 rand_obj);
 }
 
-unsigned long long 
+unsigned
 ParameterFactory::get_seed()
 {   
     return _seed;
 }
 
 void 
-ParameterFactory::set_seed(long long unsigned seed)
+ParameterFactory::set_seed(unsigned seed)
 {
     _seed = seed;
 }

@@ -3,6 +3,7 @@
 #include "parameter_factory.h"
 #include "parameter_vx.h"
 
+
 class GammaNode : public Node
 {
 public:

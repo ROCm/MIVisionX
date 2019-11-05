@@ -382,4 +382,18 @@ extern "C"  RaliImage  RALI_API_CALL raliExposure(RaliContext context, RaliImage
 /// \param is_output
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliExposureFixed(RaliContext context, RaliImage input,float shift,bool is_output);
+
+///
+/// \param context
+/// \param input
+/// \param is_output
+/// \return
+extern "C"  RaliImage  RALI_API_CALL raliCopy(RaliContext context, RaliImage input, bool is_output);
+
+///
+/// \param context
+/// \param input
+/// \param is_output
+/// \return
+extern "C"  RaliImage  RALI_API_CALL raliNop(RaliContext context, RaliImage input, bool is_output);
 #endif //MIVISIONX_RALI_API_AUGMENTATION_H

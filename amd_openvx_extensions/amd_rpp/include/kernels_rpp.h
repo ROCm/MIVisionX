@@ -80,6 +80,7 @@ enum vx_kernel_ext_amd_rpp_e
     VX_KERNEL_RPP_FOG = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x020,
     VX_KERNEL_RPP_NOISESNP = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x021,
     VX_KERNEL_RPP_COPY  = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x0022,
+    VX_KERNEL_RPP_NOP  = VX_KERNEL_BASE(VX_ID_AMD, VX_LIBRARY_RPP) + 0x0023,
 };
 
 //////////////////////////////////////////////////////////////////////

@@ -519,7 +519,7 @@ VX_API_CALL vx_node VX_API_CALL vxExtrppNode_Nop(vx_graph graph, vx_image pSrc, 
                 (vx_reference) pDst,
                 (vx_reference) DEV_TYPE
         };
-            node = createNode(graph, VX_KERNEL_RPP_PIXELATE, params, 3);
+            node = createNode(graph, VX_KERNEL_RPP_NOP, params, 3);
     }
     return node;
 }

@@ -17,6 +17,6 @@ private:
     std::string _message;
 };
 
-
+#define THROW(X) throw RaliException(" { "+std::string(__func__)+" } " + X);
 
 

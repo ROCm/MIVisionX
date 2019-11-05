@@ -5,7 +5,7 @@
 #include <sched.h>
 #include "master_graph.h"
 #include "parameter_factory.h"
-
+#include "ocl_setup.h"
 auto get_ago_affinity_info = []
     (RaliAffinity rali_affinity,
      int cpu_id,
@@ -57,12 +57,24 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         if ((status = vxGetStatus((vx_reference) _context)) != VX_SUCCESS)
             THROW("vxCreateContext failed" + TOSTR(status))
 
+        if(affinity == RaliAffinity::GPU)
+        {
+            cl_context _cl_context = nullptr;
+            cl_device_id _cl_device_id = nullptr;
+            get_device_and_context(gpu_id, &_cl_context, &_cl_device_id, CL_DEVICE_TYPE_GPU);
+            if((status = vxSetContextAttribute(_context,
+                    VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,
+                    &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
+                THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
+        }
+
+
         // Setting attribute to run on CPU or GPU should be called before load kernel module
         if ((status = vxSetContextAttribute(_context,
                                             VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,
                                             &vx_affinity,
                                             sizeof(vx_affinity))) != VX_SUCCESS)
-            THROW("vxSetContextAttribute failed " + TOSTR(status))
+            THROW("vxSetContextAttribute for AMD_AFFINITY failed " + TOSTR(status))
 
         // loading OpenVX RPP modules
         if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)

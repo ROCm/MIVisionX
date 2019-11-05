@@ -289,6 +289,20 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
+    def copy(self, input, is_output):
+        out = self._lib.raliCopy(self.handle, input.obj, is_output)
+        out_img = RaliImage(out)
+        if is_output:
+            self.output_images.append(out_img)
+        return out_img
+
+    def nop(self, input, is_output):
+        out = self._lib.raliNop(self.handle, input.obj, is_output)
+        out_img = RaliImage(out)
+        if is_output:
+            self.output_images.append(out_img)
+        return out_img
+
     """ rali_api_info.h """
 
     def getBatchSize(self):

@@ -63,5 +63,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_ColorTemperature(vx_graph graph, v
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Rain(vx_graph graph, vx_image pSrc, vx_image pDst, vx_float32 rainValue,vx_uint32 rainWidth, vx_uint32 rainHeight, vx_float32 rainTransparency);
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Fog(vx_graph graph, vx_image pSrc, vx_image pDst, vx_float32 fogValue);
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_NoiseSnp(vx_graph graph, vx_image pSrc, vx_image pDst, vx_float32 noiseProbability);
+VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Nop(vx_graph graph, vx_image pSrc, vx_image pDst);
 
 #endif //_VX_EXT_RPP_H_

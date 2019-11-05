@@ -189,6 +189,14 @@ class RaliLib:
         self.raliExposureFixed.restype = ctypes.c_void_p
         self.raliExposureFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_float, ctypes.c_bool]
 
+        self.raliCopy = self.lib.raliCopy
+        self.raliCopy.restype = ctypes.c_void_p
+        self.raliCopy.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+
+        self.raliNop = self.lib.raliNop
+        self.raliNop.restype = ctypes.c_void_p
+        self.raliNop.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+
         """ rali_api_info.h """
         self.raliGetOutputWidth = self.lib.raliGetOutputWidth
         self.raliGetOutputWidth.restype = ctypes.c_int

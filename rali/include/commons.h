@@ -15,6 +15,11 @@ enum class RaliTensorFormat
     NHWC = 0,
     NCHW
 };
+enum class RaliTensorDataType
+{
+    FP32 = 0,
+    FP16
+};
 enum class RaliAffinity
 {
     GPU = 0,

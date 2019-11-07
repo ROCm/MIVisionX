@@ -1,5 +1,6 @@
 RALI_LIB_NAME = 'librali.so'
 from enum import Enum
+from enum import IntEnum
 class ColorFormat(Enum):
     IMAGE_RGB24 = 0
     IMAGE_BGR24 = 1
@@ -12,3 +13,6 @@ class Affinity(Enum):
 class TensorLayout(Enum):
     NHWC = 0
     NCHW = 1
+class TensorDataType(IntEnum):
+	FLOAT32 = 0
+	FLOAT16 = 1

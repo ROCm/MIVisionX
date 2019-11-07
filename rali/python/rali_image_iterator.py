@@ -3,12 +3,13 @@ from  rali_common import *
 import numpy as np
 
 class ImageIterator:
-    def __init__(self, pipeline,tensor_layout = TensorLayout.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0]):
+    def __init__(self, pipeline,tensor_layout = TensorLayout.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype = TensorDataType.FLOAT32):
         self.loader = pipeline
         self.tensor_format =tensor_layout
         self.multiplier = multiplier
         self.offset = offset
         self.reverse_channels = reverse_channels
+        self.tensor_dtype = tensor_dtype
         if pipeline.build() != 0:
             raise Exception('Failed to build the augmentation graph')
         self.w = pipeline.getOutputWidth()
@@ -20,7 +21,10 @@ class ImageIterator:
         height = self.h*self.n
         #print ('h = ', height, 'w = ', self.w, 'p = ', self.p)
         self.out_image = np.zeros((height, self.w, self.p), dtype = "uint8")
-        self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float32")
+        if self.tensor_dtype == TensorDataType.FLOAT32:        
+            self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float32")
+        elif self.tensor_dtype == TensorDataType.FLOAT16:
+            self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float16")
     def next(self):
         return self.__next__()
 
@@ -33,10 +37,10 @@ class ImageIterator:
 
         self.loader.copyToNPArray(self.out_image)
         if(TensorLayout.NCHW == self.tensor_format):
-            self.loader.copyToTensorNCHW(self.out_tensor, self.multiplier, self.offset, self.reverse_channels)
+            self.loader.copyToTensorNCHW(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
-            self.loader.copyToTensorNHWC(self.out_tensor, self.multiplier, self.offset, self.reverse_channels)
-
+            self.loader.copyToTensorNHWC(self.out_tensor, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
+        
         return self.out_image , self.out_tensor
 
     def reset(self):

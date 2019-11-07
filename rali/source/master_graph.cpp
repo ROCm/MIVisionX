@@ -3,9 +3,12 @@
 #include <VX/vx_types.h>
 #include <cstring>
 #include <sched.h>
+#include <half.hpp>
 #include "master_graph.h"
 #include "parameter_factory.h"
 #include "ocl_setup.h"
+using half_float::half;
+
 auto get_ago_affinity_info = []
     (RaliAffinity rali_affinity,
      int cpu_id,
@@ -355,8 +358,8 @@ MasterGraph::copy_output(
 #define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
 
 MasterGraph::Status
-MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
-                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels)
+MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
+                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
     _convert_time.start();
     // Copies to the output context given by the user
@@ -435,20 +438,45 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
             auto in_buffer = (unsigned char*)out_image;
             if(format == RaliTensorFormat::NHWC)
             {
-                auto channel_size  = w * h;
-                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                    for(unsigned i = 0; i < channel_size; i++)
-                        out_ptr[dest_buf_offset+channel_idx+ i*c] =
-                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+                if(output_data_type == RaliTensorDataType::FP32)
+                {
+                    float *output_tensor_32 = static_cast<float *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_32[dest_buf_offset+channel_idx+ i*c] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+                }
+                else if(output_data_type == RaliTensorDataType::FP16)
+                {
+                    half *output_tensor_16 = static_cast<half *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_16[dest_buf_offset+channel_idx+ i*c] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[i*c+c-channel_idx-1]) : (half)(in_buffer[i*c+channel_idx]));
+                }
             }
             if(format == RaliTensorFormat::NCHW)
             {
-                auto channel_size  = w * h;
-                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                    for(unsigned i = 0; i < channel_size; i++)
-                        out_ptr[dest_buf_offset+channel_idx*channel_size + i] =
-                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
-
+                if(output_data_type == RaliTensorDataType::FP32)
+                {
+                    float *output_tensor_32 = static_cast<float *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                }
+                else if(output_data_type == RaliTensorDataType::FP16)
+                {
+                    half *output_tensor_16 = static_cast<half *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_16[dest_buf_offset+channel_idx*channel_size + i] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[c*i+c-channel_idx-1]) : (half)(in_buffer[c*i+channel_idx]));
+                }
 
             }
             dest_buf_offset += single_output_image_size;

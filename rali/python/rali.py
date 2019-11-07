@@ -28,6 +28,7 @@ import numpy as np
 from rali_lib import *
 from rali_image import *
 from rali_parameter import *
+from rali_common import *
 
 RaliFlipAxis =  ('RALI_FLIP_HORIZONTAL','RALI_FLIP_VERTICAL')
 
@@ -335,10 +336,16 @@ class RaliGraph():
         out = np.frombuffer(array, dtype=array.dtype)
         self._lib.copyToOutput(self.handle, np.ascontiguousarray(out, dtype=array.dtype), array.size)
 
-    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels):
+    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
-        self._lib.copyToOutputTensor(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        if tensor_dtype == TensorDataType.FLOAT32:
+            self._lib.copyToOutputTensor32(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
+        elif tensor_dtype == TensorDataType.FLOAT16:
+            self._lib.copyToOutputTensor16(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
 
-    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels):
+    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
-        self._lib.copyToOutputTensor(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        if tensor_dtype == TensorDataType.FLOAT32:
+            self._lib.copyToOutputTensor32(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
+        elif tensor_dtype == TensorDataType.FLOAT16:
+            self._lib.copyToOutputTensor16(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)

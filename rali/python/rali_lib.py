@@ -1,6 +1,7 @@
 import ctypes
 from numpy.ctypeslib import ndpointer
 from rali_common import *
+import numpy as np
 
 
 class RaliLib:
@@ -231,6 +232,11 @@ class RaliLib:
         self.copyToOutput.restype = ctypes.c_int
         self.copyToOutput.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_ubyte, flags="C_CONTIGUOUS")]
 
-        self.copyToOutputTensor = self.lib.raliCopyToOutputTensor
-        self.copyToOutputTensor.restype = ctypes.c_int
-        self.copyToOutputTensor.argtypes = [ctypes.c_void_p, ndpointer(ctypes.c_float, flags="C_CONTIGUOUS"), ctypes.c_uint, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_uint]
+        self.copyToOutputTensor16 = self.lib.raliCopyToOutputTensor16
+        self.copyToOutputTensor16.restype = ctypes.c_int
+        self.copyToOutputTensor16.argtypes = [ctypes.c_void_p, ndpointer(dtype=np.float16, flags="C_CONTIGUOUS"), ctypes.c_uint, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_uint]
+
+        self.copyToOutputTensor32 = self.lib.raliCopyToOutputTensor32
+        self.copyToOutputTensor32.restype = ctypes.c_int
+        self.copyToOutputTensor32.argtypes = [ctypes.c_void_p, ndpointer(dtype=np.float32, flags="C_CONTIGUOUS"), ctypes.c_uint, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_uint]
+        

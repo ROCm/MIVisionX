@@ -68,6 +68,7 @@ vx_status get_kernels_to_publish()
 	STATUS_ERROR_CHECK(ADD_KERENEL(Fog_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(NoiseSnp_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(Copy_Register));
+    STATUS_ERROR_CHECK(ADD_KERENEL(Nop_Register));
 
 	return status;
 }

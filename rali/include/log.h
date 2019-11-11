@@ -1,5 +1,5 @@
 #pragma once
-#define THROW(X) throw RaliException(" { "+std::string(__func__)+" } " + X);
+
 #define TOSTR(X) std::to_string(static_cast<int>(X))
 #define STR(X) std::string(X)
 

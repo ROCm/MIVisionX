@@ -474,7 +474,6 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                     float *output_tensor_32 = static_cast<float *>(out_ptr);
                     auto channel_size  = w * h;
 #if (ENABLE_SIMD && __AVX2__)
-
                     float * B_buf = output_tensor_32 + dest_buf_offset;
                     float * G_buf = B_buf + channel_size;
                     float * R_buf = G_buf + channel_size;
@@ -492,39 +491,31 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                         mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001, 0x80808004, 0x80808007, 0x8080800A);
                         mask_B = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002, 0x80808005, 0x80808008, 0x8080800B);
                     }
-
-                    __m256 pmul0, pmul1, pmul2;
-                    __m256 padd0,padd1,padd2;
-
-                    pmul0 = _mm256_set1_ps(multiplier0);
-                    pmul1 = _mm256_set1_ps(multiplier1);
-                    pmul2 = _mm256_set1_ps(multiplier2);
-
-                    padd0 = _mm256_set1_ps(offset0);
-                    padd1 = _mm256_set1_ps(offset1);
-                    padd2 = _mm256_set1_ps(offset2);
-
-
+                    __m256 pmul0 = _mm256_set1_ps(multiplier0);
+                    __m256 pmul1 = _mm256_set1_ps(multiplier1);
+                    __m256 pmul2 = _mm256_set1_ps(multiplier2);
+                    __m256 padd0 = _mm256_set1_ps(offset0);
+                    __m256 padd1 = _mm256_set1_ps(offset1);
+                    __m256 padd2 = _mm256_set1_ps(offset2);
                     unsigned int alignedLength = (channel_size & ~7);    // multiple of 8
                     unsigned int i=0;
-                    __m256 fR, fG, fB;
 
+                    __m256 fR, fG, fB;
                     for(; i < alignedLength; i+=8) {
                         __m256i pix0 = _mm256_loadu_si256((const __m256i *) in_buffer);
                         pix0 = _mm256_permutevar8x32_epi32(pix0, _mm256_setr_epi32(0, 1, 2, 3, 3, 4, 5, 6));
-                        fB = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_B));
+                        fB = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_R));
                         fG = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_G));
-                        fR = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_R));
+                        fR = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_B));
                         fB = _mm256_mul_ps(fB, pmul0);
                         fG = _mm256_mul_ps(fG, pmul1);
                         fR = _mm256_mul_ps(fR, pmul2);
                         fB = _mm256_add_ps(fB, padd0);
                         fG = _mm256_add_ps(fG, padd1);
                         fR = _mm256_add_ps(fR, padd2);
-
-                        _mm_storeu_ps(B_buf, _mm256_castps256_ps128(fB));
-                        _mm_storeu_ps(G_buf, _mm256_castps256_ps128(fG));
-                        _mm_storeu_ps(R_buf, _mm256_castps256_ps128(fR));
+                        _mm256_storeu_ps(B_buf, fB);
+                        _mm256_storeu_ps(G_buf, fG);
+                        _mm256_storeu_ps(R_buf, fR);
                         B_buf += 8; G_buf += 8; R_buf += 8;
                         in_buffer += 24;
                     }
@@ -533,6 +524,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                         *G_buf++ = (in_buffer[1] * multiplier1) + offset1;
                         *R_buf++ = (in_buffer[2] * multiplier2) + offset1;
                     }
+
 #else
                     for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                         for(unsigned i = 0; i < channel_size; i++)

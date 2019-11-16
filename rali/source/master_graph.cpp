@@ -473,7 +473,17 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                 {
                     float *output_tensor_32 = static_cast<float *>(out_ptr);
                     auto channel_size  = w * h;
+                    if(c != 3)
+                    {
+                        for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                            for(unsigned i = 0; i < channel_size; i++)
+                                output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
+                                        offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                    }
+                    else
+                    {
 #if (ENABLE_SIMD && __AVX2__)
+
                     float * B_buf = output_tensor_32 + dest_buf_offset;
                     float * G_buf = B_buf + channel_size;
                     float * R_buf = G_buf + channel_size;
@@ -531,6 +541,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
                                     offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
 #endif
+                    }
                 }
                 else if(output_data_type == RaliTensorDataType::FP16)
                 {

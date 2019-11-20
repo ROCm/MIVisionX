@@ -10,6 +10,23 @@ vx_uint32 getGraphAffinity(vx_graph graph)
     return affinity.device_type;
 }
 
+VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copy(vx_graph graph, vx_image pSrc, vx_image pDst)
+{
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if(vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 dev_type = getGraphAffinity(graph);
+        vx_scalar DEV_TYPE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &dev_type);
+        vx_reference params[] = {
+                (vx_reference) pSrc,
+                (vx_reference) pDst,
+                (vx_reference) DEV_TYPE
+        };
+        node = createNode(graph, VX_KERNEL_RPP_COPY, params, 3);
+    }
+    return node;
+}
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_brightness(vx_graph graph, vx_image pSrc, vx_image pDst, vx_float32 alpha, vx_int32 beta)
 {
     vx_node node = NULL;
@@ -364,7 +381,7 @@ VX_API_CALL vx_node vxExtrppNode_LensCorrection(vx_graph graph, vx_image pSrc, v
     return node;
 }
 
-//Creating node for LensCorrection effect
+//Creating node for Pixelate effect
 VX_API_CALL vx_node VX_API_CALL vxExtrppNode_Pixelate(vx_graph graph, vx_image pSrc, vx_image pDst)
 {
     vx_node node = NULL;
@@ -487,6 +504,24 @@ VX_API_CALL vx_node VX_API_CALL vxExtrppNode_NoiseSnp(vx_graph graph, vx_image p
     }
     return node;
 
+}
+
+//Creating node for Pixelate effect
+VX_API_CALL vx_node VX_API_CALL vxExtrppNode_Nop(vx_graph graph, vx_image pSrc, vx_image pDst)
+{
+    vx_node node = NULL;
+    vx_context context = vxGetContext((vx_reference)graph);
+    if(vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_uint32 dev_type = getGraphAffinity(graph);
+        vx_scalar DEV_TYPE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &dev_type);
+            vx_reference params[] = {
+                (vx_reference) pSrc,
+                (vx_reference) pDst,
+                (vx_reference) DEV_TYPE
+        };
+            node = createNode(graph, VX_KERNEL_RPP_NOP, params, 3);
+    }
+    return node;
 }
 
 // utility functions

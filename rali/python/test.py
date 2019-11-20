@@ -2,8 +2,10 @@
 
 from rali import *
 from rali_image_iterator import *
+from rali_common import *
 import cv2
 import time
+import sys
 
 # Defining pipeline
 
@@ -50,7 +52,7 @@ def main():
     # Pipeline creation
     loader = DataLoader(input_path, batchSize, ColorFormat.IMAGE_RGB24, Affinity.PROCESS_GPU)
 
-    imageIterator = ImageIterator(loader)
+    imageIterator = ImageIterator(loader, tensor_dtype=TensorDataType.FLOAT32)
 
     print "Input shape", loader.input.shape()
 

@@ -2,8 +2,12 @@
 #include <vx_ext_amd.h>
 #include <VX/vx_types.h>
 #include <cstring>
+#include <sched.h>
+#include <half.hpp>
 #include "master_graph.h"
 #include "parameter_factory.h"
+#include "ocl_setup.h"
+using half_float::half;
 
 auto get_ago_affinity_info = []
     (RaliAffinity rali_affinity,
@@ -28,10 +32,12 @@ auto get_ago_affinity_info = []
 
 MasterGraph::~MasterGraph()
 {
+    stop_processing();
     release();
 }
 
 MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
+        _ring_buffer(OUTPUT_RING_BUFFER_DEPTH),
         _output_tensor(nullptr),
         _graph(nullptr),
         _affinity(affinity),
@@ -40,7 +46,9 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _batch_size(batch_size),
         _cpu_threads(cpu_threads),
         _process_time("Process Time"),
-        _graph_verfied(false)
+        _first_run(true),
+        _processing(false),
+        _in_process_count(0)
 {
     try {
         vx_status status;
@@ -52,21 +60,33 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         if ((status = vxGetStatus((vx_reference) _context)) != VX_SUCCESS)
             THROW("vxCreateContext failed" + TOSTR(status))
 
+        if(affinity == RaliAffinity::GPU)
+        {
+            cl_context _cl_context = nullptr;
+            cl_device_id _cl_device_id = nullptr;
+            get_device_and_context(gpu_id, &_cl_context, &_cl_device_id, CL_DEVICE_TYPE_GPU);
+            if((status = vxSetContextAttribute(_context,
+                    VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,
+                    &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
+                THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
+        }
+
+
         // Setting attribute to run on CPU or GPU should be called before load kernel module
         if ((status = vxSetContextAttribute(_context,
                                             VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,
                                             &vx_affinity,
                                             sizeof(vx_affinity))) != VX_SUCCESS)
-            THROW("vxSetContextAttribute failed " + TOSTR(status))
+            THROW("vxSetContextAttribute for AMD_AFFINITY failed " + TOSTR(status))
 
         // loading OpenVX RPP modules
         if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)
             THROW("Cannot load OpenVX augmentation extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
-
+#ifdef RALI_VIDEO
         // loading video decoder modules
         if ((status = vxLoadKernels(_context, "vx_media")) != VX_SUCCESS)
             WRN("Cannot load AMD's OpenVX media extension, video decode functionality will not be available")
-
+#endif
         if(_affinity == RaliAffinity::GPU)
             _device.init_ocl(_context);
     }
@@ -80,20 +100,21 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 MasterGraph::Status
 MasterGraph::run()
 {
-    if(!_graph_verfied)
-        THROW("Graph not verified")
+    if(_first_run)
+    {
+        _first_run = false;
+    } else {
+        _ring_buffer.pop(); // Pop previously stored output from the ring buffer
+        for (auto &&loader_image : _loader_image)
+            loader_image->pop_name();
+    }
 
-    // Randomize parameters
-    ParameterFactory::instance()->renew_parameters();
-
-    _process_time.start();
-    for(auto&& loader_module: _loader_modules)
-        if(loader_module->load_next() != LoaderModuleStatus::OK)
-            THROW("Loader module failed to laod next batch of images")
-    _graph->process();
-    update_parameters();
-    _process_time.end();
-
+    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
+    {
+        std::unique_lock<std::mutex> lock(_count_lock);
+        if (_in_process_count > 0)
+            _in_process_count--;
+    }
     return MasterGraph::Status::OK;
 }
 
@@ -102,10 +123,10 @@ MasterGraph::create_single_graph()
 {
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations
     _graph = std::make_shared<Graph>(_context, _affinity, 0, _gpu_id);
-    for(auto node: _nodes)
+    for(auto& node: _nodes)
     {
         // Any image not yet created can be created as virtual image
-        for(auto image: node->output())
+        for(auto& image: node->output())
             if(image->info().type() == ImageInfo::Type::UNKNOWN)
             {
                 image->create_virtual(_context, _graph->get());
@@ -120,7 +141,6 @@ MasterGraph::create_single_graph()
 MasterGraph::Status
 MasterGraph::build()
 {
-    _graph_verfied = false;
     if(_output_images.empty())
         THROW("No output images are there, cannot create the pipeline")
 
@@ -133,20 +153,19 @@ MasterGraph::build()
 
 
     allocate_output_tensor();
+    size_t w = _output_image_info.width();
+    size_t h = _output_image_info.height_batch();
+    size_t c = _output_image_info.color_plane_count();
+    _ring_buffer.init(_mem_type, _device.resources(), w * h * c, _output_images.size());
     create_single_graph();
-    _graph_verfied = true;
+    start_processing();
     return Status::OK;
 }
 Image *
-MasterGraph::create_loader_output_image(const ImageInfo &info, bool is_output)
+MasterGraph::create_loader_output_image(const ImageInfo &info)
 {
     /*
-    *   NOTE: Output image for a source node needs to be created as a regular (non-virtual)
-    *         image, no matter is_output is true or not
-    *   NOTE: Output image cannot be a virtual image since it's going to be used for
-    *         swapping context
-    *   NOTE: No external allocation of image buffers are needed for the image passed
-    *         to the loader module (output image),
+    *   NOTE: Output image for a source node needs to be created as a regular (non-virtual) image
     *   NOTE: allocate flag is not set for the create_from_handle function here since image's
     *       context will be swapped with the loader_module's internal buffer
     */
@@ -155,10 +174,7 @@ MasterGraph::create_loader_output_image(const ImageInfo &info, bool is_output)
     if( output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
         THROW("Creating output image for JPEG loader failed");
 
-    if(is_output)
-        _output_images.push_back(output);
-    else
-        _internal_images.push_back(output);
+    _internal_images.push_back(output);
 
     return output;
 }
@@ -170,7 +186,7 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
     if(is_output)
     {
-        if (output->create_from_handle(_context, ImageBufferAllocation::external) != 0)
+        if (output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
             THROW("Cannot create the image from handle")
 
         _output_images.push_back(output);
@@ -182,7 +198,7 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
 void MasterGraph::release()
 {
-    _graph_verfied = false;
+    stop_processing();
     vx_status status;
     if(_graph != nullptr)
         _graph->release();
@@ -201,8 +217,12 @@ void MasterGraph::release()
 }
 
 MasterGraph::Status
-MasterGraph::update_parameters()
+MasterGraph::update_node_parameters()
 {
+    // Randomize random parameters
+    ParameterFactory::instance()->renew_parameters();
+
+    // Apply renewed parameters to VX parameters used in augmentation
     for(auto& node: _nodes)
         node->update_parameters();
 
@@ -272,14 +292,17 @@ MasterGraph::deallocate_output_tensor()
 MasterGraph::Status
 MasterGraph::reset_loaders()
 {
+
     for(auto& loader_module: _loader_modules)
         loader_module->reset();
+
+    _first_run = true;
 
     return Status::OK;
 }
 
 size_t
-MasterGraph::remaining_images_count()
+MasterGraph::internal_image_count()
 {
     int ret = -1;
     for(auto& loader_module: _loader_modules) {
@@ -287,6 +310,13 @@ MasterGraph::remaining_images_count()
         ret = (ret == -1 ) ? thisLoaderCount :
               ((thisLoaderCount < ret ) ? thisLoaderCount : ret);
     }
+    return ret;
+}
+size_t
+MasterGraph::remaining_images_count()
+{
+    std::unique_lock<std::mutex> lock(_count_lock);
+    size_t ret = internal_image_count() + _in_process_count;
     return ret;
 }
 
@@ -328,8 +358,8 @@ MasterGraph::copy_output(
 #define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
 
 MasterGraph::Status
-MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
-                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels)
+MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
+                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
     _convert_time.start();
     // Copies to the output context given by the user
@@ -353,12 +383,12 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         cl_kernel kernel = _device["utility"][kernel_name];
         auto queue = _device.resources().cmd_queue;
         unsigned dest_buf_offset = 0;
-
-        for( auto&& out_image: _output_images)
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        for( auto&& out_image: output_buffers)
         {
             int argIdx = 0;
             unsigned reverse_chnl = reverse_channels ? 1 : 0;
-            auto img_buffer = out_image->buffer();
+            auto img_buffer = out_image;
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)& (img_buffer)))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_mem), (void*)&_output_tensor ))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& dest_buf_offset))
@@ -401,25 +431,52 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
         float offset[3] = {offset0, offset1, offset2 };
         size_t dest_buf_offset = 0;
-        for( auto&& out_image: _output_images)
+
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        for( auto&& out_image: output_buffers)
         {
-            auto in_buffer = (unsigned char*)out_image->buffer();
+            auto in_buffer = (unsigned char*)out_image;
             if(format == RaliTensorFormat::NHWC)
             {
-                auto channel_size  = w * h;
-                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                    for(unsigned i = 0; i < channel_size; i++)
-                        out_ptr[dest_buf_offset+channel_idx+ i*c] =
-                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+                if(output_data_type == RaliTensorDataType::FP32)
+                {
+                    float *output_tensor_32 = static_cast<float *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_32[dest_buf_offset+channel_idx+ i*c] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+                }
+                else if(output_data_type == RaliTensorDataType::FP16)
+                {
+                    half *output_tensor_16 = static_cast<half *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_16[dest_buf_offset+channel_idx+ i*c] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[i*c+c-channel_idx-1]) : (half)(in_buffer[i*c+channel_idx]));
+                }
             }
             if(format == RaliTensorFormat::NCHW)
             {
-                auto channel_size  = w * h;
-                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                    for(unsigned i = 0; i < channel_size; i++)
-                        out_ptr[dest_buf_offset+channel_idx*channel_size + i] =
-                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
-
+                if(output_data_type == RaliTensorDataType::FP32)
+                {
+                    float *output_tensor_32 = static_cast<float *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                }
+                else if(output_data_type == RaliTensorDataType::FP16)
+                {
+                    half *output_tensor_16 = static_cast<half *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_16[dest_buf_offset+channel_idx*channel_size + i] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[c*i+c-channel_idx-1]) : (half)(in_buffer[c*i+channel_idx]));
+                }
 
             }
             dest_buf_offset += single_output_image_size;
@@ -445,23 +502,94 @@ MasterGraph::copy_output(unsigned char *out_ptr)
         //NOTE: the CL_TRUE flag is only used on the last buffer read call,
         // to avoid unnecessary sequence of synchronizations
 
-        auto out_image_idx = _output_images.size();
-        for( auto& output_image : _output_images)
+
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        auto out_image_idx = output_buffers.size();
+        for( auto&& output_handle: output_buffers)
         {
             bool sync_flag = (--out_image_idx == 0) ? CL_TRUE : CL_FALSE;
-            output_image->copy_data(_device.resources().cmd_queue, out_ptr+dest_buf_offset, sync_flag);
+            cl_int status;
+            if((status = clEnqueueReadBuffer(_device.resources().cmd_queue,
+                                             (cl_mem) output_handle,
+                                             sync_flag?(CL_TRUE):CL_FALSE,
+                                             0,
+                                             size,
+                                             out_ptr+dest_buf_offset,
+                                             0 , nullptr, nullptr)) != CL_SUCCESS)
+                THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
             dest_buf_offset += size;
         }
     }
     else
     {
         // host memory
-        for( auto&& output: _output_images)
-        {
-            memcpy(out_ptr+dest_buf_offset, output->buffer(), size);
-            dest_buf_offset += size;
-        }
+        memcpy(out_ptr, _ring_buffer.get_host_master_read_buffer(), size * _output_images.size());
     }
     _convert_time.end();
     return Status::OK;
+}
+
+void MasterGraph::output_routine()
+{
+    while(_processing)
+    {
+        if(internal_image_count() <= 0)
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            continue;
+        }
+
+
+        _process_time.start();
+        {
+            std::unique_lock<std::mutex> lock(_count_lock);
+
+            // Swap handles on the input images, so that new image is loaded to be processed
+            for (auto &&loader_module: _loader_modules)
+                if (loader_module->load_next() != LoaderModuleStatus::OK)
+                    THROW("Loader module failed to laod next batch of images")
+
+            _in_process_count++;
+        }
+        auto write_buffers = _ring_buffer.get_write_buffers();
+
+        // Swap handles on the output images, so that new processed image will be written to the a new buffer
+        for (size_t idx = 0; idx < _output_images.size(); idx++)
+            _output_images[idx]->swap_handle(write_buffers[idx]);
+
+        if (!_processing)
+            break;
+        update_node_parameters();
+        _graph->process();
+        _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
+
+        _process_time.end();
+    }
+}
+
+void MasterGraph::start_processing()
+{
+
+    _processing = true;
+    _output_thread = std::thread(&MasterGraph::output_routine, this);
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
+#else
+    struct sched_param params;
+    params.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    pthread_setschedparam(_output_thread.native_handle(), SCHED_FIFO, &params);
+#endif
+}
+
+void MasterGraph::stop_processing()
+{
+    _processing = false;
+    _ring_buffer.cancel_reading();
+    _ring_buffer.cancel_writing();
+    try
+    {
+        _output_thread.join();
+    } catch(...)
+    {
+
+    }
 }

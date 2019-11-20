@@ -7,21 +7,23 @@
 #include <numeric>// std::inner_product, std::accumulate
 #include <algorithm> // std::remove_if
 #include <vector>
+#include <thread>
+#include <random>
 #include "parameter.h"
-
+#include "log.h"
 template <typename T>
 class UniformRand: public Parameter<T>
 {
 public:
 
-    UniformRand(T start, T end)
+    UniformRand(T start, T end, unsigned seed = 0):_generator(seed)
     {
         update(start, end);
         renew();
     }
 
-    explicit UniformRand(T start):
-            UniformRand(start, start) {}
+    explicit UniformRand(T start, unsigned seed = 0):
+            UniformRand(start, start, seed) {}
 
     T default_value() const override
     {
@@ -34,6 +36,9 @@ public:
     };
     void renew() override
     {
+        std::unique_lock<std::mutex> lock(_lock);
+        auto val =_generator();
+
         if(single_value())
         {
             // If there is only a single value possible for the random variable
@@ -41,10 +46,11 @@ public:
             _updated_val = _start;
         } else {
             _updated_val = static_cast<T>(
-                    ((double) std::rand() / (double) RAND_MAX) * ((double) _end - (double) _start) + (double) _start);
+                    ((double)val / (double) _generator.max()) * ((double) _end - (double) _start) + (double) _start);
         }
     }
     int update(T start, T end) {
+        std::unique_lock<std::mutex> lock(_lock);
         if(end < start)
             end = start;
 
@@ -60,7 +66,8 @@ private:
     T _start;
     T _end;
     T _updated_val;
-
+    std::mt19937 _generator;
+    std::mutex _lock;
 };
 
 
@@ -73,7 +80,7 @@ struct CustomRand: public Parameter<T>
     (
         const T values[],
         const double frequencies[],
-        size_t size)
+        size_t size, unsigned seed = 0):_generator(seed)
     {
         update(values, frequencies, size);
         renew();
@@ -85,6 +92,8 @@ struct CustomRand: public Parameter<T>
         size_t size
     )
     {
+        std::unique_lock<std::mutex> lock(_lock);
+
         if(size == 0)
             return -1;
 
@@ -130,6 +139,7 @@ struct CustomRand: public Parameter<T>
     }
     void renew() override
     {
+        std::unique_lock<std::mutex> lock(_lock);
         if(single_value())
         {
             // If there is only a single value possible for the random variable
@@ -138,7 +148,7 @@ struct CustomRand: public Parameter<T>
         }
         else {
             // Generate a value between [0 1]
-            double rand_val = (double) rand() / (double) RAND_MAX;
+            double rand_val = (double) _generator() / (double) _generator.max();
 
             // Find the iterators pointing to the first element bigger than idx
             auto it = std::upper_bound(_comltv_dist.begin(), _comltv_dist.end(), rand_val);
@@ -164,4 +174,6 @@ private:
     std::vector<double> _comltv_dist;//!< commulative probabilities
     double _mean;
     T _updated_val;
+    std::mt19937 _generator;
+    std::mutex _lock;
 };

@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstring>
 #include <array>
+#include <queue>
 #include "device_manager.h"
 #include "commons.h"
 
@@ -72,7 +73,6 @@ struct ImageInfo
     void width(unsigned width) { _width = width; }
     void height(unsigned height) { _height = height; }
     Type type() const { return _type; }
-    const std::string& get_name(unsigned idx) const { if(idx < _image_names.size()) return _image_names[idx]; else return _empty_str;}
     unsigned batch_size() const {return _batch_size;}
     RaliMemType mem_type() const { return _mem_type; }
     unsigned data_size() const { return _data_size; }
@@ -86,8 +86,7 @@ private:
     unsigned _data_size;//!< total size of the memory needed to keep the image's data in bytes including all planes
     RaliMemType _mem_type;//!< memory type, currently either OpenCL or Host
     RaliColorFormat _color_fmt;//!< color format of the image
-    std::vector<std::string> _image_names;//!< image name/ids that are stores in the buffer
-    std::string _empty_str = "";
+    std::queue<std::vector<std::string>> _image_names;//!< image name/ids that are stores in the buffer
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
@@ -107,10 +106,10 @@ struct Image
     vx_image handle() { return vx_handle; }
     unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
-    void set_names(const std::vector<std::string> names)
-    {
-        _info._image_names = names;
-    }
+    void set_names(const std::vector<std::string> names);
+    std::vector<std::string> get_name();
+    void pop_name();
+
     //! Default destructor
     /*! Releases the OpenVX image */
     ~Image();

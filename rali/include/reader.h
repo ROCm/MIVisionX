@@ -8,7 +8,22 @@ enum class StorageType
 };
 
 struct ReaderConfig {
-    virtual StorageType type() = 0;
+    explicit ReaderConfig(StorageType type, std::string path = "", bool loop = false):_type(type), _path(path), _loop(loop) {}
+    virtual StorageType type() { return _type; };
+    void set_path(const std::string& path) { _path = path; }
+    void set_load_offset(size_t offset) { _read_offset = offset; }
+    void set_load_interval(size_t interval) { _read_interval = interval; }
+    void set_loop( bool loop) { _loop = loop; }
+    bool loop() { return _loop; }
+    size_t interval() { return _read_interval; }
+    size_t offset() { return _read_offset; }
+    std::string path() { return _path; }
+private:
+    StorageType _type = StorageType::FILE_SYSTEM;
+    std::string _path = "";
+    size_t _read_interval= 1 ;
+    size_t _read_offset = 0;
+    bool _loop = false;
 };
 
 class Reader {
@@ -26,7 +41,7 @@ public:
      \param desc description of the resource infor. It's exact fields are defind by the derived class.
      \return status of the being able to locate the resource pointed to by the desc
     */
-    virtual Status initialize(ReaderConfig* desc) = 0;
+    virtual Status initialize(ReaderConfig desc) = 0;
     //! Reads the next resource item
     /*!
      \param buf User's provided buffer to receive the loaded items	

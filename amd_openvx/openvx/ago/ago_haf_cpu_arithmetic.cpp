@@ -3169,7 +3169,8 @@ int HafCpu_AbsDiff_S16_S16S16_Sat
 
 			for (int width = 0; width < postfixWidth; width++)
 			{
-				*pLocalDst++ = (vx_int16)abs((vx_int32)(*pLocalSrc1++) - (vx_int32)(*pLocalSrc2++));
+				vx_int32 temp = (vx_int32) abs((vx_int32) (*pLocalSrc1++) - (vx_int32) (*pLocalSrc2++));
+				*pLocalDst++ =  (vx_int16) max(min(temp, INT16_MAX), INT16_MIN);
 			}
 
 			pSrcImage1 += (srcImage1StrideInBytes >> 1);
@@ -3212,7 +3213,8 @@ int HafCpu_AbsDiff_S16_S16S16_Sat
 
 			for (int width = 0; width < postfixWidth; width++)
 			{
-				*pLocalDst++ = (vx_int16)abs((vx_int32)(*pLocalSrc1++) - (vx_int32)(*pLocalSrc2++));
+				vx_int32 temp = (vx_int32) abs((vx_int32) (*pLocalSrc1++) - (vx_int32) (*pLocalSrc2++));
+				*pLocalDst++ =  (vx_int16) max(min(temp, INT16_MAX), INT16_MIN);	
 			}
 
 			pSrcImage1 += (srcImage1StrideInBytes >> 1);
@@ -3982,9 +3984,12 @@ int HafCpu_Threshold_U1_U8_Binary
 			pixelmask = 0;
 			for (int i = 0; i < 8; i++, width++)
 			{
+				if (width == postfixWidth)
+					break;
+
+				pixelmask >>= 1;
 				if (*pLocalSrc++ > threshold)
-					pixelmask |= 1;
-				pixelmask <<= 1;
+					pixelmask |= 0x80;
 			}
 			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
 		}

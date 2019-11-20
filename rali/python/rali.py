@@ -28,6 +28,7 @@ import numpy as np
 from rali_lib import *
 from rali_image import *
 from rali_parameter import *
+from rali_common import *
 
 RaliFlipAxis =  ('RALI_FLIP_HORIZONTAL','RALI_FLIP_VERTICAL')
 
@@ -89,11 +90,11 @@ class RaliGraph():
 
     """ rali_api_data_loader.h """
 
-    def jpegFileInput(self, path, color_format,  is_output,  max_width = 0, max_height= 0, num_threads = 1):
+    def jpegFileInput(self, path, color_format,  is_output, loop = False, max_width = 0, max_height= 0, num_threads = 1):
         if max_width > 0 and max_height > 0:
-            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, self.ImageSizeEvaluationPolicy['USER_GIVEN_SIZE'], max_width, max_height, 0)
+            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, loop, self.ImageSizeEvaluationPolicy['USER_GIVEN_SIZE'], max_width, max_height, 0)
         else:
-            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, self.ImageSizeEvaluationPolicy['MOST_FREQUENT_SIZE'], 0, 0, 0)
+            out = self._lib.raliJpegFileInput(self.handle, path, color_format.value, num_threads, is_output, loop, self.ImageSizeEvaluationPolicy['MOST_FREQUENT_SIZE'], 0, 0, 0)
 
         out_img = RaliImage(out)
         if is_output:
@@ -265,7 +266,7 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def lendCorrection(self, input, is_output, strength = None, zoom = None):
+    def lensCorrection(self, input, is_output, strength = None, zoom = None):
         strength_param = self.validateFloatParameter(strength)
         zoom_param = self.validateFloatParameter(zoom)
         out = self._lib.raliLensCorrection(self.handle, input.obj, is_output, strength_param, zoom_param)
@@ -281,16 +282,23 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def histogramBalance(self, input, is_output):
-        out = self._lib.raliHistogramBalance(self.handle, input.obj, is_output)
+    def exposure(self, input, is_output, shift = None):
+        param_shift = self.validateFloatParameter(shift)
+        out = self._lib.raliExposure(self.handle, input.obj, is_output, param_shift)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def exposure(self, input, is_output, shift = None):
-        param_shift = self.validateFloatParameter(shift)
-        out = self._lib.raliExposure(self.handle, input.obj, is_output, param_shift)
+    def copy(self, input, is_output):
+        out = self._lib.raliCopy(self.handle, input.obj, is_output)
+        out_img = RaliImage(out)
+        if is_output:
+            self.output_images.append(out_img)
+        return out_img
+
+    def nop(self, input, is_output):
+        out = self._lib.raliNop(self.handle, input.obj, is_output)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -328,10 +336,16 @@ class RaliGraph():
         out = np.frombuffer(array, dtype=array.dtype)
         self._lib.copyToOutput(self.handle, np.ascontiguousarray(out, dtype=array.dtype), array.size)
 
-    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels):
+    def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
-        self._lib.copyToOutputTensor(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        if tensor_dtype == TensorDataType.FLOAT32:
+            self._lib.copyToOutputTensor32(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
+        elif tensor_dtype == TensorDataType.FLOAT16:
+            self._lib.copyToOutputTensor16(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 0, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
 
-    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels):
+    def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
-        self._lib.copyToOutputTensor(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+        if tensor_dtype == TensorDataType.FLOAT32:
+            self._lib.copyToOutputTensor32(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
+        elif tensor_dtype == TensorDataType.FLOAT16:
+            self._lib.copyToOutputTensor16(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)

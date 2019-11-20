@@ -253,3 +253,23 @@ int Image::swap_handle(void* handle)
     _mem_handle = handle;
     return 0;
 }
+
+void Image::set_names(const std::vector<std::string> names)
+{
+    _info._image_names.push( names);
+}
+void Image::pop_name()
+{
+    if(_info._image_names.empty())
+        return ;
+    _info._image_names.pop();
+}
+
+std::vector<std::string> Image::get_name()
+{
+    std::vector<std::string> ret = {""};
+    if(_info._image_names.empty())
+        return ret;
+    ret = _info._image_names.front();
+    return ret;
+}

@@ -20,7 +20,7 @@ enum class MaxSizeEvaluationPolicy
 class ImageSourceEvaluator
 {
 public:
-    ImageSourceEvaluatorStatus create(StorageType storage_type, DecoderType decoder_type, const std::string &path);
+    ImageSourceEvaluatorStatus create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg);
     void find_max_dimension();
     void set_size_evaluation_policy(MaxSizeEvaluationPolicy arg);
     size_t max_width();

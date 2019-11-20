@@ -1,18 +1,14 @@
 #include "image_loader_multi_thread.h"
 
-ImageLoaderMultiThread::ImageLoaderMultiThread(DeviceResources ocl):
-_ocl(ocl)
+ImageLoaderMultiThread::ImageLoaderMultiThread(DeviceResources dev_resources):
+        _dev_resources(dev_resources)
 {
     _loader_idx = 0;
     for(size_t i = 0; i< MIN_NUM_THREADS; i++)
     {
-        auto loader = std::make_shared<ImageLoaderSingleThread>(_ocl);
+        auto loader = std::make_shared<ImageLoaderSingleThread>(_dev_resources);
         _loaders.push_back(loader);
     }
-}
-void ImageLoaderMultiThread::set_path(const std::string& image_folder)
-{
-    _image_folder = image_folder;
 }
 
 ImageLoaderMultiThread::~ImageLoaderMultiThread()
@@ -26,7 +22,7 @@ LoaderModuleStatus ImageLoaderMultiThread::load_next()
     return ret;
 }
 void
-ImageLoaderMultiThread::initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
+ImageLoaderMultiThread::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type,
                                    unsigned batch_size)
 {
     if(_created)
@@ -34,10 +30,9 @@ ImageLoaderMultiThread::initialize(StorageType storage_type, DecoderType decoder
 
     for(size_t idx = 0; idx < THREAD_COUNT; idx++)
     {
-        _loaders[idx]->set_load_interval(THREAD_COUNT);
-        _loaders[idx]->set_load_offset(idx);
-        _loaders[idx]->set_path(_image_folder);
-        _loaders[idx]->initialize(storage_type, decoder_type, mem_type, batch_size);
+        reader_cfg.set_load_interval(THREAD_COUNT);
+        reader_cfg.set_load_offset(idx);
+        _loaders[idx]->initialize(reader_cfg, decoder_cfg, mem_type, batch_size);
     }
     _created = true;
 }
@@ -81,7 +76,7 @@ void ImageLoaderMultiThread::set_thread_count(size_t num_threads)
     // Add new loader modules to increase their count to num_threads
     for(size_t i = THREAD_COUNT; i< num_threads; i++)
     {
-        auto loader = std::make_shared<ImageLoaderSingleThread>(_ocl);
+        auto loader = std::make_shared<ImageLoaderSingleThread>(_dev_resources);
         _loaders.push_back(loader);
     }
     THREAD_COUNT = num_threads;

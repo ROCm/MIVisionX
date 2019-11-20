@@ -39,18 +39,20 @@ using namespace cv;
 #define DISPLAY
 using namespace std::chrono;
 
-int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display );
+int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display, int width, int height);
 int main(int argc, const char ** argv)
 {
     // check command-line usage
     const size_t MIN_ARG_COUNT = 2;
-    printf( "Usage: image_augmentation <image-dataset-folder> output_image_name test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
+    printf( "Usage: image_augmentation <image-dataset-folder> output_image_name <width> <height> test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
     if(argc < MIN_ARG_COUNT)
         return -1;
 
     int argIdx = 0;
     const char * path = argv[++argIdx];
     const char * outName = argv[++argIdx];
+    int width = atoi(argv[++argIdx]);
+    int height = atoi(argv[++argIdx]);
 
     bool display = 1;// Display the images
     int rgb = 1;// process color images
@@ -69,12 +71,12 @@ int main(int argc, const char ** argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
 
-    test(test_case, path, outName, rgb, gpu, display);
+    test(test_case, path, outName, rgb, gpu, display, width, height);
 
     return 0;
 }
 
-int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display  )
+int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display, int width, int height)
 {
     size_t num_threads = 1;
     int inputBatchSize = 1;
@@ -97,6 +99,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
 
+    raliSetSeed(0);
+
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
     RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);
     RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
@@ -115,9 +119,9 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     if (decode_max_height <= 0 || decode_max_width <= 0)
-        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false);
+        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false);
     else
-        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false,
+        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 
     if (raliGetStatus(handle) != RALI_OK) {
@@ -126,7 +130,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     }
 
 
-    int resize_w = 224, resize_h = 224;
+    int resize_w = width, resize_h = height;
 
     RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
     RaliImage image0_b = raliRotateFixed(handle, image0, 30, false);
@@ -150,7 +154,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 2: {
             std::cout << ">>>>>>> Running " << "raliCropResizeFixed" << std::endl;
-            image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true, NULL, NULL, NULL);
+            image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.8, 0.6, -0.4);
         }
             break;
         case 3: {
@@ -356,7 +360,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format == RaliImageColor::RALI_COLOR_RGB24) ? 3 : 1);
-    const unsigned number_of_cols = 1920 / w;
+    const unsigned number_of_cols = 1;//1920 / w;
     auto cv_color_format = ((color_format == RaliImageColor::RALI_COLOR_RGB24) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
@@ -406,4 +410,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     raliRelease(handle);
     mat_input.release();
     mat_output.release();
+
+    return 0;
 }

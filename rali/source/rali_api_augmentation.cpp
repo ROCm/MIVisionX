@@ -20,6 +20,8 @@
 #include "node_blend.h"
 #include "node_resize.h"
 #include "node_rotate.h"
+#include "node_copy.h"
+#include "node_nop.h"
 
 #include "commons.h"
 #include "context.h"
@@ -1049,6 +1051,54 @@ raliExposureFixed(
         output = context->master_graph->create_image(input->info(), is_output);
 
         context->master_graph->add_node<ExposureNode>({input}, {output})->init(shift);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliCopy(
+        RaliContext context,
+        RaliImage input,
+        bool is_output)
+{
+    RaliImage output = nullptr;
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<CopyNode>({input}, {output});
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliNop(
+        RaliContext context,
+        RaliImage input,
+        bool is_output)
+{
+    RaliImage output = nullptr;
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<NopNode>({input}, {output});
     }
     catch(const std::exception& e)
     {

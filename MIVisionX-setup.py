@@ -7,7 +7,11 @@ __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
 
 import argparse
-import commands
+import sys
+if sys.version_info[0] < 3:
+	import commands
+else:
+	import subprocess
 import os
 
 # Import arguments
@@ -30,9 +34,15 @@ rppInstall = args.rpp
 # sudo requirement check
 sudoLocation = ''
 userName = ''
-status, sudoLocation = commands.getstatusoutput("which sudo")
-if sudoLocation != '/usr/bin/sudo':
-	status, userName = commands.getstatusoutput("whoami")
+if sys.version_info[0] < 3:
+	status, sudoLocation = commands.getstatusoutput("which sudo")
+	if sudoLocation != '/usr/bin/sudo':
+		status, userName = commands.getstatusoutput("whoami")
+else:
+	status, sudoLocation = subprocess.getstatusoutput("which sudo")
+	if sudoLocation != '/usr/bin/sudo':
+		status, userName = subprocess.getstatusoutput("whoami")
+	
 
 if setupDir == '':
 	setupDir_deps = '~/mivisionx-deps'

@@ -864,7 +864,6 @@ def main():
     #appends node type to output tensor name.
     node_type_append = 0
     pos = 5
-    #print "sys.argv[5] = ", sys.argv[5]
     while pos < len(sys.argv) and len(sys.argv) >= 5 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--node_type_append':
             node_type_append = int(sys.argv[pos+1])

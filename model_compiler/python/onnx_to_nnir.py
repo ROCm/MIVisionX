@@ -228,7 +228,7 @@ def main():
             node_type_append = int(sys.argv[pos+1])
             pos = pos + 2
         elif sys.argv[pos] == '--input_dims':
-            input_dims = sys.argv[pos+1]
+            #input_dims = sys.argv[pos+1]
             pos = pos + 2
     print('loading ONNX model from %s ...' % (onnxFileName))
     onnx_model_proto = onnx_pb.ModelProto()

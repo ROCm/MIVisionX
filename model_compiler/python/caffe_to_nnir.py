@@ -849,7 +849,7 @@ def caffe2ir(net_parameter, input_dims, outputFolder, verbose,node_type_append):
 
 def main():
     if len(sys.argv) < 4:
-        print ("Usage : python caffe2nnir.py <caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1] [--node_type_append 0/1 (optional: appends node type to output tensor name)]")
+        print ("Usage : python caffe_to_nnir.py <caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1] [--node_type_append 0/1 (optional: appends node type to output tensor name)]")
         sys.exit(1)
     caffeFileName = sys.argv[1]
     outputFolder = sys.argv[2]
@@ -863,12 +863,13 @@ def main():
     """
     #appends node type to output tensor name.
     node_type_append = 0
-    pos = 3
-    while len(sys.argv[pos:]) >= 5 and sys.argv[pos][:2] == '--':
+    pos = 5
+    #print "sys.argv[5] = ", sys.argv[5]
+    while pos < len(sys.argv) and len(sys.argv) >= 5 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--node_type_append':
             node_type_append = int(sys.argv[pos+1])
             pos = pos + 2
-        elif sys.argv[pos] == 'verbose':
+        elif sys.argv[pos] == '--verbose':
             verbose = int(sys.argv[pos+1])
             pos = pos + 2
             if (verbose):

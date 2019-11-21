@@ -223,9 +223,12 @@ def main():
     #appends node type to output tensor name. 
     node_type_append = 0
     pos = 3
-    while len(sys.argv[pos:]) >= 3 and sys.argv[pos][:2] == '--':
+    while pos < len(sys.argv)  and len(sys.argv) >= 3 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--node_type_append':
             node_type_append = int(sys.argv[pos+1])
+            pos = pos + 2
+        elif sys.argv[pos] == '--input_dims':
+            input_dims = sys.argv[pos+1]
             pos = pos + 2
     print('loading ONNX model from %s ...' % (onnxFileName))
     onnx_model_proto = onnx_pb.ModelProto()

@@ -824,8 +824,8 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 """ % (variance[0],variance[1],variance[2],variance[3], node.inputs[0], node.inputs[1], node.attr.get('min_size'), node.attr.get('flip'),\
         node.attr.get('clip'), node.attr.get('prior_offset'), node.outputs[0], max_size))
             elif node.type == 'upsample':
-                factor = node.attr.get('factor')
-                if factor[0] == 2 and factor[1] == 2:
+                zoom_factor = node.attr.get('zoom_factor')
+                if zoom_factor == 2:
                     f.write( \
 """
     { vx_node node = vxUpsampleNearestLayer(graph, %s, %s);

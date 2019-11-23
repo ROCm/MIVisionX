@@ -98,7 +98,7 @@ class IrAttr:
             , 'keep_top_k' : -1
             , 'confidence_threshold' : 0.0
             , 'eta' : 0.0
-            , 'factor' : []
+            , 'zoom_factor' : 2
             , 'to' : 1
             , 'count' : -1
         }
@@ -541,25 +541,17 @@ class IrGraph:
                     self.addVariable(shape_tensor)                    
                     self.addBinary(tensor_name, shape_data)
                     node.inputs[0] = tensor_name
-
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo('I064', shape_tensor.shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
                 elif node.type in ['upsample']:
-                    factor = node.attr.get('factor')
-                    if len(factor) == 2:
-                        out_shape = [input.shape[0], input.shape[1], input.shape[2]*factor[0], input.shape[3]*factor[1]]
-                    local = IrTensor()
-                    local.setName(output)
-                    local.setInfo(input.type, out_shape)
-                    local.setFormat(input.format)
-                    self.addLocal(local)
-                elif node.type in ['upsample']:
-                    factor = node.attr.get('factor')
-                    if len(factor) == 2:
-                        out_shape = [input.shape[0], input.shape[1], input.shape[2]*factor[0], input.shape[3]*factor[1]]
+                    zoom_factor = node.attr.get('zoom_factor')
+                    if (zoom_factor != 2):
+                        raise ValueError("unsupported zoom_factor for upsample: " + str(zoom_factor))
+                    #if len(factor) == 2:
+                    out_shape = [input.shape[0], input.shape[1], input.shape[2]*zoom_factor, input.shape[3]*zoom_factor ]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)

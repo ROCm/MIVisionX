@@ -42,7 +42,6 @@ auto get_ago_affinity_info = []
 
 MasterGraph::~MasterGraph()
 {
-    stop_processing();
     release();
 }
 
@@ -630,6 +629,10 @@ void MasterGraph::output_routine()
 
             _in_process_count++;
         }
+
+        if (!_processing)
+            break;
+
         auto write_buffers = _ring_buffer.get_write_buffers();
 
         // Swap handles on the output images, so that new processed image will be written to the a new buffer

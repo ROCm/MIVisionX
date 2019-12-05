@@ -15,6 +15,7 @@ public:
         //_prev_nodes.clear();
         if(_node)
             vxReleaseNode(&_node);
+        _node = nullptr;
     }
     virtual void create(std::shared_ptr<Graph> graph) = 0;
     virtual void update_parameters() = 0;

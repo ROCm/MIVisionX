@@ -207,6 +207,9 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
 void MasterGraph::release()
 {
+    for(auto& loader_module: _loader_modules)
+        loader_module->stop();
+
     stop_processing();
     vx_status status;
     if(_graph != nullptr)
@@ -220,7 +223,6 @@ void MasterGraph::release()
 
     for(auto& image: _output_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
-
 
     deallocate_output_tensor();
 }
@@ -667,11 +669,6 @@ void MasterGraph::stop_processing()
     _processing = false;
     _ring_buffer.cancel_reading();
     _ring_buffer.cancel_writing();
-    try
-    {
+    if(_output_thread.joinable())
         _output_thread.join();
-    } catch(...)
-    {
-
-    }
 }

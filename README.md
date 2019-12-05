@@ -107,8 +107,9 @@ For the convenience of the developer, we here provide the setup script which wil
 
 ##### Prerequisites for running the script
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
-2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
-3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
+2. X Window
+3. [ROCm supported hardware](https://rocm.github.io/hardware.html)
+4. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
 **usage:**
 ````

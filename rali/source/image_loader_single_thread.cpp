@@ -76,6 +76,16 @@ ImageLoaderSingleThread::set_output_image (Image* output_image)
 }
 
 void
+ImageLoaderSingleThread::stop()
+{
+    _running = 0;
+    _circ_buff.cancel_reading();
+    _circ_buff.cancel_writing();
+    if(_load_thread.joinable())
+        _load_thread.join();
+}
+
+void
 ImageLoaderSingleThread::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
 {
     if(_is_initialized)

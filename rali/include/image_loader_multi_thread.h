@@ -13,11 +13,7 @@ public:
     size_t count() override;
     void reset() override;
     void start_loading();
-    virtual void stop() override
-    {
-        for(auto& loader: _loaders)
-            loader->stop();
-    };
+    void stop() override;
 
     /*!
      *  This function is only effective if called before the create function is called

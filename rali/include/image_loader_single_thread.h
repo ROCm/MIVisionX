@@ -18,13 +18,7 @@ public:
     void reset() override; // Resets the loader to load from the beginning of the media
     std::vector<long long unsigned> timing() override;
     LoaderModuleStatus start_loading();
-    virtual void stop() override {
-        _running = 0;
-        _circ_buff.cancel_reading();
-        _circ_buff.cancel_writing();
-        if(_load_thread.joinable())
-            _load_thread.join();
-    };
+    void stop() override;
 private:
     bool is_out_of_data();
     void de_init();

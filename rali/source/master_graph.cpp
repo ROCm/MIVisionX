@@ -382,6 +382,8 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
 
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
+        if(output_data_type == RaliTensorDataType::FP16)
+            THROW("FP16 tensor output for GPU affinity is not implemented")
         // OCL device memory
         cl_int status;
 

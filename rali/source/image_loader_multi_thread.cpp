@@ -11,6 +11,12 @@ ImageLoaderMultiThread::ImageLoaderMultiThread(DeviceResources dev_resources):
     }
 }
 
+void ImageLoaderMultiThread::stop()
+{
+    for(auto& loader: _loaders)
+        loader->stop();
+}
+
 ImageLoaderMultiThread::~ImageLoaderMultiThread()
 {
     _loaders.clear();

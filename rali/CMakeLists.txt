@@ -79,8 +79,9 @@ if(${BUILD_RALI})
 	file(GLOB SOURCES "./source/*.cpp")
 
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
-
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wall ")
+	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
+	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -msse4.2 -mavx2 -Wall ")
 	target_link_libraries(${PROJECT_NAME} -fPIC turbojpeg openvx vx_rpp )
 
 	install (TARGETS rali DESTINATION lib)

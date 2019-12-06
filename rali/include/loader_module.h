@@ -32,6 +32,7 @@ public:
     virtual size_t count() = 0; // Returns the number of available images to be loaded
     virtual ~LoaderModule()= default;
     virtual std::vector<long long unsigned> timing() = 0;// Returns timing info
+    virtual void stop() = 0; // stop the internal process of loading (if any)
 };
 
 using pLoaderModule = std::shared_ptr<LoaderModule>;

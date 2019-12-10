@@ -346,18 +346,24 @@ if __name__ == '__main__':
 
 	# check for image val text
 	totalImages = 0;
-	if(imageVal != ''):
-		if (not os.path.isfile(imageValText)):
-			print("\nImage Validation Text not found, check argument --image_val\n")
-			quit()
-		else:
-			fp = open(imageValText, 'r')
-			imageValidation = fp.readlines()
-			fp.close()
-			totalImages = len(imageValidation)
-	else:
-		print("\nFlow without Image Validation Text not implemented, pass argument --image_val\n")
+	if(imageVal == ''):
+		print("\nFlow without Image Validation Text..Creating a file with no ground truths\n")
+		imageList = os.listdir(inputImageDir)
+		imageList.sort()
+		imageValText = os.getcwd() + '/imageValTxt.txt'
+		fp = open(imageValText , 'w')
+		for imageFile in imageList:
+			fp.write(imageFile + " -1" + "\n")
+
+	
+	if (not os.path.isfile(imageValText)):
+		print("\nImage Validation Text not found, check argument --image_val\n")
 		quit()
+	else:
+		fp = open(imageValText, 'r')
+		imageValidation = fp.readlines()
+		fp.close()
+		totalImages = len(imageValidation)
 
 	# original std out location 
 	orig_stdout = sys.stdout

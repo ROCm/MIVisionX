@@ -114,8 +114,8 @@ int DGtest::runInference(Mat &image) {
     for(vx_size y = 0; y < dims[1]; y++) {
         unsigned char * src = img.data + y*dims[0]*dims[2];
         float * dst = ptr + ((y * stride[1]) >> 2);
-        for(vx_size x = 0; x < dims[0]; x++, src ++) {
-            *dst++ = src[0] ;
+        for(vx_size x = 0; x < dims[0]; x++, src++) {
+            *dst++ = src[0];
         }
     }
 

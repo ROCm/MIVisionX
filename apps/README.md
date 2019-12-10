@@ -18,7 +18,7 @@ This sample [application](./dg_test#amd-dgtest) is used to recognize hand writte
 
 # MIVisionX Inference Analyzer
 
-[MIVisionX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/) Inference Analyzer Application using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
+[MIVisionX Inference Analyzer Application](./mivisionx_inference_analyzer#mivisionx-python-inference-analyzer) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
 
 <p align="center"><img width="60%" src="./mivisionx_inference_analyzer/data/images/inference_analyzer.gif" /></p>
 
@@ -29,7 +29,7 @@ This sample [application](./mivisionx_openvx_classifier/README.md) shows how to 
 
 # MIVisionX Validation Tool
 
-[MIVisionX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/) ML Model Validation Tool using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze, summarize, & validate.
+[MIVisionX ML Model Validation Tool](./mivisionx_validation_tool#mivisionx-python-ml-model-validation-tool) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze, summarize, & validate.
 
 <p align="center"><img width="100%" src="./mivisionx_validation_tool/data/images/validation-2.png" /></p>
 

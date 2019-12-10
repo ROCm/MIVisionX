@@ -16,10 +16,22 @@ This sample [application](./dg_test#amd-dgtest) is used to recognize hand writte
   <img src="../docs/images/DGtest.png">
 </p>
 
+# MIVisionX Inference Analyzer
+
+[MIVisionX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/) Inference Analyzer Application using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
+
+<p align="center"><img width="60%" src="./mivisionx_inference_analyzer/data/images/inference_analyzer.gif" /></p>
+
 ## MIVisionX OpenVX Classsification
 This sample [application](./mivisionx_openvx_classifier/README.md) shows how to run supported pre-trained caffe models with MIVisionX RunTime.
 
 <p align="center"> <img src="./mivisionx_openvx_classifier/data/MIVisionX-ImageClassification.png"></p>
+
+# MIVisionX Validation Tool
+
+[MIVisionX](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/) ML Model Validation Tool using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze, summarize, & validate.
+
+<p align="center"><img width="100%" src="./mivisionx_validation_tool/data/images/validation-2.png" /></p>
 
 ## MIVisionX WinML Classification
 This sample [application](./mivisionx_winml_classifier/README.md) shows how to run supported ONNX models with MIVisionX RunTime on Windows.

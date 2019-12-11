@@ -48,7 +48,7 @@ usage: generate-visualization.py  [-h]
 ## Sample 
 
 ````
-python generate-visualization.py --inference_results sample/inceptionV4-results.csv --image_dir sample/AMD-tinyDataSet --label sample/labels.txt --hierarchy sample/hierarchy.csv --model_name inceptionV4 --output_dir outputFolder --output_name classificationVisualized 
+python generate-visualization.py --inference_results sample/inceptionV4-results.csv --image_dir ../../AMD-tinyDataSet --label sample/labels.txt --hierarchy sample/hierarchy.csv --model_name inceptionV4 --output_dir outputFolder --output_name classificationVisualized 
 ````
 
 ## List of Features Available in this release

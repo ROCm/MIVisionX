@@ -1,5 +1,6 @@
-# RALI Unit Tests
-This application can be used to verify the functionality of the API offered by Rali.
+# RALI Performance Tests
+This application is used to run performance tests on the RALI API for graphs of depth size 1.
+
 
 ## Build Instructions
 
@@ -18,6 +19,5 @@ This application can be used to verify the functionality of the API offered by R
   ````
 ### running the application  
   ````
-Go to MIVisionX-tests/rali-unittests
-sh run-rali-unittests.sh
+rali_performance_tests [test image folder] [image width] [image height] [test case] [batch size] [0 for CPU, 1 for GPU] [0 for grayscale, 1 for RGB]
   ````

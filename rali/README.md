@@ -32,6 +32,7 @@ RALI can be currently used to perform the following operations either with rando
 *  AMD [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
 *  OpenVX (including RPP and Media extension)
 *  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or later
+*  Half float library
 
 
 ## Build instructions

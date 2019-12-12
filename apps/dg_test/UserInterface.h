@@ -42,7 +42,7 @@ private:
     /**
      *  Progress window name for user interface
      */
-    cv::String mProgressWindow = "DGtest";
+    cv::String mProgressWindow = "MIVisionX DGtest";
 
     /**
      *  Digit detector

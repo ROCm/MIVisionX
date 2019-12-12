@@ -11,9 +11,7 @@ This sample [application](./cloud_inference#cloud-inference-application) does in
 This sample [application](./dg_test#amd-dgtest) is used to recognize hand written digits.
 
 <p align="center">
-  <img src="../docs/images/digits1.png">
-  <img src="../docs/images/digits2.png">
-  <img src="../docs/images/DGtest.png">
+  <img src="../docs/images/DGtest.gif">
 </p>
 
 # MIVisionX Inference Analyzer

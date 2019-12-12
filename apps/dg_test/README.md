@@ -1,6 +1,10 @@
 # MIVisionX DGtest
 
 MIVisionX DGtest is a tutorial program for those who are new to MIOpen & OpenVX. It runs inference on the [MNIST](http://yann.lecun.com/exdb/mnist/) dataset using MIOpen & OpenVX.
+    
+<p align="center">
+  <img src="../../docs/DGtest.gif">
+</p>
 
 ### Explanation
 The program is divided into four parts:

@@ -75,8 +75,6 @@ Label section is the summary of all the classes the model has been trained to de
 
 Click on any of the label description and zoom into all the images from that class in the database.
 
-![picture alt](img/graph.png "Image")
-
 ### Image Results
 
 The Image results has all the low level information about each of the individual images in the database. It reports on the results obtained for the image in the session and allows quick view of the image.

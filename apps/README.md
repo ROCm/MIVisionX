@@ -14,6 +14,13 @@ This sample [application](./dg_test#amd-dgtest) is used to recognize hand writte
   <img src="../docs/images/DGtest.gif">
 </p>
 
+## Image Augmentation
+This sample [application](./image_augmentation#image-augmentation-application) demonstrates a basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+
+<p align="center">
+	<img width="90%" src="../docs/images/image_augmentation.png" />
+</p>
+
 # MIVisionX Inference Analyzer
 
 [MIVisionX Inference Analyzer Application](./mivisionx_inference_analyzer#mivisionx-python-inference-analyzer) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.

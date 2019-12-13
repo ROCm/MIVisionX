@@ -14,6 +14,13 @@ This sample [application](./dg_test#amd-dgtest) is used to recognize hand writte
   <img src="../docs/images/DGtest.gif">
 </p>
 
+## Image Augmentation
+This sample [application](./image_augmentation#image-augmentation-application) demonstrates a basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+
+<p align="center">
+	<img width="90%" src="../docs/images/image_augmentation.png" />
+</p>
+
 # MIVisionX Inference Analyzer
 
 [MIVisionX Inference Analyzer Application](./mivisionx_inference_analyzer#mivisionx-python-inference-analyzer) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
@@ -40,15 +47,6 @@ This sample [application](./mivisionx_winml_classifier/README.md) shows how to r
 This sample [application](./mivisionx_winml_yolov2#yolov2-using-amd-winml-extension) shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
 
 <p align="center"> <img src="./mivisionx_winml_yolov2/image/cat-yolo.jpg"> </p>
-
-## rali-unittests
-Simple application for running unit tests for RALI library.
-Usage: rali-unittests input-image-folder output-image-name augmentation-number display-on-off gpu-or-cpu rgb-or-grayscale
-Example: rali-unittests input-images/ output-image-test.png 0 1 1 1
-The above example will run the first augmentation in the app on the image located in input-images and output the result to
-output-image-test.png. It will be shown in the OpenCV display window, it will use the GPU and it will be in color. 
-Example 2: rali-unittests input-images/ output-image-test2.png 0 1 0 0
-Same as the first example but the processing will be done on the CPU and the image will be in grayscale.
 
 ## External Application
 

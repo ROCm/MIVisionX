@@ -1,5 +1,6 @@
-# Image Augmentation Unit Tests
-This application can be used to verify the functionality of the API offered by Rali.
+# RALI Performance Tests
+This application is used to run performance tests on the RALI API for graphs of depth size 1.
+
 
 ## Build Instructions
 
@@ -11,8 +12,6 @@ This application can be used to verify the functionality of the API offered by R
 
 ### build
   ````
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/rpp/lib
   mkdir build
   cd build
   cmake ../
@@ -20,5 +19,5 @@ This application can be used to verify the functionality of the API offered by R
   ````
 ### running the application  
   ````
-  ./augmentation_unittest <image-dataset-folder> <node_idx> <display_on=0/off=1> <gpu=1/cpu=0> <rgb=1/grayscale=0> num_decode_threads
+rali_performance_tests [test image folder] [image width] [image height] [test case] [batch size] [0 for CPU, 1 for GPU] [0 for grayscale, 1 for RGB]
   ````

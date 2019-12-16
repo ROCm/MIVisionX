@@ -1,14 +1,10 @@
-#include "DGtest.h"
 #include <iostream>
-#include <stdio.h>
-#include <string>
-#include <chrono>
-#include <unistd.h>
-#if ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
-#endif
+#include <vx_ext_amd.h>
+#include "DGtest.h"
+
+using namespace cv;
+using namespace std;
 
 #define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; } }
 #define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); exit(-1); } }
@@ -24,91 +20,135 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
     }
 }
 
-inline int64_t clockCounter()
-{
-    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
-}
-
-inline int64_t clockFrequency()
-{
-    return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
-}
-
-DGtest::DGtest(const char* weights, std::string inputFile, std::string outputFile, const int batchSize) : mWeights(weights), mBatchSize(batchSize){
+DGtest::DGtest(const char* weights) {
+    // create contex
     mContext = vxCreateContext();
-    if(vxGetStatus((vx_reference)mContext)) {
-        std::cerr << "ERROR: vxCreateContext(...) failed" << std::endl;
+    vx_status status;
+    status = vxGetStatus((vx_reference)mContext);
+    if(status) {
+        printf("ERROR: vxCreateContext() failed\n");
         exit(-1);
     }
-    mInputTensor = std::make_unique<VXtensor>(mContext, mBatchSize, inputFile, VX_READ_ONLY);
-    
-    mGraph = vxCreateGraph(mContext);
-    if(vxGetStatus((vx_reference)mGraph)) {
-        std::cerr << "ERROR: vxCreateGraph(...) failed" << std::endl;
-        exit(-1);
-    }
-    mOutputTensor = std::make_unique<VXtensor>(mContext, mBatchSize, outputFile, VX_WRITE_ONLY);
-};
-
-DGtest::~DGtest(){
-
-    ERROR_CHECK_STATUS(vxReleaseContext(&mContext));
-    printf("DGtest successful\n");
-};
-
-
-void DGtest::runInference() {
-    //read in from the specified input tensor
-    if(mInputTensor->readTensor() < 0) {
-        std::cout << "Failed to initialize tensor data from " << mInputTensor->getFileName() << std::endl;
-        exit(-1);
-    }
-    std::cout << "OK: initialized tensor 'data' from " << mInputTensor->getFileName() << std::endl;
-    int64_t freq = clockFrequency(), t0, t1;
-    t0 = clockCounter();
     vxRegisterLogCallback(mContext, log_callback, vx_false_e);
+
+    // create graph
+    mGraph = vxCreateGraph(mContext);
+    status = vxGetStatus((vx_reference)mGraph);
+    if(status) {
+        printf("ERROR: vxCreateGraph(...) failed (%d)\n", status);
+        exit(-1);
+    }
+
+    // create and initialize input tensor data
+    vx_size input_dims[4] = { 28, 28, 1, 1 };
+    mInputTensor = vxCreateTensor(mContext, 4, input_dims, VX_TYPE_FLOAT32, 0);
+    if(vxGetStatus((vx_reference)mInputTensor)) {
+        printf("ERROR: vxCreateTensor() failed\n");
+        exit(-1);
+    }
     
+    // create and initialize output tensor data
+    vx_size output_dims[4] = { 1, 1, 10, 1 };
+    mOutputTensor = vxCreateTensor(mContext, 4, output_dims, VX_TYPE_FLOAT32, 0);
+    if(vxGetStatus((vx_reference)mOutputTensor)) {
+        printf("ERROR: vxCreateTensor() failed for mOutputTensor\n");
+        exit(-1);
+    }
+
     //add input tensor, output tensor, and weights to the graph
-    vx_status status = annAddToGraph(mGraph, mInputTensor->getTensor(), mOutputTensor->getTensor(), mWeights);
+    status = annAddToGraph(mGraph, mInputTensor, mOutputTensor, weights);
     if(status) {
          printf("ERROR: annAddToGraph() failed (%d)\n", status);
          exit(-1);
     }
-
+    
     //verify the graph
     status = vxVerifyGraph(mGraph);
     if(status) {
         printf("ERROR: vxVerifyGraph(...) failed (%d)\n", status);
         exit(-1);
     }
-    t1 = clockCounter();
-    printf("OK: graph initialization with annAddToGraph() took %.3f msec\n", (float)(t1-t0)*1000.0f/(float)freq);
+};
+
+DGtest::~DGtest(){
+    //release the tensors
+    ERROR_CHECK_STATUS(vxReleaseTensor(&mInputTensor));
+    ERROR_CHECK_STATUS(vxReleaseTensor(&mOutputTensor));
+    //release the graph
+    ERROR_CHECK_STATUS(vxReleaseGraph(&mGraph));
+    // release context
+    ERROR_CHECK_STATUS(vxReleaseContext(&mContext));
+};
+
+int DGtest::runInference(Mat &image) {
+    
+    Mat img = image.clone();
+    
+    // convert to grayscale image
+    cvtColor(img, img, CV_BGR2GRAY);
+
+    // resize to 24 x 24 
+	resize(img, img, Size(24, 24));
+    
+    // dilate image
+	dilate(img, img, Mat::ones(2,2,CV_8U)); 
+    
+    // add border to the image so that the digit will go center and become 28 x 28 image
+    copyMakeBorder(img, img, 2, 2, 2, 2, BORDER_CONSTANT, Scalar(0,0,0));
+		
+    vx_size dims[4] = { 1, 1, 1, 1 }, stride[4];
+    vx_status status;
+    vx_map_id map_id;
+    float * ptr;
+
+    // query tensor for the dimension    
+    vxQueryTensor(mInputTensor, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*4);
+ 
+    // copy image to input tensor
+    status = vxMapTensorPatch(mInputTensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for " <<  std::endl;
+        return -1;
+    }
+    
+    for(vx_size y = 0; y < dims[1]; y++) {
+        unsigned char * src = img.data + y*dims[0]*dims[2];
+        float * dst = ptr + ((y * stride[1]) >> 2);
+        for(vx_size x = 0; x < dims[0]; x++, src++) {
+            *dst++ = src[0];
+        }
+    }
+
+    status = vxUnmapTensorPatch(mInputTensor, map_id);
+    if(status) {
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for " <<  std::endl;
+        return -1;
+    }
 
     //process the graph
-    t0 = clockCounter();
     status = vxProcessGraph(mGraph);
-    t1 = clockCounter();
     if(status != VX_SUCCESS) {
-        printf("ERROR: vxProcessGraph() failed (%d)\n", status);
-        exit(-1);
+        std::cerr << "ERROR: vxProcessGraph() failed" <<  std::endl;
+        return -1;
     }
-    printf("OK: vxProcessGraph() took %.3f msec (1st iteration)\n", (float)(t1-t0)*1000.0f/(float)freq);
-    
-    //write out to the specified output tensor
-    if(mOutputTensor->writeTensor() < 0) {
-        std::cout << "Failed to write tensor data to " << mOutputTensor->getFileName() << std::endl;
-        exit(-1);
-    }
-    std::cout << "OK: wrote tensor 'loss' into " << mOutputTensor->getFileName() << std::endl;
 
-    t0 = clockCounter();
-    int N = 100;
-    for(int i = 0; i < N; i++) {
-        status = vxProcessGraph(mGraph);
-        if(status != VX_SUCCESS)
-            break;
+    // get the output result from output tensor
+    status = vxMapTensorPatch(mOutputTensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for "  << std::endl;
+        return -1;
     }
-    t1 = clockCounter();
-    printf("OK: vxProcessGraph() took %.3f msec (average over %d iterations)\n", (float)(t1-t0)*1000.0f/(float)freq/(float)N, N);
-    ERROR_CHECK_STATUS(vxReleaseGraph(&mGraph));
+
+    mDigit = std::distance(ptr, std::max_element(ptr, ptr + 10));
+
+    status = vxUnmapTensorPatch(mOutputTensor, map_id);
+    if(status) {
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for "  << std::endl;
+        return -1;
+    }
+    return 0;
+}
+
+int DGtest::getResult() {
+    return mDigit;
 }

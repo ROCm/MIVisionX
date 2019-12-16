@@ -1811,81 +1811,48 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                 char imgFileName[1024];
                 sprintf(imgFileName, fileName.c_str(), (int)n);
                 Mat img;
-                if (dims[3] == 1) {
-                    img = imread(imgFileName, CV_LOAD_IMAGE_GRAYSCALE);
-                    if(!img.data || img.rows != dims[1] || img.cols != dims[0]) {
-                        printf("ERROR: invalid image or dimensions: %s\\n", imgFileName);
-                        return -1;
-                    }
-                    for(vx_size y = 0; y < dims[1]; y++) {
-                        unsigned char * src = img.data + y*dims[0]*dims[2];
-                        if(data_type == VX_TYPE_FLOAT32) {
-                            float * dst = (float *)ptr + ((n * stride[3] + y * stride[1]) >> 2);
-                            for(vx_size x = 0; x < dims[0]; x++, src++) {
-                                *dst++ = src[0];
-                            }
-                        } else if(data_type == VX_TYPE_FLOAT16) {
-                            short * dst = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);                   
-                            for(vx_size x = 0; x < dims[0]; x++, src++) {
-                                *dst++ = src[0];
-                            }
-                        } else if(data_type == VX_TYPE_INT64) {
-                            long int* dst = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
-                            for(vx_size x = 0; x < dims[0]; x++, src++) {
-                                *dst++ = src[0];
-                            }
-                        } else if(data_type == VX_TYPE_INT32) {
-                            int* dst = (int*)ptr + ((n * stride[3] + y * stride[1]) >> 2);
-                            for(vx_size x = 0; x < dims[0]; x++, src++) {
-                                *dst++ = src[0];
-                            }
-                        }
-                    }
+                img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
+                if(!img.data || img.rows != dims[1] || img.cols != dims[0]) {
+                    printf("ERROR: invalid image or dimensions: %s\\n", imgFileName);
+                    return -1;
                 }
-                else {
-                    img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
-                    if(!img.data || img.rows != dims[1] || img.cols != dims[0]) {
-                        printf("ERROR: invalid image or dimensions: %s\\n", imgFileName);
-                        return -1;
-                    }
-                    for(vx_size y = 0; y < dims[1]; y++) {
-                        unsigned char * src = img.data + y*dims[0]*dims[2];
-                        if(data_type == VX_TYPE_FLOAT32) {
-                            float * dstR = (float *)ptr + ((n * stride[3] + y * stride[1]) >> 2);
-                            float * dstG = dstR + (stride[2] >> 2);
-                            float * dstB = dstG + (stride[2] >> 2);
-                            for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                                *dstR++ = (src[2] * mulVec[0]) + addVec[0];
-                                *dstG++ = (src[1] * mulVec[1]) + addVec[1];
-                                *dstB++ = (src[0] * mulVec[2]) + addVec[2];
-                            }
-                        } else if(data_type == VX_TYPE_FLOAT16) {
-                            short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);
-                            short * dstG = dstR + (stride[2] >> 2);
-                            short * dstB = dstG + (stride[2] >> 2);                    
-                            for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                                *dstR++ = (src[2] * mulVec[0]) + addVec[0];
-                                *dstG++ = (src[1] * mulVec[1]) + addVec[1];
-                                *dstB++ = (src[0] * mulVec[2]) + addVec[2];
-                            }
-                        } else if(data_type == VX_TYPE_INT64) {
-                            long int* dstR = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
-                            long int* dstG = dstR + (stride[2] >> 2);
-                            long int* dstB = dstG + (stride[2] >> 2);                    
-                            for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                                *dstR++ = (src[2] * mulVec[0]) + addVec[0];
-                                *dstG++ = (src[1] * mulVec[1]) + addVec[1];
-                                *dstB++ = (src[0] * mulVec[2]) + addVec[2];
-                            }
-                        } else if(data_type == VX_TYPE_INT32) {
-                            int* dstR = (int*)ptr + ((n * stride[3] + y * stride[1]) >> 2);
-                            int* dstG = dstR + (stride[2] >> 2);
-                            int* dstB = dstG + (stride[2] >> 2);                    
-                            for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                                *dstR++ = (src[2] * mulVec[0]) + addVec[0];
-                                *dstG++ = (src[1] * mulVec[1]) + addVec[1];
-                                *dstB++ = (src[0] * mulVec[2]) + addVec[2];
-                            }
+                for(vx_size y = 0; y < dims[1]; y++) {
+                    unsigned char * src = img.data + y*dims[0]*dims[2];
+                    if(data_type == VX_TYPE_FLOAT32) {
+                        float * dstR = (float *)ptr + ((n * stride[3] + y * stride[1]) >> 2);
+                        float * dstG = dstR + (stride[2] >> 2);
+                        float * dstB = dstG + (stride[2] >> 2);
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
+                        }
+                    } else if(data_type == VX_TYPE_FLOAT16) {
+                        short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);
+                        short * dstG = dstR + (stride[2] >> 2);
+                        short * dstB = dstG + (stride[2] >> 2);                    
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
+                        }
+                    } else if(data_type == VX_TYPE_INT64) {
+                        long int* dstR = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
+                        long int* dstG = dstR + (stride[2] >> 2);
+                        long int* dstB = dstG + (stride[2] >> 2);                    
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
+                        }
+                    } else if(data_type == VX_TYPE_INT32) {
+                        int* dstR = (int*)ptr + ((n * stride[3] + y * stride[1]) >> 2);
+                        int* dstG = dstR + (stride[2] >> 2);
+                        int* dstB = dstG + (stride[2] >> 2);                    
+                        for(vx_size x = 0; x < dims[0]; x++, src += 3) {
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
                         }
                     }
                 }
@@ -1909,12 +1876,18 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 std::cerr << "ERROR: expected char[" << count*sizeof(float) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
+                            }
                         } else if(data_type == VX_TYPE_FLOAT16){
                             short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 1);
                             vx_size n = fread(ptrY, sizeof(short), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(short) << "], but got less in " << fileName << std::endl;
                                 return -1;
+                            }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
                             }
                         } else if(data_type == VX_TYPE_INT64){
                             long int * ptrY = (long int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
@@ -1923,12 +1896,18 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 std::cerr << "ERROR: expected char[" << count*sizeof(long int) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
+                            }
                         } else if(data_type == VX_TYPE_INT32){
                             int * ptrY = (int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
                             vx_size n = fread(ptrY, sizeof(int), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(int) << "], but got less in " << fileName << std::endl;
                                 return -1;
+                            }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
                             }
                         }
                     }
@@ -2317,12 +2296,12 @@ int main(int argc, const char ** argv)
     argv += 2;
 
     std::string add = "0,0,0", multiply = "1,1,1";
-    if (argc == 5) {
+    if (argc == 6) {
     	if (strcasecmp(argv[1], "--add") == 0) {
-	    add = argv[2];
+	    add = argv[3];
         }
-    	if (strcasecmp(argv[3], "--multiply") == 0) {
-	    multiply = argv[4];
+    	if (strcasecmp(argv[4], "--multiply") == 0) {
+	    multiply = argv[5];
         }
     }
 

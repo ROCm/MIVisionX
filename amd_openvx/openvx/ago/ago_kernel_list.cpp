@@ -530,7 +530,7 @@ int agoPublishKernels(AgoContext * acontext)
 			kernel->parameters[j].index = j;
 			kernel->parameters[j].direction = VX_INPUT;
 			if (kernel->argConfig[j] & AGO_KERNEL_ARG_OUTPUT_FLAG)
-				kernel->parameters[j].direction = (kernel->argConfig[j] & AGO_KERNEL_ARG_INPUT_FLAG) ? VX_BIDIRECTIONAL : VX_OUTPUT;
+				kernel->parameters[j].direction = (kernel->argConfig[j] & AGO_KERNEL_ARG_INPUT_FLAG) ? (vx_direction_e)VX_BIDIRECTIONAL : VX_OUTPUT;
 			kernel->parameters[j].type = ago_kernel_list[i].argType[j];
 			kernel->parameters[j].state = (kernel->argConfig[j] & AGO_KERNEL_ARG_OPTIONAL_FLAG) ? VX_PARAMETER_STATE_OPTIONAL : VX_PARAMETER_STATE_REQUIRED;
 			kernel->parameters[j].scope = &kernel->ref;

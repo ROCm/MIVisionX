@@ -64,6 +64,7 @@ list(APPEND SOURCES
 )
 
 add_library(openvx SHARED ${SOURCES})
+add_library(vxu SHARED api/vxu.cpp)
 
 if (OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)

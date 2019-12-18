@@ -25,18 +25,18 @@ This sample [application](./image_augmentation#image-augmentation-application) d
 
 [MIVisionX Inference Analyzer Application](./mivisionx_inference_analyzer#mivisionx-python-inference-analyzer) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
 
-<p align="center"><img width="60%" src="./mivisionx_inference_analyzer/data/images/inference_analyzer.gif" /></p>
+<p align="center"><img width="60%" src="../docs/images/inference_analyzer.gif" /></p>
 
 ## MIVisionX OpenVX Classsification
 This sample [application](./mivisionx_openvx_classifier/README.md) shows how to run supported pre-trained caffe models with MIVisionX RunTime.
 
-<p align="center"> <img src="./mivisionx_openvx_classifier/data/MIVisionX-ImageClassification.png"></p>
+<p align="center"> <img src="../docs/images/mivisionx_openvx_classifier_imageClassification.png"></p>
 
 # MIVisionX Validation Tool
 
 [MIVisionX ML Model Validation Tool](./mivisionx_validation_tool#mivisionx-python-ml-model-validation-tool) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze, summarize, & validate.
 
-<p align="center"><img width="100%" src="./mivisionx_validation_tool/data/images/validation-2.png" /></p>
+<p align="center"><img width="100%" src="../docs/images/validation-2.png" /></p>
 
 ## MIVisionX WinML Classification
 This sample [application](./mivisionx_winml_classifier/README.md) shows how to run supported ONNX models with MIVisionX RunTime on Windows.

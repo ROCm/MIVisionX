@@ -1784,6 +1784,8 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
     for(std::string s; std::getline(sf, s, ','); ) {
         argList.push_back(s);
     }
+    std::cout << "Preprocessing add :" << addVec[0] << addVec[1] << addVec[2] << std::endl;
+    std::cout << "Preprocessing multiply :" << mulVec[0] << mulVec[1] << mulVec[2] << std::endl;
     std::string fileName = argList[0];
     // access the tensor object
     vx_enum data_type = VX_TYPE_FLOAT32;

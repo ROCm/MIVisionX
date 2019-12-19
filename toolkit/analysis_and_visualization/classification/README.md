@@ -64,7 +64,7 @@ python generate-visualization.py --inference_results sample/inceptionV4-results.
 
 ### Overall Summary
 
-![picture alt](img/summary.png "Overall Summary")
+![picture alt](../../../docs/images/classification_summary.png "Overall Summary")
 
 This section summarizes the results for the current session, with information on the dataset and the model. The section classifies the dataset into images with or without ground truth and only considers the images with ground truth for analysis to avoid skewing the results.
 
@@ -74,7 +74,7 @@ The summary also timestamps the results to avoid confusion with different iterat
 
 ### Graphs
 
-![picture alt](img/graph.png "Graph")
+![picture alt](../../../docs/images/classification_graph.png "Graph")
 
 The graph section allows the user to visualize the dataset and model accurately. The graphs can help detect any anomalies with the data or the model from a higher level. The graphs can be saved or shared with others.
 

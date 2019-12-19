@@ -63,6 +63,6 @@ You can test your own trained MNIST caffemodel using the [model compiler](https:
     ./DGTest ../data/weights.bin
     
 <p align="center">
-  <img src="./images/sample.png">
+  <img src="../../docs/images/dg_test_sample.png">
 </p>
 

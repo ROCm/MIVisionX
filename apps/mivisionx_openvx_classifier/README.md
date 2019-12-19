@@ -3,10 +3,10 @@
 This application runs know CNN image classifiers on live or pre-recorded video streams.
 
 ## MIVisionX Image Classification Control
-<p align="center"><img width="100%" src="data/MIVisionX-ImageClassification.png" /></p>
+<p align="center"><img width="100%" src="../../docs/images/mivisionx_openvx_classifier_imageClassification.png" /></p>
 
 ## MIVisionX Image Classification
-<p align="center"><img width="100%" src="data/classifier.png" /></p>
+<p align="center"><img width="100%" src="../../docs/images/mivisionx_openvx_classifier_classifier.png" /></p>
 
 ## Usage
 

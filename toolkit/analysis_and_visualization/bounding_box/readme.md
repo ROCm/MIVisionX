@@ -55,7 +55,7 @@ python generate-visualization.py -i sample/boundingBoxCompare-results.csv -d ../
 
 ### Overall Summary
 
-![picture alt](img/summary.png "Overall Summary")
+![picture alt](../../../docs/images/bounding_box_summary.png "Overall Summary")
 
 This section summarizes the results for the current session, with information on the dataset and the model. The section classifies the dataset into images with or without ground truth and only considers the images with ground truth for analysis to avoid skewing the results.
 
@@ -65,7 +65,7 @@ The summary also timestamps the results to avoid confusion with different iterat
 
 ### Graphs
 
-![picture alt](img/graph.png "Graph")
+![picture alt](../../../docs/images/bounding_box_graph.png "Graph")
 
 The graph section allows the user to visualize the dataset and model accurately. The graphs can help detect any anomalies with the data or the model from a higher level. The graphs can be saved or shared with others.
 
@@ -74,8 +74,6 @@ The graph section allows the user to visualize the dataset and model accurately.
 Label section is the summary of all the classes the model has been trained to detect. The Label Summary presents the highlights of all the classes of images available in the database. The summary reports if the classes are found or not found.
 
 Click on any of the label description and zoom into all the images from that class in the database.
-
-![picture alt](img/graph.png "Image")
 
 ### Image Results
 

@@ -211,6 +211,9 @@ void MasterGraph::release()
         loader_module->stop();
 
     stop_processing();
+    _nodes.clear();
+    _root_nodes.clear();
+    _image_map.clear();
     vx_status status;
     if(_graph != nullptr)
         _graph->release();

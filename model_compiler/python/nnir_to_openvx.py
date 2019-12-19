@@ -1784,8 +1784,8 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
     for(std::string s; std::getline(sf, s, ','); ) {
         argList.push_back(s);
     }
-    std::cout << "Preprocessing add :" << addVec[0] << addVec[1] << addVec[2] << std::endl;
-    std::cout << "Preprocessing multiply :" << mulVec[0] << mulVec[1] << mulVec[2] << std::endl;
+    std::cout << "Preprocessing add :" << addVec[0] << " " << addVec[1] << " " << addVec[2] << " " << std::endl;
+    std::cout << "Preprocessing multiply :" << mulVec[0] << " " << mulVec[1] << " " << mulVec[2] << " " << std::endl;
     std::string fileName = argList[0];
     // access the tensor object
     vx_enum data_type = VX_TYPE_FLOAT32;
@@ -2299,7 +2299,7 @@ int main(int argc, const char ** argv)
 
     std::string add = "0,0,0", multiply = "1,1,1";
     if (argc == 6) {
-    	if (strcasecmp(argv[1], "--add") == 0) {
+    	if (strcasecmp(argv[2], "--add") == 0) {
 	    add = argv[3];
         }
     	if (strcasecmp(argv[4], "--multiply") == 0) {

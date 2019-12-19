@@ -81,6 +81,10 @@ enum vx_kernel_nn_ext_e {
     * \see group_cnn
     */
     VX_KERNEL_DECONVOLUTION_LAYER = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_NN_EXTENSION) + 0x7,
+    /*! \brief The Neural Network Extension local response normalization Kernel.
+    * \see group_cnn
+    */
+    VX_KERNEL_LOCAL_RESPONSE_NORMALIZATION_LAYER = VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_NN_EXTENSION) + 0x8
 };
 
 /*! \brief NN extension type enums.
@@ -356,6 +360,31 @@ VX_API_ENTRY vx_node VX_API_CALL vxNormalizationLayer(vx_graph graph, vx_tensor 
         vx_size normalization_size,
         vx_float32 alpha,
         vx_float32 beta,
+        vx_tensor outputs);
+
+/*! \brief [Graph] Creates a Convolutional Network Local Response Normalization Layer Node. This function is optional for 8-bit extension with the extension string 'KHR_NN_8'. 
+ * \details Normalizing over local input regions. Each input value is divided by \f$ (1+\frac{\alpha}{n}\sum_i x^2_i)^\beta \f$ , where n is the number of elements to normalize across.
+ * and the sum is taken over a rectangle region centred at that value (zero padding is added where necessary).
+ * \param [in] graph The handle to the graph.
+ * \param [in] inputs The input tensor data. 3 lower dimensions represent a single input, 4th dimension for batch of inputs is optional.Dimension layout is [width, height, IFM, #batches].
+ * See <tt>\ref vxCreateTensor</tt> and <tt>\ref vxCreateVirtualTensor</tt>.
+ * Implementations must support input tensor data types indicated by the extension strings 'KHR_NN_8 KHR_NN_16'. 
+ * Since this function is optional for 'KHR_NN_8', so implementations only must support <tt>VX_TYPE_INT16</tt> with fixed_point_position 8.
+ * \param [in] type [static] Either same map or across maps (see <tt>\ref vx_nn_norm_type_e</tt>).
+ * \param [in] normalization_size [static] Number of elements to normalize across. Must be a positive odd number with maximum size of 7 and minimum of 3.
+ * \param [in] alpha [static] Alpha parameter in the normalization equation. must be positive.
+ * \param [in] beta  [static] Beta parameter in the normalization equation. must be positive.
+ * \param [out] outputs The output tensor data. Output will have the same number of dimensions as input.
+ * \ingroup group_cnn
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxLocalResponseNormalizationLayer(vx_graph graph, vx_tensor inputs, vx_enum type,
+        vx_size normalization_size,
+        vx_float32 alpha,
+        vx_float32 beta,
+        vx_float32 bias,
         vx_tensor outputs);
 
 /*! \brief [Graph] Creates a Convolutional Network Activation Layer Node.

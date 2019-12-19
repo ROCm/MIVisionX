@@ -134,6 +134,7 @@ vx_status publishFullyConnectedLayer(vx_context context);
 vx_status publishPoolingLayer(vx_context context);
 vx_status publishSoftmaxLayer(vx_context context);
 vx_status publishNormalizationLayer(vx_context context);
+vx_status publishLocalResponseNormalizationLayer(vx_context context);
 vx_status publishActivationLayer(vx_context context);
 vx_status publishROIPoolingLayer(vx_context context);
 vx_status publishDeconvolutionLayer(vx_context context);

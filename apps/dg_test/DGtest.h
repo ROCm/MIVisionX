@@ -1,45 +1,38 @@
 #pragma once
-
 #include "annmodule.h"
-#include "VXtensor.h"
-#include <memory>
 
 /**
  *  Class to run the inference
  */
-
 class DGtest
 {
 public:
-    DGtest(const char* weights, std::string inputFile, std::string outputFile, const int batchSize);
+    /**
+     * Constructor
+     */
+    DGtest(const char* weights);
+
+    /**
+     * Destructor
+     */
     ~DGtest();
 
     /**
      *  Run the inference
      */
-    void runInference(); 
+    int runInference(cv::Mat &image); 
+
+    /**
+     *  Get the inference result
+     */
+    int getResult(); 
 
 private:
 
     /**
-     *  Weights file name
+     *  Inference result
      */
-    const char* mWeights;
-
-    /**
-     *  The pointer to the input tensor object
-     */
-    std::unique_ptr<VXtensor> mInputTensor;
-    
-    /**
-     *  The pointer to the output tensor object
-     */
-    std::unique_ptr<VXtensor> mOutputTensor;
-
-    /**
-     *  The batch size to run the inference
-     */
-    int mBatchSize;
+    int mDigit;
 
     /**
      *  Context that will be used for the inference
@@ -50,4 +43,15 @@ private:
      *  Graph that will be used for the inference
      */
     vx_graph mGraph;
+
+    /**
+     *  Graph that will be used for the inference
+     */
+    vx_tensor mInputTensor;
+    
+    /**
+     *  Graph that will be used for the inference
+     */
+    vx_tensor mOutputTensor;
+
 };

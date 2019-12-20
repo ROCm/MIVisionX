@@ -15,6 +15,7 @@ public:
     size_t count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
     std::vector<long long unsigned> timing() override {return {0}; }
+    void stop() override  {}
 private:
     vx_graph _graph;
     DecodeMode _decode_mode;

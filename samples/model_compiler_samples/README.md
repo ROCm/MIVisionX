@@ -303,7 +303,7 @@ Run inference on the live camera feed with this option.
 	
 	* Run YoloV2 Classifier
 	```
-	% ./classifier --mode 2 --video ../MIVisionX-Inference-Tutorial/data/videos/amd_video_01.mp4 --model_weights ../yoloV2-openvx/weights.bin --label ../MIVisionX-Inference-Tutorial/data/sample_detection_labels.txt --model_input_dims 3,416,416 --model_output_dims 125,12,12 --model_name YoloV2_Caffe --multiply 0.003922,0.003922,0.003922
+	% ./classifier --mode 2 --video ../../data/videos/AMD_driving_virtual_20.mp4 --model_weights ../yoloV2-openvx/weights.bin --label ../MIVisionX-Inference-Tutorial/data/sample_detection_labels.txt --model_input_dims 3,416,416 --model_output_dims 125,12,12 --model_name YoloV2_Caffe --multiply 0.003922,0.003922,0.003922
 	```	
 	**Note:** 
 	* Tiny YoloV2 input needs to be preprocessed

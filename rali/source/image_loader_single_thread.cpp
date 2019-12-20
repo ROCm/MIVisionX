@@ -51,7 +51,8 @@ ImageLoaderSingleThread::de_init()
     _running = 0;
     _circ_buff.cancel_reading();
     _circ_buff.cancel_writing();
-    _load_thread.join();
+    if(_load_thread.joinable())
+        _load_thread.join();
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
@@ -72,6 +73,16 @@ ImageLoaderSingleThread::set_output_image (Image* output_image)
 {
     _output_image = output_image;
     _output_mem_size = _output_image->info().data_size();
+}
+
+void
+ImageLoaderSingleThread::stop()
+{
+    _running = 0;
+    _circ_buff.cancel_reading();
+    _circ_buff.cancel_writing();
+    if(_load_thread.joinable())
+        _load_thread.join();
 }
 
 void

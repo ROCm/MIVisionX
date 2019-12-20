@@ -11,15 +11,32 @@ This sample [application](./cloud_inference#cloud-inference-application) does in
 This sample [application](./dg_test#amd-dgtest) is used to recognize hand written digits.
 
 <p align="center">
-  <img src="../docs/images/digits1.png">
-  <img src="../docs/images/digits2.png">
-  <img src="../docs/images/DGtest.png">
+  <img src="../docs/images/DGtest.gif">
 </p>
+
+## Image Augmentation
+This sample [application](./image_augmentation#image-augmentation-application) demonstrates a basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+
+<p align="center">
+	<img width="90%" src="../docs/images/image_augmentation.png" />
+</p>
+
+# MIVisionX Inference Analyzer
+
+[MIVisionX Inference Analyzer Application](./mivisionx_inference_analyzer#mivisionx-python-inference-analyzer) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
+
+<p align="center"><img width="60%" src="../docs/images/inference_analyzer.gif" /></p>
 
 ## MIVisionX OpenVX Classsification
 This sample [application](./mivisionx_openvx_classifier/README.md) shows how to run supported pre-trained caffe models with MIVisionX RunTime.
 
-<p align="center"> <img src="./mivisionx_openvx_classifier/data/MIVisionX-ImageClassification.png"></p>
+<p align="center"> <img src="../docs/images/mivisionx_openvx_classifier_imageClassification.png"></p>
+
+# MIVisionX Validation Tool
+
+[MIVisionX ML Model Validation Tool](./mivisionx_validation_tool#mivisionx-python-ml-model-validation-tool) using pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze, summarize, & validate.
+
+<p align="center"><img width="100%" src="../docs/images/validation-2.png" /></p>
 
 ## MIVisionX WinML Classification
 This sample [application](./mivisionx_winml_classifier/README.md) shows how to run supported ONNX models with MIVisionX RunTime on Windows.
@@ -30,15 +47,6 @@ This sample [application](./mivisionx_winml_classifier/README.md) shows how to r
 This sample [application](./mivisionx_winml_yolov2#yolov2-using-amd-winml-extension) shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
 
 <p align="center"> <img src="./mivisionx_winml_yolov2/image/cat-yolo.jpg"> </p>
-
-## rali-unittests
-Simple application for running unit tests for RALI library.
-Usage: rali-unittests input-image-folder output-image-name augmentation-number display-on-off gpu-or-cpu rgb-or-grayscale
-Example: rali-unittests input-images/ output-image-test.png 0 1 1 1
-The above example will run the first augmentation in the app on the image located in input-images and output the result to
-output-image-test.png. It will be shown in the OpenCV display window, it will use the GPU and it will be in color. 
-Example 2: rali-unittests input-images/ output-image-test2.png 0 1 0 0
-Same as the first example but the processing will be done on the CPU and the image will be in grayscale.
 
 ## External Application
 

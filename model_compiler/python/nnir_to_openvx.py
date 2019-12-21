@@ -2247,8 +2247,6 @@ int main(int argc, const char ** argv)
             "   <weights.bin>: is a filename of the weights file to be used for the inference\\n"
             "   <input-data-file>: is a filename to initialize input tensor\\n"
             "   <output-data-file>: is a filename to initialize output tensor\\n"
-            "   <add>: input preprocessing factor [optional - default:[0,0,0]]\\n"
-            "   <multiply>: input preprocessing factor [optional - default:[1,1,1]]\\n"
 """)
         f.write( \
 """#if ENABLE_OPENCV
@@ -2289,6 +2287,8 @@ int main(int argc, const char ** argv)
         f.write( \
 """            "       '-' to ignore\\n"
             "       other: save raw tensor into the file\\n"
+            "   <add>: input preprocessing factor [optional - default:[0,0,0]]\\n"
+            "   <multiply>: input preprocessing factor [optional - default:[1,1,1]]\\n"
             "\\n"
         );
         return -1;

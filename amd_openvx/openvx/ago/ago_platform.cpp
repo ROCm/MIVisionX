@@ -241,9 +241,14 @@ DWORD WaitForSingleObject(HANDLE h, DWORD dwMilliseconds)
 				sem->count--;
 			}
 		}
-	}
+    } else
+    {
+        printf("Invalid Handle for WaitObject\n");
+        return -1;
+    }
 	return 0;
 }
+
 BOOL ReleaseSemaphore(HANDLE h, LONG lReleaseCount, LPLONG lpPreviousCount)
 {
 	if(h) {
@@ -258,8 +263,12 @@ BOOL ReleaseSemaphore(HANDLE h, LONG lReleaseCount, LPLONG lpPreviousCount)
 				sem->cv.notify_one();
 			}
 		}
-	}
-	return 0;
+    } else
+    {
+        printf("Invalid Handle for Semaphore\n");
+        return 0;
+    }
+    return 1;
 }
 
 #endif

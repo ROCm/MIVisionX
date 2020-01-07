@@ -8,14 +8,14 @@ class JpegFileNode: public Node
 public:
     void create(std::shared_ptr<Graph> graph) override  { if(!_graph) _graph = graph; }
 
-    JpegFileNode(Image *output, DeviceResources device_resources,
-                 RaliMemType mem_type, unsigned batch_size);
-    ~JpegFileNode()
+    JpegFileNode(Image *output, DeviceResources device_resources, RaliMemType mem_type,
+                 unsigned batch_size);
+    ~JpegFileNode() override
     {
         _loader_module = nullptr;
     }
     JpegFileNode() = delete;
-    void init(const std::string& source_path, size_t num_threads = NUM_THREADS);
+    void init(size_t num_threads, const std::string &source_path, bool loop);
     void update_parameters() override  {};
     std::shared_ptr<ImageLoaderMultiThread> get_loader_module() { return _loader_module; }
 private:

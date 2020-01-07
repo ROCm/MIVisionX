@@ -17,8 +17,8 @@ class RaliIntParameter:
         self.latest_gen.argtypes = [ctypes.c_void_p]
         self.obj = self.create_obj(value)
 
-    def update(self, start, end):
-        ret = self.update_obj(start, end, self.obj)
+    def update(self, value):
+        ret = self.update_obj(value, self.obj)
         if(ret != 0):
             raise Exception('FAILED updating the random variable')
 
@@ -42,8 +42,8 @@ class RaliFloatParameter:
         self.latest_gen.argtypes = [ctypes.c_void_p]
         self.obj = self.create_obj(value)
 
-    def update(self, start, end):
-        ret = self.update_obj(start, end, self.obj)
+    def update(self, value):
+        ret = self.update_obj(value, self.obj)
         if(ret != 0):
             raise Exception('FAILED updating the random variable')
 

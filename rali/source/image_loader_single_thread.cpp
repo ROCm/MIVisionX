@@ -5,27 +5,18 @@
 #include "image_read_and_decode.h"
 #include "vx_ext_amd.h"
 
-ImageLoaderSingleThread::ImageLoaderSingleThread(DeviceResources ocl):
-_circ_buff(ocl, CIRC_BUFFER_DEPTH)
+ImageLoaderSingleThread::ImageLoaderSingleThread(DeviceResources dev_resources):
+_circ_buff(dev_resources, CIRC_BUFFER_DEPTH)
 {
+    _output_image = nullptr;
+    _mem_type = RaliMemType::HOST;
     _running = 0;
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
     _ready = false;
 }
-void ImageLoaderSingleThread::set_path(const std::string& image_folder)
-{
-    _image_folder = image_folder;
-}
-void ImageLoaderSingleThread::set_load_offset(size_t offset)
-{
-    _load_offset = offset;
-}
-void ImageLoaderSingleThread::set_load_interval(size_t interval)
-{ 
-    _load_interval = interval;  
-}
+
 ImageLoaderSingleThread::~ImageLoaderSingleThread()
 {
     de_init();
@@ -36,6 +27,10 @@ ImageLoaderSingleThread::count()
 {
     // see load_routine() function for details on the need for the mutex used here
     std::unique_lock<std::mutex> lock(_lock);
+    
+    if(_loop)
+        return _image_loader->count();
+
     return _image_loader->count() + _circ_buff.level();
 }
 
@@ -56,7 +51,8 @@ ImageLoaderSingleThread::de_init()
     _running = 0;
     _circ_buff.cancel_reading();
     _circ_buff.cancel_writing();
-    _load_thread.join();
+    if(_load_thread.joinable())
+        _load_thread.join();
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
@@ -80,21 +76,30 @@ ImageLoaderSingleThread::set_output_image (Image* output_image)
 }
 
 void
-ImageLoaderSingleThread::initialize(StorageType storage_type, DecoderType decoder_type, RaliMemType mem_type,
-                                    unsigned batch_size)
+ImageLoaderSingleThread::stop()
+{
+    _running = 0;
+    _circ_buff.cancel_reading();
+    _circ_buff.cancel_writing();
+    if(_load_thread.joinable())
+        _load_thread.join();
+}
+
+void
+ImageLoaderSingleThread::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
 {
     if(_is_initialized)
         WRN("Create function is already called and loader module is initialized")
 
     _mem_type = mem_type;
     _batch_size = batch_size;
+    _loop = reader_cfg.loop();
     _image_loader = std::make_shared<ImageReadAndDecode>();
-    auto reader_config = FileSourceReaderConfig(_image_folder, _load_offset, _load_interval);
-    auto decoder_config = TurboJpegDecoderConfig();
     try
     {
-        _image_loader->create(&reader_config, &decoder_config);
-    } catch(const std::exception& e)
+        _image_loader->create(reader_cfg, decoder_cfg);
+    }
+    catch(const std::exception& e)
     {
         de_init();
         throw;
@@ -144,8 +149,10 @@ ImageLoaderSingleThread::load_routine()
 
             if(load_status == LoaderModuleStatus::OK)
             {
+                std::unique_lock<std::mutex> lock(_names_buff_lock);
+                // Pushing to the _circ_buff and _circ_buff_names must happen all at the same time
                 _circ_buff.push();
-                _image_counter += _output_image->info().batch_size();
+                 _image_counter += _output_image->info().batch_size();
                 _circ_buff_names.push(_image_names);
             }
         }
@@ -202,10 +209,15 @@ ImageLoaderSingleThread::update_output_image()
         if(_output_image->swap_handle(_circ_buff.get_read_buffer_host()) != 0)
             return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
     }
+    {
+        // Pop from _circ_buff and _circ_buff_names happens at the same time
+        std::unique_lock<std::mutex> lock(_names_buff_lock);
+        _output_image->set_names(_circ_buff_names.front());
+        _circ_buff_names.pop();
+        _circ_buff.pop();
+    }
 
-    _output_image->set_names(_circ_buff_names.front());
-    _circ_buff_names.pop();
-    _circ_buff.pop();
+
 
     return status;
 }

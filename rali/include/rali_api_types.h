@@ -11,6 +11,9 @@
 #endif
 #endif
 
+#include <half.hpp>
+using half_float::half;
+
 typedef struct FloatParam * RaliFloatParam;
 typedef struct IntParam * RaliIntParam;
 typedef struct Context* RaliContext;
@@ -63,5 +66,11 @@ enum RaliTensorLayout
 {
     RALI_NHWC = 0,
     RALI_NCHW = 1
+};
+
+enum RaliTensorOutputType
+{
+    RALI_FP32 = 0,
+    RALI_FP16 = 1
 };
 #endif //MIVISIONX_RALI_API_TYPES_H

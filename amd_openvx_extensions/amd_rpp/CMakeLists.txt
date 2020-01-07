@@ -61,6 +61,7 @@ list (APPEND SOURCES
 		source/fog.cpp
 		source/snp_noise.cpp
 		source/copy.cpp
+		source/nop.cpp
 		)
 
 link_directories(${AMDRPP_LIBRARIES_DIR})

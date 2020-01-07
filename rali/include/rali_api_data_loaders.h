@@ -19,6 +19,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
                                                         RaliImageColor color_format,
                                                         unsigned num_threads,
                                                         bool is_output ,
+                                                        bool loop = false,
                                                         RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                         unsigned max_width = 0, unsigned max_height = 0);
 

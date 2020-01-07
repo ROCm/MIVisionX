@@ -21,7 +21,7 @@ void CopyNode::create(std::shared_ptr<Graph> graph)
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the blur (vxCopyNode) node failed: "+ TOSTR(status))
+        THROW("Adding the copy (vxCopyNode) node failed: "+ TOSTR(status))
 
 }
 

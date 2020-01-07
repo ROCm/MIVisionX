@@ -23,7 +23,7 @@ THE SOFTWARE.
 */
 #include <string>
 #include <exception>
-
+#include <parameter_factory.h>
 #include "commons.h"
 #include "context.h"
 #include "rali_api.h"
@@ -58,6 +58,7 @@ raliCreate(
             }
         };
         rali_context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
+        // Reset seed in case it's being randomized during context creation
     }
     catch(const std::exception& e)
     {

@@ -1,20 +1,24 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.4.0"
+__version__     = "1.5.1"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
 
 import argparse
-import commands
+import sys
+if sys.version_info[0] < 3:
+	import commands
+else:
+	import subprocess
 import os
 
 # Import arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', type=str, default='',        help='Setup home directory - optional (default:~/)')
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
-parser.add_argument('--miopen',    type=str, default='1.8.1',   help='MIOpen Version - optional (default:1.8.1)')
+parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
 parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options: Install ffmpeg - yes')
 parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
@@ -30,9 +34,15 @@ rppInstall = args.rpp
 # sudo requirement check
 sudoLocation = ''
 userName = ''
-status, sudoLocation = commands.getstatusoutput("which sudo")
-if sudoLocation != '/usr/bin/sudo':
-	status, userName = commands.getstatusoutput("whoami")
+if sys.version_info[0] < 3:
+	status, sudoLocation = commands.getstatusoutput("which sudo")
+	if sudoLocation != '/usr/bin/sudo':
+		status, userName = commands.getstatusoutput("whoami")
+else:
+	status, sudoLocation = subprocess.getstatusoutput("which sudo")
+	if sudoLocation != '/usr/bin/sudo':
+		status, userName = subprocess.getstatusoutput("whoami")
+	
 
 if setupDir == '':
 	setupDir_deps = '~/mivisionx-deps'
@@ -82,6 +92,10 @@ else:
 	os.system('(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; unzip 3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; mkdir build )')
+	# Install half.hpp
+	os.system('(cd '+deps_dir+'; wget https://raw.githubusercontent.com/ARM-software/ComputeLibrary/master/include/half/half.hpp )')
+	os.system('sudo -v')
+	os.system('(cd '+deps_dir+'; sudo mv half.hpp /usr/local/include/ )')
 	# Install ROCm-CMake
 	os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen OpenCV )')
 	os.system('(cd '+deps_dir+'/build/rocm-cmake; '+linuxCMake+' ../../rocm-cmake )')

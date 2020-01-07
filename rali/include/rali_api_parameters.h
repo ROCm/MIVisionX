@@ -4,11 +4,11 @@
 
 ///
 /// \param seed
-extern "C"  void RALI_API_CALL raliSetSeed(long long unsigned seed);
+extern "C"  void RALI_API_CALL raliSetSeed( unsigned seed);
 
 ///
 /// \return
-extern "C"  long long unsigned  RALI_API_CALL raliGetSeed();
+extern "C"  unsigned  RALI_API_CALL raliGetSeed();
 
 ///
 /// \param start

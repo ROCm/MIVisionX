@@ -3,8 +3,21 @@
 #include <VX/vx_types.h>
 #include <cstring>
 #include <sched.h>
+#include <half.hpp>
 #include "master_graph.h"
 #include "parameter_factory.h"
+#include "ocl_setup.h"
+using half_float::half;
+
+#if ENABLE_SIMD
+#if _WIN32
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#include <smmintrin.h>
+#include <immintrin.h>
+#endif
+#endif
 
 auto get_ago_affinity_info = []
     (RaliAffinity rali_affinity,
@@ -29,7 +42,6 @@ auto get_ago_affinity_info = []
 
 MasterGraph::~MasterGraph()
 {
-    stop_processing();
     release();
 }
 
@@ -57,12 +69,24 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         if ((status = vxGetStatus((vx_reference) _context)) != VX_SUCCESS)
             THROW("vxCreateContext failed" + TOSTR(status))
 
+        if(affinity == RaliAffinity::GPU)
+        {
+            cl_context _cl_context = nullptr;
+            cl_device_id _cl_device_id = nullptr;
+            get_device_and_context(gpu_id, &_cl_context, &_cl_device_id, CL_DEVICE_TYPE_GPU);
+            if((status = vxSetContextAttribute(_context,
+                    VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,
+                    &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
+                THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
+        }
+
+
         // Setting attribute to run on CPU or GPU should be called before load kernel module
         if ((status = vxSetContextAttribute(_context,
                                             VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,
                                             &vx_affinity,
                                             sizeof(vx_affinity))) != VX_SUCCESS)
-            THROW("vxSetContextAttribute failed " + TOSTR(status))
+            THROW("vxSetContextAttribute for AMD_AFFINITY failed " + TOSTR(status))
 
         // loading OpenVX RPP modules
         if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)
@@ -94,14 +118,12 @@ MasterGraph::run()
             loader_image->pop_name();
     }
 
+    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
     {
         std::unique_lock<std::mutex> lock(_count_lock);
         if (_in_process_count > 0)
             _in_process_count--;
     }
-
-    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
-
     return MasterGraph::Status::OK;
 }
 
@@ -110,10 +132,10 @@ MasterGraph::create_single_graph()
 {
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations
     _graph = std::make_shared<Graph>(_context, _affinity, 0, _gpu_id);
-    for(auto node: _nodes)
+    for(auto& node: _nodes)
     {
         // Any image not yet created can be created as virtual image
-        for(auto image: node->output())
+        for(auto& image: node->output())
             if(image->info().type() == ImageInfo::Type::UNKNOWN)
             {
                 image->create_virtual(_context, _graph->get());
@@ -185,7 +207,13 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
 void MasterGraph::release()
 {
+    for(auto& loader_module: _loader_modules)
+        loader_module->stop();
+
     stop_processing();
+    _nodes.clear();
+    _root_nodes.clear();
+    _image_map.clear();
     vx_status status;
     if(_graph != nullptr)
         _graph->release();
@@ -199,13 +227,16 @@ void MasterGraph::release()
     for(auto& image: _output_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
 
-
     deallocate_output_tensor();
 }
 
 MasterGraph::Status
 MasterGraph::update_node_parameters()
 {
+    // Randomize random parameters
+    ParameterFactory::instance()->renew_parameters();
+
+    // Apply renewed parameters to VX parameters used in augmentation
     for(auto& node: _nodes)
         node->update_parameters();
 
@@ -341,8 +372,8 @@ MasterGraph::copy_output(
 #define CHECK_CL_CALL_RET(x) { cl_int ret; ret = x; if( ret != CL_SUCCESS) THROW("ocl call failed "+STR(#x)+" error "+TOSTR(ret)) }
 
 MasterGraph::Status
-MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
-                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels)
+MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
+                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
     _convert_time.start();
     // Copies to the output context given by the user
@@ -354,6 +385,8 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
 
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
+        if(output_data_type == RaliTensorDataType::FP16)
+            THROW("FP16 tensor output for GPU affinity is not implemented")
         // OCL device memory
         cl_int status;
 
@@ -421,20 +454,114 @@ MasterGraph::copy_out_tensor(float *out_ptr, RaliTensorFormat format, float mult
             auto in_buffer = (unsigned char*)out_image;
             if(format == RaliTensorFormat::NHWC)
             {
-                auto channel_size  = w * h;
-                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                    for(unsigned i = 0; i < channel_size; i++)
-                        out_ptr[dest_buf_offset+channel_idx+ i*c] =
-                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+                if(output_data_type == RaliTensorDataType::FP32)
+                {
+                    float *output_tensor_32 = static_cast<float *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_32[dest_buf_offset+channel_idx+ i*c] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+                }
+                else if(output_data_type == RaliTensorDataType::FP16)
+                {
+                    half *output_tensor_16 = static_cast<half *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_16[dest_buf_offset+channel_idx+ i*c] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[i*c+c-channel_idx-1]) : (half)(in_buffer[i*c+channel_idx]));
+                }
             }
             if(format == RaliTensorFormat::NCHW)
             {
-                auto channel_size  = w * h;
-                for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                    for(unsigned i = 0; i < channel_size; i++)
-                        out_ptr[dest_buf_offset+channel_idx*channel_size + i] =
-                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                if(output_data_type == RaliTensorDataType::FP32)
+                {
+                    float *output_tensor_32 = static_cast<float *>(out_ptr);
+                    auto channel_size  = w * h;
+                    if(c != 3)
+                    {
+                        for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                            for(unsigned i = 0; i < channel_size; i++)
+                                output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
+                                        offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                    }
+                    else {
+#if (ENABLE_SIMD && __AVX2__)
 
+                        float *B_buf = output_tensor_32 + dest_buf_offset;
+                        float *G_buf = B_buf + channel_size;
+                        float *R_buf = G_buf + channel_size;
+
+                        __m256i mask_B, mask_G, mask_R;
+                        if (reverse_channels) {
+                            mask_B = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
+                                                       0x80808003, 0x80808006, 0x80808009);
+                            mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
+                                                       0x80808004, 0x80808007, 0x8080800A);
+                            mask_R = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
+                                                       0x80808005, 0x80808008, 0x8080800B);
+                        } else {
+                            mask_R = _mm256_setr_epi32(0x80808000, 0x80808003, 0x80808006, 0x80808009, 0x80808000,
+                                                       0x80808003, 0x80808006, 0x80808009);
+                            mask_G = _mm256_setr_epi32(0x80808001, 0x80808004, 0x80808007, 0x8080800A, 0x80808001,
+                                                       0x80808004, 0x80808007, 0x8080800A);
+                            mask_B = _mm256_setr_epi32(0x80808002, 0x80808005, 0x80808008, 0x8080800B, 0x80808002,
+                                                       0x80808005, 0x80808008, 0x8080800B);
+                        }
+                        __m256 pmul0 = _mm256_set1_ps(multiplier0);
+                        __m256 pmul1 = _mm256_set1_ps(multiplier1);
+                        __m256 pmul2 = _mm256_set1_ps(multiplier2);
+                        __m256 padd0 = _mm256_set1_ps(offset0);
+                        __m256 padd1 = _mm256_set1_ps(offset1);
+                        __m256 padd2 = _mm256_set1_ps(offset2);
+                        unsigned int alignedLength = (channel_size & ~7);    // multiple of 8
+                        unsigned int i = 0;
+
+                        __m256 fR, fG, fB;
+                        for (; i < alignedLength; i += 8) {
+                            __m256i pix0 = _mm256_loadu_si256((const __m256i *) in_buffer);
+                            pix0 = _mm256_permutevar8x32_epi32(pix0, _mm256_setr_epi32(0, 1, 2, 3, 3, 4, 5, 6));
+                            fB = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_R));
+                            fG = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_G));
+                            fR = _mm256_cvtepi32_ps(_mm256_shuffle_epi8(pix0, mask_B));
+                            fB = _mm256_mul_ps(fB, pmul0);
+                            fG = _mm256_mul_ps(fG, pmul1);
+                            fR = _mm256_mul_ps(fR, pmul2);
+                            fB = _mm256_add_ps(fB, padd0);
+                            fG = _mm256_add_ps(fG, padd1);
+                            fR = _mm256_add_ps(fR, padd2);
+                            _mm256_storeu_ps(B_buf, fB);
+                            _mm256_storeu_ps(G_buf, fG);
+                            _mm256_storeu_ps(R_buf, fR);
+                            B_buf += 8;
+                            G_buf += 8;
+                            R_buf += 8;
+                            in_buffer += 24;
+                        }
+                        for (; i < channel_size; i++, in_buffer += 3) {
+                            *B_buf++ = (in_buffer[0] * multiplier0) + offset0;
+                            *G_buf++ = (in_buffer[1] * multiplier1) + offset1;
+                            *R_buf++ = (in_buffer[2] * multiplier2) + offset1;
+                        }
+
+#else
+                        for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                            for(unsigned i = 0; i < channel_size; i++)
+                                output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
+                                        offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+#endif
+                    }
+                }
+                else if(output_data_type == RaliTensorDataType::FP16)
+                {
+                    half *output_tensor_16 = static_cast<half *>(out_ptr);
+                    auto channel_size  = w * h;
+                    for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                        for(unsigned i = 0; i < channel_size; i++)
+                            output_tensor_16[dest_buf_offset+channel_idx*channel_size + i] =
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[c*i+c-channel_idx-1]) : (half)(in_buffer[c*i+channel_idx]));
+                }
 
             }
             dest_buf_offset += single_output_image_size;
@@ -497,8 +624,7 @@ void MasterGraph::output_routine()
             continue;
         }
 
-        // Randomize parameters
-        ParameterFactory::instance()->renew_parameters();
+
         _process_time.start();
         {
             std::unique_lock<std::mutex> lock(_count_lock);
@@ -510,6 +636,10 @@ void MasterGraph::output_routine()
 
             _in_process_count++;
         }
+
+        if (!_processing)
+            break;
+
         auto write_buffers = _ring_buffer.get_write_buffers();
 
         // Swap handles on the output images, so that new processed image will be written to the a new buffer
@@ -544,11 +674,6 @@ void MasterGraph::stop_processing()
     _processing = false;
     _ring_buffer.cancel_reading();
     _ring_buffer.cancel_writing();
-    try
-    {
+    if(_output_thread.joinable())
         _output_thread.join();
-    } catch(...)
-    {
-
-    }
 }

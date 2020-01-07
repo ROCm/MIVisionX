@@ -116,9 +116,9 @@ int main(int argc, const char ** argv)
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     if(decode_max_height <= 0 || decode_max_width <= 0)
-        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false);
+        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false);
     else
-        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false,
+        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 
     if(raliGetStatus(handle) != RALI_OK)

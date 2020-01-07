@@ -1,9 +1,9 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
-<p align="center"><img width="60%" src="docs/images/MIVisionX.png" /></p>
+<p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
-MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open source implementation of the Khronos OpenVX™ and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos NNEF™ exchange formats. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF™</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
@@ -14,6 +14,7 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   * [RPP Extension](amd_openvx_extensions/amd_rpp)
 * [Applications](#applications)
 * [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
+* [RALI](#rali)
 * [Samples](samples#samples)
 * [Toolkit](#toolkit)
 * [Utilities](#utilities)
@@ -21,7 +22,6 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   * [Loom Shell](utilities/loom_shell#radeon-loomshell)
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
-* [RALI](#rali)
 * [Prerequisites](#prerequisites)
 * [Build & Install MIVisionX](#build--install-mivisionx)
 * [Verify the Installation](#verify-the-installation)
@@ -41,11 +41,14 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (Radeon Performance Primitives) functions. This extension is used to enable [RALI](rali/README.md) to perform image augmentation.
 
 ## Applications
-MIVisionX has a number of [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.  
+MIVisionX has a number of [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.
 
 * [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
 * [Digit Test](apps/dg_test#amd-dgtest): This sample application is used to recognize hand written digits.
+* [Image Augmentation](apps/image_augmentation#image-augmentation-application): This sample application demonstrates a basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+* [MIVisionX Inference Analyzer](apps/mivisionx_inference_analyzer#mivisionx-python-inference-analyzer): This sample application uses pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
 * [MIVisionX OpenVX Classsification](apps#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
+* [MIVisionX Validation Tool](apps/mivisionx_validation_tool#mivisionx-python-ml-model-validation-tool): This sample application uses pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze, summarize and validate models.
 * [MIVisionX WinML Classification](apps#mivisionx-winml-classification): This sample application shows how to run supported ONNX models with MIVisionX RunTime on Windows.
 * [MIVisionX WinML YoloV2](apps#mivisionx-winml-yolov2): This sample application shows how to run tiny yolov2(20 classes) with MIVisionX RunTime on Windows.
 * [External Applications](apps#external-application)
@@ -55,6 +58,9 @@ MIVisionX has a number of [applications](apps#applications) built on top of Open
 <p align="center"><img width="80%" src="docs/images/modelCompilerWorkflow.png" /></p>
 
 Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-net-model-compiler--optimizer)) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
+
+## RALI
+The Radeon Augmentation Library - [RALI](rali/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
 
 ## Toolkit
 
@@ -67,9 +73,6 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [loom_shell](utilities/loom_shell/README.md#radeon-loomsh): an interpreter to prototype 360 degree video stitching applications using a script
 * [RunVX](utilities/runvx/README.md#amd-runvx): command-line utility to execute OpenVX graph described in GDF text file
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
-
-## RALI
-The Radeon Augmentation Library [RALI](rali/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
 
 ## Prerequisites
 * CPU: SSE4.1 or above CPU, 64-bit
@@ -107,14 +110,15 @@ For the convenience of the developer, we here provide the setup script which wil
 
 ##### Prerequisites for running the script
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
-2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
-3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
+2. X Window
+3. [ROCm supported hardware](https://rocm.github.io/hardware.html)
+4. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
 **usage:**
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --miopen    [MIOpen Version - optional (default:2.1.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
@@ -176,7 +180,7 @@ cd MIVisionX
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:1.8.1)]
+                          --miopen    [MIOpen Version - optional (default:2.1.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
@@ -304,16 +308,15 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 ## Release Notes
 
 ### Known issues
-* Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
-* Latest MIOpen versions with OpenCL backend has linking errors with MIOpenGEMM. If you are facing problems with MIOpen revert back to V1.8.1 or rerun the MIVisionX-setup script.
+* Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
 
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `2.7.22`
+* ROCm: rocm-dkms - `2.10.14`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [1.8.1](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/1.8.1)
+* MIOpen - [2.1.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.1.0)
 * Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

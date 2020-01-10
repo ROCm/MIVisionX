@@ -8,7 +8,7 @@
 #include "parameter_factory.h"
 #include "ocl_setup.h"
 using half_float::half;
-
+#define RALI_VIDEO
 #if ENABLE_SIMD
 #if _WIN32
 #include <intrin.h>
@@ -90,11 +90,15 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 
         // loading OpenVX RPP modules
         if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)
-            THROW("Cannot load OpenVX augmentation extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
+            THROW("Cannot load vx_rpp extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
+        else
+            LOG("vx_rpp module loaded successfully")
 #ifdef RALI_VIDEO
         // loading video decoder modules
-        if ((status = vxLoadKernels(_context, "vx_media")) != VX_SUCCESS)
-            WRN("Cannot load AMD's OpenVX media extension, video decode functionality will not be available")
+        if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
+            WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
+        else
+            LOG("vx_amd_media module loaded")
 #endif
         if(_affinity == RaliAffinity::GPU)
             _device.init_ocl(_context);
@@ -109,6 +113,9 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 MasterGraph::Status
 MasterGraph::run()
 {
+    if(!_processing)
+        return MasterGraph::Status::NOT_RUNNING;
+
     if(_first_run)
     {
         _first_run = false;
@@ -192,7 +199,7 @@ Image *
 MasterGraph::create_image(const ImageInfo &info, bool is_output)
 {
     auto* output = new Image(info);
-
+    // if the image is not an output image, the image creation is deferred and later it'll be created as a virtual image
     if(is_output)
     {
         if (output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
@@ -200,7 +207,6 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
         _output_images.push_back(output);
     }
-
 
     return output;
 }
@@ -319,6 +325,8 @@ size_t
 MasterGraph::internal_image_count()
 {
     int ret = -1;
+    if(_loader_modules.empty())
+        ret = 999;
     for(auto& loader_module: _loader_modules) {
         int thisLoaderCount = loader_module->count();
         ret = (ret == -1 ) ? thisLoaderCount :
@@ -616,49 +624,56 @@ MasterGraph::copy_output(unsigned char *out_ptr)
 
 void MasterGraph::output_routine()
 {
-    while(_processing)
+    try {
+        while (_processing)
+        {
+            if (internal_image_count() <= 0)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+
+            _process_time.start();
+
+            {
+                std::unique_lock<std::mutex> lock(_count_lock);
+
+                // Swap handles on the input images, so that new image is loaded to be processed
+                for (auto &&loader_module: _loader_modules)
+                    if (loader_module->load_next() != LoaderModuleStatus::OK)
+                        THROW("Loader module failed to laod next batch of images")
+
+                _in_process_count++;
+            }
+
+            if (!_processing)
+                break;
+
+            auto write_buffers = _ring_buffer.get_write_buffers();
+
+            // Swap handles on the output images, so that new processed image will be written to the a new buffer
+            for (size_t idx = 0; idx < _output_images.size(); idx++)
+                _output_images[idx]->swap_handle(write_buffers[idx]);
+
+            if (!_processing)
+                break;
+            update_node_parameters();
+            _graph->process();
+            _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
+            _process_time.end();
+        }
+    }
+    catch (const std::exception &e)
     {
-        if(internal_image_count() <= 0)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            continue;
-        }
-
-
-        _process_time.start();
-        {
-            std::unique_lock<std::mutex> lock(_count_lock);
-
-            // Swap handles on the input images, so that new image is loaded to be processed
-            for (auto &&loader_module: _loader_modules)
-                if (loader_module->load_next() != LoaderModuleStatus::OK)
-                    THROW("Loader module failed to laod next batch of images")
-
-            _in_process_count++;
-        }
-
-        if (!_processing)
-            break;
-
-        auto write_buffers = _ring_buffer.get_write_buffers();
-
-        // Swap handles on the output images, so that new processed image will be written to the a new buffer
-        for (size_t idx = 0; idx < _output_images.size(); idx++)
-            _output_images[idx]->swap_handle(write_buffers[idx]);
-
-        if (!_processing)
-            break;
-        update_node_parameters();
-        _graph->process();
-        _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
-
-        _process_time.end();
+        ERR("Exception thrown in the process routine" + STR(e.what()) + STR("\n"));
+        std::cerr << "Process routine stopped because of an exception \n";
+        _processing = false;
+        _ring_buffer.cancel_all_future_waits();
     }
 }
 
 void MasterGraph::start_processing()
 {
-
     _processing = true;
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)

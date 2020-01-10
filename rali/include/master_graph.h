@@ -8,10 +8,12 @@
 #include "timing_debug.h"
 #include "node.h"
 #include "node_jpeg_file_source.h"
+#include "node_video_file_source.h"
+
 class MasterGraph
 {
 public:
-    enum class Status { OK = 0,  NOT_IMPLEMENTED };
+    enum class Status { OK = 0,  NOT_RUNNING = 1, NOT_IMPLEMENTED };
     MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads);
     ~MasterGraph();
     Status reset_loaders();

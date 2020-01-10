@@ -3,6 +3,7 @@
 #include "commons.h"
 #include "context.h"
 #include "node_jpeg_file_source.h"
+#include "node_video_file_source.h"
 #include "image_source_evaluator.h"
 #include "node_fisheye.h"
 #include "node_copy.h"
@@ -49,6 +50,20 @@ auto convert_color_format = [](RaliImageColor color_format)
 
         default:
             THROW("Unsupported Image type" + TOSTR(color_format))
+    }
+};
+
+auto convert_decoder_mode= [](RaliDecodeDevice decode_mode)
+{
+    switch(decode_mode){
+        case RALI_HW_DECODE:
+            return DecodeMode::USE_HW;
+
+        case RALI_SW_DECODE:
+            return DecodeMode::USE_SW;
+        default:
+
+            THROW("Unsupported decoder mode" + TOSTR(decode_mode))
     }
 };
 
@@ -108,6 +123,49 @@ raliJpegFileSource(
     return output;
 }
 
+RaliImage  RALI_API_CALL
+raliVideoFileSource(
+        RaliContext rali_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        RaliDecodeDevice rali_decode_device,
+        bool is_output,
+        unsigned width,
+        unsigned height,
+        bool loop)
+{
+    RaliImage output = nullptr;
+    try
+    {
+        if(width == 0 || height == 0)
+        {
+            THROW("Invalid video input width and height");
+        }
+        else
+        {
+            LOG("User input size " + TOSTR(width) + " x " + TOSTR(height));
+        }
+
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+        auto decoder_mode = convert_decoder_mode(rali_decode_device);
+        auto info = ImageInfo(width, height,
+                              rali_context->batch_size,
+                              num_of_planes,
+                              rali_context->master_graph->mem_type(),
+                              color_format );
+
+        output = rali_context->master_graph->create_image(info, is_output);
+
+        rali_context->master_graph->add_node<VideoFileNode>({}, {output})->init( source_path,decoder_mode, loop);
+
+    }
+    catch(const std::exception& e)
+    {
+        rali_context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+}
 
 RaliStatus RALI_API_CALL
 raliResetLoaders(RaliContext rali_context)

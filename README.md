@@ -48,6 +48,8 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 ## Applications
 MIVisionX has a number of [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.
 
+<p align="center"><img width="90%" src="docs/images/MIVisionX-applications.png" /></p>
+
 * [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
 * [Digit Test](apps/dg_test#amd-dgtest): This sample application is used to recognize hand written digits.
 * [Image Augmentation](apps/image_augmentation#image-augmentation-application): This sample application demonstrates a basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.

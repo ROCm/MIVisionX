@@ -143,12 +143,18 @@ int main(int argc, const char ** argv)
         std::cout << "JPEG source could not initialize : "<<raliGetErrorMessage(handle) << std::endl;
         return -1;
     }
-
-
+    RaliImage image0;
     int resize_w = 112, resize_h = 112;
-
-    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, true);
-
+    if(video_source)
+    {
+        resize_h = decode_max_height;
+        resize_w = decode_max_width;
+        image0 = input1;
+    }
+    else
+    {
+        image0 = raliResize(handle, input1, resize_w, resize_h, true);
+    }
     RaliImage image1 = raliRain(handle, image0, false);
 
     RaliImage image11 = raliFishEye(handle, image1, false);

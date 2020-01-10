@@ -49,7 +49,7 @@ int main(int argc, const char ** argv)
     }
     int argIdx = 0;
     const char * folderPath1 = argv[++argIdx];
-
+    int video_source = 0;
     bool display = 1;// Display the images
     int aug_depth = 1;// how deep is the augmentation tree
     int rgb = 1;// process color images
@@ -62,10 +62,19 @@ int main(int argc, const char ** argv)
         gpu = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        num_threads = atoi(argv[++argIdx]);
+        decode_max_width = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        decode_max_height = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        video_source = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        num_threads = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         aug_depth = atoi(argv[++argIdx]);
@@ -73,11 +82,7 @@ int main(int argc, const char ** argv)
     if(argc >= argIdx+MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
 
-    if(argc >= argIdx+MIN_ARG_COUNT)
-        decode_max_width = atoi(argv[++argIdx]);
 
-    if(argc >= argIdx+MIN_ARG_COUNT)
-        decode_max_height = atoi(argv[++argIdx]);
 
 
     int inputBatchSize = 1;
@@ -115,11 +120,23 @@ int main(int argc, const char ** argv)
 
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
-    if(decode_max_height <= 0 || decode_max_width <= 0)
-        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false);
+    if(video_source) {
+        if (decode_max_height <= 0 || decode_max_width <= 0)
+        {
+            std::cout << "Output width and height is needed for video decode\n";
+            return -1;
+        }
+        input1 = raliVideoFileSource(handle, folderPath1, color_format, RaliDecodeDevice::RALI_HW_DECODE,  false, decode_max_width, decode_max_height, false);
+    }
     else
-        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false,
+    {
+        if(decode_max_height <= 0 || decode_max_width <= 0)
+            input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false);
+        else
+            input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+    }
+
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -190,7 +207,8 @@ int main(int argc, const char ** argv)
     int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? 3 : 1);
-    const unsigned number_of_cols = 10;
+    std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
+    const unsigned number_of_cols = video_source ? 1 : 10;
     auto cv_color_format = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
@@ -200,6 +218,7 @@ int main(int argc, const char ** argv)
     printf("Going to process images\n");
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    int counter = 0;
     int color_temp_increment = 1;
     while (raliGetRemainingImages(handle) > 0)
     {
@@ -212,7 +231,7 @@ int main(int argc, const char ** argv)
         raliUpdateIntParameter(raliGetIntValue(color_temp_adj)+color_temp_increment, color_temp_adj);
 
         raliCopyToOutput(handle, mat_input.data, h*w*p);
-
+        counter += inputBatchSize;
         if(!display)
             continue;
 
@@ -236,7 +255,7 @@ int main(int argc, const char ** argv)
     std::cout << "Decode   time "<< rali_timing.decode_time << std::endl;
     std::cout << "Process  time "<< rali_timing.process_time << std::endl;
     std::cout << "Transfer time "<< rali_timing.transfer_time << std::endl;
-    std::cout << ">>>>> Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
+    std::cout << ">>>>> "<< counter << " images/frames Processed. Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
     raliRelease(handle);
     mat_input.release();
     mat_output.release();

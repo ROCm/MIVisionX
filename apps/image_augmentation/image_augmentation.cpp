@@ -44,31 +44,34 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        printf( "Usage: image_augmentation <image-dataset-folder> gpu=1/cpu=0 num_cpu_threads display-on-off augmentation_depth rgb-on-off decode_max_width decode_max_height \n" );
+        printf( "Usage: image_augmentation <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height video_mode gray_scale/rgb display_on_off num_image_decoding_threads augmentation_depth  \n" );
         return -1;
     }
     int argIdx = 0;
     const char * folderPath1 = argv[++argIdx];
-    int video_source = 0;
+    int video_mode = 0;// 0 means no video decode, 1 means hardware, 2 means software decoding
     bool display = 1;// Display the images
     int aug_depth = 1;// how deep is the augmentation tree
     int rgb = 1;// process color images
-    int decode_max_width = 0;
-    int decode_max_height = 0;
-    bool gpu = 1;
+    int decode_width = 0;
+    int decode_height = 0;
+    bool processing_device = 1;
     size_t num_threads = 1;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        gpu = atoi(argv[++argIdx]);
+        processing_device = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        decode_max_width = atoi(argv[++argIdx]);
+        decode_width = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        decode_max_height = atoi(argv[++argIdx]);
+        decode_height = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        video_source = atoi(argv[++argIdx]);
+        video_mode = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        rgb = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
@@ -79,19 +82,14 @@ int main(int argc, const char ** argv)
     if(argc >= argIdx+MIN_ARG_COUNT)
         aug_depth = atoi(argv[++argIdx]);
 
-    if(argc >= argIdx+MIN_ARG_COUNT)
-        rgb = atoi(argv[++argIdx]);
-
-
-
 
     int inputBatchSize = 1;
 
-    std::cout << ">>> Running on " << (gpu?"GPU":"CPU") << std::endl;
+    std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
 
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24 : RaliImageColor::RALI_COLOR_U8;
 
-    auto handle = raliCreate(inputBatchSize, gpu?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
+    auto handle = raliCreate(inputBatchSize, processing_device?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -118,37 +116,40 @@ int main(int argc, const char ** argv)
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
     RaliImage input1;
 
-    // The jpeg file loader can automatically select the best size to decode all images to that size
-    // User can alternatively set the size or change the policy that is used to automatically find the size
-    if(video_source) {
-        if (decode_max_height <= 0 || decode_max_width <= 0)
+
+    if(video_mode != 0)
+    {
+        if (decode_height <= 0 || decode_width <= 0)
         {
             std::cout << "Output width and height is needed for video decode\n";
             return -1;
         }
-        input1 = raliVideoFileSource(handle, folderPath1, color_format, RaliDecodeDevice::RALI_HW_DECODE,  false, decode_max_width, decode_max_height, false);
+        input1 = raliVideoFileSource(handle, folderPath1, color_format, ((video_mode == 1) ? RaliDecodeDevice::RALI_HW_DECODE:RaliDecodeDevice::RALI_SW_DECODE)
+                , true, decode_width, decode_height, false);
     }
     else
     {
-        if(decode_max_height <= 0 || decode_max_width <= 0)
+        // The jpeg file loader can automatically select the best size to decode all images to that size
+        // User can alternatively set the size or change the policy that is used to automatically find the size
+        if(decode_height <= 0 || decode_width <= 0)
             input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false);
         else
             input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false,
-                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+                                    RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
     }
-
 
     if(raliGetStatus(handle) != RALI_OK)
     {
         std::cout << "JPEG source could not initialize : "<<raliGetErrorMessage(handle) << std::endl;
         return -1;
     }
+
     RaliImage image0;
     int resize_w = 112, resize_h = 112;
-    if(video_source)
+    if(video_mode)
     {
-        resize_h = decode_max_height;
-        resize_w = decode_max_width;
+        resize_h = decode_height;
+        resize_w = decode_width;
         image0 = input1;
     }
     else
@@ -190,7 +191,6 @@ int main(int argc, const char ** argv)
 
     raliExposure(handle, image10, true);
 
-
     if(raliGetStatus(handle) != RALI_OK)
     {
         std::cout << "Error while adding the augmentation nodes " << std::endl;
@@ -214,7 +214,7 @@ int main(int argc, const char ** argv)
     int w = raliGetOutputWidth(handle);
     int p = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? 3 : 1);
     std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
-    const unsigned number_of_cols = video_source ? 1 : 10;
+    const unsigned number_of_cols = video_mode ? 1 : 10;
     auto cv_color_format = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);

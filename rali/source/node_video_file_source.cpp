@@ -65,5 +65,4 @@ VideoFileNode::VideoFileNode(const std::vector<Image*>& inputs, const std::vecto
     _batch_size = outputs[0]->info().batch_size();
     if(_batch_size > MAXIMUM_VIDEO_CONCURRENT_DECODE)
         THROW("Video batch size " + TOSTR(_batch_size)+" is bigger than " + TOSTR(MAXIMUM_VIDEO_CONCURRENT_DECODE))
-   // _loader_module = std::make_shared<VideoLoaderModule>(_graph);
 }

@@ -9,6 +9,7 @@
 #include "node.h"
 #include "node_jpeg_file_source.h"
 #include "node_video_file_source.h"
+#include "video_loader_module.h"
 
 class MasterGraph
 {
@@ -104,6 +105,22 @@ template<> inline std::shared_ptr<JpegFileNode> MasterGraph::add_node(const std:
     auto node = std::make_shared<JpegFileNode>(outputs[0], _device.resources(),  _mem_type, _batch_size);
     _loader_image.push_back(outputs[0]);
     _loader_modules.push_back(node->get_loader_module());
+    _root_nodes.push_back(node);
+    for(auto& output: outputs)
+        _image_map.insert(make_pair(output, node));
+
+    return node;
+}
+
+/*
+ * Explicit specialization for VideoFileNode
+ */
+template<> inline std::shared_ptr<VideoFileNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+{
+    auto node = std::make_shared<VideoFileNode>(inputs,outputs);
+    _nodes.push_back(node);
+    auto loader = std::make_shared<VideoLoaderModule>(node);
+    _loader_modules.push_back(loader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));

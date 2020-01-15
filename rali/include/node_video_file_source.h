@@ -1,7 +1,12 @@
 #pragma once
 #include "node.h"
-#include "video_loader_module.h"
 #include "graph.h"
+
+enum class DecodeMode {
+    USE_HW = 0,
+    USE_SW = 1
+};
+
 
 class VideoFileNode: public Node
 {

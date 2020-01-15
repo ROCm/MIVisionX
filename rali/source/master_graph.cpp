@@ -325,8 +325,6 @@ size_t
 MasterGraph::internal_image_count()
 {
     int ret = -1;
-    if(_loader_modules.empty())
-        ret = 999;
     for(auto& loader_module: _loader_modules) {
         int thisLoaderCount = loader_module->count();
         ret = (ret == -1 ) ? thisLoaderCount :

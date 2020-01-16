@@ -39,13 +39,13 @@ struct BatchNormLayerLocalData {
 static vx_status VX_CALLBACK validateBatchNormalizationLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
     // check tensor dimensions
-    vx_enum type, out_type;
+    vx_enum type, in_type, out_type;
     vx_size num_dims;
     vx_size input_dims[4], output_dims[4];
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &in_type, sizeof(in_type)));
     if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: batch_norm: #0 num_dims=%ld (must be 4)\n", num_dims);
-    if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: batch_norm: #0 type=%d (must be float)\n", type);
+    if ((in_type != VX_TYPE_FLOAT32) && (in_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: batch_norm: #0 type=%d (must be float)\n", in_type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
@@ -53,9 +53,9 @@ static vx_status VX_CALLBACK validateBatchNormalizationLayer(vx_node node, const
     if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: batch_norm: #6 type=%d (must be float)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     if (output_dims[3] != input_dims[3] || output_dims[2] != input_dims[2] ||
-        output_dims[1] != input_dims[1] || output_dims[0] != input_dims[0] || out_type != type)
+        output_dims[1] != input_dims[1] || output_dims[0] != input_dims[0] || out_type != in_type)
         return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: batch_norm: dims input[%ld,%ld,%ld,%ld] type[%d] != output[%ld,%ld,%ld,%ld] type[%d]\n",
-                    input_dims[0], input_dims[1], input_dims[2], input_dims[3], type,
+                    input_dims[0], input_dims[1], input_dims[2], input_dims[3], in_type,
                     output_dims[0], output_dims[1], output_dims[2], output_dims[3], out_type);
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
@@ -93,7 +93,7 @@ static vx_status VX_CALLBACK validateBatchNormalizationLayer(vx_node node, const
     }
 
     // output tensor configuration.
-    out_type = type;        // should be same as input type
+    out_type = in_type;        // should be same as input type
     num_dims = 4;
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[6], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
@@ -104,6 +104,7 @@ static vx_status VX_CALLBACK validateBatchNormalizationLayer(vx_node node, const
 
 static vx_status VX_CALLBACK processBatchNormalizationLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
+PROFILER_START(VX_NN, Batch_Normalization_Layer)
     BatchNormLayerLocalData * data = NULL;
     ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     miopenHandle_t miopenHandle = data->handle->miopen_handle;
@@ -115,6 +116,13 @@ static vx_status VX_CALLBACK processBatchNormalizationLayer(vx_node node, const 
     ERROR_CHECK_MIOPEN_STATUS(miopenBatchNormalizationForwardInference(miopenHandle, miopenBNSpatial, &data->alpha, &data->beta, data->input_desc, data->input_mem,
         data->output_desc, data->output_mem, data->bnScaleBiasMeanVarDesc, data->bnScale, data->bnBias, data->bnMean, data->bnVariance, data->eps));
 
+    /*DUMP LAYER BUFFER*/
+    #if ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+        //dump the output layer
+        nn_layer_test_dumpBuffer("bn_%04d.bin", (vx_tensor)parameters[6]);
+    #endif  
+
+PROFILER_STOP(VX_NN, Batch_Normalization_Layer)
     return VX_SUCCESS;
 }
 

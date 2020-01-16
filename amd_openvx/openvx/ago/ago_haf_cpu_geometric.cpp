@@ -2424,6 +2424,22 @@ vx_uint32     srcImageStrideInBytes
 		__m128i * dst = (__m128i*)pchDst;
 		__m128i * dstNext = (__m128i*)(pchDst + dstImageStrideInBytes);
 		__m128i * dstlast = dst + (dstWidth >> 4);
+
+		bool fallbackToC = false;
+
+		// Fallback to C if image width is not divisible by 16.
+		// Or if image width is smaller then 16px.
+		if ((dstWidth & 15) > 0)
+			fallbackToC = true;
+
+		// Fallback to C if image width requires odd number of vectors to process it.
+		// Do not process the last, odd, vector with MSA.
+		if (((dstWidth >> 4) % 2) == 1)
+		{
+			dstlast--;
+			fallbackToC = true;
+		}
+
 		while (dst < dstlast)
 		{
 			pixels1 = _mm_loadu_si128(src++);		// src (0-15)
@@ -2434,6 +2450,23 @@ vx_uint32     srcImageStrideInBytes
 			_mm_store_si128(dstNext++, pixels2);
 			_mm_store_si128(dstNext++, pixels1);
 		}
+
+		if (fallbackToC)
+		{
+			unsigned char *src = (unsigned char *) pSrcImage;
+			unsigned char *dst = (unsigned char *) pchDst;
+			unsigned char *dstNext = (unsigned char *) (pchDst + dstImageStrideInBytes);
+			unsigned char *dstLast = dst + dstWidth - 1;
+
+			while (dst < dstLast)
+			{
+				*dst++ = *src;
+				*dst++ = *src;
+				*dstNext++ = *src;
+				*dstNext++ = *src++;
+			}
+		}
+
 		pchDst += (dstImageStrideInBytes * 2);
 		pSrcImage += srcImageStrideInBytes;
 	}

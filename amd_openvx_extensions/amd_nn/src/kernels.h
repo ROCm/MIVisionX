@@ -45,6 +45,16 @@ THE SOFTWARE.
 #else
 #include <CL/cl.h>
 #endif
+#if _WIN32
+#include <windows.h>
+#else
+#include <sys/stat.h>
+#include <stdlib.h>
+#include <ctype.h>
+#endif
+
+// Visual Profiler (enabled by setting PROFILER_MODE=1 in profiler.h)
+#include "profiler.h"
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The macro for error checking from OpenVX status.
@@ -66,6 +76,10 @@ THE SOFTWARE.
 #define ENABLE_DEBUG_PRINT_DIMS 0
 #endif
 
+// Debug Dump Layer outputs : disabled unless enabled explicitly by setting ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS=1
+#ifndef ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS
+#define ENABLE_DEBUG_DUMP_NN_LAYER_BUFFERS 0
+#endif
 //////////////////////////////////////////////////////////////////////
 //! user kernels
 enum nn_additional_library
@@ -86,7 +100,13 @@ enum user_kernel_e
     VX_KERNEL_PERMUTE_LAYER_AMD              = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00b,
     VX_KERNEL_PRIOR_BOX_LAYER_AMD            = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00c,
     VX_KERNEL_CROP_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00d,
-    VX_KERNEL_CROP_AND_RESIZE_LAYER_AMD      = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00e
+    VX_KERNEL_CROP_AND_RESIZE_LAYER_AMD      = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00e,
+    VX_KERNEL_DETECTION_OUTPUT_LAYER_AMD     = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x00f,
+    VX_KERNEL_TENSOR_MIN_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x010,
+    VX_KERNEL_TENSOR_MAX_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x011,
+    VX_KERNEL_TENSOR_EXP_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x012,
+    VX_KERNEL_TENSOR_LOG_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x013,
+    VX_KERNEL_CAST_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x014,
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -104,7 +124,8 @@ vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx
 vx_reference getNodeParameterByIndex(vx_node node, vx_uint32 index);
 vx_status createGraphHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle);
 vx_status releaseGraphHandle(vx_node node, NeuralNetworkCommonHandle * handle);
-int getEnvironmentVariable(const char* name);
+int getEnvironmentVariable(const char* name, char * value, size_t valueSize);
+void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor);
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The kernel publish functions
@@ -134,6 +155,12 @@ vx_status publishPermuteLayer(vx_context context);
 vx_status publishPriorBoxLayer(vx_context context);
 vx_status publishCropLayer(vx_context context);
 vx_status publishCropAndResizeLayer(vx_context context);
+vx_status publishTensorMin(vx_context context);
+vx_status publishTensorMax(vx_context context);
+vx_status publishCastLayer(vx_context context);
+vx_status publishTensorExp(vx_context context);
+vx_status publishTensorLog(vx_context context);
+vx_status publishDetectionOutputLayer(vx_context context);
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing/unpublishing kernels

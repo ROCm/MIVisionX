@@ -115,6 +115,20 @@ void concat_codegen_batchszN(std::string& opencl_code, vx_size work_items, vx_si
 
 static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
+    vx_int32 axis;
+    vx_enum scalar_type;   
+    if(parameters[9])
+    {
+        ERROR_CHECK_STATUS(vxQueryScalar((vx_scalar)parameters[9], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
+        if(scalar_type != VX_TYPE_INT32) return VX_ERROR_INVALID_TYPE;
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[9], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        if(axis <= 0 || axis > 3) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: concat: #10 scalar type=%d (must be greater than 0 and lesser than 3)\n", axis);        
+    }
+    else
+    {
+        axis = 1;
+    }
+
 
     //check tensor dims and type for input
     vx_enum in_type, type;
@@ -125,18 +139,35 @@ static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_referenc
     if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #1 num_dims=%ld (must be 4)\n", num_dims);
     if ((in_type != VX_TYPE_FLOAT32) && (in_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #1 type=%d (must be float/float16)\n", in_type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input1_dims, sizeof(input1_dims)));
-    num_channels = input1_dims[2];
+
+    if(axis == 1)
+        num_channels = input1_dims[2];
+    else if(axis == 2)
+        num_channels = input1_dims[1];
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &in_type, sizeof(type)));
     if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #2 num_dims=%ld (must be 4)\n", num_dims);
     if ((in_type != VX_TYPE_FLOAT32) && (in_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #2 type=%d (must be float/float16)\n", in_type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, input2_dims, sizeof(input2_dims)));
-    if (input1_dims[3] != input2_dims[3] || input1_dims[1] != input2_dims[1] || input1_dims[0] != input2_dims[0])
-        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #2 dims input1[%ld,%ld,%ld,%ld] != dims_input2[%ld,%ld,%ld,%ld]\n",
+    
+    
+
+    if (axis == 1){
+        if (input1_dims[3] != input2_dims[3] || input1_dims[1] != input2_dims[1] || input1_dims[0] != input2_dims[0])
+            return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #2 dims input1[%ld,%ld,%ld,%ld] != dims_input2[%ld,%ld,%ld,%ld]\n",
                     input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3],
                     input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3]);
-    num_channels += input2_dims[2];
+        num_channels += input2_dims[2];
+    }
+    else if (axis == 2){
+        if (input1_dims[3] != input2_dims[3] || input1_dims[2] != input2_dims[2] || input1_dims[0] != input2_dims[0])
+            return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #2 dims input1[%ld,%ld,%ld,%ld] != dims_input2[%ld,%ld,%ld,%ld]\n",
+                    input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3],
+                    input2_dims[0], input2_dims[1], input2_dims[2], input2_dims[3]);
+        num_channels += input2_dims[1];
+    }
+    
     int i = 3;
     while(parameters[i] && (i < 9)) {
         vx_size inputn_dims[4];
@@ -145,11 +176,21 @@ static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_referenc
         if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #%d num_dims=%ld (must be 4)\n", i, num_dims);
         if ((in_type != VX_TYPE_FLOAT32) && (in_type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #%d type=%d (must be float/float16)\n", i, in_type);
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[i], VX_TENSOR_DIMS, inputn_dims, sizeof(inputn_dims)));
-        if (input1_dims[3] != inputn_dims[3] || input1_dims[1] != inputn_dims[1] || input1_dims[0] != inputn_dims[0])
+        if(axis == 1){
+            if (input1_dims[3] != inputn_dims[3] || input1_dims[1] != inputn_dims[1] || input1_dims[0] != inputn_dims[0])
             return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #%d dims input1[%ld,%ld,%ld,%ld] != dims_input%d[%ld,%ld,%ld,%ld]\n", i,
                     input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3], i,
                     inputn_dims[0], inputn_dims[1], inputn_dims[2], inputn_dims[3]);
         num_channels += inputn_dims[2];
+        }
+        else if(axis == 2)
+        {
+            if (input1_dims[3] != inputn_dims[3] || input1_dims[2] != inputn_dims[2] || input1_dims[0] != inputn_dims[0])
+                return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #%d dims input1[%ld,%ld,%ld,%ld] != dims_input%d[%ld,%ld,%ld,%ld]\n", i,
+                    input1_dims[0], input1_dims[1], input1_dims[2], input1_dims[3], i,
+                    inputn_dims[0], inputn_dims[1], inputn_dims[2], inputn_dims[3]);
+            num_channels += inputn_dims[1];
+        }
 
         i++;
     }
@@ -160,10 +201,20 @@ static vx_status VX_CALLBACK validateConcatLayer(vx_node node, const vx_referenc
     if (num_dims != 4) return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #0 num_dims=%ld (must be 4)\n", num_dims);
     if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: concat: #0 type=%d (must be float/float16)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-    if((input1_dims[0] != output_dims[0]) || (input1_dims[1] != output_dims[1]) || (num_channels != output_dims[2]) || (input1_dims[3] != output_dims[3]))
-        return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #all dims total input[%ld,%ld,%ld,%ld] != dims_output[%ld,%ld,%ld,%ld]\n",
-                    input1_dims[0], input1_dims[1], num_channels, input1_dims[3],
-                    output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
+    if(axis == 1)
+    {
+        if((input1_dims[0] != output_dims[0]) || (input1_dims[1] != output_dims[1]) || (num_channels != output_dims[2]) || (input1_dims[3] != output_dims[3]))
+            return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #all dims total input[%ld,%ld,%ld,%ld] != dims_output[%ld,%ld,%ld,%ld]\n",
+                        input1_dims[0], input1_dims[1], num_channels, input1_dims[3],
+                        output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
+    }
+    else if(axis == 2)
+    {
+        if((input1_dims[0] != output_dims[0]) || (input1_dims[2] != output_dims[2]) || (num_channels != output_dims[1]) || (input1_dims[3] != output_dims[3]))
+            return ERRMSG(VX_ERROR_INVALID_DIMENSION, "validate: concat: #all dims total input[%ld,%ld,%ld,%ld] != dims_output[%ld,%ld,%ld,%ld]\n",
+                        input1_dims[0], input1_dims[1], num_channels, input1_dims[3],
+                        output_dims[0], output_dims[1], output_dims[2], output_dims[3]);
+    }
 
     //output tensor configuration.
     type = in_type;     // should be same as input
@@ -253,6 +304,8 @@ static vx_status VX_CALLBACK opencl_codegen(
                 , i, i, i);
             opencl_kernel_code += item;
         }
+        sprintf(item, ", const int axis");
+        opencl_kernel_code += item;
     } else
     {
         sprintf(item,
@@ -269,6 +322,8 @@ static vx_status VX_CALLBACK opencl_codegen(
                 , i, i, i);
             opencl_kernel_code += item;
         }
+        sprintf(item, ", const int axis");
+        opencl_kernel_code += item;
     }
     opencl_kernel_code += ")\n";
 
@@ -291,7 +346,7 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
 //! \brief The kernel publisher.
 vx_status publishConcatLayer(vx_context context)
 {
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.concat_layer", VX_KERNEL_CONCAT_LAYER_AMD, host_kernel, 9, validateConcatLayer, nullptr, nullptr);
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.concat_layer", VX_KERNEL_CONCAT_LAYER_AMD, host_kernel, 10, validateConcatLayer, nullptr, nullptr);
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
@@ -309,6 +364,7 @@ vx_status publishConcatLayer(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 8, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL));
 
 
     //finalize and release kernel object.
@@ -318,11 +374,12 @@ vx_status publishConcatLayer(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8)
+VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output, vx_tensor input1, vx_tensor input2, vx_tensor input3, vx_tensor input4, vx_tensor input5, vx_tensor input6, vx_tensor input7, vx_tensor input8, vx_int32 axis)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+        vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
         vx_reference params[] = {
             (vx_reference)output,
             (vx_reference)input1,
@@ -332,7 +389,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output,
             (vx_reference)input5,
             (vx_reference)input6,
             (vx_reference)input7,
-            (vx_reference)input8
+            (vx_reference)input8,
+            (vx_reference)s_axis,
         };
         node = createNode(graph, VX_KERNEL_CONCAT_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
     }

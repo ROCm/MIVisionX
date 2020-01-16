@@ -30,20 +30,18 @@ if(POLICY CMP0054)
 endif()
 
 find_package(OpenCL     REQUIRED)
-find_package(miopengemm PATHS /opt/rocm)
-find_package(miopen     PATHS /opt/rocm)
-find_package(Protobuf)
-
-if(NOT miopen_FOUND OR NOT miopengemm_FOUND)
-    message(FATAL_ERROR "ERROR: couldn't find MIOpen and MIOpenGEMM -- make sure to install them")
-endif()
+find_package(miopengemm PATHS /opt/rocm REQUIRED)
+find_package(miopen     PATHS /opt/rocm REQUIRED)
+find_package(Protobuf QUIET)
 
 list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)
 
 if(Protobuf_FOUND)
-	message("-- Found Protobuf -- installing inference generator.")
 	add_subdirectory(../../utilities/inference_generator ${CMAKE_CURRENT_BINARY_DIR}/bin)
-endif()
+	message("-- ${Green}Inference Generator -- utilities/inference_generator module added${ColourReset}")
+else(Protobuf_FOUND)
+	message("-- ${Red}WARNING:Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")	
+endif(Protobuf_FOUND)
 
 include_directories(
     ../../amd_openvx/openvx/include
@@ -71,6 +69,10 @@ list(APPEND SOURCES
     src/tensor_subtract.cpp
     src/tensor_multiply.cpp
     src/tensor_matrix_multiply.cpp
+    src/tensor_min.cpp
+    src/tensor_max.cpp
+    src/tensor_exp.cpp
+    src/tensor_log.cpp
     src/argmax_layer.cpp
     src/scale_layer.cpp
     src/upsample_nearest_layer.cpp
@@ -80,10 +82,13 @@ list(APPEND SOURCES
     src/prior_box_layer.cpp
     src/crop_layer.cpp
     src/crop_and_resize_layer.cpp
+    src/detection_output.cpp
+    src/cast_layer.cpp
+    src/profiler.cpp
     )
 
 add_library(vx_nn SHARED ${SOURCES})
-target_link_libraries(vx_nn openvx MIOpen)
+target_link_libraries(vx_nn openvx MIOpen miopengemm)
 
 install (TARGETS vx_nn DESTINATION lib)
 install (FILES include/vx_amd_nn.h DESTINATION include)

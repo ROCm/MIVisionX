@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.3.0"
+__version__     = "1.5.1"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -14,14 +14,18 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', type=str, default='',        help='Setup home directory - optional (default:~/)')
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
-parser.add_argument('--miopen',    type=str, default='1.8.1',   help='MIOpen Version - optional (default:1.8.1)')
+parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
+parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options: Install ffmpeg - yes')
+parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
 args = parser.parse_args()
 
 setupDir = args.directory
 linuxSystemInstall = args.installer
 MIOpenVersion = args.miopen
+MIOpenGEMMVersion = args.miopengemm
 ffmpegInstall = args.ffmpeg
+rppInstall = args.rpp
 
 # sudo requirement check
 sudoLocation = ''
@@ -67,8 +71,10 @@ else:
 	os.system('(cd '+setupDir+'; mkdir mivisionx-deps)')
 	# Get Installation Source
 	os.system('(cd '+deps_dir+'; git clone https://github.com/RadeonOpenCompute/rocm-cmake.git )')
-	os.system('(cd '+deps_dir+'; git clone https://github.com/ROCmSoftwarePlatform/MIOpenGEMM.git )')
-	os.system('(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
+	os.system('(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/archive/'+MIOpenGEMMVersion+'.zip )')
+	os.system('(cd '+deps_dir+'; unzip '+MIOpenGEMMVersion+'.zip )')
+	if ffmpegInstall == 'yes':
+		os.system('(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
 	os.system('(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/'+MIOpenVersion+'.zip )')
 	os.system('(cd '+deps_dir+'; unzip '+MIOpenVersion+'.zip )')
 	os.system('(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v3.5.2.zip )')
@@ -76,6 +82,10 @@ else:
 	os.system('(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; unzip 3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; mkdir build )')
+	# Install half.hpp
+	os.system('(cd '+deps_dir+'; wget https://raw.githubusercontent.com/ARM-software/ComputeLibrary/master/include/half/half.hpp )')
+	os.system('sudo -v')
+	os.system('(cd '+deps_dir+'; sudo mv half.hpp /usr/local/include/ )')
 	# Install ROCm-CMake
 	os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen OpenCV )')
 	os.system('(cd '+deps_dir+'/build/rocm-cmake; '+linuxCMake+' ../../rocm-cmake )')
@@ -83,7 +93,7 @@ else:
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo '+linuxFlag+' make install )')
 	# Install MIOpenGEMM
-	os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake+' ../../MIOpenGEMM )')
+	os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake+' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
 	os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo '+linuxFlag+' make install )')
@@ -137,6 +147,8 @@ else:
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install qt5-default qtcreator')
+	if rppInstall == 'yes':
+		os.system('(cd '+deps_dir+'; git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
 	# Install ffmpeg
 	if ffmpegInstall == 'yes':
 		if linuxSystemInstall == 'apt-get':

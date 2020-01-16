@@ -20,19 +20,29 @@
 
 cmake_minimum_required (VERSION 2.8)
 project (MIVisionX)
-set(VERSION "1.3.0")
+set(VERSION "1.5.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_INSTALL_PREFIX /opt/rocm/mivisionx)
 
-message("-- MIVisionX Version - ${VERSION}")
+if(NOT WIN32)
+  string(ASCII 27 Esc)
+  set(ColourReset "${Esc}[m")
+  set(Red         "${Esc}[31m")
+  set(Green       "${Esc}[32m")
+  set(Yellow      "${Esc}[33m")
+  set(Blue        "${Esc}[34m")
+  set(BoldBlue    "${Esc}[1;34m")
+endif()
+message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(apps)
 add_subdirectory(utilities)
+add_subdirectory(rali)
 
 install(DIRECTORY docs DESTINATION .)
 

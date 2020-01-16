@@ -1,59 +1,38 @@
 __author__      = "Kiriti Nagesh Gowda"
-__copyright__   = "Copyright 2018, AMD Dataset Analysis Tool"
+__copyright__   = "Copyright 2018-2019, AMD Dataset Analysis Tool"
 __credits__     = ["Mike Schmit"]
 __license__     = "MIT"
-__version__     = "0.9.0"
+__version__     = "0.9.5"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Alpha"
 
+import argparse
 import os
-import getopt
 import sys
-#import random
-#import collections
 import csv
-#import numpy
 import datetime
 
-opts, args = getopt.getopt(sys.argv[1:], 'i:d:l:h:o:f:m:')
+# AMD Data Analysis Toolkit - Classification
+parser = argparse.ArgumentParser()
+parser.add_argument('--inference_results',  type=str, required=True,    help='input inference results CSV file          [required] (File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)')
+parser.add_argument('--image_dir',          type=str, required=True,    help='input image directory used in inference   [required]')
+parser.add_argument('--label',              type=str, required=True,    help='input labels text file                    [required]')
+parser.add_argument('--hierarchy',          type=str, default='',       help='input AMD proprietary hierarchical file   [optional]')
+parser.add_argument('--model_name',         type=str, default='',       help='input inferece model name                 [optional]')
+parser.add_argument('--output_dir',         type=str, required=True,    help='output dir to store ADAT results          [required]')
+parser.add_argument('--output_name',        type=str, required=True,    help='output ADAT file name                     [required]')
 
-inputCSVFile = '';
-inputImageDirectory = '';
-labelFile = '';
-hierarchyFile = '';
-outputDirectory = '';
-fileName = '';
-modelName = '';
-
-for opt, arg in opts:
-    if opt == '-i':
-        inputCSVFile = arg;
-    elif opt == '-d':
-        inputImageDirectory = arg;
-    elif opt == '-l':
-        labelFile = arg;
-    elif opt == '-h':
-        hierarchyFile = arg;
-    elif opt == '-o':
-        outputDirectory = arg;
-    elif opt == '-f':
-        fileName = arg;
-    elif opt == '-m':
-        modelName = arg;
-
-# report error
-if inputCSVFile == '' or inputImageDirectory == '' or labelFile == '' or outputDirectory == '' or fileName == '':
-    print('Invalid command line arguments.\n'
-        '\t\t\t\t-i [input Result CSV File - required](File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)[L:Label P:Probability]\n'\
-        '\t\t\t\t-d [input Image Directory - required]\n'\
-        '\t\t\t\t-l [input Label File      - required]\n'\
-        '\t\t\t\t-h [input Hierarchy File  - optional]\n'\
-        '\t\t\t\t-m [input NN model name   - optional]\n'\
-        '\t\t\t\t-o [output Directory - required]\n'\
-        '\t\t\t\t-f [output file name - required]\n')
-
-    exit();
+args = parser.parse_args()
+        
+# get arguments
+inputCSVFile = args.inference_results;
+inputImageDirectory = args.image_dir;
+labelFile = args.label;
+hierarchyFile = args.hierarchy;
+modelName = args.model_name;
+outputDirectory = args.output_dir;
+fileName = args.output_name;
 
 if not os.path.exists(inputImageDirectory):
     print "ERROR Invalid Input Image Directory";
@@ -317,7 +296,10 @@ import numpy as np
 netSummaryImages =  imageDataSize - totalNoGroundTruth;
 passProb = top1TotProb+top2TotProb+top3TotProb+top4TotProb+top5TotProb;
 passCount = top1Count+top2Count+top3Count+top4Count+top5Count;
-avgPassProb = float(passProb/passCount);
+if passCount > 0:
+    avgPassProb = float(passProb/passCount);
+else:
+    avgPassProb = 0
 
 print('Images with Ground Truth -- '+str(netSummaryImages));
 print('Images without Ground Truth -- '+str(totalNoGroundTruth));
@@ -333,7 +315,10 @@ print('Total mismatch -- '+str(totalMismatch));
 accuracyPer = float(totalMismatch);
 accuracyPer = (accuracyPer/netSummaryImages) * 100;
 print('Inference mismatch Percentage -- '+str(np.around(accuracyPer,decimals=2))+' %');
-print('Average mismatch Probability for Top 1 -- '+str(np.around(float(totalFailProb)/float(totalMismatch),decimals=4)));
+if totalMismatch > 0:
+    print('Average mismatch Probability for Top 1 -- '+str(np.around(float(totalFailProb)/float(totalMismatch),decimals=4)));
+else:
+    print('Average mismatch Probability for Top 1 -- 0');
 
 print("\n*****Top1*****");
 print('Top1 matches -- '+str(top1Count));  
@@ -1218,7 +1203,10 @@ print("\t</tr>\n<tr>");
 print("\t<td><font color=\"black\" size=\"4\">Average Pass Confidence for Top %d</font></td>"%(topKValue));
 print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%((avgPassProb*100)));
 print("\t<td><font color=\"black\" size=\"4\">Average mismatch Confidence for Top 1</font></td>");
-print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%(((totalFailProb/totalMismatch)*100)));
+if totalMismatch > 0:
+    print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%(((totalFailProb/totalMismatch)*100)));
+else:
+    print("\t <td align=\"center\"><font color=\"black\" size=\"4\"><b>%.2f %%</b></font></td>"%(((0)*100)));
 print("\t</tr>\n</table>\n<br><br><br>");
 #topK result
 print("\t<table align=\"center\" style=\"width: 40%\">");

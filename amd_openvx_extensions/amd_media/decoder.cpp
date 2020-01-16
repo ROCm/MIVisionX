@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <stdlib.h>
 
 // OpenCL configuration
-#define DECODE_ENABLE_OPENCL       1         // enable use of OpenCL buffers
 #define DUMP_DECODED_FRAME         0
 
 #if DUMP_DECODED_FRAME
@@ -324,23 +323,24 @@ vx_status CLoomIoMediaDecoder::Initialize()
 		// read media filenames from text file
         std::ifstream infile(inputMediaFiles.c_str());
         std::string line;
-        mediaCount = 0;
-        while(std::getline(infile, line)) {
+        int mCount = 0;
+        while(std::getline(infile, line) && mCount < mediaCount) {
             std::vector<std::string> streaminfo = split(line, ':');
             if (streaminfo.size() != 2) {
                 vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: invalid input file format");
                 return VX_ERROR_INVALID_LINK;
             }
-            inputMediaFileName[mediaCount] = streaminfo[0];
-            useVaapi[mediaCount++]         = atoi(streaminfo[1].c_str());
+            inputMediaFileName[mCount] = streaminfo[0];
+            useVaapi[mCount++]         = atoi(streaminfo[1].c_str());
         }
 	}
     else if (!inputMediaFiles.empty()) {
 		// generate media filenames
         // split the string using ','
         std::vector<std::string> mediainfo = split(inputMediaFiles, ',');
-        mediaCount = mediainfo.size();
-        for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
+        unsigned int mCount = mediainfo.size();
+        if (mCount > mediaCount) mCount = mediaCount;
+        for (int mediaIndex = 0; mediaIndex < mCount; mediaIndex++) {
             std::vector<std::string> streaminfo = split(mediainfo[mediaIndex], ':');
             if (streaminfo.size() != 2) {
                 vxAddLogEntry((vx_reference)node, VX_ERROR_INVALID_LINK, "ERROR: invalid input file format");
@@ -845,6 +845,7 @@ static vx_status VX_CALLBACK amd_media_decode_validate(vx_node node, const vx_re
     if (parameters[4]) {
         ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferOpenCL, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
         ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL, &enableUserBufferOpenCL, sizeof(enableUserBufferOpenCL)));
+        printf("decoder validate:: set enableUserBufferOpenCL: %d\n", enableUserBufferOpenCL);
     }
 
 	// check aux data parameter

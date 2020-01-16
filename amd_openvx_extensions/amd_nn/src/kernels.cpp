@@ -75,17 +75,25 @@ vx_reference getNodeParameterByIndex(vx_node node, vx_uint32 index)
     return ref;
 }
 
-int getEnvironmentVariable(const char * name)
+int getEnvironmentVariable(const char * name, char * value, size_t valueSize)
 {
 #if _WIN32
-    char text[64] = { 0 };
-    if (GetEnvironmentVariableA(name, text, (DWORD)sizeof(text)) > 0) {
-        return atoi(text);
+    char text[512] = { 0 };
+    DWORD len = GetEnvironmentVariableA(name, text, (DWORD)sizeof(text));
+    if ( len > 1) {
+        value[len-1] = '\0';
+        if(isdigit(value[0]) != 0)
+            return atoi(value);
+        else return 1;
     }
 #else
     const char * text = getenv(name);
     if (text) {
-        return atoi(text);
+        strncpy(value, text, strlen(text)+1);
+        value[strlen(text)+1] = '\0';
+        if(isdigit(value[0]) != 0)
+            return atoi(value);
+        else return 1;
     }
 #endif
     return -1;
@@ -102,7 +110,8 @@ vx_status createGraphHandle(vx_node node, NeuralNetworkCommonHandle ** pHandle)
         handle = new NeuralNetworkCommonHandle;
         memset(handle, 0, sizeof(*handle));
         const char * searchEnvName = "NN_MIOPEN_SEARCH";
-        int isEnvSet = getEnvironmentVariable(searchEnvName);
+        char textBuffer[1024];
+        int isEnvSet = getEnvironmentVariable(searchEnvName, textBuffer, sizeof(textBuffer));
         if (isEnvSet > 0)
             handle->exhaustiveSearch = true;
 
@@ -128,10 +137,69 @@ vx_status releaseGraphHandle(vx_node node, NeuralNetworkCommonHandle * handle)
     return VX_SUCCESS;
 }
 
+
+void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor)
+{
+    //get dump location and file name
+    char dump_location[512] = "NN_BufferDump/";
+    char textBuffer[512];
+    if (getEnvironmentVariable("NN_LAYER_DUMP_LOCATION", textBuffer, sizeof(textBuffer)) > 0 ) 
+    {
+        sprintf(dump_location, "%s", textBuffer);
+    }
+    #if _WIN32
+        CreateDirectory(dump_location, NULL);
+    #else
+        struct stat st = {0};
+        if (stat(dump_location, &st) == -1) { mkdir(dump_location, 0700); }
+    #endif
+    char fileName[1024];
+    static int dumpBufferCount = 0; 
+    dumpBufferCount++;
+    sprintf(fileName, strcat(dump_location, fileNameFormat), dumpBufferCount);
+    FILE * fp = fopen(fileName, "wb");
+
+    //map tensor to pointer
+    vx_size tensor_dims[4];
+    vx_status status;
+    status = vxQueryTensor((vx_tensor)tensor, VX_TENSOR_DIMS, tensor_dims, sizeof(tensor_dims));
+    if(status)
+    {
+        std::cerr << "ERROR: vxQueryTensor() failed for layer dump tensor (" << status << ")" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    vx_map_id map_id;
+    vx_size stride[4];
+    float * ptr;
+    vx_enum usage = VX_READ_ONLY;
+    
+    vx_size count_tensor = tensor_dims[0]*tensor_dims[1]*tensor_dims[2]*tensor_dims[3];
+    status = vxMapTensorPatch(tensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    if(status)
+    {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for layer dump tensor (" << status << ")" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    //write values to file
+    if(!fp) printf("Could not open file %s\n", fileName);
+    else
+    {
+        printf("OK: Writing file %s into BufferDump folder with %lu bytes\n", fileName, count_tensor*4);
+        fwrite((void **)&ptr, sizeof(float), count_tensor, fp);
+    }
+    fclose(fp);
+    status = vxUnmapTensorPatch(tensor, map_id);
+    if(status) {
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for layer dump tensor (" << status << ")" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing kernel.
 SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 {
+    PROFILER_INITIALIZE();
     // set command-queue properties to be CL_QUEUE_PROFILING_ENABLE needed by MIOpen (default)
     const char * searchEnvName = "NN_MIOPEN_CL_QUEUE_PROPERTIES";
     cl_command_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
@@ -175,6 +243,12 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
     ERROR_CHECK_STATUS(publishPriorBoxLayer(context));
     ERROR_CHECK_STATUS(publishCropLayer(context));
     ERROR_CHECK_STATUS(publishCropAndResizeLayer(context));
+    ERROR_CHECK_STATUS(publishTensorMin(context));
+    ERROR_CHECK_STATUS(publishTensorMax(context));
+    ERROR_CHECK_STATUS(publishCastLayer(context));
+    ERROR_CHECK_STATUS(publishDetectionOutputLayer(context));
+    ERROR_CHECK_STATUS(publishTensorExp(context));
+    ERROR_CHECK_STATUS(publishTensorLog(context));
 
     // register drama rules
     AgoNodeMergeRule softmax_rule = {
@@ -195,5 +269,6 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 //! \brief The module entry point for unpublishing kernel.
 SHARED_PUBLIC vx_status VX_API_CALL vxUnpublishKernels(vx_context context)
 {
+    PROFILER_SHUTDOWN();
     return VX_SUCCESS;
 }

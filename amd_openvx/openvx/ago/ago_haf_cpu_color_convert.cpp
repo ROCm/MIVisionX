@@ -3018,7 +3018,7 @@ int HafCpu_ColorConvert_Y_RGB
 			float G = (float)*pLocalSrc++;
 			float B = (float)*pLocalSrc++;
 
-			*pLocalDst++ = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*pLocalDst++ = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
 		}
 
 		pSrcImage += srcImageStrideInBytes;

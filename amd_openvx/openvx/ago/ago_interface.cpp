@@ -22,8 +22,13 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include <mutex>
 
+#if _WIN32
 static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
+#else
+static void agoGraphThreadFunction(LPVOID graph_)
+#endif
 {
 	AgoGraph * graph = (AgoGraph *)graph_;
 	while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
@@ -40,12 +45,14 @@ static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
 	// inform caller about termination
 	graph->threadThreadTerminationState = 2;
 	ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
-	return 0;
+#if _WIN32
+    return 0;
+#endif
 }
 
 AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
 {
-	CAgoLockGlobalContext lock;
+    CAgoLockGlobalContext lock;
 
 	// check if CPU hardware supports
 	bool isHardwareSupported = agoIsCpuHardwareSupported();

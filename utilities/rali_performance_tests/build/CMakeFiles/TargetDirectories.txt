@@ -1,7 +1,0 @@
-/home/svcbuild/rali-tensor-compare/MIVisionX/utilities/rali_performance_tests/build/CMakeFiles/install/strip.dir
-/home/svcbuild/rali-tensor-compare/MIVisionX/utilities/rali_performance_tests/build/CMakeFiles/edit_cache.dir
-/home/svcbuild/rali-tensor-compare/MIVisionX/utilities/rali_performance_tests/build/CMakeFiles/rali_performance_tests.dir
-/home/svcbuild/rali-tensor-compare/MIVisionX/utilities/rali_performance_tests/build/CMakeFiles/rebuild_cache.dir
-/home/svcbuild/rali-tensor-compare/MIVisionX/utilities/rali_performance_tests/build/CMakeFiles/list_install_components.dir
-/home/svcbuild/rali-tensor-compare/MIVisionX/utilities/rali_performance_tests/build/CMakeFiles/install/local.dir
-/home/svcbuild/rali-tensor-compare/MIVisionX/utilities/rali_performance_tests/build/CMakeFiles/install.dir

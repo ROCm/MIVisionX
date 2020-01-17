@@ -168,7 +168,7 @@ Generate OpenVX and test code that can be used dump and compare raw tensor data:
 % make
 % ./anntest
 
-Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
+Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]<--add ADD> <--multiply MULTIPLY>]
 
    <input-data-file>: is filename to initialize tensor
      .jpg or .png: decode and initialize for 3 channel tensors
@@ -182,8 +182,12 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
      <output-data-file> is filename for saving output tensor data
        '-' to ignore
        other: save raw tensor into the file
+       
+   <add>: input preprocessing factor [optional - default:[0,0,0]]
+   
+   <multiply>: input preprocessing factor [optional - default:[1,1,1]]
 
-% ./anntest ../weights.bin input.f32 output.f32,reference.f32,1e-6,1e-9
+% ./anntest ../weights.bin input.f32 output.f32,reference.f32,1e-6,1e-9 --add -2.1,-2.07,-1.8 --multiply 0.017,0.017,0.017
 ...
 ````
 
@@ -244,6 +248,14 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 % ./anntest ../weights.bin input-%04d.png output-%04d.png,reference.rgb,0.01
 ...
 ````
+
+Test code with preprocessing add / multiply values to normalize the input tensor. Some models(e.g. Inception v4) require input tensor to be normalized. You can pass the preprocessing values using --add & --multiply option.
+
+````
+% ./anntest ../weights.bin input.f32 output.f32 --add -2.1,-2.07,-1.8 --multiply 0.017,0.017,0.017
+...
+````
+
 ## Models & Operators currently supported
 ###  Models
 

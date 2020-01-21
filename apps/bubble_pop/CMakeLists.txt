@@ -42,7 +42,7 @@ endif()
 if(DEFINED OPENVX_LIBRARIES)
     message(STATUS "OPENVX_LIBRARIES: \t${OPENVX_LIBRARIES}")
 else()
-    link_directories    (/opt/rocm/mivisionx/lib)
+    set(OPENVX_LIBRARIES /opt/rocm/mivisionx/lib/libopenvx.so)
 endif()
 
 list    (APPEND SOURCES

@@ -24,7 +24,7 @@ In this sample we will create an OpenVX graph to run VX Bubble Pop on a live cam
 
 ### Steps to run the Bubble Pop sample
 
-* **Step - 1:** Clone the MIVisionX project and build the bubble pop application
+* **Step - 1:** Clone the MIVisionX project
 
 ```
 cd ~/ && mkdir OpenVX-bubble-pop

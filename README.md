@@ -50,7 +50,7 @@ MIVisionX has a number of [applications](apps#applications) built on top of Open
 
 <p align="center"><img width="90%" src="docs/images/MIVisionX-applications.png" /></p>
 
-* [Bubble Pop](./bubble_pop): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
+* [Bubble Pop](apps/bubble_pop#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 * [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
 * [Digit Test](apps/dg_test#amd-dgtest): This sample application is used to recognize hand written digits.
 * [Image Augmentation](apps/image_augmentation#image-augmentation-application): This sample application demonstrates a basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.

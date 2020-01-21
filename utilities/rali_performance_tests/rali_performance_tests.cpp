@@ -469,7 +469,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
     std::cout << "Process  time " << rali_timing.process_time << std::endl;
     std::cout << "Transfer time " << rali_timing.transfer_time << std::endl;
     std::cout << ">>>>> Total Elapsed Time " << dur / 1000000 << " sec " << dur % 1000000 << " us " << std::endl;
-    //raliRelease(handle);
+    raliRelease(handle);
     mat_input.release();
     mat_output.release();
 

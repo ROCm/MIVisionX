@@ -1763,14 +1763,29 @@ inline int64_t clockFrequency()
     return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
 }
 
-static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::string args, vx_enum usage = VX_WRITE_ONLY)
+static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::string args, vx_enum usage = VX_WRITE_ONLY, std::string add = "0,0,0", std::string multiply = "1,1,1")
 {
+    std::vector<float> addVec, mulVec;
+    std::stringstream sa(add), sm(multiply);
+    float i, j;
+    while (sa >> i && sm >> j)
+    {
+        addVec.push_back(i);
+        mulVec.push_back(j);
+        if (sa.peek() == ',')
+            sa.ignore();
+        if (sm.peek() == ',')
+            sm.ignore();
+    }
+    
     // split the args into fileName and other parameters
     std::vector<std::string> argList;
     std::istringstream sf(args);
     for(std::string s; std::getline(sf, s, ','); ) {
         argList.push_back(s);
     }
+    std::cout << "Preprocessing add: " << addVec[0] << " " << addVec[1] << " " << addVec[2] << " " << std::endl;
+    std::cout << "Preprocessing multiply: " << mulVec[0] << " " << mulVec[1] << " " << mulVec[2] << " " << std::endl;
     std::string fileName = argList[0];
     // access the tensor object
     vx_enum data_type = VX_TYPE_FLOAT32;
@@ -1797,51 +1812,49 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
             for(size_t n = 0; n < dims[3]; n++) {
                 char imgFileName[1024];
                 sprintf(imgFileName, fileName.c_str(), (int)n);
-                Mat img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
+                Mat img;
+                img = imread(imgFileName, CV_LOAD_IMAGE_COLOR);
                 if(!img.data || img.rows != dims[1] || img.cols != dims[0]) {
                     printf("ERROR: invalid image or dimensions: %s\\n", imgFileName);
                     return -1;
                 }
                 for(vx_size y = 0; y < dims[1]; y++) {
-                    unsigned char * src = img.data + y*dims[0]*3;
+                    unsigned char * src = img.data + y*dims[0]*dims[2];
                     if(data_type == VX_TYPE_FLOAT32) {
                         float * dstR = (float *)ptr + ((n * stride[3] + y * stride[1]) >> 2);
                         float * dstG = dstR + (stride[2] >> 2);
                         float * dstB = dstG + (stride[2] >> 2);
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                            *dstR++ = src[2];
-                            *dstG++ = src[1];
-                            *dstB++ = src[0];
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
                         }
-                    } else if(data_type == VX_TYPE_FLOAT16)
-                    {
+                    } else if(data_type == VX_TYPE_FLOAT16) {
                         short * dstR = (short *)ptr + ((n * stride[3] + y * stride[1]) >> 1);
                         short * dstG = dstR + (stride[2] >> 2);
                         short * dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                            *dstR++ = src[2];
-                            *dstG++ = src[1];
-                            *dstB++ = src[0];
-                       	}
-                    } else if(data_type == VX_TYPE_INT64)
-                    {
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
+                        }
+                    } else if(data_type == VX_TYPE_INT64) {
                         long int* dstR = (long int*)ptr + ((n * stride[3] + y * stride[1]) >> 3);
                         long int* dstG = dstR + (stride[2] >> 2);
                         long int* dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                            *dstR++ = src[2];
-                            *dstG++ = src[1];
-                            *dstB++ = src[0];
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
                         }
-                    } else if(data_type == VX_TYPE_INT32)
-                    {
+                    } else if(data_type == VX_TYPE_INT32) {
                         int* dstR = (int*)ptr + ((n * stride[3] + y * stride[1]) >> 2);
                         int* dstG = dstR + (stride[2] >> 2);
                         int* dstB = dstG + (stride[2] >> 2);                    
                         for(vx_size x = 0; x < dims[0]; x++, src += 3) {
-                            *dstR++ = src[2];
-                            *dstG++ = src[1];
-                            *dstB++ = src[0];
+                            *dstR++ = (src[2] * mulVec[0]) + addVec[0];
+                            *dstG++ = (src[1] * mulVec[1]) + addVec[1];
+                            *dstB++ = (src[0] * mulVec[2]) + addVec[2];
                         }
                     }
                 }
@@ -1865,12 +1878,18 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 std::cerr << "ERROR: expected char[" << count*sizeof(float) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
+                            }
                         } else if(data_type == VX_TYPE_FLOAT16){
                             short * ptrY = (short *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 1);
                             vx_size n = fread(ptrY, sizeof(short), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(short) << "], but got less in " << fileName << std::endl;
                                 return -1;
+                            }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
                             }
                         } else if(data_type == VX_TYPE_INT64){
                             long int * ptrY = (long int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
@@ -1879,12 +1898,18 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
                                 std::cerr << "ERROR: expected char[" << count*sizeof(long int) << "], but got less in " << fileName << std::endl;
                                 return -1;
                             }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
+                            }
                         } else if(data_type == VX_TYPE_INT32){
                             int * ptrY = (int *)ptr + ((n * stride[3] + c * stride[2] + y * stride[1]) >> 3);
                             vx_size n = fread(ptrY, sizeof(int), dims[0], fp);
                             if(n != dims[0]) {
                                 std::cerr << "ERROR: expected char[" << count*sizeof(int) << "], but got less in " << fileName << std::endl;
                                 return -1;
+                            }
+                            for(size_t x = 0; x < dims[0]; x++) {
+                                *(ptrY+x) = *(ptrY+x) * mulVec[c] + addVec[c];
                             }
                         }
                     }
@@ -2217,9 +2242,11 @@ int main(int argc, const char ** argv)
     if(argc < 2) {
         printf(
             "\\n"
-            "Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]\\n"
+            "Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]] <--add ADD> <--multiply MULTIPLY>]\\n"
             "\\n"
-            "   <input-data-file>: is filename to initialize tensor\\n"
+            "   <weights.bin>: is a filename of the weights file to be used for the inference\\n"
+            "   <input-data-file>: is a filename to initialize input tensor\\n"
+            "   <output-data-file>: is a filename to initialize output tensor\\n"
 """)
         f.write( \
 """#if ENABLE_OPENCV
@@ -2260,6 +2287,8 @@ int main(int argc, const char ** argv)
         f.write( \
 """            "       '-' to ignore\\n"
             "       other: save raw tensor into the file\\n"
+            "   <add>: input preprocessing factor [optional - default:[0,0,0]]\\n"
+            "   <multiply>: input preprocessing factor [optional - default:[1,1,1]]\\n"
             "\\n"
         );
         return -1;
@@ -2267,6 +2296,16 @@ int main(int argc, const char ** argv)
     const char * binaryFilename = argv[1];
     argc -= 2;
     argv += 2;
+
+    std::string add = "0,0,0", multiply = "1,1,1";
+    for (int i = 0; i < argc; i++) {
+        if (strcasecmp(argv[i], "--add") == 0) {
+            add = argv[i+1];
+        }
+        if (strcasecmp(argv[i], "--multiply") == 0) {
+            multiply = argv[i+1];
+        }
+    }
 
     // create context, input, output, and graph
     vxRegisterLogCallback(NULL, log_callback, vx_false_e);
@@ -2296,7 +2335,7 @@ int main(int argc, const char ** argv)
     }
     if(*argv) {
         if(strcmp(*argv, "-") != 0) {
-            if(copyTensor("%s", %s, *argv, VX_WRITE_ONLY) < 0) {
+            if(copyTensor("%s", %s, *argv, VX_WRITE_ONLY, add, multiply) < 0) {
                 return -1;
             }
             printf("OK: initialized tensor '%s' from %%s\\n", *argv);
@@ -2364,7 +2403,7 @@ int main(int argc, const char ** argv)
     // save tensor %s
     if(*argv) {
         if(strcmp(*argv, "-") != 0) {
-            if(copyTensor("%s", %s, *argv, VX_READ_ONLY) < 0) {
+            if(copyTensor("%s", %s, *argv, VX_READ_ONLY, add, multiply) < 0) {
                 return -1;
             }
             printf("OK: wrote tensor '%s' into %%s\\n", *argv);
@@ -2378,7 +2417,7 @@ int main(int argc, const char ** argv)
 """
     // save tensor %s
     auto it_%s = tensorMap.find("%s");
-   	if(copyTensor("%s", it_%s->second, "%s", VX_READ_ONLY) < 0) {
+   	if(copyTensor("%s", it_%s->second, "%s", VX_READ_ONLY, add, multiply) < 0) {
         return -1;
     }
     printf("OK: wrote tensor '%s' into %s\\n");

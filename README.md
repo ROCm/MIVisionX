@@ -92,9 +92,10 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 ### Windows
 * Windows 10
 * Windows SDK
-* Visual Studio 2017
-* Install the latest drivers and [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* Visual Studio 2017 and above
+* Install the latest AMD [drivers](https://www.amd.com/en/support)
+* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
@@ -145,10 +146,7 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 * [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX for WinML
 
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
-* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
-  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
+* Install [Windows Prerequisites](#windows)
 * Use `MIVisionX.sln` to build for x64 platform
 
 **NOTE:** vx_nn is not supported on Windows in this release
@@ -240,7 +238,14 @@ sudo make install
   runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
   ````
 **Note:** More samples are available [here](samples#samples)
-       
+
+### Windows
+* MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
+* Use RunVX to test the build
+```
+./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
+```
+
 ## Docker
 
 MIVisionX provides developers with docker images for Ubuntu 16.04, Ubuntu 18.04, CentOS 7.5, & CentOS 7.6. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.

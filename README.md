@@ -146,10 +146,7 @@ python MIVisionX-setup.py --directory [setup directory - optional]
 * [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX for WinML
 
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
-* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0) with/without [contrib](https://github.com/opencv/opencv_contrib) to support camera capture, image display, & opencv extensions
-  * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-  * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
+* Install [Windows Prerequisites](#windows)
 * Use `MIVisionX.sln` to build for x64 platform
 
 **NOTE:** vx_nn is not supported on Windows in this release

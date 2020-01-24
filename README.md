@@ -238,7 +238,14 @@ sudo make install
   runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
   ````
 **Note:** More samples are available [here](samples#samples)
-       
+
+### Windows
+* MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
+* Use RunVX to test the build
+```
+./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
+```
+
 ## Docker
 
 MIVisionX provides developers with docker images for Ubuntu 16.04, Ubuntu 18.04, CentOS 7.5, & CentOS 7.6. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.

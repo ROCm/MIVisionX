@@ -94,8 +94,8 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * Windows SDK
 * Visual Studio 2017 and above
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
-* [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 

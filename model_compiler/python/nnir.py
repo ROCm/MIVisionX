@@ -690,7 +690,9 @@ class IrGraph:
                 elif node.type in ['cast']:
                     input = self.tensor_dict[node.inputs[0]]
                     to = node.attr.get('to')
-                    if to == 6:
+                    if to == 1:
+                        output_type = 'F032'
+                    elif to == 6:
                         output_type = 'I032'
                     elif to == 7:
                         output_type = 'I064'

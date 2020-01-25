@@ -47,6 +47,8 @@ onnx2ir_attr = {
     'min' : 'min',
     'max' : 'max',
     'to' : 'to', 
+    'value' : 'value',
+    'sparse_value' : 'value'
 }
 
 onnx2ir_op_type = { 
@@ -84,6 +86,7 @@ onnx2ir_op_type = {
     'Cast'               : 'cast',
     'Shape'              : 'shape',  
     'ArgMax'             : 'argmax',
+    'Constant'           : 'constant',
 }
 
 onnx2ir_data_type = [

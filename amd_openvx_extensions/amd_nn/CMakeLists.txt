@@ -85,6 +85,7 @@ list(APPEND SOURCES
     src/detection_output.cpp
     src/cast_layer.cpp
     src/profiler.cpp
+    src/tile_layer.cpp
     )
 
 add_library(vx_nn SHARED ${SOURCES})

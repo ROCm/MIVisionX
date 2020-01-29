@@ -4,7 +4,6 @@ static vx_status VX_CALLBACK validateTileLayer(vx_node node, const vx_reference 
     vx_enum type, type2, out_type;
     vx_size num_dims;
     vx_size input_dims[4], input_dims2[4], output_dims[4];
-
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
@@ -13,68 +12,21 @@ static vx_status VX_CALLBACK validateTileLayer(vx_node node, const vx_reference 
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type2, sizeof(type2)));
-    if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
-    if ((type2 != VX_TYPE_FLOAT32) && (type2 != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
+    if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
+    if ((type2 != VX_TYPE_INT64) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims2, sizeof(input_dims2)));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
-    if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
+    if (out_type != TYPE) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-
-    vx_uint32 axis;
-
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     
-    if (axis < 0 || axis > 3) {
-        printf("validate: Tile: Axis value should be 0~3\n");
-        printf("validate: Tile: Axis = %d\n", axis);
-        return VX_ERROR_INVALID_PARAMETERS;
-    } 
-
-    vx_uint32 new_axis = 3 - axis;
-
-    int offset[4];
-
-    for (int i = 0; i < 4; i++) {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[7-i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));  
-    
-        if ((int)(offset[i] < 0)) {
-            printf("validate: Tile: Offset should be larger than 0\n");
-            return VX_ERROR_INVALID_PARAMETERS;
-        } 
-        if ((i > new_axis) && ((int)offset[i] != 0)) {
-            printf("validate: Tile: Offset(s) before axis should equal 0\n");
-            printf("validate: Tile: Axis = %d, Offset[%d] = %d\n", (int)axis, i, (int)offset[3-i]);
-            return VX_ERROR_INVALID_PARAMETERS;
-        }  
-
-        if (i <= new_axis) {
-            //check boundary
-            if ((int)(offset[i] + input_dims2[i]) > (int)input_dims[i]) {
-                printf("validate: Tile: Offset out of bound\n");
-                printf("%d + %d > %d\n", (int)offset[i], (int)input_dims2[i], (int)input_dims[i]);
-                return VX_ERROR_INVALID_PARAMETERS;
-            }
-        }
-
-        vx_size val_dim = (i <= new_axis) ? input_dims2[i] : input_dims[i];
-        
-        //check output dimension
-        if (output_dims[i] != val_dim) {
-            printf("validate: Tile: Output dimension should match the input dimension based on the axis\n");
-            printf("%d != %d\n", (int)output_dims[i], (int)val_dim);
-            return VX_ERROR_INVALID_PARAMETERS;
-        }
-    }
-        
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, &output_dims, sizeof(output_dims)));
 
     return VX_SUCCESS;
-
 }
 
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
@@ -179,13 +131,12 @@ static vx_status VX_CALLBACK opencl_codegen(
     return VX_SUCCESS;
 }
 
-
 static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num) {
     return VX_ERROR_NOT_IMPLEMENTED;
 }
 
 vx_status publishTileLayer(vx_context context) {
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.tile_layer", VX_KERNEL_TILE_LAYER_AMD, host_kernel, 8, validateTileLayer, NULL, NULL);
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.tile_layer", VX_KERNEL_TILE_LAYER_AMD, host_kernel, 3, validateTileLayer, NULL, NULL);
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
@@ -196,30 +147,20 @@ vx_status publishTileLayer(vx_context context) {
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 7, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-
+    
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
     ERROR_CHECK_STATUS(vxReleaseKernel(&kernel));
     return VX_SUCCESS; 
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxTileLayer(vx_graph graph, vx_tensor input, vx_tensor reference, vx_tensor output, vx_scalar axis, vx_scalar offset1, vx_scalar offset2, vx_scalar offset3, vx_scalar offset4) {
+VX_API_ENTRY vx_node VX_API_CALL vxTileLayer(vx_graph graph, vx_tensor input, vx_tensor repeats, vx_tensor output) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_reference params[] = {
             (vx_reference) input,
-            (vx_reference) reference,
+            (vx_reference) repeats,
             (vx_reference) output,
-            (vx_reference) axis,
-            (vx_reference) offset1,
-            (vx_reference) offset2,
-            (vx_reference) offset3,
-            (vx_reference) offset4,
         };
         node = createNode(graph, VX_KERNEL_TILE_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
     }

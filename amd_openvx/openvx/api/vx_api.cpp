@@ -4247,6 +4247,28 @@ VX_API_ENTRY vx_lut VX_API_CALL vxCreateLUT(vx_context context, vx_enum data_typ
 	return (vx_lut)data;
 }
 
+/*! \brief Creates an opaque reference to a LUT object with no direct user access
+* \param [in] graph The reference to the parent graph.
+* \param [in] data_type The type of data stored in the LUT.
+* \param [in] count The number of entries desired.
+* \returns An LUT reference <tt>\ref vx_lut</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+* \ingroup group_lut
+*/
+VX_API_ENTRY vx_lut VX_API_CALL vxCreateVirtualLUT(vx_graph graph, vx_enum data_type, vx_size count)
+{
+	AgoData * data = NULL;
+	if (agoIsValidGraph(graph)) {
+		CAgoLock lock(graph->cs);
+		char desc[512]; sprintf(desc, "lut:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
+		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+		if (data) {
+			agoGenerateVirtualDataName(graph, "lut", data->name);
+			agoAddData(&graph->dataList, data);
+		}
+	}
+	return (vx_lut)data;
+}
+
 /*! \brief Releases a reference to a LUT object.
 * The object may not be garbage collected until its total reference count is zero.
 * \param [in] lut The pointer to the LUT to release.

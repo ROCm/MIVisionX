@@ -3491,6 +3491,35 @@ VX_API_ENTRY vx_scalar VX_API_CALL vxCreateScalarWithSize(vx_context context, vx
     return (vx_scalar)data;
 }
 
+/*! \brief Creates an opaque reference to a scalar object with no direct user access.
+* \param [in] graph The reference to the parent graph.
+* \param [in] data_type The type of data to hold [REQ-1363]. Must be greater than VX_TYPE_INVALID and less than or equal to VX_TYPE_VENDOR_STRUCT_END. 
+* Or must be a vx_enum returned from vxRegisterUserStruct.
+* \return A scalar reference vx_scalar [REQ-1364]. Any possible errors preventing a successful creation should be checked using vxGetStatus.
+*/
+VX_API_ENTRY vx_scalar VX_API_CALL vxCreateVirtualScalar(vx_graph graph, vx_enum data_type)
+{
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        const char * desc_type = agoEnum2Name(data_type);
+		if (data_type && !desc_type) {
+			desc_type = agoGetUserStructName(graph->ref.context, data_type);
+		}
+        if(!data_type || desc_type) {
+			char desc[512]; 
+			if (desc_type) sprintf(desc, "scalar-virtual:%s," VX_FMT_SIZE "", desc_type);
+			else sprintf(desc, "scalar-virtual:0," VX_FMT_SIZE "");
+			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+			if (data) {
+				agoGenerateVirtualDataName(graph, "scalar", data->name);
+				agoAddData(&graph->dataList, data);
+			}
+		}
+    }
+    return (vx_scalar)data;
+}
+
 /*! \brief Releases a reference to a scalar object.
 * The object may not be garbage collected until its total reference count is zero.
 * \param [in] scalar The pointer to the scalar to release.

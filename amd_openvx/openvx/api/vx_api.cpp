@@ -5217,6 +5217,30 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrix(vx_context context, vx_enum da
 	return (vx_matrix)data;
 }
 
+/*! \brief Creates an opaque reference to a matrix object without direct user access.
+* \param [in] graph The reference to the parent graph.
+* \param [in] data_type The unit format of the matrix.
+* \param [in] columns The first dimensionality.
+* \param [in] rows The second dimensionality.
+* \returns An matrix reference <tt>\ref vx_matrix</tt>. Any possible errors preventing a
+* successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+* \ingroup group_matrix
+*/
+VX_API_ENTRY vx_matrix VX_API_CALL vxCreateVirtualMatrix(vx_graph graph, vx_enum data_type, vx_size columns, vx_size rows)
+{
+	AgoData * data = NULL;
+	if (agoIsValidGraph(graph) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
+		CAgoLock lock(graph->cs);
+		char desc[512]; sprintf(desc, "matrix:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
+		data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
+		if (data) {
+			agoGenerateVirtualDataName(graph, "matrix", data->name);
+			agoAddData(&graph->dataList, data);
+		}
+	}
+	return (vx_matrix)data;
+}
+
 /*! \brief Releases a reference to a matrix object.
 * The object may not be garbage collected until its total reference count is zero.
 * \param [in] mat The matrix reference to release.

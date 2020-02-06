@@ -5502,6 +5502,31 @@ VX_API_ENTRY vx_convolution VX_API_CALL vxCreateConvolution(vx_context context, 
 	return (vx_convolution)data;
 }
 
+/*! \brief Creates an opaque reference to a convolution matrix object without direct user access.
+* \param [in] graph - The reference to the parent graph.
+* \param [in] columns - The columns dimension of the convolution. Must be odd and greater than or equal to 3 and less than the value returned from VX_CONTEXT_CONVOLUTION_MAX_DIMENSION
+* \param [in] rows - The rows dimension of the convolution. Must be odd and greater than or equal to 3 and less than the value returned from VX_CONTEXT_CONVOLUTION_MAX_DIMENSION 
+* \return <tt>\ref vx_convolution</tt>
+* Any possible errors preventing a successful creation should be checked using vxGetStatus.
+*/
+VX_API_ENTRY vx_convolution VX_API_CALL vxCreateVirtualConvolution(vx_graph graph, vx_size columns, vx_size rows)
+{
+	AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        if(columns > 3 && rows > 3 && (columns % 2 == 1) && (rows % 2 == 1)) {
+			char desc[512]; sprintf(desc, "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
+			else sprintf(desc, "scalar-virtual:0," VX_FMT_SIZE "");
+			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+			if (data) {
+				agoGenerateVirtualDataName(graph, "conv", data->name);
+				agoAddData(&graph->dataList, data);
+			}
+		}
+    }
+	return (vx_convolution)data;
+}
+
 /*! \brief Releases the reference to a convolution matrix.
 * The object may not be garbage collected until its total reference count is zero.
 * \param [in] conv The pointer to the convolution matrix to release.

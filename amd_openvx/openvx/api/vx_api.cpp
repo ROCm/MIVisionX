@@ -5516,7 +5516,6 @@ VX_API_ENTRY vx_convolution VX_API_CALL vxCreateVirtualConvolution(vx_graph grap
         CAgoLock lock(graph->cs);
         if(columns > 3 && rows > 3 && (columns % 2 == 1) && (rows % 2 == 1)) {
 			char desc[512]; sprintf(desc, "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
-			else sprintf(desc, "scalar-virtual:0," VX_FMT_SIZE "");
 			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
 			if (data) {
 				agoGenerateVirtualDataName(graph, "conv", data->name);

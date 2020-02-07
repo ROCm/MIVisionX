@@ -729,3 +729,18 @@ VX_API_ENTRY vx_node VX_API_CALL vxCopyNode(vx_graph graph, vx_reference input, 
                                            dimof(params));
     return node;
 }
+
+VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output)
+{
+    vx_reference params[] = {
+            (vx_reference)img1,
+            (vx_reference)alpha,
+            (vx_reference)img2,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_WEIGHTED_AVERAGE,
+                                           params,
+                                           dimof(params));
+    return node;
+}

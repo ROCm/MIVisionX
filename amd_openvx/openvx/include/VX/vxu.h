@@ -930,6 +930,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxuTensorMatrixMultiply(vx_context context, v
  */
 VX_API_ENTRY vx_status VX_API_CALL vxuCopy(vx_context context, vx_reference input, vx_reference output);
 
+/*! \brief [Immediate] Computes a weighted average.
+ * \param [in] context The reference to the overall context.
+ * \param [in] img1 The first VX_DF_IMAGE_U8 image.
+ * \param [in] alpha The input VX_TYPE_FLOAT32 scalar value with a value in the range of 0.0 ≤ α ≤ 1.0 
+ * \param [in] img2 The second VX_DF_IMAGE_U8 image.
+ * \param [out] output The output VX_DF_IMAGE_U8 image, which must have the same dimensions as the input images.
+ * \ingroup group_vision_function_weighted_average
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS Success
+ * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxuWeightedAverge(vx_context context, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
+
 #ifdef __cplusplus
 }
 #endif

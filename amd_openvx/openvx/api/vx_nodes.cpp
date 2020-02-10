@@ -761,3 +761,18 @@ VX_API_ENTRY vx_node VX_API_CALL vxNonLinearFilterNode(vx_graph graph, vx_enum f
     vxReleaseScalar(&func);
     return node;
 }
+
+VX_API_ENTRY vx_node VX_API_CALL vxLaplacianPyramidNode(vx_graph graph, vx_image input, vx_pyramid laplacian, vx_image output)
+{
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)laplacian,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_LAPLACIAN_PYRAMID,
+                                           params,
+                                           dimof(params));
+    return node;
+}
+

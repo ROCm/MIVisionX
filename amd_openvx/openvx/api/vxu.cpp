@@ -1048,3 +1048,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxuNonLinearFilter(vx_context context, vx_enu
     }
     return status;
 }
+
+VX_API_ENTRY vx_status VX_API_CALL vxuLaplacianPyramid(vx_context context, vx_image input, vx_pyramid laplacian, vx_image output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+		vxuSetGraphAffinityDefault(graph);
+		vx_node node = vxLaplacianPyramidNode(graph, input, laplacian, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+            {
+                status = vxProcessGraph(graph);
+            }
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}

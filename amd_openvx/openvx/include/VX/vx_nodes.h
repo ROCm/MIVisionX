@@ -952,6 +952,20 @@ VX_API_ENTRY vx_node VX_API_CALL vxCopyNode(vx_graph graph, vx_reference input, 
  * should be checked using <tt>\ref vxGetStatus</tt>
  */
 VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
+
+/*! \brief [Graph] Creates a non-linear filter node.
+ * \param [in] graph The reference to the graph.
+ * \param [in] function The non-linear filter function.
+ * \param [in] input The input image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format.
+ * \param [in] mask The mask to be applied to the Non-linear function. VX_MATRIX_ORIGIN attribute is used to place the mask appropriately when computing the resulting image. See vxCreateMatrixFromPattern.
+ * \param [out] output The output image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format, which must have the same dimensions and format as the input image.
+ * \ingroup group_vision_function_non_linear_filter
+ * \return <tt>\ref vx_node</tt>.
+ * \retval vx_node A node reference. Any possible errors preventing a successful creation
+ * should be checked using <tt>\ref vxGetStatus</tt>
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxNonLinearFilterNode(vx_graph graph, vx_enum function, vx_image input, vx_matrix mask, vx_image output);
+
 #ifdef __cplusplus
 }
 #endif

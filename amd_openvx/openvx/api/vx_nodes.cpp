@@ -744,3 +744,20 @@ VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image 
                                            dimof(params));
     return node;
 }
+
+VX_API_ENTRY vx_node VX_API_CALL vxNonLinearFilterNode(vx_graph graph, vx_enum function, vx_image input, vx_matrix mask, vx_image output)
+{
+    vx_scalar func = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &function);
+    vx_reference params[] = {
+            (vx_reference)func,
+            (vx_reference)input,
+            (vx_reference)mask,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_NON_LINEAR_FILTER,
+                                           params,
+                                           dimof(params));
+    vxReleaseScalar(&func);
+    return node;
+}

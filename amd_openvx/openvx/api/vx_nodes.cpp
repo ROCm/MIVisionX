@@ -776,3 +776,16 @@ VX_API_ENTRY vx_node VX_API_CALL vxLaplacianPyramidNode(vx_graph graph, vx_image
     return node;
 }
 
+VX_API_ENTRY vx_node VX_API_CALL vxLaplacianReconstructNode(vx_graph graph, vx_pyramid laplacian, vx_image input, vx_image output)
+{
+    vx_reference params[] = {
+            (vx_reference)laplacian,
+            (vx_reference)input,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_LAPLACIAN_RECONSTRUCT,
+                                           params,
+                                           dimof(params));
+    return node;
+}

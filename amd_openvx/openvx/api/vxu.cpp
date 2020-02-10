@@ -1070,3 +1070,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxuLaplacianPyramid(vx_context context, vx_im
     }
     return status;
 }
+
+VX_API_ENTRY vx_status VX_API_CALL vxuLaplacianReconstruct(vx_context context, vx_pyramid laplacian, vx_image input, vx_image output)
+{
+    vx_status status = VX_FAILURE;
+    vx_graph graph = vxCreateGraph(context);
+    if (graph)
+    {
+		vxuSetGraphAffinityDefault(graph);
+		vx_node node = vxLaplacianReconstructNode(graph, laplacian, input, output);
+        if (node)
+        {
+            status = vxVerifyGraph(graph);
+            if (status == VX_SUCCESS)
+            {
+                status = vxProcessGraph(graph);
+            }
+            vxReleaseNode(&node);
+        }
+        vxReleaseGraph(&graph);
+    }
+    return status;
+}

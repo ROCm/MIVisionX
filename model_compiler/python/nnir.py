@@ -101,6 +101,10 @@ class IrAttr:
             , 'zoom_factor' : 2
             , 'to' : 1
             , 'count' : -1
+            , 'center_point_box' : 0    #nms corner coordinates default value
+            , 'max_output_boxes_per_class'  : 0
+            , 'iou_threshold' : 0.0
+            , 'score_threshold' : 0.0
         }
         self.dict_set = []
 
@@ -194,7 +198,8 @@ class IrNode:
             'detection_output' : 1,
             'matmul' : 1,
             'upsample' : 1,
-            'cast' : 1
+            'cast' : 1,
+            'nms'  : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -680,12 +685,23 @@ class IrGraph:
                     local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['nms']:
+                    output_type = 'I064'
+                    #boxes = self.tensor_dict[node.inputs[0]]
+                    #scores = self.tensor_dict[node.inputs[1]]
+                    output_shape = [1,1,1,3] 
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['detection_output']:
                     out_shape = [1,1,1,7]
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
+                    self.addLocal(local)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

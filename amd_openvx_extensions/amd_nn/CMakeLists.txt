@@ -84,6 +84,7 @@ list(APPEND SOURCES
     src/crop_and_resize_layer.cpp
     src/detection_output.cpp
     src/cast_layer.cpp
+    src/nms_layer.cpp
     src/profiler.cpp
     )
 

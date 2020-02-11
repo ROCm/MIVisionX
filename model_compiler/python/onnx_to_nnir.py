@@ -47,6 +47,7 @@ onnx2ir_attr = {
     'min' : 'min',
     'max' : 'max',
     'to' : 'to', 
+    'center_point_box' : 'center_point_box',
 }
 
 onnx2ir_op_type = { 
@@ -84,6 +85,7 @@ onnx2ir_op_type = {
     'Cast'               : 'cast',
     'Shape'              : 'shape',  
     'ArgMax'             : 'argmax',
+    'NonMaxSuppression'  : 'nms',
 }
 
 onnx2ir_data_type = [

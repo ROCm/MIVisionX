@@ -1005,7 +1005,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuRemap(vx_context context, vx_image input, 
     return status;
 }
 
-VX_API_ENTRY vx_status VX_API_CALL vxuWeightedAverge(vx_context context, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output)
+VX_API_ENTRY vx_status VX_API_CALL vxuWeightedAverage(vx_context context, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output)
 {
     vx_status status = VX_FAILURE;
     vx_graph graph = vxCreateGraph(context);

@@ -940,6 +940,32 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMatrixMultiplyNode(vx_graph graph, vx_t
  */
 VX_API_ENTRY vx_node VX_API_CALL vxCopyNode(vx_graph graph, vx_reference input, vx_reference output);
 
+/*! \brief [Graph] Creates a weighted average node.
+ * \param [in] graph The reference to the graph.
+ * \param [in] img1 The first VX_DF_IMAGE_U8 image.
+ * \param [in] alpha The input VX_TYPE_FLOAT32 scalar value with a value in the range of 0.0 ≤ α ≤ 1.0 
+ * \param [in] img2 The second VX_DF_IMAGE_U8 image.
+ * \param [out] output The output VX_DF_IMAGE_U8 image, which must have the same dimensions as the input images.
+ * \ingroup group_vision_function_weighted_average
+ * \return <tt>\ref vx_node</tt>.
+ * \retval vx_node A node reference. Any possible errors preventing a successful creation
+ * should be checked using <tt>\ref vxGetStatus</tt>
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
+
+/*! \brief [Graph] Creates a non-linear filter node.
+ * \param [in] graph The reference to the graph.
+ * \param [in] function The non-linear filter function.
+ * \param [in] input The input image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format.
+ * \param [in] mask The mask to be applied to the Non-linear function. VX_MATRIX_ORIGIN attribute is used to place the mask appropriately when computing the resulting image. See vxCreateMatrixFromPattern.
+ * \param [out] output The output image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format, which must have the same dimensions and format as the input image.
+ * \ingroup group_vision_function_non_linear_filter
+ * \return <tt>\ref vx_node</tt>.
+ * \retval vx_node A node reference. Any possible errors preventing a successful creation
+ * should be checked using <tt>\ref vxGetStatus</tt>
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxNonLinearFilterNode(vx_graph graph, vx_enum function, vx_image input, vx_matrix mask, vx_image output);
+
 #ifdef __cplusplus
 }
 #endif

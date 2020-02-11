@@ -3627,6 +3627,35 @@ VX_API_ENTRY vx_scalar VX_API_CALL vxCreateScalar(vx_context context, vx_enum da
     return (vx_scalar)data;
 }
 
+/*! \brief Creates an opaque reference to a scalar object with no direct user access.
+* \param [in] graph The reference to the parent graph.
+* \param [in] data_type The type of data to hold. Must be greater than VX_TYPE_INVALID and less than or equal to VX_TYPE_VENDOR_STRUCT_END. 
+* Or must be a vx_enum returned from vxRegisterUserStruct.
+* \return A scalar reference vx_scalar. Any possible errors preventing a successful creation should be checked using vxGetStatus.
+*/
+VX_API_ENTRY vx_scalar VX_API_CALL vxCreateVirtualScalar(vx_graph graph, vx_enum data_type)
+{
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        const char * desc_type = agoEnum2Name(data_type);
+		if (data_type && !desc_type) {
+			desc_type = agoGetUserStructName(graph->ref.context, data_type);
+		}
+        if(!data_type || desc_type) {
+			char desc[512]; 
+			if (desc_type) sprintf(desc, "scalar-virtual:%s", desc_type);
+			else sprintf(desc, "scalar-virtual:0");
+			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+			if (data) {
+				agoGenerateVirtualDataName(graph, "scalar", data->name);
+				agoAddData(&graph->dataList, data);
+			}
+		}
+    }
+    return (vx_scalar)data;
+}
+
 /*! \brief Creates a reference to a scalar object. Also see \ref sub_node_parameters.
  * \param [in] context The reference to the system context.
  * \param [in] data_type The type of data to hold. Must be greater than
@@ -4467,6 +4496,28 @@ VX_API_ENTRY vx_lut VX_API_CALL vxCreateLUT(vx_context context, vx_enum data_typ
 	return (vx_lut)data;
 }
 
+/*! \brief Creates an opaque reference to a LUT object with no direct user access
+* \param [in] graph The reference to the parent graph.
+* \param [in] data_type The type of data stored in the LUT.
+* \param [in] count The number of entries desired.
+* \returns An LUT reference <tt>\ref vx_lut</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+* \ingroup group_lut
+*/
+VX_API_ENTRY vx_lut VX_API_CALL vxCreateVirtualLUT(vx_graph graph, vx_enum data_type, vx_size count)
+{
+	AgoData * data = NULL;
+	if (agoIsValidGraph(graph)) {
+		CAgoLock lock(graph->cs);
+		char desc[512]; sprintf(desc, "lut:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
+		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+		if (data) {
+			agoGenerateVirtualDataName(graph, "lut", data->name);
+			agoAddData(&graph->dataList, data);
+		}
+	}
+	return (vx_lut)data;
+}
+
 /*! \brief Releases a reference to a LUT object.
 * The object may not be garbage collected until its total reference count is zero.
 * \param [in] lut The pointer to the LUT to release.
@@ -4860,6 +4911,29 @@ VX_API_ENTRY vx_distribution VX_API_CALL vxCreateDistribution(vx_context context
 		if (data) {
 			agoGenerateDataName(context, "dist", data->name);
 			agoAddData(&context->dataList, data);
+		}
+	}
+	return (vx_distribution)data;
+}
+
+/*! \brief Creates an opaque reference to a 1D Distribution object without direct user access.
+* \param [in] graph The reference to the parent graph.
+* \param [in] numBins The number of bins in the distribution.
+* \param [in] offset The start offset into the range value that marks the begining of the 1D Distribution.
+* \param [in] range The total number of the consecutive values of the distribution interval.
+* \return <tt>\ref vx_distribution</tt>
+* \ingroup group_distribution
+*/
+VX_API_ENTRY vx_distribution VX_API_CALL vxCreateVirtualDistribution(vx_graph graph, vx_size numBins, vx_int32 offset, vx_uint32 range)
+{
+	AgoData * data = NULL;
+	if (agoIsValidGraph(graph) && numBins > 0 && range > 0) {
+		CAgoLock lock(graph->cs);
+		char desc[512]; sprintf(desc, "distribution-virtual:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
+		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+		if (data) {
+			agoGenerateVirtualDataName(graph, "dist", data->name);
+			agoAddData(&graph->dataList, data);
 		}
 	}
 	return (vx_distribution)data;
@@ -5594,6 +5668,30 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrix(vx_context context, vx_enum da
 	return (vx_matrix)data;
 }
 
+/*! \brief Creates an opaque reference to a matrix object without direct user access.
+* \param [in] graph The reference to the parent graph.
+* \param [in] data_type The unit format of the matrix.
+* \param [in] columns The first dimensionality.
+* \param [in] rows The second dimensionality.
+* \returns An matrix reference <tt>\ref vx_matrix</tt>. Any possible errors preventing a
+* successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+* \ingroup group_matrix
+*/
+VX_API_ENTRY vx_matrix VX_API_CALL vxCreateVirtualMatrix(vx_graph graph, vx_enum data_type, vx_size columns, vx_size rows)
+{
+	AgoData * data = NULL;
+	if (agoIsValidGraph(graph) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
+		CAgoLock lock(graph->cs);
+		char desc[512]; sprintf(desc, "matrix:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
+		data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
+		if (data) {
+			agoGenerateVirtualDataName(graph, "matrix", data->name);
+			agoAddData(&graph->dataList, data);
+		}
+	}
+	return (vx_matrix)data;
+}
+
 /*! \brief Releases a reference to a matrix object.
 * The object may not be garbage collected until its total reference count is zero.
 * \param [in] mat The matrix reference to release.
@@ -6005,6 +6103,30 @@ VX_API_ENTRY vx_convolution VX_API_CALL vxCreateConvolution(vx_context context, 
 			agoAddData(&context->dataList, data);
 		}
 	}
+	return (vx_convolution)data;
+}
+
+/*! \brief Creates an opaque reference to a convolution matrix object without direct user access.
+* \param [in] graph - The reference to the parent graph.
+* \param [in] columns - The columns dimension of the convolution. Must be odd and greater than or equal to 3 and less than the value returned from VX_CONTEXT_CONVOLUTION_MAX_DIMENSION
+* \param [in] rows - The rows dimension of the convolution. Must be odd and greater than or equal to 3 and less than the value returned from VX_CONTEXT_CONVOLUTION_MAX_DIMENSION 
+* \return <tt>\ref vx_convolution</tt>
+* Any possible errors preventing a successful creation should be checked using vxGetStatus.
+*/
+VX_API_ENTRY vx_convolution VX_API_CALL vxCreateVirtualConvolution(vx_graph graph, vx_size columns, vx_size rows)
+{
+	AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        if(columns > 3 && rows > 3 && (columns % 2 == 1) && (rows % 2 == 1)) {
+			char desc[512]; sprintf(desc, "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
+			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+			if (data) {
+				agoGenerateVirtualDataName(graph, "conv", data->name);
+				agoAddData(&graph->dataList, data);
+			}
+		}
+    }
 	return (vx_convolution)data;
 }
 

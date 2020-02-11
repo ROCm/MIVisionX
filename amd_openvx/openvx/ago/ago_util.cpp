@@ -1313,6 +1313,41 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		}
 		return 0;
 	}
+	else if (!strncmp(desc, "objectarray:", 12) || !strncmp(desc, "objectarray-virtual:", 12 + 8)) {
+		if (!strncmp(desc, "objectarray-virtual:", 12 + 8)) {
+			data->isVirtual = vx_true_e;
+			desc += 8;
+		}
+		desc += 12;
+		// get configuration
+		data->ref.type = VX_TYPE_OBJECT_ARRAY;
+		const char *s = strstr(desc, ","); if (!s) return -1;
+		char data_type[64];
+		memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
+		(void)sscanf(++s, "" VX_FMT_SIZE "", &data->u.objarr.numitems);
+		data->u.objarr.itemtype = agoName2Enum(data_type);
+		if (!data->u.objarr.itemtype) data->u.objarr.itemtype = atoi(data_type);
+		if (data->isVirtual && !data->isNotFullyConfigured && (!strcmp(data_type, "0") || !data->u.objarr.numitems)) {
+			// incomplete information needs to process this again later
+			data->isNotFullyConfigured = vx_true_e;
+			return 0;
+		}
+		
+		vx_enum id = agoGetUserStructType(acontext, data_type);
+		if (!id) {
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid data type in object-array: %s\n", data_type);
+			return -1;
+		}
+		data->u.objarr.itemtype = id;
+		
+		// sanity check and update
+		data->ref.context = acontext; // array sanity check requires access to context
+		if (agoDataSanityCheckAndUpdate(data)) {
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for object-array\n");
+			return -1;
+		}
+		return 0;
+	}
 	else if (!strncmp(desc, "distribution:", 13) || !strncmp(desc, "distribution-virtual:", 13 + 8)) {
 		if (!strncmp(desc, "distribution-virtual:", 13 + 8)) {
 			data->isVirtual = vx_true_e;

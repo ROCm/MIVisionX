@@ -25,8 +25,8 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
 find_package(OpenCL QUIET)
-find_package(miopengemm PATHS /opt/rocm QUIET)
-find_package(miopen     PATHS /opt/rocm QUIET)
+find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
+find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 
 if(OpenCL_FOUND AND miopengemm_FOUND AND miopen_FOUND)
     if(OpenCV_FOUND)

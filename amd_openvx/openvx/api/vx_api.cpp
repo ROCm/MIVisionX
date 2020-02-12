@@ -525,12 +525,13 @@ VX_API_ENTRY vx_enum VX_API_CALL vxRegisterUserStructWithName(vx_context context
 VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructNameByEnum(vx_context context, vx_enum user_struct_type, vx_char* type_name, vx_size name_size)
 {
 	vx_status status = VX_ERROR_INVALID_PARAMETERS;
-	if (agoIsValidContext(context) && user_struct_type) {
+	if (agoIsValidContext(context) && (user_struct_type!= VX_TYPE_INVALID)) {
 		status = VX_FAILURE;
-		type_name = (vx_char*)(agoGetUserStructName(context, user_struct_type));
-		if(type_name != NULL) {
+		const char* temp_type_name = (agoGetUserStructName(context, user_struct_type));
+		if(temp_type_name != NULL) {
 			status = VX_ERROR_NO_MEMORY;
-			if((strlen(type_name)*sizeof(char)) <= name_size) {
+			if((strlen(temp_type_name) + 1) <= name_size) {
+				memcpy(type_name, temp_type_name, strlen(temp_type_name) + 1);
 				status = VX_SUCCESS;
 			}
 		}
@@ -554,13 +555,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructEnumByName(vx_context context,
 {
 	vx_status status = VX_FAILURE;
 	if (agoIsValidContext(context) && type_name) {
-		if((sizeof(char)*strlen(type_name)) < VX_MAX_REFERENCE_NAME) {
+		if((strlen(type_name)) < VX_MAX_REFERENCE_NAME) {
 			*user_struct_type = agoGetUserStructType(context, (vx_char*)type_name);
 			if(*user_struct_type != 0){
 				status = VX_SUCCESS;	
 			}
 		}
 	}
+	return status; 
 }
 
 /*!

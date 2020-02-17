@@ -10,7 +10,7 @@ _circ_buff(dev_resources, CIRC_BUFFER_DEPTH)
 {
     _output_image = nullptr;
     _mem_type = RaliMemType::HOST;
-    _running = 0;
+    _internal_thread_running = false;
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
@@ -38,8 +38,24 @@ void
 ImageLoaderSingleThread::reset()
 {
     if(!_ready) return;
+    // stop the writer thread and empty the internal circular buffer
+    _internal_thread_running = false;
+    _circ_buff.unblock_writer();
+
+    if(_load_thread.joinable())
+        _load_thread.join();
+
+    // Emptying the internal circular buffer
+    _circ_buff.reset();
+    while(!_circ_buff_names.empty())
+        _circ_buff_names.pop();
+
+    // resetting the reader thread to the start of the media
     _image_counter = 0;
     _image_loader->reset();
+
+    // Start loading (writer thread) again
+    start_loading();
 }
 
 void 
@@ -48,11 +64,7 @@ ImageLoaderSingleThread::de_init()
     if(!_ready) return;
     reset();
     // Set running to 0 and wait for the internal thread to join
-    _running = 0;
-    _circ_buff.cancel_reading();
-    _circ_buff.cancel_writing();
-    if(_load_thread.joinable())
-        _load_thread.join();
+    stop();
     _output_mem_size = 0;
     _batch_size = 1;
     _is_initialized = false;
@@ -78,9 +90,10 @@ ImageLoaderSingleThread::set_output_image (Image* output_image)
 void
 ImageLoaderSingleThread::stop()
 {
-    _running = 0;
-    _circ_buff.cancel_reading();
-    _circ_buff.cancel_writing();
+    _internal_thread_running = false;
+    _circ_buff.unblock_reader();
+    _circ_buff.unblock_writer();
+    _circ_buff.reset();
     if(_load_thread.joinable())
         _load_thread.join();
 }
@@ -90,6 +103,9 @@ ImageLoaderSingleThread::initialize(ReaderConfig reader_cfg, DecoderConfig decod
 {
     if(_is_initialized)
         WRN("Create function is already called and loader module is initialized")
+
+    if(_output_mem_size == 0)
+        THROW("output image size is 0, set_output_image() should be called before initialize for loader modules")
 
     _mem_type = mem_type;
     _batch_size = batch_size;
@@ -105,6 +121,7 @@ ImageLoaderSingleThread::initialize(ReaderConfig reader_cfg, DecoderConfig decod
         throw;
     }
     _image_names.resize(_batch_size);
+    _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
     LOG("Loader module initialized");
 }
@@ -114,9 +131,9 @@ ImageLoaderSingleThread::start_loading()
 {
     if(!_is_initialized)
         THROW("start_loading() should be called after create function is called")
-    _circ_buff.init(_mem_type, _output_mem_size);
+
     _ready = true;
-    _running = 1;
+    _internal_thread_running = true;
     _load_thread = std::thread(&ImageLoaderSingleThread::load_routine, this);
     return LoaderModuleStatus::OK;
 }
@@ -127,10 +144,11 @@ ImageLoaderSingleThread::load_routine()
 {
     LOG("Started the internal loader thread");
     LoaderModuleStatus last_load_status = LoaderModuleStatus::OK;
-    while(_running)
+    while(_internal_thread_running)
     {
+
         auto data = _circ_buff.get_write_buffer();
-        if(!_running)
+        if(!_internal_thread_running)
             break;
 
         auto load_status = LoaderModuleStatus::NO_MORE_DATA_TO_READ;
@@ -178,7 +196,7 @@ ImageLoaderSingleThread::load_routine()
             // the out-of-data case properly
             // It also slows down the reader thread since there is no more data to read,
             // till program ends or till reset is called
-            _circ_buff.cancel_reading();
+            _circ_buff.unblock_reader();
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 
@@ -199,18 +217,21 @@ ImageLoaderSingleThread::update_output_image()
     if(is_out_of_data())
         return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
 
+    // _circ_buff.get_read_buffer_x() is blocking and puts the caller on sleep until new images are written to the _circ_buff
     if(_mem_type== RaliMemType::OCL)
     {
-        if(_output_image->swap_handle(_circ_buff.get_read_buffer_dev())!= 0)
+        auto data_buffer =  _circ_buff.get_read_buffer_dev();
+        if(_output_image->swap_handle(data_buffer)!= 0)
             return LoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED;
     } 
     else 
     {
-        if(_output_image->swap_handle(_circ_buff.get_read_buffer_host()) != 0)
+        auto data_buffer = _circ_buff.get_read_buffer_host();
+        if(_output_image->swap_handle(data_buffer) != 0)
             return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
     }
     {
-        // Pop from _circ_buff and _circ_buff_names happens at the same time
+        // Reason for the mutex here: Pop from _circ_buff and _circ_buff_names happens at the same time
         std::unique_lock<std::mutex> lock(_names_buff_lock);
         _output_image->set_names(_circ_buff_names.front());
         _circ_buff_names.pop();

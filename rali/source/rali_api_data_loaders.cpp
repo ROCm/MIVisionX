@@ -134,9 +134,11 @@ raliVideoFileSource(
         unsigned height,
         bool loop)
 {
+
     RaliImage output = nullptr;
     try
     {
+#ifdef RALI_VIDEO
         if(width == 0 || height == 0)
         {
             THROW("Invalid video input width and height");
@@ -157,7 +159,9 @@ raliVideoFileSource(
         output = rali_context->master_graph->create_image(info, is_output);
 
         rali_context->master_graph->add_node<VideoFileNode>({}, {output})->init( source_path,decoder_mode, loop);
-
+#else
+        THROW("Video decoder is not enabled since amd media decoder is not present")
+#endif
     }
     catch(const std::exception& e)
     {
@@ -165,6 +169,7 @@ raliVideoFileSource(
         std::cerr << e.what() << '\n';
     }
     return output;
+
 }
 
 RaliStatus RALI_API_CALL
@@ -172,7 +177,7 @@ raliResetLoaders(RaliContext rali_context)
 {
     try
     {
-        //rali_context->master_graph->reset_loaders();
+        rali_context->master_graph->reset();
     }
     catch(const std::exception& e)
     {

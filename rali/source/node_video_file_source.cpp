@@ -5,7 +5,7 @@
 #include <vx_ext_rpp.h>
 #include "node_video_file_source.h"
 #include "video_loader_module.h"
-
+#ifdef RALI_VIDEO
 #include "video_loader_module.h"
 void VideoFileNode::create(std::shared_ptr<Graph> graph)
 {
@@ -66,3 +66,4 @@ VideoFileNode::VideoFileNode(const std::vector<Image*>& inputs, const std::vecto
     if(_batch_size > MAXIMUM_VIDEO_CONCURRENT_DECODE)
         THROW("Video batch size " + TOSTR(_batch_size)+" is bigger than " + TOSTR(MAXIMUM_VIDEO_CONCURRENT_DECODE))
 }
+#endif

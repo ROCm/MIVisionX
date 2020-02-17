@@ -7,7 +7,7 @@ enum class DecodeMode {
     USE_SW = 1
 };
 
-
+#ifdef RALI_VIDEO
 class VideoFileNode: public Node
 {
 public:
@@ -30,3 +30,4 @@ private:
     vx_node _copy_node;
     bool _loop;
 };
+#endif

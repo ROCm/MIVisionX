@@ -272,11 +272,17 @@ void Image::set_names(const std::vector<std::string> names)
 {
     _info._image_names.push( names);
 }
-void Image::pop_name()
+void Image::pop_image_id()
 {
     if(_info._image_names.empty())
         return ;
     _info._image_names.pop();
+}
+
+void Image::clear_image_id_queue()
+{
+    while(!_info._image_names.empty())
+        _info._image_names.pop();
 }
 
 std::vector<std::string> Image::get_name()

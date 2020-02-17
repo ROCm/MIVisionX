@@ -1,6 +1,6 @@
 
 #include "video_loader_module.h"
-
+#ifdef RALI_VIDEO
 VideoLoaderModule::VideoLoaderModule(std::shared_ptr<VideoFileNode> video_node):_video_node(std::move(video_node))
 {
 }
@@ -34,3 +34,4 @@ void VideoLoaderModule::reset()
 {
     // Functionality not there yet in the OpenVX API
 }
+#endif

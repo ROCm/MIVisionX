@@ -27,7 +27,7 @@ private:
     LoaderModuleStatus load_routine();
     Image* _output_image;
     size_t _output_mem_size;
-    int _running;
+    bool _internal_thread_running;
     size_t _batch_size;
     std::mutex _lock;
     std::mutex _names_buff_lock;
@@ -38,7 +38,7 @@ private:
     CircularBuffer _circ_buff;
     bool _is_initialized;
     bool _ready;
-    bool _loop;
+    bool _loop;//<! If true the reader will wrap around at the end of the media (files/images/...) and wouldn't stop
     const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;
 

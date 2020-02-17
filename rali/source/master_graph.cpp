@@ -8,7 +8,7 @@
 #include "parameter_factory.h"
 #include "ocl_setup.h"
 using half_float::half;
-#define RALI_VIDEO
+
 #if ENABLE_SIMD
 #if _WIN32
 #include <intrin.h>
@@ -122,7 +122,7 @@ MasterGraph::run()
     } else {
         _ring_buffer.pop(); // Pop previously stored output from the ring buffer
         for (auto &&loader_image : _loader_image)
-            loader_image->pop_name();
+            loader_image->pop_image_id();
     }
 
     _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
@@ -310,14 +310,26 @@ MasterGraph::deallocate_output_tensor()
 }
 
 MasterGraph::Status
-MasterGraph::reset_loaders()
+MasterGraph::reset()
 {
-
+    // resetting loader modules to start from the beginning of the media and clear their internal state/buffers
     for(auto& loader_module: _loader_modules)
         loader_module->reset();
 
-    _first_run = true;
+    // stop the internal processing thread so that the
+    _processing = false;
+    _ring_buffer.cancel_writing();
+    if(_output_thread.joinable())
+        _output_thread.join();
+    _ring_buffer.reset();
 
+    // remove all the old image id's queued up in the for the processed output images
+    for(auto& loader_image : _loader_image)
+        loader_image->clear_image_id_queue();
+
+    // restart processing of the images
+    _first_run = true;
+    start_processing();
     return Status::OK;
 }
 
@@ -648,6 +660,9 @@ void MasterGraph::output_routine()
                 break;
 
             auto write_buffers = _ring_buffer.get_write_buffers();
+
+            if (!_processing)
+                break;
 
             // Swap handles on the output images, so that new processed image will be written to the a new buffer
             for (size_t idx = 0; idx < _output_images.size(); idx++)

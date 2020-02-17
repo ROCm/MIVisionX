@@ -10,15 +10,16 @@ public:
     CircularBuffer(DeviceResources ocl, size_t buffer_depth );
     ~CircularBuffer();
     void init(RaliMemType output_mem_type, size_t output_mem_size);
-    void sync();
-    void cancel_reading();
-    void cancel_writing();
-    void push();
-    void pop();
+    void sync();// Syncs device buffers with host
+    void unblock_reader();// Unblocks the thread currently waiting on a call to get_read_buffer
+    void unblock_writer();// Unblocks the thread currently waiting on get_write_buffer
+    void push();// The latest write goes through, effectively adds one element to the buffer
+    void pop();// The oldest write will be erased and overwritten in upcoming writes
     cl_mem get_read_buffer_dev();
     unsigned char* get_read_buffer_host();
     unsigned char*  get_write_buffer();
-    size_t level();
+    size_t level();// Returns the number of elements stored
+    void reset();// sets the buffer level to 0
 private:
     void wait_if_empty();
     void wait_if_full();
@@ -43,7 +44,7 @@ private:
     std::mutex _lock;
     RaliMemType _output_mem_type;
     size_t _output_mem_size;
-
+    bool _initialized = false;
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;

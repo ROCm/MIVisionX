@@ -5,7 +5,7 @@
 #include "loader_module.h"
 #include "node_video_file_source.h"
 
-
+#ifdef RALI_VIDEO
 class VideoLoaderModule : public LoaderModule
 {
 public:
@@ -21,3 +21,4 @@ public:
 private:
     std::shared_ptr<VideoFileNode> _video_node;
 };
+#endif

@@ -17,15 +17,26 @@ CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
 
 }
 
-
-void CircularBuffer::cancel_reading()
+void CircularBuffer::reset()
 {
+    _write_ptr = 0;
+    _read_ptr = 0;
+    _level = 0;
+
+}
+
+void CircularBuffer::unblock_reader()
+{
+    if(!_initialized)
+        return;
     // Wake up the reader thread in case it's waiting for a load
     _wait_for_load.notify_one();
 }
 
-void CircularBuffer::cancel_writing()
+void CircularBuffer::unblock_writer()
 {
+    if(!_initialized)
+        return;
     // Wake up the writer thread in case it's waiting for an unload
     _wait_for_unload.notify_one();
 }
@@ -39,18 +50,24 @@ cl_mem CircularBuffer::get_read_buffer_dev()
 
 unsigned char* CircularBuffer::get_read_buffer_host()
 {
+    if(!_initialized)
+        return nullptr;
     wait_if_empty();
     return _host_buffer_ptrs[_read_ptr];
 }
 
 unsigned char*  CircularBuffer::get_write_buffer()
 {
+    if(!_initialized)
+        return nullptr;
     wait_if_full();
     return(_host_buffer_ptrs[_write_ptr]);
 }
 
 void CircularBuffer::sync()
 {
+    if(!_initialized)
+        return;
     cl_int err = CL_SUCCESS;
     if(_output_mem_type== RaliMemType::OCL) 
     {
@@ -85,16 +102,22 @@ void CircularBuffer::sync()
 
 void CircularBuffer::push()
 {
+    if(!_initialized)
+        return;
     sync();
     increment_write_ptr();
 }
 
 void CircularBuffer::pop()
 {
+    if(!_initialized)
+        return;
     increment_read_ptr();
 }
 void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
 {
+    if(_initialized)
+        return;
     _output_mem_type = output_mem_type;
     _output_mem_size = output_mem_size;
     if(BUFF_DEPTH < 2)
@@ -144,6 +167,7 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
 
 
     }
+    _initialized = true;
 }
 
 bool CircularBuffer::empty()
@@ -223,6 +247,7 @@ CircularBuffer::~CircularBuffer()
     _cl_cmdq = 0;
     _cl_context = 0;
     _device_id = 0;
+    _initialized = false;
 } 
 
 

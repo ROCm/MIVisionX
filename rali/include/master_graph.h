@@ -17,7 +17,7 @@ public:
     enum class Status { OK = 0,  NOT_RUNNING = 1, NOT_IMPLEMENTED };
     MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads);
     ~MasterGraph();
-    Status reset_loaders();
+    Status reset();
     size_t remaining_images_count();
     MasterGraph::Status copy_output(unsigned char *out_ptr);
     MasterGraph::Status
@@ -112,6 +112,7 @@ template<> inline std::shared_ptr<JpegFileNode> MasterGraph::add_node(const std:
     return node;
 }
 
+#ifdef RALI_VIDEO
 /*
  * Explicit specialization for VideoFileNode
  */
@@ -127,3 +128,4 @@ template<> inline std::shared_ptr<VideoFileNode> MasterGraph::add_node(const std
 
     return node;
 }
+#endif

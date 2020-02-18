@@ -19324,35 +19324,6 @@ int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand c
 	return status;
 }
 
-int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
-{
-	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
-	if (cmd == ago_kernel_cmd_execute) {
-		status = VX_ERROR_NOT_SUPPORTED;
-	}
-	else if (cmd == ago_kernel_cmd_validate) {
-		// validate parameters
-		status = VX_ERROR_NOT_SUPPORTED;
-	}
-	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
-		status = VX_SUCCESS;
-	}
-	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-		// TBD: not implemented yet
-	}
-#if ENABLE_OPENCL
-	else if (cmd == ago_kernel_cmd_opencl_codegen) {
-		// TBD: not implemented yet
-		status = VX_ERROR_NOT_SUPPORTED;
-	}
-#endif
-	else if (cmd == ago_kernel_cmd_query_target_support) {
-		node->target_support_flags = 0;
-		status = VX_SUCCESS;
-	}
-	return status;
-}
-
 int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
 {
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;

@@ -2014,6 +2014,15 @@ int agoDramaDivideNode(AgoNodeList * nodeList, AgoNode * anode)
 		case VX_KERNEL_WEIGHTED_AVERAGE:
 			status = agoDramaDivideWeightedAverageNode(nodeList, anode);
 			break;
+		case VX_KERNEL_NON_LINEAR_FILTER:
+			status = agoDramaDivideNonLinearFilterNode(nodeList, anode);
+			break;
+		case VX_KERNEL_LAPLACIAN_PYRAMID:
+			status = agoDramaDivideLaplacianPyramidNode(nodeList, anode);
+			break;
+		case VX_KERNEL_LAPLACIAN_RECONSTRUCT:
+			status = agoDramaDivideLaplacianReconstructNode(nodeList, anode);
+			break;
 		default:
 			break;
 	}

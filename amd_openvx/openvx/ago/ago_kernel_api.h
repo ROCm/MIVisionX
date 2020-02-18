@@ -77,6 +77,7 @@ int ovxKernel_Select(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_WeightedAverage(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_NonLinearFilter(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_LaplacianPyramid(AgoNode * node, AgoKernelCommand cmd);
+int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd);
 // AMD low-level kernels
 int agoKernel_Set00_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_SetFF_U8(AgoNode * node, AgoKernelCommand cmd);
@@ -359,4 +360,6 @@ int agoKernel_Select_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_NonLinearFilter_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
 #endif // __ago_kernels_api_h__
+

@@ -1805,6 +1805,74 @@ int agoDramaDivideSelectNode(AgoNodeList * nodeList, AgoNode * anode)
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }
 
+int agoDramaDivideWeightedAverageNode(AgoNodeList * nodeList, AgoNode * anode)
+{
+	// sanity checks
+	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_IMAGE);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_SCALAR);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_IMAGE);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[3], VX_TYPE_IMAGE);
+	// save parameters
+	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
+	anode->paramList[0] = paramList[3];
+	anode->paramList[1] = paramList[0];
+	anode->paramList[2] = paramList[1];
+	anode->paramList[3] = paramList[2];
+	anode->paramCount = 4;
+	vx_enum new_kernel_id = VX_KERNEL_AMD_WEIGHTED_AVERAGE_U8_U8_U8;
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+}
+
+int agoDramaDivideNonLinearFilterNode(AgoNodeList * nodeList, AgoNode * anode)
+{
+	// sanity checks
+	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_SCALAR);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_IMAGE);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_MATRIX);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[3], VX_TYPE_IMAGE);
+	// save parameters
+	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
+	anode->paramList[0] = paramList[3];
+	anode->paramList[1] = paramList[0];
+	anode->paramList[2] = paramList[1];
+	anode->paramList[3] = paramList[2];
+	anode->paramCount = 4;
+	vx_enum new_kernel_id = VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA;
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+}
+
+int agoDramaDivideLaplacianPyramidNode(AgoNodeList * nodeList, AgoNode * anode)
+{
+	// sanity checks
+	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_IMAGE);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_PYRAMID);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_IMAGE);
+	// save parameters
+	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
+	anode->paramList[0] = paramList[2];
+	anode->paramList[1] = paramList[0];
+	anode->paramList[2] = paramList[1];
+	anode->paramCount = 3;
+	vx_enum new_kernel_id = VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA;
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+}
+
+int agoDramaDivideLaplacianReconstructNode(AgoNodeList * nodeList, AgoNode * anode)
+{
+	// sanity checks
+	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_PYRAMID);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_IMAGE);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_IMAGE);
+	// save parameters
+	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
+	anode->paramList[0] = paramList[2];
+	anode->paramList[1] = paramList[0];
+	anode->paramList[2] = paramList[1];
+	anode->paramCount = 3;
+	vx_enum new_kernel_id = VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_DATA_DATA_DATA;
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+}
+
 int agoDramaDivideNode(AgoNodeList * nodeList, AgoNode * anode)
 {
 	// save parameter list
@@ -1942,6 +2010,9 @@ int agoDramaDivideNode(AgoNodeList * nodeList, AgoNode * anode)
 			break;
 		case VX_KERNEL_SELECT:
 			status = agoDramaDivideSelectNode(nodeList, anode);
+			break;
+		case VX_KERNEL_WEIGHTED_AVERAGE:
+			status = agoDramaDivideWeightedAverageNode(nodeList, anode);
 			break;
 		default:
 			break;

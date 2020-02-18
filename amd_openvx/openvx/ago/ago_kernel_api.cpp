@@ -2151,6 +2151,164 @@ int ovxKernel_Select(AgoNode * node, AgoKernelCommand cmd)
 	return status;
 }
 
+int ovxKernel_WeightedAverage(AgoNode * node, AgoKernelCommand cmd)
+{
+	// INFO: use VX_KERNEL_AMD_WEIGHTED_AVERAGE_* kernels
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		// TBD: not implemented yet
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		vx_uint32 width = node->paramList[0]->u.img.width;
+		vx_uint32 height = node->paramList[0]->u.img.height;
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[2]->u.img.format != VX_DF_IMAGE_U8)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (!width || !height)
+			return VX_ERROR_INVALID_DIMENSION;
+		else if (node->paramList[1]->u.scalar.type != VX_TYPE_FLOAT32)
+			return VX_ERROR_INVALID_TYPE;
+		// set output image sizes same as input image size
+		int N = node->paramList[3]->u.scalar.u.i >> 1;
+		vx_meta_format meta;
+		meta = &node->metaList[4];
+		meta->data.u.img.width = width;
+		meta->data.u.img.height = height;
+		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
+					| AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+					| AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+					;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int ovxKernel_NonLinearFilter(AgoNode * node, AgoKernelCommand cmd)
+{
+	// INFO: use VX_KERNEL_AMD_NON_LINEAR_FILTER_* kernels
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		// TBD: not implemented yet
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		vx_uint32 width = node->paramList[1]->u.img.width;
+		vx_uint32 height = node->paramList[1]->u.img.height;
+		if (node->paramList[1]->u.img.format != VX_DF_IMAGE_U1 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (!width || !height)
+			return VX_ERROR_INVALID_DIMENSION;
+		// set output image sizes same as input image size
+		int N = node->paramList[3]->u.scalar.u.i >> 1;
+		vx_meta_format meta;
+		meta = &node->metaList[4];
+		meta->data.u.img.width = width;
+		meta->data.u.img.height = height;
+		meta->data.u.img.format = node->paramList[1]->u.img.format;
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
+					| AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+					| AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+					;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int ovxKernel_LaplacianPyramid(AgoNode * node, AgoKernelCommand cmd)
+{
+	// INFO: use VX_KERNEL_AMD_LAPLACIAN_PYRAMID_* kernels
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		// TBD: not implemented yet
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		vx_uint32 width = node->paramList[0]->u.img.width;
+		vx_uint32 height = node->paramList[0]->u.img.height;
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_S16 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (node->paramList[1]->u.pyr.format != VX_DF_IMAGE_S16)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (!width || !height)
+			return VX_ERROR_INVALID_DIMENSION;
+		// set output image sizes same as input image size
+		int N = node->paramList[2]->u.scalar.u.i >> 1;
+		vx_meta_format meta;
+		meta = &node->metaList[3];
+		meta->data.u.img.format = node->paramList[0]->u.img.format;
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
+					| AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+					| AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+					;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd)
+{
+	// INFO: use VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_* kernels
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		// TBD: not implemented yet
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		vx_uint32 width = node->paramList[1]->u.img.width;
+		vx_uint32 height = node->paramList[1]->u.img.height;
+		if (node->paramList[1]->u.img.format != VX_DF_IMAGE_S16 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (node->paramList[0]->u.pyr.format != VX_DF_IMAGE_S16)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (!width || !height)
+			return VX_ERROR_INVALID_DIMENSION;
+		// set output image sizes same as input image size
+		int N = node->paramList[2]->u.scalar.u.i >> 1;
+		vx_meta_format meta;
+		meta = &node->metaList[3];
+		meta->data.u.img.format = node->paramList[1]->u.img.format;
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = AGO_KERNEL_FLAG_SUBGRAPH
+					| AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL
+					| AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
+					;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
 #if ENABLE_OPENCL
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local OpenCL Codegen Functions
@@ -19052,6 +19210,157 @@ int agoKernel_Select_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
 	}
 	else if (cmd == ago_kernel_cmd_validate) {
 		// TBD: not implemented yet
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		// TBD: not implemented yet
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		// TBD: not implemented yet
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+#endif
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = 0;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+// 		status = VX_SUCCESS;
+// 		AgoData * oImg = node->paramList[0];
+// 		AgoData * iImg0 = node->paramList[1];
+// 		AgoData * iImg1 = node->paramList[2];
+// 		if (HafCpu_WeightedAverage_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+// 			status = VX_FAILURE;
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		// TBD: not implemented yet
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		// TBD: not implemented yet
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+#endif
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = 0;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int agoKernel_NonLinearFilter_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		// TBD: not implemented yet
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		// TBD: not implemented yet
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+#endif
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = 0;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		// TBD: not implemented yet
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		// TBD: not implemented yet
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+#endif
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = 0;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		// TBD: not implemented yet
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		// TBD: not implemented yet
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+#endif
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = 0;
+		status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
 		status = VX_ERROR_NOT_SUPPORTED;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {

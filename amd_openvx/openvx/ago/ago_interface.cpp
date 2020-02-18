@@ -1469,6 +1469,38 @@ vx_status agoVerifyNode(AgoNode * node)
 						data->isNotFullyConfigured = vx_false_e;
 					}
 				}
+				else if (meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+					bool updated = false;
+					if (data->isVirtual) {
+						// update itemtype if not specified
+						if (data->u.objarr.itemtype == VX_TYPE_INVALID) {
+							data->u.objarr.itemtype = meta->data.u.objarr.itemtype;
+							updated = true;
+						}
+						if (data->u.objarr.numitems == 0) {
+							data->u.objarr.numitems = meta->data.u.objarr.numitems;
+							updated = true;
+						}
+					}
+					// make sure that the data come from output validator matches with object
+					if (data->u.objarr.itemtype != meta->data.u.objarr.itemtype) {
+						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid object-array type for argument#%d\n", kernel->name, arg);
+						return VX_ERROR_INVALID_TYPE;
+					}
+					else if (!data->u.objarr.numitems || (meta->data.u.objarr.numitems && meta->data.u.objarr.numitems > data->u.objarr.numitems)) {
+						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_DIMENSION, "ERROR: agoVerifyGraph: kernel %s: invalid dimension for argument#%d\n", kernel->name, arg);
+						return VX_ERROR_INVALID_DIMENSION;
+					}
+					if (updated) {
+						data->isNotFullyConfigured = vx_true_e;
+						char desc[64]; sprintf(desc, "objectarray-virtual:%u", data->u.objarr.itemtype);
+						if (agoGetDataFromDescription(graph->ref.context, graph, data, desc)) {
+							agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoVerifyGraph: agoVerifyGraph update failed for %s\n", desc);
+							return -1;
+						}
+						data->isNotFullyConfigured = vx_false_e;
+					}
+				}
 				else if (meta->data.ref.type == VX_TYPE_SCALAR) {
 					// make sure that the data come from output validator matches with object
 					if (data->u.scalar.type != meta->data.u.scalar.type) {

@@ -101,6 +101,7 @@ static struct { const char * name; vx_enum value; vx_size size; } s_table_consta
 		{ "VX_TYPE_CONVOLUTION", VX_TYPE_CONVOLUTION },
 		{ "VX_TYPE_SCALAR", VX_TYPE_SCALAR },
 		{ "VX_TYPE_ARRAY", VX_TYPE_ARRAY },
+		{ "VX_TYPE_OBJECT_ARRAY", VX_TYPE_OBJECT_ARRAY },
 		{ "VX_TYPE_IMAGE", VX_TYPE_IMAGE },
 		{ "VX_TYPE_REMAP", VX_TYPE_REMAP },
 		{ "VX_TYPE_TENSOR", VX_TYPE_TENSOR },
@@ -837,6 +838,14 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
 		else
 			sprintf(desc + strlen(desc), "array%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.arr.itemtype), data->u.arr.capacity);
 	}
+	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
+		if(data->u.objarr.itemtype >= VX_TYPE_KHRONOS_OBJECT_START && data->u.objarr.itemtype <= VX_TYPE_KHRONOS_OBJECT_END) {
+			if(data->u.objarr.itemtype != VX_TYPE_DELAY && data->u.objarr.itemtype != VX_TYPE_OBJECT_ARRAY)
+				sprintf(desc + strlen(desc), "objectarray%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.objarr.itemtype), data->u.objarr.numitems);
+		}
+		else
+			sprintf(desc + strlen(desc), "objectarray%s:UNSUPPORTED,NULL", virt);
+	}
 	else if (data->ref.type == VX_TYPE_SCALAR) {
 		if (data->u.scalar.type == VX_TYPE_ENUM) {
 			const char * name = agoEnum2Name(data->u.scalar.u.e);
@@ -1332,14 +1341,6 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 			data->isNotFullyConfigured = vx_true_e;
 			return 0;
 		}
-		
-		vx_enum id = agoGetUserStructType(acontext, data_type);
-		if (!id) {
-			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid data type in object-array: %s\n", data_type);
-			return -1;
-		}
-		data->u.objarr.itemtype = id;
-		
 		// sanity check and update
 		data->ref.context = acontext; // array sanity check requires access to context
 		if (agoDataSanityCheckAndUpdate(data)) {
@@ -2240,6 +2241,9 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 		if (!data->size) 
 			return -1;
 	}
+	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
+		//nothing to do 
+	}
 	else if (data->ref.type == VX_TYPE_TENSOR) {
 		// nothing to check yet
 	}
@@ -2472,6 +2476,12 @@ int agoAllocData(AgoData * data)
 		}
 	}
 	else if (data->ref.type == VX_TYPE_ARRAY) {
+		// allocate buffer and get aligned buffer with 16-byte alignment
+		data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
+		if (!data->buffer_allocated)
+			return -1;
+	}
+	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
 		// allocate buffer and get aligned buffer with 16-byte alignment
 		data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
 		if (!data->buffer_allocated)

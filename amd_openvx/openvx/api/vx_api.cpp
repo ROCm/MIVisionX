@@ -5733,8 +5733,8 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateVirtualMatrix(vx_graph graph, vx_enum
 	AgoData * data = NULL;
 	if (agoIsValidGraph(graph) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
 		CAgoLock lock(graph->cs);
-		char desc[512]; sprintf(desc, "matrix:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
-		data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
+		char desc[512]; sprintf(desc, "matrix-virtual:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
+		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
 		if (data) {
 			agoGenerateVirtualDataName(graph, "matrix", data->name);
 			agoAddData(&graph->dataList, data);
@@ -6761,7 +6761,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
 	if (agoIsValidData(data, VX_TYPE_REMAP))
 	{
 		status = VX_ERROR_INVALID_PARAMETERS;
+		vx_uint32 start_x = rect ? rect->start_x : 0u;
+	    vx_uint32 start_y = rect ? rect->start_y : 0u;
+	    vx_uint32 end_x = rect ? rect->end_x : 0u;
+	    vx_uint32 end_y = rect ? rect->end_y : 0u;
+	    vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
 		bool paramsValid = true;
+
 		if(rect->start_x > data->u.remap.src_width || rect->start_y > data->u.remap.src_height
 			|| rect->end_x > data->u.remap.dst_width || rect->end_y > data->u.remap.dst_height)
 			paramsValid = false;
@@ -6769,8 +6775,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
 			paramsValid = false;
 		if(user_stride_y < sizeof(vx_coordinates2df_t)*(rect->end_x - rect->start_x))
 			paramsValid = false;
+		if(user_mem_type != VX_MEMORY_TYPE_HOST && user_mem_type != VX_MEMORY_TYPE_NONE)
+			paramsValid = false;
+		if((usage == VX_READ_ONLY || usage == VX_WRITE_ONLY) || (rect == NULL) || (user_ptr == NULL))
+			paramsValid = false;
+		if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
+			paramsValid = false;
 
-		if(paramsValid && (user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)){
+		if(paramsValid){
 			status = VX_ERROR_NO_MEMORY;
 			if (!data->buffer) {
 				CAgoLock lock(data->ref.context->cs);
@@ -7840,6 +7852,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
 	    vx_enum lut_type;
 	    vx_size lut_count;
 	    vx_enum threshold_type, threshold_data_type;
+	    vx_df_image threshold_input_format, threshold_output_format;
 	    vx_size tensor_num_dims, tensor_dims[VX_MAX_TENSOR_DIMENSIONS];
 	    vx_enum tensor_type;
 	    vx_int8 tensor_fpp;
@@ -7895,7 +7908,9 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
                 break;
             case VX_TYPE_THRESHOLD:
                 if (vxQueryThreshold((vx_threshold)exemplar, VX_THRESHOLD_TYPE, &threshold_type, sizeof(threshold_type)) != VX_SUCCESS ||
-                    vxQueryThreshold((vx_threshold)exemplar, VX_THRESHOLD_DATA_TYPE, &threshold_data_type, sizeof(threshold_data_type)) != VX_SUCCESS)
+                    vxQueryThreshold((vx_threshold)exemplar, VX_THRESHOLD_DATA_TYPE, &threshold_data_type, sizeof(threshold_data_type)) != VX_SUCCESS ||
+                    vxQueryThreshold((vx_threshold)exemplar, VX_THRESHOLD_INPUT_FORMAT, &threshold_input_format, sizeof(threshold_input_format)) != VX_SUCCESS ||
+                    vxQueryThreshold((vx_threshold)exemplar, VX_THRESHOLD_OUTPUT_FORMAT, &threshold_output_format, sizeof(threshold_output_format)) != VX_SUCCESS)
                     status = VX_ERROR_INVALID_REFERENCE;
                 break;
             case VX_TYPE_TENSOR:
@@ -7943,7 +7958,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
 	                    ref = (vx_reference)vxCreateLUT(context, lut_type, lut_count);
 	                    break;
 	                case VX_TYPE_THRESHOLD:
-	                    ref = (vx_reference)vxCreateThreshold(context, threshold_type, threshold_data_type);
+	                    ref = (vx_reference)vxCreateThresholdForImage(context, threshold_type, threshold_input_format, threshold_output_format);
 	                    break;
 	            	case VX_TYPE_TENSOR:
 	                    ref = (vx_reference)vxCreateTensor(context, tensor_num_dims, tensor_dims, tensor_type, tensor_fpp);

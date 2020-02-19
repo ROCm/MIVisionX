@@ -5328,14 +5328,23 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
 {
 	AgoData * data = NULL;
 	if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
-		(input_format == VX_DF_IMAGE_U8 || input_format == VX_DF_IMAGE_S16) && (output_format == VX_DF_IMAGE_U8)) 
+		(input_format == VX_DF_IMAGE_U8 || input_format == VX_DF_IMAGE_S16) && (output_format == VX_DF_IMAGE_U8 || output_format == VX_DF_IMAGE_U1)) 
 	{
 		CAgoLock lock(context->cs);
-		char desc[512]; sprintf(desc, "threshold:%s", agoEnum2Name(thresh_type));
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "thr", data->name);
-			agoAddData(&context->dataList, data);
+
+		vx_enum data_type;
+		if(output_format == VX_DF_IMAGE_U8)
+			data_type = VX_TYPE_UINT8;
+		else if(output_format == VX_DF_IMAGE_U1)
+			data_type = VX_TYPE_BOOL;
+		const char * desc_type = agoEnum2Name(thresh_type);
+		if(desc_type){
+			char desc[512]; sprintf(desc, "threshold:%s,%s,%u,%u", desc_type, agoEnum2Name(data_type), input_format, output_format);
+			data = agoCreateDataFromDescription(context, NULL, desc, true);
+			if (data) {
+				agoGenerateDataName(context, "thr", data->name);
+				agoAddData(&context->dataList, data);
+			}
 		}
 	}
 	return (vx_threshold)data;
@@ -5354,12 +5363,21 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
 VX_API_ENTRY vx_threshold VX_API_CALL vxCreateVirtualThresholdForImage(vx_graph graph, vx_enum thresh_type, vx_df_image input_format, vx_df_image output_format)
 {
 	AgoData * data = NULL;
-	if (agoIsValidGraph(graph)) {
+	if (agoIsValidGraph(graph) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
+		(input_format == VX_DF_IMAGE_U8 || input_format == VX_DF_IMAGE_S16) && (output_format == VX_DF_IMAGE_U8 || output_format == VX_DF_IMAGE_U1)) {
 		CAgoLock lock(graph->cs);
+
 		const char * desc_type = agoEnum2Name(thresh_type);
+
+		vx_enum data_type;
+		if(output_format == VX_DF_IMAGE_U8)
+			data_type = VX_TYPE_UINT8;
+		else if(output_format == VX_DF_IMAGE_U1)
+			data_type = VX_TYPE_BOOL;
+
 		if (desc_type) {
 			char desc[512]; 
-			sprintf(desc, "threshold-virtual:%s,", desc_type);
+			sprintf(desc, "threshold-virtual:%s,%s,%u,%u", desc_type, agoEnum2Name(data_type), input_format, output_format);
 			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
 			if (data) {
 				agoGenerateVirtualDataName(graph, "thr", data->name);
@@ -5550,7 +5568,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
 			{
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
-					data->u.thr.threshold_lower = *(vx_int32 *)ptr;
+					data->u.thr.thresh_type = *(vx_int32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_THRESHOLD_TYPE:
+				if (size == sizeof(vx_enum)) {
+					data->u.thr.threshold_lower = *(vx_enum *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_THRESHOLD_INPUT_FORMAT:
+				if (size == sizeof(vx_df_image)) {
+					data->u.thr.input_format = *(vx_df_image *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_THRESHOLD_OUTPUT_FORMAT:
+				if (size == sizeof(vx_df_image)) {
+					data->u.thr.output_format = *(vx_df_image *)ptr;
 					status = VX_SUCCESS;
 				}
 				break;
@@ -5595,6 +5631,18 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryThreshold(vx_threshold thresh, vx_enum
 			case VX_THRESHOLD_ATTRIBUTE_TYPE:
 				if (size == sizeof(vx_enum)) {
 					*(vx_enum *)ptr = data->u.thr.thresh_type;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_THRESHOLD_INPUT_FORMAT:
+				if (size == sizeof(vx_df_image)) {
+					*(vx_df_image *)ptr = data->u.thr.input_format;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_THRESHOLD_OUTPUT_FORMAT:
+				if (size == sizeof(vx_df_image)) {
+					*(vx_df_image *)ptr = data->u.thr.output_format;
 					status = VX_SUCCESS;
 				}
 				break;

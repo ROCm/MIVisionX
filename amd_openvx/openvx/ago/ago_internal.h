@@ -338,6 +338,8 @@ struct AgoConfigScalar {
 struct AgoConfigThreshold {
 	vx_enum thresh_type;
 	vx_enum data_type;
+	vx_df_image input_format;
+	vx_df_image output_format;
 	vx_int32 threshold_lower, threshold_upper;
 	vx_int32 true_value, false_value;
 };

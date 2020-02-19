@@ -879,7 +879,7 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
 		sprintf(desc + strlen(desc), "lut%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.lut.type), data->u.lut.count);
 	}
 	else if (data->ref.type == VX_TYPE_THRESHOLD) {
-		sprintf(desc + strlen(desc), "threshold%s:%s,%s", virt, agoEnum2Name(data->u.thr.thresh_type), agoEnum2Name(data->u.thr.data_type));
+		sprintf(desc + strlen(desc), "threshold%s:%s,%s,%u,%u", virt, agoEnum2Name(data->u.thr.thresh_type), agoEnum2Name(data->u.thr.data_type), data->u.thr.input_format, data->u.thr.output_format);
 		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY)
 			sprintf(desc + strlen(desc), ":I,%d", data->u.thr.threshold_lower);
 		else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE)
@@ -1398,12 +1398,20 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		data->ref.type = VX_TYPE_THRESHOLD;
 		const char *s = strstr(desc, ","); if (!s) return -1;
 		char thresh_type[64], data_type[64];
+		uint32_t input_format, output_format;
 		memcpy(thresh_type, desc, s - desc); thresh_type[s - desc] = 0;
-		strcpy(data_type, s + 1);
+		strcpy(data_type, s+1); 
 		for (int i = 0; i < 64 && data_type[i]; i++) if (data_type[i] == ':' || data_type[i] == ',') { data_type[i] = 0; s += i + 2; break; }
+		input_format = stoi(s);
+		s = strstr(s, ",");
+		output_format = stoi(s+1); 
 		data->u.thr.thresh_type = agoName2Enum(thresh_type);
 		data->u.thr.data_type = agoName2Enum(data_type);
-		if (!data->u.thr.thresh_type || !data->u.thr.data_type) return -1;
+		data->u.thr.input_format = (vx_df_image)input_format;
+		data->u.thr.output_format = (vx_df_image)output_format;
+		//printf("input_format = %u\n", data->u.thr.input_format);
+		//printf("output_format = %u\n", data->u.thr.output_format);
+		if (!data->u.thr.thresh_type || !data->u.thr.data_type || !data->u.thr.input_format || !data->u.thr.output_format) return -1;
 		if (data->u.thr.data_type != VX_TYPE_UINT8 && data->u.thr.data_type != VX_TYPE_UINT16 && data->u.thr.data_type != VX_TYPE_INT16) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid threshold data_type %s\n", data_type);
 			return -1;
@@ -2278,6 +2286,7 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 		if (data->u.thr.data_type == VX_TYPE_UINT8) data->u.thr.true_value = 0xff;
 		else if (data->u.thr.data_type == VX_TYPE_UINT16) data->u.thr.true_value = 0xffff;
 		else if (data->u.thr.data_type == VX_TYPE_INT16) data->u.thr.true_value = 0x7fff;
+		else if (data->u.thr.data_type == VX_TYPE_BOOL) data->u.thr.true_value = 1;
 		else
 			return -1;
 	}

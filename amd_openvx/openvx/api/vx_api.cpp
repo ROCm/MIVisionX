@@ -6765,16 +6765,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
 	    vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
 		bool paramsValid = true;
 
-		if(rect->start_x > data->u.remap.src_width || rect->start_y > data->u.remap.src_height
-			|| rect->end_x > data->u.remap.dst_width || rect->end_y > data->u.remap.dst_height)
-			paramsValid = false;
 		if(user_coordinate_type != VX_TYPE_COORDINATES2DF)
 			paramsValid = false;
 		if(user_stride_y < sizeof(vx_coordinates2df_t)*(rect->end_x - rect->start_x))
 			paramsValid = false;
 		if(user_mem_type != VX_MEMORY_TYPE_HOST && user_mem_type != VX_MEMORY_TYPE_NONE)
 			paramsValid = false;
-		if((usage == VX_READ_ONLY || usage == VX_WRITE_ONLY) || (rect == NULL) || (user_ptr == NULL))
+		if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (user_ptr == NULL))
 			paramsValid = false;
 		if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
 			paramsValid = false;
@@ -6787,6 +6784,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
 					return VX_FAILURE;
 				}
 			}
+			vx_size stride = user_stride_y / sizeof(vx_coordinates2df_t);
 			AgoData * dataToSync = data;
 #if ENABLE_OPENCL
 			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
@@ -6806,18 +6804,40 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
 			}
 #endif
 			if (usage == VX_READ_ONLY) {
-				for (vx_uint32 d2 = 0; d2 < (rect->end_x-rect->start_x); d2++) {
-					vx_size offset = data->u.remap.src_width + (d2*user_stride_y);
-					vx_size uoffset = *(vx_size *)user_ptr + (d2*user_stride_y);
-					memcpy(((vx_coordinates2df_t *)user_ptr) + uoffset, data->buffer + offset, user_stride_y);
-				}
+				vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
+		        vx_uint32 i;
+		        vx_uint32 j;
+		        for (i = start_y; i < end_y; i++)
+		        {
+		            for (j = start_x; j < end_x; j++)
+		            {
+		                vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
+		                status = vxGetRemapPoint(remap, j, i, &coord_ptr->x, &coord_ptr->y);
+		                if(status != VX_SUCCESS)
+		                {
+		                    break;
+		                }
+
+		            }
+		        }
 			}
 			else {
-				for (vx_uint32 d2 = 0; d2 < (rect->end_x-rect->start_x); d2++) {
-					vx_size offset = data->u.remap.src_width + (d2*user_stride_y);
-					vx_size uoffset = *(vx_size *)user_ptr + (d2*user_stride_y);
-					memcpy(data->buffer + offset, ((vx_coordinates2df_t *)user_ptr) + uoffset, user_stride_y);
-				}
+				vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
+		        vx_uint32 i;
+		        vx_uint32 j;
+		        for (i = start_y; i < end_y; i++)
+		        {
+		            for (j = start_x; j < end_x; j++)
+		            {
+		                vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
+		                status = vxSetRemapPoint(remap, j, i, coord_ptr->x, coord_ptr->y);
+		                if(status != VX_SUCCESS)
+		                {
+		                    break;
+		                }
+
+		            }
+		        }
 			}
 			// update sync flags
 			dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -6910,27 +6930,44 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
 {
 	AgoData * data = (AgoData *)remap;
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_REMAP)) {
+	if (agoIsValidData(data, VX_TYPE_REMAP))
+	{
 		status = VX_ERROR_INVALID_PARAMETERS;
+		vx_uint32 start_x = rect ? rect->start_x : 0u;
+	    vx_uint32 start_y = rect ? rect->start_y : 0u;
+	    vx_uint32 end_x = rect ? rect->end_x : 0u;
+	    vx_uint32 end_y = rect ? rect->end_y : 0u;
+	    vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
 		bool paramsValid = true;
-		if(rect->start_x > data->u.remap.src_width || rect->start_y > data->u.remap.src_height
-			|| rect->end_x > data->u.remap.dst_width || rect->end_y > data->u.remap.dst_height)
-			paramsValid = false;
+
 		if(coordinate_type != VX_TYPE_COORDINATES2DF)
 			paramsValid = false;
-		if(*stride_y < (vx_size)(sizeof(vx_coordinates2df_t)*(rect->end_x - rect->start_x)))
+		if(mem_type != VX_MEMORY_TYPE_HOST && mem_type != VX_MEMORY_TYPE_NONE)
+			paramsValid = false;
+		if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (ptr == NULL) || (map_id == NULL))
+			paramsValid = false;
+		if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
 			paramsValid = false;
 
-		if (paramsValid && ptr && stride_y && map_id) {
+
+		if (paramsValid) {
 			if (!data->buffer) {
 				CAgoLock lock(data->ref.context->cs);
 				if (agoAllocData(data)) {
 					return VX_FAILURE;
 				}
 			}
-						
-			vx_size offset = (data->u.remap.dst_width - data->u.remap.src_width) * (*stride_y);
-			vx_uint8 * ptr_returned = data->buffer + offset;
+#if ENABLE_OPENCL
+			vx_enum mem_type_requested = mem_type;
+		    if (mem_type == VX_MEMORY_TYPE_OPENCL)
+		    {
+		        mem_type = VX_MEMORY_TYPE_HOST;
+		    }
+#endif	
+
+			vx_size stride = (end_x - start_x);
+		    vx_size size = (stride * (end_y - start_y)) * sizeof(vx_coordinates2df_t);
+			vx_uint8 * ptr_returned = data->buffer + size;
 
 			// save the pointer and usage for use in vxUnmapRemapPatch
 			status = VX_SUCCESS;

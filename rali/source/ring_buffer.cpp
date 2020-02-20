@@ -8,7 +8,7 @@ RingBuffer::RingBuffer(unsigned buffer_depth):
 {
     reset();
 }
-void RingBuffer::wait_if_empty()
+void RingBuffer::block_if_empty()
 {
     std::unique_lock<std::mutex> lock(_lock);
     if(empty())
@@ -19,7 +19,7 @@ void RingBuffer::wait_if_empty()
     }
 }
 
-void RingBuffer:: wait_if_full()
+void RingBuffer:: block_if_full()
 {
     std::unique_lock<std::mutex> lock(_lock);
     // Write the whole buffer except for the last spot which is being read by the reader thread
@@ -32,7 +32,7 @@ void RingBuffer:: wait_if_full()
 }
 std::vector<void*> RingBuffer::get_read_buffers()
 {
-    wait_if_empty();
+    block_if_empty();
     if(_mem_type == RaliMemType::OCL)
         return _dev_sub_buffer[_read_ptr];
 
@@ -40,7 +40,7 @@ std::vector<void*> RingBuffer::get_read_buffers()
 }
 
 void *RingBuffer::get_host_master_read_buffer() {
-    wait_if_empty();
+    block_if_empty();
     if(_mem_type == RaliMemType::OCL)
         return nullptr;
 
@@ -50,7 +50,7 @@ void *RingBuffer::get_host_master_read_buffer() {
 
 std::vector<void*> RingBuffer::get_write_buffers()
 {
-    wait_if_full();
+    block_if_full();
     if(_mem_type == RaliMemType::OCL)
         return _dev_sub_buffer[_write_ptr];
 

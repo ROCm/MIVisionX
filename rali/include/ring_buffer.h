@@ -22,9 +22,10 @@ public:
     void cancel_writing();
     void cancel_all_future_waits();
     RaliMemType mem_type() { return _mem_type; }
+    void block_if_empty();
+    void block_if_full();
 private:
-    void wait_if_empty();
-    void wait_if_full();
+
     void increment_read_ptr();
     void increment_write_ptr();
     bool full();

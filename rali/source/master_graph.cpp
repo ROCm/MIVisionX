@@ -125,7 +125,7 @@ MasterGraph::run()
             loader_image->pop_image_id();
     }
 
-    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
+    _ring_buffer.block_if_empty();// make sure read buffers are ready, it'll wait here otherwise
     {
         std::unique_lock<std::mutex> lock(_count_lock);
         if (_in_process_count > 0)
@@ -693,7 +693,10 @@ void MasterGraph::start_processing()
 #else
     struct sched_param params;
     params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-    pthread_setschedparam(_output_thread.native_handle(), SCHED_FIFO, &params);
+    auto thread = _output_thread.native_handle();
+    auto ret = pthread_setschedparam(thread, SCHED_FIFO, &params);
+    if (ret != 0)
+        WRN("Unsuccessful in setting thread realtime priority for process thread err = "+STR(std::strerror(ret)))
 #endif
 }
 

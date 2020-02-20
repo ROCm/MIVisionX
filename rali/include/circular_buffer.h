@@ -16,13 +16,14 @@ public:
     void push();// The latest write goes through, effectively adds one element to the buffer
     void pop();// The oldest write will be erased and overwritten in upcoming writes
     cl_mem get_read_buffer_dev();
-    unsigned char* get_read_buffer_host();
-    unsigned char*  get_write_buffer();
+    unsigned char* get_read_buffer_host();// blocks the caller if the buffer is empty
+    unsigned char*  get_write_buffer(); // blocks the caller if the buffer is full
     size_t level();// Returns the number of elements stored
     void reset();// sets the buffer level to 0
+    void block_if_empty();// blocks the caller if the buffer is empty
+    void block_if_full();// blocks the caller if the buffer is full
+
 private:
-    void wait_if_empty();
-    void wait_if_full();
     void increment_read_ptr();
     void increment_write_ptr();
     bool full();

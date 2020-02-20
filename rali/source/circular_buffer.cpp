@@ -44,7 +44,7 @@ void CircularBuffer::unblock_writer()
 
 cl_mem CircularBuffer::get_read_buffer_dev()
 {
-    wait_if_empty();
+    block_if_empty();
     return _dev_buffer[_read_ptr];
 }
 
@@ -52,7 +52,7 @@ unsigned char* CircularBuffer::get_read_buffer_host()
 {
     if(!_initialized)
         return nullptr;
-    wait_if_empty();
+    block_if_empty();
     return _host_buffer_ptrs[_read_ptr];
 }
 
@@ -60,7 +60,7 @@ unsigned char*  CircularBuffer::get_write_buffer()
 {
     if(!_initialized)
         return nullptr;
-    wait_if_full();
+    block_if_full();
     return(_host_buffer_ptrs[_write_ptr]);
 }
 
@@ -206,7 +206,7 @@ void CircularBuffer::increment_write_ptr()
     _wait_for_load.notify_all();
 }
 
-void CircularBuffer::wait_if_empty() 
+void CircularBuffer::block_if_empty()
 {
     std::unique_lock<std::mutex> lock(_lock);
     if(empty()) 
@@ -215,7 +215,7 @@ void CircularBuffer::wait_if_empty()
     }
 }
 
-void CircularBuffer:: wait_if_full() 
+void CircularBuffer:: block_if_full()
 {
     std::unique_lock<std::mutex> lock(_lock);
     // Write the whole buffer except for the last spot which is being read by the reader thread

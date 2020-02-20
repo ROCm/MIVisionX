@@ -691,12 +691,16 @@ void MasterGraph::start_processing()
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
+//  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds
+//  and needs tweaking the Linux security settings , can be turned on for experimentation
+#if 0
     struct sched_param params;
     params.sched_priority = sched_get_priority_max(SCHED_FIFO);
     auto thread = _output_thread.native_handle();
     auto ret = pthread_setschedparam(thread, SCHED_FIFO, &params);
     if (ret != 0)
         WRN("Unsuccessful in setting thread realtime priority for process thread err = "+STR(std::strerror(ret)))
+#endif
 #endif
 }
 

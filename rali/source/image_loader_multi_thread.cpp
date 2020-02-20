@@ -47,11 +47,14 @@ void ImageLoaderMultiThread::start_loading()
     for(unsigned i = 0; i < _loaders.size(); i++)
     {
         _loaders[i]->start_loading();
+    //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds
+    //  and needs tweaking the Linux security settings , can be turned on for experimentation
+#if 0
         // Set thread scheduling policy
         struct sched_param params;
         params.sched_priority = sched_get_priority_max(SCHED_FIFO);
         _loaders[i]->set_cpu_sched_policy(params);
-
+#endif
         // Setting cpu affinity for threads works and can be activated below for experimentation
 #if 0
         // Set thread affinity thread 0 to core 0 , 1 toc core 1 , ...

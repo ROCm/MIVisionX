@@ -48,7 +48,7 @@ private:
     std::shared_ptr<Decoder> _decoder;
     std::shared_ptr<Reader> _reader;
     std::vector<unsigned char> _compressed_buff;
-    static const size_t MAX_COMPRESSED_SIZE = 2*1024*1024; // 2 Meg
+    static const size_t MAX_COMPRESSED_SIZE = 4*1024*1024; // 4 Meg
     TimingDBG _file_load_time, _decode_time;
 };
 

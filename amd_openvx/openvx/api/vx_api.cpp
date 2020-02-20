@@ -5565,7 +5565,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
 			{
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
-					data->u.thr.thresh_type = *(vx_int32 *)ptr;
+					data->u.thr.threshold_lower = *(vx_int32 *)ptr;
 					status = VX_SUCCESS;
 				}
 				break;

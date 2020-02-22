@@ -7848,6 +7848,26 @@ OBJECTARRAY
 VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context, vx_reference exemplar, vx_size count)
 {
 	AgoData * data = NULL;
+	if (agoIsValidContext(context) && agoIsValidReference(exemplar) && count > 0) {
+		CAgoLock lock(context->cs);
+		char desc_exemplar[512]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+		char desc[512]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+		data = agoCreateDataFromDescription(context, NULL, desc, true);
+		if (data) {
+			agoGenerateDataName(context, "objectarray", data->name);
+			agoAddData(&context->dataList, data);
+			// add the children too
+			for (vx_uint32 i = 0; i < data->numChildren; i++) {
+				agoAddData(&context->dataList, data->children[i]);
+				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+					if (data->children[i]->children[j]) {
+						agoAddData(&context->dataList, data->children[i]->children[j]);
+					}
+				}
+			}
+		}
+	}
+	/*AgoData * data = NULL;
 	if (agoIsValidContext(context) && agoIsValidReference(exemplar) && exemplar->type != VX_TYPE_DELAY && exemplar->type != VX_TYPE_OBJECT_ARRAY && count > 0) {
 		CAgoLock lock(context->cs);
 
@@ -8001,10 +8021,22 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
 	                    ref = NULL;
 	                    break;
 	            }
-	            data->u.objarr.items[i] = ref;
+	            if(agoIsValidReference(ref)){
+		            printf("ref type = %u\n", ref->type);
+		            //data->u.objarr.items[i] = (vx_reference)malloc(sizeof(ref));
+		            //data->u.objarr.items[i] = ref;
+		            //ref->scope = (vx_reference)data;
+		            memcpy(&data->u.objarr.items[i], &ref, sizeof(ref));
+		            printf("i ,data item type %u : %u\n", i, data->u.objarr.items[i]->type);
+		        }
+		        else
+		        {
+		        	for(vx_uint32 j = 0u; j < i; j++)
+		        		vxReleaseReference(&(data->u.objarr.items[j]));
+		        }
 	        }
 		}
-	}
+	}*/
 	return (vx_object_array)data;
 }
 
@@ -8029,6 +8061,26 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
 VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph graph, vx_reference exemplar, vx_size count)
 {
 	AgoData * data = NULL;
+	if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
+		CAgoLock lock(graph->cs);
+		char desc_exemplar[512]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
+		char desc[512]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+		data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
+		if (data) {
+			agoGenerateVirtualDataName(graph, "objectarray", data->name);
+			agoAddData(&graph->ref.context->dataList, data);
+			// add the children too
+			for (vx_uint32 i = 0; i < data->numChildren; i++) {
+				agoAddData(&graph->ref.context->dataList, data->children[i]);
+				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+					if (data->children[i]->children[j]) {
+						agoAddData(&graph->ref.context->dataList, data->children[i]->children[j]);
+					}
+				}
+			}
+		}
+	}
+	/*AgoData * data = NULL;
 
 	if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && exemplar->type != VX_TYPE_DELAY && exemplar->type != VX_TYPE_OBJECT_ARRAY  && count > 0) {
 		CAgoLock lock(graph->cs);
@@ -8108,7 +8160,7 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
 	            data->u.objarr.items[i] = ref;
 	        }
 	    }
-	}
+	}*/
 	return (vx_object_array)data;
 }
 
@@ -8173,14 +8225,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryObjectArray(vx_object_array arr, vx_en
 */
 VX_API_ENTRY vx_reference VX_API_CALL vxGetObjectArrayItem(vx_object_array arr, vx_uint32 index)
 {
-	AgoData * data = (AgoData *)arr;
+	/*AgoData * data = (AgoData *)arr;
 	vx_reference item = NULL;
 	if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
 		if (index < data->u.objarr.numitems) {
 			item = data->u.objarr.items[index];
+			//printf("in Get!!!!data type =  %u\n", data->u.objarr.items);
 		}
 	}
-	return item;
+	return item;*/
+	AgoData * data = (AgoData *)arr;
+	AgoData * item = NULL;
+	if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
+		// convert the index from 0..-(N-1) to 0..N-1
+		if (index < data->u.objarr.numitems) {
+			item = data->children[index];
+		}
+	}
+	return (vx_reference)item;
 }
 
 /*!

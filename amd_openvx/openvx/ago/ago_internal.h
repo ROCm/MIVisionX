@@ -252,7 +252,7 @@ struct AgoConfigArray {
 struct AgoConfigObjectArray {
 	vx_enum itemtype;
 	vx_size numitems;
-	vx_reference items[AGO_MAX_OBJARR_REF];
+	//vx_reference *items;
 };
 struct AgoConfigConvolution {
 	vx_size rows;

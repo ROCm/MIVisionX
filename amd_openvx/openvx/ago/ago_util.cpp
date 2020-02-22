@@ -789,6 +789,53 @@ AgoData * agoGetSiblingTraceToDelayForUpdate(AgoData * data, int trace[], int& t
 	return (data && data->ref.type == VX_TYPE_DELAY) ? data : nullptr;
 }
 
+//next 4 functions replicating for object array
+void agoMarkChildrenAsPartOfObjectArray(AgoData * adata)
+{
+	// recursively mark children as part of delay
+	for (vx_uint32 child = 0; child < adata->numChildren; child++) {
+		if (adata->children[child]) {
+			adata->children[child]->isDelayed = vx_true_e;
+			agoMarkChildrenAsPartOfObjectArray(adata->children[child]);
+		}
+	}
+}
+
+AgoData * agoGetSiblingTraceToObjectArrayForInit(AgoData * data, int trace[], int& traceCount)
+{
+	if (data && data->isDelayed) {
+		traceCount = 0;
+		while (data && data->ref.type != VX_TYPE_OBJECT_ARRAY && traceCount < AGO_MAX_OBJARR_REF) {
+			vx_int32 siblingIndex = data->siblingIndex;
+			AgoData * parent = data->parent;
+			if (parent && parent->ref.type == VX_TYPE_OBJECT_ARRAY) {
+				for (vx_uint32 child = 0; child < parent->numChildren; child++) {
+					if (data == parent->children[child]) {
+						siblingIndex = (/*parent->u.delay.age +*/ (vx_int32)child) % parent->u.objarr.numitems;
+						break;
+					}
+				}
+			}
+			trace[traceCount++] = siblingIndex;
+			data = parent;
+		}
+	}
+	return (data && data->ref.type == VX_TYPE_OBJECT_ARRAY) ? data : nullptr;
+}
+
+AgoData * agoGetSiblingTraceToObjectArrayForUpdate(AgoData * data, int trace[], int& traceCount)
+{
+	if (data && data->isDelayed) {
+		traceCount = 0;
+		while (data && data->ref.type != VX_TYPE_OBJECT_ARRAY && traceCount < AGO_MAX_OBJARR_REF) {
+			trace[traceCount++] = data->siblingIndex;
+			data = data->parent;
+		}
+	}
+	return (data && data->ref.type == VX_TYPE_OBJECT_ARRAY) ? data : nullptr;
+}
+//replication complete
+
 AgoData * agoGetDataFromTrace(AgoData * data, int trace[], int traceCount)
 {
 	for (int i = traceCount - 1; data && i >= 0; i--) {
@@ -839,12 +886,15 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
 			sprintf(desc + strlen(desc), "array%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.arr.itemtype), data->u.arr.capacity);
 	}
 	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
-		if(data->u.objarr.itemtype >= VX_TYPE_KHRONOS_OBJECT_START && data->u.objarr.itemtype <= VX_TYPE_KHRONOS_OBJECT_END) {
+		/*if(data->u.objarr.itemtype >= VX_TYPE_KHRONOS_OBJECT_START && data->u.objarr.itemtype <= VX_TYPE_KHRONOS_OBJECT_END) {
 			if(data->u.objarr.itemtype != VX_TYPE_DELAY && data->u.objarr.itemtype != VX_TYPE_OBJECT_ARRAY)
 				sprintf(desc + strlen(desc), "objectarray%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.objarr.itemtype), data->u.objarr.numitems);
 		}
 		else
-			sprintf(desc + strlen(desc), "objectarray%s:UNSUPPORTED,NULL", virt);
+			sprintf(desc + strlen(desc), "objectarray%s:UNSUPPORTED,NULL", virt);*/
+		sprintf(desc + strlen(desc), "objectarray%s:%lu,[", virt, data->u.objarr.numitems);
+		agoGetDescriptionFromData(acontext, desc + strlen(desc), data->children[0]);
+		sprintf(desc + strlen(desc), "]");
 	}
 	else if (data->ref.type == VX_TYPE_SCALAR) {
 		if (data->u.scalar.type == VX_TYPE_ENUM) {
@@ -981,6 +1031,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		desc++; epos--;
 		char desc_child[1024];
 		strncpy(desc_child, desc, epos);
+		desc_child[epos] = '\0';
 		if (data->children) 
 			delete [] data->children;
 		data->numChildren = (vx_uint32)data->u.delay.count;
@@ -1323,7 +1374,49 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		return 0;
 	}
 	else if (!strncmp(desc, "objectarray:", 12) || !strncmp(desc, "objectarray-virtual:", 12 + 8)) {
-		if (!strncmp(desc, "objectarray-virtual:", 12 + 8)) {
+		if (!strncmp(desc, "objectarray-virtual:", 14)) {
+			data->isVirtual = vx_true_e;
+			desc += 8;
+		}
+		else desc += 12;
+		// get configuration
+		data->ref.type = VX_TYPE_OBJECT_ARRAY;
+		if (sscanf(desc, "%lu", &data->u.objarr.numitems) != 1) return -1;
+		if (data->u.objarr.numitems < 1) return -1;
+		while (*desc && *desc != '[') desc++;
+		vx_uint32 epos = (vx_uint32)strlen(desc) - 1;
+		if ((*desc != '[') || (desc[epos] != ']')) return -1;
+		desc++; epos--;
+		char desc_child[1024];
+		strncpy(desc_child, desc, epos);
+		desc_child[epos] = '\0';
+		if (data->children) 
+			delete [] data->children;
+		data->numChildren = (vx_uint32)data->u.objarr.numitems;
+		data->children = new AgoData * [data->numChildren];
+		for (vx_uint32 child = 0; child < data->numChildren; child++) {
+			if ((data->children[child] = agoCreateDataFromDescription(acontext, agraph, desc_child, false)) == NULL) return -1;
+			data->children[child]->parent = data;
+			data->children[child]->siblingIndex = (vx_int32)child;
+			if (data->children[child]->isVirtual != data->isVirtual) return -1;
+			if (child == 0) {
+				data->u.objarr.itemtype = data->children[child]->ref.type;
+				if (data->u.objarr.itemtype == VX_TYPE_DELAY || data->u.objarr.itemtype == VX_TYPE_OBJECT_ARRAY) {
+					agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: object-array of object-array/delay is not permitted\n");
+					return -1;
+				}
+			}
+		}
+		// mark the children of delay element as part of delay object
+		agoMarkChildrenAsPartOfDelay(data);
+		// sanity check and update
+		if (agoDataSanityCheckAndUpdate(data)) {
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for object-array\n");
+			return -1;
+		}
+		return 0;
+
+		/*if (!strncmp(desc, "objectarray-virtual:", 12 + 8)) {
 			data->isVirtual = vx_true_e;
 			desc += 8;
 		}
@@ -1341,13 +1434,19 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 			data->isNotFullyConfigured = vx_true_e;
 			return 0;
 		}
+
+		data->u.objarr.items = (vx_reference *)calloc(data->u.objarr.numitems, sizeof(vx_reference));
+		for (vx_size i = 0; i < data->u.objarr.numitems; i++) {
+			data->u.objarr.items[i] = NULL;
+		}
+
 		// sanity check and update
 		data->ref.context = acontext; // array sanity check requires access to context
 		if (agoDataSanityCheckAndUpdate(data)) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for object-array\n");
 			return -1;
 		}
-		return 0;
+		return 0;*/
 	}
 	else if (!strncmp(desc, "distribution:", 13) || !strncmp(desc, "distribution-virtual:", 13 + 8)) {
 		if (!strncmp(desc, "distribution-virtual:", 13 + 8)) {
@@ -1984,7 +2083,7 @@ void agoGetDataName(vx_char * name, AgoData * data)
 	for (AgoData * pdata = data; pdata; pdata = pdata->parent) {
 		char tmp[1024]; strcpy(tmp, name);
 		if (pdata->parent) {
-			sprintf(name, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
+			sprintf(name, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
 		}
 		else if (pdata->name.length()) {
 			sprintf(name, "%s%s", pdata->name.c_str(), tmp);
@@ -2251,6 +2350,17 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 	}
 	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
 		//nothing to do 
+		// make sure number of children is +ve integer and consistent number of children exist
+		if (data->u.objarr.numitems < 1 || !data->children || data->numChildren != data->u.objarr.numitems)
+			return -1;
+		// do sanity check and update on each children
+		for (vx_uint32 child = 0; child < data->numChildren; child++) {
+			if (!data->children[child] || agoDataSanityCheckAndUpdate(data->children[child]))
+				return -1;
+			// make sure delay type matches with it's children
+			if (data->u.objarr.itemtype != data->children[child]->ref.type)
+				return -1;
+		}
 	}
 	else if (data->ref.type == VX_TYPE_TENSOR) {
 		// nothing to check yet
@@ -2492,9 +2602,16 @@ int agoAllocData(AgoData * data)
 	}
 	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
 		// allocate buffer and get aligned buffer with 16-byte alignment
-		data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
+		/*data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
 		if (!data->buffer_allocated)
-			return -1;
+			return -1;*/
+		for (vx_uint32 child = 0; child < data->numChildren; child++) {
+			if (data->children[child]) {
+				if (agoAllocData(data->children[child])) {
+					return -1;
+				}
+			}
+		}
 	}
 	else if (data->ref.type == VX_TYPE_DISTRIBUTION) {
 		// allocate buffer and get aligned buffer with 16-byte alignment
@@ -3135,7 +3252,7 @@ AgoGraph::~AgoGraph()
 {
 	// decrement auto age delays
 	for (auto it = autoAgeDelayList.begin(); it != autoAgeDelayList.end(); it++) {
-		if (agoIsValidData(*it, VX_TYPE_DELAY) && (*it)->ref.internal_count > 0)
+		if ((agoIsValidData(*it, VX_TYPE_DELAY) || agoIsValidData(*it, VX_TYPE_OBJECT_ARRAY)) && (*it)->ref.internal_count > 0)
 			(*it)->ref.internal_count--;
 	}
 

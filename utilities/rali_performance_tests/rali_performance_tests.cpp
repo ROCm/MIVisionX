@@ -40,7 +40,7 @@ using namespace cv;
 using namespace std::chrono;
 
 
-int test(int test_case, const char* path, int rgb, int gpu, int width, int height, int batch_size);
+int test(int test_case, const char* path, int rgb, int gpu, int width, int height, int batch_size, int thread);
 int main(int argc, const char ** argv)
 {
     // check command-line usage
@@ -58,6 +58,7 @@ int main(int argc, const char ** argv)
     bool gpu = 1;
     int test_case = 0;
     int batch_size = 10;
+    int num_threads = 1;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         test_case = atoi(argv[++argIdx]);
@@ -71,14 +72,17 @@ int main(int argc, const char ** argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
 
-    test(test_case, path, rgb, gpu, width, height, batch_size);
+    if (argc >= argIdx + MIN_ARG_COUNT)
+	num_threads = atoi(argv[++argIdx]);
+
+    test(test_case, path, rgb, gpu, width, height, batch_size, num_threads);
 
     return 0;
 }
 
-int test(int test_case, const char* path, int rgb, int gpu, int width, int height, int batch_size)
+int test(int test_case, const char* path, int rgb, int gpu, int width, int height, int batch_size, int threads)
 {
-    size_t num_threads = 1;
+    size_t num_threads = threads;
     int inputBatchSize = 1;
     int decode_max_width = 0;
     int decode_max_height = 0;
@@ -415,6 +419,13 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
             }
         }
             break;
+	case 39: {
+			 std::cout<<"No-Op"<<std::endl;
+			 for(int j = 0; j < batch_size; j++){
+				 raliNop(handle, image0, true);
+			 }
+		 }
+		 break;
         default:
             std::cout << "Not a valid option! Exiting!\n";
             return -1;
@@ -469,7 +480,7 @@ int test(int test_case, const char* path, int rgb, int gpu, int width, int heigh
     std::cout << "Process  time " << rali_timing.process_time << std::endl;
     std::cout << "Transfer time " << rali_timing.transfer_time << std::endl;
     std::cout << ">>>>> Total Elapsed Time " << dur / 1000000 << " sec " << dur % 1000000 << " us " << std::endl;
-    raliRelease(handle);
+    //raliRelease(handle);
     mat_input.release();
     mat_output.release();
 

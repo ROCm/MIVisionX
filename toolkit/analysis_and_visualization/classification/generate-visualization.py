@@ -60,103 +60,11 @@ def generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines
     sys.stdout = orig_stdout
     print "results.csv generated"
 
-def main():
-    # AMD Data Analysis Toolkit - Classification
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--inference_results',  type=str, required=True,    help='input inference results CSV file          [required] (File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)')
-    parser.add_argument('--image_dir',          type=str, required=True,    help='input image directory used in inference   [required]')
-    parser.add_argument('--label',              type=str, required=True,    help='input labels text file                    [required]')
-    parser.add_argument('--hierarchy',          type=str, default='',       help='input AMD proprietary hierarchical file   [optional]')
-    parser.add_argument('--model_name',         type=str, default='',       help='input inferece model name                 [optional]')
-    parser.add_argument('--output_dir',         type=str, required=True,    help='output dir to store ADAT results          [required]')
-    parser.add_argument('--output_name',        type=str, required=True,    help='output ADAT file name                     [required]')
-
-    args = parser.parse_args()
-    # get arguments
-    inputCSVFile = args.inference_results;
-    inputImageDirectory = args.image_dir;
-    labelFile = args.label;
-    hierarchyFile = args.hierarchy;
-    modelName = args.model_name;
-    outputDirectory = args.output_dir;
-    fileName = args.output_name;
-
-    if not os.path.exists(inputImageDirectory):
-        print "ERROR Invalid Input Image Directory";
-        exit();
-
-    if not os.path.exists(outputDirectory):
-        os.makedirs(outputDirectory);
-
-    if modelName == '':
-        modelName = 'Generic Model';
-
-    #read inference results file
-    resultDataBase, numElements = readInferenceResultFile(inputCSVFile)
-
-    # read labels.txt
-    LabelLines, labelElements = readLabelFile(labelFile)
-
-    # read hieararchy.csv
-    hierarchyDataBase, hierarchyElements = readHierarchyFile(hierarchyFile)
-
-    if hierarchyElements != labelElements:
-        print "ERROR Invalid Hierarchy file / label File";
-        exit();
-
-    # create toolkit with icons and images
-    toolKit_Dir = outputDirectory +'/'+ fileName + '-toolKit'
-    toolKit_dir = os.path.expanduser(toolKit_Dir)
-    if not os.path.exists(toolKit_dir):
-        os.makedirs(toolKit_dir);
-    # copy images and icons
-    from distutils.dir_util import copy_tree
-    fromDirectory = inputImageDirectory;
-    toDirectory = toolKit_dir+'/images';
-    copy_tree(fromDirectory, toDirectory)
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    fromDirectory = dir_path+'/icons';
-    toDirectory = toolKit_dir+'/icons';
-    copy_tree(fromDirectory, toDirectory)
-
-    new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    fromDirectory = new_path+'/utils';
-    toDirectory = toolKit_dir+'/utils';
-    copy_tree(fromDirectory, toDirectory)
-
-    dataFolder = 'images';
-    resultsDirectory = toolKit_dir+'/results';
-    if not os.path.exists(resultsDirectory):
-        os.makedirs(resultsDirectory);
-
-    # generate detailed results.csv
-    generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines)
-
-    # generate results summary.csv
+def generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch):
     top1TotProb = top2TotProb = top3TotProb = top4TotProb = top5TotProb = totalFailProb = 0;
     top1Count = top2Count = top3Count = top4Count = top5Count = 0;
     totalNoGroundTruth = totalMismatch = 0;
-
-
-    topKPassFail = []
-    topKHierarchyPassFail = []
-    for i in xrange(100):
-        topKPassFail.append([])
-        topKHierarchyPassFail.append([])
-        for j in xrange(2):
-            topKPassFail[i].append(0)
-        for k in xrange(12):
-            topKHierarchyPassFail[i].append(0)
-
-
-    topLabelMatch = []
-    for i in xrange(1000):
-        topLabelMatch.append([])
-        for j in xrange(7):
-            topLabelMatch[i].append(0)
-
-    # Generate Comphrehensive Results
+    
     print "resultsComphrehensive.csv generation .."
     orig_stdout = sys.stdout
     sys.stdout = open(resultsDirectory+'/resultsComphrehensive.csv','w')
@@ -303,7 +211,7 @@ def main():
     sys.stdout = orig_stdout
     print "resultsComphrehensive.csv generated"
 
-    # Generate Comphrehensive Results
+    #generate Summary Results
     print "resultsSummary.txt generation .."
     orig_stdout = sys.stdout
     sys.stdout = open(resultsDirectory+'/resultsSummary.txt','w')
@@ -389,7 +297,7 @@ def main():
     sys.stdout = orig_stdout
     print "resultsSummary.txt generated"
 
-    # Hierarchy Summary
+def generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail):
     print "hierarchySummary.csv generation .."
     orig_stdout = sys.stdout
     sys.stdout = open(resultsDirectory+'/hierarchySummary.csv','w')
@@ -409,8 +317,7 @@ def main():
     sys.stdout = orig_stdout;
     print "hierarchySummary.csv generated .."
 
-
-    # Label Summary
+def generateLabelSummary(resultsDirectory, topLabelMatch, LabelLines):
     print "labelSummary.csv generation .."
     orig_stdout = sys.stdout
     sys.stdout = open(resultsDirectory+'/labelSummary.csv','w')
@@ -421,6 +328,106 @@ def main():
         topLabelMatch[i][6],(LabelLines[i].split(' ', 1)[1].rstrip('\n'))));
     sys.stdout = orig_stdout
     print "labelSummary.csv generated"
+
+def main():
+    # AMD Data Analysis Toolkit - Classification
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--inference_results',  type=str, required=True,    help='input inference results CSV file          [required] (File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)')
+    parser.add_argument('--image_dir',          type=str, required=True,    help='input image directory used in inference   [required]')
+    parser.add_argument('--label',              type=str, required=True,    help='input labels text file                    [required]')
+    parser.add_argument('--hierarchy',          type=str, default='',       help='input AMD proprietary hierarchical file   [optional]')
+    parser.add_argument('--model_name',         type=str, default='',       help='input inferece model name                 [optional]')
+    parser.add_argument('--output_dir',         type=str, required=True,    help='output dir to store ADAT results          [required]')
+    parser.add_argument('--output_name',        type=str, required=True,    help='output ADAT file name                     [required]')
+
+    args = parser.parse_args()
+    # get arguments
+    inputCSVFile = args.inference_results;
+    inputImageDirectory = args.image_dir;
+    labelFile = args.label;
+    hierarchyFile = args.hierarchy;
+    modelName = args.model_name;
+    outputDirectory = args.output_dir;
+    fileName = args.output_name;
+
+    if not os.path.exists(inputImageDirectory):
+        print "ERROR Invalid Input Image Directory";
+        exit();
+
+    if not os.path.exists(outputDirectory):
+        os.makedirs(outputDirectory);
+
+    if modelName == '':
+        modelName = 'Generic Model';
+
+    #read inference results file
+    resultDataBase, numElements = readInferenceResultFile(inputCSVFile)
+
+    # read labels.txt
+    LabelLines, labelElements = readLabelFile(labelFile)
+
+    # read hieararchy.csv
+    hierarchyDataBase, hierarchyElements = readHierarchyFile(hierarchyFile)
+
+    if hierarchyElements != labelElements:
+        print "ERROR Invalid Hierarchy file / label File";
+        exit();
+
+    # create toolkit with icons and images
+    toolKit_Dir = outputDirectory +'/'+ fileName + '-toolKit'
+    toolKit_dir = os.path.expanduser(toolKit_Dir)
+    if not os.path.exists(toolKit_dir):
+        os.makedirs(toolKit_dir);
+    # copy images and icons
+    from distutils.dir_util import copy_tree
+    fromDirectory = inputImageDirectory;
+    toDirectory = toolKit_dir+'/images';
+    copy_tree(fromDirectory, toDirectory)
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    fromDirectory = dir_path+'/icons';
+    toDirectory = toolKit_dir+'/icons';
+    copy_tree(fromDirectory, toDirectory)
+
+    new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    fromDirectory = new_path+'/utils';
+    toDirectory = toolKit_dir+'/utils';
+    copy_tree(fromDirectory, toDirectory)
+
+    dataFolder = 'images';
+    resultsDirectory = toolKit_dir+'/results';
+    if not os.path.exists(resultsDirectory):
+        os.makedirs(resultsDirectory);
+
+    # generate detailed results.csv
+    generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines)
+
+    # generate results summary.csv
+    topKPassFail = []
+    topKHierarchyPassFail = []
+    for i in xrange(100):
+        topKPassFail.append([])
+        topKHierarchyPassFail.append([])
+        for j in xrange(2):
+            topKPassFail[i].append(0)
+        for k in xrange(12):
+            topKHierarchyPassFail[i].append(0)
+
+
+    topLabelMatch = []
+    for i in xrange(1000):
+        topLabelMatch.append([])
+        for j in xrange(7):
+            topLabelMatch[i].append(0)
+
+    # Generate Comphrehensive Results
+    generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch) 
+
+    # Hierarchy Summary
+    generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail)
+
+    # Label Summary
+    generateLabelSummary(resultsDirectory, topLabelMatch, LabelLines)
 
     # generate detailed results.csv
     print "index.html generation .."

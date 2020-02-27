@@ -60,7 +60,7 @@ def generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines
     sys.stdout = orig_stdout
     print "results.csv generated"
 
-def generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch):
+def generateComprehensiveResults(resultsDirectory, numElements, resultDataBase, hierarchyDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch):
     top1TotProb = top2TotProb = top3TotProb = top4TotProb = top5TotProb = totalFailProb = 0;
     top1Count = top2Count = top3Count = top4Count = top5Count = 0;
     totalNoGroundTruth = totalMismatch = 0;
@@ -296,6 +296,7 @@ def generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase,
     print("\n");
     sys.stdout = orig_stdout
     print "resultsSummary.txt generated"
+    return passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, netSummaryImages, avgPassProb, totalFailProb
 
 def generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail):
     print "hierarchySummary.csv generation .."
@@ -791,8 +792,8 @@ def generatePageStyle():
     print("\t<script type=\"text/javascript\">");
     print("\t");
 
-def generateOverallSummary(modelName, imageDataSize, passCount, totalMismatch, totalNoGroundTruth, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, topKHierarchyPassFail, netSummaryImages):
-     
+def generateOverallSummary(modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages):
+    
     #overall summary
     print("\tgoogle.charts.load('current', {'packages':['bar']});");
     print("\tgoogle.charts.setOnLoadCallback(drawChart);");
@@ -1103,7 +1104,7 @@ def generateOverallSummary(modelName, imageDataSize, passCount, totalMismatch, t
     print("\t</tr>");
     print("\t<tr>");
     print("\t<td><font color=\"black\" size=\"4\"><b>Total Images</b></font></td>");
-    print("\t<td align=\"center\"><font color=\"black\" size=\"4\" onclick=\"clearResultFilter();goToImageResults();\"><b>%d</b></font></td>"%(imageDataSize));
+    print("\t<td align=\"center\"><font color=\"black\" size=\"4\" onclick=\"clearResultFilter();goToImageResults();\"><b>%d</b></font></td>"%(netSummaryImages));
     print("\t</tr>");
     print("\t</table>\n<br><br><br>");
     print("\t<table align=\"center\">\n \t<col width=\"300\">\n \t<col width=\"100\">\n \t<col width=\"350\">\n \t<col width=\"100\">\n<tr>");
@@ -1195,7 +1196,7 @@ def generateGraphSummary():
     print("\t <td><center><div id=\"Hierarchy_pass_fail_chart\" style=\"border: 0px solid #ccc\" ></div></center> </td>");
     print("\t");
 
-def generateHierarchySummary(topKPassFail, topKHierarchyPassFail):
+def generateHierarchySummaryResult(topKPassFail, topKHierarchyPassFail):
     #hierarchy
     print("\t<!-- hierarchy Summary -->");
     print("<A NAME=\"table2\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>Hierarchy Summary (by Confidence level)</em></font></h1></A>");
@@ -1243,7 +1244,7 @@ def generateHierarchySummary(topKPassFail, topKHierarchyPassFail):
 
     print("</table>");
 
-def generateLabelSummary(topLabelMatch, LabelLines):
+def generateLabelSummaryResult(topLabelMatch, LabelLines):
     #label
     print("\t<!-- Label Summary -->");
     print("<A NAME=\"table3\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>Label Summary (stats per image class)</em></font></h1></A>");
@@ -1566,7 +1567,7 @@ def calculateHierarchyPenalty(truth, result, hierarchyDataBase):
     
     return penaltyValue;
 
-def generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count, top2Count, top3Count, top4Count, top5Count, netSummaryImages):
+def generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, netSummaryImages):
     #Model Score
     print("\t<!-- Model Score -->");
     hierarchyPenalty = [];
@@ -2275,8 +2276,8 @@ def generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count
     print("\t</table>");
     print("\t");
 
-def generateCompareResultSummary(modelName, dataFolder, numElements, passCount, totalMismatch):
-
+def generateCompareResultSummary(toolKit_dir, modelName, dataFolder, numElements, passCount, totalMismatch):
+    orig_stdout = sys.stdout
     # Compare result summary
     SummaryFileName = '';
     FolderName = os.path.expanduser("~/.adatCompare")
@@ -2433,19 +2434,19 @@ def generateHelp():
     print ("\n</body>");
     print ("\n</html>");
 
-def generateHTML(toolKit_dir, modelName, passCount, totalMismatch, totalNoGroundTruth, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, topKHierarchyPassFail, netSummaryImages, topLabelMatch, LabelLines, numElements, resultDataBase, hierarchyDataBase, dataFolder):
+def generateHTML(toolKit_dir, modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages, topLabelMatch, LabelLines, numElements, resultDataBase, hierarchyDataBase, dataFolder):
     print "index.html generation .."
-    #orig_stdout = sys.stdout
+    orig_stdout = sys.stdout
     sys.stdout = open(toolKit_dir+'/index.html','w')
 
     generatePageStyle()
-    generateOverallSummary(modelName, netSummaryImages, passCount, totalMismatch, totalNoGroundTruth, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, topKHierarchyPassFail, netSummaryImages)
+    generateOverallSummary(modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages)
     generateGraphSummary()
-    generateHierarchySummary(topKPassFail, topKHierarchyPassFail)
-    generateLabelSummary(topLabelMatch, LabelLines)
+    generateHierarchySummaryResult(topKPassFail, topKHierarchyPassFail)
+    generateLabelSummaryResult(topLabelMatch, LabelLines)
     generateImageSummary(numElements, resultDataBase, LabelLines, dataFolder)
-    generateCompareResultSummary(modelName, dataFolder, numElements, passCount, totalMismatch)
-    generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count, top2Count, top3Count, top4Count, top5Count, netSummaryImages)
+    generateCompareResultSummary(toolKit_dir, modelName, dataFolder, numElements, passCount, totalMismatch)
+    generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, netSummaryImages)
     generateHelp()
 
     sys.stdout = orig_stdout
@@ -2543,7 +2544,7 @@ def main():
             topLabelMatch[i].append(0)
 
     # Generate Comphrehensive Results
-    generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch) 
+    passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, netSummaryImages, avgPassProb, totalFailProb = generateComprehensiveResults(resultsDirectory, numElements, resultDataBase, hierarchyDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch) 
 
     # Hierarchy Summary
     generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail)
@@ -2552,7 +2553,7 @@ def main():
     generateLabelSummary(resultsDirectory, topLabelMatch, LabelLines)
 
     # generate detailed results.csv
-    generateHTML(toolKit_dir, modelName, passCount, totalMismatch, totalNoGroundTruth, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, topKHierarchyPassFail, netSummaryImages, topLabelMatch, LabelLines, numElements, resultDataBase, hierarchyDataBase, dataFolder)
+    generateHTML(toolKit_dir, modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages, topLabelMatch, LabelLines, numElements, resultDataBase, hierarchyDataBase, dataFolder)
     exit (0)
 
 

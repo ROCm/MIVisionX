@@ -31,9 +31,7 @@ def readLabelFile(labelFile):
     return LabelLines,labelElements
 
 def readHierarchyFile(hierarchyFile):
-    hierarchySection = 0
     if hierarchyFile != '':
-        hierarchySection = 1
         hierarchyElements = 0
         with open(hierarchyFile) as hierarchy:
             hierarchyCSV = csv.reader(hierarchy)
@@ -1593,7 +1591,6 @@ def generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count
     for x in range(numElements):
       truth = int(resultDataBase[x][1]);
       if truth >= 0:
-        match = 0;
         label_1 = int(resultDataBase[x][2]);
         label_2 = int(resultDataBase[x][3]);
         label_3 = int(resultDataBase[x][4]);

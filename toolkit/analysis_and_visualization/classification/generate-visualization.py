@@ -60,7 +60,7 @@ def generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines
     sys.stdout = orig_stdout
     print "results.csv generated"
 
-def generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch):
+def generateComprehensiveResults(resultsDirectory, numElements, resultDataBase, hierarchyDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch):
     top1TotProb = top2TotProb = top3TotProb = top4TotProb = top5TotProb = totalFailProb = 0;
     top1Count = top2Count = top3Count = top4Count = top5Count = 0;
     totalNoGroundTruth = totalMismatch = 0;
@@ -296,6 +296,7 @@ def generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase,
     print("\n");
     sys.stdout = orig_stdout
     print "resultsSummary.txt generated"
+    return passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, netSummaryImages, avgPassProb, totalFailProb
 
 def generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail):
     print "hierarchySummary.csv generation .."
@@ -329,111 +330,7 @@ def generateLabelSummary(resultsDirectory, topLabelMatch, LabelLines):
     sys.stdout = orig_stdout
     print "labelSummary.csv generated"
 
-def main():
-    # AMD Data Analysis Toolkit - Classification
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--inference_results',  type=str, required=True,    help='input inference results CSV file          [required] (File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)')
-    parser.add_argument('--image_dir',          type=str, required=True,    help='input image directory used in inference   [required]')
-    parser.add_argument('--label',              type=str, required=True,    help='input labels text file                    [required]')
-    parser.add_argument('--hierarchy',          type=str, default='',       help='input AMD proprietary hierarchical file   [optional]')
-    parser.add_argument('--model_name',         type=str, default='',       help='input inferece model name                 [optional]')
-    parser.add_argument('--output_dir',         type=str, required=True,    help='output dir to store ADAT results          [required]')
-    parser.add_argument('--output_name',        type=str, required=True,    help='output ADAT file name                     [required]')
-
-    args = parser.parse_args()
-    # get arguments
-    inputCSVFile = args.inference_results;
-    inputImageDirectory = args.image_dir;
-    labelFile = args.label;
-    hierarchyFile = args.hierarchy;
-    modelName = args.model_name;
-    outputDirectory = args.output_dir;
-    fileName = args.output_name;
-
-    if not os.path.exists(inputImageDirectory):
-        print "ERROR Invalid Input Image Directory";
-        exit();
-
-    if not os.path.exists(outputDirectory):
-        os.makedirs(outputDirectory);
-
-    if modelName == '':
-        modelName = 'Generic Model';
-
-    #read inference results file
-    resultDataBase, numElements = readInferenceResultFile(inputCSVFile)
-
-    # read labels.txt
-    LabelLines, labelElements = readLabelFile(labelFile)
-
-    # read hieararchy.csv
-    hierarchyDataBase, hierarchyElements = readHierarchyFile(hierarchyFile)
-
-    if hierarchyElements != labelElements:
-        print "ERROR Invalid Hierarchy file / label File";
-        exit();
-
-    # create toolkit with icons and images
-    toolKit_Dir = outputDirectory +'/'+ fileName + '-toolKit'
-    toolKit_dir = os.path.expanduser(toolKit_Dir)
-    if not os.path.exists(toolKit_dir):
-        os.makedirs(toolKit_dir);
-    # copy images and icons
-    from distutils.dir_util import copy_tree
-    fromDirectory = inputImageDirectory;
-    toDirectory = toolKit_dir+'/images';
-    copy_tree(fromDirectory, toDirectory)
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    fromDirectory = dir_path+'/icons';
-    toDirectory = toolKit_dir+'/icons';
-    copy_tree(fromDirectory, toDirectory)
-
-    new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    fromDirectory = new_path+'/utils';
-    toDirectory = toolKit_dir+'/utils';
-    copy_tree(fromDirectory, toDirectory)
-
-    dataFolder = 'images';
-    resultsDirectory = toolKit_dir+'/results';
-    if not os.path.exists(resultsDirectory):
-        os.makedirs(resultsDirectory);
-
-    # generate detailed results.csv
-    generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines)
-
-    # generate results summary.csv
-    topKPassFail = []
-    topKHierarchyPassFail = []
-    for i in xrange(100):
-        topKPassFail.append([])
-        topKHierarchyPassFail.append([])
-        for j in xrange(2):
-            topKPassFail[i].append(0)
-        for k in xrange(12):
-            topKHierarchyPassFail[i].append(0)
-
-
-    topLabelMatch = []
-    for i in xrange(1000):
-        topLabelMatch.append([])
-        for j in xrange(7):
-            topLabelMatch[i].append(0)
-
-    # Generate Comphrehensive Results
-    generateComphrehensiveResults(resultsDirectory, numElements, resultDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch) 
-
-    # Hierarchy Summary
-    generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail)
-
-    # Label Summary
-    generateLabelSummary(resultsDirectory, topLabelMatch, LabelLines)
-
-    # generate detailed results.csv
-    print "index.html generation .."
-    #orig_stdout = sys.stdout
-    sys.stdout = open(toolKit_dir+'/index.html','w')
-
+def generatePageStyle():
     print ("<!DOCTYPE HTML PUBLIC \" -//W3C//DTD HTML 4.0 Transitional//EN\">");
     print ("\n<html>");
     print ("<head>");
@@ -894,6 +791,9 @@ def main():
     print("\t<script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>");
     print("\t<script type=\"text/javascript\">");
     print("\t");
+
+def generateOverallSummary(modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages):
+    
     #overall summary
     print("\tgoogle.charts.load('current', {'packages':['bar']});");
     print("\tgoogle.charts.setOnLoadCallback(drawChart);");
@@ -1204,7 +1104,7 @@ def main():
     print("\t</tr>");
     print("\t<tr>");
     print("\t<td><font color=\"black\" size=\"4\"><b>Total Images</b></font></td>");
-    print("\t<td align=\"center\"><font color=\"black\" size=\"4\" onclick=\"clearResultFilter();goToImageResults();\"><b>%d</b></font></td>"%(imageDataSize));
+    print("\t<td align=\"center\"><font color=\"black\" size=\"4\" onclick=\"clearResultFilter();goToImageResults();\"><b>%d</b></font></td>"%(netSummaryImages));
     print("\t</tr>");
     print("\t</table>\n<br><br><br>");
     print("\t<table align=\"center\">\n \t<col width=\"300\">\n \t<col width=\"100\">\n \t<col width=\"350\">\n \t<col width=\"100\">\n<tr>");
@@ -1269,6 +1169,7 @@ def main():
     #summary date and time
     print("\t<h1 align=\"center\"><font color=\"DodgerBlue\" size=\"4\"><br><em>Summary Generated On: </font><font color=\"black\" size=\"4\"> %s</font></em></h1>"%(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')));
 
+def generateGraphSummary():
     #Graph
     print("\t<!-- Graph Summary -->");
     print("<A NAME=\"table1\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>Graphs</em></font></h1></A>");
@@ -1295,6 +1196,7 @@ def main():
     print("\t <td><center><div id=\"Hierarchy_pass_fail_chart\" style=\"border: 0px solid #ccc\" ></div></center> </td>");
     print("\t");
 
+def generateHierarchySummaryResult(topKPassFail, topKHierarchyPassFail):
     #hierarchy
     print("\t<!-- hierarchy Summary -->");
     print("<A NAME=\"table2\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>Hierarchy Summary (by Confidence level)</em></font></h1></A>");
@@ -1342,7 +1244,7 @@ def main():
 
     print("</table>");
 
-
+def generateLabelSummaryResult(topLabelMatch, LabelLines):
     #label
     print("\t<!-- Label Summary -->");
     print("<A NAME=\"table3\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>Label Summary (stats per image class)</em></font></h1></A>");
@@ -1480,6 +1382,7 @@ def main():
     print("\t</tr>");
     print("</table>");
 
+def generateImageSummary(numElements, resultDataBase, LabelLines, dataFolder):
 
     #Image result
     print("\t<!-- Image Summary -->");
@@ -1637,132 +1540,35 @@ def main():
 
     print("</table>");
 
+def calculateHierarchyPenalty(truth, result, hierarchyDataBase):
+    penaltyValue = 0;
+    penaltyMultiplier = 0;
+    truthHierarchy = hierarchyDataBase[truth];
+    resultHierarchy = hierarchyDataBase[result];
+    token_result = '';
+    token_truth = '';
+    previousTruth = 0;
+    catCount = 0;
 
-    # Compare result summary
-    SummaryFileName = '';
-    FolderName = os.path.expanduser("~/.adatCompare")
-    if not os.path.exists(FolderName):
-        os.makedirs(FolderName);
-
-    ModelFolderName = FolderName; ModelFolderName +="/"; ModelFolderName += modelName;
-    if not os.path.exists(ModelFolderName):
-        os.makedirs(ModelFolderName);
-
-    SummaryFileName = FolderName; SummaryFileName += "/modelRunHistoryList.csv";
-
-
-    # write summary details into csv
-    if os.path.exists(SummaryFileName):
-        sys.stdout = open(SummaryFileName,'a')
-        print("%s, %s, %d, %d, %d"%(modelName,dataFolder,numElements,passCount,totalMismatch));
-    else:
-        sys.stdout = open(SummaryFileName,'w')
-        print("Model Name, Image DataBase, Number Of Images, Match, MisMatch");
-        print("%s, %s, %d, %d, %d"%(modelName,dataFolder,numElements,passCount,totalMismatch));
-
-    sys.stdout.close()
-
-    # write into HTML
-    savedResultElements = 0;
-    with open(SummaryFileName) as savedResultFile:
-        savedResultFileCSV = csv.reader(savedResultFile)
-        next(savedResultFileCSV, None) # skip header
-        savedResultDataBase = [r for r in savedResultFileCSV]
-        savedResultElements = len(savedResultDataBase)
-    sys.stdout = orig_stdout
-    print "results saved in backup drive"
-
-    sys.stdout = open(toolKit_dir+'/index.html','a')
-    print("\t<!-- Compare ResultSummary -->");
-    print("<A NAME=\"table5\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>Compare Results Summary</em></font></h1></A>");
-    print("\t<!-- Compare Graph Script -->");
-    print("\t<script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>");
-    print("\t<script type=\"text/javascript\">");
-    print("\t");
-
-    lineNumber = 0;
-    while lineNumber < savedResultElements:
-        print("\tgoogle.charts.load('current', {'packages':['bar']});");
-        print("\tgoogle.charts.setOnLoadCallback(drawChart_%d);"%(lineNumber));
-        print("\tfunction drawChart_%d(){"%(lineNumber));
-        print("\tvar data = google.visualization.arrayToDataTable([");
-        print("\t['  '     ,  'Match'  , 'Mismatch'],");
-        print("\t['Summary',   %d     , %d        ]"%(int(savedResultDataBase[lineNumber][3]),int(savedResultDataBase[lineNumber][4])));                        
-        print("\t]);");
-        print("\tvar options = { title: '%s Overall Result Summary', vAxis: { title: 'Images' }, width: 400, height: 400 };"%(savedResultDataBase[lineNumber][0]));
-        print("\tvar chart = new google.charts.Bar(document.getElementById('Model_Stats_%d'));"%(lineNumber));
-        print("\tchart.draw(data, google.charts.Bar.convertOptions(options));}");
-        print("\t");
-
-        lineNumber += 1;
-
-    print("\t");
-    # draw combined graph
-    print("\tgoogle.charts.load('current', {'packages':['bar']});");
-    print("\tgoogle.charts.setOnLoadCallback(drawChart_master);");
-    print("\tfunction drawChart_master(){");
-    print("\tvar data = google.visualization.arrayToDataTable([");
-    print("\t['Model'   ,'Match',   'Mismatch'],");
-    for i in range(savedResultElements):
-        if(i != (lineNumber-1)):
-            print("\t['%s'   ,%d ,   %d],"%(savedResultDataBase[i][0],int(savedResultDataBase[i][3]),int(savedResultDataBase[i][4])));
-        else:
-            print("\t['%s'   ,%d ,   %d]"%(savedResultDataBase[i][0],int(savedResultDataBase[i][3]),int(savedResultDataBase[i][4])));
-
-    print("\t]);");
-    print("\tvar options = { title: 'Overall Result Summary', vAxis: { title: 'Images' }, width: 800, height: 600, bar: { groupWidth: '30%' }, isStacked: true , series: { 0:{color:'green'},1:{color:'Indianred'} }};");
-    print("\tvar chart = new google.charts.Bar(document.getElementById('Model_Stats_master'));");
-    print("\tchart.draw(data, google.charts.Bar.convertOptions(options));}");
-    print("\t");
-    print("\t</script>");
-
-    # draw graph
-    print("\t");
-    print("\t");
-    print("\t<center><div id=\"Model_Stats_master\" style=\"border: 1px solid #ccc\"></div></center>");
-    print("\t");
-    print("\t<table align=\"center\" style=\"width: 90%\">");
-    print("\t<tr>");
-    i = 1;
-    while i <= savedResultElements:
-        print("\t");
-        print("\t<td><center><div id=\"Model_Stats_%d\" style=\"border: 1px solid #ccc\"></div></center></td>"%(i));
-        if( i % 3 == 0):
-            print("\t</tr>");
-            print("\t<tr>");
-        i += 1;
-
-    print("\t</tr>");
-    print("\t</table>");
-
-
-    #Model Score
-    def calculateHierarchyPenalty(truth, result, hierarchyDataBase):
-      penaltyValue = 0;
-      penaltyMultiplier = 0;
-      truthHierarchy = hierarchyDataBase[truth];
-      resultHierarchy = hierarchyDataBase[result];
-      token_result = '';
-      token_truth = '';
-      previousTruth = 0;
-      catCount = 0;
-
-      while catCount < 6:
+    while catCount < 6:
         token_truth = truthHierarchy[catCount];
         token_result = resultHierarchy[catCount];
         if((token_truth != '') and (token_truth == token_result)):
-          previousTruth = 1;
+            previousTruth = 1;
         elif( (previousTruth == 1) and (token_truth == '' and token_result == '')):
-          previousTruth = 1;
+            previousTruth = 1;
         else:
-          previousTruth = 0;
-          penaltyMultiplier += 1;
+            previousTruth = 0;
+            penaltyMultiplier += 1;
         catCount += 1;
 
-      penaltyMultiplier = float(penaltyMultiplier - 1);
-      penaltyValue = (0.2 * penaltyMultiplier);
-      return penaltyValue;
+    penaltyMultiplier = float(penaltyMultiplier - 1);
+    penaltyValue = (0.2 * penaltyMultiplier);
+    
+    return penaltyValue;
 
+def generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, netSummaryImages):
+    #Model Score
     print("\t<!-- Model Score -->");
     hierarchyPenalty = [];
     top5PassFail = [];
@@ -2470,6 +2276,107 @@ def main():
     print("\t</table>");
     print("\t");
 
+def generateCompareResultSummary(toolKit_dir, modelName, dataFolder, numElements, passCount, totalMismatch):
+    orig_stdout = sys.stdout
+    # Compare result summary
+    SummaryFileName = '';
+    FolderName = os.path.expanduser("~/.adatCompare")
+    if not os.path.exists(FolderName):
+        os.makedirs(FolderName);
+
+    ModelFolderName = FolderName; ModelFolderName +="/"; ModelFolderName += modelName;
+    if not os.path.exists(ModelFolderName):
+        os.makedirs(ModelFolderName);
+
+    SummaryFileName = FolderName; SummaryFileName += "/modelRunHistoryList.csv";
+
+
+    # write summary details into csv
+    if os.path.exists(SummaryFileName):
+        sys.stdout = open(SummaryFileName,'a')
+        print("%s, %s, %d, %d, %d"%(modelName,dataFolder,numElements,passCount,totalMismatch));
+    else:
+        sys.stdout = open(SummaryFileName,'w')
+        print("Model Name, Image DataBase, Number Of Images, Match, MisMatch");
+        print("%s, %s, %d, %d, %d"%(modelName,dataFolder,numElements,passCount,totalMismatch));
+
+    sys.stdout.close()
+
+    # write into HTML
+    savedResultElements = 0;
+    with open(SummaryFileName) as savedResultFile:
+        savedResultFileCSV = csv.reader(savedResultFile)
+        next(savedResultFileCSV, None) # skip header
+        savedResultDataBase = [r for r in savedResultFileCSV]
+        savedResultElements = len(savedResultDataBase)
+    sys.stdout = orig_stdout
+    print "results saved in backup drive"
+
+    sys.stdout = open(toolKit_dir+'/index.html','a')
+    print("\t<!-- Compare ResultSummary -->");
+    print("<A NAME=\"table5\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>Compare Results Summary</em></font></h1></A>");
+    print("\t<!-- Compare Graph Script -->");
+    print("\t<script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>");
+    print("\t<script type=\"text/javascript\">");
+    print("\t");
+
+    lineNumber = 0;
+    while lineNumber < savedResultElements:
+        print("\tgoogle.charts.load('current', {'packages':['bar']});");
+        print("\tgoogle.charts.setOnLoadCallback(drawChart_%d);"%(lineNumber));
+        print("\tfunction drawChart_%d(){"%(lineNumber));
+        print("\tvar data = google.visualization.arrayToDataTable([");
+        print("\t['  '     ,  'Match'  , 'Mismatch'],");
+        print("\t['Summary',   %d     , %d        ]"%(int(savedResultDataBase[lineNumber][3]),int(savedResultDataBase[lineNumber][4])));                        
+        print("\t]);");
+        print("\tvar options = { title: '%s Overall Result Summary', vAxis: { title: 'Images' }, width: 400, height: 400 };"%(savedResultDataBase[lineNumber][0]));
+        print("\tvar chart = new google.charts.Bar(document.getElementById('Model_Stats_%d'));"%(lineNumber));
+        print("\tchart.draw(data, google.charts.Bar.convertOptions(options));}");
+        print("\t");
+
+        lineNumber += 1;
+
+    print("\t");
+    # draw combined graph
+    print("\tgoogle.charts.load('current', {'packages':['bar']});");
+    print("\tgoogle.charts.setOnLoadCallback(drawChart_master);");
+    print("\tfunction drawChart_master(){");
+    print("\tvar data = google.visualization.arrayToDataTable([");
+    print("\t['Model'   ,'Match',   'Mismatch'],");
+    for i in range(savedResultElements):
+        if(i != (lineNumber-1)):
+            print("\t['%s'   ,%d ,   %d],"%(savedResultDataBase[i][0],int(savedResultDataBase[i][3]),int(savedResultDataBase[i][4])));
+        else:
+            print("\t['%s'   ,%d ,   %d]"%(savedResultDataBase[i][0],int(savedResultDataBase[i][3]),int(savedResultDataBase[i][4])));
+
+    print("\t]);");
+    print("\tvar options = { title: 'Overall Result Summary', vAxis: { title: 'Images' }, width: 800, height: 600, bar: { groupWidth: '30%' }, isStacked: true , series: { 0:{color:'green'},1:{color:'Indianred'} }};");
+    print("\tvar chart = new google.charts.Bar(document.getElementById('Model_Stats_master'));");
+    print("\tchart.draw(data, google.charts.Bar.convertOptions(options));}");
+    print("\t");
+    print("\t</script>");
+
+    # draw graph
+    print("\t");
+    print("\t");
+    print("\t<center><div id=\"Model_Stats_master\" style=\"border: 1px solid #ccc\"></div></center>");
+    print("\t");
+    print("\t<table align=\"center\" style=\"width: 90%\">");
+    print("\t<tr>");
+    i = 1;
+    while i <= savedResultElements:
+        print("\t");
+        print("\t<td><center><div id=\"Model_Stats_%d\" style=\"border: 1px solid #ccc\"></div></center></td>"%(i));
+        if( i % 3 == 0):
+            print("\t</tr>");
+            print("\t<tr>");
+        i += 1;
+
+    print("\t</tr>");
+    print("\t</table>");
+
+def generateHelp():
+
     # HELP
     print ("\t<!-- HELP -->");
     print ("<A NAME=\"table7\"><h1 align=\"center\"><font color=\"DodgerBlue\" size=\"6\"><br><br><br><em>HELP</em></font></h1></A>");
@@ -2527,8 +2434,126 @@ def main():
     print ("\n</body>");
     print ("\n</html>");
 
+def generateHTML(toolKit_dir, modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages, topLabelMatch, LabelLines, numElements, resultDataBase, hierarchyDataBase, dataFolder):
+    print "index.html generation .."
+    orig_stdout = sys.stdout
+    sys.stdout = open(toolKit_dir+'/index.html','w')
+
+    generatePageStyle()
+    generateOverallSummary(modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages)
+    generateGraphSummary()
+    generateHierarchySummaryResult(topKPassFail, topKHierarchyPassFail)
+    generateLabelSummaryResult(topLabelMatch, LabelLines)
+    generateImageSummary(numElements, resultDataBase, LabelLines, dataFolder)
+    generateCompareResultSummary(toolKit_dir, modelName, dataFolder, numElements, passCount, totalMismatch)
+    generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count, top2Count, top3Count, top4Count, top5Count, topKPassFail, netSummaryImages)
+    generateHelp()
+
     sys.stdout = orig_stdout
     print "index.html generated"
+
+def main():
+    # AMD Data Analysis Toolkit - Classification
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--inference_results',  type=str, required=True,    help='input inference results CSV file          [required] (File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)')
+    parser.add_argument('--image_dir',          type=str, required=True,    help='input image directory used in inference   [required]')
+    parser.add_argument('--label',              type=str, required=True,    help='input labels text file                    [required]')
+    parser.add_argument('--hierarchy',          type=str, default='',       help='input AMD proprietary hierarchical file   [optional]')
+    parser.add_argument('--model_name',         type=str, default='',       help='input inferece model name                 [optional]')
+    parser.add_argument('--output_dir',         type=str, required=True,    help='output dir to store ADAT results          [required]')
+    parser.add_argument('--output_name',        type=str, required=True,    help='output ADAT file name                     [required]')
+
+    args = parser.parse_args()
+    # get arguments
+    inputCSVFile = args.inference_results;
+    inputImageDirectory = args.image_dir;
+    labelFile = args.label;
+    hierarchyFile = args.hierarchy;
+    modelName = args.model_name;
+    outputDirectory = args.output_dir;
+    fileName = args.output_name;
+
+    if not os.path.exists(inputImageDirectory):
+        print "ERROR Invalid Input Image Directory";
+        exit();
+
+    if not os.path.exists(outputDirectory):
+        os.makedirs(outputDirectory);
+
+    if modelName == '':
+        modelName = 'Generic Model';
+
+    #read inference results file
+    resultDataBase, numElements = readInferenceResultFile(inputCSVFile)
+
+    # read labels.txt
+    LabelLines, labelElements = readLabelFile(labelFile)
+
+    # read hieararchy.csv
+    hierarchyDataBase, hierarchyElements = readHierarchyFile(hierarchyFile)
+
+    if hierarchyElements != labelElements:
+        print "ERROR Invalid Hierarchy file / label File";
+        exit();
+
+    # create toolkit with icons and images
+    toolKit_Dir = outputDirectory +'/'+ fileName + '-toolKit'
+    toolKit_dir = os.path.expanduser(toolKit_Dir)
+    if not os.path.exists(toolKit_dir):
+        os.makedirs(toolKit_dir);
+    # copy images and icons
+    from distutils.dir_util import copy_tree
+    fromDirectory = inputImageDirectory;
+    toDirectory = toolKit_dir+'/images';
+    copy_tree(fromDirectory, toDirectory)
+
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    fromDirectory = dir_path+'/icons';
+    toDirectory = toolKit_dir+'/icons';
+    copy_tree(fromDirectory, toDirectory)
+
+    new_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    fromDirectory = new_path+'/utils';
+    toDirectory = toolKit_dir+'/utils';
+    copy_tree(fromDirectory, toDirectory)
+
+    dataFolder = 'images';
+    resultsDirectory = toolKit_dir+'/results';
+    if not os.path.exists(resultsDirectory):
+        os.makedirs(resultsDirectory);
+
+    # generate detailed results.csv
+    generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines)
+
+    # generate results summary.csv
+    topKPassFail = []
+    topKHierarchyPassFail = []
+    for i in xrange(100):
+        topKPassFail.append([])
+        topKHierarchyPassFail.append([])
+        for j in xrange(2):
+            topKPassFail[i].append(0)
+        for k in xrange(12):
+            topKHierarchyPassFail[i].append(0)
+
+
+    topLabelMatch = []
+    for i in xrange(1000):
+        topLabelMatch.append([])
+        for j in xrange(7):
+            topLabelMatch[i].append(0)
+
+    # Generate Comphrehensive Results
+    passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, netSummaryImages, avgPassProb, totalFailProb = generateComprehensiveResults(resultsDirectory, numElements, resultDataBase, hierarchyDataBase, LabelLines, hierarchyFile, topKPassFail, topKHierarchyPassFail, topLabelMatch) 
+
+    # Hierarchy Summary
+    generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail)
+
+    # Label Summary
+    generateLabelSummary(resultsDirectory, topLabelMatch, LabelLines)
+
+    # generate detailed results.csv
+    generateHTML(toolKit_dir, modelName, passCount, top1Count, top2Count, top3Count, top4Count, top5Count, totalMismatch, totalNoGroundTruth, avgPassProb, totalFailProb, topKPassFail, topKHierarchyPassFail, netSummaryImages, topLabelMatch, LabelLines, numElements, resultDataBase, hierarchyDataBase, dataFolder)
     exit (0)
 
 

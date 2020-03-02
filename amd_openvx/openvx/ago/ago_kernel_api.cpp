@@ -252,6 +252,7 @@ static int ValidateArguments_CannySuppThreshold_U8(AgoNode * node, vx_df_image f
 	if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE ||
 		(node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_UINT16 && node->paramList[2]->u.thr.data_type != VX_TYPE_INT16))
 		return VX_ERROR_INVALID_TYPE;
+
 	// set output info
 	vx_meta_format meta;
 	meta = &node->metaList[0];
@@ -861,7 +862,7 @@ int ovxKernel_Threshold(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_S16)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -2350,6 +2351,51 @@ static void agoCodeGenOpenCL_Threshold_U8_U8_Range(std::string& opencl_code)
 		"#endif\n"
 		);
 }
+static void agoCodeGenOpenCL_Threshold_S16_S16_Binary(std::string& opencl_code)
+{
+	opencl_code += OPENCL_FORMAT(
+		"#ifndef Threshold_S16_S16_Binary_\n"
+		"#define Threshold_S16_S16_Binary_\n"
+		"void Threshold_S16_S16_Binary(S16x8 * p0, S16x8 p1, uint p2)\n"
+		"{\n"
+		"  S16x8 r;\n"
+		"  float4 thr = (float4)amd_unpack0(p2);\n"
+		"  r.s0 = amd_pack((amd_unpack(p1.s0) - thr) * (float4)256.0f);\n"
+		"  r.s1 = amd_pack((amd_unpack(p1.s1) - thr) * (float4)256.0f);\n"
+		"  r.s2 = amd_pack((amd_unpack(p1.s2) - thr) * (float4)256.0f);\n"
+		"  r.s3 = amd_pack((amd_unpack(p1.s3) - thr) * (float4)256.0f);\n"
+		"  *p0 = r;\n"
+		"}\n"
+		"#endif\n"
+		);
+}
+static void agoCodeGenOpenCL_Threshold_S16_S16_Range(std::string& opencl_code)
+{
+	opencl_code += OPENCL_FORMAT(
+		"#ifndef Threshold_S16_S16_Range_\n"
+		"#define Threshold_S16_S16_Range_\n"
+		"void Threshold_S16_S16_Range(S16x8 * p0, S16x8 p1, uint2 p2)\n"
+		"{\n"
+		"  S16x8 r;\n"
+		"  float4 thr0 = (float4)(amd_unpack0(p2.s0) - 1.0f);\n"
+		"  float4 thr1 = (float4)(amd_unpack0(p2.s1) + 1.0f);\n"
+		"  float4 pix0 = amd_unpack(p1.s0);\n"
+		"  float4 pix1 = amd_unpack(p1.s1);\n"
+		"  float4 pix2 = amd_unpack(p1.s2);\n"
+		"  float4 pix3 = amd_unpack(p1.s3);\n"
+		"  r.s0  = amd_pack((pix0 - thr0) * (float4)256.0f);\n"
+		"  r.s0 &= amd_pack((thr1 - pix0) * (float4)256.0f);\n"
+		"  r.s1  = amd_pack((pix1 - thr0) * (float4)256.0f);\n"
+		"  r.s1 &= amd_pack((thr1 - pix1) * (float4)256.0f);\n"
+		"  r.s2  = amd_pack((pix2 - thr0) * (float4)256.0f);\n"
+		"  r.s2 &= amd_pack((thr1 - pix2) * (float4)256.0f);\n"
+		"  r.s3  = amd_pack((pix3 - thr0) * (float4)256.0f);\n"
+		"  r.s3 &= amd_pack((thr1 - pix3) * (float4)256.0f);\n"
+		"  *p0 = r;\n"
+		"}\n"
+		"#endif\n"
+		);
+}
 static void agoCodeGenOpenCL_Add_S16_S16U8_Sat(std::string& opencl_code)
 {
 	opencl_code += OPENCL_FORMAT(
@@ -3403,6 +3449,125 @@ int agoKernel_Threshold_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
 	return status;
 }
 
+
+int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iThr = node->paramList[2];
+		if (HafCpu_Threshold_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+			status = VX_FAILURE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
+			if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+				return VX_ERROR_INVALID_TYPE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		status = VX_SUCCESS;
+		node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
+		agoCodeGenOpenCL_Threshold_S16_S16_Binary(node->opencl_code);
+		char textBuffer[2048];
+		sprintf(textBuffer, OPENCL_FORMAT(
+			"void %s (U8x8 * p0, S16x8 p1, uint p2)\n"
+			"{\n"
+			"  S16x8 r1;\n"
+			"  Threshold_S16_S16_Binary(&r1, p1, p2);\n"
+			"  Convert_U8_S16(p0, r1);\n"
+			"}\n"
+			), node->opencl_name);
+		node->opencl_code += textBuffer;
+	}
+#endif
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#endif                 
+                    ;
+        status = VX_SUCCESS;
+    }
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[1];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+	return status;
+}
+
+int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iThr = node->paramList[2];
+		if (HafCpu_Threshold_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+			status = VX_FAILURE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
+			if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+				return VX_ERROR_INVALID_TYPE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		status = VX_SUCCESS;
+		node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
+		agoCodeGenOpenCL_Threshold_S16_S16_Range(node->opencl_code);
+		char textBuffer[2048];
+		sprintf(textBuffer, OPENCL_FORMAT(
+			"void %s (U8x8 * p0, S16x8 p1, uint2 p2)\n"
+			"{\n"
+			"  S16x8 r1;\n"
+			"  Threshold_S16_S16_Range(&r1, p1, p2);\n"
+			"  Convert_U8_S16(p0, r1);\n"
+			"}\n"
+			), node->opencl_name);
+		node->opencl_code += textBuffer;
+	}
+#endif
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#endif                 
+                    ;
+        status = VX_SUCCESS;
+    }
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[1];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+	return status;
+}
+
+
+
 int agoKernel_ThresholdNot_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
 {
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
@@ -3634,6 +3799,125 @@ int agoKernel_ThresholdNot_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
 	}
 	return status;
 }
+
+
+int agoKernel_ThresholdNot_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iThr = node->paramList[2];
+		if (HafCpu_ThresholdNot_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+			status = VX_FAILURE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
+			if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+				return VX_ERROR_INVALID_TYPE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		status = VX_SUCCESS;
+		node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
+		agoCodeGenOpenCL_Threshold_S16_S16_Binary(node->opencl_code);
+		char textBuffer[2048];
+		sprintf(textBuffer, OPENCL_FORMAT(
+			"void %s (U8x8 * p0, S16x8 p1, uint p2)\n"
+			"{\n"
+			"  S16x8 r1;\n"
+			"  Threshold_S16_S16_Binary(&r1, p1, p2);\n"
+			"  Convert_U8_S16(p0, ~r1);\n"
+			"}\n"
+			), node->opencl_name);
+		node->opencl_code += textBuffer;
+	}
+#endif
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#endif                 
+                    ;
+        status = VX_SUCCESS;
+    }
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[1];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+	return status;
+}
+
+int agoKernel_ThresholdNot_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iThr = node->paramList[2];
+		if (HafCpu_ThresholdNot_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+			status = VX_FAILURE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_S16))) {
+			if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
+				return VX_ERROR_INVALID_TYPE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		status = VX_SUCCESS;
+		node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
+		agoCodeGenOpenCL_Threshold_S16_S16_Range(node->opencl_code);
+		char textBuffer[2048];
+		sprintf(textBuffer, OPENCL_FORMAT(
+			"void %s (U8x8 * p0, S16x8 p1, uint2 p2)\n"
+			"{\n"
+			"  S16x8 r1;\n"
+			"  Threshold_S16_S16_Range(&r1, p1, p2);\n"
+			"  Convert_U8_S16(p0, ~r1);\n"
+			"}\n"
+			), node->opencl_name);
+		node->opencl_code += textBuffer;
+	}
+#endif
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#endif                    
+                    ;
+        status = VX_SUCCESS;
+    }
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[1];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+	return status;
+}
+
+
 
 int agoKernel_ColorDepth_U8_S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
 {

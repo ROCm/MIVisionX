@@ -5415,12 +5415,32 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_
 			status = VX_ERROR_NOT_COMPATIBLE;
 			if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
 				status = VX_ERROR_NO_MEMORY;
+				AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+#if ENABLE_OPENCL
+			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+				// make sure dirty OpenCL buffers are synched before giving access for read
+				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+					// transfer only valid data
+					if (dataToSync->size > 0) {
+						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+						if (err) {
+							status = VX_FAILURE;
+							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
+							return status;
+						}
+					}
+					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+				}
+			}
+#endif
 				if (usage == VX_READ_ONLY){
-					*(vx_int32 *)value_ptr = data->u.thr.threshold_lower;
+					//*(vx_int32 *)value_ptr = data->u.thr.threshold_lower;
+					memcpy(value_ptr, &data->u.thr.threshold_lower, sizeof(vx_pixel_value_t));
 					status = VX_SUCCESS;
 				}
 				else if (usage == VX_WRITE_ONLY){
-					data->u.thr.threshold_lower = *(vx_int32 *)value_ptr;
+					//data->u.thr.threshold_lower = *(vx_int32 *)value_ptr;
+					memcpy(&data->u.thr.threshold_lower, value_ptr, sizeof(vx_pixel_value_t));
 					status = VX_SUCCESS;
 				}
 			}
@@ -5464,14 +5484,36 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
 			status = VX_ERROR_NOT_COMPATIBLE;
 			if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
 				status = VX_ERROR_NO_MEMORY;
+				AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+#if ENABLE_OPENCL
+			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+				// make sure dirty OpenCL buffers are synched before giving access for read
+				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+					// transfer only valid data
+					if (dataToSync->size > 0) {
+						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+						if (err) {
+							status = VX_FAILURE;
+							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
+							return status;
+						}
+					}
+					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+				}
+			}
+#endif
 				if (usage == VX_READ_ONLY){
-					*(vx_int32 *)lower_value_ptr = data->u.thr.threshold_lower;
-					*(vx_int32 *)upper_value_ptr = data->u.thr.threshold_upper;
+					memcpy(lower_value_ptr, &data->u.thr.threshold_lower, sizeof(vx_pixel_value_t));
+					memcpy(upper_value_ptr, &data->u.thr.threshold_upper, sizeof(vx_pixel_value_t));
+					//*(vx_int32 *)lower_value_ptr = data->u.thr.threshold_lower;
+					//*(vx_int32 *)upper_value_ptr = data->u.thr.threshold_upper;
 					status = VX_SUCCESS;
 				}
 				else if (usage == VX_WRITE_ONLY){
-					data->u.thr.threshold_lower = *(vx_int32 *)lower_value_ptr;
-					data->u.thr.threshold_upper = *(vx_int32 *)upper_value_ptr;
+					memcpy(&data->u.thr.threshold_lower, lower_value_ptr, sizeof(vx_pixel_value_t));
+					memcpy(&data->u.thr.threshold_upper, upper_value_ptr, sizeof(vx_pixel_value_t));
+					//data->u.thr.threshold_lower = *(vx_int32 *)lower_value_ptr;
+					//data->u.thr.threshold_upper = *(vx_int32 *)upper_value_ptr;
 					status = VX_SUCCESS;
 				}
 			}
@@ -5510,14 +5552,36 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
 		status = VX_ERROR_INVALID_PARAMETERS;
 		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && true_value_ptr && false_value_ptr) {
 			status = VX_ERROR_NO_MEMORY;
+				AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+#if ENABLE_OPENCL
+			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+				// make sure dirty OpenCL buffers are synched before giving access for read
+				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+					// transfer only valid data
+					if (dataToSync->size > 0) {
+						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+						if (err) {
+							status = VX_FAILURE;
+							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
+							return status;
+						}
+					}
+					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+				}
+			}
+#endif
 			if (usage == VX_READ_ONLY){
-				*(vx_int32 *)true_value_ptr = data->u.thr.true_value;
-				*(vx_int32 *)false_value_ptr = data->u.thr.false_value;
+				memcpy(true_value_ptr, &data->u.thr.true_value, sizeof(vx_pixel_value_t));
+				memcpy(false_value_ptr, &data->u.thr.false_value, sizeof(vx_pixel_value_t));
+				//*(vx_int32 *)true_value_ptr = data->u.thr.true_value;
+				//*(vx_int32 *)false_value_ptr = data->u.thr.false_value;
 				status = VX_SUCCESS;
 			}
 			else if (usage == VX_WRITE_ONLY){
-				data->u.thr.true_value = *(vx_int32 *)true_value_ptr;
-				data->u.thr.false_value = *(vx_int32 *)false_value_ptr;
+				memcpy(&data->u.thr.true_value, true_value_ptr, sizeof(vx_pixel_value_t));
+				memcpy(&data->u.thr.false_value, false_value_ptr, sizeof(vx_pixel_value_t));
+				//data->u.thr.true_value = *(vx_int32 *)true_value_ptr;
+				//data->u.thr.false_value = *(vx_int32 *)false_value_ptr;
 				status = VX_SUCCESS;
 			}
 		}

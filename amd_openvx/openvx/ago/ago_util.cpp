@@ -2395,7 +2395,7 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 		data->u.thr.false_value = 0;
 		if (data->u.thr.data_type == VX_TYPE_UINT8) data->u.thr.true_value = 0xff;
 		else if (data->u.thr.data_type == VX_TYPE_UINT16) data->u.thr.true_value = 0xffff;
-		else if (data->u.thr.data_type == VX_TYPE_INT16) data->u.thr.true_value = 0x7fff;
+		else if (data->u.thr.data_type == VX_TYPE_INT16) data->u.thr.true_value = -1;//0x7fff;
 		else if (data->u.thr.data_type == VX_TYPE_BOOL) data->u.thr.true_value = 1;
 		else
 			return -1;

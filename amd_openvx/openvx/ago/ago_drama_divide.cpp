@@ -739,9 +739,21 @@ int agoDramaDivideThresholdNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[2] = paramList[1];
 	anode->paramCount = 3;
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
-	if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U8_U8_BINARY;
+	if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY && paramList[1]->u.thr.input_format == VX_DF_IMAGE_U8 && paramList[1]->u.thr.output_format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U8_U8_BINARY;
+	else if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY && paramList[1]->u.thr.input_format == VX_DF_IMAGE_S16 && paramList[1]->u.thr.output_format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U8_S16_BINARY;
+	else if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY && paramList[1]->u.thr.input_format == VX_DF_IMAGE_U8 && paramList[1]->u.thr.output_format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U1_U8_BINARY;
+	else if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE && paramList[1]->u.thr.input_format == VX_DF_IMAGE_U8 && paramList[1]->u.thr.output_format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U8_U8_RANGE;
+	else if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE && paramList[1]->u.thr.input_format == VX_DF_IMAGE_S16 && paramList[1]->u.thr.output_format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U8_S16_RANGE;
+	else if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE && paramList[1]->u.thr.input_format == VX_DF_IMAGE_U8 && paramList[1]->u.thr.output_format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U1_U8_RANGE;
+	/*if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U8_U8_BINARY;
 	else if (paramList[1]->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) new_kernel_id = VX_KERNEL_AMD_THRESHOLD_U8_U8_RANGE;
-	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
+	*/return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }
 
 int agoDramaDivideIntegralImageNode(AgoNodeList * nodeList, AgoNode * anode)

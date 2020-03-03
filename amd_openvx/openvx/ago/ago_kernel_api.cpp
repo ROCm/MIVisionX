@@ -2162,16 +2162,16 @@ int ovxKernel_WeightedAverage(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[2]->u.img.format != VX_DF_IMAGE_U8)
+		vx_df_image format = node->paramList[0]->u.img.format;
+		if (format != VX_DF_IMAGE_U8 || node->paramList[2]->u.img.format != format)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
 		else if (node->paramList[1]->u.scalar.type != VX_TYPE_FLOAT32)
 			return VX_ERROR_INVALID_TYPE;
 		// set output image sizes same as input image size
-		int N = node->paramList[3]->u.scalar.u.i >> 1;
 		vx_meta_format meta;
-		meta = &node->metaList[4];
+		meta = &node->metaList[3];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
 		meta->data.u.img.format = VX_DF_IMAGE_U8;

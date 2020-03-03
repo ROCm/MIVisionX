@@ -6230,7 +6230,7 @@ VX_API_ENTRY vx_convolution VX_API_CALL vxCreateVirtualConvolution(vx_graph grap
 	AgoData * data = NULL;
     if (agoIsValidGraph(graph)) {
         CAgoLock lock(graph->cs);
-        if(columns > 3 && rows > 3 && (columns % 2 == 1) && (rows % 2 == 1)) {
+        if(columns >= 3 && rows >= 3 && (columns % 2 == 1) && (rows % 2 == 1)) {
 			char desc[512]; sprintf(desc, "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
 			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
 			if (data) {

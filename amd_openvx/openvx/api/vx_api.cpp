@@ -3644,8 +3644,8 @@ VX_API_ENTRY vx_scalar VX_API_CALL vxCreateVirtualScalar(vx_graph graph, vx_enum
 		}
         if(!data_type || desc_type) {
 			char desc[512]; 
-			if (desc_type) sprintf(desc, "scalar-virtual:%s", desc_type);
-			else sprintf(desc, "scalar-virtual:0");
+			if (desc_type) sprintf(desc, "scalar-virtual:%s,0", desc_type);
+			else sprintf(desc, "scalar-virtual:0,0");
 			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
 			if (data) {
 				agoGenerateVirtualDataName(graph, "scalar", data->name);

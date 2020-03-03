@@ -1717,6 +1717,16 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 			data->buffer[VX_MAX_STRING_BUFFER_SIZE_AMD - 1] = 0; // NUL terminate string in case of overflow
 			data->isInitialized = vx_true_e;
 		}
+		else if (data->u.scalar.type == VX_TYPE_RECTANGLE || data->u.scalar.type == VX_TYPE_KEYPOINT || data->u.scalar.type == VX_TYPE_COORDINATES2D || data->u.scalar.type == VX_TYPE_COORDINATES3D)
+		{
+			vx_size data_size = agoType2Size(acontext, agoName2Enum(data_type));
+			data->u.scalar.itemsize = data->size = data_size;
+			data->buffer_allocated = data->buffer = (vx_uint8 *)agoAllocMemory(data->size);
+            if (data->buffer) {
+                memset(data->buffer, 0, data->size);
+            }
+            data->isInitialized = vx_true_e;
+		}
 		else {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid scalar type %s\n", data_type);
 			return -1;

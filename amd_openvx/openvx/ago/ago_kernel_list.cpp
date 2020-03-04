@@ -506,9 +506,9 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COPY_DATA_DATA                                          , 1, 1, Copy_DATA_DATA, AOUT_AIN,                                     ATYPE_RR                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SELECT_DATA_DATA_DATA                                   , 1, 1, Select_DATA_DATA_DATA, AOUT_AIN,                              ATYPE_RSRR              , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_WEIGHTED_AVERAGE_U8_U8_U8                               , 1, 0, WeightedAverage_U8_U8_U8, AOUT_AINx3,                         ATYPE_IISI              , KOP_UNKNOWN   , false ),
-	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA                        , 1, 1, NonLinearFilter_DATA_DATA_DATA, AOUT_AINx3,                   ATYPE_IMIS              , KOP_UNKNOWN   , false ),
-	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA                        , 1, 1, LaplacianPyramid_DATA_DATA_DATA, AOUT_AINx3,                  ATYPE_IPI               , KOP_UNKNOWN   , false ),
-	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_DATA_DATA_DATA                    , 1, 1, LaplacianReconstruct_DATA_DATA_DATA, AOUT_AINx3,              ATYPE_IIP               , KOP_UNKNOWN   , false ),
+	// AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA                        , 1, 1, NonLinearFilter_DATA_DATA_DATA, AOUT_AINx3,                   ATYPE_IMIS              , KOP_UNKNOWN   , false ),
+	// AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA                        , 1, 1, LaplacianPyramid_DATA_DATA_DATA, AOUT_AINx3,                  ATYPE_IPI               , KOP_UNKNOWN   , false ),
+	// AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_DATA_DATA_DATA                    , 1, 1, LaplacianReconstruct_DATA_DATA_DATA, AOUT_AINx3,              ATYPE_IIP               , KOP_UNKNOWN   , false ),
 #undef AGO_KERNEL_ENTRY
 #undef OVX_KERNEL_ENTRY
 };

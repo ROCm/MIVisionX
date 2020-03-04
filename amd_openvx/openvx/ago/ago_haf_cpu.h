@@ -3022,4 +3022,11 @@ int HafCpu_FastAtan2_Canny
 	vx_int16      Gy
 );
 
+int HafCpu_WeightedAverage_U8_U8U8
+(
+    vx_image img1, 
+    vx_scalar alpha, 
+    vx_image img2, 
+    vx_image output
+);
 #endif // __ago_haf_cpu_h__

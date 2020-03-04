@@ -4508,7 +4508,7 @@ VX_API_ENTRY vx_lut VX_API_CALL vxCreateVirtualLUT(vx_graph graph, vx_enum data_
 	AgoData * data = NULL;
 	if (agoIsValidGraph(graph)) {
 		CAgoLock lock(graph->cs);
-		char desc[512]; sprintf(desc, "lut:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
+		char desc[512]; sprintf(desc, "lut-virtual:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
 		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
 		if (data) {
 			agoGenerateVirtualDataName(graph, "lut", data->name);

@@ -2392,7 +2392,7 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 			data->size = sizeof(vx_uint8) * 256;
 		}
 		else if (data->u.lut.type == VX_TYPE_INT16) {
-			if (data->u.lut.count == 0 || data->u.lut.count >= 65536)
+			if (data->u.lut.count == 0 || data->u.lut.count > 65536)
 				return -1;
 			data->u.lut.offset = (vx_uint32)(data->u.lut.count / 2);
 			data->size = sizeof(vx_int16) * data->u.lut.count;

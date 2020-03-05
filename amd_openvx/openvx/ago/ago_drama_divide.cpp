@@ -2014,7 +2014,6 @@ int agoDramaDivideNode(AgoNodeList * nodeList, AgoNode * anode)
 			break;
 		case VX_KERNEL_WEIGHTED_AVERAGE:
 			status = agoDramaDivideWeightedAverageNode(nodeList, anode);
-			//printf("the final status is %d\n", status);
 			break;
 		case VX_KERNEL_NON_LINEAR_FILTER:
 			status = agoDramaDivideNonLinearFilterNode(nodeList, anode);

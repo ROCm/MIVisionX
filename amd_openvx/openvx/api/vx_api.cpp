@@ -210,6 +210,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryContext(vx_context context, vx_enum at
 					status = VX_SUCCESS;
 				}
 				break;
+			case VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION:
+				if (size == sizeof(vx_size)) {
+					*(vx_size *)ptr = AGO_MAX_NONLINEAR_FILTER_DIM;
+					status = VX_SUCCESS;
+				}
+				break;
 			case VX_CONTEXT_ATTRIBUTE_OPTICAL_FLOW_WINDOW_MAXIMUM_DIMENSION:
 				if (size == sizeof(vx_size)) {
 					*(vx_size *)ptr = AGO_OPTICALFLOWPYRLK_MAX_DIM;
@@ -219,6 +225,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryContext(vx_context context, vx_enum at
 			case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
 				if (size == sizeof(vx_border_mode_t)) {
 					*(vx_border_mode_t *)ptr = context->immediate_border_mode;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_POLICY:
+			if (size == sizeof(vx_border_mode_policy_e)) {
+					*(vx_border_mode_policy_e *)ptr = context->immediate_border_policy;
 					status = VX_SUCCESS;
 				}
 				break;
@@ -269,7 +281,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryContext(vx_context context, vx_enum at
 				}
 				break;
 #endif
-			case VX_CONTEXT_MAX_TENSOR_DIMENSIONS:
+			case VX_CONTEXT_MAX_TENSOR_DIMS:
 				if (size == sizeof(vx_size)) {
 					*(vx_size *)ptr = AGO_MAX_TENSOR_DIMENSIONS;
 					status = VX_SUCCESS;
@@ -1525,7 +1537,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
 			if (!img->buffer) {
 				CAgoLock lock(img->ref.context->cs);
 				if (agoAllocData(img)) {
-					return VX_FAILURE;
+					return VX_ERROR_NO_MEMORY;
 				}
 			}
 			if (!*ptr) {
@@ -1892,7 +1904,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
 			if (!img->buffer) {
 				CAgoLock lock(img->ref.context->cs);
 				if (agoAllocData(img)) {
-					return VX_FAILURE;
+					return VX_ERROR_NO_MEMORY ;
 				}
 			}
 			vx_uint8 * ptr_returned = img->buffer +
@@ -2722,7 +2734,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 			}
 		}
 	}
-
+	if (status == VX_SUCCESS)
+    {
+        graph->verified = true;
+        graph->state = VX_GRAPH_STATE_VERIFIED;
+    }
+    else
+    {
+        graph->verified = false;
+        graph->state = VX_GRAPH_STATE_UNVERIFIED;
+    }
 	return status;
 }
 
@@ -2807,6 +2828,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryGraph(vx_graph graph, vx_enum attribut
 			case VX_GRAPH_ATTRIBUTE_PERFORMANCE:
 				if (size == sizeof(vx_perf_t)) {
 					agoPerfCopyNormalize(graph->ref.context, (vx_perf_t *)ptr, &graph->perf);
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_GRAPH_ATTRIBUTE_STATE:
+				if (size == sizeof(vx_enum)) {
+					*(vx_status *)ptr = graph->state;
 					status = VX_SUCCESS;
 				}
 				break;

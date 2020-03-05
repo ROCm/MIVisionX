@@ -484,6 +484,7 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_INTEGRAL_IMAGE_U32_U8                                   , 1, 0, IntegralImage_U32_U8, AOUT_AIN,                               ATYPE_II                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_HISTOGRAM_DATA_U8                                       , 1, 0, Histogram_DATA_U8, AOUT_AIN,                                  ATYPE_DI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MEAN_STD_DEV_DATA_U8                                    , 1, 0, MeanStdDev_DATA_U8, AOUT_AIN,                                 ATYPE_sI                , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MEAN_STD_DEV_DATA_U1                                    , 1, 0, MeanStdDev_DATA_U1, AOUT_AIN,                                 ATYPE_sI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MIN_MAX_DATA_U8                                         , 1, 0, MinMax_DATA_U8, AOUT_AIN,                                     ATYPE_mI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MIN_MAX_DATA_S16                                        , 1, 0, MinMax_DATA_S16, AOUT_AIN,                                    ATYPE_mI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_EQUALIZE_DATA_DATA                                      , 1, 0, Equalize_DATA_DATA, AOUT_AIN_AOPTINx8,                        ATYPE_LDDDDDDDDD        , KOP_UNKNOWN   , false ),

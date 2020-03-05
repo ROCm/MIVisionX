@@ -2748,6 +2748,15 @@ int HafCpu_MeanStdDev_DATA_U8
 		vx_uint8    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes
 	);
+int HafCpu_MeanStdDev_DATA_U1
+	(
+		vx_float32  * pSum,
+		vx_float32  * pSumOfSquared,
+		vx_uint32     srcWidth,
+		vx_uint32     srcHeight,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
 int HafCpu_Equalize_DATA_DATA
 	(
 		vx_uint8    * pLut,

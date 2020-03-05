@@ -410,6 +410,9 @@ enum vx_kernel_amd_e {
 	VX_KERNEL_AMD_MEAN_STD_DEV_DATA_U8,
 	VX_KERNEL_AMD_MIN_MAX_DATA_U8,
 
+	// Sequential: DATA = op U1
+	VX_KERNEL_AMD_MEAN_STD_DEV_DATA_U1,
+
 	// Sequential: DATA = op S16 (1)
 	VX_KERNEL_AMD_MIN_MAX_DATA_S16,
 

@@ -336,6 +336,7 @@ int agoKernel_CannyEdgeTrace_U8_U8XY(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_IntegralImage_U32_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Histogram_DATA_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MeanStdDev_DATA_U8(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_MeanStdDev_DATA_U1(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MinMax_DATA_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MinMax_DATA_S16(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Equalize_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);

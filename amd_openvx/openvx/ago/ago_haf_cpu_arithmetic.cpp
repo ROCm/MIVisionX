@@ -6981,6 +6981,108 @@ int HafCpu_MeanStdDev_DATA_U8
 	return AGO_SUCCESS;
 }
 
+int HafCpu_MeanStdDev_DATA_U1
+	(
+		vx_float32  * pSum,
+		vx_float32  * pSumOfSquared,
+		vx_uint32     srcWidth,
+		vx_uint32     srcHeight,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	)
+{
+	unsigned char * pLocalSrc;
+	__m128i pixels, pixels_16, pixels_32, pixels_64;
+	__m128i zeromask = _mm_setzero_si128();
+	__m128i sum = _mm_setzero_si128();
+	__m128i sum_squared = _mm_setzero_si128();
+	
+	int prefixWidth = intptr_t(pSrcImage) & 15;
+	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
+	int postfixWidth = ((int)srcWidth - prefixWidth) & 15;
+	int alignedWidth = (int)srcWidth - prefixWidth - postfixWidth;
+	unsigned int prefixSum = 0, postfixSum = 0;
+	unsigned long long prefixSumSquared = 0, postfixSumSquared = 0;
+
+	int height = (int) srcHeight;
+	while (height)
+	{
+		pLocalSrc = (unsigned char *) pSrcImage;
+
+		for (int x = 0; x < prefixWidth; x++, pLocalSrc++)
+		{
+			prefixSum += (unsigned int) *pLocalSrc;
+			prefixSumSquared += (unsigned long long)*pLocalSrc * (unsigned long long)*pLocalSrc;
+		}
+		int width = (int) (alignedWidth >> 4);								// 16 pixels processed at a time
+		while (width)
+		{
+			pixels = _mm_load_si128((__m128i *) pLocalSrc);
+			pixels_16 = _mm_unpackhi_epi8(pixels, zeromask);				// 15, 14, 13, 12, 11, 10, 9, 8
+			pixels_32 = _mm_unpackhi_epi16(pixels_16, zeromask);			// 15, 14, 13, 12
+
+			sum = _mm_add_epi32(sum, pixels_32);							// Pixels 15, 14, 13, 12
+			pixels_64 = _mm_unpackhi_epi32(pixels_32, zeromask);			// 15, 14
+			pixels_32 = _mm_cvtepi32_epi64(pixels_32);						// 13, 12
+			pixels_64 = _mm_mul_epu32(pixels_64, pixels_64);				// square
+			pixels_32 = _mm_mul_epu32(pixels_32, pixels_32);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_64);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_32);
+
+			pixels_32 = _mm_cvtepi16_epi32(pixels_16);
+			sum = _mm_add_epi32(sum, pixels_32);							// Pixels 11, 10, 9, 8
+			pixels_64 = _mm_unpackhi_epi32(pixels_32, zeromask);			// 11, 10
+			pixels_32 = _mm_cvtepi32_epi64(pixels_32);						// 9, 8
+			pixels_64 = _mm_mul_epu32(pixels_64, pixels_64);				// square
+			pixels_32 = _mm_mul_epu32(pixels_32, pixels_32);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_64);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_32);
+
+			pixels_16 = _mm_cvtepu8_epi16(pixels);							// 7, 6, 5, 4, 3, 2, 1, 0
+			pixels_32 = _mm_unpackhi_epi16(pixels_16, zeromask);			// 7, 6, 5, 4
+
+			sum = _mm_add_epi32(sum, pixels_32);							// Pixels 7, 6, 5, 4
+			pixels_64 = _mm_unpackhi_epi32(pixels_32, zeromask);			// 7, 6
+			pixels_32 = _mm_cvtepi32_epi64(pixels_32);						// 5, 4
+			pixels_64 = _mm_mul_epu32(pixels_64, pixels_64);				// square
+			pixels_32 = _mm_mul_epu32(pixels_32, pixels_32);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_64);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_32);
+
+			pixels_32 = _mm_cvtepi16_epi32(pixels_16);
+			sum = _mm_add_epi32(sum, pixels_32);							// Pixels 3, 2, 1, 0
+			pixels_64 = _mm_unpackhi_epi32(pixels_32, zeromask);			// 3, 2
+			pixels_32 = _mm_cvtepi32_epi64(pixels_32);						// 1, 0
+			pixels_64 = _mm_mul_epu32(pixels_64, pixels_64);				// square
+			pixels_32 = _mm_mul_epu32(pixels_32, pixels_32);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_64);
+			sum_squared = _mm_add_epi64(sum_squared, pixels_32);
+
+			pLocalSrc += 16;
+			width--;
+		}
+
+		for (int x = 0; x < postfixWidth; x++, pLocalSrc++)
+		{
+			postfixSum += (unsigned int)*pLocalSrc;
+			postfixSumSquared += (unsigned long long)*pLocalSrc * (unsigned long long)*pLocalSrc;
+		}
+
+		pSrcImage += srcImageStrideInBytes;
+		height--;
+	}
+	
+	sum = _mm_hadd_epi32(sum, sum);											// Lowest int of sum has sum of last two ints of sum
+	sum = _mm_hadd_epi32(sum, sum);											// Lowest int of sum has the sum of all four ints
+	pixels = _mm_srli_si128(sum_squared, 8);
+	sum_squared = _mm_add_epi64(sum_squared, pixels);
+
+	*pSum = (vx_float32)(M128I(sum).m128i_u32[0] + prefixSum + postfixSum);
+	*pSumOfSquared = (vx_float32)(M128I(sum_squared).m128i_u64[0] + prefixSumSquared + postfixSumSquared);
+
+	return AGO_SUCCESS;
+}
+
 int HafCpu_MeanStdDevMerge_DATA_DATA
 	(
 		vx_float32  * mean,

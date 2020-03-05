@@ -824,7 +824,7 @@ int ovxKernel_MeanStdDev(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1_AMD)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -18245,6 +18245,37 @@ int agoKernel_MeanStdDev_DATA_U8(AgoNode * node, AgoKernelCommand cmd)
 	}
 	else if (cmd == ago_kernel_cmd_validate) {
 		status = ValidateArguments_Img_1IN(node, VX_DF_IMAGE_U8);
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+                    ;
+        status = VX_SUCCESS;
+    }
+	return status;
+}
+
+int agoKernel_MeanStdDev_DATA_U1(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		AgoData * oData = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		if (HafCpu_MeanStdDev_DATA_U1(&((ago_meanstddev_data_t *)oData->buffer)->sum, &((ago_meanstddev_data_t *)oData->buffer)->sumSquared, 
+			iImg->u.img.rect_valid.end_x - iImg->u.img.rect_valid.start_x, iImg->u.img.rect_valid.end_y - iImg->u.img.rect_valid.start_y,
+			iImg->buffer + (iImg->u.img.rect_valid.start_y*iImg->u.img.stride_in_bytes) + iImg->u.img.rect_valid.start_x, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+		}
+		else {
+			((ago_meanstddev_data_t *)oData->buffer)->sampleCount = (iImg->u.img.rect_valid.end_x - iImg->u.img.rect_valid.start_x) * (iImg->u.img.rect_valid.end_y - iImg->u.img.rect_valid.start_y);
+		}
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		status = ValidateArguments_Img_1IN(node, VX_DF_IMAGE_U1_AMD);
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
 		status = VX_SUCCESS;

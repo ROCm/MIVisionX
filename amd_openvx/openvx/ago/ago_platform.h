@@ -53,6 +53,7 @@ using namespace std;
 
 #if _WIN32
 #include <Windows.h>
+#include <cmath>
 #include <intrin.h>
 #else
 #include <dlfcn.h>

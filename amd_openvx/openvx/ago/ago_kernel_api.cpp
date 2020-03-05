@@ -19237,32 +19237,18 @@ int agoKernel_Select_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
 	return status;
 }
 
-#define ERROR_CHECK_STATUS( status ) { \
-        vx_status status_ = (status); \
-        if(status_ != VX_SUCCESS) { \
-            printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status_, __LINE__); \
-            exit(1); \
-        } \
-    }
-
 int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 {
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
-		printf("execute\n");
 		status = VX_SUCCESS;
 		vx_image oImg = (vx_image)node->paramList[0];
 		vx_image iImg1 = (vx_image)node->paramList[1];
 		vx_image iImg2 = (vx_image)node->paramList[3];
-		vx_float32 value = node->paramList[2]->u.scalar.u.f;
-		vx_scalar alpha;
-		vx_float32 falpha = 0;
-	    ERROR_CHECK_STATUS(vxCopyScalar( alpha, &falpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	    printf("the float value is %f", falpha);
+		vx_float32 alpha = node->paramList[2]->u.scalar.u.f;
 		// AgoData * oImg = node->paramList[0];
 		// AgoData * iImg1 = node->paramList[1];
 		// AgoData * iImg2 = node->paramList[3];
-		// vx_int32 alpha = node->paramList[2]->u.scalar.u.i;
  		if (HafCpu_WeightedAverage_U8_U8U8(iImg1, alpha, iImg2, oImg))
  			status = VX_FAILURE;
 	}
@@ -19289,11 +19275,9 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
-		printf("initialize\n");
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-		printf("rect callback\n");
 		AgoData * out = node->paramList[0];
 		AgoData * inp = node->paramList[1];
 		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
@@ -19303,19 +19287,16 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 	}
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
-		printf("opencl \n");
 		// TBD: not implemented yet
 		status = VX_ERROR_NOT_SUPPORTED;
 	}
 #endif
 	else if (cmd == ago_kernel_cmd_query_target_support) {
-		printf("query target\n");
 		node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU              
                     ;
         status = VX_SUCCESS;
 	}
-	//printf("the ago status is %d\n", status);
 	return status;
 }
 

@@ -26,13 +26,12 @@ THE SOFTWARE.
 int HafCpu_WeightedAverage_U8_U8U8
     (
         vx_image img1, 
-        vx_scalar alpha, 
+        vx_float32 alpha, 
         vx_image img2, 
         vx_image output
     )
 {
     vx_uint32 y, x, width = 0, height = 0;
-    vx_float32 scale = 0.0f;
     void *dst_base = NULL;
     void *src_base[2] = { NULL, NULL };
     vx_imagepatch_addressing_t dst_addr, src_addr[2];
@@ -50,14 +49,10 @@ int HafCpu_WeightedAverage_U8_U8U8
     status = vxGetValidRegionImage(img1, &rect);
     status |= vxMapImagePatch(img1, &rect, 0, &src_map_id[0], &src_addr[0], (void **)&src_base[0],
                               VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
-    status |= vxCopyScalar(alpha, &scale, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    printf("4haf status is %d\n", status);
     status |= vxMapImagePatch(img2, &rect, 0, &src_map_id[1], &src_addr[1], (void **)&src_base[1],
                               VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
-    printf("5haf status is %d\n", status);
     status |= vxMapImagePatch(output, &rect, 0, &dst_map_id, &dst_addr, (void **)&dst_base,
                               VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
-    printf("6haf status is %d\n", status);
     width = src_addr[0].dim_x;
     height = src_addr[0].dim_y;
     for (y = 0; y < height; y++)
@@ -69,16 +64,13 @@ int HafCpu_WeightedAverage_U8_U8U8
             void *dstp = vxFormatImagePatchAddress2d(dst_base, x, y, &dst_addr);
             vx_int32 src0 = *(vx_uint8 *)src0p;
             vx_int32 src1 = *(vx_uint8 *)src1p;
-            vx_int32 result = (vx_int32)((1 - scale) * (vx_float32)src1 + scale * (vx_float32)src0);
+            vx_int32 result = (vx_int32)((1 - alpha) * (vx_float32)src1 + alpha * (vx_float32)src0);
             *(vx_uint8 *)dstp = (vx_uint8)result;
         }
     }
     status |= vxUnmapImagePatch(img1, src_map_id[0]);
-    printf("7haf status is %d\n", status);
     status |= vxUnmapImagePatch(img2, src_map_id[1]);
-    printf("8haf status is %d\n", status);
     status |= vxUnmapImagePatch(output, dst_map_id);
-    printf("9haf status is %d\n", status);
     return status;
 }
 

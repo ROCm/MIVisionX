@@ -1812,7 +1812,6 @@ int agoDramaDivideWeightedAverageNode(AgoNodeList * nodeList, AgoNode * anode)
 	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_SCALAR);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_IMAGE);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[3], VX_TYPE_IMAGE);
-	printf("the param value is %f\n", anode->paramList[2]->u.scalar.u.f);
 	// // save parameters
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
 	anode->paramList[0] = paramList[3];

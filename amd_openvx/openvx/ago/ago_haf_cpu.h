@@ -3025,7 +3025,7 @@ int HafCpu_FastAtan2_Canny
 int HafCpu_WeightedAverage_U8_U8U8
 (
     vx_image img1, 
-    vx_scalar alpha, 
+    vx_float32 alpha, 
     vx_image img2, 
     vx_image output
 );

@@ -313,80 +313,86 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidContext(context)) {
 		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			CAgoLock lock(context->cs);
-			switch (attribute)
-			{
-			case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
-				if (size == sizeof(vx_border_mode_t)) {
-					vx_border_mode_t immediate_border_mode = *(vx_border_mode_t *)ptr;
-					if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_CONSTANT || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE) {
-						context->immediate_border_mode = immediate_border_mode;
-						if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE)
-							memset(&context->immediate_border_mode.constant_value, 0, sizeof(context->immediate_border_mode.constant_value));
-						status = VX_SUCCESS;
+		CAgoLock lock(context->cs);
+		switch (attribute)
+		{
+		case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
+			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+			if (size == sizeof(vx_border_mode_t)) {
+				vx_border_mode_t immediate_border_mode = *(vx_border_mode_t *)ptr;
+				if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_CONSTANT || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE) {
+					context->immediate_border_mode = immediate_border_mode;
+					if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE)
+						memset(&context->immediate_border_mode.constant_value, 0, sizeof(context->immediate_border_mode.constant_value));
+					status = VX_SUCCESS;
+				}
+				else
+					status = VX_ERROR_INVALID_VALUE;
+			}
+			break;
+		case VX_CONTEXT_ATTRIBUTE_AMD_SET_TEXT_MACRO:
+			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+			if (size == sizeof(AgoContextTextMacroInfo)) {
+				status = VX_SUCCESS;
+				AgoContextTextMacroInfo * info = (AgoContextTextMacroInfo *)ptr;
+				for (auto it = context->macros.begin(); it != context->macros.end(); ++it) {
+					if (!strcmp(it->name, info->macroName)) {
+						status = VX_FAILURE;
+						agoAddLogEntry(&context->ref, status, "ERROR: vxSetContextAttribute: macro already exists: %s\n", info->macroName);
+						break;
 					}
 				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_AMD_SET_TEXT_MACRO:
-				if (size == sizeof(AgoContextTextMacroInfo)) {
-					status = VX_SUCCESS;
-					AgoContextTextMacroInfo * info = (AgoContextTextMacroInfo *)ptr;
-					for (auto it = context->macros.begin(); it != context->macros.end(); ++it) {
-						if (!strcmp(it->name, info->macroName)) {
-							status = VX_FAILURE;
-							agoAddLogEntry(&context->ref, status, "ERROR: vxSetContextAttribute: macro already exists: %s\n", info->macroName);
-							break;
-						}
-					}
-					if (status == VX_SUCCESS) {
-						MacroData macro;
-						macro.text = macro.text_allocated = (char *)calloc(1, strlen(info->text) + 1);
-						if (!macro.text) {
-							status = VX_ERROR_NO_MEMORY;
-						}
-						else {
-							strncpy(macro.name, info->macroName, sizeof(macro.name) - 1);
-							strcpy(macro.text, info->text);
-							context->macros.push_back(macro);
-						}
-					}
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_AMD_SET_MERGE_RULE:
-				if (size == sizeof(AgoNodeMergeRule)) {
-					status = VX_SUCCESS;
-					context->merge_rules.push_back(*(AgoNodeMergeRule *)ptr);
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY:
-				if (size == sizeof(AgoTargetAffinityInfo_)) {
-					status = VX_SUCCESS;
-					context->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
-				}
-				break;
-#if ENABLE_OPENCL
-			case VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT:
-				if (size == sizeof(cl_context)) {
-					if (!context->opencl_context) {
-						status = agoGpuOclCreateContext(context, *(cl_context *)ptr);
+				if (status == VX_SUCCESS) {
+					MacroData macro;
+					macro.text = macro.text_allocated = (char *)calloc(1, strlen(info->text) + 1);
+					if (!macro.text) {
+						status = VX_ERROR_NO_MEMORY;
 					}
 					else {
-						status = VX_FAILURE;
+						strncpy(macro.name, info->macroName, sizeof(macro.name) - 1);
+						strcpy(macro.text, info->text);
+						context->macros.push_back(macro);
 					}
 				}
-				break;
-			case VX_CONTEXT_CL_QUEUE_PROPERTIES:
-				if (size == sizeof(cl_command_queue_properties)) {
-					context->opencl_cmdq_properties = *(cl_command_queue_properties *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-#endif
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
 			}
+			break;
+		case VX_CONTEXT_ATTRIBUTE_AMD_SET_MERGE_RULE:
+			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+			if (size == sizeof(AgoNodeMergeRule)) {
+				status = VX_SUCCESS;
+				context->merge_rules.push_back(*(AgoNodeMergeRule *)ptr);
+			}
+			break;
+		case VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY:
+			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+			if (size == sizeof(AgoTargetAffinityInfo_)) {
+				status = VX_SUCCESS;
+				context->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
+			}
+			break;
+#if ENABLE_OPENCL
+		case VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT:
+			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+			if (size == sizeof(cl_context)) {
+				if (!context->opencl_context) {
+					status = agoGpuOclCreateContext(context, *(cl_context *)ptr);
+				}
+				else {
+					status = VX_FAILURE;
+				}
+			}
+			break;
+		case VX_CONTEXT_CL_QUEUE_PROPERTIES:
+			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+			if (size == sizeof(cl_command_queue_properties)) {
+				context->opencl_cmdq_properties = *(cl_command_queue_properties *)ptr;
+				status = VX_SUCCESS;
+			}
+			break;
+#endif
+		default:
+			status = VX_ERROR_NOT_SUPPORTED;
+			break;
 		}
 	}
 	return status;

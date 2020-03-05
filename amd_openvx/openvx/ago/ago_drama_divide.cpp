@@ -1824,13 +1824,14 @@ int agoDramaDivideWeightedAverageNode(AgoNodeList * nodeList, AgoNode * anode)
 	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_SCALAR);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_IMAGE);
 	SANITY_CHECK_DATA_TYPE(anode->paramList[3], VX_TYPE_IMAGE);
-	// save parameters
+	// // save parameters
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
 	anode->paramList[0] = paramList[3];
 	anode->paramList[1] = paramList[0];
 	anode->paramList[2] = paramList[1];
 	anode->paramList[3] = paramList[2];
 	anode->paramCount = 4;
+	// TBD: use amd optimized kernel
 	vx_enum new_kernel_id = VX_KERNEL_AMD_WEIGHTED_AVERAGE_U8_U8_U8;
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }

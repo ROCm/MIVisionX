@@ -511,7 +511,6 @@ void agoOptimizeDramaSortGraphHierarchy(AgoGraph * graph)
 int agoOptimizeDrama(AgoGraph * agraph)
 {
 	// get optimization level requested by user
-
 #if ENABLE_DEBUG_MESSAGES
 	agoWriteGraph(agraph, NULL, 0, stdout, "input-to-drama");
 #endif

@@ -1190,7 +1190,6 @@ vx_status agoVerifyNode(AgoNode * node)
 	AgoGraph * graph = (AgoGraph *)node->ref.scope;
 	AgoKernel * kernel = node->akernel;
 	vx_status status = VX_SUCCESS;
-
 	// check if node has required arguments and initialize data required for further graph processing
 	node->hierarchical_level = 0;
 	for (vx_uint32 arg = 0; arg < AGO_MAX_PARAMS; arg++) {

@@ -191,6 +191,27 @@ int HafCpu_Threshold_U1_U8_Range
 		vx_uint8      lower,
 		vx_uint8      upper
 	);
+int HafCpu_Threshold_U8_S16_Binary
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      threshold
+	);
+int HafCpu_Threshold_U8_S16_Range
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      lower,
+		vx_uint8      upper
+	);
 int HafCpu_ThresholdNot_U8_U8_Binary
 	(
 		vx_uint32     dstWidth,
@@ -223,6 +244,27 @@ int HafCpu_ThresholdNot_U1_U8_Binary
 		vx_uint8      threshold
 	);
 int HafCpu_ThresholdNot_U1_U8_Range
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      lower,
+		vx_uint8      upper
+	);
+int HafCpu_ThresholdNot_U8_S16_Binary
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      threshold
+	);
+int HafCpu_ThresholdNot_U8_S16_Range
 	(
 		vx_uint32     dstWidth,
 		vx_uint32     dstHeight,
@@ -2698,6 +2740,15 @@ int HafCpu_HistogramFixedBins_DATA_U8
 		vx_uint32     srcImageStrideInBytes
 	);
 int HafCpu_MeanStdDev_DATA_U8
+	(
+		vx_float32  * pSum,
+		vx_float32  * pSumOfSquared,
+		vx_uint32     srcWidth,
+		vx_uint32     srcHeight,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
+int HafCpu_MeanStdDev_DATA_U1
 	(
 		vx_float32  * pSum,
 		vx_float32  * pSumOfSquared,

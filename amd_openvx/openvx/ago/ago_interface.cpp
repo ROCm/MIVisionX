@@ -137,7 +137,7 @@ AgoGraph * agoCreateGraph(AgoContext * acontext)
 #endif
 #endif
 	}
-
+	agraph->state = VX_GRAPH_STATE_UNVERIFIED;
 	return (AgoGraph *)agraph;
 }
 
@@ -1981,7 +1981,7 @@ int agoExecuteGraph(AgoGraph * graph)
 	else if (!graph->nodeList.head)
 		return VX_SUCCESS;
 	int status = VX_SUCCESS;
-
+	graph->state = VX_GRAPH_STATE_RUNNING;
 	agoPerfProfileEntry(graph, ago_profile_type_exec_begin, &graph->ref);
 	agoPerfCaptureStart(&graph->perf);
 
@@ -2224,6 +2224,10 @@ int agoExecuteGraph(AgoGraph * graph)
 	agoPerfCaptureStop(&graph->perf);
 	agoPerfProfileEntry(graph, ago_profile_type_exec_end, &graph->ref);
 	graph->execFrameCount++;
+	if (status == VX_SUCCESS)
+        graph->state = VX_GRAPH_STATE_COMPLETED;
+    else
+        graph->state = VX_GRAPH_STATE_ABANDONED;
 	return status;
 }
 
@@ -2254,6 +2258,16 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
 				break;
 			case VX_DIRECTIVE_DISABLE_LOGGING:
 				reference->enable_logging = false;
+				break;
+			case VX_DIRECTIVE_ENABLE_PERFORMANCE:
+				if (context) reference->enable_perf = true;
+				else
+					status = VX_ERROR_NOT_SUPPORTED;
+				break;
+			case VX_DIRECTIVE_DISABLE_PERFORMANCE:
+				if (context) reference->enable_perf = false;
+				else
+					status = VX_ERROR_NOT_SUPPORTED;
 				break;
 			case VX_DIRECTIVE_AMD_READ_ONLY:
 				if (reference->type == VX_TYPE_CONVOLUTION || reference->type == VX_TYPE_MATRIX) {
@@ -2474,7 +2488,7 @@ int agoWaitGraph(AgoGraph * graph)
 {
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidGraph(graph)) {
-		status = VX_SUCCESS;
+		status = VX_FAILURE;
 		graph->threadWaitCount++;
 		if (graph->hThread) {
 			while (graph->threadExecuteCount != graph->threadScheduleCount) {
@@ -2484,9 +2498,7 @@ int agoWaitGraph(AgoGraph * graph)
 					break;
 				}
 			}
-		}
-		if (status == VX_SUCCESS) {
-			status = graph->status;
+			status = VX_SUCCESS;
 		}
 	}
 	return status;

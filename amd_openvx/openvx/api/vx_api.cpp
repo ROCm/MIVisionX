@@ -468,6 +468,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxDirective(vx_reference reference, vx_enum d
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetStatus(vx_reference reference)
 {
+	if(reference == NULL)
+		return VX_ERROR_NO_RESOURCES;
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidReference(reference)) {
 		status = reference->status;
@@ -4124,6 +4126,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
 					status = VX_SUCCESS;
 				}
 				break;
+			case VX_REFERENCE_NAME:			
+				if (size == sizeof(vx_char*)) {
+					AgoData * data = (AgoData *)ref;
+					strncpy((char *)ptr, data->name.c_str(), size);
+					status = VX_SUCCESS;
+				}
+				break;
 			default:
 				status = VX_ERROR_NOT_SUPPORTED;
 				break;
@@ -4257,9 +4266,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxRetainReference(vx_reference ref)
 VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx_char *name)
 {
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(ref) && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || 
+	if (agoIsValidReference(ref) /*&& ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || 
 		(ref->type == VX_TYPE_TENSOR) ||
-		(ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)))
+		(ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END))*/)
 	{
 		AgoData * data = (AgoData *)ref;
 		data->name = name;

@@ -2488,7 +2488,7 @@ int agoWaitGraph(AgoGraph * graph)
 {
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidGraph(graph)) {
-		status = VX_SUCCESS;
+		status = VX_FAILURE;
 		graph->threadWaitCount++;
 		if (graph->hThread) {
 			while (graph->threadExecuteCount != graph->threadScheduleCount) {
@@ -2498,9 +2498,7 @@ int agoWaitGraph(AgoGraph * graph)
 					break;
 				}
 			}
-		}
-		if (status == VX_SUCCESS) {
-			status = graph->status;
+			status = VX_SUCCESS;
 		}
 	}
 	return status;

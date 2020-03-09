@@ -114,6 +114,7 @@ THE SOFTWARE.
 #define ATYPE_IRSI                             { VX_TYPE_IMAGE, VX_TYPE_REMAP, VX_TYPE_SCALAR, VX_TYPE_IMAGE }
 #define ATYPE_IIIS                             { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_SCALAR }
 #define ATYPE_SISI                             { VX_TYPE_SCALAR, VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_IMAGE }
+#define ATYPE_SIMI                             { VX_TYPE_SCALAR, VX_TYPE_IMAGE, VX_TYPE_MATRIX, VX_TYPE_IMAGE }
 #define ATYPE_AI                               { VX_TYPE_ARRAY, VX_TYPE_IMAGE }
 #define ATYPE_AIS                              { VX_TYPE_ARRAY, VX_TYPE_IMAGE, VX_TYPE_SCALAR }
 #define ATYPE_ASIS                             { VX_TYPE_ARRAY, VX_TYPE_SCALAR, VX_TYPE_IMAGE, VX_TYPE_SCALAR }
@@ -223,7 +224,7 @@ static struct {
 	OVX_KERNEL_ENTRY( VX_KERNEL_COPY                  , Copy, "copy",                              		AIN_AOUT,             ATYPE_RR           , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_SELECT                , Select, "select",                          		AINx3_AOUT,           ATYPE_SRRR         , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_WEIGHTED_AVERAGE      , WeightedAverage, "weightedaverage",        		AINx3_AOUT,		      ATYPE_ISII         , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_NON_LINEAR_FILTER     , NonLinearFilter, "non_linear_filter",      		AINx3_AOUT,	     	  ATYPE_SISI         , false ),	
+	OVX_KERNEL_ENTRY( VX_KERNEL_NON_LINEAR_FILTER     , NonLinearFilter, "non_linear_filter",      		AINx3_AOUT,	     	  ATYPE_SIMI         , false ),	
 	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_PYRAMID     , LaplacianPyramid, "laplacian_pyramid",     		AINx2_AOUT,	     	  ATYPE_IPI        	 , false ),	
 	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_RECONSTRUCT , LaplacianReconstruct, "laplacian_reconstruct",  AINx2_AOUT,	     	  ATYPE_PII        	 , false ),	
 	// AMD low-level kernel primitives
@@ -511,7 +512,7 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COPY_DATA_DATA                                          , 1, 1, Copy_DATA_DATA, AOUT_AIN,                                     ATYPE_RR                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SELECT_DATA_DATA_DATA                                   , 1, 1, Select_DATA_DATA_DATA, AOUT_AIN,                              ATYPE_RSRR              , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_WEIGHTED_AVERAGE_U8_U8_U8                               , 1, 0, WeightedAverage_U8_U8_U8, AOUT_AINx3,                         ATYPE_IISI              , KOP_UNKNOWN   , false ),
-	// AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA                        , 1, 1, NonLinearFilter_DATA_DATA_DATA, AOUT_AINx3,                   ATYPE_IMIS              , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA                        , 1, 1, NonLinearFilter_DATA_DATA_DATA, AOUT_AINx3,                   ATYPE_IMIS              , KOP_UNKNOWN   , false ),
 	// AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA                        , 1, 1, LaplacianPyramid_DATA_DATA_DATA, AOUT_AINx3,                  ATYPE_IPI               , KOP_UNKNOWN   , false ),
 	// AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_DATA_DATA_DATA                    , 1, 1, LaplacianReconstruct_DATA_DATA_DATA, AOUT_AINx3,              ATYPE_IIP               , KOP_UNKNOWN   , false ),
 #undef AGO_KERNEL_ENTRY

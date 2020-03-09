@@ -395,7 +395,6 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 	// (i.e., nodes with hierarchical_level = 1 for all of its inputs)
 	////////////////////////////////////////////////
 	vx_uint32 num_nodes_marked = 0;
-	vx_uint32 num_head_nodes = 0;
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next)
 	{
 		AgoKernel * kernel = node->akernel;
@@ -408,7 +407,6 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 		}
 		if (is_head_node) {
 			// mark that node is a head node
-			num_head_nodes++;
 			node->hierarchical_level = 1;
 			num_nodes_marked++;
 #if SHOW_DEBUG_HIERARCHICAL_LEVELS
@@ -422,11 +420,7 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 			}
 		}
 	}
-	if(num_head_nodes == 0){
-		vx_status status = VX_ERROR_INVALID_GRAPH;
-		vxAddLogEntry(&graph->ref, status, "ERROR: vxVerifyGraph: invalid graph: No head. Possible cycles? [%d|%d]\n", num_nodes_marked, graph->nodeList.count);
-		return status;
-	}
+
 	////////////////////////////////////////////////
 	// calculate hierarchical_level for rest of the nodes
 	////////////////////////////////////////////////

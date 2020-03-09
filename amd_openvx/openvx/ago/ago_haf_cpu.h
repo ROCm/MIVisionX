@@ -3029,4 +3029,13 @@ int HafCpu_WeightedAverage_U8_U8U8
     vx_image img2, 
     vx_image output
 );
+
+int HafCpu_NonLinearFilter_DATA_DATADATA
+(
+	vx_int32 function, 
+	vx_image src, 
+	vx_matrix mask, 
+	vx_image dst, 
+	vx_border_t *border
+);
 #endif // __ago_haf_cpu_h__

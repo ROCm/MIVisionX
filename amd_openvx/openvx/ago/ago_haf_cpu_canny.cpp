@@ -76,6 +76,7 @@ int HafCpu_CannySobel_U16_U8_3x3_L1NORM
 		{
 			vx_int16 Gx = (vx_int16)srow0[x + 1] - (vx_int16)srow0[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow2[x - 1] + 2 * ((vx_int16)srow1[x + 1] - (vx_int16)srow1[x - 1]);
 			vx_int16 Gy = (vx_int16)srow2[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow0[x - 1] - (vx_int16)srow0[x + 1] + 2 * ((vx_int16)srow2[x] - (vx_int16)srow0[x]);
+			Gy = ~Gy + 1;
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);
@@ -122,6 +123,7 @@ int HafCpu_CannySobel_U16_U8_3x3_L1NORM
 		{
 			vx_int16 Gx = (vx_int16)srow0[x + 1] - (vx_int16)srow0[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow2[x - 1] + 2 * ((vx_int16)srow1[x + 1] - (vx_int16)srow1[x - 1]);
 			vx_int16 Gy = (vx_int16)srow2[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow0[x - 1] - (vx_int16)srow0[x + 1] + 2 * ((vx_int16)srow2[x] - (vx_int16)srow0[x]);
+			Gy = ~Gy + 1;
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);
@@ -184,7 +186,8 @@ int HafCpu_CannySobel_U16_U8_5x5_L1NORM
 			vx_int16 Gy = (vx_int16)srow4[x - 2] + (4 * (vx_int16)srow4[x - 1]) + (6 * (vx_int16)srow4[x]) + (4 * (vx_int16)srow4[x + 1]) + (vx_int16)srow4[x + 2]
 				+ 2 * ((vx_int16)srow3[x - 2] + (4 * (vx_int16)srow3[x - 1]) + (6 * (vx_int16)srow3[x]) + (4 * (vx_int16)srow3[x + 1]) + (vx_int16)srow3[x + 2])
 				- 2 * ((vx_int16)srow1[x - 2] + (4 * (vx_int16)srow1[x - 1]) + (6 * (vx_int16)srow1[x]) + (4 * (vx_int16)srow1[x + 1]) + (vx_int16)srow1[x + 2])
-				- (vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2];
+				- ((vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2]);
+			Gy = ~Gy + 1;
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);
@@ -252,7 +255,8 @@ int HafCpu_CannySobel_U16_U8_5x5_L1NORM
 			vx_int16 Gy = (vx_int16)srow4[x - 2] + (4 * (vx_int16)srow4[x - 1]) + (6 * (vx_int16)srow4[x]) + (4 * (vx_int16)srow4[x + 1]) + (vx_int16)srow4[x + 2]
 				+ 2 * ((vx_int16)srow3[x - 2] + (4 * (vx_int16)srow3[x - 1]) + (6 * (vx_int16)srow3[x]) + (4 * (vx_int16)srow3[x + 1]) + (vx_int16)srow3[x + 2])
 				- 2 * ((vx_int16)srow1[x - 2] + (4 * (vx_int16)srow1[x - 1]) + (6 * (vx_int16)srow1[x]) + (4 * (vx_int16)srow1[x + 1]) + (vx_int16)srow1[x + 2])
-				- (vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2];
+				- ((vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2]);
+			Gy = ~Gy + 1;
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);

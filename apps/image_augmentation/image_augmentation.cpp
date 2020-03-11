@@ -1,0 +1,244 @@
+/*
+MIT License
+
+Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+
+#include <iostream>
+#include <cstring>
+#include <chrono>
+#include <cstdio>
+
+#include <opencv2/opencv.hpp>
+#include <opencv/highgui.h>
+
+#include "rali_api.h"
+
+using namespace cv;
+
+#define DISPLAY
+using namespace std::chrono;
+
+
+int main(int argc, const char ** argv)
+{
+    // check command-line usage
+    const int MIN_ARG_COUNT = 2;
+    if(argc < MIN_ARG_COUNT) {
+        printf( "Usage: image_augmentation <image-dataset-folder> gpu=1/cpu=0 num_cpu_threads display-on-off augmentation_depth rgb-on-off decode_max_width decode_max_height \n" );
+        return -1;
+    }
+    int argIdx = 0;
+    const char * folderPath1 = argv[++argIdx];
+
+    bool display = 1;// Display the images
+    int aug_depth = 1;// how deep is the augmentation tree
+    int rgb = 1;// process color images
+    int decode_max_width = 0;
+    int decode_max_height = 0;
+    bool gpu = 1;
+    size_t num_threads = 1;
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        gpu = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        num_threads = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        display = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        aug_depth = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        rgb = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        decode_max_width = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        decode_max_height = atoi(argv[++argIdx]);
+
+
+    int inputBatchSize = 1;
+
+    std::cout << ">>> Running on " << (gpu?"GPU":"CPU") << std::endl;
+
+    RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24 : RaliImageColor::RALI_COLOR_U8;
+
+    auto handle = raliCreate(inputBatchSize, gpu?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
+
+    if(raliGetStatus(handle) != RALI_OK)
+    {
+        std::cout << "Could not create the Rali contex\n";
+        return -1;
+    }
+
+
+
+    /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
+
+    // Creating uniformly distributed random objects to override some of the default augmentation parameters
+    RaliFloatParam rand_crop_area = raliCreateFloatUniformRand( 0.3, 0.5 );
+    RaliIntParam color_temp_adj = raliCreateIntParameter(0);
+
+    // Creating a custom random object to set a limited number of values to randomize the rotation angle
+    const size_t num_values = 3;
+    float values[num_values] = {0,10,135};
+    double frequencies[num_values] = {1, 5, 5};
+
+    RaliFloatParam rand_angle =   raliCreateFloatRand( values , frequencies, num_values);
+
+
+    /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
+    RaliImage input1;
+
+    // The jpeg file loader can automatically select the best size to decode all images to that size
+    // User can alternatively set the size or change the policy that is used to automatically find the size
+    if(decode_max_height <= 0 || decode_max_width <= 0)
+        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false);
+    else
+        input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+
+    if(raliGetStatus(handle) != RALI_OK)
+    {
+        std::cout << "JPEG source could not initialize : "<<raliGetErrorMessage(handle) << std::endl;
+        return -1;
+    }
+
+
+    int resize_w = 112, resize_h = 112;
+
+    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, true);
+
+    RaliImage image1 = raliRain(handle, image0, false);
+
+    RaliImage image11 = raliFishEye(handle, image1, false);
+
+    raliRotate(handle, image11, true, rand_angle);
+
+
+    // Creating successive blur nodes to simulate a deep branch of augmentations
+    RaliImage image2 = raliCropResize(handle, image0, resize_w, resize_h, false, rand_crop_area);;
+    for(int i = 0 ; i < aug_depth; i++)
+    {
+        image2 = raliBlurFixed(handle, image2, 17.25, (i == (aug_depth -1)) ? true:false );
+    }
+
+
+    RaliImage image4 = raliColorTemp(handle, image0, false, color_temp_adj);
+
+    RaliImage image5 = raliWarpAffine(handle, image4, false);
+
+    RaliImage image6 = raliJitter(handle, image5, false);
+
+    raliVignette(handle, image6, true);
+
+
+
+    RaliImage image7 = raliPixelate(handle, image0, false);
+
+    RaliImage image8 = raliSnow(handle, image0, false);
+
+    RaliImage image9 = raliBlend(handle, image7, image8, false);
+
+    RaliImage image10 = raliLensCorrection(handle, image9, false);
+
+    raliExposure(handle, image10, true);
+
+
+    if(raliGetStatus(handle) != RALI_OK)
+    {
+        std::cout << "Error while adding the augmentation nodes " << std::endl;
+        auto err_msg = raliGetErrorMessage(handle);
+        std::cout << err_msg << std::endl;
+    }
+    // Calling the API to verify and build the augmentation graph
+    if(raliVerify(handle) != RALI_OK)
+    {
+        std::cout << "Could not verify the augmentation graph" << std::endl;
+        return -1;
+    }
+
+    std::cout << "Remaining images " << raliGetRemainingImages(handle) << std::endl;
+
+    std::cout << "Augmented copies count " << raliGetOutputImageCount(handle) << std::endl;
+
+
+    /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
+    int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
+    int w = raliGetOutputWidth(handle);
+    int p = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? 3 : 1);
+    const unsigned number_of_cols = 10;
+    auto cv_color_format = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? CV_8UC3 : CV_8UC1);
+    cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
+    cv::Mat mat_input(h, w, cv_color_format);
+    cv::Mat mat_color;
+    int col_counter = 0;
+    cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+    printf("Going to process images\n");
+
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    int color_temp_increment = 1;
+    while (raliGetRemainingImages(handle) > 0)
+    {
+        if(raliRun(handle) != 0)
+            break;
+
+        if(raliGetIntValue(color_temp_adj) <= -99 || raliGetIntValue(color_temp_adj)>=99)
+            color_temp_increment *= -1;
+
+        raliUpdateIntParameter(raliGetIntValue(color_temp_adj)+color_temp_increment, color_temp_adj);
+
+        raliCopyToOutput(handle, mat_input.data, h*w*p);
+
+        if(!display)
+            continue;
+
+        mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
+        if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
+        {
+            cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
+            cv::imshow("output",mat_color);
+        }
+        else
+        {
+            cv::imshow("output",mat_output);
+        }
+        cv::waitKey(1);
+        col_counter = (col_counter+1)%number_of_cols;
+    }
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    auto dur = duration_cast<microseconds>( t2 - t1 ).count();
+    auto rali_timing = raliGetTimingInfo(handle);
+    std::cout << "Load     time "<< rali_timing.load_time << std::endl;
+    std::cout << "Decode   time "<< rali_timing.decode_time << std::endl;
+    std::cout << "Process  time "<< rali_timing.process_time << std::endl;
+    std::cout << "Transfer time "<< rali_timing.transfer_time << std::endl;
+    std::cout << ">>>>> Total Elapsed Time " << dur/1000000 << " sec " << dur%1000000 << " us " << std::endl;
+    raliRelease(handle);
+    mat_input.release();
+    mat_output.release();
+    return 0;
+}

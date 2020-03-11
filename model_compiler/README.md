@@ -168,7 +168,7 @@ Generate OpenVX and test code that can be used dump and compare raw tensor data:
 % make
 % ./anntest
 
-Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
+Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]<--add ADD> <--multiply MULTIPLY>]
 
    <input-data-file>: is filename to initialize tensor
      .jpg or .png: decode and initialize for 3 channel tensors
@@ -182,8 +182,12 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
      <output-data-file> is filename for saving output tensor data
        '-' to ignore
        other: save raw tensor into the file
+       
+   <add>: input preprocessing factor [optional - default:[0,0,0]]
+   
+   <multiply>: input preprocessing factor [optional - default:[1,1,1]]
 
-% ./anntest ../weights.bin input.f32 output.f32,reference.f32,1e-6,1e-9
+% ./anntest ../weights.bin input.f32 output.f32,reference.f32,1e-6,1e-9 --add -2.1,-2.07,-1.8 --multiply 0.017,0.017,0.017
 ...
 ````
 
@@ -244,6 +248,14 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 % ./anntest ../weights.bin input-%04d.png output-%04d.png,reference.rgb,0.01
 ...
 ````
+
+Test code with preprocessing add / multiply values to normalize the input tensor. Some models(e.g. Inception v4) require input tensor to be normalized. You can pass the preprocessing values using --add & --multiply option.
+
+````
+% ./anntest ../weights.bin input.f32 output.f32 --add -2.1,-2.07,-1.8 --multiply 0.017,0.017,0.017
+...
+````
+
 ## Models & Operators currently supported
 ###  Models
 
@@ -260,8 +272,8 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Inception-V3||||			
 |Inception-V4|&#9745;|||			
 |MNIST|&#9745;||&#9745;|		
-|Mobilenet|||&#9745;|		
-|MobilenetV2|||&#9745;|		
+|Mobilenet||&#9745;|&#9745;|		
+|MobilenetV2|||&#9745;|
 |ResNet-18|||&#9745;|			
 |ResNet-34|||&#9745;|			
 |ResNet-50|&#9745;|&#9745;|&#9745;|			
@@ -288,17 +300,24 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Layers|Caffe|ONNX|NNEF|
 |-------|----|----|----|
 |Add||&#9745;|&#9745;|
+|Argmax||&#9745;|&#9745;|
 |AveragePool||&#9745;|&#9745;|
 |BatchNormalization|&#9745;|&#9745;|&#9745;|
+|Cast||&#9745;||
+|Clamp|||&#9745;|
+|Clip||&#9745;||
 |Concat|&#9745;|&#9745;|&#9745;|
 |Conv|&#9745;|&#9745;|&#9745;|
 |ConvTranspose|&#9745;|&#9745;|&#9745;|
-|Copy|||&#9745;|
+|Copy||&#9745;|&#9745;|
 |Crop|&#9745;|||
 |CropAndResize||||
 |Deconv|&#9745;|&#9745;|&#9745;|
+|DetectionOutput|&#9745;|||
+|Div||&#9745;|&#9745;|
 |Dropout||||
 |Eltwise|&#9745;|||
+|Exp||&#9745;|&#9745;|
 |Flatten|&#9745;|||
 |GEMM|&#9745;|&#9745;|&#9745;|
 |GlobalAveragePool||&#9745;|&#9745;|
@@ -306,25 +325,30 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 |Interp|&#9745;|||
 |LeakyRelu||&#9745;|&#9745;|
 |Linear|||&#9745;|
+|Log||&#9745;|&#9745;|
 |LRN|&#9745;|&#9745;|&#9745;|
-|Matmul|||&#9745;|
+|Matmul||&#9745;|&#9745;|
+|Max||&#9745;|&#9745;|
 |MaxPool||&#9745;|&#9745;|
 |MeanReduce|||&#9745;|
+|Min||&#9745;|&#9745;|
 |Mul||&#9745;|&#9745;|
 |MulAdd||||
 |Permute|&#9745;||&#9745;|
 |PriorBox|&#9745;|||
 |Relu|&#9745;|&#9745;|&#9745;|
 |Reshape|&#9745;|&#9745;|&#9745;|
+|Shape||&#9745;||
+|Sigmoid||&#9745;|&#9745;|
 |Slice|||&#9745;|
 |Split|&#9745;|||
 |Softmax|&#9745;|&#9745;|&#9745;|
 |SoftmaxWithLoss|&#9745;|||
-|Squeeze||&#9745;|
+|Squeeze||&#9745;|&#9745;|
 |Sub||&#9745;|&#9745;|
 |Sum||&#9745;||
 |Transpose||&#9745;|&#9745;|
-|Unsqueeze|||&#9745;|
+|Unsqueeze||&#9745;|&#9745;|
 |Upsample|&#9745;||&#9745;|
 
 

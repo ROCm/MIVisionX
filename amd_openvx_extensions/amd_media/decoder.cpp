@@ -35,21 +35,19 @@ THE SOFTWARE.
 #include <stdlib.h>
 
 // OpenCL configuration
-#define DECODE_ENABLE_OPENCL       0         // enable use of OpenCL buffers
 #define DUMP_DECODED_FRAME         0
-#define ENABLE_SCALING_WITH_DECODING    0
 
 #if DUMP_DECODED_FRAME
 FILE *fpIn;
 #endif
 
-#if DECODE_ENABLE_OPENCL
+//#if DECODE_ENABLE_OPENCL
 #if __APPLE__
 #include <opencl.h>
 #else
 #include <CL/cl.h>
 #endif
-#endif
+//#endif
 
 #define DECODE_BUFFER_POOL_SIZE    2  // number of buffers in decoder queue: keep it atleast 2
 
@@ -72,6 +70,8 @@ public:
 	vx_status Initialize();
 	vx_status ProcessFrame(vx_image output, vx_array aux_data);
     vx_status SetRepeatMode(vx_int32 bRepeat);
+    vx_status SetEnableUserBufferOpenCLMode(vx_bool bEnable);
+
 protected:
 	typedef enum { cmd_abort, cmd_decode } command;
 	void DecodeLoop(int mediaIndex);
@@ -90,14 +90,15 @@ private:
 	int height;
 	vx_df_image format;
 	int decoderImageHeight;
-    int clStride;
+    int clStride, clOffset;
     int offset;
     AVPixelFormat outputFormat, decoderFormat;
 	vx_uint8 * decodeBuffer[DECODE_BUFFER_POOL_SIZE];
-#if DECODE_ENABLE_OPENCL
+    vx_bool m_enableUserBufferOpenCL;
+//#if DECODE_ENABLE_OPENCL
 	cl_mem mem[DECODE_BUFFER_POOL_SIZE];
 	cl_command_queue cmdq;
-#endif
+//#endif
 	std::vector<std::string> inputMediaFileName;
     std::vector<int> useVaapi;
     std::vector<AVHWDeviceType> hwDeviceType;
@@ -115,7 +116,7 @@ private:
 	std::vector<std::thread *> thread;
 	std::vector<bool> eof;
 	std::vector<int> decodeFrameCount;
-	int outputFrameCount;
+    int outputFrameCount;
     std::vector<int> LoopDec;
 };
 
@@ -212,17 +213,13 @@ AVFrame * CLoomIoMediaDecoder::PopFrame(int mediaIndex)
 
 CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, const char inputMediaFiles_[], vx_uint32 width_, vx_uint32 height_, vx_df_image format_, vx_uint32 stride_, vx_uint32 offset_)
 	: node{ node_ }, inputMediaFiles(inputMediaFiles_), mediaCount{ static_cast<int>(mediaCount_) }, width{ static_cast<int>(width_) },
-	  height{ static_cast<int>(height_) }, format{ format_ }, stride{ static_cast<int>(stride_) }, offset{ static_cast<int>(offset_) },
+      height{ static_cast<int>(height_) }, format{ format_ }, clStride{ static_cast<int>(stride_) }, clOffset{ static_cast<int>(offset_) },
       decoderImageHeight{ static_cast<int>(height_ / ((mediaCount_ <= 1) ? 1 : mediaCount_)) }, outputFormat{ AV_PIX_FMT_UYVY422 }, outputFrameCount{ 0 },
       inputMediaFileName(mediaCount_), inputMediaFormatContext(mediaCount_), inputMediaFormat(mediaCount_),
       videoCodecContext(mediaCount_), conversionContext(mediaCount_), videoStreamIndex(mediaCount_),
 	  mutexCmd(mediaCount_), cvCmd(mediaCount_), queueCmd(mediaCount_), mutexAck(mediaCount_), cvAck(mediaCount_), queueAck(mediaCount_),
       thread(mediaCount_), eof(mediaCount_), decodeFrameCount(mediaCount_), useVaapi(mediaCount_), mutexFrame(mediaCount_), cvFrame(mediaCount_), queueFrames(mediaCount_), LoopDec(mediaCount_)
 {
-#if DECODE_ENABLE_OPENCL
-	memset(mem, 0, sizeof(mem));
-	cmdq = nullptr;
-#endif
 	memset(decodeBuffer, 0, sizeof(decodeBuffer));
     for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
         inputMediaFormat[mediaIndex] = NULL;
@@ -230,8 +227,11 @@ CLoomIoMediaDecoder::CLoomIoMediaDecoder(vx_node node_, vx_uint32 mediaCount_, c
         inputMediaFormatContext[mediaIndex] = NULL;
         LoopDec[mediaIndex] = 0;
     }
+    m_enableUserBufferOpenCL = false;   // use host buffers by default
+    memset(mem, 0, sizeof(mem));
+    cmdq = nullptr;
     // initialize freq inside GetTimeInMicroseconds()
-	GetTimeInMicroseconds();
+	GetTimeInMicroseconds();    
 #if DUMP_DECODED_FRAME
     fpIn = fopen("decoder_dump.yuv", "wb");
 #endif
@@ -253,13 +253,10 @@ CLoomIoMediaDecoder::~CLoomIoMediaDecoder()
 	}
 
 	// release buffers
-#if DECODE_ENABLE_OPENCL
-	if (cmdq) clReleaseCommandQueue(cmdq);
-#endif
-	for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-#if DECODE_ENABLE_OPENCL
-		if (mem[i]) clReleaseMemObject(mem[i]);
-#endif
+    if (m_enableUserBufferOpenCL && cmdq) clReleaseCommandQueue(cmdq);
+
+    for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
+        if (m_enableUserBufferOpenCL && mem[i]) clReleaseMemObject(mem[i]);
 		if (decodeBuffer[i]) aligned_free(decodeBuffer[i]);
 	}
 
@@ -284,6 +281,13 @@ vx_status CLoomIoMediaDecoder::SetRepeatMode(vx_int32 bRepeat)
     }
     return VX_SUCCESS;
 }
+
+vx_status CLoomIoMediaDecoder::SetEnableUserBufferOpenCLMode(vx_bool bEnable)
+{
+    m_enableUserBufferOpenCL = bEnable;
+    return VX_SUCCESS;
+}
+
 
 vx_status CLoomIoMediaDecoder::Initialize()
 {
@@ -476,36 +480,23 @@ vx_status CLoomIoMediaDecoder::Initialize()
 		vxAddLogEntry((vx_reference)node, VX_SUCCESS, "INFO: reading %dx%d into slice#%d from %s", width, decoderImageHeight, mediaIndex, mediaFileName);
 	}
 
-#if DECODE_ENABLE_OPENCL
+    if (m_enableUserBufferOpenCL) {
 	// allocate OpenCL decode buffers
-	cl_context context = nullptr;
-	ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
-	cl_device_id device_id = nullptr;
-	ERROR_CHECK_STATUS(clGetContextInfo(context, CL_CONTEXT_DEVICES, sizeof(device_id), &device_id, nullptr));
-#if defined(CL_VERSION_2_0)
-	cmdq = clCreateCommandQueueWithProperties(context, device_id, 0, nullptr);
-#else
-	cmdq = clCreateCommandQueue(context, device_id, 0, nullptr);
-#endif
-	ERROR_CHECK_NULLPTR(cmdq);
-	for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-		mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, offset + stride * height, nullptr, nullptr);
-		ERROR_CHECK_NULLPTR(mem[i]);
-	}
-#endif
-
-#if  ENABLE_SCALING_WITH_DECODING
-	// allocate and align buffer
-	for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
-        if (format == VX_DF_IMAGE_NV12) {
-            // allocate for Y and UV planes
-            decodeBuffer[i] = aligned_alloc(offset + (stride * height) + (stride*(height>>1)));
-        } else {
-            decodeBuffer[i] = aligned_alloc(offset + stride * height);
+        cl_context context = nullptr;
+        ERROR_CHECK_STATUS(vxQueryContext(vxGetContext((vx_reference)node), VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &context, sizeof(context)));
+        cl_device_id device_id = nullptr;
+        ERROR_CHECK_STATUS(clGetContextInfo(context, CL_CONTEXT_DEVICES, sizeof(device_id), &device_id, nullptr));
+    #if defined(CL_VERSION_2_0)
+        cmdq = clCreateCommandQueueWithProperties(context, device_id, 0, nullptr);
+    #else
+        cmdq = clCreateCommandQueue(context, device_id, 0, nullptr);
+    #endif
+        ERROR_CHECK_NULLPTR(cmdq);
+        for (int i = 0; i < DECODE_BUFFER_POOL_SIZE; i++) {
+            mem[i] = clCreateBuffer(context, CL_MEM_READ_WRITE, clOffset + clStride * height, nullptr, nullptr);
+            ERROR_CHECK_NULLPTR(mem[i]);
         }
-		ERROR_CHECK_NULLPTR(decodeBuffer[i]);
-	}
-#endif
+    }
 
 	// start decoder thread and wait until first frame is decoded
 	outputFrameCount = 0;
@@ -544,7 +535,6 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
 			return VX_ERROR_GRAPH_ABANDONED;
 		}
 	}
-
 	// set aux data
 	if (aux_data) {
 		// construct aux data
@@ -557,61 +547,60 @@ vx_status CLoomIoMediaDecoder::ProcessFrame(vx_image output, vx_array aux_data)
 		ERROR_CHECK_STATUS(vxTruncateArray(aux_data, 0));
 		ERROR_CHECK_STATUS(vxAddArrayItems(aux_data, sizeof(haux), &haux, sizeof(uint8_t)));
 	}
-#if DECODE_ENABLE_OPENCL
-    // set the output buffer
-    int bufId = outputFrameCount % DECODE_BUFFER_POOL_SIZE; outputFrameCount++;
-    ERROR_CHECK_STATUS(vxSetImageAttribute(output, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &mem[bufId], sizeof(cl_mem)));
-    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE, &clStride, sizeof(clStride)));
-    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET, &clOffset, sizeof(clOffset)));
-#else
-    for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
-        AVFrame *frame = PopFrame(mediaIndex);       // assuming only one stream to decode
-        if (conversionContext[mediaIndex] != NULL) {
-            vx_rectangle_t rect = { 0, (vx_uint32)(mediaIndex * decoderImageHeight), (vx_uint32)width, (vx_uint32)(mediaIndex * decoderImageHeight + decoderImageHeight) };
-            vx_map_id map_id, map_id1;
-            vx_imagepatch_addressing_t addr = {0};
-            uint8_t * ptr = nullptr;
+    if (m_enableUserBufferOpenCL) {
+        // set the openCL buffer pointer for output buffer
+        int bufId = outputFrameCount % DECODE_BUFFER_POOL_SIZE; outputFrameCount++;
+        ERROR_CHECK_STATUS(vxSetImageAttribute(output, VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &mem[bufId], sizeof(cl_mem)));
+    } else {
+        for (int mediaIndex = 0; mediaIndex < mediaCount; mediaIndex++) {
+            AVFrame *frame = PopFrame(mediaIndex);       // assuming only one stream to decode
+            if (conversionContext[mediaIndex] != NULL) {
+                vx_rectangle_t rect = { 0, (vx_uint32)(mediaIndex * decoderImageHeight), (vx_uint32)width, (vx_uint32)(mediaIndex * decoderImageHeight + decoderImageHeight) };
+                vx_map_id map_id, map_id1;
+                vx_imagepatch_addressing_t addr = {0};
+                uint8_t * ptr = nullptr;
 
-            uint8_t *dst_data[4] = {0};
-            int dst_linesize[4] = {0};
-            ERROR_CHECK_STATUS(vxMapImagePatch(output, &rect, 0, &map_id, &addr, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-            dst_data[0] = ptr;
-            dst_linesize[0] = addr.stride_y;
-            if (outputFormat == AV_PIX_FMT_NV12) {
-                uint8_t *ptr_uv = nullptr;
-                vx_imagepatch_addressing_t addr1 = {0};
-                ERROR_CHECK_STATUS(vxMapImagePatch(output, &rect, 1, &map_id1, &addr1, (void **)&ptr_uv, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-                dst_data[1] = ptr_uv;
-                dst_linesize[1]  = addr1.stride_y;
+                uint8_t *dst_data[4] = {0};
+                int dst_linesize[4] = {0};
+                ERROR_CHECK_STATUS(vxMapImagePatch(output, &rect, 0, &map_id, &addr, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+                dst_data[0] = ptr;
+                dst_linesize[0] = addr.stride_y;
+                if (outputFormat == AV_PIX_FMT_NV12) {
+                    uint8_t *ptr_uv = nullptr;
+                    vx_imagepatch_addressing_t addr1 = {0};
+                    ERROR_CHECK_STATUS(vxMapImagePatch(output, &rect, 1, &map_id1, &addr1, (void **)&ptr_uv, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+                    dst_data[1] = ptr_uv;
+                    dst_linesize[1]  = addr1.stride_y;
+                }
+                // do sws_scale
+                int ret = sws_scale(conversionContext[mediaIndex], frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize);
+                if (ret < decoderImageHeight) {
+                    fprintf(stderr, "Error in output image scaling using sws_scale\n");
+                    return VX_FAILURE;
+                }
+                #if DUMP_DECODED_FRAME
+                if (fpIn){
+                    fwrite(dst_data[0], 1, decoderImageHeight*dst_linesize[0], fpIn);
+                    if (outputFormat == AV_PIX_FMT_NV12)
+                        fwrite(dst_data[1], 1, (decoderImageHeight>>1)*dst_linesize[1], fpIn);
+                }
+                #endif
+                // commit image patch
+                ERROR_CHECK_STATUS(vxUnmapImagePatch(output, map_id));
+                if (outputFormat == AV_PIX_FMT_NV12) ERROR_CHECK_STATUS(vxUnmapImagePatch(output, map_id1));
+            } else {
+                // copy AV frame to output
+                vx_rectangle_t rect = { 0, (vx_uint32)(mediaIndex * decoderImageHeight), (vx_uint32)width, (vx_uint32)decoderImageHeight };
+                vx_rectangle_t rect1 = { 0, (vx_uint32)(mediaIndex * (decoderImageHeight>>1)), (vx_uint32)width, (vx_uint32)(decoderImageHeight) }; // UV
+                vx_imagepatch_addressing_t addr = { 0 };
+                addr.stride_x = stride / width;
+                addr.stride_y = stride;
+                ERROR_CHECK_STATUS(vxCopyImagePatch(output, &rect, 0, &addr, frame->data[0], VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+                ERROR_CHECK_STATUS(vxCopyImagePatch(output, &rect1, 1, &addr, frame->data[1], VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
             }
-            // do sws_scale
-            int ret = sws_scale(conversionContext[mediaIndex], frame->data, frame->linesize, 0, frame->height, dst_data, dst_linesize);
-            if (ret < decoderImageHeight) {
-                fprintf(stderr, "Error in output image scaling using sws_scale\n");
-                return VX_FAILURE;
-            }
-            #if DUMP_DECODED_FRAME
-            if (fpIn){
-                fwrite(dst_data[0], 1, decoderImageHeight*dst_linesize[0], fpIn);
-                if (outputFormat == AV_PIX_FMT_NV12)
-                    fwrite(dst_data[1], 1, (decoderImageHeight>>1)*dst_linesize[1], fpIn);
-            }
-            #endif
-            // commit image patch
-            ERROR_CHECK_STATUS(vxUnmapImagePatch(output, map_id));
-            if (outputFormat == AV_PIX_FMT_NV12) ERROR_CHECK_STATUS(vxUnmapImagePatch(output, map_id1));
-        } else {
-            // copy AV frame to output
-            vx_rectangle_t rect = { 0, (vx_uint32)(mediaIndex * decoderImageHeight), (vx_uint32)width, (vx_uint32)(mediaIndex * decoderImageHeight + decoderImageHeight) };
-            vx_imagepatch_addressing_t addr = { 0 };
-            addr.stride_x = stride / width;
-            addr.stride_y = stride;
-            ERROR_CHECK_STATUS(vxCopyImagePatch(output, &rect, 0, &addr, frame->data[0], VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
-            ERROR_CHECK_STATUS(vxCopyImagePatch(output, &rect, 1, &addr, frame->data[1], VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+            av_frame_free(&frame);
         }
-        av_frame_free(&frame);
     }
-#endif
     frame_num++;
     return VX_SUCCESS;
 }
@@ -694,18 +683,61 @@ void CLoomIoMediaDecoder::DecodeLoop(int mediaIndex)
                 tmp_frame = frame;
                 av_frame_free(&sw_frame);
             }
-            PushFrame(mediaIndex, tmp_frame);
-#if DECODE_ENABLE_OPENCL
-            // copy the buffer slice to OpenCL
-            cl_int err = clEnqueueWriteBuffer(cmdq, mem[bufId], CL_TRUE, offset + mediaIndex * decoderImageHeight * stride, decoderImageHeight * stride, decodedSlice, 0, nullptr, nullptr);
-            if (err < 0) {
-                vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
-                eof[mediaIndex] = true;
-                PushAck(mediaIndex, -1);
-                return;
+            if (m_enableUserBufferOpenCL) {
+            // do sw_scale for destination format
+                int bufId = decodeFrameCount[mediaIndex] % DECODE_BUFFER_POOL_SIZE;
+                if (conversionContext[mediaIndex] != NULL) {
+                    cl_int err;
+                    uint8_t * ptr = nullptr;
+                    int mapHeight = (outputFormat == AV_PIX_FMT_NV12)? (decoderImageHeight + (decoderImageHeight>>1)) : decoderImageHeight;
+                    void * mapped_ptr = (void *)clEnqueueMapBuffer(cmdq, mem[bufId], CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, clOffset + mediaIndex * mapHeight * clStride, mapHeight * clStride, 0, NULL, NULL, &err);
+                    if(err) {
+                        fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", err);
+                        continue;
+                    }
+                    uint8_t *dst_data[4] = {0};
+                    int dst_linesize[4] = {0};
+                    dst_data[0] = (uint8_t *)mapped_ptr;
+                    dst_linesize[0] = clStride;
+                    if (outputFormat == AV_PIX_FMT_NV12) {
+                        dst_data[1] = (uint8_t *)mapped_ptr + decoderImageHeight*clStride;
+                        dst_linesize[1]  = clStride;
+                    }
+                    // do sws_scale
+                    int ret = sws_scale(conversionContext[mediaIndex], tmp_frame->data, tmp_frame->linesize, 0, tmp_frame->height, dst_data, dst_linesize);
+                    if (ret < decoderImageHeight) {
+                        fprintf(stderr, "Error in output image scaling using sws_scale\n");
+                        continue;
+                    }
+                    #if DUMP_DECODED_FRAME
+                    if (fpIn){
+                        fwrite(dst_data[0], 1, decoderImageHeight*dst_linesize[0], fpIn);
+                        if (outputFormat == AV_PIX_FMT_NV12)
+                            fwrite(dst_data[1], 1, (decoderImageHeight>>1)*dst_linesize[1], fpIn);
+                    }
+                    #endif
+                    // commit image patch
+                    err = clEnqueueUnmapMemObject(cmdq, mem[bufId], mapped_ptr, 0, NULL, NULL);
+                    if(err) {
+                        fprintf(stderr,"map output for sw_scale: clEnqueueMapBuffer failed (%d)", err);
+                        continue;
+                    }
+                    err = clFinish(cmdq);
+                    if(err) {
+                        fprintf(stderr,"map output for sw_scale: clFinish failed (%d)",  err);
+                    }
+                } else {
+                    // copy AV frame to output
+                    cl_int err = clEnqueueWriteBuffer(cmdq, mem[bufId], CL_TRUE, clOffset + mediaIndex * decoderImageHeight * clStride, decoderImageHeight * clStride, tmp_frame->data, 0, nullptr, nullptr);
+                    if (err < 0) {
+                        vxAddLogEntry((vx_reference)node, VX_FAILURE, "ERROR: clEnqueueWriteBuffer(buf[%d], slice[%d]) failed (%d)\n", bufId, mediaIndex, err);
+                        continue;
+                    }
+                    clFinish(cmdq);
+                }
+            } else {
+                PushFrame(mediaIndex, tmp_frame);
             }
-            clFinish(cmdq);
-#endif
             // update decoded frame count and send ACK
             decodeFrameCount[mediaIndex]++;
             PushAck(mediaIndex, 0);
@@ -741,10 +773,12 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
 	ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_WIDTH, &width, sizeof(width)));
 	ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_HEIGHT, &height, sizeof(height)));
 	ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_FORMAT, &format, sizeof(format)));
-#if DECODE_ENABLE_OPENCL
-    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE, &stride, sizeof(stride)));
-    ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET, &offset, sizeof(offset)));
-#endif
+    vx_bool enableUserBufferOpenCL = false;
+    if (parameters[4]) {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferOpenCL, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE, &stride, sizeof(stride)));
+        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET, &offset, sizeof(offset)));
+    }
 
 	// create and initialize decoder
 	const char * s = inputMediaConfig;
@@ -764,7 +798,10 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
     if (parameters[3]){
         ERROR_CHECK_STATUS(decoder->SetRepeatMode(loop));
     }
-	ERROR_CHECK_STATUS(decoder->Initialize());
+    if (parameters[4]) {
+        ERROR_CHECK_STATUS(decoder->SetEnableUserBufferOpenCLMode(enableUserBufferOpenCL));
+    }
+    ERROR_CHECK_STATUS(decoder->Initialize());
 
 	return VX_SUCCESS;
 }
@@ -804,10 +841,12 @@ static vx_status VX_CALLBACK amd_media_decode_validate(vx_node node, const vx_re
 	ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_WIDTH, &width, sizeof(width)));
 	ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_HEIGHT, &height, sizeof(height)));
 	ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_FORMAT, &format, sizeof(format)));
-#if DECODE_ENABLE_OPENCL
-	vx_bool enableUserBufferOpenCL = vx_true_e;
-	ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL, &enableUserBufferOpenCL, sizeof(enableUserBufferOpenCL)));
-#endif
+    vx_bool enableUserBufferOpenCL = false;
+    if (parameters[4]) {
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferOpenCL, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL, &enableUserBufferOpenCL, sizeof(enableUserBufferOpenCL)));
+        printf("decoder validate:: set enableUserBufferOpenCL: %d\n", enableUserBufferOpenCL);
+    }
 
 	// check aux data parameter
 	if (parameters[2]) {
@@ -831,7 +870,7 @@ vx_status amd_media_decode_publish(vx_context context)
 {
 	// add kernel to the context with callbacks
     vx_kernel kernel = vxAddUserKernel(context, "com.amd.amd_media.decode", AMDOVX_KERNEL_AMD_MEDIA_DECODE,
-                            amd_media_decode_kernel, 4, amd_media_decode_validate,
+                            amd_media_decode_kernel, 5, amd_media_decode_validate,
                             amd_media_decode_initialize, amd_media_decode_deinitialize);
 	ERROR_CHECK_OBJECT(kernel);
 
@@ -840,6 +879,7 @@ vx_status amd_media_decode_publish(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED)); // output image
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_OPTIONAL)); // output auxiliary data (optional)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input repeat decoding at eof (optional)
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input: to set enableUserBufferOpenCL flag
 
 	// finalize and release kernel object
 	ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
@@ -848,23 +888,26 @@ vx_status amd_media_decode_publish(vx_context context)
 	return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode)
+VX_API_ENTRY vx_node VX_API_CALL amdMediaDecoderNode(vx_graph graph, const char *input_str, vx_image output, vx_array aux_data, vx_int32 loop_decode, vx_bool enable_opencl_output)
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_scalar s_input = vxCreateScalar(context, VX_TYPE_STRING_AMD, input_str);
         vx_scalar s_loop = vxCreateScalar(context, VX_TYPE_INT32, &loop_decode);
+        vx_scalar s_enable_cl_out = vxCreateScalar(context, VX_TYPE_BOOL, &enable_opencl_output);
         vx_reference params[] = {
             (vx_reference)s_input,
             (vx_reference)output,
             (vx_reference)aux_data,
             (vx_reference)s_loop,
+            (vx_reference)s_enable_cl_out,
         };
         if (vxGetStatus((vx_reference)s_input) == VX_SUCCESS) {
             node = createMediaNode(graph, "com.amd.amd_media.decode", params, sizeof(params) / sizeof(params[0])); // added node to graph
             vxReleaseScalar(&s_input);
             vxReleaseScalar(&s_loop);
+            vxReleaseScalar(&s_enable_cl_out);
         }
     }
     return node;

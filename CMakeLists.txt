@@ -20,12 +20,14 @@
 
 cmake_minimum_required (VERSION 2.8)
 project (MIVisionX)
-set(VERSION "1.3.1")
+set(VERSION "1.6.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_INSTALL_PREFIX /opt/rocm/mivisionx)
+
+set(ROCM_PATH /opt/rocm CACHE PATH "default ROCm installation path")
+set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "default MIVisionX installation path")
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -42,6 +44,7 @@ add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(apps)
 add_subdirectory(utilities)
+add_subdirectory(rali)
 
 install(DIRECTORY docs DESTINATION .)
 

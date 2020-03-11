@@ -7,11 +7,13 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Activation|vxActivationLayer|org.khronos.nn_extension.activation_layer |
 | Argmax|vxArgmaxLayerNode|com.amd.nn_extension.argmax_layer |
 | Batch Normalization|vxBatchNormalizationLayer|com.amd.nn_extension.batch_normalization_layer |
+| Cast|vxCastLayer|com.amd.nn_extension.cast_layer|
 | Concat|vxConcatLayer|com.amd.nn_extension.concat_layer |
 | Convolution|vxConvolutionLayer|org.khronos.nn_extension.convolution_layer |
 | Crop|vxCropLayer|com.amd.nn_extension.crop_layer |
 | CropAndResize|vxCropAndResizeLayer|com.amd.nn_extension.crop_and_resize_layer |
 | Deconvolution|vxDeconvolutionLayer|org.khronos.nn_extension.deconvolution_layer |
+| Detection Output|vxDetectionOutputLayer|com.amd.nn_extension.detection_output |
 | Fully Connected|vxFullyConnectedLayer|org.khronos.nn_extension.fully_connected_layer |
 | Local Response Normalization|vxNormalizationLayer|org.khronos.nn_extension.normalization_layer |
 | Permute|vxPermuteLayer|com.amd.nn_extension.permute_layer |
@@ -25,6 +27,11 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Tensor Convert Depth|vxTensorConvertDepthNode|org.khronos.openvx.tensor_convert_depth |
 | Tensor Convert from Image|vxConvertImageToTensorNode|com.amd.nn_extension.convert_image_to_tensor |
 | Tensor Convert to Image|vxConvertTensorToImageNode|com.amd.nn_extension.convert_tensor_to_image |
+| Tensor Exponential|vxTensorExpNode|com.amd.nn_extension.tensor_exp |
+| Tensor Log|vxTensorLogNode|com.amd.nn_extension.tensor_log |
+| Tensor Matrix Multiply|vxTensorMatrixMultiplyNode|org.khronos.openvx.tensor_matrix_multiply |
+| Tensor Max|vxTensorMaxNode|com.amd.nn_extension.tensor_max |
+| Tensor Min|vxTensorMinNode|com.amd.nn_extension.tensor_min |
 | Tensor Multiply|vxTensorMultiplyNode|org.khronos.openvx.tensor_multiply |
 | Tensor Subtract|vxTensorSubtractNode|org.khronos.openvx.tensor_subtract |
 | Upsample Nearest Neighborhood|vxUpsampleNearestLayer|com.amd.nn_extension.upsample_nearest_layer |

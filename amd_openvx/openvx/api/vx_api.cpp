@@ -2484,8 +2484,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxRemoveKernel(vx_kernel kernel)
 		status = VX_ERROR_INVALID_PARAMETERS;
 		// release if the kernel is not finalized and not a built-in kernel or user kernel with validate_f without external references
 		if (!kernel->finalized ||
-			(kernel->validate_f && kernel->external_kernel && (kernel->flags & AGO_KERNEL_FLAG_GROUP_USER) && 
-			 kernel->ref.internal_count < 2 && kernel->ref.external_count == 0))
+			(kernel->validate_f && kernel->external_kernel && (kernel->flags & AGO_KERNEL_FLAG_GROUP_USER) /*&& 
+			 kernel->ref.internal_count < 2 && kernel->ref.external_count == 0*/))
 		{
 			CAgoLock lock(kernel->ref.context->cs);
 			if (!agoReleaseKernel(kernel, true)) {
@@ -4130,6 +4130,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
 				if (size == sizeof(vx_char*)) {
 					AgoData * data = (AgoData *)ref;
 					strncpy((char *)ptr, data->name.c_str(), size);
+					//*(vx_char**)ptr = &data->name[0];
 					status = VX_SUCCESS;
 				}
 				break;
@@ -4266,12 +4267,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxRetainReference(vx_reference ref)
 VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx_char *name)
 {
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(ref) /*&& ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || 
+	if (agoIsValidReference(ref) && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || 
 		(ref->type == VX_TYPE_TENSOR) ||
-		(ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END))*/)
+		(ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)))
 	{
 		AgoData * data = (AgoData *)ref;
+		//printf("%s %s %lu\n", data->name.c_str(), name, strlen(name));
+		printf("before:::strlen(data name) = %lu\n", data->name.length());
+		//data->name.assign(name, strlen(name));
 		data->name = name;
+		//std::copy(name, name + strlen(name), std::back_inserter(data->name));
+		//strncpy((char *)data->name.c_str(), name, strnlen(name, VX_MAX_REFERENCE_NAME));
+		//data->name.assign("name", 4);
+		//sscanf(name, "%s", (char *)data->name.c_str());
+		printf("after:::strlen(data name) = %lu\n", data->name.length());
+		printf("after == %s\n", data->name.c_str());
+		
 		status = VX_SUCCESS;
 	}
 	return status;

@@ -4273,7 +4273,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx
 	{
 		AgoData * data = (AgoData *)ref;
 		//printf("%s %s %lu\n", data->name.c_str(), name, strlen(name));
-		printf("before:::strlen(data name) = %lu\n", data->name.length());
+		//printf("before:::strlen(data name) = %lu\n", data->name.length());
 		//data->name.assign(name, strlen(name));
 		data->name = name;
 		//std::copy(name, name + strlen(name), std::back_inserter(data->name));

@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.6"
+__version__     = "1.7"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -80,6 +80,7 @@ if(os.path.exists(deps_dir) and reinstall == 'yes'):
 
 # MIVisionX setup
 if(os.path.exists(deps_dir)):
+	os.system('(cd '+deps_dir+'; wget https://raw.githubusercontent.com/ARM-software/ComputeLibrary/master/include/half/half.hpp )')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'; sudo mv half.hpp /usr/local/include/ )')
 	os.system('sudo -v')

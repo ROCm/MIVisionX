@@ -20,14 +20,18 @@
 
 cmake_minimum_required (VERSION 2.8)
 project (MIVisionX)
-set(VERSION "1.6.0")
+set(VERSION "1.7.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "default ROCm installation path")
-set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "default MIVisionX installation path")
+set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
+
+# need to do this to avoid setting the default path to /usr/local
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -39,6 +43,7 @@ if(NOT WIN32)
   set(BoldBlue    "${Esc}[1;34m")
 endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

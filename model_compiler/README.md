@@ -307,6 +307,7 @@ Test code with preprocessing add / multiply values to normalize the input tensor
 |Clamp|||&#9745;|
 |Clip||&#9745;||
 |Concat|&#9745;|&#9745;|&#9745;|
+|Constant||&#9745;||
 |Conv|&#9745;|&#9745;|&#9745;|
 |ConvTranspose|&#9745;|&#9745;|&#9745;|
 |Copy||&#9745;|&#9745;|

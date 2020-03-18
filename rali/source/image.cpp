@@ -113,8 +113,11 @@ Image::Image(const ImageInfo& img_info):_info(img_info)
 
 int Image::create_virtual(vx_context context, vx_graph graph)
 {
-    if(vx_handle != 0)
-        return 0;
+    if(vx_handle)
+        return -1;
+
+    _context = context;
+
     // create a virtual image as the output image for this node
     vx_handle = vxCreateVirtualImage(graph, _info.width(), _info.height_batch(), VX_DF_IMAGE_VIRT);
     vx_status status;
@@ -127,6 +130,11 @@ int Image::create_virtual(vx_context context, vx_graph graph)
 
 int Image::create_from_handle(vx_context context, ImageBufferAllocation policy)
 {
+    if(vx_handle)
+        return -1;
+
+    _context = context;
+
     if(vx_handle != 0)
         return 0;
 
@@ -195,7 +203,13 @@ int Image::create_from_handle(vx_context context, ImageBufferAllocation policy)
     _info._data_size = size;
     return 0;
 }
-int Image::create(vx_context context) {
+int Image::create(vx_context context)
+{
+    if(vx_handle)
+        return -1;
+
+    _context = context;
+
     vx_status status;
     vx_df_image vx_color_format = interpret_color_fmt(_info._color_fmt);
     vx_handle = vxCreateImage(context, _info.width(), _info.height_batch(), vx_color_format);
@@ -258,11 +272,17 @@ void Image::set_names(const std::vector<std::string> names)
 {
     _info._image_names.push( names);
 }
-void Image::pop_name()
+void Image::pop_image_id()
 {
     if(_info._image_names.empty())
         return ;
     _info._image_names.pop();
+}
+
+void Image::clear_image_id_queue()
+{
+    while(!_info._image_names.empty())
+        _info._image_names.pop();
 }
 
 std::vector<std::string> Image::get_name()

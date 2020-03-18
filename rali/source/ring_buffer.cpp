@@ -4,35 +4,35 @@
 RingBuffer::RingBuffer(unsigned buffer_depth):
         BUFF_DEPTH(buffer_depth),
         _dev_sub_buffer(buffer_depth),
-        _host_master_buffers(BUFF_DEPTH),
-        _write_ptr(0),
-        _read_ptr(0),
-        _level(0)
+        _host_master_buffers(BUFF_DEPTH)
 {
-
+    reset();
 }
-void RingBuffer::wait_if_empty()
+void RingBuffer::block_if_empty()
 {
     std::unique_lock<std::mutex> lock(_lock);
     if(empty())
     { // if the current read buffer is being written wait on it
+        if(_dont_wait)
+            return;
         _wait_for_load.wait(lock);
     }
 }
 
-void RingBuffer:: wait_if_full()
+void RingBuffer:: block_if_full()
 {
     std::unique_lock<std::mutex> lock(_lock);
     // Write the whole buffer except for the last spot which is being read by the reader thread
     if(full())
     {
-        //LOG("Full\n")
+        if(_dont_wait)
+            return;
         _wait_for_unload.wait(lock);
     }
 }
 std::vector<void*> RingBuffer::get_read_buffers()
 {
-    wait_if_empty();
+    block_if_empty();
     if(_mem_type == RaliMemType::OCL)
         return _dev_sub_buffer[_read_ptr];
 
@@ -40,7 +40,7 @@ std::vector<void*> RingBuffer::get_read_buffers()
 }
 
 void *RingBuffer::get_host_master_read_buffer() {
-    wait_if_empty();
+    block_if_empty();
     if(_mem_type == RaliMemType::OCL)
         return nullptr;
 
@@ -50,7 +50,7 @@ void *RingBuffer::get_host_master_read_buffer() {
 
 std::vector<void*> RingBuffer::get_write_buffers()
 {
-    wait_if_full();
+    block_if_full();
     if(_mem_type == RaliMemType::OCL)
         return _dev_sub_buffer[_write_ptr];
 
@@ -58,7 +58,23 @@ std::vector<void*> RingBuffer::get_write_buffers()
 }
 
 
+void RingBuffer::cancel_reading()
+{
+    // Wake up the reader thread in case it's waiting for a load
+    _wait_for_load.notify_all();
+}
 
+void RingBuffer::cancel_all_future_waits()
+{
+    _dont_wait = true;
+    cancel_reading();
+    cancel_writing();
+}
+void RingBuffer::cancel_writing()
+{
+    // Wake up the writer thread in case it's waiting for an unload
+    _wait_for_unload.notify_all();
+}
 void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count)
 {
     _mem_type = mem_type;
@@ -120,6 +136,15 @@ void RingBuffer::pop()
         return;
     increment_read_ptr();
 }
+
+void RingBuffer::reset()
+{
+    _write_ptr = 0;
+    _read_ptr = 0;
+    _level = 0;
+    _dont_wait = false;
+}
+
 RingBuffer::~RingBuffer()
 {
     if(_mem_type!= RaliMemType::OCL)

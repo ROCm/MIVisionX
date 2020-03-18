@@ -104,11 +104,13 @@ struct Image
     Image() = delete;
     void* buffer() { return _mem_handle; }
     vx_image handle() { return vx_handle; }
+    vx_context context() { return _context; }
     unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
     void set_names(const std::vector<std::string> names);
     std::vector<std::string> get_name();
-    void pop_name();
+    void pop_image_id();
+    void clear_image_id_queue();
 
     //! Default destructor
     /*! Releases the OpenVX image */
@@ -124,7 +126,8 @@ struct Image
 
 private:
     bool _mem_internally_allocated = false;
-    vx_image vx_handle = 0;//!< The OpenVX image
+    vx_image vx_handle = nullptr;//!< The OpenVX image
     void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
+    vx_context _context = nullptr;
 };

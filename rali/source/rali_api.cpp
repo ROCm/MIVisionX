@@ -72,7 +72,9 @@ raliRun(RaliContext context)
 {
     try
     {
-        context->master_graph->run();
+        auto ret = context->master_graph->run();
+        if(ret != MasterGraph::Status::OK)
+            return RALI_RUNTIME_ERROR;
     }
     catch(const std::exception& e)
     {

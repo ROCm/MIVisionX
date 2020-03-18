@@ -15,23 +15,17 @@ public:
     std::vector<void*> get_read_buffers() ;
     void* get_host_master_read_buffer();
     std::vector<void*> get_write_buffers();
+    void reset();
     void pop();
     void push();
-    void cancel_reading()
-    {
-        // Wake up the reader thread in case it's waiting for a load
-        _wait_for_load.notify_one();
-    }
-
-    void cancel_writing()
-    {
-        // Wake up the writer thread in case it's waiting for an unload
-        _wait_for_unload.notify_one();
-    }
+    void cancel_reading();
+    void cancel_writing();
+    void cancel_all_future_waits();
     RaliMemType mem_type() { return _mem_type; }
+    void block_if_empty();
+    void block_if_full();
 private:
-    void wait_if_empty();
-    void wait_if_full();
+
     void increment_read_ptr();
     void increment_write_ptr();
     bool full();
@@ -45,7 +39,7 @@ private:
     std::vector<std::vector<void*>> _dev_sub_buffer;
     std::vector<std::vector<unsigned char>> _host_master_buffers;
     std::vector<std::vector<void*>> _host_sub_buffers;
-
+    bool _dont_wait = false;
     RaliMemType _mem_type;
     DeviceResources _dev;
     size_t _write_ptr;

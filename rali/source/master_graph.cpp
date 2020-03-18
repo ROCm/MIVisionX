@@ -90,11 +90,15 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 
         // loading OpenVX RPP modules
         if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)
-            THROW("Cannot load OpenVX augmentation extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
+            THROW("Cannot load vx_rpp extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
+        else
+            LOG("vx_rpp module loaded successfully")
 #ifdef RALI_VIDEO
         // loading video decoder modules
-        if ((status = vxLoadKernels(_context, "vx_media")) != VX_SUCCESS)
-            WRN("Cannot load AMD's OpenVX media extension, video decode functionality will not be available")
+        if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
+            WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
+        else
+            LOG("vx_amd_media module loaded")
 #endif
         if(_affinity == RaliAffinity::GPU)
             _device.init_ocl(_context);
@@ -109,16 +113,19 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 MasterGraph::Status
 MasterGraph::run()
 {
+    if(!_processing)
+        return MasterGraph::Status::NOT_RUNNING;
+
     if(_first_run)
     {
         _first_run = false;
     } else {
         _ring_buffer.pop(); // Pop previously stored output from the ring buffer
         for (auto &&loader_image : _loader_image)
-            loader_image->pop_name();
+            loader_image->pop_image_id();
     }
 
-    _ring_buffer.get_read_buffers();// make sure read buffers are ready, it'll wait here otherwise
+    _ring_buffer.block_if_empty();// make sure read buffers are ready, it'll wait here otherwise
     {
         std::unique_lock<std::mutex> lock(_count_lock);
         if (_in_process_count > 0)
@@ -192,7 +199,7 @@ Image *
 MasterGraph::create_image(const ImageInfo &info, bool is_output)
 {
     auto* output = new Image(info);
-
+    // if the image is not an output image, the image creation is deferred and later it'll be created as a virtual image
     if(is_output)
     {
         if (output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
@@ -200,7 +207,6 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
         _output_images.push_back(output);
     }
-
 
     return output;
 }
@@ -304,14 +310,26 @@ MasterGraph::deallocate_output_tensor()
 }
 
 MasterGraph::Status
-MasterGraph::reset_loaders()
+MasterGraph::reset()
 {
-
+    // resetting loader modules to start from the beginning of the media and clear their internal state/buffers
     for(auto& loader_module: _loader_modules)
         loader_module->reset();
 
-    _first_run = true;
+    // stop the internal processing thread so that the
+    _processing = false;
+    _ring_buffer.cancel_writing();
+    if(_output_thread.joinable())
+        _output_thread.join();
+    _ring_buffer.reset();
 
+    // remove all the old image id's queued up in the for the processed output images
+    for(auto& loader_image : _loader_image)
+        loader_image->clear_image_id_queue();
+
+    // restart processing of the images
+    _first_run = true;
+    start_processing();
     return Status::OK;
 }
 
@@ -616,56 +634,73 @@ MasterGraph::copy_output(unsigned char *out_ptr)
 
 void MasterGraph::output_routine()
 {
-    while(_processing)
+    try {
+        while (_processing)
+        {
+            if (internal_image_count() <= 0)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                continue;
+            }
+
+            _process_time.start();
+
+            {
+                std::unique_lock<std::mutex> lock(_count_lock);
+
+                // Swap handles on the input images, so that new image is loaded to be processed
+                for (auto &&loader_module: _loader_modules)
+                    if (loader_module->load_next() != LoaderModuleStatus::OK)
+                        THROW("Loader module failed to laod next batch of images")
+
+                _in_process_count++;
+            }
+
+            if (!_processing)
+                break;
+
+            auto write_buffers = _ring_buffer.get_write_buffers();
+
+            if (!_processing)
+                break;
+
+            // Swap handles on the output images, so that new processed image will be written to the a new buffer
+            for (size_t idx = 0; idx < _output_images.size(); idx++)
+                _output_images[idx]->swap_handle(write_buffers[idx]);
+
+            if (!_processing)
+                break;
+            update_node_parameters();
+            _graph->process();
+            _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
+            _process_time.end();
+        }
+    }
+    catch (const std::exception &e)
     {
-        if(internal_image_count() <= 0)
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            continue;
-        }
-
-
-        _process_time.start();
-        {
-            std::unique_lock<std::mutex> lock(_count_lock);
-
-            // Swap handles on the input images, so that new image is loaded to be processed
-            for (auto &&loader_module: _loader_modules)
-                if (loader_module->load_next() != LoaderModuleStatus::OK)
-                    THROW("Loader module failed to laod next batch of images")
-
-            _in_process_count++;
-        }
-
-        if (!_processing)
-            break;
-
-        auto write_buffers = _ring_buffer.get_write_buffers();
-
-        // Swap handles on the output images, so that new processed image will be written to the a new buffer
-        for (size_t idx = 0; idx < _output_images.size(); idx++)
-            _output_images[idx]->swap_handle(write_buffers[idx]);
-
-        if (!_processing)
-            break;
-        update_node_parameters();
-        _graph->process();
-        _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
-
-        _process_time.end();
+        ERR("Exception thrown in the process routine" + STR(e.what()) + STR("\n"));
+        std::cerr << "Process routine stopped because of an exception \n";
+        _processing = false;
+        _ring_buffer.cancel_all_future_waits();
     }
 }
 
 void MasterGraph::start_processing()
 {
-
     _processing = true;
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
+//  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds
+//  and needs tweaking the Linux security settings , can be turned on for experimentation
+#if 0
     struct sched_param params;
     params.sched_priority = sched_get_priority_max(SCHED_FIFO);
-    pthread_setschedparam(_output_thread.native_handle(), SCHED_FIFO, &params);
+    auto thread = _output_thread.native_handle();
+    auto ret = pthread_setschedparam(thread, SCHED_FIFO, &params);
+    if (ret != 0)
+        WRN("Unsuccessful in setting thread realtime priority for process thread err = "+STR(std::strerror(ret)))
+#endif
 #endif
 }
 

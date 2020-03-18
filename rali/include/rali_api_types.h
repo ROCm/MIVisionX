@@ -62,6 +62,12 @@ enum RaliImageSizeEvaluationPolicy
     RALI_USE_MOST_FREQUENT_SIZE = 2,
 };
 
+enum RaliDecodeDevice
+{
+    RALI_HW_DECODE = 0,
+    RALI_SW_DECODE = 1
+};
+
 enum RaliTensorLayout
 {
     RALI_NHWC = 0,

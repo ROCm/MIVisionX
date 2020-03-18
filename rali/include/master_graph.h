@@ -8,13 +8,16 @@
 #include "timing_debug.h"
 #include "node.h"
 #include "node_jpeg_file_source.h"
+#include "node_video_file_source.h"
+#include "video_loader_module.h"
+
 class MasterGraph
 {
 public:
-    enum class Status { OK = 0,  NOT_IMPLEMENTED };
+    enum class Status { OK = 0,  NOT_RUNNING = 1, NOT_IMPLEMENTED };
     MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads);
     ~MasterGraph();
-    Status reset_loaders();
+    Status reset();
     size_t remaining_images_count();
     MasterGraph::Status copy_output(unsigned char *out_ptr);
     MasterGraph::Status
@@ -108,3 +111,21 @@ template<> inline std::shared_ptr<JpegFileNode> MasterGraph::add_node(const std:
 
     return node;
 }
+
+#ifdef RALI_VIDEO
+/*
+ * Explicit specialization for VideoFileNode
+ */
+template<> inline std::shared_ptr<VideoFileNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+{
+    auto node = std::make_shared<VideoFileNode>(inputs,outputs);
+    _nodes.push_back(node);
+    auto loader = std::make_shared<VideoLoaderModule>(node);
+    _loader_modules.push_back(loader);
+    _root_nodes.push_back(node);
+    for(auto& output: outputs)
+        _image_map.insert(make_pair(output, node));
+
+    return node;
+}
+#endif

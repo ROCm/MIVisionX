@@ -18,6 +18,8 @@ public:
     void reset() override; // Resets the loader to load from the beginning of the media
     std::vector<long long unsigned> timing() override;
     LoaderModuleStatus start_loading();
+    LoaderModuleStatus set_cpu_affinity(cpu_set_t cpu_mask);
+    LoaderModuleStatus set_cpu_sched_policy(struct sched_param sched_policy);
     void stop() override;
 private:
     bool is_out_of_data();
@@ -27,20 +29,19 @@ private:
     LoaderModuleStatus load_routine();
     Image* _output_image;
     size_t _output_mem_size;
-    int _running;
+    bool _internal_thread_running;
     size_t _batch_size;
-    std::mutex _lock;
     std::mutex _names_buff_lock;
     std::thread _load_thread;
     RaliMemType _mem_type;
     std::queue<std::vector<std::string>> _circ_buff_names;//!< Stores the loaded images names (data is stored in the _circ_buff)
-    std::vector<std::string> _image_names;
+    std::vector<std::string> _image_names;//!< Name/ID of all the images in tha batch loaded most recently
     CircularBuffer _circ_buff;
     bool _is_initialized;
     bool _ready;
-    bool _loop;
+    bool _loop;//<! If true the reader will wrap around at the end of the media (files/images/...) and wouldn't stop
     const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
-    size_t _image_counter = 0;
-
+    size_t _image_counter = 0;//!< How many images have been loaded already
+    size_t _remaining_image_count;//!< How many images are there yet to be loaded
 };
 

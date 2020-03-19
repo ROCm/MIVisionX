@@ -137,7 +137,7 @@ AgoGraph * agoCreateGraph(AgoContext * acontext)
 #endif
 #endif
 	}
-
+	agraph->state = VX_GRAPH_STATE_UNVERIFIED;
 	return (AgoGraph *)agraph;
 }
 
@@ -1190,7 +1190,6 @@ vx_status agoVerifyNode(AgoNode * node)
 	AgoGraph * graph = (AgoGraph *)node->ref.scope;
 	AgoKernel * kernel = node->akernel;
 	vx_status status = VX_SUCCESS;
-
 	// check if node has required arguments and initialize data required for further graph processing
 	node->hierarchical_level = 0;
 	for (vx_uint32 arg = 0; arg < AGO_MAX_PARAMS; arg++) {
@@ -1462,6 +1461,38 @@ vx_status agoVerifyNode(AgoNode * node)
 					if (updated) {
 						data->isNotFullyConfigured = vx_true_e;
 						char desc[64]; sprintf(desc, "array-virtual:%u,%u", data->u.arr.itemtype, (vx_uint32)data->u.arr.capacity);
+						if (agoGetDataFromDescription(graph->ref.context, graph, data, desc)) {
+							agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoVerifyGraph: agoVerifyGraph update failed for %s\n", desc);
+							return -1;
+						}
+						data->isNotFullyConfigured = vx_false_e;
+					}
+				}
+				else if (meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+					bool updated = false;
+					if (data->isVirtual) {
+						// update itemtype if not specified
+						if (data->u.objarr.itemtype == VX_TYPE_INVALID) {
+							data->u.objarr.itemtype = meta->data.u.objarr.itemtype;
+							updated = true;
+						}
+						if (data->u.objarr.numitems == 0) {
+							data->u.objarr.numitems = meta->data.u.objarr.numitems;
+							updated = true;
+						}
+					}
+					// make sure that the data come from output validator matches with object
+					if (data->u.objarr.itemtype != meta->data.u.objarr.itemtype) {
+						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid object-array type for argument#%d\n", kernel->name, arg);
+						return VX_ERROR_INVALID_TYPE;
+					}
+					else if (!data->u.objarr.numitems || (meta->data.u.objarr.numitems && meta->data.u.objarr.numitems > data->u.objarr.numitems)) {
+						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_DIMENSION, "ERROR: agoVerifyGraph: kernel %s: invalid dimension for argument#%d\n", kernel->name, arg);
+						return VX_ERROR_INVALID_DIMENSION;
+					}
+					if (updated) {
+						data->isNotFullyConfigured = vx_true_e;
+						char desc[64]; sprintf(desc, "objectarray-virtual:%u", data->u.objarr.itemtype);
 						if (agoGetDataFromDescription(graph->ref.context, graph, data, desc)) {
 							agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoVerifyGraph: agoVerifyGraph update failed for %s\n", desc);
 							return -1;
@@ -1950,7 +1981,7 @@ int agoExecuteGraph(AgoGraph * graph)
 	else if (!graph->nodeList.head)
 		return VX_SUCCESS;
 	int status = VX_SUCCESS;
-
+	graph->state = VX_GRAPH_STATE_RUNNING;
 	agoPerfProfileEntry(graph, ago_profile_type_exec_begin, &graph->ref);
 	agoPerfCaptureStart(&graph->perf);
 
@@ -2193,6 +2224,10 @@ int agoExecuteGraph(AgoGraph * graph)
 	agoPerfCaptureStop(&graph->perf);
 	agoPerfProfileEntry(graph, ago_profile_type_exec_end, &graph->ref);
 	graph->execFrameCount++;
+	if (status == VX_SUCCESS)
+        graph->state = VX_GRAPH_STATE_COMPLETED;
+    else
+        graph->state = VX_GRAPH_STATE_ABANDONED;
 	return status;
 }
 
@@ -2223,6 +2258,16 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
 				break;
 			case VX_DIRECTIVE_DISABLE_LOGGING:
 				reference->enable_logging = false;
+				break;
+			case VX_DIRECTIVE_ENABLE_PERFORMANCE:
+				if (context) reference->enable_perf = true;
+				else
+					status = VX_ERROR_NOT_SUPPORTED;
+				break;
+			case VX_DIRECTIVE_DISABLE_PERFORMANCE:
+				if (context) reference->enable_perf = false;
+				else
+					status = VX_ERROR_NOT_SUPPORTED;
 				break;
 			case VX_DIRECTIVE_AMD_READ_ONLY:
 				if (reference->type == VX_TYPE_CONVOLUTION || reference->type == VX_TYPE_MATRIX) {
@@ -2454,9 +2499,10 @@ int agoWaitGraph(AgoGraph * graph)
 				}
 			}
 		}
-		if (status == VX_SUCCESS) {
+		else 
+			status = VX_FAILURE;
+		if(status == VX_SUCCESS)
 			status = graph->status;
-		}
 	}
 	return status;
 }

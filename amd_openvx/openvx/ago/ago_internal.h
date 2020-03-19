@@ -102,8 +102,10 @@ THE SOFTWARE.
 
 // AGO limites
 #define AGO_MAX_CONVOLUTION_DIM               9 // maximum size of convolution matrix
+#define AGO_MAX_NONLINEAR_FILTER_DIM          9 // maximum size of nonlinear filter matrix the specification requires support for is 9x9
 #define AGO_OPTICALFLOWPYRLK_MAX_DIM         15 // maximum size of opticalflow block size
 #define AGO_MAX_TENSOR_DIMENSIONS             4 // maximum dimensions supported by tensor
+#define AGO_MAX_OBJARR_REF 				   4096 // maximum number of references in a context for object array
 
 // AGO remap data precision
 #define AGO_REMAP_FRACTIONAL_BITS             3 // number of fractional bits in re-map locations
@@ -232,6 +234,7 @@ struct AgoReference {
 	bool         hint_serialize;  // serialize hint
 	bool         enable_logging;  // enable logging
 	bool         read_only;       // read only
+	bool 		 enable_perf; 	  // enable performance counter
 	vx_status    status;          // error status
 public:
 	AgoReference();
@@ -251,6 +254,7 @@ struct AgoConfigArray {
 struct AgoConfigObjectArray {
 	vx_enum itemtype;
 	vx_size numitems;
+	//vx_reference *items;
 };
 struct AgoConfigConvolution {
 	vx_size rows;
@@ -336,6 +340,8 @@ struct AgoConfigScalar {
 struct AgoConfigThreshold {
 	vx_enum thresh_type;
 	vx_enum data_type;
+	vx_df_image input_format;
+	vx_df_image output_format;
 	vx_int32 threshold_lower, threshold_upper;
 	vx_int32 true_value, false_value;
 };
@@ -612,6 +618,8 @@ struct AgoGraph {
 	bool detectedInvalidNode;
 	vx_int32 status;
 	vx_perf_t perf;
+	vx_enum state;
+	bool reverify;
 	struct AgoGraphPerfInternalInfo_ { // shall be identical to AgoGraphPerfInternalInfo in amd_ext_amd.h
 		vx_uint64 kernel_enqueue;
 		vx_uint64 kernel_wait;
@@ -676,6 +684,7 @@ struct AgoContext {
 	vx_uint32 num_active_modules;
 	vx_uint32 num_active_references;
 	vx_border_mode_t immediate_border_mode;
+	vx_border_mode_policy_e immediate_border_policy;
 	vx_log_callback_f callback_log;
 	vx_bool callback_reentrant;
 	vx_uint32 thread_config;

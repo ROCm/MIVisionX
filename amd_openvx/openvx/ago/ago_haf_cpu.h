@@ -191,6 +191,27 @@ int HafCpu_Threshold_U1_U8_Range
 		vx_uint8      lower,
 		vx_uint8      upper
 	);
+int HafCpu_Threshold_U8_S16_Binary
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      threshold
+	);
+int HafCpu_Threshold_U8_S16_Range
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      lower,
+		vx_uint8      upper
+	);
 int HafCpu_ThresholdNot_U8_U8_Binary
 	(
 		vx_uint32     dstWidth,
@@ -223,6 +244,27 @@ int HafCpu_ThresholdNot_U1_U8_Binary
 		vx_uint8      threshold
 	);
 int HafCpu_ThresholdNot_U1_U8_Range
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      lower,
+		vx_uint8      upper
+	);
+int HafCpu_ThresholdNot_U8_S16_Binary
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      threshold
+	);
+int HafCpu_ThresholdNot_U8_S16_Range
 	(
 		vx_uint32     dstWidth,
 		vx_uint32     dstHeight,
@@ -2706,6 +2748,15 @@ int HafCpu_MeanStdDev_DATA_U8
 		vx_uint8    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes
 	);
+int HafCpu_MeanStdDev_DATA_U1
+	(
+		vx_float32  * pSum,
+		vx_float32  * pSumOfSquared,
+		vx_uint32     srcWidth,
+		vx_uint32     srcHeight,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
 int HafCpu_Equalize_DATA_DATA
 	(
 		vx_uint8    * pLut,
@@ -3022,4 +3073,20 @@ int HafCpu_FastAtan2_Canny
 	vx_int16      Gy
 );
 
+int HafCpu_WeightedAverage_U8_U8U8
+(
+    vx_image img1, 
+    vx_float32 alpha, 
+    vx_image img2, 
+    vx_image output
+);
+
+int HafCpu_NonLinearFilter_DATA_DATADATA
+(
+	vx_int32 function, 
+	vx_image src, 
+	vx_matrix mask, 
+	vx_image dst, 
+	vx_border_t *border
+);
 #endif // __ago_haf_cpu_h__

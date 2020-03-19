@@ -395,6 +395,7 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 	// (i.e., nodes with hierarchical_level = 1 for all of its inputs)
 	////////////////////////////////////////////////
 	vx_uint32 num_nodes_marked = 0;
+	vx_uint32 num_head_nodes = 0;
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next)
 	{
 		AgoKernel * kernel = node->akernel;
@@ -409,6 +410,7 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 			// mark that node is a head node
 			node->hierarchical_level = 1;
 			num_nodes_marked++;
+			num_head_nodes++;
 #if SHOW_DEBUG_HIERARCHICAL_LEVELS
 			printf("DEBUG: HIERARCHICAL NODE %3d %s\n", node->hierarchical_level, node->akernel->name);
 #endif
@@ -420,7 +422,11 @@ int agoOptimizeDramaComputeGraphHierarchy(AgoGraph * graph)
 			}
 		}
 	}
-
+	if(num_head_nodes == 0){
+		vx_status status = VX_ERROR_INVALID_GRAPH;
+		vxAddLogEntry(&graph->ref, status, "ERROR: vxVerifyGraph: Cycle: Graph has no head nodes!");
+		return status;
+	}
 	////////////////////////////////////////////////
 	// calculate hierarchical_level for rest of the nodes
 	////////////////////////////////////////////////
@@ -511,7 +517,6 @@ void agoOptimizeDramaSortGraphHierarchy(AgoGraph * graph)
 int agoOptimizeDrama(AgoGraph * agraph)
 {
 	// get optimization level requested by user
-
 #if ENABLE_DEBUG_MESSAGES
 	agoWriteGraph(agraph, NULL, 0, stdout, "input-to-drama");
 #endif

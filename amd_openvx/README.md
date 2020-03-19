@@ -1,4 +1,4 @@
-# AMD OpenVX (amd_openvx)
+# AMD OpenVX
 AMD OpenVX is a highly optimized open source implementation of the [Khronos OpenVX](https://www.khronos.org/registry/vx/) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 The amd_openvx project consists of the following components:
@@ -9,11 +9,12 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * **vx_loomsl**: Radeon LOOM stitching library for live 360 degree video applications
 * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
 * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
+* **vx_rpp]**: OpenVX extension providing an interface to some of the Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [RALI](../rali/README.md) to perform image augmentation.
 * **vx_winml**: OpenVX module that implemented a mechanism to access Windows Machine Learning(WinML) functionality as OpenVX kernels
 
 ## Features
 * The code is highly optimized for both x86 CPU and OpenCL for GPU
-* Supported hardware spans the range from low power embedded APUs (like the new G series) to laptop, desktop and workstation graphics
+* Supported hardware spans the range from low power embedded APUs, laptops, desktops and workstation graphics
 * Supports `Windows`, `Linux`, and `OS X`
 * Includes a “graph optimizer” that looks at the entire processing pipeline and removes/replaces/merges functions to improve performance and minimize bandwidth at runtime 
 * Scripting support allows for rapid prototyping, without re-compiling at production performance levels

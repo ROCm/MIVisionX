@@ -66,7 +66,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 
 <p align="center"><img width="80%" src="docs/images/modelCompilerWorkflow.png" /></p>
 
-Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-net-model-compiler--optimizer)) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
+[Neural Net Model Compiler & Optimizer](model_compiler#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
 ## RALI
 The Radeon Augmentation Library - [RALI](rali/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
@@ -84,7 +84,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
 
 ## Prerequisites
-* CPU: SSE4.1 or above CPU, 64-bit
+* CPU: [SSE4.1 or above CPU, 64-bit](https://rocm.github.io/hardware.html)
 * GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
 * APU: Carrizo or above [optional]
 
@@ -331,7 +331,7 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `3.1.35`
+* ROCm: rocm-dkms - `3.1.44`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.1.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.1.0)

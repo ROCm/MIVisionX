@@ -58,6 +58,20 @@ THE SOFTWARE.
  */
 #define VX_NN_ACTIVATION_LEAKY_RELU  (VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_NN_ACTIVATION_FUNCTION_TYPE) + 0x9)
 
+/*! \brief The attributes for vx_context
+ */
+#define VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION            VX_CONTEXT_NONLINEAR_MAX_DIMENSION
+#define VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_POLICY            VX_CONTEXT_IMMEDIATE_BORDER_POLICY
+
+/*! \brief The attributes for vx_graph
+ */
+#define VX_GRAPH_ATTRIBUTE_STATE            VX_GRAPH_STATE
+
+/*! \brief The attributes for vx_object_array
+ */
+#define VX_OBJECT_ARRAY_ATTRIBUTE_ITEMTYPE         VX_OBJECT_ARRAY_ITEMTYPE
+#define VX_OBJECT_ARRAY_ATTRIBUTE_NUMITEMS         VX_OBJECT_ARRAY_NUMITEMS
+
 /*! \brief The type enumeration lists all the AMD specific types in OpenVX.
 */
 enum ago_type_public_e {

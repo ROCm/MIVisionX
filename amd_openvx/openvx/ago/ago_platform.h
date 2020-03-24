@@ -26,7 +26,7 @@ THE SOFTWARE.
 
 // OpenCL: enabled unless disabled explicitly by setting ENABLE_OPENCL=0
 #ifndef ENABLE_OPENCL
-#define ENABLE_OPENCL  0
+#define ENABLE_OPENCL  1
 #endif
 
 #define _CRT_SECURE_NO_WARNINGS

@@ -68,7 +68,7 @@ add_library(openvx SHARED ${SOURCES})
 add_library(vxu SHARED api/vxu.cpp)
 
 if (OpenCL_FOUND)
-	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
+	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(openvx ${OpenCL_LIBRARIES})
 	message("-- ${Green}AMD OpenVX -- OpenVX built with OpenCL Support${ColourReset}")

@@ -36,8 +36,7 @@ mv_compile   --model 	        <model_name: name of the trained model with path> 
 
 * Sample:
 ```
-cd MIVisionX-OpenVX-Tutorial
-mv_compile --model ~/sample-5/yoloV2Tiny20.caffemodel --install_folder mvdeploy --input_dims 1,3,416,416
+mv_compile --model <yoloV2Tiny20.caffemodel --install_folder mvdeploy --input_dims 1,3,416,416
 ```
 There will be a file libmv_deploy.so (under ./lib), weights.bin and mvtestdeploy sample app (under ./bin).
 Also there will be mv_extras folder for extra post-processing helper functions.
@@ -57,7 +56,7 @@ mvtestdeploy is a pre-generated application built in Step 3 which shows how to d
 * Sample:
 ```	
 cd mvdeploy
-./bin/mvtestdeploy ../data/img_04.JPG output.bin --install_folder . --t 100
+./bin/mvtestdeploy ./data/images/img_04.JPG output.bin --install_folder . --t 100
 ```
 This runs inference for an input file and generate output for N number of iterations.
 
@@ -105,8 +104,8 @@ Usage: mvobjdetect <options>
 * Sample
 ```
 cd ..
-./mv_build/mvobjdetect ../data/img_04.JPG - --install_folder . --bb 20 0.2 0.4 --v
-./mv_build/mvobjdetect ../data/amd_video_01.mp4 - --install_folder . --bb 20 0.2 0.4 --v
+./mv_build/mvobjdetect <input_image.JPG> - --install_folder . --bb 20 0.2 0.4 --v
+./mv_build/mvobjdetect <input_video.mp4> - --install_folder . --bb 20 0.2 0.4 --v
 ```
 ### Step 7. Run object detection with multiple video streams (e.g batch 4, 8 and 16)
 Go through steps 3 to 6, this time compiing the model for a batch of 4.
@@ -114,7 +113,7 @@ Also this sample can do batch of 8 and 16 decoding as well.
 
 ```
 cd ..
-mv_compile --model ~/sample-5/yoloV2Tiny20.caffemodel --install_folder mvdeploy_batch4 --input_dims 4,3,416,416
+mv_compile --model yoloV2Tiny20.caffemodel --install_folder mvdeploy_batch4 --input_dims 4,3,416,416
 cd mvdeploy_batch4
 cp ../mvobjdetect.cpp ../visualize.cpp ../visualize.h ../CMakeLists.txt .
 mkdir mv_build4
@@ -122,7 +121,7 @@ cd mv_build4
 cmake ../
 make -j
 cd ..
-./mv_build4/mvobjdetect ../data/Videos_4.txt - --install_folder . --bb 20 0.2 0.4 --v
+./mv_build4/mvobjdetect <Videos_4.txt> - --install_folder . --bb 20 0.2 0.4 --v
 ```
 ### Step 10. Sample output for multiple video object detection
 <p align="center"><img width="80%" src="images/Video_4_screenshot.png" /></p>

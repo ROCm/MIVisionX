@@ -206,7 +206,7 @@ int agoOptimizeGraph(AgoGraph * agraph)
 		CAgoLock lock2(agraph->ref.context->cs);
 
 		// run DRAMA graph optimizer
-		agraph->status = agoOptimizeDrama(agraph);
+		agraph->status = agoOptimizeDrama(agraph);\
 	}
 	return agraph->status;
 }
@@ -2153,7 +2153,6 @@ int agoExecuteGraph(AgoGraph * graph)
 					status = kernel->func(node, ago_kernel_cmd_execute);
 					if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED) {
 						status = VX_ERROR_NOT_IMPLEMENTED;
-						printf("over here\n");
 					}
 						
 				}

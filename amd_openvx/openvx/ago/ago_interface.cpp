@@ -206,9 +206,8 @@ int agoOptimizeGraph(AgoGraph * agraph)
 		CAgoLock lock2(agraph->ref.context->cs);
 
 		// run DRAMA graph optimizer
-		agraph->status = agoOptimizeDrama(agraph);
+		agraph->status = agoOptimizeDrama(agraph);\
 	}
-
 	return agraph->status;
 }
 
@@ -1603,7 +1602,6 @@ int agoVerifyGraph(AgoGraph * graph)
 			return status;
 		}
 	}
-
 	// compute node hierarchy in the graph: this takes care of
 	//    - single writers
 	//    - no loops
@@ -2153,8 +2151,10 @@ int agoExecuteGraph(AgoGraph * graph)
 				status = VX_SUCCESS;
 				if (kernel->func) {
 					status = kernel->func(node, ago_kernel_cmd_execute);
-					if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED)
+					if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED) {
 						status = VX_ERROR_NOT_IMPLEMENTED;
+					}
+						
 				}
 				else if (kernel->kernel_f) {
 					status = kernel->kernel_f(node, (vx_reference *)node->paramList, node->paramCount);

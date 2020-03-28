@@ -1,5 +1,6 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
+[![Analytics](https://ga-beacon.appspot.com/UA-142300484-2/MIVisionX/README?pixel)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
@@ -10,8 +11,8 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
   * [Loom 360 Video Stitch Library](amd_openvx_extensions/amd_loomsl)
   * [Neural Net Library](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
   * [OpenCV Extension](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
-  * [WinML Extension](amd_openvx_extensions/amd_winml#amd-winml-extension)
   * [RPP Extension](amd_openvx_extensions/amd_rpp)
+  * [WinML Extension](amd_openvx_extensions/amd_winml#amd-winml-extension)
 * [Applications](#applications)
 * [Neural Net Model Compiler & Optimizer](#neural-net-model-compiler--optimizer)
 * [RALI](#rali)
@@ -42,11 +43,11 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl): AMD Radeon Loom stitching library for live 360 degree video applications
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
-* [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 * [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (Radeon Performance Primitives) functions. This extension is used to enable [RALI](rali/README.md) to perform image augmentation.
+* [amd_winml](amd_openvx_extensions/amd_winml#amd-winml-extension): WinML extension will allow developers to import a pre-trained ONNX model into an OpenVX graph and add hundreds of different pre & post processing `vision`/`generic`/`user-defined` functions, available in OpenVX and OpenCV interop, to the input and output of the neural net model. This will allow developers to build an end to end application for inference.
 
 ## Applications
-MIVisionX has a number of [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.
+MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.
 
 <p align="center"><img width="90%" src="docs/images/MIVisionX-applications.png" /></p>
 
@@ -65,14 +66,14 @@ MIVisionX has a number of [applications](apps#applications) built on top of Open
 
 <p align="center"><img width="80%" src="docs/images/modelCompilerWorkflow.png" /></p>
 
-Neural Net Model Compiler & Optimizer ([model_compiler](model_compiler#neural-net-model-compiler--optimizer)) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
+[Neural Net Model Compiler & Optimizer](model_compiler#neural-net-model-compiler--optimizer) converts pre-trained neural net models to MIVisionX runtime code for optimized inference.
 
 ## RALI
 The Radeon Augmentation Library - [RALI](rali/README.md) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user.
 
 ## Toolkit
 
-[MIVisionX Toolkit](toolkit#mivisionx-toolkit), is a comprehensive set of help tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
+[MIVisionX Toolkit](toolkit#mivisionx-toolkit), is a comprehensive set of helpful tools for neural net creation, development, training, and deployment. The Toolkit provides you with helpful tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The Toolkit is designed to help you deploy your work to any AMD or 3rd party hardware, from embedded to servers.
 
 MIVisionX provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
 
@@ -83,7 +84,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
 
 ## Prerequisites
-* CPU: SSE4.1 or above CPU, 64-bit
+* CPU: [SSE4.1 or above CPU, 64-bit](https://rocm.github.io/hardware.html)
 * GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
 * APU: Carrizo or above [optional]
 
@@ -131,8 +132,11 @@ python MIVisionX-setup.py --directory [setup directory - optional]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
+                          --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ````
 **Note:** use `--installer yum` for **CentOS**
+
+**Note:** ROCm upgrade with `sudo apt upgrade` requires the setup script rerun. 
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
@@ -190,6 +194,7 @@ python MIVisionX-setup.py --directory [setup directory - optional]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
+                          --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ````
 **Note:** Use `--installer yum` for **CentOS**
 ````
@@ -326,7 +331,7 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `3.0.6`
+* ROCm: rocm-dkms - `3.1.44`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.1.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.1.0)

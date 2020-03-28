@@ -41,15 +41,15 @@ set(BUILD_RALI true)
 
 if(NOT OpenCL_FOUND)
 	set(BUILD_RALI false)
-	message("-- ${Yellow}rali library requires OpenCL, Not Found ${ColourReset}")
+	message("-- ${Yellow}rali library requires OpenCL, Not Found${ColourReset}")
 endif()
 if(NOT AMDRPP_FOUND)
 	set(BUILD_RALI false)
-	message("-- ${Yellow}rali library requires AMD's rpp library, Not Found ${ColourReset}")
+	message("-- ${Yellow}rali library requires AMD's rpp library, Not Found${ColourReset}")
 endif()
 if(NOT TurboJpeg_FOUND)
 	set(BUILD_RALI false)
-	message("-- ${Yellow}rali library requires TurboJpeg, Not Found ${ColourReset}")
+	message("-- ${Yellow}rali library requires TurboJpeg, Not Found${ColourReset}")
 endif()
 if(CMAKE_VERSION VERSION_LESS ${MIN_CMAKE_VER_REQUIRED})
 	set(BUILD_RALI false)
@@ -81,7 +81,7 @@ if(${BUILD_RALI})
 
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
-	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
+	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD${ColourReset}")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -msse4.2 -mavx2 -Wall ")
 if(NOT FFMPEG_FOUND)
 	message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
@@ -92,24 +92,5 @@ else()
 endif()
 	install (TARGETS rali DESTINATION lib)
 else()
-	message("-- ${Red}rali library is excluded ${ColourReset}")
+	message("-- ${Red}rali library is excluded${ColourReset}")
 endif()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

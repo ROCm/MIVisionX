@@ -12,13 +12,14 @@ class VideoFileNode: public Node
 {
 public:
     void create(std::shared_ptr<Graph> graph) override;
-    VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
+    VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs, const size_t batch_size);
     ~VideoFileNode() override
     {
     }
     VideoFileNode() = delete;
     void init(const std::string &source_path, DecodeMode decoder_mode, bool loop);
     void update_parameters() override  {};
+    void start_loading() override {};
 private:
     const static unsigned MAXIMUM_VIDEO_CONCURRENT_DECODE = 4;
     DecodeMode _decode_mode  = DecodeMode::USE_HW;

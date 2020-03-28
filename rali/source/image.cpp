@@ -34,6 +34,34 @@ bool operator==(const ImageInfo& rhs, const ImageInfo& lhs)
             rhs.color_plane_count() == lhs.color_plane_count());
 }
 
+unsigned ImageInfo::get_image_width(int image_batch_idx) const
+{
+    if((unsigned)image_batch_idx >= _image_width.size())
+        THROW("Accesing image width out of batch size range")
+    if(!_image_width[image_batch_idx])
+        THROW("Accessing uninitialized int parameter associated with image width")
+    return *_image_width[image_batch_idx];
+}
+
+unsigned ImageInfo::get_image_height(int image_batch_idx) const
+{
+    if((unsigned)image_batch_idx >= _image_height.size())
+        THROW("Accesing image height out of batch size range")
+    if(!_image_height[image_batch_idx])
+        THROW("Accessing uninitialized int parameter associated with image height")
+    return *_image_height[image_batch_idx];
+}
+void
+ImageInfo::recreate_image_dims()
+{
+    _image_width.clear();
+    _image_height.clear();
+    for(unsigned i = 0; i < _batch_size; i++)
+    {
+        _image_height.push_back(std::make_shared<int>(_width));
+        _image_width.push_back(std::make_shared<int>(_height));
+    }
+}
 ImageInfo::ImageInfo():
         _type(Type::UNKNOWN),
         _width(0),
@@ -58,8 +86,29 @@ ImageInfo::ImageInfo(
         _batch_size(batches),
         _data_size(width_ * height_ * _batch_size * planes),
         _mem_type(mem_type_),
-        _color_fmt(col_fmt_) {}
+        _color_fmt(col_fmt_)
+        {
+            // initializing each image dimension in the batch with the maximum image size, they'll get updated later during the runtime
+            recreate_image_dims();
+        }
 
+void Image::update_image_dims(const std::vector<uint>& width, const std::vector<uint>& height)
+{
+    if(width.size() != height.size())
+        THROW("Batch size of image height and width info does not match")
+
+    if(width.size() != info().batch_size())
+        THROW("The batch size of actual image height and width different from image batch size "+ TOSTR(width.size())+ " != " +  TOSTR(info().batch_size()))
+
+    for(unsigned i = 0; i < info().batch_size(); i++)
+    {
+        if(_info._image_width[i])
+            *_info._image_width[i] = width[i];
+
+        if(_info._image_height[i])
+            *_info._image_height[i]= height[i];
+    }
+}
 
 Image::~Image()
 {  
@@ -266,30 +315,4 @@ int Image::swap_handle(void* handle)
     // user might want to copy directly using it
     _mem_handle = handle;
     return 0;
-}
-
-void Image::set_names(const std::vector<std::string> names)
-{
-    _info._image_names.push( names);
-}
-void Image::pop_image_id()
-{
-    if(_info._image_names.empty())
-        return ;
-    _info._image_names.pop();
-}
-
-void Image::clear_image_id_queue()
-{
-    while(!_info._image_names.empty())
-        _info._image_names.pop();
-}
-
-std::vector<std::string> Image::get_name()
-{
-    std::vector<std::string> ret = {""};
-    if(_info._image_names.empty())
-        return ret;
-    ret = _info._image_names.front();
-    return ret;
 }

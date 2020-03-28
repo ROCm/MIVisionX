@@ -59,8 +59,8 @@ void VideoFileNode::init(const std::string &source_path, DecodeMode decoder_mode
     //                          _batch_size);
 }
 
-VideoFileNode::VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
-        Node(inputs, outputs)
+VideoFileNode::VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs, const size_t batch_size):
+        Node(inputs, outputs, batch_size)
 {
     _batch_size = outputs[0]->info().batch_size();
     if(_batch_size > MAXIMUM_VIDEO_CONCURRENT_DECODE)

@@ -15,10 +15,11 @@ class DataLoader(RaliGraph):
         self.setSeed(0)
         self.jpg_img = self.jpegFileInput(input_path, input_color_format, False, 0)
         self.input = self.cropResize(self.jpg_img, 112,112, False, 0.6, -1, -1)
+        #self.input = self.resize(self.jpg_img, 112,112,False)
 
-        self.warped = self.warpAffine(self.input,True)
+        # self.warped = self.warpAffine(self.input,True)
 
-        self.contrast_img = self.contrast(self.input,False)
+        self.contrast_img = self.colorTwist(self.input,True)
         self.rain_img = self.rain(self.contrast_img, True)
 
         self.bright_img = self.brightness(self.input,False)
@@ -30,7 +31,7 @@ class DataLoader(RaliGraph):
         self.snow_img = self.snow(self.fog_img, True)
 
         self.pixelate_img = self.pixelate(self.input, False)
-        self.snp_img = self.SnPNoise(self.pixelate_img, False, 0.2)
+        self.snp_img = self.SnPNoise(self.pixelate_img, False)
         self.gamma_img = self.gamma(self.snp_img, True)
 
         self.rotate_img = self.rotate(self.input, False)
@@ -42,9 +43,9 @@ class DataLoader(RaliGraph):
 #%%
 
 def main():
-    batchSize = 1
+    batchSize = 2
     if  len(sys.argv) < 2:
-        print 'Please pass the folder containing images as a command line argument'
+        print ('Please pass the folder containing images as a command line argument')
         exit(0)
 
     input_path = sys.argv[1]
@@ -54,22 +55,22 @@ def main():
 
     imageIterator = ImageIterator(loader, tensor_dtype=TensorDataType.FLOAT32)
 
-    print "Input shape", loader.input.shape()
+    print ("Input shape", loader.input.shape())
 
     print ('Pipeline created ...')
 
-    print 'Image iterator created ... number of images', imageIterator.imageCount()
+    print ('Image iterator created ... number of images', imageIterator.imageCount())
 
     start = time.time()
 
 
     for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
         cv2.imshow('image', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
-        print loader.get_input_name(0)
-        cv2.waitKey(100)
+        print (loader.get_input_name(0))
+        cv2.waitKey(0)
 
     end = time.time()
-    print 'Elapsed time1 ',(end - start)
+    print ('Elapsed time1 ',(end - start))
 
 if __name__ == '__main__':
     main()

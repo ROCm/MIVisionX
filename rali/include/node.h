@@ -6,9 +6,10 @@
 class Node
 {
 public:
-    Node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+    Node(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         _inputs(inputs),
-        _outputs(outputs)
+        _outputs(outputs),
+        _batch_size(outputs[0]->info().batch_size())
     {}
     virtual ~Node() {
         
@@ -28,4 +29,5 @@ protected:
     std::vector<Image*> _outputs;
     std::shared_ptr<Graph> _graph = nullptr;
     vx_node _node = nullptr;
+    size_t _batch_size;
 };

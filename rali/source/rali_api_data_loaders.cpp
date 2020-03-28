@@ -3,12 +3,13 @@
 #include "commons.h"
 #include "context.h"
 #include "node_jpeg_file_source.h"
+#include "node_jpeg_file_source_single_shard.h"
 #include "node_video_file_source.h"
 #include "image_source_evaluator.h"
 #include "node_fisheye.h"
 #include "node_copy.h"
 std::tuple<unsigned, unsigned>
-find_max_image_size (RaliImageSizeEvaluationPolicy decode_size_policy, const std::string& source_path)
+find_max_image_size (RaliImageSizeEvaluationPolicy decode_size_policy, StorageType storage_type, const std::string& source_path)
 {
     auto translate_image_size_policy = [](RaliImageSizeEvaluationPolicy decode_size_policy)
     {
@@ -25,7 +26,7 @@ find_max_image_size (RaliImageSizeEvaluationPolicy decode_size_policy, const std
 
     ImageSourceEvaluator source_evaluator;
     source_evaluator.set_size_evaluation_policy(translate_image_size_policy(decode_size_policy));
-    if(source_evaluator.create(ReaderConfig(StorageType::FILE_SYSTEM, source_path), DecoderConfig(DecoderType::TURBO_JPEG)) != ImageSourceEvaluatorStatus::OK)
+    if(source_evaluator.create(ReaderConfig(storage_type, source_path), DecoderConfig(DecoderType::TURBO_JPEG)) != ImageSourceEvaluatorStatus::OK)
         THROW("Initializing file source input evaluator failed ")
     auto max_width = source_evaluator.max_width();
     auto max_height = source_evaluator.max_height();
@@ -68,21 +69,25 @@ auto convert_decoder_mode= [](RaliDecodeDevice decode_mode)
 };
 
 RaliImage  RALI_API_CALL
-raliJpegFileSource(
-        RaliContext rali_context,
+raliJpegTFRecordSource(
+        RaliContext p_context,
         const char* source_path,
         RaliImageColor rali_color_format,
-        unsigned num_threads,
+        unsigned internal_shard_count,
         bool is_output,
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
         unsigned max_height)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
     try
     {
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+
+        if(internal_shard_count < 1 )
+            THROW("internal shard count should be bigger than 0")
 
         if(use_input_dimension && (max_width == 0 || max_height == 0))
         {
@@ -94,30 +99,243 @@ raliJpegFileSource(
         }
 
         auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               find_max_image_size(decode_size_policy, source_path);
-
+                               find_max_image_size(decode_size_policy, StorageType::TF_RECORD, source_path);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
+        INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
+
         auto info = ImageInfo(width, height,
-                              rali_context->batch_size,
+                              context->internal_batch_size(),
                               num_of_planes,
-                              rali_context->master_graph->mem_type(),
+                              context->master_graph->mem_type(),
                               color_format );
+        output = context->master_graph->create_loader_output_image(info);
 
-        output = rali_context->master_graph->create_loader_output_image(info);
-
-        rali_context->master_graph->add_node<JpegFileNode>({}, {output})->init(num_threads, source_path, loop);
+        context->master_graph->add_node<JpegFileNode>({}, {output})->init(internal_shard_count,
+                                                                          source_path,
+                                                                          StorageType::TF_RECORD,
+                                                                          loop,
+                                                                          context->user_batch_size(),
+                                                                          context->master_graph->mem_type());
+        context->master_graph->set_loop(loop);
 
         if(is_output)
         {
-            auto actual_output = rali_context->master_graph->create_image(info, is_output);
-            rali_context->master_graph->add_node<CopyNode>({output}, {actual_output});
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
         }
 
     }
     catch(const std::exception& e)
     {
-        rali_context->capture_error(e.what());
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliJpegTFRecordSourceSingleShard(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        unsigned shard_id,
+        unsigned shard_count,
+        bool is_output,
+        bool loop,
+        RaliImageSizeEvaluationPolicy decode_size_policy,
+        unsigned max_width,
+        unsigned max_height)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+
+        if(shard_count < 1 )
+            THROW("Shard count should be bigger than 0")
+
+        if(shard_id >= shard_count)
+            THROW("Shard id should be smaller than shard count")
+
+        if(use_input_dimension && (max_width == 0 || max_height == 0))
+        {
+            THROW("Invalid input max width and height");
+        }
+        else
+        {
+            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
+        }
+
+        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
+                               find_max_image_size(decode_size_policy, StorageType::TF_RECORD, source_path);
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+
+        INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
+
+        auto info = ImageInfo(width, height,
+                              context->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+        output = context->master_graph->create_loader_output_image(info);
+
+        context->master_graph->add_node<JpegFileSingleShardNode>({}, {output})->init(shard_id, shard_count,
+                                                                                     source_path,
+                                                                                     StorageType::TF_RECORD,
+                                                                                     loop,
+                                                                                     context->user_batch_size(),
+                                                                                     context->master_graph->mem_type());
+        context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliJpegFileSourceSingleShard(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        unsigned shard_id,
+        unsigned shard_count,
+        bool is_output,
+        bool loop,
+        RaliImageSizeEvaluationPolicy decode_size_policy,
+        unsigned max_width,
+        unsigned max_height)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+
+        if(shard_count < 1 )
+            THROW("Shard count should be bigger than 0")
+
+        if(shard_id >= shard_count)
+            THROW("Shard id should be smaller than shard count")
+
+        if(use_input_dimension && (max_width == 0 || max_height == 0))
+        {
+            THROW("Invalid input max width and height");
+        }
+        else
+        {
+            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
+        }
+
+        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
+                               find_max_image_size(decode_size_policy, StorageType::FILE_SYSTEM, source_path);
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+
+        INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
+
+        auto info = ImageInfo(width, height,
+                              context->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+        output = context->master_graph->create_loader_output_image(info);
+
+        context->master_graph->add_node<JpegFileSingleShardNode>({}, {output})->init(shard_id, shard_count,
+                                                                                     source_path,
+                                                                                     StorageType::FILE_SYSTEM,
+                                                                                     loop,
+                                                                                     context->user_batch_size(),
+                                                                                     context->master_graph->mem_type());
+        context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliJpegFileSource(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        unsigned internal_shard_count,
+        bool is_output,
+        bool loop,
+        RaliImageSizeEvaluationPolicy decode_size_policy,
+        unsigned max_width,
+        unsigned max_height)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+
+        if(internal_shard_count < 1 )
+            THROW("Shard count should be bigger than 0")
+
+        if(use_input_dimension && (max_width == 0 || max_height == 0))
+        {
+            THROW("Invalid input max width and height");
+        }
+        else
+        {
+            LOG("User input size " + TOSTR(max_width) + " x " + TOSTR(max_height))
+        }
+
+        auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
+                               find_max_image_size(decode_size_policy, StorageType::FILE_SYSTEM, source_path);
+
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+
+        INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
+
+        auto info = ImageInfo(width, height,
+                              context->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+        output = context->master_graph->create_loader_output_image(info);
+
+        context->master_graph->add_node<JpegFileNode>({}, {output})->init(internal_shard_count,
+                                                                          source_path,
+                                                                          StorageType::FILE_SYSTEM,
+                                                                          loop,
+                                                                          context->user_batch_size(),
+                                                                          context->master_graph->mem_type());
+        context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
         std::cerr << e.what() << '\n';
     }
     return output;
@@ -125,7 +343,7 @@ raliJpegFileSource(
 
 RaliImage  RALI_API_CALL
 raliVideoFileSource(
-        RaliContext rali_context,
+        RaliContext p_context,
         const char* source_path,
         RaliImageColor rali_color_format,
         RaliDecodeDevice rali_decode_device,
@@ -135,7 +353,8 @@ raliVideoFileSource(
         bool loop)
 {
 
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
     try
     {
 #ifdef RALI_VIDEO
@@ -151,21 +370,22 @@ raliVideoFileSource(
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
-                              rali_context->batch_size,
+                              context->internal_batch_size(),
                               num_of_planes,
-                              rali_context->master_graph->mem_type(),
+                              context->master_graph->mem_type(),
                               color_format );
 
-        output = rali_context->master_graph->create_image(info, is_output);
+        output = context->master_graph->create_image(info, is_output);
 
-        rali_context->master_graph->add_node<VideoFileNode>({}, {output})->init( source_path,decoder_mode, loop);
+        context->master_graph->add_node<VideoFileNode>({}, {output}, context->batch_size)->init( source_path,decoder_mode, loop);
+        context->master_graph->set_loop(loop);
 #else
         THROW("Video decoder is not enabled since amd media decoder is not present")
 #endif
     }
     catch(const std::exception& e)
     {
-        rali_context->capture_error(e.what());
+        context->capture_error(e.what());
         std::cerr << e.what() << '\n';
     }
     return output;
@@ -173,15 +393,16 @@ raliVideoFileSource(
 }
 
 RaliStatus RALI_API_CALL
-raliResetLoaders(RaliContext rali_context)
+raliResetLoaders(RaliContext p_context)
 {
+    auto context = static_cast<Context*>(p_context);
     try
     {
-        rali_context->master_graph->reset();
+        context->master_graph->reset();
     }
     catch(const std::exception& e)
     {
-        rali_context->capture_error(e.what());
+        context->capture_error(e.what());
         ERR(e.what())
         return RALI_RUNTIME_ERROR;
     }

@@ -2,7 +2,7 @@
 #include "node_copy.h"
 #include "exception.h"
 
-CopyNode::CopyNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+CopyNode::CopyNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs)
 {
 }

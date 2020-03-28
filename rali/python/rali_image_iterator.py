@@ -4,6 +4,7 @@ import numpy as np
 
 class ImageIterator:
     def __init__(self, pipeline,tensor_layout = TensorLayout.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype = TensorDataType.FLOAT32):
+        print("coming to Image itertor")
         self.loader = pipeline
         self.tensor_format =tensor_layout
         self.multiplier = multiplier

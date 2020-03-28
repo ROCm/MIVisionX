@@ -13,7 +13,7 @@ void RingBuffer::block_if_empty()
     std::unique_lock<std::mutex> lock(_lock);
     if(empty())
     { // if the current read buffer is being written wait on it
-        if(_dont_wait)
+        if(_dont_block)
             return;
         _wait_for_load.wait(lock);
     }
@@ -25,7 +25,7 @@ void RingBuffer:: block_if_full()
     // Write the whole buffer except for the last spot which is being read by the reader thread
     if(full())
     {
-        if(_dont_wait)
+        if(_dont_block)
             return;
         _wait_for_unload.wait(lock);
     }
@@ -58,19 +58,19 @@ std::vector<void*> RingBuffer::get_write_buffers()
 }
 
 
-void RingBuffer::cancel_reading()
+void RingBuffer::unblock_reader()
 {
     // Wake up the reader thread in case it's waiting for a load
     _wait_for_load.notify_all();
 }
 
-void RingBuffer::cancel_all_future_waits()
+void RingBuffer::release_all_blocked_calls()
 {
-    _dont_wait = true;
-    cancel_reading();
-    cancel_writing();
+    _dont_block = true;
+    unblock_reader();
+    unblock_writer();
 }
-void RingBuffer::cancel_writing()
+void RingBuffer::unblock_writer()
 {
     // Wake up the writer thread in case it's waiting for an unload
     _wait_for_unload.notify_all();
@@ -127,6 +127,9 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
 }
 void RingBuffer::push()
 {
+    // pushing and popping to and from image and metadata buffer should be atomic so that their level stays the same at all times
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
+    _meta_ring_buffer.push(_last_image_meta_data);
     increment_write_ptr();
 }
 
@@ -134,7 +137,10 @@ void RingBuffer::pop()
 {
     if(empty())
         return;
+    // pushing and popping to and from image and metadata buffer should be atomic so that their level stays the same at all times
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
     increment_read_ptr();
+    _meta_ring_buffer.pop();
 }
 
 void RingBuffer::reset()
@@ -142,7 +148,9 @@ void RingBuffer::reset()
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;
-    _dont_wait = false;
+    _dont_block = false;
+    while(!_meta_ring_buffer.empty())
+        _meta_ring_buffer.pop();
 }
 
 RingBuffer::~RingBuffer()
@@ -194,5 +202,19 @@ void RingBuffer::increment_write_ptr()
     lock.unlock();
     // Wake up the reader thread (in case waiting) since there is a new load to be read
     _wait_for_load.notify_all();
+}
+
+void RingBuffer::set_meta_data( ImageNameBatch names, pMetaDataBatch meta_data)
+{
+    _last_image_meta_data = std::move(std::make_pair(std::move(names), meta_data));
+}
+
+MetaDataNamePair& RingBuffer::get_meta_data()
+{
+    block_if_empty();
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
+    if(_level != _meta_ring_buffer.size())
+        THROW("ring buffer internals error, image and metadata sizes not the same "+TOSTR(_level) + " != "+TOSTR(_meta_ring_buffer.size()))
+    return  _meta_ring_buffer.front();
 }
 

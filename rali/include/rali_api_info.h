@@ -37,13 +37,11 @@ extern "C" size_t RALI_API_CALL raliGetImageHeight(RaliImage image);
 /// \return Color format of the pipeline output image,
 extern "C" size_t RALI_API_CALL raliGetImagePlanes(RaliImage image);
 
-/// Returned value valid only after raliRun is called
-/// \param image
-/// \param image_idx Index for the image in the batch
-/// \return pointer to the start of buffer storing the image name currently loaded into the batch,
-extern "C" void RALI_API_CALL raliGetImageName(RaliImage image, char* buf, unsigned image_idx);
+/// Returned value valid only after raliVerify is called
+/// \param rali_context
+/// \return 1 if all images have been processed, otherwise 0
+extern "C" size_t RALI_API_CALL raliIsEmpty(RaliContext rali_context);
 
-extern "C" unsigned RALI_API_CALL raliGetImageNameLen(RaliImage image,  unsigned image_idx);
 
 ///
 /// \param rali_context
@@ -64,5 +62,42 @@ extern "C" const char* RALI_API_CALL raliGetErrorMessage(RaliContext rali_contex
 /// \param rali_context
 /// \return
 extern "C" TimingInfo RALI_API_CALL raliGetTimingInfo(RaliContext rali_context);
+
+///
+/// \param rali_context
+/// \param source_path path to the folder that contains the dataset or metadata file
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+extern "C" RaliMetaData RALI_API_CALL raliCreateLabelReader(RaliContext rali_context, const char* source_path);
+
+///
+/// \param rali_context
+/// \param buf user buffer provided to be filled with output image name
+/// \param image_idx the imageIdx in the output batch
+extern "C" void RALI_API_CALL raliGetImageName(RaliContext rali_context,  char* buf, unsigned image_idx);
+
+///
+/// \param rali_context
+/// \param image_idx the imageIdx in the output batch
+/// \return The length of the name of the image associated with image_idx in the output batch
+extern "C" unsigned RALI_API_CALL raliGetImageNameLen(RaliContext rali_context,  unsigned image_idx);
+
+/// \param meta_data RaliMetaData object that contains info about the images and labels
+/// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
+extern "C" void RALI_API_CALL raliGetImageLabels(RaliContext rali_context, int* buf);
+
+///
+/// \param rali_context
+/// \param image_idx the imageIdx in the output batch
+/// \return The size of the buffer needs to be provided by user to get bounding box info associated with image_idx in the output batch.
+extern "C" unsigned RALI_API_CALL raliGetBoundingBoxCount(RaliContext rali_context, unsigned image_idx );
+
+///
+/// \param rali_context
+/// \param image_idx the imageIdx in the output batch
+/// \param buf The user's buffer that will be filled with bounding box info. It needs to be of size bounding box len returned by a call to the raliGetBoundingBoxCount
+extern "C" void RALI_API_CALL raliGetBoundingBoxLabel(RaliContext rali_context, int* buf, unsigned image_idx );
+extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, int* buf, unsigned image_idx );
+
+
 
 #endif //MIVISIONX_RALI_API_INFO_H

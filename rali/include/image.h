@@ -6,8 +6,10 @@
 #include <cstring>
 #include <array>
 #include <queue>
+#include <memory>
 #include "device_manager.h"
 #include "commons.h"
+
 
 /*! \brief Converts Rali Memory type to OpenVX memory type
  *
@@ -43,8 +45,10 @@ struct ROI {
 
 
 /*! \brief Holds the information about an OpenVX image */
+
 struct ImageInfo
 {
+    using pInt = std::shared_ptr<int>;
     friend struct Image;
     enum class Type
     {
@@ -77,6 +81,10 @@ struct ImageInfo
     RaliMemType mem_type() const { return _mem_type; }
     unsigned data_size() const { return _data_size; }
     RaliColorFormat color_format() const {return _color_fmt; }
+    unsigned get_image_width(int image_batch_idx) const;
+    unsigned get_image_height(int image_batch_idx) const;
+
+
 private:
     Type _type = Type::UNKNOWN;//!< image type, whether is virtual image, created from handle or is a regular image
     unsigned _width;//!< image width for a single image in the batch
@@ -86,7 +94,10 @@ private:
     unsigned _data_size;//!< total size of the memory needed to keep the image's data in bytes including all planes
     RaliMemType _mem_type;//!< memory type, currently either OpenCL or Host
     RaliColorFormat _color_fmt;//!< color format of the image
-    std::queue<std::vector<std::string>> _image_names;//!< image name/ids that are stores in the buffer
+    std::vector<pInt> _image_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size
+    std::vector<pInt> _image_height;//!< The actual image height stored in the buffer, it's always smaller than _height
+
+    void recreate_image_dims();
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
@@ -107,19 +118,16 @@ struct Image
     vx_context context() { return _context; }
     unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
-    void set_names(const std::vector<std::string> names);
-    std::vector<std::string> get_name();
-    void pop_image_id();
-    void clear_image_id_queue();
-
     //! Default destructor
     /*! Releases the OpenVX image */
     ~Image();
 
     //! Constructor accepting the image information as input
-    Image(const ImageInfo& img_info);
+    explicit Image(const ImageInfo& img_info);
 
     int create(vx_context context);
+    void update_image_dims(const std::vector<uint>& width, const std::vector<uint>& height);
+    void reset_image_dims() { _info.recreate_image_dims(); }
 
     int create_from_handle(vx_context context, ImageBufferAllocation policy);
     int create_virtual(vx_context context, vx_graph graph);

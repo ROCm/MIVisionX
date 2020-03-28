@@ -7,15 +7,17 @@
 class BlurNode : public Node
 {
 public:
-    BlurNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
+    BlurNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     BlurNode() = delete;
     void create(std::shared_ptr<Graph> graph) override ;
-    void init( float sdev);
-    void init( FloatParam *sdev);
+    void init(int sdev);
+    void init(IntParam *sdev);
     void update_parameters() override;
 
 private:
-    ParameterVX<float> _sdev;
-    constexpr static float SDEV_RANGE [2] = {0.3, 5.0};
-    constexpr static unsigned SDEV_OVX_PARAM_IDX = 2;
+    ParameterVX<int> _sdev;
+    constexpr static int SDEV_RANGE [2] = {3, 9};
+    std::vector<vx_uint32> _width, _height;
+    vx_array _width_array ,_height_array;
+    void update_dimensions();
 };

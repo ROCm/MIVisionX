@@ -1,7 +1,5 @@
 import rali_pybind as b
-from amd.rali.pipeline import Pipeline as p
 import amd.rali.types as types
-import numpy as np
 
 class Node:
     def __init__(self):
@@ -49,6 +47,7 @@ class FileReader(Node):
     def __init__(self, file_root, bytes_per_sample_hint = 0, file_list = '', initial_fill = '', lazy_init = '', num_shards = 1,
                 pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
                 seed = -1, shard_id = 0, shuffle_after_epoch = False, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
+        super(FileReader, self).__init__()
         self._file_root = file_root
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._file_list = file_list
@@ -79,7 +78,7 @@ class FileReader(Node):
         return self.output,self._labels
 
     def rali_c_func_call(self,handle):
-        output = b.labelReader(handle,self._file_root)
+        b.labelReader(handle,self._file_root)
         return self._file_root
     
     
@@ -123,6 +122,7 @@ class ImageDecoder(Node):
     def __init__(self, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
                 cache_type = '', device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, output_type = 0,
                 preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
+        super(ImageDecoder, self).__init__()
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._cache_batch_copy = cache_batch_copy
@@ -155,10 +155,86 @@ class ImageDecoder(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            print("Gonna call imagedecoder with decode_width ::", multiplier*decode_width," decode_height ::", multiplier*decode_height)
             output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
             output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
+        return output_image
+
+
+class ImageDecoderRandomCrop(Node):
+    """
+        affine (bool, optional, default = True) – `mixed` backend only If internal threads should be affined to CPU cores
+
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+        device_memory_padding (int, optional, default = 16777216) – `mixed` backend only Padding for nvJPEG’s device memory allocations in bytes. This parameter helps to avoid reallocation in nvJPEG whenever a bigger image is encountered and internal buffer needs to be reallocated to decode it.
+
+        host_memory_padding (int, optional, default = 8388608) – `mixed` backend only Padding for nvJPEG’s host memory allocations in bytes. This parameter helps to avoid reallocation in nvJPEG whenever a bigger image is encountered and internal buffer needs to be reallocated to decode it.
+
+        hybrid_huffman_threshold (int, optional, default = 1000000) – `mixed` backend only Images with number of pixels (height * width) above this threshold will use the nvJPEG hybrid Huffman decoder. Images below will use the nvJPEG full host huffman decoder. N.B.: Hybrid Huffman decoder still uses mostly the CPU.
+
+        num_attempts (int, optional, default = 10) – Maximum number of attempts used to choose random area and aspect ratio.
+
+        output_type (int, optional, default = 0) – The color space of output image.
+
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+        random_area (float or list of float, optional, default = [0.08, 1.0]) – Range from which to choose random area factor A. The cropped image’s area will be equal to A * original image’s area.
+
+        random_aspect_ratio (float or list of float, optional, default = [0.75, 1.333333]) – Range from which to choose random aspect ratio (width/height).
+
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+        split_stages (bool, optional, default = False) – `mixed` backend only Split into separated CPU stage and GPU stage operators
+
+        use_chunk_allocator (bool, optional, default = False) – Experimental, `mixed` backend only Use chunk pinned memory allocator, allocating chunk of size batch_size*prefetch_queue_depth during the construction and suballocate them in runtime. Ignored when split_stages is false.
+
+        use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
+    """
+    def __init__(self, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, 
+                num_attempts = 10, output_type = 0,preserve = False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
+                seed = 1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
+        super(ImageDecoderRandomCrop, self).__init__()
+        self._affine = affine
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._device_memory_padding = device_memory_padding
+        self._host_memory_padding = host_memory_padding
+        self._hybrid_huffman_threshold = hybrid_huffman_threshold
+        self._num_attempts = num_attempts
+        self._output_type = output_type
+        self._preserve = preserve
+        self._random_area = random_area
+        self._random_aspect_ratio = random_aspect_ratio
+        self._seed = seed
+        self._split_stages = split_stages
+        self._use_chunk_allocator = use_chunk_allocator
+        self._use_fast_idct = use_fast_idct
+        self.output = Node()
+
+    def __call__(self, input):
+        input.next = self
+        self.data = "ImageDecoderRandomCrop"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, is_output):
+        b.setSeed(self._seed)
+        num_threads = 1
+        if decode_width != None and decode_height != None:
+            multiplier = 4
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        else:
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
+        self.area = b.CreateFloatUniformRand(self._random_area[0],self._random_area[1])
+        self.aspect_ratio = b.CreateFloatUniformRand(self._random_aspect_ratio[0],self._random_aspect_ratio[1])
+        self.x_drift =  b.CreateFloatParameter(0)
+        self.y_drift =  b.CreateFloatParameter(0)
+        output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+        # output_image = b.CropResize(handle, output_image, 500, 500, is_output, self.area, self.aspect_ratio, self.x_drift, self.y_drift)
+        # output_image = b.CropResize(handle, output_image, 0, 0, is_output, None, None, None, None)
         return output_image
 
 class ColorTwist(Node):
@@ -203,6 +279,7 @@ class ColorTwist(Node):
     """
     def __init__(self, brightness = 1.0, bytes_per_sample_hint = 0, contrast = 1.0, hue = 0.0, image_type = 0, 
                 preserve = False, saturation = 1.0,seed = -1, device = None):
+        super(ColorTwist, self).__init__()
         self._brightness = brightness
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._contrast = contrast
@@ -228,80 +305,6 @@ class ColorTwist(Node):
         output_image = b.ColorTwistFixed(handle, input_image, self._brightness,self._contrast,self._hue,self._saturation,is_output)
         return output_image
 
-class ImageDecoderRandomCrop(Node):
-    """
-        affine (bool, optional, default = True) – `mixed` backend only If internal threads should be affined to CPU cores
-
-        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
-
-        device_memory_padding (int, optional, default = 16777216) – `mixed` backend only Padding for nvJPEG’s device memory allocations in bytes. This parameter helps to avoid reallocation in nvJPEG whenever a bigger image is encountered and internal buffer needs to be reallocated to decode it.
-
-        host_memory_padding (int, optional, default = 8388608) – `mixed` backend only Padding for nvJPEG’s host memory allocations in bytes. This parameter helps to avoid reallocation in nvJPEG whenever a bigger image is encountered and internal buffer needs to be reallocated to decode it.
-
-        hybrid_huffman_threshold (int, optional, default = 1000000) – `mixed` backend only Images with number of pixels (height * width) above this threshold will use the nvJPEG hybrid Huffman decoder. Images below will use the nvJPEG full host huffman decoder. N.B.: Hybrid Huffman decoder still uses mostly the CPU.
-
-        num_attempts (int, optional, default = 10) – Maximum number of attempts used to choose random area and aspect ratio.
-
-        output_type (int, optional, default = 0) – The color space of output image.
-
-        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
-
-        random_area (float or list of float, optional, default = [0.08, 1.0]) – Range from which to choose random area factor A. The cropped image’s area will be equal to A * original image’s area.
-
-        random_aspect_ratio (float or list of float, optional, default = [0.75, 1.333333]) – Range from which to choose random aspect ratio (width/height).
-
-        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
-
-        split_stages (bool, optional, default = False) – `mixed` backend only Split into separated CPU stage and GPU stage operators
-
-        use_chunk_allocator (bool, optional, default = False) – Experimental, `mixed` backend only Use chunk pinned memory allocator, allocating chunk of size batch_size*prefetch_queue_depth during the construction and suballocate them in runtime. Ignored when split_stages is false.
-
-        use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
-    """
-    def __init__(self, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, 
-                num_attempts = 10, output_type = 0,preserve = False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
-                seed = 1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
-        self._affine = affine
-        self._bytes_per_sample_hint = bytes_per_sample_hint
-        self._device_memory_padding = device_memory_padding
-        self._host_memory_padding = host_memory_padding
-        self._hybrid_huffman_threshold = hybrid_huffman_threshold
-        self._num_attempts = num_attempts
-        self._output_type = output_type
-        self._preserve = preserve
-        self._random_area = random_area
-        self._random_aspect_ratio = random_aspect_ratio
-        self._seed = seed
-        self._split_stages = split_stages
-        self._use_chunk_allocator = use_chunk_allocator
-        self._use_fast_idct = use_fast_idct
-        self.output = Node()
-
-    def __call__(self, input):
-        input.next = self
-        self.data = "ImageDecoderRandomCrop"
-        self.prev = input
-        self.next = self.output
-        self.output.prev = self
-        self.output.next = None
-        return self.output
-
-    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, is_output):
-        b.setSeed(self._seed)
-        num_threads = 1
-        if decode_width != None and decode_height != None:
-            multiplier = 4
-            print("Gonna call imagedecoder with decode_width ::", multiplier*decode_width," decode_height ::", multiplier*decode_height)
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-        else:
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
-        self.area = b.CreateFloatUniformRand(self._random_area[0],self._random_area[1])
-        self.aspect_ratio = b.CreateFloatUniformRand(self._random_aspect_ratio[0],self._random_aspect_ratio[1])
-        self.x_drift =  b.CreateFloatParameter(0)
-        self.y_drift =  b.CreateFloatParameter(0)
-        output_image = b.CropResize(handle, output_image, 500, 500, is_output, self.area, self.aspect_ratio, self.x_drift, self.y_drift)
-        # output_image = b.CropResize(handle, output_image, 0, 0, is_output, None, None, None, None)
-        return output_image
 
 class Resize(Node):
     """
@@ -352,6 +355,7 @@ class Resize(Node):
     def __init__(self, bytes_per_sample_hint = 0, image_type = 0, interp_type = 1, mag_filter = 1, max_size = [0.0, 0.0], min_filter = 1,
                 minibatch_size = 32, preserve = False, resize_longer = 0.0, resize_shorter = 0.0, resize_x = 0.0, resize_y = 0.0,
                 save_attrs = False,seed = 1, temp_buffer_hint = 0, device = None):
+        super(Resize, self).__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
         self._interp_type = interp_type
@@ -379,8 +383,6 @@ class Resize(Node):
         return self.output
     
     def rali_c_func_call(self, handle, input_image, is_output):
-        # b.setSeed(self._seed)
-        # print("is_output in resize",is_output)
         output_image = b.Resize(handle, input_image, self._resize_x, self._resize_y, is_output)
         return output_image
 
@@ -423,6 +425,7 @@ class  CropMirrorNormalize(Node):
     def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 0, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
                 crop_w = 0 , image_type = 0, mean = [0.0], mirror = 0, output_dtype = types.FLOAT, output_layout = types.NCHW, pad_output = False, 
                 preserve = False, seed = 1, std = [1.0], device = None):
+        super(CropMirrorNormalize, self).__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._crop = crop
         if(len(crop) == 2):
@@ -512,7 +515,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     """
     def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 0, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
                 crop_w = 0 , image_type = 0, output_dtype = types.FLOAT, preserve = False, seed = 1, device = None):
-        
+        super(Crop, self).__init__()       
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._crop = crop
         if(len(crop) == 2):
@@ -545,17 +548,19 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         self.next = self.output
         self.output.prev = self
         self.output.next = None
-        # self._temp = mirror
         return self.output
     
     def rali_c_func_call(self, handle, input_image, is_output):
         b.setSeed(self._seed)
         output_image = []
-        # output_image = b.CropMirrorNormalize(handle, input_image, 500, 500, is_output,None, None, None, None, None, None, None)
-        output_image=b.Crop(handle, input_image , self._crop_w, self._crop_h, self._crop_d , is_output, self._crop_pos_x, self._crop_pos_y, self._crop_pos_z )
-        # output_image = b.CropMirrorNormalize(handle, input_image, self._crop_d, self._crop_h, self._crop_w, 1,
-        #                                     1, 1, self._mean, self._std, is_output, mirror)
-        
+        crop_h = b.CreateFloatParameter(self._crop_h)
+        crop_w = b.CreateFloatParameter(self._crop_w)
+        crop_d = b.CreateFloatParameter(self._crop_d)
+        crop_pos_x = b.CreateFloatParameter(self._crop_pos_x)
+        crop_pos_y = b.CreateFloatParameter(self._crop_pos_y)
+        crop_pos_z = b.CreateFloatParameter(self._crop_pos_z)
+        # output_image = b.Crop(handle, input_image, is_output, crop_w, crop_h, crop_d, crop_pos_x, crop_pos_y, crop_pos_z)
+        output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
         return output_image 
 
 
@@ -577,6 +582,7 @@ class GammaCorrection(Node):
     _gamma = 0
 
     def __init__(self,gamma, device = None):
+        super(GammaCorrection, self).__init__()
         self._gamma = gamma
         self.output = Node()
     
@@ -590,7 +596,6 @@ class GammaCorrection(Node):
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        alpha = None
         output_image = b.GammaCorrection(handle, input_image, is_output, None)
         return output_image
 
@@ -599,6 +604,7 @@ class Snow(Node):
     _snow = 0
 
     def __init__(self,snow, device = None):
+        super(Snow, self).__init__()
         self._snow = snow
         self.output = Node()
     
@@ -619,6 +625,7 @@ class Rain(Node):
     _rain = 0
 
     def __init__(self,rain, device = None):
+        super(Rain, self).__init__()
         self._rain = rain
         self.output = Node()
     

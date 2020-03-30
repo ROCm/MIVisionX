@@ -87,8 +87,8 @@ ImageReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
                          const size_t max_decoded_width,
                          const size_t max_decoded_height,
-                         std::vector<uint>& actual_decoded_width,
-                         std::vector<uint>& actual_decoded_height,
+                         std::vector<uint32_t> &roi_width,
+                         std::vector<uint32_t> &roi_height,
                          RaliColorFormat output_color_format )
 {
     if(max_decoded_width == 0 || max_decoded_height == 0 )
@@ -166,8 +166,8 @@ ImageReadAndDecode::load(unsigned char* buff,
     for(size_t i = 0; i < _batch_size; i++)
     {
         names[i] = _image_names[i];
-        actual_decoded_width[i] = _actual_decoded_width[i];
-        actual_decoded_height[i] = _actual_decoded_height[i];
+        roi_width[i] = _actual_decoded_width[i];
+        roi_height[i] = _actual_decoded_height[i];
     }
 
     _decode_time.end();// Debug timing

@@ -470,39 +470,49 @@ extern "C"  RaliImage  RALI_API_CALL raliColorTwist(RaliContext context, RaliIma
 /// \param is_output
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliColorTwistFixed(RaliContext context, RaliImage input,
-                                                        float alpha, float beta, float hue, float sat,
+                                                        float alpha,
+                                                        float beta,
+                                                        float hue,
+                                                        float sat,
                                                         bool is_output);
 
-// extern "C"  RaliImage  RALI_API_CALL raliCropMirrorNormalize(RaliContext context, RaliImage input, unsigned dest_width,
-//                                                     unsigned dest_height, bool is_output, RaliFloatParam mean = NULL,
-//                                                     RaliFloatParam std_dev = NULL ,RaliIntParam mirror = NULL,
-//                                                     RaliFloatParam area = NULL,
-//                                                     RaliFloatParam aspect_ratio = NULL,
-//                                                     RaliFloatParam x_center_drift = NULL,
-//                                                     RaliFloatParam y_center_drift = NULL);
-// extern "C" RaliImage  RALI_API_CALL raliCropMirrorNormalizeFixed(   RaliContext context,
-//                                                             RaliImage input,
-//                                                             unsigned dest_width, unsigned dest_height,
-//                                                             float area, float aspect_ratio,
-//                                                             float x_center_drift,
-//                                                             float y_center_drift, float mean, float sdev, int mirror,
-//                                                             bool is_output);
+extern "C"  RaliImage  RALI_API_CALL raliCropMirrorNormalize(RaliContext context, RaliImage input,
+                                                            unsigned crop_depth,
+                                                            unsigned crop_height,
+                                                            unsigned crop_width,
+                                                            float start_x,
+                                                            float start_y,
+                                                            float start_z,
+                                                            std::vector<float> &mean,
+                                                            std::vector<float> &std_dev,
+                                                            bool is_output ,
+                                                            RaliIntParam mirror = NULL);
 
-extern "C" RaliImage
-RALI_API_CALL raliCropMirrorNormalize(RaliContext context, RaliImage input, unsigned crop_depth, unsigned crop_height,
-                                                    unsigned crop_width, float start_x, float start_y, float start_z, 
-                                                    std::vector<float> &mean, std::vector<float> &std_dev,   bool is_output , RaliIntParam mirror = NULL);
+extern "C" RaliImage  RALI_API_CALL raliCrop(RaliContext context, RaliImage input, bool is_output,
+                                             RaliFloatParam crop_width = NULL,
+                                             RaliFloatParam crop_height = NULL,
+                                             RaliFloatParam crop_depth = NULL,
+                                             RaliFloatParam crop_pox_x = NULL,
+                                             RaliFloatParam crop_pos_y = NULL,
+                                             RaliFloatParam crop_pos_z = NULL); 
 
-extern "C" RaliImage RALI_API_CALL raliCropFixed( RaliContext context, RaliImage  input, unsigned crop_width, unsigned crop_height, unsigned crop_depth,
-        bool is_output, float crop_pox_x, float crop_pos_y, float crop_pos_z);
-extern "C" RaliImage  RALI_API_CALL raliCropCenterFixed(
-        RaliContext context,
-        RaliImage input,
-        unsigned crop_width, unsigned crop_height, unsigned crop_depth, bool output);
+extern "C"  RaliImage  RALI_API_CALL raliCropFixed(RaliContext context, RaliImage  input,
+                                                   unsigned crop_width,
+                                                   unsigned crop_height,
+                                                   unsigned crop_depth,
+                                                   bool is_output,
+                                                   float crop_pox_x,
+                                                   float crop_pos_y,
+                                                   float crop_pos_z);
 
-// extern "C"  RaliImage  RALI_API_CALL raliCropResizeFixed(RaliContext context, RaliImage input, unsigned dest_width,
-//                                                             unsigned dest_height, bool is_output, float area,
-//                                                             float x_center_drift, float y_center_drift);
+extern "C" RaliImage  RALI_API_CALL raliCropCenterFixed(RaliContext context, RaliImage input,
+                                                        unsigned crop_width,
+                                                        unsigned crop_height,
+                                                        unsigned crop_depth,
+                                                        bool output);
+
+
+
 // /// Accepts U8 and RGB24 input. The output image dimension can be set to new values allowing the rotated image to fit,
 // /// otherwise; the image is cropped to fit the result.
 // /// \param context Rali context

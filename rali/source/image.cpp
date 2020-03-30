@@ -34,32 +34,53 @@ bool operator==(const ImageInfo& rhs, const ImageInfo& lhs)
             rhs.color_plane_count() == lhs.color_plane_count());
 }
 
-unsigned ImageInfo::get_image_width(int image_batch_idx) const
+uint32_t * ImageInfo::get_roi_width() const
 {
-    if((unsigned)image_batch_idx >= _image_width.size())
-        THROW("Accesing image width out of batch size range")
-    if(!_image_width[image_batch_idx])
-        THROW("Accessing uninitialized int parameter associated with image width")
-    return *_image_width[image_batch_idx];
+    return _roi_width->data();
 }
 
-unsigned ImageInfo::get_image_height(int image_batch_idx) const
+uint32_t * ImageInfo::get_roi_height() const
 {
-    if((unsigned)image_batch_idx >= _image_height.size())
+    return _roi_height->data();
+}
+
+const std::vector<uint32_t>& ImageInfo::get_roi_width_vec() const
+{
+    return *_roi_width;
+}
+
+const std::vector<uint32_t>& ImageInfo::get_roi_height_vec() const
+{
+    return *_roi_height;
+}
+
+
+unsigned ImageInfo::get_roi_width(int image_batch_idx) const
+{
+    if((unsigned)image_batch_idx >= _roi_width->size())
+        THROW("Accesing image width out of batch size range")
+    if(!_roi_width->at(image_batch_idx))
+        THROW("Accessing uninitialized int parameter associated with image width")
+    return _roi_width->at(image_batch_idx);
+}
+
+unsigned ImageInfo::get_roi_height(int image_batch_idx) const
+{
+    if((unsigned)image_batch_idx >= _roi_height->size())
         THROW("Accesing image height out of batch size range")
-    if(!_image_height[image_batch_idx])
+    if(!_roi_height->at(image_batch_idx))
         THROW("Accessing uninitialized int parameter associated with image height")
-    return *_image_height[image_batch_idx];
+    return _roi_height->at(image_batch_idx);
 }
 void
-ImageInfo::recreate_image_dims()
+ImageInfo::reallocate_image_roi_buffers()
 {
-    _image_width.clear();
-    _image_height.clear();
+    _roi_height = std::make_shared<std::vector<uint32_t>>(_batch_size);
+    _roi_width = std::make_shared<std::vector<uint32_t>>(_batch_size);
     for(unsigned i = 0; i < _batch_size; i++)
     {
-        _image_height.push_back(std::make_shared<int>(_width));
-        _image_width.push_back(std::make_shared<int>(_height));
+        _roi_height->at(i) = height_single();
+        _roi_width->at(i) = width();
     }
 }
 ImageInfo::ImageInfo():
@@ -89,24 +110,41 @@ ImageInfo::ImageInfo(
         _color_fmt(col_fmt_)
         {
             // initializing each image dimension in the batch with the maximum image size, they'll get updated later during the runtime
-            recreate_image_dims();
+            reallocate_image_roi_buffers();
         }
 
-void Image::update_image_dims(const std::vector<uint>& width, const std::vector<uint>& height)
+void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height)
 {
     if(width.size() != height.size())
         THROW("Batch size of image height and width info does not match")
 
     if(width.size() != info().batch_size())
         THROW("The batch size of actual image height and width different from image batch size "+ TOSTR(width.size())+ " != " +  TOSTR(info().batch_size()))
-
+    if(! _info._roi_width || !_info._roi_height)
+        THROW("ROI width or ROI height vector not created")
     for(unsigned i = 0; i < info().batch_size(); i++)
     {
-        if(_info._image_width[i])
-            *_info._image_width[i] = width[i];
 
-        if(_info._image_height[i])
-            *_info._image_height[i]= height[i];
+        if (width[i] > _info.width())
+        {
+            ERR("Given ROI width is larger than buffer width for image[" + TOSTR(i) + "] " + TOSTR(width[i]) + " > " + TOSTR(_info.width()))
+            _info._roi_width->at(i) = _info.width();
+        }
+        else
+        {
+            _info._roi_width->at(i) = width[i];
+        }
+
+        if(height[i] > _info.height_single())
+        {
+            ERR("Given ROI height is larger than buffer with for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
+            _info._roi_height->at(i) = _info.height_single();
+        }
+        else
+        {
+            _info._roi_height->at(i)= height[i];
+        }
+
     }
 }
 

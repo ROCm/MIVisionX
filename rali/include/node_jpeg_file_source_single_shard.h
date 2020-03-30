@@ -6,9 +6,6 @@
 class JpegFileSingleShardNode: public Node
 {
 public:
-    void create(std::shared_ptr<Graph> graph) override  { if(!_graph) _graph = graph; }
-
-
     JpegFileSingleShardNode(Image *output, DeviceResources device_resources);
     ~JpegFileSingleShardNode() override;
 
@@ -21,8 +18,10 @@ public:
     void init(unsigned shard_id, unsigned shard_count, const std::string &source_path, StorageType storage_type, bool loop,
               size_t load_batch_count, RaliMemType mem_type);
 
-    void update_parameters() override  {};
     std::shared_ptr<LoaderModule> get_loader_module();
+protected:
+    void create_node() override {};
+    void update_node() override {};
 private:
     std::shared_ptr<ImageLoader> _loader_module = nullptr;
 };

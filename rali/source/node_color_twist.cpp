@@ -12,43 +12,18 @@ ColorTwistBatchNode::ColorTwistBatchNode(const std::vector<Image *> &inputs, con
 {
 }
 
-void ColorTwistBatchNode::create(std::shared_ptr<Graph> graph)
+void ColorTwistBatchNode::create_node()
 {
-    vx_uint32 *width, *height;
-    width = (vx_uint32* ) malloc(sizeof(vx_uint32) * _batch_size);
-    height = (vx_uint32* ) malloc(sizeof(vx_uint32) * _batch_size);
 
-    for (uint i = 0; i < _batch_size; i++ ) {
-         width[i] = _outputs[0]->info().width();
-         height[i] = _outputs[0]->info().height_single();
-    }
-
-    vx_status width_status, height_status;
-    
     if(_node)
         return;
 
-    _graph = graph;
+    _alpha.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _beta.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _hue.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _sat.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
 
-    if(_outputs.empty() || _inputs.empty())
-        THROW("Uninitialized input/output arguments")
-
-    _alpha.create_array(graph , VX_TYPE_FLOAT32, _batch_size);
-    _beta.create_array(graph , VX_TYPE_FLOAT32, _batch_size);
-    _hue.create_array(graph , VX_TYPE_FLOAT32, _batch_size);
-    _sat.create_array(graph , VX_TYPE_FLOAT32, _batch_size);
-   
-   
-    vx_array width_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
-    vx_array height_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
-
-    width_status = vxAddArrayItems(width_array,_batch_size, width, sizeof(vx_uint32));
-    height_status = vxAddArrayItems(height_array,_batch_size, height, sizeof(vx_uint32));
-
-    _node = vxExtrppNode_ColorTwistbatchPD(_graph->get(), _inputs[0]->handle(), width_array, height_array, _outputs[0]->handle(), _alpha.default_array(), _beta.default_array(), _hue.default_array(), _sat.default_array(), _batch_size);/*A temporary fix for time being*/
-
-    if(width_status != 0 || height_status != 0)
-        THROW(" vxAddArrayItems failed in the (vxExtrppNode_ColorTwistbatchPD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
+    _node = vxExtrppNode_ColorTwistbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _alpha.default_array(), _beta.default_array(), _hue.default_array(), _sat.default_array(), _batch_size);/*A temporary fix for time being*/
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
@@ -71,11 +46,10 @@ void ColorTwistBatchNode::init(FloatParam *alpha, FloatParam *beta, FloatParam *
     _sat.set_param(core(sat));
 }
 
-void ColorTwistBatchNode::update_parameters()
+void ColorTwistBatchNode::update_node()
 {
     _alpha.update_array();
     _beta.update_array();
     _hue.update_array();
     _sat.update_array();
 }
-

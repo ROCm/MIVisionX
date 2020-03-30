@@ -66,7 +66,7 @@ raliRotate(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-            output->reset_image_dims();
+            output->reset_image_roi();
         context->master_graph->add_node<RotateNode>({input}, {output})->init(angle);
     }
     catch(const std::exception& e)
@@ -108,7 +108,7 @@ raliRotateFixed(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-            output->reset_image_dims();
+            output->reset_image_roi();
 
         context->master_graph->add_node<RotateNode>({input}, {output})->init(angle);
     }
@@ -345,7 +345,7 @@ raliCropResize(
         output = context->master_graph->create_image(output_info, is_output);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-        output->reset_image_dims();
+        output->reset_image_roi();
 
         context->master_graph->add_node<CropResizeNode>({input}, {output})->init(area, aspect_ratio, x_center_drift, y_center_drift);
     }
@@ -386,7 +386,7 @@ raliCropResizeFixed(
         output = context->master_graph->create_image(output_info, is_output);
 
         // user provides the output size and the dimension of all the images after this node will be fixed and equal to that size
-        output->reset_image_dims();
+        output->reset_image_roi();
 
         context->master_graph->add_node<CropResizeNode>({input}, {output})->init(area, aspect_ratio, x_center_drift, y_center_drift);
     }
@@ -422,7 +422,7 @@ raliResize(
         output = context->master_graph->create_image(output_info, is_output);
 
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-        output->reset_image_dims();
+        output->reset_image_roi();
 
         context->master_graph->add_node<ResizeNode>({input}, {output});
     }
@@ -651,7 +651,7 @@ raliWarpAffine(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-            output->reset_image_dims();
+            output->reset_image_roi();
 
         context->master_graph->add_node<WarpAffineNode>({input}, {output})->init(x0, x1, y0, y1, o0, o1);
     }
@@ -696,7 +696,7 @@ raliWarpAffineFixed(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-            output->reset_image_dims();
+            output->reset_image_roi();
 
         context->master_graph->add_node<WarpAffineNode>({input}, {output})->init(x0, x1, y0, y1, o0, o1);
     }
@@ -1447,51 +1447,6 @@ raliColorTwistFixed(
     return output;
 }
 
-/*RaliImage
-RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, unsigned dest_width,
-                                                    unsigned dest_height, bool is_output, RaliFloatParam p_mean ,
-                                                    RaliFloatParam p_sdev ,RaliIntParam p_mirror,
-                                                    RaliFloatParam p_area,
-                                                    RaliFloatParam p_aspect_ratio ,
-                                                    RaliFloatParam p_x_center_drift,
-                                                    RaliFloatParam p_y_center_drift)
-{
-    Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);
-    auto input = static_cast<Image*>(p_input);
-    auto mean = static_cast<FloatParam*>(p_mean);
-    auto sdev = static_cast<FloatParam*>(p_sdev);
-    auto mirror = static_cast<IntParam*>(p_mirror);
-    auto area = static_cast<FloatParam*>(p_area);
-    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
-    auto x_center_drift = static_cast<FloatParam*>(p_x_center_drift);
-    auto y_center_drift = static_cast<FloatParam*>(p_y_center_drift);
-    try
-    {
-        if(!input || !context || dest_width == 0 || dest_height == 0)
-            THROW("Null values passed as input")
-
-        // For the crop mirror normalize resize node, user can create an image with a different width and height
-        ImageInfo output_info = input->info();
-        //output_info.width(dest_width);
-        //output_info.height(dest_height);
-
-        output = context->master_graph->create_image(output_info, is_output);
-
-        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-        output->reset_image_dims();
-
-        context->master_graph->add_node<CropMirrorNormalizeNode>({input}, {output}, context->batch_size)->init(area, aspect_ratio,
-                                                                x_center_drift, y_center_drift, mean, sdev, mirror);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-    }
-    return output;
-}*/
-
 RaliImage
 RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, unsigned crop_depth, unsigned crop_height,
                                     unsigned crop_width, float start_x, float start_y, float start_z, std::vector<float> &mean,
@@ -1523,7 +1478,7 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
         output_info.height(crop_height);
         output = context->master_graph->create_image(output_info, is_output);
         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-        output->reset_image_dims();
+        output->reset_image_roi();
 
         context->master_graph->add_node<CropMirrorNormalizeNode>({input}, {output})->init(crop_height, crop_width, start_x, start_y, mean_acutal,
                                                                                           std_actual , mirror );
@@ -1537,36 +1492,34 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
 }
 
 
-
-/*RaliImage  RALI_API_CALL
-raliCropMirrorNormalizeFixed(
+RaliImage RALI_API_CALL
+raliCrop(
         RaliContext p_context,
         RaliImage p_input,
-        unsigned dest_width, unsigned dest_height,
-        float area, float aspect_ratio,
-        float x_center_drift,
-        float y_center_drift, float mean, float sdev, int mirror,
-        bool is_output)
+        bool is_output,
+        RaliFloatParam p_crop_width,
+        RaliFloatParam p_crop_height,
+        RaliFloatParam p_crop_depth,
+        RaliFloatParam p_crop_pox_x,
+        RaliFloatParam p_crop_pos_y,
+        RaliFloatParam p_crop_pos_z)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
+    auto crop_h = static_cast<FloatParam*>(p_crop_height);
+    auto crop_w = static_cast<FloatParam*>(p_crop_width);
+    auto x_drift = static_cast<FloatParam*>(p_crop_pox_x);
+    auto y_drift = static_cast<FloatParam*>(p_crop_pos_y);
+
     try
     {
-        if(!input || !context || dest_width == 0 || dest_height == 0)
+        if(!input || !context)
             THROW("Null values passed as input")
-
-        // For the crop resize node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
-        //output_info.width(dest_width);
-        //output_info.height(dest_height);
-
         output = context->master_graph->create_image(output_info, is_output);
-
-        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-        output->reset_image_dims();
-
-        context->master_graph->add_node<CropMirrorNormalizeNode>({input}, {output}, context->batch_size)->init(area, aspect_ratio, x_center_drift, y_center_drift, mean, sdev, mirror);
+        output->reset_image_roi();
+        context->master_graph->add_node<CropNode>({input}, {output})->init(crop_h, crop_w, x_drift, y_drift);
     }
     catch(const std::exception& e)
     {
@@ -1574,81 +1527,7 @@ raliCropMirrorNormalizeFixed(
         ERR(e.what())
     }
     return output;
-}*/
-
-// RaliImage  RALI_API_CALL
-// raliCropMirrorNormalizeFixed(
-//         RaliContext p_context,
-//         RaliImage p_input,
-//         unsigned dest_width, unsigned dest_height,
-//         float area, float aspect_ratio,
-//         float x_center_drift,
-//         float y_center_drift, float mean, float sdev, int mirror,
-//         bool is_output)
-// {
-//     Image* output = nullptr;
-//     auto context = static_cast<Context*>(p_context);
-//     auto input = static_cast<Image*>(p_input);
-//     try
-//     {
-//         if(!input || !context || dest_width == 0 || dest_height == 0)
-//             THROW("Null values passed as input")
-
-//         // For the crop resize node, user can create an image with a different width and height
-//         ImageInfo output_info = input->info();
-//         //output_info.width(dest_width);
-//         //output_info.height(dest_height);
-
-//         output = context->master_graph->create_image(output_info, is_output);
-
-//         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-//         output->reset_image_dims();
-
-//         context->master_graph->add_node<CropMirrorNormalizeNode>({input}, {output})->init(area, aspect_ratio, x_center_drift, y_center_drift, mean, sdev, mirror);
-//     }
-//     catch(const std::exception& e)
-//     {
-//         context->capture_error(e.what());
-//         ERR(e.what())
-//     }
-//     return output;
-// }
-// RaliImage  RALI_API_CALL
-// raliCrop(
-//         RaliContext p_context,
-//         RaliImage p_input,
-//         unsigned dest_width, unsigned dest_height,
-//         bool is_output)
-// {
-//     Image* output = nullptr;
-//     auto context = static_cast<Context*>(p_context);
-//     auto input = static_cast<Image*>(p_input);
-   
-//     try
-//     {
-//         if(!input || !context )
-//             THROW("Null values passed as input")
-//         if(dest_width == 0 || dest_height == 0)
-//             THROW("Crop node needs tp receive non-zero destination dimensions")
-//         // For the crop resize node, user can create an image with a different width and height
-//         ImageInfo output_info = input->info();
-
-//         output_info.width(dest_width);
-//         output_info.height(dest_height);
-//         output = context->master_graph->create_image(output_info, is_output);
-
-//         // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-//         output->reset_image_dims();
-
-//         context->master_graph->add_node<CropResizeNode>({input}, {output})->init(area, aspect_ratio, x_center_drift, y_center_drift);
-//     }
-//     catch(const std::exception& e)
-//     {
-//         context->capture_error(e.what());
-//         ERR(e.what())
-//     }
-//     return output;
-// }
+}
 
 
 
@@ -1656,39 +1535,30 @@ RaliImage  RALI_API_CALL
 raliCropFixed(
         RaliContext p_context,
         RaliImage p_input,
-        unsigned crop_width, unsigned crop_height, unsigned crop_depth,
+        unsigned crop_width,
+        unsigned crop_height,
+        unsigned crop_depth,
         bool is_output,
-        float p_x_crop_pox_x,
-        float p_y_crop_pos_y,
-        float p_z_crop_pos_z)
+        float crop_pos_x,
+        float crop_pos_y,
+        float crop_pos_z)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
-   // auto crop_pox_x = static_cast<FloatParam*>(p_x_crop_pox_x);
-    //auto crop_pos_y = static_cast<FloatParam*>(p_y_crop_pos_y);
-    
     try
     {
         if(!input || !context )
             THROW("Null values passed as input")
-
-        // For the crop resize node, user can create an image with a different width and height
+        if(crop_width == 0 || crop_height == 0 || crop_depth == 0)
+            THROW("Crop node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
-        if( crop_width != 0 && crop_height != 0)
-        {
-            output_info.width(crop_width);
-            output_info.height(crop_height);
-            output = context->master_graph->create_image(output_info, is_output);
-            // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-            output->reset_image_dims();
-        } 
-        else
-        {
-            output = context->master_graph->create_image(input->info(), is_output);
-        }
-
-        context->master_graph->add_node<CropNode>({input}, {output})->init(crop_height, crop_width, p_x_crop_pox_x, p_y_crop_pos_y);
+        output_info.width(crop_width);
+        output_info.height(crop_height);
+        output = context->master_graph->create_image(input->info(), is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<CropNode>({input}, {output})->init(crop_height, crop_width, crop_pos_x, crop_pos_y);
     }
     catch(const std::exception& e)
     {
@@ -1702,35 +1572,26 @@ RaliImage  RALI_API_CALL
 raliCropCenterFixed(
         RaliContext p_context,
         RaliImage p_input,
-        unsigned crop_width, unsigned crop_height, unsigned crop_depth,
+        unsigned crop_width,
+        unsigned crop_height,
+        unsigned crop_depth,
         bool is_output)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
-   // auto crop_pox_x = static_cast<FloatParam*>(p_x_crop_pox_x);
-    //auto crop_pos_y = static_cast<FloatParam*>(p_y_crop_pos_y);
-    
     try
     {
         if(!input || !context )
             THROW("Null values passed as input")
-
-        // For the crop resize node, user can create an image with a different width and height
+        if(crop_width == 0 || crop_height == 0 || crop_depth == 0)
+            THROW("Crop node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
-        if( crop_width != 0 && crop_height != 0)
-        {
-            output_info.width(crop_width);
-            output_info.height(crop_height);
-            output = context->master_graph->create_image(output_info, is_output);
-            // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
-            output->reset_image_dims();
-        } 
-        else
-        {
-            output = context->master_graph->create_image(input->info(), is_output);
-        }
-
+        output_info.width(crop_width);
+        output_info.height(crop_height);
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
         context->master_graph->add_node<CropNode>({input}, {output})->init(crop_height, crop_width);
     }
     catch(const std::exception& e)

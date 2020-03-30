@@ -107,8 +107,8 @@ ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, Rali
         throw;
     }
     _decoded_img_info._image_names.resize(_batch_size);
-    _decoded_img_info._decoded_height.resize(_batch_size);
-    _decoded_img_info._decoded_width.resize(batch_size);
+    _decoded_img_info._roi_height.resize(_batch_size);
+    _decoded_img_info._roi_width.resize(batch_size);
     _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
     LOG("Loader module initialized");
@@ -145,8 +145,8 @@ ImageLoader::load_routine()
                                              _decoded_img_info._image_names,
                                              _output_image->info().width(),
                                              _output_image->info().height_single(),
-                                             _decoded_img_info._decoded_width,
-                                             _decoded_img_info._decoded_height,
+                                             _decoded_img_info._roi_width,
+                                             _decoded_img_info._roi_height,
                                              _output_image->info().color_format() );
 
             if(load_status == LoaderModuleStatus::OK)
@@ -223,7 +223,7 @@ ImageLoader::update_output_image()
 
     decoded_image_info d_img_info = _circ_buff.get_image_info();
     _output_names = d_img_info._image_names;
-    _output_image->update_image_dims(d_img_info._decoded_width, d_img_info._decoded_height);
+    _output_image->update_image_roi(d_img_info._roi_width, d_img_info._roi_height);
 
     _circ_buff.pop();
     if(!_loop)

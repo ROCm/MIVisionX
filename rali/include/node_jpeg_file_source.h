@@ -6,8 +6,6 @@
 class JpegFileNode: public Node
 {
 public:
-    void create(std::shared_ptr<Graph> graph) override  { if(!_graph) _graph = graph; }
-
     /// \param device_resources shard count from user
 
     /// internal_shard_count number of loader/decoders are created and each shard is loaded and decoded using separate and independent resources increasing the parallelism and performance.
@@ -23,8 +21,10 @@ public:
     void init(unsigned internal_shard_count, const std::string &source_path, StorageType storage_type, bool loop,
               size_t load_batch_count, RaliMemType mem_type);
 
-    void update_parameters() override  {};
     std::shared_ptr<LoaderModule> get_loader_module();
+protected:
+    void create_node() override {};
+    void update_node() override {};
 private:
     std::shared_ptr<ImageLoaderSharded> _loader_module = nullptr;
 };

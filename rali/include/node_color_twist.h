@@ -9,11 +9,12 @@ class ColorTwistBatchNode : public Node
 public:
     ColorTwistBatchNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     ColorTwistBatchNode() = delete;
-    void create(std::shared_ptr<Graph> graph) override ;
     void init(float alpha, float beta, float hue, float sat);
     void init(FloatParam *alpha, FloatParam *beta, FloatParam *hue, FloatParam *sat);
-    void update_parameters() override;
 
+protected:
+    void create_node() override;
+    void update_node() override;
 private:
 
     ParameterVX<float> _alpha;

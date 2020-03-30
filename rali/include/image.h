@@ -48,7 +48,6 @@ struct ROI {
 
 struct ImageInfo
 {
-    using pInt = std::shared_ptr<int>;
     friend struct Image;
     enum class Type
     {
@@ -81,10 +80,12 @@ struct ImageInfo
     RaliMemType mem_type() const { return _mem_type; }
     unsigned data_size() const { return _data_size; }
     RaliColorFormat color_format() const {return _color_fmt; }
-    unsigned get_image_width(int image_batch_idx) const;
-    unsigned get_image_height(int image_batch_idx) const;
-
-
+    unsigned get_roi_width(int image_batch_idx) const;
+    unsigned get_roi_height(int image_batch_idx) const;
+    uint32_t * get_roi_width() const;
+    uint32_t * get_roi_height() const;
+    const std::vector<uint32_t>& get_roi_width_vec() const;
+    const std::vector<uint32_t>& get_roi_height_vec() const;
 private:
     Type _type = Type::UNKNOWN;//!< image type, whether is virtual image, created from handle or is a regular image
     unsigned _width;//!< image width for a single image in the batch
@@ -94,10 +95,13 @@ private:
     unsigned _data_size;//!< total size of the memory needed to keep the image's data in bytes including all planes
     RaliMemType _mem_type;//!< memory type, currently either OpenCL or Host
     RaliColorFormat _color_fmt;//!< color format of the image
-    std::vector<pInt> _image_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size
-    std::vector<pInt> _image_height;//!< The actual image height stored in the buffer, it's always smaller than _height
+    std::shared_ptr<std::vector<uint32_t>> _roi_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one and observed for all.
+    std::shared_ptr<std::vector<uint32_t>> _roi_height;//!< The actual image height stored in the buffer, it's always smaller than _height. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one changes can be observed for all.
 
-    void recreate_image_dims();
+    void reallocate_image_roi_buffers();
+
+
+
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
@@ -126,8 +130,8 @@ struct Image
     explicit Image(const ImageInfo& img_info);
 
     int create(vx_context context);
-    void update_image_dims(const std::vector<uint>& width, const std::vector<uint>& height);
-    void reset_image_dims() { _info.recreate_image_dims(); }
+    void update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height);
+    void reset_image_roi() { _info.reallocate_image_roi_buffers(); }
 
     int create_from_handle(vx_context context, ImageBufferAllocation policy);
     int create_virtual(vx_context context, vx_graph graph);
@@ -139,3 +143,6 @@ private:
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
     vx_context _context = nullptr;
 };
+
+
+

@@ -7,11 +7,8 @@
 #include "video_loader_module.h"
 #ifdef RALI_VIDEO
 #include "video_loader_module.h"
-void VideoFileNode::create(std::shared_ptr<Graph> graph)
+void VideoFileNode::create_node()
 {
-    if(!_graph)
-        _graph = graph;
-
     std::ostringstream iss;
 
     // The format for the input string to the OVX decoder API is as follows:

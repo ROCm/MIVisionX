@@ -8,8 +8,8 @@
 struct decoded_image_info
 {
     std::vector<std::string> _image_names;
-    std::vector<uint> _decoded_width;
-    std::vector<uint> _decoded_height;
+    std::vector<uint32_t> _roi_width;
+    std::vector<uint32_t> _roi_height;
 };
 
 class CircularBuffer

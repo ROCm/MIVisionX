@@ -7,17 +7,14 @@
 class VignetteNode : public Node
 {
 public:
-    void create(std::shared_ptr<Graph> graph) override ;
     VignetteNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     VignetteNode () = delete;
     void init(float sdev);
     void init(FloatParam *sdev);
-    void update_parameters() override;
-
+protected:
+    void create_node() override;
+    void update_node() override;
 private:
     ParameterVX<float> _sdev;
     constexpr static float SDEV_RANGE [2] = {40 , 60};
-    std::vector<vx_uint32> _width, _height;
-    vx_array _width_array ,_height_array;
-    void update_dimensions();
 };

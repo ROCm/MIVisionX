@@ -31,16 +31,16 @@ public:
     /// \param names User's buffer provided to be filled with name of the images decoded
     /// \param max_decoded_width User's buffer maximum width per decoded image. User expects the decoder to downscale the image if image's original width is bigger than max_width
     /// \param max_decoded_height user's buffer maximum height per decoded image. User expects the decoder to downscale the image if image's original height is bigger than max_height
-    /// \param actual_decoded_width User's buffer to be filled with actual decoded image width. decoded_width is lower than max_width and is either equal to the original image width if smaller than max_width or downscaled if necessary to fit the max_width criterion.
-    /// \param actual_decoded_height User's buffer to be filled with actual decoded image height. decoded_height is lower than max_height and is either equal to the original image height if smaller than max_height or downscaled if necessary to fit the max_height criterion.
+    /// \param roi_width is set by the load() function tp the width of the region that decoded image is located. It's less than max_width and is either equal to the original image width if original image width is smaller than max_width or downscaled if necessary to fit the max_width criterion.
+    /// \param roi_height  is set by the load() function tp the width of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
     /// \param output_color_format defines what color format user expects decoder to decode images into if capable of doing so supported is
     LoaderModuleStatus load(
             unsigned char* buff,
             std::vector<std::string>& names,
             const size_t  max_decoded_width,
             const size_t max_decoded_height,
-            std::vector<uint>& actual_decoded_width,
-            std::vector<uint>& actual_decoded_height,
+            std::vector<uint32_t> &roi_width,
+            std::vector<uint32_t> &roi_height,
             RaliColorFormat output_color_format );
 
     //! returns timing info or other status information

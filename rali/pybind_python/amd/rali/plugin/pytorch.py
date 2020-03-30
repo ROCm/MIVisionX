@@ -2,8 +2,6 @@ import torch
 import numpy as np
 import rali_pybind as b
 import amd.rali.types as types
-from amd.rali.pipeline import Pipeline
-
 class RALIGenericImageIterator(object):
     def __init__(self, pipeline):
         self.loader = pipeline
@@ -11,19 +9,16 @@ class RALIGenericImageIterator(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         color_format = b.getOutputColorFormat(self.loader._handle)
-        #print("h <<",self.h,"\t w <<",self.w,"\t n <<",self.n,"\t ",color_format)
         self.p = (1 if color_format is types.GRAY else 3)
         height = self.h*self.n
         self.out_tensor = None
         self.out_image = np.zeros((height, self.w, self.p), dtype = "uint8")
         self.bs = pipeline._batch_size
-        # print("Complets the init")
 
     def next(self):
         return self.__next__()
 
     def __next__(self):
-        # print("In the next routine")
         if b.getRemainingImages(self.loader._handle) < self.bs:
             raise StopIteration
 
@@ -31,7 +26,6 @@ class RALIGenericImageIterator(object):
             raise StopIteration
 
         self.loader.copyImage(self.out_image)
-        # print("returns from copyImage")
         return self.out_image , self.out_tensor
 
     def reset(self):
@@ -56,7 +50,6 @@ class RALIGenericIterator(object):
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
         color_format = b.getOutputColorFormat(self.loader._handle)
-        #print("h <<",self.h,"\t w <<",self.w,"\t n <<",self.n,"\t color_format <<",color_format,"\t bs <<",self.bs)
         self.p = (1 if color_format is types.GRAY else 3)
         if self.tensor_dtype == types.FLOAT:
             self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
@@ -68,7 +61,6 @@ class RALIGenericIterator(object):
         return self.__next__()
 
     def __next__(self):
-        # print("In the next routine")
         if(b.isEmpty(self.loader._handle)):
             timing_info = b.getTimingInfo(self.loader._handle)
             print("Load     time ::",timing_info.load_time)
@@ -87,7 +79,6 @@ class RALIGenericIterator(object):
         
         self.loader.getImageLabels(self.labels)
         self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
-        #print("Labels:: ",self.labels)
     
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out), self.labels_tensor
@@ -169,7 +160,5 @@ class RALIClassificationIterator(RALIGenericIterator):
                  dynamic_shape=False,
                  last_batch_padded=False):
         pipe = pipelines
-        #print("tensor_layout = pipe._tensor_layout ::", pipe._tensor_layout)
-        #print("tensor_dtype = pipe.tensor_dtype ::", pipe._tensor_dtype)
         super(RALIClassificationIterator, self).__init__(pipe, tensor_layout = pipe._tensor_layout, tensor_dtype = pipe._tensor_dtype,
                                                             multiplier=pipe._multiplier, offset=pipe._offset)

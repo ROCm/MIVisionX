@@ -299,8 +299,11 @@ class RaliGraph():
     def getReaminingImageCount(self):
         return self._lib.remainingImagesCount(self.handle)
 
-    def getOutputImageCount(self):
-        return self._lib.raliGetOutputImageCount(self.handle)
+    def raliIsEmpty(self):
+        return self._lib.raliIsEmpty(self.handle)
+
+    def raliGetAugmentationBranchCount(self):
+        return self._lib.raliGetAugmentationBranchCount(self.handle)
 
     def setSeed(self, seed):
         self._lib.raliSetSeed(seed)

@@ -227,9 +227,21 @@ class RaliLib:
         self.raliGetSeed.restype = ctypes.c_ulonglong
         self.raliGetSeed.argtypes = []
 
-        self.raliGetOutputImageCount = self.lib.raliGetOutputImageCount
-        self.raliGetOutputImageCount.restype = ctypes.c_int
-        self.raliGetOutputImageCount.argtypes = [ctypes.c_void_p]
+        self.raliGetAugmentationBranchCount = self.lib.raliGetAugmentationBranchCount
+        self.raliGetAugmentationBranchCount.restype = ctypes.c_int
+        self.raliGetAugmentationBranchCount.argtypes = [ctypes.c_void_p]
+
+        self.raliIsEmpty = self.lib.raliIsEmpty
+        self.raliIsEmpty.restype = ctypes.c_int
+        self.raliIsEmpty.argtypes = [ctypes.c_void_p]
+
+        self.raliGetImageName = self.lib.raliGetImageName
+        self.raliGetImageName.restype = ctypes.c_void_p
+        self.raliGetImageName.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint]
+
+        self.raliGetImageNameLen = self.lib.raliGetImageNameLen
+        self.raliGetImageNameLen.restype = ctypes.c_uint
+        self.raliGetImageNameLen.argtypes = [ctypes.c_void_p, ctypes.c_uint]
 
         """ rali_api_data_transfer.h """
         self.copyToOutput = self.lib.raliCopyToOutput

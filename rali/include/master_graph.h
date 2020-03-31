@@ -7,8 +7,8 @@
 #include "ring_buffer.h"
 #include "timing_debug.h"
 #include "node.h"
-#include "node_jpeg_file_source.h"
-#include "node_jpeg_file_source_single_shard.h"
+#include "node_image_loader.h"
+#include "node_image_loader_single_shard.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 
@@ -83,7 +83,7 @@ private:
     vx_context _context;
     const RaliMemType _mem_type;//!< Is set according to the _affinity, if GPU, is set to CL, otherwise host
     TimingDBG _process_time;
-    std::shared_ptr<MetaDataReader> _meta_data_manager = nullptr;
+    std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
     bool _first_run = true;
     bool _processing;//!< Indicates if internal processing thread should keep processing or not
@@ -120,13 +120,13 @@ std::shared_ptr<T> MasterGraph::add_node(const std::vector<Image *> &inputs, con
 }
 
 /*
- * Explicit specialization for JpegFileNode
+ * Explicit specialization for ImageLoaderNode
  */
-template<> inline std::shared_ptr<JpegFileNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+template<> inline std::shared_ptr<ImageLoaderNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<JpegFileNode>(outputs[0], _device.resources());
+    auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
@@ -134,11 +134,11 @@ template<> inline std::shared_ptr<JpegFileNode> MasterGraph::add_node(const std:
 
     return node;
 }
-template<> inline std::shared_ptr<JpegFileSingleShardNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<JpegFileSingleShardNode>(outputs[0], _device.resources());
+    auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)

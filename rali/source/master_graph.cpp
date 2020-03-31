@@ -242,7 +242,7 @@ void MasterGraph::release()
         delete image;// It will call the vxReleaseImage internally in the destructor
     _augmented_meta_data = nullptr;
     _meta_data_graph = nullptr;
-    _meta_data_manager = nullptr;
+    _meta_data_reader = nullptr;
     deallocate_output_tensor();
 }
 
@@ -672,8 +672,8 @@ void MasterGraph::output_routine()
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
 
                 // meta_data lookup is done before _meta_data_graph->process() is called to have the new meta_data ready for processing
-                if (_meta_data_manager)
-                    _meta_data_manager->lookup(this_cycle_names);
+                if (_meta_data_reader)
+                    _meta_data_reader->lookup(this_cycle_names);
 
                 full_batch_image_names += this_cycle_names;
 
@@ -758,36 +758,36 @@ void MasterGraph::stop_processing()
 
 MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output)
 {
-    if( _meta_data_manager)
+    if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::BoundingBox, source_path);
     _meta_data_graph = create_meta_data_graph(config);
-    _meta_data_manager = create_meta_data_manager(config);
-    _meta_data_manager->init(config);
-    _meta_data_manager->read_all(source_path);
+    _meta_data_reader = create_meta_data_manager(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
     if(is_output)
     {
         if (_augmented_meta_data)
             THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
         else
-            _augmented_meta_data = _meta_data_manager->get_output();
+            _augmented_meta_data = _meta_data_reader->get_output();
     }
-    return _meta_data_manager->get_output();
+    return _meta_data_reader->get_output();
 }
 
 MetaDataBatch* MasterGraph::create_file_system_label_reader(const char* source_path)
 {
-    if( _meta_data_manager)
+    if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, source_path);
-    _meta_data_manager = create_meta_data_manager(config);
-    _meta_data_manager->init(config);
-    _meta_data_manager->read_all(source_path);
+    _meta_data_reader = create_meta_data_manager(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
     if (_augmented_meta_data)
         THROW("Metadata can only have a single output")
     else
-        _augmented_meta_data = _meta_data_manager->get_output();
-    return _meta_data_manager->get_output();
+        _augmented_meta_data = _meta_data_reader->get_output();
+    return _meta_data_reader->get_output();
 }
 const std::pair<ImageNameBatch,pMetaDataBatch>& MasterGraph::meta_data()
 {

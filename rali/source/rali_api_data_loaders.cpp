@@ -2,14 +2,15 @@
 #include "rali_api.h"
 #include "commons.h"
 #include "context.h"
-#include "node_jpeg_file_source.h"
-#include "node_jpeg_file_source_single_shard.h"
+#include "node_image_loader.h"
+#include "node_image_loader_single_shard.h"
 #include "node_video_file_source.h"
 #include "image_source_evaluator.h"
 #include "node_fisheye.h"
 #include "node_copy.h"
 std::tuple<unsigned, unsigned>
-find_max_image_size (RaliImageSizeEvaluationPolicy decode_size_policy, StorageType storage_type, const std::string& source_path)
+evaluate_image_data_set(RaliImageSizeEvaluationPolicy decode_size_policy, StorageType storage_type,
+                        DecoderType decoder_type, const std::string &source_path)
 {
     auto translate_image_size_policy = [](RaliImageSizeEvaluationPolicy decode_size_policy)
     {
@@ -99,7 +100,8 @@ raliJpegTFRecordSource(
         }
 
         auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               find_max_image_size(decode_size_policy, StorageType::TF_RECORD, source_path);
+                               evaluate_image_data_set(decode_size_policy, StorageType::TF_RECORD, DecoderType::TURBO_JPEG,
+                                                       source_path);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
@@ -111,12 +113,13 @@ raliJpegTFRecordSource(
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
 
-        context->master_graph->add_node<JpegFileNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path,
-                                                                          StorageType::TF_RECORD,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type());
+        context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
+                                                                             source_path,
+                                                                             StorageType::TF_RECORD,
+                                                                             DecoderType::TURBO_JPEG,
+                                                                             loop,
+                                                                             context->user_batch_size(),
+                                                                             context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -169,7 +172,8 @@ raliJpegTFRecordSourceSingleShard(
         }
 
         auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               find_max_image_size(decode_size_policy, StorageType::TF_RECORD, source_path);
+                               evaluate_image_data_set(decode_size_policy, StorageType::TF_RECORD, DecoderType::TURBO_JPEG,
+                                                       source_path);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
@@ -181,12 +185,13 @@ raliJpegTFRecordSourceSingleShard(
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
 
-        context->master_graph->add_node<JpegFileSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                     source_path,
-                                                                                     StorageType::TF_RECORD,
-                                                                                     loop,
-                                                                                     context->user_batch_size(),
-                                                                                     context->master_graph->mem_type());
+        context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
+                                                                                        source_path,
+                                                                                        StorageType::TF_RECORD,
+                                                                                        DecoderType::TURBO_JPEG,
+                                                                                        loop,
+                                                                                        context->user_batch_size(),
+                                                                                        context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -239,7 +244,8 @@ raliJpegFileSourceSingleShard(
         }
 
         auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               find_max_image_size(decode_size_policy, StorageType::FILE_SYSTEM, source_path);
+                               evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG,
+                                                       source_path);
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
@@ -251,12 +257,13 @@ raliJpegFileSourceSingleShard(
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
 
-        context->master_graph->add_node<JpegFileSingleShardNode>({}, {output})->init(shard_id, shard_count,
-                                                                                     source_path,
-                                                                                     StorageType::FILE_SYSTEM,
-                                                                                     loop,
-                                                                                     context->user_batch_size(),
-                                                                                     context->master_graph->mem_type());
+        context->master_graph->add_node<ImageLoaderSingleShardNode>({}, {output})->init(shard_id, shard_count,
+                                                                                        source_path,
+                                                                                        StorageType::FILE_SYSTEM,
+                                                                                        DecoderType::TURBO_JPEG,
+                                                                                        loop,
+                                                                                        context->user_batch_size(),
+                                                                                        context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -305,7 +312,8 @@ raliJpegFileSource(
         }
 
         auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               find_max_image_size(decode_size_policy, StorageType::FILE_SYSTEM, source_path);
+                               evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG,
+                                                       source_path);
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
@@ -318,12 +326,13 @@ raliJpegFileSource(
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
 
-        context->master_graph->add_node<JpegFileNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path,
-                                                                          StorageType::FILE_SYSTEM,
-                                                                          loop,
-                                                                          context->user_batch_size(),
-                                                                          context->master_graph->mem_type());
+        context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
+                                                                             source_path,
+                                                                             StorageType::FILE_SYSTEM,
+                                                                             DecoderType::TURBO_JPEG,
+                                                                             loop,
+                                                                             context->user_batch_size(),
+                                                                             context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         if(is_output)

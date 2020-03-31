@@ -119,11 +119,11 @@ int main(int argc, const char ** argv)
         return -1;
     }
 
-    std::cout << "Augmented copies count " << raliGetOutputImageCount(handle) << std::endl;
+    std::cout << "Augmented copies count " << raliGetAugmentationBranchCount(handle) << std::endl;
 
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
-    int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
+    int h = raliGetAugmentationBranchCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? 3 : 1);
     std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;

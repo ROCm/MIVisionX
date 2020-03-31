@@ -17,20 +17,7 @@ size_t RALI_API_CALL raliGetImagePlanes(RaliImage p_image)
     auto image = static_cast<Image*>(p_image);
     return image->info().color_plane_count();
 }
-/*
-void RALI_API_CALL raliGetImageName(RaliImage p_image, char* buf, unsigned image_idx)
-{
 
-    auto ret = image->get_name();
-    memcpy((void*)buf, ret[image_idx].c_str(), ret[image_idx].size());
-}
-
-unsigned RALI_API_CALL raliGetImageNameLen(RaliImage p_image,  unsigned image_idx)
-{
-    auto ret = image->get_name();
-    return ret[image_idx].size();
-}
- */
 int RALI_API_CALL raliGetOutputWidth(RaliContext p_context)
 {
     auto context = static_cast<Context*>(p_context);
@@ -62,10 +49,10 @@ int RALI_API_CALL raliGetOutputColorFormat(RaliContext p_context)
 
     return translate_color_format(context->master_graph->output_color_format());
 }
-size_t RALI_API_CALL raliGetOutputImageCount(RaliContext p_context)
+size_t RALI_API_CALL raliGetAugmentationBranchCount(RaliContext p_context)
 {
     auto context = static_cast<Context*>(p_context);
-    return context->master_graph->output_image_count();
+    return context->master_graph->augmentation_branch_count();
 }
 
 size_t  RALI_API_CALL

@@ -29,7 +29,7 @@ public:
     size_t output_height();
     size_t output_byte_size();
     size_t output_depth();
-    size_t output_image_count();
+    size_t augmentation_branch_count();
     size_t output_sample_size();
     RaliColorFormat output_color_format();
     Status build();

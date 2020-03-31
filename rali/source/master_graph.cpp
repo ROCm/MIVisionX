@@ -260,7 +260,7 @@ MasterGraph::update_node_parameters()
 }
 
 size_t
-MasterGraph::output_image_count()
+MasterGraph::augmentation_branch_count()
 {
     return _output_images.size();
 }

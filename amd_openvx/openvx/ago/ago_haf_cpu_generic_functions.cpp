@@ -339,7 +339,6 @@ static vx_status ownCopyImage(vx_image input, vx_image output)
 
         status |= vxMapImagePatch(input, &src_rect, p, &map_id1, &src_addr, &src, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
         status |= vxMapImagePatch(output, &dst_rect, p, &map_id2, &dst_addr, &dst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
-
         for (y = 0; y < src_addr.dim_y && status == VX_SUCCESS; y += src_addr.step_y)
         {
             for (x = 0; x < src_addr.dim_x && status == VX_SUCCESS; x += src_addr.step_x)
@@ -709,9 +708,9 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     )
 {
     vx_status status = VX_SUCCESS;
-
+    
     vx_context context = vxGetContext((vx_reference)node);
-
+    
     vx_size lev;
     vx_size levels = 1;
     vx_uint32 width = 0;
@@ -747,7 +746,6 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
 
     level_width = width;
     level_height = height;
-
     gauss_cur = vxGetPyramidLevel(gaussian, 0);
     gauss_next = vxGetPyramidLevel(gaussian, 1);
     for (lev = 0; lev < levels; lev++)
@@ -789,5 +787,92 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     status |= vxReleasePyramid(&gaussian);
     status |= vxReleaseConvolution(&conv);
 
+    return status;
+}
+
+#define VX_SCALE_PYRAMID_DOUBLE (2.0f)
+
+int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
+    (
+        vx_node node, 
+        vx_pyramid laplacian,
+        vx_image input,
+        vx_image output
+    )
+{
+    vx_status status = VX_SUCCESS;
+
+    vx_context context = vxGetContext((vx_reference)node);
+
+    vx_size lev;
+    vx_size levels = 1;
+    vx_uint32 width = 0;
+    vx_uint32 height = 0;
+    vx_uint32 level_width = 0;
+    vx_uint32 level_height = 0;
+    vx_df_image format = VX_DF_IMAGE_S16;
+    vx_enum policy = VX_CONVERT_POLICY_SATURATE;
+    vx_border_t border;
+    vx_image filling = 0;
+    vx_image pyr_level = 0;
+    vx_image filter = 0;
+    vx_image out = 0;
+    vx_convolution conv;
+
+    vx_scalar spolicy = vxCreateScalar(context, VX_TYPE_ENUM, &policy);
+
+    status |= vxQueryImage(input, VX_IMAGE_WIDTH, &width, sizeof(width));
+    status |= vxQueryImage(input, VX_IMAGE_HEIGHT, &height, sizeof(height));
+    
+    status |= vxQueryPyramid(laplacian, VX_PYRAMID_LEVELS, &levels, sizeof(levels));
+
+    status |= vxQueryNode(node, VX_NODE_BORDER, &border, sizeof(border));
+    border.mode = VX_BORDER_REPLICATE;
+    conv = vxCreateGaussian5x5Convolution(context);
+
+    level_width = (vx_uint32)ceilf(width  * VX_SCALE_PYRAMID_DOUBLE);
+    level_height = (vx_uint32)ceilf(height * VX_SCALE_PYRAMID_DOUBLE);
+    filling = vxCreateImage(context, width, height, format);
+    for (lev = 0; lev < levels; lev++)
+    {
+        out = vxCreateImage(context, level_width, level_height, format);
+        filter = vxCreateImage(context, level_width, level_height, format);
+
+        pyr_level = vxGetPyramidLevel(laplacian, (vx_uint32)((levels - 1) - lev));
+
+        if (lev == 0)
+        {
+            ownCopyImage(input, filling);
+        }
+        upsampleImage(context, level_width, level_height, filling, conv, filter, &border);
+        vxuAdd(context, filter, pyr_level, policy, out);
+        //vxAddition(filter, pyr_level, spolicy, out);
+
+        status |= vxReleaseImage(&pyr_level);
+
+        if ((levels - 1) - lev == 0)
+        {
+            ownCopyImage(out, output);
+            status |= vxReleaseImage(&filling);
+        }
+        else
+        {
+            /* compute dimensions for the next level */
+            status |= vxReleaseImage(&filling);
+            filling = vxCreateImage(context, level_width, level_height, format);
+            ownCopyImage(out, filling);
+
+            level_width = (vx_uint32)ceilf(level_width  * VX_SCALE_PYRAMID_DOUBLE);
+            level_height = (vx_uint32)ceilf(level_height * VX_SCALE_PYRAMID_DOUBLE);
+
+
+        }
+        status |= vxReleaseImage(&out);
+        status |= vxReleaseImage(&filter);
+
+    }
+    status |= vxReleaseConvolution(&conv);
+    status |= vxReleaseScalar(&spolicy);
+    
     return status;
 }

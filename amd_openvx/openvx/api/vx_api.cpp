@@ -6947,11 +6947,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryPyramid(vx_pyramid pyr, vx_enum attrib
 VX_API_ENTRY vx_image VX_API_CALL vxGetPyramidLevel(vx_pyramid pyr, vx_uint32 index)
 {
 	AgoData * data = (AgoData *)pyr;
-
 	AgoData * img = NULL;
 	if (agoIsValidData(data, VX_TYPE_PYRAMID) && (index < data->u.pyr.levels) && !data->isNotFullyConfigured) {
 		img = data->children[index];
-		agoRetainData((AgoGraph *)data->ref.scope, img, true);	
+		agoRetainData((AgoGraph *)data->ref.scope, img, true);
 	}
 	return (vx_image)img;
 }

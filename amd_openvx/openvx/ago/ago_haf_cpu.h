@@ -3089,4 +3089,20 @@ int HafCpu_NonLinearFilter_DATA_DATADATA
 	vx_image dst, 
 	vx_border_t *border
 );
+
+int HafCpu_LaplacianPyramid_DATA_DATA_DATA
+(
+	vx_node node,
+	vx_image input, 
+	vx_pyramid laplacian,
+	vx_image output
+);
+
+int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
+(
+	vx_node node, 
+	vx_pyramid laplacian,
+	vx_image input,
+	vx_image output
+);
 #endif // __ago_haf_cpu_h__

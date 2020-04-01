@@ -2773,7 +2773,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxProcessGraph(vx_graph graph)
 {
-	return agoProcessGraph(graph);
+	vx_status status = agoProcessGraph(graph);
+	return status;
 }
 
 /*! \brief Schedules a graph for future execution.

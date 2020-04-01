@@ -2215,9 +2215,8 @@ int ovxKernel_NonLinearFilter(AgoNode * node, AgoKernelCommand cmd)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
-		else if (node->paramList[3]->u.img.format != format) {
+		else if (node->paramList[3]->u.img.format != format)
 			return VX_ERROR_INVALID_FORMAT;
-		}
 		
 		// set output image sizes same as input image size
 		vx_meta_format meta;
@@ -2253,17 +2252,31 @@ int ovxKernel_LaplacianPyramid(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_S16 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		vx_df_image format = node->paramList[0]->u.img.format;
+		if (format != VX_DF_IMAGE_S16 && format != VX_DF_IMAGE_U8)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (node->paramList[1]->u.pyr.format != VX_DF_IMAGE_S16)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
+		else if (node->paramList[2]->u.img.format != format) 
+			return VX_ERROR_INVALID_FORMAT;
+		
+		vx_float32 scale = node->paramList[1]->u.pyr.scale;
+		vx_size levels = node->paramList[1]->u.pyr.levels;
+
+		while (levels--) {
+        	width *= scale;
+        	height *= scale;
+    	}
+		
 		// set output image sizes same as input image size
-		int N = node->paramList[2]->u.scalar.u.i >> 1;
 		vx_meta_format meta;
-		meta = &node->metaList[3];
-		meta->data.u.img.format = node->paramList[0]->u.img.format;
+		meta = &node->metaList[2];
+		meta->data.u.img.width = width;
+		meta->data.u.img.height = height;
+		meta->data.u.img.format = format;
+
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -2292,17 +2305,28 @@ int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[1]->u.img.width;
 		vx_uint32 height = node->paramList[1]->u.img.height;
-		if (node->paramList[1]->u.img.format != VX_DF_IMAGE_S16 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
+		vx_df_image format = node->paramList[1]->u.img.format;
+		if (format != VX_DF_IMAGE_S16 && format != VX_DF_IMAGE_U8)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (node->paramList[0]->u.pyr.format != VX_DF_IMAGE_S16)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
+		else if (node->paramList[2]->u.img.format != format) 
+			return VX_ERROR_INVALID_FORMAT;
+		
+		vx_float32 scale = node->paramList[0]->u.pyr.scale;
+		vx_size levels = node->paramList[0]->u.pyr.levels;
+		while (levels--) {
+        	width /= scale;
+        	height /= scale;
+    	}
 		// set output image sizes same as input image size
-		int N = node->paramList[2]->u.scalar.u.i >> 1;
 		vx_meta_format meta;
-		meta = &node->metaList[3];
-		meta->data.u.img.format = node->paramList[1]->u.img.format;
+		meta = &node->metaList[2];
+		meta->data.u.img.width = width;
+		meta->data.u.img.height = height;
+		meta->data.u.img.format = format;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -13459,10 +13483,14 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * inp = node->paramList[1];
 		vx_uint32 width = out->u.img.width;
 		vx_uint32 height = out->u.img.height;
-		out->u.img.rect_valid.start_x = min(((inp->u.img.rect_valid.start_x + 1) >> 1) + 1, width);
-		out->u.img.rect_valid.start_y = min(((inp->u.img.rect_valid.start_y + 1) >> 1) + 1, height);
-		out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1) - 1, 0);
-		out->u.img.rect_valid.end_y = max((int)((inp->u.img.rect_valid.end_y + 1) >> 1) - 1, 0);
+		out->u.img.rect_valid.start_x = min(((inp->u.img.rect_valid.start_x + 1) >> 1), width);
+		out->u.img.rect_valid.start_y = min(((inp->u.img.rect_valid.start_y + 1) >> 1), height);
+		out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1), 0);
+		out->u.img.rect_valid.end_y = max((int)((inp->u.img.rect_valid.end_y + 1) >> 1), 0);
+		// out->u.img.rect_valid.start_x = min(((inp->u.img.rect_valid.start_x + 1) >> 1) + 1, width);
+		// out->u.img.rect_valid.start_y = min(((inp->u.img.rect_valid.start_y + 1) >> 1) + 1, height);
+		// out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1) - 1, 0);
+		// out->u.img.rect_valid.end_y = max((int)((inp->u.img.rect_valid.end_y + 1) >> 1) - 1, 0);
 	}
 	return status;
 }
@@ -19639,7 +19667,7 @@ int agoKernel_NonLinearFilter_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cm
 		vx_uint32 width = node->paramList[2]->u.img.width;
 		vx_uint32 height = node->paramList[2]->u.img.height;
 		vx_df_image format = node->paramList[2]->u.img.format;
-		if (format != VX_DF_IMAGE_U8 && format != VX_DF_IMAGE_U1) {
+		if (format != VX_DF_IMAGE_U8 && format != VX_DF_IMAGE_U16) {
 			return VX_ERROR_INVALID_FORMAT;
 		}
 		else if (!width || !height){
@@ -19652,6 +19680,71 @@ int agoKernel_NonLinearFilter_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cm
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
 		meta->data.u.img.format = format;
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[2];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		// TBD: not implemented yet
+		status = VX_ERROR_NOT_SUPPORTED;
+	}
+#endif
+	else if (cmd == ago_kernel_cmd_query_target_support) {
+		node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU              
+                    ;
+        status = VX_SUCCESS;
+	}
+	return status;
+}
+
+int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		vx_image oImg = (vx_image)node->paramList[0];
+		vx_image iImg = (vx_image)node->paramList[1];
+		vx_pyramid laplacian = (vx_pyramid)node->paramList[2];
+		if (HafCpu_LaplacianPyramid_DATA_DATA_DATA((vx_node)node, iImg, laplacian, oImg))
+			status = VX_FAILURE;	
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		// validate parameters
+		vx_uint32 width = node->paramList[1]->u.img.width;
+		vx_uint32 height = node->paramList[1]->u.img.height;
+		vx_df_image format = node->paramList[1]->u.img.format;
+		if (format != VX_DF_IMAGE_S16 && format != VX_DF_IMAGE_U8)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (node->paramList[2]->u.pyr.format != VX_DF_IMAGE_S16)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (!width || !height)
+			return VX_ERROR_INVALID_DIMENSION;
+		
+		vx_float32 scale = node->paramList[2]->u.pyr.scale;
+		vx_size levels = node->paramList[2]->u.pyr.levels;
+		while (levels--) {
+        	width *= scale;
+        	height *= scale;
+    	}
+
+		// set output image sizes same as input image size
+		vx_meta_format meta;
+		meta = &node->metaList[0];
+		meta->data.u.img.width = width;
+		meta->data.u.img.height = height;
+		meta->data.u.img.format = format;
+
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -19680,50 +19773,50 @@ int agoKernel_NonLinearFilter_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cm
 	return status;
 }
 
-int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
-{
-	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
-	if (cmd == ago_kernel_cmd_execute) {
-		status = VX_ERROR_NOT_SUPPORTED;
-	}
-	else if (cmd == ago_kernel_cmd_validate) {
-		// validate parameters
-		status = VX_ERROR_NOT_SUPPORTED;
-	}
-	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
-		status = VX_SUCCESS;
-	}
-	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-		// TBD: not implemented yet
-	}
-#if ENABLE_OPENCL
-	else if (cmd == ago_kernel_cmd_opencl_codegen) {
-		// TBD: not implemented yet
-		status = VX_ERROR_NOT_SUPPORTED;
-	}
-#endif
-	else if (cmd == ago_kernel_cmd_query_target_support) {
-		node->target_support_flags = 0;
-		status = VX_SUCCESS;
-	}
-	return status;
-}
-
 int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)
 {
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
-		status = VX_ERROR_NOT_SUPPORTED;
+		status = VX_SUCCESS;
+		vx_image oImg = (vx_image)node->paramList[0];
+		vx_image iImg = (vx_image)node->paramList[2];
+		vx_pyramid laplacian = (vx_pyramid)node->paramList[1];
+		if (HafCpu_LaplacianReconstruct_DATA_DATA_DATA((vx_node)node, laplacian, iImg, oImg))
+			status = VX_FAILURE;
 	}
 	else if (cmd == ago_kernel_cmd_validate) {
 		// validate parameters
-		status = VX_ERROR_NOT_SUPPORTED;
+		vx_uint32 width = node->paramList[2]->u.img.width;
+		vx_uint32 height = node->paramList[2]->u.img.height;
+		vx_df_image format = node->paramList[2]->u.img.format;
+		if (format != VX_DF_IMAGE_S16 && format != VX_DF_IMAGE_U8)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (node->paramList[1]->u.pyr.format != VX_DF_IMAGE_S16)
+			return VX_ERROR_INVALID_FORMAT;
+		else if (!width || !height)
+			return VX_ERROR_INVALID_DIMENSION;
+		
+		vx_float32 scale = node->paramList[1]->u.pyr.scale;
+		vx_size levels = node->paramList[1]->u.pyr.levels;
+
+		while (levels--) {
+        	width /= scale;
+        	height /= scale;
+    	}
+		// set output image sizes same as input image size
+		vx_meta_format meta;
+		meta = &node->metaList[0];
+		meta->data.u.img.width = width;
+		meta->data.u.img.height = height;
+		meta->data.u.img.format = format;
+
+		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-		// TBD: not implemented yet
+
 	}
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
@@ -19732,8 +19825,10 @@ int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelComma
 	}
 #endif
 	else if (cmd == ago_kernel_cmd_query_target_support) {
-		node->target_support_flags = 0;
-		status = VX_SUCCESS;
+		node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU              
+                    ;
+        status = VX_SUCCESS;
 	}
 	return status;
 }

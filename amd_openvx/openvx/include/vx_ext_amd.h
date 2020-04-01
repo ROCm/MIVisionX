@@ -67,6 +67,11 @@ THE SOFTWARE.
  */
 #define VX_GRAPH_ATTRIBUTE_STATE            VX_GRAPH_STATE
 
+/*! \brief The attributes for vx_object_array
+ */
+#define VX_OBJECT_ARRAY_ATTRIBUTE_ITEMTYPE         VX_OBJECT_ARRAY_ITEMTYPE
+#define VX_OBJECT_ARRAY_ATTRIBUTE_NUMITEMS         VX_OBJECT_ARRAY_NUMITEMS
+
 /*! \brief The type enumeration lists all the AMD specific types in OpenVX.
 */
 enum ago_type_public_e {

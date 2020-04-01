@@ -339,7 +339,6 @@ static vx_status ownCopyImage(vx_image input, vx_image output)
 
         status |= vxMapImagePatch(input, &src_rect, p, &map_id1, &src_addr, &src, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
         status |= vxMapImagePatch(output, &dst_rect, p, &map_id2, &dst_addr, &dst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
-
         for (y = 0; y < src_addr.dim_y && status == VX_SUCCESS; y += src_addr.step_y)
         {
             for (x = 0; x < src_addr.dim_x && status == VX_SUCCESS; x += src_addr.step_x)
@@ -824,7 +823,7 @@ int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
 
     status |= vxQueryImage(input, VX_IMAGE_WIDTH, &width, sizeof(width));
     status |= vxQueryImage(input, VX_IMAGE_HEIGHT, &height, sizeof(height));
-
+    
     status |= vxQueryPyramid(laplacian, VX_PYRAMID_LEVELS, &levels, sizeof(levels));
 
     status |= vxQueryNode(node, VX_NODE_BORDER, &border, sizeof(border));

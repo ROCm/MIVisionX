@@ -183,9 +183,6 @@ int main(int argc, const char ** argv)
 
     model_batch_64(handle ,input1, 224, 224);
 
-    //raliNop(handle, input1, true);
-    int resize_w = 112, resize_h = 112;
-
 
     if(raliGetStatus(handle) != RALI_OK)
     {

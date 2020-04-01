@@ -760,7 +760,7 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::BoundingBox, source_path);
+    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, source_path);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_manager(config);
     _meta_data_reader->init(config);
@@ -775,11 +775,11 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch* MasterGraph::create_file_system_label_reader(const char* source_path)
+MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDataReaderType reader_type)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, source_path);
+    MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
     _meta_data_reader = create_meta_data_manager(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
@@ -789,6 +789,7 @@ MetaDataBatch* MasterGraph::create_file_system_label_reader(const char* source_p
         _augmented_meta_data = _meta_data_reader->get_output();
     return _meta_data_reader->get_output();
 }
+
 const std::pair<ImageNameBatch,pMetaDataBatch>& MasterGraph::meta_data()
 {
     if(_ring_buffer.level() == 0)

@@ -2,7 +2,7 @@
 #include <memory>
 #include "bounding_box_graph.h"
 #include "meta_data_graph.h"
-#include "meta_data_graph_factory.h"
+#include "meta_data_reader.h"
 #include "exception.h"
 
 

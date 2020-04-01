@@ -41,7 +41,7 @@ public:
     std::shared_ptr<T> add_node(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     Image *create_image(const ImageInfo &info, bool is_output);
     Image *create_loader_output_image(const ImageInfo &info);
-    MetaDataBatch * create_file_system_label_reader(const char* source_path);
+    MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
     MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output);
     MetaDataBatch* create_tf_record_meta_data_reader(const char *source_path);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();

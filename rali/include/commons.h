@@ -53,23 +53,6 @@ enum class ImageBufferAllocation
     none = 1
 };
 
-enum class MetaDataType
-{
-    Label,
-    BoundingBox
-};
-
-struct MetaDataConfig
-{
-private:
-    MetaDataType _type;
-    std::string _path;
-public:
-    MetaDataConfig(const MetaDataType& type, const std::string& path ):_type(type), _path(path){}
-    MetaDataConfig() = delete;
-    MetaDataType type() const { return _type; }
-    std::string path() const { return  _path; }
-};
 
 struct Timing
 {

@@ -4,6 +4,33 @@
 #include <memory>
 #include "meta_data.h"
 
+enum class MetaDataReaderType
+{
+    FOLDER_BASED_LABEL_READER = 0,// Used for imagenet-like dataset
+    TEXT_FILE_META_DATA_READER,// Used when metadata is stored in a text file
+    COCO_META_DATA_READER
+};
+enum class MetaDataType
+{
+    Label,
+    BoundingBox
+};
+
+struct MetaDataConfig
+{
+private:
+    MetaDataType _type;
+    MetaDataReaderType _reader_type;
+    std::string _path;
+public:
+    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path ):_type(type),  _path(path){}
+    MetaDataConfig() = delete;
+    MetaDataType type() const { return _type; }
+    MetaDataReaderType reader_type() const { return _reader_type; }
+    std::string path() const { return  _path; }
+};
+
+
 class MetaDataReader
 {
 public:

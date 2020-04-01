@@ -3260,7 +3260,7 @@ int agoKernel_Threshold_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_Threshold_U8_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+		if (HafCpu_Threshold_U8_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3313,7 +3313,7 @@ int agoKernel_Threshold_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_Threshold_U8_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+		if (HafCpu_Threshold_U8_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3366,7 +3366,7 @@ int agoKernel_Threshold_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_Threshold_U1_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+		if (HafCpu_Threshold_U1_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3424,7 +3424,7 @@ int agoKernel_Threshold_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_Threshold_U1_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+		if (HafCpu_Threshold_U1_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3483,7 +3483,7 @@ int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_Threshold_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+		if (HafCpu_Threshold_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3541,7 +3541,7 @@ int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_Threshold_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+		if (HafCpu_Threshold_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3601,7 +3601,7 @@ int agoKernel_ThresholdNot_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_ThresholdNot_U8_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+		if (HafCpu_ThresholdNot_U8_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3659,7 +3659,7 @@ int agoKernel_ThresholdNot_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_ThresholdNot_U8_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+		if (HafCpu_ThresholdNot_U8_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3717,7 +3717,7 @@ int agoKernel_ThresholdNot_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_ThresholdNot_U1_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+		if (HafCpu_ThresholdNot_U1_U8_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_value.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3775,7 +3775,7 @@ int agoKernel_ThresholdNot_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_ThresholdNot_U1_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+		if (HafCpu_ThresholdNot_U1_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3834,7 +3834,7 @@ int agoKernel_ThresholdNot_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_ThresholdNot_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower)) {
+		if (HafCpu_ThresholdNot_U8_S16_Binary(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -3892,7 +3892,7 @@ int agoKernel_ThresholdNot_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
 		AgoData * iThr = node->paramList[2];
-		if (HafCpu_ThresholdNot_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper)) {
+		if (HafCpu_ThresholdNot_U8_S16_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
 			status = VX_FAILURE;
 		}
 	}
@@ -15025,7 +15025,7 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM(AgoNode * node, AgoKern
 		if (HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 															  oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, 
 															  iImg->buffer, iImg->u.img.stride_in_bytes,
-															  iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper, node->localDataPtr))
+															  iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1, node->localDataPtr))
 		{
 			status = VX_FAILURE;
 		}
@@ -15073,7 +15073,7 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(AgoNode * node, AgoKern
 		if (HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 															  oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, 
 															  iImg->buffer, iImg->u.img.stride_in_bytes,
-															  iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper))
+															  iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
 		{
 			status = VX_FAILURE;
 		}
@@ -15115,7 +15115,7 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM(AgoNode * node, AgoKern
 		if (HafCpu_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 															  oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, 
 															  iImg->buffer, iImg->u.img.stride_in_bytes,
-															  iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper))
+															  iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
 		{
 			status = VX_FAILURE;
 		}
@@ -15157,7 +15157,7 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM(AgoNode * node, AgoKern
 		if (HafCpu_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 															  oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, 
 															  iImg->buffer, iImg->u.img.stride_in_bytes,
-															  iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper))
+															  iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
 		{
 			status = VX_FAILURE;
 		}
@@ -15199,7 +15199,7 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L1NORM(AgoNode * node, AgoKern
 		if (HafCpu_CannySobelSuppThreshold_U8XY_U8_7x7_L1NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 															  oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, 
 															  iImg->buffer, iImg->u.img.stride_in_bytes,
-															  iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper))
+															  iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
 		{
 			status = VX_FAILURE;
 		}
@@ -15241,7 +15241,7 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(AgoNode * node, AgoKern
 		if (HafCpu_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 															  oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, 
 															  iImg->buffer, iImg->u.img.stride_in_bytes,
-															  iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper))
+															  iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
 		{
 			status = VX_FAILURE;
 		}
@@ -15621,7 +15621,7 @@ int agoKernel_CannySuppThreshold_U8XY_U16_3x3(AgoNode * node, AgoKernelCommand c
 		if (HafCpu_CannySuppThreshold_U8XY_U16_3x3(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 			oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
 			(vx_uint16 *)iImg->buffer, iImg->u.img.stride_in_bytes,
-			iThr->u.thr.threshold_lower, iThr->u.thr.threshold_upper))
+			iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
 		{
 			status = VX_FAILURE;
 		}

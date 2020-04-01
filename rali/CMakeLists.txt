@@ -65,7 +65,8 @@ if(${BUILD_RALI})
 	# Rali uses C++ 17 features
 	set (CMAKE_CXX_STANDARD 17)
 	message("-- ${Green}Radeon Augmentation Library -- rali module added${ColourReset}")
-	install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h DESTINATION ./include/)
+	install (FILES ./python/rali.py python/rali_lib.py ./python/rali_common.py ./python/rali_image.py ./python/rali_parameter.py ./python/rali_torch.py  ./python/rali_image_iterator.py DESTINATION ./rali/python )
+	install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h include/rali_api_meta_data.h DESTINATION ./include/)
 	include_directories (
 			${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
 			${TurboJpeg_INCLUDE_DIRS}

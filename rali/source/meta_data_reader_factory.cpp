@@ -7,7 +7,7 @@
 #include "text_file_meta_data_reader.h"
 
 
-std::shared_ptr<MetaDataReader> create_meta_data_manager(const MetaDataConfig& config) {
+std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& config) {
     switch(config.reader_type()) {
         case MetaDataReaderType::FOLDER_BASED_LABEL_READER:
         {
@@ -36,6 +36,6 @@ std::shared_ptr<MetaDataReader> create_meta_data_manager(const MetaDataConfig& c
         }
             break;
         default:
-            THROW("MetaDataReader type is unsupported");
+            THROW("MetaDataReader type is unsupported : "+ TOSTR(config.reader_type()));
     }
 }

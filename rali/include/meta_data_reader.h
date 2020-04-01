@@ -23,7 +23,7 @@ private:
     MetaDataReaderType _reader_type;
     std::string _path;
 public:
-    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path ):_type(type),  _path(path){}
+    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path ):_type(type), _reader_type(reader_type),  _path(path){}
     MetaDataConfig() = delete;
     MetaDataType type() const { return _type; }
     MetaDataReaderType reader_type() const { return _reader_type; }

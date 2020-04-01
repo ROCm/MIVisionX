@@ -299,11 +299,10 @@ class DataLoader(RaliGraph):
 		self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float32")
 
 	def get_input_name(self):
-		size = self.raliGetImageNameLen(self.obj, 0)
+		size = self.raliGetImageNameLen(0)
 		ret = ctypes.create_string_buffer(size)
-		self.raliGetImageName(self.obj, ret, 0)
+		self.raliGetImageName(ret, 0)
 		return ret.value
-		#return self.jpg_img.name(0)
 
 	def process_validation(self, validation_list):
 		for i in range(len(validation_list)):

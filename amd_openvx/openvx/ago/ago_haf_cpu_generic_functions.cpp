@@ -708,7 +708,7 @@ int HafCpu_LaplacianPyramid_DATA_DATA_DATA
     )
 {
     vx_status status = VX_SUCCESS;
-
+    
     vx_context context = vxGetContext((vx_reference)node);
     
     vx_size lev;

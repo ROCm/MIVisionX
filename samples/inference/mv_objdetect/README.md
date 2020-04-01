@@ -36,7 +36,7 @@ mv_compile   --model 	        <model_name: name of the trained model with path> 
 
 * Sample:
 ```
-mv_compile --model <yoloV2Tiny20.caffemodel --install_folder mvdeploy --input_dims 1,3,416,416
+mv_compile --model yoloV2Tiny20.caffemodel --install_folder mvdeploy --input_dims 1,3,416,416
 ```
 There will be a file libmv_deploy.so (under ./lib), weights.bin and mvtestdeploy sample app (under ./bin).
 Also there will be mv_extras folder for extra post-processing helper functions.
@@ -56,7 +56,7 @@ mvtestdeploy is a pre-generated application built in Step 3 which shows how to d
 * Sample:
 ```	
 cd mvdeploy
-./bin/mvtestdeploy ./data/images/img_04.JPG output.bin --install_folder . --t 100
+./bin/mvtestdeploy ../data/images/img_04.JPG output.bin --install_folder . --t 100
 ```
 This runs inference for an input file and generate output for N number of iterations.
 
@@ -107,9 +107,13 @@ cd ..
 ./mv_build/mvobjdetect <input_image.JPG> - --install_folder . --bb 20 0.2 0.4 --v
 ./mv_build/mvobjdetect <input_video.mp4> - --install_folder . --bb 20 0.2 0.4 --v
 ```
+Note: Make sure the input image and video file exist and specified with full path
+
 ### Step 7. Run object detection with multiple video streams (e.g batch 4, 8 and 16)
-Go through steps 3 to 6, this time compiing the model for a batch of 4.
-Also this sample can do batch of 8 and 16 decoding as well.
+Go through steps 3 to 6, this time compiling the model for a batch of 4.
+Also this sample can do batch of 8 and 16 decoding as well. 
+For batch 8, --input_dims 8,3,416,416  and create Videos_8.txt file with 8 input streams
+For batch 16, --input_dims 16,3,416,416 and create Videos_16.txt file with 16 input streams
 
 ```
 cd ..
@@ -123,8 +127,12 @@ make -j
 cd ..
 ./mv_build4/mvobjdetect <Videos_4.txt> - --install_folder . --bb 20 0.2 0.4 --v
 ```
+Note: Where Videos_4.txt has the names of input video files with full path. Make sure the files exist in your test system.
+e.g: Use the ../data/Videos/Videos_4.txt file. Modify it to specify your input files. 
+The last bit (:0 / :1) chooses software or hardware mode for decoding.
+
 ### Step 10. Sample output for multiple video object detection
-<p align="center"><img width="80%" src="images/Video_4_screenshot.png" /></p>
+<p align="center"><img width="80%" src="data/images/Video_4_screenshot.png" /></p>
 
 # License
 This project is licensed under the MIT License - see the LICENSE.md file for details

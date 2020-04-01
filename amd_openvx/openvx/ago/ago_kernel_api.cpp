@@ -2041,6 +2041,7 @@ int ovxKernel_Remap(AgoNode * node, AgoKernelCommand cmd)
 
 int ovxKernel_HalfScaleGaussian(AgoNode * node, AgoKernelCommand cmd)
 {
+	printf("halfscalegaussian called\n");
 	// INFO: use VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_* kernels
     vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
     if (cmd == ago_kernel_cmd_execute) {
@@ -2312,6 +2313,16 @@ int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
+		else if (node->paramList[2]->u.img.format != format) 
+			return VX_ERROR_INVALID_FORMAT;
+		
+		vx_float32 scale = node->paramList[0]->u.pyr.scale;
+		vx_size levels = node->paramList[0]->u.pyr.levels;
+
+		while (levels--) {
+        	width *= scale;
+        	height *= scale;
+    	}
 		// set output image sizes same as input image size
 		vx_meta_format meta;
 		meta = &node->metaList[2];
@@ -13299,6 +13310,7 @@ int agoKernel_Median_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 
 int agoKernel_Gaussian_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 {
+	printf("gaussian u8u8 3x3\n");
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;
@@ -13353,6 +13365,7 @@ int agoKernel_Gaussian_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 
 int agoKernel_ScaleGaussianHalf_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 {
+	printf("scale gaussianhalf u8u8 3x3\n");
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;
@@ -13488,6 +13501,7 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
 
 int agoKernel_ScaleGaussianOrb_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
 {
+	printf("scalegaussianorb u8u8 5x5\n");
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;
@@ -19768,19 +19782,40 @@ int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelComma
 {
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
-		status = VX_ERROR_NOT_SUPPORTED;
+		status = VX_SUCCESS;
+		vx_image oImg = (vx_image)node->paramList[0];
+		vx_image iImg = (vx_image)node->paramList[2];
+		vx_pyramid laplacian = (vx_pyramid)node->paramList[1];
+		if (HafCpu_LaplacianReconstruct_DATA_DATA_DATA((vx_node)node, laplacian, iImg, oImg))
+			status = VX_FAILURE;
 	}
 	else if (cmd == ago_kernel_cmd_validate) {
 		// validate parameters
-		vx_uint32 width = node->paramList[1]->u.img.width;
-		vx_uint32 height = node->paramList[1]->u.img.height;
-		vx_df_image format = node->paramList[1]->u.img.format;
+		vx_uint32 width = node->paramList[2]->u.img.width;
+		vx_uint32 height = node->paramList[2]->u.img.height;
+		vx_df_image format = node->paramList[2]->u.img.format;
 		if (format != VX_DF_IMAGE_S16 && format != VX_DF_IMAGE_U8)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (node->paramList[2]->u.pyr.format != VX_DF_IMAGE_S16)
 			return VX_ERROR_INVALID_FORMAT;
-		else if (!width || !height)
+			else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
+		
+		vx_float32 scale = node->paramList[1]->u.pyr.scale;
+		vx_size levels = node->paramList[1]->u.pyr.levels;
+		while (levels--) {
+        	width *= scale;
+        	height *= scale;
+    	}
+
+		// set output image sizes same as input image size
+		vx_meta_format meta;
+		meta = &node->metaList[0];
+		meta->data.u.img.width = width;
+		meta->data.u.img.height = height;
+		meta->data.u.img.format = format;
+
+		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
 		status = VX_SUCCESS;

@@ -75,12 +75,10 @@ class Pipeline(object):
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
                  rali_cpu=False, max_streams=-1, default_cuda_stream_priority = 0):
-        #print(rali_cpu)
         if(rali_cpu):
-            print("comes to cpu")
+            #print("comes to cpu")
             self._handle = b.raliCreate(batch_size, types.CPU, device_id, num_threads)
         else:
-            #print("comes to GPU")
             self._handle = b.raliCreate(batch_size, types.GPU, device_id, num_threads)
         if(b.getStatus(self._handle) == types.OK):
             print("Pipeline has been created succesfully")
@@ -108,32 +106,30 @@ class Pipeline(object):
         self._img_w = None
     
     def store_values(self, operator):
-            #Check if ops is one of those functionality to determine tensor_layout and tensor_dtype and crop.
-            # If so preserve it in pipeline to use for dali iterator call.
-            if(operator.data in self._check_ops):
-                self._tensor_layout = operator._output_layout
-                self._tensor_dtype = operator._output_dtype
-                self._multiplier = list(map(lambda x: 1/x ,operator._mean))
-                self._offset = list(map(lambda x,y: x/y, operator._mean, operator._std))
-                if operator._crop_h != 0 and operator._crop_w != 0:
-                    self._img_w = operator._crop_w
-                    self._img_h = operator._crop_h
-            elif(operator.data in self._check_crop_ops):
-                self.img_w = operator._resize_x
-                self._img_h = operator._resize_y
+        """
+            Check if ops is one of those functionality to determine tensor_layout and tensor_dtype and crop.
+            If so preserve it in pipeline to use for dali iterator call.
+        """
+        if(operator.data in self._check_ops):
+            self._tensor_layout = operator._output_layout
+            self._tensor_dtype = operator._output_dtype
+            self._multiplier = list(map(lambda x: 1/x ,operator._mean))
+            self._offset = list(map(lambda x,y: x/y, operator._mean, operator._std))
+            if operator._crop_h != 0 and operator._crop_w != 0:
+                self._img_w = operator._crop_w
+                self._img_h = operator._crop_h
+        elif(operator.data in self._check_crop_ops):
+            self.img_w = operator._resize_x
+            self._img_h = operator._resize_y
 
     def process_calls(self,output_image):
         last_operator = output_image.prev
         temp = output_image
-        #print("Gonna traverse list")
-        while(temp.prev is not None):
-            #print("temp.data", temp.data)
+        while(temp.prev is not None):    
             if(temp.data in (self._check_ops + self._check_crop_ops)):
                 self.store_values(temp)
             temp = temp.prev
-        #print("temp.data", temp.data)
         file_reader = temp
-        # temp.next.data = 
         file_reader.rali_c_func_call(self._handle)
         temp = temp.next
         operator = temp.next
@@ -168,8 +164,6 @@ class Pipeline(object):
         status = b.raliRun(self._handle)
         if(status != types.OK):
             print("Rali Run failed")
-        #else:
-        #    print("Rali run passes")
         return status
 
     
@@ -184,10 +178,9 @@ class Pipeline(object):
         return self._handle
 
     def copyImage(self, array):
-        #print("Comes to copyImage")
         out = np.frombuffer(array, dtype=array.dtype)
         b.raliCopyToOutput(self._handle, np.ascontiguousarray(out, dtype=array.dtype))
-        #print("Gonna return from copyImage")
+        
 
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)

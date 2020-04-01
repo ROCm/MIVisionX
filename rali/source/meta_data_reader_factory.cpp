@@ -29,7 +29,7 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
         case MetaDataReaderType::COCO_META_DATA_READER:
         {
             if(config.type() != MetaDataType::BoundingBox)
-                THROW("FOLDER_BASED_LABEL_READER can only be used to load labels")
+                THROW("FOLDER_BASED_LABEL_READER can only be used to load bounding boxes")
             auto ret = std::make_shared<COCOMetaDataReader>();
             ret->init(config);
             return ret;

@@ -213,7 +213,7 @@ namespace rali{
             py::arg("crop_pox_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("crop_pos_z") = NULL);
-        m.def("raliBrightness",&raliBrightness,
+        m.def("Brightness",&raliBrightness,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),
@@ -241,12 +241,106 @@ namespace rali{
             py::arg("input"),
             py::arg("is_output"),
             py::arg("shift") = NULL);
-        m.def("Contrast",&raliContrast);
+        m.def("Blur",&raliBlur,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("sdev") = NULL);
+        m.def("Contrast",&raliContrast,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("min") = NULL,
+            py::arg("max") = NULL);
         m.def("Flip",&raliFlip);
-        m.def("Jitter",&raliJitter);
-        m.def("Rotate",&raliRotate);
-        m.def("Hue",&raliHue);
-        m.def("Saturation",&raliSaturation);
-        m.def("WarpAffine",&raliWarpAffine);
+        m.def("Jitter",&raliJitter,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("kernel_size") = NULL);
+        m.def("Rotate",&raliRotate,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("angle") = NULL,
+            py::arg("dest_width") = 0,
+            py::arg("dest_height") = 0);
+        m.def("Hue",&raliHue,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("hue") = NULL);
+        m.def("Saturation",&raliSaturation,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("sat") = NULL);     
+        m.def("WarpAffine",&raliWarpAffine,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("dest_width") = 0,
+            py::arg("dest_height") = 0,
+            py::arg("x0") = NULL,
+            py::arg("x1") = NULL,
+            py::arg("y0") = NULL,
+            py::arg("y1") = NULL,
+            py::arg("o0") = NULL,
+            py::arg("o1") = NULL);
+        m.def("Fog",&raliFog,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("fog_value") = NULL);
+        m.def("FishEye",&raliFishEye,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"));
+        m.def("Vignette",&raliVignette,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("sdev") = NULL); 
+        m.def("SnPNoise",&raliSnPNoise,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("sdev") = NULL);
+        m.def("Exposure",&raliExposure,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("shift") = NULL);
+        m.def("Pixelate",&raliPixelate,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"));
+        m.def("Blend",&raliBlend,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input1"),
+            py::arg("input2"),
+            py::arg("is_output"),
+            py::arg("ratio") = NULL);
+        m.def("Flip",&raliFlip,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("flip_axis") = NULL);
+
     }
 }

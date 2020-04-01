@@ -29,7 +29,6 @@ class HybridTrainPipe(Pipeline):
 													random_area=[0.1, 1.0],
 													num_attempts=100)
 		self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
-		# self.res = ops.Crop(crop=(crop, crop))
 		self.cmnp = ops.CropMirrorNormalize(device="gpu",
 											output_dtype=types.FLOAT,
 											output_layout=types.NCHW,
@@ -64,7 +63,7 @@ class ToyNet(nn.Module):
 		self.fc1 = nn.Linear(2048, 512)
 		self.fc2 = nn.Linear(512, 128)
 		self.fc3 = nn.Linear(128, 2) # Two classes only
-	#self.m = nn.Softmax()
+		self.m = nn.Softmax()
 
 
 	def forward(self, x):
@@ -86,7 +85,6 @@ def main():
 	nt = 1
 	di = 0
 	crop_size = 224
-	# crop_size = 224
 	if  len(sys.argv) < 2:
 		print ('Please pass the folder containing images as a command line argument')
 		exit(0)

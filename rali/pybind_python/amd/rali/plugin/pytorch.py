@@ -93,7 +93,6 @@ class RALIGenericIterator(object):
         return self
 
 
-# class RALIClassificationIterator(RALIGenericImageIterator):
 class RALIClassificationIterator(RALIGenericIterator):
     """
     DALI iterator for classification tasks for PyTorch. It returns 2 outputs
@@ -162,3 +161,21 @@ class RALIClassificationIterator(RALIGenericIterator):
         pipe = pipelines
         super(RALIClassificationIterator, self).__init__(pipe, tensor_layout = pipe._tensor_layout, tensor_dtype = pipe._tensor_dtype,
                                                             multiplier=pipe._multiplier, offset=pipe._offset)
+
+
+class RALI_iterator(RALIGenericImageIterator):
+    """
+    DALI iterator for classification tasks for PyTorch. It returns 2 outputs
+    (data and label) in the form of PyTorch's Tensor.
+
+   
+    """
+    def __init__(self,
+                 pipelines,
+                 size = 0,
+                 auto_reset=False,
+                 fill_last_batch=True,
+                 dynamic_shape=False,
+                 last_batch_padded=False):
+        pipe = pipelines
+        super(RALI_iterator, self).__init__(pipe)

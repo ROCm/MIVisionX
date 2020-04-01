@@ -559,8 +559,8 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         crop_pos_x = b.CreateFloatParameter(self._crop_pos_x)
         crop_pos_y = b.CreateFloatParameter(self._crop_pos_y)
         crop_pos_z = b.CreateFloatParameter(self._crop_pos_z)
-        # output_image = b.Crop(handle, input_image, is_output, crop_w, crop_h, crop_d, crop_pos_x, crop_pos_y, crop_pos_z)
-        output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+        #output_image = b.Crop(handle, input_image, is_output, crop_w, crop_h, crop_d, crop_pos_x, crop_pos_y, crop_pos_z)
+        output_image = b.Crop(handle, input_image, is_output, None, None, None, None, None, None)
         return output_image 
 
 
@@ -579,9 +579,7 @@ class CoinFlip():
         return output_arr
 
 class GammaCorrection(Node):
-    _gamma = 0
-
-    def __init__(self,gamma, device = None):
+    def __init__(self,gamma = 0.5, device = None):
         super(GammaCorrection, self).__init__()
         self._gamma = gamma
         self.output = Node()
@@ -601,9 +599,7 @@ class GammaCorrection(Node):
 
        
 class Snow(Node):
-    _snow = 0
-
-    def __init__(self,snow, device = None):
+    def __init__(self,snow = 0.5, device = None):
         super(Snow, self).__init__()
         self._snow = snow
         self.output = Node()
@@ -622,9 +618,7 @@ class Snow(Node):
         return output_image
 
 class Rain(Node):
-    _rain = 0
-
-    def __init__(self,rain, device = None):
+    def __init__(self,rain = 0.5, device = None):
         super(Rain, self).__init__()
         self._rain = rain
         self.output = Node()
@@ -640,4 +634,600 @@ class Rain(Node):
 
     def rali_c_func_call(self, handle, input_image, is_output):
         output_image = b.Rain(handle, input_image, is_output,None,None,None,None)
+        return output_image
+
+
+
+
+class Blur(Node):
+    '''
+    BLUR
+
+    '''
+    def __init__(self,blur = 3, device = None):
+        super(Blur, self).__init__()
+        self._blur = blur
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Blur"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Blur(handle, input_image, is_output,None)
+        return output_image
+
+
+
+class Contrast(Node):
+    """
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+contrast (float, optional, default = 1.0) –
+
+Contrast change factor. Values >= 0 are accepted. For example:
+
+0 - gray image,
+
+1 - no change
+
+2 - increase contrast twice
+
+image_type (int, optional, default = 0) – The color space of input and output image
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+    """
+
+    def __init__(self,bytes_per_sample_hint = 0, contrast = 1.0 ,image_type = 0, preserve = False, seed = -1, device = None):
+        super(Contrast, self).__init__()
+        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._contrast = contrast
+        self._image_type = image_type
+        self._preserve=preserve
+        self._seed = seed
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Contrast"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Contrast(handle, input_image, is_output, None, None)
+        return output_image
+
+
+
+
+
+class Jitter(Node):
+    """
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+fill_value (float, optional, default = 0.0) – Color value used for padding pixels.
+
+interp_type (int, optional, default = 0) – Type of interpolation used.
+
+mask (int, optional, default = 1) –
+
+Whether to apply this augmentation to the input image.
+
+0 - do not apply this transformation
+
+1 - apply this transformation
+
+nDegree (int, optional, default = 2) – Each pixel is moved by a random amount in range [-nDegree/2, nDegree/2].
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+
+    """
+    
+
+    def __init__(self,bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 0, mask = 1, nDegree = 2 , preserve = False, seed = -1, device = None):
+        super(Jitter, self).__init__()
+        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._fill_value = fill_value
+        self._interp_type = interp_type
+        self._mask = mask
+        self._nDegree = nDegree
+        self._preserve=preserve
+        self._seed = seed
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Jitter"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Jitter(handle, input_image, is_output,None)
+        return output_image
+
+
+
+
+
+
+class Rotate(Node):
+    """
+
+angle (float) – Angle, in degrees, by which the image is rotated. For 2D data, the rotation is counter-clockwise, assuming top-left corner at (0,0) For 3D data, the angle is a positive rotation around given axis
+
+axis (float or list of float, optional, default = []) – 3D only: axis around which to rotate. The vector does not need to be normalized, but must have non-zero length. Reversing the vector is equivalent to changing the sign of angle.
+
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+fill_value (float, optional, default = 0.0) – Value used to fill areas that are outside source image. If not specified, source coordinates are clamped and the border pixel is repeated.
+
+interp_type (int, optional, default = 1) – Type of interpolation used.
+
+keep_size (bool, optional, default = False) – If True, original canvas size is kept. If False (default) and size is not set, then the canvas size is adjusted to acommodate the rotated image with least padding possible
+
+output_dtype (int, optional, default = -1) – Output data type. By default, same as input type
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+size (float or list of float, optional, default = []) – Output size, in pixels/points. Non-integer sizes are rounded to nearest integer. Channel dimension should be excluded (e.g. for RGB images specify (480,640), not (480,640,3).
+
+    """
+    
+
+    def __init__(self,angle = 0, axis = [], bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 1, keep_size = False, output_dtype = -1 , preserve = False, seed = -1, size = [], device = None):
+        super(Rotate, self).__init__()
+        self._angle = angle
+        self._axis = axis
+        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._fill_value = fill_value
+        self._interp_type = interp_type
+        self._keep_size = keep_size
+        self._output_dtype = output_dtype
+        self._preserve=preserve
+        self._seed = seed
+        self._size = size
+        
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Rotate"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Rotate(handle, input_image, is_output,None,0,0)
+        return output_image
+
+
+
+
+
+
+class Hue(Node):
+    """
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+hue (float, optional, default = 0.0) – Hue change, in degrees.
+
+image_type (int, optional, default = 0) – The color space of input and output image
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+    """
+    
+
+    def __init__(self, bytes_per_sample_hint = 0,  hue = 0.0, image_type = 0, preserve = False, seed = -1, device = None):
+        super(Hue, self).__init__()
+        self._hue = hue
+        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._image_type = image_type
+        self._preserve=preserve
+        self._seed = seed
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Hue"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Hue(handle, input_image, is_output,None)
+        return output_image
+
+
+
+
+class Saturation(Node):
+    """
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+image_type (int, optional, default = 0) – The color space of input and output image
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+saturation (float, optional, default = 1.0) –
+
+Saturation change factor. Values >= 0 are supported. For example:
+
+0 - completely desaturated image
+
+1 - no change to image’s saturation
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+    """
+    
+
+    def __init__(self, bytes_per_sample_hint = 0,  saturation = 1.0, image_type = 0, preserve = False, seed = -1, device = None):
+        super(Saturation, self).__init__()
+        self._saturation = saturation
+        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._image_type = image_type
+        self._preserve=preserve
+        self._seed = seed
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Saturation"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Saturation(handle, input_image, is_output,None)
+        return output_image
+
+
+
+
+class WarpAffine(Node):
+    """
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+fill_value (float, optional, default = 0.0) – Value used to fill areas that are outside source image. If not specified, source coordinates are clamped and the border pixel is repeated.
+
+interp_type (int, optional, default = 1) – Type of interpolation used.
+
+matrix (float or list of float, optional, default = []) –
+
+Transform matrix (dst -> src). Given list of values (M11, M12, M13, M21, M22, M23) this operation will produce a new image using the following formula
+
+dst(x,y) = src(M11 * x + M12 * y + M13, M21 * x + M22 * y + M23)
+
+It is equivalent to OpenCV’s warpAffine operation with a flag WARP_INVERSE_MAP set.
+
+output_dtype (int, optional, default = -1) – Output data type. By default, same as input type
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+size (float or list of float, optional, default = []) – Output size, in pixels/points. Non-integer sizes are rounded to nearest integer. Channel dimension should be excluded (e.g. for RGB images specify (480,640), not (480,640,3).
+    """
+    
+
+    def __init__(self,bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 1,matrix = [], output_dtype = -1 , preserve = False, seed = -1, size = [], device = None):
+        super(WarpAffine, self).__init__()
+        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._fill_value = fill_value
+        self._interp_type = interp_type
+        self._matrix = matrix
+        self._output_dtype = output_dtype
+        self._preserve=preserve
+        self._seed = seed
+        self._size = size
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "WarpAffine"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.WarpAffine(handle, input_image, is_output,0, 0 ,None ,None, None ,None, None ,None)
+        return output_image
+
+
+
+
+class HSV(Node):
+
+    """
+    bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+dtype (int, optional, default = 0) – Output data type; if not set, the input type is used.
+
+hue (float, optional, default = 0.0) – Set additive change of hue. 0 denotes no-op
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+saturation (float, optional, default = 1.0) – Set multiplicative change of saturation. 1 denotes no-op
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+value (float, optional, default = 1.0) – Set multiplicative change of value. 1 denotes no-op
+    """
+    
+
+    def __init__(self,bytes_per_sample_hint = 0,dtype = 0,hue = 0.0 , saturation = 1.0 , preserve = False, seed = -1, value = 1.0, device = None):
+        super(HSV, self).__init__()
+        self._bytes_per_sample_hint=bytes_per_sample_hint
+        
+        self._interp_type = interp_type
+        self._dtype = dtype
+        self._hue = hue
+        self._saturation = saturation
+        self._preserve=preserve
+        self._seed = seed
+        self._value = value
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "HSV"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image0 = b.Hue(handle, input_image, is_output,None)
+        output_image = b.Saturation(handle, output_image0, is_output,None)
+        return output_image
+
+
+class Fog(Node):
+    def __init__(self,fog = 0.5, device = None):
+        super(Fog, self).__init__()
+        self._fog = fog
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Fog"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Fog(handle, input_image, is_output,None)
+        return output_image
+
+
+
+class FishEye(Node):
+    def __init__(self, device = None):
+        super(FishEye, self).__init__()
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "FishEye"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.FishEye(handle, input_image, is_output)
+        return output_image
+
+
+
+class Brightness(Node):
+    """
+    brightness (float, optional, default = 1.0) –
+
+Brightness change factor. Values >= 0 are accepted. For example:
+
+0 - black image,
+
+1 - no change
+
+2 - increase brightness twice
+
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+image_type (int, optional, default = 0) – The color space of input and output image
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+    """
+
+    def __init__(self, brightness = 1.0, bytes_per_sample_hint = 0, image_type = 0, 
+                preserve = False ,seed = -1, device = None):
+        super(Brightness, self).__init__()
+        self._brightness = brightness
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._image_type = image_type
+        self._preserve = preserve
+        self._seed = seed
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Brightness"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Brightness(handle, input_image, is_output,None , None)
+        return output_image
+
+
+
+
+class Vignette(Node):
+    
+    def __init__(self,vignette = 0.5, device = None):
+        super(Vignette, self).__init__()
+        self._vignette = vignette
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Vignette"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Vignette(handle, input_image, is_output, None)
+        return output_image
+
+
+
+class SnPNoise(Node):
+
+    def __init__(self,snpNoise = 0.5, device = None):
+        super(SnPNoise, self).__init__()
+        self._snpNoise = snpNoise
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "SnPNoise"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.SnPNoise(handle, input_image, is_output, None)
+        return output_image
+
+
+
+
+class Exposure(Node):
+    def __init__(self,exposure = 0.5, device = None):
+        super(Exposure, self).__init__()
+        self._exposure = exposure
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Exposure"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Exposure(handle, input_image, is_output, None)
+        return output_image
+
+
+
+
+
+class Pixelate(Node):
+    def __init__(self, device = None):
+        super(Pixelate, self).__init__()
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Pixelate"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Pixelate(handle, input_image, is_output, None)
+        return output_image
+
+
+
+
+class Blend(Node):
+    def __init__(self,blend = 0.5, device = None):
+        super(Blend, self).__init__()
+        self._blend = blend
+        self.output = Node()
+    
+    def __call__(self,input1,input2):
+        self._input2=input2
+        input1.next = self
+        self.data = "Blend"
+        self.prev = input1
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Blend(handle, input_image,self._input2, is_output, None)
+        return output_image
+
+
+
+
+class Flip(Node):
+    def __init__(self,flip = 0, device = None):
+        super(Flip, self).__init__()
+        self._flip = flip
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "Flip"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = b.Flip(handle, input_image, is_output, None)
         return output_image

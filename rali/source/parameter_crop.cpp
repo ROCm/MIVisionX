@@ -53,15 +53,15 @@ void CropParam::create_array(std::shared_ptr<Graph> graph)
     in_width.resize(batch_size);
     in_height.resize(batch_size);
 
-    x1_arr =    vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT64,batch_size);
-    cropw_arr = vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT64,batch_size);
-    y1_arr =    vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT64,batch_size);
-    croph_arr = vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT64,batch_size);
+    x1_arr =    vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT32,batch_size);
+    cropw_arr = vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT32,batch_size);
+    y1_arr =    vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT32,batch_size);
+    croph_arr = vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT32,batch_size);
 
-    vxAddArrayItems(x1_arr,batch_size, x1_arr_val.data(), sizeof(size_t));
-    vxAddArrayItems(y1_arr,batch_size, y1_arr_val.data(), sizeof(size_t));
-    vxAddArrayItems(cropw_arr,batch_size, cropw_arr_val.data(), sizeof(size_t));
-    vxAddArrayItems(croph_arr,batch_size, croph_arr_val.data(), sizeof(size_t));
+    vxAddArrayItems(x1_arr,batch_size, x1_arr_val.data(), sizeof(vx_uint32));
+    vxAddArrayItems(y1_arr,batch_size, y1_arr_val.data(), sizeof(vx_uint32));
+    vxAddArrayItems(cropw_arr,batch_size, cropw_arr_val.data(), sizeof(vx_uint32));
+    vxAddArrayItems(croph_arr,batch_size, croph_arr_val.data(), sizeof(vx_uint32));
     update_array();
 }
 
@@ -69,17 +69,16 @@ void CropParam::update_array()
 {
     vx_status status = VX_SUCCESS;
     fill_values();
-    
-    status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(size_t), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(vx_uint32), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
-    status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(size_t), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(vx_uint32), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
-    status = vxCopyArrayRange((vx_array)cropw_arr, 0, batch_size, sizeof(size_t), cropw_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    status = vxCopyArrayRange((vx_array)cropw_arr, 0, batch_size, sizeof(vx_uint32), cropw_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
-    status = vxCopyArrayRange((vx_array)croph_arr, 0, batch_size, sizeof(size_t), croph_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    status = vxCopyArrayRange((vx_array)croph_arr, 0, batch_size, sizeof(vx_uint32), croph_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
 }
@@ -124,7 +123,6 @@ void CropParam::fill_values()
                     y1_arr_val[img_idx] =  0;
                     cropw_arr_val[img_idx] = static_cast<size_t> (crop_w_factor_ * in_width[img_idx]);
                     croph_arr_val[img_idx] = static_cast<size_t> (crop_h_factor_ * in_height[img_idx]);
-
                 }
         }    
 }

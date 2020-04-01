@@ -206,7 +206,7 @@ int agoOptimizeGraph(AgoGraph * agraph)
 		CAgoLock lock2(agraph->ref.context->cs);
 
 		// run DRAMA graph optimizer
-		agraph->status = agoOptimizeDrama(agraph);\
+		agraph->status = agoOptimizeDrama(agraph);
 	}
 	return agraph->status;
 }

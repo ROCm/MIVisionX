@@ -13308,7 +13308,6 @@ int agoKernel_Median_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 
 int agoKernel_Gaussian_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 {
-	printf("gaussian u8u8 3x3\n");
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;
@@ -13363,7 +13362,6 @@ int agoKernel_Gaussian_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 
 int agoKernel_ScaleGaussianHalf_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 {
-	printf("scale gaussianhalf u8u8 3x3\n");
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;

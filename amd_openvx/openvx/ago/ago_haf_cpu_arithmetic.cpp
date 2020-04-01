@@ -4082,7 +4082,7 @@ int HafCpu_Threshold_U8_S16_Binary
 	(
 		vx_uint32     dstWidth,
 		vx_uint32     dstHeight,
-		vx_uint8    * pDstImage,
+		vx_int16    * pDstImage,
 		vx_uint32     dstImageStrideInBytes,
 		vx_uint8    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
@@ -4105,7 +4105,7 @@ int HafCpu_Threshold_U8_S16_Binary
 		{
 			pixels = _mm_load_si128(&src[width >> 4]);
 			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			pixels = _mm_cmpgt_epi8(pixels, thresh);
+			pixels = _mm_cmpgt_epi16(pixels, thresh);
 
 			// Convert U8 to U1
 /*#ifdef _WIN64
@@ -4160,9 +4160,9 @@ int HafCpu_Threshold_U8_S16_Range
 		{
 			pixels = _mm_load_si128(&src[width >> 4]);
 			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			temp = _mm_cmpgt_epi8(pixels, threshU);
+			temp = _mm_cmpgt_epi16(pixels, threshU);
 			temp = _mm_andnot_si128(temp, ones);				// This gives 255 if pixels <= threshU, a way to implement less than or equal to
-			pixels = _mm_cmplt_epi8(pixels, threshL);
+			pixels = _mm_cmplt_epi16(pixels, threshL);
 			pixels = _mm_andnot_si128(pixels, temp);			// 255 if pixels >= threshL and AND with temp
 			
 			// Convert U8 to U1
@@ -4191,20 +4191,22 @@ int HafCpu_Threshold_U8_S16_Binary
 		vx_uint32     dstHeight,
 		vx_uint8    * pDstImage,
 		vx_uint32     dstImageStrideInBytes,
-		vx_uint8    * pSrcImage,
+		vx_int16    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
 		vx_uint8      threshold
 	)
 {
-	__m128i * pLocalSrc_xmm;
-	vx_uint8 *pLocalSrc, *pLocalDst;
+	__m128i * pLocalSrc_xmm, * pLocalDst_xmm;
+	vx_uint8 *pLocalDst;
+	vx_int16 * pLocalSrc;
 
 	__m128i pixels;
-	__m128i offset = _mm_set1_epi8((char)0x80);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
-	__m128i thresh = _mm_set1_epi8((char)threshold);
+	__m128i offset = _mm_set1_epi16((char)0x8000);				// To convert the range from 0-255 to -128 to 127, because SSE does not have compare instructions for unsigned bytes
+	__m128i thresh = _mm_set1_epi16((char)threshold);
 	thresh = _mm_xor_si128(thresh, offset);						// Convert the threshold to the new range
 
-	int pixelmask;
+	vx_int64 pixelmask;
+	__m128i temp;
 	int height = (int)dstHeight;
 
 	int alignedWidth = dstWidth & ~15;
@@ -4213,21 +4215,25 @@ int HafCpu_Threshold_U8_S16_Binary
 	while (height)
 	{
 		pLocalSrc_xmm = (__m128i*) pSrcImage;
-		vx_int16 * pLocalDst_16 = (vx_int16 *)pDstImage;
+		vx_int64 * pLocalDst_64 = (vx_int64 *)pDstImage;
 
-		int width = (int)(alignedWidth >> 4);					// 16 pixels (bits) are processed at a time in the inner loop
+		int width = (int)(alignedWidth >> 6);					// 64 pixels (bits) are processed at a time in the inner loop
+
 		while (width)
 		{
 			pixels = _mm_loadu_si128(pLocalSrc_xmm++);
 			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			pixels = _mm_cmpgt_epi8(pixels, thresh);
+			pixels = _mm_cmpgt_epi16(pixels, thresh);
 
-			pixelmask = _mm_movemask_epi8(pixels);				// Convert U8 to U1
-			*pLocalDst_16++ = (vx_int16)(pixelmask & 0xFFFF);
+			temp = _mm_packus_epi16(pixels, _mm_setzero_si128());
+
+			//pixelmask = _mm_movemask_epi8(pixels);				// Convert U8 to U1
+			pixelmask = _mm_cvtsi128_si64x(temp);
+			*pLocalDst_64++ = (vx_int64)(pixelmask & 0xFFFFFFFFFFFFFFFF);
 			width--;
 		}
-		pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
-		pLocalDst = (vx_uint8 *)pLocalDst_16;
+		pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
+		pLocalDst = (vx_uint8 *)pLocalDst_64;
 
 		width = 0;
 		while (width < postfixWidth)
@@ -4240,12 +4246,12 @@ int HafCpu_Threshold_U8_S16_Binary
 
 				pixelmask >>= 1;
 				if (*pLocalSrc++ > threshold)
-					pixelmask |= 0x80;
+					pixelmask |= 0x8000;
 			}
-			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
+			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFFFF);
 		}
 		
-		pSrcImage += srcImageStrideInBytes;
+		pSrcImage += (srcImageStrideInBytes >> 1);
 		pDstImage += dstImageStrideInBytes;
 		height--;
 	}
@@ -4258,7 +4264,7 @@ int HafCpu_Threshold_U8_S16_Range
 		vx_uint32     dstHeight,
 		vx_uint8    * pDstImage,
 		vx_uint32     dstImageStrideInBytes,
-		vx_uint8    * pSrcImage,
+		vx_int16    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
 		vx_uint8      lower,
 		vx_uint8      upper

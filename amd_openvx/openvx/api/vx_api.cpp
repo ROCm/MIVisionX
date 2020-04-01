@@ -5346,14 +5346,48 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThreshold(vx_context context, vx_e
 {
 	AgoData * data = NULL;
 	if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
-		(data_type >= VX_TYPE_INT8) && (data_type <= VX_TYPE_INT32))
+		(((data_type >= VX_TYPE_INT8) && (data_type <= VX_TYPE_INT32)) || data_type == VX_TYPE_BOOL))
 	{
 		CAgoLock lock(context->cs);
 		char desc[512]; sprintf(desc, "threshold:%s,%s", agoEnum2Name(thresh_type), agoEnum2Name(data_type));
 		data = agoCreateDataFromDescription(context, NULL, desc, true);
+
 		if (data) {
 			agoGenerateDataName(context, "thr", data->name);
 			agoAddData(&context->dataList, data);
+			switch(data_type)
+            {
+            case VX_TYPE_BOOL:
+                data->u.thr.true_value.U1 = AGO_U1_THRESHOLD_TRUE_VALUE;
+                data->u.thr.false_value.U1 = AGO_U1_THRESHOLD_FALSE_VALUE;
+                break;
+            case VX_TYPE_INT8:
+                data->u.thr.true_value.U8 = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                break;
+            case VX_TYPE_UINT8:
+                data->u.thr.true_value.U8 = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                break;
+            case VX_TYPE_UINT16:
+                data->u.thr.true_value.U16 = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                data->u.thr.false_value.U16 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                break;
+            case VX_TYPE_INT16:
+                data->u.thr.true_value.S16 = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                data->u.thr.false_value.S16 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                break;
+            case VX_TYPE_INT32:
+                data->u.thr.true_value.S32 = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                data->u.thr.false_value.S32 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                break;
+            case VX_TYPE_UINT32:
+                data->u.thr.true_value.U32 = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                data->u.thr.false_value.U32 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                break;
+            default:
+                break;
+            }
 		}
 	}
 	return (vx_threshold)data;
@@ -5378,23 +5412,121 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThreshold(vx_context context, vx_e
 VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context context, vx_enum thresh_type, vx_df_image input_format, vx_df_image output_format)
 {
 	AgoData * data = NULL;
-	if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
-		(input_format == VX_DF_IMAGE_U8 || input_format == VX_DF_IMAGE_S16) && (output_format == VX_DF_IMAGE_U8 || output_format == VX_DF_IMAGE_U1)) 
+	if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE)) 
 	{
-		CAgoLock lock(context->cs);
+		/*if((input_format == VX_DF_IMAGE_RGB  || input_format == VX_DF_IMAGE_RGBX || input_format == VX_DF_IMAGE_NV12 || 
+			input_format == VX_DF_IMAGE_NV21 || input_format == VX_DF_IMAGE_UYVY || input_format == VX_DF_IMAGE_YUYV || 
+			input_format == VX_DF_IMAGE_IYUV || input_format == VX_DF_IMAGE_YUV4) && (output_format == VX_DF_IMAGE_RGB  || 
+			output_format == VX_DF_IMAGE_RGBX || output_format == VX_DF_IMAGE_NV12 || output_format == VX_DF_IMAGE_NV21 || 
+			output_format == VX_DF_IMAGE_UYVY || output_format == VX_DF_IMAGE_YUYV || output_format == VX_DF_IMAGE_IYUV || 
+			output_format == VX_DF_IMAGE_YUV4)) {*/
 
-		vx_enum data_type;
-		if(output_format == VX_DF_IMAGE_U8)
-			data_type = VX_TYPE_UINT8;
-		else if(output_format == VX_DF_IMAGE_U1)
-			data_type = VX_TYPE_BOOL;
-		const char * desc_type = agoEnum2Name(thresh_type);
-		if(desc_type){
-			char desc[512]; sprintf(desc, "threshold:%s,%s,%u,%u", desc_type, agoEnum2Name(data_type), input_format, output_format);
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if (data) {
-				agoGenerateDataName(context, "thr", data->name);
-				agoAddData(&context->dataList, data);
+			CAgoLock lock(context->cs);
+
+			/*vx_enum data_type;
+			if(output_format == VX_DF_IMAGE_U8)
+				data_type = VX_TYPE_UINT8;
+			else if(output_format == VX_DF_IMAGE_U1)
+				data_type = VX_TYPE_BOOL;
+			*/
+			const char * desc_type = agoEnum2Name(thresh_type);
+			if(desc_type){
+				char desc[512]; sprintf(desc, "threshold:%s,%u,%u", desc_type, input_format, output_format);
+				data = agoCreateDataFromDescription(context, NULL, desc, true);
+				if (data) {
+					agoGenerateDataName(context, "thr", data->name);
+					agoAddData(&context->dataList, data);
+
+					switch (output_format)
+		        	{
+			            case VX_DF_IMAGE_RGB:
+			            {
+			                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+			                data->u.thr.true_value.RGB[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.true_value.RGB[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.true_value.RGB[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.RGB[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                data->u.thr.false_value.RGB[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                data->u.thr.false_value.RGB[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_RGBX:
+			            {
+			                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+			                data->u.thr.true_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.true_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.true_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.true_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                data->u.thr.false_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                data->u.thr.false_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                data->u.thr.false_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_NV12:
+			            case VX_DF_IMAGE_NV21:
+			            case VX_DF_IMAGE_UYVY:
+			            case VX_DF_IMAGE_YUYV:
+			            case VX_DF_IMAGE_IYUV:
+			            case VX_DF_IMAGE_YUV4:
+			            {
+			                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+			                data->u.thr.true_value.YUV[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.true_value.YUV[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.true_value.YUV[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.YUV[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                data->u.thr.false_value.YUV[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                data->u.thr.false_value.YUV[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_U1:
+			            {
+			                data->u.thr.data_type = VX_TYPE_BOOL;
+			                data->u.thr.true_value.U1  = AGO_U1_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.U1 = AGO_U1_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_U8:
+			            {
+			                data->u.thr.data_type = VX_TYPE_UINT8;
+			                data->u.thr.true_value.U8  = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_S16:
+			            {
+			                data->u.thr.data_type = VX_TYPE_INT16;
+			                data->u.thr.true_value.S16  = AGO_S16_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.S16 = AGO_S16_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_U16:
+			            {
+			                data->u.thr.data_type = VX_TYPE_UINT16;
+			                data->u.thr.true_value.U16  = AGO_U16_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.U16 = AGO_U16_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_S32:
+			            {
+			                data->u.thr.data_type = VX_TYPE_INT32;
+			                data->u.thr.true_value.S32  = AGO_S32_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.S32 = AGO_S32_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            case VX_DF_IMAGE_U32:
+			            {
+			                data->u.thr.data_type = VX_TYPE_UINT32;
+			                data->u.thr.true_value.U32  = AGO_U32_THRESHOLD_TRUE_VALUE;
+			                data->u.thr.false_value.U32 = AGO_U32_THRESHOLD_FALSE_VALUE;
+			                break;
+			            }
+			            default:
+			            {
+			                break;
+			            }
+			        }
+				//}
 			}
 		}
 	}
@@ -5420,19 +5552,108 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateVirtualThresholdForImage(vx_graph 
 
 		const char * desc_type = agoEnum2Name(thresh_type);
 
-		vx_enum data_type;
+		/*vx_enum data_type;
 		if(output_format == VX_DF_IMAGE_U8)
 			data_type = VX_TYPE_UINT8;
 		else if(output_format == VX_DF_IMAGE_U1)
 			data_type = VX_TYPE_BOOL;
-
+		*/
 		if (desc_type) {
 			char desc[512]; 
-			sprintf(desc, "threshold-virtual:%s,%s,%u,%u", desc_type, agoEnum2Name(data_type), input_format, output_format);
+			sprintf(desc, "threshold-virtual:%s,%u,%u", desc_type, input_format, output_format);
 			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
 			if (data) {
 				agoGenerateVirtualDataName(graph, "thr", data->name);
 				agoAddData(&graph->dataList, data);
+				switch (output_format)
+	        	{
+		            case VX_DF_IMAGE_RGB:
+		            {
+		                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+		                data->u.thr.true_value.RGB[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.true_value.RGB[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.true_value.RGB[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.RGB[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                data->u.thr.false_value.RGB[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                data->u.thr.false_value.RGB[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_RGBX:
+		            {
+		                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+		                data->u.thr.true_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.true_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.true_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.true_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                data->u.thr.false_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                data->u.thr.false_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                data->u.thr.false_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_NV12:
+		            case VX_DF_IMAGE_NV21:
+		            case VX_DF_IMAGE_UYVY:
+		            case VX_DF_IMAGE_YUYV:
+		            case VX_DF_IMAGE_IYUV:
+		            case VX_DF_IMAGE_YUV4:
+		            {
+		                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+		                data->u.thr.true_value.YUV[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.true_value.YUV[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.true_value.YUV[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.YUV[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                data->u.thr.false_value.YUV[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                data->u.thr.false_value.YUV[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_U1:
+		            {
+		                data->u.thr.data_type = VX_TYPE_BOOL;
+		                data->u.thr.true_value.U1  = AGO_U1_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.U1 = AGO_U1_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_U8:
+		            {
+		                data->u.thr.data_type = VX_TYPE_UINT8;
+		                data->u.thr.true_value.U8  = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_S16:
+		            {
+		                data->u.thr.data_type = VX_TYPE_INT16;
+		                data->u.thr.true_value.S16  = AGO_S16_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.S16 = AGO_S16_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_U16:
+		            {
+		                data->u.thr.data_type = VX_TYPE_UINT16;
+		                data->u.thr.true_value.U16  = AGO_U16_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.U16 = AGO_U16_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_S32:
+		            {
+		                data->u.thr.data_type = VX_TYPE_INT32;
+		                data->u.thr.true_value.S32  = AGO_S32_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.S32 = AGO_S32_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            case VX_DF_IMAGE_U32:
+		            {
+		                data->u.thr.data_type = VX_TYPE_UINT32;
+		                data->u.thr.true_value.U32  = AGO_U32_THRESHOLD_TRUE_VALUE;
+		                data->u.thr.false_value.U32 = AGO_U32_THRESHOLD_FALSE_VALUE;
+		                break;
+		            }
+		            default:
+		            {
+		                break;
+		            }
+		        }
 			}
 		}
 	}
@@ -5489,12 +5710,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_
 #endif
 				if (usage == VX_READ_ONLY){
 					//*(vx_int32 *)value_ptr = data->u.thr.threshold_lower;
-					memcpy(value_ptr, &data->u.thr.threshold_lower, sizeof(vx_pixel_value_t));
+					memcpy(value_ptr, &data->u.thr.threshold_value, sizeof(vx_pixel_value_t));
 					status = VX_SUCCESS;
 				}
 				else if (usage == VX_WRITE_ONLY){
 					//data->u.thr.threshold_lower = *(vx_int32 *)value_ptr;
-					memcpy(&data->u.thr.threshold_lower, value_ptr, sizeof(vx_pixel_value_t));
+					memcpy(&data->u.thr.threshold_value, value_ptr, sizeof(vx_pixel_value_t));
 					status = VX_SUCCESS;
 				}
 			}
@@ -5559,15 +5780,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
 				if (usage == VX_READ_ONLY){
 					memcpy(lower_value_ptr, &data->u.thr.threshold_lower, sizeof(vx_pixel_value_t));
 					memcpy(upper_value_ptr, &data->u.thr.threshold_upper, sizeof(vx_pixel_value_t));
-					//*(vx_int32 *)lower_value_ptr = data->u.thr.threshold_lower;
-					//*(vx_int32 *)upper_value_ptr = data->u.thr.threshold_upper;
 					status = VX_SUCCESS;
 				}
 				else if (usage == VX_WRITE_ONLY){
 					memcpy(&data->u.thr.threshold_lower, lower_value_ptr, sizeof(vx_pixel_value_t));
 					memcpy(&data->u.thr.threshold_upper, upper_value_ptr, sizeof(vx_pixel_value_t));
-					//data->u.thr.threshold_lower = *(vx_int32 *)lower_value_ptr;
-					//data->u.thr.threshold_upper = *(vx_int32 *)upper_value_ptr;
 					status = VX_SUCCESS;
 				}
 			}
@@ -5627,15 +5844,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
 			if (usage == VX_READ_ONLY){
 				memcpy(true_value_ptr, &data->u.thr.true_value, sizeof(vx_pixel_value_t));
 				memcpy(false_value_ptr, &data->u.thr.false_value, sizeof(vx_pixel_value_t));
-				//*(vx_int32 *)true_value_ptr = data->u.thr.true_value;
-				//*(vx_int32 *)false_value_ptr = data->u.thr.false_value;
 				status = VX_SUCCESS;
 			}
 			else if (usage == VX_WRITE_ONLY){
 				memcpy(&data->u.thr.true_value, true_value_ptr, sizeof(vx_pixel_value_t));
 				memcpy(&data->u.thr.false_value, false_value_ptr, sizeof(vx_pixel_value_t));
-				//data->u.thr.true_value = *(vx_int32 *)true_value_ptr;
-				//data->u.thr.false_value = *(vx_int32 *)false_value_ptr;
 				status = VX_SUCCESS;
 			}
 		}
@@ -5683,13 +5896,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
 			{
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
-					data->u.thr.threshold_lower = *(vx_int32 *)ptr;
+					data->u.thr.threshold_value = *(vx_pixel_value_t *)ptr;
 					status = VX_SUCCESS;
 				}
 				break;
 			case VX_THRESHOLD_TYPE:
 				if (size == sizeof(vx_enum)) {
-					data->u.thr.threshold_lower = *(vx_enum *)ptr;
+					data->u.thr.thresh_type = *(vx_enum *)ptr;
 					status = VX_SUCCESS;
 				}
 				break;
@@ -5707,13 +5920,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
 				break;
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					data->u.thr.threshold_lower = *(vx_int32 *)ptr;
+					data->u.thr.threshold_lower = *(vx_pixel_value_t *)ptr;
 					status = VX_SUCCESS;
 				}
 				break;
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					data->u.thr.threshold_upper = *(vx_int32 *)ptr;
+					data->u.thr.threshold_upper = *(vx_pixel_value_t *)ptr;
 					status = VX_SUCCESS;
 				}
 				break;
@@ -5769,31 +5982,31 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryThreshold(vx_threshold thresh, vx_enum
 				break;
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
-					*(vx_int32 *)ptr = data->u.thr.threshold_lower;
+					*(vx_pixel_value_t *)ptr = data->u.thr.threshold_value;
 					status = VX_SUCCESS;
 				}
 				break;
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					*(vx_int32 *)ptr = data->u.thr.threshold_lower;
+					*(vx_pixel_value_t *)ptr = data->u.thr.threshold_lower;
 					status = VX_SUCCESS;
 				}
 				break;
 			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER:
 				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					*(vx_int32 *)ptr = data->u.thr.threshold_upper;
+					*(vx_pixel_value_t *)ptr = data->u.thr.threshold_upper;
 					status = VX_SUCCESS;
 				}
 				break;
 			case VX_THRESHOLD_ATTRIBUTE_TRUE_VALUE:
 				if (size == sizeof(vx_int32)) {
-					*(vx_int32 *)ptr = data->u.thr.true_value;
+					*(vx_pixel_value_t *)ptr = data->u.thr.true_value;
 					status = VX_SUCCESS;
 				}
 				break;
 			case VX_THRESHOLD_ATTRIBUTE_FALSE_VALUE:
 				if (size == sizeof(vx_int32)) {
-					*(vx_int32 *)ptr = data->u.thr.false_value;
+					*(vx_pixel_value_t *)ptr = data->u.thr.false_value;
 					status = VX_SUCCESS;
 				}
 				break;

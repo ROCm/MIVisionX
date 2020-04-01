@@ -163,6 +163,21 @@ THE SOFTWARE.
 #define MAX_MODULE_NAME_SIZE 256
 #define MAX_MODULE_PATH_SIZE 1024
 
+// threshold default values
+#define AGO_DEFAULT_THRESHOLD_FALSE_VALUE 0
+#define AGO_DEFAULT_THRESHOLD_TRUE_VALUE  255
+
+#define AGO_U1_THRESHOLD_FALSE_VALUE vx_false_e
+#define AGO_U1_THRESHOLD_TRUE_VALUE vx_true_e
+#define AGO_S16_THRESHOLD_FALSE_VALUE 0
+#define AGO_S16_THRESHOLD_TRUE_VALUE  (-1)
+#define AGO_U16_THRESHOLD_FALSE_VALUE 0
+#define AGO_U16_THRESHOLD_TRUE_VALUE  0xFFFF
+#define AGO_S32_THRESHOLD_FALSE_VALUE 0
+#define AGO_S32_THRESHOLD_TRUE_VALUE  (-1)
+#define AGO_U32_THRESHOLD_FALSE_VALUE 0
+#define AGO_U32_THRESHOLD_TRUE_VALUE  0xFFFFFFFF
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // helpful macros
 //
@@ -342,8 +357,8 @@ struct AgoConfigThreshold {
 	vx_enum data_type;
 	vx_df_image input_format;
 	vx_df_image output_format;
-	vx_int32 threshold_lower, threshold_upper;
-	vx_int32 true_value, false_value;
+	vx_pixel_value_t threshold_lower, threshold_upper, threshold_value;
+	vx_pixel_value_t true_value, false_value;
 };
 struct AgoConfigTensor {
 	vx_size num_dims;

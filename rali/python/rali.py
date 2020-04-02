@@ -115,11 +115,11 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def cropResize(self, input, dest_width, dest_height, is_output, area = None, x_center_drift = None, y_center_drift= None):
+    def cropResize(self, input, dest_width, dest_height, is_output, area = None, x_center_drift = None, y_center_drift= None, aspect_ratio = None):
         param_area = self.validateFloatParameter( area)
         param_x_drift = self.validateFloatParameter( x_center_drift)
         param_y_drift = self.validateFloatParameter( y_center_drift)
-        out = self._lib.raliCropResize(self.handle, input.obj,dest_width,dest_height, is_output, param_area, param_x_drift, param_y_drift)
+        out = self._lib.raliCropResize(self.handle, input.obj,dest_width,dest_height, is_output, param_area,aspect_ratio, param_x_drift, param_y_drift)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -194,9 +194,9 @@ class RaliGraph():
         o0 = self.validateFloatParameter(rotate_matrix[2][0])
         o1 = self.validateFloatParameter(rotate_matrix[2][1])
         if dest_width != 0 and dest_height != 0:
-            out = self._lib.raliWarpAffine(self.handle, input.obj, is_output, x0, x1, y0, y1, o0, o1, dest_width, dest_height)
+            out = self._lib.raliWarpAffine(self.handle, input.obj, is_output,dest_width, dest_height, x0, x1, y0, y1, o0, o1)
         else:
-            out = self._lib.raliWarpAffine(self.handle, input.obj, is_output, x0, x1, y0, y1, o0, o1, 0, 0)
+            out = self._lib.raliWarpAffine(self.handle, input.obj, is_output,0,0, x0, x1, y0, y1, o0, o1)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -217,10 +217,9 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def jitter(self, input, is_output, min = None, max = None):
-        min_param = self.validateIntParameter(min)
-        max_param = self.validateIntParameter(max)
-        out = self._lib.raliJitter(self.handle, input.obj, is_output, min_param, max_param)
+    def jitter(self, input, is_output, value = None):
+        param_value = self.validateIntParameter(value)
+        out = self._lib.raliJitter(self.handle, input.obj, is_output, param_value)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -244,7 +243,7 @@ class RaliGraph():
 
     def rain(self, input, is_output, rain_value = None):
         param_rain = self.validateFloatParameter(rain_value)
-        out = self._lib.raliRain(self.handle, input.obj, is_output, param_rain)
+        out = self._lib.raliRain(self.handle, input.obj, is_output, param_rain, None, None, None )
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -312,8 +311,18 @@ class RaliGraph():
     def getReaminingImageCount(self):
         return self._lib.remainingImagesCount(self.handle)
 
-    def getOutputImageCount(self):
-        return self._lib.raliGetOutputImageCount(self.handle)
+    def raliIsEmpty(self):
+        return self._lib.raliIsEmpty(self.handle)
+
+    def raliGetAugmentationBranchCount(self):
+        return self._lib.raliGetAugmentationBranchCount(self.handle)
+
+    def raliGetImageName(self, buf, image_idx):
+        return self._lib.raliGetImageName(self.handle, buf, image_idx)
+
+    def raliGetImageNameLen(self, image_idx):
+        return self._lib.raliGetImageNameLen(self.handle, image_idx)
+
 
     def setSeed(self, seed):
         self._lib.raliSetSeed(seed)

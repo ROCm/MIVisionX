@@ -25,7 +25,7 @@ ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
     // Can initialize it to any decoder types if needed
     
 
-    _header_buff.resize(COMPRESSED_SIZE);
+    // _header_buff.resize(COMPRESSED_SIZE);
     _decoder = create_decoder(std::move(decoder_cfg));
     _reader = create_reader(std::move(reader_cfg));
     find_max_dimension();
@@ -39,10 +39,11 @@ ImageSourceEvaluator::find_max_dimension()
 
     while( _reader->count() ) 
     {
-        if( (_reader->open()) == 0 )
+        size_t fsize = _reader->open();
+        if( (fsize) == 0 )
             continue;
-
-        auto actual_read_size = _reader->read(_header_buff.data(), COMPRESSED_SIZE);
+        _header_buff.resize(fsize);
+        auto actual_read_size = _reader->read(_header_buff.data(), fsize);
         _reader->close();
         
         int width, height, jpeg_sub_samp;

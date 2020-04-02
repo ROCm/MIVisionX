@@ -7,15 +7,15 @@
 class ExposureNode : public Node
 {
 public:
-    void create(std::shared_ptr<Graph> graph) override ;
-    ExposureNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
+    ExposureNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     ExposureNode() = delete;
     void init(float shift);
     void init(FloatParam *shift);
-    void update_parameters() override;
-
+protected:
+    void create_node() override;
+    void update_node() override;
 private:
     ParameterVX<float> _shift;
+    vx_array _width_array ,_height_array;
     constexpr static float SHIFT_RANGE [2] = {0.15, 0.95};
-    constexpr static unsigned SHIFT_OVX_PARAM_IDX = 2;
 };

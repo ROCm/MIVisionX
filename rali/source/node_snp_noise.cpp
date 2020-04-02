@@ -4,43 +4,37 @@
 #include "exception.h"
 
 
-SnPNoiseNode::SnPNoiseNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+SnPNoiseNode::SnPNoiseNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
-        _sdev(SDEV_OVX_PARAM_IDX, SDEV_RANGE[0], SDEV_RANGE[1])
+        _sdev(SDEV_RANGE[0], SDEV_RANGE[1])
 {
 }
 
-void SnPNoiseNode::create(std::shared_ptr<Graph> graph)
+void SnPNoiseNode::create_node()
 {
     if(_node)
         return;
 
-    _graph = graph;
-
-    if(_outputs.empty() || _inputs.empty())
-        THROW("Uninitialized input/output arguments")
-
-    _node = vxExtrppNode_NoiseSnp(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _sdev.default_value());
+    _sdev.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _node = vxExtrppNode_NoisebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _sdev.default_array(), _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the snp noise (vxExtrppNode_NoiseSnp) node failed: "+ TOSTR(status))
-
-    _sdev.create(_node);
+        THROW("Adding the snp noise (vxExtrppNode_NoisebatchPD) node failed: "+ TOSTR(status))
 
 }
 
-void SnPNoiseNode::init(float shfit)
+void SnPNoiseNode::init(float sdev)
 {
-    _sdev.set_param(shfit);
+    _sdev.set_param(sdev);
 }
 
-void SnPNoiseNode::init(FloatParam* shfit)
+void SnPNoiseNode::init(FloatParam* sdev)
 {
-    _sdev.set_param(core(shfit));
+    _sdev.set_param(core(sdev));
 }
 
-void SnPNoiseNode::update_parameters()
+void SnPNoiseNode::update_node()
 {
-    _sdev.update();
+    _sdev.update_array();
 }

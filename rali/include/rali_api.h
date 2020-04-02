@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "rali_api_data_loaders.h"
 #include "rali_api_augmentation.h"
 #include "rali_api_data_transfer.h"
+#include "rali_api_meta_data.h"
 #include "rali_api_info.h"
 
 /// Creates the context for a new augmentation pipeline. Initializes all the required internals for the pipeline

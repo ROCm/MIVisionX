@@ -44,15 +44,15 @@ class RaliLib:
 
         self.raliCropResize = self.lib.raliCropResize
         self.raliCropResize.restype = ctypes.c_void_p
-        self.raliCropResize.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.raliCropResize.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.raliCropResizeFixed = self.lib.raliCropResizeFixed
         self.raliCropResizeFixed.restype = ctypes.c_void_p
-        self.raliCropResizeFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_float, ctypes.c_float, ctypes.c_float]
+        self.raliCropResizeFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float]
 
         self.raliRotate = self.lib.raliRotate
         self.raliRotate.restype = ctypes.c_void_p
-        self.raliRotate.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_uint,  ctypes.c_uint]
+        self.raliRotate.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_uint,  ctypes.c_uint]
 
         # self.raliRotateFixed = self.lib.raliRotateFixed
         # self.raliRotateFixed.restype = ctypes.c_void_p
@@ -60,7 +60,7 @@ class RaliLib:
 
         self.raliBrightness = self.lib.raliBrightness
         self.raliBrightness.restype = ctypes.c_void_p
-        self.raliBrightness.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliBrightness.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p]
 
         # self.raliBrightnessFixed = self.lib.raliBrightnessFixed
         # self.raliBrightnessFixed.restype = ctypes.c_void_p
@@ -68,7 +68,7 @@ class RaliLib:
 
         self.raliGamma = self.lib.raliGamma
         self.raliGamma.restype = ctypes.c_void_p
-        self.raliGamma.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliGamma.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool,  ctypes.c_void_p]
 
         # self.raliGammaFixed = self.lib.raliGammaFixed
         # self.raliGammaFixed.restype = ctypes.c_void_p
@@ -76,7 +76,7 @@ class RaliLib:
 
         self.raliContrast = self.lib.raliContrast
         self.raliContrast.restype = ctypes.c_void_p
-        self.raliContrast.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliContrast.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool,  ctypes.c_void_p,  ctypes.c_void_p]
 
         # self.raliContrastFixed = self.lib.raliContrastFixed
         # self.raliContrastFixed.restype = ctypes.c_void_p
@@ -84,8 +84,12 @@ class RaliLib:
 
         self.raliFlip = self.lib.raliFlip
         self.raliFlip.restype = ctypes.c_void_p
-        self.raliFlip.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliFlip.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
+        self.raliFlipFixed = self.lib.raliFlipFixed
+        self.raliFlipFixed.restype = ctypes.c_void_p
+        self.raliFlipFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_bool]
+        
         self.raliBlur = self.lib.raliBlur
         self.raliBlur.restype = ctypes.c_void_p
         self.raliBlur.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
@@ -96,7 +100,7 @@ class RaliLib:
 
         self.raliBlend = self.lib.raliBlend
         self.raliBlend.restype = ctypes.c_void_p
-        self.raliBlend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliBlend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         # self.raliBlendFixed = self.lib.raliBlendFixed
         # self.raliBlendFixed.restype = ctypes.c_void_p
@@ -104,7 +108,7 @@ class RaliLib:
 
         self.raliWarpAffine = self.lib.raliWarpAffine
         self.raliWarpAffine.restype = ctypes.c_void_p
-        self.raliWarpAffine.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.raliWarpAffine.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_uint, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.raliWarpAffineFixed = self.lib.raliWarpAffineFixed
         self.raliWarpAffineFixed.restype = ctypes.c_void_p
@@ -116,7 +120,7 @@ class RaliLib:
 
         self.raliVignette = self.lib.raliVignette
         self.raliVignette.restype = ctypes.c_void_p
-        self.raliVignette.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliVignette.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool,ctypes.c_void_p]
 
         # self.raliVignetteFixed = self.lib.raliVignetteFixed
         # self.raliVignetteFixed.restype = ctypes.c_void_p
@@ -124,7 +128,7 @@ class RaliLib:
 
         self.raliJitter = self.lib.raliJitter
         self.raliJitter.restype = ctypes.c_void_p
-        self.raliJitter.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliJitter.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         # self.raliJitterFixed = self.lib.raliJitterFixed
         # self.raliJitterFixed.restype = ctypes.c_void_p
@@ -132,7 +136,7 @@ class RaliLib:
 
         self.raliSnPNoise = self.lib.raliSnPNoise
         self.raliSnPNoise.restype = ctypes.c_void_p
-        self.raliSnPNoise.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliSnPNoise.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         # self.raliSnPNoiseFixed = self.lib.raliSnPNoiseFixed
         # self.raliSnPNoiseFixed.restype = ctypes.c_void_p
@@ -140,7 +144,7 @@ class RaliLib:
 
         self.raliSnow = self.lib.raliSnow
         self.raliSnow.restype = ctypes.c_void_p
-        self.raliSnow.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliSnow.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         # self.raliSnowFixed = self.lib.raliSnowFixed
         # self.raliSnowFixed.restype = ctypes.c_void_p
@@ -148,7 +152,7 @@ class RaliLib:
 
         self.raliRain = self.lib.raliRain
         self.raliRain.restype = ctypes.c_void_p
-        self.raliRain.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliRain.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         # self.raliRainFixed = self.lib.raliRainFixed
         # self.raliRainFixed.restype = ctypes.c_void_p
@@ -156,7 +160,7 @@ class RaliLib:
 
         self.raliColorTemp = self.lib.raliColorTemp
         self.raliColorTemp.restype = ctypes.c_void_p
-        self.raliColorTemp.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliColorTemp.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         # self.raliColorTempFixed = self.lib.raliColorTempFixed
         # self.raliColorTempFixed.restype = ctypes.c_void_p
@@ -164,7 +168,7 @@ class RaliLib:
 
         self.raliFog = self.lib.raliFog
         self.raliFog.restype = ctypes.c_void_p
-        self.raliFog.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliFog.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         # self.raliFogFixed = self.lib.raliFogFixed
         # self.raliFogFixed.restype = ctypes.c_void_p
@@ -172,7 +176,7 @@ class RaliLib:
 
         self.raliLensCorrection = self.lib.raliLensCorrection
         self.raliLensCorrection.restype = ctypes.c_void_p
-        self.raliLensCorrection.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliLensCorrection.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p]
 
         # self.raliLensCorrectionFixed = self.lib.raliLensCorrectionFixed
         # self.raliLensCorrectionFixed.restype = ctypes.c_void_p
@@ -184,11 +188,11 @@ class RaliLib:
 
         self.raliExposure = self.lib.raliExposure
         self.raliExposure.restype = ctypes.c_void_p
-        self.raliExposure.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliExposure.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         self.raliColorTwist = self.lib.raliColorTwist
         self.raliColorTwist.restype = ctypes.c_void_p
-        self.raliColorTwist.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool]
+        self.raliColorTwist.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
         
         # self.raliExposureFixed = self.lib.raliExposureFixed
         # self.raliExposureFixed.restype = ctypes.c_void_p

@@ -317,6 +317,13 @@ class RaliGraph():
     def raliGetAugmentationBranchCount(self):
         return self._lib.raliGetAugmentationBranchCount(self.handle)
 
+    def raliGetImageName(self, buf, image_idx):
+        return self._lib.raliGetImageName(self.handle, buf, image_idx)
+
+    def raliGetImageNameLen(self, image_idx):
+        return self._lib.raliGetImageNameLen(self.handle, image_idx)
+
+
     def setSeed(self, seed):
         self._lib.raliSetSeed(seed)
 

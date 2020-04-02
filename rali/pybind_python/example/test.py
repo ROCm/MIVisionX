@@ -6,14 +6,7 @@ from amd.rali.plugin.pytorch import RALI_iterator
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
 import amd.rali.types as types
-
-
-image_path = "/home/swetha/sample"
-bs = 2
-nt = 1
-di = 0
-crop_size = 224
-
+import sys
 class HybridTrainPipe(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = False):
 		super(HybridTrainPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
@@ -73,19 +66,23 @@ class HybridTrainPipe(Pipeline):
 		return [output, self.labels]
 
 def main():
-    pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size) #, dali_cpu=args.dali_cpu)        
-    pipe.build()
-    world_size=1
-    imageIterator = RALI_iterator(pipe)
+	if  len(sys.argv) < 2:
+		print ('Please pass the folder containing images as a command line argument')
+		exit(0)
+	image_path = sys.argv[1]
+	bs = 2
+	nt = 1
+	di = 0
+	crop_size = 224
+	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size) #, dali_cpu=args.dali_cpu)        
+	pipe.build()
+	world_size=1
+	imageIterator = RALI_iterator(pipe)
 
-    # pipe1 = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=200) #, dali_cpu=args.dali_cpu)        
-    # pipe1.build()
-    # imageIterator = RALIClassificationIterator(pipe1)
 
-
-    for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
-        cv2.imshow('image', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
-        cv2.waitKey(0)
+	for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
+		cv2.imshow('image', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
+		cv2.waitKey(0)
 
 if __name__ == '__main__':
     main() 

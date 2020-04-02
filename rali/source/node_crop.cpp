@@ -35,7 +35,7 @@ void CropNode::update_node()
     _crop_param->update_array();
     std::vector<uint32_t> crop_h_dims, crop_w_dims;
     _crop_param->get_crop_dimensions(crop_h_dims, crop_w_dims);
-    _inputs[0]->update_image_roi(crop_w_dims, crop_h_dims);
+    _outputs[0]->update_image_roi(crop_w_dims, crop_h_dims);
 }
 
 void CropNode::init(unsigned int crop_h, unsigned int crop_w, float x_drift, float y_drift)

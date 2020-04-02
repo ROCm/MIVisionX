@@ -118,7 +118,7 @@ namespace rali{
         m.def("getOutputHeight",&raliGetOutputHeight);
         m.def("getOutputColorFormat",&raliGetOutputColorFormat);
         m.def("getRemainingImages",&raliGetRemainingImages);
-        m.def("getOutputImageCount",&raliGetOutputImageCount);
+        m.def("getOutputImageCount",&raliGetAugmentationBranchCount);
         m.def("getImageWidth",&raliGetImageWidth);
         m.def("getImageHeight",&raliGetImageHeight);
         m.def("getImagePlanes",&raliGetImagePlanes);

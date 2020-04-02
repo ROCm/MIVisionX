@@ -185,16 +185,16 @@ class Pipeline(object):
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.RaliTensorLayout.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.TensorDataType.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.RaliTensorLayout.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.RaliTensorLayout.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.TensorDataType.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.RaliTensorLayout.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
     
     def getImageLabels(self, array):
         b.getImageLabels(self._handle, array)

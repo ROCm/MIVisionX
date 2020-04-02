@@ -119,60 +119,68 @@ class RaliGraph():
         param_area = self.validateFloatParameter( area)
         param_x_drift = self.validateFloatParameter( x_center_drift)
         param_y_drift = self.validateFloatParameter( y_center_drift)
-        out = self._lib.raliCropResize(self.handle, input.obj,dest_width,dest_height, is_output, param_area, aspect_ratio, param_x_drift, param_y_drift)
+        out = self._lib.raliCropResize(self.handle, input.obj,dest_width,dest_height, is_output, param_area,aspect_ratio, param_x_drift, param_y_drift)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def rotate(self, input, is_output, dest_width = 0, dest_height = 0):
+    def rotate(self, input, is_output,angle = None,  dest_width = 0, dest_height = 0):
+        param_angle = self.validateFloatParameter(angle)
         if dest_width != 0 and dest_height != 0:
-            out = self._lib.raliRotate(self.handle, input.obj, is_output, None, dest_width, dest_height)
+            out = self._lib.raliRotate(self.handle, input.obj, is_output, param_angle, dest_width, dest_height)
         else:
-            out = self._lib.raliRotate(self.handle, input.obj, is_output, None, 0, 0)
+            out = self._lib.raliRotate(self.handle, input.obj, is_output, param_angle, 0, 0)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def brightness(self, input, is_output):
-        out = self._lib.raliBrightness(self.handle, input.obj, is_output, None, None)
+    def brightness(self, input, is_output, alpha = None, beta = None):
+        alpha_param = self.validateFloatParameter( alpha)
+        beta_param = self.validateFloatParameter( beta)
+        out = self._lib.raliBrightness(self.handle, input.obj, is_output, alpha_param, beta_param)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def gamma(self, input, is_output):
-        out = self._lib.raliGamma(self.handle, input.obj, is_output, None)
+    def gamma(self, input, is_output, alpha = None):
+        param_alpha = self.validateFloatParameter(alpha)
+        out = self._lib.raliGamma(self.handle, input.obj, is_output, param_alpha)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def contrast(self, input, is_output):
-        out = self._lib.raliContrast(self.handle, input.obj, is_output, None, None)
+    def contrast(self, input, is_output, min = None, max = None):
+        min_param = self.validateIntParameter(min)
+        max_param = self.validateIntParameter(max)
+        out = self._lib.raliContrast(self.handle, input.obj, is_output, min_param, max_param)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def flip(self, input, is_output, axis=0):
-        # sending 0 as flip axis
-        out = self._lib.raliFlipFixed(self.handle, input.obj, axis, is_output)
+    def flip(self, input, is_output, flip_axis = 0):
+        out = self._lib.raliFlip(self.handle, input.obj, flip_axis, is_output)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def blur(self, input, is_output):
-        out = self._lib.raliBlur(self.handle, input.obj, is_output, None)
+    def blur(self, input, is_output, sdev = None):
+        param_sdev = self.validateFloatParameter(sdev)
+        out = self._lib.raliBlur(self.handle, input.obj, is_output, param_sdev)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def blend(self, input1, input2, is_output):
-        out = self._lib.raliBlend(self.handle, input1.obj,input2.obj, is_output, None)
+    def blend(self, input1, input2, is_output, ratio = None):
+
+        param_ratio = self.validateFloatParameter(ratio)
+        out = self._lib.raliBlend(self.handle, input1.obj,input2.obj, is_output, param_ratio)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -188,7 +196,7 @@ class RaliGraph():
         if dest_width != 0 and dest_height != 0:
             out = self._lib.raliWarpAffine(self.handle, input.obj, is_output,dest_width, dest_height, x0, x1, y0, y1, o0, o1)
         else:
-            out = self._lib.raliWarpAffine(self.handle, input.obj, is_output, 0, 0, x0, x1, y0, y1, o0, o1)
+            out = self._lib.raliWarpAffine(self.handle, input.obj, is_output,0,0, x0, x1, y0, y1, o0, o1)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -201,57 +209,66 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def vignette(self, input, is_output):
-        out = self._lib.raliVignette(self.handle, input.obj, is_output, None)
+    def vignette(self, input, is_output, sdev = None):
+        param_sdev = self.validateFloatParameter(sdev)
+        out = self._lib.raliVignette(self.handle, input.obj, is_output, param_sdev)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def jitter(self, input, is_output):
-        out = self._lib.raliJitter(self.handle, input.obj, is_output, None)
+    def jitter(self, input, is_output, value = None):
+        param_value = self.validateIntParameter(value)
+        out = self._lib.raliJitter(self.handle, input.obj, is_output, param_value)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def SnPNoise(self, input, is_output):
-        out = self._lib.raliSnPNoise(self.handle, input.obj, is_output, None)
+    def SnPNoise(self, input, is_output, sdev = None):
+        param_sdev = self.validateFloatParameter(sdev)
+        out = self._lib.raliSnPNoise(self.handle, input.obj, is_output, param_sdev)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def snow(self, input, is_output):
-        out = self._lib.raliSnow(self.handle, input.obj, is_output, None)
+    def snow(self, input, is_output, sdev = None):
+        param_sdev = self.validateFloatParameter(sdev)
+        out = self._lib.raliSnow(self.handle, input.obj, is_output, param_sdev)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def rain(self, input, is_output):
-        out = self._lib.raliRain(self.handle, input.obj, is_output, None, None, None, None)
+    def rain(self, input, is_output, rain_value = None):
+        param_rain = self.validateFloatParameter(rain_value)
+        out = self._lib.raliRain(self.handle, input.obj, is_output, param_rain, None, None, None )
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def colorTemp(self, input, is_output):
-        out = self._lib.raliColorTemp(self.handle, input.obj, is_output, None)
+    def colorTemp(self, input, is_output, adj_value = None):
+        adj_value = self.validateIntParameter(adj_value)
+        out = self._lib.raliColorTemp(self.handle, input.obj, is_output, adj_value)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def fog(self, input, is_output):
-        out = self._lib.raliFog(self.handle, input.obj, is_output, None)
+    def fog(self, input, is_output, fog_value = None):
+        param_fog = self.validateFloatParameter(fog_value)
+        out = self._lib.raliFog(self.handle, input.obj, is_output, param_fog)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
         return out_img
 
-    def lensCorrection(self, input, is_output):
-        out = self._lib.raliLensCorrection(self.handle, input.obj, is_output, None, None)
+    def lensCorrection(self, input, is_output, strength = None, zoom = None):
+        strength_param = self.validateFloatParameter(strength)
+        zoom_param = self.validateFloatParameter(zoom)
+        out = self._lib.raliLensCorrection(self.handle, input.obj, is_output, strength_param, zoom_param)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -264,15 +281,9 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-    def exposure(self, input, is_output):
-        out = self._lib.raliExposure(self.handle, input.obj, is_output, None)
-        out_img = RaliImage(out)
-        if is_output:
-            self.output_images.append(out_img)
-        return out_img
-
-    def colorTwist(self, input, is_output):
-        out = self._lib.raliColorTwist(self.handle, input.obj, is_output, None, None, None, None)
+    def exposure(self, input, is_output, shift = None):
+        param_shift = self.validateFloatParameter(shift)
+        out = self._lib.raliExposure(self.handle, input.obj, is_output, param_shift)
         out_img = RaliImage(out)
         if is_output:
             self.output_images.append(out_img)
@@ -305,14 +316,6 @@ class RaliGraph():
 
     def raliGetAugmentationBranchCount(self):
         return self._lib.raliGetAugmentationBranchCount(self.handle)
-
-
-    def raliGetImageName(self, buf, image_idx):
-        return self._lib.raliGetImageName(self.handle, buf, image_idx)
-
-    def raliGetImageNameLen(self, image_idx):
-        return self._lib.raliGetImageNameLen(self.handle, image_idx)
-
 
     def setSeed(self, seed):
         self._lib.raliSetSeed(seed)

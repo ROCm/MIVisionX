@@ -357,18 +357,18 @@ class DataLoader(RaliGraph):
 
 def main():
     batchSize = 2
-    if  len(sys.argv) < 2:
-        print ('Please pass the folder containing images as a command line argument')
+    if  len(sys.argv) < 3:
+        print ('Please pass the folder containing images as a command line argument plus path to the labels file')
         exit(0)
 
     input_path = sys.argv[1]
-
+    label_file_path = sys.argv[2]
     # Pipeline creation
     #loader = DataLoader(input_path, batchSize, ColorFormat.IMAGE_RGB24, Affinity.PROCESS_GPU)
     rali_batch_size = 1
     modelBatchSizeInt = 64
 
-    fp = open('/home/svcbuild/work/lk/MIVisionX/apps/mivisionx_validation_tool/sample/AMD-tinyDataSet-val.txt', 'r')
+    fp = open(label_file_path, 'r')
     imageValidation = fp.readlines()
     fp.close()
 

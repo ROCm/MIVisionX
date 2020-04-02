@@ -47,13 +47,6 @@ enum class RaliMemType
     OCL
 };
 
-enum class ImageBufferAllocation
-{
-    external = 0,
-    none = 1
-};
-
-
 struct Timing
 {
     // The following timings are accumulated timing not just the most recent activity

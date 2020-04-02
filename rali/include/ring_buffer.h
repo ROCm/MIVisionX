@@ -48,7 +48,7 @@ private:
     std::condition_variable _wait_for_load;
     std::condition_variable _wait_for_unload;
     std::vector<std::vector<void*>> _dev_sub_buffer;
-    std::vector<std::vector<unsigned char>> _host_master_buffers;
+    std::vector<void*> _host_master_buffers;
     std::vector<std::vector<void*>> _host_sub_buffers;
     bool _dont_block = false;
     RaliMemType _mem_type;
@@ -57,4 +57,5 @@ private:
     size_t _read_ptr;
     size_t _level;
     std::mutex  _names_buff_lock;
+    const size_t MEM_ALIGNMENT = 256;
 };

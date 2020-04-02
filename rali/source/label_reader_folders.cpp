@@ -26,13 +26,16 @@ void LabelReaderFolders::init(const MetaDataConfig& cfg)
 }
 bool LabelReaderFolders::exists(const std::string& image_name)
 {
-    return _map_content.find(image_name) == _map_content.end();
+    return _map_content.find(image_name) != _map_content.end();
 }
 void LabelReaderFolders::add(std::string image_name, int label)
 {
     pMetaData info = std::make_shared<Label>(label);
-    if(!exists(image_name))
+    if(exists(image_name))
+    {
         WRN("Entity with the same name exists")
+        return;
+    }
     _map_content.insert(pair<std::string, std::shared_ptr<Label>>(image_name, info));
 }
 

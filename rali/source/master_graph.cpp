@@ -192,12 +192,10 @@ MasterGraph::create_loader_output_image(const ImageInfo &info)
 {
     /*
     *   NOTE: Output image for a source node needs to be created as a regular (non-virtual) image
-    *   NOTE: allocate flag is not set for the create_from_handle function here since image's
-    *       context will be swapped with the loader_module's internal buffer
     */
     auto output = new Image(info);
 
-    if( output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
+    if(output->create_from_handle(_context) != 0)
         THROW("Creating output image for loader failed");
 
     _internal_images.push_back(output);
@@ -212,7 +210,7 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
     // if the image is not an output image, the image creation is deferred and later it'll be created as a virtual image
     if(is_output)
     {
-        if (output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
+        if (output->create_from_handle(_context) != 0)
             THROW("Cannot create the image from handle")
 
         _output_images.push_back(output);
@@ -801,28 +799,33 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
 {
     const unsigned MINIMUM_CPU_THREAD_COUNT = 2;
     const unsigned DEFAULT_SMT_COUNT = 2;
-    const unsigned DEFAULT_CPU_CORE_COUNT = 8;
+
 
     if(affinity == RaliAffinity::GPU)
         return user_batch_size;
     
-    unsigned thread_count = std::thread::hardware_concurrency();
-    if(thread_count >= MINIMUM_CPU_THREAD_COUNT)
-        INFO("Can run "+ TOSTR(thread_count) + " threads simultaneously on this machine")
+    unsigned THREAD_COUNT = std::thread::hardware_concurrency();
+    if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
+        INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
     else
     {
-        thread_count =DEFAULT_CPU_CORE_COUNT;
-        WRN("hardware_concurrency() failed assumes "+TOSTR(thread_count)+" cores maximum ")
+        THREAD_COUNT = MINIMUM_CPU_THREAD_COUNT;
+        WRN("hardware_concurrency() call failed assuming can run " + TOSTR(THREAD_COUNT) + " threads")
     }
     size_t ret = user_batch_size;
-    for( size_t i = thread_count/DEFAULT_SMT_COUNT; i <= DEFAULT_SMT_COUNT; i++)
+    size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
+
+    if(CORE_COUNT <= 0)
+        THROW("Wrong core count detected less than 0")
+
+    for( size_t i = CORE_COUNT; i <= THREAD_COUNT; i++)
         if(user_batch_size % i == 0)
         {
             ret = i;
             break;
         }
 
-    for( size_t i =  thread_count/DEFAULT_SMT_COUNT; i > 1; i--)
+    for(size_t i = CORE_COUNT; i > 1; i--)
         if(user_batch_size % i == 0)
         {
             ret = i;

@@ -58,6 +58,7 @@ private:
     RaliMemType _output_mem_type;
     size_t _output_mem_size;
     bool _initialized = false;
+    const size_t MEM_ALIGNMENT = 256;
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;

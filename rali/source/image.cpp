@@ -151,23 +151,6 @@ void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vect
 Image::~Image()
 {  
     vxReleaseImage(&vx_handle);
-
-    if(_mem_handle == nullptr)
-        return;
-    if(!_mem_internally_allocated)
-        return;
-
-    if(_info._mem_type == RaliMemType::OCL)
-    {
-        if(clReleaseMemObject((cl_mem)_mem_handle) != CL_SUCCESS)
-            ERR("Couldn't release cl mem")
-    } 
-    else 
-    {
-        delete[] (float*)(_mem_handle);
-    }
-
-    _mem_handle = nullptr;
 }
 
 //! Converts the Rali color format type to OpenVX
@@ -215,15 +198,15 @@ int Image::create_virtual(vx_context context, vx_graph graph)
     return 0;                                             
 }
 
-int Image::create_from_handle(vx_context context, ImageBufferAllocation policy)
+int Image::create_from_handle(vx_context context)
 {
     if(vx_handle)
+    {
+        WRN("Image object create method is already called ")
         return -1;
+    }
 
     _context = context;
-
-    if(vx_handle != 0)
-        return 0;
 
     // TODO: the pointer passed here changes if the number of planes are more than one
     vx_imagepatch_addressing_t addr_in = { 0 };
@@ -250,37 +233,7 @@ int Image::create_from_handle(vx_context context, ImageBufferAllocation policy)
 
     vx_status status;
     vx_size size = (addr_in.dim_y+0) * (addr_in.stride_y+0);
-    if(policy == ImageBufferAllocation::external)
-    {
-        if(_info._mem_type == RaliMemType::OCL)
-        {
-            cl_context opencl_context = nullptr;
-            // allocate opencl buffer with required dim
-            status = vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &opencl_context, sizeof(opencl_context));
-            if (status != VX_SUCCESS)
-                THROW("vxQueryContext of failed "+TOSTR( status));
 
-
-            cl_int ret = CL_SUCCESS;
-            cl_mem clImg = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE, size, NULL, &ret);
-
-            if (!clImg || ret)
-            {
-                if(ret == CL_INVALID_BUFFER_SIZE)
-                    ERR("Requested"+TOSTR(size)+"bytes which is more than max allocation on the device");
-                THROW("clCreateBuffer of size "+TOSTR(size)+"failed "+ TOSTR(ret));
-            }
-            clRetainMemObject(clImg);
-            ptr[0] = clImg;
-        } 
-        else
-        {
-            unsigned char* hostImage = new unsigned char[size];
-            ptr[0] = hostImage;
-        }
-        _mem_handle = ptr[0];
-        _mem_internally_allocated = true;
-    }
     vx_df_image vx_color_format = interpret_color_fmt(_info._color_fmt);
     vx_handle = vxCreateImageFromHandle(context, vx_color_format , &addr_in, ptr, vx_mem_type(_info._mem_type));
     if((status = vxGetStatus((vx_reference)vx_handle)) != VX_SUCCESS)

@@ -44,7 +44,7 @@ void *RingBuffer::get_host_master_read_buffer() {
     if(_mem_type == RaliMemType::OCL)
         return nullptr;
 
-    return _host_master_buffers[_read_ptr].data();
+    return _host_master_buffers[_read_ptr];
 }
 
 
@@ -118,10 +118,12 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
         _host_sub_buffers.resize(BUFF_DEPTH);
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
-            _host_master_buffers[buffIdx].resize(sub_buffer_size * sub_buffer_count);
+            const size_t master_buffer_size = sub_buffer_size * sub_buffer_count;
+            // a minimum of extra MEM_ALIGNMENT is allocated
+            _host_master_buffers[buffIdx] = aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (master_buffer_size / MEM_ALIGNMENT + 1));
             _host_sub_buffers[buffIdx].resize(_sub_buffer_count);
             for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
-                _host_sub_buffers[buffIdx][sub_buff_idx] = _host_master_buffers[buffIdx].data() + _sub_buffer_size * sub_buff_idx;
+                _host_sub_buffers[buffIdx][sub_buff_idx] = (unsigned char*)_host_master_buffers[buffIdx] + _sub_buffer_size * sub_buff_idx;
         }
     }
 }
@@ -158,15 +160,21 @@ RingBuffer::~RingBuffer()
     if(_mem_type!= RaliMemType::OCL)
         return;
 
+    for(unsigned idx=0; idx < _host_master_buffers.size(); idx++)
+        if(_host_master_buffers[idx])
+            free(_host_master_buffers[idx]);
+
+    _host_master_buffers.clear();
+    _host_sub_buffers.clear();
+
     for(size_t buffIdx = 0; buffIdx <_dev_sub_buffer.size(); buffIdx++)
-    {
         for(unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
             if(_dev_sub_buffer[buffIdx][sub_buf_idx])
                 if(clReleaseMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
                     ERR("Could not release ocl memory in the ring buffer")
 
 
-    }
+
 }
 
 bool RingBuffer::empty()

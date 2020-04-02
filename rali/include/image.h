@@ -132,12 +132,11 @@ struct Image
     int create(vx_context context);
     void update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height);
     void reset_image_roi() { _info.reallocate_image_roi_buffers(); }
-
-    int create_from_handle(vx_context context, ImageBufferAllocation policy);
+    // create_from_handle() no internal memory allocation is done here since image's handle should be swapped with external buffers before usage
+    int create_from_handle(vx_context context);
     int create_virtual(vx_context context, vx_graph graph);
 
 private:
-    bool _mem_internally_allocated = false;
     vx_image vx_handle = nullptr;//!< The OpenVX image
     void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image

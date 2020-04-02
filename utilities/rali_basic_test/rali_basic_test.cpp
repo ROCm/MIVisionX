@@ -40,11 +40,12 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        std::cout <<  "Usage: image_augmentation <image_dataset_folder>  <test_case:0/1> <processing_device=1/cpu=0>  decode_width decode_height <gray_scale:0/rgb:1> decode_shard_counts \n";
+        std::cout <<  "Usage: image_augmentation <image_dataset_folder> <label_text_file_path> <test_case:0/1> <processing_device=1/cpu=0>  decode_width decode_height <gray_scale:0/rgb:1> decode_shard_counts \n";
         return -1;
     }
     int argIdx = 0;
     const char * folderPath1 = argv[++argIdx];
+    const char * label_text_file_path = argv[++argIdx];
     int rgb = 1;// process color images
     int decode_width = 0;
     int decode_height = 0;
@@ -95,9 +96,11 @@ int main(int argc, const char ** argv)
     else
         input1 = raliJpegFileSource(handle, folderPath1,  color_format, decode_shard_counts, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
-    //raliCreateLabelReader(handle, folderPath1);
-    std::string val_text = "/home/svcbuild/work/lk/MIVisionX/apps/mivisionx_validation_tool/sample/AMD-tinyDataSet-val.txt";
-    raliCreateTextFileBasedLabelReader(handle, val_text.c_str());
+    if(strcmp(label_text_file_path, "") == 0)
+        raliCreateLabelReader(handle, folderPath1);
+    else
+        raliCreateTextFileBasedLabelReader(handle, label_text_file_path);
+
     auto image0 = raliFlipFixed(handle, input1, 1, false);
     auto image1 = raliColorTwistFixed(handle, image0, 1.2, 0.4, 1.2, 0.8, false);
     raliCropResizeFixed(handle, image1, 224, 224, true, 0.9, 1.1, 0.1, 0.1 );

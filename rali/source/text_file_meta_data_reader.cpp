@@ -1,4 +1,5 @@
 #include <string.h>
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <utility>
@@ -13,14 +14,17 @@ void TextFileMetaDataReader::init(const MetaDataConfig &cfg) {
 
 bool TextFileMetaDataReader::exists(const std::string& image_name)
 {
-    return _map_content.find(image_name) == _map_content.end();
+    return _map_content.find(image_name) != _map_content.end();
 }
 
 void TextFileMetaDataReader::add(std::string image_name, int label)
 {
     pMetaData info = std::make_shared<Label>(label);
     if(exists(image_name))
+    {
         WRN("Entity with the same name exists")
+        return;
+    }
     _map_content.insert(std::pair<std::string, std::shared_ptr<Label>>(image_name, info));
 }
 
@@ -43,16 +47,25 @@ void TextFileMetaDataReader::lookup(const std::vector<std::string> &image_names)
 }
 
 void TextFileMetaDataReader::read_all(const std::string &path) {
-	std::ifstream _text_file(path.c_str());
-	if(_text_file.good()) {
-		_text_file.open(path.c_str(), std::ifstream::in);
-		std::string image_name;
-		int label;
-		while(!_text_file.eof()) {
-			_text_file>>image_name>>label;
+	std::ifstream text_file(path.c_str());
+	if(text_file.good())
+	{
+		//_text_file.open(path.c_str(), std::ifstream::in);
+		std::string line;
+		while(std::getline(text_file, line))
+		{
+            std::istringstream line_ss(line);
+            int label;
+            std::string image_name;
+            if(!(line_ss>>image_name>>label))
+                continue;
 			add(image_name, label);
 		}
 	}
+	else
+    {
+	    THROW("Can't open the metadata file at "+ path)
+    }
 }
 
 void TextFileMetaDataReader::release(std::string image_name) {

@@ -7,7 +7,6 @@ CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
         _device_id(ocl.device_id),
         _dev_buffer(BUFF_DEPTH, nullptr),
         _host_buffer_ptrs(BUFF_DEPTH, nullptr),
-        _actual_host_buffers(BUFF_DEPTH),
         _write_ptr(0),
         _read_ptr(0),
         _level(0)
@@ -168,8 +167,8 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
     {
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
-            _actual_host_buffers[buffIdx].resize(_output_mem_size);
-            _host_buffer_ptrs[buffIdx] = _actual_host_buffers[buffIdx].data();
+            // a minimum of extra MEM_ALIGNMENT is allocated
+            _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
         }
 
 
@@ -243,11 +242,14 @@ CircularBuffer::~CircularBuffer()
             if(clReleaseMemObject(_dev_buffer[buffIdx]) != CL_SUCCESS)
                 ERR("Could not release ocl memory in the circular buffer")
         }
+        else
+        {
+            free(_host_buffer_ptrs[buffIdx]);
+        }
     }
 
     _dev_buffer.clear();
     _host_buffer_ptrs.clear();
-    _actual_host_buffers.clear();
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;

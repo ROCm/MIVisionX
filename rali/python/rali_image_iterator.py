@@ -16,7 +16,7 @@ class ImageIterator:
         self.w = pipeline.getOutputWidth()
         self.h = pipeline.getOutputHeight()
         self.b = pipeline.getBatchSize()
-        self.n = pipeline.getOutputImageCount()
+        self.n = pipeline.raliGetAugmentationBranchCount()
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
         height = self.h*self.n

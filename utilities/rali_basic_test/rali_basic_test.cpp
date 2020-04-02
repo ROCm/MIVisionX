@@ -95,7 +95,9 @@ int main(int argc, const char ** argv)
     else
         input1 = raliJpegFileSource(handle, folderPath1,  color_format, decode_shard_counts, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
-    raliCreateLabelReader(handle, folderPath1);
+    //raliCreateLabelReader(handle, folderPath1);
+    std::string val_text = "/home/svcbuild/work/lk/MIVisionX/apps/mivisionx_validation_tool/sample/AMD-tinyDataSet-val.txt";
+    raliCreateTextFileBasedLabelReader(handle, val_text.c_str());
     auto image0 = raliFlipFixed(handle, input1, 1, false);
     auto image1 = raliColorTwistFixed(handle, image0, 1.2, 0.4, 1.2, 0.8, false);
     raliCropResizeFixed(handle, image1, 224, 224, true, 0.9, 1.1, 0.1, 0.1 );

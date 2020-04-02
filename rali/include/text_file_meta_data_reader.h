@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
@@ -15,4 +16,9 @@ public:
     ~TextFileMetaDataReader() override { delete _output; }
 private:
     LabelBatch* _output;
+    void read_files(const std::string& _path);
+    bool exists(const std::string &image_name);
+    void add(std::string image_name, int label);
+    std::map<std::string, std::shared_ptr<Label>> _map_content;
+    std::string _path;
 };

@@ -85,30 +85,34 @@ void CropParam::update_array()
 
 void CropParam::fill_values()
 {
+    int cropw_temp = 0, croph_temp;
+
     if(!(_random))
         {
-            if(_centric)
+        for (uint img_idx = 0; img_idx < batch_size; img_idx++)
             {
-                for (uint img_idx = 0; img_idx < batch_size; img_idx++)
-                {
-                    x1_arr_val[img_idx] =  in_width[img_idx] /2 - (crop_w / 2); 
-                    y1_arr_val[img_idx] =  in_height[img_idx] / 2 - (crop_h / 2);
-                    cropw_arr_val[img_idx] = crop_w;
-                    croph_arr_val[img_idx] = crop_h;
+                if(crop_w >= in_width[img_idx])    cropw_temp = in_width[img_idx] - 1;
+		else 	                           cropw_temp = crop_w;
+
+                if(crop_h >= in_height[img_idx])   croph_temp = in_height[img_idx] - 1;
+		else                               croph_temp = crop_h;
+
+                if(_centric)
+		{
+                    x1_arr_val[img_idx] =  in_width[img_idx] /2 - (cropw_temp / 2); 
+                    y1_arr_val[img_idx] =  in_height[img_idx] / 2 - (croph_temp / 2);
+                    cropw_arr_val[img_idx] = cropw_temp;
+                    croph_arr_val[img_idx] = croph_temp;
                 }
-            }
-            else
-            {
-                for (uint img_idx = 0; img_idx < batch_size; img_idx++)
+                else
                 {
-                    x1_arr_val[img_idx] =  x1 ; 
-                    y1_arr_val[img_idx] =  y1;
-                    cropw_arr_val[img_idx] = crop_w;
-                    croph_arr_val[img_idx] = crop_h;
-                }
+                    x1_arr_val[img_idx] =  0; 
+                    y1_arr_val[img_idx] =  0;
+                    cropw_arr_val[img_idx] = cropw_temp;
+                    croph_arr_val[img_idx] = croph_temp;
+                }      
             }
         }
-
         else
         {
             for (uint img_idx = 0; img_idx < batch_size; img_idx++)
@@ -123,6 +127,9 @@ void CropParam::fill_values()
                     y1_arr_val[img_idx] =  0;
                     cropw_arr_val[img_idx] = static_cast<size_t> (crop_w_factor_ * in_width[img_idx]);
                     croph_arr_val[img_idx] = static_cast<size_t> (crop_h_factor_ * in_height[img_idx]);
+		    if(cropw_arr_val[img_idx] >= in_width[img_idx])  cropw_arr_val[img_idx] = in_width[img_idx] - 1;
+                    if(croph_arr_val[img_idx] >= in_height[img_idx]) croph_arr_val[img_idx] = in_height[img_idx] - 1;
+
                 }
         }    
 }

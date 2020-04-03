@@ -5696,7 +5696,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_CropPD(vx_graph graph,vx_image pSr
 	vx_context context = vxGetContext((vx_reference)graph);
 	if(vxGetStatus((vx_reference)context) == VX_SUCCESS) {
 		vx_uint32 dev_type = getGraphAffinity(graph);
-		std::cout << "Inside VxExtrppNode"<<dev_type << std::endl;
 		vx_scalar DEV_TYPE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &dev_type);
 		vx_scalar NBATCHSIZE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &nbatchSize);
 		vx_reference params[] = {

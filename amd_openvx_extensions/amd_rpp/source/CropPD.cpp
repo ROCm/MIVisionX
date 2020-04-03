@@ -160,11 +160,9 @@ static vx_status VX_CALLBACK initializeCropPD(vx_node node, const vx_reference *
 	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	refreshCropPD(node, parameters, num, data);
 #if ENABLE_OPENCL
-	std::cout << "Inside Initialize" << (data->device_type == AGO_TARGET_AFFINITY_GPU) << std::endl;
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
 		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
 #endif
-		std::cout << "Inside Initialize" << (data->device_type == AGO_TARGET_AFFINITY_CPU) << std::endl;
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppCreateWithBatchSize(&data->rppHandle, data->nbatchSize);
 

@@ -8,15 +8,16 @@
 class SnPNoiseNode : public Node
 {
 public:
-    SnPNoiseNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    void create(std::shared_ptr<Graph> graph) override ;
+    SnPNoiseNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
     SnPNoiseNode() = delete;
     void init(float sdev);
     void init(FloatParam *sdev);
-protected:
-    void create_node() override;
-    void update_node() override;
+    void update_parameters() override;
+
 private:
     ParameterVX<float> _sdev;
-    constexpr static float SDEV_RANGE [2] = {0.1, 0.15};
+    constexpr static float SDEV_RANGE [2] = {0.15, 0.6};
+    constexpr static unsigned SDEV_OVX_PARAM_IDX = 2;
 };
 

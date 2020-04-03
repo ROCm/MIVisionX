@@ -11,16 +11,14 @@ enum class DecodeMode {
 class VideoFileNode: public Node
 {
 public:
-    VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs, const size_t batch_size);
+    void create(std::shared_ptr<Graph> graph) override;
+    VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
     ~VideoFileNode() override
     {
     }
     VideoFileNode() = delete;
     void init(const std::string &source_path, DecodeMode decoder_mode, bool loop);
-    void start_loading() override {};
-protected:
-    void create_node() override;
-    void update_node() override {};
+    void update_parameters() override  {};
 private:
     const static unsigned MAXIMUM_VIDEO_CONCURRENT_DECODE = 4;
     DecodeMode _decode_mode  = DecodeMode::USE_HW;

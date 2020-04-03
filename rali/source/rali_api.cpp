@@ -23,16 +23,16 @@ THE SOFTWARE.
 */
 #include <string>
 #include <exception>
+#include <parameter_factory.h>
 #include "commons.h"
 #include "context.h"
 #include "rali_api.h"
 
 RaliStatus RALI_API_CALL
-raliRelease(RaliContext p_context)
+raliRelease(RaliContext rali_context)
 {
-    // Deleting context is required to call the destructor of all the member objects
-    auto context = static_cast<Context*>(p_context);
-    delete context;
+    // Deleting rali_context is required to call the destructor of all the member objects
+    delete rali_context;
     return RALI_OK;
 }
 RaliContext RALI_API_CALL
@@ -42,7 +42,7 @@ raliCreate(
         int gpu_id,
         size_t cpu_thread_count)
 {
-    RaliContext context = nullptr;
+    RaliContext rali_context = nullptr;
     try
     {
         auto translate_process_mode = [](RaliProcessMode process_mode)
@@ -57,20 +57,19 @@ raliCreate(
                     THROW("Unkown Rali process mode")
             }
         };
-        context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
+        rali_context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
         // Reset seed in case it's being randomized during context creation
     }
     catch(const std::exception& e)
     {
         ERR( STR("Failed to init the Rali context, ") + STR(e.what()))
     }
-    return context;
+    return rali_context;
 }
 
 RaliStatus RALI_API_CALL
-raliRun(RaliContext p_context)
+raliRun(RaliContext context)
 {
-    auto context = static_cast<Context*>(p_context);
     try
     {
         auto ret = context->master_graph->run();
@@ -87,9 +86,8 @@ raliRun(RaliContext p_context)
 }
 
 RaliStatus RALI_API_CALL
-raliVerify(RaliContext p_context)
+raliVerify(RaliContext context)
 {
-    auto context = static_cast<Context*>(p_context);
     try
     {
         context->master_graph->build();

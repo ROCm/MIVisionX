@@ -44,7 +44,7 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        printf( "Usage: image_augmentation <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height video_mode gray_scale/rgb display_on_off decode_shard_count  \n" );
+        printf( "Usage: image_augmentation <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height video_mode gray_scale/rgb display_on_off num_image_decoding_threads augmentation_depth  \n" );
         return -1;
     }
     int argIdx = 0;
@@ -56,7 +56,7 @@ int main(int argc, const char ** argv)
     int decode_width = 0;
     int decode_height = 0;
     bool processing_device = 1;
-    size_t shard_count = 2;
+    size_t num_threads = 1;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -77,10 +77,13 @@ int main(int argc, const char ** argv)
         display = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        shard_count = atoi(argv[++argIdx]);
+        num_threads = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        aug_depth = atoi(argv[++argIdx]);
 
 
-    int inputBatchSize = 2;
+    int inputBatchSize = 1;
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
 
@@ -129,9 +132,9 @@ int main(int argc, const char ** argv)
         // The jpeg file loader can automatically select the best size to decode all images to that size
         // User can alternatively set the size or change the policy that is used to automatically find the size
         if(decode_height <= 0 || decode_width <= 0)
-            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false);
+            input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false);
         else
-            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false,
+            input1 = raliJpegFileSource(handle, folderPath1,  color_format, num_threads, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
     }
 
@@ -203,11 +206,11 @@ int main(int argc, const char ** argv)
 
     std::cout << "Remaining images " << raliGetRemainingImages(handle) << std::endl;
 
-    std::cout << "Augmented copies count " << raliGetAugmentationBranchCount(handle) << std::endl;
+    std::cout << "Augmented copies count " << raliGetOutputImageCount(handle) << std::endl;
 
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
-    int h = raliGetAugmentationBranchCount(handle) * raliGetOutputHeight(handle);
+    int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format ==  RaliImageColor::RALI_COLOR_RGB24 ) ? 3 : 1);
     std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
@@ -223,7 +226,7 @@ int main(int argc, const char ** argv)
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     int color_temp_increment = 1;
-    while (!raliIsEmpty(handle))
+    while (raliGetRemainingImages(handle) > 0)
     {
         if(raliRun(handle) != 0)
             break;

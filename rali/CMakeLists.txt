@@ -41,15 +41,15 @@ set(BUILD_RALI true)
 
 if(NOT OpenCL_FOUND)
 	set(BUILD_RALI false)
-	message("-- ${Yellow}rali library requires OpenCL, Not Found ${ColourReset}")
+	message("-- ${Yellow}rali library requires OpenCL, Not Found${ColourReset}")
 endif()
 if(NOT AMDRPP_FOUND)
 	set(BUILD_RALI false)
-	message("-- ${Yellow}rali library requires AMD's rpp library, Not Found ${ColourReset}")
+	message("-- ${Yellow}rali library requires AMD's rpp library, Not Found${ColourReset}")
 endif()
 if(NOT TurboJpeg_FOUND)
 	set(BUILD_RALI false)
-	message("-- ${Yellow}rali library requires TurboJpeg, Not Found ${ColourReset}")
+	message("-- ${Yellow}rali library requires TurboJpeg, Not Found${ColourReset}")
 endif()
 if(CMAKE_VERSION VERSION_LESS ${MIN_CMAKE_VER_REQUIRED})
 	set(BUILD_RALI false)
@@ -66,7 +66,7 @@ if(${BUILD_RALI})
 	set (CMAKE_CXX_STANDARD 17)
 	message("-- ${Green}Radeon Augmentation Library -- rali module added${ColourReset}")
 	install (FILES ./python/rali.py python/rali_lib.py ./python/rali_common.py ./python/rali_image.py ./python/rali_parameter.py ./python/rali_torch.py  ./python/rali_image_iterator.py DESTINATION ./rali/python )
-	install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h include/rali_api_meta_data.h DESTINATION ./include/)
+	install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h DESTINATION ./include/)
 	include_directories (
 			${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
 			${TurboJpeg_INCLUDE_DIRS}
@@ -81,10 +81,8 @@ if(${BUILD_RALI})
 
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0)
-	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall ")
+	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD${ColourReset}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -msse4.2 -mavx2 -Wall ")
 if(NOT FFMPEG_FOUND)
 	message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
 	target_link_libraries(${PROJECT_NAME} -fPIC turbojpeg openvx vx_rpp )
@@ -94,24 +92,5 @@ else()
 endif()
 	install (TARGETS rali DESTINATION lib)
 else()
-	message("-- ${Red}rali library is excluded ${ColourReset}")
+	message("-- ${Red}rali library is excluded${ColourReset}")
 endif()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

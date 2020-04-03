@@ -2,18 +2,10 @@
 #include <vector>
 #include <condition_variable>
 #include <CL/cl.h>
-#include <queue>
 #include "device_manager.h"
 #include "commons.h"
-struct decoded_image_info
-{
-    std::vector<std::string> _image_names;
-    std::vector<uint32_t> _roi_width;
-    std::vector<uint32_t> _roi_height;
-};
 
-class CircularBuffer
-{
+class CircularBuffer {
 public:
     CircularBuffer(DeviceResources ocl, size_t buffer_depth );
     ~CircularBuffer();
@@ -23,8 +15,6 @@ public:
     void unblock_writer();// Unblocks the thread currently waiting on get_write_buffer
     void push();// The latest write goes through, effectively adds one element to the buffer
     void pop();// The oldest write will be erased and overwritten in upcoming writes
-    void set_image_info(const decoded_image_info& info) { _last_image_info = info; }
-    decoded_image_info& get_image_info();
     cl_mem get_read_buffer_dev();
     unsigned char* get_read_buffer_host();// blocks the caller if the buffer is empty
     unsigned char*  get_write_buffer(); // blocks the caller if the buffer is full
@@ -39,12 +29,10 @@ private:
     bool full();
     bool empty();    
     const size_t BUFF_DEPTH;
-    decoded_image_info _last_image_info;
-    std::queue<decoded_image_info> _circ_image_info;//!< Stores the loaded images names, decoded_width and decoded_height(data is stored in the _circ_buff)
-    std::mutex _names_buff_lock;
+
     /*
      *  Pinned memory allocated on the host used for fast host to device memory transactions,
-     *  or the regular host memory buffers in the host processing case.
+     *  or the regular host memory buffers in the CPU affinity case.
      */
     cl_command_queue _cl_cmdq = nullptr;
     cl_context _cl_context = nullptr;
@@ -58,7 +46,6 @@ private:
     RaliMemType _output_mem_type;
     size_t _output_mem_size;
     bool _initialized = false;
-    const size_t MEM_ALIGNMENT = 256;
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;

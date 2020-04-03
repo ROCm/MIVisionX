@@ -7,9 +7,6 @@
 #include "master_graph.h"
 #include "parameter_factory.h"
 #include "ocl_setup.h"
-#include "meta_data_reader_factory.h"
-#include "meta_data_graph_factory.h"
-
 using half_float::half;
 
 #if ENABLE_SIMD
@@ -54,20 +51,21 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _graph(nullptr),
         _affinity(affinity),
         _gpu_id(gpu_id),
-        _convert_time("Conversion Time", DBG_TIMING),
-        _user_batch_size(batch_size),
+        _convert_time("Conversion Time"),
+        _batch_size(batch_size),
         _cpu_threads(cpu_threads),
-        _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
-        _process_time("Process Time", DBG_TIMING),
+        _process_time("Process Time"),
         _first_run(true),
         _processing(false),
-        _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
-        _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size)
+        _in_process_count(0)
 {
     try {
         vx_status status;
         _context = vxCreateContext();
+        _mem_type = (_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST;
+
         auto vx_affinity = get_ago_affinity_info(_affinity, 0, gpu_id);
+
         if ((status = vxGetStatus((vx_reference) _context)) != VX_SUCCESS)
             THROW("vxCreateContext failed" + TOSTR(status))
 
@@ -115,40 +113,27 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 MasterGraph::Status
 MasterGraph::run()
 {
-
-    if(!_processing)// The user should not call the run function before the build() is called or while reset() is happening
+    if(!_processing)
         return MasterGraph::Status::NOT_RUNNING;
-
-    if(no_more_processed_data())
-        return MasterGraph::Status::NO_MORE_DATA;
-
-    _ring_buffer.block_if_empty();// wait here if the user thread (caller of this function) is faster in consuming the processed images compare to th output routine in producing them
 
     if(_first_run)
     {
-        // calling run pops the processed images that have been used by user, when user calls run() for the first time
-        // they've not used anything yet, so we don't pop a batch from the _ring_buffer
         _first_run = false;
     } else {
-        _ring_buffer.pop(); // Pop previously used output images and metadata from the ring buffer
+        _ring_buffer.pop(); // Pop previously stored output from the ring buffer
+        for (auto &&loader_image : _loader_image)
+            loader_image->pop_image_id();
     }
 
-    // If the last batch of processed imaged has been just popped from the ring_buffer it means user has previously consumed all the processed images.
-    // User should check using the IsEmpty() API and not call run() or copy() API when there is no more data. run() will return MasterGraph::Status::NO_MORE_DATA flag to notify it.
-    if(no_more_processed_data())
-        return MasterGraph::Status::NO_MORE_DATA;
-
-    decrease_image_count();
-
+    _ring_buffer.block_if_empty();// make sure read buffers are ready, it'll wait here otherwise
+    {
+        std::unique_lock<std::mutex> lock(_count_lock);
+        if (_in_process_count > 0)
+            _in_process_count--;
+    }
     return MasterGraph::Status::OK;
 }
 
-void
-MasterGraph::decrease_image_count()
-{
-    if(!_loop)
-        _remaining_images_count -= _user_batch_size;
-}
 void
 MasterGraph::create_single_graph()
 {
@@ -163,6 +148,7 @@ MasterGraph::create_single_graph()
                 image->create_virtual(_context, _graph->get());
                 _internal_images.push_back(image);
             }
+
         node->create(_graph);
     }
     _graph->verify();
@@ -180,9 +166,13 @@ MasterGraph::build()
         if(!(output_image->info() == _output_image_info))
             THROW("Dimension of the output images do not match")
 
-    allocate_output_tensor();
 
-    _ring_buffer.init(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
+
+    allocate_output_tensor();
+    size_t w = _output_image_info.width();
+    size_t h = _output_image_info.height_batch();
+    size_t c = _output_image_info.color_plane_count();
+    _ring_buffer.init(_mem_type, _device.resources(), w * h * c, _output_images.size());
     create_single_graph();
     start_processing();
     return Status::OK;
@@ -192,11 +182,13 @@ MasterGraph::create_loader_output_image(const ImageInfo &info)
 {
     /*
     *   NOTE: Output image for a source node needs to be created as a regular (non-virtual) image
+    *   NOTE: allocate flag is not set for the create_from_handle function here since image's
+    *       context will be swapped with the loader_module's internal buffer
     */
     auto output = new Image(info);
 
-    if(output->create_from_handle(_context) != 0)
-        THROW("Creating output image for loader failed");
+    if( output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
+        THROW("Creating output image for JPEG loader failed");
 
     _internal_images.push_back(output);
 
@@ -210,7 +202,7 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
     // if the image is not an output image, the image creation is deferred and later it'll be created as a virtual image
     if(is_output)
     {
-        if (output->create_from_handle(_context) != 0)
+        if (output->create_from_handle(_context, ImageBufferAllocation::none) != 0)
             THROW("Cannot create the image from handle")
 
         _output_images.push_back(output);
@@ -221,7 +213,9 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
 
 void MasterGraph::release()
 {
-    LOG("MasterGraph release ...")
+    for(auto& loader_module: _loader_modules)
+        loader_module->stop();
+
     stop_processing();
     _nodes.clear();
     _root_nodes.clear();
@@ -238,9 +232,7 @@ void MasterGraph::release()
 
     for(auto& image: _output_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
-    _augmented_meta_data = nullptr;
-    _meta_data_graph = nullptr;
-    _meta_data_reader = nullptr;
+
     deallocate_output_tensor();
 }
 
@@ -258,7 +250,7 @@ MasterGraph::update_node_parameters()
 }
 
 size_t
-MasterGraph::augmentation_branch_count()
+MasterGraph::output_image_count()
 {
     return _output_images.size();
 }
@@ -278,16 +270,19 @@ MasterGraph::output_width()
 size_t
 MasterGraph::output_height()
 {
-    return _output_image_info.height_batch()*_user_to_internal_batch_ratio;
+    return _output_image_info.height_batch();
 }
 
 MasterGraph::Status
 MasterGraph::allocate_output_tensor()
 {
     // creating a float buffer that can accommodates all output images
-    size_t output_float_buffer_size = output_byte_size() * _output_images.size();
+    size_t output_float_buffer_size = _output_image_info.width() *
+                                      _output_image_info.height_batch() *
+                                      _output_image_info.color_plane_count() *
+                                      _output_images.size();
 
-    if(processing_on_device())
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         cl_int ret = CL_SUCCESS;
         _output_tensor = nullptr;
@@ -308,7 +303,7 @@ MasterGraph::allocate_output_tensor()
 MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
-    if(processing_on_device() && _output_tensor != nullptr)
+    if(_output_image_info.mem_type() == RaliMemType::OCL && _output_tensor != nullptr)
         clReleaseMemObject(_output_tensor );
 
     return Status::OK;
@@ -317,27 +312,44 @@ MasterGraph::deallocate_output_tensor()
 MasterGraph::Status
 MasterGraph::reset()
 {
+    // resetting loader modules to start from the beginning of the media and clear their internal state/buffers
+    for(auto& loader_module: _loader_modules)
+        loader_module->reset();
+
     // stop the internal processing thread so that the
     _processing = false;
-    _ring_buffer.unblock_writer();
+    _ring_buffer.cancel_writing();
     if(_output_thread.joinable())
         _output_thread.join();
     _ring_buffer.reset();
-    // clearing meta ring buffer
 
-    // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
-    _loader_module->reset();
+    // remove all the old image id's queued up in the for the processed output images
+    for(auto& loader_image : _loader_image)
+        loader_image->clear_image_id_queue();
+
     // restart processing of the images
     _first_run = true;
-    _output_routine_finished_processing = false;
     start_processing();
     return Status::OK;
 }
 
 size_t
+MasterGraph::internal_image_count()
+{
+    int ret = -1;
+    for(auto& loader_module: _loader_modules) {
+        int thisLoaderCount = loader_module->count();
+        ret = (ret == -1 ) ? thisLoaderCount :
+              ((thisLoaderCount < ret ) ? thisLoaderCount : ret);
+    }
+    return ret;
+}
+size_t
 MasterGraph::remaining_images_count()
 {
-    return (_remaining_images_count >= 0) ? _remaining_images_count:0;
+    std::unique_lock<std::mutex> lock(_count_lock);
+    size_t ret = internal_image_count() + _in_process_count;
+    return ret;
 }
 
 RaliMemType
@@ -346,13 +358,21 @@ MasterGraph::mem_type()
     return _mem_type;
 }
 
-Timing
+std::vector<long long unsigned>
 MasterGraph::timing()
 {
-    Timing t = _loader_module->timing();
-    t.image_process_time += _process_time.get_timing();
-    t.copy_to_output += _convert_time.get_timing();
-    return t;
+    long long unsigned load_time = 0;
+    long long unsigned decode_time = 0;
+    for(auto& loader_module: _loader_modules)
+    {
+        auto ret = loader_module->timing();
+        if(ret.size() < 2)
+            continue;
+
+        load_time += ret[0];
+        decode_time += ret[1];
+    }
+    return {load_time, decode_time, _process_time.get_timing(), _convert_time.get_timing()};
 }
 
 
@@ -361,9 +381,6 @@ MasterGraph::copy_output(
         cl_mem out_ptr,
         size_t out_size)
 {
-    if(no_more_processed_data())
-        return MasterGraph::Status::NO_MORE_DATA;
-
     return Status::NOT_IMPLEMENTED;
     _convert_time.start();
     _convert_time.end();
@@ -376,16 +393,13 @@ MasterGraph::Status
 MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
                              float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
-    if(no_more_processed_data())
-        return MasterGraph::Status::NO_MORE_DATA;
-
     _convert_time.start();
     // Copies to the output context given by the user
-    const size_t w = output_width();
-    const size_t h = output_height();
-    const size_t c = output_depth();
+    size_t w = _output_image_info.width();
+    size_t h = _output_image_info.height_batch();
+    size_t c = _output_image_info.color_plane_count();
 
-    const size_t single_output_image_size = output_byte_size();
+    size_t single_output_image_size = w * h * c;
 
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
@@ -394,7 +408,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
         // OCL device memory
         cl_int status;
 
-        size_t global_work_size = output_sample_size();
+        size_t global_work_size = single_output_image_size;
         size_t local_work_size = 256;
 
         // TODO: Use the runKernel function instead
@@ -578,21 +592,20 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
 MasterGraph::Status
 MasterGraph::copy_output(unsigned char *out_ptr)
 {
-    if(no_more_processed_data())
-        return MasterGraph::Status::NO_MORE_DATA;
-
     _convert_time.start();
     // Copies to the output context given by the user
-    size_t size = output_byte_size();
+    size_t size = _output_image_info.width() *
+                  _output_image_info.height_batch() *
+                  _output_image_info.color_plane_count();
 
     size_t dest_buf_offset = 0;
 
-    if(processing_on_device())
+    if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         //NOTE: the CL_TRUE flag is only used on the last buffer read call,
         // to avoid unnecessary sequence of synchronizations
 
-        // get_read_buffers() calls block_if_empty() internally and blocks if buffers are empty until a new batch is processed
+
         auto output_buffers =_ring_buffer.get_read_buffers();
         auto out_image_idx = output_buffers.size();
         for( auto&& output_handle: output_buffers)
@@ -612,123 +625,69 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     }
     else
     {
-        // get_host_master_read_buffer is blocking if _ring_buffer is empty, and blocks this thread till internal processing thread process a new batch and store in the _ring_buffer
+        // host memory
         memcpy(out_ptr, _ring_buffer.get_host_master_read_buffer(), size * _output_images.size());
     }
     _convert_time.end();
     return Status::OK;
 }
 
-ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
-{
-    dest.insert(dest.end(), src.cbegin(), src.cend());
-    return dest;
-}
-
 void MasterGraph::output_routine()
 {
-    INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
-    if(processing_on_device() && _user_to_internal_batch_ratio != 1)
-        THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
-
     try {
         while (_processing)
         {
-            const size_t each_cycle_size = output_byte_size()/_user_to_internal_batch_ratio;
-
-            ImageNameBatch full_batch_image_names = {};
-            pMetaDataBatch full_batch_meta_data = nullptr;
-
-            if (_loader_module->remaining_count() < _user_batch_size)
+            if (internal_image_count() <= 0)
             {
-                // If the internal process routine ,output_routine(), has finished processing all the images, and last
-                // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
-                notify_user_thread();
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
 
-            // _ring_buffer.get_write_buffers() is blocking and blocks here until user uses processed image by calling run() and frees space in the ring_buffer
-            auto write_buffers = _ring_buffer.get_write_buffers();
+            _process_time.start();
 
-            // When executing on CPU the internal batch count can be smaller than the user batch count
-            // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
-            // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
-            for(unsigned cycle_idx = 0; cycle_idx< _user_to_internal_batch_ratio; cycle_idx++)
             {
-                // Swap handles on the input image, so that new image is loaded to be processed
-                auto load_ret = _loader_module->load_next();
-                if (load_ret != LoaderModuleStatus::OK)
-                    THROW("Loader module failed to load next batch of images, status " + TOSTR(load_ret))
+                std::unique_lock<std::mutex> lock(_count_lock);
 
-                if (!_processing)
-                    break;
+                // Swap handles on the input images, so that new image is loaded to be processed
+                for (auto &&loader_module: _loader_modules)
+                    if (loader_module->load_next() != LoaderModuleStatus::OK)
+                        THROW("Loader module failed to laod next batch of images")
 
-                auto this_cycle_names =  _loader_module->get_id();
-
-                if(this_cycle_names.size() != _internal_batch_size)
-                    WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
-
-                // meta_data lookup is done before _meta_data_graph->process() is called to have the new meta_data ready for processing
-                if (_meta_data_reader)
-                    _meta_data_reader->lookup(this_cycle_names);
-
-                full_batch_image_names += this_cycle_names;
-
-                if (!_processing)
-                    break;
-
-                // Swap handles on the output images, so that new processed image will be written to the a new buffer
-                for (size_t idx = 0; idx < _output_images.size(); idx++)
-                {
-                    if(_affinity == RaliAffinity::GPU)
-                        _output_images[idx]->swap_handle(write_buffers[idx]);
-                    else
-                    {
-                        auto this_cycle_buffer_ptr = (unsigned char *) write_buffers[idx] + each_cycle_size * cycle_idx;
-                        _output_images[idx]->swap_handle(this_cycle_buffer_ptr);
-                    }
-                }
-
-                if (!_processing)
-                    break;
-
-                update_node_parameters();
-                _process_time.start();
-                _graph->process();
-                _process_time.end();
-
-                //process metadata, _augmented_meta_data contains the results after the call to process
-                if (_meta_data_graph)
-                    _meta_data_graph->process();
-
-                // concatenating metadata using the this cycle's internal batch
-                if(_augmented_meta_data)
-                {
-                    if (full_batch_meta_data)
-                        full_batch_meta_data->concatenate(_augmented_meta_data);
-                    else
-                        full_batch_meta_data = _augmented_meta_data->clone();
-                }
+                _in_process_count++;
             }
 
-            _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
-            _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
+            if (!_processing)
+                break;
 
+            auto write_buffers = _ring_buffer.get_write_buffers();
+
+            if (!_processing)
+                break;
+
+            // Swap handles on the output images, so that new processed image will be written to the a new buffer
+            for (size_t idx = 0; idx < _output_images.size(); idx++)
+                _output_images[idx]->swap_handle(write_buffers[idx]);
+
+            if (!_processing)
+                break;
+            update_node_parameters();
+            _graph->process();
+            _ring_buffer.push(); // After process returns, the spot in the circular buffer can be stored
+            _process_time.end();
         }
     }
     catch (const std::exception &e)
     {
-        ERR("Exception thrown in the process routine: " + STR(e.what()) + STR("\n"));
+        ERR("Exception thrown in the process routine" + STR(e.what()) + STR("\n"));
+        std::cerr << "Process routine stopped because of an exception \n";
         _processing = false;
-        _ring_buffer.release_all_blocked_calls();
+        _ring_buffer.cancel_all_future_waits();
     }
 }
 
 void MasterGraph::start_processing()
 {
     _processing = true;
-    _remaining_images_count = _loader_module->remaining_count();
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else
@@ -748,117 +707,8 @@ void MasterGraph::start_processing()
 void MasterGraph::stop_processing()
 {
     _processing = false;
-    _ring_buffer.unblock_reader();
-    _ring_buffer.unblock_writer();
+    _ring_buffer.cancel_reading();
+    _ring_buffer.cancel_writing();
     if(_output_thread.joinable())
         _output_thread.join();
-}
-
-MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output)
-{
-    if( _meta_data_reader)
-        THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, source_path);
-    _meta_data_graph = create_meta_data_graph(config);
-    _meta_data_reader = create_meta_data_reader(config);
-    _meta_data_reader->init(config);
-    _meta_data_reader->read_all(source_path);
-    if(is_output)
-    {
-        if (_augmented_meta_data)
-            THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
-        else
-            _augmented_meta_data = _meta_data_reader->get_output();
-    }
-    return _meta_data_reader->get_output();
-}
-
-MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDataReaderType reader_type)
-{
-    if( _meta_data_reader)
-        THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
-    _meta_data_reader = create_meta_data_reader(config);
-    _meta_data_reader->init(config);
-    _meta_data_reader->read_all(source_path);
-    if (_augmented_meta_data)
-        THROW("Metadata can only have a single output")
-    else
-        _augmented_meta_data = _meta_data_reader->get_output();
-    return _meta_data_reader->get_output();
-}
-
-const std::pair<ImageNameBatch,pMetaDataBatch>& MasterGraph::meta_data()
-{
-    if(_ring_buffer.level() == 0)
-        THROW("No meta data has been loaded")
-    return _ring_buffer.get_meta_data();
-}
-
-size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, RaliAffinity affinity)
-{
-    const unsigned MINIMUM_CPU_THREAD_COUNT = 2;
-    const unsigned DEFAULT_SMT_COUNT = 2;
-
-
-    if(affinity == RaliAffinity::GPU)
-        return user_batch_size;
-    
-    unsigned THREAD_COUNT = std::thread::hardware_concurrency();
-    if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
-        INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
-    else
-    {
-        THREAD_COUNT = MINIMUM_CPU_THREAD_COUNT;
-        WRN("hardware_concurrency() call failed assuming can run " + TOSTR(THREAD_COUNT) + " threads")
-    }
-    size_t ret = user_batch_size;
-    size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
-
-    if(CORE_COUNT <= 0)
-        THROW("Wrong core count detected less than 0")
-
-    for( size_t i = CORE_COUNT; i <= THREAD_COUNT; i++)
-        if(user_batch_size % i == 0)
-        {
-            ret = i;
-            break;
-        }
-
-    for(size_t i = CORE_COUNT; i > 1; i--)
-        if(user_batch_size % i == 0)
-        {
-            ret = i;
-            break;
-        }
-    INFO("User batch size "+ TOSTR(user_batch_size)+" Internal batch size set to "+ TOSTR(ret))
-    return ret;
-}
-
-size_t MasterGraph::output_sample_size()
-{
-    return output_height() * output_width() * output_depth();
-}
-
-size_t MasterGraph::output_byte_size()
-{
-    return output_height() * output_width() * output_depth() * SAMPLE_SIZE;
-}
-
-size_t MasterGraph::output_depth()
-{
-    return _output_image_info.color_plane_count();
-}
-
-void MasterGraph::notify_user_thread()
-{
-    if(_output_routine_finished_processing)
-        return;
-    LOG("Output routine finished processing all images, no more image to be processed")
-    _output_routine_finished_processing = true;
-}
-
-bool MasterGraph::no_more_processed_data()
-{
-    return (_output_routine_finished_processing && _ring_buffer.empty());
 }

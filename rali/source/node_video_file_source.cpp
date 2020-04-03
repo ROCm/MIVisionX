@@ -7,8 +7,11 @@
 #include "video_loader_module.h"
 #ifdef RALI_VIDEO
 #include "video_loader_module.h"
-void VideoFileNode::create_node()
+void VideoFileNode::create(std::shared_ptr<Graph> graph)
 {
+    if(!_graph)
+        _graph = graph;
+
     std::ostringstream iss;
 
     // The format for the input string to the OVX decoder API is as follows:
@@ -49,10 +52,15 @@ void VideoFileNode::init(const std::string &source_path, DecodeMode decoder_mode
     _decode_mode = decoder_mode;
     _source_path = source_path;
     _loop = loop;
+    //_loader_module->set_output_image(_outputs[0]);
+    // Set reader and decoder config accordingly for the JpegFileNode
+    //_loader_module->initialize(ReaderConfig(StorageType::FILE_SYSTEM, _source_path, _loop), DecoderConfig(DecoderType::OVX_FFMPEG),
+    //                           _mem_type,
+    //                          _batch_size);
 }
 
-VideoFileNode::VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs, const size_t batch_size):
-        Node(inputs, outputs, batch_size)
+VideoFileNode::VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+        Node(inputs, outputs)
 {
     _batch_size = outputs[0]->info().batch_size();
     if(_batch_size > MAXIMUM_VIDEO_CONCURRENT_DECODE)

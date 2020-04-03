@@ -6,10 +6,8 @@
 #include <cstring>
 #include <array>
 #include <queue>
-#include <memory>
 #include "device_manager.h"
 #include "commons.h"
-
 
 /*! \brief Converts Rali Memory type to OpenVX memory type
  *
@@ -45,7 +43,6 @@ struct ROI {
 
 
 /*! \brief Holds the information about an OpenVX image */
-
 struct ImageInfo
 {
     friend struct Image;
@@ -80,12 +77,6 @@ struct ImageInfo
     RaliMemType mem_type() const { return _mem_type; }
     unsigned data_size() const { return _data_size; }
     RaliColorFormat color_format() const {return _color_fmt; }
-    unsigned get_roi_width(int image_batch_idx) const;
-    unsigned get_roi_height(int image_batch_idx) const;
-    uint32_t * get_roi_width() const;
-    uint32_t * get_roi_height() const;
-    const std::vector<uint32_t>& get_roi_width_vec() const;
-    const std::vector<uint32_t>& get_roi_height_vec() const;
 private:
     Type _type = Type::UNKNOWN;//!< image type, whether is virtual image, created from handle or is a regular image
     unsigned _width;//!< image width for a single image in the batch
@@ -95,13 +86,7 @@ private:
     unsigned _data_size;//!< total size of the memory needed to keep the image's data in bytes including all planes
     RaliMemType _mem_type;//!< memory type, currently either OpenCL or Host
     RaliColorFormat _color_fmt;//!< color format of the image
-    std::shared_ptr<std::vector<uint32_t>> _roi_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one and observed for all.
-    std::shared_ptr<std::vector<uint32_t>> _roi_height;//!< The actual image height stored in the buffer, it's always smaller than _height. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one changes can be observed for all.
-
-    void reallocate_image_roi_buffers();
-
-
-
+    std::queue<std::vector<std::string>> _image_names;//!< image name/ids that are stores in the buffer
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
@@ -122,26 +107,27 @@ struct Image
     vx_context context() { return _context; }
     unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
+    void set_names(const std::vector<std::string> names);
+    std::vector<std::string> get_name();
+    void pop_image_id();
+    void clear_image_id_queue();
+
     //! Default destructor
     /*! Releases the OpenVX image */
     ~Image();
 
     //! Constructor accepting the image information as input
-    explicit Image(const ImageInfo& img_info);
+    Image(const ImageInfo& img_info);
 
     int create(vx_context context);
-    void update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height);
-    void reset_image_roi() { _info.reallocate_image_roi_buffers(); }
-    // create_from_handle() no internal memory allocation is done here since image's handle should be swapped with external buffers before usage
-    int create_from_handle(vx_context context);
+
+    int create_from_handle(vx_context context, ImageBufferAllocation policy);
     int create_virtual(vx_context context, vx_graph graph);
 
 private:
+    bool _mem_internally_allocated = false;
     vx_image vx_handle = nullptr;//!< The OpenVX image
     void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
     vx_context _context = nullptr;
 };
-
-
-

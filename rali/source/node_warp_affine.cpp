@@ -4,70 +4,39 @@
 #include "exception.h"
 
 
-WarpAffineNode::WarpAffineNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
+WarpAffineNode::WarpAffineNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
         Node(inputs, outputs),
-        _x0(COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
-        _x1(COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
-        _y0(COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
-        _y1(COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
-        _o0(COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1]),
-        _o1(COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1])
+        _x0(COEFFICIENT_X0_OVX_PARAM_IDX, COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
+        _x1(COEFFICIENT_X1_OVX_PARAM_IDX, COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
+        _y0(COEFFICIENT_Y0_OVX_PARAM_IDX, COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
+        _y1(COEFFICIENT_Y1_OVX_PARAM_IDX, COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
+        _o0(COEFFICIENT_O0_OVX_PARAM_IDX, COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1]),
+        _o1(COEFFICIENT_O1_OVX_PARAM_IDX, COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1])
 {
 }
 
-void WarpAffineNode::create_node()
+void WarpAffineNode::create(std::shared_ptr<Graph> graph)
 {
     if(_node)
         return;
 
-    vx_status width_status, height_status;
-    _affine.resize(6 * _batch_size);
+    _graph = graph;
 
-    uint batch_size = _batch_size;
-    for (uint i=0; i < batch_size; i++ )
-    {
-         _affine[i*6 + 0] = _x0.renew();
-         _affine[i*6 + 1] = _y0.renew();
-         _affine[i*6 + 2] = _x1.renew();
-         _affine[i*6 + 3] = _y1.renew();
-         _affine[i*6 + 4] = _o0.renew();
-         _affine[i*6 + 5] = _o1.renew();
+    if(_outputs.empty() || _inputs.empty())
+        THROW("Uninitialized input/output arguments")
 
-    }
-    _dst_roi_width = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
-    _dst_roi_height = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
-    std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
-    std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
-    width_status = vxAddArrayItems(_dst_roi_width, _batch_size, dst_roi_width.data(), sizeof(vx_uint32));
-    height_status = vxAddArrayItems(_dst_roi_height, _batch_size, dst_roi_height.data(), sizeof(vx_uint32));
-    if(width_status != 0 || height_status != 0)
-        THROW(" vxAddArrayItems failed in the rotate (vxExtrppNode_WarpAffinePD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
-
+    _node = vxExtrppNode_WarpAffine(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _outputs[0]->info().width(), _outputs[0]->info().height_batch(),
+                                    _x0.default_value(), _y0.default_value(), _o0.default_value(), _x1.default_value(), _y1.default_value(), _o1.default_value());
     vx_status status;
-    _affine_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_FLOAT32, _batch_size * 6);
-    status = vxAddArrayItems(_affine_array,_batch_size * 6, _affine.data(), sizeof(vx_float32));
-    _node = vxExtrppNode_WarpAffinebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height,
-                                           _affine_array, _batch_size);
-    
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the warp affine (vxExtrppNode_WarpAffinePD) node failed: "+ TOSTR(status))
-}
+        THROW("Adding the warp affine (vxExtrppNode_WarpAffine) node failed: "+ TOSTR(status))
 
-void WarpAffineNode::update_affine_array()
-{
-    for (uint i = 0; i < _batch_size; i++ )
-    {
-        _affine[i*6 + 0] = _x0.renew();
-        _affine[i*6 + 1] = _y0.renew();
-        _affine[i*6 + 2] = _x1.renew();
-        _affine[i*6 + 3] = _y1.renew();
-        _affine[i*6 + 4] = _o0.renew();
-        _affine[i*6 + 5] = _o1.renew();
-    }
-    vx_status affine_status;
-    affine_status = vxCopyArrayRange((vx_array)_affine_array, 0, _batch_size * 6, sizeof(vx_float32), _affine.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST); //vxAddArrayItems(_width_array,_batch_size, _width, sizeof(vx_uint32));
-    if(affine_status != 0)
-        THROW(" vxCopyArrayRange failed in the WarpAffine(vxExtrppNode_WarpAffinePD) node: "+ TOSTR(affine_status))
+    _x0.create(_node);
+    _x1.create(_node);
+    _y0.create(_node);
+    _y1.create(_node);
+    _o0.create(_node);
+    _o1.create(_node);
 }
 
 void WarpAffineNode::init(float x0, float x1, float y0, float y1, float o0, float o1)
@@ -90,7 +59,12 @@ void WarpAffineNode::init(FloatParam* x0, FloatParam* x1, FloatParam* y0, FloatP
     _o1.set_param(core(o1));
 }
 
-void WarpAffineNode::update_node()
+void WarpAffineNode::update_parameters()
 {
-    update_affine_array();
+    _x0.update();
+    _y0.update();
+    _x1.update();
+    _y1.update();
+    _o0.update();
+    _o1.update();
 }

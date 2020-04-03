@@ -55,16 +55,15 @@ public:
       \param input_buffer  User provided buffer containig the encoded image
       \param output_buffer User provided buffer used to write the decoded image into
       \param input_size Size of the compressed data provided in the input_buffer
-      \param desired_width The width user wants the decoded image to be resized to
-      \param desired_height The height user wants the decoded image to be resized to
+      \param max_decoded_width The maximum width user wants the decoded image to be
+      \param max_decoded_height The maximum height user wants the decoded image to be.
 
     */
-    virtual Status decode(unsigned char* input_buffer, 
-                            size_t input_size, 
-                            unsigned char* output_buffer, 
-                            int desired_width, 
-                            int desired_height, 
-                            ColorFormat desired_color) = 0;
+    virtual Decoder::Status decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
+                                   size_t max_decoded_width, size_t max_decoded_height,
+                                   size_t original_image_width, size_t original_image_height,
+                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
+                                   Decoder::ColorFormat desired_decoded_color_format) = 0;
 
     virtual ~Decoder() = default;
 };

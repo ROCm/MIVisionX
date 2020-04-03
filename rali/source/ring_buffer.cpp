@@ -13,7 +13,7 @@ void RingBuffer::block_if_empty()
     std::unique_lock<std::mutex> lock(_lock);
     if(empty())
     { // if the current read buffer is being written wait on it
-        if(_dont_wait)
+        if(_dont_block)
             return;
         _wait_for_load.wait(lock);
     }
@@ -25,7 +25,7 @@ void RingBuffer:: block_if_full()
     // Write the whole buffer except for the last spot which is being read by the reader thread
     if(full())
     {
-        if(_dont_wait)
+        if(_dont_block)
             return;
         _wait_for_unload.wait(lock);
     }
@@ -44,7 +44,7 @@ void *RingBuffer::get_host_master_read_buffer() {
     if(_mem_type == RaliMemType::OCL)
         return nullptr;
 
-    return _host_master_buffers[_read_ptr].data();
+    return _host_master_buffers[_read_ptr];
 }
 
 
@@ -58,19 +58,19 @@ std::vector<void*> RingBuffer::get_write_buffers()
 }
 
 
-void RingBuffer::cancel_reading()
+void RingBuffer::unblock_reader()
 {
     // Wake up the reader thread in case it's waiting for a load
     _wait_for_load.notify_all();
 }
 
-void RingBuffer::cancel_all_future_waits()
+void RingBuffer::release_all_blocked_calls()
 {
-    _dont_wait = true;
-    cancel_reading();
-    cancel_writing();
+    _dont_block = true;
+    unblock_reader();
+    unblock_writer();
 }
-void RingBuffer::cancel_writing()
+void RingBuffer::unblock_writer()
 {
     // Wake up the writer thread in case it's waiting for an unload
     _wait_for_unload.notify_all();
@@ -118,15 +118,20 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
         _host_sub_buffers.resize(BUFF_DEPTH);
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
-            _host_master_buffers[buffIdx].resize(sub_buffer_size * sub_buffer_count);
+            const size_t master_buffer_size = sub_buffer_size * sub_buffer_count;
+            // a minimum of extra MEM_ALIGNMENT is allocated
+            _host_master_buffers[buffIdx] = aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (master_buffer_size / MEM_ALIGNMENT + 1));
             _host_sub_buffers[buffIdx].resize(_sub_buffer_count);
             for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
-                _host_sub_buffers[buffIdx][sub_buff_idx] = _host_master_buffers[buffIdx].data() + _sub_buffer_size * sub_buff_idx;
+                _host_sub_buffers[buffIdx][sub_buff_idx] = (unsigned char*)_host_master_buffers[buffIdx] + _sub_buffer_size * sub_buff_idx;
         }
     }
 }
 void RingBuffer::push()
 {
+    // pushing and popping to and from image and metadata buffer should be atomic so that their level stays the same at all times
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
+    _meta_ring_buffer.push(_last_image_meta_data);
     increment_write_ptr();
 }
 
@@ -134,7 +139,10 @@ void RingBuffer::pop()
 {
     if(empty())
         return;
+    // pushing and popping to and from image and metadata buffer should be atomic so that their level stays the same at all times
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
     increment_read_ptr();
+    _meta_ring_buffer.pop();
 }
 
 void RingBuffer::reset()
@@ -142,7 +150,9 @@ void RingBuffer::reset()
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;
-    _dont_wait = false;
+    _dont_block = false;
+    while(!_meta_ring_buffer.empty())
+        _meta_ring_buffer.pop();
 }
 
 RingBuffer::~RingBuffer()
@@ -150,15 +160,21 @@ RingBuffer::~RingBuffer()
     if(_mem_type!= RaliMemType::OCL)
         return;
 
+    for(unsigned idx=0; idx < _host_master_buffers.size(); idx++)
+        if(_host_master_buffers[idx])
+            free(_host_master_buffers[idx]);
+
+    _host_master_buffers.clear();
+    _host_sub_buffers.clear();
+
     for(size_t buffIdx = 0; buffIdx <_dev_sub_buffer.size(); buffIdx++)
-    {
         for(unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
             if(_dev_sub_buffer[buffIdx][sub_buf_idx])
                 if(clReleaseMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
                     ERR("Could not release ocl memory in the ring buffer")
 
 
-    }
+
 }
 
 bool RingBuffer::empty()
@@ -194,5 +210,19 @@ void RingBuffer::increment_write_ptr()
     lock.unlock();
     // Wake up the reader thread (in case waiting) since there is a new load to be read
     _wait_for_load.notify_all();
+}
+
+void RingBuffer::set_meta_data( ImageNameBatch names, pMetaDataBatch meta_data)
+{
+    _last_image_meta_data = std::move(std::make_pair(std::move(names), meta_data));
+}
+
+MetaDataNamePair& RingBuffer::get_meta_data()
+{
+    block_if_empty();
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
+    if(_level != _meta_ring_buffer.size())
+        THROW("ring buffer internals error, image and metadata sizes not the same "+TOSTR(_level) + " != "+TOSTR(_meta_ring_buffer.size()))
+    return  _meta_ring_buffer.front();
 }
 

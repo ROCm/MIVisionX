@@ -7,7 +7,6 @@ CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
         _device_id(ocl.device_id),
         _dev_buffer(BUFF_DEPTH, nullptr),
         _host_buffer_ptrs(BUFF_DEPTH, nullptr),
-        _actual_host_buffers(BUFF_DEPTH),
         _write_ptr(0),
         _read_ptr(0),
         _level(0)
@@ -22,7 +21,8 @@ void CircularBuffer::reset()
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;
-
+    while(!_circ_image_info.empty())
+        _circ_image_info.pop();
 }
 
 void CircularBuffer::unblock_reader()
@@ -51,7 +51,7 @@ cl_mem CircularBuffer::get_read_buffer_dev()
 unsigned char* CircularBuffer::get_read_buffer_host()
 {
     if(!_initialized)
-        return nullptr;
+        THROW("Circular buffer not initialized")
     block_if_empty();
     return _host_buffer_ptrs[_read_ptr];
 }
@@ -59,7 +59,7 @@ unsigned char* CircularBuffer::get_read_buffer_host()
 unsigned char*  CircularBuffer::get_write_buffer()
 {
     if(!_initialized)
-        return nullptr;
+        THROW("Circular buffer not initialized")
     block_if_full();
     return(_host_buffer_ptrs[_write_ptr]);
 }
@@ -105,6 +105,9 @@ void CircularBuffer::push()
     if(!_initialized)
         return;
     sync();
+    // Pushing to the _circ_buff and _circ_buff_names must happen all at the same time
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
+    _circ_image_info.push(_last_image_info);
     increment_write_ptr();
 }
 
@@ -112,7 +115,10 @@ void CircularBuffer::pop()
 {
     if(!_initialized)
         return;
+    // Pushing to the _circ_buff and _circ_buff_names must happen all at the same time
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
     increment_read_ptr();
+    _circ_image_info.pop();
 }
 void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
 {
@@ -161,8 +167,8 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
     {
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
-            _actual_host_buffers[buffIdx].resize(_output_mem_size);
-            _host_buffer_ptrs[buffIdx] = _actual_host_buffers[buffIdx].data();
+            // a minimum of extra MEM_ALIGNMENT is allocated
+            _host_buffer_ptrs[buffIdx] = (unsigned char*)aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (_output_mem_size / MEM_ALIGNMENT + 1));
         }
 
 
@@ -185,7 +191,7 @@ size_t CircularBuffer::level()
     return _level;
 }
 
-void CircularBuffer::increment_read_ptr() 
+void CircularBuffer::increment_read_ptr()
 {
     std::unique_lock<std::mutex> lock(_lock);
     _read_ptr = (_read_ptr+1)%BUFF_DEPTH;
@@ -196,7 +202,7 @@ void CircularBuffer::increment_read_ptr()
 
 }
 
-void CircularBuffer::increment_write_ptr() 
+void CircularBuffer::increment_write_ptr()
 {
     std::unique_lock<std::mutex> lock(_lock);
     _write_ptr = (_write_ptr+1)%BUFF_DEPTH;
@@ -225,7 +231,7 @@ void CircularBuffer:: block_if_full()
     }
 }
 
-CircularBuffer::~CircularBuffer() 
+CircularBuffer::~CircularBuffer()
 {
     for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++) 
     {
@@ -236,11 +242,14 @@ CircularBuffer::~CircularBuffer()
             if(clReleaseMemObject(_dev_buffer[buffIdx]) != CL_SUCCESS)
                 ERR("Could not release ocl memory in the circular buffer")
         }
+        else
+        {
+            free(_host_buffer_ptrs[buffIdx]);
+        }
     }
 
     _dev_buffer.clear();
     _host_buffer_ptrs.clear();
-    _actual_host_buffers.clear();
     _write_ptr = 0;
     _read_ptr = 0;
     _level = 0;
@@ -248,6 +257,15 @@ CircularBuffer::~CircularBuffer()
     _cl_context = 0;
     _device_id = 0;
     _initialized = false;
-} 
+}
+
+decoded_image_info &CircularBuffer::get_image_info()
+{
+    block_if_empty();
+    std::unique_lock<std::mutex> lock(_names_buff_lock);
+    if(_level != _circ_image_info.size())
+        THROW("CircularBuffer internals error, image and image info sizes not the same "+TOSTR(_level) + " != "+TOSTR(_circ_image_info.size()))
+    return  _circ_image_info.front();
+}
 
 

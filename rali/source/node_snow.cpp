@@ -1,34 +1,26 @@
 #include <vx_ext_rpp.h>
-#include <VX/vx_compatibility.h>
 #include <graph.h>
 #include "node_snow.h"
 #include "exception.h"
 
 
-SnowNode::SnowNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+SnowNode::SnowNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
-        _shift(SNOW_VALUE_OVX_PARAM_IDX, SNOW_VALUE_RANGE[0], SNOW_VALUE_RANGE[1])
+        _shift(SNOW_VALUE_RANGE[0], SNOW_VALUE_RANGE[1])
 {
 }
 
-void SnowNode::create(std::shared_ptr<Graph> graph)
+void SnowNode::create_node()
 {
     if(_node)
         return;
 
-    _graph = graph;
-
-    if(_outputs.empty() || _inputs.empty())
-        THROW("Uninitialized input/output arguments")
-
-    _node = vxExtrppNode_Snow(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _shift.default_value());
+    _shift.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _node = vxExtrppNode_SnowbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _shift.default_array(), _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the snow (vxExtrppNode_Snow) node failed: "+ TOSTR(status))
-
-    _shift.create(_node);
-
 }
 
 void SnowNode::init(float shfit)
@@ -41,7 +33,7 @@ void SnowNode::init(FloatParam* shfit)
     _shift.set_param(core(shfit));
 }
 
-void SnowNode::update_parameters()
+void SnowNode::update_node()
 {
-    _shift.update();
+    _shift.update_array();
 }

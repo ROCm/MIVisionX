@@ -5,29 +5,26 @@
 #include "exception.h"
 
 
-GammaNode::GammaNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+GammaNode::GammaNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
-        _shift(SHIFT_OVX_PARAM_IDX, SHIFT_RANGE[0], SHIFT_RANGE[1])
+        _shift(SHIFT_RANGE[0], SHIFT_RANGE[1])
 {
 }
 
-void GammaNode::create(std::shared_ptr<Graph> graph)
+void GammaNode::create_node()
 {
     if(_node)
         return;
 
-    _graph = graph;
-
     if(_outputs.empty() || _inputs.empty())
         THROW("Uninitialized input/output arguments")
 
-    _node = vxExtrppNode_GammaCorrection(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _shift.default_value());
+    _shift.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _node = vxExtrppNode_GammaCorrectionbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _shift.default_array(), _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the gamma (vxExtrppNode_GammaCorrection) node failed: "+ TOSTR(status))
-
-    _shift.create(_node);
+        THROW("Adding the gamma (vxExtrppNode_GammaCorrectionbatchPD) node failed: "+ TOSTR(status))
 
 }
 
@@ -41,7 +38,7 @@ void GammaNode::init(FloatParam* shfit)
     _shift.set_param(core(shfit));
 }
 
-void GammaNode::update_parameters()
+void GammaNode::update_node()
 {
-    _shift.update();
+     _shift.update_array();
 }

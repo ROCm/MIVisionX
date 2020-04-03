@@ -3,32 +3,26 @@
 enum class StorageType
 {
     FILE_SYSTEM = 0,
-    TF_RECORD = 1
+    RECORDIO,
+    TFRecord
 };
 
-struct ReaderConfig
-{
+struct ReaderConfig {
     explicit ReaderConfig(StorageType type, std::string path = "", bool loop = false):_type(type), _path(path), _loop(loop) {}
     virtual StorageType type() { return _type; };
     void set_path(const std::string& path) { _path = path; }
-    void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
-    void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
-    /// \param read_batch_count Tells the reader it needs to read the images in multiples of load_batch_count. If available images not divisible to load_batch_count,
-    /// the reader will repeat images to make available images an even multiple of this load_batch_count
-    void set_batch_count(size_t read_batch_count) { _batch_count = read_batch_count; }
-    /// \param loop if True the reader's available images still the same no matter how many images have been read
+    void set_load_offset(size_t offset) { _read_offset = offset; }
+    void set_load_interval(size_t interval) { _read_interval = interval; }
     void set_loop( bool loop) { _loop = loop; }
     bool loop() { return _loop; }
-    size_t get_shard_count() { return _shard_count; }
-    size_t get_shard_id() { return _shard_id; }
-    size_t get_batch_size() { return _batch_count; }
+    size_t interval() { return _read_interval; }
+    size_t offset() { return _read_offset; }
     std::string path() { return _path; }
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";
-    size_t _shard_count= 1 ;
-    size_t _shard_id = 0;
-    size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
+    size_t _read_interval= 1 ;
+    size_t _read_offset = 0;
     bool _loop = false;
 };
 

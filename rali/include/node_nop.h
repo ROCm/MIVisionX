@@ -5,9 +5,8 @@
 class NopNode : public Node
 {
 public:
-    NopNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    NopNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
     NopNode() = delete;
-protected:
-    void create_node() override;
-    void update_node() override;
+    void create(std::shared_ptr<Graph> graph) override ;
+    void update_parameters() override;
 };

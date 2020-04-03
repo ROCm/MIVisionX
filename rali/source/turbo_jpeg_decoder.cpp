@@ -21,12 +21,13 @@ TJDecoder::TJDecoder(){
 Decoder::Status TJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) 
 {
     //TODO : Use the most recent TurboJpeg API tjDecompressHeader3 which returns the color components
+    int jpegSubsamp;
     if(tjDecompressHeader2(m_jpegDecompressor,
                             input_buffer, 
                             input_size, 
                             width, 
                             height, 
-                            color_comps) != 0)
+                            &jpegSubsamp) != 0) 
     {
         WRN("Jpeg header decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
         return Status::HEADER_DECODE_FAILED;
@@ -34,15 +35,16 @@ Decoder::Status TJDecoder::decode_info(unsigned char* input_buffer, size_t input
     return Status::OK;
 }
 
-Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
-                                  size_t max_decoded_width, size_t max_decoded_height,
-                                  size_t original_image_width, size_t original_image_height,
-                                  size_t &actual_decoded_width, size_t &actual_decoded_height,
-                                  Decoder::ColorFormat desired_decoded_color_format)
+Decoder::Status TJDecoder::decode(unsigned char* input_buffer, 
+                                    size_t input_size, 
+                                    unsigned char* output_buffer, 
+                                    int desired_width, 
+                                    int desired_height, 
+                                    Decoder::ColorFormat desired_color) 
 {
     int tjpf = TJPF_RGB;
     int planes = 1;
-    switch (desired_decoded_color_format) {
+    switch (desired_color) {
         case Decoder::ColorFormat::GRAY:
             tjpf = TJPF_GRAY;
             planes= 1;
@@ -56,34 +58,21 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
             planes = 3;
         break;
     };
-    actual_decoded_width = max_decoded_width;
-    actual_decoded_height = max_decoded_height;
-
+    
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
-    if( tjDecompress2(m_jpegDecompressor,
-                      input_buffer,
-                      input_size,
-                      output_buffer,
-                      max_decoded_width,
-                      max_decoded_width * planes,
-                      max_decoded_height,
-                      tjpf,
-                      TJFLAG_FASTDCT) != 0)
+    if( tjDecompress2(m_jpegDecompressor,  
+                        input_buffer, 
+                        input_size, 
+                        output_buffer, 
+                        desired_width, 
+                        desired_width*planes, 
+                        desired_height, 
+                        tjpf,
+                        TJFLAG_FASTDCT) != 0)
     {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
         return Status::CONTENT_DECODE_FAILED;
     }
-    // Find the decoded image size using the predefined scaling factors in the turbo jpeg decoder
-    uint scaledw =max_decoded_width, scaledh=max_decoded_height;
-    for (auto scaling_factor : SCALING_FACTORS)
-    {
-        scaledw = TJSCALED(original_image_width, scaling_factor);
-        scaledh = TJSCALED(original_image_height, scaling_factor);
-        if (scaledw <= max_decoded_width && scaledh <= max_decoded_height)
-            break;
-    }
-    actual_decoded_width = scaledw;
-    actual_decoded_height = scaledh;
     return Status::OK;
 }
 

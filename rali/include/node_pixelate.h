@@ -8,10 +8,8 @@
 class PixelateNode : public Node
 {
 public:
-    PixelateNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    void create(std::shared_ptr<Graph> graph) override;
+    PixelateNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
     PixelateNode() = delete;
-protected:
-    void create_node() override;
-    void update_node() override;
-private:
+    void update_parameters() override;
 };

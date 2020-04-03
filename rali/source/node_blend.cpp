@@ -4,39 +4,42 @@
 #include "exception.h"
 
 
-BlendNode::BlendNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
+BlendNode::BlendNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
         Node(inputs, outputs),
-        _ratio(RATIO_RANGE[0], RATIO_RANGE[1])
+        _ratio(RATIO_OVX_PARAM_IDX, RATIO_RANGE[0], RATIO_RANGE[1])
 {
 }
-void BlendNode::create_node()
+void BlendNode::create(std::shared_ptr<Graph> graph)
 {
-
     if(_node)
         return;
 
-    if(_inputs.size() < 2)
-        THROW("Blend node needs two input images")
+    _graph = graph;
 
-    _ratio.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
-    _node = vxExtrppNode_BlendbatchPD(_graph->get(), _inputs[0]->handle(), _inputs[1]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _ratio.default_array(), _batch_size);
+    if(_inputs.size() < 2 || _outputs.empty())
+        THROW("Uninitialized input/output arguments")
+
+    _node = vxExtrppNode_Blend(_graph->get(), _inputs[0]->handle(), _inputs[1]->handle(), _outputs[0]->handle(), _ratio.default_value());
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the blend (vxExtrppNode_BlendbatchPD) node failed: "+ TOSTR(status))
+        THROW("Adding the blend (vxExtrppNode_Blend) node failed: "+ TOSTR(status))
+
+    _ratio.create(_node);
+
 }
 
-void BlendNode::init(float ratio)
+void BlendNode::init(float sdev)
 {
-    _ratio.set_param(ratio);
+    _ratio.set_param(sdev);
 }
 
-void BlendNode::init(FloatParam* ratio)
+void BlendNode::init(FloatParam* sdev)
 {
-    _ratio.set_param(core(ratio));
+    _ratio.set_param(core(sdev));
 }
 
-void BlendNode::update_node()
+void BlendNode::update_parameters()
 {
-    _ratio.update_array();
+    _ratio.update();
 }

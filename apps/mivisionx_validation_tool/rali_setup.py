@@ -291,7 +291,7 @@ class DataLoader(RaliGraph):
 		self.w = self.getOutputWidth()
 		self.h = self.getOutputHeight()
 		self.b = self.getBatchSize()
-            	self.n = self.raliGetAugmentationBranchCount()
+		self.n = self.getOutputImageCount()
 		color_format = self.getOutputColorFormat()
 		self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
 		height = self.h*self.n
@@ -299,10 +299,7 @@ class DataLoader(RaliGraph):
 		self.out_tensor = np.zeros(( self.b*self.n, self.p, self.h/self.b, self.w,), dtype = "float32")
 
 	def get_input_name(self):
-		size = self.raliGetImageNameLen(0)
-		ret = ctypes.create_string_buffer(size)
-		self.raliGetImageName(ret, 0)
-		return ret.value
+		return self.jpg_img.name(0)
 
 	def process_validation(self, validation_list):
 		for i in range(len(validation_list)):
@@ -379,7 +376,7 @@ class DataLoader(RaliGraph):
 		self.reset()
 		
 	def get_next_augmentation(self):
-                if self.raliIsEmpty() == 1:
+		if self.getReaminingImageCount() <= 0:
 			#raise StopIteration
 			return -1
 		self.renew_parameters()

@@ -32,15 +32,3 @@ public:
 private:
     T _val;
 };
-using pIntParam = std::shared_ptr<SimpleParameter<int>>;
-using pFloatParam = std::shared_ptr<SimpleParameter<float>>;
-
-inline pIntParam create_simple_int_param(int val)
-{
-    return std::make_shared<SimpleParameter<int>>(val);
-}
-
-inline pFloatParam create_simple_float_param(float val)
-{
-    return std::make_shared<SimpleParameter<float>>(val);
-}

@@ -3,49 +3,43 @@
 #include "exception.h"
 
 
-RotateNode::RotateNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
+RotateNode::RotateNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
         Node(inputs, outputs),
-        _angle(ROTATE_ANGLE_RANGE[0], ROTATE_ANGLE_RANGE[1])
+        _angle(ROTATE_ANGLE_OVX_PARAM_IDX, ROTATE_ANGLE_RANGE[0], ROTATE_ANGLE_RANGE[1])
 {
 }
 
-void RotateNode::create_node()
+void RotateNode::create(std::shared_ptr<Graph> graph)
 {
     if(_node)
         return;
-    std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
-    std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
 
-    _dst_roi_width = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
-    _dst_roi_height = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
+    _graph = graph;
 
-    vx_status width_status, height_status;
+    if(_outputs.empty() || _inputs.empty())
+        THROW("Uninitialized input/output arguments")
 
-    width_status = vxAddArrayItems(_dst_roi_width, _batch_size, dst_roi_width.data(), sizeof(vx_uint32));
-    height_status = vxAddArrayItems(_dst_roi_height, _batch_size, dst_roi_height.data(), sizeof(vx_uint32));
-    if(width_status != 0 || height_status != 0)
-        THROW(" vxAddArrayItems failed in the resize (vxExtrppNode_ResizebatchPD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
-
-    _angle.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
-   _node = vxExtrppNode_RotatebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _angle.default_array(), _batch_size);
+    _node = vxExtrppNode_Rotate(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _outputs[0]->info().width(), _outputs[0]->info().height_batch(), _angle.default_value());
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the rotate (vxExtrppNode_RotatebatchPD) node failed: "+ TOSTR(status))
+        THROW("Adding the rotate (vxExtrppNode_Rotate) node failed: "+ TOSTR(status))
+
+    _angle.create(_node);
 
 }
 
-void RotateNode::init(float angle)
+void RotateNode::init(float shfit)
 {
-    _angle.set_param(angle);
+    _angle.set_param(shfit);
 }
 
-void RotateNode::init(FloatParam* angle)
+void RotateNode::init(FloatParam* shfit)
 {
-    _angle.set_param(core(angle));
+    _angle.set_param(core(shfit));
 }
 
-void RotateNode::update_node()
+void RotateNode::update_parameters()
 {
-    _angle.update_array();
+    _angle.update();
 }

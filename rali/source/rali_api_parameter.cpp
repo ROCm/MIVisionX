@@ -15,16 +15,14 @@ raliGetSeed()
 }
 
 int RALI_API_CALL
-raliGetIntValue(RaliIntParam p_obj)
+raliGetIntValue(RaliIntParam obj)
 {
-    auto obj = static_cast<IntParam*>(p_obj);
     return obj->core->get();
 }
 
 float RALI_API_CALL
-raliGetFloatValue(RaliFloatParam p_obj)
+raliGetFloatValue(RaliFloatParam obj)
 {
-    auto obj = static_cast<FloatParam*>(p_obj);
     return obj->core->get();
 }
 
@@ -40,9 +38,8 @@ RaliStatus  RALI_API_CALL
 raliUpdateIntUniformRand(
         int start,
         int end,
-        RaliIntParam p_input_obj)
+        RaliIntParam input_obj)
 {
-    auto input_obj = static_cast<IntParam*>(p_input_obj);
     if(!validate_uniform_rand_param(input_obj))  {
         ERR("raliUpdateIntUniformRand : not a UniformRand object!");
         return RALI_INVALID_PARAMETER_TYPE;
@@ -67,9 +64,8 @@ RaliStatus  RALI_API_CALL
 raliUpdateFloatUniformRand(
         float start,
         float end,
-        RaliFloatParam p_input_obj)
+        RaliFloatParam input_obj)
 {
-    auto input_obj = static_cast<FloatParam*>(p_input_obj);
     if(!validate_uniform_rand_param(input_obj)) {
         ERR("raliUpdateFloatUniformRand : not a uniform random object!");
         return RALI_INVALID_PARAMETER_TYPE;
@@ -107,9 +103,8 @@ raliCreateIntParameter(int val)
 }
 
 RaliStatus  RALI_API_CALL
-raliUpdateIntParameter(int new_val, RaliIntParam p_input_obj)
+raliUpdateIntParameter(int new_val, RaliIntParam input_obj)
 {
-    auto input_obj = static_cast<IntParam*>(p_input_obj);
     if(!validate_simple_rand_param(input_obj)) {
         ERR("raliUpdateFloatRand : not a custom random object!");
         return RALI_INVALID_PARAMETER_TYPE;
@@ -122,9 +117,8 @@ raliUpdateIntParameter(int new_val, RaliIntParam p_input_obj)
 }
 
 RaliStatus  RALI_API_CALL
-raliUpdateFloatParameter(float new_val, RaliFloatParam p_input_obj)
+raliUpdateFloatParameter(float new_val, RaliFloatParam input_obj)
 {
-    auto input_obj = static_cast<FloatParam*>(p_input_obj);
     if(!validate_simple_rand_param(input_obj)) {
         ERR("raliUpdateFloatRand : not a custom random object!");
         return RALI_INVALID_PARAMETER_TYPE;
@@ -141,9 +135,8 @@ raliUpdateFloatRand(
         const float *values,
         const double *frequencies,
         unsigned size,
-        RaliFloatParam p_updating_obj)
+        RaliFloatParam updating_obj)
 {
-    auto updating_obj = static_cast<FloatParam*>(p_updating_obj);
     if(!validate_custom_rand_param(updating_obj)) {
         ERR("raliUpdateFloatRand : not a custom random object!");
         return RALI_INVALID_PARAMETER_TYPE;
@@ -172,9 +165,8 @@ raliUpdateIntRand(
         const int *values,
         const double *frequencies,
         unsigned size,
-        RaliIntParam p_updating_obj)
+        RaliIntParam updating_obj)
 {
-    auto updating_obj = static_cast<IntParam*>(p_updating_obj);
     if(!validate_custom_rand_param(updating_obj)) {
         ERR("raliUpdateIntRand : not a CustomRand object!");
         return RALI_INVALID_PARAMETER_TYPE;

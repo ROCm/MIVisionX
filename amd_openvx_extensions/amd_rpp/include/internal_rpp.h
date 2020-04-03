@@ -43,7 +43,7 @@ using namespace std;
 //! \brief The macro for error checking from OpenVX object.
 //#define ERROR_CHECK_OBJECT(obj)  { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS){ vxAddLogEntry((vx_reference)(obj), status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}
 
-#define MAX_KERNELS 500
+#define MAX_KERNELS 100
 
 class Kernellist
 {

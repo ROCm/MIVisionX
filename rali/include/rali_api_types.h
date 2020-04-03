@@ -14,11 +14,10 @@
 #include <half.hpp>
 using half_float::half;
 
-typedef void * RaliFloatParam;
-typedef void * RaliIntParam;
-typedef void * RaliContext;
-typedef void * RaliImage;
-typedef void * RaliMetaData;
+typedef struct FloatParam * RaliFloatParam;
+typedef struct IntParam * RaliIntParam;
+typedef struct Context* RaliContext;
+typedef struct Image* RaliImage;
 
 struct TimingInfo
 {

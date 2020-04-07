@@ -19751,12 +19751,7 @@ int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand c
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-		AgoData * out = node->paramList[0];
-		AgoData * inp = node->paramList[1];
-		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
-		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
-		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
-		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+		status = VX_SUCCESS;
 	}
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
@@ -19816,7 +19811,7 @@ int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelComma
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-
+		status = VX_SUCCESS;
 	}
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {

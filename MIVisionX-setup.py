@@ -21,7 +21,7 @@ parser.add_argument('--installer', type=str, default='apt-get', help='Linux syst
 parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
 parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options: Install ffmpeg - yes')
-parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
+parser.add_argument('--rpp',       type=str, default='no',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', type=str, default='no',      help='Remove previous setup and reinstall (default:no) [options:yes/no]')
 args = parser.parse_args()
 

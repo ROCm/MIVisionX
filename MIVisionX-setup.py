@@ -186,6 +186,24 @@ else:
 	# Install RPP
 	if rppInstall == 'yes':
 		os.system('(cd '+deps_dir+'; git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
+		#Yasm/Nasm for TurboJPEG
+		if linuxSystemInstall == 'apt-get':
+			os.system('sudo -v')
+			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install nasm yasm')
+		else:
+			# Nasm
+			os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
+			os.system('(cd '+deps_dir+'; tar xjvf nasm-2.14.02.tar.bz2 )')
+			os.system('(cd '+deps_dir+'/nasm-2.14.02; ./autogen.sh; ./configure; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/nasm-2.14.02; sudo '+linuxFlag+' make install )')
+			# Yasm
+			os.system('(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
+			os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
+			os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
+		os.system('(cd '+deps_dir+'; git clone https://github.com/libjpeg-turbo/libjpeg-turbo; cd libjpeg-turbo; mkdir build; cd build; cmake ../; make -j4; sudo make install)')
 	# Install ffmpeg
 	if ffmpegInstall == 'yes':
 		if linuxSystemInstall == 'apt-get':

@@ -199,7 +199,7 @@ int HafCpu_Threshold_U8_S16_Binary
 		vx_uint32     dstImageStrideInBytes,
 		vx_int16    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      threshold
+		vx_int16      threshold
 	);
 int HafCpu_Threshold_U8_S16_Range
 	(
@@ -209,8 +209,8 @@ int HafCpu_Threshold_U8_S16_Range
 		vx_uint32     dstImageStrideInBytes,
 		vx_int16    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      lower,
-		vx_uint8      upper
+		vx_int16      lower,
+		vx_int16      upper
 	);
 int HafCpu_ThresholdNot_U8_U8_Binary
 	(

@@ -4075,116 +4075,6 @@ int HafCpu_Threshold_U1_U8_Range
 }
 #endif
 
-#if USE_AVX
-/* The function assumes that the source image pointer is 16 byte aligned, and the source stride as well
-It processes the pixels in a width which is the next highest multiple of 16 after dstWidth */
-int HafCpu_Threshold_U8_S16_Binary
-	(
-		vx_uint32     dstWidth,
-		vx_uint32     dstHeight,
-		vx_int16    * pDstImage,
-		vx_uint32     dstImageStrideInBytes,
-		vx_uint8    * pSrcImage,
-		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      threshold
-	)
-{
-	__m128i * src = (__m128i*)pSrcImage;
-
-	__m128i pixels;
-	__m128i offset = _mm_set1_epi8((char)0x80);				// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
-	__m128i thresh = _mm_set1_epi8((char)threshold);
-	thresh = _mm_xor_si128(thresh, offset);						// Convert the threshold to the new range
-
-	//uint64_t maskConv = 0x0101010101010101;
-	uint64_t result[2];
-
-	for (unsigned int height = 0; height < dstHeight; height++)
-	{
-		for (unsigned int width = 0; width < dstWidth; width += 16)
-		{
-			pixels = _mm_load_si128(&src[width >> 4]);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			pixels = _mm_cmpgt_epi16(pixels, thresh);
-
-			// Convert U8 to U1
-/*#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
-#else
-#pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
-#endif
-*/
-			result[0] = _mm_extract_epi64(pixels, 0);
-			result[1] = _mm_extract_epi64(pixels, 1);
-
-			*((unsigned short *)pDstImage + (width >> 4)) = (unsigned short)(((result[1] & 0xFF) << 8) | (result[0] & 0xFF));
-		}
-		src += (srcImageStrideInBytes >> 4);
-		pDstImage += dstImageStrideInBytes;
-	}
-	return AGO_SUCCESS;
-}
-
-/* The function assumes that the source image pointer is 16 byte aligned, and the source stride as well
-It processes the pixels in a width which is the next highest multiple of 16 after dstWidth */
-int HafCpu_Threshold_U8_S16_Range
-	(
-		vx_uint32     dstWidth,
-		vx_uint32     dstHeight,
-		vx_uint8    * pDstImage,
-		vx_uint32     dstImageStrideInBytes,
-		vx_uint8    * pSrcImage,
-		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      lower,
-		vx_uint8      upper
-	)
-{
-	__m128i * src = (__m128i*)pSrcImage;
-	__m128i pixels;
-	__m128i offset = _mm_set1_epi8((char)0x80);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
-	__m128i threshU = _mm_set1_epi8((char)upper);
-	__m128i threshL = _mm_set1_epi8((char)lower);
-	__m128i ones = _mm_set1_epi8((char)1);
-	__m128i temp;
-
-	threshU = _mm_xor_si128(threshU, offset);					// Convert the upper threshold to the new range
-	threshL = _mm_xor_si128(threshL, offset);					// Convert the lower threshold to the new range
-
-	//uint64_t maskConv = 0x0101010101010101;
-	uint64_t result[2];
-
-	for (unsigned int height = 0; height < dstHeight; height++)
-	{
-		for (unsigned int width = 0; width < dstWidth; width += 16)
-		{
-			pixels = _mm_load_si128(&src[width >> 4]);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			temp = _mm_cmpgt_epi16(pixels, threshU);
-			temp = _mm_andnot_si128(temp, ones);				// This gives 255 if pixels <= threshU, a way to implement less than or equal to
-			pixels = _mm_cmplt_epi16(pixels, threshL);
-			pixels = _mm_andnot_si128(pixels, temp);			// 255 if pixels >= threshL and AND with temp
-			
-			// Convert U8 to U1
-/*#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
-#else
-#pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
-#endif
-*/
-			result[0] = _mm_extract_epi64(pixels, 0);
-			result[1] = _mm_extract_epi64(pixels, 1);
-
-			*((unsigned short *)pDstImage + (width >> 4)) = (unsigned short)(((result[1] & 0xFF) << 8) | (result[0] & 0xFF));
-		}
-		src += (srcImageStrideInBytes >> 4);
-		pDstImage += dstImageStrideInBytes;
-	}
-	return AGO_SUCCESS;
-}
-#else
-
 int HafCpu_Threshold_U8_S16_Binary
 	(
 		vx_uint32     dstWidth,
@@ -4193,68 +4083,89 @@ int HafCpu_Threshold_U8_S16_Binary
 		vx_uint32     dstImageStrideInBytes,
 		vx_int16    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      threshold
+		vx_int16      threshold
 	)
 {
-	__m128i * pLocalSrc_xmm, * pLocalDst_xmm;
+	// C code 
+	for (int height = 0; height < (int) dstHeight; height++)
+	{
+		for (int width = 0; width < (int) dstWidth; width++)
+		{
+			vx_int16 pix = *pSrcImage++;
+			*pDstImage++ = (pix > threshold) ? (vx_uint8)255 : 0;
+		}
+	}
+	
+	/* Fix SSE Code
+	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
+
+	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
+	vx_int16 *pLocalSrc;
 	vx_uint8 *pLocalDst;
-	vx_int16 * pLocalSrc;
-
 	__m128i pixels;
-	__m128i offset = _mm_set1_epi16((char)0x8000);				// To convert the range from 0-255 to -128 to 127, because SSE does not have compare instructions for unsigned bytes
-	__m128i thresh = _mm_set1_epi16((char)threshold);
-	thresh = _mm_xor_si128(thresh, offset);						// Convert the threshold to the new range
-
-	vx_int64 pixelmask;
-	__m128i temp;
-	int height = (int)dstHeight;
+	__m128i offset = _mm_set1_epi16((char) 0x8000);				// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
+	__m128i thresh = _mm_set1_epi16((char) threshold);
+	//thresh = _mm_xor_si128(thresh, offset);					// Convert the threshold to the new range
 
 	int alignedWidth = dstWidth & ~15;
 	int postfixWidth = dstWidth - alignedWidth;
-
-	while (height)
+	if (useAligned)
 	{
-		pLocalSrc_xmm = (__m128i*) pSrcImage;
-		vx_int64 * pLocalDst_64 = (vx_int64 *)pDstImage;
-
-		int width = (int)(alignedWidth >> 6);					// 64 pixels (bits) are processed at a time in the inner loop
-
-		while (width)
+		for (int height = 0; height < (int) dstHeight; height++)
 		{
-			pixels = _mm_loadu_si128(pLocalSrc_xmm++);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			pixels = _mm_cmpgt_epi16(pixels, thresh);
+			/*pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
 
-			temp = _mm_packus_epi16(pixels, _mm_setzero_si128());
-
-			//pixelmask = _mm_movemask_epi8(pixels);				// Convert U8 to U1
-			pixelmask = _mm_cvtsi128_si64x(temp);
-			*pLocalDst_64++ = (vx_int64)(pixelmask & 0xFFFFFFFFFFFFFFFF);
-			width--;
-		}
-		pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
-		pLocalDst = (vx_uint8 *)pLocalDst_64;
-
-		width = 0;
-		while (width < postfixWidth)
-		{
-			pixelmask = 0;
-			for (int i = 0; i < 8; i++, width++)
+			for (int width = 0; width < alignedWidth; width += 16)
 			{
-				if (width == postfixWidth)
-					break;
-
-				pixelmask >>= 1;
-				if (*pLocalSrc++ > threshold)
-					pixelmask |= 0x8000;
+				pixels = _mm_load_si128(pLocalSrc_xmm++);
+				//pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				pixels = _mm_cmpgt_epi16(pixels, thresh);
+				_mm_store_si128(pLocalDst_xmm++, pixels);
 			}
-			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFFFF);
+
+			pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
+			
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_int16 pix = *pLocalSrc++;
+				*pLocalDst++ = (pix > threshold) ? (vx_uint8)255 : 0;
+			}
+
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
 		}
-		
-		pSrcImage += (srcImageStrideInBytes >> 1);
-		pDstImage += dstImageStrideInBytes;
-		height--;
 	}
+	else
+	{
+		printf("in NOT aligned!\n");
+		for (int height = 0; height < (int) dstHeight; height++)
+		{
+			pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
+
+			for (int width = 0; width < alignedWidth; width += 16)
+			{
+				pixels = _mm_loadu_si128(pLocalSrc_xmm++);
+				//pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				pixels = _mm_cmpgt_epi16(pixels, thresh);
+				_mm_storeu_si128(pLocalDst_xmm++, pixels);
+			}
+
+			pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
+
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_int16 pix = *pLocalSrc++;
+				*pLocalDst++ = (pix > threshold) ? (vx_uint8)255 : 0;
+			}
+
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
+		}
+	}*/
 	return AGO_SUCCESS;
 }
 
@@ -4266,71 +4177,99 @@ int HafCpu_Threshold_U8_S16_Range
 		vx_uint32     dstImageStrideInBytes,
 		vx_int16    * pSrcImage,
 		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      lower,
-		vx_uint8      upper
+		vx_int16      lower,
+		vx_int16      upper
 	)
 {
-	__m128i * pLocalSrc_xmm;
-	vx_uint8 *pLocalSrc, *pLocalDst;
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		for (int width = 0; width < (int)dstWidth; width++)
+		{
+			vx_int16 pix = *pSrcImage++;
+			*pDstImage++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
+		}
+	}
 
-	__m128i pixels, temp;
-	__m128i offset = _mm_set1_epi8((char)0x80);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
-	__m128i threshU = _mm_set1_epi8((char)upper);
-	__m128i threshL = _mm_set1_epi8((char)lower);
-	__m128i ones = _mm_set1_epi8((char)0xFF);
+	/* Fix SSE Code
+	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
 
-	threshU = _mm_xor_si128(threshU, offset);					// Convert the upper threshold to the new range
-	threshL = _mm_xor_si128(threshL, offset);					// Convert the lower threshold to the new range
-
-	int pixelmask;
-	int height = (int)dstHeight;
+	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
+	vx_int16 *pLocalSrc;
+	vx_uint8 *pLocalDst;
+	__m128i pixels;
+	__m128i offset = _mm_set1_epi16((char)0x8000);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
+	__m128i threshU = _mm_set1_epi16((char)upper);
+	__m128i threshL = _mm_set1_epi16((char)lower);
+	__m128i ones = _mm_set1_epi16((char)0xFFFF);
+	__m128i temp;
+	
+	//threshU = _mm_xor_si128(threshU, offset);					// Convert the upper threshold to the new range
+	//threshL = _mm_xor_si128(threshL, offset);					// Convert the lower threshold to the new range
 
 	int alignedWidth = dstWidth & ~15;
 	int postfixWidth = dstWidth - alignedWidth;
 
-	while (height)
+	if (useAligned)
 	{
-		pLocalSrc_xmm = (__m128i*) pSrcImage;
-		vx_int16 * pLocalDst_16 = (vx_int16 *)pDstImage;
-		int width = (int)(dstWidth >> 4);						// 16 pixels (bits) are processed at a time in the inner loop
-
-		while (width)
+		for (int height = 0; height < (int)dstHeight; height++)
 		{
-			pixels = _mm_loadu_si128(pLocalSrc_xmm++);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			temp = _mm_cmpgt_epi8(pixels, threshU);				// pixels > upper gives 255
-			pixels = _mm_cmplt_epi8(pixels, threshL);			// pixels < lower gives 255
-			pixels = _mm_or_si128(pixels, temp);
-			pixels = _mm_andnot_si128(pixels, ones);
+			pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
 
-			pixelmask = _mm_movemask_epi8(pixels);				// Convert U8 to U1
-			*pLocalDst_16++ = (short)(pixelmask & 0xFFFF);
-			width--;
-		}
-		pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
-		pLocalDst = (vx_uint8 *)pLocalDst_16;
-
-		width = 0;
-		while (width < postfixWidth)
-		{
-			pixelmask = 0;
-			vx_uint8 pix = *pLocalSrc++;
-			for (int i = 0; i < 8; i++, width++)
+			for (int width = 0; width < alignedWidth; width += 16)
 			{
-				if ((pix >= lower) && (pix <= upper))
-					pixelmask |= 1;
-				pixelmask <<= 1;
+				pixels = _mm_load_si128(pLocalSrc_xmm++);
+				//pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				temp = _mm_cmpgt_epi16(pixels, threshU);				// pixels > upper gives 255
+				pixels = _mm_cmplt_epi16(pixels, threshL);			// pixels < lower gives 255
+				pixels = _mm_or_si128(pixels, temp);
+				pixels = _mm_andnot_si128(pixels, ones);
+				_mm_store_si128(pLocalDst_xmm++, pixels);
 			}
-			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
-		}
+			pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
 
-		pSrcImage += srcImageStrideInBytes;
-		pDstImage += dstImageStrideInBytes;
-		height--;
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_int16 pix = *pLocalSrc++;
+				*pLocalDst++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
+			}
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
+		}
 	}
+	else
+	{
+		for (int height = 0; height < (int)dstHeight; height++)
+		{
+			pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
+
+			for (int width = 0; width < alignedWidth; width += 16)
+			{
+				pixels = _mm_loadu_si128(pLocalSrc_xmm++);
+				pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				temp = _mm_cmpgt_epi16(pixels, threshU);				// pixels > upper gives 255
+				pixels = _mm_cmplt_epi16(pixels, threshL);			// pixels < lower gives 255
+				pixels = _mm_or_si128(pixels, temp);
+				pixels = _mm_andnot_si128(pixels, ones);
+				_mm_storeu_si128(pLocalDst_xmm++, pixels);
+			}
+			pLocalSrc = (vx_int16 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
+
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_int16 pix = *pLocalSrc++;
+				*pLocalDst++ = ((pix > upper) && (pix < lower)) ? 0 : (vx_uint8)255;
+			}
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
+		}
+	}
+	*/
 	return AGO_SUCCESS;
 }
-#endif
 
 int HafCpu_ThresholdNot_U8_U8_Binary
 	(
@@ -4743,10 +4682,6 @@ int HafCpu_ThresholdNot_U1_U8_Range
 }
 #endif
 
-
-#if USE_AVX
-/* The function assumes that the source image pointer is 16 byte aligned, and the source stride as well
-It processes the pixels in a width which is the next highest multiple of 16 after dstWidth */
 int HafCpu_ThresholdNot_U8_S16_Binary
 	(
 		vx_uint32     dstWidth,
@@ -4758,46 +4693,77 @@ int HafCpu_ThresholdNot_U8_S16_Binary
 		vx_uint8      threshold
 	)
 {
-	__m128i * src = (__m128i*)pSrcImage;
+	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
 
+	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
+	vx_uint8 *pLocalSrc, *pLocalDst;
 	__m128i pixels;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
-	__m128i offset = _mm_set1_epi8((char)0x80);				// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
+	__m128i offset = _mm_set1_epi8((char)0x80);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
 	__m128i thresh = _mm_set1_epi8((char)threshold);
 	thresh = _mm_xor_si128(thresh, offset);						// Convert the threshold to the new range
+	
+	int alignedWidth = dstWidth & ~15;
+	int postfixWidth = dstWidth - alignedWidth;
 
-	//uint64_t maskConv = 0x0101010101010101;
-	uint64_t result[2];
-
-	for (unsigned int height = 0; height < dstHeight; height++)
+	if (useAligned)
 	{
-		for (unsigned int width = 0; width < dstWidth; width += 16)
+		for (int height = 0; height < (int)dstHeight; height++)
 		{
-			pixels = _mm_load_si128(&src[width >> 4]);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			pixels = _mm_cmpgt_epi8(pixels, thresh);
-			pixels = _mm_andnot_si128(pixels, ones);			// NOT
+			pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
 
-			// Convert U8 to U1
-/*#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
-#else
-#pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
-#endif
-*/
-			result[0] = _mm_extract_epi64(pixels, 0);
-			result[1] = _mm_extract_epi64(pixels, 1);
-			*((unsigned short *)pDstImage + (width >> 4)) = (unsigned short)(((result[1] & 0xFF) << 8) | (result[0] & 0xFF));
+			for (int width = 0; width < alignedWidth; width += 16)
+			{
+				pixels = _mm_load_si128(pLocalSrc_xmm++);
+				pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				pixels = _mm_cmpgt_epi8(pixels, thresh);
+				pixels = _mm_andnot_si128(pixels, ones);			// NOT
+				_mm_store_si128(pLocalDst_xmm++, pixels);
+			}
+			pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
+
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_uint8 pix = *pLocalSrc++;
+				*pLocalDst++ = (pix > threshold) ? 0 : (vx_uint8)255;
+			}
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
 		}
-		src += (srcImageStrideInBytes >> 4);
-		pDstImage += dstImageStrideInBytes;
 	}
+	else
+	{
+		for (int height = 0; height < (int)dstHeight; height++)
+		{
+			pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
+
+			for (int width = 0; width < alignedWidth; width += 16)
+			{
+				pixels = _mm_loadu_si128(pLocalSrc_xmm++);
+				pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				pixels = _mm_cmpgt_epi8(pixels, thresh);
+				pixels = _mm_andnot_si128(pixels, ones);			// NOT
+				_mm_storeu_si128(pLocalDst_xmm++, pixels);
+			}
+			pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
+
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_uint8 pix = *pLocalSrc++;
+				*pLocalDst++ = (pix > threshold) ? 0 : (vx_uint8)255;
+			}
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
+		}
+	}
+	
 	return AGO_SUCCESS;
 }
 
-/* The function assumes that the source image pointer is 16 byte aligned, and the source stride as well
-It processes the pixels in a width which is the next highest multiple of 16 after dstWidth */
 int HafCpu_ThresholdNot_U8_S16_Range
 	(
 		vx_uint32     dstWidth,
@@ -4810,7 +4776,10 @@ int HafCpu_ThresholdNot_U8_S16_Range
 		vx_uint8      upper
 	)
 {
-	__m128i * src = (__m128i*)pSrcImage;
+	bool useAligned = ((((intptr_t)pSrcImage | (intptr_t)pDstImage) & 0xF) == 0) ? true : false;
+
+	__m128i *pLocalSrc_xmm, *pLocalDst_xmm;
+	vx_uint8 *pLocalSrc, *pLocalDst;
 	__m128i pixels;
 	__m128i ones = _mm_set1_epi16((short)0xFFFF);
 	__m128i offset = _mm_set1_epi8((char)0x80);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
@@ -4821,172 +4790,68 @@ int HafCpu_ThresholdNot_U8_S16_Range
 	threshU = _mm_xor_si128(threshU, offset);					// Convert the upper threshold to the new range
 	threshL = _mm_xor_si128(threshL, offset);					// Convert the lower threshold to the new range
 
-	uint64_t maskConv = 0x0101010101010101;
-	uint64_t result[2];
-
-	for (unsigned int height = 0; height < dstHeight; height++)
-	{
-		for (unsigned int width = 0; width < dstWidth; width += 16)
-		{
-			pixels = _mm_load_si128(&src[width >> 4]);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			temp = _mm_cmpgt_epi8(pixels, threshU);
-			temp = _mm_andnot_si128(temp, ones);				// This gives 255 if pixels <= threshU, a way to implement less than or equal to
-			pixels = _mm_cmplt_epi8(pixels, threshL);
-			pixels = _mm_andnot_si128(pixels, temp);			// 255 if pixels >= threshL and AND with temp
-			pixels = _mm_andnot_si128(pixels, ones);			// NOT
-
-			// Convert U8 to U1
-/*#ifdef _WIN64
-			result[0] = _pext_u64(pixels.m128i_u64[0], maskConv);
-			result[1] = _pext_u64(pixels.m128i_u64[1], maskConv);
-#else
-#pragma message("Warning: TBD: need a 32-bit implementation using _pext_u32")
-#endif
-*/			result[0] = _mm_extract_epi64(pixels, 0);
-			result[1] = _mm_extract_epi64(pixels, 1);
-			*((unsigned short *)pDstImage + (width >> 4)) = (unsigned short)(((result[1] & 0xFF) << 8) | (result[0] & 0xFF));
-		}
-		src += (srcImageStrideInBytes >> 4);
-		pDstImage += dstImageStrideInBytes;
-	}
-	return AGO_SUCCESS;
-}
-#else
-
-int HafCpu_ThresholdNot_U8_S16_Binary
-	(
-		vx_uint32     dstWidth,
-		vx_uint32     dstHeight,
-		vx_uint8    * pDstImage,
-		vx_uint32     dstImageStrideInBytes,
-		vx_uint8    * pSrcImage,
-		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      threshold
-	)
-{
-	__m128i * pLocalSrc_xmm;
-	vx_uint8 *pLocalSrc, *pLocalDst;
-
-	__m128i pixels;
-	__m128i offset = _mm_set1_epi8((char)0x80);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
-	__m128i thresh = _mm_set1_epi8((char)threshold);
-	thresh = _mm_xor_si128(thresh, offset);						// Convert the threshold to the new range
-
-	int pixelmask;
-	int height = (int)dstHeight;
-
 	int alignedWidth = dstWidth & ~15;
 	int postfixWidth = dstWidth - alignedWidth;
 
-	while (height)
+	if (useAligned)
 	{
-		pLocalSrc_xmm = (__m128i*) pSrcImage;
-		vx_int16 * pLocalDst_16 = (vx_int16 *)pDstImage;
-
-		int width = (int)(dstWidth >> 4);						// 16 pixels (bits) are processed at a time in the inner loop
-		while (width)
+		for (int height = 0; height < (int)dstHeight; height++)
 		{
-			pixels = _mm_load_si128(pLocalSrc_xmm++);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			pixels = _mm_cmpgt_epi8(pixels, thresh);
+			pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
 
-			pixelmask = _mm_movemask_epi8(pixels);				// Convert U8 to U1
-			*pLocalDst_16++ = (vx_int16)(~pixelmask & 0xFFFF);
-			width--;
-		}
-		pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
-		pLocalDst = (vx_uint8 *)pLocalDst_16;
-
-		width = 0;
-		while (width < postfixWidth)
-		{
-			pixelmask = 0;
-			for (int i = 0; i < 8; i++, width++)
+			for (int width = 0; width < alignedWidth; width += 16)
 			{
-				if (*pLocalSrc++ <= threshold)
-					pixelmask |= 1;
-				pixelmask <<= 1;
+				pixels = _mm_load_si128(pLocalSrc_xmm++);
+				pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				temp = _mm_cmpgt_epi8(pixels, threshU);				// pixels > upper gives 255
+				pixels = _mm_cmplt_epi8(pixels, threshL);			// pixels < lower gives 255
+				pixels = _mm_or_si128(pixels, temp);
+				_mm_store_si128(pLocalDst_xmm++, pixels);
 			}
-			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
+			pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
+
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_uint8 pix = *pLocalSrc++;
+				*pLocalDst++ = ((pix > upper) && (pix < lower)) ? (vx_uint8)255 : 0;
+			}
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
 		}
-		pSrcImage += srcImageStrideInBytes;
-		pDstImage += dstImageStrideInBytes;
-		height--;
+	}
+	else
+	{
+		for (int height = 0; height < (int)dstHeight; height++)
+		{
+			pLocalSrc_xmm = (__m128i *) pSrcImage;
+			pLocalDst_xmm = (__m128i *) pDstImage;
+
+			for (int width = 0; width < alignedWidth; width += 16)
+			{
+				pixels = _mm_loadu_si128(pLocalSrc_xmm++);
+				pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
+				temp = _mm_cmpgt_epi8(pixels, threshU);				// pixels > upper gives 255
+				pixels = _mm_cmplt_epi8(pixels, threshL);			// pixels < lower gives 255
+				pixels = _mm_or_si128(pixels, temp);
+				_mm_storeu_si128(pLocalDst_xmm++, pixels);
+			}
+			pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
+			pLocalDst = (vx_uint8 *)pLocalDst_xmm;
+
+			for (int width = 0; width < postfixWidth; width++)
+			{
+				vx_uint8 pix = *pLocalSrc++;
+				*pLocalDst++ = ((pix > upper) && (pix < lower)) ? (vx_uint8)255 : 0;
+			}
+			pSrcImage += srcImageStrideInBytes;
+			pDstImage += dstImageStrideInBytes;
+		}
 	}
 	return AGO_SUCCESS;
 }
 
-int HafCpu_ThresholdNot_U8_S16_Range
-	(
-		vx_uint32     dstWidth,
-		vx_uint32     dstHeight,
-		vx_uint8    * pDstImage,
-		vx_uint32     dstImageStrideInBytes,
-		vx_uint8    * pSrcImage,
-		vx_uint32     srcImageStrideInBytes,
-		vx_uint8      lower,
-		vx_uint8      upper
-	)
-{
-	__m128i * pLocalSrc_xmm;
-	vx_uint8 *pLocalSrc, *pLocalDst;
-
-	__m128i pixels, temp;
-	__m128i offset = _mm_set1_epi8((char)0x80);					// To convert the range from 0..255 to -128..127, because SSE does not have compare instructions for unsigned bytes
-	__m128i threshU = _mm_set1_epi8((char)upper);
-	__m128i threshL = _mm_set1_epi8((char)lower);
-	
-	threshU = _mm_xor_si128(threshU, offset);					// Convert the upper threshold to the new range
-	threshL = _mm_xor_si128(threshL, offset);					// Convert the lower threshold to the new range
-
-	int pixelmask;
-	int height = (int)dstHeight;
-
-	int alignedWidth = dstWidth & ~15;
-	int postfixWidth = dstWidth - alignedWidth;
-
-	while (height)
-	{
-		pLocalSrc_xmm = (__m128i*) pSrcImage;
-		vx_int16 * pLocalDst_16 = (vx_int16 *)pDstImage;
-		int width = (int)(dstWidth >> 4);						// 16 pixels (bits) are processed at a time in the inner loop
-
-		while (width)
-		{
-			pixels = _mm_load_si128(pLocalSrc_xmm++);
-			pixels = _mm_xor_si128(pixels, offset);				// Convert the pixels to the new range
-			temp = _mm_cmpgt_epi8(pixels, threshU);				// pixels > upper gives 255
-			pixels = _mm_cmplt_epi8(pixels, threshL);			// pixels < lower gives 255
-			pixels = _mm_or_si128(pixels, temp);
-
-			pixelmask = _mm_movemask_epi8(pixels);				// Convert U8 to U1
-			*pLocalDst_16++ = (vx_int16)(pixelmask & 0xFFFF);
-			width--;
-		}
-		pLocalSrc = (vx_uint8 *)pLocalSrc_xmm;
-		pLocalDst = (vx_uint8 *)pLocalDst_16;
-
-		width = 0;
-		while (width < postfixWidth)
-		{
-			pixelmask = 0;
-			vx_uint8 pix = *pLocalSrc++;
-			for (int i = 0; i < 8; i++, width++)
-			{
-				if ((pix < lower) && (pix > upper))
-					pixelmask |= 1;
-				pixelmask <<= 1;
-			}
-			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
-		}
-		pSrcImage += srcImageStrideInBytes;
-		pDstImage += dstImageStrideInBytes;
-		height--;
-	}
-	return AGO_SUCCESS;
-}
-#endif
 
 // compute the dstImage values from the LUT of srcImage
 int HafCpu_Lut_U8_U8

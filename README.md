@@ -326,6 +326,7 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 
 ### Known issues
 * Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
+* ROCm `3.0` and above has known to slow down OpenCL kernels.
 
 ### Tested configurations
 * Windows 10

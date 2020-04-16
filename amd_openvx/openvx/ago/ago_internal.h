@@ -578,6 +578,8 @@ struct AgoNode {
 	vx_uint32 hierarchical_level;
 	vx_status status;
 	vx_perf_t perf;
+	vx_bool local_data_change_is_enabled;
+	vx_bool local_data_set_by_implementation;
 #if ENABLE_OPENCL
 	vx_uint32 opencl_type;
 	char opencl_name[VX_MAX_KERNEL_NAME];

@@ -1788,7 +1788,9 @@ int agoInitializeGraph(AgoGraph * graph)
 			status = kernel->func(node, ago_kernel_cmd_initialize);
 		}
 		else if (kernel->initialize_f) {
+			//node->local_data_change_is_enabled = vx_true_e;
 			status = kernel->initialize_f(node, (vx_reference *)node->paramList, node->paramCount);
+			//node->local_data_change_is_enabled = vx_false_e;
 		}
 		if (status) {
 			return status;
@@ -1802,6 +1804,7 @@ int agoInitializeGraph(AgoGraph * graph)
 					return VX_ERROR_NO_MEMORY;
 				}
 				memset(node->localDataPtr, 0, node->localDataSize);
+				//node->local_data_set_by_implementation = vx_true_e;
 			}
 			node->initialized = true;
 			// keep a copy of paramList into paramListForAgeDelay
@@ -2497,8 +2500,6 @@ int agoWaitGraph(AgoGraph * graph)
 				}
 			}
 		}
-		else 
-			status = VX_FAILURE;
 		if(status == VX_SUCCESS)
 			status = graph->status;
 	}

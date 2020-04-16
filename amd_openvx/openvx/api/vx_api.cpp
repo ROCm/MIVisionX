@@ -3227,16 +3227,28 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeAttribute(vx_node node, vx_enum attr
 				}
 				break;
 			case VX_NODE_ATTRIBUTE_LOCAL_DATA_SIZE:
-				if (size == sizeof(vx_size)) {
-					node->localDataSize = *(vx_size *)ptr;
-					status = VX_SUCCESS;
+				if (node->local_data_change_is_enabled) {
+					if (size == sizeof(vx_size)) {
+						node->localDataSize = *(vx_size *)ptr;
+						status = VX_SUCCESS;
+					}
 				}
+				else
+                {
+                    status = VX_ERROR_NOT_SUPPORTED;
+                }
 				break;
 			case VX_NODE_ATTRIBUTE_LOCAL_DATA_PTR:
-				if (size == sizeof(void *)) {
-					node->localDataPtr = *(vx_uint8 **)ptr;
-					status = VX_SUCCESS;
+				if(node->local_data_change_is_enabled) {
+					if (size == sizeof(void *)) {
+						node->localDataPtr = *(vx_uint8 **)ptr;
+						status = VX_SUCCESS;
+					}
 				}
+				else
+            	{
+                    status = VX_ERROR_NOT_SUPPORTED;
+	            }
 				break;
 			case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
 				if (size == sizeof(AgoTargetAffinityInfo_)) {
@@ -8692,6 +8704,89 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
 				}
 				break;
 			/**********************************************************************/
+			case VX_OBJECT_ARRAY_NUMITEMS:
+				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+					meta->data.u.objarr.numitems = *(vx_size *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_OBJECT_ARRAY_ITEMTYPE:
+				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+					meta->data.u.objarr.itemtype = *(vx_enum *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			/**********************************************************************/
+			case VX_REMAP_SOURCE_WIDTH:
+				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+					meta->data.u.remap.src_width = *(vx_uint32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_REMAP_SOURCE_HEIGHT:
+				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+					meta->data.u.remap.src_height = *(vx_uint32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_REMAP_DESTINATION_WIDTH:
+				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+					meta->data.u.remap.dst_width = *(vx_uint32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_REMAP_DESTINATION_HEIGHT:
+				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+					meta->data.u.remap.dst_height = *(vx_uint32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			/**********************************************************************/
+			case VX_LUT_TYPE:
+				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_LUT) {
+					meta->data.u.lut.type = *(vx_enum *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_LUT_COUNT:
+				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_LUT) {
+					meta->data.u.lut.count = *(vx_size *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			/**********************************************************************/
+			case VX_THRESHOLD_TYPE:
+				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_THRESHOLD) {
+					meta->data.u.thr.thresh_type = *(vx_enum *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			/**********************************************************************/
+			case VX_DISTRIBUTION_BINS:
+				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+					meta->data.u.dist.numbins = *(vx_size *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_DISTRIBUTION_OFFSET:
+				if (size == sizeof(vx_int32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+					meta->data.u.dist.offset = *(vx_int32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_DISTRIBUTION_RANGE:
+				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+					meta->data.u.dist.range = *(vx_uint32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			case VX_DISTRIBUTION_WINDOW:
+				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+					meta->data.u.dist.window = *(vx_uint32 *)ptr;
+					status = VX_SUCCESS;
+				}
+				break;
+			/**********************************************************************/
 			case VX_PYRAMID_FORMAT:
 				if (size == sizeof(vx_df_image) && meta->data.ref.type == VX_TYPE_PYRAMID) {
 					meta->data.u.pyr.format = *(vx_df_image *)ptr;
@@ -8820,6 +8915,38 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatFromReference(vx_meta_format m
 			break;
 		case VX_TYPE_SCALAR:
 			meta->data.u.scalar.type = ref->u.scalar.type;
+			break;
+		case VX_TYPE_OBJECT_ARRAY:
+			meta->data.u.objarr.numitems = ref->u.objarr.numitems;
+			meta->data.u.objarr.itemtype = ref->u.objarr.itemtype;
+			break;
+		case VX_TYPE_REMAP:
+			meta->data.u.remap.src_width = ref->u.remap.src_width;
+			meta->data.u.remap.src_height = ref->u.remap.src_height;
+			meta->data.u.remap.dst_width = ref->u.remap.dst_width;
+			meta->data.u.remap.dst_height = ref->u.remap.dst_height;
+			break;
+		case VX_TYPE_LUT:
+			meta->data.u.lut.type = ref->u.lut.type;
+			meta->data.u.lut.count = ref->u.lut.count;
+			meta->data.u.lut.offset = ref->u.lut.offset;
+			break;
+		case VX_TYPE_DISTRIBUTION:
+			meta->data.u.dist.numbins = ref->u.dist.numbins;
+			meta->data.u.dist.offset = ref->u.dist.offset;
+			meta->data.u.dist.range = ref->u.dist.range;
+			meta->data.u.dist.window = ref->u.dist.window;
+			break;
+		case VX_TYPE_THRESHOLD:
+			meta->data.u.thr.thresh_type = ref->u.thr.thresh_type;
+			break;
+		case VX_TYPE_MATRIX:
+			meta->data.u.mat.type = ref->u.mat.type;
+			meta->data.u.mat.columns = ref->u.mat.columns;
+			meta->data.u.mat.rows = ref->u.mat.rows;
+			meta->data.u.mat.itemsize = ref->u.mat.itemsize;
+			meta->data.u.mat.pattern = ref->u.mat.pattern;
+			meta->data.u.mat.origin = ref->u.mat.origin;
 			break;
 		default:
 			status = VX_ERROR_INVALID_REFERENCE;

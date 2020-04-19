@@ -25,7 +25,6 @@ interpret_color_format(RaliColorFormat color_format )
 }
 
 
-
 Timing
 ImageReadAndDecode::timing()
 {

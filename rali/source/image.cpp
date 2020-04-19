@@ -165,7 +165,8 @@ vx_df_image interpret_color_fmt(RaliColorFormat color_format)
 
         case RaliColorFormat::RGB24:
         case RaliColorFormat::BGR24:
-            return VX_DF_IMAGE_RGB;    
+        case RaliColorFormat::RGB_PLANAR:           // not theoretically correct, but keeping it for the same memory allocation
+            return VX_DF_IMAGE_RGB;
 
         case RaliColorFormat::U8:
             return VX_DF_IMAGE_U8;

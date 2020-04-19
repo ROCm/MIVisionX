@@ -3,7 +3,8 @@
 enum class StorageType
 {
     FILE_SYSTEM = 0,
-    TF_RECORD = 1
+    TF_RECORD = 1,
+    CIFAR10_RAW_DATA = 3
 };
 
 struct ReaderConfig

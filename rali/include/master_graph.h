@@ -9,6 +9,7 @@
 #include "node.h"
 #include "node_image_loader.h"
 #include "node_image_loader_single_shard.h"
+#include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 
@@ -25,6 +26,8 @@ public:
     copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
                     float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
     Status copy_output(cl_mem out_ptr, size_t out_size);
+    Status copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
+                    float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
     size_t output_width();
     size_t output_height();
     size_t output_byte_size();
@@ -44,6 +47,7 @@ public:
     MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
     MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output);
     MetaDataBatch* create_tf_record_meta_data_reader(const char *source_path);
+    MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
     bool empty() { return (remaining_images_count() < _user_batch_size); }
@@ -139,6 +143,22 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
+    _loader_module = node->get_loader_module();
+    _root_nodes.push_back(node);
+    for(auto& output: outputs)
+        _image_map.insert(make_pair(output, node));
+
+    return node;
+}
+
+/*
+ * Explicit specialization for Cifar10LoaderNode
+ */
+template<> inline std::shared_ptr<Cifar10LoaderNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+{
+    if(_loader_module)
+        THROW("A loader already exists, cannot have more than one loader")
+    auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)

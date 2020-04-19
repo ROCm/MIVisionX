@@ -41,4 +41,12 @@ extern "C" unsigned RALI_API_CALL raliGetBoundingBoxCount(RaliContext rali_conte
 extern "C" void RALI_API_CALL raliGetBoundingBoxLabel(RaliContext rali_context, int* buf, unsigned image_idx );
 extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, int* buf, unsigned image_idx );
 
+///
+/// \param rali_context
+/// \param source_path path to the file that contains the metadata file
+/// \param filename_prefix: look only files with prefix ( needed for cifar10)
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+extern "C" RaliMetaData RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext rali_context, const char* source_path, const char* file_prefix);
+
+
 #endif //MIVISIONX_RALI_API_META_DATA_H

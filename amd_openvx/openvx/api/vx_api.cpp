@@ -2322,6 +2322,7 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddKernel(vx_context context,
 			kernel->initialize_f = init;
 			kernel->deinitialize_f = deinit;
 			kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
+			kernel->user_kernel = vx_true_e;
 			agoAddKernel(&context->kernelList, kernel);
 			// update reference count
 			kernel->ref.context->num_active_references++;
@@ -2441,6 +2442,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddParameterToKernel(vx_kernel kernel, vx_u
 		CAgoLock lock(kernel->ref.context->cs);
 		status = VX_ERROR_INVALID_PARAMETERS;
 		// add parameter if the kernel is not finalized and not a built-in kernel and not initialized earlier
+		if((data_type == VX_TYPE_DELAY && dir != VX_INPUT))
+				return VX_ERROR_INVALID_PARAMETERS;
 		if (kernel->external_kernel && !kernel->finalized && 
 			index < AGO_MAX_PARAMS &&
 			(dir == VX_INPUT || dir == VX_OUTPUT || dir == VX_BIDIRECTIONAL) && 
@@ -3230,6 +3233,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeAttribute(vx_node node, vx_enum attr
 				if (node->local_data_change_is_enabled) {
 					if (size == sizeof(vx_size)) {
 						node->localDataSize = *(vx_size *)ptr;
+						node->local_data_set_by_implementation = vx_false_e;
 						status = VX_SUCCESS;
 					}
 				}
@@ -3242,6 +3246,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeAttribute(vx_node node, vx_enum attr
 				if(node->local_data_change_is_enabled) {
 					if (size == sizeof(void *)) {
 						node->localDataPtr = *(vx_uint8 **)ptr;
+						node->local_data_set_by_implementation = vx_false_e;
 						status = VX_SUCCESS;
 					}
 				}
@@ -8658,9 +8663,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
 			/**********************************************************************/
 			case VX_VALID_RECT_CALLBACK:
 				if (size == sizeof(vx_kernel_image_valid_rectangle_f)) {
-					meta->data.u.img.format = *(vx_df_image *)ptr;
+					meta->set_valid_rectangle_callback = *(vx_kernel_image_valid_rectangle_f*)ptr;
 					status = VX_SUCCESS;
-					meta->set_valid_rectangle_callback = *(vx_kernel_image_valid_rectangle_f)ptr;
 				}
 				break;
 			/**********************************************************************/

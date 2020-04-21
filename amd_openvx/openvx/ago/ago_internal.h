@@ -497,6 +497,7 @@ struct AgoKernel {
 	vx_uint8 * localDataPtr;
 	bool external_kernel;
 	bool finalized;
+	vx_bool user_kernel;
 	vx_kernel_f kernel_f;
 	vx_kernel_validate_f validate_f;
 	vx_kernel_input_validate_f input_validate_f;

@@ -163,11 +163,11 @@ CIFAR10DataLoader::load_routine()
                 _reader->close();
                 file_counter++;
             }
-
             _file_load_time.end();// Debug timing
             _circ_buff.set_image_info(_raw_img_info);
             _circ_buff.push();
             _image_counter += _output_image->info().batch_size();
+            load_status = LoaderModuleStatus::OK;
         }
         if(load_status != LoaderModuleStatus::OK)
         {

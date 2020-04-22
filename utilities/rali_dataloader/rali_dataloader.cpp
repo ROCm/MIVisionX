@@ -108,7 +108,7 @@ int main(int argc, const char ** argv)
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
     RaliImage input1;
 
-    input1 = raliRawCIFAR10Source(handle, folderPath1,  color_format, true, decode_width, decode_height, false);
+    input1 = raliRawCIFAR10Source(handle, folderPath1,  color_format, true, decode_width, decode_height, "data_batch_", false);
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -202,9 +202,9 @@ int main(int argc, const char ** argv)
     int iter_cnt = 0;
     float  pmul = 2.0f/255;
     float  padd = -1.0f;
-    while (!raliIsEmpty(handle) /*&& (iter_cnt < 300)*/)
+    while (!raliIsEmpty(handle) /*&& (iter_cnt < 100)*/)
     {
-        if ((iter_cnt %16) == 0)
+       // if ((iter_cnt %16) == 0)
             printf("Processing iter: %d\n", iter_cnt);
         if(raliRun(handle) != 0)
             break;
@@ -218,9 +218,9 @@ int main(int argc, const char ** argv)
             names[i] = std::move(std::vector<char>(raliGetImageNameLen(handle, 0), '\n'));
             raliGetImageName(handle, names[i].data(), i);
             std::string id(names[i].begin(), names[i].end());
-            std::cout << "name "<< id << " label "<< labels[i] << " - ";
+           // std::cout << "name "<< id << " label "<< labels[i] << " - ";
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
         iter_cnt ++;
 
         if(!display)

@@ -481,6 +481,7 @@ raliRawCIFAR10Source(
                  bool is_output ,
                  unsigned out_width,
                  unsigned out_height,
+                 const char* filename_prefix,
                  bool loop )
 {
     Image* output = nullptr;
@@ -510,10 +511,10 @@ raliRawCIFAR10Source(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<Cifar10LoaderNode>({}, {output})->init(source_path,
-                                                                             StorageType::CIFAR10_RAW_DATA,
+                                                                             StorageType::UNCOMPRESSED_BINARY_DATA,
                                                                              loop,
                                                                              context->user_batch_size(),
-                                                                             context->master_graph->mem_type());
+                                                                             context->master_graph->mem_type(), filename_prefix);
         context->master_graph->set_loop(loop);
 
         if(is_output)

@@ -9,7 +9,7 @@ Cifar10LoaderNode::Cifar10LoaderNode(Image *output, DeviceResources device_resou
 }
 
 void Cifar10LoaderNode::init(const std::string &source_path, StorageType storage_type,
-                           bool loop, size_t load_batch_count, RaliMemType mem_type)
+                           bool loop, size_t load_batch_count, RaliMemType mem_type, const std::string &file_prefix)
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for Cifar10LoaderNode, cannot initialize")
@@ -17,6 +17,7 @@ void Cifar10LoaderNode::init(const std::string &source_path, StorageType storage
     // Set reader and decoder config accordingly for the Cifar10LoaderNode
     auto reader_cfg = ReaderConfig(storage_type, source_path, loop);
     reader_cfg.set_batch_count(load_batch_count);
+    reader_cfg.set_file_prefix(file_prefix);
     // DecoderConfig will be ignored in loader. Just passing it for api match
     _loader_module->initialize(reader_cfg, DecoderConfig(DecoderType::TURBO_JPEG),
              mem_type, _batch_size);

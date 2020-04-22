@@ -64,15 +64,15 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
-/// \param decode_size_policy
-/// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
-/// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param out_width ; output width
+/// \param out_height ; output_height
+/// \param filename_prefix ; if set loader will only load files with the given prefix name
 /// \return Reference to the output image
 extern "C"  RaliImage  RALI_API_CALL raliRawCIFAR10Source(RaliContext context,
                                                         const char* source_path,
                                                         RaliImageColor color_format,
                                                         bool is_output ,
-                                                        unsigned out_width, unsigned out_height,
+                                                        unsigned out_width, unsigned out_height, const char* filename_prefix = "",
                                                         bool loop = false);
 
 ///

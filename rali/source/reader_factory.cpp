@@ -22,7 +22,7 @@ std::shared_ptr<Reader> create_reader(ReaderConfig config) {
             return ret;
         }
         break;
-        case StorageType::CIFAR10_RAW_DATA:
+        case StorageType::UNCOMPRESSED_BINARY_DATA:
         {
             auto ret = std::make_shared<CIFAR10DataReader>();
             if(ret->initialize(config) != Reader::Status::OK)

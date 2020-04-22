@@ -894,9 +894,6 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
 
     const size_t single_output_image_size = output_byte_size();
 
-    _convert_time.end();
-    return Status::OK;
-
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         THROW("copy_out_tensor_planar for GPU affinity is not implemented")

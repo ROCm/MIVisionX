@@ -60,7 +60,7 @@ private:
     unsigned _last_file_idx;        // index of individual raw file in a batched file
     // hard_coding the following for now. Eventually needs to add in the ReaderConfig
     //!< file_name_prefix tells the reader to read only files with the prefix:: eventually needs to be passed through ReaderConfig
-    const std::string _file_name_prefix = "data_batch_";
+    std::string _file_name_prefix;// = "data_batch_";
     //!< _raw_file_size of each file to read
     const size_t _raw_file_size = (32*32*3 + 1);    // todo:: need to add an option in reader config to take this.
     size_t _total_file_size;

@@ -2322,7 +2322,7 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddKernel(vx_context context,
 			kernel->initialize_f = init;
 			kernel->deinitialize_f = deinit;
 			kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
-			kernel->user_kernel = vx_true_e;
+			kernel->user_kernel = vx_false_e;
 			agoAddKernel(&context->kernelList, kernel);
 			// update reference count
 			kernel->ref.context->num_active_references++;
@@ -2383,6 +2383,7 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddUserKernel(vx_context context,
 			kernel->initialize_f = init;
 			kernel->deinitialize_f = deinit;
 			kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
+			kernel->user_kernel = vx_true_e;
 			agoAddKernel(&context->kernelList, kernel);
 			// update reference count
 			kernel->ref.context->num_active_references++;
@@ -2708,8 +2709,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 		CAgoLock lock2(graph->ref.context->cs);
 
 		// mark that graph is not verified and can't be executed
-		graph->verified = vx_false_e;
+		//graph->verified = vx_false_e;
 		graph->isReadyToExecute = vx_false_e;
+        graph->state = VX_GRAPH_STATE_UNVERIFIED;
 
 		// check to see if user requested for graph dump
 		vx_uint32 ago_graph_dump = 0;
@@ -2724,7 +2726,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 		// verify graph per OpenVX specification
 		status = agoVerifyGraph(graph);
 		if (status == VX_SUCCESS) {
-			graph->verified = vx_true_e;
 			// run graph optimizer
 			if (agoOptimizeGraph(graph)) {
 				status = VX_FAILURE;
@@ -2737,6 +2738,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 			else {
 				graph->isReadyToExecute = vx_true_e;
 			}
+			graph->verified = vx_true_e;
+			graph->state = VX_GRAPH_STATE_VERIFIED;
 		}
 
 		if (ago_graph_dump) {
@@ -2746,15 +2749,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 		}
 	}
 	if (status == VX_SUCCESS)
-    {
-        graph->verified = true;
-        graph->state = VX_GRAPH_STATE_VERIFIED;
-    }
-    else
-    {
-        graph->verified = false;
-        graph->state = VX_GRAPH_STATE_UNVERIFIED;
-    }
+		graph->verified = vx_true_e;
+	else
+		graph->verified = vx_false_e;
 	return status;
 }
 

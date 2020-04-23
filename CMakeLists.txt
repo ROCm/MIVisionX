@@ -20,7 +20,7 @@
 
 cmake_minimum_required (VERSION 2.8)
 project (MIVisionX)
-set(VERSION "1.7.0")
+set(VERSION "1.8.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -81,7 +81,7 @@ else()
     message("-- CentOS detected -- .rpm package will be created")
     set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "RPM")
-    set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl, protobuf, opencv, python-pip")
+    set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl, protobuf, opencv")
     set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
 endif()
 

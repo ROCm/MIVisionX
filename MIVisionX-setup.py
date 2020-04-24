@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7.3"
+__version__     = "1.7.4"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -21,7 +21,7 @@ parser.add_argument('--installer', type=str, default='apt-get', help='Linux syst
 parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
 parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options: Install ffmpeg - yes')
-parser.add_argument('--rpp',       type=str, default='no',     help='Radeon Performance Primitives (RPP) Installation - optional (default:no) [options:yes/no]')
+parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', type=str, default='no',      help='Remove previous setup and reinstall (default:no) [options:yes/no]')
 args = parser.parse_args()
 
@@ -185,7 +185,7 @@ else:
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install qt5-default qtcreator')
 	# Install RPP
 	if rppInstall == 'yes':
-		os.system('(cd '+deps_dir+'; git clone -b 0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
+		os.system('(cd '+deps_dir+'; git clone -b 0.2 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
 		#Yasm/Nasm for TurboJPEG
 		if linuxSystemInstall == 'apt-get':
 			os.system('sudo -v')

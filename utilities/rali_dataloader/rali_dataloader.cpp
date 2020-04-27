@@ -185,7 +185,7 @@ int main(int argc, const char ** argv)
               (color_format ==  RaliImageColor::RALI_COLOR_RGB_PLANAR )) ? 3 : 1);
     std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << std::endl;
     const unsigned number_of_cols = 1;    // no augmented case
-    float out_tensor[h*w*3*inputBatchSize];
+    float out_tensor[h*w*p*inputBatchSize];
     auto cv_color_format = ((p==3) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
@@ -202,15 +202,17 @@ int main(int argc, const char ** argv)
     int iter_cnt = 0;
     float  pmul = 2.0f/255;
     float  padd = -1.0f;
-    while (!raliIsEmpty(handle) /*&& (iter_cnt < 100)*/)
+    while (!raliIsEmpty(handle) && (iter_cnt < 100))
     {
        // if ((iter_cnt %16) == 0)
             printf("Processing iter: %d\n", iter_cnt);
         if(raliRun(handle) != 0)
             break;
 
-        //raliCopyToOutput(handle, mat_input.data, h*w*p);
-        raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
+        if(display)
+            raliCopyToOutput(handle, mat_input.data, h*w*p);
+        else
+            raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
         raliGetImageLabels(handle, labels.data());
         for(int i = 0; i < inputBatchSize; i++)
@@ -234,18 +236,23 @@ int main(int argc, const char ** argv)
         }
         else if (color_format == RaliImageColor::RALI_COLOR_RGB_PLANAR )
         {
-          // convert planar to packed for OPENCV
-          for (int j = 0; j < n ; j++) {
-            int const kWidth = w;
-            int const kHeight = raliGetOutputHeight(handle);
-            unsigned char *interleavedp = mat_output.data;
-            unsigned char *planarp = mat_input.data;
-            for (int i = 0; i != kWidth*kHeight; ++i) {
-                interleavedp[i*3+0] = planarp[i+0*kWidth*kHeight];
-                interleavedp[i*3+1] = planarp[i+1*kWidth*kHeight];
-                interleavedp[i*3+2] = planarp[i+2*kWidth*kHeight];
+            // convert planar to packed for OPENCV
+            for (int j = 0; j < n ; j++) {
+                int const kWidth = w;
+                int const kHeight = raliGetOutputHeight(handle);
+                int single_h = kHeight/inputBatchSize;
+                for (int n = 0; n<inputBatchSize; n++) {
+                    unsigned  channel_size = kWidth*single_h*p;
+                    unsigned char *interleavedp = mat_output.data + channel_size*n;
+                    unsigned char *planarp = mat_input.data + channel_size*n;
+                    for (int i = 0; i < (kWidth * single_h); i++) {
+                        interleavedp[i * 3 + 0] = planarp[i + 0 * kWidth * single_h];
+                        interleavedp[i * 3 + 1] = planarp[i + 1 * kWidth * single_h];
+                        interleavedp[i * 3 + 2] = planarp[i + 2 * kWidth * single_h];
+                    }
+                }
             }
-          }      
+            cv::imshow("output",mat_output);
         }
         else
         {

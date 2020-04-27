@@ -5,9 +5,6 @@
 #include "commons.h"
 #include "image.h"
 
-
-
-
 enum class LoaderModuleStatus
 {
     OK = 0,
@@ -27,10 +24,11 @@ public:
     virtual void set_output_image(Image* output_image) = 0;
     virtual LoaderModuleStatus load_next() = 0; // Loads the next image data into the Image's buffer set by calling into the set_output_image
     virtual void reset() = 0; // Resets the loader to load from the beginning of the media
-    virtual size_t count() = 0; // Returns the number of available images to be loaded
+    virtual size_t remaining_count() = 0; // Returns the number of available images to be loaded
     virtual ~LoaderModule()= default;
-    virtual std::vector<long long unsigned> timing() = 0;// Returns timing info
-    virtual void stop() = 0; // stop the internal process of loading (if any)
+    virtual Timing timing() = 0;// Returns timing info
+    virtual std::vector<std::string> get_id() = 0; // returns the id of the last batch of images/frames loaded
+    virtual void start_loading() = 0; // starts internal loading thread
 };
 
 using pLoaderModule = std::shared_ptr<LoaderModule>;

@@ -3,43 +3,36 @@
 #include "node_fog.h"
 #include "exception.h"
 
-FogNode::FogNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+FogNode::FogNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
-        _fog_param(FOG_VALUE_OVX_PARAM_IDX, FOG_VALUE_RANGE[0], FOG_VALUE_RANGE[1])
+        _fog_param(FOG_VALUE_RANGE[0], FOG_VALUE_RANGE[1])
 {
 }
 
-void FogNode::create(std::shared_ptr<Graph> graph)
+void FogNode::create_node()
 {
     if(_node)
         return;
 
-    _graph = graph;
-
-    if(_outputs.empty() || _inputs.empty())
-        THROW("Uninitialized input/output arguments")
-
-    _node = vxExtrppNode_Fog(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _fog_param.default_value());
+    _fog_param.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _node = vxExtrppNode_FogbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _fog_param.default_array(), _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the fog (vxExtrppNode_Fog) node failed: "+ TOSTR(status))
-
-    _fog_param.create(_node);
-
 }
 
-void FogNode::init(float shfit)
+void FogNode::init(float fog_param)
 {
-    _fog_param.set_param(shfit);
+    _fog_param.set_param(fog_param);
 }
 
-void FogNode::init(FloatParam* shfit)
+void FogNode::init(FloatParam* fog_param)
 {
-    _fog_param.set_param(core(shfit));
+    _fog_param.set_param(core(fog_param));
 }
 
-void FogNode::update_parameters()
+void FogNode::update_node()
 {
-    _fog_param.update();
+    _fog_param.update_array();
 }

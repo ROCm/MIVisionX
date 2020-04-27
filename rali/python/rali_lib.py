@@ -44,11 +44,11 @@ class RaliLib:
 
         self.raliCropResize = self.lib.raliCropResize
         self.raliCropResize.restype = ctypes.c_void_p
-        self.raliCropResize.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
+        self.raliCropResize.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.raliCropResizeFixed = self.lib.raliCropResizeFixed
         self.raliCropResizeFixed.restype = ctypes.c_void_p
-        self.raliCropResizeFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_float, ctypes.c_float, ctypes.c_float]
+        self.raliCropResizeFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint, ctypes.c_bool, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float]
 
         self.raliRotate = self.lib.raliRotate
         self.raliRotate.restype = ctypes.c_void_p
@@ -82,7 +82,7 @@ class RaliLib:
         self.raliContrastFixed.restype = ctypes.c_void_p
         self.raliContrastFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_int, ctypes.c_int]
 
-        self.raliFlip = self.lib.raliFlip
+        self.raliFlip = self.lib.raliFlipFixed
         self.raliFlip.restype = ctypes.c_void_p
         self.raliFlip.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_bool]
 
@@ -104,7 +104,7 @@ class RaliLib:
 
         self.raliWarpAffine = self.lib.raliWarpAffine
         self.raliWarpAffine.restype = ctypes.c_void_p
-        self.raliWarpAffine.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.raliWarpAffine.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_uint, ctypes.c_uint, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.raliWarpAffineFixed = self.lib.raliWarpAffineFixed
         self.raliWarpAffineFixed.restype = ctypes.c_void_p
@@ -120,15 +120,15 @@ class RaliLib:
 
         self.raliVignetteFixed = self.lib.raliVignetteFixed
         self.raliVignetteFixed.restype = ctypes.c_void_p
-        self.raliVignetteFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_float]
+        self.raliVignetteFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_float, ctypes.c_bool]
 
         self.raliJitter = self.lib.raliJitter
         self.raliJitter.restype = ctypes.c_void_p
-        self.raliJitter.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p]
+        self.raliJitter.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
 
         self.raliJitterFixed = self.lib.raliJitterFixed
         self.raliJitterFixed.restype = ctypes.c_void_p
-        self.raliJitterFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_int, ctypes.c_int]
+        self.raliJitterFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int, ctypes.c_bool]
 
         self.raliSnPNoise = self.lib.raliSnPNoise
         self.raliSnPNoise.restype = ctypes.c_void_p
@@ -148,11 +148,11 @@ class RaliLib:
 
         self.raliRain = self.lib.raliRain
         self.raliRain.restype = ctypes.c_void_p
-        self.raliRain.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p]
+        self.raliRain.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p]
 
         self.raliRainFixed = self.lib.raliRainFixed
         self.raliRainFixed.restype = ctypes.c_void_p
-        self.raliRainFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_float, ctypes.c_bool]
+        self.raliRainFixed.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_float,ctypes.c_float,ctypes.c_float,ctypes.c_float, ctypes.c_bool]
 
         self.raliColorTemp = self.lib.raliColorTemp
         self.raliColorTemp.restype = ctypes.c_void_p
@@ -223,9 +223,21 @@ class RaliLib:
         self.raliGetSeed.restype = ctypes.c_ulonglong
         self.raliGetSeed.argtypes = []
 
-        self.raliGetOutputImageCount = self.lib.raliGetOutputImageCount
-        self.raliGetOutputImageCount.restype = ctypes.c_int
-        self.raliGetOutputImageCount.argtypes = [ctypes.c_void_p]
+        self.raliGetAugmentationBranchCount = self.lib.raliGetAugmentationBranchCount
+        self.raliGetAugmentationBranchCount.restype = ctypes.c_int
+        self.raliGetAugmentationBranchCount.argtypes = [ctypes.c_void_p]
+
+        self.raliIsEmpty = self.lib.raliIsEmpty
+        self.raliIsEmpty.restype = ctypes.c_int
+        self.raliIsEmpty.argtypes = [ctypes.c_void_p]
+
+        self.raliGetImageName = self.lib.raliGetImageName
+        self.raliGetImageName.restype = ctypes.c_void_p
+        self.raliGetImageName.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_uint]
+
+        self.raliGetImageNameLen = self.lib.raliGetImageNameLen
+        self.raliGetImageNameLen.restype = ctypes.c_uint
+        self.raliGetImageNameLen.argtypes = [ctypes.c_void_p, ctypes.c_uint]
 
         """ rali_api_data_transfer.h """
         self.copyToOutput = self.lib.raliCopyToOutput
@@ -239,4 +251,13 @@ class RaliLib:
         self.copyToOutputTensor32 = self.lib.raliCopyToOutputTensor32
         self.copyToOutputTensor32.restype = ctypes.c_int
         self.copyToOutputTensor32.argtypes = [ctypes.c_void_p, ndpointer(dtype=np.float32, flags="C_CONTIGUOUS"), ctypes.c_uint, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_uint]
-        
+
+        """ rali_api_meta_data.h"""
+        self.raliCreateTextFileBasedLabelReader = self.lib.raliCreateTextFileBasedLabelReader
+        self.raliCreateTextFileBasedLabelReader.restype = ctypes.c_void_p
+        self.raliCreateTextFileBasedLabelReader.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+
+        self.raliGetImageLabels = self.lib.raliGetImageLabels
+        self.raliGetImageLabels.restype = ctypes.c_void_p
+        self.raliGetImageLabels.argtypes = [ctypes.c_void_p, ndpointer(dtype=np.int32, flags="C_CONTIGUOUS")]
+

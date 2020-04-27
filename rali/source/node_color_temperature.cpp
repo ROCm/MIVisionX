@@ -3,44 +3,39 @@
 #include "node_color_temperature.h"
 #include "exception.h"
 
-ColorTemperatureNode::ColorTemperatureNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+ColorTemperatureNode::ColorTemperatureNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
-        _adj_value_param(ADJUSTMENT_OVX_PARAM_IDX, ADJUSTMENT_RANGE[0], ADJUSTMENT_RANGE[1])
+        _adj_value_param(ADJUSTMENT_RANGE[0], ADJUSTMENT_RANGE[1])
 {
 }
 
-void ColorTemperatureNode::create(std::shared_ptr<Graph> graph)
+void ColorTemperatureNode::create_node()
 {
     if(_node)
         return;
 
-    _graph = graph;
+    _adj_value_param.create_array(_graph , VX_TYPE_INT32, _batch_size);
 
-    if(_outputs.empty() || _inputs.empty())
-        THROW("Uninitialized input/output arguments")
-
-    _node = vxExtrppNode_ColorTemperature(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _adj_value_param.default_value());
+    _node = vxExtrppNode_ColorTemperaturebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _adj_value_param.default_array(), _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the color temp (vxExtrppNode_ColorTemperature) node failed: "+ TOSTR(status))
-
-    _adj_value_param.create(_node);
+        THROW("Adding the color temp batch (vxExtrppNode_ColorTemperaturebatchPD) node failed: "+ TOSTR(status))
 
 }
 
-void ColorTemperatureNode::init(int adj)
+void ColorTemperatureNode::init(int adjustment)
 {
-    _adj_value_param.set_param(adj);
+    _adj_value_param.set_param(adjustment);
 }
 
-void ColorTemperatureNode::init(IntParam* adj)
+void ColorTemperatureNode::init(IntParam* adjustment)
 {
-    _adj_value_param.set_param(core(adj));
+    _adj_value_param.set_param(core(adjustment));
 }
 
-void ColorTemperatureNode::update_parameters()
+void ColorTemperatureNode::update_node()
 {
-    _adj_value_param.update();
+    _adj_value_param.update_array();
 }
 

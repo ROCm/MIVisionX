@@ -24,13 +24,13 @@ THE SOFTWARE.
 #include <kernels_rpp.h>
 #include <vx_ext_rpp.h>
 #include <stdio.h>
+#include <iostream>
 #include "internal_rpp.h"
-
 #include "internal_publishKernels.h"
-
 #include </opt/rocm/rpp/include/rpp.h>
 #include </opt/rocm/rpp/include/rppdefs.h>
 #include </opt/rocm/rpp/include/rppi.h>
+
 
 struct CopyLocalData {
 

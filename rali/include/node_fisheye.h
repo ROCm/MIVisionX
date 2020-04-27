@@ -7,8 +7,11 @@
 class FisheyeNode : public Node
 {
 public:
-    void create(std::shared_ptr<Graph> graph) override;
-    FisheyeNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
+    FisheyeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     FisheyeNode() = delete;
-    void update_parameters() override;
+
+protected:
+    void create_node() override;
+    void update_node() override;
+private:
 };

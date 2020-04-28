@@ -9,6 +9,13 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateLabelReader(RaliContext rali_con
 
 ///
 /// \param rali_context
+/// \param source_path path to the coco json file
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+extern "C" RaliMetaData RALI_API_CALL raliCreateCOCOReader(RaliContext rali_context, const char* source_path, bool is_output);
+
+
+///
+/// \param rali_context
 /// \param source_path path to the file that contains the metadata file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateTextFileBasedLabelReader(RaliContext rali_context, const char* source_path);
@@ -39,6 +46,6 @@ extern "C" unsigned RALI_API_CALL raliGetBoundingBoxCount(RaliContext rali_conte
 /// \param image_idx the imageIdx in the output batch
 /// \param buf The user's buffer that will be filled with bounding box info. It needs to be of size bounding box len returned by a call to the raliGetBoundingBoxCount
 extern "C" void RALI_API_CALL raliGetBoundingBoxLabel(RaliContext rali_context, int* buf, unsigned image_idx );
-extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, int* buf, unsigned image_idx );
+extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, float* buf, unsigned image_idx );
 
 #endif //MIVISIONX_RALI_API_META_DATA_H

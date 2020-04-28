@@ -47,7 +47,8 @@ class FileReader(Node):
     def __init__(self, file_root, bytes_per_sample_hint = 0, file_list = '', initial_fill = '', lazy_init = '', num_shards = 1,
                 pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
                 seed = -1, shard_id = 0, shuffle_after_epoch = False, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
-        super(FileReader, self).__init__()
+        
+        Node().__init__()
         self._file_root = file_root
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._file_list = file_list
@@ -82,7 +83,128 @@ class FileReader(Node):
         return self._file_root
     
     
+class COCOReader(Node):
+
     
+    """
+
+
+        file_root (str) – Path to a directory containing data files.
+
+        annotations_file (str, optional, default = '') – List of paths to the JSON annotations files.
+
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+        dump_meta_files (bool, optional, default = False) – If true, operator will dump meta files in folder provided with dump_meta_files_path.
+
+        dump_meta_files_path (str, optional, default = '') – Path to directory for saving meta files containing preprocessed COCO annotations.
+
+        file_list (str, optional, default = '') – Path to the file with a list of pairs file id (leave empty to traverse the file_root directory to obtain files and labels)
+
+        initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
+
+        lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
+
+        ltrb (bool, optional, default = False) – If true, bboxes are returned as [left, top, right, bottom], else [x, y, width, height].
+
+        masks (bool, optional, default = False) –
+
+        If true, segmentation masks are read and returned as polygons. Each mask can be one or more polygons. A polygon is a list of points (2 floats). For a given sample, the polygons are represented by two tensors:
+
+            masks_meta -> list of tuples (mask_idx, start_idx, end_idx)
+
+            masks_coords-> list of (x,y) coordinates
+
+        One mask can have one or more masks_meta having the same mask_idx, which means that the mask for that given index consists of several polygons). start_idx indicates the index of the first coords in masks_coords. Currently skips objects with iscrowd=1 annotations (RLE masks, not suitable for instance segmentation).
+
+        meta_files_path (str, optional, default = '') – Path to directory with meta files containing preprocessed COCO annotations.
+
+        num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
+
+        pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
+
+        prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
+
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+        random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
+
+        ratio (bool, optional, default = False) – If true, bboxes returned values as expressed as ratio w.r.t. to the image width and height.
+
+        read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
+
+        save_img_ids (bool, optional, default = False) – If true, image IDs will also be returned.
+
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+        shard_id (int, optional, default = 0) – Id of the part to read.
+
+        shuffle_after_epoch (bool, optional, default = False) – If true, reader shuffles whole dataset after each epoch.
+
+        size_threshold (float, optional, default = 0.1) – If width or height of a bounding box representing an instance of an object is under this value, object will be skipped during reading. It is represented as absolute value.
+
+        skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
+
+        skip_empty (bool, optional, default = False) – If true, reader will skip samples with no object instances in them
+
+        stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
+
+        tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
+
+
+    """  
+
+    def __init__(self,file_root, annotations_file ='', bytes_per_sample_hint = 0, dump_meta_files =False ,dump_meta_files_path = '', file_list ='', initial_fill = 1024,  lazy_init = False ,ltrb = False,masks = False, meta_files_path ='', num_shards = 1, pad_last_batch =False, prefetch_queue_depth=1,
+     preserve = False, random_shuffle=False, ratio=False ,read_ahead=False,
+     save_img_ids =False , seed =-1 ,shard_id =0, shuffle_after_epoch=False , size_threshold =0.1, 
+     skip_cached_images=False, skip_empty=False, stick_to_shard=False, tensor_init_bytes= 1048576):
+        Node().__init__()
+        self._file_root = file_root
+        self._annotations_file = annotations_file
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._dump_meta_files = dump_meta_files
+        self._dump_meta_files_path = dump_meta_files_path
+        self._file_list = file_list
+        self._initial_fill = initial_fill
+        self._lazy_init = lazy_init
+        self._ltrb = ltrb
+        self._masks = masks
+        self._meta_files_path = meta_files_path
+        self._num_shards = num_shards
+        self._pad_last_batch = pad_last_batch
+        self._prefetch_queue_depth = prefetch_queue_depth
+        self._preserve = preserve
+        self._random_shuffle = random_shuffle
+        self._ratio = ratio
+        self._read_ahead = read_ahead
+        self._save_img_ids = save_img_ids
+        self._seed = seed
+        self._shard_id = shard_id
+        self._shuffle_after_epoch = shuffle_after_epoch
+        self._size_threshold = size_threshold
+        self._skip_cached_images = skip_cached_images
+        self._skip_empty = skip_empty
+        self._stick_to_shard = stick_to_shard
+        self._tensor_init_bytes = tensor_init_bytes
+        self._labels= []
+        self._bboxes= []
+        self.output = Node()
+
+    def __call__(self,name = ""):
+        self.data = "COCOReader"
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._file_root
+        return self.output, self._bboxes, self._labels
+
+    def rali_c_func_call(self,handle):
+        b.COCOReader(handle , self._annotations_file, True)
+        # b.labelReader(handle,self._file_root)
+        return self._file_root
+
+   
     
 
 class ImageDecoder(Node):
@@ -122,7 +244,7 @@ class ImageDecoder(Node):
     def __init__(self, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
                 cache_type = '', device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, output_type = 0,
                 preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
-        super(ImageDecoder, self).__init__()
+        Node().__init__()
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._cache_batch_copy = cache_batch_copy
@@ -151,7 +273,7 @@ class ImageDecoder(Node):
         self.output.next = None
         return self.output
 
-    def rali_c_func_call(self, handle, input_image, is_output):
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, is_output):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
@@ -194,7 +316,7 @@ class ImageDecoderRandomCrop(Node):
     def __init__(self, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, 
                 num_attempts = 10, output_type = 0,preserve = False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
                 seed = 1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
-        super(ImageDecoderRandomCrop, self).__init__()
+        Node().__init__()
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._device_memory_padding = device_memory_padding
@@ -228,13 +350,7 @@ class ImageDecoderRandomCrop(Node):
             output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
             output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
-        self.area = b.CreateFloatUniformRand(self._random_area[0],self._random_area[1])
-        self.aspect_ratio = b.CreateFloatUniformRand(self._random_aspect_ratio[0],self._random_aspect_ratio[1])
-        self.x_drift =  b.CreateFloatParameter(0)
-        self.y_drift =  b.CreateFloatParameter(0)
         output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
-        # output_image = b.CropResize(handle, output_image, 500, 500, is_output, self.area, self.aspect_ratio, self.x_drift, self.y_drift)
-        # output_image = b.CropResize(handle, output_image, 0, 0, is_output, None, None, None, None)
         return output_image
 
 class ColorTwist(Node):
@@ -279,7 +395,7 @@ class ColorTwist(Node):
     """
     def __init__(self, brightness = 1.0, bytes_per_sample_hint = 0, contrast = 1.0, hue = 0.0, image_type = 0, 
                 preserve = False, saturation = 1.0,seed = -1, device = None):
-        super(ColorTwist, self).__init__()
+        Node().__init__()
         self._brightness = brightness
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._contrast = contrast
@@ -355,7 +471,7 @@ class Resize(Node):
     def __init__(self, bytes_per_sample_hint = 0, image_type = 0, interp_type = 1, mag_filter = 1, max_size = [0.0, 0.0], min_filter = 1,
                 minibatch_size = 32, preserve = False, resize_longer = 0.0, resize_shorter = 0.0, resize_x = 0.0, resize_y = 0.0,
                 save_attrs = False,seed = 1, temp_buffer_hint = 0, device = None):
-        super(Resize, self).__init__()
+        Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
         self._interp_type = interp_type
@@ -425,7 +541,7 @@ class  CropMirrorNormalize(Node):
     def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 0, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
                 crop_w = 0 , image_type = 0, mean = [0.0], mirror = 0, output_dtype = types.FLOAT, output_layout = types.NCHW, pad_output = False, 
                 preserve = False, seed = 1, std = [1.0], device = None):
-        super(CropMirrorNormalize, self).__init__()
+        Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._crop = crop
         if(len(crop) == 2):
@@ -513,9 +629,9 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
 
     """
-    def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 0, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
+    def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 1, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
                 crop_w = 0 , image_type = 0, output_dtype = types.FLOAT, preserve = False, seed = 1, device = None):
-        super(Crop, self).__init__()       
+        Node().__init__()      
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._crop = crop
         if(len(crop) == 2):
@@ -553,16 +669,85 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     def rali_c_func_call(self, handle, input_image, is_output):
         b.setSeed(self._seed)
         output_image = []
-        crop_h = b.CreateFloatParameter(self._crop_h)
-        crop_w = b.CreateFloatParameter(self._crop_w)
-        crop_d = b.CreateFloatParameter(self._crop_d)
-        crop_pos_x = b.CreateFloatParameter(self._crop_pos_x)
-        crop_pos_y = b.CreateFloatParameter(self._crop_pos_y)
-        crop_pos_z = b.CreateFloatParameter(self._crop_pos_z)
-        #output_image = b.Crop(handle, input_image, is_output, crop_w, crop_h, crop_d, crop_pos_x, crop_pos_y, crop_pos_z)
-        output_image = b.Crop(handle, input_image, is_output, None, None, None, None, None, None)
+        if ((self._crop_w == 0) and (self._crop_h == 0)):
+            output_image = b.Crop(handle, input_image, is_output, None, None, None, None, None, None)
+        else:
+            output_image = b.CropFixed(handle, input_image,self._crop_w, self._crop_h, self._crop_d, is_output,  self._crop_pos_x, self._crop_pos_y, self._crop_pos_z)
+
         return output_image 
 
+class CentreCrop(Node):
+    
+
+    """
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+crop (float or list of float, optional, default = [0.0, 0.0]) – Shape of the cropped image, specified as a list of value (e.g. (crop_H, crop_W) for 2D crop, (crop_D, crop_H, crop_W) for volumetric crop). Providing crop argument is incompatible with providing separate arguments crop_d, crop_h and crop_w.
+
+crop_d (float, optional, default = 0.0) – Volumetric inputs only cropping window depth (in pixels). If provided, crop_h and crop_w should be provided as well. Providing crop_w, crop_h, crop_d is incompatible with providing fixed crop window dimensions (argument crop).
+
+crop_h (float, optional, default = 0.0) – Cropping window height (in pixels). If provided, crop_w should be provided as well. Providing crop_w, crop_h is incompatible with providing fixed crop window dimensions (argument crop).
+
+crop_pos_x (float, optional, default = 0.5) – Normalized (0.0 - 1.0) horizontal position of the cropping window (upper left corner). Actual position is calculated as crop_x = crop_x_norm * (W - crop_W), where crop_x_norm is the normalized position, W is the width of the image and crop_W is the width of the cropping window.
+
+crop_pos_y (float, optional, default = 0.5) – Normalized (0.0 - 1.0) vertical position of the cropping window (upper left corner). Actual position is calculated as crop_y = crop_y_norm * (H - crop_H), where crop_y_norm is the normalized position, H is the height of the image and crop_H is the height of the cropping window.
+
+crop_pos_z (float, optional, default = 0.5) – Volumetric inputs only Normalized (0.0 - 1.0) normal position of the cropping window (front plane). Actual position is calculated as crop_z = crop_z_norm * (D - crop_d), where crop_z_norm is the normalized position, D is the depth of the image and crop_d is the depth of the cropping window.
+
+crop_w (float, optional, default = 0.0) – Cropping window width (in pixels). If provided, crop_h should be provided as well. Providing crop_w, crop_h is incompatible with providing fixed crop window dimensions (argument crop).
+
+image_type (int, optional, default = 0) – The color space of input and output image
+
+output_dtype (int, optional, default = -1) – Output data type. By default same data type as the input will be used. Supported types: FLOAT, FLOAT16, and UINT8
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+
+    """
+    def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 1, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
+                crop_w = 0 , image_type = 0, output_dtype = types.FLOAT, preserve = False, seed = 1, device = None):
+        Node().__init__()      
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._crop = crop
+        if(len(crop) == 2):
+            self._crop_h = crop[0]
+            self._crop_w = crop[1]
+            self._crop_d = crop_d
+        elif(len(crop) == 3):
+            self._crop_d = crop[0]
+            self._crop_h = crop[1]
+            self._crop_w = crop[2]
+        else:
+            self._crop_d = crop_d
+            self._crop_h = crop_h
+            self._crop_w = crop_w
+        self._crop_pos_x = crop_pos_x
+        self._crop_pos_y = crop_pos_y
+        self._crop_pos_z = crop_pos_z
+        self._image_type = image_type
+        self._output_dtype = output_dtype
+        self._preserve = preserve
+        self._seed = seed
+        self.output = Node()
+        self._temp = None
+
+                
+    def __call__(self, input, is_output = False):
+        input.next = self
+        self.data = "CentreCrop"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+    
+    def rali_c_func_call(self, handle, input_image, is_output):
+        b.setSeed(self._seed)
+        output_image = []
+        output_image = b.CenterCropFixed(handle, input_image,self._crop_w, self._crop_h, self._crop_d, is_output)
+        return output_image 
 
 class CoinFlip():
     def __init__(self,probability=0.5, device = None):
@@ -580,7 +765,7 @@ class CoinFlip():
 
 class GammaCorrection(Node):
     def __init__(self,gamma = 0.5, device = None):
-        super(GammaCorrection, self).__init__()
+        Node().__init__()
         self._gamma = gamma
         self.output = Node()
     
@@ -600,7 +785,7 @@ class GammaCorrection(Node):
        
 class Snow(Node):
     def __init__(self,snow = 0.5, device = None):
-        super(Snow, self).__init__()
+        Node().__init__()
         self._snow = snow
         self.output = Node()
     
@@ -619,7 +804,7 @@ class Snow(Node):
 
 class Rain(Node):
     def __init__(self,rain = 0.5, device = None):
-        super(Rain, self).__init__()
+        Node().__init__()
         self._rain = rain
         self.output = Node()
     
@@ -645,7 +830,7 @@ class Blur(Node):
 
     '''
     def __init__(self,blur = 3, device = None):
-        super(Blur, self).__init__()
+        Node().__init__()
         self._blur = blur
         self.output = Node()
     
@@ -687,7 +872,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     """
 
     def __init__(self,bytes_per_sample_hint = 0, contrast = 1.0 ,image_type = 0, preserve = False, seed = -1, device = None):
-        super(Contrast, self).__init__()
+        Node().__init__()
         self._bytes_per_sample_hint=bytes_per_sample_hint
         self._contrast = contrast
         self._image_type = image_type
@@ -739,7 +924,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     
 
     def __init__(self,bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 0, mask = 1, nDegree = 2 , preserve = False, seed = -1, device = None):
-        super(Jitter, self).__init__()
+        Node().__init__()
         self._bytes_per_sample_hint=bytes_per_sample_hint
         self._fill_value = fill_value
         self._interp_type = interp_type
@@ -794,7 +979,7 @@ size (float or list of float, optional, default = []) – Output size, in pixels
     
 
     def __init__(self,angle = 0, axis = [], bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 1, keep_size = False, output_dtype = -1 , preserve = False, seed = -1, size = [], device = None):
-        super(Rotate, self).__init__()
+        Node().__init__()
         self._angle = angle
         self._axis = axis
         self._bytes_per_sample_hint=bytes_per_sample_hint
@@ -842,7 +1027,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     
 
     def __init__(self, bytes_per_sample_hint = 0,  hue = 0.0, image_type = 0, preserve = False, seed = -1, device = None):
-        super(Hue, self).__init__()
+        Node().__init__()
         self._hue = hue
         self._bytes_per_sample_hint=bytes_per_sample_hint
         self._image_type = image_type
@@ -888,7 +1073,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     
 
     def __init__(self, bytes_per_sample_hint = 0,  saturation = 1.0, image_type = 0, preserve = False, seed = -1, device = None):
-        super(Saturation, self).__init__()
+        Node().__init__()
         self._saturation = saturation
         self._bytes_per_sample_hint=bytes_per_sample_hint
         self._image_type = image_type
@@ -939,7 +1124,7 @@ size (float or list of float, optional, default = []) – Output size, in pixels
     
 
     def __init__(self,bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 1,matrix = [], output_dtype = -1 , preserve = False, seed = -1, size = [], device = None):
-        super(WarpAffine, self).__init__()
+        Node().__init__()
         self._bytes_per_sample_hint=bytes_per_sample_hint
         self._fill_value = fill_value
         self._interp_type = interp_type
@@ -986,9 +1171,8 @@ value (float, optional, default = 1.0) – Set multiplicative change of value. 1
     
 
     def __init__(self,bytes_per_sample_hint = 0,dtype = 0,hue = 0.0 , saturation = 1.0 , preserve = False, seed = -1, value = 1.0, device = None):
-        super(HSV, self).__init__()
+        Node().__init__()
         self._bytes_per_sample_hint=bytes_per_sample_hint
-        
         self._interp_type = interp_type
         self._dtype = dtype
         self._hue = hue
@@ -1015,7 +1199,7 @@ value (float, optional, default = 1.0) – Set multiplicative change of value. 1
 
 class Fog(Node):
     def __init__(self,fog = 0.5, device = None):
-        super(Fog, self).__init__()
+        Node().__init__()
         self._fog = fog
         self.output = Node()
     
@@ -1036,7 +1220,7 @@ class Fog(Node):
 
 class FishEye(Node):
     def __init__(self, device = None):
-        super(FishEye, self).__init__()
+        Node().__init__()
         self.output = Node()
     
     def __call__(self,input):
@@ -1077,7 +1261,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
     def __init__(self, brightness = 1.0, bytes_per_sample_hint = 0, image_type = 0, 
                 preserve = False ,seed = -1, device = None):
-        super(Brightness, self).__init__()
+        Node().__init__()
         self._brightness = brightness
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
@@ -1104,7 +1288,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 class Vignette(Node):
     
     def __init__(self,vignette = 0.5, device = None):
-        super(Vignette, self).__init__()
+        Node().__init__()
         self._vignette = vignette
         self.output = Node()
     
@@ -1126,7 +1310,7 @@ class Vignette(Node):
 class SnPNoise(Node):
 
     def __init__(self,snpNoise = 0.5, device = None):
-        super(SnPNoise, self).__init__()
+        Node().__init__()
         self._snpNoise = snpNoise
         self.output = Node()
     
@@ -1148,7 +1332,7 @@ class SnPNoise(Node):
 
 class Exposure(Node):
     def __init__(self,exposure = 0.5, device = None):
-        super(Exposure, self).__init__()
+        Node().__init__()
         self._exposure = exposure
         self.output = Node()
     
@@ -1171,7 +1355,7 @@ class Exposure(Node):
 
 class Pixelate(Node):
     def __init__(self, device = None):
-        super(Pixelate, self).__init__()
+        Node().__init__()
         self.output = Node()
     
     def __call__(self,input):
@@ -1192,7 +1376,7 @@ class Pixelate(Node):
 
 class Blend(Node):
     def __init__(self,blend = 0.5, device = None):
-        super(Blend, self).__init__()
+        Node().__init__()
         self._blend = blend
         self.output = Node()
     
@@ -1215,7 +1399,7 @@ class Blend(Node):
 
 class Flip(Node):
     def __init__(self,flip = 0, device = None):
-        super(Flip, self).__init__()
+        Node().__init__()
         self._flip = flip
         self.output = Node()
     

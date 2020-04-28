@@ -64,6 +64,3 @@ void CropResizeNode::init(FloatParam* area, FloatParam* aspect_ratio, FloatParam
     _crop_param->set_x_drift(core(x_center_drift));
     _crop_param->set_y_drift(core(y_center_drift));
 }
-
-
-

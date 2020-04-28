@@ -113,13 +113,13 @@ class Pipeline(object):
         if(operator.data in self._check_ops):
             self._tensor_layout = operator._output_layout
             self._tensor_dtype = operator._output_dtype
-            self._multiplier = list(map(lambda x: 1/x ,operator._mean))
-            self._offset = list(map(lambda x,y: x/y, operator._mean, operator._std))
+            self._multiplier = list(map(lambda x: 1/x ,operator._std))
+            self._offset = list(map(lambda x,y: -(x/y), operator._mean, operator._std))
             if operator._crop_h != 0 and operator._crop_w != 0:
                 self._img_w = operator._crop_w
                 self._img_h = operator._crop_h
         elif(operator.data in self._check_crop_ops):
-            self.img_w = operator._resize_x
+            self._img_w = operator._resize_x
             self._img_h = operator._resize_y
 
     def process_calls(self,output_image):
@@ -151,8 +151,9 @@ class Pipeline(object):
     def build(self):
         """Build the pipeline using raliVerify call
         """
-        outputs,labels = self.define_graph()
-        self.process_calls(outputs)
+        
+        outputs= self.define_graph()
+        self.process_calls(outputs[0])
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
@@ -198,3 +199,42 @@ class Pipeline(object):
     
     def getImageLabels(self, array):
         b.getImageLabels(self._handle, array)
+
+    def GetBBLabels(self, array, idx):
+        return b.getBBLabels(self._handle, array, idx)
+    
+    def GetBBCords(self, array, idx):
+        return b.getBBCords(self._handle, array, idx)
+  
+    def GetImageLabels(self, array):
+        return b.getImageLabels(self._handle, array)
+
+    def GetBoundingBoxCount(self,idx):
+        return b.getBoundingBoxCount(self._handle,idx)
+
+    def GetBoundingBox(self,array):
+        return array    
+
+    def getOutputWidth(self):
+        return b.getOutputWidth(self._handle)
+
+    def getOutputHeight(self):
+        return b.getOutputHeight(self._handle) 
+
+    def getOutputImageCount(self):
+        return b.getOutputImageCount(self._handle)   
+
+    def getOutputColorFormat(self):
+        return b.getOutputColorFormat(self._handle)  
+
+    def getRemainingImages(self):
+        return b.getRemainingImages(self._handle)
+
+    def raliResetLoaders(self):
+        return b.raliResetLoaders(self._handle)
+
+    def isEmpty(self):
+        return b.isEmpty(self._handle)
+
+    def Timing_Info(self):
+        return b.getTimingInfo(self._handle)

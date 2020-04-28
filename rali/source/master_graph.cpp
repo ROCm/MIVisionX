@@ -247,7 +247,10 @@ void MasterGraph::release()
 MasterGraph::Status
 MasterGraph::update_node_parameters()
 {
-    // Generating new random parameters is done in the nodes. Apply renewed parameters to VX parameters used in augmentation
+    // Randomize random parameters
+    ParameterFactory::instance()->renew_parameters();
+
+    // Apply renewed parameters to VX parameters used in augmentation
     for(auto& node: _nodes)
         node->update_parameters();
 

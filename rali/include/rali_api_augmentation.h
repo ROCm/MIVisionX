@@ -504,12 +504,27 @@ extern "C"  RaliImage  RALI_API_CALL raliCropFixed(RaliContext context, RaliImag
                                                    float crop_pox_x,
                                                    float crop_pos_y,
                                                    float crop_pos_z);
+// //// \param crop_width
+
 
 extern "C" RaliImage  RALI_API_CALL raliCropCenterFixed(RaliContext context, RaliImage input,
                                                         unsigned crop_width,
                                                         unsigned crop_height,
                                                         unsigned crop_depth,
                                                         bool output);
+
+extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirrorFixed( RaliContext context, RaliImage input,
+                                                           unsigned dest_width, unsigned dest_height,
+                                                            bool is_output,
+                                                            unsigned crop_h,
+                                                            unsigned crop_w,
+                                                            RaliIntParam mirror
+                                                            );
+extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context, RaliImage p_input,
+                                                           unsigned dest_width, unsigned dest_height,
+                                                            bool is_output, RaliFloatParam p_crop_height = NULL,
+                                                            RaliFloatParam p_crop_width = NULL, RaliIntParam p_mirror = NULL
+                                                            );
 
 
 

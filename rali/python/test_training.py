@@ -4,21 +4,21 @@
 
 from rali_torch import *
 from rali import *
-
+import sys
 class DataLoader(RaliGraph):
 
 	def graph(self, input, batch_size):
-		warped = self.warpAffine(input,False)
-		pixelate_img = self.pixelate(warped, False)
+		# warped = self.warpAffine(input,False)
+		pixelate_img = self.pixelate(input, False)
 		temp_img = self.colorTemp(pixelate_img, False)
 		vignette_img = self.vignette(temp_img, False)
 		out0 = self.jitter(vignette_img, True)
 		out0.set_labels(0)
 		contrast_img = self.contrast(input,False)
 		blur_img = self.blur(contrast_img, False)
-		gamma_img = self.gamma(blur_img, False, 1.5)
+		gamma_img = self.gamma(blur_img, False)
 		rotate_img = self.rotate(gamma_img, False)
-		out1 = self.SnPNoise(rotate_img, True, 0.05)
+		out1 = self.SnPNoise(rotate_img, True)
 		out1.set_labels(1)
 		return out0, out1
 
@@ -28,11 +28,13 @@ class DataLoader(RaliGraph):
 
 		jpg_class_0 = self.jpegFileInput(class_0_path, input_color_format, False)
 		input0 = self.cropResize(jpg_class_0, 224, 224, False, 0.6, -1, -1)
+		#input0 = self.resize(jpg_class_0, 224,224,False)
 		out0 = self.graph(input0, batch_size)
 
 
 		jpg_class_1 = self.jpegFileInput(class_1_path, input_color_format, False)
 		input1 = self.cropResize(jpg_class_1, 224, 224, False, 0.6, -1, -1)
+		#input1 = self.resize(jpg_class_1, 224,224,False)
 		out1 = self.graph(input1, batch_size)
 
 		self.out = out0, out1
@@ -71,10 +73,10 @@ class ToyNet(nn.Module):
 
 
 def main():
-	print 'In the app'
+	print ('In the app')
 	batchSize = 1
 	if  len(sys.argv) < 3:
-		print 'Please pass the folder containing images as a command line argument'
+		print ('Please pass the folder containing images as a command line argument')
 		exit(0)
 
 	input_class_0 = sys.argv[1]
@@ -87,7 +89,7 @@ def main():
 
 	print ('Torch iterator created ... number of images', torchIterator.imageCount() )
 
-	torchIterator = PyTorchIterator(loader)
+	# torchIterator = PyTorchIterator(loader)
 
 	net = ToyNet()
 

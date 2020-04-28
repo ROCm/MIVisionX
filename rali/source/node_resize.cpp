@@ -37,4 +37,5 @@ void ResizeNode::create_node()
 
 void ResizeNode::update_node()
 {
+  
 }

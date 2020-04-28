@@ -289,6 +289,7 @@ vx_status get_kernels_to_publish()
 	STATUS_ERROR_CHECK(ADD_KERENEL(ColorTwistbatchPD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(CropMirrorNormalizePD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(CropPD_Register));
+	STATUS_ERROR_CHECK(ADD_KERENEL(ResizeCropMirrorPD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(Copy_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(Nop_Register));
     return status;

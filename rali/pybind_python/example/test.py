@@ -8,7 +8,7 @@ import amd.rali.ops as ops
 import amd.rali.types as types
 import sys
 class HybridTrainPipe(Pipeline):
-	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = False):
+	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
 		super(HybridTrainPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
 		world_size = 1
 		local_rank = 0
@@ -24,18 +24,18 @@ class HybridTrainPipe(Pipeline):
 													random_area=[0.1, 1.0],
 													num_attempts=100)
 		self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
-		#self.res = ops.Crop(crop=(crop, crop))
-		self.rain = ops.Rain(rain=0.5)
-		self.blur = ops.Blur(blur=0.5)
-		self.jitter = ops.Jitter()
-		self.contrast =ops.Rotate(angle=20)
-		self.hue = ops.Hue()
-		self.blend = ops.Blend(blend=0.5)
-		self.snp = ops.SnPNoise(snpNoise = 0.5)
-		self.ving = ops.Vignette(vignette = 0.2)
-		self.exp = ops.Exposure(exposure = 0.2)
-		#self.wf = ops.WarpAffine()
-		self.sat = ops.Saturation()
+		# #self.res = ops.Crop(crop=(crop, crop))
+		# self.rain = ops.Rain(rain=0.5)
+		# self.blur = ops.Blur(blur=0.5)
+		# self.jitter = ops.Jitter()
+		# self.contrast =ops.Rotate(angle=20)
+		# self.hue = ops.Hue()
+		# self.blend = ops.Blend(blend=0.5)
+		# self.snp = ops.SnPNoise(snpNoise = 0.5)
+		# self.ving = ops.Vignette(vignette = 0.2)
+		# self.exp = ops.Exposure(exposure = 0.2)
+		# #self.wf = ops.WarpAffine()
+		# self.sat = ops.Saturation()
 		self.cmnp = ops.CropMirrorNormalize(device="gpu",
 											output_dtype=types.FLOAT,
 											output_layout=types.NCHW,
@@ -50,31 +50,35 @@ class HybridTrainPipe(Pipeline):
 		rng = self.coin()
 		self.jpegs, self.labels = self.input(name="Reader")
 		images = self.decode(self.jpegs)
-		images = self.rain(images)
-		images = self.blur(images)
+		# images = self.rain(images)
+		# images = self.blur(images)
 		images = self.res(images)
-		images = self.jitter(images)
-		images_hue = self.hue(images)
-		images_snp = self.snp(images)
-		images = self.ving(images)
-		images = self.blend(images_hue, images_snp)
-		images = self.exp(images)
-		images = self.sat(images)
-		#images = self.wf(images)
-		images = self.contrast(images)
+		# images = self.jitter(images)
+		# images_hue = self.hue(images)
+		# images_snp = self.snp(images)
+		# images = self.ving(images)
+		# images = self.blend(images_hue, images_snp)
+		# images = self.exp(images)
+		# images = self.sat(images)
+		# #images = self.wf(images)
+		# images = self.contrast(images)
 		output = self.cmnp(images, mirror=rng)
 		return [output, self.labels]
 
 def main():
-	if  len(sys.argv) < 2:
-		print ('Please pass the folder containing images as a command line argument')
+	if  len(sys.argv) < 4:
+		print ('Please pass image_folder cpu/gpu batch_size')
 		exit(0)
-	image_path = sys.argv[1]
-	bs = 2
+	_image_path = sys.argv[1]
+	if(sys.argv[2] == "cpu"):
+		_rali_cpu = True
+	else:
+		_rali_cpu = False
+	bs = int(sys.argv[3])
 	nt = 1
 	di = 0
 	crop_size = 224
-	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size) #, dali_cpu=args.dali_cpu)        
+	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=_image_path, crop=crop_size, rali_cpu=_rali_cpu)
 	pipe.build()
 	world_size=1
 	imageIterator = RALI_iterator(pipe)

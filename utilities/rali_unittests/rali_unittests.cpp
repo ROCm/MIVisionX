@@ -57,7 +57,7 @@ int main(int argc, const char ** argv)
     bool display = 1;// Display the images
     int rgb = 1;// process color images
     bool gpu = 1;
-    int test_case = 0;
+    int test_case = 3; // For Rotate 
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         test_case = atoi(argv[++argIdx]);
@@ -70,7 +70,7 @@ int main(int argc, const char ** argv)
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
-
+    
     test(test_case, path, outName, rgb, gpu, display, width, height);
 
     return 0;
@@ -111,9 +111,16 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     double frequencies[num_values] = {1, 5, 5};
     RaliFloatParam rand_angle = raliCreateFloatRand(values, frequencies,
                                                     sizeof(values) / sizeof(values[0]));
-
+    
+    //num_values = 2;
+    int new_values[2] = { 0, 1};
+    double new_freq[2] = {40, 60};
+    RaliIntParam rand_mirror = raliCreateIntRand(new_values, new_freq, 2);
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
+
+    RaliMetaData meta_data = raliCreateLabelReader(handle, path);
+    
     RaliImage input1;
 
     // The jpeg file loader can automatically select the best size to decode all images to that size
@@ -130,10 +137,11 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     }
 
 
-    int resize_w = width, resize_h = height;
+    int resize_w = width, resize_h = height; // height and width
 
-    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
-    RaliImage image0_b = raliRotateFixed(handle, image0, 30, false);
+    //RaliImage image0 = input1;
+    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);// input1; 
+    RaliImage image0_b = raliRotate(handle, image0,false);
 
     RaliFlipAxis axis_h = RALI_FLIP_HORIZONTAL;
     RaliFlipAxis axis_v = RALI_FLIP_VERTICAL;
@@ -149,196 +157,223 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 1: {
             std::cout << ">>>>>>> Running " << "raliCropResize" << std::endl;
-            image1 = raliCropResize(handle, image0, resize_w, resize_h, true, rand_crop_area);
+            image1 = raliCropResize(handle, input1, resize_w, resize_h, true);
         }
             break;
         case 2: {
-            std::cout << ">>>>>>> Running " << "raliCropResizeFixed" << std::endl;
-            image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.8, 0.6, -0.4);
+            std::cout << ">>>>>>> Running " << "raliRotate" << std::endl;
+            image1 = raliRotate(handle, image0, true);
         }
             break;
         case 3: {
-            std::cout << ">>>>>>> Running " << "raliRotate" << std::endl;
-            image1 = raliRotate(handle, image0, true, rand_angle);
-        }
-            break;
-        case 4: {
-            std::cout << ">>>>>>> Running " << "raliRotateFixed" << std::endl;
-            image1 = raliRotateFixed(handle, image0, 45, true, resize_w, resize_h);
-        }
-            break;
-        case 5: {
             std::cout << ">>>>>>> Running " << "raliBrightness" << std::endl;
             image1 = raliBrightness(handle, image0, true);
         }
             break;
-        case 6: {
-            std::cout << ">>>>>>> Running " << "raliBrightnessFixed" << std::endl;
-            image1 = raliBrightnessFixed(handle, image0, 4, 50, true);
-        }
-            break;
-        case 7: {
+        case 4: {
             std::cout << ">>>>>>> Running " << "raliGamma" << std::endl;
             image1 = raliGamma(handle, image0, true);
         }
             break;
-        case 8: {
-            std::cout << ">>>>>>> Running " << "raliGammaFixed" << std::endl;
-            image1 = raliGammaFixed(handle, image0, 0.5, true);
-        }
-            break;
-        case 9: {
+        case 5: {
             std::cout << ">>>>>>> Running " << "raliContrast" << std::endl;
             image1 = raliContrast(handle, image0, true);
         }
             break;
-        case 10: {
-            std::cout << ">>>>>>> Running " << "raliContrastFixed" << std::endl;
-            image1 = raliContrastFixed(handle, image0, 30, 380, true);
+        case 6: {
+            std::cout << ">>>>>>> Running " << "raliFlip" << std::endl;
+            image1 = raliFlip(handle, image0, true);
         }
             break;
-        case 11: {
-            std::cout << ">>>>>>> Running " << "raliFlip horizontal" << std::endl;
-            image1 = raliFlip(handle, image0, axis_h, true);
-        }
-            break;
-        case 12: {
-            std::cout << ">>>>>>> Running " << "raliFlip vertical" << std::endl;
-            image1 = raliFlip(handle, image0, axis_v, true);
-        }
-            break;
-        case 13: {
+        case 7: {
             std::cout << ">>>>>>> Running " << "raliBlur" << std::endl;
             image1 = raliBlur(handle, image0, true);
         }
             break;
-        case 14: {
-            std::cout << ">>>>>>> Running " << "raliBlurFixed" << std::endl;
-            image1 = raliBlurFixed(handle, image0, 17.25, true);
-        }
-            break;
-        case 15: {
+        case 8: {
             std::cout << ">>>>>>> Running " << "raliBlend" << std::endl;
             image1 = raliBlend(handle, image0, image0_b, true);
         }
             break;
-        case 16: {
-            std::cout << ">>>>>>> Running " << "raliBlendFixed" << std::endl;
-            image1 = raliBlendFixed(handle, image0, image0_b, 0.5, true);
-        }
-            break;
-
-        case 17: {
+        case 9: {
             std::cout << ">>>>>>> Running " << "raliWarpAffine" << std::endl;
-            image1 = raliWarpAffine(handle, image0, true);
+           image1 = raliWarpAffine(handle, image0, true);
         }
             break;
-        case 18: {
-            std::cout << ">>>>>>> Running " << "raliWarpAffineFixed" << std::endl;
-            image1 = raliWarpAffineFixed(handle, image0, true, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5);
-        }
-            break;
-        case 19: {
+        case 10: {
             std::cout << ">>>>>>> Running " << "raliFishEye" << std::endl;
             image1 = raliFishEye(handle, image0, true);
         }
             break;
-        case 20: {
+        case 11: {
             std::cout << ">>>>>>> Running " << "raliVignette" << std::endl;
             image1 = raliVignette(handle, image0, true);
         }
             break;
-        case 21: {
-            std::cout << ">>>>>>> Running " << "raliVignetteFixed" << std::endl;
-            image1 = raliVignetteFixed(handle, image0, 40, true);
-        }
-            break;
-        case 22: {
+        case 12: {
             std::cout << ">>>>>>> Running " << "raliJitter" << std::endl;
             image1 = raliJitter(handle, image0, true);
         }
             break;
-        case 23: {
-            std::cout << ">>>>>>> Running " << "raliJitterFixed" << std::endl;
-            image1 = raliJitterFixed(handle, image0, 3, true);
-        }
-            break;
-        case 24: {
+        case 13: {
             std::cout << ">>>>>>> Running " << "raliSnPNoise" << std::endl;
             image1 = raliSnPNoise(handle, image0, true);
         }
             break;
-        case 25: {
-            std::cout << ">>>>>>> Running " << "raliSnPNoiseFixed" << std::endl;
-            image1 = raliSnPNoiseFixed(handle, image0, 0.5, true);
-        }
-            break;
-        case 26: {
+        case 14: {
             std::cout << ">>>>>>> Running " << "raliSnow" << std::endl;
             image1 = raliSnow(handle, image0, true);
         }
             break;
-        case 27: {
-            std::cout << ">>>>>>> Running " << "raliSnowFixed" << std::endl;
-            image1 = raliSnowFixed(handle, image0, 0.5, true);
-        }
-            break;
-        case 28: {
+        case 15: {
             std::cout << ">>>>>>> Running " << "raliRain" << std::endl;
             image1 = raliRain(handle, image0, true);
         }
             break;
-        case 29: {
-            std::cout << ">>>>>>> Running " << "raliRainFixed" << std::endl;
-            image1 = raliRainFixed(handle, image0, 0.5, true);
-        }
-            break;
-        case 30: {
+        case 16: {
             std::cout << ">>>>>>> Running " << "raliColorTemp" << std::endl;
-            image1 = raliColorTemp(handle, image0, true, color_temp_adj);
+            image1 = raliColorTemp(handle, image0, true);
         }
             break;
-        case 31: {
-            std::cout << ">>>>>>> Running " << "raliColorTempFixed" << std::endl;
-            image1 = raliColorTempFixed(handle, image0, 70, true);
-        }
-            break;
-        case 32: {
+        case 17: {
             std::cout << ">>>>>>> Running " << "raliFog" << std::endl;
             image1 = raliFog(handle, image0, true);
         }
             break;
-        case 33: {
-            std::cout << ">>>>>>> Running " << "raliFogFixed" << std::endl;
-            image1 = raliFogFixed(handle, image0, true, 2.5);
-        }
-            break;
-        case 34: {
+        case 18: {
             std::cout << ">>>>>>> Running " << "raliLensCorrection" << std::endl;
             image1 = raliLensCorrection(handle, image0, true);
         }
             break;
-        case 35: {
-            std::cout << ">>>>>>> Running " << "raliLensCorrectionFixed" << std::endl;
-            image1 = raliLensCorrectionFixed(handle, image0, 2.9, 1.5, true);
-        }
-            break;
-        case 36: {
+        case 19: {
             std::cout << ">>>>>>> Running " << "raliPixelate" << std::endl;
             image1 = raliPixelate(handle, image0, true);
         }
             break;
-        case 37: {
+        case 20: {
             std::cout << ">>>>>>> Running " << "raliExposure" << std::endl;
             image1 = raliExposure(handle, image0, true);
         }
+        case 21: {
+            std::cout << ">>>>>>> Running " << "raliHue" << std::endl;
+            image1 = raliHue(handle, image0, true);
+        }
+        case 22: {
+            std::cout << ">>>>>>> Running " << "raliSaturation" << std::endl;
+            image1 = raliSaturation(handle, image0, true);
+        }
+            break;
+        case 23: {
+            std::cout << ">>>>>>> Running " << "raliCopy" << std::endl;
+            image1 = raliCopy(handle, image0, true);
+        }
+            break;
+        case 24: {
+            std::cout << ">>>>>>> Running " << "raliColorTwist" << std::endl;
+            image1 = raliColorTwist(handle, image0, true);
+        }
+            break;
+	case 25: {
+            std::cout << ">>>>>>> Running " << "raliCropMirrorNormalize" << std::endl;
+	    std::vector<float> mean;
+	    std::vector<float> std_dev;
+            image1 = raliCropMirrorNormalize(handle, image0, 1, 200, 200, 50, 50, 1, mean, std_dev, true);
+        }
+            break;
+
+
+
+        case 30: {
+             std::cout << ">>>>>>> Running " << "raliCropResizeFixed" << std::endl;
+             image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.25, 1.2, 0.6, -0.4);
+         }
+             break;
+	case 31: {
+            std::cout << ">>>>>>> Running " << "raliRotateFixed" << std::endl;
+            image1 = raliRotateFixed(handle, image0, 45, true);
+        }
+            break;
+        case 32: {
+            std::cout << ">>>>>>> Running " << "raliBrightnessFixed" << std::endl;
+            image1 = raliBrightnessFixed(handle, image0, 1.90, 20, true);
+        }
+            break;
+        case 33: {
+            std::cout << ">>>>>>> Running " << "raliGammaFixed" << std::endl;
+            image1 = raliGammaFixed(handle, image0, 0.5, true);
+        }
+            break;
+        case 34: {
+            std::cout << ">>>>>>> Running " << "raliContrastFixed" << std::endl;
+            image1 = raliContrastFixed(handle, image0, 30, 80, true);
+        }
+            break;
+        case 35: {
+           std::cout << ">>>>>>> Running " << "raliBlurFixed" << std::endl;
+           image1 = raliBlurFixed(handle, image0, 5, true);
+        }
+            break;
+        case 36: {
+            std::cout << ">>>>>>> Running " << "raliBlendFixed" << std::endl;
+            image1 = raliBlendFixed(handle, image0, image0_b, 0.5, true);
+        }
+            break;
+        case 37: {
+            std::cout << ">>>>>>> Running " << "raliWarpAffineFixed" << std::endl;
+            image1 = raliWarpAffineFixed(handle, image0, true, 0.25, 0.25, 1, 1, 5, 5);
+        }
             break;
         case 38: {
+            std::cout << ">>>>>>> Running " << "raliVignetteFixed" << std::endl;
+            image1 = raliVignetteFixed(handle, image0, 50 , true);
+        }
+            break;
+        case 39: {
+            std::cout << ">>>>>>> Running " << "raliJitterFixed" << std::endl;
+            image1 = raliJitterFixed(handle, image0, 3, true);
+        }
+            break;
+        case 40: {
+            std::cout << ">>>>>>> Running " << "raliSnPNoiseFixed" << std::endl;
+            image1 = raliSnPNoiseFixed(handle, image0, 0.12, true);
+        }
+            break;
+        case 41: {
+            std::cout << ">>>>>>> Running " << "raliSnowFixed" << std::endl;
+            image1 = raliSnowFixed(handle, image0, 0.2, true);
+        }
+            break;
+        case 42: {
+            std::cout << ">>>>>>> Running " << "raliRainFixed" << std::endl;
+            image1 = raliRainFixed(handle, image0, 0.5, 2, 16, 0.25, true);
+        }
+            break;
+        case 43: {
+            std::cout << ">>>>>>> Running " << "raliColorTempFixed" << std::endl;
+            image1 = raliColorTempFixed(handle, image0, 70, true);
+        }
+            break;
+        case 44: {
+            std::cout << ">>>>>>> Running " << "raliFogFixed" << std::endl;
+            image1 = raliFogFixed(handle, image0, 0.5, true);
+        }
+            break;
+        case 45: {
+            std::cout << ">>>>>>> Running " << "raliLensCorrectionFixed" << std::endl;
+            image1 = raliLensCorrectionFixed(handle, image0, 2.9, 1.2, true);
+        }
+            break;
+        case 46: {
             std::cout << ">>>>>>> Running " << "raliExposureFixed" << std::endl;
             image1 = raliExposureFixed(handle, image0, 1, true);
         }
             break;
-        default:
+        case 47: {
+            std::cout << ">>>>>>> Running " << "raliFlipFixed" << std::endl;
+            image1 = raliFlipFixed(handle, image0, 2, true);
+        }
+            break;
+	default:
             std::cout << "Not a valid option! Exiting!\n";
             return -1;
     }
@@ -351,13 +386,11 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
         return -1;
     }
 
-
-
-    printf("Augmented copies count %d\n", raliGetOutputImageCount(handle));
+    printf("\n\nAugmented copies count %d \n", raliGetAugmentationBranchCount(handle));
 
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
-    int h = raliGetOutputImageCount(handle) * raliGetOutputHeight(handle);
+    int h = raliGetAugmentationBranchCount(handle) * raliGetOutputHeight(handle);
     int w = raliGetOutputWidth(handle);
     int p = ((color_format == RaliImageColor::RALI_COLOR_RGB24) ? 3 : 1);
     const unsigned number_of_cols = 1;//1920 / w;
@@ -366,14 +399,22 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
     int col_counter = 0;
-    cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
+    //cv::namedWindow("output", CV_WINDOW_AUTOSIZE);
     printf("Going to process images\n");
     printf("Remaining images %d \n", raliGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
-    while (raliGetRemainingImages(handle) > 0) {
+    while (raliGetRemainingImages(handle) >= inputBatchSize) {
         if (raliRun(handle) != 0)
             break;
+        
+        char img_name[50];
+        int label_id[inputBatchSize];     
+        raliGetImageLabels(handle, label_id);
+        for(int i = 0; i < inputBatchSize; i++) {
+            raliGetImageName(handle, img_name, i);
+            std::cerr << "\nPrinting image name : " << img_name<<"\t Printing label_id : " << label_id[i] << std::endl;
+        }
 
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
@@ -391,6 +432,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
             cv::imshow("output", mat_color);
             cv::imwrite(outName, mat_color, compression_params);
+            cv::waitKey(0);
         } else {
             cv::imshow("output", mat_output);
             cv::imwrite(outName, mat_output, compression_params);
@@ -399,6 +441,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
         cv::waitKey(100);
         col_counter = (col_counter + 1) % number_of_cols;
     }
+
     high_resolution_clock::time_point t2 = high_resolution_clock::now();
     auto dur = duration_cast<microseconds>(t2 - t1).count();
     auto rali_timing = raliGetTimingInfo(handle);

@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7"
+__version__     = "1.7.4"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -20,9 +20,9 @@ parser.add_argument('--directory', type=str, default='',        help='Setup home
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
 parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
-parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options: Install ffmpeg - yes')
+parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
-parser.add_argument('--reinstall', type=str, default='no',      help='Remove previous setup and reinstall (default:no) [options:yes/no]')
+parser.add_argument('--reinstall', type=str, default='no',      help='Remove previous setup and reinstall - optional (default:no) [options:yes/no]')
 args = parser.parse_args()
 
 setupDir = args.directory
@@ -185,7 +185,25 @@ else:
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install qt5-default qtcreator')
 	# Install RPP
 	if rppInstall == 'yes':
-		os.system('(cd '+deps_dir+'; git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
+		os.system('(cd '+deps_dir+'; git clone -b 0.2 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
+		#Yasm/Nasm for TurboJPEG
+		if linuxSystemInstall == 'apt-get':
+			os.system('sudo -v')
+			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install nasm yasm')
+		else:
+			# Nasm
+			os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
+			os.system('(cd '+deps_dir+'; tar xjvf nasm-2.14.02.tar.bz2 )')
+			os.system('(cd '+deps_dir+'/nasm-2.14.02; ./autogen.sh; ./configure; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/nasm-2.14.02; sudo '+linuxFlag+' make install )')
+			# Yasm
+			os.system('(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
+			os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
+			os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
+		os.system('(cd '+deps_dir+'; git clone https://github.com/libjpeg-turbo/libjpeg-turbo; cd libjpeg-turbo; mkdir build; cd build; cmake ../; make -j4; sudo make install)')
 	# Install ffmpeg
 	if ffmpegInstall == 'yes':
 		if linuxSystemInstall == 'apt-get':

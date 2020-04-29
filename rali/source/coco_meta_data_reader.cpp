@@ -32,6 +32,11 @@ void COCOMetaDataReader::lookup(const std::vector<std::string> &image_names) {
     {
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
+	/*
+	 * User should provide the coco train or val folder containing images with respect to json file.
+	 * If the processed COCO image was not in the map, returns BoundingBox meta data values as zero since 
+	 * those images doesn't have annotations.
+	 */
         if(_map_content.end() == it){
 
             BoundingBoxCords bb_coords;

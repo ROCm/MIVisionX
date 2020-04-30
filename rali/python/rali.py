@@ -101,6 +101,13 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
+    def BinaryFileInput(self, path, color_format, is_output, width, height, file_prefix, loop = False):
+        out = self._lib.raliBinaryFileInput(self.handle, path, color_format.value, is_output, width, height, file_prefix, loop)
+        out_img = RaliImage(out)
+        if is_output:
+            self.output_images.append(out_img)
+        return out_img
+
 
     def reset(self):
         return self._lib.startOver(self.handle)
@@ -343,8 +350,11 @@ class RaliGraph():
     def raliCreateTextFileBasedLabelReader(self, label_file):
         return self._lib.raliCreateTextFileBasedLabelReader(self.handle, label_file)
 
-    def raliGetImageLabels(self, buffer):
-        return self._lib.raliGetImageLabels(self.handle, np.ascontiguousarray(out, dtype=np.int32))
+    def getImageLabels(self, buffer):
+        return self._lib.raliGetImageLabels(self.handle, np.ascontiguousarray(buffer, dtype=np.int32))
+
+    def CreateCifar10LabelReader(self, path, file_prefix):
+        return self._lib.raliCreateCifar10LabelReader(self.handle, path, file_prefix)
 
     """ rali_api_data_transfer.h """
 
@@ -365,3 +375,4 @@ class RaliGraph():
             self._lib.copyToOutputTensor32(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
         elif tensor_dtype == TensorDataType.FLOAT16:
             self._lib.copyToOutputTensor16(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
+

@@ -59,6 +59,22 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         RaliDecodeDevice rali_decode_device,
                                                         bool is_output ,
                                                         unsigned width , unsigned height, bool loop = false );
+/// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param out_width ; output width
+/// \param out_height ; output_height
+/// \param filename_prefix ; if set loader will only load files with the given prefix name
+/// \return Reference to the output image
+extern "C"  RaliImage  RALI_API_CALL raliRawCIFAR10Source(RaliContext context,
+                                                        const char* source_path,
+                                                        RaliImageColor color_format,
+                                                        bool is_output ,
+                                                        unsigned out_width, unsigned out_height, const char* filename_prefix = "",
+                                                        bool loop = false);
+
 ///
 /// \param rali_context
 /// \return

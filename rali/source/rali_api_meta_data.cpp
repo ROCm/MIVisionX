@@ -116,4 +116,13 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf, unsigne
     ptr += sizeof(BoundingBoxCord)*sizeof(float);
 }
 
+RaliMetaData
+RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char* source_path, const char* file_prefix) {
+    auto context = static_cast<Context*>(p_context);
+    if (!context)
+        THROW("Invalid rali context passed to raliCreateTextFileBasedLabelReader")
+
+    return context->master_graph->create_cifar10_label_reader(source_path, file_prefix);
+
+}
 

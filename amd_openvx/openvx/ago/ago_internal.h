@@ -307,6 +307,7 @@ struct AgoConfigImage {
 	vx_uint32 x_scale_factor_is_2; // will be 0 or 1
 	vx_uint32 y_scale_factor_is_2; // will be 0 or 1
 	vx_bool enableUserBufferOpenCL;
+	vx_bool mem_handle; 		// false by default ; true if image created from handle and the handle is NULL
 };
 struct AgoConfigLut {
 	vx_enum type;

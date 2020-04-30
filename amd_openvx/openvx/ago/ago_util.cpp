@@ -2530,11 +2530,13 @@ int agoAllocData(AgoData * data)
 		}
 	}
 	else if (data->ref.type == VX_TYPE_IMAGE) {
+		data->u.img.mem_handle = vx_false_e;
 		if (data->children) {
 			for (vx_uint32 child = 0; child < data->numChildren; child++) {
 				if (data->children[child]) {
 					if (agoAllocData(data->children[child])) {
 						// TBD error handling
+						data->u.img.mem_handle = vx_true_e;
 						return -1;
 					}
 				}
@@ -2544,6 +2546,7 @@ int agoAllocData(AgoData * data)
             // make sure that the master image has been allocated
 			if (!data->u.img.roiMasterImage->buffer) {
 				if (agoAllocData(data->u.img.roiMasterImage) < 0) {
+					data->u.img.mem_handle = vx_true_e;
 					return -1;
 				}
 			}
@@ -2556,8 +2559,10 @@ int agoAllocData(AgoData * data)
 			if (data->u.img.isUniform) {
 				// allocate buffer
 				data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
-				if (!data->buffer_allocated)
+				if (!data->buffer_allocated){
+					data->u.img.mem_handle = vx_true_e;
 					return -1;
+				}
 				// initialize image with uniform values
 				if (data->u.img.format == VX_DF_IMAGE_RGBX) {
 					vx_uint32 value = (data->u.img.uniform[0] & 0xff) | ((data->u.img.uniform[1] & 0xff) << 8) | ((data->u.img.uniform[2] & 0xff) << 16) | ((data->u.img.uniform[3] & 0xff) << 24);
@@ -2604,8 +2609,10 @@ int agoAllocData(AgoData * data)
 			else {
 				// allocate buffer and get aligned buffer with 16-byte alignment
 				data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
-				if (!data->buffer_allocated)
+				if (!data->buffer_allocated){
+					data->u.img.mem_handle = vx_true_e;
 					return -1;
+				}
 			}
 		}
 	}

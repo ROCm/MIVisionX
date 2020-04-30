@@ -251,3 +251,13 @@ class RaliLib:
         self.copyToOutputTensor32 = self.lib.raliCopyToOutputTensor32
         self.copyToOutputTensor32.restype = ctypes.c_int
         self.copyToOutputTensor32.argtypes = [ctypes.c_void_p, ndpointer(dtype=np.float32, flags="C_CONTIGUOUS"), ctypes.c_uint, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_float, ctypes.c_uint]
+
+        """ rali_api_meta_data.h"""
+        self.raliCreateTextFileBasedLabelReader = self.lib.raliCreateTextFileBasedLabelReader
+        self.raliCreateTextFileBasedLabelReader.restype = ctypes.c_void_p
+        self.raliCreateTextFileBasedLabelReader.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+
+        self.raliGetImageLabels = self.lib.raliGetImageLabels
+        self.raliGetImageLabels.restype = ctypes.c_void_p
+        self.raliGetImageLabels.argtypes = [ctypes.c_void_p, ndpointer(dtype=np.int32, flags="C_CONTIGUOUS")]
+

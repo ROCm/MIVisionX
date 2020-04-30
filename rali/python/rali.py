@@ -339,6 +339,13 @@ class RaliGraph():
     def getOutputColorFormat(self):
         return self._lib.raliGetOutputColorFormat(self.handle)
 
+    """ rali_api_meta_data.h"""
+    def raliCreateTextFileBasedLabelReader(self, label_file):
+        return self._lib.raliCreateTextFileBasedLabelReader(self.handle, label_file)
+
+    def raliGetImageLabels(self, buffer):
+        return self._lib.raliGetImageLabels(self.handle, np.ascontiguousarray(out, dtype=np.int32))
+
     """ rali_api_data_transfer.h """
 
     def copyToNPArray(self, array ):

@@ -172,7 +172,7 @@ sudo apt-get install mivisionx
 sudo yum install mivisionx
 ````
  **Note:**
-  * vx_winml is not supported on linux
+  * vx_winml is not supported on linux OS
   * source code will not available with apt-get/yum install
   * executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
   * OpenVX and module header files into `/opt/rocm/mivisionx/include`

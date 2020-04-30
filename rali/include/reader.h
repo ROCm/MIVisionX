@@ -33,7 +33,7 @@ private:
     size_t _shard_id = 0;
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     bool _loop = false;
-    std::string _file_prefix = ""; //!< to read only files with prefix. not applicable to jpegs and TFRecord.
+    std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader
 };
 
 class Reader {

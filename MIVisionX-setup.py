@@ -203,7 +203,10 @@ else:
 			os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
 			os.system('sudo -v')
 			os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
-		os.system('(cd '+deps_dir+'; git clone https://github.com/libjpeg-turbo/libjpeg-turbo; cd libjpeg-turbo; mkdir build; cd build; cmake ../; make -j4; sudo make install)')
+		#os.system('(cd '+deps_dir+'; git clone https://github.com/libjpeg-turbo/libjpeg-turbo; cd libjpeg-turbo; mkdir build; cd build; cmake ../; make -j4; sudo make install)')
+		os.system('(cd '+deps_dir+'; wget https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz )')
+		os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
+		os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; cmake -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
 	# Install ffmpeg
 	if ffmpegInstall == 'yes':
 		if linuxSystemInstall == 'apt-get':

@@ -185,6 +185,7 @@ else:
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install qt5-default qtcreator')
 	# Install RPP
 	if rppInstall == 'yes':
+		os.system('(sudo apt-get install libjsoncpp-dev)')
 		os.system('(sudo apt --yes install libboost-all-dev clang)')
 		os.system('(cd '+deps_dir+'; git clone -b 0.2 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
 		#Yasm/Nasm for TurboJPEG

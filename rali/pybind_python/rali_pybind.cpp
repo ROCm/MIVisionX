@@ -64,6 +64,26 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_BB_label_copy(RaliContext context, py::array_t<int> array,unsigned image_idx)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetBoundingBoxLabel(context,ptr,image_idx);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_BB_cord_copy(RaliContext context, py::array_t<float> array,unsigned image_idx)
+    {
+        auto buf = array.request();
+        float* ptr = (float*) buf.ptr;
+        // call pure C++ function
+        raliGetBoundingBoxCords(context,ptr,image_idx);
+        return py::cast<py::none>(Py_None);
+    }
+
+
+
     PYBIND11_MODULE(rali_pybind, m) {
         m.doc() = "Python bindings for the C++ portions of RALI";
         // rali_api.h
@@ -126,7 +146,13 @@ namespace rali{
         m.def("getImageNameLen",&raliGetImageNameLen);
         m.def("getStatus",&raliGetStatus);
         m.def("labelReader",&raliCreateLabelReader);
+        m.def("COCOReader",&raliCreateCOCOReader);
         m.def("getImageLabels",&wrapper_label_copy);
+        m.def("getBBLabels",&wrapper_BB_label_copy);
+        m.def("getBBCords",&wrapper_BB_cord_copy);
+        m.def("getBoundingBoxCount",&raliGetBoundingBoxCount);
+        
+
         m.def("isEmpty",&raliIsEmpty);
         m.def("getTimingInfo",raliGetTimingInfo);
         // rali_api_parameter.h
@@ -213,6 +239,25 @@ namespace rali{
             py::arg("crop_pox_x") = NULL,
             py::arg("crop_pos_y") = NULL,
             py::arg("crop_pos_z") = NULL);
+        m.def("CropFixed",&raliCropFixed,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("crop_width"),
+            py::arg("crop_height"),
+            py::arg("crop_depth"),
+            py::arg("is_output"),
+            py::arg("crop_pox_x"),
+            py::arg("crop_pos_y"),
+            py::arg("crop_pos_z"));
+        m.def("CenterCropFixed",&raliCropCenterFixed,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("crop_width"),
+            py::arg("crop_height"),
+            py::arg("crop_depth"),
+            py::arg("is_output"));
         m.def("Brightness",&raliBrightness,
             py::return_value_policy::reference,
             py::arg("context"),

@@ -300,6 +300,7 @@ list (APPEND SOURCES
     source/ColorTwistbatchPD.cpp
     source/CropMirrorNormalizePD.cpp
     source/CropPD.cpp
+    source/ResizeCropMirrorPD.cpp
     source/nop.cpp
     source/copy.cpp
 

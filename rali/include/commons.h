@@ -34,7 +34,8 @@ enum class RaliColorFormat
 {
     RGB24 = 0,
     BGR24,
-    U8
+    U8,
+    RGB_PLANAR,
 };
 
 /*! \brief Memory type, host or device

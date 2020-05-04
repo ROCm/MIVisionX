@@ -32,3 +32,42 @@ from rali_pybind.types import NHWC
 from rali_pybind.types import NCHW
 
 
+
+
+
+
+_known_types={
+
+
+	OK : ("OK", OK),
+    CONTEXT_INVALID : ("CONTEXT_INVALID", CONTEXT_INVALID),
+	RUNTIME_ERROR : ("RUNTIME_ERROR", RUNTIME_ERROR),
+    UPDATE_PARAMETER_FAILED : ("UPDATE_PARAMETER_FAILED", UPDATE_PARAMETER_FAILED),
+	INVALID_PARAMETER_TYPE : ("INVALID_PARAMETER_TYPE", INVALID_PARAMETER_TYPE),
+
+	GPU : ("GPU", GPU),
+    CPU : ("CPU", CPU),
+	FLOAT : ("FLOAT", FLOAT),
+    FLOAT16 : ("FLOAT16", FLOAT16),
+
+
+	MAX_SIZE : ("MAX_SIZE", MAX_SIZE),
+    USER_GIVEN_SIZE : ("USER_GIVEN_SIZE", USER_GIVEN_SIZE),
+	MOST_FREQUENT_SIZE : ("MOST_FREQUENT_SIZE", MOST_FREQUENT_SIZE),
+	
+	NHWC : ("NHWC", NHWC),
+    NCHW : ("NCHW", NCHW),
+	BGR : ("BGR", BGR),
+    RGB : ("RGB", RGB),
+	GRAY : ("GRAY", GRAY)
+
+
+}
+
+
+def data_type_function(dtype):
+    if dtype in _known_types:
+        ret = _known_types[dtype][0]
+        return ret
+    else:
+        raise RuntimeError(str(dtype) + " does not correspond to a known type.")

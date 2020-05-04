@@ -274,6 +274,8 @@ vx_status ColorTwist_Register(vx_context);
 vx_status ColorTwistbatchPD_Register(vx_context);
 vx_status CropMirrorNormalizePD_Register(vx_context);
 vx_status CropPD_Register(vx_context);
+vx_status ResizeCropMirrorPD_Register(vx_context);
+vx_status ResizeCropMirrorPD(vx_context);
 vx_status Nop_Register(vx_context);
 vx_status Copy_Register(vx_context);
 
@@ -548,6 +550,8 @@ vx_status Copy_Register(vx_context);
 #define VX_KERNEL_RPP_COLORTWISTBATCHPD_NAME        "org.rpp.ColorTwistbatchPD"
 #define VX_KERNEL_RPP_CROPMIRRORNORMALIZEBATCHPD_NAME        "org.rpp.CropMirrorNormalizebatchPD"
 #define VX_KERNEL_RPP_CROPPD_NAME   "org.rpp.CropPD"
+#define VX_KERNEL_RPP_RESIZECROPMIRRORPD_NAME      "org.rpp.ResizeCropMirrorPD"
+
 
 // #define VX_KERNEL_RPP_COLORTWISTBATCHPS_NAME        "org.rpp.ColorTwistPS"
 // #define VX_KERNEL_RPP_COLORTWISTBATCHPDROID_NAME    "org.rpp.ColorTwistPDROID"

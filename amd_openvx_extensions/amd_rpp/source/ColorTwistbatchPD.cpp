@@ -22,6 +22,8 @@ struct ColorTwistbatchPDLocalData {
 	vx_float32 *beta;
     vx_float32 *hue;
     vx_float32 *sat;
+	Rpp32u* srcBatch_width;
+	Rpp32u* srcBatch_height;
 #if ENABLE_OPENCL
 	cl_mem cl_pSrc;
 	cl_mem cl_pDst;
@@ -31,32 +33,19 @@ struct ColorTwistbatchPDLocalData {
 static vx_status VX_CALLBACK refreshColorTwistbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, ColorTwistbatchPDLocalData *data)
 {
 	vx_status status = VX_SUCCESS;
- 	size_t arr_size;
 	vx_status copy_status;
-		STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[4], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-	data->alpha = (vx_float32 *)malloc(sizeof(vx_float32) * arr_size);
-	copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, arr_size, sizeof(vx_float32),data->alpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-		STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[5], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-	data->beta = (vx_float32 *)malloc(sizeof(vx_float32) * arr_size);
-	copy_status = vxCopyArrayRange((vx_array)parameters[5], 0, arr_size, sizeof(vx_float32),data->beta, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[6], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-	data->hue = (vx_float32 *)malloc(sizeof(vx_float32) * arr_size);
-	copy_status = vxCopyArrayRange((vx_array)parameters[6], 0, arr_size, sizeof(vx_float32),data->hue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[7], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
-	data->sat = (vx_float32 *)malloc(sizeof(vx_float32) * arr_size);
-	copy_status = vxCopyArrayRange((vx_array)parameters[7], 0, arr_size, sizeof(vx_float32),data->sat, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-	STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[8], &data->nbatchSize));
+	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(vx_float32),data->alpha, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(vx_float32),data->beta, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->nbatchSize, sizeof(vx_float32),data->hue, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[7], 0, data->nbatchSize, sizeof(vx_float32),data->sat, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
 	data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
-	data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-	Rpp32u *srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	Rpp32u *srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-	copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	for(int i = 0; i < data->nbatchSize; i++){
-		data->srcDimensions[i].width = srcBatch_width[i];
-		data->srcDimensions[i].height = srcBatch_height[i];
+		data->srcDimensions[i].width = data->srcBatch_width[i];
+		data->srcDimensions[i].height = data->srcBatch_height[i];
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -150,6 +139,15 @@ static vx_status VX_CALLBACK initializeColorTwistbatchPD(vx_node node, const vx_
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
 #endif
 	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[9], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+	STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[8], &data->nbatchSize));
+	data->alpha = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize);
+	data->beta = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize);
+	data->hue = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize);
+	data->sat = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize);
+	data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+	data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+	data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+
 	refreshColorTwistbatchPD(node, parameters, num, data);
 #if ENABLE_OPENCL
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -172,6 +170,13 @@ static vx_status VX_CALLBACK uninitializeColorTwistbatchPD(vx_node node, const v
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppDestroyHost(data->rppHandle);
+	free(data->alpha);
+	free(data->beta);
+	free(data->hue);
+	free(data->sat);
+	free(data->srcDimensions);
+	free(data->srcBatch_width);
+	free(data->srcBatch_height);
 	delete(data);
 	return VX_SUCCESS; 
 }

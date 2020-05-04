@@ -13,7 +13,7 @@ import amd.rali.types as types
 
 
 class HybridTrainPipe(Pipeline):
-	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = False):
+	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
 		super(HybridTrainPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
 		world_size = 1
 		local_rank = 0
@@ -81,16 +81,19 @@ class ToyNet(nn.Module):
 
 
 def main():
-	bs = 2
+	if  len(sys.argv) < 4:
+		print ('Please pass image_folder cpu/gpu batch_size ')
+		exit(0)
+	if(sys.argv[2] == "cpu"):
+		_rali_cpu = True
+	else:
+		_rali_cpu = False
+	bs = int(sys.argv[3])
 	nt = 1
 	di = 0
 	crop_size = 224
-	if  len(sys.argv) < 2:
-		print ('Please pass the folder containing images as a command line argument')
-		exit(0)
-
 	image_path = sys.argv[1]
-	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=True)        
+	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu)        
 	pipe.build()
 	imageIterator = RALIClassificationIterator(pipe)
 

@@ -41,7 +41,8 @@ enum RaliImageColor
 {
     RALI_COLOR_RGB24 = 0,
     RALI_COLOR_BGR24 = 1,
-    RALI_COLOR_U8  = 2
+    RALI_COLOR_U8  = 2,
+    RALI_COLOR_RGB_PLANAR = 3,
 };
 
 enum RaliProcessMode

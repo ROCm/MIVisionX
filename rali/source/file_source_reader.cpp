@@ -1,4 +1,5 @@
 #include <cassert>
+#include <algorithm>
 #include <commons.h>
 #include "file_source_reader.h"
 #include <boost/filesystem.hpp>
@@ -108,6 +109,7 @@ FileSourceReader::release()
 
 void FileSourceReader::reset()
 {
+    std::random_shuffle(_file_names.begin(), _file_names.end());
     _read_counter = 0;
     _curr_file_idx = 0;
 }

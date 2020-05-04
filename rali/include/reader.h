@@ -3,7 +3,8 @@
 enum class StorageType
 {
     FILE_SYSTEM = 0,
-    TF_RECORD = 1
+    TF_RECORD = 1,
+    UNCOMPRESSED_BINARY_DATA = 3        // experimental: added for supporting cifar10 data set
 };
 
 struct ReaderConfig
@@ -23,6 +24,8 @@ struct ReaderConfig
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
     std::string path() { return _path; }
+    void set_file_prefix(const std::string &prefix) {_file_prefix = prefix;}
+    std::string file_prefix() {return _file_prefix;}
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";
@@ -30,6 +33,7 @@ private:
     size_t _shard_id = 0;
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     bool _loop = false;
+    std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader
 };
 
 class Reader {

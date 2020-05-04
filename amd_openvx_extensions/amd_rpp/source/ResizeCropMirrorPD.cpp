@@ -9,7 +9,7 @@
 #include </opt/rocm/rpp/include/rppi.h>
 
 
-struct CropMirrorNormalizebatchPDLocalData { 
+struct ResizeCropMirrorPDLocalData { 
 	RPPCommonHandle handle;
 	rppHandle_t rppHandle;
 	Rpp32u device_type; 
@@ -20,46 +20,59 @@ struct CropMirrorNormalizebatchPDLocalData {
 	RppiSize maxDstDimensions;
 	RppPtr_t pSrc;
 	RppPtr_t pDst;
-	vx_uint32 *start_x;
-	vx_uint32 *start_y;
-	vx_float32  *mean;
-    vx_float32 *std_dev;
-    vx_uint32 *mirror;
-    vx_uint32 chnShift; //NHWC to NCHW
-	Rpp32u *srcBatch_width;
-	Rpp32u *srcBatch_height;
-	Rpp32u *dstBatch_width;
-	Rpp32u *dstBatch_height;
+	vx_uint32 *x1;
+	vx_uint32 *y1;
+	vx_uint32 *x2;
+	vx_uint32 *y2;
+    vx_uint32 *mirrorFlag;
 #if ENABLE_OPENCL
 	cl_mem cl_pSrc;
 	cl_mem cl_pDst;
 #endif 
 };
 
-static vx_status VX_CALLBACK refreshCropMirrorNormalizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, CropMirrorNormalizebatchPDLocalData *data)
+static vx_status VX_CALLBACK refreshResizeCropMirrorPD(vx_node node, const vx_reference *parameters, vx_uint32 num, ResizeCropMirrorPDLocalData *data)
 {
 	vx_status status = VX_SUCCESS;
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[6], 0, data->nbatchSize, sizeof(vx_uint32),data->start_x, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[7], 0, data->nbatchSize, sizeof(vx_uint32),data->start_y, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[8], 0, data->nbatchSize, sizeof(vx_float32),data->mean, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[9], 0, data->nbatchSize, sizeof(vx_float32),data->std_dev, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));    
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[10], 0, data->nbatchSize, sizeof(vx_uint32),data->mirror, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &data->chnShift));
+ 	size_t arr_size;
+	vx_status copy_status;
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[6], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+	data->x1 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
+	copy_status = vxCopyArrayRange((vx_array)parameters[6], 0, arr_size, sizeof(vx_uint32),data->x1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[7], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+	data->y1 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
+	copy_status = vxCopyArrayRange((vx_array)parameters[7], 0, arr_size, sizeof(vx_uint32),data->y1, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[8], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+	data->x2 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
+	copy_status = vxCopyArrayRange((vx_array)parameters[8], 0, arr_size, sizeof(vx_uint32),data->x2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[9], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+	data->y2 = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
+	copy_status = vxCopyArrayRange((vx_array)parameters[9], 0, arr_size, sizeof(vx_uint32),data->y2, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[10], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
+    data->mirrorFlag = (vx_uint32 *)malloc(sizeof(vx_uint32) * arr_size);
+	copy_status = vxCopyArrayRange((vx_array)parameters[10], 0, arr_size, sizeof(vx_uint32),data->mirrorFlag, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+	STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[11], &data->nbatchSize));
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->maxSrcDimensions.height, sizeof(data->maxSrcDimensions.height)));
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->maxSrcDimensions.width, sizeof(data->maxSrcDimensions.width)));
 	data->maxSrcDimensions.height = data->maxSrcDimensions.height / data->nbatchSize;
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_HEIGHT, &data->maxDstDimensions.height, sizeof(data->maxDstDimensions.height)));
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_WIDTH, &data->maxDstDimensions.width, sizeof(data->maxDstDimensions.width)));
 	data->maxDstDimensions.height = data->maxDstDimensions.height / data->nbatchSize;
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),data->srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(Rpp32u),data->dstBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(Rpp32u),data->dstBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+	data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+	data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
+	Rpp32u *srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+	Rpp32u *srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+	Rpp32u *dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+	Rpp32u *dstBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
+	copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+	copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, data->nbatchSize, sizeof(Rpp32u),srcBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+	copy_status = vxCopyArrayRange((vx_array)parameters[4], 0, data->nbatchSize, sizeof(Rpp32u),dstBatch_width, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+	copy_status = vxCopyArrayRange((vx_array)parameters[5], 0, data->nbatchSize, sizeof(Rpp32u),dstBatch_height, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 	for(int i = 0; i < data->nbatchSize; i++){
-		data->srcDimensions[i].width = data->srcBatch_width[i];
-		data->srcDimensions[i].height = data->srcBatch_height[i];
-		data->dstDimensions[i].width = data->dstBatch_width[i];
-		data->dstDimensions[i].height = data->dstBatch_height[i];
+		data->srcDimensions[i].width = srcBatch_width[i];
+		data->srcDimensions[i].height = srcBatch_height[i];
+		data->dstDimensions[i].width = dstBatch_width[i];
+		data->dstDimensions[i].height = dstBatch_height[i];
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
@@ -74,16 +87,14 @@ static vx_status VX_CALLBACK refreshCropMirrorNormalizebatchPD(vx_node node, con
 	return status; 
 }
 
-static vx_status VX_CALLBACK validateCropMirrorNormalizebatchPD(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
+static vx_status VX_CALLBACK validateResizeCropMirrorPD(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
 {
 	vx_status status = VX_SUCCESS;
 	vx_enum scalar_type;
 	STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[11], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
- 	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #11 type=%d (must be size)\n", scalar_type);
+ 	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #10 type=%d (must be size)\n", scalar_type);
 	STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[12], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
- 	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #12 type=%d (must be size)\n", scalar_type);
-	STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[13], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
- 	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #13 type=%d (must be size)\n", scalar_type);
+ 	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #11 type=%d (must be size)\n", scalar_type);
 	// Check for input parameters 
 	vx_parameter input_param; 
 	vx_image input; 
@@ -93,7 +104,7 @@ static vx_status VX_CALLBACK validateCropMirrorNormalizebatchPD(vx_node node, co
 	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image))); 
 	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB) 
 	{
-		return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: CropMirrorNormalizebatchPD: image: #0 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
+		return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: ResizeCropMirrorPD: image: #0 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
 	}
 
 	// Check for output parameters 
@@ -115,60 +126,49 @@ static vx_status VX_CALLBACK validateCropMirrorNormalizebatchPD(vx_node node, co
 	return status;
 }
 
-static vx_status VX_CALLBACK processCropMirrorNormalizebatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num) 
-{
+static vx_status VX_CALLBACK processResizeCropMirrorPD(vx_node node, const vx_reference * parameters, vx_uint32 num) 
+{ 
 	RppStatus status = RPP_SUCCESS;
-	CropMirrorNormalizebatchPDLocalData * data = NULL;
+	ResizeCropMirrorPDLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
-
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
-		refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
-		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			status = rppi_crop_mirror_normalize_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
+		refreshResizeCropMirrorPD(node, parameters, num, data);
+	
+    	if (df_image == VX_DF_IMAGE_U8 ){ 
+		//status = rppi_resize_crop_u8_mirror_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->x1,data->x2,data->y1,data->y2, data->mirrorFlag, data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y, data->mean, data->std_dev, data->mirror, data->chnShift ,data->nbatchSize,data->rppHandle);
+			status = rppi_resize_crop_mirror_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->x1,data->x2,data->y1,data->y2, data->mirrorFlag, data->nbatchSize,data->rppHandle);
 		}
 		return status;
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
-		refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
+		refreshResizeCropMirrorPD(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			status = rppi_crop_mirror_normalize_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y,data->mean, data->std_dev, data->mirror, data->chnShift,data->nbatchSize,data->rppHandle);
+			
+			status = rppi_resize_crop_mirror_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->x1,data->x2,data->y1,data->y2 , data->mirrorFlag, data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_crop_mirror_normalize_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->start_x,data->start_y,data->mean, data->std_dev, data->mirror, data->chnShift,data->nbatchSize,data->rppHandle);
+			status = rppi_resize_crop_mirror_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->x1,data->x2,data->y1,data->y2, data->mirrorFlag, data->nbatchSize,data->rppHandle);
 		}
 		return status;
 	}
 }
 
-static vx_status VX_CALLBACK initializeCropMirrorNormalizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num) 
+static vx_status VX_CALLBACK initializeResizeCropMirrorPD(vx_node node, const vx_reference *parameters, vx_uint32 num) 
 {
-	CropMirrorNormalizebatchPDLocalData * data = new CropMirrorNormalizebatchPDLocalData;
+	ResizeCropMirrorPDLocalData * data = new ResizeCropMirrorPDLocalData;
 	memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
 #endif
-	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[13], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-	STATUS_ERROR_CHECK(vxReadScalarValue((vx_scalar)parameters[12], &data->nbatchSize));
-	data->start_x = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
-	data->start_y = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
-	data->mean = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize);
-	data->std_dev = (vx_float32 *)malloc(sizeof(vx_float32) * data->nbatchSize);
-	data->mirror = (vx_uint32 *)malloc(sizeof(vx_uint32) * data->nbatchSize);
-	data->srcDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-	data->dstDimensions = (RppiSize *)malloc(sizeof(RppiSize) * data->nbatchSize);
-	data->srcBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	data->srcBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	data->dstBatch_width = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	data->dstBatch_height = (Rpp32u *)malloc(sizeof(Rpp32u) * data->nbatchSize);
-	refreshCropMirrorNormalizebatchPD(node, parameters, num, data);
+	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[12], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+	refreshResizeCropMirrorPD(node, parameters, num, data);
 #if ENABLE_OPENCL
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
 		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
@@ -180,9 +180,9 @@ static vx_status VX_CALLBACK initializeCropMirrorNormalizebatchPD(vx_node node, 
 	return VX_SUCCESS;
 }
 
-static vx_status VX_CALLBACK uninitializeCropMirrorNormalizebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
+static vx_status VX_CALLBACK uninitializeResizeCropMirrorPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-	CropMirrorNormalizebatchPDLocalData * data; 
+	ResizeCropMirrorPDLocalData * data; 
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -190,32 +190,21 @@ static vx_status VX_CALLBACK uninitializeCropMirrorNormalizebatchPD(vx_node node
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppDestroyHost(data->rppHandle);
-	free(data->start_x);
-	free(data->start_y);
-	free(data->mean);
-	free(data->std_dev);
-	free(data->mirror);
-	free(data->srcDimensions);
-	free(data->dstDimensions);
-	free(data->srcBatch_width);
-	free(data->srcBatch_height);
-	free(data->dstBatch_width);
-	free(data->dstBatch_height);
 	delete(data);
 	return VX_SUCCESS; 
 }
 
-vx_status CropMirrorNormalizePD_Register(vx_context context)
+vx_status ResizeCropMirrorPD_Register(vx_context context)
 {
 	vx_status status = VX_SUCCESS;
 	// Add kernel to the context with callbacks
-	vx_kernel kernel = vxAddUserKernel(context, "org.rpp.CropMirrorNormalizebatchPD",
-		VX_KERNEL_RPP_CROPMIRRORNORMALIZEBATCHPD,
-		processCropMirrorNormalizebatchPD,
-		14,
-		validateCropMirrorNormalizebatchPD,
-		initializeCropMirrorNormalizebatchPD,
-		uninitializeCropMirrorNormalizebatchPD);
+	vx_kernel kernel = vxAddUserKernel(context, "org.rpp.ResizeCropMirrorPD",
+		VX_KERNEL_RPP_RESIZECROPMIRRORPD,
+		processResizeCropMirrorPD,
+		13,
+		validateResizeCropMirrorPD,
+		initializeResizeCropMirrorPD,
+		uninitializeResizeCropMirrorPD);
 	ERROR_CHECK_OBJECT(kernel);
 	AgoTargetAffinityInfo affinity;
 	vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
@@ -241,8 +230,7 @@ vx_status CropMirrorNormalizePD_Register(vx_context context)
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 9, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
         PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 10, VX_INPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 11, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    	PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 12, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 13, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
+		PARAM_ERROR_CHECK(vxAddParameterToKernel(kernel, 12, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
 		PARAM_ERROR_CHECK(vxFinalizeKernel(kernel));
 	}
 	if (status != VX_SUCCESS)

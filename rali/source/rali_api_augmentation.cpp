@@ -24,6 +24,7 @@
 #include "node_hue.h"
 #include "node_saturation.h"
 #include "node_crop_mirror_normalize.h"
+#include "node_resize_crop_mirror.h"
 #include "node_crop.h"
 #include "node_copy.h"
 #include "node_nop.h"
@@ -1472,8 +1473,6 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
 
         // For the crop mirror normalize resize node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
-        //output_info.height(dest_height);
-
         output_info.width(crop_width);
         output_info.height(crop_height);
         output = context->master_graph->create_image(output_info, is_output);
@@ -1488,7 +1487,7 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
         context->capture_error(e.what());
         ERR(e.what())
     }
-    return input; // Changed to output----------------IMPORTANT
+    return input; // Changed to input----------------IMPORTANT
 }
 
 
@@ -1517,6 +1516,8 @@ raliCrop(
         if(!input || !context)
             THROW("Null values passed as input")
         ImageInfo output_info = input->info();
+        output_info.width(input->info().width());
+        output_info.height(input->info().height_single());
         output = context->master_graph->create_image(output_info, is_output);
         output->reset_image_roi();
         context->master_graph->add_node<CropNode>({input}, {output})->init(crop_h, crop_w, x_drift, y_drift);
@@ -1528,8 +1529,6 @@ raliCrop(
     }
     return output;
 }
-
-
 
 RaliImage  RALI_API_CALL
 raliCropFixed(
@@ -1590,9 +1589,48 @@ raliCropCenterFixed(
         ImageInfo output_info = input->info();
         output_info.width(crop_width);
         output_info.height(crop_height);
-        output = context->master_graph->create_image(output_info, is_output);
+        output = context->master_graph->create_image(input->info(), is_output);
         output->reset_image_roi();
         context->master_graph->add_node<CropNode>({input}, {output})->init(crop_height, crop_width);
+    }
+
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliResizeCropMirrorFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        unsigned dest_width,
+        unsigned dest_height,
+        bool is_output,
+        unsigned crop_h,
+        unsigned crop_w,
+        RaliIntParam p_mirror
+        )
+{
+    Image* output = nullptr;
+    auto mirror = static_cast<IntParam *>(p_mirror);
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context )
+            THROW("Null values passed as input")
+        if(dest_width == 0 || dest_height == 0)
+            THROW("Crop Mirror node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<ResizeCropMirrorNode>({input}, {output})->init(crop_h, crop_w, mirror);
     }
     catch(const std::exception& e)
     {
@@ -1602,6 +1640,39 @@ raliCropCenterFixed(
     return output;
 }
 
+extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context, RaliImage p_input,
+                                                           unsigned dest_width, unsigned dest_height,
+                                                            bool is_output, RaliFloatParam p_crop_height,
+                                                            RaliFloatParam p_crop_width, RaliIntParam p_mirror 
+                                                            )
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto crop_h = static_cast<FloatParam*>(p_crop_height);
+    auto crop_w = static_cast<FloatParam*>(p_crop_width);
+    auto mirror  = static_cast<IntParam*>(p_mirror);
+    try
+    {
+        if(!input || !context )
+            THROW("Null values passed as input")
+        if(dest_width == 0 || dest_height == 0)
+            THROW("Crop Mirror node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<ResizeCropMirrorNode>({input}, {output})->init(crop_h, crop_w, mirror);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
 
 RaliImage  RALI_API_CALL
 raliCopy(

@@ -42,6 +42,8 @@ int RALI_API_CALL raliGetOutputColorFormat(RaliContext p_context)
                 return 1;
             case RaliColorFormat::U8:
                 return 2;
+            case RaliColorFormat::RGB_PLANAR:
+                return 3;
             default:
                 THROW("Unsupported Image type" + TOSTR(color_format))
         }

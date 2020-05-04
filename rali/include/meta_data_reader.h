@@ -8,7 +8,8 @@ enum class MetaDataReaderType
 {
     FOLDER_BASED_LABEL_READER = 0,// Used for imagenet-like dataset
     TEXT_FILE_META_DATA_READER,// Used when metadata is stored in a text file
-    COCO_META_DATA_READER
+    COCO_META_DATA_READER,
+    CIFAR10_META_DATA_READER    // meta_data for cifar10 data which is store as part of bin file
 };
 enum class MetaDataType
 {
@@ -22,12 +23,15 @@ private:
     MetaDataType _type;
     MetaDataReaderType _reader_type;
     std::string _path;
+    std::string _file_prefix;           // if we want to read only filenames with prefix (needed for cifar10 meta data)
 public:
-    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path ):_type(type), _reader_type(reader_type),  _path(path){}
+    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::string file_prefix=std::string())
+                    :_type(type), _reader_type(reader_type),  _path(path), _file_prefix(file_prefix){}
     MetaDataConfig() = delete;
     MetaDataType type() const { return _type; }
     MetaDataReaderType reader_type() const { return _reader_type; }
     std::string path() const { return  _path; }
+    std::string file_prefix() const { return  _file_prefix; }
 };
 
 

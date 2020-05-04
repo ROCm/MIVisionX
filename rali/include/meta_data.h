@@ -6,7 +6,7 @@
 #include "commons.h"
 
 
-typedef  struct { int x1; int x2; int y1; int y2; } BoundingBoxCord;
+typedef  struct { float x; float y; float w; float h; } BoundingBoxCord;
 typedef  std::vector<BoundingBoxCord> BoundingBoxCords;
 typedef  std::vector<int> BoundingBoxLabels;
 
@@ -120,4 +120,5 @@ struct BoundingBoxBatch: public MetaDataBatch
 };
 using ImageNameBatch = std::vector<std::string>;
 using pMetaData = std::shared_ptr<Label>;
+using pMetaDataBox = std::shared_ptr<BoundingBox>;
 using pMetaDataBatch = std::shared_ptr<MetaDataBatch>;

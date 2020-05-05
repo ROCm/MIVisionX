@@ -275,6 +275,16 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
         }
             break;
         case 26: {
+            std::cout << ">>>>>>> Running " << "raliCrop " << std::endl;
+            raliCrop(handle, image0, true);
+        }
+            break;
+        case 27: {
+            std::cout << ">>>>>>> Running " << "raliResizeCropMirror" << std::endl;
+            raliResizeCropMirror(handle, image0, resize_w, resize_h, true);
+        }
+            break;
+        case 28: {
             std::cout << ">>>>>>> Running " << "No-Op" << std::endl;
             raliNop(handle, image0, true);
         }

@@ -39,14 +39,15 @@ using namespace cv;
 #define DISPLAY
 using namespace std::chrono;
 
-int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display, int width, int height);
+int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height);
 int main(int argc, const char ** argv)
 {
     // check command-line usage
-    const size_t MIN_ARG_COUNT = 2;
-    printf( "Usage: image_augmentation <image-dataset-folder> output_image_name <width> <height> test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
-    if(argc < MIN_ARG_COUNT)
+    const size_t MIN_ARG_COUNT = 4;
+    if(argc < MIN_ARG_COUNT){
+   	 printf( "Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale=0  \n" );
         return -1;
+    }
 
     int argIdx = 0;
     const char * path = argv[++argIdx];
@@ -54,7 +55,6 @@ int main(int argc, const char ** argv)
     int width = atoi(argv[++argIdx]);
     int height = atoi(argv[++argIdx]);
 
-    bool display = 1;// Display the images
     int rgb = 1;// process color images
     bool gpu = 1;
     int test_case = 3; // For Rotate 
@@ -63,20 +63,17 @@ int main(int argc, const char ** argv)
         test_case = atoi(argv[++argIdx]);
 
     if (argc >= argIdx + MIN_ARG_COUNT)
-        display = atoi(argv[++argIdx]);
-
-    if (argc >= argIdx + MIN_ARG_COUNT)
         gpu = atoi(argv[++argIdx]);
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
     
-    test(test_case, path, outName, rgb, gpu, display, width, height);
+    test(test_case, path, outName, rgb, gpu, width, height);
 
     return 0;
 }
 
-int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int display, int width, int height)
+int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height)
 {
     size_t num_threads = 1;
     int inputBatchSize = 1;
@@ -280,6 +277,16 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             image1 = raliCropMirrorNormalize(handle, image0, 1, 200, 200, 50, 50, 1, mean, std_dev, true);
         }
             break;
+	case 26: {
+            std::cout << ">>>>>>> Running " << "raliCrop" << std::endl;
+            image1 = raliCrop(handle, image0, true);
+        }
+            break;
+	case 27: {
+            std::cout << ">>>>>>> Running " << "raliResizeCropMirror" << std::endl;
+            image1 = raliResizeCropMirror(handle, image0, resize_w, resize_h, true);
+        }
+            break;
 
 
 
@@ -320,7 +327,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 37: {
             std::cout << ">>>>>>> Running " << "raliWarpAffineFixed" << std::endl;
-            image1 = raliWarpAffineFixed(handle, image0, true, 0.25, 0.25, 1, 1, 5, 5);
+            image1 = raliWarpAffineFixed(handle, image0, 0.25, 0.25, 1, 1, 5, 5, true);
         }
             break;
         case 38: {
@@ -373,6 +380,37 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             image1 = raliFlipFixed(handle, image0, 2, true);
         }
             break;
+	case 48: {
+            std::cout << ">>>>>>> Running " << "raliHueFixed" << std::endl;
+            image1 = raliHueFixed(handle, image0, 150, true);
+        }
+            break;
+        case 49: {
+            std::cout << ">>>>>>> Running " << "raliSaturationFixed" << std::endl;
+            image1 = raliSaturationFixed(handle, image0, 0.3, true);
+        }
+            break;
+        case 50: {
+            std::cout << ">>>>>>> Running " << "raliColorTwistFixed" << std::endl;
+            image1 = raliColorTwistFixed(handle, image0, 0.2, 10.0, 100.0, 0.25, true);
+        }
+            break;
+        case 51: {
+            std::cout << ">>>>>>> Running " << "raliCropFixed" << std::endl;
+            image1 = raliCropFixed(handle, image0, 100, 100, 1, true, 25, 25, 2);
+        }
+            break;
+        case 52: {
+            std::cout << ">>>>>>> Running " << "raliCropCenterFixed" << std::endl;
+            image1 = raliCropCenterFixed(handle, image0, 100, 100, 2, true);
+        }
+            break;
+        case 53: {
+            std::cout << ">>>>>>> Running " << "raliResizeCropMirrorFixed" << std::endl;
+            image1 = raliResizeCropMirrorFixed(handle, image0, 100, 100, true, 50, 50, 0);
+        }
+            break;
+	
 	default:
             std::cout << "Not a valid option! Exiting!\n";
             return -1;
@@ -420,8 +458,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
 
         raliCopyToOutput(handle, mat_input.data, h * w * p);
-        if (!display)
-            continue;
 
         std::vector<int> compression_params;
         compression_params.push_back(IMWRITE_PNG_COMPRESSION);
@@ -430,15 +466,11 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
         if (color_format == RaliImageColor::RALI_COLOR_RGB24) {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imshow("output", mat_color);
             cv::imwrite(outName, mat_color, compression_params);
-            cv::waitKey(0);
         } else {
-            cv::imshow("output", mat_output);
             cv::imwrite(outName, mat_output, compression_params);
 
         }
-        cv::waitKey(100);
         col_counter = (col_counter + 1) % number_of_cols;
     }
 

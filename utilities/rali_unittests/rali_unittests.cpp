@@ -45,7 +45,7 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const size_t MIN_ARG_COUNT = 4;
     if(argc < MIN_ARG_COUNT){
-   	 printf( "Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case display-on-off gpu=1/cpu=0 rgb=1/grayscale=0  \n" );
+   	 printf( "Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0  \n" );
         return -1;
     }
 

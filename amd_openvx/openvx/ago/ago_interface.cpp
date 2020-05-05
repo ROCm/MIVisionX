@@ -22,8 +22,13 @@ THE SOFTWARE.
 
 
 #include "ago_internal.h"
+#include <mutex>
 
+#if _WIN32
 static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
+#else
+static void agoGraphThreadFunction(LPVOID graph_)
+#endif
 {
 	AgoGraph * graph = (AgoGraph *)graph_;
 	while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
@@ -40,12 +45,14 @@ static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
 	// inform caller about termination
 	graph->threadThreadTerminationState = 2;
 	ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
-	return 0;
+#if _WIN32
+    return 0;
+#endif
 }
 
 AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
 {
-	CAgoLockGlobalContext lock;
+    CAgoLockGlobalContext lock;
 
 	// check if CPU hardware supports
 	bool isHardwareSupported = agoIsCpuHardwareSupported();
@@ -96,7 +103,7 @@ int agoReleaseContext(AgoContext * acontext)
 AgoGraph * agoCreateGraph(AgoContext * acontext)
 {
 	AgoGraph * agraph = new AgoGraph;
-	if (!agraph) {
+	if (!agraph || !acontext) {
 		return nullptr;
 	}
 
@@ -150,52 +157,52 @@ int agoReleaseGraph(AgoGraph * agraph)
 	int status = 0;
 	agraph->ref.external_count--;
 	if (agraph->ref.external_count == 0) {
-		EnterCriticalSection(&agraph->cs);
-		// stop graph thread
-		if (agraph->hThread) {
-			if (agraph->hThread) {
-				agraph->threadThreadTerminationState = 1;
-				ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
-				while (agraph->threadThreadTerminationState == 1) {
-					std::this_thread::sleep_for(std::chrono::milliseconds(1));
-				}
-				CloseHandle(agraph->hThread);
-			}
-			if (agraph->hSemToThread) {
-				CloseHandle(agraph->hSemToThread);
-			}
-			if (agraph->hSemFromThread) {
-				CloseHandle(agraph->hSemFromThread);
-			}
-		}
-		// deinitialize the graph
-		for (AgoNode * node = agraph->nodeList.head; node; node = node->next)
-		{
-			status = agoShutdownNode(node);
-			if (status) {
-				break;
-			}
-		}
-		if (!status) {
-			// remove graph from context
-			if (agoRemoveGraph(&agraph->ref.context->graphList, agraph) != agraph) {
-				status = -1;
-				LeaveCriticalSection(&agraph->cs);
-			}
-			else {
-#if ENABLE_OPENCL
-				// Releasing the command queue for the graph because it is not needed
-				agoGpuOclReleaseGraph(agraph);
-#endif
-				LeaveCriticalSection(&agraph->cs);
-				// move graph to garbage list
-				agraph->next = agraph->ref.context->graph_garbage_list;
-				agraph->ref.context->graph_garbage_list = agraph;
-			}
-		}
-		else {
-			LeaveCriticalSection(&agraph->cs);
-		}
+        EnterCriticalSection(&agraph->cs);
+        // stop graph thread
+        if (agraph->hThread) {
+            agraph->threadThreadTerminationState = 1;
+            ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
+            while (agraph->threadThreadTerminationState == 1) {
+                // give a chance for the thread to run in case it is waititng
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
+            }
+            if (agraph->hSemToThread) {
+                CloseHandle(agraph->hSemToThread);
+            }
+            if (agraph->hSemFromThread) {
+                CloseHandle(agraph->hSemFromThread);
+            }
+            CloseHandle(agraph->hThread);
+        }
+        // deinitialize the graph
+        for (AgoNode * node = agraph->nodeList.head; node; node = node->next)
+        {
+            status = agoShutdownNode(node);
+            if (status) {
+                break;
+            }
+        }
+        if (!status) {
+            // remove graph from context
+            if (agoRemoveGraph(&agraph->ref.context->graphList, agraph) != agraph) {
+                status = -1;
+                LeaveCriticalSection(&agraph->cs);
+            }
+            else {
+        #if ENABLE_OPENCL
+                // Releasing the command queue for the graph because it is not needed
+                agoGpuOclReleaseGraph(agraph);
+        #endif
+                LeaveCriticalSection(&agraph->cs);
+                // move graph to garbage list
+                agraph->next = agraph->ref.context->graph_garbage_list;
+                agraph->ref.context->graph_garbage_list = agraph;
+            }
+        }
+        else {
+            LeaveCriticalSection(&agraph->cs);
+        }
 	}
 
 	return status;

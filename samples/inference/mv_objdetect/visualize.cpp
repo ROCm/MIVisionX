@@ -51,6 +51,38 @@ void Visualize::show(const Mat& img, std::vector<BBox>& Results, int batchSize)
 				putText(img, txt, Point((int)left, (int)top), FONT_HERSHEY_COMPLEX_SMALL, 0.8, Scalar(255, 255, 255), 1, 8);
 	        }
 		}
+	} else if (batchSize > 4) {
+		imgheight >>= (batchSize == 8) ? 1: 2;
+		imgWidth >>= 2;
+		xoffs = (float)imgWidth;
+		yoffs = (float)imgheight;
+		for (int i = 0; i < detectedNum; i++) {
+		    BBox *pb = &Results[i];
+			if (pb->confidence > mConfidence) {
+				float w2 = pb->w/2.f;  float h2 = pb->h/2.f;
+				float left = (pb->x - w2)* imgWidth;
+				float right = (pb->x + w2)* imgWidth;
+				float top = (pb->y - h2)* imgheight;
+				float bottom = (pb->y + h2)* imgheight;
+				if(left < 0.0) left = 0.0;
+				if(right > img.cols-1) right = (float)(imgWidth-1);
+				if(top < 0.0) top = 0;
+				if(bottom > imgheight-1) bottom = (float)(imgheight-1);
+				xoffs = (float)imgWidth*(pb->imgnum&0x3); 
+				yoffs = (float)imgheight*((pb->imgnum&0xc)>>2);
+				left += xoffs; right += xoffs;
+				top += yoffs; bottom += yoffs;
+				int index = pb->label; //Results[i].objType % mColorNum;
+				Scalar clr(colors[index][0], colors[index][1], colors[index][2]);
+				string txt = yoloClasses[index];
+				rectangle(img, Point((int)left, (int)top), Point((int)right, (int)bottom), clr, 2);
+				Size size = getTextSize(txt, FONT_HERSHEY_COMPLEX_SMALL, 0.8, 2, 0);
+				int width = size.width;
+				int height = size.height;
+				rectangle(img, Point((int)left, ((int)top - (height + 4))), Point(((int)left + width), (int)top), clr, -1);
+				putText(img, txt, Point((int)left, (int)top), FONT_HERSHEY_COMPLEX_SMALL, 0.8, Scalar(255, 255, 255), 1, 8);
+	    	}
+		}
 	} else {
 		for (int i = 0; i < detectedNum; i++) {		
 		    BBox *pb = &Results[i];

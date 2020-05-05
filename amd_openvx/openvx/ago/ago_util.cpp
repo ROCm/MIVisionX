@@ -3343,6 +3343,7 @@ AgoContext::AgoContext()
 		}
 	}
 }
+
 AgoContext::~AgoContext()
 {
 	for (AgoGraph * agraph = graphList.head; agraph;) {

@@ -3,11 +3,26 @@
 #include "exception.h"
 
 
-BrightnessNode::BrightnessNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+BrightnessNode::BrightnessNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
-        _alpha(ALPHA_OVX_PARAM_IDX, ALPHA_RANGE[0], ALPHA_RANGE[1]),
-        _beta (BETA_OVX_PARAM_IDX, BETA_RANGE[0], BETA_RANGE[1])
+        _alpha(ALPHA_RANGE[0], ALPHA_RANGE[1]),
+        _beta (BETA_RANGE[0], BETA_RANGE[1])
 {
+}
+
+void BrightnessNode::create_node()
+{
+    if(_node)
+        return;
+
+    _alpha.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _beta.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+
+    _node = vxExtrppNode_BrightnessbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _alpha.default_array(), _beta.default_array(), _batch_size);/*A temporary fix for time being*/
+
+    vx_status status;
+    if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
+        THROW("Adding the brightness_batch (vxExtrppNode_BrightnessbatchPD) node failed: "+ TOSTR(status))
 }
 
 void BrightnessNode::init( float alpha, int beta)
@@ -22,31 +37,10 @@ void BrightnessNode::init( FloatParam* alpha, IntParam* beta)
     _beta.set_param(core(beta));
 }
 
-void BrightnessNode::create(std::shared_ptr<Graph> graph)
+
+void BrightnessNode::update_node()
 {
-    if(_node)
-        return;
-
-    _graph = graph;
-
-    if(_outputs.empty() || _inputs.empty())
-        THROW("Uninitialized input/output arguments")
-
-    _node = vxExtrppNode_brightness(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _alpha.default_value(), _beta.default_value());
-
-    vx_status status;
-    if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
-        THROW("Adding the brightness (vxExtrppNode_brightness) node failed: "+ TOSTR(status))
-
-    _alpha.create(_node);
-    _beta.create(_node);
-
-}
-
-
-void BrightnessNode::update_parameters()
-{
-    _alpha.update();
-    _beta.update();
+    _alpha.update_array();
+    _beta.update_array();
 }
 

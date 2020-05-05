@@ -2,43 +2,37 @@
 #include "node_blur.h"
 #include "exception.h"
 
-BlurNode::BlurNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+BlurNode::BlurNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
-        _sdev(SDEV_OVX_PARAM_IDX, SDEV_RANGE[0], SDEV_RANGE[1])
+        _sdev(SDEV_RANGE[0], SDEV_RANGE[1])
 {
 }
 
-void BlurNode::create(std::shared_ptr<Graph> graph)
+void BlurNode::create_node()
 {
     if(_node)
         return;
 
-    _graph = graph;
-
-    if(_outputs.empty() || _inputs.empty())
-        THROW("Uninitialized input/output arguments")
-
-    _node = vxExtrppNode_blur(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _sdev.default_value());
+    _sdev.create_array(_graph ,VX_TYPE_UINT32, _batch_size);
+    _node = vxExtrppNode_BlurbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width,_src_roi_height, _outputs[0]->handle(), _sdev.default_array(), _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the blur (vxExtrppNode_blur) node failed: "+ TOSTR(status))
 
-    _sdev.create(_node);
-
 }
 
-void BlurNode::init(float sdev)
+void BlurNode::init(int sdev)
 {
     _sdev.set_param(sdev);
 }
 
-void BlurNode::init(FloatParam* sdev)
+void BlurNode::init(IntParam* sdev)
 {
     _sdev.set_param(core(sdev));
 }
 
-void BlurNode::update_parameters()
+void BlurNode::update_node()
 {
-    _sdev.update();
+    _sdev.update_array();
 }

@@ -691,7 +691,7 @@ struct MacroData {
 struct AgoContext {
 	AgoReference ref;
 	vx_uint64 perfNormFactor;
-	CRITICAL_SECTION cs;
+    CRITICAL_SECTION cs;
 	AgoKernelList kernelList;
 	AgoDataList dataList;
 	AgoGraphList graphList;
@@ -908,6 +908,7 @@ public:
 	CAgoLockGlobalContext() { agoLockGlobalContext(); }
 	~CAgoLockGlobalContext() { agoUnlockGlobalContext(); }
 };
+
 class CAgoLock {
 public:
 	CAgoLock(CRITICAL_SECTION& cs) { m_cs = &cs; EnterCriticalSection(m_cs); }

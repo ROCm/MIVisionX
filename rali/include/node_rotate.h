@@ -7,16 +7,17 @@
 class RotateNode : public Node
 {
 public:
-    RotateNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
+    RotateNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     RotateNode() = delete;
-    void create(std::shared_ptr<Graph> graph) override;
-    void init(FloatParam *angle);
     void init(float angle);
-    void update_parameters() override;
+    void init(FloatParam *angle);
+
+protected:
+    void create_node() override;
+    void update_node() override;
 private:
     ParameterVX<float> _angle;
-    constexpr static unsigned ROTATE_ANGLE_OVX_PARAM_IDX = 4;
+    vx_array _dst_roi_width,_dst_roi_height;
     constexpr static float ROTATE_ANGLE_RANGE [2] = {0, 180};
 
 };
-

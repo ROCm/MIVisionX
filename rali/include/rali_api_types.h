@@ -14,10 +14,11 @@
 #include <half.hpp>
 using half_float::half;
 
-typedef struct FloatParam * RaliFloatParam;
-typedef struct IntParam * RaliIntParam;
-typedef struct Context* RaliContext;
-typedef struct Image* RaliImage;
+typedef void * RaliFloatParam;
+typedef void * RaliIntParam;
+typedef void * RaliContext;
+typedef void * RaliImage;
+typedef void * RaliMetaData;
 
 struct TimingInfo
 {
@@ -40,7 +41,8 @@ enum RaliImageColor
 {
     RALI_COLOR_RGB24 = 0,
     RALI_COLOR_BGR24 = 1,
-    RALI_COLOR_U8  = 2
+    RALI_COLOR_U8  = 2,
+    RALI_COLOR_RGB_PLANAR = 3,
 };
 
 enum RaliProcessMode
@@ -60,6 +62,12 @@ enum RaliImageSizeEvaluationPolicy
     RALI_USE_MAX_SIZE = 0,
     RALI_USE_USER_GIVEN_SIZE = 1,
     RALI_USE_MOST_FREQUENT_SIZE = 2,
+};
+
+enum RaliDecodeDevice
+{
+    RALI_HW_DECODE = 0,
+    RALI_SW_DECODE = 1
 };
 
 enum RaliTensorLayout

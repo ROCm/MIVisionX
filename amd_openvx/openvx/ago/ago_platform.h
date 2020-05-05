@@ -53,6 +53,7 @@ using namespace std;
 
 #if _WIN32
 #include <Windows.h>
+#include <cmath>
 #include <intrin.h>
 #else
 #include <dlfcn.h>
@@ -133,11 +134,11 @@ typedef unsigned long DWORD;
 typedef void * LPVOID;
 typedef int BOOL;
 typedef long LONG, * LPLONG;
-typedef DWORD (*LPTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
-extern void EnterCriticalSection(CRITICAL_SECTION cs);
-extern void LeaveCriticalSection(CRITICAL_SECTION cs);
-extern void InitializeCriticalSection(CRITICAL_SECTION cs);
-extern void DeleteCriticalSection(CRITICAL_SECTION cs);
+typedef void (*LPTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
+extern void EnterCriticalSection(CRITICAL_SECTION* cs);
+extern void LeaveCriticalSection(CRITICAL_SECTION* cs);
+extern void InitializeCriticalSection(CRITICAL_SECTION* cs);
+extern void DeleteCriticalSection(CRITICAL_SECTION* cs);
 extern void CloseHandle(HANDLE h);
 extern HANDLE CreateSemaphore(void *, LONG, LONG, void *);
 extern HANDLE CreateThread(void *, size_t dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, void *);

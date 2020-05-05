@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "mv_extras_postproc.h"
 #include "visualize.h"
 #include <iterator>
+#define USE_OPENCL_FOR_DECODER_OUTPUT   0
 
 // hard coded biases for yolo_v2 and yolo_v3 (x,y) for 5 bounding boxes
 const float BB_biases[10]             = {1.08,1.19,  3.42,4.41,  6.63,11.38,  9.42,5.11,  16.62,10.52};     // bounding box biases
@@ -45,9 +46,10 @@ inline int64_t clockFrequency()
     return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
 }
 
-static vx_status MIVID_CALLBACK preprocess_addnodes_callback_fn(mivid_session inf_session, vx_tensor outp_tensor, const char *inp_string, float a, float b)
+// implementation of preprocess_addnodes_callback_fn
+static vx_status MIVID_CALLBACK preprocess_addnodes_callback_fn(mivid_session inf_session, vx_tensor outp_tensor, mv_preprocess_callback_args *preproc_args)
 {
-    if (inf_session) {
+    if (inf_session && preproc_args) {
         mivid_handle hdl = (mivid_handle) inf_session;
         vx_context context = hdl->context;
         vx_graph graph   = hdl->graph;
@@ -61,11 +63,26 @@ static vx_status MIVID_CALLBACK preprocess_addnodes_callback_fn(mivid_session in
             printf("preprocess_addnodes_callback_fn:: outp_tensor num_dims=%ld (must be 4)\n", num_dims);
             return VX_ERROR_INVALID_DIMENSION;
         }
-        ERROR_CHECK_STATUS(vxQueryTensor(outp_tensor, VX_TENSOR_DIMS, tens_dims, sizeof(tens_dims)));    
+        ERROR_CHECK_STATUS(vxQueryTensor(outp_tensor, VX_TENSOR_DIMS, tens_dims, sizeof(tens_dims)));
+#if !USE_OPENCL_FOR_DECODER_OUTPUT        
         vx_image dec_image = vxCreateImage(context, tens_dims[0], tens_dims[1]*tens_dims[3], VX_DF_IMAGE_RGB);   // todo:: add support for batch (height is tens_dims[1]*tens_dims[3])
-        vx_node node_decoder = amdMediaDecoderNode(graph, inp_string, dec_image, (vx_array)nullptr);
+        vx_node node_decoder = amdMediaDecoderNode(graph, preproc_args->inp_string_decoder, dec_image, (vx_array)nullptr, preproc_args->loop_decode);
         ERROR_CHECK_OBJECT(node_decoder);
-        vx_node node_img_tensor = vxConvertImageToTensorNode(graph, dec_image, outp_tensor, a, b, 0);
+#else
+        vx_imagepatch_addressing_t addr_in = { 0 };
+        //void *ptr[1] = { nullptr };
+        addr_in.dim_x = tens_dims[0];
+        addr_in.dim_y = tens_dims[1];
+        addr_in.stride_x = tens_dims[3];
+        addr_in.stride_y = tens_dims[0] * tens_dims[3];
+        if (addr_in.stride_y == 0) addr_in.stride_y = addr_in.stride_x * addr_in.dim_x;
+        //vx_image dec_image = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &addr_in, ptr, VX_MEMORY_TYPE_OPENCL);
+        vx_image dec_image = vxCreateVirtualImage(graph, addr_in.dim_x, addr_in.dim_y, VX_DF_IMAGE_RGB);
+        ERROR_CHECK_OBJECT(dec_image);
+        vx_node node_decoder = amdMediaDecoderNode(graph, preproc_args->inp_string_decoder, dec_image, (vx_array)nullptr, preproc_args->loop_decode, true);
+        ERROR_CHECK_OBJECT(node_decoder);
+#endif        
+        vx_node node_img_tensor = vxConvertImageToTensorNode(graph, dec_image, outp_tensor, preproc_args->preproc_a, preproc_args->preproc_b, 0);
         ERROR_CHECK_OBJECT(node_img_tensor);
         ERROR_CHECK_STATUS(vxReleaseNode(&node_decoder));
         ERROR_CHECK_STATUS(vxReleaseNode(&node_img_tensor));
@@ -79,22 +96,17 @@ static vx_status MIVID_CALLBACK preprocess_addnodes_callback_fn(mivid_session in
 
 void printUsage() {
     printf("Usage: mvobjdetect <options>\n"
-        "   <input-data-file>: : is filename(s) to initialize input tensor\n"
-#if ENABLE_OPENCV
-        "   .jpg or .png: decode and copy to raw_data file or .mp4 or .m4v for video input\n"
-#endif
-         "   other: initialize tensor with raw data from the file\n"
-         "   <output-data-file/- > for video all frames will be output to single file OR - for no output \n"
-        "   --install_folder <install_folder> : the location for compiled model\n"
-        "   --backend <backend>: optional (default:OpenVX_Rocm_OpenCL) is the name of the backend for compilation\n"
-        "   --frames <#num/eof> : num of frames to process inference for cases like video\n"
-        "   --argmax <topK> : give argmax output in vec<label,prob>\n"
-        "   --t <num of interations> to run for performance\n"
-        "   --vaapi :use vaapi for decoding\n"
-        "   --label <labels.txt> to run for performance\n"
-        "   --bb <nc thres_c thres_nms> bounding box detection parameters\n"
-        "   --v <optional (if specified visualize the result on the input image)\n"
-    );
+        "\t<input-data-file: .jpg, .png, .mp4, .m4v>: is filename(s) to initialize input tensor         \t[required]\n"
+        "\t<output-data-file/- >: for video all frames will be output to single file OR '-'for no output\t[required]\n"
+        "\t--install_folder <install_folder> : the location for compiled module                         \t[required]\n"
+        "\t--bb <channels, threshold_c threshold_nms> bounding box detection parameters                 \t[required]\n"
+        "\t--frames <#num/eof> : num of frames to process inference         \t[optional: default till eof]\n"
+        "\t--backend <backend>: is the name of the backend for compilation  \t[optional: default OpenVX_Rocm_OpenCL]\n"
+        "\t--argmax <topK> : give argmax output in vec<label,prob>          \t[optional: default no argmax]\n"
+        "\t--t <num of interations> to run for performance                  \t[optional: default 1]\n"
+        "\t--hwdec :use hwaccel for decoding                                \t[optional: default cpu decoding]\n"
+        "\t--label <labels.txt>                                             \t[optional: default use yolo_v2 20 classes]\n"
+        "\t--v :if specified visualize the result on the input image        \t[optional: default no visualization]\n");
 }
 
 
@@ -113,11 +125,11 @@ int main(int argc, const char ** argv)
     std::string  weightsFile  = "./weights.bin";
     mivid_backend backend = OpenVX_Rocm_OpenCL;
     std::string inpFileName  = std::string(argv[1]);
-    std::string outFileName  = std::string(argv[2]);
+    std::string outFileName  = !strncmp(argv[2], "--", 2)? "-" : std::string(argv[2]);
     int bPeformanceRun = 0, numIterations = 0, bVisualize = 0, bVaapi = 0;
     int detectBB = 0;
     int  argmaxOutput = 0, topK = 1;
-    int useMultiFrameInput = 0, capture_till_eof = 0, start_frame=0, end_frame = 1;
+    int useMultiFrameInput = 0, capture_till_eof = 0, start_frame=0, end_frame = 1, loop_decode = 0;
     int numClasses = 0;
     float conf_th = 0.0, nms_th=0.0;
     Visualize *pVisualize = nullptr;
@@ -137,6 +149,9 @@ int main(int argc, const char ** argv)
             useMultiFrameInput = 1;
             if (!strcmp(argv[arg], "eof")) {
                 capture_till_eof = 1;
+            }else if (!strcmp(argv[arg], "loop")) {
+                capture_till_eof = 1;
+                loop_decode = 1;
             }else {
                 end_frame = atoi(argv[arg]);
             }
@@ -145,7 +160,7 @@ int main(int argc, const char ** argv)
             arg++;
             numIterations = atoi(argv[arg]);
         }        
-        if (!strcmp(argv[arg], "--vaapi")) {
+        if (!strcmp(argv[arg], "--hwdec")) {
             bVaapi = atoi(argv[arg]);
         }
 
@@ -207,7 +222,8 @@ int main(int argc, const char ** argv)
         vx_image inp_img;
         float time_in_millisec;
         int do_preprocess = 0;
-        float scale_factor = 1.0f/255;
+        float scale_factor = 1.0f/255;      // required for YOLO v2 (since it is trained on normalized images)
+        float add_factor = 0.0f;            // required for YOLO v2 (since it is trained on normalized images)
 
         // get input and output dimensions from inoutConfig
         std::stringstream inout_dims(inoutConfig);
@@ -262,26 +278,34 @@ int main(int argc, const char ** argv)
         out_dims[2] = std::get<1>(output_dims[0]);
         out_dims[1] = std::get<2>(output_dims[0]);
         out_dims[0] = std::get<3>(output_dims[0]);
+        mv_preprocess_callback_args preproc_args;
+        preproc_args.loop_decode = loop_decode;
+        preproc_args.preproc_a = scale_factor;
+        preproc_args.preproc_b = 0.0;
 
-        // for video input, set preprocessing callback for adding video decoder node
+        std::string inp_dec_str;    // needed for amd_video_decoder
+     // for video input, set preprocessing callback for adding video decoder node
         if (inp_dims[3] == 1 && inp_dims[2] == 3 && inpFileName.size() > 4 && ((inpFileName.substr(inpFileName.size()-4, 4) == ".mp4")||(inpFileName.substr(inpFileName.size()-4, 4) == ".m4v")))
         {
-            std::string inp_dec_str = bVaapi? ("1," + inpFileName + ":1") : ("1," + inpFileName + ":0");
-            SetPreProcessCallback(&preprocess_addnodes_callback_fn, inp_dec_str.c_str(), scale_factor, 0.0);
+            inp_dec_str = bVaapi? ("1," + inpFileName + ":1") : ("1," + inpFileName + ":0");
+            preproc_args.inp_string_decoder = inp_dec_str.c_str();
+            SetPreProcessCallback(&preprocess_addnodes_callback_fn, &preproc_args);
             do_preprocess = 1;
+            if (!useMultiFrameInput) capture_till_eof = 1;   // if frames parameter is not specified, capture till eof
             printf("OK:: SetPreProcessCallback \n");
         }
         else if (inp_dims[3] > 1 && inp_dims[2] == 3 && (((inpFileName.size() > 6) && (inpFileName.substr(inpFileName.size()-6, 4) == ".mp4")
                                                         ||(inpFileName.substr(inpFileName.size()-6, 4) == ".m4v")) || (inpFileName.substr(inpFileName.size()-4, 4) == ".txt")))
         {
-            std::string inp_dec_str;
             if (inpFileName.substr(inpFileName.size()-4, 4) != ".txt") {
                 inp_dec_str = std::to_string(inp_dims[3]) + "," + inpFileName;
             } else {
                 inp_dec_str = std::to_string(inp_dims[3]) + "," + inpFileName;
             }
-            SetPreProcessCallback(&preprocess_addnodes_callback_fn, inp_dec_str.c_str(), scale_factor, 0.0);
+            preproc_args.inp_string_decoder = inp_dec_str.c_str();
+            SetPreProcessCallback(&preprocess_addnodes_callback_fn, &preproc_args);
             do_preprocess = 1;
+            if (!useMultiFrameInput) capture_till_eof = 1;   // if frames parameter is not specified, capture till eof
             printf("OK:: SetPreProcessCallback \n");
         } 
 
@@ -307,7 +331,8 @@ int main(int argc, const char ** argv)
         Mat *inp_img_mat = nullptr;
         if (!do_preprocess) {
     #if ENABLE_OPENCV
-            if(inp_dims[2] == 3 && inpFileName.size() > 4 && (inpFileName.substr(inpFileName.size()-4, 4) == ".png" || inpFileName.substr(inpFileName.size()-4, 4) == ".jpg"))
+            if(inp_dims[2] == 3 && inpFileName.size() > 4 && (inpFileName.substr(inpFileName.size()-4, 4) == ".png" || inpFileName.substr(inpFileName.size()-4, 4) == ".jpg"
+                                                             || inpFileName.substr(inpFileName.size()-4, 4) == ".PNG" || inpFileName.substr(inpFileName.size()-4, 4) == ".JPG"))
             {
                 for(size_t n = 0; n < inp_dims[3]; n++) {
                     char imgFileName[1024];
@@ -327,9 +352,9 @@ int main(int argc, const char ** argv)
                         float * dstG = dstR + (istride[2] >> 2);
                         float * dstB = dstG + (istride[2] >> 2);
                         for(vx_size x = 0; x < inp_dims[0]; x++, src += 3) {
-                            *dstR++ = src[2]*scale_factor;
-                            *dstG++ = src[1]*scale_factor;
-                            *dstB++ = src[0]*scale_factor;
+                            *dstR++ = src[2]*scale_factor + add_factor;
+                            *dstG++ = src[1]*scale_factor + add_factor;
+                            *dstB++ = src[0]*scale_factor + add_factor;
                         }
                     }
                 }
@@ -420,7 +445,7 @@ int main(int argc, const char ** argv)
             if (argmaxOutput) {
                 mv_postproc_argmax(outMem, (void *)cl, topK, out_dims[3], out_dims[2], out_dims[1], out_dims[0]);
                 for (int l=0; l<topK; l++) {
-                    printf("Argmax topK: %d classs:%d conf: %f\n", l, cl[l].index, cl[l].probability);
+                    printf("Argmax topK: %d class:%d conf: %7.5f\n", l, cl[l].index, cl[l].probability);
                 }
             }
             if (bVisualize && pVisualize) {
@@ -430,6 +455,10 @@ int main(int argc, const char ** argv)
                     cv::Mat img;
                     if (inp_dims[3] == 4) {
                         img.create(inp_dims[1]*2, inp_dims[0]*2, CV_8UC3);     // both width and height multiplied by 2 to accomodate 4 images
+                    } else if (inp_dims[3] == 8){
+                        img.create(inp_dims[1]*2, inp_dims[0]*4, CV_8UC3);     // both width*4 and height*2 to accomodate 8 images
+                    } else if (inp_dims[3] == 16){
+                        img.create(inp_dims[1]*4, inp_dims[0]*4, CV_8UC3);     // both width*4 and height*4 to accomodate 16 images
                     } else {
                         img.create(inp_dims[1]*inp_dims[3], inp_dims[0], CV_8UC3);
                     }
@@ -444,38 +473,111 @@ int main(int argc, const char ** argv)
 
                     vx_uint8 * src = NULL;
                     ERROR_CHECK_STATUS(vxMapImagePatch(inp_img, &rect_1, 0, &map_id, &addr, (void **)&src, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-                    if (inp_dims[3] == 4) {
-                        vx_uint32 height1 = height >> 2;
+                    if (inp_dims[3] >= 4) {
+                        vx_uint32 height1 = height/inp_dims[3];
+                        // copy images 0 and 1 to dest at loc (0,0) and (0,1)
                         for (vx_uint32 y = 0; y < height1; y++) {
                             vx_uint8 * pDst = (vx_uint8 *)img.data + y * img.step;
                             vx_uint8 * pDst1 = pDst + width*3;
                             vx_uint8 * pSrc = (vx_uint8 *)src + y * addr.stride_y;
                             vx_uint8 * pSrc1 = (vx_uint8 *)src + (y + height1) * addr.stride_y;
                             for (vx_uint32 x = 0; x < width; x++) {
-                                pDst[0] = pSrc[2];
-                                pDst[1] = pSrc[1];
-                                pDst[2] = pSrc[0];
-                                pDst1[0] = pSrc1[2];
-                                pDst1[1] = pSrc1[1];
-                                pDst1[2] = pSrc1[0];
+                                pDst[0] = pSrc[2], pDst[1] = pSrc[1], pDst[2] = pSrc[0];
+                                pDst1[0] = pSrc1[2], pDst1[1] = pSrc1[1], pDst1[2] = pSrc1[0];
                                 pDst += 3, pDst1 += 3;
                                 pSrc += 3, pSrc1 += 3;
                             }
                         }
-                        for (vx_uint32 y = height1; y < (height1*2); y++) {
-                            vx_uint8 * pDst = (vx_uint8 *)img.data + y * img.step;
+                        // if num_images > 4, copy img 2 and 3 to dst at loc (0,2) and (0,3)
+                        if ( inp_dims[3] > 4) {
+                            for (vx_uint32 y = 0; y < height1; y++) {
+                                vx_uint8 * pDst = (vx_uint8 *)img.data + width*6 + y * img.step;
+                                vx_uint8 * pDst1 = pDst + width*3;
+                                vx_uint8 * pSrc = (vx_uint8 *)src + (y+height1*2) * addr.stride_y;
+                                vx_uint8 * pSrc1 = (vx_uint8 *)src + (y + height1*3) * addr.stride_y;
+                                for (vx_uint32 x = 0; x < width; x++) {
+                                    pDst[0] = pSrc[2], pDst[1] = pSrc[1], pDst[2] = pSrc[0];
+                                    pDst1[0] = pSrc1[2], pDst1[1] = pSrc1[1], pDst1[2] = pSrc1[0];
+                                    pDst += 3, pDst1 += 3;
+                                    pSrc += 3, pSrc1 += 3;
+                                }
+                            }
+                        }
+                        // copy images 2  & 3 / 4 & 5 to dest at loc (1,0) and (1,1)
+                        for (vx_uint32 y = 0; y < height1; y++) {
+                            vx_uint8 * pDst = (vx_uint8 *)img.data + (y+height1) * img.step;
                             vx_uint8 * pDst1 = pDst + width*3;
-                            vx_uint8 * pSrc = (vx_uint8 *)src + (y + height1) * addr.stride_y;
-                            vx_uint8 * pSrc1 = (vx_uint8 *)src + (y + height1*2) * addr.stride_y;
+			    vx_uint8 *pSrc, *pSrc1;
+                            if (inp_dims[3] == 4) {
+                                pSrc = (vx_uint8 *)src + (y + height1*2) * addr.stride_y;
+                                pSrc1 = (vx_uint8 *)src + (y + height1*3) * addr.stride_y;
+                            } else {
+                                pSrc = (vx_uint8 *)src + (y + height1*4) * addr.stride_y;
+                                pSrc1 = (vx_uint8 *)src + (y + height1*5) * addr.stride_y;                                
+                            }
                             for (vx_uint32 x = 0; x < width; x++) {
-                                pDst[0] = pSrc[2];
-                                pDst[1] = pSrc[1];
-                                pDst[2] = pSrc[0];
-                                pDst1[0] = pSrc1[2];
-                                pDst1[1] = pSrc1[1];
-                                pDst1[2] = pSrc1[0];
+                                pDst[0] = pSrc[2], pDst[1] = pSrc[1], pDst[2] = pSrc[0];
+                                pDst1[0] = pSrc1[2], pDst1[1] = pSrc1[1], pDst1[2] = pSrc1[0];
                                 pDst += 3, pDst1 += 3;
                                 pSrc += 3, pSrc1 += 3;
+                            }
+                        }
+                        // if num_images > 4, copy img 6 and 7 to dst at loc (1,2) and (1,3)
+                        if ( inp_dims[3] > 4) {
+                            for (vx_uint32 y = 0; y < height1; y++) {
+                                vx_uint8 * pDst = (vx_uint8 *)img.data + width*6 + (y+height1) * img.step;
+                                vx_uint8 * pDst1 = pDst + width*3;
+                                vx_uint8 * pSrc = (vx_uint8 *)src + (y+height1*6) * addr.stride_y;
+                                vx_uint8 * pSrc1 = (vx_uint8 *)src + (y + height1*7) * addr.stride_y;
+                                for (vx_uint32 x = 0; x < width; x++) {
+                                    pDst[0] = pSrc[2], pDst[1] = pSrc[1], pDst[2] = pSrc[0];
+                                    pDst1[0] = pSrc1[2], pDst1[1] = pSrc1[1], pDst1[2] = pSrc1[0];
+                                    pDst += 3, pDst1 += 3;
+                                    pSrc += 3, pSrc1 += 3;
+                                }
+                            }
+                        }
+                        // the following code is for batch 12 and 16
+                        if ( inp_dims[3] > 8) {
+                            // copy images 8, 9, 10 and 11 to dest at loc (2,0), (2,1), (2,2) and (2,3)
+                            for (vx_uint32 y = 0; y < height1; y++) {
+                                vx_uint8 * pDst = (vx_uint8 *)img.data + (y+height1*2) * img.step;
+                                vx_uint8 * pDst1 = pDst + width*3;
+                                vx_uint8 * pDst2 = pDst1 + width*3;
+                                vx_uint8 * pDst3 = pDst2 + width*3;
+                                vx_uint8 * pSrc  = (vx_uint8 *)src + (y + height1*8) * addr.stride_y;
+                                vx_uint8 * pSrc1 = (vx_uint8 *)src + (y + height1*9) * addr.stride_y;
+                                vx_uint8 * pSrc2 = (vx_uint8 *)src + (y + height1*10) * addr.stride_y;
+                                vx_uint8 * pSrc3 = (vx_uint8 *)src + (y + height1*11) * addr.stride_y;
+                                for (vx_uint32 x = 0; x < width; x++) {
+                                    pDst[0] = pSrc[2], pDst[1] = pSrc[1], pDst[2] = pSrc[0];
+                                    pDst1[0] = pSrc1[2], pDst1[1] = pSrc1[1], pDst1[2] = pSrc1[0];
+                                    pDst2[0] = pSrc2[2], pDst2[1] = pSrc2[1], pDst2[2] = pSrc2[0];
+                                    pDst3[0] = pSrc3[2], pDst3[1] = pSrc3[1], pDst3[2] = pSrc3[0];
+                                    pDst += 3, pDst1 += 3, pDst2 += 3, pDst3 += 3;
+                                    pSrc += 3, pSrc1 += 3, pSrc2 += 3, pSrc3 += 3;
+                                }
+                            }
+                        }
+                        if ( inp_dims[3] > 12) {
+                            // copy images 12, 13, 14 and 15 to dest at loc (3,0), (3,1), (3,2) and (3,3)
+                            for (vx_uint32 y = 0; y < height1; y++) {
+                                vx_uint8 * pDst = (vx_uint8 *)img.data + (y+height1*3) * img.step;
+                                vx_uint8 * pDst1 = pDst + width*3;
+                                vx_uint8 * pDst2 = pDst1 + width*3;
+                                vx_uint8 * pDst3 = pDst2 + width*3;
+                                vx_uint8 * pSrc  = (vx_uint8 *)src + (y + height1*12) * addr.stride_y;
+                                vx_uint8 * pSrc1 = (vx_uint8 *)src + (y + height1*13) * addr.stride_y;
+                                vx_uint8 * pSrc2 = (vx_uint8 *)src + (y + height1*14) * addr.stride_y;
+                                vx_uint8 * pSrc3 = (vx_uint8 *)src + (y + height1*15) * addr.stride_y;
+                                for (vx_uint32 x = 0; x < width; x++) {
+                                    pDst[0] = pSrc[2], pDst[1] = pSrc[1], pDst[2] = pSrc[0];
+                                    pDst1[0] = pSrc1[2], pDst1[1] = pSrc1[1], pDst1[2] = pSrc1[0];
+                                    pDst2[0] = pSrc2[2], pDst2[1] = pSrc2[1], pDst2[2] = pSrc2[0];
+                                    pDst3[0] = pSrc3[2], pDst3[1] = pSrc3[1], pDst3[2] = pSrc3[0];
+                                    pDst += 3, pDst1 += 3, pDst2 += 3, pDst3 += 3;
+                                    pSrc += 3, pSrc1 += 3, pSrc2 += 3, pSrc3 += 3;
+                                }
                             }
                         }
                     } else {
@@ -494,7 +596,6 @@ int main(int argc, const char ** argv)
 
                     ERROR_CHECK_STATUS(vxUnmapImagePatch(inp_img, map_id));
                     pVisualize->show(img, detected_bb, inp_dims[3]);
-                    img.release();
                     if (cvWaitKey(1) >= 0)
                         break;
                 } else if (inp_img_mat){

@@ -5,6 +5,7 @@ class ColorFormat(Enum):
     IMAGE_RGB24 = 0
     IMAGE_BGR24 = 1
     IMAGE_U8 = 2
+    IMAGE_RGB_PLANAR = 3
 
 class Affinity(Enum):
     PROCESS_GPU = 0

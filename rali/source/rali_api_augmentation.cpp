@@ -20,6 +20,12 @@
 #include "node_blend.h"
 #include "node_resize.h"
 #include "node_rotate.h"
+#include "node_color_twist.h"
+#include "node_hue.h"
+#include "node_saturation.h"
+#include "node_crop_mirror_normalize.h"
+#include "node_resize_crop_mirror.h"
+#include "node_crop.h"
 #include "node_copy.h"
 #include "node_nop.h"
 
@@ -27,16 +33,21 @@
 #include "context.h"
 #include "rali_api.h"
 
+
+
 RaliImage  RALI_API_CALL
 raliRotate(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam angle,
+        RaliFloatParam p_angle,
         unsigned dest_width,
         unsigned dest_height)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto angle = static_cast<FloatParam*>(p_angle);
     try
     {
         if(!input || !context)
@@ -54,6 +65,9 @@ raliRotate(
 
         output = context->master_graph->create_image(output_info, is_output);
 
+        // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
+        if(dest_width != 0 && dest_height != 0)
+            output->reset_image_roi();
         context->master_graph->add_node<RotateNode>({input}, {output})->init(angle);
     }
     catch(const std::exception& e)
@@ -66,14 +80,16 @@ raliRotate(
 
 RaliImage  RALI_API_CALL
 raliRotateFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float angle,
         bool is_output,
         unsigned dest_width,
         unsigned dest_height)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -90,6 +106,10 @@ raliRotateFixed(
         output_info.height(dest_height);
 
         output = context->master_graph->create_image(output_info, is_output);
+
+        // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
+        if(dest_width != 0 && dest_height != 0)
+            output->reset_image_roi();
 
         context->master_graph->add_node<RotateNode>({input}, {output})->init(angle);
     }
@@ -103,12 +123,14 @@ raliRotateFixed(
 
 RaliImage RALI_API_CALL
 raliFlip(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         RaliFlipAxis axis,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -116,7 +138,7 @@ raliFlip(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<FlipNode>({input}, {output})->init(axis);
+        context->master_graph->add_node<FlipNode>({input}, {output});
     }
     catch(const std::exception& e)
     {
@@ -126,66 +148,18 @@ raliFlip(
     return output;
 }
 
-RaliImage RALI_API_CALL
-raliContrast(
-        RaliContext context,
-        RaliImage input,
-        bool is_output,
-        RaliIntParam min,
-        RaliIntParam max)
-{
-    RaliImage output = nullptr;
-    try
-    {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
-        output = context->master_graph->create_image(input->info(), is_output);
-
-        context->master_graph->add_node<RaliContrastNode>({input}, {output})->init(min, max);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-    }
-    return output;
-}
-
-RaliImage RALI_API_CALL
-raliContrastFixed(
-        RaliContext context,
-        RaliImage input,
-        unsigned min,
-        unsigned max,
-        bool is_output)
-{
-    RaliImage output = nullptr;
-    try
-    {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
-        output = context->master_graph->create_image(input->info(), is_output);
-
-        context->master_graph->add_node<RaliContrastNode>({input}, {output})->init(min, max);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-    }
-    return output;
-}
 
 RaliImage RALI_API_CALL
 raliGamma(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam alpha)
+        RaliFloatParam p_alpha)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto alpha = static_cast<FloatParam*>(p_alpha);
     try
     {
         if(!input || !context)
@@ -205,12 +179,14 @@ raliGamma(
 
 RaliImage RALI_API_CALL
 raliGammaFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float alpha,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -228,30 +204,107 @@ raliGammaFixed(
     return output;
 }
 
-RaliImage  RALI_API_CALL
-raliCropResizeFixed(
-        RaliContext context,
-        RaliImage input,
-        unsigned dest_width, unsigned dest_height,
+RaliImage RALI_API_CALL
+raliHue(
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        float area,
-        float x_center_drift,
-        float y_center_drift)
+        RaliFloatParam p_hue)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto hue = static_cast<FloatParam*>(p_hue);
     try
     {
-        if(!input || !context || dest_width == 0 || dest_height == 0)
+        if(!input || !context)
             THROW("Null values passed as input")
 
-        // For the crop resize node, user can create an image with a different width and height
-        ImageInfo output_info = input->info();
-        output_info.width(dest_width);
-        output_info.height(dest_height);
+        output = context->master_graph->create_image(input->info(), is_output);
 
-        output = context->master_graph->create_image(output_info, is_output);
+        context->master_graph->add_node<HueNode>({input}, {output})->init(hue);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
 
-        context->master_graph->add_node<CropResizeNode>({input}, {output})->init(area, x_center_drift, y_center_drift);
+RaliImage RALI_API_CALL
+raliHueFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        float hue,
+        bool is_output)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<HueNode>({input}, {output})->init(hue);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage RALI_API_CALL
+raliSaturation(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output,
+        RaliFloatParam p_sat)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto sat = static_cast<FloatParam*>(p_sat);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<SatNode>({input}, {output})->init(sat);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage RALI_API_CALL
+raliSaturationFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        float sat,
+        bool is_output)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<SatNode>({input}, {output})->init(sat);
     }
     catch(const std::exception& e)
     {
@@ -263,28 +316,80 @@ raliCropResizeFixed(
 
 RaliImage  RALI_API_CALL
 raliCropResize(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         unsigned dest_width, unsigned dest_height,
         bool is_output,
-        RaliFloatParam area,
-        RaliFloatParam x_center_drift,
-        RaliFloatParam y_center_drift)
+        RaliFloatParam p_area,
+        RaliFloatParam p_aspect_ratio,
+        RaliFloatParam p_x_center_drift,
+        RaliFloatParam p_y_center_drift)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto area = static_cast<FloatParam*>(p_area);
+    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
+    auto x_center_drift = static_cast<FloatParam*>(p_x_center_drift);
+    auto y_center_drift = static_cast<FloatParam*>(p_y_center_drift);
     try
     {
-        if(!input || !context || dest_width == 0 || dest_height == 0)
+        if(!input || !context )
             THROW("Null values passed as input")
-
+        if(dest_width == 0 || dest_height == 0)
+            THROW("CropResize node needs tp receive non-zero destination dimensions")
         // For the crop resize node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
+
         output_info.width(dest_width);
         output_info.height(dest_height);
-
         output = context->master_graph->create_image(output_info, is_output);
 
-        context->master_graph->add_node<CropResizeNode>({input}, {output})->init(area, x_center_drift, y_center_drift);
+        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+        output->reset_image_roi();
+
+        context->master_graph->add_node<CropResizeNode>({input}, {output})->init(area, aspect_ratio, x_center_drift, y_center_drift);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+
+RaliImage  RALI_API_CALL
+raliCropResizeFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        unsigned dest_width, unsigned dest_height,
+        bool is_output,
+        float area,
+        float aspect_ratio,
+        float x_center_drift,
+        float y_center_drift)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+        if(dest_width == 0 || dest_height == 0)
+            THROW("CropResize node needs tp receive non-zero destination dimensions")
+        // For the crop resize node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+        output = context->master_graph->create_image(output_info, is_output);
+
+        // user provides the output size and the dimension of all the images after this node will be fixed and equal to that size
+        output->reset_image_roi();
+
+        context->master_graph->add_node<CropResizeNode>({input}, {output})->init(area, aspect_ratio, x_center_drift, y_center_drift);
     }
     catch(const std::exception& e)
     {
@@ -296,13 +401,15 @@ raliCropResize(
 
 RaliImage  RALI_API_CALL
 raliResize(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         unsigned dest_width,
         unsigned dest_height,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context || dest_width == 0 || dest_height == 0)
@@ -314,6 +421,9 @@ raliResize(
         output_info.height(dest_height);
 
         output = context->master_graph->create_image(output_info, is_output);
+
+        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+        output->reset_image_roi();
 
         context->master_graph->add_node<ResizeNode>({input}, {output});
     }
@@ -327,13 +437,17 @@ raliResize(
 
 RaliImage RALI_API_CALL
 raliBrightness(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam alpha,
-        RaliIntParam beta)
+        RaliFloatParam p_alpha,
+        RaliIntParam p_beta)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto alpha = static_cast<FloatParam*>(p_alpha);
+    auto beta = static_cast<IntParam*>(p_beta);
     try
     {
         if(!input || !context)
@@ -353,13 +467,15 @@ raliBrightness(
 
 RaliImage RALI_API_CALL
 raliBrightnessFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float alpha,
         int beta,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -379,12 +495,15 @@ raliBrightnessFixed(
 
 RaliImage RALI_API_CALL
 raliBlur(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam sdev)
+        RaliIntParam p_sdev)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto sdev = static_cast<IntParam*>(p_sdev);
     try
     {
         if(!input || !context)
@@ -402,15 +521,16 @@ raliBlur(
     return output;
 }
 
-
 RaliImage RALI_API_CALL
 raliBlurFixed(
-        RaliContext context,
-        RaliImage input,
-        float sdev,
+        RaliContext p_context,
+        RaliImage p_input,
+        int sdev,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -430,13 +550,17 @@ raliBlurFixed(
 
 RaliImage  RALI_API_CALL
 raliBlend(
-        RaliContext context,
-        RaliImage input1,
-        RaliImage input2,
+        RaliContext p_context,
+        RaliImage p_input1,
+        RaliImage p_input2,
         bool is_output,
-        RaliFloatParam ratio)
+        RaliFloatParam p_ratio)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input1 = static_cast<Image*>(p_input1);
+    auto input2 = static_cast<Image*>(p_input2);
+    auto ratio = static_cast<FloatParam*>(p_ratio);
     try
     {
         if(!input1 || !input2 || !context)
@@ -459,13 +583,16 @@ raliBlend(
 
 RaliImage  RALI_API_CALL
 raliBlendFixed(
-        RaliContext context,
-        RaliImage input1,
-        RaliImage input2,
+        RaliContext p_context,
+        RaliImage p_input1,
+        RaliImage p_input2,
         float ratio,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input1 = static_cast<Image*>(p_input1);
+    auto input2 = static_cast<Image*>(p_input2);
     try
     {
         if(!input1 || !input2 || !context)
@@ -486,17 +613,26 @@ raliBlendFixed(
     return output;
 }
 
+
 RaliImage  RALI_API_CALL
 raliWarpAffine(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam x0, RaliFloatParam x1,
-        RaliFloatParam y0, RaliFloatParam y1,
-        RaliFloatParam o0, RaliFloatParam o1,
-        unsigned dest_height, unsigned dest_width)
+        unsigned dest_height, unsigned dest_width,
+        RaliFloatParam p_x0, RaliFloatParam p_x1,
+        RaliFloatParam p_y0, RaliFloatParam p_y1,
+        RaliFloatParam p_o0, RaliFloatParam p_o1)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto x0 = static_cast<FloatParam*>(p_x0);
+    auto x1 = static_cast<FloatParam*>(p_x1);
+    auto y0 = static_cast<FloatParam*>(p_y0);
+    auto y1 = static_cast<FloatParam*>(p_y1);
+    auto o0 = static_cast<FloatParam*>(p_o0);
+    auto o1 = static_cast<FloatParam*>(p_o1);
     try
     {
         if(!input || !context)
@@ -514,7 +650,11 @@ raliWarpAffine(
 
         output = context->master_graph->create_image(output_info, is_output);
 
-        context->master_graph->add_node<WarpAffineNode>({input}, {output})->init( x0, x1, y0, y1, o0, o1);
+        // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
+        if(dest_width != 0 && dest_height != 0)
+            output->reset_image_roi();
+
+        context->master_graph->add_node<WarpAffineNode>({input}, {output})->init(x0, x1, y0, y1, o0, o1);
     }
     catch(const std::exception& e)
     {
@@ -526,8 +666,8 @@ raliWarpAffine(
 
 RaliImage  RALI_API_CALL
 raliWarpAffineFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float x0, float x1,
         float y0, float y1,
         float o0, float o1,
@@ -535,7 +675,9 @@ raliWarpAffineFixed(
         unsigned int dest_height,
         unsigned int dest_width)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -553,6 +695,10 @@ raliWarpAffineFixed(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
+        // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
+        if(dest_width != 0 && dest_height != 0)
+            output->reset_image_roi();
+
         context->master_graph->add_node<WarpAffineNode>({input}, {output})->init(x0, x1, y0, y1, o0, o1);
     }
     catch(const std::exception& e)
@@ -565,11 +711,13 @@ raliWarpAffineFixed(
 
 RaliImage  RALI_API_CALL
 raliFishEye(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -589,12 +737,15 @@ raliFishEye(
 
 RaliImage RALI_API_CALL
 raliVignette(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam sdev)
+        RaliFloatParam p_sdev)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto sdev = static_cast<FloatParam*>(p_sdev);
     try
     {
         if(!input || !context)
@@ -614,12 +765,14 @@ raliVignette(
 
 RaliImage RALI_API_CALL
 raliVignetteFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float sdev,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -639,12 +792,15 @@ raliVignetteFixed(
 
 RaliImage RALI_API_CALL
 raliJitter(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliIntParam kernel_size)
+        RaliIntParam p_kernel_size)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto kernel_size = static_cast<IntParam*>(p_kernel_size);
     try
     {
         if(!input || !context)
@@ -664,12 +820,14 @@ raliJitter(
 
 RaliImage RALI_API_CALL
 raliJitterFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         int kernel_size,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -687,14 +845,18 @@ raliJitterFixed(
     return output;
 }
 
+
 RaliImage RALI_API_CALL
 raliSnPNoise(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam sdev)
+        RaliFloatParam p_sdev)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto sdev = static_cast<FloatParam*>(p_sdev);
     try
     {
         if(!input || !context)
@@ -714,12 +876,14 @@ raliSnPNoise(
 
 RaliImage RALI_API_CALL
 raliSnPNoiseFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float sdev,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -738,13 +902,16 @@ raliSnPNoiseFixed(
 }
 
 RaliImage RALI_API_CALL
-raliSnow(
-        RaliContext context,
-        RaliImage input,
+raliFlip(
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam sdev)
+        RaliIntParam p_flip_axis)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto flip_axis = static_cast<IntParam*>(p_flip_axis);
     try
     {
         if(!input || !context)
@@ -752,7 +919,121 @@ raliSnow(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<SnowNode>({input}, {output})->init(sdev);
+        context->master_graph->add_node<FlipNode>({input}, {output})->init(flip_axis);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage RALI_API_CALL
+raliFlipFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        int flip_axis,
+        bool is_output)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<FlipNode>({input}, {output})->init(flip_axis);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+
+RaliImage RALI_API_CALL
+raliContrast(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output,
+        RaliIntParam p_min,
+        RaliIntParam p_max)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto min = static_cast<IntParam*>(p_min);
+    auto max = static_cast<IntParam*>(p_max);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<RaliContrastNode>({input}, {output})->init(min, max);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage RALI_API_CALL
+raliContrastFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        unsigned min,
+        unsigned max,
+        bool is_output)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<RaliContrastNode>({input}, {output})->init(min, max);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage RALI_API_CALL
+raliSnow(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output,
+        RaliFloatParam p_shift)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto shift = static_cast<FloatParam*>(p_shift);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<SnowNode>({input}, {output})->init(shift);
     }
     catch(const std::exception& e)
     {
@@ -764,12 +1045,14 @@ raliSnow(
 
 RaliImage RALI_API_CALL
 raliSnowFixed(
-        RaliContext context,
-        RaliImage input,
-        float sdev,
+        RaliContext p_context,
+        RaliImage p_input,
+        float shift,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -777,7 +1060,7 @@ raliSnowFixed(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<SnowNode>({input}, {output})->init(sdev);
+        context->master_graph->add_node<SnowNode>({input}, {output})->init(shift);
     }
     catch(const std::exception& e)
     {
@@ -789,12 +1072,21 @@ raliSnowFixed(
 
 RaliImage RALI_API_CALL
 raliRain(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam rain_value)
+        RaliFloatParam p_rain_value,
+        RaliIntParam p_rain_width,
+        RaliIntParam p_rain_height,
+        RaliFloatParam p_rain_transparency)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto rain_width = static_cast<IntParam*>(p_rain_width);
+    auto rain_height = static_cast<IntParam*>(p_rain_height);
+    auto rain_transparency = static_cast<FloatParam*>(p_rain_transparency);
+    auto rain_value = static_cast<FloatParam*>(p_rain_value);
     try
     {
         if(!input || !context)
@@ -802,7 +1094,7 @@ raliRain(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<RainNode>({input}, {output})->init(rain_value);
+        context->master_graph->add_node<RainNode>({input}, {output})->init(rain_value, rain_width, rain_height, rain_transparency);
     }
     catch(const std::exception& e)
     {
@@ -814,12 +1106,17 @@ raliRain(
 
 RaliImage RALI_API_CALL
 raliRainFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float rain_value,
+        int rain_width,
+        int rain_height,
+        float rain_transparency,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -827,7 +1124,7 @@ raliRainFixed(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<RainNode>({input}, {output})->init( rain_value);
+        context->master_graph->add_node<RainNode>({input}, {output})->init(rain_value, rain_width, rain_height, rain_transparency);
     }
     catch(const std::exception& e)
     {
@@ -839,12 +1136,15 @@ raliRainFixed(
 
 RaliImage RALI_API_CALL
 raliColorTemp(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliIntParam adjustment)
+        RaliIntParam p_adj_value_param)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto adj_value_param = static_cast<IntParam*>(p_adj_value_param);
     try
     {
         if(!input || !context)
@@ -852,7 +1152,7 @@ raliColorTemp(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<ColorTemperatureNode>({input}, {output})->init(adjustment);
+        context->master_graph->add_node<ColorTemperatureNode>({input}, {output})->init(adj_value_param);
     }
     catch(const std::exception& e)
     {
@@ -864,12 +1164,14 @@ raliColorTemp(
 
 RaliImage RALI_API_CALL
 raliColorTempFixed(
-        RaliContext context,
-        RaliImage input,
-        int adjustment,
+        RaliContext p_context,
+        RaliImage p_input,
+        int adj_value_param,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -877,7 +1179,7 @@ raliColorTempFixed(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<ColorTemperatureNode>({input}, {output})->init(adjustment);
+        context->master_graph->add_node<ColorTemperatureNode>({input}, {output})->init(adj_value_param);
     }
     catch(const std::exception& e)
     {
@@ -886,15 +1188,19 @@ raliColorTempFixed(
     }
     return output;
 }
+
 
 RaliImage RALI_API_CALL
 raliFog(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam fog_value)
+        RaliFloatParam p_fog_param)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto fog_param = static_cast<FloatParam*>(p_fog_param);
     try
     {
         if(!input || !context)
@@ -902,7 +1208,7 @@ raliFog(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<FogNode>({input}, {output})->init(fog_value);
+        context->master_graph->add_node<FogNode>({input}, {output})->init(fog_param);
     }
     catch(const std::exception& e)
     {
@@ -913,9 +1219,15 @@ raliFog(
 }
 
 RaliImage RALI_API_CALL
-raliFogFixed(RaliContext context, RaliImage input, float fog_value, bool is_output)
+raliFogFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        float fog_param,
+        bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -923,7 +1235,7 @@ raliFogFixed(RaliContext context, RaliImage input, float fog_value, bool is_outp
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<FogNode>({input}, {output})->init(fog_value);
+        context->master_graph->add_node<FogNode>({input}, {output})->init(fog_param);
     }
     catch(const std::exception& e)
     {
@@ -933,14 +1245,15 @@ raliFogFixed(RaliContext context, RaliImage input, float fog_value, bool is_outp
     return output;
 }
 
-
 RaliImage  RALI_API_CALL
 raliPixelate(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -960,13 +1273,17 @@ raliPixelate(
 
 RaliImage RALI_API_CALL
 raliLensCorrection(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam strength,
-        RaliFloatParam zoom)
+        RaliFloatParam p_strength,
+        RaliFloatParam p_zoom)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto strength = static_cast<FloatParam*>(p_strength);
+    auto zoom = static_cast<FloatParam*>(p_zoom);
     try
     {
         if(!input || !context)
@@ -986,13 +1303,15 @@ raliLensCorrection(
 
 RaliImage RALI_API_CALL
 raliLensCorrectionFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float strength,
         float zoom,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -1000,7 +1319,7 @@ raliLensCorrectionFixed(
 
         output = context->master_graph->create_image(input->info(), is_output);
 
-        context->master_graph->add_node<LensCorrectionNode>({input}, {output})->init( strength, zoom);
+        context->master_graph->add_node<LensCorrectionNode>({input}, {output})->init(strength, zoom);
     }
     catch(const std::exception& e)
     {
@@ -1012,12 +1331,15 @@ raliLensCorrectionFixed(
 
 RaliImage RALI_API_CALL
 raliExposure(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output,
-        RaliFloatParam shift)
+        RaliFloatParam p_shift)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto shift = static_cast<FloatParam*>(p_shift);
     try
     {
         if(!input || !context)
@@ -1037,12 +1359,14 @@ raliExposure(
 
 RaliImage RALI_API_CALL
 raliExposureFixed(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         float shift,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -1060,13 +1384,305 @@ raliExposureFixed(
     return output;
 }
 
-RaliImage  RALI_API_CALL
-raliCopy(
-        RaliContext context,
-        RaliImage input,
+RaliImage RALI_API_CALL
+raliColorTwist(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output,
+        RaliFloatParam p_alpha,
+        RaliFloatParam p_beta,
+        RaliFloatParam p_hue,
+        RaliFloatParam p_sat)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto alpha = static_cast<FloatParam*>(p_alpha);
+    auto beta = static_cast<FloatParam*>(p_beta);
+    auto hue = static_cast<FloatParam*>(p_hue);
+    auto sat = static_cast<FloatParam*>(p_sat);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<ColorTwistBatchNode>({input}, {output})->init(alpha, beta, hue, sat);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage RALI_API_CALL
+raliColorTwistFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        float alpha,
+        float beta,
+        float hue,
+        float sat,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+
+        output = context->master_graph->create_image(input->info(), is_output);
+
+        context->master_graph->add_node<ColorTwistBatchNode>({input}, {output})->init(alpha, beta, hue, sat);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage
+RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, unsigned crop_depth, unsigned crop_height,
+                                    unsigned crop_width, float start_x, float start_y, float start_z, std::vector<float> &mean,
+                                    std::vector<float> &std_dev, bool is_output, RaliIntParam p_mirror)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto mirror = static_cast<IntParam *>(p_mirror);
+    float mean_acutal = 0, std_actual = 0; // Mean of vectors
+    for(unsigned i = 0; i < mean.size(); i++)
+    {
+        mean_acutal += mean[i];
+        std_actual  += std_dev[i];
+    }
+    mean_acutal /= mean.size();
+    std_actual /= std_dev.size();
+
+   try
+    {
+        if(!input || !context || crop_width == 0 || crop_height == 0)
+            THROW("Null values passed as input")
+
+        // For the crop mirror normalize resize node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(crop_width);
+        output_info.height(crop_height);
+        output = context->master_graph->create_image(output_info, is_output);
+        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+        output->reset_image_roi();
+
+        context->master_graph->add_node<CropMirrorNormalizeNode>({input}, {output})->init(crop_height, crop_width, start_x, start_y, mean_acutal,
+                                                                                          std_actual , mirror );
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return input; // Changed to input----------------IMPORTANT
+}
+
+
+RaliImage RALI_API_CALL
+raliCrop(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output,
+        RaliFloatParam p_crop_width,
+        RaliFloatParam p_crop_height,
+        RaliFloatParam p_crop_depth,
+        RaliFloatParam p_crop_pox_x,
+        RaliFloatParam p_crop_pos_y,
+        RaliFloatParam p_crop_pos_z)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto crop_h = static_cast<FloatParam*>(p_crop_height);
+    auto crop_w = static_cast<FloatParam*>(p_crop_width);
+    auto x_drift = static_cast<FloatParam*>(p_crop_pox_x);
+    auto y_drift = static_cast<FloatParam*>(p_crop_pos_y);
+
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+        ImageInfo output_info = input->info();
+        output_info.width(input->info().width());
+        output_info.height(input->info().height_single());
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<CropNode>({input}, {output})->init(crop_h, crop_w, x_drift, y_drift);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliCropFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        unsigned crop_width,
+        unsigned crop_height,
+        unsigned crop_depth,
+        bool is_output,
+        float crop_pos_x,
+        float crop_pos_y,
+        float crop_pos_z)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context )
+            THROW("Null values passed as input")
+        if(crop_width == 0 || crop_height == 0 || crop_depth == 0)
+            THROW("Crop node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(crop_width);
+        output_info.height(crop_height);
+        output = context->master_graph->create_image(input->info(), is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<CropNode>({input}, {output})->init(crop_height, crop_width, crop_pos_x, crop_pos_y);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliCropCenterFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        unsigned crop_width,
+        unsigned crop_height,
+        unsigned crop_depth,
+        bool is_output)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context )
+            THROW("Null values passed as input")
+        if(crop_width == 0 || crop_height == 0 || crop_depth == 0)
+            THROW("Crop node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(crop_width);
+        output_info.height(crop_height);
+        output = context->master_graph->create_image(input->info(), is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<CropNode>({input}, {output})->init(crop_height, crop_width);
+    }
+
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliResizeCropMirrorFixed(
+        RaliContext p_context,
+        RaliImage p_input,
+        unsigned dest_width,
+        unsigned dest_height,
+        bool is_output,
+        unsigned crop_h,
+        unsigned crop_w,
+        RaliIntParam p_mirror
+        )
+{
+    Image* output = nullptr;
+    auto mirror = static_cast<IntParam *>(p_mirror);
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        if(!input || !context )
+            THROW("Null values passed as input")
+        if(dest_width == 0 || dest_height == 0)
+            THROW("Crop Mirror node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<ResizeCropMirrorNode>({input}, {output})->init(crop_h, crop_w, mirror);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context, RaliImage p_input,
+                                                           unsigned dest_width, unsigned dest_height,
+                                                            bool is_output, RaliFloatParam p_crop_height,
+                                                            RaliFloatParam p_crop_width, RaliIntParam p_mirror 
+                                                            )
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto crop_h = static_cast<FloatParam*>(p_crop_height);
+    auto crop_w = static_cast<FloatParam*>(p_crop_width);
+    auto mirror  = static_cast<IntParam*>(p_mirror);
+    try
+    {
+        if(!input || !context )
+            THROW("Null values passed as input")
+        if(dest_width == 0 || dest_height == 0)
+            THROW("Crop Mirror node needs tp receive non-zero destination dimensions")
+        // For the crop node, user can create an image with a different width and height
+        ImageInfo output_info = input->info();
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<ResizeCropMirrorNode>({input}, {output})->init(crop_h, crop_w, mirror);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
+RaliImage  RALI_API_CALL
+raliCopy(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)
@@ -1086,11 +1702,13 @@ raliCopy(
 
 RaliImage  RALI_API_CALL
 raliNop(
-        RaliContext context,
-        RaliImage input,
+        RaliContext p_context,
+        RaliImage p_input,
         bool is_output)
 {
-    RaliImage output = nullptr;
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
     try
     {
         if(!input || !context)

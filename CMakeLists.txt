@@ -20,12 +20,17 @@
 
 cmake_minimum_required (VERSION 2.8)
 project (MIVisionX)
-set(VERSION "1.6.0")
+set(VERSION "1.8.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_INSTALL_PREFIX /opt/rocm/mivisionx)
+
+set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
+# need to do this to avoid setting the default path to /usr/local
+if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)
+endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 if(NOT WIN32)
   string(ASCII 27 Esc)
@@ -37,6 +42,7 @@ if(NOT WIN32)
   set(BoldBlue    "${Esc}[1;34m")
 endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
@@ -75,7 +81,7 @@ else()
     message("-- CentOS detected -- .rpm package will be created")
     set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "RPM")
-    set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl, protobuf, opencv, python-pip")
+    set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl, protobuf, opencv")
     set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
 endif()
 

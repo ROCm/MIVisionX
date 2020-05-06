@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7.4"
+__version__     = "1.7.8"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -68,7 +68,9 @@ else:
 		os.system('yum -y update')
 		os.system('yum -y install sudo')
 	os.system('sudo -v')
-	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel openssl-devel hg')
+	os.system('sudo yum -y update')
+	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel')
+	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install openssl-devel hg autoconf automake')
 
 # setup directory
 deps_dir = os.path.expanduser(setupDir_deps)
@@ -80,9 +82,8 @@ if(os.path.exists(deps_dir) and reinstall == 'yes'):
 
 # MIVisionX setup
 if(os.path.exists(deps_dir)):
-	os.system('(cd '+deps_dir+'; wget https://raw.githubusercontent.com/ARM-software/ComputeLibrary/master/include/half/half.hpp )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'; sudo mv half.hpp /usr/local/include/ )')
+	os.system('(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo '+linuxFlag+' make install -j8)')
 	os.system('sudo -v')
@@ -119,9 +120,10 @@ else:
 	os.system('(cd '+deps_dir+'; unzip 3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; mkdir build )')
 	# Install half.hpp
-	os.system('(cd '+deps_dir+'; wget https://raw.githubusercontent.com/ARM-software/ComputeLibrary/master/include/half/half.hpp )')
+	os.system('(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')
+	os.system('(cd '+deps_dir+'; unzip half-1.12.0.zip -d half-files )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'; sudo mv half.hpp /usr/local/include/ )')
+	os.system('(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
 	# Install ROCm-CMake
 	os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen OpenCV )')
 	os.system('(cd '+deps_dir+'/build/rocm-cmake; '+linuxCMake+' ../../rocm-cmake )')
@@ -185,25 +187,48 @@ else:
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install qt5-default qtcreator')
 	# Install RPP
 	if rppInstall == 'yes':
-		os.system('(cd '+deps_dir+'; git clone -b 0.2 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; cmake -DBACKEND=OCL ../; make -j4; sudo make install)')
 		#Yasm/Nasm for TurboJPEG
 		if linuxSystemInstall == 'apt-get':
 			os.system('sudo -v')
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install nasm yasm')
-		else:
+			#json-cpp
+			os.system('sudo -v')
+			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libjsoncpp-dev')
+			#clang+boost
+			os.system('sudo -v')
+			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libboost-all-dev clang')
+			#turbo-JPEG
+			os.system('(cd '+deps_dir+'; wget https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz )')
+			os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
+			os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
+			#RPP
+			os.system('(cd '+deps_dir+'; git clone -b 0.3 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
+		# Turn off for CentOS - TBD: turn on when RPP is supported on CentOS 
+		#else:
 			# Nasm
-			os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
-			os.system('(cd '+deps_dir+'; tar xjvf nasm-2.14.02.tar.bz2 )')
-			os.system('(cd '+deps_dir+'/nasm-2.14.02; ./autogen.sh; ./configure; make -j8 )')
-			os.system('sudo -v')
-			os.system('(cd '+deps_dir+'/nasm-2.14.02; sudo '+linuxFlag+' make install )')
+			#os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
+			#os.system('(cd '+deps_dir+'; tar xjvf nasm-2.14.02.tar.bz2 )')
+			#os.system('(cd '+deps_dir+'/nasm-2.14.02; ./autogen.sh; ./configure; make -j8 )')
+			#os.system('sudo -v')
+			#os.system('(cd '+deps_dir+'/nasm-2.14.02; sudo '+linuxFlag+' make install )')
 			# Yasm
-			os.system('(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
-			os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
-			os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
-			os.system('sudo -v')
-			os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
-		os.system('(cd '+deps_dir+'; git clone https://github.com/libjpeg-turbo/libjpeg-turbo; cd libjpeg-turbo; mkdir build; cd build; cmake ../; make -j4; sudo make install)')
+			#os.system('(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
+			#os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
+			#os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
+			#os.system('sudo -v')
+			#os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
+			#JSON-cpp
+			#os.system('sudo -v')
+			#os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install jsoncpp')
+			#clang+boost
+			#os.system('sudo -v')
+			#os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install boost-devel clang')
+			#turbo-JPEG
+			#os.system('(cd '+deps_dir+'; wget https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz )')
+			#os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
+			#os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
+			#RPP
+			#os.system('(cd '+deps_dir+'; git clone -b 0.3 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
 	# Install ffmpeg
 	if ffmpegInstall == 'yes':
 		if linuxSystemInstall == 'apt-get':
@@ -215,6 +240,13 @@ else:
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget zlib1g-dev')
 			os.system('sudo -v')
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
+			# FFMPEG 4
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
+			os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
+			os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install )')
 		else:
 			os.system('sudo -v')
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install autoconf automake bzip2 bzip2-devel cmake freetype-devel libass-devel')
@@ -238,19 +270,20 @@ else:
 			os.system('sudo -v')
 			os.system('(cd '+deps_dir+'/x264; sudo '+linuxFlag+' make install )')
 			# libx265
-			os.system('(cd '+deps_dir+'; hg clone https://bitbucket.org/multicoreware/x265 )')
-			os.system('(cd '+deps_dir+'/x265/build/linux; cmake -G "Unix Makefiles" -DENABLE_SHARED:bool=off ../../source; make -j8 )')
+			os.system('(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
+			os.system('(cd '+deps_dir+'/x265/build/linux; ./make-Makefiles.bash; make -j8 )')
 			os.system('sudo -v')
-			os.system('(cd '+deps_dir+'/x265/build/linux; sudo '+linuxFlag+' make install )')
+			os.system('(cd '+deps_dir+'/x265/build/linux; sudo '+linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')
 			# libfdk_aac
-			os.system('(cd '+deps_dir+'; git clone --depth 1 https://github.com/mstorsjo/fdk-aac )')
-			os.system('(cd '+deps_dir+'/fdk-aac; autoreconf -fiv; ./configure; make -j8 )')
+			os.system('(cd '+deps_dir+'; git clone https://github.com/mstorsjo/fdk-aac.git )')
+			os.system('(cd '+deps_dir+'/fdk-aac; autoreconf -fiv; ./configure --disable-shared; make -j8 )')
 			os.system('sudo -v')
 			os.system('(cd '+deps_dir+'/fdk-aac; sudo '+linuxFlag+' make install )')
-		os.system('sudo -v')
-		os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-		os.system('(cd '+deps_dir+'/ffmpeg; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-		os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
-		os.system('sudo -v')
-		os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install )')
+			# FFMPEG 4
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
+			os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --disable-shared --enable-static --enable-libx264 --enable-libx265 --enable-libass --enable-gpl --enable-nonfree)')
+			os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install )')
 	print("\nMIVisionX Dependencies Installed\n")

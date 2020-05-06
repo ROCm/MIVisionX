@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7.5"
+__version__     = "1.7.8"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -68,7 +68,9 @@ else:
 		os.system('yum -y update')
 		os.system('yum -y install sudo')
 	os.system('sudo -v')
-	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel openssl-devel hg')
+	os.system('sudo yum -y update')
+	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel')
+	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install openssl-devel hg autoconf automake')
 
 # setup directory
 deps_dir = os.path.expanduser(setupDir_deps)
@@ -238,6 +240,13 @@ else:
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget zlib1g-dev')
 			os.system('sudo -v')
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
+			# FFMPEG 4
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
+			os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
+			os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install )')
 		else:
 			os.system('sudo -v')
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install autoconf automake bzip2 bzip2-devel cmake freetype-devel libass-devel')
@@ -261,19 +270,20 @@ else:
 			os.system('sudo -v')
 			os.system('(cd '+deps_dir+'/x264; sudo '+linuxFlag+' make install )')
 			# libx265
-			os.system('(cd '+deps_dir+'; hg clone https://bitbucket.org/multicoreware/x265 )')
-			os.system('(cd '+deps_dir+'/x265/build/linux; cmake -G "Unix Makefiles" -DENABLE_SHARED:bool=off ../../source; make -j8 )')
+			os.system('(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
+			os.system('(cd '+deps_dir+'/x265/build/linux; ./make-Makefiles.bash; make -j8 )')
 			os.system('sudo -v')
-			os.system('(cd '+deps_dir+'/x265/build/linux; sudo '+linuxFlag+' make install )')
+			os.system('(cd '+deps_dir+'/x265/build/linux; sudo '+linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')
 			# libfdk_aac
-			os.system('(cd '+deps_dir+'; git clone --depth 1 https://github.com/mstorsjo/fdk-aac )')
-			os.system('(cd '+deps_dir+'/fdk-aac; autoreconf -fiv; ./configure; make -j8 )')
+			os.system('(cd '+deps_dir+'; git clone https://github.com/mstorsjo/fdk-aac.git )')
+			os.system('(cd '+deps_dir+'/fdk-aac; autoreconf -fiv; ./configure --disable-shared; make -j8 )')
 			os.system('sudo -v')
 			os.system('(cd '+deps_dir+'/fdk-aac; sudo '+linuxFlag+' make install )')
-		os.system('sudo -v')
-		os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-		os.system('(cd '+deps_dir+'/ffmpeg; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-		os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
-		os.system('sudo -v')
-		os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install )')
+			# FFMPEG 4
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
+			os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --disable-shared --enable-static --enable-libx264 --enable-libx265 --enable-libass --enable-gpl --enable-nonfree)')
+			os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+			os.system('sudo -v')
+			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install )')
 	print("\nMIVisionX Dependencies Installed\n")

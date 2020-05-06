@@ -88,7 +88,8 @@ ImageReadAndDecode::load(unsigned char* buff,
                          const size_t max_decoded_height,
                          std::vector<uint32_t> &roi_width,
                          std::vector<uint32_t> &roi_height,
-                         RaliColorFormat output_color_format )
+                         RaliColorFormat output_color_format,
+                         bool decoder_keep_original )
 {
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
@@ -101,6 +102,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     const auto ret = interpret_color_format(output_color_format);
     const Decoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
+    const bool keep_original = decoder_keep_original;
 
     // Decode with the height and size equal to a single image  
     // File read is done serially since I/O parallelization does not work very well.
@@ -130,7 +132,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         _decompressed_buff_ptrs[i] = buff + image_size * i;
 
     _decode_time.start();// Debug timing
-#pragma omp parallel for num_threads(_batch_size) default(none)
+#pragma omp parallel for num_threads(_batch_size)  default(none)
     for(size_t i= 0; i < _batch_size; i++)
     {
         // initialize the actual decoded height and width with the maximum
@@ -154,7 +156,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,
                                scaledw, scaledh,
-                               decoder_color_format) != Decoder::Status::OK)
+                               decoder_color_format, keep_original) != Decoder::Status::OK)
         {
             continue;
         }

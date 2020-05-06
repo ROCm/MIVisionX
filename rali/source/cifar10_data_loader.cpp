@@ -85,7 +85,7 @@ CIFAR10DataLoader::set_output_image (Image* output_image)
 }
 
 void
-CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
+CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size)
 {
     if(_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")

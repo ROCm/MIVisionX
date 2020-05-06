@@ -85,7 +85,7 @@ ImageLoader::stop_internal_thread()
 }
 
 void
-ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
+ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool decoder_keep_original)
 {
     if(_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")
@@ -96,6 +96,7 @@ ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, Rali
     _mem_type = mem_type;
     _batch_size = batch_size;
     _loop = reader_cfg.loop();
+    _decoder_keep_original = decoder_keep_original;
     _image_loader = std::make_shared<ImageReadAndDecode>();
     try
     {
@@ -147,7 +148,7 @@ ImageLoader::load_routine()
                                              _output_image->info().height_single(),
                                              _decoded_img_info._roi_width,
                                              _decoded_img_info._roi_height,
-                                             _output_image->info().color_format() );
+                                             _output_image->info().color_format(), _decoder_keep_original );
 
             if(load_status == LoaderModuleStatus::OK)
             {

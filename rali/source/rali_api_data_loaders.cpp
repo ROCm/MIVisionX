@@ -18,6 +18,7 @@ evaluate_image_data_set(RaliImageSizeEvaluationPolicy decode_size_policy, Storag
         switch(decode_size_policy)
         {
             case RALI_USE_MAX_SIZE:
+            case RALI_USE_MAX_SIZE_RESTRICTED:
                 return MaxSizeEvaluationPolicy::MAXIMUM_FOUND_SIZE;
             case RALI_USE_MOST_FREQUENT_SIZE:
                 return MaxSizeEvaluationPolicy::MOST_FREQUENT_SIZE;
@@ -230,7 +231,8 @@ raliJpegFileSourceSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
+        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -267,7 +269,7 @@ raliJpegFileSourceSingleShard(
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type());
+                                                                                        context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -301,7 +303,8 @@ raliJpegFileSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
+        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -335,7 +338,7 @@ raliJpegFileSource(
                                                                           DecoderType::TURBO_JPEG,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type());
+                                                                          context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -369,7 +372,7 @@ raliJpegFileSourceCrop(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) ;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")

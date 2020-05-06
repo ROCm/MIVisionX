@@ -44,7 +44,7 @@ LoaderModuleStatus ImageLoaderSharded::load_next()
 }
 void
 ImageLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type,
-                               unsigned batch_size)
+                               unsigned batch_size, bool keep_orig_size)
 {
     if(_initialized)
         return;
@@ -61,7 +61,7 @@ ImageLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cf
         _loaders[idx]->set_output_image(_output_image);
         reader_cfg.set_shard_count(_shard_count);
         reader_cfg.set_shard_id(idx);
-        _loaders[idx]->initialize(reader_cfg, decoder_cfg, mem_type, batch_size);
+        _loaders[idx]->initialize(reader_cfg, decoder_cfg, mem_type, batch_size, keep_orig_size);
     }
     _initialized = true;
 }

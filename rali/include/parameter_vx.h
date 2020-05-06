@@ -91,6 +91,7 @@ public:
         for (uint i=0; i < _batch_size ; i++ )
         {
             _arrVal[i] = renew();
+            //INFO("update_array: " + TOSTR(i) + "," + TOSTR(_arrVal[i]));
         }
         status = vxCopyArrayRange((vx_array)_array, 0, _batch_size, sizeof(T), _arrVal.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
         if(status != 0)

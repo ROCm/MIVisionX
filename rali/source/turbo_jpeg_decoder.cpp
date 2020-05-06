@@ -38,7 +38,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                                   size_t max_decoded_width, size_t max_decoded_height,
                                   size_t original_image_width, size_t original_image_height,
                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
-                                  Decoder::ColorFormat desired_decoded_color_format)
+                                  Decoder::ColorFormat desired_decoded_color_format, bool keep_original_size)
 {
     int tjpf = TJPF_RGB;
     int planes = 1;
@@ -56,34 +56,70 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
             planes = 3;
         break;
     };
-    actual_decoded_width = max_decoded_width;
-    actual_decoded_height = max_decoded_height;
+    if (!keep_original_size) {
+        actual_decoded_width = max_decoded_width;
+        actual_decoded_height = max_decoded_height;
 
-    //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
-    if( tjDecompress2(m_jpegDecompressor,
-                      input_buffer,
-                      input_size,
-                      output_buffer,
-                      max_decoded_width,
-                      max_decoded_width * planes,
-                      max_decoded_height,
-                      tjpf,
-                      TJFLAG_FASTDCT) != 0)
-    {
-        WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
-        return Status::CONTENT_DECODE_FAILED;
+        //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
+        if (tjDecompress2(m_jpegDecompressor,
+                          input_buffer,
+                          input_size,
+                          output_buffer,
+                          max_decoded_width,
+                          max_decoded_width * planes,
+                          max_decoded_height,
+                          tjpf,
+                          TJFLAG_FASTDCT) != 0) {
+            WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
+            return Status::CONTENT_DECODE_FAILED;
+        }
+        // Find the decoded image size using the predefined scaling factors in the turbo jpeg decoder
+        uint scaledw = max_decoded_width, scaledh = max_decoded_height;
+        for (auto scaling_factor : SCALING_FACTORS) {
+            scaledw = TJSCALED(original_image_width, scaling_factor);
+            scaledh = TJSCALED(original_image_height, scaling_factor);
+            if (scaledw <= max_decoded_width && scaledh <= max_decoded_height)
+                break;
+        }
+        actual_decoded_width = scaledw;
+        actual_decoded_height = scaledh;
+    } else {
+        if (original_image_width < max_decoded_width)
+            actual_decoded_width = original_image_width;
+        else
+            actual_decoded_width = max_decoded_width;
+        if (original_image_height < max_decoded_height)
+            actual_decoded_height = original_image_height;
+        else
+            actual_decoded_height = max_decoded_height;
+
+        //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
+        if (tjDecompress2(m_jpegDecompressor,
+                          input_buffer,
+                          input_size,
+                          output_buffer,
+                          actual_decoded_width,
+                          max_decoded_width * planes,
+                          actual_decoded_height,
+                          tjpf,
+                          TJFLAG_FASTDCT) != 0) {
+            WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
+            return Status::CONTENT_DECODE_FAILED;
+        }
+        // Find the decoded image size using the predefined scaling factors in the turbo jpeg decoder
+        if ((actual_decoded_width != original_image_width) || (actual_decoded_height != original_image_height))
+        {
+            uint scaledw = actual_decoded_width, scaledh = actual_decoded_height;
+            for (auto scaling_factor : SCALING_FACTORS) {
+                scaledw = TJSCALED(original_image_width, scaling_factor);
+                scaledh = TJSCALED(original_image_height, scaling_factor);
+                if (scaledw <= max_decoded_width && scaledh <= max_decoded_height)
+                    break;
+            }
+            actual_decoded_width = scaledw;
+            actual_decoded_height = scaledh;
+        }
     }
-    // Find the decoded image size using the predefined scaling factors in the turbo jpeg decoder
-    uint scaledw =max_decoded_width, scaledh=max_decoded_height;
-    for (auto scaling_factor : SCALING_FACTORS)
-    {
-        scaledw = TJSCALED(original_image_width, scaling_factor);
-        scaledh = TJSCALED(original_image_height, scaling_factor);
-        if (scaledw <= max_decoded_width && scaledh <= max_decoded_height)
-            break;
-    }
-    actual_decoded_width = scaledw;
-    actual_decoded_height = scaledh;
     return Status::OK;
 }
 

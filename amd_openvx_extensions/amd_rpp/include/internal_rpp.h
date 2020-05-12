@@ -25,8 +25,8 @@ THE SOFTWARE.
 #define _INTERNAL_RPP_H_
 
 #include "VX/vx.h"
-#include "VX/vx_compatibility.h"
 #include "kernels_rpp.h"
+#include "VX/vx_compatibility.h"
 
 #include "rpp.h"
 #include "rppdefs.h"

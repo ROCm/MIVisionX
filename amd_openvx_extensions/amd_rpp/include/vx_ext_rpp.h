@@ -326,4 +326,6 @@ extern  "C" {
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif //_VX_EXT_RPP_H_

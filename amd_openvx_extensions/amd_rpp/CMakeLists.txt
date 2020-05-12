@@ -26,8 +26,8 @@ cmake_policy(SET CMP0054 NEW)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
+find_package(AMDRPP    REQUIRED)
 find_package(OpenCL    QUIET)
-find_package(AMDRPP    QUIET)
 
 include_directories(include)
 include_directories(../../amd_openvx/openvx/include/)

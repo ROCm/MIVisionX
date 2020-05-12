@@ -68,7 +68,8 @@ list(APPEND SOURCES
         source/BitwiseNOTbatchPS.cpp
         source/Blend.cpp
         source/BlendbatchPD.cpp
-        source/BlendbatchPS.cppsource/BlendbatchPDROID.cpp
+        source/BlendbatchPS.cpp
+        source/BlendbatchPDROID.cpp
         source/Blur.cpp
         source/BlurbatchPD.cpp
         source/BlurbatchPDROID.cpp

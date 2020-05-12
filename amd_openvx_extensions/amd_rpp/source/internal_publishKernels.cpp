@@ -20,13 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "internal_publishKernels.h"
 #include "vx_ext_rpp.h"
 
 /**********************************************************************
   PUBLIC FUNCTION for OpenVX user defined functions
-  **********************************************************************/
+**********************************************************************/
 extern "C"  SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 {
 	vx_status status = VX_SUCCESS;

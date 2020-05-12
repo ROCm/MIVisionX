@@ -1,5 +1,3 @@
-################################################################################
-#
 # MIT License
 #
 # Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc.
@@ -22,18 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-################################################################################
 
-cmake_minimum_required (VERSION 2.8)
-
-project (rali)
+cmake_minimum_required(VERSION 2.8)
+project(rali)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCL QUIET)
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
-find_package(FFmpeg QUIET) # If FFMPEG is there, vx_amd_media is expected to be built as well
+# If FFMPEG is found, vx_amd_media is expected to be built as well
+find_package(FFmpeg QUIET)
 
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
@@ -86,7 +83,7 @@ if(${BUILD_RALI})
 	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp")
 	add_definitions(-ljsoncpp)
-	message("CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
+	message("-- ${Green}${PROJECT_NAME} - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 if(NOT FFMPEG_FOUND)
 	message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
 	target_link_libraries(${PROJECT_NAME} -fPIC turbojpeg openvx vx_rpp jsoncpp)

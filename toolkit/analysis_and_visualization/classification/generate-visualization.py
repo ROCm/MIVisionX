@@ -2426,7 +2426,7 @@ def generateHelp():
     print ("\t</table>");
     print ("\t<br><br><br>");
     #TBD: symbol
-    print ("\t\t<div class=\"footer\"> <p>2018 Advanced Micro Devices, Inc</p></div>");
+    print ("\t\t<div class=\"footer\"> <p>2018 - 2020 Advanced Micro Devices, Inc</p></div>");
     print ("\t");
     print ("\n</body>");
     print ("\n</html>");

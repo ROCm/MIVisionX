@@ -3437,7 +3437,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxReplicateNode(vx_graph graph, vx_node first
 			vx_uint32 num_levels = 0;
 			for (vx_uint32 i = 0; i < number_of_parameters; i++) {
 				if (replicate[i]) {
-					if (paramList[i] && paramList[i]->parent && paramList[i]->siblingIndex == 0 && paramList[i]->parent->ref.type == VX_TYPE_PYRAMID) {
+					if (paramList[i] && paramList[i]->parent && paramList[i]->siblingIndex == 0 && (paramList[i]->parent->ref.type == VX_TYPE_PYRAMID || paramList[i]->parent->ref.type == VX_TYPE_OBJECT_ARRAY)) {
 						if (num_levels != paramList[i]->parent->numChildren) {
 							if (num_levels == 0) {
 								num_levels = paramList[i]->parent->numChildren;

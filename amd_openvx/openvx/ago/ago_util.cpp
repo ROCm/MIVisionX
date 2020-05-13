@@ -1414,7 +1414,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 			}
 		}
 		// mark the children of delay element as part of delay object
-		agoMarkChildrenAsPartOfDelay(data);
+		//agoMarkChildrenAsPartOfDelay(data);
 		// sanity check and update
 		if (agoDataSanityCheckAndUpdate(data)) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for object-array\n");

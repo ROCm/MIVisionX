@@ -26,10 +26,6 @@ THE SOFTWARE.
 #include "VX/vx.h"
 #include "VX/vx_compatibility.h"
 
-#include "rpp.h"
-#include "rppdefs.h"
-#include "rppi.h"
-
 #if ENABLE_OPENCL
 #include <CL/cl.h>
 #endif

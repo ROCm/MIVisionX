@@ -75,9 +75,7 @@ if(${BUILD_RALI})
 			    ./include
 			    )
 	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR})
-
 	file(GLOB SOURCES "./source/*.cpp")
-
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)

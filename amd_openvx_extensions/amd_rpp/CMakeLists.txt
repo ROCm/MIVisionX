@@ -326,7 +326,7 @@ else(OpenCL_FOUND)
 endif(OpenCL_FOUND)
 
 install(TARGETS vx_rpp DESTINATION lib)
-install(FILES include/vx_ext_rpp.h include/kernels_rpp.h DESTINATION include)
+install(FILES include/vx_ext_rpp.h DESTINATION include)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	target_link_libraries(OpenVX)

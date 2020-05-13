@@ -66,7 +66,7 @@ if(${BUILD_RALI})
 	install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h include/rali_api_meta_data.h DESTINATION ./include/)
 	include_directories (
 			${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
-			${TurboJpeg_INCLUDE_DIRS}
+			${TurboJpeg_INCLUDE_DIRS} ${AMDRPP_INCLUDE_DIRS}
 			../amd_openvx/openvx/include/
 			../amd_openvx_extensions/amd_rpp/include/
 			../amd_openvx_extensions/amd_media/include/

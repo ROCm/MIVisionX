@@ -630,7 +630,7 @@ struct AgoGraph {
 	AgoGraph * next;
 	CRITICAL_SECTION cs;
 	HANDLE hThread, hSemToThread, hSemFromThread;
-	vx_int32 threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState;
+	vx_int32 threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState, threadThreadWaitState;
 	AgoDataList dataList;
 	AgoNodeList nodeList;
 	vx_bool isReadyToExecute;

@@ -32,6 +32,7 @@ static void agoGraphThreadFunction(LPVOID graph_)
 {
 	AgoGraph * graph = (AgoGraph *)graph_;
 	while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
+		graph->threadThreadWaitState = 2;
 		if (graph->threadThreadTerminationState)
 			break;
 
@@ -122,7 +123,6 @@ AgoGraph * agoCreateGraph(AgoContext * acontext)
 		agoAddGraph(&acontext->graphList, agraph);
 		agraph->ref.external_count++;
 	}
-
 	if (acontext->thread_config & 1) {
 		// create semaphore and thread for graph scheduling: limit 1000 pending requests
 		agraph->hSemToThread = CreateSemaphore(nullptr, 0, 1000, nullptr);
@@ -204,7 +204,6 @@ int agoReleaseGraph(AgoGraph * agraph)
             LeaveCriticalSection(&agraph->cs);
         }
 	}
-
 	return status;
 }
 
@@ -217,6 +216,7 @@ int agoOptimizeGraph(AgoGraph * agraph)
 		// run DRAMA graph optimizer
 		agraph->status = agoOptimizeDrama(agraph);
 	}
+
 	return agraph->status;
 }
 
@@ -1198,6 +1198,7 @@ vx_status agoVerifyNode(AgoNode * node)
 	AgoGraph * graph = (AgoGraph *)node->ref.scope;
 	AgoKernel * kernel = node->akernel;
 	vx_status status = VX_SUCCESS;
+
 	// check if node has required arguments and initialize data required for further graph processing
 	node->hierarchical_level = 0;
 	for (vx_uint32 arg = 0; arg < AGO_MAX_PARAMS; arg++) {
@@ -1617,6 +1618,7 @@ int agoVerifyGraph(AgoGraph * graph)
 			return status;
 		}
 	}
+
 	// compute node hierarchy in the graph: this takes care of
 	//    - single writers
 	//    - no loops
@@ -2204,7 +2206,7 @@ int agoExecuteGraph(AgoGraph * graph)
 				if (kernel->func) {
 					status = kernel->func(node, ago_kernel_cmd_execute);
 					if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED)
-						status = VX_ERROR_NOT_IMPLEMENTED;	
+						status = VX_ERROR_NOT_IMPLEMENTED;
 				}
 				else if (kernel->kernel_f) {
 					status = kernel->kernel_f(node, (vx_reference *)node->paramList, node->paramCount);
@@ -2278,6 +2280,7 @@ int agoExecuteGraph(AgoGraph * graph)
         graph->state = VX_GRAPH_STATE_COMPLETED;
     else
         graph->state = VX_GRAPH_STATE_ABANDONED;
+
 	return status;
 }
 
@@ -2540,8 +2543,17 @@ int agoWaitGraph(AgoGraph * graph)
 	if (agoIsValidGraph(graph)) {
 		status = VX_SUCCESS;
 		graph->threadWaitCount++;
+		if (graph->threadScheduleCount <= 0) // the graph was never scheduled so return VX_FAILURE
+			return VX_FAILURE; 
 		if (graph->hThread) {
-			while (graph->threadExecuteCount != graph->threadScheduleCount) {
+			graph->threadThreadWaitState = 1;
+			while (graph->threadThreadWaitState == 1) {
+				// wait for the agoGraphThreadFunction to be done
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				// release the semaphore in case the agoScheduleGraph was called before the agoGraphThreadFunction
+                ReleaseSemaphore(graph->hSemToThread, 1, nullptr);
+            }
+			while (graph->threadExecuteCount < graph->threadScheduleCount) {
 				if (WaitForSingleObject(graph->hSemFromThread, INFINITE) != WAIT_OBJECT_0) {
 					agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoWaitGraph: WaitForSingleObject failed\n");
 					status = VX_FAILURE;

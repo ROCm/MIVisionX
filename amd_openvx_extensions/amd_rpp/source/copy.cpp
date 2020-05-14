@@ -20,16 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-
-
-
-
 #include "internal_publishKernels.h"
-
-
-
-
 
 struct CopyLocalData {
 
@@ -67,7 +58,6 @@ static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference param
         status = VX_ERROR_INVALID_VALUE;
 
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_FORMAT, &df_image, sizeof(df_image)));
-
 
     vx_uint32  height, width;
     STATUS_ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));

@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #ifndef _INTERNAL_RPP_H_
 #define _INTERNAL_RPP_H_
 
@@ -73,47 +72,77 @@ int getEnvironmentVariable(const char* name);
 class Kernellist
 {
 public:
-	struct node{ public: std::function<vx_status(vx_context)> func; node* next; };
-	int count;
-	Kernellist(int max){ top = nullptr; maxnum = max; count = 0;}
+    struct node {
+    public:
+        std::function<vx_status(vx_context)> func;
+        node* next;
+    };
+    int count;
+    Kernellist(int max) {
+        top = nullptr;
+        maxnum = max;
+        count = 0;
+    }
 
-	vx_status ADD(std::function<vx_status(vx_context)> element)
-	{
-		vx_status status = VX_SUCCESS;
-		if (count == maxnum) return VX_ERROR_NO_RESOURCES;
-		else
-		{
-			node *newTop = new node;
-			if (top == nullptr){ newTop->func = element;	newTop->next = nullptr;  top = newTop;	count++; }
-			else{ newTop->func = element;	newTop->next = top; top = newTop; count++; }
-		}
-		return status;
-	}
+    vx_status ADD(std::function<vx_status(vx_context)> element)
+    {
+        vx_status status = VX_SUCCESS;
+        if (count == maxnum) return VX_ERROR_NO_RESOURCES;
+        else
+        {
+            node *newTop = new node;
+            if (top == nullptr) {
+                newTop->func = element;
+                newTop->next = nullptr;
+                top = newTop;
+                count++;
+            }
+            else {
+                newTop->func = element;
+                newTop->next = top;
+                top = newTop;
+                count++;
+            }
+        }
+        return status;
+    }
 
-	vx_status REMOVE()
-	{
-		vx_status status = VX_SUCCESS;
-		if (top == nullptr) return VX_ERROR_NO_RESOURCES;
-		else{ node * old = top; top = top->next; count--; delete(old); }
-		return status;
-	}
+    vx_status REMOVE()
+    {
+        vx_status status = VX_SUCCESS;
+        if (top == nullptr) return VX_ERROR_NO_RESOURCES;
+        else {
+            node * old = top;
+            top = top->next;
+            count--;
+            delete(old);
+        }
+        return status;
+    }
 
-	vx_status PUBLISH(vx_context context)
-	{
-		vx_status status = VX_SUCCESS;
+    vx_status PUBLISH(vx_context context)
+    {
+        vx_status status = VX_SUCCESS;
 
-		if (top == nullptr) { vxAddLogEntry((vx_reference)context, VX_ERROR_NO_RESOURCES, "PUBLISH Fail, Kernel list is empty");  return VX_ERROR_NO_RESOURCES; }
+        if (top == nullptr) {
+            vxAddLogEntry((vx_reference)context, VX_ERROR_NO_RESOURCES, "PUBLISH Fail, Kernel list is empty");
+            return VX_ERROR_NO_RESOURCES;
+        }
 
-		else
-		{
-			node * Kernel = top;
-			for (int i = 0; i < count; i++){ STATUS_ERROR_CHECK(Kernel->func(context)); Kernel = Kernel->next;}
-		}
-		return status;
-	}
+        else
+        {
+            node * Kernel = top;
+            for (int i = 0; i < count; i++) {
+                STATUS_ERROR_CHECK(Kernel->func(context));
+                Kernel = Kernel->next;
+            }
+        }
+        return status;
+    }
 
 private:
-	node *top; int maxnum;
+    node *top;
+    int maxnum;
 };
 
 static Kernellist *Kernel_List;

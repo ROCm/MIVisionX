@@ -20,16 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-
-
-
-
 #include "internal_publishKernels.h"
-
-
-
-
 
 struct CropPDLocalData { 
 	RPPCommonHandle handle;
@@ -160,7 +151,6 @@ static vx_status VX_CALLBACK processCropPD(vx_node node, const vx_reference * pa
 		return status;
 	}
 }
-
 
 static vx_status VX_CALLBACK initializeCropPD(vx_node node, const vx_reference *parameters, vx_uint32 num) 
 {

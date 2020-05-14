@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
-
 #%%
 
 from rali_torch import *
@@ -51,7 +49,6 @@ class DataLoader(RaliGraph):
 		#input0 = self.resize(jpg_class_0, 224,224,False)
 		out0 = self.graph(input0, batch_size)
 
-
 		jpg_class_1 = self.jpegFileInput(class_1_path, input_color_format, False)
 		input1 = self.cropResize(jpg_class_1, 224, 224, False, 0.6, -1, -1)
 		#input1 = self.resize(jpg_class_1, 224,224,False)
@@ -77,7 +74,6 @@ class ToyNet(nn.Module):
 		self.fc3 = nn.Linear(128, 2) # Two classes only
 	#self.m = nn.Softmax()
 
-
 	def forward(self, x):
 		x = self.pool(F.relu(self.conv1(x)))
 		x = self.pool(F.relu(self.conv2(x)))
@@ -89,8 +85,6 @@ class ToyNet(nn.Module):
 		x = F.relu(self.fc2(x))
 		x = self.fc3(x)
 		return x
-
-
 
 def main():
 	print ('In the app')

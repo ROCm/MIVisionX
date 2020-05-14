@@ -321,8 +321,6 @@ class DataLoader(RaliGraph):
         gamma_shift = augmentation*5.0
         self.gamma_shift_param.update(gamma_shift)
 
-
-
     def renew_parameters(self):
         curr_degree = self.degree_param.get()
         #values for rotation change
@@ -409,7 +407,6 @@ def main():
 
     start = time.time()
 
-
     for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
         cv2.imshow('image', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
         print (loader.get_input_name(0))
@@ -420,6 +417,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 #%%

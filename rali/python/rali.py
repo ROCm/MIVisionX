@@ -26,7 +26,6 @@ from rali_common import *
 
 RaliFlipAxis =  ('RALI_FLIP_HORIZONTAL','RALI_FLIP_VERTICAL')
 
-
 class RaliGraph():
     def __init__(self, batch_size, affinity):
         self._lib = RaliLib()
@@ -38,8 +37,6 @@ class RaliGraph():
             print('OK: Pipeline api found ')
         else:
             raise Exception('FAILED creating the pipeline')
-
-
 
     ImageSizeEvaluationPolicy = {
         'MAX_SIZE' : 0,
@@ -102,10 +99,8 @@ class RaliGraph():
             self.output_images.append(out_img)
         return out_img
 
-
     def reset(self):
         return self._lib.startOver(self.handle)
-
 
     """ rali_api_augmentation.h"""
 
@@ -324,7 +319,6 @@ class RaliGraph():
     def raliGetImageNameLen(self, image_idx):
         return self._lib.raliGetImageNameLen(self.handle, image_idx)
 
-
     def setSeed(self, seed):
         self._lib.raliSetSeed(seed)
 
@@ -369,4 +363,3 @@ class RaliGraph():
             self._lib.copyToOutputTensor32(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
         elif tensor_dtype == TensorDataType.FLOAT16:
             self._lib.copyToOutputTensor16(self.handle, np.ascontiguousarray(out, dtype=array.dtype), 1, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0), tensor_dtype)
-

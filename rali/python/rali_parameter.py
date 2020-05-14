@@ -45,7 +45,6 @@ class RaliIntParameter:
     def get(self):
         return self.latest_gen(self.obj)
 
-
 class RaliFloatParameter:
     def __init__(self, value):
         self.sharedlib = RALI_LIB_NAME
@@ -70,7 +69,6 @@ class RaliFloatParameter:
     def get(self):
         return self.latest_gen(self.obj)
 
-
 class RaliIntUniformRand:
     def __init__(self, start, end):
         self.sharedlib = RALI_LIB_NAME
@@ -94,7 +92,6 @@ class RaliIntUniformRand:
 
     def get(self):
         return self.latest_gen(self.obj)
-
 
 class RaliFloatUniformRand:
     def __init__(self, start, end):

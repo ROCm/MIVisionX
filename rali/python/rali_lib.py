@@ -23,7 +23,6 @@ from numpy.ctypeslib import ndpointer
 from rali_common import *
 import numpy as np
 
-
 class RaliLib:
     def __init__(self):
         self.sharedlib = RALI_LIB_NAME

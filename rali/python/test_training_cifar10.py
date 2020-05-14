@@ -18,8 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
-
 #%%
 import sys
 ##############
@@ -34,7 +32,6 @@ from rali import *
 #import amd.rali.ops as ops
 #import amd.rali.types as types
 PATH = '/home/rajy/pytorch_test/cifar_net_rali.pth'
-
 
 class DataLoader(RaliGraph):
 #define graph is not used for now: enable for testing with augmentation
@@ -59,7 +56,6 @@ class DataLoader(RaliGraph):
 		self.CreateCifar10LabelReader(path, file_prefix)
 		input0 = self.BinaryFileInput(path, input_color_format, True, width, height, file_prefix)
 		self.out = input0
-
 
 import torchvision
 import torch.nn as nn

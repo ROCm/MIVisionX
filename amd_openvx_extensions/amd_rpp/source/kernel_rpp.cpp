@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-#include "kernels_rpp.h"
+#include "internal_publishKernels.h"
+#include "vx_ext_rpp.h"
 
 vx_uint32 getGraphAffinity(vx_graph graph)
 {
@@ -32,6 +32,7 @@ vx_uint32 getGraphAffinity(vx_graph graph)
    // std::cerr<<"\n affinity "<<affinity.device_type;
     return affinity.device_type;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Brightness(vx_graph graph,vx_image pSrc,vx_image pDst,vx_scalar alpha,vx_scalar beta)
 {
 	vx_node node = NULL;
@@ -50,6 +51,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Brightness(vx_graph graph,vx_image
 	}
 	return node;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPS(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_scalar alpha,vx_scalar beta,vx_uint32 nbatchSize)
 {
 	vx_node node = NULL;
@@ -72,6 +74,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPS(vx_graph graph,v
 	}
 	return node;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array alpha,vx_array beta,vx_uint32 nbatchSize)
 {
 	vx_node node = NULL;
@@ -94,6 +97,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPD(vx_graph graph,v
 	}
 	return node;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPDROID(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array alpha,vx_array beta,vx_array roiX,vx_array roiY,vx_array roiWidth,vx_array roiHeight,vx_uint32 nbatchSize)
 {
 	vx_node node = NULL;

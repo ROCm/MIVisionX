@@ -24,9 +24,18 @@ THE SOFTWARE.
 #ifndef _INTERNAL_RPP_H_
 #define _INTERNAL_RPP_H_
 
-#include"VX/vx.h"
+#include "VX/vx.h"
+#include "VX/vx_compatibility.h"
+#include "vx_ext_amd.h"
 #include "kernels_rpp.h"
-#include <VX/vx_compatibility.h>
+
+#include "rpp.h"
+#include "rppdefs.h"
+#include "rppi.h"
+
+#if ENABLE_OPENCL
+#include <CL/cl.h>
+#endif
 
 #include<stdio.h>
 #include<stdlib.h>
@@ -38,12 +47,28 @@ THE SOFTWARE.
 
 using namespace std;
 
-//#define STATUS_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) return status;}
-//#define PARAM_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) goto exit;}
-//! \brief The macro for error checking from OpenVX object.
-//#define ERROR_CHECK_OBJECT(obj)  { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS){ vxAddLogEntry((vx_reference)(obj), status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}
-
+#define OPENVX_KHR_RPP   "vx_khr_rpp"
+#define ERRMSG(status, format, ...) printf("ERROR: " format, __VA_ARGS__), status
+#define STATUS_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) return status;}
+#define PARAM_ERROR_CHECK(call){vx_status status = call; if(status!= VX_SUCCESS) goto exit;}
+#define ERROR_CHECK_OBJECT(obj)  { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS){ vxAddLogEntry((vx_reference)(obj), status, "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; }}
 #define MAX_KERNELS 500
+
+//! Brief Common data shared across all nodes in a graph
+struct RPPCommonHandle {
+#if ENABLE_OPENCL
+    cl_command_queue cmdq;
+#endif
+    void* cpuHandle = NULL;
+    int count;
+    bool exhaustiveSearch;
+};
+
+//! Brief The utility functions
+vx_node createNode(vx_graph graph, vx_enum kernelEnum, vx_reference params[], vx_uint32 num);
+vx_status createGraphHandle(vx_node node, RPPCommonHandle ** pHandle);
+vx_status releaseGraphHandle(vx_node node, RPPCommonHandle * handle);
+int getEnvironmentVariable(const char* name);
 
 class Kernellist
 {

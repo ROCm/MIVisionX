@@ -48,6 +48,9 @@ enum vx_kernel_amd_e {
 	VX_KERNEL_AMD_THRESHOLD_NOT_U8_U8_BINARY,
 	VX_KERNEL_AMD_THRESHOLD_NOT_U8_U8_RANGE,
 
+	// Element-wise 1-channel: S16 = op S16 
+	VX_KERNEL_AMD_LUT_S16_S16,
+
 	// Element-wise 1-channel: U8 = op U1 (1)
 	VX_KERNEL_AMD_NOT_U8_U1,
 

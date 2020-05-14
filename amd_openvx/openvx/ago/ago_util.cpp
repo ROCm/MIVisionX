@@ -1486,6 +1486,10 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		if (data->u.lut.type != VX_TYPE_UINT8 && data->u.lut.type != VX_TYPE_INT16) 
 			return -1;
 		if (sscanf(++s, "" VX_FMT_SIZE "", &data->u.lut.count) != 1) return -1;
+		if (data->u.lut.type == VX_TYPE_UINT8)
+			data->u.lut.offset = 0;
+		else if(data->u.lut.type == VX_TYPE_INT16)
+			data->u.lut.offset = (vx_uint32)(data->u.lut.count/2);
 		// sanity check and update
 		if (agoDataSanityCheckAndUpdate(data)) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for lut\n");

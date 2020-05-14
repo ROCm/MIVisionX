@@ -624,7 +624,12 @@ int agoDramaDivideTableLookupNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[1] = paramList[0];
 	anode->paramList[2] = paramList[1];
 	anode->paramCount = 3;
-	return agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_LUT_U8_U8);
+	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+	if (paramList[1]->u.lut.type ==  VX_TYPE_UINT8)
+		new_kernel_id = VX_KERNEL_AMD_LUT_U8_U8;
+	else if(paramList[1]->u.lut.type ==  VX_TYPE_INT16)
+		new_kernel_id = VX_KERNEL_AMD_LUT_S16_S16;
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }
 
 int agoDramaDivideHistogramNode(AgoNodeList * nodeList, AgoNode * anode)

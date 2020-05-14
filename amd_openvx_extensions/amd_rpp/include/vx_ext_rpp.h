@@ -26,10 +26,6 @@ THE SOFTWARE.
 #include "VX/vx.h"
 #include "VX/vx_compatibility.h"
 
-#if ENABLE_OPENCL
-#include <CL/cl.h>
-#endif
-
 #ifndef dimof
 #define dimof(x) (sizeof(x)/sizeof(x[0]))
 #endif
@@ -46,9 +42,9 @@ vx_node vxCreateNodeByStructure(vx_graph graph, vx_enum kernelenum, vx_reference
 extern  "C" {
 #endif
 
-	/*!***********************************************************************************************************
-                   					RPP VX_API_ENTRY C Function NODE
-	*************************************************************************************************************/
+    /*!***********************************************************************************************************
+                   		         RPP VX_API_ENTRY C Function NODE
+    *************************************************************************************************************/
 
     extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_AbsoluteDifference(vx_graph graph,vx_image pSrc1,vx_image pSrc2,vx_image pDst);
     extern  "C" SHARED_PUBLIC vx_node VX_API_CALL vxExtrppNode_AbsoluteDifferencebatchPD(vx_graph graph,vx_image pSrc1,vx_image pSrc2,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_uint32 nbatchSize);

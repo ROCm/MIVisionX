@@ -86,6 +86,7 @@ int agoKernel_Not_U8_U1(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Not_U1_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Not_U1_U1(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Lut_U8_U8(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Threshold_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Threshold_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Threshold_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd);

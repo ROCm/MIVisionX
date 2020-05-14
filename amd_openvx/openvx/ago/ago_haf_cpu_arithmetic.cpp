@@ -4909,6 +4909,80 @@ int HafCpu_Lut_U8_U8
 	return AGO_SUCCESS;
 }
 
+// compute the dstImage values from the LUT of srcImage
+int HafCpu_Lut_S16_S16
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_int16    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_int16    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_int16    * pLut,
+		vx_uint32 	  offset
+	)
+{
+	for (int height = 0; height < (int) dstHeight; height++)
+	{
+		for (int width = 0; width < (int) dstWidth; width++, pSrcImage++, pDstImage++)
+		{
+			*pDstImage = pLut[*pSrcImage+offset];
+		}
+	}
+	//TBD: Implement SSE Version
+	/*int prefixWidth = intptr_t(pDstImage) & 15;
+	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
+	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;				// Check for multiple of 16
+	int alignedWidth = (int)dstWidth - prefixWidth - postfixWidth;
+
+	__m128i pixels1, pixels2;
+	int p0, p1, p2, p3;
+	unsigned char *pchDst = (unsigned char*)pDstImage;
+	unsigned char *pchDstlast = (unsigned char*)pDstImage + dstHeight*dstImageStrideInBytes;
+
+	for (int height = 0; height < (int)dstHeight; height++)
+	{
+		unsigned char * pLocalDst = (unsigned char*)pDstImage;
+		unsigned char * pLocalSrc = (unsigned char*)pSrcImage;
+
+		for (int x = 0; x < prefixWidth; x++, pLocalSrc++, pLocalDst++)
+		{
+			*pLocalDst = pLut[*pLocalSrc];
+		}
+
+		for (int x = 0; x < (alignedWidth >> 4); x++)
+		{
+			pixels1 = _mm_loadu_si128((__m128i *) pLocalSrc);
+			p0 = _mm_cvtsi128_si32(pixels1);
+			p1 = _mm_extract_epi32(pixels1, 1);
+			p2 = _mm_extract_epi32(pixels1, 2);
+			p3 = _mm_extract_epi32(pixels1, 3);
+			p0 = pLut[p0 & 0xff] | (pLut[(p0 >> 8) & 0xFF] << 8) | (pLut[(p0 >> 16) & 0xFF] << 16) | (pLut[(p0 >> 24) & 0xFF] << 24);
+			p1 = pLut[p1 & 0xff] | (pLut[(p1 >> 8) & 0xFF] << 8) | (pLut[(p1 >> 16) & 0xFF] << 16) | (pLut[(p1 >> 24) & 0xFF] << 24);
+			p2 = pLut[p2 & 0xff] | (pLut[(p2 >> 8) & 0xFF] << 8) | (pLut[(p2 >> 16) & 0xFF] << 16) | (pLut[(p2 >> 24) & 0xFF] << 24);
+			p3 = pLut[p3 & 0xff] | (pLut[(p3 >> 8) & 0xFF] << 8) | (pLut[(p3 >> 16) & 0xFF] << 16) | (pLut[(p3 >> 24) & 0xFF] << 24);
+			M128I(pixels2).m128i_u32[0] = p0;
+			M128I(pixels2).m128i_u32[1] = p1;
+			M128I(pixels2).m128i_u32[2] = p2;
+			M128I(pixels2).m128i_u32[3] = p3;
+			_mm_store_si128((__m128i *) pLocalDst, pixels2);
+
+			pLocalSrc += 16;
+			pLocalDst += 16;
+		}
+
+		for (int x = 0; x < postfixWidth; x++, pLocalSrc++, pLocalDst++)
+		{
+			*pLocalDst = pLut[*pLocalSrc];
+		}
+
+		pSrcImage += srcImageStrideInBytes;
+		pDstImage += dstImageStrideInBytes;
+	}
+	*/
+	return AGO_SUCCESS;
+}
+
 int HafCpu_Magnitude_S16_S16S16
 	(
 		vx_uint32     dstWidth,

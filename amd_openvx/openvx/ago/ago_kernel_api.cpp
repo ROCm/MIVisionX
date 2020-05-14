@@ -673,7 +673,7 @@ int ovxKernel_TableLookup(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.lut.type != VX_TYPE_UINT8)
+		if ((node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.lut.type != VX_TYPE_UINT8) && (node->paramList[0]->u.img.format != VX_DF_IMAGE_S16 || node->paramList[1]->u.lut.type != VX_TYPE_INT16))
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -682,7 +682,10 @@ int ovxKernel_TableLookup(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[2];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if (node->paramList[0]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if (node->paramList[0]->u.img.format == VX_DF_IMAGE_S16)
+			meta->data.u.img.format = VX_DF_IMAGE_S16;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -3215,6 +3218,72 @@ int agoKernel_Lut_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
 		status = VX_SUCCESS;
 	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		status = VX_SUCCESS;
+		node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
+		char textBuffer[2048];
+		sprintf(textBuffer, OPENCL_FORMAT(
+			"void %s (U8x8 * p0, U8x8 p1, __read_only image1d_t lut)\n"
+			"{\n"
+			"    U8x8 r;\n"
+			"    float4 f;\n"
+			"    f.s0 = read_imagef(lut, (int)( p1.s0        & 255)).s0 * 255.0f;\n"
+			"    f.s1 = read_imagef(lut, (int)((p1.s0 >>  8) & 255)).s0 * 255.0f;\n"
+			"    f.s2 = read_imagef(lut, (int)((p1.s0 >> 16) & 255)).s0 * 255.0f;\n"
+			"    f.s3 = read_imagef(lut, (int)( p1.s0 >> 24       )).s0 * 255.0f;\n"
+			"    r.s0 = amd_pack(f);\n"
+			"    f.s0 = read_imagef(lut, (int)( p1.s1        & 255)).s0 * 255.0f;\n"
+			"    f.s1 = read_imagef(lut, (int)((p1.s1 >>  8) & 255)).s0 * 255.0f;\n"
+			"    f.s2 = read_imagef(lut, (int)((p1.s1 >> 16) & 255)).s0 * 255.0f;\n"
+			"    f.s3 = read_imagef(lut, (int)( p1.s1 >> 24       )).s0 * 255.0f;\n"
+			"    r.s1 = amd_pack(f);\n"
+			"    *p0 = r;\n"
+			"}\n"
+			), node->opencl_name);
+		node->opencl_code += textBuffer;
+	}
+#endif
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#endif                 
+                    ;
+        status = VX_SUCCESS;
+    }
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[1];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+	return status;
+}
+
+int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
+{
+	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+	if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iLut = node->paramList[2];
+		vx_uint32 offset = iLut->u.lut.offset;
+		if (HafCpu_Lut_S16_S16(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->buffer, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg->buffer, iImg->u.img.stride_in_bytes, (vx_int16 *)iLut->buffer, offset)) {
+			status = VX_FAILURE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_S16, VX_DF_IMAGE_S16);
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+//TBD: add support for S16. This is the U8 version
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
 		status = VX_SUCCESS;

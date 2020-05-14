@@ -235,6 +235,7 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NOT_U1_U8                                               , 1, 1, Not_U1_U8, AOUT_AIN,                                          ATYPE_II                , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NOT_U1_U1                                               , 1, 1, Not_U1_U1, AOUT_AIN,                                          ATYPE_II                , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LUT_U8_U8                                               , 1, 1, Lut_U8_U8, AOUT_AINx2,                                        ATYPE_IIL               , KOP_ELEMWISE  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LUT_S16_S16                                             , 1, 1, Lut_S16_S16, AOUT_AINx2,                                      ATYPE_IIL               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U8_U8_BINARY                                  , 1, 1, Threshold_U8_U8_Binary, AOUT_AINx2,                           ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U8_U8_RANGE                                   , 1, 1, Threshold_U8_U8_Range, AOUT_AINx2,                            ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U1_U8_BINARY                                  , 1, 1, Threshold_U1_U8_Binary, AOUT_AINx2,                           ATYPE_IIT               , KOP_ELEMWISE  , false ),

@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -24,12 +25,12 @@ THE SOFTWARE.
 #include <commons.h>
 #include "turbo_jpeg_decoder.h"
 
-TJDecoder::TJDecoder(){
+TJDecoder::TJDecoder() {
     m_jpegDecompressor = tjInitDecompress();
 
 #if 0
     int num_avail_scalings = 0;
-    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);	
+    auto scaling_factors = tjGetScalingFactors	(&num_avail_scalings);
     for(int i = 0; i < num_avail_scalings; i++) {
         if(scaling_factors[i].num < scaling_factors[i].denom) {
 
@@ -39,16 +40,15 @@ TJDecoder::TJDecoder(){
 #endif
 };
 
-
-Decoder::Status TJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) 
+Decoder::Status TJDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps)
 {
     //TODO : Use the most recent TurboJpeg API tjDecompressHeader3 which returns the color components
     if(tjDecompressHeader2(m_jpegDecompressor,
-                            input_buffer, 
-                            input_size, 
-                            width, 
-                            height, 
-                            color_comps) != 0)
+                           input_buffer,
+                           input_size,
+                           width,
+                           height,
+                           color_comps) != 0)
     {
         WRN("Jpeg header decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
         return Status::HEADER_DECODE_FAILED;
@@ -65,17 +65,17 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
     int tjpf = TJPF_RGB;
     int planes = 1;
     switch (desired_decoded_color_format) {
-        case Decoder::ColorFormat::GRAY:
-            tjpf = TJPF_GRAY;
-            planes= 1;
+    case Decoder::ColorFormat::GRAY:
+        tjpf = TJPF_GRAY;
+        planes= 1;
         break;
-        case Decoder::ColorFormat::RGB:
-            tjpf = TJPF_RGB;
-            planes = 3;
+    case Decoder::ColorFormat::RGB:
+        tjpf = TJPF_RGB;
+        planes = 3;
         break;
-        case Decoder::ColorFormat::BGR:
-            tjpf = TJPF_BGR;
-            planes = 3;
+    case Decoder::ColorFormat::BGR:
+        tjpf = TJPF_BGR;
+        planes = 3;
         break;
     };
     actual_decoded_width = max_decoded_width;

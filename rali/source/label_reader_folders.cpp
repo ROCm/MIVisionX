@@ -29,7 +29,6 @@ THE SOFTWARE.
 #include "exception.h"
 #include "label_reader_folders.h"
 
-
 using namespace std;
 
 namespace filesys = boost::filesystem;
@@ -91,7 +90,7 @@ void LabelReaderFolders::lookup(const std::vector<std::string>& image_names)
         WRN("No image names passed")
         return;
     }
-    if(image_names.size() != (unsigned)_output->size())   
+    if(image_names.size() != (unsigned)_output->size())
         _output->resize(image_names.size());
 
     for(unsigned i = 0; i < image_names.size(); i++)
@@ -100,7 +99,7 @@ void LabelReaderFolders::lookup(const std::vector<std::string>& image_names)
         auto it = _map_content.find(image_name);
         if(_map_content.end() == it)
             THROW("ERROR: Given name not present in the map"+ image_name )
-        _output->get_label_batch()[i] = it->second->get_label();
+            _output->get_label_batch()[i] = it->second->get_label();
     }
 }
 
@@ -113,7 +112,7 @@ void LabelReaderFolders::read_all(const std::string& _path)
     std::vector<std::string> entry_name_list;
     std::string _full_path = _folder_path;
 
-    while((_entity = readdir (_sub_dir)) != nullptr) 
+    while((_entity = readdir (_sub_dir)) != nullptr)
     {
         std::string entry_name(_entity->d_name);
         if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
@@ -123,7 +122,7 @@ void LabelReaderFolders::read_all(const std::string& _path)
 
     std::string subfolder_path = _full_path + "/" + entry_name_list[0];
     filesys::path pathObj(subfolder_path);
-    if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) 
+    if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
     {
         read_files(_folder_path);
         for(unsigned i = 0; i < _subfolder_file_names.size(); i++) {
@@ -142,8 +141,8 @@ void LabelReaderFolders::read_all(const std::string& _path)
                 add(_subfolder_file_names[i], dir_count);
             }
             // print_map_contents();
-        }  
-    }  
+        }
+    }
     closedir(_sub_dir);
 }
 
@@ -165,6 +164,5 @@ void LabelReaderFolders::read_files(const std::string& _path)
     }
     if(_file_names.empty())
         WRN("LabelReader: Could not find any file in " + _path)
-    closedir(_src_dir);
+        closedir(_src_dir);
 }
-

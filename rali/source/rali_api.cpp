@@ -36,10 +36,10 @@ raliRelease(RaliContext p_context)
 }
 RaliContext RALI_API_CALL
 raliCreate(
-        size_t batch_size,
-        RaliProcessMode affinity,
-        int gpu_id,
-        size_t cpu_thread_count)
+    size_t batch_size,
+    RaliProcessMode affinity,
+    int gpu_id,
+    size_t cpu_thread_count)
 {
     RaliContext context = nullptr;
     try
@@ -48,12 +48,12 @@ raliCreate(
         {
             switch(process_mode)
             {
-                case RALI_PROCESS_GPU:
-                    return RaliAffinity::GPU;
-                case RALI_PROCESS_CPU:
-                    return RaliAffinity::CPU;
-                default:
-                    THROW("Unkown Rali process mode")
+            case RALI_PROCESS_GPU:
+                return RaliAffinity::GPU;
+            case RALI_PROCESS_CPU:
+                return RaliAffinity::CPU;
+            default:
+                THROW("Unkown Rali process mode")
             }
         };
         context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
@@ -101,7 +101,3 @@ raliVerify(RaliContext p_context)
     }
     return RALI_OK;
 }
-
-
-
-

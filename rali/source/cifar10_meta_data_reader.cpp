@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -28,7 +29,6 @@ THE SOFTWARE.
 #include "commons.h"
 #include "exception.h"
 #include "cifar10_meta_data_reader.h"
-
 
 using namespace std;
 
@@ -102,7 +102,7 @@ void Cifar10MetaDataReader::lookup(const std::vector<std::string>& image_names)
         auto it = _map_content.find(image_name);
         if(_map_content.end() == it)
             THROW("ERROR: Given name not present in the map"+ image_name )
-        _output->get_label_batch()[i] = it->second->get_label();
+            _output->get_label_batch()[i] = it->second->get_label();
     }
 }
 
@@ -196,6 +196,5 @@ void Cifar10MetaDataReader::read_files(const std::string& _path)
     }
     if(_file_names.empty())
         WRN("LabelReader: Could not find any file in " + _path)
-    closedir(_src_dir);
+        closedir(_src_dir);
 }
-

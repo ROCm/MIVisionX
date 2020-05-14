@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -30,7 +31,7 @@ THE SOFTWARE.
 #include "text_file_meta_data_reader.h"
 
 void TextFileMetaDataReader::init(const MetaDataConfig &cfg) {
-	_path = cfg.path();
+    _path = cfg.path();
     _output = new LabelBatch();
 }
 
@@ -51,12 +52,12 @@ void TextFileMetaDataReader::add(std::string image_name, int label)
 }
 
 void TextFileMetaDataReader::lookup(const std::vector<std::string> &image_names) {
-	if(image_names.empty())
+    if(image_names.empty())
     {
         WRN("No image names passed")
         return;
     }
-    if(image_names.size() != (unsigned)_output->size())   
+    if(image_names.size() != (unsigned)_output->size())
         _output->resize(image_names.size());
     for(unsigned i = 0; i < image_names.size(); i++)
     {
@@ -64,34 +65,34 @@ void TextFileMetaDataReader::lookup(const std::vector<std::string> &image_names)
         auto it = _map_content.find(image_name);
         if(_map_content.end() == it)
             THROW("ERROR: Given name not present in the map"+ image_name )
-        _output->get_label_batch()[i] = it->second->get_label();
+            _output->get_label_batch()[i] = it->second->get_label();
     }
 }
 
 void TextFileMetaDataReader::read_all(const std::string &path) {
-	std::ifstream text_file(path.c_str());
-	if(text_file.good())
-	{
-		//_text_file.open(path.c_str(), std::ifstream::in);
-		std::string line;
-		while(std::getline(text_file, line))
-		{
+    std::ifstream text_file(path.c_str());
+    if(text_file.good())
+    {
+        //_text_file.open(path.c_str(), std::ifstream::in);
+        std::string line;
+        while(std::getline(text_file, line))
+        {
             std::istringstream line_ss(line);
             int label;
             std::string image_name;
             if(!(line_ss>>image_name>>label))
                 continue;
-			add(image_name, label);
-		}
-	}
-	else
+            add(image_name, label);
+        }
+    }
+    else
     {
-	    THROW("Can't open the metadata file at "+ path)
+        THROW("Can't open the metadata file at "+ path)
     }
 }
 
 void TextFileMetaDataReader::release(std::string image_name) {
-	if(!exists(image_name))
+    if(!exists(image_name))
     {
         WRN("ERROR: Given not present in the map" + image_name);
         return;
@@ -100,7 +101,7 @@ void TextFileMetaDataReader::release(std::string image_name) {
 }
 
 void TextFileMetaDataReader::release() {
-	_map_content.clear();
+    _map_content.clear();
 }
 
 TextFileMetaDataReader::TextFileMetaDataReader() {
@@ -109,4 +110,3 @@ TextFileMetaDataReader::TextFileMetaDataReader() {
 //
 // Created by mvx on 3/31/20.
 //
-

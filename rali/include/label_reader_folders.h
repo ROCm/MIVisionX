@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -36,9 +37,13 @@ public :
     void release(std::string image_name);
     void release() override;
     void print_map_contents();
-    MetaDataBatch * get_output() override { return _output; }
+    MetaDataBatch * get_output() override {
+        return _output;
+    }
     LabelReaderFolders();
-    ~LabelReaderFolders() override { delete _output; }
+    ~LabelReaderFolders() override {
+        delete _output;
+    }
 private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);

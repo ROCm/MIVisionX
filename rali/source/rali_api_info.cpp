@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -57,17 +58,17 @@ int RALI_API_CALL raliGetOutputColorFormat(RaliContext p_context)
     auto context = static_cast<Context*>(p_context);
     auto translate_color_format = [](RaliColorFormat color_format)
     {
-        switch(color_format){
-            case RaliColorFormat::RGB24:
-                return 0;
-            case RaliColorFormat::BGR24:
-                return 1;
-            case RaliColorFormat::U8:
-                return 2;
-            case RaliColorFormat::RGB_PLANAR:
-                return 3;
-            default:
-                THROW("Unsupported Image type" + TOSTR(color_format))
+        switch(color_format) {
+        case RaliColorFormat::RGB24:
+            return 0;
+        case RaliColorFormat::BGR24:
+            return 1;
+        case RaliColorFormat::U8:
+            return 2;
+        case RaliColorFormat::RGB_PLANAR:
+            return 3;
+        default:
+            THROW("Unsupported Image type" + TOSTR(color_format))
         }
     };
 

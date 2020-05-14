@@ -43,8 +43,5 @@ private:
     size_t _dest_width;
     size_t _dest_height;
     std::shared_ptr<RandomCropResizeParam> _crop_param;
-    vx_array _dst_roi_width ,_dst_roi_height;
+    vx_array _dst_roi_width,_dst_roi_height;
 };
-
-
-

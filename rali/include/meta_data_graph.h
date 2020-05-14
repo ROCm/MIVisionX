@@ -39,4 +39,3 @@ public:
 
     virtual MetaDataBatch* resize(MetaDataBatch* input, unsigned dest_width, unsigned dest_height) = 0;
 };
-

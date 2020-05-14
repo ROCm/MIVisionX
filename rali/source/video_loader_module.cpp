@@ -20,14 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "video_loader_module.h"
 #ifdef RALI_VIDEO
 VideoLoaderModule::VideoLoaderModule(std::shared_ptr<VideoFileNode> video_node):_video_node(std::move(video_node))
 {
 }
 
-LoaderModuleStatus 
+LoaderModuleStatus
 VideoLoaderModule::load_next()
 {
     // Do nothing since call to process graph suffices (done externally)
@@ -46,8 +45,8 @@ VideoLoaderModule::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg
 
 size_t VideoLoaderModule::count()
 {
-    // TODO: use FFMPEG to find the total number of frames and keep counting 
-    // how many times laod_next() is called successfully, subtract them and 
+    // TODO: use FFMPEG to find the total number of frames and keep counting
+    // how many times laod_next() is called successfully, subtract them and
     // that would be the count of frames remained to be decoded
     return 9999999;
 }

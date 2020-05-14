@@ -38,9 +38,13 @@ public:
     void set_output_image (Image* output_image) override;
     size_t count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
-    std::vector<long long unsigned> timing() override {return {0}; }
+    std::vector<long long unsigned> timing() override {
+        return {0};
+    }
     void stop() override  {}
-    void get_id() { return 0; }
+    void get_id() {
+        return 0;
+    }
 private:
     std::shared_ptr<VideoFileNode> _video_node;
 };

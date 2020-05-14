@@ -40,5 +40,3 @@ private:
 };
 
 #define THROW(X) throw RaliException(" { "+std::string(__func__)+" } " + X);
-
-

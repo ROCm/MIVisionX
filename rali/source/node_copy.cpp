@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -25,7 +26,7 @@ THE SOFTWARE.
 #include "exception.h"
 
 CopyNode::CopyNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs)
+    Node(inputs, outputs)
 {
 }
 
@@ -40,5 +41,4 @@ void CopyNode::create_node()
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the copy (vxCopyNode) node failed: "+ TOSTR(status))
 
-}
-
+    }

@@ -44,4 +44,3 @@ private:
     size_t _dest_height;
     std::shared_ptr<CropParam> _crop_param;
 };
-

@@ -25,8 +25,6 @@ THE SOFTWARE.
 #include "parameter_factory.h"
 #include "parameter_vx.h"
 
-
-
 class LensCorrectionNode : public Node
 {
 public:

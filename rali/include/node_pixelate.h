@@ -26,7 +26,6 @@ THE SOFTWARE.
 #include "parameter_factory.h"
 #include "graph.h"
 
-
 class PixelateNode : public Node
 {
 public:

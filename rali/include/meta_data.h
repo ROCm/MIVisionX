@@ -27,16 +27,26 @@ THE SOFTWARE.
 #include <memory>
 #include "commons.h"
 
-
-typedef  struct { float x; float y; float w; float h; } BoundingBoxCord;
+typedef  struct {
+    float x;
+    float y;
+    float w;
+    float h;
+} BoundingBoxCord;
 typedef  std::vector<BoundingBoxCord> BoundingBoxCords;
 typedef  std::vector<int> BoundingBoxLabels;
 
 struct MetaData
 {
-    int& get_label() { return _label_id; }
-    BoundingBoxCords& get_bb_cords() { return _bb_cords; }
-    BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
+    int& get_label() {
+        return _label_id;
+    }
+    BoundingBoxCords& get_bb_cords() {
+        return _bb_cords;
+    }
+    BoundingBoxLabels& get_bb_labels() {
+        return _bb_label_ids;
+    }
 protected:
     BoundingBoxCords _bb_cords = {}; // For bb use
     BoundingBoxLabels _bb_label_ids = {};// For bb use
@@ -45,8 +55,12 @@ protected:
 
 struct Label : public MetaData
 {
-    Label(int label) { _label_id = label; }
-    Label(){ _label_id = -1; }
+    Label(int label) {
+        _label_id = label;
+    }
+    Label() {
+        _label_id = -1;
+    }
 };
 
 struct BoundingBox : public MetaData
@@ -57,8 +71,12 @@ struct BoundingBox : public MetaData
         _bb_cords =std::move(bb_cords);
         _bb_label_ids = std::move(bb_label_ids);
     }
-    void set_bb_cords(BoundingBoxCords bb_cords) { _bb_cords =std::move(bb_cords); }
-    void set_bb_labels(BoundingBoxLabels bb_label_ids) {_bb_label_ids = std::move(bb_label_ids); }
+    void set_bb_cords(BoundingBoxCords bb_cords) {
+        _bb_cords =std::move(bb_cords);
+    }
+    void set_bb_labels(BoundingBoxLabels bb_label_ids) {
+        _bb_label_ids = std::move(bb_label_ids);
+    }
 };
 
 struct MetaDataBatch
@@ -74,9 +92,15 @@ struct MetaDataBatch
         return this;
     }
     virtual std::shared_ptr<MetaDataBatch> clone()  = 0;
-    std::vector<int>& get_label_batch() { return _label_id; }
-    std::vector<BoundingBoxCords>& get_bb_cords_batch() { return _bb_cords; }
-    std::vector<BoundingBoxLabels>& get_bb_labels_batch() { return _bb_label_ids; }
+    std::vector<int>& get_label_batch() {
+        return _label_id;
+    }
+    std::vector<BoundingBoxCords>& get_bb_cords_batch() {
+        return _bb_cords;
+    }
+    std::vector<BoundingBoxLabels>& get_bb_labels_batch() {
+        return _bb_label_ids;
+    }
 protected:
     std::vector<int> _label_id = {}; // For label use only
     std::vector<BoundingBoxCords> _bb_cords = {};

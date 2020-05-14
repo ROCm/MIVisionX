@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -45,7 +46,7 @@ public:
     }
 
     explicit UniformRand(T start, unsigned seed = 0):
-            UniformRand(start, start, seed) {}
+        UniformRand(start, start, seed) {}
 
     T default_value() const override
     {
@@ -68,7 +69,7 @@ public:
             _updated_val = _start;
         } else {
             _updated_val = static_cast<T>(
-                    ((double)val / (double) _generator.max()) * ((double) _end - (double) _start) + (double) _start);
+                               ((double)val / (double) _generator.max()) * ((double) _end - (double) _start) + (double) _start);
         }
     }
     int update(T start, T end) {
@@ -91,8 +92,6 @@ private:
     std::mt19937 _generator;
     std::mutex _lock;
 };
-
-
 
 template <typename T>
 struct CustomRand: public Parameter<T>
@@ -128,7 +127,10 @@ struct CustomRand: public Parameter<T>
             _frequencies.begin(),
             _frequencies.end(),
             _frequencies.begin(),
-            [&](double in) -> double { if(in >= 0) { sum += in; return in;} return 0; });
+        [&](double in) -> double { if(in >= 0) {
+        sum += in;
+        return in;
+    } return 0; });
 
         // NOTE: If there remains values with probability zero it may cause issues with sampling
         // TODO: Remove values associated with probabilities equal to 0 from the _frequencies and _values
@@ -138,13 +140,15 @@ struct CustomRand: public Parameter<T>
             _frequencies.begin(),
             _frequencies.end(),
             _frequencies.begin(),
-            [&](double in) { return (double)in/sum;});
+        [&](double in) {
+            return (double)in/sum;
+        });
 
         //Compute the expected value by performing inner product of probs and values
         _mean = std::inner_product(
-            _values.begin(),
-            _values.end(),
-            _frequencies.begin(), 0);
+                    _values.begin(),
+                    _values.end(),
+                    _frequencies.begin(), 0);
 
         // Create the partial sum of the probability distribution function (PDF), is used for random generation
         std::partial_sum(

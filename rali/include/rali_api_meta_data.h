@@ -35,7 +35,6 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateLabelReader(RaliContext rali_con
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateCOCOReader(RaliContext rali_context, const char* source_path, bool is_output);
 
-
 ///
 /// \param rali_context
 /// \param source_path path to the file that contains the metadata file
@@ -76,6 +75,5 @@ extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, 
 /// \param filename_prefix: look only files with prefix ( needed for cifar10)
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext rali_context, const char* source_path, const char* file_prefix);
-
 
 #endif //MIVISIONX_RALI_API_META_DATA_H

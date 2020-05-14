@@ -26,8 +26,8 @@ THE SOFTWARE.
 #include "exception.h"
 
 ResizeCropMirrorNode::ResizeCropMirrorNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-         Node(inputs, outputs),
-        _mirror(MIRROR_RANGE[0], MIRROR_RANGE[1])
+    Node(inputs, outputs),
+    _mirror(MIRROR_RANGE[0], MIRROR_RANGE[1])
 {
     _crop_param = std::make_shared<CropParam>(_batch_size);
 }
@@ -51,14 +51,14 @@ void ResizeCropMirrorNode::create_node()
     height_status = vxAddArrayItems(_dst_roi_height, _batch_size, dst_roi_height.data(), sizeof(vx_uint32));
     if(width_status != 0 || height_status != 0)
         THROW(" vxAddArrayItems failed in the crop resize node (vxExtrppNode_ResizeCropbatchPD    )  node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
-    _mirror.create_array(_graph ,VX_TYPE_UINT32, _batch_size);
+        _mirror.create_array(_graph,VX_TYPE_UINT32, _batch_size);
     _node = vxExtrppNode_ResizeCropMirrorPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width,
-                                           _dst_roi_height, _crop_param->x1_arr, _crop_param->x2_arr, _crop_param->y1_arr, _crop_param->y2_arr,  _mirror.default_array(),_batch_size);
+                                            _dst_roi_height, _crop_param->x1_arr, _crop_param->x2_arr, _crop_param->y1_arr, _crop_param->y2_arr,  _mirror.default_array(),_batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Error adding the resize crop mirror resize node (vxExtrppNode_ResizeCropbatchPD    ) failed: "+TOSTR(status))
-}
+    }
 
 void ResizeCropMirrorNode::update_node()
 {
@@ -70,17 +70,15 @@ void ResizeCropMirrorNode::init(unsigned int crop_h, unsigned int crop_w, IntPar
 {
     _crop_param->crop_w = crop_w;
     _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
+    _crop_param->x1     = 0;
     _crop_param->y1     = 0;
     _mirror.set_param(core(mirror));
 }
-
 
 void ResizeCropMirrorNode::init(FloatParam *crop_h_factor, FloatParam  *crop_w_factor, IntParam *mirror)
 {
     _crop_param->set_crop_height_factor(core(crop_h_factor));
     _crop_param->set_crop_width_factor(core(crop_w_factor));
-    _crop_param->set_random();   
+    _crop_param->set_random();
     _mirror.set_param(core(mirror));
 }
-

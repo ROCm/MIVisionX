@@ -27,7 +27,6 @@ THE SOFTWARE.
 #include <dirent.h>
 #include "reader.h"
 
-
 class CIFAR10DataReader : public Reader {
 public:
     //! Looks up the folder which contains the CIFAR10 training/test data which is uncompressed, amd makes up image names
@@ -51,7 +50,9 @@ public:
     void reset() override;
 
     //! Returns the name of the latest data_id opened
-    std::string id() override { return _last_id;};
+    std::string id() override {
+        return _last_id;
+    };
 
     unsigned count() override;
 
@@ -61,7 +62,9 @@ public:
 
     CIFAR10DataReader();
 
-    unsigned get_file_index() { return _last_file_idx;}
+    unsigned get_file_index() {
+        return _last_file_idx;
+    }
 
 private:
     //! opens the folder containing the images
@@ -96,6 +99,8 @@ private:
     int _read_counter = 0;
     void incremenet_read_ptr();
     int release();
-    void incremenet_file_id() { _file_id++; }
+    void incremenet_file_id() {
+        _file_id++;
+    }
 
 };

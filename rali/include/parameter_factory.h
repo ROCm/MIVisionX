@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #pragma once
 #include <set>
 #include <thread>
@@ -28,7 +27,6 @@ THE SOFTWARE.
 #include <memory>
 #include "parameter_random.h"
 #include "parameter_simple.h"
-
 
 enum class RaliParameterType
 {
@@ -38,23 +36,23 @@ enum class RaliParameterType
 };
 
 struct IntParam
-{ 
+{
     IntParam(
-            Parameter<int>* core,
-            RaliParameterType type):
-            core(core),
-            type(type){}
+        Parameter<int>* core,
+        RaliParameterType type):
+        core(core),
+        type(type) {}
     Parameter<int>* core;
     const RaliParameterType type;
 };
 
 struct FloatParam
-{ 
+{
     FloatParam(
-            Parameter<float>* core,
-            RaliParameterType type):
-            core(core),
-            type(type){}
+        Parameter<float>* core,
+        RaliParameterType type):
+        core(core),
+        type(type) {}
     Parameter<float>* core;
     const RaliParameterType type;
 };
@@ -79,13 +77,13 @@ public:
     unsigned get_seed();
 
     template<typename T>
-    Parameter<T>* create_uniform_rand_param(T start, T end){
+    Parameter<T>* create_uniform_rand_param(T start, T end) {
         auto gen = new UniformRand<T>(start, end, _seed);
         _parameters.insert(gen);
         return gen;
     }
     template<typename T>
-    Parameter<T>* create_single_value_param(T value){
+    Parameter<T>* create_single_value_param(T value) {
         auto gen = new SimpleParameter<T>(value);
         _parameters.insert(gen);
         return gen;
@@ -107,14 +105,6 @@ private:
     long long unsigned _seed;
     std::set<pParamCore> _parameters; //<! Keeps the random generators used to randomized the augmentation parameters
     static ParameterFactory* _instance;
-    static std::mutex _mutex; 
+    static std::mutex _mutex;
     ParameterFactory();
 };
-
-
-
-
-
-
-
-

@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -51,11 +52,15 @@ public:
     {
         if(in_width_.size() != in_width.size() || in_height.size() != in_height_.size())
             THROW("wrong input width = "+ TOSTR(in_width.size())+" or height size = "+TOSTR(in_height_.size()))
-        in_width  = in_width_;
+            in_width  = in_width_;
         in_height = in_height_;
     }
-    void set_random() {_random = true;}
-    void set_centric() {_centric = true;}
+    void set_random() {
+        _random = true;
+    }
+    void set_centric() {
+        _centric = true;
+    }
     void set_x_drift_factor(Parameter<float>* x_drift);
     void set_y_drift_factor(Parameter<float>* y_drift);
     void set_crop_height_factor(Parameter<float>* crop_h_factor);
@@ -70,9 +75,9 @@ public:
     void update_array();
     void get_crop_dimensions(std::vector<uint32_t> &crop_w_dim, std::vector<uint32_t> &crop_h_dim);
 private:
-    constexpr static float CROP_X_DRIFT_RANGE [2]  = {0.01, 0.49}; 
+    constexpr static float CROP_X_DRIFT_RANGE [2]  = {0.01, 0.49};
     constexpr static float CROP_Y_DRIFT_RANGE [2]  = {0.01, 0.49};
-    constexpr static float CROP_HEIGHT_FACTOR_RANGE[2]  = {0.25, 0.95}; 
+    constexpr static float CROP_HEIGHT_FACTOR_RANGE[2]  = {0.25, 0.95};
     constexpr static float CROP_WIDTH_FACTOR_RANGE[2]   = {0.25, 0.95};
     Parameter<float>  *x_drift_factor, *y_drift_factor, *crop_height_factor, *crop_width_factor;
     Parameter<float>* default_x_drift_factor();

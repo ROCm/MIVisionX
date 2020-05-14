@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include "parameter_factory.h"
 #include "parameter_vx.h"
 
-
 class HueNode : public Node
 {
 public:

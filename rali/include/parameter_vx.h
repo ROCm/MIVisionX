@@ -31,26 +31,26 @@ class ParameterVX
 {
 public:
     ParameterVX(unsigned ovx_param_idx, T default_range_start, T default_range_end):
-            OVX_PARAM_IDX(ovx_param_idx),
-            _DEFAULT_RANGE_START(default_range_start),
-            _DEFAULT_RANGE_END(default_range_end)
+        OVX_PARAM_IDX(ovx_param_idx),
+        _DEFAULT_RANGE_START(default_range_start),
+        _DEFAULT_RANGE_END(default_range_end)
     {
         _param = ParameterFactory::instance()->create_uniform_rand_param<T>(_DEFAULT_RANGE_START,
-                                                                            _DEFAULT_RANGE_END);
+                 _DEFAULT_RANGE_END);
     }
     ParameterVX( T default_range_start, T default_range_end):
-            _DEFAULT_RANGE_START(default_range_start),
-            _DEFAULT_RANGE_END(default_range_end)
+        _DEFAULT_RANGE_START(default_range_start),
+        _DEFAULT_RANGE_END(default_range_end)
     {
         _param = ParameterFactory::instance()->create_uniform_rand_param<T>(_DEFAULT_RANGE_START,
-                                                                            _DEFAULT_RANGE_END);
+                 _DEFAULT_RANGE_END);
     }
     void create(vx_node node)
     {
         vx_status status;
         auto ref = vxGetParameterByIndex(node, OVX_PARAM_IDX);
         if( (status = vxQueryParameter(ref,VX_PARAMETER_ATTRIBUTE_REF, &_scalar, sizeof(vx_scalar))) != VX_SUCCESS ||
-            (status = vxGetStatus((vx_reference)node)) != VX_SUCCESS)
+                (status = vxGetStatus((vx_reference)node)) != VX_SUCCESS)
             THROW("Getting vx scalar from the vx node failed" + TOSTR(status));
         if( (status = vxReadScalarValue(_scalar, &_val)) != VX_SUCCESS)
             THROW("Reading vx scalar failed" + TOSTR(status));
@@ -106,7 +106,7 @@ public:
         if((status = vxWriteScalarValue(_scalar, &val))!= VX_SUCCESS)
             WRN("Updating vx scalar failed")
 
-    }
+        }
     void update_array( )
     {
         vx_status status;
@@ -117,7 +117,7 @@ public:
         status = vxCopyArrayRange((vx_array)_array, 0, _batch_size, sizeof(T), _arrVal.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
         if(status != 0)
             THROW(" vxCopyArrayRange failed in update_array (ParameterVX): "+ TOSTR(status))
-    }
+        }
     T renew()
     {
         _param->renew();

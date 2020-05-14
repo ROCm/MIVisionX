@@ -63,9 +63,9 @@ void VideoFileNode::create_node()
     vx_status res = VX_SUCCESS;
     if((res = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Failed to add video decoder node")
-    if((res = vxGetStatus((vx_reference)_copy_node)) != VX_SUCCESS)
-        THROW("Failed to add video copy decoder node")
-}
+        if((res = vxGetStatus((vx_reference)_copy_node)) != VX_SUCCESS)
+            THROW("Failed to add video copy decoder node")
+        }
 void VideoFileNode::init(const std::string &source_path, DecodeMode decoder_mode, bool loop)
 {
     _decode_mode = decoder_mode;
@@ -74,10 +74,10 @@ void VideoFileNode::init(const std::string &source_path, DecodeMode decoder_mode
 }
 
 VideoFileNode::VideoFileNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs, const size_t batch_size):
-        Node(inputs, outputs, batch_size)
+    Node(inputs, outputs, batch_size)
 {
     _batch_size = outputs[0]->info().batch_size();
     if(_batch_size > MAXIMUM_VIDEO_CONCURRENT_DECODE)
         THROW("Video batch size " + TOSTR(_batch_size)+" is bigger than " + TOSTR(MAXIMUM_VIDEO_CONCURRENT_DECODE))
-}
+    }
 #endif

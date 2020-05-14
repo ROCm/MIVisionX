@@ -38,5 +38,3 @@ private:
     ParameterVX<float> _fog_param;
     constexpr static float FOG_VALUE_RANGE [2] = {0.2, 0.8};
 };
-
-

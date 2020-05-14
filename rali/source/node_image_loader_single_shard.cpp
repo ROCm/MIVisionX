@@ -23,9 +23,10 @@ THE SOFTWARE.
 #include "node_image_loader_single_shard.h"
 #include "exception.h"
 
-
 ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, DeviceResources device_resources):
-        Node({}, {output})
+    Node({}, {
+    output
+})
 {
     _loader_module = std::make_shared<ImageLoader>(device_resources);
 }
@@ -37,11 +38,11 @@ ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const 
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for ImageLoaderNode, cannot initialize")
-    if(shard_count < 1)
-        THROW("Shard count should be greater than or equal to one")
-    if(shard_id >= shard_count)
-        THROW("Shard is should be smaller than shard count")
-    _loader_module->set_output_image(_outputs[0]);
+        if(shard_count < 1)
+            THROW("Shard count should be greater than or equal to one")
+            if(shard_id >= shard_count)
+                THROW("Shard is should be smaller than shard count")
+                _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the ImageLoaderNode
     auto reader_cfg = ReaderConfig(storage_type, source_path, loop);
     reader_cfg.set_shard_count(shard_count);
@@ -57,7 +58,7 @@ std::shared_ptr<LoaderModule> ImageLoaderSingleShardNode::get_loader_module()
 {
     if(!_loader_module)
         WRN("ImageLoaderSingleShardNode's loader module is null, not initialized")
-    return _loader_module;
+        return _loader_module;
 }
 
 ImageLoaderSingleShardNode::~ImageLoaderSingleShardNode()

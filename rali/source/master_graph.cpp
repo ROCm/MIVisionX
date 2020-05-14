@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -45,22 +46,22 @@ using half_float::half;
 #endif
 
 auto get_ago_affinity_info = []
-    (RaliAffinity rali_affinity,
-     int cpu_id,
-     int gpu_id)
+                             (RaliAffinity rali_affinity,
+                              int cpu_id,
+                              int gpu_id)
 {
     AgoTargetAffinityInfo affinity;
     switch(rali_affinity) {
-        case RaliAffinity::GPU:
-            affinity.device_type =  AGO_TARGET_AFFINITY_GPU;
-            affinity.device_info = (gpu_id >=0 && gpu_id <=9)? gpu_id : 0;
-            break;
-        case RaliAffinity::CPU:
-            affinity.device_type = AGO_TARGET_AFFINITY_CPU;
-            affinity.device_info = (cpu_id >=0 && cpu_id <=9)? cpu_id : 0;
-            break;
-        default:
-            throw std::invalid_argument("Unsupported affinity");
+    case RaliAffinity::GPU:
+        affinity.device_type =  AGO_TARGET_AFFINITY_GPU;
+        affinity.device_info = (gpu_id >=0 && gpu_id <=9)? gpu_id : 0;
+        break;
+    case RaliAffinity::CPU:
+        affinity.device_type = AGO_TARGET_AFFINITY_CPU;
+        affinity.device_info = (cpu_id >=0 && cpu_id <=9)? cpu_id : 0;
+        break;
+    default:
+        throw std::invalid_argument("Unsupported affinity");
     }
     return affinity;
 };
@@ -71,20 +72,20 @@ MasterGraph::~MasterGraph()
 }
 
 MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
-        _ring_buffer(OUTPUT_RING_BUFFER_DEPTH),
-        _output_tensor(nullptr),
-        _graph(nullptr),
-        _affinity(affinity),
-        _gpu_id(gpu_id),
-        _convert_time("Conversion Time", DBG_TIMING),
-        _user_batch_size(batch_size),
-        _cpu_threads(cpu_threads),
-        _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
-        _process_time("Process Time", DBG_TIMING),
-        _first_run(true),
-        _processing(false),
-        _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
-        _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size)
+    _ring_buffer(OUTPUT_RING_BUFFER_DEPTH),
+    _output_tensor(nullptr),
+    _graph(nullptr),
+    _affinity(affinity),
+    _gpu_id(gpu_id),
+    _convert_time("Conversion Time", DBG_TIMING),
+    _user_batch_size(batch_size),
+    _cpu_threads(cpu_threads),
+    _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
+    _process_time("Process Time", DBG_TIMING),
+    _first_run(true),
+    _processing(false),
+    _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
+    _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size)
 {
     try {
         vx_status status;
@@ -93,17 +94,16 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         if ((status = vxGetStatus((vx_reference) _context)) != VX_SUCCESS)
             THROW("vxCreateContext failed" + TOSTR(status))
 
-        if(affinity == RaliAffinity::GPU)
-        {
-            cl_context _cl_context = nullptr;
-            cl_device_id _cl_device_id = nullptr;
-            get_device_and_context(gpu_id, &_cl_context, &_cl_device_id, CL_DEVICE_TYPE_GPU);
-            if((status = vxSetContextAttribute(_context,
-                    VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,
-                    &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
-                THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
-        }
-
+            if(affinity == RaliAffinity::GPU)
+            {
+                cl_context _cl_context = nullptr;
+                cl_device_id _cl_device_id = nullptr;
+                get_device_and_context(gpu_id, &_cl_context, &_cl_device_id, CL_DEVICE_TYPE_GPU);
+                if((status = vxSetContextAttribute(_context,
+                                                   VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,
+                                                   &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
+                    THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
+                }
 
         // Setting attribute to run on CPU or GPU should be called before load kernel module
         if ((status = vxSetContextAttribute(_context,
@@ -112,20 +112,20 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
                                             sizeof(vx_affinity))) != VX_SUCCESS)
             THROW("vxSetContextAttribute for AMD_AFFINITY failed " + TOSTR(status))
 
-        // loading OpenVX RPP modules
-        if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)
-            THROW("Cannot load vx_rpp extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
-        else
-            LOG("vx_rpp module loaded successfully")
+            // loading OpenVX RPP modules
+            if ((status = vxLoadKernels(_context, "vx_rpp")) != VX_SUCCESS)
+                THROW("Cannot load vx_rpp extension (vx_rpp), vxLoadKernels failed " + TOSTR(status))
+                    else
+                        LOG("vx_rpp module loaded successfully")
 #ifdef RALI_VIDEO
-        // loading video decoder modules
-        if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
-            WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
-        else
-            LOG("vx_amd_media module loaded")
+                        // loading video decoder modules
+                        if ((status = vxLoadKernels(_context, "vx_amd_media")) != VX_SUCCESS)
+                            WRN("Cannot load vx_amd_media extension, video decode functionality will not be available")
+                            else
+                                LOG("vx_amd_media module loaded")
 #endif
-        if(_affinity == RaliAffinity::GPU)
-            _device.init_ocl(_context);
+                                if(_affinity == RaliAffinity::GPU)
+                                    _device.init_ocl(_context);
     }
     catch(const std::exception& e)
     {
@@ -196,13 +196,13 @@ MasterGraph::build()
     if(_output_images.empty())
         THROW("No output images are there, cannot create the pipeline")
 
-    // Verify all output images have the same dimension, otherwise creating a unified tensor from them is not supported
-    _output_image_info = _output_images.front()->info();
+        // Verify all output images have the same dimension, otherwise creating a unified tensor from them is not supported
+        _output_image_info = _output_images.front()->info();
     for(auto&& output_image : _output_images)
         if(!(output_image->info() == _output_image_info))
             THROW("Dimension of the output images do not match")
 
-    allocate_output_tensor();
+            allocate_output_tensor();
 
     _ring_buffer.init(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
     create_single_graph();
@@ -235,7 +235,7 @@ MasterGraph::create_image(const ImageInfo &info, bool is_output)
         if (output->create_from_handle(_context) != 0)
             THROW("Cannot create the image from handle")
 
-        _output_images.push_back(output);
+            _output_images.push_back(output);
     }
 
     return output;
@@ -255,8 +255,8 @@ void MasterGraph::release()
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseContext " + TOSTR(status))
 
-    for(auto& image: _internal_images)
-        delete image;// It will call the vxReleaseImage internally in the destructor
+        for(auto& image: _internal_images)
+            delete image;// It will call the vxReleaseImage internally in the destructor
 
     for(auto& image: _output_images)
         delete image;// It will call the vxReleaseImage internally in the destructor
@@ -322,7 +322,7 @@ MasterGraph::allocate_output_tensor()
         if (!clImgFloat || ret != CL_SUCCESS)
             THROW("clCreateBuffer of size " + TOSTR(size) + " failed " + TOSTR(ret))
 
-        _output_tensor = clImgFloat;
+            _output_tensor = clImgFloat;
     }
     return Status::OK;
 }
@@ -377,11 +377,10 @@ MasterGraph::timing()
     return t;
 }
 
-
 MasterGraph::Status
 MasterGraph::copy_output(
-        cl_mem out_ptr,
-        size_t out_size)
+    cl_mem out_ptr,
+    size_t out_size)
 {
     if(no_more_processed_data())
         return MasterGraph::Status::NO_MORE_DATA;
@@ -416,8 +415,8 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
     {
         if(output_data_type == RaliTensorDataType::FP16)
             THROW("FP16 tensor output for GPU affinity is not implemented")
-        // OCL device memory
-        cl_int status;
+            // OCL device memory
+            cl_int status;
 
         size_t global_work_size = output_sample_size();
         size_t local_work_size = 256;
@@ -448,17 +447,16 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset2))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& reverse_chnl))
 
-
             if((status = clEnqueueNDRangeKernel(queue,
                                                 kernel,
                                                 1,
                                                 nullptr,
                                                 &global_work_size,
                                                 &local_work_size,
-                                                0 , nullptr, nullptr)) != CL_SUCCESS)
+                                                0, nullptr, nullptr)) != CL_SUCCESS)
                 THROW("clEnqueueNDRangeKernel failed on kernel "+STR(kernel_name)+" error " + TOSTR(status))
 
-            dest_buf_offset += single_output_image_size;
+                dest_buf_offset += single_output_image_size;
         }
 
         int read_size = single_output_image_size*_output_images.size()*sizeof(cl_float);
@@ -468,9 +466,9 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                          0,
                                          read_size,
                                          out_ptr,
-                                         0 , nullptr, nullptr)) != CL_SUCCESS)
+                                         0, nullptr, nullptr)) != CL_SUCCESS)
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
-    }
+        }
     if(_output_image_info.mem_type() == RaliMemType::HOST)
     {
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
@@ -490,7 +488,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                     for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                         for(unsigned i = 0; i < channel_size; i++)
                             output_tensor_32[dest_buf_offset+channel_idx+ i*c] =
-                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
+                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i*c+c-channel_idx-1]) : (float)(in_buffer[i*c+channel_idx]));
                 }
                 else if(output_data_type == RaliTensorDataType::FP16)
                 {
@@ -499,7 +497,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                     for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                         for(unsigned i = 0; i < channel_size; i++)
                             output_tensor_16[dest_buf_offset+channel_idx+ i*c] =
-                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[i*c+c-channel_idx-1]) : (half)(in_buffer[i*c+channel_idx]));
+                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[i*c+c-channel_idx-1]) : (half)(in_buffer[i*c+channel_idx]));
                 }
             }
             if(format == RaliTensorFormat::NCHW)
@@ -513,7 +511,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                         for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                             for(unsigned i = 0; i < channel_size; i++)
                                 output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                        offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
                     }
                     else {
 #if (ENABLE_SIMD && __AVX2__)
@@ -578,7 +576,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                         for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                             for(unsigned i = 0; i < channel_size; i++)
                                 output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                        offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
+                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
 #endif
                     }
                 }
@@ -589,7 +587,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                     for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                         for(unsigned i = 0; i < channel_size; i++)
                             output_tensor_16[dest_buf_offset+channel_idx*channel_size + i] =
-                                    offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[c*i+c-channel_idx-1]) : (half)(in_buffer[c*i+channel_idx]));
+                                offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (half)(in_buffer[c*i+c-channel_idx-1]) : (half)(in_buffer[c*i+channel_idx]));
                 }
 
             }
@@ -630,9 +628,9 @@ MasterGraph::copy_output(unsigned char *out_ptr)
                                              0,
                                              size,
                                              out_ptr+dest_buf_offset,
-                                             0 , nullptr, nullptr)) != CL_SUCCESS)
+                                             0, nullptr, nullptr)) != CL_SUCCESS)
                 THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
-            dest_buf_offset += size;
+                dest_buf_offset += size;
         }
     }
     else
@@ -656,98 +654,98 @@ void MasterGraph::output_routine()
     if(processing_on_device() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 
-    try {
-        while (_processing)
-        {
-            const size_t each_cycle_size = output_byte_size()/_user_to_internal_batch_ratio;
-
-            ImageNameBatch full_batch_image_names = {};
-            pMetaDataBatch full_batch_meta_data = nullptr;
-
-            if (_loader_module->remaining_count() < _user_batch_size)
+        try {
+            while (_processing)
             {
-                // If the internal process routine ,output_routine(), has finished processing all the images, and last
-                // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
-                notify_user_thread();
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                continue;
-            }
+                const size_t each_cycle_size = output_byte_size()/_user_to_internal_batch_ratio;
 
-            // _ring_buffer.get_write_buffers() is blocking and blocks here until user uses processed image by calling run() and frees space in the ring_buffer
-            auto write_buffers = _ring_buffer.get_write_buffers();
+                ImageNameBatch full_batch_image_names = {};
+                pMetaDataBatch full_batch_meta_data = nullptr;
 
-            // When executing on CPU the internal batch count can be smaller than the user batch count
-            // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
-            // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
-            for(unsigned cycle_idx = 0; cycle_idx< _user_to_internal_batch_ratio; cycle_idx++)
-            {
-                // Swap handles on the input image, so that new image is loaded to be processed
-                auto load_ret = _loader_module->load_next();
-                if (load_ret != LoaderModuleStatus::OK)
-                    THROW("Loader module failed to load next batch of images, status " + TOSTR(load_ret))
-
-                if (!_processing)
-                    break;
-
-                auto this_cycle_names =  _loader_module->get_id();
-
-                if(this_cycle_names.size() != _internal_batch_size)
-                    WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
-
-                // meta_data lookup is done before _meta_data_graph->process() is called to have the new meta_data ready for processing
-                if (_meta_data_reader)
-                    _meta_data_reader->lookup(this_cycle_names);
-
-                full_batch_image_names += this_cycle_names;
-
-                if (!_processing)
-                    break;
-
-                // Swap handles on the output images, so that new processed image will be written to the a new buffer
-                for (size_t idx = 0; idx < _output_images.size(); idx++)
+                if (_loader_module->remaining_count() < _user_batch_size)
                 {
-                    if(_affinity == RaliAffinity::GPU)
-                        _output_images[idx]->swap_handle(write_buffers[idx]);
-                    else
+                    // If the internal process routine ,output_routine(), has finished processing all the images, and last
+                    // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
+                    notify_user_thread();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    continue;
+                }
+
+                // _ring_buffer.get_write_buffers() is blocking and blocks here until user uses processed image by calling run() and frees space in the ring_buffer
+                auto write_buffers = _ring_buffer.get_write_buffers();
+
+                // When executing on CPU the internal batch count can be smaller than the user batch count
+                // In that case the user_batch_size will be an integer multiple of the _internal_batch_size
+                // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
+                for(unsigned cycle_idx = 0; cycle_idx< _user_to_internal_batch_ratio; cycle_idx++)
+                {
+                    // Swap handles on the input image, so that new image is loaded to be processed
+                    auto load_ret = _loader_module->load_next();
+                    if (load_ret != LoaderModuleStatus::OK)
+                        THROW("Loader module failed to load next batch of images, status " + TOSTR(load_ret))
+
+                        if (!_processing)
+                            break;
+
+                    auto this_cycle_names =  _loader_module->get_id();
+
+                    if(this_cycle_names.size() != _internal_batch_size)
+                        WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
+
+                        // meta_data lookup is done before _meta_data_graph->process() is called to have the new meta_data ready for processing
+                        if (_meta_data_reader)
+                            _meta_data_reader->lookup(this_cycle_names);
+
+                    full_batch_image_names += this_cycle_names;
+
+                    if (!_processing)
+                        break;
+
+                    // Swap handles on the output images, so that new processed image will be written to the a new buffer
+                    for (size_t idx = 0; idx < _output_images.size(); idx++)
                     {
-                        auto this_cycle_buffer_ptr = (unsigned char *) write_buffers[idx] + each_cycle_size * cycle_idx;
-                        _output_images[idx]->swap_handle(this_cycle_buffer_ptr);
+                        if(_affinity == RaliAffinity::GPU)
+                            _output_images[idx]->swap_handle(write_buffers[idx]);
+                        else
+                        {
+                            auto this_cycle_buffer_ptr = (unsigned char *) write_buffers[idx] + each_cycle_size * cycle_idx;
+                            _output_images[idx]->swap_handle(this_cycle_buffer_ptr);
+                        }
+                    }
+
+                    if (!_processing)
+                        break;
+
+                    update_node_parameters();
+                    _process_time.start();
+                    _graph->process();
+                    _process_time.end();
+
+                    //process metadata, _augmented_meta_data contains the results after the call to process
+                    if (_meta_data_graph)
+                        _meta_data_graph->process();
+
+                    // concatenating metadata using the this cycle's internal batch
+                    if(_augmented_meta_data)
+                    {
+                        if (full_batch_meta_data)
+                            full_batch_meta_data->concatenate(_augmented_meta_data);
+                        else
+                            full_batch_meta_data = _augmented_meta_data->clone();
                     }
                 }
 
-                if (!_processing)
-                    break;
+                _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
+                _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
 
-                update_node_parameters();
-                _process_time.start();
-                _graph->process();
-                _process_time.end();
-
-                //process metadata, _augmented_meta_data contains the results after the call to process
-                if (_meta_data_graph)
-                    _meta_data_graph->process();
-
-                // concatenating metadata using the this cycle's internal batch
-                if(_augmented_meta_data)
-                {
-                    if (full_batch_meta_data)
-                        full_batch_meta_data->concatenate(_augmented_meta_data);
-                    else
-                        full_batch_meta_data = _augmented_meta_data->clone();
-                }
             }
-
-            _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
-            _ring_buffer.push(); // Image data and metadata is now stored in output the ring_buffer, increases it's level by 1
-
         }
-    }
-    catch (const std::exception &e)
-    {
-        ERR("Exception thrown in the process routine: " + STR(e.what()) + STR("\n"));
-        _processing = false;
-        _ring_buffer.release_all_blocked_calls();
-    }
+        catch (const std::exception &e)
+        {
+            ERR("Exception thrown in the process routine: " + STR(e.what()) + STR("\n"));
+            _processing = false;
+            _ring_buffer.release_all_blocked_calls();
+        }
 }
 
 void MasterGraph::start_processing()
@@ -783,7 +781,7 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, source_path);
+        MetaDataConfig config(MetaDataType::BoundingBox, MetaDataReaderType::COCO_META_DATA_READER, source_path);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -792,8 +790,8 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     {
         if (_augmented_meta_data)
             THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
-        else
-            _augmented_meta_data = _meta_data_reader->get_output();
+            else
+                _augmented_meta_data = _meta_data_reader->get_output();
     }
     return _meta_data_reader->get_output();
 }
@@ -802,14 +800,14 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
+        MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
     if (_augmented_meta_data)
         THROW("Metadata can only have a single output")
-    else
-        _augmented_meta_data = _meta_data_reader->get_output();
+        else
+            _augmented_meta_data = _meta_data_reader->get_output();
     return _meta_data_reader->get_output();
 }
 
@@ -817,23 +815,22 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, file_prefix);
+        MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, file_prefix);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
     if (_augmented_meta_data)
         THROW("Metadata can only have a single output")
-    else
-        _augmented_meta_data = _meta_data_reader->get_output();
+        else
+            _augmented_meta_data = _meta_data_reader->get_output();
     return _meta_data_reader->get_output();
 }
-
 
 const std::pair<ImageNameBatch,pMetaDataBatch>& MasterGraph::meta_data()
 {
     if(_ring_buffer.level() == 0)
         THROW("No meta data has been loaded")
-    return _ring_buffer.get_meta_data();
+        return _ring_buffer.get_meta_data();
 }
 
 size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, RaliAffinity affinity)
@@ -841,30 +838,29 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
     const unsigned MINIMUM_CPU_THREAD_COUNT = 2;
     const unsigned DEFAULT_SMT_COUNT = 2;
 
-
     if(affinity == RaliAffinity::GPU)
         return user_batch_size;
-    
+
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
         INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")
-    else
-    {
-        THREAD_COUNT = MINIMUM_CPU_THREAD_COUNT;
-        WRN("hardware_concurrency() call failed assuming can run " + TOSTR(THREAD_COUNT) + " threads")
-    }
+        else
+        {
+            THREAD_COUNT = MINIMUM_CPU_THREAD_COUNT;
+            WRN("hardware_concurrency() call failed assuming can run " + TOSTR(THREAD_COUNT) + " threads")
+        }
     size_t ret = user_batch_size;
     size_t CORE_COUNT = THREAD_COUNT / DEFAULT_SMT_COUNT;
 
     if(CORE_COUNT <= 0)
         THROW("Wrong core count detected less than 0")
 
-    for( size_t i = CORE_COUNT; i <= THREAD_COUNT; i++)
-        if(user_batch_size % i == 0)
-        {
-            ret = i;
-            break;
-        }
+        for( size_t i = CORE_COUNT; i <= THREAD_COUNT; i++)
+            if(user_batch_size % i == 0)
+            {
+                ret = i;
+                break;
+            }
 
     for(size_t i = CORE_COUNT; i > 1; i--)
         if(user_batch_size % i == 0)
@@ -906,7 +902,7 @@ bool MasterGraph::no_more_processed_data()
 
 MasterGraph::Status
 MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1,
-                             float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
+                                    float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
     if(no_more_processed_data())
         return MasterGraph::Status::NO_MORE_DATA;
@@ -919,7 +915,6 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
     const size_t n = _output_image_info.batch_size();
 
     const size_t single_output_image_size = output_byte_size();
-
 
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
@@ -945,24 +940,24 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
                         for (unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                             for (unsigned i = 0; i < channel_size; i++)
                                 output_tensor_32[dest_buf_offset + channel_idx + i * c] =
-                                        offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (float) (in_buffer[i +
-                                                                                                     (c - channel_idx -
-                                                                                                      1) *
-                                                                                                     channel_size])
-                                                                                : (float) (in_buffer[i + channel_idx *
-                                                                                                         channel_size]));
+                                    offset[channel_idx] + multiplier[channel_idx] *
+                                    (reverse_channels ? (float) (in_buffer[i +
+                                                                   (c - channel_idx -
+                                                                    1) *
+                                                                   channel_size])
+                                     : (float) (in_buffer[i + channel_idx *
+                                                            channel_size]));
                     } else if (output_data_type == RaliTensorDataType::FP16) {
                         half *output_tensor_16 = static_cast<half *>(out_ptr) + batch_offset;
                         auto channel_size = w * h;
                         for (unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                             for (unsigned i = 0; i < channel_size; i++)
                                 output_tensor_16[dest_buf_offset + channel_idx + i * c] =
-                                        offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (half) (in_buffer[
-                                                                      (c - channel_idx - 1) * channel_size + i])
-                                                                                : (half) (in_buffer[
-                                                                              channel_idx * channel_size + i]));
+                                    offset[channel_idx] + multiplier[channel_idx] *
+                                    (reverse_channels ? (half) (in_buffer[
+                                                                    (c - channel_idx - 1) * channel_size + i])
+                                     : (half) (in_buffer[
+                                                   channel_idx * channel_size + i]));
                     }
                 }
                 if (format == RaliTensorFormat::NCHW) {
@@ -974,11 +969,11 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
                             for (unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                                 for (unsigned i = 0; i < channel_size; i++)
                                     output_tensor_32[dest_buf_offset + channel_idx * channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx] *
-                                                                  (reverse_channels ? (float) (in_buffer[
-                                                                          (c - channel_idx - 1) * channel_size + i])
-                                                                                    : (float) (in_buffer[
-                                                                                  channel_idx * channel_size + i]));
+                                        offset[channel_idx] + multiplier[channel_idx] *
+                                        (reverse_channels ? (float) (in_buffer[
+                                                                         (c - channel_idx - 1) * channel_size + i])
+                                         : (float) (in_buffer[
+                                                        channel_idx * channel_size + i]));
                         } else {
 #if (ENABLE_SIMD && __AVX2__)
 
@@ -1037,7 +1032,7 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
                             for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                                 for(unsigned i = 0; i < channel_size; i++)
                                     output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i+(c-channel_idx-1)*channel_size]) : (float)(in_buffer[i+channel_idx*channel_size]));
+                                        offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[i+(c-channel_idx-1)*channel_size]) : (float)(in_buffer[i+channel_idx*channel_size]));
 #endif
                         }
                     } else if (output_data_type == RaliTensorDataType::FP16) {
@@ -1046,12 +1041,12 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
                         for (unsigned channel_idx = 0; channel_idx < c; channel_idx++)
                             for (unsigned i = 0; i < channel_size; i++)
                                 output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
-                                        offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (half) (in_buffer[i +
-                                                                                                    (c - channel_idx -
-                                                                                                     1) * channel_size])
-                                                                                : (half) (in_buffer[i + channel_idx *
-                                                                                                        channel_size]));
+                                    offset[channel_idx] + multiplier[channel_idx] *
+                                    (reverse_channels ? (half) (in_buffer[i +
+                                                                  (c - channel_idx -
+                                                                   1) * channel_size])
+                                     : (half) (in_buffer[i + channel_idx *
+                                                           channel_size]));
                     }
                 }
             }

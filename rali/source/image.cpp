@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -28,24 +29,24 @@ THE SOFTWARE.
 #include "commons.h"
 #include "image.h"
 
-vx_enum vx_mem_type(RaliMemType mem) 
+vx_enum vx_mem_type(RaliMemType mem)
 {
     switch(mem)
     {
-        case RaliMemType::OCL:
-        {
-            return VX_MEMORY_TYPE_OPENCL;
-        }
-        break;
-        case RaliMemType::HOST:
-        {
-            return VX_MEMORY_TYPE_HOST;
-        }
-        break;
-        default:
-            throw std::runtime_error("Memory type not valid");
+    case RaliMemType::OCL:
+    {
+        return VX_MEMORY_TYPE_OPENCL;
     }
-    
+    break;
+    case RaliMemType::HOST:
+    {
+        return VX_MEMORY_TYPE_HOST;
+    }
+    break;
+    default:
+        throw std::runtime_error("Memory type not valid");
+    }
+
 }
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs)
 {
@@ -76,23 +77,22 @@ const std::vector<uint32_t>& ImageInfo::get_roi_height_vec() const
     return *_roi_height;
 }
 
-
 unsigned ImageInfo::get_roi_width(int image_batch_idx) const
 {
     if((unsigned)image_batch_idx >= _roi_width->size())
         THROW("Accesing image width out of batch size range")
-    if(!_roi_width->at(image_batch_idx))
-        THROW("Accessing uninitialized int parameter associated with image width")
-    return _roi_width->at(image_batch_idx);
+        if(!_roi_width->at(image_batch_idx))
+            THROW("Accessing uninitialized int parameter associated with image width")
+            return _roi_width->at(image_batch_idx);
 }
 
 unsigned ImageInfo::get_roi_height(int image_batch_idx) const
 {
     if((unsigned)image_batch_idx >= _roi_height->size())
         THROW("Accesing image height out of batch size range")
-    if(!_roi_height->at(image_batch_idx))
-        THROW("Accessing uninitialized int parameter associated with image height")
-    return _roi_height->at(image_batch_idx);
+        if(!_roi_height->at(image_batch_idx))
+            THROW("Accessing uninitialized int parameter associated with image height")
+            return _roi_height->at(image_batch_idx);
 }
 void
 ImageInfo::reallocate_image_roi_buffers()
@@ -106,72 +106,72 @@ ImageInfo::reallocate_image_roi_buffers()
     }
 }
 ImageInfo::ImageInfo():
-        _type(Type::UNKNOWN),
-        _width(0),
-        _height(0),
-        _color_planes(1),
-        _batch_size(1),
-        _data_size(0),
-        _mem_type(RaliMemType::HOST),
-        _color_fmt(RaliColorFormat::U8){}
+    _type(Type::UNKNOWN),
+    _width(0),
+    _height(0),
+    _color_planes(1),
+    _batch_size(1),
+    _data_size(0),
+    _mem_type(RaliMemType::HOST),
+    _color_fmt(RaliColorFormat::U8) {}
 
 ImageInfo::ImageInfo(
     unsigned width_,
     unsigned height_,
     unsigned batches,
     unsigned planes,
-    RaliMemType mem_type_, 
+    RaliMemType mem_type_,
     RaliColorFormat col_fmt_):
-        _type(Type::UNKNOWN),
-        _width(width_),
-        _height(height_),
-        _color_planes(planes),
-        _batch_size(batches),
-        _data_size(width_ * height_ * _batch_size * planes),
-        _mem_type(mem_type_),
-        _color_fmt(col_fmt_)
-        {
-            // initializing each image dimension in the batch with the maximum image size, they'll get updated later during the runtime
-            reallocate_image_roi_buffers();
-        }
+    _type(Type::UNKNOWN),
+    _width(width_),
+    _height(height_),
+    _color_planes(planes),
+    _batch_size(batches),
+    _data_size(width_ * height_ * _batch_size * planes),
+    _mem_type(mem_type_),
+    _color_fmt(col_fmt_)
+{
+    // initializing each image dimension in the batch with the maximum image size, they'll get updated later during the runtime
+    reallocate_image_roi_buffers();
+}
 
 void Image::update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height)
 {
     if(width.size() != height.size())
         THROW("Batch size of image height and width info does not match")
 
-    if(width.size() != info().batch_size())
-        THROW("The batch size of actual image height and width different from image batch size "+ TOSTR(width.size())+ " != " +  TOSTR(info().batch_size()))
-    if(! _info._roi_width || !_info._roi_height)
-        THROW("ROI width or ROI height vector not created")
-    for(unsigned i = 0; i < info().batch_size(); i++)
-    {
+        if(width.size() != info().batch_size())
+            THROW("The batch size of actual image height and width different from image batch size "+ TOSTR(width.size())+ " != " +  TOSTR(info().batch_size()))
+            if(! _info._roi_width || !_info._roi_height)
+                THROW("ROI width or ROI height vector not created")
+                for(unsigned i = 0; i < info().batch_size(); i++)
+                {
 
-        if (width[i] > _info.width())
-        {
-            ERR("Given ROI width is larger than buffer width for image[" + TOSTR(i) + "] " + TOSTR(width[i]) + " > " + TOSTR(_info.width()))
-            _info._roi_width->at(i) = _info.width();
-        }
-        else
-        {
-            _info._roi_width->at(i) = width[i];
-        }
+                    if (width[i] > _info.width())
+                    {
+                        ERR("Given ROI width is larger than buffer width for image[" + TOSTR(i) + "] " + TOSTR(width[i]) + " > " + TOSTR(_info.width()))
+                        _info._roi_width->at(i) = _info.width();
+                    }
+                    else
+                    {
+                        _info._roi_width->at(i) = width[i];
+                    }
 
-        if(height[i] > _info.height_single())
-        {
-            ERR("Given ROI height is larger than buffer with for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
-            _info._roi_height->at(i) = _info.height_single();
-        }
-        else
-        {
-            _info._roi_height->at(i)= height[i];
-        }
+                    if(height[i] > _info.height_single())
+                    {
+                        ERR("Given ROI height is larger than buffer with for image[" + TOSTR(i) + "] " + TOSTR(height[i]) +" > " + TOSTR(_info.height_single()))
+                        _info._roi_height->at(i) = _info.height_single();
+                    }
+                    else
+                    {
+                        _info._roi_height->at(i)= height[i];
+                    }
 
-    }
+                }
 }
 
 Image::~Image()
-{  
+{
     vxReleaseImage(&vx_handle);
 }
 
@@ -181,20 +181,20 @@ Image::~Image()
  * The input images loaded in GBR format should be
  * reordered before passed to OpenVX, and match RGB.
  */
-vx_df_image interpret_color_fmt(RaliColorFormat color_format) 
+vx_df_image interpret_color_fmt(RaliColorFormat color_format)
 {
-    switch(color_format){   
+    switch(color_format) {
 
-        case RaliColorFormat::RGB24:
-        case RaliColorFormat::BGR24:
-        case RaliColorFormat::RGB_PLANAR:           // not theoretically correct, but keeping it for the same memory allocation
-            return VX_DF_IMAGE_RGB;
+    case RaliColorFormat::RGB24:
+    case RaliColorFormat::BGR24:
+    case RaliColorFormat::RGB_PLANAR:           // not theoretically correct, but keeping it for the same memory allocation
+        return VX_DF_IMAGE_RGB;
 
-        case RaliColorFormat::U8:
-            return VX_DF_IMAGE_U8;
+    case RaliColorFormat::U8:
+        return VX_DF_IMAGE_U8;
 
-        default:
-            THROW("Unsupported Image type "+ TOSTR(color_format))
+    default:
+        THROW("Unsupported Image type "+ TOSTR(color_format))
     }
 }
 
@@ -217,8 +217,8 @@ int Image::create_virtual(vx_context context, vx_graph graph)
     if((status = vxGetStatus((vx_reference)vx_handle)) != VX_SUCCESS)
         THROW("Error: vxCreateVirtualImage(input:[" + TOSTR(_info.width()) + "x" + TOSTR(_info.height_batch()) + "]): failed " + TOSTR(status))
 
-    _info._type = ImageInfo::Type::VIRTUAL;
-    return 0;                                             
+        _info._type = ImageInfo::Type::VIRTUAL;
+    return 0;
 }
 
 int Image::create_from_handle(vx_context context)
@@ -258,11 +258,11 @@ int Image::create_from_handle(vx_context context)
     vx_size size = (addr_in.dim_y+0) * (addr_in.stride_y+0);
 
     vx_df_image vx_color_format = interpret_color_fmt(_info._color_fmt);
-    vx_handle = vxCreateImageFromHandle(context, vx_color_format , &addr_in, ptr, vx_mem_type(_info._mem_type));
+    vx_handle = vxCreateImageFromHandle(context, vx_color_format, &addr_in, ptr, vx_mem_type(_info._mem_type));
     if((status = vxGetStatus((vx_reference)vx_handle)) != VX_SUCCESS)
         THROW("Error: vxCreateImageFromHandle(input:[" + TOSTR(_info.width()) + "x" + TOSTR(_info.height_batch()) + "]): failed " + TOSTR(status))
 
-    _info._type = ImageInfo::Type::HANDLE;
+        _info._type = ImageInfo::Type::HANDLE;
     _info._data_size = size;
     return 0;
 }
@@ -278,7 +278,7 @@ int Image::create(vx_context context)
     vx_handle = vxCreateImage(context, _info.width(), _info.height_batch(), vx_color_format);
     if((status = vxGetStatus((vx_reference)vx_handle)) != VX_SUCCESS)
         THROW("Error: vxCreateImage(input:[" + TOSTR(_info.width()) + "x" + TOSTR(_info.height_batch()) + "]): failed " + TOSTR(status))
-    _info._type = ImageInfo::Type::REGULAR;
+        _info._type = ImageInfo::Type::REGULAR;
     return 0;
 }
 
@@ -301,10 +301,10 @@ unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bo
                                          0,
                                          size,
                                          user_buffer,
-                                         0 , nullptr, nullptr)) != CL_SUCCESS)
+                                         0, nullptr, nullptr)) != CL_SUCCESS)
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
 
-    } else
+        } else
     {
         memcpy(user_buffer, _mem_handle, size);
     }

@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -27,8 +28,6 @@ THE SOFTWARE.
 #include <dirent.h>
 #include "reader.h"
 
-
-
 class FileSourceReader : public Reader {
 public:
     //! Looks up the folder which contains the files, amd loads the image names
@@ -52,7 +51,9 @@ public:
     void reset() override;
 
     //! Returns the name of the latest file opened
-    std::string id() override { return _last_id;};
+    std::string id() override {
+        return _last_id;
+    };
 
     unsigned count() override;
 
@@ -89,7 +90,9 @@ private:
     void incremenet_read_ptr();
     int release();
     size_t get_file_shard_id();
-    void incremenet_file_id() { _file_id++; }
+    void incremenet_file_id() {
+        _file_id++;
+    }
     void replicate_last_image_to_fill_last_shard();
 
 };

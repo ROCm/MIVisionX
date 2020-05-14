@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -25,15 +26,14 @@ THE SOFTWARE.
 #include "node_warp_affine.h"
 #include "exception.h"
 
-
 WarpAffineNode::WarpAffineNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs),
-        _x0(COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
-        _x1(COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
-        _y0(COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
-        _y1(COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
-        _o0(COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1]),
-        _o1(COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1])
+    Node(inputs, outputs),
+    _x0(COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
+    _x1(COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
+    _y0(COEFFICIENT_RANGE_0[0], COEFFICIENT_RANGE_0[1]),
+    _y1(COEFFICIENT_RANGE_1[0], COEFFICIENT_RANGE_1[1]),
+    _o0(COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1]),
+    _o1(COEFFICIENT_RANGE_OFFSET[0], COEFFICIENT_RANGE_OFFSET[1])
 {
 }
 
@@ -48,12 +48,12 @@ void WarpAffineNode::create_node()
     uint batch_size = _batch_size;
     for (uint i=0; i < batch_size; i++ )
     {
-         _affine[i*6 + 0] = _x0.renew();
-         _affine[i*6 + 1] = _y0.renew();
-         _affine[i*6 + 2] = _x1.renew();
-         _affine[i*6 + 3] = _y1.renew();
-         _affine[i*6 + 4] = _o0.renew();
-         _affine[i*6 + 5] = _o1.renew();
+        _affine[i*6 + 0] = _x0.renew();
+        _affine[i*6 + 1] = _y0.renew();
+        _affine[i*6 + 2] = _x1.renew();
+        _affine[i*6 + 3] = _y1.renew();
+        _affine[i*6 + 4] = _o0.renew();
+        _affine[i*6 + 5] = _o1.renew();
 
     }
     _dst_roi_width = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
@@ -65,15 +65,15 @@ void WarpAffineNode::create_node()
     if(width_status != 0 || height_status != 0)
         THROW(" vxAddArrayItems failed in the rotate (vxExtrppNode_WarpAffinePD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
 
-    vx_status status;
+        vx_status status;
     _affine_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_FLOAT32, _batch_size * 6);
     status = vxAddArrayItems(_affine_array,_batch_size * 6, _affine.data(), sizeof(vx_float32));
     _node = vxExtrppNode_WarpAffinebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height,
                                            _affine_array, _batch_size);
-    
+
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the warp affine (vxExtrppNode_WarpAffinePD) node failed: "+ TOSTR(status))
-}
+    }
 
 void WarpAffineNode::update_affine_array()
 {
@@ -90,7 +90,7 @@ void WarpAffineNode::update_affine_array()
     affine_status = vxCopyArrayRange((vx_array)_affine_array, 0, _batch_size * 6, sizeof(vx_float32), _affine.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST); //vxAddArrayItems(_width_array,_batch_size, _width, sizeof(vx_uint32));
     if(affine_status != 0)
         THROW(" vxCopyArrayRange failed in the WarpAffine(vxExtrppNode_WarpAffinePD) node: "+ TOSTR(affine_status))
-}
+    }
 
 void WarpAffineNode::init(float x0, float x1, float y0, float y1, float o0, float o1)
 {

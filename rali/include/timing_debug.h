@@ -27,24 +27,23 @@ THE SOFTWARE.
 #include <utility>
 #include "commons.h"
 
-
 #define DEFAULT_DBG_TIMING 1
 /*! \brief Debugging RaliDbgTiming class
-* 
-* Can be used anywhere in the code for adding RaliDbgTiming for debugging and profiling 
+*
+* Can be used anywhere in the code for adding RaliDbgTiming for debugging and profiling
 */
 class TimingDBG {
 public:
     //! Constrcutor
     /*!
-    \param name Name of the timer, 
+    \param name Name of the timer,
     \param enable enables the timer module, if not set, timer is disabled
     */
     explicit TimingDBG(std::string  name, bool enable = DEFAULT_DBG_TIMING):
-            _accumulated_time(_t_start - _t_start),
-            _count(0),
-            _enable(enable),
-            _name(std::move(name))
+        _accumulated_time(_t_start - _t_start),
+        _count(0),
+        _enable(enable),
+        _name(std::move(name))
     {}
 
     //! Starts the timer
@@ -65,7 +64,7 @@ public:
             return;
 
         std::chrono::high_resolution_clock::time_point t_end =
-                std::chrono::high_resolution_clock::now();
+            std::chrono::high_resolution_clock::now();
 
         if(_t_start < t_end)
         {
@@ -84,7 +83,7 @@ public:
         auto dur = static_cast<long long unsigned> (std::chrono::duration_cast<std::chrono::microseconds>(_accumulated_time).count());
         if(_count > 0)
             LOG (_name + " ran " + TOSTR(_count) + " times with average duration " + TOSTR((dur / _count) / 1000000 ) + " sec " + TOSTR((dur / _count) % 1000000) + " us ")
-        _count = 0;
+            _count = 0;
         _accumulated_time = _t_start - _t_start;
         return dur;
     }
@@ -98,7 +97,6 @@ public:
         return dur;
     }
 
-
     unsigned count()
     {
         return _count;
@@ -110,6 +108,5 @@ private:
     unsigned _count;
     const bool _enable;
     std::string _name;
-
 
 };

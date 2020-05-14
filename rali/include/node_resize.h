@@ -32,5 +32,5 @@ protected:
     void create_node() override;
     void update_node() override;
 private:
-    vx_array  _dst_roi_width , _dst_roi_height ;
+    vx_array  _dst_roi_width, _dst_roi_height ;
 };

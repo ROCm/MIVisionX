@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -32,9 +33,12 @@ struct DeviceResources {
     cl_context context;
     cl_device_id device_id;
     cl_command_queue cmd_queue;
-    DeviceResources() { cmd_queue = nullptr; context = nullptr; device_id = nullptr; }
+    DeviceResources() {
+        cmd_queue = nullptr;
+        context = nullptr;
+        device_id = nullptr;
+    }
 };
-
 
 class CLProgram {
 public:
@@ -61,13 +65,12 @@ private:
 
 };
 
-
 class DeviceManager {
 public:
-    DeviceManager(){};
+    DeviceManager() {};
 
     cl_int initialize();
-    
+
     DeviceResources resources();
 
     const CLProgram& operator[](const std::string& prog_name);

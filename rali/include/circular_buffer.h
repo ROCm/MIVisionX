@@ -45,7 +45,9 @@ public:
     void unblock_writer();// Unblocks the thread currently waiting on get_write_buffer
     void push();// The latest write goes through, effectively adds one element to the buffer
     void pop();// The oldest write will be erased and overwritten in upcoming writes
-    void set_image_info(const decoded_image_info& info) { _last_image_info = info; }
+    void set_image_info(const decoded_image_info& info) {
+        _last_image_info = info;
+    }
     decoded_image_info& get_image_info();
     cl_mem get_read_buffer_dev();
     unsigned char* get_read_buffer_host();// blocks the caller if the buffer is empty
@@ -59,7 +61,7 @@ private:
     void increment_read_ptr();
     void increment_write_ptr();
     bool full();
-    bool empty();    
+    bool empty();
     const size_t BUFF_DEPTH;
     decoded_image_info _last_image_info;
     std::queue<decoded_image_info> _circ_image_info;//!< Stores the loaded images names, decoded_width and decoded_height(data is stored in the _circ_buff)

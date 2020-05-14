@@ -57,13 +57,13 @@ public:
     /// \param roi_height  is set by the load() function tp the width of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
     /// \param output_color_format defines what color format user expects decoder to decode images into if capable of doing so supported is
     LoaderModuleStatus load(
-            unsigned char* buff,
-            std::vector<std::string>& names,
-            const size_t  max_decoded_width,
-            const size_t max_decoded_height,
-            std::vector<uint32_t> &roi_width,
-            std::vector<uint32_t> &roi_height,
-            RaliColorFormat output_color_format );
+        unsigned char* buff,
+        std::vector<std::string>& names,
+        const size_t  max_decoded_width,
+        const size_t max_decoded_height,
+        std::vector<uint32_t> &roi_width,
+        std::vector<uint32_t> &roi_height,
+        RaliColorFormat output_color_format );
 
     //! returns timing info or other status information
     Timing timing();
@@ -82,4 +82,3 @@ private:
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
 };
-

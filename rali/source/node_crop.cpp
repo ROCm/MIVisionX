@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -26,9 +27,9 @@ THE SOFTWARE.
 #include "exception.h"
 
 CropNode::CropNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs),
-        _dest_width(_outputs[0]->info().width()),
-        _dest_height(_outputs[0]->info().height_batch())
+    Node(inputs, outputs),
+    _dest_width(_outputs[0]->info().width()),
+    _dest_height(_outputs[0]->info().height_batch())
 {
     _crop_param = std::make_shared<CropParam>(_batch_size);
 }
@@ -41,7 +42,7 @@ void CropNode::create_node()
     if(_dest_width == 0 || _dest_height == 0)
         THROW("Uninitialized destination dimension")
 
-    _crop_param->create_array(_graph);
+        _crop_param->create_array(_graph);
 
     _node = vxExtrppNode_CropPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _crop_param->cropw_arr,
                                 _crop_param->croph_arr, _crop_param->x1_arr, _crop_param->y1_arr, _batch_size);
@@ -49,7 +50,7 @@ void CropNode::create_node()
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Error adding the crop resize node (vxExtrppNode_ResizeCropbatchPD    ) failed: "+TOSTR(status))
-}
+    }
 
 void CropNode::update_node()
 {
@@ -64,7 +65,7 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w, float x_drift, flo
 {
     _crop_param->crop_w = crop_w;
     _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
+    _crop_param->x1     = 0;
     _crop_param->y1     = 0;
 }
 
@@ -72,11 +73,10 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w)
 {
     _crop_param->crop_w = crop_w;
     _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
+    _crop_param->x1     = 0;
     _crop_param->y1     = 0;
     _crop_param->set_centric();
 }
-
 
 void CropNode::init(FloatParam *crop_h_factor, FloatParam  *crop_w_factor, FloatParam *x_drift, FloatParam *y_drift)
 {
@@ -84,8 +84,5 @@ void CropNode::init(FloatParam *crop_h_factor, FloatParam  *crop_w_factor, Float
     _crop_param->set_y_drift_factor(core(y_drift));
     _crop_param->set_crop_height_factor(core(crop_h_factor));
     _crop_param->set_crop_width_factor(core(crop_w_factor));
-    _crop_param->set_random();    
+    _crop_param->set_random();
 }
-
-
-

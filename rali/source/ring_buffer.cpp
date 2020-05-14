@@ -24,9 +24,9 @@ THE SOFTWARE.
 #include "ring_buffer.h"
 
 RingBuffer::RingBuffer(unsigned buffer_depth):
-        BUFF_DEPTH(buffer_depth),
-        _dev_sub_buffer(buffer_depth),
-        _host_master_buffers(BUFF_DEPTH)
+    BUFF_DEPTH(buffer_depth),
+    _dev_sub_buffer(buffer_depth),
+    _host_master_buffers(BUFF_DEPTH)
 {
     reset();
 }
@@ -34,7 +34,7 @@ void RingBuffer::block_if_empty()
 {
     std::unique_lock<std::mutex> lock(_lock);
     if(empty())
-    { // if the current read buffer is being written wait on it
+    {   // if the current read buffer is being written wait on it
         if(_dont_block)
             return;
         _wait_for_load.wait(lock);
@@ -69,7 +69,6 @@ void *RingBuffer::get_host_master_read_buffer() {
     return _host_master_buffers[_read_ptr];
 }
 
-
 std::vector<void*> RingBuffer::get_write_buffers()
 {
     block_if_full();
@@ -78,7 +77,6 @@ std::vector<void*> RingBuffer::get_write_buffers()
 
     return _host_sub_buffers[_write_ptr];
 }
-
 
 void RingBuffer::unblock_reader()
 {
@@ -106,48 +104,48 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
     if(BUFF_DEPTH < 2)
         THROW ("Error internal buffer size for the ring buffer should be greater than one")
 
-    // Allocating buffers
-    if(mem_type== RaliMemType::OCL)
-    {
-        if(_dev.cmd_queue == nullptr || _dev.device_id == nullptr || _dev.context == nullptr)
-            THROW("Error ocl structure needed since memory type is OCL");
-
-        cl_int err = CL_SUCCESS;
-
-        for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+        // Allocating buffers
+        if(mem_type== RaliMemType::OCL)
         {
-            cl_mem_flags flags = CL_MEM_READ_ONLY;
+            if(_dev.cmd_queue == nullptr || _dev.device_id == nullptr || _dev.context == nullptr)
+                THROW("Error ocl structure needed since memory type is OCL");
 
-            _dev_sub_buffer[buffIdx].resize(_sub_buffer_count);
-            for(unsigned sub_idx = 0; sub_idx < _sub_buffer_count; sub_idx++)
+            cl_int err = CL_SUCCESS;
+
+            for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
             {
-                _dev_sub_buffer[buffIdx][sub_idx] =  clCreateBuffer(_dev.context, flags, sub_buffer_size, NULL, &err);
+                cl_mem_flags flags = CL_MEM_READ_ONLY;
 
-                if(err)
+                _dev_sub_buffer[buffIdx].resize(_sub_buffer_count);
+                for(unsigned sub_idx = 0; sub_idx < _sub_buffer_count; sub_idx++)
                 {
-                    _dev_sub_buffer.clear();
-                    THROW("clCreateBuffer of size " + TOSTR(sub_buffer_size) + " index " + TOSTR(sub_idx) +
-                          " failed " + TOSTR(err));
+                    _dev_sub_buffer[buffIdx][sub_idx] =  clCreateBuffer(_dev.context, flags, sub_buffer_size, NULL, &err);
+
+                    if(err)
+                    {
+                        _dev_sub_buffer.clear();
+                        THROW("clCreateBuffer of size " + TOSTR(sub_buffer_size) + " index " + TOSTR(sub_idx) +
+                              " failed " + TOSTR(err));
+                    }
+
+                    clRetainMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_idx]);
                 }
 
-                clRetainMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_idx]);
             }
-
         }
-    }
-    else
-    {
-        _host_sub_buffers.resize(BUFF_DEPTH);
-        for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+        else
         {
-            const size_t master_buffer_size = sub_buffer_size * sub_buffer_count;
-            // a minimum of extra MEM_ALIGNMENT is allocated
-            _host_master_buffers[buffIdx] = aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (master_buffer_size / MEM_ALIGNMENT + 1));
-            _host_sub_buffers[buffIdx].resize(_sub_buffer_count);
-            for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
-                _host_sub_buffers[buffIdx][sub_buff_idx] = (unsigned char*)_host_master_buffers[buffIdx] + _sub_buffer_size * sub_buff_idx;
+            _host_sub_buffers.resize(BUFF_DEPTH);
+            for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
+            {
+                const size_t master_buffer_size = sub_buffer_size * sub_buffer_count;
+                // a minimum of extra MEM_ALIGNMENT is allocated
+                _host_master_buffers[buffIdx] = aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (master_buffer_size / MEM_ALIGNMENT + 1));
+                _host_sub_buffers[buffIdx].resize(_sub_buffer_count);
+                for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
+                    _host_sub_buffers[buffIdx][sub_buff_idx] = (unsigned char*)_host_master_buffers[buffIdx] + _sub_buffer_size * sub_buff_idx;
+            }
         }
-    }
 }
 void RingBuffer::push()
 {
@@ -195,9 +193,7 @@ RingBuffer::~RingBuffer()
                 if(clReleaseMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
                     ERR("Could not release ocl memory in the ring buffer")
 
-
-
-}
+                }
 
 bool RingBuffer::empty()
 {
@@ -245,6 +241,5 @@ MetaDataNamePair& RingBuffer::get_meta_data()
     std::unique_lock<std::mutex> lock(_names_buff_lock);
     if(_level != _meta_ring_buffer.size())
         THROW("ring buffer internals error, image and metadata sizes not the same "+TOSTR(_level) + " != "+TOSTR(_meta_ring_buffer.size()))
-    return  _meta_ring_buffer.front();
+        return  _meta_ring_buffer.front();
 }
-

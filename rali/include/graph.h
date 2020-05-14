@@ -25,7 +25,6 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include <VX/vx_types.h>
 
-
 class Graph
 {
 public:
@@ -34,7 +33,9 @@ public:
     Status verify();
     Status process();
     Status release();
-    vx_graph get() { return _graph; }
+    vx_graph get() {
+        return _graph;
+    }
 private:
     RaliMemType _mem_type;
     vx_context  _context = nullptr;

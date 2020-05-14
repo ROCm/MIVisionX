@@ -52,7 +52,7 @@ public:
     {
         if(in_width_.size() != in_width.size() || in_height.size() != in_height_.size())
             THROW("wrong input width = "+ TOSTR(in_width.size())+" or height size = "+TOSTR(in_height_.size()))
-        in_width = in_width_;
+            in_width = in_width_;
         in_height =  in_height_;
         for(size_t image_idx = 0; image_idx < in_width_.size(); image_idx++)
         {
@@ -61,7 +61,6 @@ public:
             y1[image_idx] = 0;
             y2[image_idx] = in_height_[image_idx] - 1;
         }
-
 
     }
     void set_area_coeff(Parameter<float>* area);

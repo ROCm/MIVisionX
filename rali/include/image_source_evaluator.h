@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -30,7 +31,7 @@ THE SOFTWARE.
 enum class ImageSourceEvaluatorStatus
 {
     OK = 0,
-    UNSUPPORTED_DECODER_TYPE, 
+    UNSUPPORTED_DECODER_TYPE,
     UNSUPPORTED_STORAGE_TYPE,
 };
 enum class MaxSizeEvaluationPolicy
@@ -52,20 +53,23 @@ private:
     class FindMaxSize
     {
     public:
-        void set_policy(MaxSizeEvaluationPolicy arg) { _policy = arg; }
+        void set_policy(MaxSizeEvaluationPolicy arg) {
+            _policy = arg;
+        }
         void process_sample(unsigned val);
-        unsigned get_max() { return _max; };
+        unsigned get_max() {
+            return _max;
+        };
     private:
         MaxSizeEvaluationPolicy _policy = MaxSizeEvaluationPolicy::MOST_FREQUENT_SIZE;
         std::map<unsigned,unsigned> _hist;
         unsigned _max = 0;
         unsigned _max_count = 0;
-    }; 
-    FindMaxSize _width_max; 
+    };
+    FindMaxSize _width_max;
     FindMaxSize _height_max;
     std::shared_ptr<Decoder> _decoder;
     std::shared_ptr<Reader> _reader;
     std::vector<unsigned char> _header_buff;
     static const size_t COMPRESSED_SIZE = 1024 * 1024; // 1 MB
 };
-

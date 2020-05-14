@@ -58,7 +58,6 @@ enum RaliStatus
     RALI_INVALID_PARAMETER_TYPE
 };
 
-
 enum RaliImageColor
 {
     RALI_COLOR_RGB24 = 0,

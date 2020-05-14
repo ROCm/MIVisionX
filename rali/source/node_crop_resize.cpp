@@ -26,9 +26,9 @@ THE SOFTWARE.
 #include "exception.h"
 
 CropResizeNode::CropResizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs),
-        _dest_width(_outputs[0]->info().width()),
-        _dest_height(_outputs[0]->info().height_batch())
+    Node(inputs, outputs),
+    _dest_width(_outputs[0]->info().width()),
+    _dest_height(_outputs[0]->info().height_batch())
 {
     _crop_param = std::make_shared<RandomCropResizeParam>(_batch_size);
 }
@@ -41,7 +41,7 @@ void CropResizeNode::create_node()
     if(_dest_width == 0 || _dest_height == 0)
         THROW("Uninitialized destination dimension")
 
-    _crop_param->create_array(_graph);
+        _crop_param->create_array(_graph);
 
     std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
     std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
@@ -56,13 +56,13 @@ void CropResizeNode::create_node()
     if(width_status != 0 || height_status != 0)
         THROW(" vxAddArrayItems failed in the crop resize node (vxExtrppNode_ResizeCropbatchPD    )  node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
 
-    _node = vxExtrppNode_ResizeCropbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width,
-                                           _dst_roi_height, _crop_param->x1_arr, _crop_param->y1_arr, _crop_param->x2_arr, _crop_param->y2_arr, _batch_size);
+        _node = vxExtrppNode_ResizeCropbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width,
+                                               _dst_roi_height, _crop_param->x1_arr, _crop_param->y1_arr, _crop_param->x2_arr, _crop_param->y2_arr, _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Error adding the crop resize node (vxExtrppNode_ResizeCropbatchPD    ) failed: "+TOSTR(status))
-}
+    }
 
 void CropResizeNode::update_node()
 {
@@ -77,7 +77,6 @@ void CropResizeNode::init(float area, float aspect_ratio, float x_center_drift, 
     _crop_param->set_x_drift(ParameterFactory::instance()->create_single_value_param(x_center_drift));
     _crop_param->set_y_drift(ParameterFactory::instance()->create_single_value_param(y_center_drift));
 }
-
 
 void CropResizeNode::init(FloatParam* area, FloatParam* aspect_ratio, FloatParam *x_center_drift, FloatParam *y_center_drift)
 {

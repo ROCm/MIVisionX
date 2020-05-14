@@ -39,4 +39,3 @@ public:
     /// \return returns if this parameter takes a single value (vs a range of values or many values)
     virtual bool single_value() const = 0;
 };
-

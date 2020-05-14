@@ -20,14 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include <cmath>
 #include <VX/vx.h>
 #include <VX/vx_compatibility.h>
 #include <graph.h>
 #include "parameter_crop_resize.h"
 #include "commons.h"
-
 
 void RandomCropResizeParam::set_area_coeff(Parameter<float>* area)
 {
@@ -179,7 +177,7 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
 // |
 // V Y directoin
 
-    auto bound = [](float arg, float min , float max)
+    auto bound = [](float arg, float min, float max)
     {
         if( arg < min)
             return min;
@@ -191,11 +189,10 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     auto y_center = in_height[image_idx] / 2;
     auto x_center = in_width[image_idx] / 2;
 
-
     auto temp_aspect_ratio = aspect_ratio_;
 
     float length_coeff = std::sqrt(bound(area_coeff_, RandomCropResizeParam::MIN_RANDOM_AREA_COEFF, 1.0));
-    
+
     auto cropped_width = (size_t)(length_coeff  * (float)in_width[image_idx] );
     auto cropped_height = (size_t)(cropped_width / temp_aspect_ratio) ;
 
@@ -204,32 +201,29 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     {
         temp_aspect_ratio = ((float)in_width[image_idx]  / in_height[image_idx] );
         cropped_width = (size_t)(length_coeff  * (float)in_width[image_idx] );
-        cropped_height = (size_t)( (float)(cropped_width) / temp_aspect_ratio) ; 
+        cropped_height = (size_t)( (float)(cropped_width) / temp_aspect_ratio) ;
     }
 
     size_t y_max_drift = (in_height[image_idx] - cropped_height) / 2;
     size_t x_max_drift = (in_width[image_idx] - cropped_width ) / 2;
 
-
     size_t no_drift_y1 = y_center - cropped_height/2;
     size_t no_drift_x1 = x_center - cropped_width/2;
 
-
     float x_drift_coeff = bound(x_center_drift_, -1.0, 1.0);// in [-1 1] range
     float y_drift_coeff = bound(y_center_drift_, -1.0, 1.0);// in [-1 1] range
-
 
     x1[image_idx] = (size_t)((float)no_drift_x1 + x_drift_coeff * (float)x_max_drift);
     y1[image_idx] = (size_t)((float)no_drift_y1 + y_drift_coeff * (float)y_max_drift);
 
     x1[image_idx] = x_center - cropped_width/2; // ROI centric
     y1[image_idx] = y_center - cropped_height/2; // ROI centric
-   
+
 
     x2[image_idx] = x1[image_idx] + cropped_width ;
     y2[image_idx] = y1[image_idx] + cropped_height ;
-    
-    auto check_bound = [](int arg, int min , int max)
+
+    auto check_bound = [](int arg, int min, int max)
     {
         return arg < min || arg > max;
     };
@@ -237,27 +231,27 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     if(check_bound(x1[image_idx], 0, in_width[image_idx]) || check_bound(x2[image_idx], 0, in_width[image_idx]) || check_bound(y1[image_idx], 0, in_height[image_idx]) || check_bound(y2[image_idx], 0, in_height[image_idx]))
         // TODO: proper action required here
         WRN("Wrong crop area calculation")
-}
+    }
 Parameter<float> *RandomCropResizeParam::default_area()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_AREA_RANGE[0],
-                                                                         CROP_AREA_RANGE[1])->core;
+            CROP_AREA_RANGE[1])->core;
 }
 
 Parameter<float> *RandomCropResizeParam::default_aspect_ratio()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_ASPECT_RATIO[0],
-                                                                         CROP_ASPECT_RATIO[1])->core;
+            CROP_ASPECT_RATIO[1])->core;
 }
 
 Parameter<float> *RandomCropResizeParam::default_x_drift()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_AREA_X_DRIFT_RANGE[0],
-                                                                         CROP_AREA_X_DRIFT_RANGE[1])->core;
+            CROP_AREA_X_DRIFT_RANGE[1])->core;
 }
 
 Parameter<float> *RandomCropResizeParam::default_y_drift()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_AREA_Y_DRIFT_RANGE[0],
-                                                                         CROP_AREA_Y_DRIFT_RANGE[1])->core;
+            CROP_AREA_Y_DRIFT_RANGE[1])->core;
 }

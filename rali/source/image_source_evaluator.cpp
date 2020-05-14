@@ -25,7 +25,7 @@ THE SOFTWARE.
 #include "reader_factory.h"
 void ImageSourceEvaluator::set_size_evaluation_policy(MaxSizeEvaluationPolicy arg)
 {
-    _width_max.set_policy (arg); 
+    _width_max.set_policy (arg);
     _height_max.set_policy (arg);
 }
 
@@ -37,15 +37,15 @@ size_t ImageSourceEvaluator::max_width()
 size_t ImageSourceEvaluator::max_height()
 {
     return _height_max.get_max();
-}  
+}
 
-ImageSourceEvaluatorStatus 
+ImageSourceEvaluatorStatus
 ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
 {
     ImageSourceEvaluatorStatus status = ImageSourceEvaluatorStatus::OK;
 
     // Can initialize it to any decoder types if needed
-    
+
 
     // _header_buff.resize(COMPRESSED_SIZE);
     _decoder = create_decoder(std::move(decoder_cfg));
@@ -54,12 +54,12 @@ ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
     return status;
 }
 
-void 
+void
 ImageSourceEvaluator::find_max_dimension()
 {
     _reader->reset();
 
-    while( _reader->count() ) 
+    while( _reader->count() )
     {
         size_t fsize = _reader->open();
         if( (fsize) == 0 )
@@ -67,14 +67,14 @@ ImageSourceEvaluator::find_max_dimension()
         _header_buff.resize(fsize);
         auto actual_read_size = _reader->read(_header_buff.data(), fsize);
         _reader->close();
-        
+
         int width, height, jpeg_sub_samp;
         if(_decoder->decode_info(_header_buff.data(), actual_read_size, &width, &height, &jpeg_sub_samp ) != Decoder::Status::OK)
         {
             WRN("Could not decode the header of the: "+ _reader->id())
             continue;
         }
-        
+
         if(width <= 0 || height <=0)
             continue;
 
@@ -87,7 +87,7 @@ ImageSourceEvaluator::find_max_dimension()
     _reader->reset();
 }
 
-void 
+void
 ImageSourceEvaluator::FindMaxSize::process_sample(unsigned val)
 {
     if(_policy == MaxSizeEvaluationPolicy::MAXIMUM_FOUND_SIZE)
@@ -111,6 +111,6 @@ ImageSourceEvaluator::FindMaxSize::process_sample(unsigned val)
         {
             _max = val;
             _max_count = new_count;
-        }        
+        }
     }
 }

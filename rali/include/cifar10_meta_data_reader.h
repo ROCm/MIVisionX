@@ -36,9 +36,13 @@ public :
     void release(std::string image_name);
     void release() override;
     void print_map_contents();
-    MetaDataBatch * get_output() override { return _output; }
+    MetaDataBatch * get_output() override {
+        return _output;
+    }
     Cifar10MetaDataReader();
-    ~Cifar10MetaDataReader() override { delete _output; }
+    ~Cifar10MetaDataReader() override {
+        delete _output;
+    }
 private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);

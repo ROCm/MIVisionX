@@ -23,7 +23,7 @@ THE SOFTWARE.
 #include "image_loader_sharded.h"
 
 ImageLoaderSharded::ImageLoaderSharded(DeviceResources dev_resources):
-        _dev_resources(dev_resources)
+    _dev_resources(dev_resources)
 {
     _loader_idx = 0;
 }
@@ -92,8 +92,8 @@ void ImageLoaderSharded::start_loading()
     for(unsigned i = 0; i < _loaders.size(); i++)
     {
         _loaders[i]->start_loading();
-    //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds
-    //  and needs tweaking the Linux security settings , can be turned on for experimentation
+        //  Changing thread scheduling policy and it's priority does not help on latest Ubuntu builds
+        //  and needs tweaking the Linux security settings , can be turned on for experimentation
 #if 0
         // Set thread scheduling policy
         struct sched_param params;

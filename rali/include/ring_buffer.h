@@ -54,7 +54,9 @@ public:
     void unblock_reader();
     void unblock_writer();
     void release_all_blocked_calls();
-    RaliMemType mem_type() { return _mem_type; }
+    RaliMemType mem_type() {
+        return _mem_type;
+    }
     void block_if_empty();
     void block_if_full();
 private:

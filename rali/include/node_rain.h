@@ -32,7 +32,7 @@ public:
     RainNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     RainNode() = delete;
     void init(float rain_value, int rain_width, int rain_height, float rain_transparency);
-    void init(FloatParam *rain_value, IntParam *rain_width, IntParam *rain_height, FloatParam *rain_transparency); 
+    void init(FloatParam *rain_value, IntParam *rain_width, IntParam *rain_height, FloatParam *rain_transparency);
 protected:
     void create_node() override;
     void update_node() override;

@@ -33,9 +33,13 @@ public:
     void read_all(const std::string& path) override;
     void release(std::string image_name);
     void release() override;
-    MetaDataBatch * get_output() override { return _output; }
+    MetaDataBatch * get_output() override {
+        return _output;
+    }
     TextFileMetaDataReader();
-    ~TextFileMetaDataReader() override { delete _output; }
+    ~TextFileMetaDataReader() override {
+        delete _output;
+    }
 private:
     LabelBatch* _output;
     void read_files(const std::string& _path);

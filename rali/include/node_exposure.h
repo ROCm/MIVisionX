@@ -1,3 +1,4 @@
+
 /*
 Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
@@ -38,6 +39,6 @@ protected:
     void update_node() override;
 private:
     ParameterVX<float> _shift;
-    vx_array _width_array ,_height_array;
+    vx_array _width_array,_height_array;
     constexpr static float SHIFT_RANGE [2] = {0.15, 0.95};
 };

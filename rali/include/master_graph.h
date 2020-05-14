@@ -49,7 +49,7 @@ public:
                     float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
     Status copy_output(cl_mem out_ptr, size_t out_size);
     Status copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
-                    float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
+                                  float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
     size_t output_width();
     size_t output_height();
     size_t output_byte_size();
@@ -71,9 +71,15 @@ public:
     MetaDataBatch* create_tf_record_meta_data_reader(const char *source_path);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
-    void set_loop(bool val) { _loop = val; }
-    bool empty() { return (remaining_images_count() < _user_batch_size); }
-    size_t internal_batch_size() { return _internal_batch_size; }
+    void set_loop(bool val) {
+        _loop = val;
+    }
+    bool empty() {
+        return (remaining_images_count() < _user_batch_size);
+    }
+    size_t internal_batch_size() {
+        return _internal_batch_size;
+    }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -83,7 +89,9 @@ private:
     void stop_processing();
     void output_routine();
     void decrease_image_count();
-    bool processing_on_device() { return _output_image_info.mem_type() == RaliMemType::OCL; };
+    bool processing_on_device() {
+        return _output_image_info.mem_type() == RaliMemType::OCL;
+    };
     /// notify_user_thread() is called when the internal processing thread is done with processing all available images
     void notify_user_thread();
     /// no_more_processed_data() is logically linked to the notify_user_thread() and is used to tell the user they've already consumed all the processed images
@@ -134,7 +142,7 @@ std::shared_ptr<T> MasterGraph::add_node(const std::vector<Image *> &inputs, con
         if (_image_map.find(input) == _image_map.end())
             THROW("Input image is invalid, cannot be found among output of previously created nodes")
 
-        auto parent_node = _image_map.find(input)->second;
+            auto parent_node = _image_map.find(input)->second;
         parent_node->add_next(node);
         node->add_previous(parent_node);
     }
@@ -152,7 +160,7 @@ template<> inline std::shared_ptr<ImageLoaderNode> MasterGraph::add_node(const s
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
+        auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
@@ -164,7 +172,7 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
+        auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
@@ -180,7 +188,7 @@ template<> inline std::shared_ptr<Cifar10LoaderNode> MasterGraph::add_node(const
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], _device.resources());
+        auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
@@ -197,7 +205,7 @@ template<> inline std::shared_ptr<VideoFileNode> MasterGraph::add_node(const std
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<VideoFileNode>(inputs,outputs);
+        auto node = std::make_shared<VideoFileNode>(inputs,outputs);
     _nodes.push_back(node);
     auto loader = std::make_shared<VideoLoaderModule>(node);
     _loader_module = loader;

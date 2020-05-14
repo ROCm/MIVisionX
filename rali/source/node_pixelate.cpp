@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include "exception.h"
 
 PixelateNode::PixelateNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs)
+    Node(inputs, outputs)
 {
 }
 
@@ -41,9 +41,8 @@ void PixelateNode::create_node()
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the pixelate (vxExtrppNode_Pixelate) node failed: "+ TOSTR(status))
 
-}
+    }
 
 void PixelateNode::update_node()
 {
 }
-

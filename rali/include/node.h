@@ -35,11 +35,17 @@ public:
     virtual ~Node();
     void create(std::shared_ptr<Graph> graph);
     void update_parameters();
-    std::vector<Image*> input() { return _inputs; };
-    std::vector<Image*> output() { return _outputs; };
+    std::vector<Image*> input() {
+        return _inputs;
+    };
+    std::vector<Image*> output() {
+        return _outputs;
+    };
     void add_next(const std::shared_ptr<Node>& node) {} // To be implemented
     void add_previous(const std::shared_ptr<Node>& node) {} //To be implemented
-    std::shared_ptr<Graph> graph() { return _graph; }
+    std::shared_ptr<Graph> graph() {
+        return _graph;
+    }
 protected:
     virtual void create_node() = 0;
     virtual void update_node() = 0;

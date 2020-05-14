@@ -53,7 +53,6 @@ extern "C" size_t RALI_API_CALL raliGetImageWidth(RaliImage image);
 /// \return Height of the pipeline output image, includes all images in the batch
 extern "C" size_t RALI_API_CALL raliGetImageHeight(RaliImage image);
 
-
 /// Returned value valid only after raliVerify is called
 /// \param image
 /// \return Color format of the pipeline output image,
@@ -63,7 +62,6 @@ extern "C" size_t RALI_API_CALL raliGetImagePlanes(RaliImage image);
 /// \param rali_context
 /// \return 1 if all images have been processed, otherwise 0
 extern "C" size_t RALI_API_CALL raliIsEmpty(RaliContext rali_context);
-
 
 ///
 /// \param rali_context

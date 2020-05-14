@@ -41,4 +41,3 @@ private:
     ParameterVX<float> _sdev;
     constexpr static float SDEV_RANGE [2] = {0.1, 0.15};
 };
-

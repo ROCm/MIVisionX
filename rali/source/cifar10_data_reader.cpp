@@ -58,7 +58,7 @@ Reader::Status CIFAR10DataReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
     _file_name_prefix = desc.file_prefix();
-   // _file_name_prefix = "data_batch_";
+    // _file_name_prefix = "data_batch_";
     return subfolder_reading();
 }
 
@@ -105,13 +105,13 @@ size_t CIFAR10DataReader::open()
     _current_file_size = ftell(_current_fPtr);// Check how many bytes are there between and the current read pointer position (end of the file)
 
     if(_current_file_size < _raw_file_size)     // not enough data in the file to read
-    { // If file is empty continue
+    {   // If file is empty continue
         fclose(_current_fPtr);
         _current_fPtr = nullptr;
         return 0;
     }
 
-    fseek(_current_fPtr, file_offset+1 , SEEK_SET);// Take the file pointer back to the fileoffset + 1 extra byte for label
+    fseek(_current_fPtr, file_offset+1, SEEK_SET); // Take the file pointer back to the fileoffset + 1 extra byte for label
 
     return (_raw_file_size-1);
 }
@@ -189,7 +189,7 @@ Reader::Status CIFAR10DataReader::subfolder_reading()
     if(!_file_names.empty())
         LOG("CIFAR10DataReader  Total of " + TOSTR(_file_names.size()) + " images loaded from " + _full_path )
 
-    closedir(_sub_dir);
+        closedir(_sub_dir);
     return ret;
 }
 /*
@@ -205,7 +205,6 @@ Reader::Status CIFAR10DataReader::open_folder()
 {
     if ((_src_dir = opendir (_folder_path.c_str())) == nullptr)
         THROW("CIFAR10DataReader ERROR: Failed opening the directory at " + _folder_path);
-
 
     while((_entity = readdir (_src_dir)) != nullptr)
     {
@@ -237,7 +236,6 @@ Reader::Status CIFAR10DataReader::open_folder()
     if(_file_names.empty())
         WRN("CIFAR10DataReader:: Did not load any file from " + _folder_path)
 
-    closedir(_src_dir);
+        closedir(_src_dir);
     return Reader::Status::OK;
 }
-

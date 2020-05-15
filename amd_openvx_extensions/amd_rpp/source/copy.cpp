@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,17 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-#include <kernels_rpp.h>
-#include <vx_ext_rpp.h>
-#include <stdio.h>
-#include <iostream>
-#include "internal_rpp.h"
 #include "internal_publishKernels.h"
-#include </opt/rocm/rpp/include/rpp.h>
-#include </opt/rocm/rpp/include/rppdefs.h>
-#include </opt/rocm/rpp/include/rppi.h>
-
 
 struct CopyLocalData {
 
@@ -68,7 +58,6 @@ static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference param
         status = VX_ERROR_INVALID_VALUE;
 
     STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_FORMAT, &df_image, sizeof(df_image)));
-
 
     vx_uint32  height, width;
     STATUS_ERROR_CHECK(vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));

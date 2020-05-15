@@ -30,16 +30,16 @@ THE SOFTWARE.
 
 std::shared_ptr<MetaDataGraph> create_meta_data_graph(const MetaDataConfig& config) {
     switch(config.type()) {
-        case MetaDataType::Label:
-        {
-            return nullptr;
-        }
-        case MetaDataType::BoundingBox:
-        {
-            return std::make_shared<BoundingBoxGraph>();
-        }
+    case MetaDataType::Label:
+    {
+        return nullptr;
+    }
+    case MetaDataType::BoundingBox:
+    {
+        return std::make_shared<BoundingBoxGraph>();
+    }
 
-        default:
-            THROW("MetaDataReader type is unsupported");
+    default:
+        THROW("MetaDataReader type is unsupported");
     }
 }

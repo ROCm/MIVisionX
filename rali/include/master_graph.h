@@ -49,7 +49,7 @@ public:
                     float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
     Status copy_output(cl_mem out_ptr, size_t out_size);
     Status copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, float multiplier0, float multiplier1, float multiplier2,
-                    float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
+                                  float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type);
     size_t output_width();
     size_t output_height();
     size_t output_byte_size();
@@ -134,13 +134,13 @@ std::shared_ptr<T> MasterGraph::add_node(const std::vector<Image *> &inputs, con
         if (_image_map.find(input) == _image_map.end())
             THROW("Input image is invalid, cannot be found among output of previously created nodes")
 
-        auto parent_node = _image_map.find(input)->second;
+            auto parent_node = _image_map.find(input)->second;
         parent_node->add_next(node);
         node->add_previous(parent_node);
     }
 
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+    { _image_map.insert(make_pair(output, node)); }
 
     return node;
 }
@@ -152,11 +152,11 @@ template<> inline std::shared_ptr<ImageLoaderNode> MasterGraph::add_node(const s
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
+        auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+    { _image_map.insert(make_pair(output, node)); }
 
     return node;
 }
@@ -164,11 +164,11 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
+        auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+    { _image_map.insert(make_pair(output, node)); }
 
     return node;
 }
@@ -180,11 +180,11 @@ template<> inline std::shared_ptr<Cifar10LoaderNode> MasterGraph::add_node(const
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], _device.resources());
+        auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+    { _image_map.insert(make_pair(output, node)); }
 
     return node;
 }
@@ -197,13 +197,13 @@ template<> inline std::shared_ptr<VideoFileNode> MasterGraph::add_node(const std
 {
     if(_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
-    auto node = std::make_shared<VideoFileNode>(inputs,outputs);
+        auto node = std::make_shared<VideoFileNode>(inputs,outputs);
     _nodes.push_back(node);
     auto loader = std::make_shared<VideoLoaderModule>(node);
     _loader_module = loader;
     _root_nodes.push_back(node);
     for(auto& output: outputs)
-        _image_map.insert(make_pair(output, node));
+    { _image_map.insert(make_pair(output, node)); }
 
     return node;
 }

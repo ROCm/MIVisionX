@@ -28,7 +28,7 @@ THE SOFTWARE.
 
 
 class TFRecordReader : public Reader
-        {
+{
 public:
     //! Reads the TFRecord File, and loads the image ids and other necessary info
     /*!
@@ -57,7 +57,7 @@ public:
 
     ~TFRecordReader() override = default;
 
-    int close() override{ return 0; };
+    int close() override { return 0; };
 
     TFRecordReader()= default;
 

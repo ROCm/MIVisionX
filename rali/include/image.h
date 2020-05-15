@@ -35,13 +35,13 @@ THE SOFTWARE.
 
 /*! \brief Converts Rali Memory type to OpenVX memory type
  *
- * @param mem input Rali type 
+ * @param mem input Rali type
  * @return the OpenVX type associated with input argument
  */
 vx_enum vx_mem_type(RaliMemType mem);
 struct Point
 {
-    unsigned x; // Along the width 
+    unsigned x; // Along the width
     unsigned y; // Along the height
 };
 
@@ -58,7 +58,7 @@ struct ROI {
 // |  |    |           |           |    |
 // |  -----------------o-----------------
 // |  |    |           |           |    |
-// |  |    +-----------|-----------+    | 
+// |  |    +-----------|-----------+    |
 // |  |                |        p2(x,y) |
 // |  +++++++++++++++++++++++++++++++++++
 // |
@@ -88,7 +88,7 @@ struct ImageInfo
         unsigned height,
         unsigned batch_size,
         unsigned color_planes_count,
-        RaliMemType mem_type, 
+        RaliMemType mem_type,
         RaliColorFormat color_format);
 
     unsigned width() const { return _width; }
@@ -127,7 +127,7 @@ private:
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
-/*! \brief Holds an OpenVX image and it's info 
+/*! \brief Holds an OpenVX image and it's info
 *
 * Keeps the information about the image that can be queried using OVX API as well,
 * but for simplicity and ease of use, they are kept in separate fields
@@ -137,7 +137,7 @@ struct Image
     int swap_handle(void* handle);
 
     const ImageInfo& info() { return _info; }
-    //! Default constructor 
+    //! Default constructor
     Image() = delete;
     void* buffer() { return _mem_handle; }
     vx_image handle() { return vx_handle; }

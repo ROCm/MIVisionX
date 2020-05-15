@@ -25,14 +25,14 @@ THE SOFTWARE.
 #include "exception.h"
 
 NopNode::NopNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs)
+    Node(inputs, outputs)
 {
 }
 
 void NopNode::create_node()
 {
     if(_node)
-        return;
+    { return; }
 
 
     _node = vxExtrppNode_Nop(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle());
@@ -41,7 +41,7 @@ void NopNode::create_node()
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the nop (vxNopNode) node failed: "+ TOSTR(status))
 
-}
+    }
 
 void NopNode::update_node()
 {

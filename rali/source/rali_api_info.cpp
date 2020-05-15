@@ -57,17 +57,17 @@ int RALI_API_CALL raliGetOutputColorFormat(RaliContext p_context)
     auto context = static_cast<Context*>(p_context);
     auto translate_color_format = [](RaliColorFormat color_format)
     {
-        switch(color_format){
-            case RaliColorFormat::RGB24:
-                return 0;
-            case RaliColorFormat::BGR24:
-                return 1;
-            case RaliColorFormat::U8:
-                return 2;
-            case RaliColorFormat::RGB_PLANAR:
-                return 3;
-            default:
-                THROW("Unsupported Image type" + TOSTR(color_format))
+        switch(color_format) {
+        case RaliColorFormat::RGB24:
+            return 0;
+        case RaliColorFormat::BGR24:
+            return 1;
+        case RaliColorFormat::U8:
+            return 2;
+        case RaliColorFormat::RGB_PLANAR:
+            return 3;
+        default:
+            THROW("Unsupported Image type" + TOSTR(color_format))
         }
     };
 
@@ -100,10 +100,10 @@ RaliStatus RALI_API_CALL raliGetStatus(RaliContext p_context)
 {
     auto context = static_cast<Context*>(p_context);
     if(!context)
-        return RALI_CONTEXT_INVALID;
+    { return RALI_CONTEXT_INVALID; }
 
     if(context->no_error())
-        return RALI_OK;
+    { return RALI_OK; }
 
     return RALI_RUNTIME_ERROR;
 }

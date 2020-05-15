@@ -76,20 +76,20 @@ public:
     virtual Status initialize(ReaderConfig desc) = 0;
     //! Reads the next resource item
     /*!
-     \param buf User's provided buffer to receive the loaded items	
+     \param buf User's provided buffer to receive the loaded items
      \return Size of the loaded resource
     */
- 
-       //! Opens the next item and returns it's size
+
+    //! Opens the next item and returns it's size
     /*!
      \return Size of the item, if 0 failed to access it
     */
     virtual size_t open() = 0;
-    
+
     //! Copies the data of the opened item to the buf
     virtual size_t read(unsigned char* buf, size_t read_size) = 0;
 
-    //! Closes the opened item 
+    //! Closes the opened item
     virtual int close() = 0;
 
     //! Starts reading from the first item in the resource

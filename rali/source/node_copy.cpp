@@ -25,14 +25,14 @@ THE SOFTWARE.
 #include "exception.h"
 
 CopyNode::CopyNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs)
+    Node(inputs, outputs)
 {
 }
 
 void CopyNode::create_node()
 {
     if(_node)
-        return;
+    { return; }
 
     _node = vxExtrppNode_Copy(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle());
 
@@ -40,5 +40,5 @@ void CopyNode::create_node()
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the copy (vxCopyNode) node failed: "+ TOSTR(status))
 
-}
+    }
 

@@ -38,5 +38,5 @@ protected:
     void update_node() override;
 private:
     ParameterVX<float> _sdev;
-    constexpr static float SDEV_RANGE [2] = {40 , 60};
+    constexpr static float SDEV_RANGE [2] = {40, 60};
 };

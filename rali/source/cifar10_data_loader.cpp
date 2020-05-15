@@ -20,15 +20,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <thread> 
+#include <thread>
 #include <chrono>
 #include "cifar10_data_loader.h"
 #include "vx_ext_amd.h"
 
 CIFAR10DataLoader::CIFAR10DataLoader(DeviceResources dev_resources):
-_circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
-_file_load_time("file load time", DBG_TIMING),
-_swap_handle_time("Swap_handle_time", DBG_TIMING)
+    _circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
+    _file_load_time("file load time", DBG_TIMING),
+    _swap_handle_time("Swap_handle_time", DBG_TIMING)
 {
     _output_image = nullptr;
     _mem_type = RaliMemType::HOST;
@@ -49,7 +49,7 @@ CIFAR10DataLoader::remaining_count()
     return _remaining_image_count;
 }
 
-void 
+void
 CIFAR10DataLoader::reset()
 {
     // stop the writer thread and empty the internal circular buffer
@@ -57,7 +57,7 @@ CIFAR10DataLoader::reset()
     _circ_buff.unblock_writer();
 
     if(_load_thread.joinable())
-        _load_thread.join();
+    { _load_thread.join(); }
 
     // Emptying the internal circular buffer
     _circ_buff.reset();
@@ -70,7 +70,7 @@ CIFAR10DataLoader::reset()
     start_loading();
 }
 
-void 
+void
 CIFAR10DataLoader::de_init()
 {
     stop_internal_thread();
@@ -89,7 +89,7 @@ CIFAR10DataLoader::stop_internal_thread()
     _circ_buff.unblock_writer();
     _circ_buff.reset();
     if(_load_thread.joinable())
-        _load_thread.join();
+    { _load_thread.join(); }
 }
 
 
@@ -112,10 +112,10 @@ CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg
     if(_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")
 
-    if(_output_mem_size == 0)
-        THROW("output image size is 0, set_output_image() should be called before initialize for loader modules")
-    // initialize loader and reader
-    _mem_type = mem_type;
+        if(_output_mem_size == 0)
+            THROW("output image size is 0, set_output_image() should be called before initialize for loader modules")
+            // initialize loader and reader
+            _mem_type = mem_type;
     _batch_size = batch_size;
     _loop = reader_cfg.loop();
     _image_size = _output_mem_size/batch_size;
@@ -144,13 +144,13 @@ CIFAR10DataLoader::start_loading()
     if(!_is_initialized)
         THROW("start_loading() should be called after initialize() function is called")
 
-    _remaining_image_count = _reader->count();
+        _remaining_image_count = _reader->count();
     _internal_thread_running = true;
     _load_thread = std::thread(&CIFAR10DataLoader::load_routine, this);
 }
 
 
-LoaderModuleStatus 
+LoaderModuleStatus
 CIFAR10DataLoader::load_routine()
 {
     LOG("Started the internal loader thread");
@@ -163,7 +163,7 @@ CIFAR10DataLoader::load_routine()
         auto cifar10reader = std::dynamic_pointer_cast<CIFAR10DataReader>(_reader);
 
         if(!_internal_thread_running)
-            break;
+        { break; }
 
         auto load_status = LoaderModuleStatus::NO_MORE_DATA_TO_READ;
         {
@@ -196,7 +196,7 @@ CIFAR10DataLoader::load_routine()
             if(last_load_status != load_status )
             {
                 if (load_status == LoaderModuleStatus::NO_MORE_DATA_TO_READ ||
-                    load_status == LoaderModuleStatus::NO_FILES_TO_READ)
+                        load_status == LoaderModuleStatus::NO_FILES_TO_READ)
                 {
                     LOG("Cycled through all images, count " + TOSTR(_image_counter));
                 }
@@ -207,8 +207,8 @@ CIFAR10DataLoader::load_routine()
                 last_load_status = load_status;
             }
 
-            // Here it sets the out-of-data flag and signal the circular buffer's internal 
-            // read semaphore using release() call 
+            // Here it sets the out-of-data flag and signal the circular buffer's internal
+            // read semaphore using release() call
             // , and calls the release() allows the reader thread to wake up and handle
             // the out-of-data case properly
             // It also slows down the reader thread since there is no more data to read,
@@ -220,20 +220,20 @@ CIFAR10DataLoader::load_routine()
     return LoaderModuleStatus::OK;
 }
 
-bool 
+bool
 CIFAR10DataLoader::is_out_of_data()
 {
     return (remaining_count() < _batch_size) ;
 }
-LoaderModuleStatus 
+LoaderModuleStatus
 CIFAR10DataLoader::update_output_image()
 {
     LoaderModuleStatus status = LoaderModuleStatus::OK;
 
     if(is_out_of_data())
-        return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
+    { return LoaderModuleStatus::NO_MORE_DATA_TO_READ; }
     if(_stopped)
-        return LoaderModuleStatus::OK;
+    { return LoaderModuleStatus::OK; }
 
     // _circ_buff.get_read_buffer_x() is blocking and puts the caller on sleep until new images are written to the _circ_buff
     if(_mem_type== RaliMemType::OCL)
@@ -241,19 +241,19 @@ CIFAR10DataLoader::update_output_image()
         auto data_buffer =  _circ_buff.get_read_buffer_dev();
         _swap_handle_time.start();
         if(_output_image->swap_handle(data_buffer)!= 0)
-            return LoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED;
+        { return LoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED; }
         _swap_handle_time.end();
-    } 
-    else 
+    }
+    else
     {
         auto data_buffer = _circ_buff.get_read_buffer_host();
         _swap_handle_time.start();
         if(_output_image->swap_handle(data_buffer) != 0)
-            return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
+        { return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED; }
         _swap_handle_time.end();
     }
     if(_stopped)
-        return LoaderModuleStatus::OK;
+    { return LoaderModuleStatus::OK; }
 
     decoded_image_info d_img_info = _circ_buff.get_image_info();
     _output_names = d_img_info._image_names;
@@ -261,7 +261,7 @@ CIFAR10DataLoader::update_output_image()
 
     _circ_buff.pop();
     if(!_loop)
-        _remaining_image_count -= _batch_size;
+    { _remaining_image_count -= _batch_size; }
 
     return status;
 }

@@ -25,7 +25,7 @@ Node::~Node()
 {
 
     if(!_node)
-        vxReleaseNode(&_node);
+    { vxReleaseNode(&_node); }
     _node = nullptr;
 }
 
@@ -35,7 +35,7 @@ Node::create(std::shared_ptr<Graph> graph)
     if(_outputs.empty() || _inputs.empty())
         THROW("Uninitialized input/output images to the node")
 
-    _graph = graph;
+        _graph = graph;
 
     if(!_inputs.empty())
     {
@@ -48,7 +48,7 @@ Node::create(std::shared_ptr<Graph> graph)
         height_status = vxAddArrayItems(_src_roi_height, _batch_size, roi_height.data(), sizeof(vx_uint32));
         if (width_status != 0 || height_status != 0)
             THROW(" vxAddArrayItems failed : " + TOSTR(width_status) + "  " + TOSTR(height_status))
-    }
+        }
 
     create_node();
 }
@@ -68,4 +68,4 @@ Node::update_src_roi()
     height_status = vxCopyArrayRange((vx_array)_src_roi_height, 0, _batch_size, sizeof(vx_uint32), _inputs[0]->info().get_roi_height(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(width_status != 0 || height_status != 0)
         THROW(" Failed calling vxCopyArrayRange for width / height status : "+ TOSTR(width_status) + " / "+ TOSTR(height_status))
-}
+    }

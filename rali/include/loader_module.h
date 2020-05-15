@@ -39,7 +39,7 @@ enum class LoaderModuleStatus
 };
 
 /*! \class LoaderModule The interface defining the API and requirements of loader modules*/
-class LoaderModule 
+class LoaderModule
 {
 public:
     virtual void initialize(ReaderConfig reader_config, DecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size) = 0;

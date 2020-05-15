@@ -52,7 +52,7 @@ enum class RaliAffinity
 /*! \brief Color formats currently supported by Rali SDK as input/output
  *
  */
-enum class RaliColorFormat 
+enum class RaliColorFormat
 {
     RGB24 = 0,
     BGR24,
@@ -61,10 +61,10 @@ enum class RaliColorFormat
 };
 
 /*! \brief Memory type, host or device
- * 
+ *
  *  Currently supports HOST and OCL, will support HIP in future
  */
-enum class RaliMemType 
+enum class RaliMemType
 {
     HOST = 0,
     OCL

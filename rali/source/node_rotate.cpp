@@ -26,15 +26,15 @@ THE SOFTWARE.
 
 
 RotateNode::RotateNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs),
-        _angle(ROTATE_ANGLE_RANGE[0], ROTATE_ANGLE_RANGE[1])
+    Node(inputs, outputs),
+    _angle(ROTATE_ANGLE_RANGE[0], ROTATE_ANGLE_RANGE[1])
 {
 }
 
 void RotateNode::create_node()
 {
     if(_node)
-        return;
+    { return; }
     std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
     std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
 
@@ -48,14 +48,14 @@ void RotateNode::create_node()
     if(width_status != 0 || height_status != 0)
         THROW(" vxAddArrayItems failed in the resize (vxExtrppNode_ResizebatchPD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
 
-    _angle.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
-   _node = vxExtrppNode_RotatebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _angle.default_array(), _batch_size);
+        _angle.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
+    _node = vxExtrppNode_RotatebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _dst_roi_width, _dst_roi_height, _angle.default_array(), _batch_size);
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the rotate (vxExtrppNode_RotatebatchPD) node failed: "+ TOSTR(status))
 
-}
+    }
 
 void RotateNode::init(float angle)
 {

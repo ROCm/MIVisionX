@@ -64,10 +64,10 @@ private:
 
 class DeviceManager {
 public:
-    DeviceManager(){};
+    DeviceManager() {};
 
     cl_int initialize();
-    
+
     DeviceResources resources();
 
     const CLProgram& operator[](const std::string& prog_name);

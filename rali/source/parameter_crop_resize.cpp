@@ -32,7 +32,7 @@ THE SOFTWARE.
 void RandomCropResizeParam::set_area_coeff(Parameter<float>* area)
 {
     if(!area)
-        return;
+    { return; }
 
     ParameterFactory::instance()->destroy_param(area_coeff);
     area_coeff = area;
@@ -41,7 +41,7 @@ void RandomCropResizeParam::set_area_coeff(Parameter<float>* area)
 void RandomCropResizeParam::set_aspect_ratio_coeff(Parameter<float>* aspect_ratio)
 {
     if(!aspect_ratio)
-        return;
+    { return; }
 
     ParameterFactory::instance()->destroy_param(aspect_ratio_coeff);
     aspect_ratio_coeff = aspect_ratio;
@@ -49,7 +49,7 @@ void RandomCropResizeParam::set_aspect_ratio_coeff(Parameter<float>* aspect_rati
 void RandomCropResizeParam::set_x_drift(Parameter<float>* x_drift)
 {
     if(!x_drift)
-        return;
+    { return; }
 
     ParameterFactory::instance()->destroy_param(x_center_drift);
     x_center_drift = x_drift;
@@ -57,7 +57,7 @@ void RandomCropResizeParam::set_x_drift(Parameter<float>* x_drift)
 void RandomCropResizeParam::set_y_drift(Parameter<float>* y_drift)
 {
     if(!y_drift)
-        return;
+    { return; }
 
     ParameterFactory::instance()->destroy_param(y_center_drift);
     y_center_drift = y_drift;
@@ -113,16 +113,16 @@ void RandomCropResizeParam::update_array()
     }
     status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(size_t), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
     status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(size_t), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
     status = vxCopyArrayRange((vx_array)x2_arr, 0, batch_size, sizeof(size_t), x2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
     status = vxCopyArrayRange((vx_array)y2_arr, 0, batch_size, sizeof(size_t), y2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
 }
 
 void RandomCropResizeParam::update_array_for_cmn() // For crop mirro normalize
@@ -151,16 +151,16 @@ void RandomCropResizeParam::update_array_for_cmn() // For crop mirro normalize
     }
     status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(size_t), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
     status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(size_t), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
     status = vxCopyArrayRange((vx_array)x2_arr, 0, batch_size, sizeof(size_t), x2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
     status = vxCopyArrayRange((vx_array)y2_arr, 0, batch_size, sizeof(size_t), y2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
 }
 
 void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_coeff_, float x_center_drift_, float y_center_drift_, float aspect_ratio_)
@@ -179,12 +179,12 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
 // |
 // V Y directoin
 
-    auto bound = [](float arg, float min , float max)
+    auto bound = [](float arg, float min, float max)
     {
         if( arg < min)
-            return min;
+        { return min; }
         if( arg > max)
-            return max;
+        { return max; }
         return arg;
     };
 
@@ -195,7 +195,7 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     auto temp_aspect_ratio = aspect_ratio_;
 
     float length_coeff = std::sqrt(bound(area_coeff_, RandomCropResizeParam::MIN_RANDOM_AREA_COEFF, 1.0));
-    
+
     auto cropped_width = (size_t)(length_coeff  * (float)in_width[image_idx] );
     auto cropped_height = (size_t)(cropped_width / temp_aspect_ratio) ;
 
@@ -204,7 +204,7 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     {
         temp_aspect_ratio = ((float)in_width[image_idx]  / in_height[image_idx] );
         cropped_width = (size_t)(length_coeff  * (float)in_width[image_idx] );
-        cropped_height = (size_t)( (float)(cropped_width) / temp_aspect_ratio) ; 
+        cropped_height = (size_t)( (float)(cropped_width) / temp_aspect_ratio) ;
     }
 
     size_t y_max_drift = (in_height[image_idx] - cropped_height) / 2;
@@ -224,12 +224,12 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
 
     x1[image_idx] = x_center - cropped_width/2; // ROI centric
     y1[image_idx] = y_center - cropped_height/2; // ROI centric
-   
+
 
     x2[image_idx] = x1[image_idx] + cropped_width ;
     y2[image_idx] = y1[image_idx] + cropped_height ;
-    
-    auto check_bound = [](int arg, int min , int max)
+
+    auto check_bound = [](int arg, int min, int max)
     {
         return arg < min || arg > max;
     };
@@ -237,27 +237,27 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     if(check_bound(x1[image_idx], 0, in_width[image_idx]) || check_bound(x2[image_idx], 0, in_width[image_idx]) || check_bound(y1[image_idx], 0, in_height[image_idx]) || check_bound(y2[image_idx], 0, in_height[image_idx]))
         // TODO: proper action required here
         WRN("Wrong crop area calculation")
-}
+    }
 Parameter<float> *RandomCropResizeParam::default_area()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_AREA_RANGE[0],
-                                                                         CROP_AREA_RANGE[1])->core;
+            CROP_AREA_RANGE[1])->core;
 }
 
 Parameter<float> *RandomCropResizeParam::default_aspect_ratio()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_ASPECT_RATIO[0],
-                                                                         CROP_ASPECT_RATIO[1])->core;
+            CROP_ASPECT_RATIO[1])->core;
 }
 
 Parameter<float> *RandomCropResizeParam::default_x_drift()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_AREA_X_DRIFT_RANGE[0],
-                                                                         CROP_AREA_X_DRIFT_RANGE[1])->core;
+            CROP_AREA_X_DRIFT_RANGE[1])->core;
 }
 
 Parameter<float> *RandomCropResizeParam::default_y_drift()
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(CROP_AREA_Y_DRIFT_RANGE[0],
-                                                                         CROP_AREA_Y_DRIFT_RANGE[1])->core;
+            CROP_AREA_Y_DRIFT_RANGE[1])->core;
 }

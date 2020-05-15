@@ -46,7 +46,7 @@ protected:
 struct Label : public MetaData
 {
     Label(int label) { _label_id = label; }
-    Label(){ _label_id = -1; }
+    Label() { _label_id = -1; }
 };
 
 struct BoundingBox : public MetaData

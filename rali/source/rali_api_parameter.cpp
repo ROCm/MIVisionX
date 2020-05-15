@@ -24,14 +24,14 @@ THE SOFTWARE.
 #include "rali_api.h"
 #include "parameter_factory.h"
 
-void RALI_API_CALL 
+void RALI_API_CALL
 raliSetSeed(unsigned seed)
 {
     ParameterFactory::instance()->set_seed(seed);
 }
 
 unsigned RALI_API_CALL
-raliGetSeed() 
+raliGetSeed()
 {
     return ParameterFactory::instance()->get_seed();
 }
@@ -52,17 +52,17 @@ raliGetFloatValue(RaliFloatParam p_obj)
 
 RaliIntParam  RALI_API_CALL
 raliCreateIntUniformRand(
-    int start, 
-    int end) 
+    int start,
+    int end)
 {
     return ParameterFactory::instance()->create_uniform_int_rand_param(start, end);
 }
 
 RaliStatus  RALI_API_CALL
 raliUpdateIntUniformRand(
-        int start,
-        int end,
-        RaliIntParam p_input_obj)
+    int start,
+    int end,
+    RaliIntParam p_input_obj)
 {
     auto input_obj = static_cast<IntParam*>(p_input_obj);
     if(!validate_uniform_rand_param(input_obj))  {
@@ -72,24 +72,24 @@ raliUpdateIntUniformRand(
 
     UniformRand<int>* obj;
     if((obj = dynamic_cast<UniformRand<int>*>(input_obj->core)) == nullptr)
-        return RALI_INVALID_PARAMETER_TYPE;
+    { return RALI_INVALID_PARAMETER_TYPE; }
 
     return (obj->update(start, end) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
-}    
+}
 
 RaliFloatParam  RALI_API_CALL
 raliCreateFloatUniformRand(
-    float start, 
-    float end) 
+    float start,
+    float end)
 {
     return ParameterFactory::instance()->create_uniform_float_rand_param(start, end);
 }
 
 RaliStatus  RALI_API_CALL
 raliUpdateFloatUniformRand(
-        float start,
-        float end,
-        RaliFloatParam p_input_obj)
+    float start,
+    float end,
+    RaliFloatParam p_input_obj)
 {
     auto input_obj = static_cast<FloatParam*>(p_input_obj);
     if(!validate_uniform_rand_param(input_obj)) {
@@ -99,21 +99,21 @@ raliUpdateFloatUniformRand(
 
     UniformRand<float>* obj;
     if((obj = dynamic_cast<UniformRand<float>*>(input_obj->core)) == nullptr)
-        return RALI_INVALID_PARAMETER_TYPE;
+    { return RALI_INVALID_PARAMETER_TYPE; }
 
     return (obj->update(start, end) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
-                                                    
-}   
+
+}
 
 RaliFloatParam  RALI_API_CALL
 raliCreateFloatRand(
-        const float *values,
-        const double *frequencies,
-        unsigned size)
+    const float *values,
+    const double *frequencies,
+    unsigned size)
 {
     return ParameterFactory::instance()->create_custom_float_rand_param(values,
-                                                                        frequencies,
-                                                                        size);
+            frequencies,
+            size);
 }
 
 RaliFloatParam  RALI_API_CALL
@@ -139,7 +139,7 @@ raliUpdateIntParameter(int new_val, RaliIntParam p_input_obj)
 
     SimpleParameter<int>* obj;
     if((obj = dynamic_cast<SimpleParameter<int>*>(input_obj->core)) == nullptr)
-        return RALI_INVALID_PARAMETER_TYPE;
+    { return RALI_INVALID_PARAMETER_TYPE; }
     return (obj->update(new_val) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED;
 }
 
@@ -154,47 +154,47 @@ raliUpdateFloatParameter(float new_val, RaliFloatParam p_input_obj)
 
     SimpleParameter<float>* obj;
     if((obj = dynamic_cast<SimpleParameter<float>*>(input_obj->core)) == nullptr)
-        return RALI_INVALID_PARAMETER_TYPE;
+    { return RALI_INVALID_PARAMETER_TYPE; }
     return (obj->update(new_val) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED;
 }
 
 RaliStatus  RALI_API_CALL
 raliUpdateFloatRand(
-        const float *values,
-        const double *frequencies,
-        unsigned size,
-        RaliFloatParam p_updating_obj)
+    const float *values,
+    const double *frequencies,
+    unsigned size,
+    RaliFloatParam p_updating_obj)
 {
     auto updating_obj = static_cast<FloatParam*>(p_updating_obj);
     if(!validate_custom_rand_param(updating_obj)) {
         ERR("raliUpdateFloatRand : not a custom random object!");
         return RALI_INVALID_PARAMETER_TYPE;
     }
-    
+
     CustomRand<float>* obj;
     if((obj = dynamic_cast<CustomRand<float>*>(updating_obj->core)) == nullptr)
-        return RALI_INVALID_PARAMETER_TYPE;
+    { return RALI_INVALID_PARAMETER_TYPE; }
 
     return (obj->update(values, frequencies, size) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
-} 
+}
 
 RaliIntParam  RALI_API_CALL
 raliCreateIntRand(
-        const int *values,
-        const double *frequencies,
-        unsigned size)
+    const int *values,
+    const double *frequencies,
+    unsigned size)
 {
     return ParameterFactory::instance()->create_custom_int_rand_param(values,
-                                                                      frequencies,
-                                                                      size);
+            frequencies,
+            size);
 }
 
 RaliStatus  RALI_API_CALL
 raliUpdateIntRand(
-        const int *values,
-        const double *frequencies,
-        unsigned size,
-        RaliIntParam p_updating_obj)
+    const int *values,
+    const double *frequencies,
+    unsigned size,
+    RaliIntParam p_updating_obj)
 {
     auto updating_obj = static_cast<IntParam*>(p_updating_obj);
     if(!validate_custom_rand_param(updating_obj)) {
@@ -204,7 +204,7 @@ raliUpdateIntRand(
 
     CustomRand<int>* obj;
     if((obj = dynamic_cast<CustomRand<int>*>(updating_obj->core)) == nullptr)
-        return RALI_INVALID_PARAMETER_TYPE;
+    { return RALI_INVALID_PARAMETER_TYPE; }
 
     return (obj->update( values, frequencies, size) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
-} 
+}

@@ -28,22 +28,22 @@ THE SOFTWARE.
 
 
 
-std::tuple<Decoder::ColorFormat, unsigned > 
-interpret_color_format(RaliColorFormat color_format ) 
+std::tuple<Decoder::ColorFormat, unsigned >
+interpret_color_format(RaliColorFormat color_format )
 {
     switch (color_format) {
-        case RaliColorFormat::RGB24:
-            return  std::make_tuple(Decoder::ColorFormat::RGB, 3);
+    case RaliColorFormat::RGB24:
+        return  std::make_tuple(Decoder::ColorFormat::RGB, 3);
 
-        case RaliColorFormat::BGR24:
-            return  std::make_tuple(Decoder::ColorFormat::BGR, 3);
+    case RaliColorFormat::BGR24:
+        return  std::make_tuple(Decoder::ColorFormat::BGR, 3);
 
-        case RaliColorFormat::U8:
-            return  std::make_tuple(Decoder::ColorFormat::GRAY, 1);
+    case RaliColorFormat::U8:
+        return  std::make_tuple(Decoder::ColorFormat::GRAY, 1);
 
-        default:
-            throw std::invalid_argument("Invalid color format\n");
-    }    
+    default:
+        throw std::invalid_argument("Invalid color format\n");
+    }
 }
 
 
@@ -66,7 +66,7 @@ ImageReadAndDecode::~ImageReadAndDecode()
 {
     _reader = nullptr;
     _decoder.clear();
-}   
+}
 
 void
 ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size)
@@ -89,7 +89,7 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _reader = create_reader(reader_config);
 }
 
-void 
+void
 ImageReadAndDecode::reset()
 {
     // TODO: Reload images from the folder if needed
@@ -103,7 +103,7 @@ ImageReadAndDecode::count()
 }
 
 
-LoaderModuleStatus 
+LoaderModuleStatus
 ImageReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
                          const size_t max_decoded_width,
@@ -114,17 +114,17 @@ ImageReadAndDecode::load(unsigned char* buff,
 {
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
-    if(!buff)
-        THROW("Null pointer passed as output buffer")
-    if(_reader->count() < _batch_size)
-        return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
+        if(!buff)
+            THROW("Null pointer passed as output buffer")
+            if(_reader->count() < _batch_size)
+            { return LoaderModuleStatus::NO_MORE_DATA_TO_READ; }
     // load images/frames from the disk and push them as a large image onto the buff
     unsigned file_counter = 0;
     const auto ret = interpret_color_format(output_color_format);
     const Decoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
 
-    // Decode with the height and size equal to a single image  
+    // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start();// Debug timing
 
@@ -149,16 +149,16 @@ ImageReadAndDecode::load(unsigned char* buff,
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     for(size_t i = 0; i < _batch_size; i++)
-        _decompressed_buff_ptrs[i] = buff + image_size * i;
+    { _decompressed_buff_ptrs[i] = buff + image_size * i; }
 
     _decode_time.start();// Debug timing
-#pragma omp parallel for num_threads(_batch_size) default(none)
+    #pragma omp parallel for num_threads(_batch_size) default(none)
     for(size_t i= 0; i < _batch_size; i++)
     {
         // initialize the actual decoded height and width with the maximum
         _actual_decoded_width[i] = max_decoded_width;
         _actual_decoded_height[i] = max_decoded_height;
-        
+
         int original_width, original_height, jpeg_sub_samp;
         if(_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height, &jpeg_sub_samp ) != Decoder::Status::OK)
         {
@@ -167,7 +167,7 @@ ImageReadAndDecode::load(unsigned char* buff,
 #if 0
         if((unsigned)original_width != max_decoded_width || (unsigned)original_height != max_decoded_height)
             // Seeting the whole buffer to zero in case resizing to exact output dimension is not possible.
-            memset(_decompressed_buff_ptrs[i],0 , image_size);
+        { memset(_decompressed_buff_ptrs[i],0, image_size); }
 #endif
 
         // decode the image and get the actual decoded image width and height

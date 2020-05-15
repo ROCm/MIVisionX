@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include "parameter_vx.h"
 #include "parameter_crop_resize.h"
 
-class CropMirrorNormalizeNode : public Node 
+class CropMirrorNormalizeNode : public Node
 {
 public:
     CropMirrorNormalizeNode(const std::vector<Image *> &inputs,
@@ -45,7 +45,7 @@ private:
     int _crop_h;
     int _crop_w;
     int _crop_d;
-    float _mean; // vector of means in future 
+    float _mean; // vector of means in future
     float _std_dev; // vector of std_devs in future
     ParameterVX<int> _mirror; // Should come from int random number generator with values 1 or 0 - Coin Flip
     constexpr static int   MIRROR_RANGE [2] =  {0, 1};

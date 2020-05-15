@@ -24,11 +24,11 @@ THE SOFTWARE.
 
 #if OPENCV_FOUND
 int handleError( int status, const char* func_name,
-            const char* err_msg, const char* file_name,
-            int line, void* userdata )
+                 const char* err_msg, const char* file_name,
+                 int line, void* userdata )
 {
     //TODO: add proper error handling here
-    return 0;   
+    return 0;
 }
 
 
@@ -46,14 +46,14 @@ Decoder::Status CVDecoder::decode(unsigned char* input_buffer, size_t input_size
 #if 0
     m_mat_compressed = cv::Mat(1, input_size, CV_8UC1, input_buffer);
     m_mat_orig = cv::imdecode(m_mat_compressed, CV_LOAD_IMAGE_COLOR);
-    
+
     if(m_mat_orig.rows == 0 || m_mat_orig.cols == 0) {
         printf("Could not decode the image\n");
         return Status::CONTENT_DECODE_FAILED;
     }
     int width = m_mat_orig.cols;
     int height = m_mat_orig.rows;
-    
+
     return Status::OK;
 
 

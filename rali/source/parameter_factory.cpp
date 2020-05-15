@@ -31,13 +31,13 @@ bool validate_simple_rand_param(pParam arg)
 {
     bool ret = true;
     std::visit(
-            [&ret](auto&& arg)
-            {
-                if(arg == nullptr || arg->type != RaliParameterType::DETERMINISTIC)
-                    ret = false;
+        [&ret](auto&& arg)
+    {
+        if(arg == nullptr || arg->type != RaliParameterType::DETERMINISTIC)
+        { ret = false; }
 
-            },
-            arg);
+    },
+    arg);
     return ret;
 }
 
@@ -47,12 +47,12 @@ bool validate_custom_rand_param(pParam arg)
     bool ret = true;
     std::visit(
         [&ret](auto&& arg)
-        {
-            if(arg == nullptr || arg->type != RaliParameterType::RANDOM_CUSTOM)
-                ret = false;
-            
-        },
-        arg);
+    {
+        if(arg == nullptr || arg->type != RaliParameterType::RANDOM_CUSTOM)
+        { ret = false; }
+
+    },
+    arg);
     return ret;
 }
 
@@ -61,12 +61,12 @@ bool validate_uniform_rand_param(pParam  rand_obj)
     bool ret = true;
     std::visit(
         [&ret](auto&& arg)
-        {
-            if(arg == nullptr || arg->type != RaliParameterType::RANDOM_UNIFORM)
-                ret = false;
-                           
-        },
-        rand_obj);
+    {
+        if(arg == nullptr || arg->type != RaliParameterType::RANDOM_UNIFORM)
+        { ret = false; }
+
+    },
+    rand_obj);
     return ret;
 }
 
@@ -76,11 +76,11 @@ ParameterFactory::ParameterFactory()
 }
 
 ParameterFactory* ParameterFactory::instance() {
-    
+
     if(_instance == nullptr)// For performance reasons
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        if(_instance == nullptr) 
+        if(_instance == nullptr)
         {
             _instance = new ParameterFactory();
         }
@@ -90,32 +90,32 @@ ParameterFactory* ParameterFactory::instance() {
 
 ParameterFactory::~ParameterFactory() {
     for(auto&& rand_obj : _parameters)
-            std::visit(
-                [](auto&& arg)
-                {
-                    delete arg;
-                },
-                rand_obj);
+        std::visit(
+            [](auto&& arg)
+    {
+        delete arg;
+    },
+    rand_obj);
 }
 
 void ParameterFactory::renew_parameters()
 {
     for(auto&& rand_obj : _parameters)
         std::visit(
-                [](auto&& arg)
-                {
-                    arg->renew();
-                },
-                rand_obj);
+            [](auto&& arg)
+    {
+        arg->renew();
+    },
+    rand_obj);
 }
 
 unsigned
 ParameterFactory::get_seed()
-{   
+{
     return _seed;
 }
 
-void 
+void
 ParameterFactory::set_seed(unsigned seed)
 {
     _seed = seed;
@@ -174,13 +174,13 @@ FloatParam* ParameterFactory::create_single_value_float_param(float value)
 Parameter<int>* core(IntParam* arg)
 {
     if(!arg)
-        return nullptr;
+    { return nullptr; }
     return arg->core;
 }
 
 Parameter<float>* core(FloatParam* arg)
 {
     if(!arg)
-        return nullptr;
+    { return nullptr; }
     return arg->core;
 }

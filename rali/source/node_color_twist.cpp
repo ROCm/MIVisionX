@@ -26,11 +26,11 @@ THE SOFTWARE.
 
 
 ColorTwistBatchNode::ColorTwistBatchNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
-        Node(inputs, outputs),
-        _alpha(ALPHA_RANGE[0], ALPHA_RANGE[1]),
-        _beta (BETA_RANGE[0], BETA_RANGE[1]),
-        _hue(ALPHA_RANGE[0], HUE_RANGE[1]),
-        _sat (BETA_RANGE[0], SAT_RANGE[1])
+    Node(inputs, outputs),
+    _alpha(ALPHA_RANGE[0], ALPHA_RANGE[1]),
+    _beta (BETA_RANGE[0], BETA_RANGE[1]),
+    _hue(ALPHA_RANGE[0], HUE_RANGE[1]),
+    _sat (BETA_RANGE[0], SAT_RANGE[1])
 {
 }
 
@@ -38,19 +38,19 @@ void ColorTwistBatchNode::create_node()
 {
 
     if(_node)
-        return;
+    { return; }
 
-    _alpha.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
-    _beta.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
-    _hue.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
-    _sat.create_array(_graph , VX_TYPE_FLOAT32, _batch_size);
+    _alpha.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
+    _beta.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
+    _hue.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
+    _sat.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
 
     _node = vxExtrppNode_ColorTwistbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _alpha.default_array(), _beta.default_array(), _hue.default_array(), _sat.default_array(), _batch_size);/*A temporary fix for time being*/
 
     vx_status status;
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the ColorTwist_batch (vxExtrppNode_ColorTwistbatchPD) node failed: "+ TOSTR(status))
-}
+    }
 
 void ColorTwistBatchNode::init(float alpha, float beta, float hue, float sat)
 {

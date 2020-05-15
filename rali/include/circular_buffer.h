@@ -59,7 +59,7 @@ private:
     void increment_read_ptr();
     void increment_write_ptr();
     bool full();
-    bool empty();    
+    bool empty();
     const size_t BUFF_DEPTH;
     decoded_image_info _last_image_info;
     std::queue<decoded_image_info> _circ_image_info;//!< Stores the loaded images names, decoded_width and decoded_height(data is stored in the _circ_buff)

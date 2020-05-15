@@ -37,13 +37,13 @@ THE SOFTWARE.
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return Reference to the output image
 extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
-                                                        const char* source_path,
-                                                        RaliImageColor color_format,
-                                                        unsigned internal_shard_count,
-                                                        bool is_output ,
-                                                        bool loop = false,
-                                                        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0);
+        const char* source_path,
+        RaliImageColor color_format,
+        unsigned internal_shard_count,
+        bool is_output,
+        bool loop = false,
+        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
+        unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
 /// \param rali_context Rali context
@@ -57,14 +57,14 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext context,
-                                                                   const char* source_path,
-                                                                   RaliImageColor color_format,
-                                                                   unsigned shard_id,
-                                                                   unsigned shard_count,
-                                                                   bool is_output ,
-                                                                   bool loop = false,
-                                                                   RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
-                                                                   unsigned max_width = 0, unsigned max_height = 0);
+        const char* source_path,
+        RaliImageColor color_format,
+        unsigned shard_id,
+        unsigned shard_count,
+        bool is_output,
+        bool loop = false,
+        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
+        unsigned max_width = 0, unsigned max_height = 0);
 
 
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.
@@ -76,11 +76,11 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext c
 /// \param height The height of the decoded frames, larger or smaller will be resized
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
-                                                        const char* source_path,
-                                                        RaliImageColor color_format,
-                                                        RaliDecodeDevice rali_decode_device,
-                                                        bool is_output ,
-                                                        unsigned width , unsigned height, bool loop = false );
+        const char* source_path,
+        RaliImageColor color_format,
+        RaliDecodeDevice rali_decode_device,
+        bool is_output,
+        unsigned width, unsigned height, bool loop = false );
 /// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
 /// \param rali_context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
@@ -91,11 +91,11 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
 /// \param filename_prefix ; if set loader will only load files with the given prefix name
 /// \return Reference to the output image
 extern "C"  RaliImage  RALI_API_CALL raliRawCIFAR10Source(RaliContext context,
-                                                        const char* source_path,
-                                                        RaliImageColor color_format,
-                                                        bool is_output ,
-                                                        unsigned out_width, unsigned out_height, const char* filename_prefix = "",
-                                                        bool loop = false);
+        const char* source_path,
+        RaliImageColor color_format,
+        bool is_output,
+        unsigned out_width, unsigned out_height, const char* filename_prefix = "",
+        bool loop = false);
 
 ///
 /// \param rali_context

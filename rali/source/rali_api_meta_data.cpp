@@ -35,17 +35,17 @@ RALI_API_CALL raliCreateLabelReader(RaliContext p_context, const char* source_pa
     if (!context)
         THROW("Invalid rali context passed to raliCreateLabelReader")
 
-    return context->master_graph->create_label_reader(source_path, MetaDataReaderType::FOLDER_BASED_LABEL_READER);
+        return context->master_graph->create_label_reader(source_path, MetaDataReaderType::FOLDER_BASED_LABEL_READER);
 
 }
 
 RaliMetaData
-RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_path, bool is_output){
+RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_path, bool is_output) {
     auto context = static_cast<Context*>(p_context);
     if (!context)
         THROW("Invalid rali context passed to raliCreateLabelReader")
 
-    return context->master_graph->create_coco_meta_data_reader(source_path, is_output);
+        return context->master_graph->create_coco_meta_data_reader(source_path, is_output);
 
 }
 
@@ -55,7 +55,7 @@ RALI_API_CALL raliCreateTextFileBasedLabelReader(RaliContext p_context, const ch
     if (!context)
         THROW("Invalid rali context passed to raliCreateTextFileBasedLabelReader")
 
-    return context->master_graph->create_label_reader(source_path, MetaDataReaderType::TEXT_FILE_META_DATA_READER);
+        return context->master_graph->create_label_reader(source_path, MetaDataReaderType::TEXT_FILE_META_DATA_READER);
 
 }
 
@@ -67,7 +67,7 @@ RALI_API_CALL raliGetImageName(RaliContext p_context,  char* buf, unsigned image
     auto meta_data = context->master_graph->meta_data();
     if(image_idx >= meta_data.first.size())
         THROW("Image idx is out of batch size range")
-    memcpy(buf, meta_data.first[image_idx].c_str(), meta_data.first[image_idx].size());
+        memcpy(buf, meta_data.first[image_idx].c_str(), meta_data.first[image_idx].size());
 }
 
 unsigned
@@ -77,7 +77,7 @@ RALI_API_CALL raliGetImageNameLen(RaliContext p_context, unsigned image_idx)
     auto meta_data = context->master_graph->meta_data();
     if(image_idx >= meta_data.first.size())
         THROW("Image idx is out of batch size range")
-    return meta_data.first[image_idx].size();
+        return meta_data.first[image_idx].size();
 }
 
 void
@@ -92,7 +92,7 @@ RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
     size_t meta_data_batch_size = meta_data.second->get_label_batch().size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    memcpy(buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
+        memcpy(buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
 }
 
 unsigned
@@ -144,7 +144,7 @@ RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char
     if (!context)
         THROW("Invalid rali context passed to raliCreateTextFileBasedLabelReader")
 
-    return context->master_graph->create_cifar10_label_reader(source_path, file_prefix);
+        return context->master_graph->create_cifar10_label_reader(source_path, file_prefix);
 
 }
 

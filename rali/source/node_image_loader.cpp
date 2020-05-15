@@ -9,7 +9,7 @@ ImageLoaderNode::ImageLoaderNode(Image *output, DeviceResources device_resources
 }
 
 void ImageLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, StorageType storage_type,
-                           DecoderType decoder_type, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
+                           DecoderType decoder_type, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig, bool shuffle)
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for ImageLoaderNode, cannot initialize")
@@ -20,6 +20,7 @@ void ImageLoaderNode::init(unsigned internal_shard_count, const std::string &sou
     auto reader_cfg = ReaderConfig(storage_type, source_path, loop);
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
+    reader_cfg.set_shuffle(shuffle);
     _loader_module->initialize(reader_cfg, DecoderConfig(decoder_type),
              mem_type,
              _batch_size, decoder_keep_orig);

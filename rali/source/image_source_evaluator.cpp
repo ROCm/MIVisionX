@@ -62,7 +62,6 @@ ImageSourceEvaluator::find_max_dimension()
     }
     // return the reader read pointer to the begining of the resource
     _reader->reset();
-    _reader->reset();
 }
 
 void 

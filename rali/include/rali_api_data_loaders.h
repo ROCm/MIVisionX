@@ -21,7 +21,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
                                                         bool is_output ,
                                                         bool loop = false,
                                                         RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
-                                                        unsigned max_width = 0, unsigned max_height = 0);
+                                                        unsigned max_width = 0, unsigned max_height = 0, bool shuffle = false);
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
 /// \param rali_context Rali context
@@ -42,7 +42,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext c
                                                                    bool is_output ,
                                                                    bool loop = false,
                                                                    RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
-                                                                   unsigned max_width = 0, unsigned max_height = 0);
+                                                                   unsigned max_width = 0, unsigned max_height = 0, bool shuffle = false);
 
 
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.

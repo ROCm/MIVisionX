@@ -123,6 +123,8 @@ namespace rali{
             .value("MAX_SIZE",RALI_USE_MAX_SIZE)
             .value("USER_GIVEN_SIZE",RALI_USE_USER_GIVEN_SIZE)
             .value("MOST_FREQUENT_SIZE",RALI_USE_MOST_FREQUENT_SIZE)
+            .value("MAX_SIZE_ORIG",RALI_USE_MAX_SIZE_RESTRICTED)
+            .value("USER_GIVEN_SIZE_ORIG",RALI_USE_USER_GIVEN_SIZE_RESTRICTED)
             .export_values();
         py::enum_<RaliImageColor>(types_m,"RaliImageColor","Image type")
             .value("RGB",RALI_COLOR_RGB24)

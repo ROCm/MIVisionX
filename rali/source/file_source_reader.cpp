@@ -29,13 +29,18 @@ unsigned FileSourceReader::count()
 
 Reader::Status FileSourceReader::initialize(ReaderConfig desc)
 {
+    auto ret = Reader::Status::OK;
     _file_id = 0;
     _folder_path = desc.path();
     _shard_id = desc.get_shard_id();
     _shard_count = desc.get_shard_count();
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
-    return subfolder_reading();
+    _shuffle = desc.shuffle();
+    ret = subfolder_reading();
+    // _shuffle file_names if set
+    if (ret == Reader::Status::OK && _shuffle) std::random_shuffle(_file_names.begin(), _file_names.end());
+    return ret;
 }
 
 void FileSourceReader::incremenet_read_ptr()
@@ -109,7 +114,7 @@ FileSourceReader::release()
 
 void FileSourceReader::reset()
 {
-    std::random_shuffle(_file_names.begin(), _file_names.end());
+    if (_shuffle) std::random_shuffle(_file_names.begin(), _file_names.end());
     _read_counter = 0;
     _curr_file_idx = 0;
 }

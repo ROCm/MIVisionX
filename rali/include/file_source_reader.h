@@ -63,6 +63,7 @@ private:
     size_t _file_id = 0;
     size_t _in_batch_read_count = 0;
     bool _loop;
+    bool _shuffle;
     int _read_counter = 0;
     void incremenet_read_ptr();
     int release();

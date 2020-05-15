@@ -20,6 +20,8 @@ struct ReaderConfig
     /// \param loop if True the reader's available images still the same no matter how many images have been read
     void set_loop( bool loop) { _loop = loop; }
     bool loop() { return _loop; }
+    void set_shuffle( bool shuffle) { _shuffle = shuffle; }
+    bool shuffle() { return _shuffle; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
@@ -33,6 +35,7 @@ private:
     size_t _shard_id = 0;
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     bool _loop = false;
+    bool _shuffle = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader
 };
 

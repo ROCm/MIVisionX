@@ -204,8 +204,8 @@ class COCOReader(Node):
         # b.labelReader(handle,self._file_root)
         return self._file_root
 
-   
-    
+
+
 
 class ImageDecoder(Node):
     """
@@ -277,7 +277,7 @@ class ImageDecoder(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
         else:
             output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
         return output_image

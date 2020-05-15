@@ -20,6 +20,8 @@ from rali_pybind.types import FLOAT16
 from rali_pybind.types import MAX_SIZE
 from rali_pybind.types import USER_GIVEN_SIZE
 from rali_pybind.types import MOST_FREQUENT_SIZE
+from rali_pybind.types import MAX_SIZE_ORIG
+from rali_pybind.types import USER_GIVEN_SIZE_ORIG
 
 
 #      RaliImageColor
@@ -54,7 +56,9 @@ _known_types={
 	MAX_SIZE : ("MAX_SIZE", MAX_SIZE),
     USER_GIVEN_SIZE : ("USER_GIVEN_SIZE", USER_GIVEN_SIZE),
 	MOST_FREQUENT_SIZE : ("MOST_FREQUENT_SIZE", MOST_FREQUENT_SIZE),
-	
+    MAX_SIZE_ORIG : ("MAX_SIZE_ORIG", MAX_SIZE_ORIG),
+    USER_GIVEN_SIZE_ORIG : ("USER_GIVEN_SIZE_ORIG", USER_GIVEN_SIZE_ORIG),
+
 	NHWC : ("NHWC", NHWC),
     NCHW : ("NCHW", NCHW),
 	BGR : ("BGR", BGR),

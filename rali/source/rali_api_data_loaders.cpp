@@ -225,7 +225,8 @@ raliJpegFileSourceSingleShard(
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        bool shuffle)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -269,7 +270,7 @@ raliJpegFileSourceSingleShard(
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(), decoder_keep_original);
+                                                                                        context->master_graph->mem_type(), decoder_keep_original, shuffle);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -297,7 +298,8 @@ raliJpegFileSource(
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        bool shuffle)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -338,7 +340,7 @@ raliJpegFileSource(
                                                                           DecoderType::TURBO_JPEG,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type(), decoder_keep_original);
+                                                                          context->master_graph->mem_type(), decoder_keep_original, shuffle);
         context->master_graph->set_loop(loop);
 
         if(is_output)

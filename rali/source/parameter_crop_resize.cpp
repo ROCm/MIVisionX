@@ -247,7 +247,6 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     x1[image_idx] = x_center - cropped_width/2; // ROI centric
     y1[image_idx] = y_center - cropped_height/2; // ROI centric
 
-
     x2[image_idx] = x1[image_idx] + cropped_width ;
     y2[image_idx] = y1[image_idx] + cropped_height ;
 

@@ -46,7 +46,6 @@ ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
 
     // Can initialize it to any decoder types if needed
 
-
     // _header_buff.resize(COMPRESSED_SIZE);
     _decoder = create_decoder(std::move(decoder_cfg));
     _reader = create_reader(std::move(reader_cfg));

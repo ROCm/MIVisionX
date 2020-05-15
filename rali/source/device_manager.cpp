@@ -90,7 +90,6 @@ cl_int CLProgram::buildAll() {
         THROW("Building" + program_name + "program from source failed: " + TOSTR(clerr));
     }
 
-
     clerr = clBuildProgram(m_prog, 1, &m_ocl->device_id, NULL, NULL, NULL);
 
     if(clerr != CL_SUCCESS)
@@ -133,8 +132,6 @@ cl_int DeviceManager::initialize() {
     {
         m_programs.insert(make_pair(code.getName(), CLProgram(&_resources, code)));
     }
-
-
 
     cl_int status = CL_SUCCESS;
     for(auto& e: m_programs)

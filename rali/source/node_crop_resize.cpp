@@ -36,7 +36,9 @@ CropResizeNode::CropResizeNode(const std::vector<Image *> &inputs, const std::ve
 void CropResizeNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     if(_dest_width == 0 || _dest_height == 0)
         THROW("Uninitialized destination dimension")

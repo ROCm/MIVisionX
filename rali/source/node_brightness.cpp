@@ -34,7 +34,9 @@ BrightnessNode::BrightnessNode(const std::vector<Image *> &inputs, const std::ve
 void BrightnessNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     _alpha.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
     _beta.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);

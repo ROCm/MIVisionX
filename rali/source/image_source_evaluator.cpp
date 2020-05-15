@@ -63,7 +63,9 @@ ImageSourceEvaluator::find_max_dimension()
     {
         size_t fsize = _reader->open();
         if( (fsize) == 0 )
+        {
             continue;
+        }
         _header_buff.resize(fsize);
         auto actual_read_size = _reader->read(_header_buff.data(), fsize);
         _reader->close();
@@ -76,7 +78,9 @@ ImageSourceEvaluator::find_max_dimension()
         }
 
         if(width <= 0 || height <=0)
+        {
             continue;
+        }
 
         _width_max.process_sample(width);
         _height_max.process_sample(height);

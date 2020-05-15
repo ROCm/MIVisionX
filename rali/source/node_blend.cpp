@@ -34,7 +34,9 @@ void BlendNode::create_node()
 {
 
     if(_node)
+    {
         return;
+    }
 
     if(_inputs.size() < 2)
         THROW("Blend node needs two input images")

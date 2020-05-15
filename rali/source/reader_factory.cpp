@@ -33,14 +33,18 @@ std::shared_ptr<Reader> create_reader(ReaderConfig config) {
     {
         auto ret = std::make_shared<FileSourceReader>();
         if(ret->initialize(config) != Reader::Status::OK)
+        {
             throw std::runtime_error("File reader cannot access the storage");
+        }
         return ret;
     }
     case StorageType::TF_RECORD:
     {
         auto ret = std::make_shared<TFRecordReader>();
         if(ret->initialize(config) != Reader::Status::OK)
+        {
             throw std::runtime_error("File reader cannot access the storage");
+        }
         return ret;
     }
     break;
@@ -48,7 +52,9 @@ std::shared_ptr<Reader> create_reader(ReaderConfig config) {
     {
         auto ret = std::make_shared<CIFAR10DataReader>();
         if(ret->initialize(config) != Reader::Status::OK)
+        {
             throw std::runtime_error("CFar10 data reader cannot access the storage");
+        }
         return ret;
     }
     break;

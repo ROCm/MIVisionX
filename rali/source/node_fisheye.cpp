@@ -32,7 +32,9 @@ FisheyeNode::FisheyeNode(const std::vector<Image *> &inputs, const std::vector<I
 void FisheyeNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     _node = vxExtrppNode_FisheyebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _batch_size);
 

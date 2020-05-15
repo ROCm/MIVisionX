@@ -102,7 +102,9 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
         scaledw = TJSCALED(original_image_width, scaling_factor);
         scaledh = TJSCALED(original_image_height, scaling_factor);
         if (scaledw <= max_decoded_width && scaledh <= max_decoded_height)
+        {
             break;
+        }
     }
     actual_decoded_width = scaledw;
     actual_decoded_height = scaledh;

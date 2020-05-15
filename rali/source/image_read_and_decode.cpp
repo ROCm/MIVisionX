@@ -112,7 +112,9 @@ ImageReadAndDecode::load(unsigned char* buff,
         if(!buff)
             THROW("Null pointer passed as output buffer")
             if(_reader->count() < _batch_size)
+            {
                 return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
+            }
     // load images/frames from the disk and push them as a large image onto the buff
     unsigned file_counter = 0;
     const auto ret = interpret_color_format(output_color_format);
@@ -144,7 +146,9 @@ ImageReadAndDecode::load(unsigned char* buff,
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     for(size_t i = 0; i < _batch_size; i++)
+    {
         _decompressed_buff_ptrs[i] = buff + image_size * i;
+    }
 
     _decode_time.start();// Debug timing
     #pragma omp parallel for num_threads(_batch_size) default(none)
@@ -162,7 +166,9 @@ ImageReadAndDecode::load(unsigned char* buff,
 #if 0
         if((unsigned)original_width != max_decoded_width || (unsigned)original_height != max_decoded_height)
             // Seeting the whole buffer to zero in case resizing to exact output dimension is not possible.
+        {
             memset(_decompressed_buff_ptrs[i],0, image_size);
+        }
 #endif
 
         // decode the image and get the actual decoded image width and height

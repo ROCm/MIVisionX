@@ -28,11 +28,17 @@ THE SOFTWARE.
 DeviceManager::~DeviceManager()
 {
     if(_resources.cmd_queue != nullptr)
+    {
         clReleaseCommandQueue(_resources.cmd_queue);
+    }
     if(_resources.device_id != nullptr)
+    {
         clReleaseDevice(_resources.device_id);
+    }
     if(_resources.context != nullptr)
+    {
         clReleaseContext(_resources.context);
+    }
 
     _resources.cmd_queue = nullptr;
     _resources.context = nullptr;
@@ -48,14 +54,20 @@ CLProgram::~CLProgram()
 }
 cl_int CLProgram::runKernel(const std::string& kernel_name, const std::vector<void*>&  args, const std::vector<size_t>& argSize, const std::vector<size_t>& globalWorkSize, const std::vector<size_t>& localWorkSize) {
     cl_int status;
-    if(argSize.size() != args.size()) return -1;
+    if(argSize.size() != args.size()) {
+        return -1;
+    }
     cl_kernel kernel = (*this)[kernel_name];
     for(unsigned argId = 0; argId < args.size(); argId++)
         if((status = clSetKernelArg( kernel, argId, argSize[argId], args[argId]))!= CL_SUCCESS)
+        {
             THROW("clSetKernelArg failed " + TOSTR(status));
+        }
 
     if((status = clEnqueueNDRangeKernel(m_ocl->cmd_queue, kernel, 1, NULL, globalWorkSize.data(), localWorkSize.data(), 0, NULL, NULL)) != CL_SUCCESS)
+    {
         THROW("clEnqueueNDRangeKernel failed on " + kernel_name + " error " + TOSTR(status));
+    }
 
     return status;
 }
@@ -74,19 +86,25 @@ cl_int CLProgram::buildAll() {
     m_prog = clCreateProgramWithSource(m_ocl->context, 1, &code_src, &code_size, &clerr);
 
     if(clerr != CL_SUCCESS)
+    {
         THROW("Building" + program_name + "program from source failed: " + TOSTR(clerr));
+    }
 
 
     clerr = clBuildProgram(m_prog, 1, &m_ocl->device_id, NULL, NULL, NULL);
 
     if(clerr != CL_SUCCESS)
+    {
         THROW("Building" + program_name + " failed: " + TOSTR(clerr));
+    }
 
     for(unsigned i =0; i < kernel_names.size(); ++i) {
         auto kernel = clCreateKernel(m_prog, kernel_names[i].c_str(), &clerr);
         clRetainKernel(kernel);
         if(clerr != CL_SUCCESS)
+        {
             THROW("Building kernel" + kernel_names[i] + " failed");
+        }
 
         m_kernels.insert(std::make_pair(kernel_names[i], kernel));
     }
@@ -101,7 +119,9 @@ const cl_kernel& CLProgram::operator[](const std::string& kernel_name) const {
 
     const auto it =  m_kernels.find(kernel_name);
     if(it != m_kernels.end())
+    {
         return it->second;
+    }
 
     THROW("Requested kernel" + kernel_name +  " does not exist");
 }
@@ -110,14 +130,18 @@ cl_int DeviceManager::initialize() {
 
     std::vector<DeviceCode> ocl_codes = {OCLUtility() };
     for(auto& code: ocl_codes)
+    {
         m_programs.insert(make_pair(code.getName(), CLProgram(&_resources, code)));
+    }
 
 
 
     cl_int status = CL_SUCCESS;
     for(auto& e: m_programs)
         if((status = e.second.buildAll()) != CL_SUCCESS)
+        {
             THROW("Couldn't build " + e.first);
+        }
 
     return status;
 }
@@ -168,7 +192,9 @@ const CLProgram& DeviceManager::operator[](const std::string& prog_name)
 {
     auto it = m_programs.find(prog_name);
     if(  it != m_programs.end())
+    {
         return it->second;
+    }
 
     THROW("Requested kernel" + prog_name + "does not exist");
 }

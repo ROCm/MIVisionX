@@ -33,7 +33,9 @@ PixelateNode::PixelateNode(const std::vector<Image *> &inputs, const std::vector
 void PixelateNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     _node = vxExtrppNode_PixelatebatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _batch_size);
 

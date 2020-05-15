@@ -39,7 +39,9 @@ RainNode::RainNode(const std::vector<Image *> &inputs, const std::vector<Image *
 void RainNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     _rain_value.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
     _rain_transparency.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);

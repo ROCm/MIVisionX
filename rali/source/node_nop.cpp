@@ -33,7 +33,9 @@ NopNode::NopNode(const std::vector<Image *> &inputs, const std::vector<Image *> 
 void NopNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     _node = vxExtrppNode_Nop(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle());
 

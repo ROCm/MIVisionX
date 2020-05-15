@@ -34,7 +34,9 @@ FogNode::FogNode(const std::vector<Image *> &inputs, const std::vector<Image *> 
 void FogNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     _fog_param.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
     _node = vxExtrppNode_FogbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _fog_param.default_array(), _batch_size);

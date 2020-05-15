@@ -58,7 +58,9 @@ ImageLoader::reset()
     _circ_buff.unblock_writer();
 
     if(_load_thread.joinable())
+    {
         _load_thread.join();
+    }
 
     // Emptying the internal circular buffer
     _circ_buff.reset();
@@ -103,7 +105,9 @@ ImageLoader::stop_internal_thread()
     _circ_buff.unblock_writer();
     _circ_buff.reset();
     if(_load_thread.joinable())
+    {
         _load_thread.join();
+    }
 }
 
 void
@@ -158,7 +162,9 @@ ImageLoader::load_routine()
     {
         auto data = _circ_buff.get_write_buffer();
         if(!_internal_thread_running)
+        {
             break;
+        }
 
         auto load_status = LoaderModuleStatus::NO_MORE_DATA_TO_READ;
         {
@@ -218,9 +224,13 @@ ImageLoader::update_output_image()
     LoaderModuleStatus status = LoaderModuleStatus::OK;
 
     if(is_out_of_data())
+    {
         return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
+    }
     if(_stopped)
+    {
         return LoaderModuleStatus::OK;
+    }
 
     // _circ_buff.get_read_buffer_x() is blocking and puts the caller on sleep until new images are written to the _circ_buff
     if(_mem_type== RaliMemType::OCL)
@@ -228,7 +238,9 @@ ImageLoader::update_output_image()
         auto data_buffer =  _circ_buff.get_read_buffer_dev();
         _swap_handle_time.start();
         if(_output_image->swap_handle(data_buffer)!= 0)
+        {
             return LoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED;
+        }
         _swap_handle_time.end();
     }
     else
@@ -236,11 +248,15 @@ ImageLoader::update_output_image()
         auto data_buffer = _circ_buff.get_read_buffer_host();
         _swap_handle_time.start();
         if(_output_image->swap_handle(data_buffer) != 0)
+        {
             return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
+        }
         _swap_handle_time.end();
     }
     if(_stopped)
+    {
         return LoaderModuleStatus::OK;
+    }
 
     decoded_image_info d_img_info = _circ_buff.get_image_info();
     _output_names = d_img_info._image_names;
@@ -248,7 +264,9 @@ ImageLoader::update_output_image()
 
     _circ_buff.pop();
     if(!_loop)
+    {
         _remaining_image_count -= _batch_size;
+    }
 
     return status;
 }
@@ -269,7 +287,9 @@ LoaderModuleStatus ImageLoader::set_cpu_affinity(cpu_set_t cpu_mask)
         int ret = pthread_setaffinity_np(_load_thread.native_handle(),
                                          sizeof(cpu_set_t), &cpu_mask);
     if (ret != 0)
+    {
         WRN("Error calling pthread_setaffinity_np: " + TOSTR(ret));
+    }
 #endif
         return LoaderModuleStatus::OK;
 }

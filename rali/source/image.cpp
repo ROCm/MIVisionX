@@ -207,7 +207,9 @@ Image::Image(const ImageInfo& img_info):_info(img_info)
 int Image::create_virtual(vx_context context, vx_graph graph)
 {
     if(vx_handle)
+    {
         return -1;
+    }
 
     _context = context;
 
@@ -247,12 +249,18 @@ int Image::create_from_handle(vx_context context)
     addr_in.stride_x = _info._color_planes;
 
     if (alignpixels == 0)
+    {
         addr_in.stride_y = addr_in.dim_x *addr_in.stride_x;
+    }
     else
+    {
         addr_in.stride_y = ((addr_in.dim_x + alignpixels - 1) & ~(alignpixels - 1))*addr_in.stride_x;
+    }
 
     if(_info.height_batch() == 0 || _info.width() == 0 || _info._color_planes == 0)
+    {
         THROW("Invalid image dimension " + TOSTR(_info.height_batch()) + " x " + TOSTR(_info.width()) + " x " + TOSTR(_info._color_planes));
+    }
 
     vx_status status;
     vx_size size = (addr_in.dim_y+0) * (addr_in.stride_y+0);
@@ -269,7 +277,9 @@ int Image::create_from_handle(vx_context context)
 int Image::create(vx_context context)
 {
     if(vx_handle)
+    {
         return -1;
+    }
 
     _context = context;
 
@@ -285,7 +295,9 @@ int Image::create(vx_context context)
 unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync)
 {
     if(_info._type != ImageInfo::Type::HANDLE)
+    {
         return 0;
+    }
 
     unsigned size = _info.width() *
                     _info.height_batch() *

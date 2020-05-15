@@ -35,7 +35,9 @@ CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
     _level(0)
 {
     for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
+    {
         _dev_buffer[bufIdx] = nullptr;
+    }
 
 }
 
@@ -45,13 +47,17 @@ void CircularBuffer::reset()
     _read_ptr = 0;
     _level = 0;
     while(!_circ_image_info.empty())
+    {
         _circ_image_info.pop();
+    }
 }
 
 void CircularBuffer::unblock_reader()
 {
     if(!_initialized)
+    {
         return;
+    }
     // Wake up the reader thread in case it's waiting for a load
     _wait_for_load.notify_one();
 }
@@ -59,7 +65,9 @@ void CircularBuffer::unblock_reader()
 void CircularBuffer::unblock_writer()
 {
     if(!_initialized)
+    {
         return;
+    }
     // Wake up the writer thread in case it's waiting for an unload
     _wait_for_unload.notify_one();
 }
@@ -89,13 +97,17 @@ unsigned char*  CircularBuffer::get_write_buffer()
 void CircularBuffer::sync()
 {
     if(!_initialized)
+    {
         return;
+    }
     cl_int err = CL_SUCCESS;
     if(_output_mem_type== RaliMemType::OCL)
     {
 #if 0
         if(clEnqueueWriteBuffer(_cl_cmdq, _dev_sub_buffer[_write_ptr], CL_TRUE, 0, _output_mem_size, _host_buffer_ptrs[_write_ptr], 0, NULL, NULL) != CL_SUCCESS)
+        {
             THROW("clEnqueueMapBuffer of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
+        }
 
 #else
         //NOTE: instead of calling clEnqueueWriteBuffer (shown above),
@@ -111,7 +123,9 @@ void CircularBuffer::sync()
                                         _output_mem_size,
                                         0, NULL, NULL, &err );
         if(err)
+        {
             THROW("clEnqueueUnmapMemObject of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
+        }
 
 #endif
     }
@@ -125,7 +139,9 @@ void CircularBuffer::sync()
 void CircularBuffer::push()
 {
     if(!_initialized)
+    {
         return;
+    }
     sync();
     // Pushing to the _circ_buff and _circ_buff_names must happen all at the same time
     std::unique_lock<std::mutex> lock(_names_buff_lock);
@@ -136,7 +152,9 @@ void CircularBuffer::push()
 void CircularBuffer::pop()
 {
     if(!_initialized)
+    {
         return;
+    }
     // Pushing to the _circ_buff and _circ_buff_names must happen all at the same time
     std::unique_lock<std::mutex> lock(_names_buff_lock);
     increment_read_ptr();
@@ -145,7 +163,9 @@ void CircularBuffer::pop()
 void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
 {
     if(_initialized)
+    {
         return;
+    }
     _output_mem_type = output_mem_type;
     _output_mem_size = output_mem_size;
     if(BUFF_DEPTH < 2)
@@ -155,7 +175,9 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
         if(_output_mem_type== RaliMemType::OCL)
         {
             if(_cl_cmdq == nullptr || _device_id == nullptr || _cl_context == nullptr)
+            {
                 THROW("Error ocl structure needed since memory type is OCL");
+            }
 
             cl_int err = CL_SUCCESS;
 
@@ -168,7 +190,9 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
                                                         CL_MEM_READ_ONLY|CL_MEM_ALLOC_HOST_PTR,
                                                         _output_mem_size, NULL, &err);// Create pinned memory
                 if (!_dev_buffer[buffIdx]  || err)
+                {
                     THROW("clCreateBuffer of size" + TOSTR(_output_mem_size)+  "failed " + TOSTR(err));
+                }
 
                 //TODO: we don't need to map the buffers to host here if the output of the output of this
                 //  loader_module is not required by the user to be part of the augmented output
@@ -179,7 +203,9 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
                                              _output_mem_size,
                                              0, NULL, NULL, &err );
                 if(err)
+                {
                     THROW("clEnqueueMapBuffer of size" + TOSTR(_output_mem_size)+  "failed " + TOSTR(err));
+                }
                 clRetainMemObject(_dev_buffer[buffIdx]);
 
             }

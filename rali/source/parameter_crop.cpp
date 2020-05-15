@@ -30,7 +30,9 @@ THE SOFTWARE.
 void CropParam::set_x_drift_factor(Parameter<float>* x_drift)
 {
     if(!x_drift)
+    {
         return ;
+    }
     ParameterFactory::instance()->destroy_param(x_drift_factor);
     x_drift_factor = x_drift;
 }
@@ -38,7 +40,9 @@ void CropParam::set_x_drift_factor(Parameter<float>* x_drift)
 void CropParam::set_y_drift_factor(Parameter<float>* y_drift)
 {
     if(!y_drift)
+    {
         return ;
+    }
     ParameterFactory::instance()->destroy_param(y_drift_factor);
     y_drift_factor = y_drift;
 }
@@ -46,7 +50,9 @@ void CropParam::set_y_drift_factor(Parameter<float>* y_drift)
 void CropParam::set_crop_height_factor(Parameter<float>* crop_h_factor)
 {
     if(!crop_h_factor)
+    {
         return ;
+    }
     ParameterFactory::instance()->destroy_param(crop_height_factor);
     crop_height_factor = crop_h_factor;
 }
@@ -54,7 +60,9 @@ void CropParam::set_crop_height_factor(Parameter<float>* crop_h_factor)
 void CropParam::set_crop_width_factor(Parameter<float>* crop_w_factor)
 {
     if(!crop_w_factor)
+    {
         return ;
+    }
     ParameterFactory::instance()->destroy_param(crop_width_factor);
     crop_width_factor = crop_w_factor;
 }
@@ -97,22 +105,34 @@ void CropParam::update_array()
     fill_values();
     status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(vx_uint32), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
+    {
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(vx_uint32), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
+    {
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)cropw_arr, 0, batch_size, sizeof(vx_uint32), cropw_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
+    {
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)croph_arr, 0, batch_size, sizeof(vx_uint32), croph_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
+    {
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)x2_arr, 0, batch_size, sizeof(vx_uint32), x2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
+    {
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)y2_arr, 0, batch_size, sizeof(vx_uint32), y2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
+    {
         WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
 }
 
 void CropParam::fill_values()
@@ -123,11 +143,19 @@ void CropParam::fill_values()
     {
         for (uint img_idx = 0; img_idx < batch_size; img_idx++)
         {
-            if(crop_w >= in_width[img_idx])    cropw_temp = in_width[img_idx] - 1;
-            else 	                           cropw_temp = crop_w;
+            if(crop_w >= in_width[img_idx])    {
+                cropw_temp = in_width[img_idx] - 1;
+            }
+            else 	                           {
+                cropw_temp = crop_w;
+            }
 
-            if(crop_h >= in_height[img_idx])   croph_temp = in_height[img_idx] - 1;
-            else                               croph_temp = crop_h;
+            if(crop_h >= in_height[img_idx])   {
+                croph_temp = in_height[img_idx] - 1;
+            }
+            else                               {
+                croph_temp = crop_h;
+            }
 
             if(_centric)
             {

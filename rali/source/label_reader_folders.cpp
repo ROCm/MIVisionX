@@ -91,7 +91,9 @@ void LabelReaderFolders::lookup(const std::vector<std::string>& image_names)
         return;
     }
     if(image_names.size() != (unsigned)_output->size())
+    {
         _output->resize(image_names.size());
+    }
 
     for(unsigned i = 0; i < image_names.size(); i++)
     {
@@ -107,7 +109,9 @@ void LabelReaderFolders::read_all(const std::string& _path)
 {
     std::string _folder_path = _path;
     if ((_sub_dir = opendir (_folder_path.c_str())) == nullptr)
+    {
         THROW("ERROR: Failed opening the directory at " + _folder_path);
+    }
 
     std::vector<std::string> entry_name_list;
     std::string _full_path = _folder_path;
@@ -115,7 +119,9 @@ void LabelReaderFolders::read_all(const std::string& _path)
     while((_entity = readdir (_sub_dir)) != nullptr)
     {
         std::string entry_name(_entity->d_name);
-        if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
+        if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) {
+            continue;
+        }
         entry_name_list.push_back(entry_name);
     }
     std::sort(entry_name_list.begin(), entry_name_list.end());
@@ -149,12 +155,16 @@ void LabelReaderFolders::read_all(const std::string& _path)
 void LabelReaderFolders::read_files(const std::string& _path)
 {
     if ((_src_dir = opendir (_path.c_str())) == nullptr)
+    {
         THROW("ERROR: Failed opening the directory at " + _path);
+    }
 
     while((_entity = readdir (_src_dir)) != nullptr)
     {
         if(_entity->d_type != DT_REG)
+        {
             continue;
+        }
 
         std::string file_path = _path;
         file_path.append("/");

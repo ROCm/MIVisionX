@@ -36,7 +36,9 @@ void RingBuffer::block_if_empty()
     if(empty())
     {   // if the current read buffer is being written wait on it
         if(_dont_block)
+        {
             return;
+        }
         _wait_for_load.wait(lock);
     }
 }
@@ -48,7 +50,9 @@ void RingBuffer:: block_if_full()
     if(full())
     {
         if(_dont_block)
+        {
             return;
+        }
         _wait_for_unload.wait(lock);
     }
 }
@@ -56,7 +60,9 @@ std::vector<void*> RingBuffer::get_read_buffers()
 {
     block_if_empty();
     if(_mem_type == RaliMemType::OCL)
+    {
         return _dev_sub_buffer[_read_ptr];
+    }
 
     return _host_sub_buffers[_read_ptr];
 }
@@ -64,7 +70,9 @@ std::vector<void*> RingBuffer::get_read_buffers()
 void *RingBuffer::get_host_master_read_buffer() {
     block_if_empty();
     if(_mem_type == RaliMemType::OCL)
+    {
         return nullptr;
+    }
 
     return _host_master_buffers[_read_ptr];
 }
@@ -73,7 +81,9 @@ std::vector<void*> RingBuffer::get_write_buffers()
 {
     block_if_full();
     if(_mem_type == RaliMemType::OCL)
+    {
         return _dev_sub_buffer[_write_ptr];
+    }
 
     return _host_sub_buffers[_write_ptr];
 }
@@ -108,7 +118,9 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
         if(mem_type== RaliMemType::OCL)
         {
             if(_dev.cmd_queue == nullptr || _dev.device_id == nullptr || _dev.context == nullptr)
+            {
                 THROW("Error ocl structure needed since memory type is OCL");
+            }
 
             cl_int err = CL_SUCCESS;
 
@@ -143,7 +155,9 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
                 _host_master_buffers[buffIdx] = aligned_alloc(MEM_ALIGNMENT, MEM_ALIGNMENT * (master_buffer_size / MEM_ALIGNMENT + 1));
                 _host_sub_buffers[buffIdx].resize(_sub_buffer_count);
                 for(size_t sub_buff_idx = 0; sub_buff_idx < _sub_buffer_count; sub_buff_idx++)
+                {
                     _host_sub_buffers[buffIdx][sub_buff_idx] = (unsigned char*)_host_master_buffers[buffIdx] + _sub_buffer_size * sub_buff_idx;
+                }
             }
         }
 }
@@ -158,7 +172,9 @@ void RingBuffer::push()
 void RingBuffer::pop()
 {
     if(empty())
+    {
         return;
+    }
     // pushing and popping to and from image and metadata buffer should be atomic so that their level stays the same at all times
     std::unique_lock<std::mutex> lock(_names_buff_lock);
     increment_read_ptr();
@@ -172,17 +188,23 @@ void RingBuffer::reset()
     _level = 0;
     _dont_block = false;
     while(!_meta_ring_buffer.empty())
+    {
         _meta_ring_buffer.pop();
+    }
 }
 
 RingBuffer::~RingBuffer()
 {
     if(_mem_type!= RaliMemType::OCL)
+    {
         return;
+    }
 
     for(unsigned idx=0; idx < _host_master_buffers.size(); idx++)
         if(_host_master_buffers[idx])
+        {
             free(_host_master_buffers[idx]);
+        }
 
     _host_master_buffers.clear();
     _host_sub_buffers.clear();

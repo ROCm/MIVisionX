@@ -34,7 +34,9 @@ VignetteNode::VignetteNode(const std::vector<Image *> &inputs, const std::vector
 void VignetteNode::create_node()
 {
     if(_node)
+    {
         return;
+    }
 
     _sdev.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
 

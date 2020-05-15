@@ -57,7 +57,7 @@ def readHierarchyFile(hierarchyFile):
             hierarchyCSV = csv.reader(hierarchy)
             hierarchyDataBase = [r for r in hierarchyCSV]
             hierarchyElements = len(hierarchyDataBase)
-    return hierarchyDataBase, hierarchyElements
+        return hierarchyDataBase, hierarchyElements
 
 def generateResultsCSV(resultsDirectory, numElements, resultDataBase, LabelLines):
     print "results.csv generation .."

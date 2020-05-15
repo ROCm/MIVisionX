@@ -125,7 +125,9 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
                                 LOG("vx_amd_media module loaded")
 #endif
                                 if(_affinity == RaliAffinity::GPU)
-                                { _device.init_ocl(_context); }
+                                {
+                                    _device.init_ocl(_context);
+                                }
     }
     catch(const std::exception& e)
     {
@@ -139,10 +141,14 @@ MasterGraph::run()
 {
 
     if(!_processing)// The user should not call the run function before the build() is called or while reset() is happening
-    { return MasterGraph::Status::NOT_RUNNING; }
+    {
+        return MasterGraph::Status::NOT_RUNNING;
+    }
 
     if(no_more_processed_data())
-    { return MasterGraph::Status::NO_MORE_DATA; }
+    {
+        return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     _ring_buffer.block_if_empty();// wait here if the user thread (caller of this function) is faster in consuming the processed images compare to th output routine in producing them
 
@@ -158,7 +164,9 @@ MasterGraph::run()
     // If the last batch of processed imaged has been just popped from the ring_buffer it means user has previously consumed all the processed images.
     // User should check using the IsEmpty() API and not call run() or copy() API when there is no more data. run() will return MasterGraph::Status::NO_MORE_DATA flag to notify it.
     if(no_more_processed_data())
-    { return MasterGraph::Status::NO_MORE_DATA; }
+    {
+        return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     decrease_image_count();
 
@@ -169,7 +177,9 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-    { _remaining_images_count -= _user_batch_size; }
+    {
+        _remaining_images_count -= _user_batch_size;
+    }
 }
 void
 MasterGraph::create_single_graph()
@@ -218,7 +228,9 @@ MasterGraph::create_loader_output_image(const ImageInfo &info)
     auto output = new Image(info);
 
     if(output->create_from_handle(_context) != 0)
-    { THROW("Creating output image for loader failed"); }
+    {
+        THROW("Creating output image for loader failed");
+    }
 
     _internal_images.push_back(output);
 
@@ -250,16 +262,22 @@ void MasterGraph::release()
     _image_map.clear();
     vx_status status;
     if(_graph != nullptr)
-    { _graph->release(); }
+    {
+        _graph->release();
+    }
 
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseContext " + TOSTR(status))
 
         for(auto& image: _internal_images)
-        { delete image; }// It will call the vxReleaseImage internally in the destructor
+        {
+            delete image;    // It will call the vxReleaseImage internally in the destructor
+        }
 
     for(auto& image: _output_images)
-    { delete image; }// It will call the vxReleaseImage internally in the destructor
+    {
+        delete image;    // It will call the vxReleaseImage internally in the destructor
+    }
     _augmented_meta_data = nullptr;
     _meta_data_graph = nullptr;
     _meta_data_reader = nullptr;
@@ -274,7 +292,9 @@ MasterGraph::update_node_parameters()
 
     // Apply renewed parameters to VX parameters used in augmentation
     for(auto& node: _nodes)
-    { node->update_parameters(); }
+    {
+        node->update_parameters();
+    }
 
     return Status::OK;
 }
@@ -331,7 +351,9 @@ MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
     if(processing_on_device() && _output_tensor != nullptr)
-    { clReleaseMemObject(_output_tensor ); }
+    {
+        clReleaseMemObject(_output_tensor );
+    }
 
     return Status::OK;
 }
@@ -343,7 +365,9 @@ MasterGraph::reset()
     _processing = false;
     _ring_buffer.unblock_writer();
     if(_output_thread.joinable())
-    { _output_thread.join(); }
+    {
+        _output_thread.join();
+    }
     _ring_buffer.reset();
     // clearing meta ring buffer
 
@@ -384,7 +408,9 @@ MasterGraph::copy_output(
     size_t out_size)
 {
     if(no_more_processed_data())
-    { return MasterGraph::Status::NO_MORE_DATA; }
+    {
+        return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     return Status::NOT_IMPLEMENTED;
     _convert_time.start();
@@ -399,10 +425,14 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                              float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
     if(no_more_processed_data())
-    { return MasterGraph::Status::NO_MORE_DATA; }
+    {
+        return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     if (output_color_format() == RaliColorFormat::RGB_PLANAR)
-    { return MasterGraph::copy_out_tensor_planar(out_ptr,format,multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, output_data_type); }
+    {
+        return MasterGraph::copy_out_tensor_planar(out_ptr,format,multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, output_data_type);
+    }
 
     _convert_time.start();
     // Copies to the output context given by the user
@@ -604,7 +634,9 @@ MasterGraph::Status
 MasterGraph::copy_output(unsigned char *out_ptr)
 {
     if(no_more_processed_data())
-    { return MasterGraph::Status::NO_MORE_DATA; }
+    {
+        return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     _convert_time.start();
     // Copies to the output context given by the user
@@ -687,7 +719,9 @@ void MasterGraph::output_routine()
                         THROW("Loader module failed to load next batch of images, status " + TOSTR(load_ret))
 
                         if (!_processing)
-                        { break; }
+                        {
+                            break;
+                        }
 
                     auto this_cycle_names =  _loader_module->get_id();
 
@@ -696,18 +730,24 @@ void MasterGraph::output_routine()
 
                         // meta_data lookup is done before _meta_data_graph->process() is called to have the new meta_data ready for processing
                         if (_meta_data_reader)
-                        { _meta_data_reader->lookup(this_cycle_names); }
+                        {
+                            _meta_data_reader->lookup(this_cycle_names);
+                        }
 
                     full_batch_image_names += this_cycle_names;
 
                     if (!_processing)
-                    { break; }
+                    {
+                        break;
+                    }
 
                     // Swap handles on the output images, so that new processed image will be written to the a new buffer
                     for (size_t idx = 0; idx < _output_images.size(); idx++)
                     {
                         if(_affinity == RaliAffinity::GPU)
-                        { _output_images[idx]->swap_handle(write_buffers[idx]); }
+                        {
+                            _output_images[idx]->swap_handle(write_buffers[idx]);
+                        }
                         else
                         {
                             auto this_cycle_buffer_ptr = (unsigned char *) write_buffers[idx] + each_cycle_size * cycle_idx;
@@ -716,7 +756,9 @@ void MasterGraph::output_routine()
                     }
 
                     if (!_processing)
-                    { break; }
+                    {
+                        break;
+                    }
 
                     update_node_parameters();
                     _process_time.start();
@@ -725,15 +767,21 @@ void MasterGraph::output_routine()
 
                     //process metadata, _augmented_meta_data contains the results after the call to process
                     if (_meta_data_graph)
-                    { _meta_data_graph->process(); }
+                    {
+                        _meta_data_graph->process();
+                    }
 
                     // concatenating metadata using the this cycle's internal batch
                     if(_augmented_meta_data)
                     {
                         if (full_batch_meta_data)
-                        { full_batch_meta_data->concatenate(_augmented_meta_data); }
+                        {
+                            full_batch_meta_data->concatenate(_augmented_meta_data);
+                        }
                         else
-                        { full_batch_meta_data = _augmented_meta_data->clone(); }
+                        {
+                            full_batch_meta_data = _augmented_meta_data->clone();
+                        }
                     }
                 }
 
@@ -776,7 +824,9 @@ void MasterGraph::stop_processing()
     _ring_buffer.unblock_reader();
     _ring_buffer.unblock_writer();
     if(_output_thread.joinable())
-    { _output_thread.join(); }
+    {
+        _output_thread.join();
+    }
 }
 
 MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_path, bool is_output)
@@ -793,7 +843,9 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
         if (_augmented_meta_data)
             THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
             else
-            { _augmented_meta_data = _meta_data_reader->get_output(); }
+            {
+                _augmented_meta_data = _meta_data_reader->get_output();
+            }
     }
     return _meta_data_reader->get_output();
 }
@@ -809,7 +861,9 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     if (_augmented_meta_data)
         THROW("Metadata can only have a single output")
         else
-        { _augmented_meta_data = _meta_data_reader->get_output(); }
+        {
+            _augmented_meta_data = _meta_data_reader->get_output();
+        }
     return _meta_data_reader->get_output();
 }
 
@@ -824,7 +878,9 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
     if (_augmented_meta_data)
         THROW("Metadata can only have a single output")
         else
-        { _augmented_meta_data = _meta_data_reader->get_output(); }
+        {
+            _augmented_meta_data = _meta_data_reader->get_output();
+        }
     return _meta_data_reader->get_output();
 }
 
@@ -843,7 +899,9 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
 
 
     if(affinity == RaliAffinity::GPU)
-    { return user_batch_size; }
+    {
+        return user_batch_size;
+    }
 
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
@@ -894,7 +952,9 @@ size_t MasterGraph::output_depth()
 void MasterGraph::notify_user_thread()
 {
     if(_output_routine_finished_processing)
-    { return; }
+    {
+        return;
+    }
     LOG("Output routine finished processing all images, no more image to be processed")
     _output_routine_finished_processing = true;
 }
@@ -909,7 +969,9 @@ MasterGraph::copy_out_tensor_planar(void *out_ptr, RaliTensorFormat format, floa
                                     float multiplier2, float offset0, float offset1, float offset2, bool reverse_channels, RaliTensorDataType output_data_type)
 {
     if(no_more_processed_data())
-    { return MasterGraph::Status::NO_MORE_DATA; }
+    {
+        return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     _convert_time.start();
     // Copies to the output context given by the user, each image is copied separate for planar

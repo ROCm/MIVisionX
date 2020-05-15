@@ -72,7 +72,9 @@ raliUpdateIntUniformRand(
 
     UniformRand<int>* obj;
     if((obj = dynamic_cast<UniformRand<int>*>(input_obj->core)) == nullptr)
-    { return RALI_INVALID_PARAMETER_TYPE; }
+    {
+        return RALI_INVALID_PARAMETER_TYPE;
+    }
 
     return (obj->update(start, end) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
 }
@@ -99,7 +101,9 @@ raliUpdateFloatUniformRand(
 
     UniformRand<float>* obj;
     if((obj = dynamic_cast<UniformRand<float>*>(input_obj->core)) == nullptr)
-    { return RALI_INVALID_PARAMETER_TYPE; }
+    {
+        return RALI_INVALID_PARAMETER_TYPE;
+    }
 
     return (obj->update(start, end) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
 
@@ -139,7 +143,9 @@ raliUpdateIntParameter(int new_val, RaliIntParam p_input_obj)
 
     SimpleParameter<int>* obj;
     if((obj = dynamic_cast<SimpleParameter<int>*>(input_obj->core)) == nullptr)
-    { return RALI_INVALID_PARAMETER_TYPE; }
+    {
+        return RALI_INVALID_PARAMETER_TYPE;
+    }
     return (obj->update(new_val) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED;
 }
 
@@ -154,7 +160,9 @@ raliUpdateFloatParameter(float new_val, RaliFloatParam p_input_obj)
 
     SimpleParameter<float>* obj;
     if((obj = dynamic_cast<SimpleParameter<float>*>(input_obj->core)) == nullptr)
-    { return RALI_INVALID_PARAMETER_TYPE; }
+    {
+        return RALI_INVALID_PARAMETER_TYPE;
+    }
     return (obj->update(new_val) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED;
 }
 
@@ -173,7 +181,9 @@ raliUpdateFloatRand(
 
     CustomRand<float>* obj;
     if((obj = dynamic_cast<CustomRand<float>*>(updating_obj->core)) == nullptr)
-    { return RALI_INVALID_PARAMETER_TYPE; }
+    {
+        return RALI_INVALID_PARAMETER_TYPE;
+    }
 
     return (obj->update(values, frequencies, size) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
 }
@@ -204,7 +214,9 @@ raliUpdateIntRand(
 
     CustomRand<int>* obj;
     if((obj = dynamic_cast<CustomRand<int>*>(updating_obj->core)) == nullptr)
-    { return RALI_INVALID_PARAMETER_TYPE; }
+    {
+        return RALI_INVALID_PARAMETER_TYPE;
+    }
 
     return (obj->update( values, frequencies, size) == 0) ? RALI_OK : RALI_UPDATE_PARAMETER_FAILED ;
 }

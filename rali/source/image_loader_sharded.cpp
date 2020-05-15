@@ -31,7 +31,9 @@ ImageLoaderSharded::ImageLoaderSharded(DeviceResources dev_resources):
 std::vector<std::string> ImageLoaderSharded::get_id()
 {
     if(!_initialized)
-    { THROW("get_id() should be called after initialize() function"); }
+    {
+        THROW("get_id() should be called after initialize() function");
+    }
     return _loaders[_loader_idx]->get_id();
 }
 
@@ -46,13 +48,17 @@ ImageLoaderSharded::fast_forward_through_empty_loaders()
     int loaders_count = _loaders.size();
     // reject empty loaders and get to a loader that still has images to play
     while (_loaders[_loader_idx]->remaining_count() == 0 && loaders_count-- > 0)
-    { increment_loader_idx(); }
+    {
+        increment_loader_idx();
+    }
 }
 
 LoaderModuleStatus ImageLoaderSharded::load_next()
 {
     if(!_initialized)
-    { return LoaderModuleStatus::NOT_INITIALIZED; }
+    {
+        return LoaderModuleStatus::NOT_INITIALIZED;
+    }
 
     increment_loader_idx();
 
@@ -69,7 +75,9 @@ ImageLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cf
                                unsigned batch_size)
 {
     if(_initialized)
-    { return; }
+    {
+        return;
+    }
     _shard_count = reader_cfg.get_shard_count();
     // Create loader modules
     for(size_t i = 0; i < _shard_count; i++)
@@ -119,13 +127,17 @@ size_t ImageLoaderSharded::remaining_count()
 {
     int sum = 0;
     for(auto& loader: _loaders)
-    { sum += loader->remaining_count(); }
+    {
+        sum += loader->remaining_count();
+    }
     return sum;
 }
 void ImageLoaderSharded::reset()
 {
     for(auto& loader: _loaders)
-    { loader->reset(); }
+    {
+        loader->reset();
+    }
 }
 void ImageLoaderSharded::increment_loader_idx()
 {

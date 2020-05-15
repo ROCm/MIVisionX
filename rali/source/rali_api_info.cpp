@@ -100,10 +100,14 @@ RaliStatus RALI_API_CALL raliGetStatus(RaliContext p_context)
 {
     auto context = static_cast<Context*>(p_context);
     if(!context)
-    { return RALI_CONTEXT_INVALID; }
+    {
+        return RALI_CONTEXT_INVALID;
+    }
 
     if(context->no_error())
-    { return RALI_OK; }
+    {
+        return RALI_OK;
+    }
 
     return RALI_RUNTIME_ERROR;
 }

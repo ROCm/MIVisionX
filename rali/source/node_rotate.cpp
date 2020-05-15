@@ -34,7 +34,9 @@ RotateNode::RotateNode(const std::vector<Image *> &inputs, const std::vector<Ima
 void RotateNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
     std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
     std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
 

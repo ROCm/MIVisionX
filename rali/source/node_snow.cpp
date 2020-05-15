@@ -35,7 +35,9 @@ SnowNode::SnowNode(const std::vector<Image *> &inputs, const std::vector<Image *
 void SnowNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     _shift.create_array(_graph, VX_TYPE_FLOAT32, _batch_size);
     _node = vxExtrppNode_SnowbatchPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _shift.default_array(), _batch_size);

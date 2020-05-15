@@ -35,7 +35,9 @@ void RaliContrastNode::create_node()
 {
 
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     _min.create_array(_graph,VX_TYPE_UINT32, _batch_size);
     _max.create_array(_graph,VX_TYPE_UINT32, _batch_size);

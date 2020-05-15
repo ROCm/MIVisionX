@@ -34,7 +34,9 @@ FlipNode::FlipNode(const std::vector<Image *> &inputs, const std::vector<Image *
 void FlipNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
 
     _flip_axis.create_array(_graph,VX_TYPE_UINT32,_batch_size);

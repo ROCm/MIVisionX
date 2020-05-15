@@ -34,7 +34,9 @@ ColorTemperatureNode::ColorTemperatureNode(const std::vector<Image *> &inputs, c
 void ColorTemperatureNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     _adj_value_param.create_array(_graph, VX_TYPE_INT32, _batch_size);
 

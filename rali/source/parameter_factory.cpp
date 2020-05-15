@@ -34,7 +34,9 @@ bool validate_simple_rand_param(pParam arg)
         [&ret](auto&& arg)
     {
         if(arg == nullptr || arg->type != RaliParameterType::DETERMINISTIC)
-        { ret = false; }
+        {
+            ret = false;
+        }
 
     },
     arg);
@@ -49,7 +51,9 @@ bool validate_custom_rand_param(pParam arg)
         [&ret](auto&& arg)
     {
         if(arg == nullptr || arg->type != RaliParameterType::RANDOM_CUSTOM)
-        { ret = false; }
+        {
+            ret = false;
+        }
 
     },
     arg);
@@ -63,7 +67,9 @@ bool validate_uniform_rand_param(pParam  rand_obj)
         [&ret](auto&& arg)
     {
         if(arg == nullptr || arg->type != RaliParameterType::RANDOM_UNIFORM)
-        { ret = false; }
+        {
+            ret = false;
+        }
 
     },
     rand_obj);
@@ -174,13 +180,17 @@ FloatParam* ParameterFactory::create_single_value_float_param(float value)
 Parameter<int>* core(IntParam* arg)
 {
     if(!arg)
-    { return nullptr; }
+    {
+        return nullptr;
+    }
     return arg->core;
 }
 
 Parameter<float>* core(FloatParam* arg)
 {
     if(!arg)
-    { return nullptr; }
+    {
+        return nullptr;
+    }
     return arg->core;
 }

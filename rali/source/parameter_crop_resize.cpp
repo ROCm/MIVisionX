@@ -32,7 +32,9 @@ THE SOFTWARE.
 void RandomCropResizeParam::set_area_coeff(Parameter<float>* area)
 {
     if(!area)
-    { return; }
+    {
+        return;
+    }
 
     ParameterFactory::instance()->destroy_param(area_coeff);
     area_coeff = area;
@@ -41,7 +43,9 @@ void RandomCropResizeParam::set_area_coeff(Parameter<float>* area)
 void RandomCropResizeParam::set_aspect_ratio_coeff(Parameter<float>* aspect_ratio)
 {
     if(!aspect_ratio)
-    { return; }
+    {
+        return;
+    }
 
     ParameterFactory::instance()->destroy_param(aspect_ratio_coeff);
     aspect_ratio_coeff = aspect_ratio;
@@ -49,7 +53,9 @@ void RandomCropResizeParam::set_aspect_ratio_coeff(Parameter<float>* aspect_rati
 void RandomCropResizeParam::set_x_drift(Parameter<float>* x_drift)
 {
     if(!x_drift)
-    { return; }
+    {
+        return;
+    }
 
     ParameterFactory::instance()->destroy_param(x_center_drift);
     x_center_drift = x_drift;
@@ -57,7 +63,9 @@ void RandomCropResizeParam::set_x_drift(Parameter<float>* x_drift)
 void RandomCropResizeParam::set_y_drift(Parameter<float>* y_drift)
 {
     if(!y_drift)
-    { return; }
+    {
+        return;
+    }
 
     ParameterFactory::instance()->destroy_param(y_center_drift);
     y_center_drift = y_drift;
@@ -113,16 +121,24 @@ void RandomCropResizeParam::update_array()
     }
     status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(size_t), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(size_t), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)x2_arr, 0, batch_size, sizeof(size_t), x2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)y2_arr, 0, batch_size, sizeof(size_t), y2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
 }
 
 void RandomCropResizeParam::update_array_for_cmn() // For crop mirro normalize
@@ -151,16 +167,24 @@ void RandomCropResizeParam::update_array_for_cmn() // For crop mirro normalize
     }
     status = vxCopyArrayRange((vx_array)x1_arr, 0, batch_size, sizeof(size_t), x1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)y1_arr, 0, batch_size, sizeof(size_t), y1_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)x2_arr, 0, batch_size, sizeof(size_t), x2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
     status = vxCopyArrayRange((vx_array)y2_arr, 0, batch_size, sizeof(size_t), y2_arr_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status != VX_SUCCESS)
-    { WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status)); }
+    {
+        WRN("ERROR: vxCopyArrayRange x1_arr failed " +TOSTR(status));
+    }
 }
 
 void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_coeff_, float x_center_drift_, float y_center_drift_, float aspect_ratio_)
@@ -182,9 +206,13 @@ void RandomCropResizeParam::calculate_area_cmn(unsigned image_idx, float area_co
     auto bound = [](float arg, float min, float max)
     {
         if( arg < min)
-        { return min; }
+        {
+            return min;
+        }
         if( arg > max)
-        { return max; }
+        {
+            return max;
+        }
         return arg;
     };
 

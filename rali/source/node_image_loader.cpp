@@ -25,7 +25,9 @@ THE SOFTWARE.
 
 
 ImageLoaderNode::ImageLoaderNode(Image *output, DeviceResources device_resources):
-    Node({}, {output})
+    Node({}, {
+    output
+})
 {
     _loader_module = std::make_shared<ImageLoaderSharded>(device_resources);
 }

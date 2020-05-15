@@ -57,7 +57,9 @@ void TextFileMetaDataReader::lookup(const std::vector<std::string> &image_names)
         return;
     }
     if(image_names.size() != (unsigned)_output->size())
-    { _output->resize(image_names.size()); }
+    {
+        _output->resize(image_names.size());
+    }
     for(unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
@@ -80,7 +82,9 @@ void TextFileMetaDataReader::read_all(const std::string &path) {
             int label;
             std::string image_name;
             if(!(line_ss>>image_name>>label))
-            { continue; }
+            {
+                continue;
+            }
             add(image_name, label);
         }
     }

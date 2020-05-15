@@ -57,7 +57,9 @@ CIFAR10DataLoader::reset()
     _circ_buff.unblock_writer();
 
     if(_load_thread.joinable())
-    { _load_thread.join(); }
+    {
+        _load_thread.join();
+    }
 
     // Emptying the internal circular buffer
     _circ_buff.reset();
@@ -89,7 +91,9 @@ CIFAR10DataLoader::stop_internal_thread()
     _circ_buff.unblock_writer();
     _circ_buff.reset();
     if(_load_thread.joinable())
-    { _load_thread.join(); }
+    {
+        _load_thread.join();
+    }
 }
 
 
@@ -163,7 +167,9 @@ CIFAR10DataLoader::load_routine()
         auto cifar10reader = std::dynamic_pointer_cast<CIFAR10DataReader>(_reader);
 
         if(!_internal_thread_running)
-        { break; }
+        {
+            break;
+        }
 
         auto load_status = LoaderModuleStatus::NO_MORE_DATA_TO_READ;
         {
@@ -231,9 +237,13 @@ CIFAR10DataLoader::update_output_image()
     LoaderModuleStatus status = LoaderModuleStatus::OK;
 
     if(is_out_of_data())
-    { return LoaderModuleStatus::NO_MORE_DATA_TO_READ; }
+    {
+        return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
+    }
     if(_stopped)
-    { return LoaderModuleStatus::OK; }
+    {
+        return LoaderModuleStatus::OK;
+    }
 
     // _circ_buff.get_read_buffer_x() is blocking and puts the caller on sleep until new images are written to the _circ_buff
     if(_mem_type== RaliMemType::OCL)
@@ -241,7 +251,9 @@ CIFAR10DataLoader::update_output_image()
         auto data_buffer =  _circ_buff.get_read_buffer_dev();
         _swap_handle_time.start();
         if(_output_image->swap_handle(data_buffer)!= 0)
-        { return LoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED; }
+        {
+            return LoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED;
+        }
         _swap_handle_time.end();
     }
     else
@@ -249,11 +261,15 @@ CIFAR10DataLoader::update_output_image()
         auto data_buffer = _circ_buff.get_read_buffer_host();
         _swap_handle_time.start();
         if(_output_image->swap_handle(data_buffer) != 0)
-        { return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED; }
+        {
+            return LoaderModuleStatus::HOST_BUFFER_SWAP_FAILED;
+        }
         _swap_handle_time.end();
     }
     if(_stopped)
-    { return LoaderModuleStatus::OK; }
+    {
+        return LoaderModuleStatus::OK;
+    }
 
     decoded_image_info d_img_info = _circ_buff.get_image_info();
     _output_names = d_img_info._image_names;
@@ -261,7 +277,9 @@ CIFAR10DataLoader::update_output_image()
 
     _circ_buff.pop();
     if(!_loop)
-    { _remaining_image_count -= _batch_size; }
+    {
+        _remaining_image_count -= _batch_size;
+    }
 
     return status;
 }

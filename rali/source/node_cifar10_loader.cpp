@@ -25,7 +25,9 @@ THE SOFTWARE.
 
 
 Cifar10LoaderNode::Cifar10LoaderNode(Image *output, DeviceResources device_resources):
-    Node({}, {output})
+    Node({}, {
+    output
+})
 {
     _loader_module = std::make_shared<CIFAR10DataLoader>(device_resources);
 }

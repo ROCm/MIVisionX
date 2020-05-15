@@ -40,7 +40,9 @@ WarpAffineNode::WarpAffineNode(const std::vector<Image *> &inputs, const std::ve
 void WarpAffineNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     vx_status width_status, height_status;
     _affine.resize(6 * _batch_size);

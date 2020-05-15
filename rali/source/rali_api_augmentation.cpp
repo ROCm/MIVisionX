@@ -89,7 +89,9 @@ raliRotate(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-        { output->reset_image_roi(); }
+        {
+            output->reset_image_roi();
+        }
         context->master_graph->add_node<RotateNode>({input}, {output})->init(angle);
     }
     catch(const std::exception& e)
@@ -131,7 +133,9 @@ raliRotateFixed(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-        { output->reset_image_roi(); }
+        {
+            output->reset_image_roi();
+        }
 
         context->master_graph->add_node<RotateNode>({input}, {output})->init(angle);
     }
@@ -674,7 +678,9 @@ raliWarpAffine(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-        { output->reset_image_roi(); }
+        {
+            output->reset_image_roi();
+        }
 
         context->master_graph->add_node<WarpAffineNode>({input}, {output})->init(x0, x1, y0, y1, o0, o1);
     }
@@ -719,7 +725,9 @@ raliWarpAffineFixed(
 
         // If the user has provided the output size the dimension of all the images after this node will be fixed and equal to that size
         if(dest_width != 0 && dest_height != 0)
-        { output->reset_image_roi(); }
+        {
+            output->reset_image_roi();
+        }
 
         context->master_graph->add_node<WarpAffineNode>({input}, {output})->init(x0, x1, y0, y1, o0, o1);
     }

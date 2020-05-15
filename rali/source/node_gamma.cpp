@@ -36,7 +36,9 @@ GammaNode::GammaNode(const std::vector<Image *> &inputs, const std::vector<Image
 void GammaNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     if(_outputs.empty() || _inputs.empty())
         THROW("Uninitialized input/output arguments")

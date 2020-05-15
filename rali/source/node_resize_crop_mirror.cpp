@@ -35,7 +35,9 @@ ResizeCropMirrorNode::ResizeCropMirrorNode(const std::vector<Image *> &inputs, c
 void ResizeCropMirrorNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     _crop_param->create_array(_graph);
 

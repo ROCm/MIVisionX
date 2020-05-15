@@ -32,7 +32,9 @@ CopyNode::CopyNode(const std::vector<Image *> &inputs, const std::vector<Image *
 void CopyNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     _node = vxExtrppNode_Copy(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle());
 

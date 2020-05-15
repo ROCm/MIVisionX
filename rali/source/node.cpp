@@ -25,7 +25,9 @@ Node::~Node()
 {
 
     if(!_node)
-    { vxReleaseNode(&_node); }
+    {
+        vxReleaseNode(&_node);
+    }
     _node = nullptr;
 }
 

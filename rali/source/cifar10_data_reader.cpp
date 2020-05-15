@@ -45,7 +45,9 @@ CIFAR10DataReader::CIFAR10DataReader()
 unsigned CIFAR10DataReader::count()
 {
     if(_loop)
-    { return _file_names.size(); }
+    {
+        return _file_names.size();
+    }
 
     int ret = ((int)_file_names.size() -_read_counter);
     return ((ret < 0) ? 0 : ret);
@@ -98,7 +100,9 @@ size_t CIFAR10DataReader::open()
     }
 
     if(!_current_fPtr) // Check if it is ready for reading
-    { return 0; }
+    {
+        return 0;
+    }
 
     fseek(_current_fPtr, file_offset, SEEK_END);// Take the file read pointer to the end
 
@@ -119,7 +123,9 @@ size_t CIFAR10DataReader::open()
 size_t CIFAR10DataReader::read(unsigned char* buf, size_t read_size)
 {
     if(!_current_fPtr)
-    { return 0; }
+    {
+        return 0;
+    }
 
     // Requested read size bigger than the raw file size? just read as many bytes as the raw file size
     read_size = (read_size > (_raw_file_size-1)) ? _raw_file_size-1 : read_size;
@@ -157,7 +163,9 @@ void CIFAR10DataReader::reset()
 Reader::Status CIFAR10DataReader::subfolder_reading()
 {
     if ((_sub_dir = opendir (_folder_path.c_str())) == nullptr)
-    { THROW("CIFAR10DataReader ERROR: Failed opening the directory at " + _folder_path); }
+    {
+        THROW("CIFAR10DataReader ERROR: Failed opening the directory at " + _folder_path);
+    }
 
     std::vector<std::string> entry_name_list;
     std::string _full_path = _folder_path;
@@ -165,7 +173,9 @@ Reader::Status CIFAR10DataReader::subfolder_reading()
     while((_entity = readdir (_sub_dir)) != nullptr)
     {
         std::string entry_name(_entity->d_name);
-        if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) { continue; }
+        if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) {
+            continue;
+        }
         entry_name_list.push_back(entry_name);
         LOG("CIFAR10DataReader  Got entry name " +  entry_name )
     }
@@ -183,7 +193,9 @@ Reader::Status CIFAR10DataReader::subfolder_reading()
             std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
             _folder_path = subfolder_path;
             if(open_folder() != Reader::Status::OK)
-            { WRN("CIFAR10DataReader: File reader cannot access the storage at " + _folder_path); }
+            {
+                WRN("CIFAR10DataReader: File reader cannot access the storage at " + _folder_path);
+            }
         }
     }
     if(!_file_names.empty())
@@ -204,13 +216,17 @@ void CIFAR10DataReader::replicate_last_image_to_fill_last_shard()
 Reader::Status CIFAR10DataReader::open_folder()
 {
     if ((_src_dir = opendir (_folder_path.c_str())) == nullptr)
-    { THROW("CIFAR10DataReader ERROR: Failed opening the directory at " + _folder_path); }
+    {
+        THROW("CIFAR10DataReader ERROR: Failed opening the directory at " + _folder_path);
+    }
 
 
     while((_entity = readdir (_src_dir)) != nullptr)
     {
         if(_entity->d_type != DT_REG)
-        { continue; }
+        {
+            continue;
+        }
         _in_batch_read_count++;
         _in_batch_read_count = (_in_batch_read_count%_batch_count == 0) ? 0 : _in_batch_read_count;
         std::string file_path = _folder_path;

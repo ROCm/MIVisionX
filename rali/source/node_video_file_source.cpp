@@ -47,13 +47,17 @@ void VideoFileNode::create_node()
     {
         path = video_path.substr(prev_pos, new_pos);
         if(vid_count >= _batch_size)
-        { break; }
+        {
+            break;
+        }
         prev_pos = new_pos;
         _path_to_videos[vid_count++] = path;
     }
     LOG("Total of "+TOSTR(vid_count)+ " videos going to be loaded , using "+((_decode_mode == DecodeMode::USE_HW) ? " hardware decoder ":" software decoder"))
     for(size_t i = 0; i < _video_stream_count; i++)
-    { iss << (_path_to_videos[i])<< ":" << ((_decode_mode == DecodeMode::USE_HW) ? "1":"0"); }
+    {
+        iss << (_path_to_videos[i])<< ":" << ((_decode_mode == DecodeMode::USE_HW) ? "1":"0");
+    }
 
     LOG("Total of "+TOSTR(vid_count)+ " videos going to be loaded " + iss.str())
     _interm_output = std::make_unique<Image>(_outputs[0]->info());

@@ -36,7 +36,9 @@ CropMirrorNormalizeNode::CropMirrorNormalizeNode(const std::vector<Image *> &inp
 void CropMirrorNormalizeNode::create_node()
 {
     if(_node)
-    { return; }
+    {
+        return;
+    }
 
     if(_crop_h == 0 || _crop_w == 0)
         THROW("Uninitialized destination dimension - Invalid Crop Sizes")

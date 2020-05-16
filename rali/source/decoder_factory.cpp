@@ -20,19 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-#include <decoder.h>
-#include <turbo_jpeg_decoder.h>
 #include "decoder_factory.h"
 #include "commons.h"
+#include <decoder.h>
+#include <turbo_jpeg_decoder.h>
 
 std::shared_ptr<Decoder> create_decoder(DecoderConfig config) {
-    switch(config.type())
-    {
-    case DecoderType::TURBO_JPEG:
-        return std::make_shared<TJDecoder>();
-        break;
-    default:
-        THROW("Unsupported decoder type "+ TOSTR(config.type()));
-    }
+  switch (config.type()) {
+  case DecoderType::TURBO_JPEG:
+    return std::make_shared<TJDecoder>();
+    break;
+  default:
+    THROW("Unsupported decoder type " + TOSTR(config.type()));
+  }
 }

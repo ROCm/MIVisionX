@@ -21,24 +21,17 @@ THE SOFTWARE.
 */
 
 #pragma once
-#include <stdexcept>
 #include <exception>
+#include <stdexcept>
 #include <string>
 
-class RaliException : public std::exception
-{
+class RaliException : public std::exception {
 public:
+  explicit RaliException(const std::string &message) : _message(message) {}
+  virtual const char *what() const throw() override { return _message.c_str(); }
 
-    explicit RaliException(const std::string& message):_message(message)
-    {}
-    virtual const char* what() const throw() override
-    {
-        return _message.c_str();
-    }
 private:
-    std::string _message;
+  std::string _message;
 };
 
-#define THROW(X) throw RaliException(" { "+std::string(__func__)+" } " + X);
-
-
+#define THROW(X) throw RaliException(" { " + std::string(__func__) + " } " + X);

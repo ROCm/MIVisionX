@@ -20,90 +20,66 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <string>
-#include <exception>
+#include "rali_api.h"
 #include "commons.h"
 #include "context.h"
-#include "rali_api.h"
+#include <exception>
+#include <string>
 
-RaliStatus RALI_API_CALL
-raliRelease(RaliContext p_context)
-{
-    // Deleting context is required to call the destructor of all the member objects
-    auto context = static_cast<Context*>(p_context);
-    delete context;
-    return RALI_OK;
+RaliStatus RALI_API_CALL raliRelease(RaliContext p_context) {
+  // Deleting context is required to call the destructor of all the member
+  // objects
+  auto context = static_cast<Context *>(p_context);
+  delete context;
+  return RALI_OK;
 }
-RaliContext RALI_API_CALL
-raliCreate(
-    size_t batch_size,
-    RaliProcessMode affinity,
-    int gpu_id,
-    size_t cpu_thread_count)
-{
-    RaliContext context = nullptr;
-    try
-    {
-        auto translate_process_mode = [](RaliProcessMode process_mode)
-        {
-            switch(process_mode)
-            {
-            case RALI_PROCESS_GPU:
-                return RaliAffinity::GPU;
-            case RALI_PROCESS_CPU:
-                return RaliAffinity::CPU;
-            default:
-                THROW("Unkown Rali process mode")
-            }
-        };
-        context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
-        // Reset seed in case it's being randomized during context creation
-    }
-    catch(const std::exception& e)
-    {
-        ERR( STR("Failed to init the Rali context, ") + STR(e.what()))
-    }
-    return context;
+RaliContext RALI_API_CALL raliCreate(size_t batch_size,
+                                     RaliProcessMode affinity, int gpu_id,
+                                     size_t cpu_thread_count) {
+  RaliContext context = nullptr;
+  try {
+    auto translate_process_mode = [](RaliProcessMode process_mode) {
+      switch (process_mode) {
+      case RALI_PROCESS_GPU:
+        return RaliAffinity::GPU;
+      case RALI_PROCESS_CPU:
+        return RaliAffinity::CPU;
+      default:
+        THROW("Unkown Rali process mode")
+      }
+    };
+    context = new Context(batch_size, translate_process_mode(affinity), gpu_id,
+                          cpu_thread_count);
+    // Reset seed in case it's being randomized during context creation
+  } catch (const std::exception &e) {
+    ERR(STR("Failed to init the Rali context, ") + STR(e.what()))
+  }
+  return context;
 }
 
-RaliStatus RALI_API_CALL
-raliRun(RaliContext p_context)
-{
-    auto context = static_cast<Context*>(p_context);
-    try
-    {
-        auto ret = context->master_graph->run();
-        if(ret != MasterGraph::Status::OK)
-        {
-            return RALI_RUNTIME_ERROR;
-        }
+RaliStatus RALI_API_CALL raliRun(RaliContext p_context) {
+  auto context = static_cast<Context *>(p_context);
+  try {
+    auto ret = context->master_graph->run();
+    if (ret != MasterGraph::Status::OK) {
+      return RALI_RUNTIME_ERROR;
     }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-        return RALI_RUNTIME_ERROR;
-    }
-    return RALI_OK;
+  } catch (const std::exception &e) {
+    context->capture_error(e.what());
+    ERR(e.what())
+    return RALI_RUNTIME_ERROR;
+  }
+  return RALI_OK;
 }
 
-RaliStatus RALI_API_CALL
-raliVerify(RaliContext p_context)
-{
-    auto context = static_cast<Context*>(p_context);
-    try
-    {
-        context->master_graph->build();
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-        return RALI_RUNTIME_ERROR;
-    }
-    return RALI_OK;
+RaliStatus RALI_API_CALL raliVerify(RaliContext p_context) {
+  auto context = static_cast<Context *>(p_context);
+  try {
+    context->master_graph->build();
+  } catch (const std::exception &e) {
+    context->capture_error(e.what());
+    ERR(e.what())
+    return RALI_RUNTIME_ERROR;
+  }
+  return RALI_OK;
 }
-
-
-
-

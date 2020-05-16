@@ -22,7 +22,7 @@ THE SOFTWARE.
 
 #pragma once
 
-#include <exception>
 #include "reader.h"
+#include <exception>
 
 std::shared_ptr<Reader> create_reader(ReaderConfig config);

@@ -23,35 +23,35 @@ THE SOFTWARE.
 #ifndef RALI_H
 #define RALI_H
 
-#include "rali_api_types.h"
-#include "rali_api_parameters.h"
-#include "rali_api_data_loaders.h"
 #include "rali_api_augmentation.h"
+#include "rali_api_data_loaders.h"
 #include "rali_api_data_transfer.h"
-#include "rali_api_meta_data.h"
 #include "rali_api_info.h"
+#include "rali_api_meta_data.h"
+#include "rali_api_parameters.h"
+#include "rali_api_types.h"
 
-/// Creates the context for a new augmentation pipeline. Initializes all the required internals for the pipeline
-/// \param batch_size
-/// \param affinity
-/// \param gpu_id
-/// \param cpu_thread_count
-/// \return
-extern "C"  RaliContext  RALI_API_CALL raliCreate(size_t batch_size, RaliProcessMode affinity, int gpu_id = 0, size_t cpu_thread_count = 1);
-
-///
-/// \param context
-/// \return
-extern "C"  RaliStatus RALI_API_CALL raliVerify(RaliContext context);
+/// Creates the context for a new augmentation pipeline. Initializes all the
+/// required internals for the pipeline \param batch_size \param affinity \param
+/// gpu_id \param cpu_thread_count \return
+extern "C" RaliContext RALI_API_CALL raliCreate(size_t batch_size,
+                                                RaliProcessMode affinity,
+                                                int gpu_id = 0,
+                                                size_t cpu_thread_count = 1);
 
 ///
 /// \param context
 /// \return
-extern "C"  RaliStatus  RALI_API_CALL raliRun(RaliContext context);
+extern "C" RaliStatus RALI_API_CALL raliVerify(RaliContext context);
+
+///
+/// \param context
+/// \return
+extern "C" RaliStatus RALI_API_CALL raliRun(RaliContext context);
 
 ///
 /// \param rali_context
 /// \return
-extern "C"  RaliStatus  RALI_API_CALL raliRelease(RaliContext rali_context);
+extern "C" RaliStatus RALI_API_CALL raliRelease(RaliContext rali_context);
 
 #endif

@@ -20,26 +20,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-#include <memory>
 #include "bounding_box_graph.h"
+#include "exception.h"
 #include "meta_data_graph.h"
 #include "meta_data_reader.h"
-#include "exception.h"
+#include <memory>
 
+std::shared_ptr<MetaDataGraph>
+create_meta_data_graph(const MetaDataConfig &config) {
+  switch (config.type()) {
+  case MetaDataType::Label: {
+    return nullptr;
+  }
+  case MetaDataType::BoundingBox: {
+    return std::make_shared<BoundingBoxGraph>();
+  }
 
-std::shared_ptr<MetaDataGraph> create_meta_data_graph(const MetaDataConfig& config) {
-    switch(config.type()) {
-    case MetaDataType::Label:
-    {
-        return nullptr;
-    }
-    case MetaDataType::BoundingBox:
-    {
-        return std::make_shared<BoundingBoxGraph>();
-    }
-
-    default:
-        THROW("MetaDataReader type is unsupported");
-    }
+  default:
+    THROW("MetaDataReader type is unsupported");
+  }
 }

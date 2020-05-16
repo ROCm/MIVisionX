@@ -22,18 +22,19 @@ THE SOFTWARE.
 
 #pragma once
 
+#include "graph.h"
 #include "node.h"
 #include "parameter_factory.h"
-#include "graph.h"
 
-
-class PixelateNode : public Node
-{
+class PixelateNode : public Node {
 public:
-    PixelateNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
-    PixelateNode() = delete;
+  PixelateNode(const std::vector<Image *> &inputs,
+               const std::vector<Image *> &outputs);
+  PixelateNode() = delete;
+
 protected:
-    void create_node() override;
-    void update_node() override;
+  void create_node() override;
+  void update_node() override;
+
 private:
 };

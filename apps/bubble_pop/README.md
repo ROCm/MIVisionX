@@ -8,7 +8,7 @@
 
 In this project, we provide OpenVX sample applications to use with any conformant implementation of OpenVX.
 
- ## VX Bubble Pop Sample
+## VX Bubble Pop Sample
 
 In this sample we will create an OpenVX graph to run VX Bubble Pop on a live camera. This sample application uses <a href="https://en.wikipedia.org/wiki/OpenCV" target="_blank">OpenCV</a> to decode input image, draw bubbles/donuts and display the output.
 

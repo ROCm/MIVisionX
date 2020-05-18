@@ -38,9 +38,6 @@ using namespace cv;
 
 #define DISPLAY
 
-
-//#define PARTIAL_DECODE 
-
 //#define COCO_READER
 #define LABEL_READER 
 //#define TF_READER 

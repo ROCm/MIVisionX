@@ -1,25 +1,3 @@
-/*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #pragma once
 #include <memory>
 #include <list>
@@ -32,6 +10,7 @@ THE SOFTWARE.
 #include "node_image_loader.h"
 #include "node_image_loader_single_shard.h"
 #include "node_cifar10_loader.h"
+#include "node_fused_jpeg_crop.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 
@@ -172,6 +151,19 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
 
     return node;
 }
+template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+{
+    if(_loader_module)
+        THROW("A loader already exists, cannot have more than one loader")
+    auto node = std::make_shared<FusedJpegCropNode>(outputs[0], _device.resources());
+    _loader_module = node->get_loader_module();
+    _root_nodes.push_back(node);
+    for(auto& output: outputs)
+        _image_map.insert(make_pair(output, node));
+
+    return node;
+}
+
 
 /*
  * Explicit specialization for Cifar10LoaderNode

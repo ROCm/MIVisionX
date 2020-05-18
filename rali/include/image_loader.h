@@ -1,25 +1,3 @@
-/*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #pragma once 
 
 #include <string>
@@ -36,7 +14,7 @@ public:
     explicit ImageLoader(DeviceResources dev_resources);
     ~ImageLoader() override;
     LoaderModuleStatus load_next() override;
-    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size) override;
+    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
     void set_output_image (Image* output_image) override;
     size_t remaining_count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
@@ -68,5 +46,6 @@ private:
     const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
+    bool _decoder_keep_original = false;
 };
 

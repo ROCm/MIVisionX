@@ -1,25 +1,3 @@
-/*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #include <thread> 
 #include <chrono>
 #include "image_loader.h"
@@ -107,7 +85,7 @@ ImageLoader::stop_internal_thread()
 }
 
 void
-ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
+ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool decoder_keep_original)
 {
     if(_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")
@@ -118,6 +96,7 @@ ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, Rali
     _mem_type = mem_type;
     _batch_size = batch_size;
     _loop = reader_cfg.loop();
+    _decoder_keep_original = decoder_keep_original;
     _image_loader = std::make_shared<ImageReadAndDecode>();
     try
     {
@@ -169,7 +148,7 @@ ImageLoader::load_routine()
                                              _output_image->info().height_single(),
                                              _decoded_img_info._roi_width,
                                              _decoded_img_info._roi_height,
-                                             _output_image->info().color_format() );
+                                             _output_image->info().color_format(), _decoder_keep_original );
 
             if(load_status == LoaderModuleStatus::OK)
             {

@@ -1,6 +1,8 @@
+################################################################################
+#
 # MIT License
 #
-# Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc.
+# Copyright (c) 2018 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,17 +22,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+################################################################################
 
-cmake_minimum_required(VERSION 2.8)
-project(rali)
+cmake_minimum_required (VERSION 2.8)
+
+project (rali)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
+
+#additional includes for tf_Record_Read
+find_package(PkgConfig)
+pkg_check_modules(PROTOBUF protobuf)
+link_directories(
+    ${PROTOBUF_LIBRARY_DIRS}
+)
+include_directories(
+    ${PROTOBUF_INCLUDE_DIRS}
+)
+
 
 find_package(OpenCL QUIET)
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
-# If FFMPEG is found, vx_amd_media is expected to be built as well
-find_package(FFmpeg QUIET)
+find_package(FFmpeg QUIET) # If FFMPEG is there, vx_amd_media is expected to be built as well
 
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
@@ -60,38 +74,61 @@ endif()
 
 if(${BUILD_RALI})
 	# Rali uses C++ 17 features
-	set(CMAKE_CXX_STANDARD 17)
+	set (CMAKE_CXX_STANDARD 17)
 	message("-- ${Green}Radeon Augmentation Library -- rali module added${ColourReset}")
-	install(FILES ./python/rali.py python/rali_lib.py ./python/rali_common.py ./python/rali_image.py ./python/rali_parameter.py ./python/rali_torch.py  ./python/rali_image_iterator.py DESTINATION ./rali/python )
-	install(FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h include/rali_api_meta_data.h DESTINATION ./include/)
-	include_directories(
-			    ${OpenCL_INCLUDE_DIRS}
-			    ${OpenCL_INCLUDE_DIRS}/Headers
-			    ${TurboJpeg_INCLUDE_DIRS}
-			    ${AMDRPP_INCLUDE_DIRS}
-			    ../amd_openvx/openvx/include/
-			    ../amd_openvx_extensions/amd_rpp/include/
-			    ../amd_openvx_extensions/amd_media/include/
-			    ./include
-			    )
-	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR})
-	file(GLOB SOURCES "./source/*.cpp")
+	install (FILES ./python/rali.py python/rali_lib.py ./python/rali_common.py ./python/rali_image.py ./python/rali_parameter.py ./python/rali_torch.py  ./python/rali_image_iterator.py DESTINATION ./rali/python )
+	install (FILES include/rali_api.h include/rali_api_info.h include/rali_api_augmentation.h include/rali_api_data_loaders.h include/rali_api_types.h include/rali_api_data_transfer.h  include/rali_api_parameters.h include/rali_api_meta_data.h DESTINATION ./include/)
+	include_directories (
+			${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
+			${TurboJpeg_INCLUDE_DIRS}
+			../amd_openvx/openvx/include/
+			../amd_openvx_extensions/amd_rpp/include/
+			../amd_openvx_extensions/amd_media/include/
+			./include
+			./tf/)
+
+	link_directories   ( ${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR}
+						/usr/local/lib/)
+
+	file(GLOB SOURCES "./source/*.cpp"
+						"./tf/example.pb.cc"
+						"./tf/feature.pb.cc")
+        
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0)
 	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread")
 	add_definitions(-ljsoncpp)
-	message("-- ${Green}${PROJECT_NAME} - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
-	if(NOT FFMPEG_FOUND)
-		message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
-		target_link_libraries(${PROJECT_NAME} -fPIC turbojpeg openvx vx_rpp jsoncpp)
-	else()
-		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
-		target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
-	endif()
+	message("CMAKE_CXX_FLAGS is ${CMAKE_CXX_FLAGS}")
+if(NOT FFMPEG_FOUND)
+	message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
+	target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp jsoncpp)
+else()
+	message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
+	target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
+endif()
 	install (TARGETS rali DESTINATION lib)
 else()
 	message("-- ${Red}rali library is excluded ${ColourReset}")
 endif()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,25 +1,3 @@
-/*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #include <cassert>
 #include <algorithm>
 #include <commons.h>
@@ -38,6 +16,7 @@ FileSourceReader::FileSourceReader()
     _current_fPtr = nullptr;
     _loop = false;
     _file_id = 0;
+    _shuffle = false;
 }
 
 unsigned FileSourceReader::count()
@@ -57,6 +36,7 @@ Reader::Status FileSourceReader::initialize(ReaderConfig desc)
     _shard_count = desc.get_shard_count();
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
+    _shuffle = desc.shuffle();
     return subfolder_reading();
 }
 
@@ -131,7 +111,8 @@ FileSourceReader::release()
 
 void FileSourceReader::reset()
 {
-    std::random_shuffle(_file_names.begin(), _file_names.end());
+    if(_shuffle)
+        std::random_shuffle(_file_names.begin(), _file_names.end());
     _read_counter = 0;
     _curr_file_idx = 0;
 }
@@ -177,7 +158,8 @@ Reader::Status FileSourceReader::subfolder_reading()
     if(!_file_names.empty())
         LOG("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Total of " + TOSTR(_file_names.size()) + " images loaded from " + _full_path )
 
-
+    if(_shuffle)
+        std::random_shuffle(_file_names.begin(), _file_names.end());
     closedir(_sub_dir);
     return ret;
 }

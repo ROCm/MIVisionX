@@ -25,6 +25,13 @@ RALI can be currently used to perform the following operations either with rando
 * Lens correction
 * Pixelization
 * Exposure modification
+* Hue
+* Saturation
+* ColorTwist
+* Crop
+* Crop Mirror Normalization
+* Resize Crop Mirror
+* Random Crop
 
 
 ## Prerequisites
@@ -55,6 +62,7 @@ Note: You need wget package to download the tar file.
 wget  https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz
 tar xf libjpeg-turbo-2.0.3.tar.gz
 cd libjpeg-turbo-2.0.3
+cp $MIVISION-Directory/rali/turbojpeg/* .  #MIVISION-Directory should be exported
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr \
@@ -63,13 +71,31 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
       -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib  \
       ..
-make -j 4
+make -j$nproc
 sudo make install      
 ```
 
-##Jsoncpp installation
+## Jsoncpp installation
 
 sudo apt-get install libjsoncpp-dev
+
+## Google Protobuf installation
+https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
+
+    git clone https://github.com/protocolbuffers/protobuf.git
+    cd protobuf
+    git checkout v3.11.4 
+    git submodule update --init --recursive
+    ./autogen.sh
+    
+To build and install the C++ Protocol Buffer runtime and the Protocol
+Buffer compiler (protoc) execute the following:
+
+    ./configure
+     make
+     make check
+     sudo make install
+     sudo ldconfig # refresh shared library cache.
 
 ## Sample and test applications
 *  [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of moifications.

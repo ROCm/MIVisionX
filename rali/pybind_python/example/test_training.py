@@ -10,6 +10,7 @@ from amd.rali.plugin.pytorch import RALIClassificationIterator
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
 import amd.rali.types as types
+import os
 
 
 class HybridTrainPipe(Pipeline):
@@ -52,7 +53,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 class ToyNet(nn.Module):
-	def __init__(self):
+	def __init__(self,num_classes):
 		super(ToyNet, self).__init__()
 		self.conv1 = nn.Conv2d(3, 6, 5)
 		self.pool = nn.MaxPool2d(2, 2)
@@ -62,7 +63,7 @@ class ToyNet(nn.Module):
 		self.fc0 = nn.Linear(256 * 11*11, 2048)
 		self.fc1 = nn.Linear(2048, 512)
 		self.fc2 = nn.Linear(512, 128)
-		self.fc3 = nn.Linear(128, 2) # Two classes only
+		self.fc3 = nn.Linear(128, num_classes) # Two classes only
 		self.m = nn.Softmax()
 
 
@@ -96,8 +97,9 @@ def main():
 	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu)        
 	pipe.build()
 	imageIterator = RALIClassificationIterator(pipe)
-
-	net = ToyNet()
+	num_classes = len(next(os.walk(image_path))[1])
+	print("num_classes:: ",num_classes)
+	net = ToyNet(num_classes)
 
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optim.SGD(net.parameters(), lr=0.0005, momentum=0.9)
@@ -111,7 +113,7 @@ def main():
 
 			sys.stdout.write("\r Mini-batch " + str(i))
 			# print("Images",image_batch)
-			# print("Labels",labels)
+			print("Labels",labels)
 
 			optimizer.zero_grad()
 

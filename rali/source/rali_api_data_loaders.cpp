@@ -1,25 +1,3 @@
-/*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #include <tuple>
 #include "rali_api.h"
 #include "commons.h"
@@ -31,6 +9,8 @@ THE SOFTWARE.
 #include "image_source_evaluator.h"
 #include "node_fisheye.h"
 #include "node_copy.h"
+#include "node_fused_jpeg_crop.h"
+
 std::tuple<unsigned, unsigned>
 evaluate_image_data_set(RaliImageSizeEvaluationPolicy decode_size_policy, StorageType storage_type,
                         DecoderType decoder_type, const std::string &source_path)
@@ -40,6 +20,7 @@ evaluate_image_data_set(RaliImageSizeEvaluationPolicy decode_size_policy, Storag
         switch(decode_size_policy)
         {
             case RALI_USE_MAX_SIZE:
+            case RALI_USE_MAX_SIZE_RESTRICTED:
                 return MaxSizeEvaluationPolicy::MAXIMUM_FOUND_SIZE;
             case RALI_USE_MOST_FREQUENT_SIZE:
                 return MaxSizeEvaluationPolicy::MOST_FREQUENT_SIZE;
@@ -102,6 +83,7 @@ raliJpegTFRecordSource(
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         bool is_output,
+        bool shuffle,
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
@@ -143,6 +125,7 @@ raliJpegTFRecordSource(
                                                                              source_path,
                                                                              StorageType::TF_RECORD,
                                                                              DecoderType::TURBO_JPEG,
+                                                                             shuffle,
                                                                              loop,
                                                                              context->user_batch_size(),
                                                                              context->master_graph->mem_type());
@@ -171,6 +154,7 @@ raliJpegTFRecordSourceSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         bool is_output,
+        bool shuffle,
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
@@ -215,6 +199,7 @@ raliJpegTFRecordSourceSingleShard(
                                                                                         source_path,
                                                                                         StorageType::TF_RECORD,
                                                                                         DecoderType::TURBO_JPEG,
+                                                                                        shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
                                                                                         context->master_graph->mem_type());
@@ -243,6 +228,7 @@ raliJpegFileSourceSingleShard(
         unsigned shard_id,
         unsigned shard_count,
         bool is_output,
+        bool shuffle,
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
@@ -252,7 +238,8 @@ raliJpegFileSourceSingleShard(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
+        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
 
         if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -287,9 +274,10 @@ raliJpegFileSourceSingleShard(
                                                                                         source_path,
                                                                                         StorageType::FILE_SYSTEM,
                                                                                         DecoderType::TURBO_JPEG,
+                                                                                        shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type());
+                                                                                        context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -314,6 +302,7 @@ raliJpegFileSource(
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         bool is_output,
+        bool shuffle,
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
@@ -323,7 +312,8 @@ raliJpegFileSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
+        bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -355,9 +345,10 @@ raliJpegFileSource(
                                                                           source_path,
                                                                           StorageType::FILE_SYSTEM,
                                                                           DecoderType::TURBO_JPEG,
+                                                                          shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type());
+                                                                          context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)
@@ -376,22 +367,32 @@ raliJpegFileSource(
 }
 
 RaliImage  RALI_API_CALL
-raliJpegFileSourceCrop(
+raliFusedJpegCrop(
         RaliContext p_context,
         const char* source_path,
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         bool is_output,
+        bool shuffle,
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RaliFloatParam p_area_factor,
+        RaliFloatParam p_aspect_ratio,
+        RaliFloatParam p_x_drift_factor,
+        RaliFloatParam p_y_drift_factor 
+        )
 {
     Image* output = nullptr;
+    auto area_factor  = static_cast<FloatParam*>(p_area_factor);
+    auto aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
+    auto x_drift_factor = static_cast<FloatParam*>(p_x_drift_factor);
+    auto y_drift_factor = static_cast<FloatParam*>(p_y_drift_factor);
     auto context = static_cast<Context*>(p_context);
     try
     {
-        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
+        bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) ;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -406,7 +407,7 @@ raliJpegFileSourceCrop(
         }
 
         auto [width, height] = use_input_dimension? std::make_tuple(max_width, max_height):
-                               evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::TURBO_JPEG, source_path);
+                               evaluate_image_data_set(decode_size_policy, StorageType::FILE_SYSTEM, DecoderType::FUSED_TURBO_JPEG, source_path);
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
 
@@ -418,14 +419,15 @@ raliJpegFileSourceCrop(
                               context->master_graph->mem_type(),
                               color_format );
         output = context->master_graph->create_loader_output_image(info);
-
-        context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
+        context->master_graph->add_node<FusedJpegCropNode>({}, {output})->init(internal_shard_count,
                                                                           source_path,
                                                                           StorageType::FILE_SYSTEM,
-                                                                          DecoderType::TURBO_JPEG,
+                                                                          DecoderType::FUSED_TURBO_JPEG,
+                                                                          shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type());
+                                                                          context->master_graph->mem_type(),
+                                                                          area_factor, aspect_ratio, x_drift_factor, y_drift_factor);
         context->master_graph->set_loop(loop);
 
         if(is_output)

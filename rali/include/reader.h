@@ -1,25 +1,3 @@
-/*
-Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-
 #pragma once
 
 enum class StorageType
@@ -31,7 +9,7 @@ enum class StorageType
 
 struct ReaderConfig
 {
-    explicit ReaderConfig(StorageType type, std::string path = "", bool loop = false):_type(type), _path(path), _loop(loop) {}
+    explicit ReaderConfig(StorageType type, std::string path = "",bool shuffle = false, bool loop = false):_type(type), _path(path), _shuffle(shuffle), _loop(loop) {}
     virtual StorageType type() { return _type; };
     void set_path(const std::string& path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
@@ -42,6 +20,7 @@ struct ReaderConfig
     /// \param loop if True the reader's available images still the same no matter how many images have been read
     void set_loop( bool loop) { _loop = loop; }
     bool loop() { return _loop; }
+    bool shuffle() {return _shuffle;}
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
@@ -54,6 +33,7 @@ private:
     size_t _shard_count= 1 ;
     size_t _shard_id = 0;
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
+    bool _shuffle = false;
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader
 };

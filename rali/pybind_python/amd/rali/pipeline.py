@@ -32,7 +32,7 @@ class Pipeline(object):
         overlapping CPU and GPU computation, typically resulting
         in faster execution speed, but larger memory consumption.
     `prefetch_queue_depth` : int or {"cpu_size": int, "gpu_size": int}, optional, default = 2
-        Depth of the executor pipeline. Deeper pipeline makes DALI
+        Depth of the executor pipeline. Deeper pipeline makes RALI
         more resistant to uneven execution time of each batch, but it
         also consumes more memory for internal buffers.
         Specifying a dict:
@@ -51,7 +51,7 @@ class Pipeline(object):
         In order to synchronize with the pipeline one needs to call
         :meth:`nvidia.dali.pipeline.Pipeline.outputs` method.
     `bytes_per_sample` : int, optional, default = 0
-        A hint for DALI for how much memory to use for its tensors.
+        A hint for RALI for how much memory to use for its tensors.
     `set_affinity` : bool, optional, default = False
         Whether to set CPU core affinity to the one closest to the
         GPU being used.
@@ -61,7 +61,7 @@ class Pipeline(object):
         This parameter is currently unused (and behavior of
         unrestricted number of streams is assumed).
     `default_cuda_stream_priority` : int, optional, default = 0
-        CUDA stream priority used by DALI. See `cudaStreamCreateWithPriority` in CUDA documentation
+        CUDA stream priority used by RALI. See `cudaStreamCreateWithPriority` in CUDA documentation
     """
     '''. 
     Args: batch_size
@@ -87,6 +87,7 @@ class Pipeline(object):
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
         self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop"]
+        self._check_ops_reader = ["FileReader","TFRecordReader","COCOReader"]
         self._batch_size = batch_size
         self._num_threads = num_threads
         self._device_id = device_id
@@ -104,6 +105,7 @@ class Pipeline(object):
         self._offset = None
         self._img_h = None
         self._img_w = None
+        self._shuffle = None
     
     def store_values(self, operator):
         """
@@ -126,37 +128,37 @@ class Pipeline(object):
         last_operator = output_image.prev
         temp = output_image
         while(temp.prev is not None):    
-            if(temp.data in (self._check_ops + self._check_crop_ops)):
+            if(temp.data in (self._check_ops + self._check_crop_ops + self._check_ops_reader)):
                 self.store_values(temp)
             temp = temp.prev
         file_reader = temp
         file_reader.rali_c_func_call(self._handle)
+        self._shuffle = file_reader._random_shuffle
         temp = temp.next
         operator = temp.next
         while(operator.next.next is not None):
             tensor = operator.next
             if(operator.data in self._check_ops_decoder):
-                tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, False)
+                tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, False)
             else:
                 tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, False)
             operator = operator.next.next
-
         tensor = last_operator.next
         if(operator.data in self._check_ops_decoder):
-            tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, True)
+            tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, True)
         else:
             tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, True)
         return tensor.data 
 
     def build(self):
         """Build the pipeline using raliVerify call
-        """
-        
-        outputs= self.define_graph()
+        """      
+        outputs = self.define_graph()
         self.process_calls(outputs[0])
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
+            exit(0)
         return outputs
 
     def run(self):
@@ -172,7 +174,7 @@ class Pipeline(object):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
 
-        It returns a list of outputs created by calling DALI Operators."""
+        It returns a list of outputs created by calling RALI Operators."""
         raise NotImplementedError
 
     def get_handle(self):
@@ -187,14 +189,14 @@ class Pipeline(object):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
             b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-        elif tensor_dtype == types.TensorDataType.FLOAT16:
+        elif tensor_dtype == types.FLOAT16:
             b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
             b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-        elif tensor_dtype == types.TensorDataType.FLOAT16:
+        elif tensor_dtype == types.FLOAT16:
             b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
     
     def getImageLabels(self, array):

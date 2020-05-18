@@ -47,14 +47,14 @@ class RALIGenericIterator(object):
         
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
-        self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
         color_format = b.getOutputColorFormat(self.loader._handle)
         self.p = (1 if color_format is types.GRAY else 3)
         if self.tensor_dtype == types.FLOAT:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
-        elif self.tensor_dtype == types.TensorDataType.FLOAT16:
-            self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
+            self.out = np.zeros(( self.bs, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
+        elif self.tensor_dtype == types.FLOAT16:
+            self.out = np.zeros(( self.bs, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
+        print("Self.out",self.out.shape)
         self.labels = np.zeros((self.bs),dtype = "int32")
 
     def next(self):
@@ -82,7 +82,7 @@ class RALIGenericIterator(object):
     
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out), self.labels_tensor
-        elif self.tensor_dtype == types.TensorDataType.FLOAT16:
+        elif self.tensor_dtype == types.FLOAT16:
             return torch.from_numpy(self.out.astype(np.float16)), self.labels_tensor
 
     def reset(self):

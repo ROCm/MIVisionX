@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -129,9 +129,9 @@ int main(int argc, const char ** argv)
         // The jpeg file loader can automatically select the best size to decode all images to that size
         // User can alternatively set the size or change the policy that is used to automatically find the size
         if(decode_height <= 0 || decode_width <= 0)
-            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false);
+            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false, false);
         else
-            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false,
+            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
     }
 

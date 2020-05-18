@@ -9,8 +9,6 @@ import tensorflow as tf
 class HybridPipe(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
 		super(HybridPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
-		world_size = 1
-		local_rank = 0
 		
 		self.input = ops.TFRecordReader(path=data_dir, index_path = ""  , features={
                 'image/encoded':tf.FixedLenFeature((), tf.string, ""),
@@ -65,7 +63,6 @@ def main():
 	crop_size = 224
 	pipe = HybridPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu) 
 	pipe.build()
-	world_size=1
 	imageIterator = RALIClassificationIterator(pipe)
 	for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
 		if(i % bs == 0):

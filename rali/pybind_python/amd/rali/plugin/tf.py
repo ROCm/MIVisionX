@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import rali_pybind as b
 import amd.rali.types as types
@@ -97,8 +96,8 @@ class RALIGenericIterator(object):
 
 class RALIClassificationIterator(RALIGenericIterator):
     """
-    RALI iterator for classification tasks for PyTorch. It returns 2 outputs
-    (data and label) in the form of PyTorch's Tensor.
+    RALI iterator for classification tasks for TensorFlow. It returns 2 outputs
+    (data and label) in the form of TensorFlow's Tensor.
 
     Calling
 
@@ -129,8 +128,8 @@ class RALIClassificationIterator(RALIGenericIterator):
 
 class RALI_iterator(RALIGenericImageIterator):
     """
-    RALI iterator for classification tasks for PyTorch. It returns 2 outputs
-    (data and label) in the form of PyTorch's Tensor.
+    RALI iterator for classification tasks for TensorFlow. It returns 2 outputs
+    (data and label) in the form of TensorFlow's Tensor.
 
    
     """

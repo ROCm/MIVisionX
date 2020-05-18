@@ -33,7 +33,7 @@ RALI can be currently used to perform the following operations either with rando
 *  OpenVX (including RPP and Media extension)
 *  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or later
 *  Half float library
-
+*  jsoncpp library
 
 ## Build instructions
 Rali builds and installs as part of the MIVisonX toolkit. RALI depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for RALI to build. RALI also needs Turbo JPEG library to decode input JPEG images.  
@@ -66,6 +66,10 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
 make -j 4
 sudo make install      
 ```
+
+##Jsoncpp installation
+
+sudo apt-get install libjsoncpp-dev
 
 ## Sample and test applications
 *  [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of moifications.

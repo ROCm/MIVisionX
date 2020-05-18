@@ -95,28 +95,28 @@ class RALIGenericIterator(object):
 
 class RALIClassificationIterator(RALIGenericIterator):
     """
-    DALI iterator for classification tasks for PyTorch. It returns 2 outputs
+    RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
 
     Calling
 
     .. code-block:: python
 
-       DALIClassificationIterator(pipelines, size)
+       RALIClassificationIterator(pipelines, size)
 
     is equivalent to calling
 
     .. code-block:: python
 
-       DALIGenericIterator(pipelines, ["data", "label"], size)
+       RALIGenericIterator(pipelines, ["data", "label"], size)
 
     Please keep in mind that Tensors returned by the iterator are
-    still owned by DALI. They are valid till the next iterator call.
+    still owned by RALI. They are valid till the next iterator call.
     If the content needs to be preserved please copy it to another tensor.
 
     Parameters
     ----------
-    pipelines : list of nvidia.dali.pipeline.Pipeline
+    pipelines : list of amd.raliLI.pipeline.Pipeline
                 List of pipelines to use
     size : int
            Number of samples in the epoch (Usually the size of the dataset).
@@ -130,12 +130,12 @@ class RALIClassificationIterator(RALIGenericIterator):
                  Setting this flag to False will cause the iterator to return
                  exactly 'size' entries.
     dynamic_shape: bool, optional, default = False
-                 Whether the shape of the output of the DALI pipeline can
+                 Whether the shape of the output of the RALI pipeline can
                  change during execution. If True, the pytorch tensor will be resized accordingly
-                 if the shape of DALI returned tensors changes during execution.
+                 if the shape of RALI returned tensors changes during execution.
                  If False, the iterator will fail in case of change.
     last_batch_padded : bool, optional, default = False
-                 Whether the last batch provided by DALI is padded with the last sample
+                 Whether the last batch provided by RALI is padded with the last sample
                  or it just wraps up. In the conjunction with `fill_last_batch` it tells
                  if the iterator returning last batch with data only partially filled with
                  data from the current epoch is dropping padding samples or samples from
@@ -165,7 +165,7 @@ class RALIClassificationIterator(RALIGenericIterator):
 
 class RALI_iterator(RALIGenericImageIterator):
     """
-    DALI iterator for classification tasks for PyTorch. It returns 2 outputs
+    RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
 
    

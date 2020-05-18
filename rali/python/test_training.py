@@ -1,24 +1,44 @@
+# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 
 
 #%%
 
 from rali_torch import *
 from rali import *
-
+import sys
 class DataLoader(RaliGraph):
 
 	def graph(self, input, batch_size):
-		warped = self.warpAffine(input,False)
-		pixelate_img = self.pixelate(warped, False)
+		# warped = self.warpAffine(input,False)
+		pixelate_img = self.pixelate(input, False)
 		temp_img = self.colorTemp(pixelate_img, False)
 		vignette_img = self.vignette(temp_img, False)
 		out0 = self.jitter(vignette_img, True)
 		out0.set_labels(0)
 		contrast_img = self.contrast(input,False)
 		blur_img = self.blur(contrast_img, False)
-		gamma_img = self.gamma(blur_img, False, 1.5)
+		gamma_img = self.gamma(blur_img, False)
 		rotate_img = self.rotate(gamma_img, False)
-		out1 = self.SnPNoise(rotate_img, True, 0.05)
+		out1 = self.SnPNoise(rotate_img, True)
 		out1.set_labels(1)
 		return out0, out1
 
@@ -28,11 +48,13 @@ class DataLoader(RaliGraph):
 
 		jpg_class_0 = self.jpegFileInput(class_0_path, input_color_format, False)
 		input0 = self.cropResize(jpg_class_0, 224, 224, False, 0.6, -1, -1)
+		#input0 = self.resize(jpg_class_0, 224,224,False)
 		out0 = self.graph(input0, batch_size)
 
 
 		jpg_class_1 = self.jpegFileInput(class_1_path, input_color_format, False)
 		input1 = self.cropResize(jpg_class_1, 224, 224, False, 0.6, -1, -1)
+		#input1 = self.resize(jpg_class_1, 224,224,False)
 		out1 = self.graph(input1, batch_size)
 
 		self.out = out0, out1
@@ -71,10 +93,10 @@ class ToyNet(nn.Module):
 
 
 def main():
-	print 'In the app'
+	print ('In the app')
 	batchSize = 1
 	if  len(sys.argv) < 3:
-		print 'Please pass the folder containing images as a command line argument'
+		print ('Please pass the folder containing images as a command line argument')
 		exit(0)
 
 	input_class_0 = sys.argv[1]
@@ -87,7 +109,7 @@ def main():
 
 	print ('Torch iterator created ... number of images', torchIterator.imageCount() )
 
-	torchIterator = PyTorchIterator(loader)
+	# torchIterator = PyTorchIterator(loader)
 
 	net = ToyNet()
 

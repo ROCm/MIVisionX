@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #ifndef MIVISIONX_RALI_API_DATA_LOADERS_H
 #define MIVISIONX_RALI_API_DATA_LOADERS_H
 #include "rali_api_types.h"
@@ -59,6 +81,22 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         RaliDecodeDevice rali_decode_device,
                                                         bool is_output ,
                                                         unsigned width , unsigned height, bool loop = false );
+/// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param out_width ; output width
+/// \param out_height ; output_height
+/// \param filename_prefix ; if set loader will only load files with the given prefix name
+/// \return Reference to the output image
+extern "C"  RaliImage  RALI_API_CALL raliRawCIFAR10Source(RaliContext context,
+                                                        const char* source_path,
+                                                        RaliImageColor color_format,
+                                                        bool is_output ,
+                                                        unsigned out_width, unsigned out_height, const char* filename_prefix = "",
+                                                        bool loop = false);
+
 ///
 /// \param rali_context
 /// \return

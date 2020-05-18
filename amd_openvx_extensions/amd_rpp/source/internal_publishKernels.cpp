@@ -1,10 +1,31 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 
 #include "internal_publishKernels.h"
 #include "vx_ext_rpp.h"
 
 /**********************************************************************
   PUBLIC FUNCTION for OpenVX user defined functions
-  **********************************************************************/
+**********************************************************************/
 extern "C"  SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
 {
 	vx_status status = VX_SUCCESS;
@@ -289,6 +310,7 @@ vx_status get_kernels_to_publish()
 	STATUS_ERROR_CHECK(ADD_KERENEL(ColorTwistbatchPD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(CropMirrorNormalizePD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(CropPD_Register));
+	STATUS_ERROR_CHECK(ADD_KERENEL(ResizeCropMirrorPD_Register));
 	STATUS_ERROR_CHECK(ADD_KERENEL(Copy_Register));
     STATUS_ERROR_CHECK(ADD_KERENEL(Nop_Register));
     return status;

@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #include <tuple>
 #include "rali_api.h"
 #include "commons.h"
@@ -5,6 +27,7 @@
 #include "node_image_loader.h"
 #include "node_image_loader_single_shard.h"
 #include "node_video_file_source.h"
+#include "node_cifar10_loader.h"
 #include "image_source_evaluator.h"
 #include "node_fisheye.h"
 #include "node_copy.h"
@@ -49,6 +72,9 @@ auto convert_color_format = [](RaliImageColor color_format)
 
         case RALI_COLOR_U8:
             return std::make_tuple(RaliColorFormat::U8, 1);
+
+        case RALI_COLOR_RGB_PLANAR:
+            return std::make_tuple(RaliColorFormat::RGB_PLANAR, 3);
 
         default:
             THROW("Unsupported Image type" + TOSTR(color_format))
@@ -467,6 +493,67 @@ raliVideoFileSource(
     return output;
 
 }
+
+// loader for CFAR10 raw data: Can be used for other raw data loaders as well
+RaliImage  RALI_API_CALL
+raliRawCIFAR10Source(
+                 RaliContext p_context,
+                 const char* source_path,
+                 RaliImageColor rali_color_format,
+                 bool is_output ,
+                 unsigned out_width,
+                 unsigned out_height,
+                 const char* filename_prefix,
+                 bool loop )
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+
+        if(out_width == 0 || out_height == 0)
+        {
+            THROW("Invalid video input width and height");
+        }
+        else
+        {
+            LOG("User input size " + TOSTR(out_width) + " x " + TOSTR(out_height));
+        }
+
+        auto [width, height] = std::make_tuple(out_width, out_height);
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+
+        INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
+
+        auto info = ImageInfo(width, height,
+                              context->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+        output = context->master_graph->create_loader_output_image(info);
+
+        context->master_graph->add_node<Cifar10LoaderNode>({}, {output})->init(source_path,
+                                                                             StorageType::UNCOMPRESSED_BINARY_DATA,
+                                                                             loop,
+                                                                             context->user_batch_size(),
+                                                                             context->master_graph->mem_type(), filename_prefix);
+        context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+}
+
 
 RaliStatus RALI_API_CALL
 raliResetLoaders(RaliContext p_context)

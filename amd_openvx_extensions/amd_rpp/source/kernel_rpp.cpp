@@ -1,5 +1,27 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
-#include "kernels_rpp.h"
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+#include "internal_publishKernels.h"
+#include "vx_ext_rpp.h"
 
 vx_uint32 getGraphAffinity(vx_graph graph)
 {
@@ -10,6 +32,7 @@ vx_uint32 getGraphAffinity(vx_graph graph)
    // std::cerr<<"\n affinity "<<affinity.device_type;
     return affinity.device_type;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Brightness(vx_graph graph,vx_image pSrc,vx_image pDst,vx_scalar alpha,vx_scalar beta)
 {
 	vx_node node = NULL;
@@ -28,6 +51,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Brightness(vx_graph graph,vx_image
 	}
 	return node;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPS(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_scalar alpha,vx_scalar beta,vx_uint32 nbatchSize)
 {
 	vx_node node = NULL;
@@ -50,6 +74,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPS(vx_graph graph,v
 	}
 	return node;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array alpha,vx_array beta,vx_uint32 nbatchSize)
 {
 	vx_node node = NULL;
@@ -72,6 +97,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPD(vx_graph graph,v
 	}
 	return node;
 }
+
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_BrightnessbatchPDROID(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array alpha,vx_array beta,vx_array roiX,vx_array roiY,vx_array roiWidth,vx_array roiHeight,vx_uint32 nbatchSize)
 {
 	vx_node node = NULL;
@@ -5715,6 +5741,33 @@ VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_CropPD(vx_graph graph,vx_image pSr
 	return node;
 }
 
+VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_ResizeCropMirrorPD(vx_graph graph,vx_image pSrc,vx_array srcImgWidth,vx_array srcImgHeight,vx_image pDst,vx_array dstImgWidth,vx_array dstImgHeight,vx_array x1,vx_array y1,vx_array x2,vx_array y2, vx_array mirror, vx_uint32 nbatchSize)
+{
+	vx_node node = NULL;
+	vx_context context = vxGetContext((vx_reference)graph);
+	if(vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+		vx_uint32 dev_type = getGraphAffinity(graph);
+		vx_scalar DEV_TYPE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &dev_type);
+		vx_scalar NBATCHSIZE = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_UINT32, &nbatchSize);
+		vx_reference params[] = {
+			(vx_reference) pSrc,
+			(vx_reference) srcImgWidth,
+			(vx_reference) srcImgHeight,
+			(vx_reference) pDst,
+			(vx_reference) dstImgWidth,
+			(vx_reference) dstImgHeight,
+			(vx_reference) x1,
+			(vx_reference) x2,
+			(vx_reference) y1,
+			(vx_reference) y2,
+			(vx_reference) mirror,
+			(vx_reference) NBATCHSIZE,
+			(vx_reference) DEV_TYPE
+		}; 
+		 node = createNode(graph, VX_KERNEL_RPP_RESIZECROPMIRRORPD, params, 13);
+	}
+	return node;
+}
 
 VX_API_ENTRY vx_node VX_API_CALL vxExtrppNode_Copy(vx_graph graph, vx_image pSrc, vx_image pDst)
 {

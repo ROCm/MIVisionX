@@ -1,1 +1,0 @@
-/usr/bin/c++   -std=c++11  -rdynamic CMakeFiles/loom_shell.dir/loom_shell_util.cpp.o CMakeFiles/loom_shell.dir/loom_shell.cpp.o CMakeFiles/loom_shell.dir/help.cpp.o  -o ../../bin/loom_shell  -Wl,-rpath,/home/lokesh/AMD/GPUOpen/forked/MIVisionX/buid/lib: ../../lib/libvx_loomsl.so ../../lib/libopenvx.so -lpthread -lOpenCL -ldl -lm 

@@ -26,10 +26,9 @@
 
 cmake_minimum_required (VERSION 2.8)
 
-project (rali_unittests)
+project (rali_basic_test_with_epoch)
 
 set (CMAKE_CXX_STANDARD 11)
-#set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ljsoncpp")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
@@ -39,12 +38,35 @@ include_directories ( ${OpenCV_INCLUDE_DIRS}  /opt/rocm/mivisionx/include/)
 
 link_directories    (/opt/rocm/mivisionx/lib/)
 
-add_executable(${PROJECT_NAME} ./rali_unittests.cpp)
+add_executable(${PROJECT_NAME} ./rali_basic_test_with_epoch.cpp)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)
 include_directories(${OpenCV_INCLUDE_DIRS})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall -pg")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rali ${OpenCV_LIBRARIES})
 
 
 
 install (TARGETS ${PROJECT_NAME} DESTINATION bin)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

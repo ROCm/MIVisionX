@@ -95,7 +95,7 @@ Buffer compiler (protoc) execute the following:
      make
      make check
      sudo make install
-     sudo ldconfig # refresh shared library cache.
+     sudo ldconfig  #refresh shared library cache.
 
 ## Sample and test applications
 *  [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of moifications.

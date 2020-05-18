@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -20,11 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #ifndef _PUBLISH_KERNELS_H_
 #define _PUBLISH_KERNELS_H_
 
-#if _WIN32 
+#if _WIN32
 #define SHARED_PUBLIC __declspec(dllexport)
 #else
 #define SHARED_PUBLIC __attribute__ ((visibility ("default")))
@@ -104,8 +103,6 @@ vx_status CV_SURF_compute_Register(vx_context);
 vx_status CV_SURF_detect_Register(vx_context);
 #endif
 
-
-
 //Filters
 #define VX_KERNEL_OPENCV_Medianblur_NAME                  "org.opencv.medianblur"
 #define VX_KERNEL_OPENCV_Boxfilter_NAME                   "org.opencv.boxfilter"
@@ -179,4 +176,3 @@ vx_status CV_SURF_detect_Register(vx_context);
 #define VX_KERNEL_OPENCV_norm_NAME                        "org.opencv.norm"
 
 #endif //_AMDVX_EXT__PUBLISH_KERNELS_H_
-

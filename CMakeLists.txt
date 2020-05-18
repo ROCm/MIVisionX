@@ -50,7 +50,7 @@ add_subdirectory(apps)
 add_subdirectory(utilities)
 add_subdirectory(rali)
 
-install(DIRECTORY docs DESTINATION)
+install(DIRECTORY docs DESTINATION $(CMAKE_INSTALL_PREFIX)/)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

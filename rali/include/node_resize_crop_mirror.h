@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include "node.h"
 #include "parameter_vx.h"
 #include "parameter_factory.h"
-#include "parameter_crop.h"
+#include "parameter_crop_factory.h"
 
 class CropParam;
 
@@ -39,7 +39,7 @@ protected:
     void create_node() override;
     void update_node() override;
 private:
-    std::shared_ptr<CropParam> _crop_param;
+    std::shared_ptr<RaliCropParam> _crop_param;
     vx_array _dst_roi_width ,_dst_roi_height;
     ParameterVX<int> _mirror; 
     constexpr static int MIRROR_RANGE [2] =  {0, 1};

@@ -81,6 +81,9 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _decompressed_buff_ptrs.resize(_batch_size);
     _actual_decoded_width.resize(_batch_size);
     _actual_decoded_height.resize(_batch_size);
+
+    _decoder_config = decoder_config;
+
     for(int i = 0; i < batch_size; i++)
     {
         _compressed_buff[i].resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
@@ -178,7 +181,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,
                                scaledw, scaledh,
-                               decoder_color_format, keep_original) != Decoder::Status::OK)
+                               decoder_color_format,_decoder_config, keep_original) != Decoder::Status::OK)
         {
             continue;
         }

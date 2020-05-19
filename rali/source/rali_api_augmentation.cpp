@@ -48,6 +48,7 @@ THE SOFTWARE.
 #include "node_crop_mirror_normalize.h"
 #include "node_resize_crop_mirror.h"
 #include "node_crop.h"
+#include "node_random_crop.h"
 #include "node_copy.h"
 #include "node_nop.h"
 
@@ -1695,6 +1696,45 @@ extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context
     }
     return output;
 }
+
+extern "C" RaliImage RALI_API_CALL
+raliRandomCrop(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output,
+        RaliFloatParam p_crop_area_factor,
+        RaliFloatParam p_crop_aspect_ratio,
+        RaliFloatParam p_crop_pox_x,
+        RaliFloatParam p_crop_pos_y)
+{
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    auto crop_area_factor  = static_cast<FloatParam*>(p_crop_area_factor);
+    auto crop_aspect_ratio = static_cast<FloatParam*>(p_crop_aspect_ratio);
+    auto x_drift = static_cast<FloatParam*>(p_crop_pox_x);
+    auto y_drift = static_cast<FloatParam*>(p_crop_pos_y);
+
+    try
+    {
+        if(!input || !context)
+            THROW("Null values passed as input")
+        ImageInfo output_info = input->info();
+        output_info.width(input->info().width());
+        output_info.height(input->info().height_single());
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
+        context->master_graph->add_node<RandomCropNode>({input}, {output})->init(crop_area_factor, crop_aspect_ratio,
+                                                                           x_drift, y_drift);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
+
 
 RaliImage  RALI_API_CALL
 raliCopy(

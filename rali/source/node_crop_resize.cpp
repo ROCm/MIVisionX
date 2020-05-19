@@ -30,7 +30,7 @@ CropResizeNode::CropResizeNode(const std::vector<Image *> &inputs, const std::ve
         _dest_width(_outputs[0]->info().width()),
         _dest_height(_outputs[0]->info().height_batch())
 {
-    _crop_param = std::make_shared<RandomCropResizeParam>(_batch_size);
+    _crop_param = std::make_shared<RaliRandomCropParam>(_batch_size);
 }
 
 void CropResizeNode::create_node()
@@ -72,17 +72,17 @@ void CropResizeNode::update_node()
 
 void CropResizeNode::init(float area, float aspect_ratio, float x_center_drift, float y_center_drift)
 {
-    _crop_param->set_area_coeff(ParameterFactory::instance()->create_single_value_param(area));
-    _crop_param->set_aspect_ratio_coeff(ParameterFactory::instance()->create_single_value_param(aspect_ratio));
-    _crop_param->set_x_drift(ParameterFactory::instance()->create_single_value_param(x_center_drift));
-    _crop_param->set_y_drift(ParameterFactory::instance()->create_single_value_param(y_center_drift));
+    _crop_param->set_area_factor(ParameterFactory::instance()->create_single_value_param(area));
+    _crop_param->set_aspect_ratio(ParameterFactory::instance()->create_single_value_param(aspect_ratio));
+    _crop_param->set_x_drift_factor(ParameterFactory::instance()->create_single_value_param(x_center_drift));
+    _crop_param->set_y_drift_factor(ParameterFactory::instance()->create_single_value_param(y_center_drift));
 }
 
 
 void CropResizeNode::init(FloatParam* area, FloatParam* aspect_ratio, FloatParam *x_center_drift, FloatParam *y_center_drift)
 {
-    _crop_param->set_area_coeff(core(area));
-    _crop_param->set_aspect_ratio_coeff(core(aspect_ratio));
-    _crop_param->set_x_drift(core(x_center_drift));
-    _crop_param->set_y_drift(core(y_center_drift));
+    _crop_param->set_area_factor(core(area));
+    _crop_param->set_aspect_ratio(core(aspect_ratio));
+    _crop_param->set_x_drift_factor(core(x_center_drift));
+    _crop_param->set_y_drift_factor(core(y_center_drift));
 }

@@ -36,6 +36,7 @@ std::shared_ptr<Reader> create_reader(ReaderConfig config) {
                 throw std::runtime_error("File reader cannot access the storage");
             return ret;
         }
+        break;
         case StorageType::TF_RECORD:
         {
             auto ret = std::make_shared<TFRecordReader>();

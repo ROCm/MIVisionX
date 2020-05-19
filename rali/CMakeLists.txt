@@ -72,24 +72,29 @@ if(${BUILD_RALI})
 			    ../amd_openvx/openvx/include/
 			    ../amd_openvx_extensions/amd_rpp/include/
 			    ../amd_openvx_extensions/amd_media/include/
-			    ./include
-			    )
-	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR})
+			    ./include)
+			    #./tf/)
+
+	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR}
+					/usr/local/lib/)
 	file(GLOB SOURCES "./source/*.cpp")
+			#"./tf/example.pb.cc"
+			#"./tf/feature.pb.cc")
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0)
+	target_compile_definitions(${PROJECT_NAME} PUBLIC TFRECORD_ENABLE=0)
 	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread")
 	add_definitions(-ljsoncpp)
 	message("-- ${Green}${PROJECT_NAME} - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 	if(NOT FFMPEG_FOUND)
 		message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
-		target_link_libraries(${PROJECT_NAME} -fPIC turbojpeg openvx vx_rpp jsoncpp)
+		target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp jsoncpp)
 	else()
 		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
-		target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
+		target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
 	endif()
 	install (TARGETS rali DESTINATION lib)
 else()

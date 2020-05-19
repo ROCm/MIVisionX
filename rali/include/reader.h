@@ -31,7 +31,7 @@ enum class StorageType
 
 struct ReaderConfig
 {
-    explicit ReaderConfig(StorageType type, std::string path = "", bool loop = false):_type(type), _path(path), _loop(loop) {}
+    explicit ReaderConfig(StorageType type, std::string path = "", bool shuffle = false, bool loop = false):_type(type), _path(path), _shuffle(shuffle), _loop(loop) {}
     virtual StorageType type() { return _type; };
     void set_path(const std::string& path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
@@ -40,10 +40,10 @@ struct ReaderConfig
     /// the reader will repeat images to make available images an even multiple of this load_batch_count
     void set_batch_count(size_t read_batch_count) { _batch_count = read_batch_count; }
     /// \param loop if True the reader's available images still the same no matter how many images have been read
-    void set_loop( bool loop) { _loop = loop; }
+    bool shuffle() { return _shuffle; }
     bool loop() { return _loop; }
     void set_shuffle( bool shuffle) { _shuffle = shuffle; }
-    bool shuffle() { return _shuffle; }
+    void set_loop( bool loop) { _loop = loop; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
@@ -56,8 +56,8 @@ private:
     size_t _shard_count= 1 ;
     size_t _shard_id = 0;
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
-    bool _loop = false;
     bool _shuffle = false;
+    bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader
 };
 

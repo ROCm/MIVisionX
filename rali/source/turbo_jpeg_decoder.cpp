@@ -60,7 +60,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                                   size_t max_decoded_width, size_t max_decoded_height,
                                   size_t original_image_width, size_t original_image_height,
                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
-                                  Decoder::ColorFormat desired_decoded_color_format, bool keep_original_size)
+                                  Decoder::ColorFormat desired_decoded_color_format,DecoderConfig config, bool keep_original_size)
 {
     int tjpf = TJPF_RGB;
     int planes = 1;
@@ -78,6 +78,7 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
             planes = 3;
         break;
     };
+
     if (!keep_original_size) {
         actual_decoded_width = max_decoded_width;
         actual_decoded_height = max_decoded_height;

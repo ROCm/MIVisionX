@@ -67,9 +67,9 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX toolkit is a comprehensiv
 # find linux distribution
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
-    OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+                OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
+                OUTPUT_STRIP_TRAILING_WHITESPACE
+                )
 
 # generate .deb or .rpm package
 if(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")

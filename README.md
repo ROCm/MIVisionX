@@ -331,7 +331,7 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
-* ROCm: rocm-dkms - `3.1.44`
+* ROCm: rocm-dkms - `3.3.0-19`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.1.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.1.0)

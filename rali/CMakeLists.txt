@@ -73,13 +73,10 @@ if(${BUILD_RALI})
 			    ../amd_openvx_extensions/amd_rpp/include/
 			    ../amd_openvx_extensions/amd_media/include/
 			    ./include)
-			    #./tf/)
 
 	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR}
 					/usr/local/lib/)
 	file(GLOB SOURCES "./source/*.cpp")
-			#"./tf/example.pb.cc"
-			#"./tf/feature.pb.cc")
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)

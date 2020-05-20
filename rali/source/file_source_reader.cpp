@@ -52,7 +52,6 @@ unsigned FileSourceReader::count()
 
 Reader::Status FileSourceReader::initialize(ReaderConfig desc)
 {
-    auto ret = Reader::Status::OK;
     _file_id = 0;
     _folder_path = desc.path();
     _shard_id = desc.get_shard_id();

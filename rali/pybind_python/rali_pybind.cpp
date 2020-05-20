@@ -19,7 +19,6 @@ namespace rali{
         unsigned char* ptr = (unsigned char*) buf.ptr;
         // call pure C++ function
         int status = raliCopyToOutput(context,ptr,buf.size);
-        // std::cerr<<"\n Copy failed with status :: "<<status;
         return py::cast<py::none>(Py_None);
     }
 
@@ -148,7 +147,6 @@ namespace rali{
         m.def("getImageNameLen",&raliGetImageNameLen);
         m.def("getStatus",&raliGetStatus);
         m.def("labelReader",&raliCreateLabelReader);
-        m.def("TFLabelReader",&raliCreateTFReader);
         m.def("COCOReader",&raliCreateCOCOReader);
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
@@ -177,41 +175,13 @@ namespace rali{
             py::arg("context"),
             py::arg("source_path"),
             py::arg("color_format"),
-            py::arg("num_threads"),
+            py::arg("internal_shard_count"),
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        m.def("TF_ImageDecoder",&raliJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
-            py::return_value_policy::reference,
-            py::arg("p_context"),
-            py::arg("source_path"),
-            py::arg("rali_color_format"),
-            py::arg("num_threads"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0);
-        m.def("FusedDecoderCrop",&raliFusedJpegCrop,"Reads file from the source and decodes them partially to output random crops",
-            py::return_value_policy::reference,
-            py::arg("context"),
-            py::arg("source_path"),
-            py::arg("color_format"),
-            py::arg("num_threads"),
-            py::arg("is_output"),
-            py::arg("shuffle") = false,
-            py::arg("loop") = false,
-            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
-            py::arg("max_width") = 0,
-            py::arg("max_height") = 0,
-            py::arg("area_factor") = NULL,
-            py::arg("aspect_ratio") = NULL,
-            py::arg("y_drift_factor") = NULL,
-            py::arg("x_drift_factor") = NULL);
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h
         m.def("Resize",&raliResize,

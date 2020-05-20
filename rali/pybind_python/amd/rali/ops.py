@@ -82,86 +82,6 @@ class FileReader(Node):
         b.labelReader(handle,self._file_root)
         return self._file_root
     
-    
-class TFRecordReader(Node):
-
-    """
-
-features (dict }) – Dictionary of names and configuration of features existing in TFRecord file.
-
-index_path (str or list of str) – List of paths to index files (1 index file for every TFRecord file). Index files may be obtained from TFRecord files using tfrecord2idx script distributed with RALI.
-
-path (str or list of str) – List of paths to TFRecord files.
-
-bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
-
-initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
-
-lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
-
-num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
-
-pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
-
-prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
-
-preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
-
-random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
-
-read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
-
-seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
-
-shard_id (int, optional, default = 0) – Id of the part to read.
-
-skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
-
-stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
-
-tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
-
-    """
-
-    def __init__(self, features, path, index_path="", bytes_per_sample_hint=0, initial_fill = 1024, lazy_init = False, num_shards = 1, pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False, read_ahead = False, seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576,  device = None) :
-        Node().__init__()
-        self._features = features
-        self._index_path = index_path
-        self._path = path
-        self._bytes_per_sample_hint = bytes_per_sample_hint
-        self._initial_fill = initial_fill
-        self._lazy_init = lazy_init
-        self._num_shards = num_shards
-        self._pad_last_batch = pad_last_batch
-        self._prefetch_queue_depth = prefetch_queue_depth
-        self._preserve = preserve
-        self._random_shuffle =random_shuffle
-        self._read_ahead = read_ahead
-        self._seed = seed
-        self._shard_id = shard_id
-        self._skip_cached_images = skip_cached_images
-        self._stick_to_shard = stick_to_shard
-        self._tensor_init_bytes = tensor_init_bytes
-        self._device = device
-        self.output = Node()
-        self._labels = []
-        self._features["image/encoded"]=self.output
-        self._features["image/class/label"]=self._labels
-
-
-    def __call__(self,name = ""):
-            self.data = "TFRecordReader"
-            self.prev = None
-            self.next = self.output
-            self.output.prev = self
-            self.output.next = None
-            self.output.data = self._path
-            return self._features
-
-    def rali_c_func_call(self,handle):
-        # output = b.LabelReader(handle,self._file_root)
-        b.TFLabelReader(handle ,self._path, True)
-        return self._index_path
 
 class COCOReader(Node):
 
@@ -356,16 +276,9 @@ class ImageDecoder(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            if(self.prev.prev.data == "TFRecordReader"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-            else:
-                output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
-            if(self.prev.prev.data == "TFRecordReader"):
-                # output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, 4*224, 4*224)
-            else:
-                output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
         return output_image
 
 
@@ -428,26 +341,16 @@ class ImageDecoderRandomCrop(Node):
         self.output.next = None
         return self.output
 
-    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, is_output):
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height,  shuffle, is_output):
         b.setSeed(self._seed)
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            if(self.prev.prev.data == "TFRecordReader"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
-            else:
-#                output_image = b.FusedDecoderCrop(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height, None, None)
-                output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         else:
-            if(self.prev.prev.data == "TFRecordReader"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
-            else:
-#                output_image = b.FusedDecoderCrop(handle, input_image, types.RGB, num_threads, is_output, False, types.MOST_FREQUENT_SIZE, 0 , 0, None, None)
-                output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+            output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         return output_image
 
 class ColorTwist(Node):

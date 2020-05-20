@@ -30,8 +30,8 @@ if(POLICY CMP0054)
 endif()
 
 find_package(OpenCL     REQUIRED)
-find_package(miopengemm PATHS /opt/rocm REQUIRED)
-find_package(miopen     PATHS /opt/rocm REQUIRED)
+find_package(miopengemm PATHS ${ROCM_PATH} REQUIRED)
+find_package(miopen     PATHS ${ROCM_PATH} REQUIRED)
 find_package(Protobuf QUIET)
 
 list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)

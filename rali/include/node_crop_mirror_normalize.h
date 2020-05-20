@@ -25,8 +25,6 @@ THE SOFTWARE.
 #include "parameter_factory.h"
 #include "parameter_crop_factory.h"
 #include "parameter_vx.h"
-#include "parameter_crop_resize.h"
-
 class CropMirrorNormalizeNode : public Node 
 {
 public:
@@ -42,8 +40,8 @@ private:
     vx_array _src_width_array, _src_height_array;
     std::vector<vx_float32> _mean_vx, _std_dev_vx;
     vx_array _mean_array, _std_dev_array;
-    float _mean;
-    float _std_dev;
+    float _mean; 
+    float _std_dev; 
     ParameterVX<int> _mirror;
     constexpr static int   MIRROR_RANGE [2] =  {0, 1};
 };

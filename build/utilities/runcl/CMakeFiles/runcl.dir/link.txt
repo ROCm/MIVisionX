@@ -1,0 +1,1 @@
+/usr/bin/c++   -std=c++11 -DHAVE_OpenSSL=1  -rdynamic CMakeFiles/runcl.dir/runcl.cpp.o  -o ../../bin/runcl  -lOpenCL -lcrypto 

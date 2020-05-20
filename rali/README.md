@@ -82,24 +82,6 @@ sudo make install
 sudo apt-get install libjsoncpp-dev
 ```
 
-## Google Protobuf installation
-https://github.com/protocolbuffers/protobuf/blob/master/src/README.md
-
-    git clone https://github.com/protocolbuffers/protobuf.git
-    cd protobuf
-    git checkout v3.11.4 
-    git submodule update --init --recursive
-    ./autogen.sh
-    
-To build and install the C++ Protocol Buffer runtime and the Protocol
-Buffer compiler (protoc) execute the following:
-
-    ./configure
-     make
-     make check
-     sudo make install
-     sudo ldconfig # refresh shared library cache.
-
 ## Sample and test applications
 *  [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of moifications.
 *  [Augmentation unit tests](../apps/augmentation_unittest) can be used to test RALI's API individually.

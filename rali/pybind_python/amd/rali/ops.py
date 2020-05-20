@@ -124,7 +124,7 @@ tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memor
     """
 
     def __init__(self, features, path, index_path="", bytes_per_sample_hint=0, initial_fill = 1024, lazy_init = False, num_shards = 1, pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False, read_ahead = False, seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576,  device = None) :
-
+        Node().__init__()
         self._features = features
         self._index_path = index_path
         self._path = path
@@ -160,7 +160,7 @@ tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memor
 
     def rali_c_func_call(self,handle):
         # output = b.LabelReader(handle,self._file_root)
-        output = b.TFLabelReader(handle ,self._path, True)
+        b.TFLabelReader(handle ,self._path, True)
         return self._index_path
 
 class COCOReader(Node):

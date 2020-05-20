@@ -24,18 +24,7 @@ class HybridTrainPipe(Pipeline):
 													random_area=[0.1, 1.0],
 													num_attempts=100)
 		self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
-		# #self.res = ops.Crop(crop=(crop, crop))
-		# self.rain = ops.Rain(rain=0.5)
-		# self.blur = ops.Blur(blur=0.5)
-		# self.jitter = ops.Jitter()
-		# self.contrast =ops.Rotate(angle=20)
-		# self.hue = ops.Hue()
-		# self.blend = ops.Blend(blend=0.5)
-		# self.snp = ops.SnPNoise(snpNoise = 0.5)
-		# self.ving = ops.Vignette(vignette = 0.2)
-		# self.exp = ops.Exposure(exposure = 0.2)
-		# #self.wf = ops.WarpAffine()
-		# self.sat = ops.Saturation()
+		self.rain = ops.Rain(rain=0.5)
 		self.cmnp = ops.CropMirrorNormalize(device="gpu",
 											output_dtype=types.FLOAT,
 											output_layout=types.NCHW,
@@ -50,18 +39,8 @@ class HybridTrainPipe(Pipeline):
 		rng = self.coin()
 		self.jpegs, self.labels = self.input(name="Reader")
 		images = self.decode(self.jpegs)
-		# images = self.rain(images)
-		# images = self.blur(images)
+		images = self.rain(images)
 		images = self.res(images)
-		# images = self.jitter(images)
-		# images_hue = self.hue(images)
-		# images_snp = self.snp(images)
-		# images = self.ving(images)
-		# images = self.blend(images_hue, images_snp)
-		# images = self.exp(images)
-		# images = self.sat(images)
-		# #images = self.wf(images)
-		# images = self.contrast(images)
 		output = self.cmnp(images, mirror=rng)
 		return [output, self.labels]
 
@@ -83,10 +62,9 @@ def main():
 	world_size=1
 	imageIterator = RALI_iterator(pipe)
 
-
 	for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
-		cv2.imshow('image', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
-		cv2.waitKey(0)
+		cv2.imshow('image_batch', cv2.cvtColor(image_batch, cv2.COLOR_RGB2BGR))
+		cv2.waitKey(10)
 
 if __name__ == '__main__':
     main() 

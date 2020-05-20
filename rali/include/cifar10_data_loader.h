@@ -33,7 +33,7 @@ public:
     explicit CIFAR10DataLoader(DeviceResources dev_resources);
     ~CIFAR10DataLoader() override;
     LoaderModuleStatus load_next() override;
-    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size) override;
+    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=true) override;
     void set_output_image (Image* output_image) override;
     size_t remaining_count() override;
     void reset() override;

@@ -406,10 +406,10 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
 
     _convert_time.start();
     // Copies to the output context given by the user
-    const size_t w = output_width();
-    const size_t h = output_height();
+    unsigned int n = _user_batch_size;
     const size_t c = output_depth();
-
+    const size_t h = _output_image_info.height_single();
+    const size_t w = output_width();
     const size_t single_output_image_size = output_byte_size();
 
     if(_output_image_info.mem_type() == RaliMemType::OCL)
@@ -516,6 +516,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                         offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
                     }
                     else {
+/*
 #if (ENABLE_SIMD && __AVX2__)
 
                         float *B_buf = output_tensor_32 + dest_buf_offset;
@@ -573,13 +574,18 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             *G_buf++ = (in_buffer[1] * multiplier1) + offset1;
                             *R_buf++ = (in_buffer[2] * multiplier2) + offset1;
                         }
+*/
+// #else
+                        for (unsigned int nCount = 0; nCount < n; nCount++)
+                        {
+                            for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                                for(unsigned i = 0; i < channel_size; i++)
+                                    output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
+                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)]) : (float)(in_buffer[dest_buf_offset + (c*i+channel_idx)]));
 
-#else
-                        for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                            for(unsigned i = 0; i < channel_size; i++)
-                                output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
-                                        offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[c*i+c-channel_idx-1]) : (float)(in_buffer[c*i+channel_idx]));
-#endif
+                            dest_buf_offset += (w * c * h);
+                        }
+// #endif
                     }
                 }
                 else if(output_data_type == RaliTensorDataType::FP16)
@@ -795,6 +801,22 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
         else
             _augmented_meta_data = _meta_data_reader->get_output();
     }
+    return _meta_data_reader->get_output();
+}
+
+MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path)
+{
+    if( _meta_data_reader)
+        THROW("A metadata reader has already been created")
+    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::TF_META_DATA_READER, source_path);
+    _meta_data_graph = create_meta_data_graph(config);
+    _meta_data_reader = create_meta_data_reader(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
+    if (_augmented_meta_data)
+        THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
+    else
+        _augmented_meta_data = _meta_data_reader->get_output();
     return _meta_data_reader->get_output();
 }
 

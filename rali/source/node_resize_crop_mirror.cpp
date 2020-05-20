@@ -29,7 +29,7 @@ ResizeCropMirrorNode::ResizeCropMirrorNode(const std::vector<Image *> &inputs, c
          Node(inputs, outputs),
         _mirror(MIRROR_RANGE[0], MIRROR_RANGE[1])
 {
-    _crop_param = std::make_shared<CropParam>(_batch_size);
+    _crop_param = std::make_shared<RaliCropParam>(_batch_size);
 }
 
 void ResizeCropMirrorNode::create_node()

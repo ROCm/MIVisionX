@@ -19,7 +19,6 @@ namespace rali{
         unsigned char* ptr = (unsigned char*) buf.ptr;
         // call pure C++ function
         int status = raliCopyToOutput(context,ptr,buf.size);
-        // std::cerr<<"\n Copy failed with status :: "<<status;
         return py::cast<py::none>(Py_None);
     }
 
@@ -123,6 +122,8 @@ namespace rali{
             .value("MAX_SIZE",RALI_USE_MAX_SIZE)
             .value("USER_GIVEN_SIZE",RALI_USE_USER_GIVEN_SIZE)
             .value("MOST_FREQUENT_SIZE",RALI_USE_MOST_FREQUENT_SIZE)
+            .value("MAX_SIZE_ORIG",RALI_USE_MAX_SIZE_RESTRICTED)
+            .value("USER_GIVEN_SIZE_ORIG",RALI_USE_USER_GIVEN_SIZE_RESTRICTED)
             .export_values();
         py::enum_<RaliImageColor>(types_m,"RaliImageColor","Image type")
             .value("RGB",RALI_COLOR_RGB24)
@@ -151,8 +152,6 @@ namespace rali{
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
         m.def("getBoundingBoxCount",&raliGetBoundingBoxCount);
-        
-
         m.def("isEmpty",&raliIsEmpty);
         m.def("getTimingInfo",raliGetTimingInfo);
         // rali_api_parameter.h
@@ -176,8 +175,9 @@ namespace rali{
             py::arg("context"),
             py::arg("source_path"),
             py::arg("color_format"),
-            py::arg("num_threads"),
+            py::arg("internal_shard_count"),
             py::arg("is_output"),
+            py::arg("shuffle") = false,
             py::arg("loop") = false,
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
@@ -386,6 +386,14 @@ namespace rali{
             py::arg("input"),
             py::arg("is_output"),
             py::arg("flip_axis") = NULL);
-
+        m.def("RandomCrop",&raliRandomCrop,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+            py::arg("crop_area_factor") = NULL,
+            py::arg("crop_aspect_ratio") = NULL,
+            py::arg("crop_pos_x") = NULL,
+            py::arg("crop_pos_y") = NULL);
     }
 }

@@ -23,9 +23,8 @@ THE SOFTWARE.
 #pragma once
 #include "node.h"
 #include "parameter_factory.h"
-#include "parameter_crop.h"
-
-class CropParam;
+#include "parameter_crop_factory.h"
+#include "parameter_rali_crop.h"
 
 class CropNode : public Node
 {
@@ -42,6 +41,6 @@ private:
 
     size_t _dest_width;
     size_t _dest_height;
-    std::shared_ptr<CropParam> _crop_param;
+    std::shared_ptr<RaliCropParam> _crop_param;
 };
 

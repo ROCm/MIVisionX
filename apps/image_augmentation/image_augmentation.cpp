@@ -126,13 +126,13 @@ int main(int argc, const char ** argv)
     }
     else
     {
-        // The jpeg file loader can automatically select the best size to decode all images to that size
-        // User can alternatively set the size or change the policy that is used to automatically find the size
-        if(decode_height <= 0 || decode_width <= 0)
-            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false);
+	 // The jpeg file loader can automatically select the best size to decode all images to that size
+         // User can alternatively set the size or change the policy that is used to automatically find the size
+         if(decode_height <= 0 || decode_width <= 0)
+             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false, false);
         else
-            input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false,
-                                    RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
+             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false, false,  RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
+
     }
 
     if(raliGetStatus(handle) != RALI_OK)

@@ -123,12 +123,12 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     if (decode_max_height <= 0 || decode_max_width <= 0)
-        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false);
+        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
     else
-        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false,
+        input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
-
-    if (raliGetStatus(handle) != RALI_OK) {
+                                    
+     if (raliGetStatus(handle) != RALI_OK) {
         std::cout << "JPEG source could not initialize : " << raliGetErrorMessage(handle) << std::endl;
         return -1;
     }

@@ -40,7 +40,8 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
                                                         const char* source_path,
                                                         RaliImageColor color_format,
                                                         unsigned internal_shard_count,
-                                                        bool is_output ,
+                                                        bool is_output,
+                                                        bool shuffle = false,
                                                         bool loop = false,
                                                         RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                         unsigned max_width = 0, unsigned max_height = 0);
@@ -62,10 +63,10 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext c
                                                                    unsigned shard_id,
                                                                    unsigned shard_count,
                                                                    bool is_output ,
+                                                                   bool shuffle = false,
                                                                    bool loop = false,
                                                                    RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                                    unsigned max_width = 0, unsigned max_height = 0);
-
 
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.
 /// \param rali_context Rali context

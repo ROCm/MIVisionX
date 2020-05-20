@@ -20,31 +20,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <stdexcept>
-#include <memory>
-#include "reader_factory.h"
-#include "file_source_reader.h"
-#include "cifar10_data_reader.h"
+#pragma once
+#include "parameter_crop.h"
 
-std::shared_ptr<Reader> create_reader(ReaderConfig config) {
-    switch(config.type()) {
-        case StorageType ::FILE_SYSTEM:
-        {
-            auto ret = std::make_shared<FileSourceReader>();
-            if(ret->initialize(config) != Reader::Status::OK)
-                throw std::runtime_error("File reader cannot access the storage");
-            return ret;
-        }
-        break;
-        case StorageType::UNCOMPRESSED_BINARY_DATA:
-        {
-            auto ret = std::make_shared<CIFAR10DataReader>();
-            if(ret->initialize(config) != Reader::Status::OK)
-                throw std::runtime_error("CFar10 data reader cannot access the storage");
-            return ret;
-        }
-        break;
-        default:
-            throw std::runtime_error ("Reader type is unsupported");
+class RaliCropParam : public CropParam
+{
+public:
+    RaliCropParam() = delete;
+    RaliCropParam(unsigned int batch_size): CropParam(batch_size)
+    {
+        crop_height_factor = default_crop_height_factor();
+        crop_width_factor  = default_crop_width_factor();
     }
-}
+    unsigned int  crop_w, crop_h, crop_d;
+    void set_crop_height_factor(Parameter<float>* crop_h_factor);
+    void set_crop_width_factor(Parameter<float>*  crop_w_factor);
+    void update_array() override;
+private:
+    constexpr static float CROP_HEIGHT_FACTOR_RANGE[2]  = {0.55, 0.95}; 
+    constexpr static float CROP_WIDTH_FACTOR_RANGE[2]   = {0.55, 0.95};
+    Parameter<float>* default_crop_height_factor();
+    Parameter<float>* default_crop_width_factor();
+    Parameter<float> *crop_height_factor, *crop_width_factor;
+    void fill_crop_dims() override;
+};

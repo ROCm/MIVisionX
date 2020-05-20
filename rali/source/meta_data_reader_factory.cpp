@@ -50,6 +50,10 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;
+
+
+
+            
         case MetaDataReaderType::COCO_META_DATA_READER:
         {
             if(config.type() != MetaDataType::BoundingBox)

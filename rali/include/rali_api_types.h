@@ -84,6 +84,8 @@ enum RaliImageSizeEvaluationPolicy
     RALI_USE_MAX_SIZE = 0,
     RALI_USE_USER_GIVEN_SIZE = 1,
     RALI_USE_MOST_FREQUENT_SIZE = 2,
+    RALI_USE_USER_GIVEN_SIZE_RESTRICTED = 3,    // use the given size only if the actual decoded size is greater than the given size
+    RALI_USE_MAX_SIZE_RESTRICTED = 4,       // use max size if the actual decoded size is greater than max
 };
 
 enum RaliDecodeDevice

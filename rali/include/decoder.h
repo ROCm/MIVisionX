@@ -23,10 +23,13 @@ THE SOFTWARE.
 #pragma once
 
 #include <cstddef>
-
+#include <iostream>
+#include <vector>
+#include "parameter_factory.h"
 enum class DecoderType
 {
     TURBO_JPEG = 0,//!< Can only decode
+    FUSED_TURBO_JPEG = 1, //!< FOR PARTIAL DECODING
     OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
 };
 
@@ -35,9 +38,24 @@ enum class DecoderType
 class DecoderConfig
 {
 public:
+    DecoderConfig() {}
     explicit DecoderConfig(DecoderType type):_type(type){}
     virtual DecoderType type() {return _type; };
     DecoderType _type = DecoderType::TURBO_JPEG;
+    std::vector<Parameter<float>*> _crop_param;
+    void set_crop_param(std::vector<Parameter<float>*> crop_param) { _crop_param = std::move(crop_param); };
+    std::vector<float> get_crop_param(){
+        std::vector<float> crop_mul(4);
+        _crop_param[0]->renew();
+        crop_mul[0] = _crop_param[0]->get();
+        _crop_param[1]->renew();
+        crop_mul[1] = _crop_param[1]->get();
+        _crop_param[2]->renew();
+        crop_mul[2] = _crop_param[2]->get();
+        _crop_param[3]->renew();
+        crop_mul[3] = _crop_param[3]->get();
+        return crop_mul;
+    };
 };
 
 
@@ -85,7 +103,7 @@ public:
                                    size_t max_decoded_width, size_t max_decoded_height,
                                    size_t original_image_width, size_t original_image_height,
                                    size_t &actual_decoded_width, size_t &actual_decoded_height,
-                                   Decoder::ColorFormat desired_decoded_color_format) = 0;
+                                   Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original) = 0;
 
     virtual ~Decoder() = default;
 };

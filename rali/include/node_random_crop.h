@@ -20,31 +20,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include <stdexcept>
-#include <memory>
-#include "reader_factory.h"
-#include "file_source_reader.h"
-#include "cifar10_data_reader.h"
+#pragma once
+#include "node.h"
+#include "parameter_factory.h"
+#include "parameter_crop_factory.h"
+#include "parameter_rali_crop.h"
 
-std::shared_ptr<Reader> create_reader(ReaderConfig config) {
-    switch(config.type()) {
-        case StorageType ::FILE_SYSTEM:
-        {
-            auto ret = std::make_shared<FileSourceReader>();
-            if(ret->initialize(config) != Reader::Status::OK)
-                throw std::runtime_error("File reader cannot access the storage");
-            return ret;
-        }
-        break;
-        case StorageType::UNCOMPRESSED_BINARY_DATA:
-        {
-            auto ret = std::make_shared<CIFAR10DataReader>();
-            if(ret->initialize(config) != Reader::Status::OK)
-                throw std::runtime_error("CFar10 data reader cannot access the storage");
-            return ret;
-        }
-        break;
-        default:
-            throw std::runtime_error ("Reader type is unsupported");
-    }
-}
+class RandomCropNode : public Node
+{
+public:
+    RandomCropNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    RandomCropNode() = delete;
+    void init(float area , float aspect_ratio, float x_drift, float y_drift);
+    void init( FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam * x_drift, FloatParam * y_drift);
+protected:
+    void create_node() override ;
+    void update_node() override;
+private:
+    size_t _dest_width;
+    size_t _dest_height;
+    std::shared_ptr<RaliRandomCropParam> _crop_param;
+};
+

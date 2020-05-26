@@ -25,6 +25,13 @@ RALI can be currently used to perform the following operations either with rando
 * Lens correction
 * Pixelization
 * Exposure modification
+* Hue
+* Saturation
+* ColorTwist
+* Crop
+* Crop Mirror Normalization
+* Resize Crop Mirror
+* Random Crop
 
 
 ## Prerequisites
@@ -66,7 +73,7 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
       -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib  \
       ..
-make -j 4
+make -j$nproc
 sudo make install      
 ````
 

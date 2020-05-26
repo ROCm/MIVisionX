@@ -59,9 +59,6 @@ class COCOPipeline(Pipeline):
 		return [output, self.bb, self.labels]
 
 
-
-
-
 class RALICOCOIterator(object):
     """
     COCO RALI iterator for pyTorch.
@@ -94,17 +91,11 @@ class RALICOCOIterator(object):
         self.rim=self.loader.getRemainingImages()
         print("____________REMAINING IMAGES____________:",self.rim)
         color_format = self.loader.getOutputColorFormat()
-        #print("h <<",self.h,"\t w <<",self.w,"\t n <<",self.n,"\t color_format <<",color_format,"\t bs <<",self.bs)
         self.p = (1 if color_format is types.GRAY else 3)
         if self.tensor_dtype == types.FLOAT:
             self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
-            # self.bboxes=np.zeros(4,dtype = "float32" )
         elif self.tensor_dtype == types.FLOAT16:
             self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
-            # self.bboxes=np.zeros(4,dtype = "float16" )
-        
-        
-
 
 
     def next(self):
@@ -119,7 +110,6 @@ class RALICOCOIterator(object):
             print("Process  time ::",timing_info.process_time)
             print("Transfer time ::",timing_info.transfer_time)
             raise StopIteration
-        
 
         if self.loader.run() != 0:
             raise StopIteration
@@ -131,12 +121,8 @@ class RALICOCOIterator(object):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        
-        
 
         for idx in range(self.bs):
-            
-
             sum=self.loader.GetBoundingBoxCount(idx)
             self.labels = np.zeros(sum,dtype = "int32")
             self.bboxes = np.zeros(sum*4,dtype = "float32" )
@@ -149,14 +135,8 @@ class RALICOCOIterator(object):
             self.lis.append(self.bb_2d_numpy)
             self.lis_lab.append(self.label_2d_numpy)
 
-        
-
-        #Converting nested lists to Long tensors.
-
         self.target = self.lis
         self.target1 = self.lis_lab
-
-
         max_cols = max([len(row) for batch in self.target for row in batch])
         print("max_cols",max_cols)
         max_rows = max([len(batch) for batch in self.target])
@@ -174,28 +154,18 @@ class RALICOCOIterator(object):
         self.labels_padded = torch.LongTensor([row + [0] * (max_cols1 - len(row)) for batch in self.labels_padded for row in batch])
         self.labels_padded = self.labels_padded.view(-1, max_rows1, max_cols1)
         print(self.labels_padded)
-        
-       
-        
-    
+
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out),self.bb_padded, self.labels_padded
         elif self.tensor_dtype == types.FLOAT16:
             return torch.from_numpy(self.out.astype(np.float16)),self.bb_padded, self.labels_padded
-            #bb_padded-->bbox
-            #labels_padded-->labels
 
-    
     def reset(self):
         self.loader.raliResetLoaders()
 
     def __iter__(self):
         self.loader.raliResetLoaders()
         return self
-
-
-
-
 
 def main():
 	if  len(sys.argv) < 5:

@@ -63,7 +63,8 @@ public:
             const size_t max_decoded_height,
             std::vector<uint32_t> &roi_width,
             std::vector<uint32_t> &roi_height,
-            RaliColorFormat output_color_format );
+            RaliColorFormat output_color_format,
+            bool decoder_keep_original=false);
 
     //! returns timing info or other status information
     Timing timing();
@@ -81,5 +82,7 @@ private:
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
+    DecoderConfig _decoder_config;
+    bool decoder_keep_original;
 };
 

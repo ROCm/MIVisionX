@@ -44,7 +44,7 @@ class RALIGenericIterator(object):
         self.offset = offset
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
-        
+
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
@@ -56,6 +56,10 @@ class RALIGenericIterator(object):
         elif self.tensor_dtype == types.TensorDataType.FLOAT16:
             self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
         self.labels = np.zeros((self.bs),dtype = "int32")
+        if self.bs != 0:
+            self.len = b.getRemainingImages(self.loader._handle)//self.bs
+        else:
+            self.len = b.getRemainingImages(self.loader._handle)
 
     def next(self):
         return self.__next__()
@@ -91,6 +95,9 @@ class RALIGenericIterator(object):
     def __iter__(self):
         b.raliResetLoaders(self.loader._handle)
         return self
+
+    def __len__(self):
+        return self.len
 
 
 class RALIClassificationIterator(RALIGenericIterator):

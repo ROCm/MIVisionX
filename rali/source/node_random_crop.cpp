@@ -22,19 +22,18 @@ THE SOFTWARE.
 
 #include <vx_ext_rpp.h>
 #include <graph.h>
-#include "node_crop.h"
-#include "parameter_crop.h"
+#include "node_random_crop.h"
 #include "exception.h"
 
-CropNode::CropNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
+RandomCropNode::RandomCropNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs) :
         Node(inputs, outputs),
         _dest_width(_outputs[0]->info().width()),
         _dest_height(_outputs[0]->info().height_batch())
 {
-    _crop_param = std::make_shared<RaliCropParam>(_batch_size);
+    _crop_param = std::make_shared<RaliRandomCropParam>(_batch_size);
 }
 
-void CropNode::create_node()
+void RandomCropNode::create_node()
 {
     if(_node)
         return;
@@ -43,7 +42,6 @@ void CropNode::create_node()
         THROW("Uninitialized destination dimension")
 
     _crop_param->create_array(_graph);
-
     _node = vxExtrppNode_CropPD(_graph->get(), _inputs[0]->handle(), _src_roi_width, _src_roi_height, _outputs[0]->handle(), _crop_param->cropw_arr,
                                 _crop_param->croph_arr, _crop_param->x1_arr, _crop_param->y1_arr, _batch_size);
 
@@ -52,7 +50,7 @@ void CropNode::create_node()
         THROW("Error adding the crop resize node (vxExtrppNode_ResizeCropbatchPD    ) failed: "+TOSTR(status))
 }
 
-void CropNode::update_node()
+void RandomCropNode::update_node()
 {
     _crop_param->set_image_dimensions(_inputs[0]->info().get_roi_width_vec(), _inputs[0]->info().get_roi_height_vec());
     _crop_param->update_array();
@@ -61,36 +59,14 @@ void CropNode::update_node()
     _outputs[0]->update_image_roi(crop_w_dims, crop_h_dims);
 }
 
-void CropNode::init(unsigned int crop_h, unsigned int crop_w, float x_drift_, float y_drift_)
+void RandomCropNode::init(float crop_area_factor, float crop_aspect_ratio, float x_drift, float y_drift)
 {
-    _crop_param->crop_w = crop_w;
-    _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
-    _crop_param->y1     = 0;
-    FloatParam *x_drift  = ParameterFactory::instance()->create_single_value_float_param(x_drift_);
-    FloatParam *y_drift  = ParameterFactory::instance()->create_single_value_float_param(y_drift_);
-    _crop_param->set_x_drift_factor(core(x_drift));
-    _crop_param->set_y_drift_factor(core(y_drift));
+   
 }
-
-void CropNode::init(unsigned int crop_h, unsigned int crop_w)
-{
-    _crop_param->crop_w = crop_w;
-    _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
-    _crop_param->y1     = 0;
-    FloatParam *x_drift  = ParameterFactory::instance()->create_single_value_float_param(0.5);
-    FloatParam *y_drift  = ParameterFactory::instance()->create_single_value_float_param(0.5);
-    _crop_param->set_x_drift_factor(core(x_drift));
-    _crop_param->set_y_drift_factor(core(y_drift));
-}
-
-
-void CropNode::init(FloatParam *crop_h_factor, FloatParam  *crop_w_factor, FloatParam *x_drift, FloatParam *y_drift)
+void RandomCropNode::init(FloatParam *crop_area_factor, FloatParam  *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
 {
     _crop_param->set_x_drift_factor(core(x_drift));
     _crop_param->set_y_drift_factor(core(y_drift));
-    _crop_param->set_crop_height_factor(core(crop_h_factor));
-    _crop_param->set_crop_width_factor(core(crop_w_factor));
-    _crop_param->set_random();
+    _crop_param->set_area_factor(core(crop_area_factor));
+    _crop_param->set_aspect_ratio(core(crop_aspect_ratio));  
 }

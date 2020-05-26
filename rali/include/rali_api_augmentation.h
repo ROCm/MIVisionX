@@ -542,13 +542,18 @@ extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirrorFixed( RaliContext cont
                                                             unsigned crop_w,
                                                             RaliIntParam mirror
                                                             );
-extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context, RaliImage p_input,
+extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext context, RaliImage input,
                                                            unsigned dest_width, unsigned dest_height,
-                                                            bool is_output, RaliFloatParam p_crop_height = NULL,
-                                                            RaliFloatParam p_crop_width = NULL, RaliIntParam p_mirror = NULL
+                                                            bool is_output, RaliFloatParam crop_height = NULL,
+                                                            RaliFloatParam crop_width = NULL, RaliIntParam mirror = NULL
                                                             );
 
-
+extern "C" RaliImage RALI_API_CALL raliRandomCrop(  RaliContext context, RaliImage input,
+                                                    bool is_output,
+                                                    RaliFloatParam crop_area_factor  = NULL,
+                                                    RaliFloatParam crop_aspect_ratio = NULL,
+                                                    RaliFloatParam crop_pos_x = NULL,
+                                                    RaliFloatParam crop_pos_y = NULL);
 
 // /// Accepts U8 and RGB24 input. The output image dimension can be set to new values allowing the rotated image to fit,
 // /// otherwise; the image is cropped to fit the result.

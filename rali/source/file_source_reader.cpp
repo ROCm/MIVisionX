@@ -38,6 +38,7 @@ FileSourceReader::FileSourceReader()
     _current_fPtr = nullptr;
     _loop = false;
     _file_id = 0;
+    _shuffle = false;
 }
 
 unsigned FileSourceReader::count()
@@ -56,6 +57,7 @@ Reader::Status FileSourceReader::initialize(ReaderConfig desc)
     _shard_id = desc.get_shard_id();
     _shard_count = desc.get_shard_count();
     _batch_count = desc.get_batch_size();
+    _shuffle = desc.shuffle();
     _loop = desc.loop();
     return subfolder_reading();
 }
@@ -131,7 +133,7 @@ FileSourceReader::release()
 
 void FileSourceReader::reset()
 {
-    std::random_shuffle(_file_names.begin(), _file_names.end());
+    if (_shuffle) std::random_shuffle(_file_names.begin(), _file_names.end());
     _read_counter = 0;
     _curr_file_idx = 0;
 }
@@ -177,7 +179,8 @@ Reader::Status FileSourceReader::subfolder_reading()
     if(!_file_names.empty())
         LOG("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Total of " + TOSTR(_file_names.size()) + " images loaded from " + _full_path )
 
-
+    if(_shuffle)
+        std::random_shuffle(_file_names.begin(), _file_names.end());
     closedir(_sub_dir);
     return ret;
 }

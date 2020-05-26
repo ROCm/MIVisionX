@@ -82,7 +82,7 @@ class FileReader(Node):
         b.labelReader(handle,self._file_root)
         return self._file_root
     
-    
+
 class COCOReader(Node):
 
     
@@ -204,8 +204,7 @@ class COCOReader(Node):
         # b.labelReader(handle,self._file_root)
         return self._file_root
 
-   
-    
+
 
 class ImageDecoder(Node):
     """
@@ -273,13 +272,13 @@ class ImageDecoder(Node):
         self.output.next = None
         return self.output
 
-    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, is_output):
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, shuffle, is_output):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
         return output_image
 
 
@@ -342,15 +341,16 @@ class ImageDecoderRandomCrop(Node):
         self.output.next = None
         return self.output
 
-    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, is_output):
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height,  shuffle, is_output):
         b.setSeed(self._seed)
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         else:
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
-        output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+            output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         return output_image
 
 class ColorTwist(Node):
@@ -748,6 +748,32 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         output_image = []
         output_image = b.CenterCropFixed(handle, input_image,self._crop_w, self._crop_h, self._crop_d, is_output)
         return output_image 
+
+class RandomCrop(Node):
+
+    def __init__(self, crop_area_factor = [0.08, 1], crop_aspect_ratio = [0.75, 1.333333], crop_pox_x = 0, crop_pox_y = 0, device = None):
+        Node().__init__()
+        self._crop_area_factor = crop_area_factor
+        self._crop_aspect_ratio = crop_aspect_ratio
+        self._crop_pox_x = crop_pox_x
+        self._crop_pox_y = crop_pox_y
+        self.output = Node()
+        self._temp = None
+
+
+    def __call__(self, input, is_output = False):
+        input.next = self
+        self.data = "RandomCrop"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        output_image = []
+        output_image = b.RandomCrop(handle, input_image, is_output, None, None, None, None)
+        return output_image
 
 class CoinFlip():
     def __init__(self,probability=0.5, device = None):

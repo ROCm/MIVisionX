@@ -44,7 +44,7 @@ int main(int argc, const char ** argv)
     // check command-line usage
     const int MIN_ARG_COUNT = 2;
     if(argc < MIN_ARG_COUNT) {
-        printf( "Usage: image_augmentation <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height video_mode gray_scale/rgb display_on_off decode_shard_count  \n" );
+        printf( "Usage: image_augmentation <image_dataset_folder/video_file> <processing_device=1/cpu=0>  decode_width decode_height video_mode gray_scale/rgb display_on_off decode_shard_count  <shuffle:0/1> \n" );
         return -1;
     }
     int argIdx = 0;
@@ -57,6 +57,7 @@ int main(int argc, const char ** argv)
     int decode_height = 0;
     bool processing_device = 1;
     size_t shard_count = 2;
+    int shuffle = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -78,6 +79,9 @@ int main(int argc, const char ** argv)
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         shard_count = atoi(argv[++argIdx]);
+
+    if(argc >= argIdx+MIN_ARG_COUNT)
+        shuffle = atoi(argv[++argIdx]);
 
 
     int inputBatchSize = 2;
@@ -129,9 +133,9 @@ int main(int argc, const char ** argv)
 	 // The jpeg file loader can automatically select the best size to decode all images to that size
          // User can alternatively set the size or change the policy that is used to automatically find the size
          if(decode_height <= 0 || decode_width <= 0)
-             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false, false);
+             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, shuffle, false);
         else
-             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, false, false,  RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
+             input1 = raliJpegFileSource(handle, folderPath1,  color_format, shard_count, false, shuffle, false,  RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
 
     }
 
@@ -159,14 +163,12 @@ int main(int argc, const char ** argv)
 
     raliRotate(handle, image11, true, rand_angle);
 
-
     // Creating successive blur nodes to simulate a deep branch of augmentations
     RaliImage image2 = raliCropResize(handle, image0, resize_w, resize_h, false, rand_crop_area);;
     for(int i = 0 ; i < aug_depth; i++)
     {
         image2 = raliBlurFixed(handle, image2, 17.25, (i == (aug_depth -1)) ? true:false );
     }
-
 
     RaliImage image4 = raliColorTemp(handle, image0, false, color_temp_adj);
 
@@ -175,8 +177,6 @@ int main(int argc, const char ** argv)
     RaliImage image6 = raliJitter(handle, image5, false);
 
     raliVignette(handle, image6, true);
-
-
 
     RaliImage image7 = raliPixelate(handle, image0, false);
 
@@ -202,9 +202,7 @@ int main(int argc, const char ** argv)
     }
 
     std::cout << "Remaining images " << raliGetRemainingImages(handle) << std::endl;
-
     std::cout << "Augmented copies count " << raliGetAugmentationBranchCount(handle) << std::endl;
-
 
     /*>>>>>>>>>>>>>>>>>>> Diplay using OpenCV <<<<<<<<<<<<<<<<<*/
     int h = raliGetAugmentationBranchCount(handle) * raliGetOutputHeight(handle);

@@ -124,7 +124,7 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
     if (decode_max_height <= 0 || decode_max_width <= 0)
         image0 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
     else
-        image0 = raliJpegFileSource(handle, path, color_format, num_threads, false, true,
+        image0 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 
     if (raliGetStatus(handle) != RALI_OK) {

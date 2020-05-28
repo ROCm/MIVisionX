@@ -18,16 +18,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (amd_nn)
+cmake_minimum_required(VERSION 2.8)
+project(amd_nn)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-set (CMAKE_CXX_STANDARD 11)
-
-# Get rid of warning
-if(POLICY CMP0054)
-	cmake_policy(SET CMP0054 OLD)
-endif()
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL     REQUIRED)
 find_package(miopengemm PATHS ${ROCM_PATH} REQUIRED)
@@ -90,11 +85,11 @@ list(APPEND SOURCES
 add_library(vx_nn SHARED ${SOURCES})
 target_link_libraries(vx_nn openvx MIOpen miopengemm)
 
-install (TARGETS vx_nn DESTINATION lib)
-install (FILES include/vx_amd_nn.h DESTINATION include)
-install (DIRECTORY ../../model_compiler DESTINATION .)
-install (DIRECTORY ../../toolkit DESTINATION .)
-install (DIRECTORY ../../apps DESTINATION .)
+install(TARGETS vx_nn DESTINATION lib)
+install(FILES include/vx_amd_nn.h DESTINATION include)
+install(DIRECTORY ../../model_compiler DESTINATION .)
+install(DIRECTORY ../../toolkit DESTINATION .)
+install(DIRECTORY ../../apps DESTINATION .)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

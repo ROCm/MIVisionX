@@ -18,15 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (amd_loomsl)
+cmake_minimum_required(VERSION 2.8)
+project(amd_loomsl)
 
-set (CMAKE_CXX_STANDARD 11)
-
-# Get rid of warning
-if(POLICY CMP0054)
-	cmake_policy(SET CMP0054 OLD)
-endif()
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL REQUIRED)
 
@@ -52,7 +47,7 @@ list(APPEND SOURCES
 	profiler.cpp
 	)
 
-include_directories (. kernels)
+include_directories(. kernels)
 add_library(vx_loomsl SHARED ${SOURCES})
 target_link_libraries(vx_loomsl ${OpenCL_LIBRARIES} openvx)
 
@@ -63,5 +58,5 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 else()
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
 endif()

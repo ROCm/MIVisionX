@@ -22,7 +22,6 @@ cmake_minimum_required(VERSION 2.8)
 project(vx_rpp)
 
 set(CMAKE_CXX_STANDARD 11)
-cmake_policy(SET CMP0054 NEW)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 

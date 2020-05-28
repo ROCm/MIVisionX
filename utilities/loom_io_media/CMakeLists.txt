@@ -23,11 +23,6 @@ project (vx_loomio_media)
 
 set (CMAKE_CXX_STANDARD 11)
 
-# Get rid of warning
-if(POLICY CMP0054)
-	cmake_policy(SET CMP0054 OLD)
-endif()
-
 find_package(OpenCL REQUIRED)
 
 find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)

@@ -25,9 +25,7 @@ set (CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
 
-list(APPEND SOURCES
-	runcl.cpp
-)
+list(APPEND SOURCES runcl.cpp)
 
 add_executable(runcl ${SOURCES})
 install (TARGETS runcl DESTINATION bin)
@@ -40,9 +38,6 @@ else(OpenCL_FOUND)
 	target_compile_definitions(runcl PUBLIC ENABLE_OPENCL=0)
 endif(OpenCL_FOUND)
 
-if( POLICY CMP0054 )
-  cmake_policy( SET CMP0054 OLD )
-endif()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

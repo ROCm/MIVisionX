@@ -276,7 +276,7 @@ class ImageDecoder(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
         else:
             output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
         return output_image

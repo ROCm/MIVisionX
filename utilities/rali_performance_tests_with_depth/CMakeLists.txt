@@ -1,5 +1,3 @@
-################################################################################
-#
 # MIT License
 #
 # Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc.
@@ -21,30 +19,28 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-################################################################################
 
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required(VERSION 2.8)
 
-project (rali_performance_tests_with_depth)
+project(rali_performance_tests_with_depth)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
-include_directories ( ${OpenCV_INCLUDE_DIRS}  /opt/rocm/mivisionx/include/)
+include_directories(${OpenCV_INCLUDE_DIRS}  
+                    /opt/rocm/mivisionx/include/
+                   )
 
-link_directories    (/opt/rocm/mivisionx/lib/)
+link_directories(/opt/rocm/mivisionx/lib/)
 
 add_executable(${PROJECT_NAME} ./rali_performance_tests_with_depth.cpp)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)
 include_directories(${OpenCV_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -mf16c -Wall ")
 target_link_libraries(${PROJECT_NAME} rali ${OpenCV_LIBRARIES})
-
-
 
 install (TARGETS ${PROJECT_NAME} DESTINATION bin)
 

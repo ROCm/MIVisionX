@@ -18,18 +18,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (amd_opencv)
+cmake_minimum_required(VERSION 2.8)
+project(amd_opencv)
 
-set (CMAKE_CXX_STANDARD 11)
-cmake_policy(SET CMP0054 NEW)
+set(CMAKE_CXX_STANDARD 11)
 
-find_package (OpenCV REQUIRED)
+find_package(OpenCV REQUIRED)
 
-include_directories (include)
-include_directories (../../amd_openvx/openvx/include)
+include_directories(../../amd_openvx/openvx/include
+					include
+				   )
 
-list (APPEND SOURCES
+list(APPEND SOURCES
 	source/internal_dataTranslator.cpp
 	source/internal_publishKernels.cpp
 	source/internal_vxNodes.cpp
@@ -100,10 +100,10 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 target_link_libraries(vx_opencv ${OpenCV_LIBRARIES})
 target_compile_definitions(vx_opencv PUBLIC USE_OPENCV_CONTRIB=0)
 
-install (TARGETS vx_opencv DESTINATION lib)
-install (FILES include/vx_ext_opencv.h DESTINATION include)
+install(TARGETS vx_opencv DESTINATION lib)
+install(FILES include/vx_ext_opencv.h DESTINATION include)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	target_link_libraries(vx_opencv OpenVX)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

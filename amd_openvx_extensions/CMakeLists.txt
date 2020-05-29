@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (amd_openvx_extensions)
+cmake_minimum_required(VERSION 2.8)
+project(amd_openvx_extensions)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
@@ -32,14 +32,14 @@ find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 
 if(OpenCL_FOUND)
     if(AMDRPP_FOUND)
-        add_subdirectory (amd_rpp)
+        add_subdirectory(amd_rpp)
     else()
         message("-- ${Red}WARNING:AMDRPP Not Found -- amd_rpp module excluded${ColourReset}")
     endif()
-    add_subdirectory (amd_loomsl)
+    add_subdirectory(amd_loomsl)
     message("-- ${Green}AMD OpenVX Loom Stich Library Extension -- amd_loomsl module added${ColourReset}")
     if(FFMPEG_FOUND)
-        add_subdirectory (amd_media)
+        add_subdirectory(amd_media)
         message("-- ${Green}AMD OpenVX Media Extension -- amd_media module added${ColourReset}")
     else()
         message("-- ${Red}WARNING:FFMPEG Not Found -- amd_media module excluded${ColourReset}")
@@ -49,7 +49,7 @@ else()
 endif(OpenCL_FOUND)
 
 if(OpenCL_FOUND AND miopengemm_FOUND AND miopen_FOUND)
-    add_subdirectory (amd_nn)
+    add_subdirectory(amd_nn)
     message("-- ${Green}AMD OpenVX Neural Network Extension -- amd_nn module added${ColourReset}")
 else()
     message("-- ${Red}WARNING:MIOpen/MIOpenGEMM Not Found -- amd_nn module excluded${ColourReset}")
@@ -57,7 +57,7 @@ endif()
 
 if(OpenCV_FOUND)
     if(${OpenCV_VERSION_MAJOR} EQUAL 3)
-        add_subdirectory (amd_opencv)
+        add_subdirectory(amd_opencv)
         message("-- ${Green}AMD OpenVX OpenCV Extension -- amd_opencv module added${ColourReset}")
     endif()
 else()

@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
 cmake_minimum_required(VERSION 2.8)
 project(inference_server_app)
 
@@ -30,9 +29,10 @@ find_package(OpenCL REQUIRED)
 find_package(OpenCV REQUIRED)
 
 include_directories(../../../amd_openvx/openvx/include
+  					${OpenCL_INCLUDE_DIRS}
 					../../../amd_openvx_extensions/amd_nn
 				   )
-include_directories(${OpenCL_INCLUDE_DIRS})
+
 list(APPEND SOURCES
 		common.cpp
 		arguments.cpp
@@ -49,14 +49,14 @@ list(APPEND SOURCES
 
 add_executable(inference_server_app ${SOURCES})
 target_link_libraries(inference_server_app vx_nn openvx pthread)
-install (TARGETS inference_server_app DESTINATION bin)
+install TARGETS inference_server_app DESTINATION bin)
 
-if (OpenCL_FOUND)
+if(OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS}/CL ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(inference_server_app ${OpenCL_LIBRARIES})
 endif(OpenCL_FOUND)
 
-if (OpenCV_FOUND)
+if(OpenCV_FOUND)
 	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=1)
 	include_directories(${OpenCV_INCLUDE_DIRS})
 	target_link_libraries(inference_server_app ${OpenCV_LIBRARIES})
@@ -64,7 +64,7 @@ else(OpenCV_FOUND)
 	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()

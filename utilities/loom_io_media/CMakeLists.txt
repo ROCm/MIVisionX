@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (vx_loomio_media)
+cmake_minimum_required(VERSION 2.8)
+project(vx_loomio_media)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL REQUIRED)
 
@@ -35,16 +35,16 @@ find_library(SWSCALE_LIBRARY swscale)
 find_library(AVFORMAT_LIBRARY avformat)
 
 include_directories(
-    ${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
-    ${AVUTIL_INCLUDE_DIR} ${AVCODEC_INCLUDE_DIR} ${SWSCALE_INCLUDE_DIR} ${AVFORMAT_INCLUDE_DIR}
-    ../../amd_openvx/openvx/include
-    )
+                    ${OpenCL_INCLUDE_DIRS} 
+                    ${OpenCL_INCLUDE_DIRS}/Headers
+                    ${AVUTIL_INCLUDE_DIR} 
+                    ${AVCODEC_INCLUDE_DIR} 
+                    ${SWSCALE_INCLUDE_DIR} 
+                    ${AVFORMAT_INCLUDE_DIR}
+                    ../../amd_openvx/openvx/include
+                    )
 
-list(APPEND SOURCES
-	decoder.cpp
-	encoder.cpp
-	vx_loomio_media.cpp
-	)
+list(APPEND SOURCES decoder.cpp encoder.cpp vx_loomio_media.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES} ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)

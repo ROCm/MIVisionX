@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required (VERSION 2.8)
-project (applications)
+project(applications)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 

@@ -38,13 +38,13 @@ else(Protobuf_FOUND)
 	message("-- ${Red}WARNING:Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")	
 endif(Protobuf_FOUND)
 
-include_directories(
-    ../../amd_openvx/openvx/include
-    src
-    include
-	../../utilities/inference_generator
-    )
-include_directories(${OpenCL_INCLUDE_DIRS})
+include_directories(../../amd_openvx/openvx/include
+                    ${OpenCL_INCLUDE_DIRS}
+                    src
+                    include
+	                ../../utilities/inference_generator
+                    )
+
 list(APPEND SOURCES
     src/kernels.cpp
     src/activation_layer.cpp

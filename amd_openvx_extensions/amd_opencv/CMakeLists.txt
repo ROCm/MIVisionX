@@ -25,8 +25,9 @@ set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCV REQUIRED)
 
-include_directories(include)
-include_directories(../../amd_openvx/openvx/include)
+include_directories(../../amd_openvx/openvx/include
+					include
+				   )
 
 list(APPEND SOURCES
 	source/internal_dataTranslator.cpp

@@ -1,5 +1,3 @@
-################################################################################
-#
 # MIT License
 #
 # Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc.
@@ -21,14 +19,19 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-#
-################################################################################
 
-cmake_minimum_required (VERSION 2.8)
-project (mv_compile)
-set (CMAKE_CXX_STANDARD 11)
-include_directories (/opt/rocm/mivisionx/include ${PROJECT_SOURCE_DIR} )
+cmake_minimum_required(VERSION 2.8)
+project(mv_compile)
+set(CMAKE_CXX_STANDARD 11)
+
+include_directories(/opt/rocm/mivisionx/include 
+                    ${PROJECT_SOURCE_DIR}
+                   )
+
 add_executable(mv_compile mv_compile.cpp)
+
 install (TARGETS mv_compile DESTINATION bin)
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -msse4.1 -mf16c")
 target_link_libraries(mv_compile ${CMAKE_DL_LIBS})
+

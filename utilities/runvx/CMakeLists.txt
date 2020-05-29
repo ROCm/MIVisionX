@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (runvx)
+cmake_minimum_required(VERSION 2.8)
+project(runvx)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
 find_package(OpenCV QUIET)

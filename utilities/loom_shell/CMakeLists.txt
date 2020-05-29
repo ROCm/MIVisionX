@@ -18,7 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-
 cmake_minimum_required(VERSION 2.8)
 project(loom_shell)
 
@@ -30,11 +29,7 @@ include_directories(../../amd_openvx/openvx/include
                     ../../amd_openvx_extensions/amd_loomsl
                    )
 
-list(APPEND SOURCES
-	loom_shell_util.cpp
-	loom_shell.cpp
-	help.cpp
-    )
+list(APPEND SOURCES loom_shell_util.cpp loom_shell.cpp help.cpp)
 
 add_executable(loom_shell ${SOURCES})
 install(TARGETS loom_shell DESTINATION bin)

@@ -19,17 +19,19 @@
 # THE SOFTWARE.
 
 
-cmake_minimum_required (VERSION 2.8)
-project (inference_server_app)
+cmake_minimum_required(VERSION 2.8)
+project(inference_server_app)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../../amd_openvx/cmake)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL REQUIRED)
 find_package(OpenCV REQUIRED)
 
-include_directories(../../../amd_openvx/openvx/include ../../../amd_openvx_extensions/amd_nn)
+include_directories(../../../amd_openvx/openvx/include
+					../../../amd_openvx_extensions/amd_nn
+				   )
 include_directories(${OpenCL_INCLUDE_DIRS})
 list(APPEND SOURCES
 		common.cpp
@@ -62,9 +64,6 @@ else(OpenCV_FOUND)
 	target_compile_definitions(inference_server_app PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
 
-if( POLICY CMP0054 )
-  cmake_policy( SET CMP0054 OLD )
-endif()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

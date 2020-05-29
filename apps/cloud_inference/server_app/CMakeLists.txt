@@ -49,7 +49,7 @@ list(APPEND SOURCES
 
 add_executable(inference_server_app ${SOURCES})
 target_link_libraries(inference_server_app vx_nn openvx pthread)
-install TARGETS inference_server_app DESTINATION bin)
+install(TARGETS inference_server_app DESTINATION bin)
 
 if(OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS}/CL ${OpenCL_INCLUDE_DIRS}/Headers)

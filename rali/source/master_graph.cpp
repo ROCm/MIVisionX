@@ -137,12 +137,12 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 MasterGraph::Status
 MasterGraph::run()
 {
-
     if(!_processing)// The user should not call the run function before the build() is called or while reset() is happening
         return MasterGraph::Status::NOT_RUNNING;
 
-    if(no_more_processed_data())
+    if(no_more_processed_data()) {
         return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     _ring_buffer.block_if_empty();// wait here if the user thread (caller of this function) is faster in consuming the processed images compare to th output routine in producing them
 
@@ -157,8 +157,9 @@ MasterGraph::run()
 
     // If the last batch of processed imaged has been just popped from the ring_buffer it means user has previously consumed all the processed images.
     // User should check using the IsEmpty() API and not call run() or copy() API when there is no more data. run() will return MasterGraph::Status::NO_MORE_DATA flag to notify it.
-    if(no_more_processed_data())
+    if(no_more_processed_data()) {
         return MasterGraph::Status::NO_MORE_DATA;
+    }
 
     decrease_image_count();
 
@@ -675,10 +676,11 @@ void MasterGraph::output_routine()
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
                 // processed images stored in the _ring_buffer will be consumed by the user when it calls the run() func
                 notify_user_thread();
+                // the following call is required in case the ring buffer is waiting for more data to be loaded and there is no more data to process.
+                _ring_buffer.release_if_empty();
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
-
             // _ring_buffer.get_write_buffers() is blocking and blocks here until user uses processed image by calling run() and frees space in the ring_buffer
             auto write_buffers = _ring_buffer.get_write_buffers();
 

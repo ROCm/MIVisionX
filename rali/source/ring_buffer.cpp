@@ -92,6 +92,12 @@ void RingBuffer::release_all_blocked_calls()
     unblock_reader();
     unblock_writer();
 }
+
+void RingBuffer::release_if_empty()
+{
+    if (empty()) unblock_reader();
+}
+
 void RingBuffer::unblock_writer()
 {
     // Wake up the writer thread in case it's waiting for an unload

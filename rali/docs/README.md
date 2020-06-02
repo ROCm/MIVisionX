@@ -90,7 +90,7 @@ Step 8: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```
 Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into train and val folders
 Step 2: Pull and run [MIVisionX rali_pytorch docker] (../docker). The docker already installed with pre-built packeges for RALI
-Step 6: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
-Step 7: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
-Step 8: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
+Step 3: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
+Step 4: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
+Step 5: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```

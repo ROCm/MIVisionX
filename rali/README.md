@@ -38,9 +38,11 @@ RALI can be currently used to perform the following operations either with rando
 *  Ubunto 16.04 or later with
 *  AMD [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
 *  OpenVX (including RPP and Media extension)
+*  Boost lib 1.66 or later 
 *  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or later
 *  Half float library
 *  jsoncpp library
+*  Google protobuf 3.11.1 or higher
 
 ## Build instructions
 Rali builds and installs as part of the MIVisonX toolkit. RALI depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for RALI to build. RALI also needs Turbo JPEG library to decode input JPEG images.  

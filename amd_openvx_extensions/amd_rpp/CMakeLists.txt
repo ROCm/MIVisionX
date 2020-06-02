@@ -22,16 +22,16 @@ cmake_minimum_required(VERSION 2.8)
 project(vx_rpp)
 
 set(CMAKE_CXX_STANDARD 11)
-cmake_policy(SET CMP0054 NEW)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
 find_package(AMDRPP    REQUIRED)
 find_package(OpenCL    QUIET)
 
-include_directories(include)
-include_directories(../../amd_openvx/openvx/include/)
-include_directories(${AMDRPP_INCLUDE_DIRS})
+include_directories(../../amd_openvx/openvx/include/
+                    ${AMDRPP_INCLUDE_DIRS}
+                    include
+                   )
 
 list(APPEND SOURCES
         source/AbsoluteDifference.cpp
@@ -310,7 +310,7 @@ list(APPEND SOURCES
 
 link_directories(${AMDRPP_LIBRARIES_DIR})
 
-if (OpenCL_FOUND)
+if(OpenCL_FOUND)
 	message("-- ${Green}AMD VX RPP -- BUILDING WITH OPENCL BACKEND${ColourReset}")
 	set(ENABLE_OPENCL 1)
 	add_definitions(-DENABLE_OPENCL=${ENABLE_OPENCL} -DRPP_BACKEND_OPENCL=1)
@@ -328,7 +328,7 @@ endif(OpenCL_FOUND)
 install(TARGETS vx_rpp DESTINATION lib)
 install(FILES include/vx_ext_rpp.h DESTINATION include)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	target_link_libraries(OpenVX)
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

@@ -313,7 +313,7 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
     int i = 0;
-    while (i++ < 100){  
+    while (i++ < 100 && !raliIsEmpty(handle)){  
         
         if (raliRun(handle) != 0)
             break;

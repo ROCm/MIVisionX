@@ -55,7 +55,7 @@ Follow the build instructions in [RALI](../README.md)
 
 ### amd.rali.pipeline 
 * Contains Pipeline class which has all the data needed to build and run RALI graph.
-* Contains support for context creation, verify and run the graph.
+* Contains support for context/graph creation, verify and run the graph.
 * Has data transfer functions to exchange data between frameworks and RALI
 * define_graph functionality has been implemented to add nodes to build pipeline graph.
 
@@ -66,7 +66,7 @@ Rali.types are enums exported from C++ api to python. Some examples include CPU,
 *  Contains RaliGenericIterator for Pytorch.
 *  RaliClassificationIterator class implements iterator for image classification and return images with corresponding labels.
 *  From the above classes, any hybrid iterator pipeline can be created by adding augmentations.
-*  see example [PyTorch Simple Example](./examples/test_training.py). Requires PyTorch.
+*  see example [PyTorch Simple Example](./examples). Requires PyTorch.
 
 ### installing RALI python plugin (Python 3.6)
 *  Build and install RPP

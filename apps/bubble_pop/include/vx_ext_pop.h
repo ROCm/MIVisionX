@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 #include "VX/vx.h"
-#include <VX/vx_compatibility.h>
 #include "opencv2/opencv.hpp"
 
 #if _WIN32 

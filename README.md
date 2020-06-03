@@ -35,7 +35,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 ## Applications
 MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.
 
-<p align="center"><img width="90%" src="docs/images/vx-pop-app.gif" /></p>
+<p align="center"><img width="60%" src="docs/images/vx-pop-app.gif" /></p>
 
 * [Bubble Pop](apps/bubble_pop#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 

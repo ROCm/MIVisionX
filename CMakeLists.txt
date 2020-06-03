@@ -50,6 +50,7 @@ add_subdirectory(apps)
 add_subdirectory(utilities)
 
 install(DIRECTORY docs DESTINATION .)
+install(DIRECTORY apps DESTINATION .)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

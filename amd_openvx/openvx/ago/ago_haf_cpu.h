@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #ifndef __ago_haf_cpu_h__
 #define __ago_haf_cpu_h__
 
@@ -34,7 +33,6 @@ THE SOFTWARE.
 #define atan2_p3		(-0.3258083974640975f*57.29577951308232f)
 #define atan2_p5		(0.1555786518463281f*57.29577951308232f)
 #define atan2_p7		(-0.04432655554792128f*57.29577951308232f)
-
 
 typedef struct {
 	vx_uint16 x;

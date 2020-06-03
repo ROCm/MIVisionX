@@ -1,16 +1,19 @@
-# AMD RunVX
-RunVX is a command-line tool to execute OpenVX graphs, with a simple, easy-to-use interface. It encapsulates most of the routine OpenVX calls, thus speeding up development and enabling rapid prototyping. As input, RunVX takes a GDF (Graph Description Format) file, a simple and intuitive syntax to describe the various data, nodes, and their dependencies. The tool has other useful features, such as, file read/write, data compares, image and keypoint data visualization, etc.
+# AMD RunVX USER GUIDE
 
-If available, this project uses OpenCV for camera capture and image display.
+## DESCRIPTION
+This guide provides an overview of the content and usage of the RunVX tool. This tool is used to run OpenVX graphs, with a simple, easy-to-use interface. It encapsulates most of the routine OpenVX calls, thus speeding up development and enabling rapid prototyping.
 
-## RunVX Usage and GDF Syntax
-    runvx.exe [options] <file.gdf> [argument(s)]
+## RUNVX TOOL
+RunVX is a command line tool used to execute OpenVX graphs. As input, RUNVX takes a GDF (Graph Description Format) file, a simple and intuitive syntax to describe the various data, nodes, and their dependencies. This guide describes the elements of RunVX tool and the syntax used to run various OpenVX graphs. The tool has other useful features, such as, file read/write, data compares, image and keypoint data visualization, etc.
+
+### RunVX Usage and GDF Syntax
+    runvx.exe [options] file <file.gdf> [argument(s)]
     runvx.exe [options] node <kernelName> [argument(s)]
     runvx.exe [options] shell [argument(s)]
         
     The argument(s) are data objects created using <data-description> syntax.
     These arguments can be accessed from inside GDF as $1, $2, etc.
-
+    
     The available command-line options are:
       -h
           Show full help.
@@ -31,11 +34,6 @@ If available, this project uses OpenCV for camera capture and image display.
       -disable-virtual
           Replace all virtual data types in GDF with non-virtual data types.
           Use of this flag (i.e. for debugging) can make a graph run slower.
-      -dump-data-config:<dumpFilePrefix>,<object-type>[,object-type[...]]
-          Automatically dump all non-virtual objects of specified object types
-          into files '<dumpFilePrefix>dumpdata_####_<object-type>_<object-name>.raw'
-      -discard-commands:<cmd>[,cmd[...]]
-          Discard the listed commands.
     
     The supported list of OpenVX built-in kernel names is given below:
         org.khronos.openvx.color_convert
@@ -83,11 +81,11 @@ If available, this project uses OpenCV for camera capture and image display.
     The available GDF commands are:
       import <libraryName>
           Import kernels in a library using vxLoadKernel API.
-
+    
       type <typeName> userstruct:<size-in-bytes>
           Create an OpenVX user defined structure using vxRegisterUserStruct API.
           The <typeName> can be used as a type in array object.
-
+    
       data <dataName> = <data-description>
           Create an OpenVX data object in context using the below syntax for
           <data-description>:
@@ -95,52 +93,43 @@ If available, this project uses OpenCV for camera capture and image display.
               convolution:<columns>,<rows>
               distribution:<numBins>,<offset>,<range>
               delay:<exemplar>,<slots>
-              image:<width>,<height>,<image-format>[,<range>][,<space>]
-              uniform-image:<width>,<height>,<image-format>,<uniform-pixel-value>
-              image-from-roi:<master-image>,rect{<start-x>;<start-y>;<end-x>;<end-y>}
-              image-from-handle:<image-format>,{<dim-x>;<dim-y>;<stride-x>;<stride-y>}[+...],<memory-type>
-              image-from-channel:<master-image>,<channel>
+              image:<width>,<height>,<image-format>
+              image-uniform:<width>,<height>,<image-format>,<uniform-pixel-value>
+              image-roi:<master-image>,rect{<start-x>;<start-y>;<end-x>;<end-y>}
               lut:<data-type>,<count>
               matrix:<data-type>,<columns>,<rows>
               pyramid:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<image-format>
               remap:<srcWidth>,<srcHeight>,<dstWidth>,<dstHeight>
               scalar:<data-type>,<value>
               threshold:<thresh-type>,<data-type>
-              tensor:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>
-              tensor-from-roi:<master-tensor>,<num-of-dims>,{<start0>,<start1>,...},{<end0>,<end1>,...}
-              tensor-from-handle:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>,{<stride0>,<stride1>,...},<num-alloc-handles>,<memory-type>
           For virtual object in default graph use the below syntax for
           <data-description>:
-              virtual-array:<data-type>,<capacity>
-              virtual-image:<width>,<height>,<image-format>
-              virtual-pyramid:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<image-format>
-              virtual-tensor:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>
-
+              array-virtual:<data-type>,<capacity>
+              image-virtual:<width>,<height>,<image-format>
+              pyramid-virtual:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<image-format>
+    
           where:
               <master-image> can be name of a image data object (including $1, $2, ...)
-              <master-tensor> can be name of a tensor data object (including $1, $2, ...)
               <exemplar> can be name of a data object (including $1, $2, ...)
               <thresh-type> can be BINARY,RANGE
               <uniform-pixel-value> can be an integer or {<byte>;<byte>;...}
               <image-format> can be RGB2,RGBX,IYUV,NV12,U008,S016,U001,F032,...
               <data-type> can be UINT8,INT16,INT32,UINT32,FLOAT32,ENUM,BOOL,SIZE,
                                  KEYPOINT,COORDINATES2D,RECTANGLE,<typeName>,...
-              <range> can be vx_channel_range_e enums FULL or RESTRICTED
-              <space> can be vx_color_space_e enums BT709 or BT601_525 or BT601_625
-
+    
       node <kernelName> [<argument(s)>]
           Create a node of specified kernel in the default graph with specified
           node arguments. Node arguments have to be OpenVX data objects created
           earlier in GDF or data objects specified on command-line accessible as
           $1, $2, etc. For scalar enumerations as node arguments, use !<enumName>
           syntax (e.g., !VX_CHANNEL_Y for channel_extract node).
-
+    
       include <file.gdf>
           Specify inclusion of another GDF file.
-
+    
       shell
           Start a shell command session.
-
+    
       set <option> [<value>]
           Specify or query the following global options:
               set verbose [on|off]
@@ -161,10 +150,7 @@ If available, this project uses OpenCV for camera capture and image display.
                   Turn on/off data compares or just discard data compare errors.
               set use-schedule-graph [on|off]
                   Turn on/off use of vxScheduleGraph instead of vxProcessGraph.
-              set dump-data-config [<dumpFilePrefix>,<obj-type>[,<obj-type>[...]]]
-                  Specify dump data config for portion of the graph. To disable
-                  don't specify any config.
-
+    
       graph <command> [<arguments> ...]
           Specify below graph specific commands:
               graph auto-age [<delayName> [<delayName> ...]]
@@ -183,10 +169,7 @@ If available, this project uses OpenCV for camera capture and image display.
                   Launch the default or specified graph(s).
               graph info [<graphName(s)>]
                   Show graph details for debug.
-
-      rename <dataNameOld> <dataNameNew>
-          Rename a data object\n"
-
+    
       init <dataName> <initial-value>
           Initialize data object with specified value.
           - convolution object initial values can be:
@@ -204,15 +187,7 @@ If available, this project uses OpenCV for camera capture and image display.
           - threshold object initial values can be:
               For VX_THRESHOLD_TYPE_BINARY: <value>
               For VX_THRESHOLD_TYPE_RANGE: {<lower>;<upper>}
-          - image object initial values can be:
-              Binary file with image data. For images created from handle,
-              the vxSwapHandles API will be invoked before executing the graph.
-          - tensor object initial values can be:
-              Binary file with tensor data.
-              To replicate a file multiple times, use @repeat~N~<fileName>.
-              To fill the tensor with a value, use @fill~f32~<float-value>,
-              @fill~i32~<int-value>, @fill~i16~<int-value>, or @fill~u8~<uint-value>.
-
+    
       read <dataName> <fileName> [ascii|binary] [<option(s)>]
           Read frame-level data from the specified <fileName>.
           - images can be read from containers (such as, .jpg, .avi, .mp4, etc.)
@@ -227,7 +202,7 @@ If available, this project uses OpenCV for camera capture and image display.
             pyramid objects expect all frames of each level in separate files.
           - convolution objects support the option: scale
             This will read scale value as the first 32-bit integer in file(s).
-
+    
       write <dataName> <fileName> [ascii|binary] [<option(s)>]
           Write frame-level data to the specified <fileName>.
           - certain raw data formats support writing data for all frames into a
@@ -240,7 +215,7 @@ If available, this project uses OpenCV for camera capture and image display.
             pyramid objects expect all frames of each level in separate files.
           - convolution objects support the option: scale
             This will write scale value as the first 32-bit integer in file(s).
-
+    
       compare <dataName> <fileName> [ascii|binary] [<option(s)>]
           Compare frame-level data from the specified <fileName>.
           - certain raw data formats support comparing data for all frames from a
@@ -269,7 +244,7 @@ If available, this project uses OpenCV for camera capture and image display.
               specify tolerance: err{<x>;<y>}
           - scalar objects support the option:
               specify that file specifies inclusive range of valid values: range
-
+    
       view <dataName> <windowName>
           Display frame-level data in a window with title <windowName>. Each window
           can display an image data object and optionally additional other data
@@ -279,7 +254,7 @@ If available, this project uses OpenCV for camera capture and image display.
           - display of array, distribution, lut, and scalar objects are
             overlaid on top of an image with the same <windowName>.
           - delay object displays reference in the slot#0 of current time.
-
+    
       directive <dataName> <directive>
           Specify a directive to data object. Only a few directives are supported:
           - Use sync-cl-write directive to issue VX_DIRECTIVE_AMD_COPY_TO_OPENCL
@@ -288,16 +263,16 @@ If available, this project uses OpenCV for camera capture and image display.
           - Use readonly directive to issue VX_DIRECTIVE_AMD_READ_ONLY directive
             that informs the OpenVX framework that object won't be updated after
             init command. Supported for convolution and matrix data objects only.
-
+    
       pause
           Wait until a key is pressed before processing next GDF command.
-
+    
       help [command]
           Show the GDF command help.
-
+    
       exit
           Exit from shell or included GDF file.
-
+    
       quit
           Abort the application.
 
@@ -305,18 +280,18 @@ If available, this project uses OpenCV for camera capture and image display.
 Here are few examples that demonstrate use of RUNVX prototyping tool.
 
 ### Canny Edge Detector
-This example demonstrates building OpenVX graph for Canny edge detector. Use [face1.jpg](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-core/blob/master/examples/images/face1.jpg) for this example.
+This example demonstrates building OpenVX graph for Canny edge detector. Use [raja-koduri-640x480.jpg](http://cdn5.applesencia.com/wp-content/blogs.dir/17/files/2013/04/raja-koduri-640x480.jpg) for this example.
 
     % runvx[.exe] file canny.gdf
 
 File **canny.gdf**:
 
     # create input and output images
-    data input  = image:480,360,RGB2
-    data output = image:480,360,U008
+    data input  = image:640,480,RGB2
+    data output = image:640,480,U008
     
     # specify input source for input image and request for displaying input and output images
-    read input  examples/images/face1.jpg
+    read input  raja-koduri-640x480.jpg
     view input  inputWindow
     view output edgesWindow
     
@@ -332,28 +307,28 @@ File **canny.gdf**:
     node org.khronos.openvx.canny_edge_detector luma hyst gradient_size !NORM_L1 output
 
 ### Skintone Pixel Detector
-This example demonstrates building OpenVX graph for pixel-based skin tone detector [Peer et al. 2003]. Use [face1.jpg](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-core/blob/master/examples/images/face1.jpg) for this example.
+This example demonstrates building OpenVX graph for pixel-based skin tone detector [Peer et al. 2003]. Use [raja-koduri-640x480.jpg](http://cdn5.applesencia.com/wp-content/blogs.dir/17/files/2013/04/raja-koduri-640x480.jpg) for this example.
 
     % runvx[.exe] file skintonedetect.gdf
 
 File **skintonedetect.gdf**:
 
     # create input and output images
-    data input  = image:480,360,RGB2
-    data output = image:480,360,U008
-
+    data input  = image:640,480,RGB2
+    data output = image:640,480,U008
+    
     # specify input source for input image and request for displaying input and output images
-    read input  examples/images/face1.jpg
+    read input  raja-koduri-640x480.jpg
     view input  inputWindow
     view output skintoneWindow
-
+    
     # threshold objects
     data thr95  = threshold:BINARY,UINT8:INIT,95 # threshold for computing R > 95
     data thr40  = threshold:BINARY,UINT8:INIT,40 # threshold for computing G > 40
     data thr20  = threshold:BINARY,UINT8:INIT,20 # threshold for computing B > 20
     data thr15  = threshold:BINARY,UINT8:INIT,15 # threshold for computing R-G > 15
     data thr0   = threshold:BINARY,UINT8:INIT,0  # threshold for computing R-B > 0
-
+    
     # virtual image objects for intermediate results
     data R      = image-virtual:0,0,U008
     data G      = image-virtual:0,0,U008
@@ -368,27 +343,26 @@ File **skintonedetect.gdf**:
     data and1   = image-virtual:0,0,U008
     data and2   = image-virtual:0,0,U008
     data and3   = image-virtual:0,0,U008
-
+    
     # extract R,G,B channels and compute R-G and R-B
-    node org.khronos.openvx.channel_extract input !CHANNEL_R R # extract R channel
+    node org.khronos.openvx.channel_extract input !CHANNEL_B R # extract R channel
     node org.khronos.openvx.channel_extract input !CHANNEL_G G # extract G channel
-    node org.khronos.openvx.channel_extract input !CHANNEL_B B # extract B channel
+    node org.khronos.openvx.channel_extract input !CHANNEL_R B # extract B channel
     node org.khronos.openvx.subtract R   G   !SATURATE RmG  # compute R-G
     node org.khronos.openvx.subtract R   B   !SATURATE RmB  # compute R-B
-
+    
     # compute threshold
     node org.khronos.openvx.threshold R   thr95 R95         # compute R > 95
     node org.khronos.openvx.threshold G   thr40 G40         # compute G > 40
     node org.khronos.openvx.threshold B   thr20 B20         # compute B > 20
     node org.khronos.openvx.threshold RmG thr15 RmG15       # compute RmG > 15
     node org.khronos.openvx.threshold RmB thr0  RmB0        # compute RmB > 0
-
+    
     # aggregate all thresholded values to produce SKIN pixels
     node org.khronos.openvx.and R95   G40   and1            # compute R95 & G40
     node org.khronos.openvx.and and1  B20   and2            # compute B20 & and1
     node org.khronos.openvx.and RmG15 RmB0  and3            # compute RmG15 & RmB0
     node org.khronos.openvx.and and2 and3 output            # compute and2 & and3 as output
-
 
 ### Feature Tracker
 The feature tracker example demonstrates building an application with two 

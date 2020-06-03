@@ -24,22 +24,11 @@ THE SOFTWARE.
 #ifndef __VX_UTILS_H__
 #define __VX_UTILS_H__
 
-// OpenCL: enabled unless disabled explicitly by setting ENABLE_OPENCL=0
-#ifndef ENABLE_OPENCL
-#define ENABLE_OPENCL  1
-#endif
-// OpenCV: enabled unless disabled explicitly by setting ENABLE_OPENCV=0
-#ifndef ENABLE_OPENCV
-#define ENABLE_OPENCV 1
-#endif
-
 #include <VX/vx.h>
-#include <VX/vx_compatibility.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <string.h>
 #include <inttypes.h>
 
 #include <sstream>
@@ -69,15 +58,10 @@ THE SOFTWARE.
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#if ENABLE_OPENCL
-#if __APPLE__
-#include <opencl.h>
-#else
-#include <CL/cl.h>
+#ifndef USE_OPENCV
+#define USE_OPENCV 1
 #endif
-#endif
-
-#if ENABLE_OPENCV
+#if USE_OPENCV
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
@@ -93,7 +77,6 @@ using namespace std;
 // error check/report macros
 #define ReportError(...) { printf(__VA_ARGS__); throw -1; }
 #define ERROR_CHECK(call) { vx_status status = call; if(status) ReportError("ERROR: " #call "=> %d (%s) [" __FILE__ "#%d]\n", status, ovxEnum2Name(status), __LINE__); }
-#define ERROR_CHECK_AND_WARN(call,warncode) { vx_status status = call; if(status == warncode) printf("WARNING: " #call "=> %d (%s) [" __FILE__ "#%d]\n", status, ovxEnum2Name(status), __LINE__); else if(status) ReportError("ERROR: " #call "=> %d (%s) [" __FILE__ "#%d]\n", status, ovxEnum2Name(status), __LINE__); }
 #define NULLPTR_CHECK(call) if((call) == nullptr) ReportError("ERROR: " #call "=> nullptr [" __FILE__ "#%d]\n", __LINE__)
 
 ///////////////////////////////////////////////////////////////////////////
@@ -172,21 +155,16 @@ vx_enum ovxName2Enum(const char * name);
 void ComputeChecksum(char checkSumString[64], vx_image image, vx_rectangle_t * rectRegion);
 // compare rectangular region specified within an image and return number of pixels mismatching
 size_t CompareImage(vx_image image, vx_rectangle_t * rectRegion, vx_uint8 * refImage, float errLimitMin, float errLimitMax, int frameNumber, const char * fileNameRef);
-// get image width in bytes from image
-vx_size CalculateImageWidthInBytes(vx_image image);
 // read image
 int ReadImage(vx_image image, vx_rectangle_t * rectFull, FILE * fp);
 // write image
 int WriteImage(vx_image image, vx_rectangle_t * rectFull, FILE * fp);
-// write image compressed
-int WriteImageCompressed(vx_image image, vx_rectangle_t * rectFull, const char * fileName);
 
 // read & write scalar value to/from a string
 int ReadScalarToString(vx_scalar scalar, char str[]);
 int WriteScalarFromString(vx_scalar scalar, const char str[]);
 int GetScalarValueFromString(vx_enum type, const char str[], vx_uint64 * value);
 int PutScalarValueToString(vx_enum type, const void * value, char str[]);
-int GetScalarValueForStructTypes(vx_enum type, const char str[], void * value);
 
 // useful utility functions:
 //   stristr -- case insensitive version of strstr
@@ -195,4 +173,3 @@ vector<string> &split(const string &s, char delim, vector<string> &elems);
 int convert_image_format(string format);
 
 #endif
-

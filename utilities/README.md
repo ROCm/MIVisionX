@@ -2,12 +2,6 @@
 
 MIVisionX has utility applications which could be used by developers to test, quick prototype or develop sample applications.
 
-## [Inference Generator](inference_generator#inference-generator)
-caffe2openvx: Convert a pre-trained CAFFE model into a C library for use by applications.
-
-## [Loom Shell](loom_shell#radeon-loomshell)
-LoomShell is an interpreter that enables stitching 360 degree videos using a script. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
-
 ## [RunCL](runcl#amd-runcl)
 RunCL is a command-line tool to build, execute, and debug OpenCL programs, with a simple, easy-to-use interface.
 

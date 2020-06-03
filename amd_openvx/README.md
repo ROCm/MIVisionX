@@ -1,16 +1,12 @@
-# AMD OpenVX
-AMD OpenVX is a highly optimized open source implementation of the [Khronos OpenVX](https://www.khronos.org/registry/vx/) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
+# AMD OpenVX 1.0.1
+AMD OpenVX 1.0.1 is a highly optimized open source implementation of the [Khronos OpenVX](https://www.khronos.org/registry/vx/) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 The amd_openvx project consists of the following components:
 * [OpenVX](openvx/README.md): AMD OpenVX library
 
 The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. Look into amd_openvx_extensions for additional OpenVX modules and utilities.
 
-* **vx_loomsl**: Radeon LOOM stitching library for live 360 degree video applications
-* **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
 * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
-* **vx_rpp]**: OpenVX extension providing an interface to some of the Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [RALI](../rali/README.md) to perform image augmentation.
-* **vx_winml**: OpenVX module that implemented a mechanism to access Windows Machine Learning(WinML) functionality as OpenVX kernels
 
 ## Features
 * The code is highly optimized for both x86 CPU and OpenCL for GPU
@@ -21,9 +17,9 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 ## Pre-requisites
 * CPU: SSE4.1 or above CPU, 64-bit.
-* GPU: Radeon Professional Graphics Cards or Vega Family of Products (16GB required for vx_loomsl and vx_nn libraries)
+* GPU: Radeon Professional Graphics Cards or Vega Family of Products
   * Windows: install the latest drivers and OpenCL SDK [download](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases)
-  * Linux: install [ROCm](https://rocm.github.io/ROCmInstall.html)
+  * Linux: install [ROCm OpenCL](https://rocm.github.io/ROCmInstall.html)
 * OpenCV 3.4+ [download](https://github.com/opencv/opencv/releases) for RunVX & AMD OpenCV Extensions
   * Set OpenCV_DIR environment variable to OpenCV/build folder
 

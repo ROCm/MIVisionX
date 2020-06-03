@@ -28,7 +28,7 @@ find_package(OpenCL QUIET)
 list(APPEND SOURCES runcl.cpp)
 
 add_executable(runcl ${SOURCES})
-install (TARGETS runcl DESTINATION bin)
+install(TARGETS runcl DESTINATION bin)
 
 if(OpenCL_FOUND)
 	target_compile_definitions(runcl PUBLIC ENABLE_OPENCL=1)

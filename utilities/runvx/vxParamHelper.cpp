@@ -89,7 +89,7 @@ int GuiTrackBarProcessKey(int key)
 	}
 	if (g_trackBarObj[id]) {
 		vx_enum obj_type = VX_ERROR_INVALID_TYPE;
-		vxQueryReference(g_trackBarObj[id], VX_REFERENCE_TYPE, &obj_type, sizeof(obj_type));
+		vxQueryReference(g_trackBarObj[id], VX_REF_ATTRIBUTE_TYPE, &obj_type, sizeof(obj_type));
 		if (obj_type == VX_TYPE_SCALAR) {
 			if (key == 0x00250000) id = 0, key = '-'; // left arrow: hardcoded to id#0 (F1) dec
 			else if (key == 0x00260000) id = 1, key = '+'; // up arrow: hardcoded to id#1 (F2) inc
@@ -153,7 +153,7 @@ int GuiTrackBarProcessKey(int key)
 // global OpenCV image count and specified read inputs count
 int ProcessCvWindowKeyRefresh(int waitKeyDelayInMilliSeconds)
 {
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	if (g_numCvUse > 0) {
 		// process keyboard
 		int key = waitKey(waitKeyDelayInMilliSeconds);

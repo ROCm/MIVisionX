@@ -20,15 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
-#include <mutex>
 
-#if _WIN32
 static DWORD WINAPI agoGraphThreadFunction(LPVOID graph_)
-#else
-static void agoGraphThreadFunction(LPVOID graph_)
-#endif
 {
 	AgoGraph * graph = (AgoGraph *)graph_;
 	while (WaitForSingleObject(graph->hSemToThread, INFINITE) == WAIT_OBJECT_0) {
@@ -45,38 +39,29 @@ static void agoGraphThreadFunction(LPVOID graph_)
 	// inform caller about termination
 	graph->threadThreadTerminationState = 2;
 	ReleaseSemaphore(graph->hSemFromThread, 1, nullptr);
-#if _WIN32
-    return 0;
-#endif
+	return 0;
 }
 
-AgoContext * agoCreateContextFromPlatform(struct _vx_platform * platform)
+AgoContext * agoCreateContext()
 {
-    CAgoLockGlobalContext lock;
+	CAgoLockGlobalContext lock;
 
 	// check if CPU hardware supports
 	bool isHardwareSupported = agoIsCpuHardwareSupported();
 	if (!isHardwareSupported) {
-		agoAddLogEntry(NULL, VX_FAILURE, "ERROR: Unsupported CPU (requires SSE 4.2)\n");
+		agoAddLogEntry(NULL, VX_FAILURE, "ERROR: Unsupported CPU\n");
 		return NULL;
 	}
 
 	// create context and initialize
 	AgoContext * acontext = new AgoContext;
+	if (agoPublishKernels(acontext)) {
+		delete acontext;
+		acontext = NULL;
+	}
 	if (acontext) {
-		acontext->ref.platform = platform;
 		agoResetReference(&acontext->ref, VX_TYPE_CONTEXT, acontext, NULL);
 		acontext->ref.external_count++;
-		// initialize image formats
-		if (agoInitializeImageComponentsAndPlanes(acontext)) {
-			delete acontext;
-			return NULL;
-		}
-		// initialize kernels
-		if (agoPublishKernels(acontext)) {
-			delete acontext;
-			return NULL;
-		}
 		// initialize thread config
 		char textBuffer[1024];
 		if (agoGetEnvironmentVariable("AGO_THREAD_CONFIG", textBuffer, sizeof(textBuffer))) {
@@ -94,16 +79,22 @@ int agoReleaseContext(AgoContext * acontext)
 		return -1;
 
 	EnterCriticalSection(&acontext->cs);
-	// release all the resources
-	LeaveCriticalSection(&acontext->cs);
-	delete acontext;
+	acontext->ref.external_count--;
+	if (acontext->ref.external_count == 0) {
+		// release all the resources
+		LeaveCriticalSection(&acontext->cs);
+		delete acontext;
+	}
+	else {
+		LeaveCriticalSection(&acontext->cs);
+	}
 	return 0;
 }
 
 AgoGraph * agoCreateGraph(AgoContext * acontext)
 {
 	AgoGraph * agraph = new AgoGraph;
-	if (!agraph || !acontext) {
+	if (!agraph) {
 		return nullptr;
 	}
 
@@ -155,52 +146,52 @@ int agoReleaseGraph(AgoGraph * agraph)
 	int status = 0;
 	agraph->ref.external_count--;
 	if (agraph->ref.external_count == 0) {
-        EnterCriticalSection(&agraph->cs);
-        // stop graph thread
-        if (agraph->hThread) {
-            agraph->threadThreadTerminationState = 1;
-            ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
-            while (agraph->threadThreadTerminationState == 1) {
-                // give a chance for the thread to run in case it is waititng
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
-            }
-            if (agraph->hSemToThread) {
-                CloseHandle(agraph->hSemToThread);
-            }
-            if (agraph->hSemFromThread) {
-                CloseHandle(agraph->hSemFromThread);
-            }
-            CloseHandle(agraph->hThread);
-        }
-        // deinitialize the graph
-        for (AgoNode * node = agraph->nodeList.head; node; node = node->next)
-        {
-            status = agoShutdownNode(node);
-            if (status) {
-                break;
-            }
-        }
-        if (!status) {
-            // remove graph from context
-            if (agoRemoveGraph(&agraph->ref.context->graphList, agraph) != agraph) {
-                status = -1;
-                LeaveCriticalSection(&agraph->cs);
-            }
-            else {
-        #if ENABLE_OPENCL
-                // Releasing the command queue for the graph because it is not needed
-                agoGpuOclReleaseGraph(agraph);
-        #endif
-                LeaveCriticalSection(&agraph->cs);
-                // move graph to garbage list
-                agraph->next = agraph->ref.context->graph_garbage_list;
-                agraph->ref.context->graph_garbage_list = agraph;
-            }
-        }
-        else {
-            LeaveCriticalSection(&agraph->cs);
-        }
+		EnterCriticalSection(&agraph->cs);
+		// stop graph thread
+		if (agraph->hThread) {
+			if (agraph->hThread) {
+				agraph->threadThreadTerminationState = 1;
+				ReleaseSemaphore(agraph->hSemToThread, 1, nullptr);
+				while (agraph->threadThreadTerminationState == 1) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				}
+				CloseHandle(agraph->hThread);
+			}
+			if (agraph->hSemToThread) {
+				CloseHandle(agraph->hSemToThread);
+			}
+			if (agraph->hSemFromThread) {
+				CloseHandle(agraph->hSemFromThread);
+			}
+		}
+		// deinitialize the graph
+		for (AgoNode * node = agraph->nodeList.head; node; node = node->next)
+		{
+			status = agoShutdownNode(node);
+			if (status) {
+				break;
+			}
+		}
+		if (!status) {
+			// remove graph from context
+			if (agoRemoveGraph(&agraph->ref.context->graphList, agraph) != agraph) {
+				status = -1;
+				LeaveCriticalSection(&agraph->cs);
+			}
+			else {
+#if ENABLE_OPENCL
+				// Releasing the command queue for the graph because it is not needed
+				agoGpuOclReleaseGraph(agraph);
+#endif
+				LeaveCriticalSection(&agraph->cs);
+				// move graph to garbage list
+				agraph->next = agraph->ref.context->graph_garbage_list;
+				agraph->ref.context->graph_garbage_list = agraph;
+			}
+		}
+		else {
+			LeaveCriticalSection(&agraph->cs);
+		}
 	}
 
 	return status;
@@ -338,7 +329,7 @@ int agoWriteGraph(AgoGraph * agraph, AgoReference * * ref, int num_ref, FILE * f
 			}
 		}
 		if (anode->attr_border_mode.mode == VX_BORDER_MODE_REPLICATE) fprintf(fp, " attr:BORDER_MODE:REPLICATE");
-		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) fprintf(fp, " attr:BORDER_MODE:CONSTANT,0x%08x", anode->attr_border_mode.constant_value.U32);
+		else if (anode->attr_border_mode.mode == VX_BORDER_MODE_CONSTANT) fprintf(fp, " attr:BORDER_MODE:CONSTANT,0x%08x", anode->attr_border_mode.constant_value);
 		if (anode->attr_affinity.device_type) {
 			fprintf(fp, " attr:AFFINITY:%s", (anode->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) ? "GPU" : "CPU");
 			if (anode->attr_affinity.device_info) 
@@ -624,7 +615,6 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
 				AgoKernel * akernel = NULL;
 				AgoNode * node = NULL;
 				char * str_subgraph = NULL;
-				bool str_subgraph_allocated = false;
 				AgoReference * ref_subgraph[AGO_MAX_PARAMS] = { 0 };
 				if (!strcmp(arg[0], "node")) {
 					if (!(akernel = agoFindKernelByName(context, arg[1]))) {
@@ -657,12 +647,11 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
 						break;
 					}
 					fseek(fp, 0L, SEEK_END); long size = ftell(fp); fseek(fp, 0L, SEEK_SET);
-					if (!(str_subgraph = new char[size + 1]()) || (fread(str_subgraph, sizeof(char), size, fp) != size)) {
+					if (!(str_subgraph = (char *)calloc(1, size + 1)) || (fread(str_subgraph, sizeof(char), size, fp) != size)) {
 						agoAddLogEntry(&agraph->ref, VX_FAILURE, "FATAL: calloc/fread(%d) failed\n", (int)size + 1);
 						agraph->status = -1; 
 						break; 
 					}
-					str_subgraph_allocated = true;
 					fclose(fp);
 					// update suffix
 					const char * name = arg[1];
@@ -680,16 +669,16 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
 						if (!strncmp(&arg[2 + p][5], "BORDER_MODE:", 12)) {
 							if (!strcmp(&arg[2 + p][17], "UNDEFINED")) {
 								node->attr_border_mode.mode = VX_BORDER_MODE_UNDEFINED;
-								memset(&node->attr_border_mode.constant_value, 0, sizeof(node->attr_border_mode.constant_value));
+								node->attr_border_mode.constant_value = 0;
 							}
 							else if (!strcmp(&arg[2 + p][17], "REPLICATE")) {
 								node->attr_border_mode.mode = VX_BORDER_MODE_REPLICATE;
-								memset(&node->attr_border_mode.constant_value, 0, sizeof(node->attr_border_mode.constant_value));
+								node->attr_border_mode.constant_value = 0;
 							}
 							else if (!strncmp(&arg[2 + p][17], "CONSTANT,", 9)) {
 								node->attr_border_mode.mode = VX_BORDER_MODE_CONSTANT;
-								memset(&node->attr_border_mode.constant_value, 0, sizeof(node->attr_border_mode.constant_value));
-								(void)sscanf(&arg[2 + p][17 + 9], "%i", &node->attr_border_mode.constant_value.U32);
+								node->attr_border_mode.constant_value = 0;
+								(void)sscanf(&arg[2 + p][17 + 9], "%i", &node->attr_border_mode.constant_value);
 							}
 							else {
 								agoAddLogEntry(&agraph->ref, VX_FAILURE, "ERROR: agoReadGraph: line %d: invalid/unsupported border mode attribute -- arg#%d\n>>>> %s\n", lineno, p, lineCopy);
@@ -812,8 +801,8 @@ static void agoReadGraphFromStringInternal(AgoGraph * agraph, AgoReference * * r
 				if (str_subgraph && !agraph->status) {
 					agoReadGraphFromStringInternal(agraph, ref_subgraph, narg - 2, callback_f, callback_obj, str_subgraph, (dumpToConsole > 0) ? dumpToConsole - 1 : vx_false_e, vars, localPrefix + localSuffix);
 				}
-				if (str_subgraph_allocated)
-					delete[] str_subgraph;
+				if (str_subgraph && !strcmp(arg[0], "file"))
+					free(str_subgraph);
 				if (agraph->status)
 					break;
 			}
@@ -1064,14 +1053,14 @@ int agoReadGraph(AgoGraph * agraph, AgoReference * * ref, int num_ref, ago_data_
 	long cur = ftell(fp); fseek(fp,  0L, SEEK_END);
 	long end = ftell(fp); fseek(fp, cur, SEEK_SET);
 	long size = end - cur; if (size < 1) return agraph->status;
-	char * str = new char [size + 1]();
+	char * str = (char *)calloc(1, size + 1);
 	if (!str || (fread(str, sizeof(char), size, fp) != size))
 		return -1;
 
 	// read the graph from file
 	std::vector< std::pair< std::string, std::string > > vars;
 	agoReadGraphFromStringInternal(agraph, ref, num_ref, callback_f, callback_obj, str, dumpToConsole, vars, "L");
-	delete[] str;
+	free(str);
 
 	// mark the scope of all virtual data to graph
 	for (AgoData * data = agraph->dataList.head; data; data = data->next) {
@@ -1119,22 +1108,14 @@ int agoLoadModule(AgoContext * context, const char * module)
 		CAgoLock lock(context->cs);
 		status = VX_ERROR_INVALID_PARAMETERS;
 		char filePath[1024]; sprintf(filePath, SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
-		for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
-			if (strcmp(filePath, context->modules[index].module_path) == 0) {
-				agoAddLogEntry(&context->ref, VX_SUCCESS, "WARNING: kernels already loaded from %s\n", filePath);
-				return VX_SUCCESS;
-			}
-		}
 		ago_module hmodule = agoOpenModule(filePath);
 		if (hmodule == NULL) {
-			status = VX_ERROR_INVALID_MODULE;
-			agoAddLogEntry(&context->ref, status, "ERROR: Unable to load module %s\n", filePath);
+			agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: Unable to load module %s\n", filePath);
 		}
 		else {
 			vx_publish_kernels_f publish_kernels_f = (vx_publish_kernels_f)agoGetFunctionAddress(hmodule, "vxPublishKernels");
 			if (!publish_kernels_f) {
-				status = VX_ERROR_INVALID_MODULE;
-				agoAddLogEntry(&context->ref, status, "ERROR: vxPublishKernels symbol missing in %s\n", filePath);
+				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: vxPublishKernels symbol missing in %s\n", filePath);
 			}
 			else {
 				// add module entry into context
@@ -1148,7 +1129,7 @@ int agoLoadModule(AgoContext * context, const char * module)
 				context->num_active_modules++;
 				// invoke vxPublishKernels
 				vx_uint32 count = context->kernelList.count;
-				context->importing_module_index_plus1 = context->num_active_modules;
+				context->importing_module_index_plus1 = context->num_active_modules + 1;
 				status = publish_kernels_f(context);
 				context->importing_module_index_plus1 = 0;
 				if (status == VX_SUCCESS) {
@@ -1157,35 +1138,6 @@ int agoLoadModule(AgoContext * context, const char * module)
 				else {
 					agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: vxPublishKernels(%s) failed (%d:%s)\n", module, status, agoEnum2Name(status));
 				}
-			}
-		}
-	}
-	return status;
-}
-
-int agoUnloadModule(AgoContext * context, const char * module)
-{
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context)) {
-		CAgoLock lock(context->cs);
-		status = VX_ERROR_INVALID_MODULE;
-		char filePath[1024]; sprintf(filePath, SHARED_LIBRARY_PREFIX "%s" SHARED_LIBRARY_EXTENSION, module);
-		for (vx_uint32 index = 0; index < context->num_active_modules; index++) {
-			if (strcmp(filePath, context->modules[index].module_path) == 0) {
-				vx_unpublish_kernels_f unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(context->modules[index].hmodule, "vxUnpublishKernels");
-				if (!unpublish_kernels_f) {
-					status = VX_ERROR_NOT_SUPPORTED;
-					agoAddLogEntry(&context->ref, status, "ERROR: vxUnpublishKernels symbol missing in %s\n", filePath);
-				}
-				else {
-					status = unpublish_kernels_f(context);
-					if (status == VX_SUCCESS) {
-						agoCloseModule(context->modules[index].hmodule);
-						context->modules[index].hmodule = nullptr;
-						context->modules[index].module_path[0] = '\0';
-					}
-				}
-				break;
 			}
 		}
 	}
@@ -1217,9 +1169,12 @@ vx_status agoVerifyNode(AgoNode * node)
 			// reset meta data of the node for output argument processing
 			if ((kernel->argConfig[arg] & (AGO_KERNEL_ARG_INPUT_FLAG | AGO_KERNEL_ARG_OUTPUT_FLAG)) == AGO_KERNEL_ARG_OUTPUT_FLAG) {
 				vx_meta_format meta = &node->metaList[arg];
-				meta->data.ref.type = data->ref.type;
+				meta->type = VX_TYPE_META_FORMAT;
+				meta->data.ref.magic = AGO_MAGIC_VALID;
+				meta->data.ref.context = node->ref.context;
+				meta->data.ref.scope = node->ref.scope;
+				meta->data.ref.type = kernel->argType[arg];
 				meta->data.ref.external_count = 1;
-				meta->set_valid_rectangle_callback = nullptr;
 				if (data->ref.type == VX_TYPE_IMAGE) {
 					meta->data.u.img.rect_valid.start_x = 0;
 					meta->data.u.img.rect_valid.start_y = 0;
@@ -1236,37 +1191,12 @@ vx_status agoVerifyNode(AgoNode * node)
 		}
 	}
 
-	// mark the kernels with VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK
-	// with enableUserBufferOpenCL
-	if (kernel->opencl_buffer_update_callback_f) {
-		AgoData * data = node->paramList[kernel->opencl_buffer_update_param_index];
-		if (!data || !data->isVirtual || data->ref.type != VX_TYPE_IMAGE || data->u.img.planes != 1 || data->ownerOfUserBufferOpenCL || data->u.img.enableUserBufferOpenCL) {
-			status = VX_ERROR_INVALID_PARAMETERS;
-			agoAddLogEntry(&kernel->ref, status, "ERROR: agoVerifyGraph: kernel %s: unexpected/unsupported argument#%d -- needs virtual image with single-plane\n", kernel->name, kernel->opencl_buffer_update_param_index);
-			return status;
-		}
-		// mark that the buffer gets initialized a node
-		data->u.img.enableUserBufferOpenCL = vx_true_e;
-		data->ownerOfUserBufferOpenCL = node;
-	}
-
 	// check if node arguments are valid
 	if (kernel->func) {
 		// validate arguments for built-in kernel functions
 		vx_status status = kernel->func(node, ago_kernel_cmd_validate);
 		if (status) {
 			agoAddLogEntry(&kernel->ref, status, "ERROR: agoVerifyGraph: kernel %s: ago_kernel_cmd_validate failed (%d)\n", kernel->name, status);
-			return status;
-		}
-	}
-	else if (kernel->validate_f) {
-		// validate arguments for user-kernels functions
-		vx_meta_format metaList[AGO_MAX_PARAMS];
-		for (int i = 0; i < AGO_MAX_PARAMS; i++)
-			metaList[i] = &node->metaList[i];
-		status = kernel->validate_f(node, (vx_reference *)node->paramList, node->paramCount, metaList);
-		if (status) {
-			agoAddLogEntry(&kernel->ref, status, "ERROR: agoVerifyGraph: kernel %s: kernel_validate failed (%d)\n", kernel->name, status);
 			return status;
 		}
 	}
@@ -1303,12 +1233,16 @@ vx_status agoVerifyNode(AgoNode * node)
 		}
 	}
 	// check if node output arguments are valid
+	node->rect_valid.start_x = 0;
+	node->rect_valid.start_y = 0;
+	node->rect_valid.end_x = INT_MAX;
+	node->rect_valid.end_y = INT_MAX;
 	for (vx_uint32 arg = 0; arg < node->paramCount; arg++) {
 		AgoData * data = node->paramList[arg];
 		if (data) {
 			if ((kernel->argConfig[arg] & (AGO_KERNEL_ARG_INPUT_FLAG | AGO_KERNEL_ARG_OUTPUT_FLAG)) == AGO_KERNEL_ARG_OUTPUT_FLAG) {
 				vx_meta_format meta = &node->metaList[arg];
-				if (kernel->argType[arg] && kernel->argType[arg] != VX_TYPE_REFERENCE && (meta->data.ref.type != kernel->argType[arg])) {
+				if (kernel->argType[arg] && (meta->data.ref.type != kernel->argType[arg])) {
 					agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: output argument type mismatch for argument#%d\n", kernel->name, arg);
 					return VX_ERROR_INVALID_TYPE;
 				}
@@ -1359,14 +1293,18 @@ vx_status agoVerifyNode(AgoNode * node)
 						data->u.img.rect_valid.end_x = data->u.img.width;
 					if (data->u.img.rect_valid.end_y == INT_MAX)
 						data->u.img.rect_valid.end_y = data->u.img.height;
+					node->rect_valid.start_x = max(node->rect_valid.start_x, data->u.img.rect_valid.start_x);
+					node->rect_valid.start_y = max(node->rect_valid.start_y, data->u.img.rect_valid.start_y);
+					node->rect_valid.end_x = min(node->rect_valid.end_x, data->u.img.rect_valid.end_x);
+					node->rect_valid.end_y = min(node->rect_valid.end_y, data->u.img.rect_valid.end_y);
 					// check for VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL attribute
 					if (meta->data.u.img.enableUserBufferOpenCL) {
 						// supports only virtual images with single color plane and without ROI
-						if (!data->isVirtual || data->u.img.planes != 1 || data->u.img.isROI || data->ownerOfUserBufferOpenCL) {
+						if (!data->isVirtual || data->u.img.planes != 1 || data->u.img.isROI) {
 							agoAddLogEntry(&kernel->ref, VX_ERROR_NOT_SUPPORTED, "ERROR: agoVerifyGraph: kernel %s: VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL is not supported for argument#%d\n", kernel->name, arg);
 							return VX_ERROR_NOT_SUPPORTED;
 						}
-						data->u.img.enableUserBufferOpenCL = vx_true_e;
+						data->u.img.enableUserBufferOpenCL = meta->data.u.img.enableUserBufferOpenCL;
 					}
 				}
 				else if (meta->data.ref.type == VX_TYPE_PYRAMID) {
@@ -1431,6 +1369,10 @@ vx_status agoVerifyNode(AgoNode * node)
 						data->u.pyr.rect_valid.end_x = data->u.pyr.width;
 					if (data->u.pyr.rect_valid.end_y == INT_MAX)
 						data->u.pyr.rect_valid.end_y = data->u.pyr.height;
+					node->rect_valid.start_x = max(node->rect_valid.start_x, data->u.pyr.rect_valid.start_x);
+					node->rect_valid.start_y = max(node->rect_valid.start_y, data->u.pyr.rect_valid.start_y);
+					node->rect_valid.end_x = min(node->rect_valid.end_x, data->u.pyr.rect_valid.end_x);
+					node->rect_valid.end_y = min(node->rect_valid.end_y, data->u.pyr.rect_valid.end_y);
 					// propagate valid rectangle to all images inside the pyramid
 					for (vx_uint32 i = 0; i < data->numChildren; i++) {
 						AgoData * img = data->children[i];
@@ -1459,7 +1401,7 @@ vx_status agoVerifyNode(AgoNode * node)
 					}
 					// make sure that the data come from output validator matches with object
 					if (data->u.arr.itemtype != meta->data.u.arr.itemtype) {
-						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid array type for argument#%d\n", kernel->name, arg);
+						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid type for argument#%d\n", kernel->name, arg);
 						return VX_ERROR_INVALID_TYPE;
 					}
 					else if (!data->u.arr.capacity || (meta->data.u.arr.capacity && meta->data.u.arr.capacity > data->u.arr.capacity)) {
@@ -1483,36 +1425,11 @@ vx_status agoVerifyNode(AgoNode * node)
 						return VX_ERROR_INVALID_TYPE;
 					}
 				}
-				else if (meta->data.ref.type == VX_TYPE_MATRIX) {
-					// make sure that the data come from output validator matches with object
-					if ((data->u.mat.type != meta->data.u.mat.type) || (data->u.mat.columns != meta->data.u.mat.columns) || (data->u.mat.rows != meta->data.u.mat.rows)) {
-						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid matrix meta for argument#%d\n", kernel->name, arg);
-						return VX_ERROR_INVALID_TYPE;
-					}
-				}
 				else if (meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
 					// nothing to do
 				}
 				else if (meta->data.ref.type == VX_TYPE_LUT) {
 					// nothing to do
-				}
-				else if (meta->data.ref.type == VX_TYPE_REMAP) {
-					// nothing to do
-				}
-				else if (meta->data.ref.type == VX_TYPE_TENSOR) {
-					// make sure that the data come from output validator matches with object
-					bool mismatched = false;
-					if ((data->u.tensor.num_dims != meta->data.u.tensor.num_dims) || (data->u.tensor.data_type != meta->data.u.tensor.data_type) || (data->u.tensor.fixed_point_pos != meta->data.u.tensor.fixed_point_pos)) {
-						mismatched = true;
-					}
-					for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
-						if (data->u.tensor.dims[i] != meta->data.u.tensor.dims[i])
-							mismatched = true;
-					}
-					if (mismatched) {
-						agoAddLogEntry(&kernel->ref, VX_ERROR_INVALID_TYPE, "ERROR: agoVerifyGraph: kernel %s: invalid tensor meta for argument#%d\n", kernel->name, arg);
-						return VX_ERROR_INVALID_TYPE;
-					}
 				}
 				else if (meta->data.ref.type == AGO_TYPE_CANNY_STACK) {
 					// nothing to do
@@ -1555,15 +1472,21 @@ int agoVerifyGraph(AgoGraph * graph)
 	agoOptimizeDramaSortGraphHierarchy(graph);
 
 	// initialize valid region every input image/pyramid to its full region
-	// and reset the user virtul buffer owner
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
 		for (vx_uint32 i = 0; i < node->paramCount; i++) {
 			AgoData * data = node->paramList[i];
 			if (data) {
 				if (data->ref.type == VX_TYPE_IMAGE) {
-					if (data->isVirtual) {
-						data->ownerOfUserBufferOpenCL = nullptr;
-					}
+					data->u.img.rect_valid.start_x = 0;
+					data->u.img.rect_valid.start_y = 0;
+					data->u.img.rect_valid.end_x = data->u.img.width;
+					data->u.img.rect_valid.end_y = data->u.img.height;
+				}
+				else if (data->ref.type == VX_TYPE_PYRAMID) {
+					data->u.pyr.rect_valid.start_x = 0;
+					data->u.pyr.rect_valid.start_y = 0;
+					data->u.pyr.rect_valid.end_x = data->u.pyr.width;
+					data->u.pyr.rect_valid.end_y = data->u.pyr.height;
 				}
 			}
 		}
@@ -1584,174 +1507,6 @@ int agoVerifyGraph(AgoGraph * graph)
 	//    - single writers
 	//    - no loops
 	status = agoOptimizeDramaComputeGraphHierarchy(graph);
-	if (status) {
-		return status;
-	}
-
-#if ENABLE_OPENCL
-	// if all nodes run on GPU, clear enable_node_level_opencl_flush
-	bool cpuTargetBufferNodesExists = false;
-	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
-		if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU &&
-			!node->akernel->opencl_buffer_access_enable)
-			cpuTargetBufferNodesExists = true;
-	}
-	if(!cpuTargetBufferNodesExists) {
-		graph->enable_node_level_opencl_flush = false;
-	}
-#endif
-
-	return status;
-}
-
-vx_status agoPrepareImageValidRectangleBuffers(AgoGraph * graph)
-{
-	vx_status status = VX_SUCCESS;
-
-	////////////////////////////////////////////////
-	// prepare for image valid rectangle computation
-	////////////////////////////////////////////////
-	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
-		vx_uint32 valid_rect_num_inputs = 0, valid_rect_num_outputs = 0;
-		for (vx_uint32 i = 0; i < node->paramCount; i++) {
-			AgoParameter * param = &node->parameters[i];
-			AgoData * data = node->paramList[i];
-			if (data) {
-				if (data->ref.type == VX_TYPE_IMAGE) {
-					if (param->direction == VX_INPUT)
-						valid_rect_num_inputs++;
-					if (param->direction == VX_OUTPUT)
-						valid_rect_num_outputs++;
-				}
-				else if (data->ref.type == VX_TYPE_PYRAMID) {
-					if (param->direction == VX_INPUT)
-						valid_rect_num_inputs += (vx_uint32)data->u.pyr.levels;
-					if (param->direction == VX_OUTPUT)
-						valid_rect_num_outputs += (vx_uint32)data->u.pyr.levels;
-				}
-			}
-		}
-		node->valid_rect_num_inputs = valid_rect_num_inputs;
-		node->valid_rect_num_outputs = valid_rect_num_outputs;
-		if (node->akernel->func && ((node->akernel->flags & AGO_KERNEL_FLAG_GROUP_MASK) == AGO_KERNEL_FLAG_GROUP_AMDLL ||
-			(node->akernel->flags & AGO_KERNEL_FLAG_GROUP_MASK) == AGO_KERNEL_FLAG_GROUP_OVX10))
-		{
-			// nothing to do for built-in kernels
-		}
-		else
-		{
-			if (node->valid_rect_inputs)
-				delete[] node->valid_rect_inputs;
-			if (node->valid_rect_outputs)
-				delete[] node->valid_rect_outputs;
-			node->valid_rect_inputs = nullptr;
-			node->valid_rect_outputs = nullptr;
-			if (valid_rect_num_outputs > 0) {
-				// allocate valid_rect_outputs[] and valid_rect_inputs[]
-				node->valid_rect_outputs = new vx_rectangle_t *[valid_rect_num_outputs]();
-				if (!node->valid_rect_outputs) {
-					status = VX_ERROR_NO_MEMORY;
-					break;
-				}
-				if (valid_rect_num_inputs > 0) {
-					node->valid_rect_inputs = new vx_rectangle_t *[valid_rect_num_inputs]();
-					if (!node->valid_rect_inputs) {
-						status = VX_ERROR_NO_MEMORY;
-						break;
-					}
-					// prepare valid_rect_inputs[] with valid pointers
-					vx_uint32 index = 0;
-					for (vx_uint32 i = 0; i < node->paramCount; i++) {
-						AgoParameter * param = &node->parameters[i];
-						AgoData * data = node->paramList[i];
-						if (data && param->direction == VX_INPUT) {
-							if (data->ref.type == VX_TYPE_IMAGE) {
-								node->valid_rect_inputs[index++] = &data->u.img.rect_valid;
-							}
-							else if (data->ref.type == VX_TYPE_PYRAMID) {
-								for (vx_size level = 0; level < data->u.pyr.levels; level++) {
-									node->valid_rect_inputs[index++] = &data->children[level]->u.img.rect_valid;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return status;
-}
-
-vx_status agoComputeImageValidRectangleOutputs(AgoGraph * graph)
-{
-	vx_status status = VX_SUCCESS;
-
-	// compute output image valid rectangles
-	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
-		if (node->akernel->func && ((node->akernel->flags & AGO_KERNEL_FLAG_GROUP_MASK) == AGO_KERNEL_FLAG_GROUP_AMDLL ||
-			(node->akernel->flags & AGO_KERNEL_FLAG_GROUP_MASK) == AGO_KERNEL_FLAG_GROUP_OVX10))
-		{
-			status = node->akernel->func(node, ago_kernel_cmd_valid_rect_callback);
-			if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED) {
-				// consider unimplemented cases as success (nothing needed)
-				status = VX_SUCCESS;
-			}
-		}
-		else if (node->valid_rect_outputs) {
-			// use node->valid_rect_outputs[] to propagate valid rectangles
-			for (vx_uint32 i = 0; i < node->paramCount; i++) {
-				AgoParameter * param = &node->parameters[i];
-				AgoData * data = node->paramList[i];
-				if (data && param->direction == VX_OUTPUT) {
-					if (data->ref.type == VX_TYPE_IMAGE) {
-						if (node->metaList[i].set_valid_rectangle_callback) {
-							node->valid_rect_outputs[0] = &data->u.img.rect_valid;
-							status = node->metaList[i].set_valid_rectangle_callback(node, i, node->valid_rect_inputs, node->valid_rect_outputs);
-						}
-						else if (node->valid_rect_reset) {
-							data->u.img.rect_valid.start_x = 0;
-							data->u.img.rect_valid.start_y = 0;
-							data->u.img.rect_valid.end_x = data->u.img.width;
-							data->u.img.rect_valid.end_y = data->u.img.height;
-						}
-					}
-					else if (data->ref.type == VX_TYPE_PYRAMID) {
-						if (node->metaList[i].set_valid_rectangle_callback) {
-							for (vx_size level = 0; level < data->u.pyr.levels; level++) {
-								node->valid_rect_outputs[level] = &data->children[level]->u.img.rect_valid;
-							}
-							status = node->metaList[i].set_valid_rectangle_callback(node, i, node->valid_rect_inputs, node->valid_rect_outputs);
-						}
-						else if (node->valid_rect_reset) {
-							for (vx_size level = 0; level < data->u.pyr.levels; level++) {
-								data->children[level]->u.img.rect_valid.start_x = 0;
-								data->children[level]->u.img.rect_valid.start_y = 0;
-								data->children[level]->u.img.rect_valid.end_x = data->children[level]->u.img.width;
-								data->children[level]->u.img.rect_valid.end_y = data->children[level]->u.img.height;
-							}
-						}
-					}
-				}
-			}
-		}
-#if 0 // TBD remove -- dump valid rectangle info
-		for (vx_uint32 i = 0; i < node->paramCount; i++) {
-			AgoParameter * param = &node->parameters[i];
-			AgoData * data = node->paramList[i];
-			if (data && param->direction == VX_OUTPUT) {
-				if (data->ref.type == VX_TYPE_IMAGE) {
-					printf("valid_rect [ %5d %5d %5d %5d ] image %s\n", data->u.img.rect_valid.start_x, data->u.img.rect_valid.start_y, data->u.img.rect_valid.end_x, data->u.img.rect_valid.end_y, data->name.c_str());
-				}
-				else if (data->ref.type == VX_TYPE_PYRAMID) {
-					for (vx_size level = 0; level < data->u.pyr.levels; level++) {
-						printf("valid_rect [ %5d %5d %5d %5d ] pyrL%d %s\n", data->children[level]->u.img.rect_valid.start_x, data->children[level]->u.img.rect_valid.start_y, data->children[level]->u.img.rect_valid.end_x, data->children[level]->u.img.rect_valid.end_y, (int)level, data->name.c_str());
-					}
-				}
-			}
-		}
-#endif
-	}
 
 	return status;
 }
@@ -1799,7 +1554,6 @@ static int agoWaitForNodesCompletion(AgoGraph * graph)
 			AgoNode * node = graph->opencl_nodeListQueued[i];
 			if (node->supernode) {
 				if (!node->supernode->launched || agoGpuOclSuperNodeWait(graph, node->supernode) < 0) {
-					agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: launched=%d supernode wait failed\n", node->supernode->launched);
 					return VX_FAILURE;
 				}
 				agoPerfCaptureStop(&node->perf);
@@ -1817,7 +1571,6 @@ static int agoWaitForNodesCompletion(AgoGraph * graph)
 			}
 			else {
 				if (agoGpuOclSingleNodeWait(graph, node) < 0) {
-					agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: single node wait failed\n");
 					return VX_FAILURE;
 				}
 				agoPerfCaptureStop(&node->perf);
@@ -1874,8 +1627,8 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
 		}
 		else {
 			if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+				int64_t stime = agoGetClockCounter();
 				if (dataToSync->ref.type == VX_TYPE_LUT) {
-					int64_t stime = agoGetClockCounter();
 					size_t origin[3] = { 0, 0, 0 };
 					size_t region[3] = { 256, 1, 1 };
 					cl_int err = clEnqueueReadImage(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, origin, region, 256, 0, dataToSync->buffer, 0, NULL, NULL);
@@ -1883,9 +1636,6 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
 						agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadImage(lut) => %d\n", err);
 						return -1; 
 					}
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					int64_t etime = agoGetClockCounter();
-					graph->opencl_perf.buffer_read += etime - stime;
 				}
 				else {
 					vx_size size = dataToSync->size;
@@ -1893,24 +1643,17 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
 						// transfer only region that has valid data
 						size = dataToSync->u.arr.numitems * dataToSync->u.arr.itemsize;
 					}
-					else if (node->akernel->opencl_buffer_access_enable) {
-						// no need to transfer to CPU for this node
-						size = 0;
-					}
 					if (size > 0) {
-						int64_t stime = agoGetClockCounter();
-						if (size > 0) {
-							cl_int err = clEnqueueReadBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
-							if (err) {
-								agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadBuffer(0x%x,%s,%ld,%ld) => %d\n", dataToSync->ref.type, dataToSync->name.c_str(), dataToSync->opencl_buffer_offset, size, err);
-								return -1;
-							}
+						cl_int err = clEnqueueReadBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
+						if (err) { 
+							agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadBuffer() => %d\n", err);
+							return -1; 
 						}
-						dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-						int64_t etime = agoGetClockCounter();
-						graph->opencl_perf.buffer_read += etime - stime;
 					}
 				}
+				dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+				int64_t etime = agoGetClockCounter();
+				graph->opencl_perf.buffer_read += etime - stime;
 			}
 		}
 	}
@@ -1918,54 +1661,42 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
 }
 #endif
 
-int agoUpdateDelaySlots(AgoNode * node)
-{
-	vx_graph graph = (vx_graph)node->ref.scope;
-	for (vx_uint32 arg = 0; arg < node->paramCount; arg++) {
-		AgoData * data = node->paramList[arg];
-		if (data && agoIsPartOfDelay(data)) {
-			// get the trace to delay object from original node parameter without vxAgeDelay changes
-			int siblingTrace[AGO_MAX_DEPTH_FROM_DELAY_OBJECT], siblingTraceCount = 0;
-			AgoData * delay = agoGetSiblingTraceToDelayForUpdate(node->paramListForAgeDelay[arg], siblingTrace, siblingTraceCount);
-			if (delay) {
-				// get the data 
-				data = agoGetDataFromTrace(delay, siblingTrace, siblingTraceCount);
-				if (data) {
-					// update the node parameter
-					node->paramList[arg] = data;
-				}
-				else {
-					agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: SiblingTrace#1 missing\n");
-					return VX_FAILURE;
-				}
-			}
-			else {
-				agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: SiblingTrace#2 missing\n");
-				return VX_FAILURE;
-			}
-		}
-	}
-	return 0;
-}
-
 int agoExecuteGraph(AgoGraph * graph)
 {
-	if (graph->detectedInvalidNode) {
-		agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoExecuteGraph: detected invalid node\n");
+	if (graph->detectedInvalidNode)
 		return VX_FAILURE;
-	}
 	else if (!graph->nodeList.head)
 		return VX_SUCCESS;
 	int status = VX_SUCCESS;
 
-	agoPerfProfileEntry(graph, ago_profile_type_exec_begin, &graph->ref);
 	agoPerfCaptureStart(&graph->perf);
 
 	// update delay slots
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
-		status = agoUpdateDelaySlots(node);
-		if (status != VX_SUCCESS)
-			return status;
+		for (vx_uint32 arg = 0; arg < node->paramCount; arg++) {
+			AgoData * data = node->paramList[arg];
+			if (data && agoIsPartOfDelay(data)) {
+				// get the trace to delay object from original node parameter without vxAgeDelay changes
+				int siblingTrace[AGO_MAX_DEPTH_FROM_DELAY_OBJECT], siblingTraceCount = 0;
+				AgoData * delay = agoGetSiblingTraceToDelayForUpdate(node->paramListForAgeDelay[arg], siblingTrace, siblingTraceCount);
+				if (delay) {
+					// get the data 
+					data = agoGetDataFromTrace(delay, siblingTrace, siblingTraceCount);
+					if (data) {
+						// update the node parameter
+						node->paramList[arg] = data;
+					}
+					else {
+						agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: SiblingTrace#1 missing\n");
+						return VX_FAILURE;
+					}
+				}
+				else {
+					agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: SiblingTrace#2 missing\n");
+					return VX_FAILURE;
+				}
+			}
+		}
 	}
 #if ENABLE_OPENCL
 	for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
@@ -2001,6 +1732,7 @@ int agoExecuteGraph(AgoGraph * graph)
 	for (AgoData * data = graph->dataList.head; data; data = data->next) {
 		if (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferOpenCL) {
 			data->opencl_buffer = nullptr;
+			data->opencl_buffer_offset = 0;
 		}
 	}
 #endif
@@ -2016,7 +1748,6 @@ int agoExecuteGraph(AgoGraph * graph)
 	memset(&graph->opencl_perf, 0, sizeof(graph->opencl_perf));
 #endif
 	// execute one nodes in one hierarchical level at a time
-	bool opencl_buffer_access_enable = false;
 	for (auto enode = graph->nodeList.head; enode;) {
 		// get snode..enode with next hierarchical_level 
 		auto hierarchical_level = enode->hierarchical_level;
@@ -2028,7 +1759,6 @@ int agoExecuteGraph(AgoGraph * graph)
 		for (auto node = snode; node != enode; node = node->next) {
 			if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
 				bool launched = true;
-				agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
 				agoPerfCaptureStart(&node->perf);
 				if (!node->supernode) {
 					// launch the single node
@@ -2052,7 +1782,6 @@ int agoExecuteGraph(AgoGraph * graph)
 						nodeLaunchHierarchicalLevel = node->hierarchical_level;
 					}
 				}
-				agoPerfProfileEntry(graph, ago_profile_type_launch_end, &node->ref);
 			}
 		}
 #endif
@@ -2060,70 +1789,33 @@ int agoExecuteGraph(AgoGraph * graph)
 		for (auto node = snode; node != enode; node = node->next) {
 			if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU) {
 #if ENABLE_OPENCL
-				opencl_buffer_access_enable |= (node->akernel->opencl_buffer_access_enable ? true : false);
-				if (!node->akernel->opencl_buffer_access_enable) {
-					agoPerfProfileEntry(graph, ago_profile_type_wait_begin, &node->ref);
-					if (nodeLaunchHierarchicalLevel > 0 && nodeLaunchHierarchicalLevel < node->hierarchical_level) {
-						status = agoWaitForNodesCompletion(graph);
-						if (status != VX_SUCCESS) {
-							agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoWaitForNodesCompletion failed (%d:%s)\n", status, agoEnum2Name(status));
+				if (nodeLaunchHierarchicalLevel > 0 && nodeLaunchHierarchicalLevel < node->hierarchical_level) {
+					status = agoWaitForNodesCompletion(graph);
+					if (status != VX_SUCCESS) {
+						agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoWaitForNodesCompletion failed (%d:%s)\n", status, agoEnum2Name(status));
+						return status;
+					}
+					nodeLaunchHierarchicalLevel = 0;
+				}
+				// make sure that all input buffers are synched
+				for (vx_uint32 i = 0; i < node->paramCount; i++) {
+					AgoData * data = node->paramList[i];
+					if (data && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL)) {
+						auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
+						status = agoDataSyncFromGpuToCpu(graph, node, dataToSync);
+						for (vx_uint32 j = 0; !status && j < dataToSync->numChildren; j++) {
+							AgoData * jdata = dataToSync->children[j];
+							if (jdata)
+								status = agoDataSyncFromGpuToCpu(graph, node, jdata);
+						}
+						if (status) {
+							agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDataSyncFromGpuToCpu failed (%d:%s) for node(%s) arg#%d data(%s)\n", status, agoEnum2Name(status), node->akernel->name, i, data->name.c_str());
 							return status;
 						}
-						nodeLaunchHierarchicalLevel = 0;
-					}
-					if(opencl_buffer_access_enable) {
-						cl_int err = clFinish(graph->opencl_cmdq);
-						if (err) {
-							agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clFinish(graph) => %d\n", err);
-							return VX_FAILURE;
-						}
-						opencl_buffer_access_enable = false;
-					}
-					agoPerfProfileEntry(graph, ago_profile_type_wait_end, &node->ref);
-				}
-				agoPerfProfileEntry(graph, ago_profile_type_copy_begin, &node->ref);
-				// make sure that all input buffers are synched
-				if (node->akernel->opencl_buffer_access_enable) {
-					for (vx_uint32 i = 0; i < node->paramCount; i++) {
-						AgoData * data = node->paramList[i];
-						if (data && data->opencl_buffer &&
-							(node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
-						{
-							auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
-							if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
-							    dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
-							{
-								status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_OPENCL);
-								if(status != VX_SUCCESS) {
-									agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_OPENCL) failed (%d:%s)\n", status, agoEnum2Name(status));
-									return status;
-								}
-							}
-						}
 					}
 				}
-				else {
-					for (vx_uint32 i = 0; i < node->paramCount; i++) {
-						AgoData * data = node->paramList[i];
-						if (data && (node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL)) {
-							auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
-							status = agoDataSyncFromGpuToCpu(graph, node, dataToSync);
-							for (vx_uint32 j = 0; !status && j < dataToSync->numChildren; j++) {
-								AgoData * jdata = dataToSync->children[j];
-								if (jdata)
-									status = agoDataSyncFromGpuToCpu(graph, node, jdata);
-							}
-							if (status) {
-								agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDataSyncFromGpuToCpu failed (%d:%s) for node(%s) arg#%d data(%s)\n", status, agoEnum2Name(status), node->akernel->name, i, data->name.c_str());
-								return status;
-							}
-						}
-					}
-				}
-				agoPerfProfileEntry(graph, ago_profile_type_copy_end, &node->ref);
 #endif
 				// execute node
-				agoPerfProfileEntry(graph, ago_profile_type_exec_begin, &node->ref);
 				agoPerfCaptureStart(&node->perf);
 				AgoKernel * kernel = node->akernel;
 				status = VX_SUCCESS;
@@ -2140,20 +1832,16 @@ int agoExecuteGraph(AgoGraph * graph)
 					return status;
 				}
 				agoPerfCaptureStop(&node->perf);
-				agoPerfProfileEntry(graph, ago_profile_type_exec_end, &node->ref);
 #if ENABLE_OPENCL
 				// mark that node outputs are dirty
 				for (vx_uint32 i = 0; i < node->paramCount; i++) {
 					AgoData * data = node->paramList[i];
-					if (data && data->opencl_buffer &&
+					if (data && data->opencl_buffer && !data->u.img.enableUserBufferOpenCL && 
 						(node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
 					{
 						auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
 						dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-						dataToSync->buffer_sync_flags |=
-							((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferOpenCL)
-								? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
-								: AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
+						dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE;
 					}
 				}
 #endif
@@ -2168,7 +1856,6 @@ int agoExecuteGraph(AgoGraph * graph)
 		}
 	}
 #if ENABLE_OPENCL
-	agoPerfProfileEntry(graph, ago_profile_type_wait_begin, &graph->ref);
 	if (nodeLaunchHierarchicalLevel > 0) {
 		status = agoWaitForNodesCompletion(graph);
 		if (status != VX_SUCCESS) {
@@ -2176,43 +1863,13 @@ int agoExecuteGraph(AgoGraph * graph)
 			return status;
 		}
 	}
-	if(opencl_buffer_access_enable) {
-		cl_int err = clFinish(graph->opencl_cmdq);
-		if (err) {
-			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clFinish(graph) => %d\n", err);
-			return VX_FAILURE;
-		}
-	}
-	agoPerfProfileEntry(graph, ago_profile_type_wait_end, &graph->ref);
 	graph->opencl_perf_total.kernel_enqueue += graph->opencl_perf.kernel_enqueue;
 	graph->opencl_perf_total.kernel_wait += graph->opencl_perf.kernel_wait;
 	graph->opencl_perf_total.buffer_read += graph->opencl_perf.buffer_read;
 	graph->opencl_perf_total.buffer_write += graph->opencl_perf.buffer_write;
 #endif
-
-	// auto age delays
-	for (auto it = graph->autoAgeDelayList.begin(); it != graph->autoAgeDelayList.end(); it++) {
-		if (agoIsValidData(*it, VX_TYPE_DELAY)) {
-			agoAgeDelay(*it);
-		}
-	}
-
 	agoPerfCaptureStop(&graph->perf);
-	agoPerfProfileEntry(graph, ago_profile_type_exec_end, &graph->ref);
-	graph->execFrameCount++;
 	return status;
-}
-
-int agoAgeDelay(AgoData * delay)
-{
-	// cycle through all the pointers by swapping
-	AgoData * childLast = delay->children[delay->u.delay.count - 1];
-	for (vx_int32 i = (vx_int32)delay->u.delay.count - 1; i > 0; i--) {
-		delay->children[i] = delay->children[i - 1];
-	}
-	delay->children[0] = childLast;
-	delay->u.delay.age++;
-	return VX_SUCCESS;
 }
 
 vx_status agoDirective(vx_reference reference, vx_enum directive)
@@ -2262,24 +1919,18 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
 							dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
 							status = VX_SUCCESS;
 						}
-						else {
-							status = VX_ERROR_NOT_ALLOCATED;
-						}
 					}
 					else if (dataToSync->ref.type == VX_TYPE_IMAGE && dataToSync->numChildren > 0) {
-						status = VX_ERROR_NOT_ALLOCATED;
 						for (vx_uint32 plane = 0; plane < dataToSync->numChildren; plane++) {
 							AgoData * img = dataToSync->children[plane];
-							if (img) {
-								if (img->opencl_buffer) {
-									cl_int err = clEnqueueWriteBuffer(img->ref.context->opencl_cmdq, img->opencl_buffer, CL_TRUE, img->opencl_buffer_offset, img->size, img->buffer, 0, NULL, NULL);
-									if (err) {
-										agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clEnqueueWriteBuffer() => %d\n", err);
-										return VX_FAILURE;
-									}
-									img->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-									status = VX_SUCCESS;
+							if (img && img->opencl_buffer) {
+								cl_int err = clEnqueueWriteBuffer(img->ref.context->opencl_cmdq, img->opencl_buffer, CL_TRUE, img->opencl_buffer_offset, img->size, img->buffer, 0, NULL, NULL);
+								if (err) { 
+									agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clEnqueueWriteBuffer() => %d\n", err);
+									return VX_FAILURE; 
 								}
+								img->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+								status = VX_SUCCESS;
 							}
 						}
 					}
@@ -2300,30 +1951,7 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
 							dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
 							status = VX_SUCCESS;
 						}
-						else {
-							status = VX_ERROR_NOT_ALLOCATED;
-						}
 					}
-				}
-				break;
-#endif
-			case VX_DIRECTIVE_AMD_ENABLE_PROFILE_CAPTURE:
-			case VX_DIRECTIVE_AMD_DISABLE_PROFILE_CAPTURE:
-				if (reference->type == VX_TYPE_GRAPH) {
-					((AgoGraph *)reference)->enable_performance_profiling = 
-						(directive == VX_DIRECTIVE_AMD_ENABLE_PROFILE_CAPTURE) ? true : false;
-				}
-				else {
-					status = VX_ERROR_NOT_SUPPORTED;
-				}
-				break;
-#if ENABLE_OPENCL
-			case VX_DIRECTIVE_AMD_DISABLE_OPENCL_FLUSH:
-				if (reference->type == VX_TYPE_GRAPH) {
-					((AgoGraph *)reference)->enable_node_level_opencl_flush = false;
-				}
-				else {
-					status = VX_ERROR_NOT_SUPPORTED;
 				}
 				break;
 #endif
@@ -2369,24 +1997,6 @@ vx_status agoGraphDumpPerformanceProfile(AgoGraph * graph, const char * fileName
 				node->akernel->name);
 		}
 	}
-	if (graph->enable_performance_profiling && graph->performance_profile.size() > 0) {
-		fprintf(fp, "***PROFILER-OUTPUT***\n");
-		fprintf(fp, " frame,type,timestamp(ms),object-name\n");
-		int64_t stime = graph->performance_profile[0].time;
-		for (auto entry : graph->performance_profile) {
-			char name[256];
-			if (entry.ref->type == VX_TYPE_GRAPH) strcpy(name, "GRAPH");
-			else if (entry.ref->type == VX_TYPE_NODE) strncpy(name, ((AgoNode *)entry.ref)->akernel->name, sizeof(name) - 1);
-			else agoGetDataName(name, (AgoData *)entry.ref);
-			static const char * type_str[] = {
-				"launch(s)", "launch(e)", "wait(s)", "wait(e)", "copy(s)", "copy(e)", "exec(s)", "exec(e)",
-				"8", "9", "10", "11", "12", "13", "14", "15"
-			};
-			fprintf(fp, "%6d,%-9.9s,%13.3f,%s\n", entry.id, type_str[entry.type], (float)(entry.time - stime) * factor, name);
-		}
-		// clear the profiling data
-		graph->performance_profile.clear();
-	}
 	fflush(fp);
 	if (!use_stdout) {
 		fclose(fp);
@@ -2408,12 +2018,9 @@ int agoProcessGraph(AgoGraph * graph)
 
 		// execute graph if possible
 		if (status == VX_SUCCESS) {
+			status = VX_FAILURE;
 			if (graph->verified && graph->isReadyToExecute) {
 				status = agoExecuteGraph(graph);
-			}
-			else {
-				agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoProcessGraph: not verified (%d) or not ready to execute (%d)\n", graph->verified, graph->isReadyToExecute);
-				status = VX_FAILURE;
 			}
 		}
 	}
@@ -2455,7 +2062,6 @@ int agoWaitGraph(AgoGraph * graph)
 		if (graph->hThread) {
 			while (graph->threadExecuteCount != graph->threadScheduleCount) {
 				if (WaitForSingleObject(graph->hSemFromThread, INFINITE) != WAIT_OBJECT_0) {
-					agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoWaitGraph: WaitForSingleObject failed\n");
 					status = VX_FAILURE;
 					break;
 				}

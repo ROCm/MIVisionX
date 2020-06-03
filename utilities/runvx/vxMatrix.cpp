@@ -160,43 +160,24 @@ int CVxParamMatrix::InitializeIO(vx_context context, vx_graph graph, vx_referenc
 		else if (!_stricmp(ioType, "init"))
 		{ // write request syntax: init,{<value1>;<value2>;...<valueN>}
 			NULLPTR_CHECK(m_bufForAccess = new vx_uint8[m_size]);
-			if (fileName[0] == '{') {
-				vx_size index = 0; char fmt[3] = { '{', (m_data_type == VX_TYPE_FLOAT32) ? 'f' : 'd', 0 };
-				for (const char * s = fileName; *s && index < (m_columns * m_rows); fmt[0] = ';', index++) {
-					if (m_data_type == VX_TYPE_INT32 || m_data_type == VX_TYPE_UINT8) {
-						vx_uint32 value;
-						s = ScanParameters(s, "<value>", fmt, &value);
-						if (m_data_type == VX_TYPE_UINT8) ((vx_uint8 *)m_bufForAccess)[index] = (vx_uint8)value;
-						else ((vx_int32 *)m_bufForAccess)[index] = value;
-					}
-					else if (m_data_type == VX_TYPE_FLOAT32) {
-						s = ScanParameters(s, "<value>", fmt, &((vx_float32 *)m_bufForAccess)[index]);
-					}
-					else ReportError("ERROR: matrix init option not support for data_type of %s\n", GetVxObjectName());
+			vx_size index = 0; char fmt[3] = { '{', (m_data_type == VX_TYPE_FLOAT32) ? 'f' : 'd', 0 };
+			for (const char * s = fileName; *s && index < (m_columns * m_rows); fmt[0] = ';', index++) {
+				if (m_data_type == VX_TYPE_INT32 || m_data_type == VX_TYPE_UINT8) {
+					vx_uint32 value;
+					s = ScanParameters(s, "<value>", fmt, &value);
+					if (m_data_type == VX_TYPE_UINT8) ((vx_uint8 *)m_bufForAccess)[index] = (vx_uint8)value;
+					else ((vx_int32 *)m_bufForAccess)[index] = value;
 				}
-				if (index < (m_columns * m_rows)) ReportError("ERROR: matrix init have too few values: %s\n", fileName);
-				ERROR_CHECK(vxWriteMatrix(m_matrix, m_bufForAccess));
-			}
-			else {
-				std::string fileNameRead = m_fileNameRead;
-				bool fileNameForReadHasIndex = m_fileNameForReadHasIndex;
-				bool readFileIsBinary = m_readFileIsBinary;
-				m_fileNameRead.assign(RootDirUpdated(fileName));
-				m_fileNameForReadHasIndex = (m_fileNameRead.find("%") != m_fileNameRead.npos) ? true : false;
-				m_readFileIsBinary = (m_fileNameRead.find(".txt") != m_fileNameRead.npos) ? false : true;
-				if (ReadFrame(0)) {
-					return -1;
+				else if (m_data_type == VX_TYPE_FLOAT32) {
+					s = ScanParameters(s, "<value>", fmt, &((vx_float32 *)m_bufForAccess)[index]);
 				}
-				m_fileNameRead = fileNameRead;
-				m_fileNameForReadHasIndex = fileNameForReadHasIndex;
-				m_readFileIsBinary = readFileIsBinary;
+				else ReportError("ERROR: matrix init option not support for data_type of %s\n", GetVxObjectName());
 			}
+			if (index < (m_columns * m_rows)) ReportError("ERROR: matrix init have too few values: %s\n", fileName);
+			ERROR_CHECK(vxWriteMatrix(m_matrix, m_bufForAccess));
 		}
 		else if (!_stricmp(ioType, "directive") && !_stricmp(fileName, "readonly")) {
 			ERROR_CHECK(vxDirective((vx_reference)m_matrix, VX_DIRECTIVE_AMD_READ_ONLY));
-		}
-		else if (!_stricmp(ioType, "directive") && (!_stricmp(fileName, "VX_DIRECTIVE_AMD_COPY_TO_OPENCL") || !_stricmp(fileName, "sync-cl-write"))) {
-			m_useSyncOpenCLWriteDirective = true;
 		}
 		else if (!_stricmp(ioType, "ui") && !_strnicmp(fileName, "f", 1) && m_data_type == VX_TYPE_FLOAT32 && m_columns == 3 && m_rows == 3) {
 			int id = 0;
@@ -219,9 +200,6 @@ int CVxParamMatrix::InitializeIO(vx_context context, vx_graph graph, vx_referenc
 
 int CVxParamMatrix::Finalize()
 {
-	if (m_useSyncOpenCLWriteDirective) {
-		ERROR_CHECK_AND_WARN(vxDirective((vx_reference)m_matrix, VX_DIRECTIVE_AMD_COPY_TO_OPENCL), VX_ERROR_NOT_ALLOCATED);
-	}
 	return 0;
 }
 
@@ -279,10 +257,6 @@ int CVxParamMatrix::ReadFrame(int frameNumber)
 	fclose(fp);
 	if (status < 0)
 		ReportError("ERROR: detected EOF on matrix input file: %s\n", fileName);
-
-	if (m_useSyncOpenCLWriteDirective) {
-		ERROR_CHECK_AND_WARN(vxDirective((vx_reference)m_matrix, VX_DIRECTIVE_AMD_COPY_TO_OPENCL), VX_ERROR_NOT_ALLOCATED);
-	}
 
 	return status;
 }

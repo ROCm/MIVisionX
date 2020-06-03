@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 typedef struct {
@@ -166,7 +165,6 @@ int HafCpu_HarrisSobel_HG3_U8_3x3
 		pSrcImage += srcImageStrideInBytes;
 		pDstGxy += (dstGxyStrideInBytes / sizeof(ago_harris_Gxy_t));
 	}
-
 
 #if 0
 	pSrcImage += srcImageStrideInBytes;										// First row not processed

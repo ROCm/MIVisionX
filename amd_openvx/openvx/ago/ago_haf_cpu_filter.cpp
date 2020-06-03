@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 extern vx_uint32 dataConvertU1ToU8_4bytes[16];
@@ -1526,159 +1525,6 @@ int HafCpu_Gaussian_U8_U8_3x3
 		vx_uint8	* pScratch
 	)
 {
-#if USE_AVX
-	unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
-	unsigned char *pLocalDst = (unsigned char *)pDstImage;
-
-	int prefixWidth = intptr_t(pDstImage) & 15;
-	prefixWidth = (prefixWidth == 0) ? 0 : (16 - prefixWidth);
-	int postfixWidth = ((int)dstWidth - prefixWidth) & 15;
-	int alignedWidth = (int)dstWidth - prefixWidth - postfixWidth;
-
-	int tmpWidth = (dstWidth + 15) & ~15;
-	vx_uint16 * pPrevRow = (vx_uint16*)pScratch;
-	vx_uint16 * pCurrRow = ((vx_uint16*)pScratch) + tmpWidth;
-	vx_uint16 * pNextRow = ((vx_uint16*)pScratch) + (tmpWidth + tmpWidth);
-
-	__m128i row0, shiftedR, shiftedL;
-	__m256i temp0, resultL;
-
-	vx_uint16 * pLocalPrevRow = pPrevRow;
-	vx_uint16 * pLocalCurrRow = pCurrRow;
-	vx_uint16 * pLocalNextRow = pNextRow;
-	vx_uint16 * pTemp;
-
-	// Process first two rows - Horizontal filtering
-	for (int x = 0; x < prefixWidth; x++, pLocalSrc++)
-	{
-		*pLocalPrevRow++ = (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes - 1] + 2 * (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes] + (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes + 1];
-		*pLocalCurrRow++ = (vx_uint16)pLocalSrc[-1] + 2 * (vx_uint16)pLocalSrc[0] + (vx_uint16)pLocalSrc[1];
-	}
-
-	for (int x = 0; x < (alignedWidth >> 4); x++)
-	{
-		// row above
-		row0 = _mm_loadu_si128((__m128i *)(pLocalSrc - srcImageStrideInBytes));
-		shiftedL = _mm_loadu_si128((__m128i *)(pLocalSrc - srcImageStrideInBytes - 1));
-		shiftedR = _mm_loadu_si128((__m128i *)(pLocalSrc - srcImageStrideInBytes + 1));
-
-		resultL = _mm256_cvtepu8_epi16(shiftedL);						// 1 * (-1,-1)
-		
-		temp0 = _mm256_cvtepu8_epi16(row0);
-		temp0 = _mm256_slli_epi16(temp0, 1);							// 2 * (0,-1)
-		resultL = _mm256_add_epi16(resultL, temp0);
-
-		temp0 = _mm256_cvtepu8_epi16(shiftedR);							// 1 * (1,-1)
-		resultL = _mm256_add_epi16(resultL, temp0);
-
-		_mm256_storeu_si256((__m256i *) pLocalPrevRow, resultL);
-
-		// current row
-		row0 = _mm_loadu_si128((__m128i *) pLocalSrc);
-		shiftedL = _mm_loadu_si128((__m128i *)(pLocalSrc - 1));
-		shiftedR = _mm_loadu_si128((__m128i *)(pLocalSrc + 1));
-
-		resultL = _mm256_cvtepu8_epi16(shiftedL);						// 1 * (-1,-1)
-
-		temp0 = _mm256_cvtepu8_epi16(row0);
-		temp0 = _mm256_slli_epi16(temp0, 1);							// 2 * (0,-1)
-		resultL = _mm256_add_epi16(resultL, temp0);
-
-		temp0 = _mm256_cvtepu8_epi16(shiftedR);							// 1 * (1,-1)
-		resultL = _mm256_add_epi16(resultL, temp0);
-
-		_mm256_storeu_si256((__m256i *) pLocalCurrRow, resultL);
-
-		pLocalSrc += 16;
-		pLocalPrevRow += 16;
-		pLocalCurrRow += 16;
-	}
-
-	for (int x = 0; x < postfixWidth; x++, pLocalSrc++)
-	{
-		*pLocalPrevRow++ = (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes - 1] + 2 * (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes] + (vx_uint16)pLocalSrc[-(int)srcImageStrideInBytes + 1];
-		*pLocalCurrRow++ = (vx_uint16)pLocalSrc[-1] + 2 * (vx_uint16)pLocalSrc[0] + (vx_uint16)pLocalSrc[1];
-	}
-
-	pLocalPrevRow = pPrevRow;
-	pLocalCurrRow = pCurrRow;
-	pLocalNextRow = pNextRow;
-
-	// Process rows 3 till the end
-	int height = (int)dstHeight;
-	while (height)
-	{
-		pLocalSrc = (unsigned char *)(pSrcImage + srcImageStrideInBytes);				// Pointing to the row below
-		pLocalDst = (unsigned char *)pDstImage;
-
-		for (int x = 0; x < prefixWidth; x++, pLocalSrc++)
-		{
-			vx_uint16 temp = (vx_uint16)pLocalSrc[-1] + 2 * (vx_uint16)pLocalSrc[0] + (vx_uint16)pLocalSrc[1];
-			*pLocalNextRow++ = temp;													// Save the next row temp pixels
-			*pLocalDst++ = (char)((temp + *pLocalPrevRow++ + 2*(*pLocalCurrRow++)) >> 4);
-		}
-
-		int width = (int)(alignedWidth >> 4);
-		while (width)
-		{
-			// Horizontal Filtering
-			// current row
-			row0 = _mm_loadu_si128((__m128i *) pLocalSrc);
-			shiftedL = _mm_loadu_si128((__m128i *)(pLocalSrc - 1));
-			shiftedR = _mm_loadu_si128((__m128i *)(pLocalSrc + 1));
-
-			resultL = _mm256_cvtepu8_epi16(shiftedL);						// 1 * (-1,-1)
-
-			temp0 = _mm256_cvtepu8_epi16(row0);
-			temp0 = _mm256_slli_epi16(temp0, 1);							// 2 * (0,-1)
-			resultL = _mm256_add_epi16(resultL, temp0);
-
-			temp0 = _mm256_cvtepu8_epi16(shiftedR);							// 1 * (1,-1)
-			resultL = _mm256_add_epi16(resultL, temp0);
-			_mm256_storeu_si256((__m256i*) pLocalNextRow, resultL);			// Save the horizontal filtered pixels from the next row
-
-			temp0 = _mm256_loadu_si256((__m256i*) pLocalPrevRow);			// Prev Row
-			resultL = _mm256_add_epi16(resultL, temp0);						// Prev Row + Next Row
-
-			temp0 = _mm256_loadu_si256((__m256i*) pLocalCurrRow);			// Current Row
-			temp0 = _mm256_slli_epi16(temp0, 1);							// Current Row * 2
-			
-			resultL = _mm256_add_epi16(resultL, temp0);						// Prev row + 2*curr row + next row
-			resultL = _mm256_srli_epi16(resultL, 4);						// Div by 16 (normalization)
-			
-			resultL = _mm256_packus_epi16(resultL, resultL);				// Convert to 8 bit
-			row0 = _mm256_castsi256_si128(resultL);							// Lower 128 bits 
-			_mm_store_si128((__m128i*) pLocalDst, row0);
-
-			pLocalSrc += 16;
-			pLocalDst += 16;
-			pLocalPrevRow += 16;
-			pLocalCurrRow += 16;
-			pLocalNextRow += 16;
-			width--;
-		}
-
-		for (int x = 0; x < postfixWidth; x++, pLocalSrc++)
-		{
-			vx_uint16 temp = (vx_uint16)pLocalSrc[-1] + 2 * (vx_uint16)pLocalSrc[0] + (vx_uint16)pLocalSrc[1];
-			*pLocalNextRow++ = temp;										// Save the next row temp pixels
-			*pLocalDst++ = (char)((temp + *pLocalPrevRow++ + 2*(*pLocalCurrRow++)) >> 4);
-		}
-
-		pTemp = pPrevRow;
-		pPrevRow = pCurrRow;
-		pCurrRow = pNextRow;
-		pNextRow = pTemp;
-
-		pLocalPrevRow = pPrevRow;
-		pLocalCurrRow = pCurrRow;
-		pLocalNextRow = pNextRow;
-
-		pSrcImage += srcImageStrideInBytes;
-		pDstImage += dstImageStrideInBytes;
-		height--;
-	}
-#else
 	unsigned char *pLocalSrc = (unsigned char *)pSrcImage;
 	unsigned char *pLocalDst = (unsigned char *)pDstImage;
 
@@ -1742,7 +1588,7 @@ int HafCpu_Gaussian_U8_U8_3x3
 
 		shiftedL = _mm_unpackhi_epi8(row0, zeromask);
 		shiftedL = _mm_slli_epi16(shiftedL, 1);							// H: 2 * (0,0)
-		row0 = _mm_cvtepu8_epi16(row0);
+		row0 = _mm_cvtepu8_epi16(row0);	
 		row0 = _mm_slli_epi16(row0, 1);									// L: 2 * (0,0)
 		resultH = _mm_add_epi16(resultH, shiftedL);
 		resultL = _mm_add_epi16(resultL, row0);
@@ -1781,7 +1627,7 @@ int HafCpu_Gaussian_U8_U8_3x3
 		{
 			vx_uint16 temp = (vx_uint16)pLocalSrc[-1] + 2 * (vx_uint16)pLocalSrc[0] + (vx_uint16)pLocalSrc[1];
 			*pLocalNextRow++ = temp;													// Save the next row temp pixels
-			*pLocalDst++ = (char)((temp + *pLocalPrevRow++ + 2 * (*pLocalCurrRow++)) >> 4);
+			*pLocalDst++ = (char)((temp + *pLocalPrevRow++ + 2*(*pLocalCurrRow++)) >> 4);
 		}
 
 		int width = (int)(alignedWidth >> 4);
@@ -1842,7 +1688,7 @@ int HafCpu_Gaussian_U8_U8_3x3
 		{
 			vx_uint16 temp = (vx_uint16)pLocalSrc[-1] + 2 * (vx_uint16)pLocalSrc[0] + (vx_uint16)pLocalSrc[1];
 			*pLocalNextRow++ = temp;										// Save the next row temp pixels
-			*pLocalDst++ = (char)((temp + *pLocalPrevRow++ + 2 * (*pLocalCurrRow++)) >> 4);
+			*pLocalDst++ = (char)((temp + *pLocalPrevRow++ + 2*(*pLocalCurrRow++)) >> 4);
 		}
 
 		pTemp = pPrevRow;
@@ -1858,8 +1704,6 @@ int HafCpu_Gaussian_U8_U8_3x3
 		pDstImage += dstImageStrideInBytes;
 		height--;
 	}
-#endif
-	
 	return AGO_SUCCESS;
 }
 
@@ -2414,7 +2258,6 @@ int HafCpu_Sobel_S16S16_U8_3x3_GXY
 			_mm_store_si128((__m128i *) (pLocalNextRow + 8), GxH);
 			_mm_store_si128((__m128i *) (pLocalNextRow + 16), GyL);			// Save the horizontal filtered pixels from the next row - Gy
 			_mm_store_si128((__m128i *) (pLocalNextRow + 24), GyH);
-
 
 			temp1 = _mm_add_epi16(temp1, shiftedR);							// next row - Prev row 
 			temp0 = _mm_add_epi16(temp0, shiftedL);

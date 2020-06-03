@@ -18,23 +18,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required(VERSION 2.8)
 project(applications)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
 find_package(OpenCL QUIET)
-find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
-find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 
-if(OpenCL_FOUND AND miopengemm_FOUND AND miopen_FOUND)
+if(OpenCL_FOUND)
     if(OpenCV_FOUND)
-        add_subdirectory (cloud_inference/server_app)
-        message("-- ${Green}Cloud Inference -- cloud_inference application added${ColourReset}")
+        add_subdirectory(bubble_pop)
+        message("-- ${Green}Bubble Pop -- application added${ColourReset}")
     else()
-        message("-- ${Red}WARNING:OpenCV Not Found -- cloud_inference application excluded${ColourReset}")
+        message("-- ${Red}WARNING:OpenCV Not Found -- Bubble Pop application excluded${ColourReset}")
     endif()
-else()
-    message("-- ${Red}WARNING:OpenCL/MIOpenGEMM/MIOpen Not Found -- cloud_inference application excluded${ColourReset}")
 endif()

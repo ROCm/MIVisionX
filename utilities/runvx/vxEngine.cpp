@@ -42,20 +42,11 @@ void RemoveVirtualKeywordFromParamDescription(std::string& paramDesc)
 	if (pos != std::string::npos) {
 		paramDesc.erase(pos, 8);
 	}
-	else if ((pos = paramDesc.find("virtual-")) != std::string::npos) {
-		paramDesc.erase(pos, 8);
-	}
 }
 
 static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
 {
-	size_t len = strlen(string);
-	if (len > 0) {
-		printf("%s", string);
-		if (string[len - 1] != '\n')
-			printf("\n");
-		fflush(stdout);
-	}
+	printf("%s", string); fflush(stdout);
 }
 
 CVxEngine::CVxEngine()
@@ -77,8 +68,6 @@ CVxEngine::CVxEngine()
 	m_disableCompare = false;
 	m_numGraphProcessed = 0;
 	m_graphVerified = false;
-	m_dumpDataEnabled = false;
-	m_dumpDataCount = 0;
 }
 
 CVxEngine::~CVxEngine()
@@ -86,27 +75,22 @@ CVxEngine::~CVxEngine()
 	Shutdown();
 }
 
-int CVxEngine::Initialize(int argCount, int defaultTargetAffinity, int defaultTargetInfo, bool enableScheduleGraph, bool disableVirtual, bool enableFullProfile, bool disableNodeFlushForCL, std::string discardCommandList)
+int CVxEngine::Initialize(int argCount, int defaultTargetAffinity, int defaultTargetInfo, bool enableScheduleGraph, bool disableVirtual)
 {
 	// save configuration
 	m_paramCount = argCount;
 	m_enableScheduleGraph = enableScheduleGraph;
 	vx_status ovxStatus = VX_SUCCESS;
 	m_disableVirtual = disableVirtual;
-	// add ','s at the end of command list to be discarded to ease string search
-	m_discardCommandList = ",";
-	m_discardCommandList += discardCommandList;
-	m_discardCommandList += ",";
 
 	// create OpenVX context, register log_callback, and show implementation
-	vxRegisterLogCallback(nullptr, log_callback, vx_false_e); // to receive log messages from vxCreateContext (if any)
 	m_context = vxCreateContext();
 	if (vxGetStatus((vx_reference)m_context)) { printf("ERROR: vxCreateContext failed\n"); throw - 1; }
 	vxRegisterLogCallback(m_context, log_callback, vx_false_e);
 	char name[VX_MAX_IMPLEMENTATION_NAME];
 	ovxStatus = vxQueryContext(m_context, VX_CONTEXT_ATTRIBUTE_IMPLEMENTATION, name, VX_MAX_IMPLEMENTATION_NAME);
 	if (ovxStatus) {
-		printf("ERROR: vxQueryContext(VX_CONTEXT_ATTRIBUTE_IMPLEMENTATION) failed (%d:%s)\n", ovxStatus, ovxEnum2Name(ovxStatus));
+		printf("ERROR: vxQueryContext)VX_CONTEXT_ATTRIBUTE_IMPLEMENTATION) failed (%d:%s)\n", ovxStatus, ovxEnum2Name(ovxStatus));
 		return -1;
 	}
 	printf("OK: using %s\n", name);
@@ -128,14 +112,6 @@ int CVxEngine::Initialize(int argCount, int defaultTargetAffinity, int defaultTa
 	m_graph = vxCreateGraph(m_context);
 	if (vxGetStatus((vx_reference)m_graph)){ printf("ERROR: vxCreateGraph failed\n"); throw - 1; }
 
-	// select graph options
-	if(enableFullProfile) {
-	    vxDirective((vx_reference)m_graph, VX_DIRECTIVE_AMD_ENABLE_PROFILE_CAPTURE);
-	}
-	if(disableNodeFlushForCL) {
-	    vxDirective((vx_reference)m_graph, VX_DIRECTIVE_AMD_DISABLE_OPENCL_FLUSH);
-	}
-
 	return 0;
 }
 
@@ -146,18 +122,6 @@ int CVxEngine::SetGraphOptimizerFlags(vx_uint32 graph_optimizer_flags)
 	if (status)
 		ReportError("ERROR: vxSetGraphAttribute(*,VX_GRAPH_ATTRIBUTE_AMD_OPTIMIZER_FLAGS,%d) failed (%d:%s)\n", graph_optimizer_flags, status, ovxEnum2Name(status));
 	return 0;
-}
-
-void CVxEngine::SetDumpDataConfig(std::string dumpDataConfig)
-{
-	m_dumpDataEnabled = false;
-	// extract dumpDataFilePrefix and dumpDataObjectList (with added ',' at the end)
-	// to check if an object type is specified, use dumpDataObjectList.find(",<object-type>,") != npos
-	size_t pos = dumpDataConfig.find(",");
-	if(pos == std::string::npos) return;
-	m_dumpDataFilePrefix = dumpDataConfig.substr(0,pos);
-	m_dumpDataObjectList = dumpDataConfig.substr(pos) + ",";
-	m_dumpDataEnabled = true;
 }
 
 vx_context CVxEngine::getContext()
@@ -384,9 +348,7 @@ int CVxEngine::ProcessGraph(std::vector<const char *> * graphNameList, size_t be
 	m_timeMeasurements.clear();
 	int64_t start_time = utilGetClockCounter();
 	for (int frameNumber = m_frameStart; m_usingMultiFrameCapture || frameNumber < m_frameEnd; frameNumber++, count++){
-		// sync frame
-		if ((status = SyncFrame(frameNumber)) < 0) throw - 1;
-		// read input data, when specified
+		//read input data, when specified
 		if ((status = ReadFrame(frameNumber)) < 0) throw - 1;
 		if (m_framesEofRequested && status > 0) {
 			// data is not available
@@ -398,7 +360,7 @@ int CVxEngine::ProcessGraph(std::vector<const char *> * graphNameList, size_t be
 		// execute graph for current frame
 		if (graphObjList.size() < 2 && !m_enableScheduleGraph) {
 			status = vxProcessGraph(graphObjList[0]);
-			if (status != VX_SUCCESS && status != VX_ERROR_GRAPH_ABANDONED)
+			if (status)
 				ReportError("ERROR: vxScheduleGraph(%s) failed (%d:%s)\n", !graphNameList ? "" : (*graphNameList)[beginIndex], status, ovxEnum2Name(status));
 		}
 		else {
@@ -417,15 +379,11 @@ int CVxEngine::ProcessGraph(std::vector<const char *> * graphNameList, size_t be
 				else if (status)
 					ReportError("ERROR: vxScheduleGraph(%s) failed (%d:%s)\n", !graphNameList ? "" : (*graphNameList)[beginIndex + i], status, ovxEnum2Name(status));
 			}
-			if (abandoned)
+			if (!status && abandoned)
 				status = VX_ERROR_GRAPH_ABANDONED;
 		}
-		if (status == VX_ERROR_GRAPH_ABANDONED) {
-#if _DEBUG
-			printf("WARNING: graph aborted with VX_ERROR_GRAPH_ABANDONED\n");
-#endif
+		if (status == VX_ERROR_GRAPH_ABANDONED)
 			break; // don't report graph abandoned as an error
-		}
 		if (status < 0) throw - 1;
 		// get frame level performance measurements
 		MeasureFrame(frameNumber, status, graphObjList);
@@ -483,24 +441,6 @@ const char * RemoveWhiteSpacesAndComment(char * line)
 	return buf;
 }
 
-int CVxEngine::RenameData(const char * oldName, const char * newName)
-{
-	auto itOld = m_paramMap.find(oldName);
-	auto itNew = m_paramMap.find(newName);
-	if (itNew != m_paramMap.end()) {
-		ReportError("ERROR: data object with name '%s' already exists\n", newName);
-	}
-	else if (itOld == m_paramMap.end()) {
-		ReportError("ERROR: data object with name '%s' doesn't exist\n", oldName);
-	}
-	else {
-		auto obj = itOld->second;
-		m_paramMap.erase(itOld);
-		m_paramMap.insert(pair<string, CVxParameter *>(newName, obj));
-	}
-	return 0;
-}
-
 int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 {
 	// remove whitespaces and save original text for error reporting
@@ -527,13 +467,6 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 		s = t + 1;
 	}
 	if (!wordList.size())
-		return BUILD_GRAPH_SUCCESS;
-
-	// discard command if listed in discardCommandList
-	std::string commandKey = ",";
-	commandKey += wordList[0];
-	commandKey += ",";
-	if (m_discardCommandList.find(commandKey) != std::string::npos)
 		return BUILD_GRAPH_SUCCESS;
 
 	// process a GDF statement
@@ -660,12 +593,6 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 					m_enableDumpGDF = false;
 			}
 			printf("> current settings for dump-gdf: %s\n", m_enableDumpGDF ? "on" : "off");
-		}
-		else if (!_stricmp(wordList[1], "dump-data-config"))
-		{ // syntax: set dump-data-config [<dumpFilePrefix>,<obj-type>[,<obj-type>[...]]]
-			std::string dumpDataConfig = (wordList.size() > 2) ? wordList[2] : "";
-			SetDumpDataConfig(dumpDataConfig);
-			printf("> current settings for dump-data-config: %s\n", dumpDataConfig.c_str());
 		}
 		else ReportError("ERROR: syntax error: %s\n" "See help for details.\n", originalText);
 	}
@@ -867,25 +794,6 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 		vx_status status = vxSetReferenceName(ref, wordList[1]);
 		if (status != VX_SUCCESS)
 			ReportError("ERROR: vxSetReferenceName(%s) failed (%d:%s)\n", wordList[1], status, ovxEnum2Name(status));
-		// check if dump-data-config is enabled for non-virtual data objects
-		if(m_dumpDataEnabled && objDesc.find("virtual") == std::string::npos) {
-			// check if object type is requeted for dump
-			std::string objType = objDesc.substr(0,objDesc.find(":"));
-			std::string objTypeKey = ","; objTypeKey += objType + ",";
-			if(m_dumpDataObjectList.find(objTypeKey) != std::string::npos) {
-				// issue an InitializeIO command with write to dump into a file
-				char io_params[256];
-				sprintf(io_params, "write,%sdump_%04d_%s_%s.raw", m_dumpDataFilePrefix.c_str(), m_dumpDataCount, objType.c_str(), wordList[1]);
-				int status = obj->InitializeIO(m_context, m_graph, obj->GetVxObject(), io_params);
-				if (status < 0)
-					ReportError("ERROR: dump-data-config for %s failed: %s\n", wordList[1], io_params);
-				m_dumpDataCount++;
-			}
-		}
-	}
-	else if (!_stricmp(wordList[0], "rename") && wordList.size() == 3)
-	{ // syntax: rename <old-name> <new-name>
-		RenameData(wordList[1], wordList[2]);
 	}
 	else if (wordList.size() > 2 && (!_stricmp(wordList[0], "init") || 
 		!_stricmp(wordList[0], "read") || !_stricmp(wordList[0], "write") || 
@@ -946,10 +854,10 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 						for (int index = 0; index < 4 && (*p == '{' || *p == ';');) {
 							int value = 0;
 							p = ScanParameters(&p[1], "<byte>", "d", &value);
-							border_mode.constant_value.reserved[index++] = (vx_uint8)value;
+							((vx_uint8 *)&border_mode.constant_value)[index++] = (vx_uint8)value;
 						}
 					}
-					else (void)sscanf(p + 1, "%i", &border_mode.constant_value.U32);
+					else (void)sscanf(p + 1, "%i", &border_mode.constant_value);
 				}
 				status = vxSetNodeAttribute(node, VX_NODE_ATTRIBUTE_BORDER_MODE, &border_mode, sizeof(border_mode));
 				if (status != VX_SUCCESS)
@@ -1003,7 +911,7 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 					int subObjIndex = 0;
 					paramDescIndex = ScanParameters(paramDescIndex, "[<index>]", "[d]", &subObjIndex);
 					// get sub-indexed object
-					vx_enum type; ERROR_CHECK(vxQueryReference(ref, VX_REFERENCE_TYPE, &type, sizeof(type)));
+					vx_enum type; ERROR_CHECK(vxQueryReference(ref, VX_REF_ATTRIBUTE_TYPE, &type, sizeof(type)));
 					if (type == VX_TYPE_PYRAMID) {
 						ref = (vx_reference)vxGetPyramidLevel((vx_pyramid)ref, (vx_uint32)subObjIndex);
 						status = vxGetStatus(ref);
@@ -1123,16 +1031,6 @@ int CVxEngine::Shell(int level, FILE * fp)
 		else if (status == BUILD_GRAPH_EXIT)
 			return 0;
 		if (!fp) { printf("%% "); fflush(stdout); }
-	}
-	return 0;
-}
-
-int CVxEngine::SyncFrame(int frameNumber)
-{
-	for (auto it = m_paramMap.begin(); it != m_paramMap.end(); ++it){
-		int status = it->second->SyncFrame(frameNumber);
-		if (status)
-			return status;
 	}
 	return 0;
 }
@@ -1318,38 +1216,29 @@ void PrintHelpGDF(const char * command)
 		"          convolution:<columns>,<rows>\n"
 		"          distribution:<numBins>,<offset>,<range>\n"
 		"          delay:<exemplar>,<slots>\n"
-		"          image:<width>,<height>,<image-format>[,<range>][,<space>]\n"
-		"          uniform-image:<width>,<height>,<image-format>,<uniform-pixel-value>\n"
-		"          image-from-roi:<master-image>,rect{<start-x>;<start-y>;<end-x>;<end-y>}\n"
-		"          image-from-handle:<image-format>,{<dim-x>;<dim-y>;<stride-x>;<stride-y>}[+...],<memory-type>\n"
-		"          image-from-channel:<master-image>,<channel>\n"
+		"          image:<width>,<height>,<image-format>\n"
+		"          image-uniform:<width>,<height>,<image-format>,<uniform-pixel-value>\n"
+		"          image-roi:<master-image>,rect{<start-x>;<start-y>;<end-x>;<end-y>}\n"
 		"          lut:<data-type>,<count>\n"
 		"          matrix:<data-type>,<columns>,<rows>\n"
 		"          pyramid:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<image-format>\n"
 		"          remap:<srcWidth>,<srcHeight>,<dstWidth>,<dstHeight>\n"
 		"          scalar:<data-type>,<value>\n"
 		"          threshold:<thresh-type>,<data-type>\n"
-		"          tensor:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>\n"
-		"          tensor-from-roi:<master-tensor>,<num-of-dims>,{<start0>,<start1>,...},{<end0>,<end1>,...}\n"
-		"          tensor-from-handle:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>,{<stride0>,<stride1>,...},<num-alloc-handles>,<memory-type>\n"
 		"      For virtual object in default graph use the below syntax for\n"
 		"      <data-description>:\n"
-		"          virtual-array:<data-type>,<capacity>\n"
-		"          virtual-image:<width>,<height>,<image-format>\n"
-		"          virtual-pyramid:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<image-format>\n"
-		"          virtual-tensor:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>\n"
+		"          array-virtual:<data-type>,<capacity>\n"
+		"          image-virtual:<width>,<height>,<image-format>\n"
+		"          pyramid-virtual:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<image-format>\n"
 		"\n"
 		"      where:\n"
 		"          <master-image> can be name of a image data object (including $1, $2, ...)\n"
-		"          <master-tensor> can be name of a tensor data object (including $1, $2, ...)\n"
 		"          <exemplar> can be name of a data object (including $1, $2, ...)\n"
 		"          <thresh-type> can be BINARY,RANGE\n"
 		"          <uniform-pixel-value> can be an integer or {<byte>;<byte>;...}\n"
 		"          <image-format> can be RGB2,RGBX,IYUV,NV12,U008,S016,U001,F032,...\n"
 		"          <data-type> can be UINT8,INT16,INT32,UINT32,FLOAT32,ENUM,BOOL,SIZE,\n"
 		"                             KEYPOINT,COORDINATES2D,RECTANGLE,<typeName>,...\n"
-		"          <range> can be vx_channel_range_e enums FULL or RESTRICTED\n"
-		"          <space> can be vx_color_space_e enums BT709 or BT601_525 or BT601_625\n"
 		"\n"
 		);
 	if (strstr("node", command)) printf(
@@ -1392,9 +1281,6 @@ void PrintHelpGDF(const char * command)
 		"              Turn on/off data compares or just discard data compare errors.\n"
 		"          set use-schedule-graph [on|off]\n"
 		"              Turn on/off use of vxScheduleGraph instead of vxProcessGraph.\n"
-		"          set dump-data-config [<dumpFilePrefix>,<obj-type>[,<obj-type>[...]]]\n"
-		"              Specify dump data config for portion of the graph. To disable\n"
-		"              don't specify any config.\n"
 		"\n"
 		);
 	if (strstr("graph", command)) printf(
@@ -1418,11 +1304,6 @@ void PrintHelpGDF(const char * command)
 		"              Show graph details for debug.\n"
 		"\n"
 		);
-	if (strstr("rename", command)) printf(
-		"  rename <dataNameOld> <dataNameNew>\n"
-		"      Rename a data object\n"
-		"\n"
-		);
 	if (strstr("init", command)) printf(
 		"  init <dataName> <initial-value>\n"
 		"      Initialize data object with specified value.\n"
@@ -1441,14 +1322,6 @@ void PrintHelpGDF(const char * command)
 		"      - threshold object initial values can be:\n"
 		"          For VX_THRESHOLD_TYPE_BINARY: <value>\n"
 		"          For VX_THRESHOLD_TYPE_RANGE: {<lower>;<upper>}\n"
-		"      - image object initial values can be:\n"
-		"          Binary file with image data. For images created from handle,\n"
-		"          the vxSwapHandles API will be invoked before executing the graph.\n"
-		"      - tensor object initial values can be:\n"
-		"          Binary file with tensor data.\n"
-		"          To replicate a file multiple times, use @repeat~N~<fileName>.\n"
-		"          To fill the tensor with a value, use @fill~f32~<float-value>,\n"
-		"          @fill~i32~<int-value>, @fill~i16~<int-value>, or @fill~u8~<uint-value>.\n"
 		"\n"
 		);
 	if (strstr("read", command)) printf(

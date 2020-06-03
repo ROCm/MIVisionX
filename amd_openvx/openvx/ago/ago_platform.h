@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #ifndef __ago_platform_h__
 #define __ago_platform_h__
 
@@ -32,12 +31,10 @@ THE SOFTWARE.
 #define _CRT_SECURE_NO_WARNINGS
 #define _USE_MATH_DEFINES
 #include <VX/vx.h>
-#include <VX/vx_compatibility.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <string.h>
 #include <limits.h>
 #include <float.h>
 #include <math.h>
@@ -53,26 +50,18 @@ using namespace std;
 
 #if _WIN32
 #include <Windows.h>
-#include <cmath>
 #include <intrin.h>
 #else
 #include <dlfcn.h>
-#include <x86intrin.h>
 #if __APPLE__
+#include <x86intrin.h>
 #include <cstdlib>
 #include <cmath>
 #endif
-#include <strings.h>
-#define _strnicmp strncasecmp
-#define _stricmp  strcasecmp
 #endif
 
 #if ENABLE_OPENCL
-#if __APPLE__
-#include <opencl.h>
-#else
 #include <CL/cl.h>
-#endif
 #endif
 
 // platform specific shared library file extension
@@ -134,11 +123,11 @@ typedef unsigned long DWORD;
 typedef void * LPVOID;
 typedef int BOOL;
 typedef long LONG, * LPLONG;
-typedef void (*LPTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
-extern void EnterCriticalSection(CRITICAL_SECTION* cs);
-extern void LeaveCriticalSection(CRITICAL_SECTION* cs);
-extern void InitializeCriticalSection(CRITICAL_SECTION* cs);
-extern void DeleteCriticalSection(CRITICAL_SECTION* cs);
+typedef DWORD (*LPTHREAD_START_ROUTINE)(LPVOID lpThreadParameter);
+extern void EnterCriticalSection(CRITICAL_SECTION cs);
+extern void LeaveCriticalSection(CRITICAL_SECTION cs);
+extern void InitializeCriticalSection(CRITICAL_SECTION cs);
+extern void DeleteCriticalSection(CRITICAL_SECTION cs);
 extern void CloseHandle(HANDLE h);
 extern HANDLE CreateSemaphore(void *, LONG, LONG, void *);
 extern HANDLE CreateThread(void *, size_t dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, void *);

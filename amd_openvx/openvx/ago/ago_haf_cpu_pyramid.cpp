@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 static inline unsigned short Horizontal5x5GaussianFilter_C(unsigned char * srcImage)
@@ -404,4 +403,3 @@ int HafCpu_ScaleGaussianOrb_U8_U8_5x5
 	}
 	return AGO_SUCCESS;
 }
-

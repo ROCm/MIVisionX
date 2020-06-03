@@ -40,6 +40,7 @@ CVxParamArray::CVxParamArray()
 	m_bufForRead = nullptr;
 	m_compareCountMatches = 0;
 	m_compareCountMismatches = 0;
+	m_useSyncOpenCLWriteDirective = false;
 	m_errX = 0;
 	m_errY = 0;
 	m_errStrength = 1e-10f;
@@ -55,11 +56,9 @@ int CVxParamArray::Initialize(vx_context context, vx_graph graph, const char * d
 {
 	// get object parameters and create object
 	char objType[64];
-	const char * ioParams = ScanParameters(desc, "array|virtual-array:", "s:", objType);
-	if (!_stricmp(objType, "array") || !_stricmp(objType, "virtual-array") ||
-		!_stricmp(objType, "array-virtual"))
-	{
-		// syntax: [virtual-]array:<format>,<capacity>[:<io-params>]
+	const char * ioParams = ScanParameters(desc, "array|array-virtual:", "s:", objType);
+	if (!_stricmp(objType, "array") || !_stricmp(objType, "array-virtual")) {
+		// syntax: array[-virtual]:<format>,<capacity>[:<io-params>]
 		char itemType[64];
 		ioParams = ScanParameters(ioParams, "<format>,<capacity>", "s,D", &itemType, &m_capacity);
 		bool found_userStruct = false;
@@ -76,7 +75,7 @@ int CVxParamArray::Initialize(vx_context context, vx_graph graph, const char * d
 			}
 		}
 		// create array object
-		if (!_stricmp(objType, "virtual-array") || !_stricmp(objType, "array-virtual")) {
+		if (!_stricmp(objType, "array-virtual")) {
 			m_array = vxCreateVirtualArray(graph, m_format, m_capacity);
 			m_isVirtualObject = true;
 		}
@@ -184,26 +183,8 @@ int CVxParamArray::InitializeIO(vx_context context, vx_graph graph, vx_reference
 			m_displayName.assign(fileName);
 			m_paramList.push_back(this);
 		}
-		else if (!_stricmp(ioType, "directive") && (!_stricmp(fileName, "VX_DIRECTIVE_AMD_COPY_TO_OPENCL") || !_stricmp(fileName, "sync-cl-write"))) {
+		else if (!_stricmp(ioType, "directive") && !_stricmp(fileName, "sync-cl-write")) {
 			m_useSyncOpenCLWriteDirective = true;
-		}
-		else if (!_stricmp(ioType, "init")) {
-			m_fileNameRead.assign(RootDirUpdated(fileName));
-			m_fileNameForReadHasIndex = (m_fileNameRead.find("%") != m_fileNameRead.npos) ? true : false;
-			m_readFileIsBinary = (m_fileNameRead.find(".txt") != m_fileNameRead.npos) ? false : true;
-			while (*io_params == ',') {
-				char option[64];
-				io_params = ScanParameters(io_params, ",ascii|binary", ",s", option);
-				if (!_stricmp(option, "ascii")) {
-					m_readFileIsBinary = false;
-				}
-				else if (!_stricmp(option, "binary")) {
-					m_readFileIsBinary = true;
-				}
-				else ReportError("ERROR: invalid array init option: %s\n", option);
-			}
-			if (ReadFrame(0) < 0)
-				ReportError("ERROR: reading from input file for array init\n");
 		}
 		else ReportError("ERROR: invalid array operation: %s\n", ioType);
 		if (*io_params == ':') io_params++;
@@ -218,11 +199,6 @@ int CVxParamArray::Finalize()
 	// get attributes
 	ERROR_CHECK(vxQueryArray(m_array, VX_ARRAY_ATTRIBUTE_ITEMSIZE, &m_itemSize, sizeof(m_itemSize)));
 	ERROR_CHECK(vxQueryArray(m_array, VX_ARRAY_ATTRIBUTE_CAPACITY, &m_capacity, sizeof(m_capacity)));
-
-	// process user requested directives
-	if (m_useSyncOpenCLWriteDirective) {
-		ERROR_CHECK_AND_WARN(vxDirective((vx_reference)m_array, VX_DIRECTIVE_AMD_COPY_TO_OPENCL), VX_ERROR_NOT_ALLOCATED);
-	}
 
 	return 0;
 }
@@ -362,7 +338,7 @@ int CVxParamArray::ReadFrame(int frameNumber)
 
 	// process user requested directives
 	if (m_useSyncOpenCLWriteDirective) {
-		ERROR_CHECK_AND_WARN(vxDirective((vx_reference)m_array, VX_DIRECTIVE_AMD_COPY_TO_OPENCL), VX_ERROR_NOT_ALLOCATED);
+		ERROR_CHECK(vxDirective((vx_reference)m_array, VX_DIRECTIVE_AMD_COPY_TO_OPENCL));
 	}
 
 	return 0;

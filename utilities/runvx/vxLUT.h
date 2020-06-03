@@ -51,6 +51,7 @@ private:
 	bool m_compareFileIsBinary;
 	int m_compareCountMatches;
 	int m_compareCountMismatches;
+	bool m_useSyncOpenCLWriteDirective;
 	// vx object
 	vx_lut m_lut;
 };

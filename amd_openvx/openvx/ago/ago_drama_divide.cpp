@@ -20,13 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 #define SANITY_CHECK_DATA_TYPE(data,data_type)          if(!data || data->ref.type != data_type) return -1
 #define SANITY_CHECK_DATA_TYPE_OPTIONAL(data,data_type) if( data && data->ref.type != data_type) return -1
 
-int agoDramaDivideAppend(AgoNodeList * nodeList, AgoNode * anode, vx_enum new_kernel_id, vx_reference * paramList, vx_uint32 paramCount)
+int agoDramaDivideAppend(AgoNodeList * nodeList, AgoNode * anode, vx_enum new_kernel_id)
 {
 	if (new_kernel_id == VX_KERNEL_AMD_INVALID) {
 		// TBD: error handling
@@ -35,24 +34,13 @@ int agoDramaDivideAppend(AgoNodeList * nodeList, AgoNode * anode, vx_enum new_ke
 	}
 	// create a new AgoNode and add it to the nodeList
 	AgoNode * childnode = agoCreateNode((AgoGraph *)anode->ref.scope, new_kernel_id);
-	for (vx_uint32 i = 0; i < paramCount; i++) {
-		childnode->paramList[i] = (AgoData *)paramList[i];
+	for (vx_uint32 i = 0; i < anode->paramCount; i++) {
+		childnode->paramList[i] = anode->paramList[i];
 	}
-	anode->drama_divide_invoked = true;
 	// transfer attributes from anode to childnode
 	agoImportNodeConfig(childnode, anode);
 	// verify the node
 	return agoVerifyNode(childnode);
-}
-
-vx_status VX_CALLBACK agoDramaDivideAddNodeCallback(vx_node node, vx_enum kernel_id, vx_reference * paramList, vx_uint32 paramCount)
-{
-    return agoDramaDivideAppend(&((AgoGraph *)node->ref.scope)->nodeList, node, kernel_id, paramList, paramCount);
-}
-
-int agoDramaDivideAppend(AgoNodeList * nodeList, AgoNode * anode, vx_enum new_kernel_id)
-{
-    return agoDramaDivideAppend(nodeList, anode, new_kernel_id, (vx_reference *)anode->paramList, anode->paramCount);
 }
 
 int agoDramaDivideColorConvertNode(AgoNodeList * nodeList, AgoNode * anode)
@@ -507,23 +495,18 @@ int agoDramaDivideSobel3x3Node(AgoNodeList * nodeList, AgoNode * anode)
 	// sanity checks
 	if (anode->paramCount != 3) return -1;
 	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_IMAGE);
-	SANITY_CHECK_DATA_TYPE_OPTIONAL(anode->paramList[1], VX_TYPE_IMAGE);
-	SANITY_CHECK_DATA_TYPE_OPTIONAL(anode->paramList[2], VX_TYPE_IMAGE);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[1], VX_TYPE_IMAGE);
+	SANITY_CHECK_DATA_TYPE(anode->paramList[2], VX_TYPE_IMAGE);
 	// perform divide
 	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
-	if (paramList[1]) {
-		anode->paramList[0] = paramList[1];
-		anode->paramList[1] = paramList[0];
-		anode->paramCount = 2;
-		if (agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_SOBEL_S16_U8_3x3_GX)) return -1;
-	}
-	if (paramList[2]) {
-		anode->paramList[0] = paramList[2];
-		anode->paramList[1] = paramList[0];
-		anode->paramCount = 2;
-		if (agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_SOBEL_S16_U8_3x3_GY)) return -1;
-	}
-	return VX_SUCCESS;
+	anode->paramList[0] = paramList[1];
+	anode->paramList[1] = paramList[0];
+	anode->paramCount = 2;
+	if (agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_SOBEL_S16_U8_3x3_GX)) return -1;
+	anode->paramList[0] = paramList[2];
+	anode->paramList[1] = paramList[0];
+	anode->paramCount = 2;
+	return agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_SOBEL_S16_U8_3x3_GY);
 }
 
 int agoDramaDivideMagnitudeNode(AgoNodeList * nodeList, AgoNode * anode)
@@ -597,7 +580,7 @@ int agoDramaDivideScaleImageNode(AgoNodeList * nodeList, AgoNode * anode)
 				new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_BILINEAR_CONSTANT;
 				// create scalar object for border mode
 				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-				char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value);
 				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 				if (!dataBorder) return -1;
 				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1403,7 +1386,7 @@ int agoDramaDivideRemapNode(AgoNodeList * nodeList, AgoNode * anode)
 			if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
 				// create scalar object for border mode
 				AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-				char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+				char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value);
 				AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 				if (!dataBorder) return -1;
 				agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1454,7 +1437,7 @@ int agoDramaDivideWarpAffineNode(AgoNodeList * nodeList, AgoNode * anode)
 		if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
 			// create scalar object for border mode
 			AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-			char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+			char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value);
 			AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 			if (!dataBorder) return -1;
 			agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1492,7 +1475,7 @@ int agoDramaDivideWarpPerspectiveNode(AgoNodeList * nodeList, AgoNode * anode)
 		if (new_kernel_id != VX_KERNEL_AMD_INVALID) {
 			// create scalar object for border mode
 			AgoGraph * agraph = (AgoGraph *)anode->ref.scope;
-			char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value.U8);
+			char desc[64]; sprintf(desc, "scalar-virtual:UINT8,%d", anode->attr_border_mode.constant_value);
 			AgoData * dataBorder = agoCreateDataFromDescription(anode->ref.context, agraph, desc, false);
 			if (!dataBorder) return -1;
 			agoGenerateVirtualDataName(agraph, "scalar", dataBorder->name);
@@ -1775,41 +1758,11 @@ int agoDramaDivideOpticalFlowPyrLkNode(AgoNodeList * nodeList, AgoNode * anode)
 #endif
 }
 
-int agoDramaDivideCopyNode(AgoNodeList * nodeList, AgoNode * anode)
-{
-	// sanity checks
-	SANITY_CHECK_DATA_TYPE(anode->paramList[1], anode->paramList[0]->ref.type);
-	// save parameters
-	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
-	anode->paramList[0] = paramList[1];
-	anode->paramList[1] = paramList[0];
-	anode->paramCount = 2;
-	vx_enum new_kernel_id = VX_KERNEL_AMD_COPY_DATA_DATA;
-	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
-}
-
-int agoDramaDivideSelectNode(AgoNodeList * nodeList, AgoNode * anode)
-{
-	// sanity checks
-	SANITY_CHECK_DATA_TYPE(anode->paramList[0], VX_TYPE_SCALAR);
-	SANITY_CHECK_DATA_TYPE(anode->paramList[3], anode->paramList[1]->ref.type);
-	SANITY_CHECK_DATA_TYPE(anode->paramList[2], anode->paramList[1]->ref.type);
-	// save parameters
-	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
-	anode->paramList[0] = paramList[3];
-	anode->paramList[1] = paramList[0];
-	anode->paramList[2] = paramList[1];
-	anode->paramList[3] = paramList[2];
-	anode->paramCount = 4;
-	vx_enum new_kernel_id = VX_KERNEL_AMD_SELECT_DATA_DATA_DATA;
-	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
-}
-
 int agoDramaDivideNode(AgoNodeList * nodeList, AgoNode * anode)
 {
 	// save parameter list
-	vx_uint32 paramCount = anode->paramCount;
-	AgoData * paramList[AGO_MAX_PARAMS]; memcpy(paramList, anode->paramList, sizeof(paramList));
+	AgoData * paramList[AGO_MAX_PARAMS];
+	memcpy(paramList, anode->paramList, sizeof(paramList));
 	// divide the node depending on the type
 	int status = -1;
 	switch (anode->akernel->id)
@@ -1937,17 +1890,10 @@ int agoDramaDivideNode(AgoNodeList * nodeList, AgoNode * anode)
 		case VX_KERNEL_HALFSCALE_GAUSSIAN:
 			status = agoDramaDivideHalfscaleGaussianNode(nodeList, anode);
 			break;
-		case VX_KERNEL_COPY:
-			status = agoDramaDivideCopyNode(nodeList, anode);
-			break;
-		case VX_KERNEL_SELECT:
-			status = agoDramaDivideSelectNode(nodeList, anode);
-			break;
 		default:
 			break;
 	}
 	// revert parameter list
-	anode->paramCount = paramCount;
 	memcpy(anode->paramList, paramList, sizeof(anode->paramList));
 	return status;
 }
@@ -1976,9 +1922,14 @@ int agoOptimizeDramaDivide(AgoGraph * agraph)
 				anode = next;
 			}
 			else {
-				// TBD: error handling
-				agoAddLogEntry(&anode->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaDivide: failed for node %s (not implemented yet)\n", anode->akernel->name);
-				astatus = -1;
+				if (anode->akernel->id == VX_KERNEL_INVALID) {
+					agraph->detectedInvalidNode = true;
+				}
+				else {
+					// TBD: error handling
+					agoAddLogEntry(&anode->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaDivide: failed for node %s\n", anode->akernel->name);
+					astatus = -1;
+				}
 				// advance to next node, since node divide failed
 				aprev = anode;
 				anode = anode->next;
@@ -1986,11 +1937,10 @@ int agoOptimizeDramaDivide(AgoGraph * agraph)
 		}
 		else if (anode->akernel->regen_callback_f) {
 			// try regenerating the node
-			anode->drama_divide_invoked = false;
-			vx_bool replace_original = vx_true_e;
-			vx_status status = anode->akernel->regen_callback_f(anode, agoDramaDivideAddNodeCallback, replace_original);
+			vx_bool regen_not_needed = vx_true_e;
+			vx_status status = anode->akernel->regen_callback_f(agraph, anode, regen_not_needed);
 			if (status == VX_SUCCESS) {
-				if (anode->drama_divide_invoked && replace_original) {
+				if (regen_not_needed == vx_false_e) {
 					// remove and release the current node
 					if (aprev) aprev->next = anode->next;
 					else agraph->nodeList.head = anode->next;

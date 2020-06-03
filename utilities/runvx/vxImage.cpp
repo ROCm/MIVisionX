@@ -43,16 +43,12 @@ CVxParamImage::CVxParamImage()
 	m_countFrames = 0;
 	m_useCheckSumForCompare = false;
 	m_generateCheckSumForCompare = false;
+	m_useSyncOpenCLWriteDirective = false;
 	m_usingDisplay = false;
 	m_usingWriter = false;
 	m_countInitializeIO = 0;
-	m_memory_type = VX_MEMORY_TYPE_NONE;
-	m_active_handle = 0;
-	memset(m_addr, 0, sizeof(m_addr));
-	memset(m_memory_handle, 0, sizeof(m_memory_handle));
-	m_swap_handles = false;
 
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	m_cvCapDev = NULL;
 	m_cvCapMat = NULL;
 	m_cvDispMat = NULL;
@@ -76,8 +72,6 @@ CVxParamImage::CVxParamImage()
 	m_doNotResizeCapturedImages = false;
 	m_captureWidth = 0;
 	m_captureHeight = 0;
-	m_colorIndexDefault = 0;
-	m_radiusDefault = 2.0;
 }
 
 CVxParamImage::~CVxParamImage()
@@ -98,33 +92,7 @@ int CVxParamImage::Shutdown(void)
 		delete[] m_bufForCompare;
 		m_bufForCompare = nullptr;
 	}
-
-	if (m_memory_type == VX_MEMORY_TYPE_HOST) {
-		for (int active_handle = 0; active_handle < 2; active_handle++) {
-			for (vx_size plane = 0; plane < m_planes; plane++) {
-				if (m_memory_handle[active_handle][plane])
-					free(m_memory_handle[active_handle][plane]);
-				m_memory_handle[active_handle][plane] = nullptr;
-			}
-		}
-	}
-#if ENABLE_OPENCL
-	else if (m_memory_type == VX_MEMORY_TYPE_OPENCL) {
-		for (int active_handle = 0; active_handle < 2; active_handle++) {
-			for (vx_size plane = 0; plane < m_planes; plane++) {
-				if (m_memory_handle[active_handle][plane]) {
-					int err = clReleaseMemObject((cl_mem)m_memory_handle[active_handle][plane]);
-					if (err)
-						ReportError("ERROR: clReleaseMemObject(*) failed (%d)\n", err);
-				}
-				m_memory_handle[active_handle][plane] = nullptr;
-			}
-		}
-	}
-#endif
-	m_memory_type = VX_MEMORY_TYPE_NONE;
-
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	bool changed_numCvUse = false;
 	if (m_cvDispMat) {
 		if (m_usingDisplay) {
@@ -144,7 +112,7 @@ int CVxParamImage::Shutdown(void)
 		delete (VideoCapture *)m_cvCapDev;
 		m_cvCapDev = NULL;
 	}
-	if (m_cvImage) {
+	if (m_cvImage){
 		g_numCvUse--;
 		changed_numCvUse = true;
 		delete (Mat *)m_cvImage;
@@ -174,14 +142,12 @@ int CVxParamImage::Initialize(vx_context context, vx_graph graph, const char * d
 {
 	// get object parameters and create object
 	char objType[64];
-	const char * ioParams = ScanParameters(desc, "image|virtual-image|uniform-image|image-from-roi|image-from-handle|image-from-channel:", "s:", objType);
-	if (!_stricmp(objType, "image") || !_stricmp(objType, "virtual-image") || !_stricmp(objType, "uniform-image") ||
-		!_stricmp(objType, "image-virtual") || !_stricmp(objType, "image-uniform"))
-	{
-		// syntax: [virtual-|uniform-]image:<width>,<height>,<format>[,<range>][,<space>][:<io-params>]
+	const char * ioParams = ScanParameters(desc, "image|image-virtual|image-uniform|image-roi:", "s:", objType);
+	if (!_stricmp(objType, "image") || !_stricmp(objType, "image-virtual") || !_stricmp(objType, "image-uniform")) {
+		// syntax: image[-virtual]:<width>,<height>,<format>[:<io-params>]
 		ioParams = ScanParameters(ioParams, "<width>,<height>,<format>", "d,d,c", &m_width, &m_height, &m_format);
-		if (!_stricmp(objType, "uniform-image") || !_stricmp(objType, "image-uniform")) {
-			memset(&m_uniformValue, 0, sizeof(m_uniformValue));
+		if (!_stricmp(objType, "image-uniform")) {
+			m_uniformValue = 0;
 			if (*ioParams == ',') {
 				ioParams++;
 				if (*ioParams == '{') {
@@ -190,46 +156,29 @@ int CVxParamImage::Initialize(vx_context context, vx_graph graph, const char * d
 					for (int index = 0; index < 4 && (*p == '{' || *p == ';');) {
 						int value = 0;
 						p = ScanParameters(&p[1], "<byte>", "d", &value);
-						m_uniformValue.reserved[index++] = (vx_uint8)value;
+						((vx_uint8 *)&m_uniformValue)[index++] = (vx_uint8)value;
 					}
 					if (*p == '}') p++;
 					ioParams = p;
 				}
-				else ioParams = ScanParameters(ioParams, "<uniform-pixel-value>", "D", m_uniformValue.reserved);
+				else ioParams = ScanParameters(ioParams, "<uniform-pixel-value>", "D", &m_uniformValue);
 			}
 			m_image = vxCreateUniformImage(context, m_width, m_height, m_format, &m_uniformValue);
 		}
-		else if (!_stricmp(objType, "image-virtual") || !_stricmp(objType, "virtual-image")) {
+		else if (!_stricmp(objType, "image-virtual")) {
 			m_image = vxCreateVirtualImage(graph, m_width, m_height, m_format);
 			m_isVirtualObject = true;
 		}
 		else {
 			m_image = vxCreateImage(context, m_width, m_height, m_format);
 		}
-		if (vxGetStatus((vx_reference)m_image) == VX_SUCCESS) {
-			// process optional parameters: channel range and color space
-			while (*ioParams == ',') {
-				char enumName[64];
-				ioParams = ScanParameters(ioParams, ",<enum>", ",s", enumName);
-				vx_enum enumValue = ovxName2Enum(enumName);
-				if (enumValue == VX_CHANNEL_RANGE_FULL || enumValue == VX_CHANNEL_RANGE_RESTRICTED) {
-					ERROR_CHECK(vxSetImageAttribute(m_image, VX_IMAGE_ATTRIBUTE_RANGE, &enumValue, sizeof(enumValue)));
-				}
-				else if (enumValue == VX_COLOR_SPACE_BT601_525 || enumValue == VX_COLOR_SPACE_BT601_625 || enumValue == VX_COLOR_SPACE_BT709) {
-					ERROR_CHECK(vxSetImageAttribute(m_image, VX_IMAGE_ATTRIBUTE_SPACE, &enumValue, sizeof(enumValue)));
-				}
-				else {
-					ReportError("ERROR: invalid enum specified: %s\n", enumName);
-				}
-			}
-		}
 	}
-	else if (!_stricmp(objType, "image-from-roi") || !_stricmp(objType, "image-roi")) {
-		// syntax: image-from-roi:<master-image>,rect{<start-x>;<start-y>;<end-x>;<end-y>}[:<io-params>]
+	else if (!_stricmp(objType, "image-roi")) {
+		// syntax: image-roi:<master-image>,rect{<start-x>;<start-y>;<end-x>;<end-y>}[:<io-params>]
 		char roi[64];
 		ioParams = ScanParameters(ioParams, "<master-image>,rect{<start-x>;<start-y>;<end-x>;<end-y>}", "s,s", m_roiMasterName, roi);
 		if (_strnicmp(roi, "rect{", 5) != 0) 
-			ReportError("ERROR: invalid image-from-roi syntax: %s\n", desc);
+			ReportError("ERROR: invalid image-roi syntax: %s\n", desc);
 		ScanParameters(&roi[4], "{<start-x>;<start-y>;<end-x>;<end-y>}", "{d;d;d;d}", &m_roiRegion.start_x, &m_roiRegion.start_y, &m_roiRegion.end_x, &m_roiRegion.end_y);
 		auto it = m_paramMap->find(m_roiMasterName);
 		if (it == m_paramMap->end())
@@ -237,88 +186,9 @@ int CVxParamImage::Initialize(vx_context context, vx_graph graph, const char * d
 		vx_image masterImage = (vx_image)it->second->GetVxObject();
 		m_image = vxCreateImageFromROI(masterImage, &m_roiRegion);
 	}
-	else if (!_stricmp(objType, "image-from-channel")) {
-		// syntax: image-from-channel:<master-image>,<channel>[:<io-params>]
-		char roi[64];
-		ioParams = ScanParameters(ioParams, "<master-image>,<channel>", "s,s", m_roiMasterName, roi);
-		vx_uint64 channel = 0;
-		if (GetScalarValueFromString(VX_TYPE_ENUM, roi, &channel) < 0)
-			ReportError("ERROR: invalid channel enum: %s\n", roi);
-		auto it = m_paramMap->find(m_roiMasterName);
-		if (it == m_paramMap->end())
-			ReportError("ERROR: image [%s] doesn't exist for %s\n", m_roiMasterName, desc);
-		vx_image masterImage = (vx_image)it->second->GetVxObject();
-		m_image = vxCreateImageFromChannel(masterImage, (vx_enum)channel);
-	}
-	else if (!_stricmp(objType, "image-from-handle")) {
-		// syntax: image-from-handle:<image-format>,{<dim-x>;<dim-y>;<stride-x>;<stride-y>}[+...],<memory-type>[:<io-params>]
-		ioParams = ScanParameters(ioParams, "<format>,{<dim-x>;<dim-y>;<stride-x>;<stride-y>}", "c,{d;d;d;d}", &m_format, 
-											&m_addr[0].dim_x, &m_addr[0].dim_y, &m_addr[0].stride_x, &m_addr[0].stride_y);
-		m_width = m_addr[0].dim_x;
-		m_height = m_addr[0].dim_y;
-		m_planes = 1;
-		while (ioParams[0] == ';' && ioParams[1] == '{' && m_planes < 4) {
-			ioParams = ScanParameters(ioParams, ",{<dim-x>;<dim-y>;<stride-x>;<stride-y>}", "+{d;d;d;d}", &m_format, 
-												&m_addr[m_planes].dim_x, &m_addr[m_planes].dim_y, &m_addr[m_planes].stride_x, &m_addr[m_planes].stride_y);
-			m_planes++;
-		}
-		char type_str[64];
-		ioParams = ScanParameters(ioParams, "<memory-type>", ",s", type_str);
-		vx_uint64 type_value = 0;
-		if (GetScalarValueFromString(VX_TYPE_ENUM, type_str, &type_value) < 0)
-			ReportError("ERROR: invalid channel enum: %s\n", type_str);
-		int alloc_flags = 0;
-		if (ioParams[0] == ',') {
-			ioParams = ScanParameters(ioParams, "<alloc-flag>", ",d", &alloc_flags);
-		}
-		bool align_memory = false;
-		m_memory_type = (vx_enum)type_value;
-		if (m_memory_type == VX_MEMORY_TYPE_HOST) {
-			if (alloc_flags == 1) {
-				memset(m_memory_handle, 0, sizeof(m_memory_handle));
-			}
-			else {
-				// allocate all handles on host
-				for (int active_handle = 0; active_handle < 2; active_handle++) {
-					for (vx_size plane = 0; plane < m_planes; plane++) {
-						vx_size size = m_addr[plane].dim_y * m_addr[plane].stride_y;
-						m_memory_handle[active_handle][plane] = malloc(size);
-						if (!m_memory_handle[active_handle][plane])
-							ReportError("ERROR: malloc(%d) failed\n", (int)size);
-					}
-				}
-			}
-		}
-#if ENABLE_OPENCL
-		else if (m_memory_type == VX_MEMORY_TYPE_OPENCL) {
-			if (alloc_flags == 1) {
-				memset(m_memory_handle, 0, sizeof(m_memory_handle));
-			}
-			else {
-				// allocate all handles on opencl
-				cl_context opencl_context = nullptr;
-				vx_status status = vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT, &opencl_context, sizeof(opencl_context));
-				if (status)
-					ReportError("ERROR: vxQueryContext(*,VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,...) failed (%d)\n", status);
-				for (int active_handle = 0; active_handle < 2; active_handle++) {
-					for (vx_size plane = 0; plane < m_planes; plane++) {
-						vx_size size = m_addr[plane].dim_y * m_addr[plane].stride_y;
-						cl_int err = CL_SUCCESS;
-						m_memory_handle[active_handle][plane] = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE, size, NULL, &err);
-						if (!m_memory_handle[active_handle][plane] || err)
-							ReportError("ERROR: clCreateBuffer(*,CL_MEM_READ_WRITE,%d,NULL,*) failed (%d)\n", (int)size, err);
-					}
-				}
-			}
-		}
-#endif
-		else ReportError("ERROR: invalid memory-type enum: %s\n", type_str);
-		m_active_handle = 0;
-		m_image = vxCreateImageFromHandle(context, m_format, m_addr, m_memory_handle[m_active_handle], m_memory_type);
-	}
 	else ReportError("ERROR: unsupported image type: %s\n", desc);
 	vx_status ovxStatus = vxGetStatus((vx_reference)m_image);
-	if (ovxStatus != VX_SUCCESS) {
+	if (ovxStatus != VX_SUCCESS){
 		printf("ERROR: image creation failed => %d (%s)\n", ovxStatus, ovxEnum2Name(ovxStatus));
 		if (m_image) vxReleaseImage(&m_image);
 		throw - 1;
@@ -393,10 +263,10 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 				!_strnicmp(fileName, "file://", 7) || !_strnicmp(fileName, "http://", 7) || !_strnicmp(fileName, "https://", 8) ||
 				cameraDevice >= 0)
 			{ // need OpenCV to process these read I/O requests ////////////////////
-#if ENABLE_OPENCV
-				if (m_format == VX_DF_IMAGE_RGB || m_format == VX_DF_IMAGE_U8) {
+#if USE_OPENCV
+				if (m_format == VX_DF_IMAGE_RGB) {
 					// pen video capture device and mark multi-frame capture
-                    m_usingMultiFrameCapture = false;
+					m_usingMultiFrameCapture = true;
 					VideoCapture * pCap = nullptr;
 					if (cameraDevice >= 0) {
 						pCap = new VideoCapture(cameraDevice);
@@ -404,8 +274,8 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 					else {
 						pCap = new VideoCapture(fileName);
 						// if single .jpg are is specified, mark as single-frame capture
-						if (strstr(fileName, "%") == NULL && (!_stricmp(&fileName[strlen(fileName) - 4], ".avi") || !_stricmp(&fileName[extpos], ".mp4"))) {
-                            m_usingMultiFrameCapture = true;
+						if (strstr(fileName, "%") == NULL && !_stricmp(&fileName[strlen(fileName) - 4], ".jpg")) {
+							m_usingMultiFrameCapture = false;
 						}
 					}
 					m_cvCapDev = pCap;
@@ -420,8 +290,8 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 					}
 #endif
 					m_cvReadEofOccured = false;
-					int cvMatType = (m_format == VX_DF_IMAGE_RGB) ? CV_8UC3 : CV_8U;
-					m_cvCapMat = new Mat(m_height, m_width, cvMatType); //Mat(row, column, type)
+					int cvMatType = CV_8UC3;
+					m_cvCapMat = new Mat(m_width, m_height, cvMatType);
 					strcpy(m_cameraName, fileName);
 					g_numCvUse++;
 					// skip frames if requested
@@ -455,70 +325,12 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 				m_usingMultiFrameCapture = true;
 			}
 		}
-		else if (!_stricmp(ioType, "init")) {
-			if (fileName[0])
-			{ // initialize image by reading from a file
-				if (m_fpRead) {
-					fclose(m_fpRead);
-					m_fpRead = nullptr;
-				}
-				m_fileNameRead.assign(RootDirUpdated(fileName));
-				m_fileNameForReadHasIndex = (m_fileNameRead.find("%") != m_fileNameRead.npos) ? true : false;
-				m_usingMultiFrameCapture = true;
-				// read two images into handles
-				m_rectFull.start_x = 0;
-				m_rectFull.start_y = 0;
-				m_rectFull.end_x = m_width;
-				m_rectFull.end_y = m_height;
-				m_fpRead = fopen(m_fileNameRead.c_str(), "rb");
-				if (!m_fpRead) ReportError("ERROR: unable to open: %s\n", m_fileNameRead.c_str());
-				if (ReadImage(m_image, &m_rectFull, m_fpRead))
-					ReportError("ERROR: unable to initialize image(%s) fully from %s\n", m_vxObjName, fileName);
-				if (m_memory_type != VX_MEMORY_TYPE_NONE)
-				{ // need to read second image if image was created from handle
-					m_active_handle = !m_active_handle;
-					vx_status status = vxSwapImageHandle(m_image, m_memory_handle[m_active_handle], m_memory_handle[!m_active_handle], m_planes);
-					if (status)
-						ReportError("ERROR: vxSwapImageHandle(%s,*,*,%d) failed (%d)\n", m_vxObjName, (int)m_planes, status);
-					if (ReadImage(m_image, &m_rectFull, m_fpRead))
-						ReportError("ERROR: unable to initialize second image(%s) fully from %s\n", m_vxObjName, fileName);
-				}
-				// close the file
-				if (m_fpRead) {
-					fclose(m_fpRead);
-					m_fpRead = nullptr;
-				}
-				m_fileNameRead = "";
-				m_fileNameForReadHasIndex = false;
-			}
-			// mark that swap handles needs to be executed for images created from handle
-			if (m_memory_type != VX_MEMORY_TYPE_NONE)
-				m_swap_handles = true;
-		}
 		else if (!_stricmp(ioType, "view") || !_stricmp(ioType, "write"))
-		{ // write or view request syntax: write,<fileNameOrURL> OR view,<window-name>[,color-index{<#>}|,radius{<#>}]
+		{ // write or view request syntax: write,<fileNameOrURL> OR view,<window-name>
 			bool needDisplay = false;
-			while (*io_params == ',') {
-				char option[64];
-				io_params = ScanParameters(io_params, ",color-index{index}|radius{radius}", ",s", option);
-				if (!_strnicmp(option, "color-index{", 12)) {
-					int colorIndex = 0;
-					if (sscanf(&option[12], "%d", &colorIndex) == 1) {
-						m_colorIndexDefault = colorIndex;
-					}
-					else ReportError("ERROR: invalid image read/camera option: %s\n", option);
-				}
-				else if (!_strnicmp(option, "radius{", 7)) {
-					float radius = 2.0;
-					if (sscanf(&option[7], "%f", &radius) == 1) {
-						m_radiusDefault = radius;
-					}
-					else ReportError("ERROR: invalid image read/camera option: %s\n", option);
-				}
-			}
-			if (!_stricmp(ioType, "view") || !_stricmp(&fileName[extpos], ".mp4") || !_stricmp(&fileName[extpos], ".avi"))
+			if (!_stricmp(ioType, "view") || !_stricmp(&fileName[extpos], ".mp4") || !_stricmp(&fileName[extpos], ".avi") || !_stricmp(&fileName[extpos], ".jpg"))
 			{ // need OpenCV to process these write I/O requests ////////////////////
-#if ENABLE_OPENCV
+#if USE_OPENCV
 				if (!_stricmp(ioType, "view")) {
 					m_usingDisplay = true;
 					m_displayName.assign(fileName);
@@ -595,7 +407,7 @@ int CVxParamImage::InitializeIO(vx_context context, vx_graph graph, vx_reference
 				else ReportError("ERROR: invalid image compare option: %s\n", option);
 			}
 		}
-		else if (!_stricmp(ioType, "directive") && (!_stricmp(fileName, "VX_DIRECTIVE_AMD_COPY_TO_OPENCL") || !_stricmp(fileName, "sync-cl-write"))) {
+		else if (!_stricmp(ioType, "directive") && !_stricmp(fileName, "sync-cl-write")) {
 			m_useSyncOpenCLWriteDirective = true;
 		}
 		else ReportError("ERROR: invalid image operation: %s\n", ioType);
@@ -624,9 +436,6 @@ int CVxParamImage::Finalize()
 	m_compareCountMatches = 0;
 	m_compareCountMismatches = 0;
 
-	// Calculate image width for single plane image:
-	vx_size width_in_bytes = (m_planes == 1) ? CalculateImageWidthInBytes(m_image) : 0;
-
 	// compute frame size in bytes
 	m_frameSize = 0;
 	for (vx_uint32 plane = 0; plane < (vx_uint32)m_planes; plane++) {
@@ -636,8 +445,7 @@ int CVxParamImage::Finalize()
 		if (vxAccessImagePatch(m_image, &m_rectFull, plane, &addr, (void **)&dst, VX_READ_ONLY) == VX_SUCCESS) {
 			vx_size width = (addr.dim_x * addr.scale_x) / VX_SCALE_UNITY;
 			vx_size height = (addr.dim_y * addr.scale_y) / VX_SCALE_UNITY;
-			if (addr.stride_x != 0)
-				width_in_bytes = (width * addr.stride_x);
+			vx_size width_in_bytes = (m_format == VX_DF_IMAGE_U1_AMD) ? ((width + 7) >> 3) : (width * addr.stride_x);
 			m_frameSize += width_in_bytes * height;
 			ERROR_CHECK(vxCommitImagePatch(m_image, &m_rectFull, plane, &addr, (void *)dst));
 		}
@@ -645,27 +453,15 @@ int CVxParamImage::Finalize()
 
 	if (m_useSyncOpenCLWriteDirective) {
 		// process user requested directives (required for uniform images)
-		ERROR_CHECK_AND_WARN(vxDirective((vx_reference)m_image, VX_DIRECTIVE_AMD_COPY_TO_OPENCL), VX_ERROR_NOT_ALLOCATED);
+		ERROR_CHECK(vxDirective((vx_reference)m_image, VX_DIRECTIVE_AMD_COPY_TO_OPENCL));
 	}
 
-	return 0;
-}
-
-int CVxParamImage::SyncFrame(int frameNumber)
-{
-	if (m_swap_handles) {
-		// swap handles if requested for images created from handle
-		m_active_handle = !m_active_handle;
-		vx_status status = vxSwapImageHandle(m_image, m_memory_handle[m_active_handle], m_memory_handle[!m_active_handle], m_planes);
-		if (status)
-			ReportError("ERROR: vxSwapImageHandle(%s,*,*,%d) failed (%d)\n", m_vxObjName, (int)m_planes, status);
-	}
 	return 0;
 }
 
 int CVxParamImage::ReadFrame(int frameNumber)
 {
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	if (m_cvCapMat && m_cvCapDev) {
 		// read image from camera
 		if (m_cvReadEofOccured) {
@@ -674,15 +470,9 @@ int CVxParamImage::ReadFrame(int frameNumber)
 		}
 		VideoCapture * pCap = (VideoCapture *)m_cvCapDev;
 		Mat * pMat = (Mat *)m_cvCapMat;
-        //Get Mat type, bevor get a new frame from VideoCapture.
-        int type = pMat->type();
 		int timeout = 0;
 		*pCap >> *pMat;
-        //change Mat type.
-        if(type == CV_8U){ /*CV_8U convert to gray*/
-            cvtColor( *pMat, *pMat, CV_BGR2GRAY );
-        }
-		if (!pMat->data) {
+		if (!pMat->data){
 			// no data available, report that no more frames available
 			m_cvReadEofOccured = true;
 			return 1;
@@ -711,32 +501,18 @@ int CVxParamImage::ReadFrame(int frameNumber)
 			ERROR_CHECK(vxAccessImagePatch(m_image, &rect, 0, &addr, (void **)&dst, VX_WRITE_ONLY));
 			vx_int32 rowSize = ((vx_int32)pMat->step < addr.stride_y) ? (vx_int32)pMat->step : addr.stride_y;
 			for (vx_uint32 y = 0; y < rect.end_y; y++) {
-				if (m_format == VX_DF_IMAGE_RGB) {
-					// convert BGR to RGB
-					vx_uint8 * pDst = (vx_uint8 *)dst + y * addr.stride_y;
-					vx_uint8 * pSrc = (vx_uint8 *)pMat->data + y * pMat->step;
-					for (vx_uint32 x = 0; x < m_width; x++) {
-						pDst[0] = pSrc[2];
-						pDst[1] = pSrc[1];
-						pDst[2] = pSrc[0];
-						pDst += 3;
-						pSrc += 3;
-					}
-				}
-				else {
-					memcpy(dst + y * addr.stride_y, pMat->data + y * pMat->step, rowSize);
-				}
+				memcpy(dst + y * addr.stride_y, pMat->data + y * pMat->step, rowSize);
 			}
 			ERROR_CHECK(vxCommitImagePatch(m_image, &rect, 0, &addr, dst));
 		}
 	}
-	else if (m_cvImage) {
+	else if (m_cvImage){
 		// read image from camera
 		VideoCapture * pCap = (VideoCapture *)m_cvCapDev;
 		Mat * pMat = (Mat *)m_cvImage;
 		int timeout = 0;
 		*pCap >> *pMat;
-		if (!pMat->data) {
+		if (!pMat->data){
 			printf("ERROR: Can't read camera input. Camera is not supported.\n");
 			return -1;
 		}
@@ -753,7 +529,7 @@ int CVxParamImage::ReadFrame(int frameNumber)
 #endif
 
 	// make sure that input file is open when OpenCV camera is not active and input filename is specified
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	if (!m_cvImage)
 #endif
 	if (!m_fpRead) {
@@ -798,13 +574,13 @@ int CVxParamImage::ReadFrame(int frameNumber)
 
 	// process user requested directives
 	if (m_useSyncOpenCLWriteDirective) {
-		ERROR_CHECK_AND_WARN(vxDirective((vx_reference)m_image, VX_DIRECTIVE_AMD_COPY_TO_OPENCL), VX_ERROR_NOT_ALLOCATED);
+		ERROR_CHECK(vxDirective((vx_reference)m_image, VX_DIRECTIVE_AMD_COPY_TO_OPENCL));
 	}
 
 	return 0;
 }
 
-#if ENABLE_OPENCV
+#if USE_OPENCV
 int CVxParamImage::ViewFrame(int frameNumber)
 {
 	if (m_cvDispMat) {
@@ -821,19 +597,6 @@ int CVxParamImage::ViewFrame(int frameNumber)
 					vx_uint8 * pSrc = (vx_uint8 *)src + y * addr.stride_y;
 					for (vx_uint32 x = 0; x < m_width; x++) {
 						pDst[x] = (pSrc[x >> 3] & (1 << (x & 3))) ? 255u : 0;
-					}
-				}
-			}
-			else if (m_format == VX_DF_IMAGE_RGB) {
-				for (vx_uint32 y = 0; y < m_height; y++) {
-					vx_uint8 * pDst = (vx_uint8 *)pMat->data + y * pMat->step;
-					vx_uint8 * pSrc = (vx_uint8 *)src + y * addr.stride_y;
-					for (vx_uint32 x = 0; x < m_width; x++) {
-						pDst[0] = pSrc[2];
-						pDst[1] = pSrc[1];
-						pDst[2] = pSrc[0];
-						pDst += 3;
-						pSrc += 3;
 					}
 				}
 			}
@@ -855,7 +618,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 
 			// color table for key-points
 			static int colorTable[][3] = { { 0, 255, 0 }, { 255, 0, 0 }, { 0, 255, 255 }, { 51, 51, 255 }, { 0, 0, 102 }, { 255, 255, 255 } };
-			int colorIndex = m_colorIndexDefault;
+			int colorIndex = 0;
 
 			// list of golbal list
 			std::vector<ArrayItemForView> kpList;
@@ -1048,7 +811,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 				FILE * fp = fopen(fileName, "r");
 				if (!fp) ReportError("ERROR: unable to open '%s'\n", fileName);
 				char line[256];
-				while (fgets(line, sizeof(line), fp) != NULL) {
+				while (fgets(line, sizeof(line), fp) != NULL){
 					if (sscanf(line, "%d%d%f", &kpItem.x, &kpItem.y, &kpItem.strength) == 3) {
 						kpList.push_back(kpItem);
 					}
@@ -1071,7 +834,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 				if (it->itemtype == VX_TYPE_KEYPOINT) {
 					// compute the radius of point using strength and binSize
 					float strength = it->strength;
-					double radius = m_radiusDefault;
+					double radius = 2.0;
 					if (strength > minStrength) {
 						radius += 2.0 * floor((strength - minStrength) / binSize);
 					}
@@ -1087,7 +850,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 				}
 				else if (it->itemtype == VX_TYPE_COORDINATES2D) {
 					// plot the points with small circle
-					float radius = m_radiusDefault;
+					float radius = 1.0;
 					Point center(it->x, it->y);
 					circle(*pOutputImage, center, (int)radius, Scalar(0, 0, 0), 1, 8);
 					circle(*pOutputImage, center, (int)radius + 1, color, 1, 8);
@@ -1108,7 +871,7 @@ int CVxParamImage::ViewFrame(int frameNumber)
 
 int CVxParamImage::WriteFrame(int frameNumber)
 {
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	if (ViewFrame(frameNumber) < 0)
 		return -1;
 #endif
@@ -1117,22 +880,6 @@ int CVxParamImage::WriteFrame(int frameNumber)
 		if (m_fileNameWrite.length() > 0 && !m_usingWriter) {
 			char fileName[MAX_FILE_NAME_LENGTH];
 			sprintf(fileName, m_fileNameWrite.c_str(), frameNumber, m_width, m_height);
-#if ENABLE_OPENCV
-            // check if openCV imwrite need to be used
-            int extpos = (int)strlen(fileName) - 1;
-            while (extpos > 0 && fileName[extpos] != '.')
-                extpos--;
- 
-            if (!_stricmp(&fileName[extpos], ".jpg") || !_stricmp(&fileName[extpos], ".jpeg") ||
-                !_stricmp(&fileName[extpos], ".jpe") || !_stricmp(&fileName[extpos], ".png") ||
-                !_stricmp(&fileName[extpos], ".bmp") || !_stricmp(&fileName[extpos], ".tif") ||
-                !_stricmp(&fileName[extpos], ".ppm") || !_stricmp(&fileName[extpos], ".tiff") ||
-                !_stricmp(&fileName[extpos], ".pgm") || !_stricmp(&fileName[extpos], ".pbm"))
-            {
-                WriteImageCompressed(m_image, &m_rectFull,fileName);
-                return 0;
-            }
-#endif
 			m_fpWrite = fopen(fileName, "wb+");
 			if (!m_fpWrite) ReportError("ERROR: unable to create: %s\n", fileName);
 		}
@@ -1143,7 +890,7 @@ int CVxParamImage::WriteFrame(int frameNumber)
 		WriteImage(m_image, &m_rectFull, m_fpWrite);
 
 		// close the file if one frame gets written per file
-		if (m_fileNameForWriteHasIndex && m_fpWrite) {
+		if (m_fileNameForWriteHasIndex && m_fpWrite){
 			fclose(m_fpWrite);
 			m_fpWrite = nullptr;
 		}

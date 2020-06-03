@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 #include "ago_haf_gpu.h"
 
@@ -35,11 +34,7 @@ static void clDumpBuffer(const char * fileNameFormat, cl_command_queue opencl_cm
 	char fileName[1024]; sprintf(fileName, fileNameFormat, dumpBufferCount);
 	cl_mem opencl_buffer = data->opencl_buffer;
 	cl_uint opencl_buffer_offset = data->opencl_buffer_offset;
-	cl_uint size = (cl_uint)0;
-	if (data->ref.type == VX_TYPE_IMAGE)
-		size = (cl_uint)(data->u.img.stride_in_bytes*data->u.img.height);
-	else
-		size = (cl_uint)data->size;
+	cl_uint size = (cl_uint)data->size;
 	FILE * fp = fopen(fileName, "wb"); if (!fp) { printf("ERROR: unable to create: %s\n", fileName); exit(1); }
 	clFinish(opencl_cmdq);
 	void * p = clEnqueueMapBuffer(opencl_cmdq, opencl_buffer, CL_TRUE, CL_MAP_READ, 0, opencl_buffer_offset + size, 0, NULL, NULL, NULL);
@@ -56,26 +51,6 @@ static void clDumpBuffer(const char * fileNameFormat, cl_command_queue opencl_cm
 #endif
 
 #if ENABLE_OPENCL
-static cl_mem agoGpuOclCreateBuffer(AgoContext * context, cl_mem_flags flags, size_t size, void * host_ptr, cl_int * errcode_ret)
-{
-	cl_mem mem = clCreateBuffer(context->opencl_context, flags, size, host_ptr, errcode_ret);
-	if (mem) {
-		context->opencl_mem_alloc_count++;
-		context->opencl_mem_alloc_size += size;
-	}
-	return mem;
-}
-
-static cl_mem agoGpuOclCreateImage(AgoContext * context, cl_mem_flags flags, const cl_image_format * image_format, const cl_image_desc * image_desc, void * host_ptr, cl_int * errcode_ret)
-{
-	cl_mem mem = clCreateImage(context->opencl_context, flags, image_format, image_desc, host_ptr, errcode_ret);
-	if (mem) {
-		context->opencl_mem_alloc_count++;
-		context->opencl_mem_alloc_size += image_desc->image_width; // TBD: currently assumes 8-bit 1D image
-	}
-	return mem;
-}
-
 int agoGpuOclReleaseContext(AgoContext * context)
 {
 	if (context->opencl_cmdq) {
@@ -138,9 +113,7 @@ int agoGpuOclReleaseData(AgoData * data)
 	if (data->opencl_buffer_allocated) {
 		clReleaseMemObject(data->opencl_buffer_allocated);
 		data->opencl_buffer_allocated = NULL;
-		data->ref.context->opencl_mem_release_count++;
 	}
-#if defined(CL_VERSION_2_0)
 	if (data->opencl_svm_buffer_allocated) {
 		if (data->ref.context->opencl_config_flags & CONFIG_OPENCL_SVM_AS_FGS) {
 			agoReleaseMemory(data->opencl_svm_buffer_allocated);
@@ -150,9 +123,8 @@ int agoGpuOclReleaseData(AgoData * data)
 		}
 		data->opencl_svm_buffer_allocated = NULL;
 	}
-	data->opencl_svm_buffer = NULL;
-#endif
 	data->opencl_buffer = NULL;
+	data->opencl_svm_buffer = NULL;
 	data->opencl_buffer_offset = 0;
 	return 0;
 }
@@ -165,7 +137,7 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
 		context->opencl_context = opencl_context;
 	}
 	else {
-		// get AMD platform (if available)
+		// get AMD platform
 		cl_uint num_platforms;
 		cl_int status;
 		if ((status = clGetPlatformIDs(0, NULL, &num_platforms)) != CL_SUCCESS) {
@@ -177,29 +149,23 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
 			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clGetPlatformIDs(%d,*,0) => %d (failed)\n", num_platforms, status);
 			return -1;
 		}
-		cl_platform_id platform_id = nullptr;
-		char opencl_platform_override[64] = "";
-		if(agoGetEnvironmentVariable("AGO_OPENCL_PLATFORM", opencl_platform_override, sizeof(opencl_platform_override))) {
-			cl_uint index = (cl_uint)atoi(opencl_platform_override);
-			if(index < num_platforms) {
-				platform_id = platform_list[index];
+		cl_platform_id platform_id = 0;
+		for (int i = 0; i < (int)num_platforms; i++) {
+			char vendor[128] = { 0 };
+			if ((status = clGetPlatformInfo(platform_list[i], CL_PLATFORM_VENDOR, sizeof(vendor), vendor, NULL)) != CL_SUCCESS) {
+				agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clGetPlatformInfo([%d],...) => %d (failed)\n", i, status);
+				return -1;
 			}
-		}
-		if(!platform_id) {
-			platform_id = platform_list[0];
-			for (int i = 0; i < (int)num_platforms; i++) {
-				char vendor[128] = { 0 };
-				if ((status = clGetPlatformInfo(platform_list[i], CL_PLATFORM_VENDOR, sizeof(vendor), vendor, NULL)) != CL_SUCCESS) {
-					agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clGetPlatformInfo([%d],...) => %d (failed)\n", i, status);
-					return -1;
-				}
-				if (!strcmp(vendor, "Advanced Micro Devices, Inc.")) {
-					platform_id = platform_list[i];
-					break;
-				}
+			if (!strcmp(vendor, "Advanced Micro Devices, Inc.")) {
+				platform_id = platform_list[i];
+				break;
 			}
 		}
 		delete [] platform_list;
+		if (!platform_id) {
+			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: Could not find a valid AMD platform\n");
+			return -1;
+		}
 		// set context properties
 		cl_context_properties ctxprop[] = {
 			CL_CONTEXT_PLATFORM, (cl_context_properties)platform_id,
@@ -249,32 +215,19 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
 		agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_NAME) => %d\n", context->opencl_device_list[device_id], status);
 		return -1; 
 	}
-	char extensions[2048] = { 0 };
-	status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, sizeof(extensions) - 1, extensions, NULL);
-	if (status) {
-		agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) => %d\n", context->opencl_device_list[device_id], status);
-		return -1;
-	}
-	context->isAmdMediaOpsSupported = strstr(extensions, "cl_amd_media_ops") ? true : false;
-#if defined(CL_VERSION_2_0)
 	agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device#%d (%s) [%s] [SvmCaps " VX_FMT_SIZE " %d]\n", device_id, deviceName, deviceVersion, context->opencl_svmcaps, context->opencl_config_flags);
-#else
-	agoAddLogEntry(&context->ref, VX_SUCCESS, "OK: OpenVX using GPU device#%d (%s) [%s] [%d]\n", device_id, deviceName, deviceVersion, context->opencl_config_flags);
-#endif
 	memset(context->opencl_extensions, 0, sizeof(context->opencl_extensions));
 	status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_EXTENSIONS, sizeof(context->opencl_extensions), context->opencl_extensions, NULL);
 	if (status) { 
 		agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_EXTENSIONS) => %d\n", context->opencl_device_list[device_id], status);
 		return -1; 
 	}
-#if defined(CL_VERSION_2_0)
 	context->opencl_svmcaps = 0;
 	status = clGetDeviceInfo(context->opencl_device_list[device_id], CL_DEVICE_SVM_CAPABILITIES, sizeof(context->opencl_svmcaps), &context->opencl_svmcaps, NULL);
 	if (status) { 
 		agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clGetDeviceInfo(%p,CL_DEVICE_SVM_CAPABILITIES) => %d\n", context->opencl_device_list[device_id], status);
 		return -1; 
 	}
-#endif
 	// get default OpenCL build options
 	strcpy(context->opencl_build_options, (context->opencl_config_flags & CONFIG_OPENCL_USE_1_2) ? "-cl-std=CL1.2" : "-cl-std=CL2.0");
 	// override build options with environment variable
@@ -287,7 +240,6 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
 	}
 
 	// decide SVM features
-#if defined(CL_VERSION_2_0)
 	if (context->opencl_svmcaps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM)) {
 		context->opencl_config_flags &= ~CONFIG_OPENCL_SVM_MASK;
 		if (context->attr_affinity.device_info & AGO_TARGET_AFFINITY_GPU_INFO_SVM_MASK) {
@@ -314,14 +266,8 @@ int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context)
 			}
 		}
 	}
-#endif
 	// create command queue for buffer sync
-#if defined(CL_VERSION_2_0)
-	cl_queue_properties properties[] = { CL_QUEUE_PROPERTIES, context->opencl_cmdq_properties, 0 };
-	context->opencl_cmdq = clCreateCommandQueueWithProperties(context->opencl_context, context->opencl_device_list[device_id], properties, &status);
-#else
-	context->opencl_cmdq = clCreateCommandQueue(context->opencl_context, context->opencl_device_list[device_id], context->opencl_cmdq_properties, &status);
-#endif
+	context->opencl_cmdq = clCreateCommandQueueWithProperties(context->opencl_context, context->opencl_device_list[device_id], NULL, &status);
 	if (status) {
 		agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateCommandQueueWithProperties(%p,%p,0,*) => %d\n", context->opencl_context, context->opencl_device_list[device_id], status);
 		return -1;
@@ -340,9 +286,9 @@ int agoGpuOclAllocBuffer(AgoData * data)
 	AgoContext * context = data->ref.context;
 	if (data->ref.type == VX_TYPE_IMAGE) {
 		AgoData * dataMaster = data->u.img.roiMasterImage ? data->u.img.roiMasterImage : data; // to handle image ROI
-		if (!dataMaster->opencl_buffer && !dataMaster->u.img.enableUserBufferOpenCL && !(dataMaster->import_type == VX_MEMORY_TYPE_OPENCL)) {
+		if (!dataMaster->opencl_buffer && !dataMaster->u.img.enableUserBufferOpenCL) {
 			cl_int err = CL_SUCCESS;
-#if defined(CL_VERSION_2_0)
+			dataMaster->opencl_buffer_offset = 256 + dataMaster->u.img.stride_in_bytes;
 			if (!dataMaster->buffer && !dataMaster->u.img.isUniform) {
 				if (context->opencl_config_flags & CONFIG_OPENCL_SVM_ENABLE) {
 					if (context->opencl_config_flags & CONFIG_OPENCL_SVM_AS_FGS) {
@@ -368,17 +314,15 @@ int agoGpuOclAllocBuffer(AgoData * data)
 				dataMaster->buffer = dataMaster->opencl_svm_buffer_allocated + dataMaster->opencl_buffer_offset;
 				if (context->opencl_config_flags & CONFIG_OPENCL_SVM_AS_CLMEM) {
 					// use svm buffer as opencl_buffer(GPU)
-					dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, dataMaster->size + dataMaster->opencl_buffer_offset, dataMaster->opencl_svm_buffer_allocated, &err);
+					dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = clCreateBuffer(context->opencl_context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, dataMaster->size + dataMaster->opencl_buffer_offset, dataMaster->opencl_svm_buffer_allocated, &err);
 				}
 			}
-			else
-#endif
-			{
+			else {
 				// allocate normal opencl_buffer
-				dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, dataMaster->size + dataMaster->opencl_buffer_offset, NULL, &err);
+				dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = clCreateBuffer(context->opencl_context, CL_MEM_READ_WRITE, dataMaster->size + dataMaster->opencl_buffer_offset, NULL, &err);
 			}
 			if (err) {
-				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d\n", context->opencl_context, (int)dataMaster->size + dataMaster->opencl_buffer_offset, err);
+				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d\n", context->opencl_context, (int)dataMaster->size + dataMaster->opencl_buffer_offset, err);
 				return -1;
 			}
 			if (dataMaster->u.img.isUniform) {
@@ -400,16 +344,16 @@ int agoGpuOclAllocBuffer(AgoData * data)
 		if (data != dataMaster) {
 			// special handling for image ROI
 			data->opencl_buffer = dataMaster->opencl_buffer;
-#if defined(CL_VERSION_2_0)
 			data->opencl_svm_buffer = dataMaster->opencl_svm_buffer;
-#endif
+			data->opencl_buffer_offset = data->u.img.rect_roi.start_y * data->u.img.stride_in_bytes +
+				((data->u.img.rect_roi.start_x * (vx_uint32)data->u.img.pixel_size_in_bits) >> 3) +
+				dataMaster->opencl_buffer_offset;
 		}
 	}
 	else if (data->ref.type == VX_TYPE_ARRAY || data->ref.type == AGO_TYPE_CANNY_STACK) {
 		if (!data->opencl_buffer) {
 			data->opencl_buffer_offset = DATA_OPENCL_ARRAY_OFFSET; // first few bytes reserved for numitems/stacktop
 			cl_int err = CL_SUCCESS;
-#if defined(CL_VERSION_2_0)
 			if (!data->buffer) {
 				if (context->opencl_config_flags & CONFIG_OPENCL_SVM_ENABLE) {
 					if (context->opencl_config_flags & CONFIG_OPENCL_SVM_AS_FGS) {
@@ -438,14 +382,12 @@ int agoGpuOclAllocBuffer(AgoData * data)
 				data->buffer = data->opencl_svm_buffer_allocated + data->opencl_buffer_offset;
 				if (context->opencl_config_flags & CONFIG_OPENCL_SVM_AS_CLMEM) {
 					// use svm buffer as opencl_buffer(GPU)
-					data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, data->size + data->opencl_buffer_offset, data->opencl_svm_buffer_allocated, &err);
+					data->opencl_buffer = data->opencl_buffer_allocated = clCreateBuffer(context->opencl_context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, data->size + data->opencl_buffer_offset, data->opencl_svm_buffer_allocated, &err);
 				}
 			}
-			else
-#endif
-			{
+			else {
 				// normal opencl_buffer allocation
-				data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, data->size + data->opencl_buffer_offset, NULL, &err);
+				data->opencl_buffer = data->opencl_buffer_allocated = clCreateBuffer(context->opencl_context, CL_MEM_READ_WRITE, data->size + data->opencl_buffer_offset, NULL, &err);
 				if (data->opencl_buffer) {
 					// initialize array header which containts numitems
 					vx_uint32 zero = 0;
@@ -455,79 +397,36 @@ int agoGpuOclAllocBuffer(AgoData * data)
 				}
 			}
 			if (err) {
-				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d (array/cannystack)\n", context->opencl_context, (int)data->size, err);
+				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d (array/cannystack)\n", context->opencl_context, (int)data->size, err);
 				return -1;
 			}
 		}
 	}
-	else if (data->ref.type == VX_TYPE_SCALAR || data->ref.type == VX_TYPE_THRESHOLD || data->ref.type == VX_TYPE_CONVOLUTION) {
+	else if (data->ref.type == VX_TYPE_SCALAR || data->ref.type == VX_TYPE_THRESHOLD || data->ref.type == VX_TYPE_MATRIX || data->ref.type == VX_TYPE_CONVOLUTION) {
 		// nothing to do
 	}
 	else if (data->ref.type == VX_TYPE_LUT) {
 		if (!data->opencl_buffer) {
-			if (data->u.lut.type == VX_TYPE_UINT8) {
-				// allocal OpenCL image
-				cl_int err = -1;
-				cl_image_format format = { CL_INTENSITY, CL_UNORM_INT8 };
-				cl_image_desc desc = { CL_MEM_OBJECT_IMAGE1D, 256, 0, 0, 1, 0, 0, 0, 0, NULL };
-				data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateImage(context, CL_MEM_READ_WRITE, &format, &desc, NULL, &err);
-				if (err) {
-					agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateImage(%p,CL_MEM_READ_WRITE,1D/U8,256,0,*) => %d (for LUT)\n", context->opencl_context, err);
-					return -1;
-				}
-				data->opencl_buffer_offset = 0;
+			cl_int err = -1;
+			cl_image_format format = { CL_INTENSITY, CL_UNORM_INT8 };
+			cl_image_desc desc = { CL_MEM_OBJECT_IMAGE1D, 256, 0, 0, 1, 0, 0, 0, 0, NULL };
+			data->opencl_buffer = data->opencl_buffer_allocated = clCreateImage(context->opencl_context, CL_MEM_READ_WRITE, &format, &desc, NULL, &err);
+			if (err) {
+				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateImage(%p,CL_MEM_READ_WRITE,1D/U8,256,0,*) => %d\n", context->opencl_context, err);
+				return -1;
 			}
-			else {
-				// normal opencl_buffer allocation
-				cl_int err = -1;
-				data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, data->size + data->opencl_buffer_offset, NULL, &err);
-				if (err) {
-					agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,*) => %d (for LUT)\n", context->opencl_context, (int)(data->size + data->opencl_buffer_offset), err);
-					return -1;
-				}
-			}
+			data->opencl_buffer_offset = 0;
 		}
 	}
 	else if (data->ref.type == VX_TYPE_REMAP) {
 		if (!data->opencl_buffer) {
 			cl_int err = -1;
-			data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, data->size, NULL, &err);
+			data->opencl_buffer = data->opencl_buffer_allocated = clCreateBuffer(context->opencl_context, CL_MEM_READ_WRITE, data->size, NULL, &err);
 			if (err) {
-				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d (for Remap)\n", context->opencl_context, (int)data->size, err);
+				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: clCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d\n", context->opencl_context, (int)data->size, err);
 				return -1;
 			}
 			data->opencl_buffer_offset = 0;
-		}
-	}
-	else if (data->ref.type == VX_TYPE_MATRIX) {
-		if (!data->opencl_buffer) {
-			cl_int err = -1;
-			data->opencl_buffer = data->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, data->size, NULL, &err);
-			if (err) {
-				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d (for Matrix)\n", context->opencl_context, (int)data->size, err);
-				return -1;
-			}
-			data->opencl_buffer_offset = 0;
-		}
-	}
-	else if (data->ref.type == VX_TYPE_TENSOR) {
-		AgoData * dataMaster = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data; // to handle tensor ROI
-		if (!dataMaster->opencl_buffer) {
-			cl_int err = -1;
-			dataMaster->opencl_buffer = dataMaster->opencl_buffer_allocated = agoGpuOclCreateBuffer(context, CL_MEM_READ_WRITE, dataMaster->size + dataMaster->opencl_buffer_offset, NULL, &err);
-			if (err) {
-				agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuOclCreateBuffer(%p,CL_MEM_READ_WRITE,%d,0,*) => %d (for Tensor)\n", context->opencl_context, (int)dataMaster->size + dataMaster->opencl_buffer_offset, err);
-				return -1;
-			}
-			dataMaster->opencl_buffer_offset = 0;
-		}
-		if (data != dataMaster) {
-			// special handling for tensor ROI
-			data->opencl_buffer = dataMaster->opencl_buffer;
-#if defined(CL_VERSION_2_0)
-			data->opencl_svm_buffer = dataMaster->opencl_svm_buffer;
-#endif
-			data->opencl_buffer_offset = (vx_uint32)data->u.tensor.offset;
 		}
 	}
 	else if (data->numChildren > 0) {
@@ -544,6 +443,24 @@ int agoGpuOclAllocBuffer(AgoData * data)
 	// allocate CPU buffer
 	if (agoAllocData(data)) {
 		return -1;
+	}
+	return 0;
+}
+
+int agoGpuOclAllocBuffers(AgoGraph * graph, AgoNode * node)
+{
+	for (vx_uint32 i = 0; i < node->paramCount; i++) {
+		AgoData * data = node->paramList[i];
+		if (data && !data->opencl_buffer) {
+			if (agoIsPartOfDelay(data)) {
+				int siblingTrace[AGO_MAX_DEPTH_FROM_DELAY_OBJECT], siblingTraceCount = 0;
+				data = agoGetSiblingTraceToDelayForUpdate(data, siblingTrace, siblingTraceCount);
+				if (!data) return -1;
+			}
+			if (agoGpuOclAllocBuffer(data) < 0) {
+				return -1;
+			}
+		}
 	}
 	return 0;
 }
@@ -598,33 +515,27 @@ static const char * agoGpuImageFormat2RegType(vx_df_image format)
 	else if (format == VX_DF_IMAGE_UYVY) reg_type = "U16";
 	else if (format == VX_DF_IMAGE_YUYV) reg_type = "U16";
 	else if (format == VX_DF_IMAGE_F32_AMD) reg_type = "F32";
-	else if (format == VX_DF_IMAGE_F16_AMD) reg_type = "F16";
 	return reg_type;
 }
 
 int agoGpuOclDataSetBufferAsKernelArg(AgoData * data, cl_kernel opencl_kernel, vx_uint32 kernelArgIndex, vx_uint32 group)
 {
+	cl_int err = CL_INVALID_MEM_OBJECT;
 	if (data->opencl_buffer) {
-		cl_int err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(data->opencl_buffer), &data->opencl_buffer);
+		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(data->opencl_buffer), &data->opencl_buffer);
 		if (err) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,buffer) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
 			return -1;
 		}
 	}
-#if defined(CL_VERSION_2_0)
 	else if (data->opencl_svm_buffer) {
-		cl_int err = clSetKernelArgSVMPointer(opencl_kernel, (cl_uint)kernelArgIndex, data->opencl_svm_buffer);
+		err = clSetKernelArgSVMPointer(opencl_kernel, (cl_uint)kernelArgIndex, data->opencl_svm_buffer);
 		if (err) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArgSVMPointer(supernode,%d,*,buffer) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
 			return -1;
 		}
 	}
-#endif
-	else if (data->import_type != VX_MEMORY_TYPE_OPENCL && !(data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferOpenCL)) {
-		agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataSetBufferAsKernelArg(supernode,%d) OpenCL buffer not allocated for group#%d\n", (cl_uint)kernelArgIndex, group);
-		return -1;
-	}
-	return 0;
+	return err;
 }
 
 static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgIndex, AgoData * data, bool need_access, vx_uint32 dataFlags, vx_uint32 group)
@@ -715,7 +626,7 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
 		kernelArgIndex++;
 	}
 	else if (data->ref.type == VX_TYPE_SCALAR) {
-		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, (data->u.scalar.type == VX_TYPE_FLOAT16) ? sizeof(vx_uint16) : sizeof(vx_uint32), &data->u.scalar.u.u);
+		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(cl_uint), &data->u.scalar.u.u);
 		if (err) { 
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,scalar) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
 			return -1; 
@@ -723,48 +634,12 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
 		kernelArgIndex++;
 	}
 	else if (data->ref.type == VX_TYPE_MATRIX) {
-		if (dataFlags & DATA_OPENCL_FLAG_PASS_BY_VALUE) {
-			if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				// make sure dirty OpenCL buffers are synched before giving access for read
-				if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-					// transfer only valid data
-					vx_size size = data->size;
-					if (size > 0) {
-						cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, 0, size, data->buffer, 0, NULL, NULL);
-						if (err) {
-							agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix) clEnqueueReadBuffer() => %d for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-							return -1;
-						}
-					}
-					data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-				}
-			}
-			// set the kernel argument
-			err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, data->size, data->buffer);
-			if (err) {
-				agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-				return -1;
-			}
-			kernelArgIndex++;
+		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, data->size, data->buffer);
+		if (err) { 
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
+			return -1; 
 		}
-		else {
-			if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
-				return -1;
-			kernelArgIndex++;
-			// number of columns and rows of matrix
-			err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.mat.columns);
-			if (err) {
-				agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix:columns) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-				return -1;
-			}
-			kernelArgIndex++;
-			err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.mat.rows);
-			if (err) {
-				agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix:rows) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-				return -1;
-			}
-			kernelArgIndex++;
-		}
+		kernelArgIndex++;
 	}
 	else if (data->ref.type == VX_TYPE_CONVOLUTION) {
 		agoAllocData(data); // make sure that the data has been allocated
@@ -779,21 +654,6 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
 		if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
 			return -1;
 		kernelArgIndex++;
-		if (data->u.lut.type != VX_TYPE_UINT8) {
-			// count and offset parameters
-			err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.lut.count);
-			if (err) {
-				agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,lut:count) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-				return -1;
-			}
-			kernelArgIndex++;
-			err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.lut.offset);
-			if (err) {
-				agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,lut:offset) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-				return -1;
-			}
-			kernelArgIndex++;
-		}
 	}
 	else if (data->ref.type == VX_TYPE_REMAP) {
 		if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
@@ -802,31 +662,16 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
 		vx_uint32 stride = data->u.remap.dst_width * sizeof(vx_uint32);
 		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(stride), &stride);
 		if (err) { 
-			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,remap.stride) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,stride) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
 			return -1; 
 		}
 		kernelArgIndex++;
 	}
-	else if (data->ref.type == VX_TYPE_TENSOR) {
-		if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
-			return -1;
-		kernelArgIndex++;
-		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.tensor.offset);
+	else if (data->ref.type == VX_TYPE_SCALAR) {
+		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(data->u.scalar.u.i), &data->u.scalar.u.i);
 		if (err) { 
-			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,tensor.offset) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,scalar) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
 			return -1; 
-		}
-		kernelArgIndex++;
-		vx_uint32 stride[4] = {
-			(vx_uint32)data->u.tensor.stride[0],
-			(vx_uint32)data->u.tensor.stride[1],
-			(vx_uint32)data->u.tensor.stride[2],
-			(vx_uint32)data->u.tensor.stride[3]
-		};
-		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(stride), stride);
-		if (err) {
-			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,tensor.offset) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-			return -1;
 		}
 		kernelArgIndex++;
 	}
@@ -846,22 +691,12 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
 			if (dataFlags & NODE_OPENCL_TYPE_NEED_IMGSIZE) {
 				kernelArgIndex += 2;
 			}
-			if (!data->opencl_buffer && data->isVirtual && data->ownerOfUserBufferOpenCL &&
-				data->ownerOfUserBufferOpenCL->akernel->opencl_buffer_update_callback_f)
-			{ // need to update opencl buffer
-				vx_status status = data->ownerOfUserBufferOpenCL->akernel->opencl_buffer_update_callback_f(data->ownerOfUserBufferOpenCL, 
-					(vx_reference *)data->ownerOfUserBufferOpenCL->paramList, data->ownerOfUserBufferOpenCL->paramCount);
-				if (status || !data->opencl_buffer) {
-					agoAddLogEntry(&data->ownerOfUserBufferOpenCL->ref, status, "ERROR: opencl_buffer_update_callback_f: failed(%d:%p)\n", status, data->opencl_buffer);
-					return -1;
-				}
-			}
 			if (data->isDelayed) {
 				// needs to set opencl_buffer everytime when the buffer is part of a delay object
 				if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
 					return -1;
 			}
-			else if ((data->u.img.enableUserBufferOpenCL || data->import_type == VX_MEMORY_TYPE_OPENCL) && data->opencl_buffer) {
+			else if (data->u.img.enableUserBufferOpenCL && data->opencl_buffer) {
 				// need to set opencl_buffer and opencl_buffer_offset everytime if enableUserBufferOpenCL is true
 				if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
 					return -1;
@@ -961,61 +796,20 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
 		kernelArgIndex++;
 	}
 	else if (data->ref.type == VX_TYPE_SCALAR) {
-		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, (data->u.scalar.type == VX_TYPE_FLOAT16) ? sizeof(vx_uint16) : sizeof(vx_uint32), &data->u.scalar.u.u);
-		if (err) {
+		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(data->u.scalar.u.i), &data->u.scalar.u.i);
+		if (err) { 
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,scalar) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-			return -1;
+			return -1; 
 		}
 		kernelArgIndex++;
 	}
 	else if (data->ref.type == VX_TYPE_MATRIX) {
-		if (dataFlags & DATA_OPENCL_FLAG_PASS_BY_VALUE) {
-			if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				// make sure dirty OpenCL buffers are synched before giving access for read
-				if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-					// transfer only valid data
-					vx_size size = data->size;
-					if (size > 0) {
-						cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, 0, size, data->buffer, 0, NULL, NULL);
-						if (err) {
-							agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix) clEnqueueReadBuffer() => %d for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-							return -1;
-						}
-					}
-					data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-				}
-			}
-			// set the kernel argument
-			err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, data->size, data->buffer);
-			if (err) {
-				agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
-				return -1;
-			}
-			kernelArgIndex++;
+		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, data->size, data->buffer);
+		if (err) { 
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,matrix) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
+			return -1; 
 		}
-		else {
-			if (data->isDelayed) {
-				// needs to set opencl_buffer everytime when the buffer is part of a delay object
-				if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
-					return -1;
-			}
-			kernelArgIndex += 3;
-			if (need_read_access) {
-				if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-					if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
-						int64_t stime = agoGetClockCounter();
-						cl_int err = clEnqueueWriteBuffer(opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, data->size, data->buffer, 0, NULL, NULL);
-						if (err) {
-							agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: clEnqueueWriteBuffer() => %d (for Matrix)\n", err);
-							return -1;
-						}
-						data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-						int64_t etime = agoGetClockCounter();
-						graph->opencl_perf.buffer_write += etime - stime;
-					}
-				}
-			}
-		}
+		kernelArgIndex++;
 	}
 	else if (data->ref.type == VX_TYPE_CONVOLUTION) {
 		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, data->size << 1, data->reserved);
@@ -1033,28 +827,16 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
 					return -1;
 			}
 			kernelArgIndex += 1;
-			if (data->u.lut.type != VX_TYPE_UINT8) {
-				kernelArgIndex += 2;
-			}
 			if (need_read_access) {
 				if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
 					if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
 						int64_t stime = agoGetClockCounter();
-						if (data->u.lut.type == VX_TYPE_UINT8) {
-							size_t origin[3] = { 0, 0, 0 };
-							size_t region[3] = { 256, 1, 1 };
-							err = clEnqueueWriteImage(opencl_cmdq, data->opencl_buffer, CL_TRUE, origin, region, 256, 0, data->buffer, 0, NULL, NULL);
-							if (err) {
-								agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clEnqueueWriteImage(lut) => %d\n", err);
-								return -1;
-							}
-						}
-						else if (data->u.lut.type == VX_TYPE_INT16) {
-							cl_int err = clEnqueueWriteBuffer(opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, data->size, data->buffer, 0, NULL, NULL);
-							if (err) {
-								agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: clEnqueueWriteBuffer() => %d (for LUT)\n", err);
-								return -1;
-							}
+						size_t origin[3] = { 0, 0, 0 };
+						size_t region[3] = { 256, 1, 1 };
+						err = clEnqueueWriteImage(opencl_cmdq, data->opencl_buffer, CL_TRUE, origin, region, 256, 0, data->buffer, 0, NULL, NULL);
+						if (err) { 
+							agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clEnqueueWriteImage(lut) => %d\n", err);
+							return -1; 
 						}
 						data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
 						int64_t etime = agoGetClockCounter();
@@ -1073,48 +855,18 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
 			}
 			kernelArgIndex += 2;
 			if (need_read_access) {
-				if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+				if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
 					if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
 						int64_t stime = agoGetClockCounter();
 						cl_int err = clEnqueueWriteBuffer(opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, data->size, data->buffer, 0, NULL, NULL);
 						if (err) { 
-							agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: clEnqueueWriteBuffer() => %d (for Remap)\n", err);
-							return -1;
+							agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clEnqueueWriteBuffer() => %d\n", err);
+							return -1; 
 						}
 						data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
 						int64_t etime = agoGetClockCounter();
 						graph->opencl_perf.buffer_write += etime - stime;
 					}
-				}
-			}
-		}
-	}
-	else if (data->ref.type == VX_TYPE_TENSOR) {
-		if (data->isDelayed) {
-			// needs to set opencl_buffer everytime when the buffer is part of a delay object
-			if (agoGpuOclDataSetBufferAsKernelArg(data, opencl_kernel, kernelArgIndex, group) < 0)
-				return -1;
-		}
-		kernelArgIndex += 3;
-		if (need_read_access) {
-			auto dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
-			if (!(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
-					int64_t stime = agoGetClockCounter();
-					if (dataToSync->opencl_buffer) {
-						cl_int err = clEnqueueWriteBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-						if (err) {
-							agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: clEnqueueWriteBuffer() => %d (tensor)\n", err);
-							return -1;
-						}
-					}
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					int64_t etime = agoGetClockCounter();
-					graph->opencl_perf.buffer_write += etime - stime;
-#if ENABLE_DEBUG_DUMP_CL_BUFFERS
-					char fileName[128]; sprintf(fileName, "input_%%04d_tensor.raw");
-					clDumpBuffer(fileName, opencl_cmdq, dataToSync);
-#endif
 				}
 			}
 		}
@@ -1137,20 +889,11 @@ static int agoGpuOclDataOutputMarkDirty(AgoGraph * graph, AgoData * data, bool n
 			}
 		}
 	}
-	else if (data->ref.type == VX_TYPE_ARRAY || data->ref.type == VX_TYPE_MATRIX) {
+	else if (data->ref.type == VX_TYPE_ARRAY) {
 		if (need_access) { // only use image objects that need write access
 			if (need_write_access) {
 				data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
 				data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
-			}
-		}
-	}
-	else if (data->ref.type == VX_TYPE_TENSOR) {
-		if (need_access) { // only use tensor objects that need write access
-			if (need_write_access) {
-				auto dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
-				dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-				dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
 			}
 		}
 	}
@@ -1169,11 +912,7 @@ static int agoGpuOclDataOutputAtomicSync(AgoGraph * graph, AgoData * data)
 		// update number of items
 		cl_int err = CL_SUCCESS;
 		int64_t stime = agoGetClockCounter();
-#if defined(CL_VERSION_2_0)
 		vx_uint32 * pNumItems = (vx_uint32 *)data->opencl_svm_buffer;
-#else
-		vx_uint32 * pNumItems = nullptr;
-#endif
 		if (data->opencl_buffer) {
 			pNumItems = (vx_uint32 *)clEnqueueMapBuffer(opencl_cmdq, data->opencl_buffer, CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, sizeof(vx_uint32), 0, NULL, NULL, &err);
 			if (err) { 
@@ -1202,11 +941,7 @@ static int agoGpuOclDataOutputAtomicSync(AgoGraph * graph, AgoData * data)
 		// update number of items and reset it for next use
 		int64_t stime = agoGetClockCounter();
 		cl_int err = CL_SUCCESS;
-#if defined(CL_VERSION_2_0)
 		vx_uint8 * stack = data->opencl_svm_buffer;
-#else
-		vx_uint8 * stack = nullptr;
-#endif
 		if (data->opencl_buffer) {
 			stack = (vx_uint8 *)clEnqueueMapBuffer(opencl_cmdq, data->opencl_buffer, CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, sizeof(vx_uint32), 0, NULL, NULL, &err);
 			if (err) { 
@@ -1273,24 +1008,12 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
 		code += item;
 	}
 	else if (data->ref.type == VX_TYPE_MATRIX) {
-		if (data->u.mat.type == VX_TYPE_FLOAT32 && data->u.mat.columns == 2 && data->u.mat.rows == 3) {
+		if (data->u.mat.columns == 2 && data->u.mat.rows == 3) {
 			sprintf(item, "ago_affine_matrix_t p%d", index);
 			code += item;
 		}
-		else if (data->u.mat.type == VX_TYPE_FLOAT32 && data->u.mat.columns == 3 && data->u.mat.rows == 3) {
+		else if (data->u.mat.columns == 3 && data->u.mat.rows == 3) {
 			sprintf(item, "ago_perspective_matrix_t p%d", index);
-			code += item;
-		}
-		else if (data->u.mat.type == VX_TYPE_FLOAT32) {
-			sprintf(item, "__global float p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
-			code += item;
-		}
-		else if (data->u.mat.type == VX_TYPE_INT32) {
-			sprintf(item, "__global int p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
-			code += item;
-		}
-		else if (data->u.mat.type == VX_TYPE_UINT8) {
-			sprintf(item, "__global uchar p%d_buf, uint p%d_columns, p%d_uint rows", index, index, index);
 			code += item;
 		}
 		else {
@@ -1302,14 +1025,8 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
 		code += item;
 	}
 	else if (data->ref.type == VX_TYPE_LUT) {
-		if (data->u.lut.type == VX_TYPE_UINT8) {
-			sprintf(item, "__read_only image1d_t p%d", index);
-			code += item;
-		}
-		else if (data->u.lut.type == VX_TYPE_INT16) {
-			sprintf(item, "__global short * p%d_buf, uint p%d_count, uint p%d_offset", index, index, index);
-			code += item;
-		}
+		sprintf(item, "__read_only image1d_t p%d", index);
+		code += item;
 	}
 	else if (data->ref.type == VX_TYPE_REMAP) {
 		sprintf(item, "__global uchar * p%d_buf, uint p%d_stride", index, index);
@@ -1321,203 +1038,12 @@ static std::string agoGpuOclData2Decl(AgoData * data, vx_uint32 index, vx_uint32
 	return code;
 }
 
-static void replaceString(std::string& str, const std::string& from, const std::string& to)
-{
-	size_t start_pos = 0;
-	while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
-		str.replace(start_pos, from.length(), to);
-		start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
-	}
-}
-
-static void agoEmulateAmdMediaOpsInOpenCL(std::string& code)
-{
-	// Replace pragma with built in functions.
-	if (code.find("#pragma OPENCL EXTENSION cl_amd_media_ops : enable") != std::string::npos)
-	{
-		std::string clmediaopscode = OPENCL_FORMAT(
-			"inline uint amd_pack(float4 src){\n"
-			"	uint dst =  ((uint)(clamp (src.s0,0.0f,255.0f))     )\n"
-			"			  + ((uint)(clamp (src.s1,0.0f,255.0f))<< 8 ) \n"
-			"			  + ((uint)(clamp (src.s2,0.0f,255.0f))<< 16) \n"
-			"			  + ((uint)(clamp (src.s3,0.0f,255.0f))<< 24); \n"
-			"	return dst;\n"
-			"}\n"
-			"\n"
-			"inline float amd_unpack3(uint src){\n"
-			"	float dst=  (float)((src >> 24) & 0xff);\n"
-			"	return dst;\n"
-			"}\n"
-			"\n"
-			"inline float amd_unpack2(uint src){\n"
-			"	float dst=  (float)((src >> 16) & 0xff);\n"
-			"	return dst;\n"
-			"}\n"
-			"\n"
-			"inline float amd_unpack1(uint src){\n"
-			"	float dst= (float)((src >> 8) & 0xff);\n"
-			"	return dst;\n"
-			"}\n"
-			"\n"
-			"inline float amd_unpack0(uint src){\n"
-			"	float dst=  (float)((src)& 0xff);\n"
-			"	return dst;\n"
-			"}\n"
-			"\n"
-			"inline uint amd_bitalign(uint src0,uint src1, uint src2){\n"
-			"	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 31));\n"
-			"	return dst;\n"
-			"}\n"
-			"\n"
-			"inline uint amd_bytealign(uint src0,uint src1, uint src2){\n"
-			"	uint dst = (uint)(as_ulong((uint2)(src1,src0)) >> (src2 & 31) * 8 );\n"
-			"	return dst;\n"
-			"}\n"
-			"\n"
-			"inline uint amd_lerp(uint src0, uint src1, uint src2) {\n"
-			"	uint dst = (((((src0 >>  0) & 0xff) + ((src1 >>  0) & 0xff) + ((src2 >>  0) & 1)) >> 1) <<  0) + \n"
-			"			   (((((src0 >>  8) & 0xff) + ((src1 >>  8) & 0xff) + ((src2 >>  8) & 1)) >> 1) <<  8) + \n"
-			"			   (((((src0 >> 16) & 0xff) + ((src1 >> 16) & 0xff) + ((src2 >> 16) & 1)) >> 1) << 16) + \n"
-			"			   (((((src0 >> 24) & 0xff) + ((src1 >> 24) & 0xff) + ((src2 >> 24) & 1)) >> 1) << 24); \n"
-			"	return dst;"
-			"}\n"
-			"\n"
-			"inline uint amd_sad(uint src0, uint src1, uint src2){ \n"
-			"	uint dst = src2 + \n"
-			"			   abs(((src0 >>  0) & 0xff) - ((src1 >>  0) & 0xff)) + \n"
-			"			   abs(((src0 >>  8) & 0xff) - ((src1 >>  8) & 0xff)) + \n"
-			"			   abs(((src0 >> 16) & 0xff) - ((src1 >> 16) & 0xff)) + \n"
-			"			   abs(((src0 >> 24) & 0xff) - ((src1 >> 24) & 0xff));  \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-			"inline uint amd_sadhi(uint src0, uint src1, uint src2){ \n"
-			"	uint dst = src2 + \n"
-			"			   (abs(((src0 >>  0) & 0xff) - ((src1 >>  0) & 0xff)) << 16) + \n"
-			"			   (abs(((src0 >>  8) & 0xff) - ((src1 >>  8) & 0xff)) << 16) + \n"
-			"			   (abs(((src0 >> 16) & 0xff) - ((src1 >> 16) & 0xff)) << 16) + \n"
-			"			   (abs(((src0 >> 24) & 0xff) - ((src1 >> 24) & 0xff)) << 16);  \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-			"inline uint amd_sad4(uint4 src0, uint4 src1, uint src2) { \n"
-			"	uint dst = src2 + \n"
-			"			   abs(((src0.s0 >>  0) & 0xff) - ((src1.s0 >>  0) & 0xff)) + \n"
-			"              abs(((src0.s0 >>  8) & 0xff) - ((src1.s0 >>  8) & 0xff)) + \n"
-			"              abs(((src0.s0 >> 16) & 0xff) - ((src1.s0 >> 16) & 0xff)) + \n"
-			"              abs(((src0.s0 >> 24) & 0xff) - ((src1.s0 >> 24) & 0xff)) + \n"
-			"              abs(((src0.s1 >>  0) & 0xff) - ((src1.s0 >>  0) & 0xff)) + \n"
-			"              abs(((src0.s1 >>  8) & 0xff) - ((src1.s1 >>  8) & 0xff)) + \n"
-			"              abs(((src0.s1 >> 16) & 0xff) - ((src1.s1 >> 16) & 0xff)) + \n"
-			"              abs(((src0.s1 >> 24) & 0xff) - ((src1.s1 >> 24) & 0xff)) + \n"
-			"              abs(((src0.s2 >>  0) & 0xff) - ((src1.s2 >>  0) & 0xff)) + \n"
-			"              abs(((src0.s2 >>  8) & 0xff) - ((src1.s2 >>  8) & 0xff)) + \n"
-			"              abs(((src0.s2 >> 16) & 0xff) - ((src1.s2 >> 16) & 0xff)) + \n"
-			"              abs(((src0.s2 >> 24) & 0xff) - ((src1.s2 >> 24) & 0xff)) + \n"
-			"              abs(((src0.s3 >>  0) & 0xff) - ((src1.s3 >>  0) & 0xff)) + \n"
-			"              abs(((src0.s3 >>  8) & 0xff) - ((src1.s3 >>  8) & 0xff)) + \n"
-			"              abs(((src0.s3 >> 16) & 0xff) - ((src1.s3 >> 16) & 0xff)) + \n"
-			"              abs(((src0.s3 >> 24) & 0xff) - ((src1.s3 >> 24) & 0xff));  \n"
-			"	return dst;	\n"
-			"}\n"
-			"\n"
-			);
-
-		std::string clmediaops2code = OPENCL_FORMAT(
-			"inline uint amd_msad(uint src0, uint src1, uint src2){ \n"
-			"	uchar4 src0u8 = as_uchar4(src0); \n"
-			"	uchar4 src1u8 = as_uchar4(src1); \n"
-			"	uint dst = src2 + \n"
-			"			   ((src1u8.s0 == 0) ? 0 : abs(src0u8.s0 - src1u8.s0)) + \n"
-			"			   ((src1u8.s1 == 0) ? 0 : abs(src0u8.s1 - src1u8.s1)) + \n"
-			"			   ((src1u8.s2 == 0) ? 0 : abs(src0u8.s2 - src1u8.s2)) + \n"
-			"			   ((src1u8.s3 == 0) ? 0 : abs(src0u8.s3 - src1u8.s3));  \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-			"inline ulong amd_qsad(ulong src0, uint src1, ulong src2) { \n"
-			"	uchar8 src0u8 = as_uchar8(src0); \n"
-			"	ushort4 src2u16 = as_ushort4(src2); \n"
-			"	ushort4 dstu16; \n"
-			"	dstu16.s0 = amd_sad(as_uint(src0u8.s0123), src1, src2u16.s0); \n"
-			"	dstu16.s1 = amd_sad(as_uint(src0u8.s1234), src1, src2u16.s1); \n"
-			"	dstu16.s2 = amd_sad(as_uint(src0u8.s2345), src1, src2u16.s2); \n"
-			"	dstu16.s3 = amd_sad(as_uint(src0u8.s3456), src1, src2u16.s3); \n"
-			"	ulong dst = as_ulong(dstu16); \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-			"inline ulong amd_mqsad(ulong src0, uint src1, ulong src2) { \n"
-			"	uchar8 src0u8 = as_uchar8(src0); \n"
-			"	ushort4 src2u16 = as_ushort4(src2); \n"
-			"   ushort4 dstu16; \n"
-			"   dstu16.s0 = amd_msad(as_uint(src0u8.s0123), src1, src2u16.s0); \n"
-			"   dstu16.s1 = amd_msad(as_uint(src0u8.s1234), src1, src2u16.s1); \n"
-			"   dstu16.s2 = amd_msad(as_uint(src0u8.s2345), src1, src2u16.s2); \n"
-			"   dstu16.s3 = amd_msad(as_uint(src0u8.s3456), src1, src2u16.s3);"
-			"   ulong dst = as_ulong(dstu16); \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-			"inline uint amd_sadw(uint src0, uint src1, uint src2) { \n"
-			"	  ushort2 src0u16 = as_ushort2(src0); \n"
-			"     ushort2 src1u16 = as_ushort2(src1); \n"
-			"     uint dst = src2 + \n"
-			"                abs(src0u16.s0 - src1u16.s0) + \n"
-			"                abs(src0u16.s1 - src1u16.s1); \n"
-			"	  return dst; \n"
-			"}\n"
-			"\n"
-			"inline uint amd_sadd(uint src0, uint src1, uint src2) { \n"
-			"	   uint dst = src2 +  abs(src0 - src1); \n"
-			"	   return dst; \n"
-			"}\n"
-			"\n"
-			"inline uint amd_bfe(uint src0, uint src1, uint src2) { \n"
-			"   uint dst;"
-			"	uint offset = src1 & 31;\n"
-			"	uint width  = src2 & 31;\n"
-			"   if ( width == 0 )\n"
-			"       dst=0;\n"
-			"   else if((offset + width) < 32) "
-			"       dst = (src0 << (32 - offset - width)) >> (32 - width);\n"
-			"   else \n"
-			"       dst = src0 >> offset;\n"
-			"   return dst;\n"
-			"}\n"
-			"\n"
-			"inline uint amd_bfm(uint src0 , uint src1){ \n"
-			"	uint dst = ((1 << (src0 & 0x1f)) - 1) << (src1 & 0x1f); \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-			"inline uint amd_min3(uint src0, uint src1, uint src2) { \n"
-			"	uint dst = min(src0, min(src1,src2));\n"
-			"   return dst;\n "
-			"}\n"
-			"\n"
-			"inline uint amd_max3(uint src0, uint src1, uint src2) { \n"
-			"	uint dst = max(src0, max(src1,src2)); \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-			"inline uint amd_median3(uint src0, uint src1, uint src2){ \n"
-			"	uint dst = max(min(src0,src1), min(max(src0,src1),src2)); \n"
-			"	return dst; \n"
-			"}\n"
-			"\n"
-		);
-		replaceString(code, "#pragma OPENCL EXTENSION cl_amd_media_ops : enable", clmediaopscode);
-		replaceString(code, "#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable", clmediaops2code);
-	}
-}
-
-int agoGpuOclSuperNodeUpdate(AgoGraph * graph, AgoSuperNode * supernode)
+int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 {
 	// make sure that all output images have same dimensions
 	// check to make sure that max input hierarchy level is less than min output hierarchy level
 	vx_uint32 width = 0, height = 0;
-	vx_uint32 max_input_hierarchical_level = 0, min_output_hierarchical_level = INT_MAX;
+	vx_uint32 max_input_hierarchical_level = 0, min_output_hierarchical_level = (1 << 30);
 	for (size_t index = 0; index < supernode->dataList.size(); index++) {
 		AgoData * data = supernode->dataList[index];
 		if (data->ref.type == VX_TYPE_IMAGE && supernode->dataInfo[index].argument_usage[VX_INPUT] == 0) {
@@ -1547,38 +1073,15 @@ int agoGpuOclSuperNodeUpdate(AgoGraph * graph, AgoSuperNode * supernode)
 		agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoGpuOclSuperNodeFinalize: doesn't support mix of hierarchical levels inside same group#%d\n", supernode->group);
 		return -1;
 	}
-	supernode->width = width;
-	supernode->height = height;
-
-	// mark hierarchical level (start,end) of all supernodes
-	for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
-		supernode->hierarchical_level_start = INT_MAX;
-		supernode->hierarchical_level_end = 0;
-		for (AgoNode * node : supernode->nodeList) {
-			supernode->hierarchical_level_start = min(supernode->hierarchical_level_start, node->hierarchical_level);
-			supernode->hierarchical_level_end = max(supernode->hierarchical_level_end, node->hierarchical_level);
-		}
-	}
-
-	return 0;
-}
-
-int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
-{
-	// get supernode image dimensions
-	vx_uint32 width = supernode->width;
-	vx_uint32 height = supernode->height;
 	// decide work group dimensions (256 work-items)
 	vx_uint32 work_group_width = AGO_OPENCL_WORKGROUP_SIZE_0;
 	vx_uint32 work_group_height = AGO_OPENCL_WORKGROUP_SIZE_1;
 	// save image size and compute global work
 	//   - each work item processes 8x1 pixels
+	supernode->width = width;
+	supernode->height = height;
 	supernode->opencl_global_work[0] = (((width + 7) >> 3) + (work_group_width  - 1)) & ~(work_group_width  - 1);
 	supernode->opencl_global_work[1] = (  height           + (work_group_height - 1)) & ~(work_group_height - 1);
-	supernode->opencl_global_work[2] = 1;
-	supernode->opencl_local_work[0] = work_group_width;
-	supernode->opencl_local_work[1] = work_group_height;
-	supernode->opencl_local_work[2] = 1;
 	for (size_t index = 0; index < supernode->dataList.size(); index++) {
 		AgoData * data = supernode->dataList[index];
 	}
@@ -1590,7 +1093,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		AgoData * data = supernode->dataList[index];
 	}
 	// generate code: node functions in OpenCL
-	char item[512];
+	char item[256];
 	std::string code = OPENCL_FORMAT(
 		"#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
 		"#pragma OPENCL EXTENSION cl_amd_media_ops2 : enable\n"
@@ -1740,16 +1243,11 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		if (node->akernel->func) {
 			node->opencl_code = "";
 			status = node->akernel->func(node, ago_kernel_cmd_opencl_codegen);
-			for(vx_size dim = node->opencl_work_dim; dim < 3; dim++) {
-				node->opencl_global_work[dim] = 1;
-				node->opencl_local_work[dim] = 1;
-			}
-			node->opencl_work_dim = 3;
 		}
 		else if (node->akernel->opencl_codegen_callback_f) {
 			// generation function declaration
 			std::string code2;
-			char item[512];
+			char item[256];
 			sprintf(item, "void %s(", node->opencl_name); code2 = item;
 			for (vx_uint32 i = 0; i < node->paramCount; i++) {
 				AgoData * data = node->paramList[i];
@@ -1792,14 +1290,11 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 			node->opencl_output_array_param_index_plus1 = 0;
 			node->opencl_local_buffer_usage_mask = 0;
 			node->opencl_local_buffer_size_in_bytes = 0;
-			status = node->akernel->opencl_codegen_callback_f(node, (vx_reference *)node->paramList, node->paramCount,
-				true, node->opencl_name, node->opencl_code, node->opencl_build_options, node->opencl_work_dim, supernode->opencl_global_work,
-				supernode->opencl_local_work, node->opencl_local_buffer_usage_mask, node->opencl_local_buffer_size_in_bytes);
-			for(vx_size dim = node->opencl_work_dim; dim < 3; dim++) {
-				node->opencl_global_work[dim] = 1;
-				node->opencl_local_work[dim] = 1;
-			}
-			node->opencl_work_dim = 3;
+			vx_uint32 work_dim = 2;
+			vx_size global_work[3] = { supernode->opencl_global_work[0], supernode->opencl_global_work[1], 1 };
+			vx_size local_work[3] = { work_group_width, work_group_height, 1 };
+			status = node->akernel->opencl_codegen_callback_f(node, true, node->opencl_name, node->opencl_code, node->opencl_build_options, work_dim, global_work, 
+				local_work, node->opencl_local_buffer_usage_mask, node->opencl_local_buffer_size_in_bytes);
 		}
 		if (status != VX_SUCCESS) {
 			agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoGpuOclSuperNodeFinalize: kernel %s in group#%d is not supported yet\n", node->akernel->name, supernode->group);
@@ -1833,11 +1328,6 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 								}
 							}
 						}
-					}
-					else if (node->opencl_param_as_value_mask & (1 << i)) {
-						// when code generator asked to pass an argument by value, mark the flag for setting kernel arguments
-						size_t data_index = std::find(supernode->dataList.begin(), supernode->dataList.end(), data) - supernode->dataList.begin();
-						supernode->dataInfo[data_index].data_type_flags |= DATA_OPENCL_FLAG_PASS_BY_VALUE;
 					}
 				}
 			}
@@ -1994,9 +1484,6 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 	}
 	// generate code: end of function and save
 	code += "\t}\n}\n";
-	if (!(graph->ref.context->isAmdMediaOpsSupported)) {
-		agoEmulateAmdMediaOpsInOpenCL(code);
-	}
 	supernode->opencl_code = code;
 	const char * opencl_code = supernode->opencl_code.c_str();
 
@@ -2081,9 +1568,9 @@ int agoGpuOclSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode)
 	// launch the kernel
 	int64_t stime = agoGetClockCounter();
 	cl_int err;
-	err = clEnqueueNDRangeKernel(supernode->opencl_cmdq, supernode->opencl_kernel, 3, NULL, supernode->opencl_global_work, supernode->opencl_local_work, 0, NULL, &supernode->opencl_event);
+	err = clEnqueueNDRangeKernel(supernode->opencl_cmdq, supernode->opencl_kernel, 2, NULL, supernode->opencl_global_work, NULL, 0, NULL, &supernode->opencl_event);
 	if (err) { 
-		agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: clEnqueueNDRangeKernel(supernode,3,*,{%d,%d,%d},{%d,%d,%d},...) failed(%d) for group#%d\n", (cl_uint)supernode->opencl_global_work[0], (cl_uint)supernode->opencl_global_work[1], (cl_uint)supernode->opencl_global_work[2], (cl_uint)supernode->opencl_local_work[0], (cl_uint)supernode->opencl_local_work[1], (cl_uint)supernode->opencl_local_work[2], err, supernode->group);
+		agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: clEnqueueNDRangeKernel(supernode,2,*,%dx%d,...) failed(%d) for group#%d\n", (cl_uint)supernode->opencl_global_work[0], (cl_uint)supernode->opencl_global_work[1], err, supernode->group);
 		return -1; 
 	}
 	err = clFlush(supernode->opencl_cmdq);
@@ -2146,9 +1633,6 @@ int agoGpuOclSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode)
 
 int agoGpuOclSingleNodeFinalize(AgoGraph * graph, AgoNode * node)
 {
-	if (!(graph->ref.context->isAmdMediaOpsSupported)) {
-		agoEmulateAmdMediaOpsInOpenCL(node->opencl_code);
-	}
 	const char * opencl_code = node->opencl_code.c_str();
 
 	// dump OpenCL kernel if environment variable AGO_DUMP_GPU is specified with dump file path prefix
@@ -2198,8 +1682,10 @@ int agoGpuOclSingleNodeFinalize(AgoGraph * graph, AgoNode * node)
 			if (node->paramList[index]->ref.type == VX_TYPE_IMAGE) {
 				dataFlags |= NODE_OPENCL_TYPE_NEED_IMGSIZE;
 			}
-			if (node->opencl_param_as_value_mask & (1 << index)) {
-				dataFlags |= DATA_OPENCL_FLAG_PASS_BY_VALUE;
+			else if (node->paramList[index]->ref.type == VX_TYPE_ARRAY) {
+				if (node->opencl_param_atomic_mask & (1 << index)) {
+					dataFlags |= NODE_OPENCL_TYPE_ATOMIC;
+				}
 			}
 			if (agoGpuOclSetKernelArgs(node->opencl_kernel, kernelArgIndex, node->paramList[index], true, dataFlags, 0) < 0) {
 				return -1;
@@ -2240,46 +1726,23 @@ int agoGpuOclSingleNodeLaunch(AgoGraph * graph, AgoNode * node)
 		if (node->paramList[index] && !(node->opencl_param_discard_mask & (1 << index))) {
 			bool need_read_access = node->parameters[index].direction != VX_OUTPUT ? true : false;
 			bool need_atomic_access = (node->opencl_param_atomic_mask & (1 << index)) ? true : false;
-			vx_uint32 dataFlags = NODE_OPENCL_TYPE_NEED_IMGSIZE;
-			if (node->opencl_param_as_value_mask & (1 << index))
-				dataFlags |= DATA_OPENCL_FLAG_PASS_BY_VALUE;
-			if (agoGpuOclDataInputSync(graph, node->opencl_kernel, kernelArgIndex, node->paramList[index], dataFlags, 0, true, need_read_access, need_atomic_access) < 0) {
+			if (agoGpuOclDataInputSync(graph, node->opencl_kernel, kernelArgIndex, node->paramList[index], NODE_OPENCL_TYPE_NEED_IMGSIZE, 0, true, need_read_access, need_atomic_access) < 0) {
 				return -1;
 			}
 		}
 	}
-	// update global work if needed
-	if (node->akernel->opencl_global_work_update_callback_f) {
-		vx_status status = node->akernel->opencl_global_work_update_callback_f(node, (vx_reference *)node->paramList, node->paramCount, node->opencl_work_dim, node->opencl_global_work, node->opencl_local_work);
-		if (status) {
-			agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoGpuOclSingleNodeLaunch: invalid opencl_global_work_update_callback_f failed (%d) for kernel %s\n", status, node->akernel->name);
-			return -1;
-		}
-		for(vx_size dim = node->opencl_work_dim; dim < 3; dim++) {
-			node->opencl_global_work[dim] = 1;
-			node->opencl_local_work[dim] = 1;
-		}
-		node->opencl_work_dim = 3;
-	}
 	// launch the kernel
 	int64_t stime = agoGetClockCounter();
 	cl_int err;
-	if(node->opencl_local_work[0] != 0) {
-		err = clEnqueueNDRangeKernel(graph->opencl_cmdq, node->opencl_kernel, node->opencl_work_dim, NULL, node->opencl_global_work, node->opencl_local_work, 0, NULL, &node->opencl_event);
-	}
-	else {
-		err = clEnqueueNDRangeKernel(graph->opencl_cmdq, node->opencl_kernel, node->opencl_work_dim, NULL, node->opencl_global_work, NULL, 0, NULL, &node->opencl_event);
-	}
+	err = clEnqueueNDRangeKernel(graph->opencl_cmdq, node->opencl_kernel, node->opencl_work_dim, NULL, node->opencl_global_work, NULL, 0, NULL, &node->opencl_event);
 	if (err) { 
-		agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: clEnqueueNDRangeKernel(supernode,%d,*,{%d,%d,%d},{%d,%d,%d},...) failed(%d) for %s\n", (cl_uint)node->opencl_work_dim, (cl_uint)node->opencl_global_work[0], (cl_uint)node->opencl_global_work[1], (cl_uint)node->opencl_global_work[2], (cl_uint)node->opencl_local_work[0], (cl_uint)node->opencl_local_work[1], (cl_uint)node->opencl_local_work[2], err, node->akernel->name);
+		agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: clEnqueueNDRangeKernel(supernode,%d,*,{%d,%d,%d},...) failed(%d) for %s\n", (cl_uint)node->opencl_work_dim, (cl_uint)node->opencl_global_work[0], (cl_uint)node->opencl_global_work[1], (cl_uint)node->opencl_global_work[2], err, node->akernel->name);
 		return -1; 
 	}
-	if(graph->enable_node_level_opencl_flush) {
-		err = clFlush(graph->opencl_cmdq);
-		if (err) {
-			agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: clFlush(supernode) failed(%d) for %s\n", err, node->akernel->name);
-			return -1;
-		}
+	err = clFlush(graph->opencl_cmdq);
+	if (err) { 
+		agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: clFlush(supernode) failed(%d) for %s\n", err, node->akernel->name);
+		return -1; 
 	}
 	int64_t etime = agoGetClockCounter();
 	graph->opencl_perf.kernel_enqueue += etime - stime;
@@ -2323,15 +1786,6 @@ int agoGpuOclSingleNodeWait(AgoGraph * graph, AgoNode * node)
 				if (need_write_access) {
 					auto dataToSync = node->paramList[index]->u.img.isROI ? node->paramList[index]->u.img.roiMasterImage : node->paramList[index];
 					char fileName[128]; sprintf(fileName, "input_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
-					cl_command_queue opencl_cmdq = graph->opencl_cmdq ? graph->opencl_cmdq : graph->ref.context->opencl_cmdq;
-					clDumpBuffer(fileName, opencl_cmdq, node->paramList[index]);
-					//printf("Press ENTER to continue... ");  char line[256]; gets(line);
-				}
-			}
-			else if (node->paramList[index]->ref.type == VX_TYPE_TENSOR) {
-				if (need_write_access) {
-					auto dataToSync = node->paramList[index]->u.tensor.roiMaster ? node->paramList[index]->u.tensor.roiMaster : node->paramList[index];
-					char fileName[128]; sprintf(fileName, "input_%%04d_tensor.raw");
 					cl_command_queue opencl_cmdq = graph->opencl_cmdq ? graph->opencl_cmdq : graph->ref.context->opencl_cmdq;
 					clDumpBuffer(fileName, opencl_cmdq, node->paramList[index]);
 					//printf("Press ENTER to continue... ");  char line[256]; gets(line);

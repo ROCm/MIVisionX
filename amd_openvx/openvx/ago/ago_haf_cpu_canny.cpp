@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 static const int n_offset[][2][2] = {
@@ -39,7 +38,6 @@ static const ago_coord2d_short_t dir_offsets[8] = {
 	{ 0, +1 },
 	{ +1, +1 },
 };
-
 
 int HafCpu_CannySobel_U16_U8_3x3_L1NORM
 	(
@@ -76,7 +74,6 @@ int HafCpu_CannySobel_U16_U8_3x3_L1NORM
 		{
 			vx_int16 Gx = (vx_int16)srow0[x + 1] - (vx_int16)srow0[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow2[x - 1] + 2 * ((vx_int16)srow1[x + 1] - (vx_int16)srow1[x - 1]);
 			vx_int16 Gy = (vx_int16)srow2[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow0[x - 1] - (vx_int16)srow0[x + 1] + 2 * ((vx_int16)srow2[x] - (vx_int16)srow0[x]);
-			Gy = ~Gy + 1;
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);
@@ -123,7 +120,6 @@ int HafCpu_CannySobel_U16_U8_3x3_L1NORM
 		{
 			vx_int16 Gx = (vx_int16)srow0[x + 1] - (vx_int16)srow0[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow2[x - 1] + 2 * ((vx_int16)srow1[x + 1] - (vx_int16)srow1[x - 1]);
 			vx_int16 Gy = (vx_int16)srow2[x - 1] + (vx_int16)srow2[x + 1] - (vx_int16)srow0[x - 1] - (vx_int16)srow0[x + 1] + 2 * ((vx_int16)srow2[x] - (vx_int16)srow0[x]);
-			Gy = ~Gy + 1;
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);
@@ -186,8 +182,7 @@ int HafCpu_CannySobel_U16_U8_5x5_L1NORM
 			vx_int16 Gy = (vx_int16)srow4[x - 2] + (4 * (vx_int16)srow4[x - 1]) + (6 * (vx_int16)srow4[x]) + (4 * (vx_int16)srow4[x + 1]) + (vx_int16)srow4[x + 2]
 				+ 2 * ((vx_int16)srow3[x - 2] + (4 * (vx_int16)srow3[x - 1]) + (6 * (vx_int16)srow3[x]) + (4 * (vx_int16)srow3[x + 1]) + (vx_int16)srow3[x + 2])
 				- 2 * ((vx_int16)srow1[x - 2] + (4 * (vx_int16)srow1[x - 1]) + (6 * (vx_int16)srow1[x]) + (4 * (vx_int16)srow1[x + 1]) + (vx_int16)srow1[x + 2])
-				- ((vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2]);
-			Gy = ~Gy + 1;
+				- (vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2];
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);
@@ -255,8 +250,7 @@ int HafCpu_CannySobel_U16_U8_5x5_L1NORM
 			vx_int16 Gy = (vx_int16)srow4[x - 2] + (4 * (vx_int16)srow4[x - 1]) + (6 * (vx_int16)srow4[x]) + (4 * (vx_int16)srow4[x + 1]) + (vx_int16)srow4[x + 2]
 				+ 2 * ((vx_int16)srow3[x - 2] + (4 * (vx_int16)srow3[x - 1]) + (6 * (vx_int16)srow3[x]) + (4 * (vx_int16)srow3[x + 1]) + (vx_int16)srow3[x + 2])
 				- 2 * ((vx_int16)srow1[x - 2] + (4 * (vx_int16)srow1[x - 1]) + (6 * (vx_int16)srow1[x]) + (4 * (vx_int16)srow1[x + 1]) + (vx_int16)srow1[x + 2])
-				- ((vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2]);
-			Gy = ~Gy + 1;
+				- (vx_int16)srow0[x - 2] + (4 * (vx_int16)srow0[x - 1]) + (6 * (vx_int16)srow0[x]) + (4 * (vx_int16)srow0[x + 1]) + (vx_int16)srow0[x + 2];
 			vx_int16 tmp = abs(Gx) + abs(Gy);
 			tmp <<= 2;
 			tmp |= (HafCpu_FastAtan2_Canny(Gx, Gy) & 3);
@@ -367,7 +361,6 @@ int HafCpu_CannySobel_U16_U8_7x7_L1NORM
 			__m128i s4 = _mm_loadu_si128((const __m128i*)(r0 + x + 2));
 			__m128i s5 = _mm_loadu_si128((const __m128i*)(r0 + x + 3));
 
-
 			__m128i t0 = _mm_slli_epi16(_mm_subs_epi16(s4, s1), 2);
 			__m128i t1 = _mm_mullo_epi16(_mm_subs_epi16(s3, s2), c5);
 			t0 = _mm_adds_epi16(t0, _mm_subs_epi16(s5, s0));
@@ -380,7 +373,6 @@ int HafCpu_CannySobel_U16_U8_7x7_L1NORM
 			s4 = _mm_loadu_si128((const __m128i*)(r1 + x + 1));
 			s5 = _mm_loadu_si128((const __m128i*)(r1 + x + 2));
 			__m128i s6 = _mm_loadu_si128((const __m128i*)(r1 + x + 3));
-
 
 			t1 = _mm_adds_epi16(_mm_mullo_epi16(_mm_add_epi16(s1, s5), c6), _mm_mullo_epi16(s3, c20));
 			__m128i t2 = _mm_mullo_epi16(_mm_add_epi16(s2, s4), c15);
@@ -423,7 +415,6 @@ int HafCpu_CannySobel_U16_U8_7x7_L1NORM
 	}
 	return AGO_SUCCESS;
 }
-
 
 int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 	(
@@ -989,7 +980,6 @@ int HafCpu_CannySobel_U16_U8_7x7_L2NORM
 			__m128i s4 = _mm_loadu_si128((const __m128i*)(r0 + x + 2));
 			__m128i s5 = _mm_loadu_si128((const __m128i*)(r0 + x + 3));
 
-
 			__m128i t0 = _mm_slli_epi16(_mm_subs_epi16(s4, s1), 2);
 			__m128i t1 = _mm_mullo_epi16(_mm_subs_epi16(s3, s2), c5);
 			t0 = _mm_adds_epi16(t0, _mm_subs_epi16(s5, s0));
@@ -1002,7 +992,6 @@ int HafCpu_CannySobel_U16_U8_7x7_L2NORM
 			s4 = _mm_loadu_si128((const __m128i*)(r1 + x + 1));
 			s5 = _mm_loadu_si128((const __m128i*)(r1 + x + 2));
 			__m128i s6 = _mm_loadu_si128((const __m128i*)(r1 + x + 3));
-
 
 			t1 = _mm_adds_epi16(_mm_mullo_epi16(_mm_add_epi16(s1, s5), c6), _mm_mullo_epi16(s3, c20));
 			__m128i t2 = _mm_mullo_epi16(_mm_add_epi16(s2, s4), c15);

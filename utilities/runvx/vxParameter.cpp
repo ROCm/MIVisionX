@@ -33,7 +33,6 @@ THE SOFTWARE.
 #include "vxRemap.h"
 #include "vxScalar.h"
 #include "vxThreshold.h"
-#include "vxTensor.h"
 
 #define VX_MAX_FILE_NAME 128
 
@@ -58,7 +57,6 @@ CVxParameter::CVxParameter()
 	m_usingMultiFrameCapture = false;
 	m_captureFrameStart = false;
 	m_isVirtualObject = false;
-	m_useSyncOpenCLWriteDirective = false;
 }
 
 CVxParameter::~CVxParameter()
@@ -99,11 +97,6 @@ void CVxParameter::AddToArrayListForView(int colorIndex, int x, int y)
 		ArrayItemForView kpItem = { VX_TYPE_COORDINATES2D, colorIndex, x, y, 0.0f, 0, 0 };
 		m_arrayListForView.push_back(kpItem);
 	}
-}
-
-int CVxParameter::SyncFrame(int frameNumber)
-{
-	return 0;
 }
 
 list<CVxParameter *> CVxParameter::m_paramList;
@@ -209,10 +202,7 @@ int CVxParamDelay::CompareFrame(int frameNumber)
 CVxParameter * CreateDataObject(vx_context context, vx_graph graph, std::map<std::string, CVxParameter *> * m_paramMap, map<string, vx_enum> * m_userStructMap, const char * desc, vx_uint32 captureFrameStart)
 {
 	// create the object based on the description
-	if (!_strnicmp(desc, "image:", 6) || !_strnicmp(desc, "virtual-image:", 14) || !_strnicmp(desc, "uniform-image:", 14) || 
-		!_strnicmp(desc, "image-from-roi:", 15) || !_strnicmp(desc, "image-from-handle:", 18) || !_strnicmp(desc, "image-from-channel:", 19) ||
-		!_strnicmp(desc, "image-virtual:", 14) || !_strnicmp(desc, "image-uniform:", 14) || !_strnicmp(desc, "image-roi:", 10))
-	{
+	if (!_strnicmp(desc, "image:", 6) || !_strnicmp(desc, "image-virtual:", 14) || !_strnicmp(desc, "image-uniform:", 14) || !_strnicmp(desc, "image-roi:", 10)) {
 		CVxParamImage *this_image = new CVxParamImage();
 		this_image->SetCaptureFrameStart(captureFrameStart);
 		this_image->SetParamMap(m_paramMap);
@@ -221,9 +211,7 @@ CVxParameter * CreateDataObject(vx_context context, vx_graph graph, std::map<std
 			return NULL;
 		return this_image;
 	}
-	else if (!_strnicmp(desc, "array:", 6) || !_strnicmp(desc, "virtual-array:", 14) ||
-			 !_strnicmp(desc, "array-virtual:", 14))
-	{
+	else if (!_strnicmp(desc, "array:", 6) || !_strnicmp(desc, "array-virtual:", 14)){
 		CVxParamArray *this_array = new CVxParamArray();
 		this_array->SetCaptureFrameStart(captureFrameStart);
 		this_array->SetUserStructMap(m_userStructMap);
@@ -232,9 +220,7 @@ CVxParameter * CreateDataObject(vx_context context, vx_graph graph, std::map<std
 			return NULL;
 		return this_array;
 	}
-	else if (!_strnicmp(desc, "pyramid:", 8) || !_strnicmp(desc, "virtual-pyramid:", 16) ||
-			 !_strnicmp(desc, "pyramid-virtual:", 16))
-	{
+	else if (!_strnicmp(desc, "pyramid:", 8) || !_strnicmp(desc, "pyramid-virtual:", 16)) {
 		CVxParamPyramid *this_pyramid = new CVxParamPyramid();
 		this_pyramid->SetCaptureFrameStart(captureFrameStart);
 		int status = this_pyramid->Initialize(context, graph, desc);
@@ -330,17 +316,6 @@ CVxParameter * CreateDataObject(vx_context context, vx_graph graph, std::map<std
 			return NULL;
 		return this_delay;
 	}
-	else if (!_strnicmp(desc, "tensor:", 7) || !_strnicmp(desc, "virtual-tensor:", 15) ||
-			 !_strnicmp(desc, "tensor-from-roi:", 16) || !_strnicmp(desc, "tensor-from-handle:", 19))
-	{
-		CVxParamTensor *this_tensor = new CVxParamTensor();
-		this_tensor->SetParamMap(m_paramMap);
-		this_tensor->SetCaptureFrameStart(captureFrameStart);
-		int status = this_tensor->Initialize(context, graph, desc);
-		if (status)
-			return NULL;
-		return this_tensor;
-	}
 	else return nullptr;
 }
 
@@ -348,9 +323,9 @@ CVxParameter * CreateDataObject(vx_context context, vx_graph graph, vx_reference
 {
 	// create the object based on the ref
 	vx_enum type;
-	vx_status status = vxQueryReference(ref, VX_REFERENCE_TYPE, &type, sizeof(type));
+	vx_status status = vxQueryReference(ref, VX_REF_ATTRIBUTE_TYPE, &type, sizeof(type));
 	if (status) {
-		printf("ERROR: CreateDataObject: vxQueryReference(*,VX_REFERENCE_TYPE,...) failed(%d)\n", status);
+		printf("ERROR: CreateDataObject: vxQueryReference(*,VX_REF_ATTRIBUTE_TYPE,...) failed(%d)\n", status);
 		throw -1;
 	}
 	if (type == VX_TYPE_IMAGE) {
@@ -486,54 +461,6 @@ const char * ScanParameters(const char * s_, const char * syntax, const char * f
 					*(va_arg(argp, int64_t *)) = value;
 				}
 			}
-			else if (*fmt == 'l') { // list of 32-bit integer in decimal or hexadecimal
-				vx_uint32 count = *va_arg(argp, vx_uint32 *);
-				vx_uint32 * ptr = va_arg(argp, vx_uint32 *);
-				if (*s != '{') {
-					printf("ERROR: ScanParameters: missing '{' for list: syntax=[%s] fmt=[%s] s=[%s]\n", syntax, fmt_, s_);
-					throw - 1;
-				}
-				s++;
-				for (vx_uint32 i = 0; i < count; i++) {
-					if (i > 0) {
-						if (*s != ',') {
-							printf("ERROR: ScanParameters: missing ',' in list: syntax=[%s] fmt=[%s] s=[%s]\n", syntax, fmt_, s_);
-							throw - 1;
-						}
-						s++;
-					}
-					s = ScanParameters(s, "value", "d", &ptr[i]);
-				}
-				if (*s != '}') {
-					printf("ERROR: ScanParameters: missing '}' for list: syntax=[%s] fmt=[%s] s=[%s]\n", syntax, fmt_, s_);
-					throw - 1;
-				}
-				s++;
-			}
-			else if (*fmt == 'L') { // list of 64-bit integer in decimal or hexadecimal
-				vx_size count = *va_arg(argp, vx_size *);
-				vx_size * ptr = va_arg(argp, vx_size *);
-				if (*s != '{') {
-					printf("ERROR: ScanParameters: missing '{' for list: syntax=[%s] fmt=[%s] s=[%s]\n", syntax, fmt_, s_);
-					throw - 1;
-				}
-				s++;
-				for (vx_size i = 0; i < count; i++) {
-					if (i > 0) {
-						if (*s != ',') {
-							printf("ERROR: ScanParameters: missing ',' in list: syntax=[%s] fmt=[%s] s=[%s]\n", syntax, fmt_, s_);
-							throw - 1;
-						}
-						s++;
-					}
-					s = ScanParameters(s, "value", "D", &ptr[i]);
-				}
-				if (*s != '}') {
-					printf("ERROR: ScanParameters: missing '}' for list: syntax=[%s] fmt=[%s] s=[%s]\n", syntax, fmt_, s_);
-					throw - 1;
-				}
-				s++;
-			}
 			else if (*fmt == 'f' || *fmt == 'F') { // 32-bit/64-bit floating-point
 				char buf[64] = { 0 };
 				for (int i = 0; i < ((int)sizeof(buf) - 1) && ((*s >= '0' && *s <= '9') || *s == '.' || *s == '-' || *s == 'e'); i++)
@@ -556,37 +483,19 @@ const char * ScanParameters(const char * s_, const char * syntax, const char * f
 			else if (*fmt == 's' || *fmt == 'S') { // string of upto 64-bytes/256-bytes until ',', ':', or end-of-string
 				int maxStringBufferLength = (*fmt == 'S') ? 256 : 64;
 				char * p = va_arg(argp, char *);
-				if (s[0] == '"') {
-					s++;
-					// copy till end of string or '"'
-					for (; (*s != '\0') && (*s != '"') && (--maxStringBufferLength > 0);)
-						*p++ = *s++;
-					*p = 0;
-					if(*s == '"') s++;
+				if (!_strnicmp(s, "https://", 8) || !_strnicmp(s, "http://", 7) || !_strnicmp(s, "file://", 7) || 
+					(((s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z')) && s[1] == ':' && s[2] == '\\'))
+				{
+					// started with drive letter or url, so copy prefix string to avoid use of ':' as end marker
+					int len = (s[1] == ':') ? 3 : ((s[4] == ':') ? 7 : 8);
+					strncpy(p, s, len);
+					p += len;  s += len;
+					maxStringBufferLength -= len;
 				}
-				else if (s[0] == '{') {
+				// copy till end of string or ',' or ':'
+				for (; (*s != '\0') && (*s != ',') && (*s != ':') && (--maxStringBufferLength > 0);)
 					*p++ = *s++;
-					// copy till end of the string.
-					for (; (*s != '\0') && (*s != '}') && (--maxStringBufferLength > 2);)
-						*p++ = *s++;
-					if (*s == '}') *p++ = *s++;
-					*p = 0;
-				}
-				else {
-					if (!_strnicmp(s, "https://", 8) || !_strnicmp(s, "http://", 7) || !_strnicmp(s, "file://", 7) ||
-						(((s[0] >= 'a' && s[0] <= 'z') || (s[0] >= 'A' && s[0] <= 'Z')) && s[1] == ':' && s[2] == '\\'))
-					{
-						// started with drive letter or url, so copy prefix string to avoid use of ':' as end marker
-						int len = (s[1] == ':') ? 3 : ((s[4] == ':') ? 7 : 8);
-						strncpy(p, s, len);
-						p += len;  s += len;
-						maxStringBufferLength -= len;
-					}
-					// copy till end of string or ',' or ':'
-					for (; (*s != '\0') && (*s != ',') && (*s != ':') && (--maxStringBufferLength > 0);)
-						*p++ = *s++;
-					*p = 0;
-				}
+				*p = 0;
 			}
 			else if (*fmt == *s) { // skip matched seperators in fmt
 				s++;

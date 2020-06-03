@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 DECL_ALIGN(16) unsigned char dataChannelExtract[16 * 29] ATTR_ALIGN(16) = { 
@@ -1193,7 +1192,6 @@ int HafCpu_ChannelCombine_U16_U8U8
 			*pLocalDst++ = *pLocalSrc1++;
 		}
 
-
 		int width = (int)(dstWidth >> 4);									// 16 byte pairs copied into dst at once
 		pLocalSrc0_xmm = (__m128i *) pLocalSrc0;
 		pLocalSrc1_xmm = (__m128i *) pLocalSrc1;
@@ -1614,7 +1612,6 @@ int HafCpu_ChannelExtract_U8U8U8_U24
 	// Check for output buffer alignment
 	intptr_t prealignBytes = (intptr_t(pDstImage0) & intptr_t(pDstImage1) & intptr_t(pDstImage2)) & 15;
 	bool isAligned = (prealignBytes == ((intptr_t(pDstImage0) | intptr_t(pDstImage1) | intptr_t(pDstImage2)) & 15));	// True if all three buffers have the same alignment
-
 
 	unsigned char *pLocalSrc, *pLocalDst0, *pLocalDst1, *pLocalDst2;
 	__m128i * tbl = (__m128i *) dataChannelExtract;

@@ -108,6 +108,7 @@ else:
 	os.system('(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; unzip 3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; mkdir build )')
+	os.system('(cd '+deps_dir+'; mkdir build/OpenCV )')
 	# Install half.hpp
 	os.system('(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')
 	os.system('(cd '+deps_dir+'; unzip half-1.12.0.zip -d half-files )')

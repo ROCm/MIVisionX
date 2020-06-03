@@ -50,14 +50,18 @@ using namespace std;
 
 #if _WIN32
 #include <Windows.h>
+#include <cmath>
 #include <intrin.h>
 #else
 #include <dlfcn.h>
-#if __APPLE__
 #include <x86intrin.h>
+#if __APPLE__
 #include <cstdlib>
 #include <cmath>
 #endif
+#include <strings.h>
+#define _strnicmp strncasecmp
+#define _stricmp  strcasecmp
 #endif
 
 #if ENABLE_OPENCL

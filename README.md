@@ -28,14 +28,14 @@ MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and
 ## AMD OpenVX Extensions
 The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
 
-<p align="center"><img width="70%" src="docs/images/MIVisionX-OpenVX-Extensions.png" /></p>
+<p align="center"><img width="30%" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/OpenCV_Logo_with_text_svg_version.svg/1920px-OpenCV_Logo_with_text_svg_version.svg.png" /></p>
 
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
 
 ## Applications
 MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.
 
-<p align="center"><img width="90%" src="docs/images/MIVisionX-applications.png" /></p>
+<p align="center"><img width="90%" src="docs/images/vx-pop-app.gif" /></p>
 
 * [Bubble Pop](apps/bubble_pop#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 
@@ -100,7 +100,7 @@ python MIVisionX-Lite-setup.py --directory [setup directory - optional]
 
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
 * Install [Windows Prerequisites](#windows)
-* Use `MIVisionX.sln` to build for x64 platform
+* Use `MIVisionX-Lite.sln` to build for x64 platform
 
 ### Linux
 
@@ -175,7 +175,7 @@ sudo make install
 **Note:** More samples are available [here](samples#samples)
 
 ### Windows
-* MIVisionX_Lite.sln builds the libraries & executables in the folder `MIVisionX/x64`
+* MIVisionX-Lite.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
 ```
 ./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf

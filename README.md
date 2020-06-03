@@ -28,7 +28,7 @@ MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and
 ## AMD OpenVX Extensions
 The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
 
-<p align="center"><img width="30%" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/OpenCV_Logo_with_text_svg_version.svg/1920px-OpenCV_Logo_with_text_svg_version.svg.png" /></p>
+<p align="center"><img width="5%" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/OpenCV_Logo_with_text_svg_version.svg/1920px-OpenCV_Logo_with_text_svg_version.svg.png" /></p>
 
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
 

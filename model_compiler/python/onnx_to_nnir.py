@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,7 @@ onnx2ir_attr = {
     'max' : 'max',
     'to' : 'to', 
     'center_point_box' : 'center_point_box',
+    'value' : 'value'
 }
 
 onnx2ir_op_type = { 
@@ -86,6 +87,7 @@ onnx2ir_op_type = {
     'Shape'              : 'shape',  
     'ArgMax'             : 'argmax',
     'NonMaxSuppression'  : 'nms',
+    'Constant'           : 'constant',
 }
 
 onnx2ir_data_type = [
@@ -205,7 +207,7 @@ def onnx_graph_to_ir_graph(onnx_graph):
     graph.updateLocals()
     return graph
 
-def onnx2ir(model, output_folder):
+def onnx2ir(model, output_folder, node_type_append):
     # get graph from ONNX model
     if isinstance(model, str):
         onnx_model = onnx.load(model)
@@ -214,14 +216,24 @@ def onnx2ir(model, output_folder):
     else:
         raise TypeError("Model must be file path to .onnx file or onnx loaded model")
     graph = onnx_graph_to_ir_graph(onnx_model.graph)
-    graph.toFile(output_folder)
+    graph.toFile(output_folder, node_type_append)
 
 def main():
     if len(sys.argv) < 3:
-        print('Usage: python onnx_to_nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)]')
+        print('Usage: python onnx_to_nnir.py <onnxModel> <nnirOutputFolder> [--input_dims n,c,h,w (optional)] [--node_type_append 0/1 (optional: appends node type to output tensor name)]')
         sys.exit(1)
     onnxFileName = sys.argv[1]
     outputFolder = sys.argv[2]
+    #appends node type to output tensor name. 
+    node_type_append = 0
+    pos = 4
+    while pos < len(sys.argv)  and len(sys.argv) > 3 and sys.argv[pos][:2] == '--':
+        if sys.argv[pos] == '--node_type_append':
+            node_type_append = int(sys.argv[pos+1])
+            pos = pos + 2
+        elif sys.argv[pos] == '--input_dims':
+            #input_dims = sys.argv[pos+1]
+            pos = pos + 2
     print('loading ONNX model from %s ...' % (onnxFileName))
     onnx_model_proto = onnx_pb.ModelProto()
     if not os.path.isfile(onnxFileName):
@@ -229,7 +241,7 @@ def main():
         sys.exit(1)
     onnx_model_proto.ParseFromString(open(onnxFileName, 'rb').read())
     print('converting to IR model in %s ...' % (outputFolder))
-    onnx2ir(onnx_model_proto, outputFolder)
+    onnx2ir(onnx_model_proto, outputFolder, node_type_append)
 
 if __name__ == '__main__':
     main()

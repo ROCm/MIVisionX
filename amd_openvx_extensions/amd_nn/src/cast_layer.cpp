@@ -151,6 +151,13 @@ static vx_status VX_CALLBACK opencl_codegen(
         			);
         			opencl_kernel_code += item;
         		}
+                else if(output_type == VX_TYPE_FLOAT32) {
+                    sprintf(item,
+                    "   float4 i = *(__global float4 *)in; \n"
+                    "   *(__global float4 *)&out[0] = i; \n"
+                    );
+                    opencl_kernel_code += item;
+                }   
         	}
         	else if(input_type == VX_TYPE_INT32) {
         		if(output_type == VX_TYPE_INT64) {
@@ -191,6 +198,13 @@ static vx_status VX_CALLBACK opencl_codegen(
         			);
         			opencl_kernel_code += item;
         		}
+                else if(output_type == VX_TYPE_FLOAT32) {
+                    sprintf(item,
+                    "   float i = *(__global float *)in; \n"
+                    "   *(__global float *)&out[0] = i; \n"
+                    );
+                    opencl_kernel_code += item;
+                }
         	}
         	else if(input_type == VX_TYPE_INT32) {
         		if(output_type == VX_TYPE_INT64) {

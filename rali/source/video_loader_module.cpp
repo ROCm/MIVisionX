@@ -1,11 +1,30 @@
-#include <sstream>
-#include <vx_amd_media.h>
-#include <vx_ext_amd.h>
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+
 #include "video_loader_module.h"
-
-VideoLoaderModule::VideoLoaderModule(vx_graph ovx_graph):_graph(ovx_graph)
+#ifdef RALI_VIDEO
+VideoLoaderModule::VideoLoaderModule(std::shared_ptr<VideoFileNode> video_node):_video_node(std::move(video_node))
 {
-
 }
 
 LoaderModuleStatus 
@@ -23,46 +42,6 @@ VideoLoaderModule::set_output_image (Image* output_image)
 void
 VideoLoaderModule::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
 {
-#if 0    
-    // Currently only files as storage and FFMEG OpenVX decoding is supported
-    if (desc->decoder_type() != DecoderType::OVX_FFMPEG)
-        return LoaderModuleStatus::UNSUPPORTED_DECODER_TYPE;
-
-    if (desc->storage_type() != StorageType::FILE_SYSTEM)
-        return LoaderModuleStatus::UNSUPPORTED_STORAGE_TYPE;
-    
-    
-    std::ostringstream iss;
-    auto vid_desc = dynamic_cast<H264FileDecoderConfig*>(desc);
-
-    // The format for the input string to the OVX decoder API is as follows:
-    // <video_stream_count>,<path_to_video_0>:0|1,<path_to_video_0>:0|1,<path_to_video_0>:0|1 ...
-    // after each path to videos 0 stands for sw decoding, while 1 stands for hw decoding
-    _video_stream_count = vid_desc->_batch_size;
-    iss << _video_stream_count << ",";
-
-    for(size_t i = 0; i < _video_stream_count; i++)
-        iss << (vid_desc->_path_to_videos[i])<< ":" << ((_decode_mode == DecodeMode::USE_HW) ? "1":"0");
-    
-    
-    size_t video_width, video_height;
-    // TODO: Find out the video size from the file itself using FFMPEG API
-
-    vx_image interm_image = vxCreateVirtualImage(_graph, video_width , video_height*_video_stream_count, VX_DF_IMAGE_VIRT);
-    
-    
-    unsigned enbale_open_cl = (vid_desc->_mem_type == RaliMemType::OCL) ? 1 : 0;
-    
-    // TODO: use _loop and enbale_open_cl flag as the last arguments passed to the amdMediaDecoderNode 
-    // vx_node ret  = amdMediaDecoderNode(_graph, iss.str().c_str(), interm_image, NULL);
-    // vx_status res = VX_SUCCESS;
-    // if((res = vxGetStatus((vx_reference)ret)) != VX_SUCCESS)
-       // return LoaderModuleStatus::ADDING_OVX_VIDEO_DECODE_FAILED;
-
-    //
-#endif     
-    return ;
-    
 }
 
 size_t VideoLoaderModule::count()
@@ -70,10 +49,11 @@ size_t VideoLoaderModule::count()
     // TODO: use FFMPEG to find the total number of frames and keep counting 
     // how many times laod_next() is called successfully, subtract them and 
     // that would be the count of frames remained to be decoded
-    return 999999999; 
+    return 9999999;
 }
 
 void VideoLoaderModule::reset()
 {
     // Functionality not there yet in the OpenVX API
 }
+#endif

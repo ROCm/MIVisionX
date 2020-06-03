@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (openvx)
+cmake_minimum_required(VERSION 2.8)
+project(openvx)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
 
@@ -75,10 +75,8 @@ else(OpenCL_FOUND)
 	message("-- ${Red}WARNING:OpenCL Not Found -- OpenVX built for CPU only${ColourReset}")
 endif(OpenCL_FOUND)
 
-install (TARGETS openvx DESTINATION lib)
-install (FILES
-            include/vx_ext_amd.h
-         DESTINATION include)
+install(TARGETS openvx DESTINATION lib)
+install(FILES include/vx_ext_amd.h DESTINATION include)
 install (FILES
             include/VX/vx.h
             include/VX/vx_api.h
@@ -96,9 +94,6 @@ install (FILES
             include/VX/vxu.h
          DESTINATION include/VX)
 
-if( POLICY CMP0054 )
-  cmake_policy( SET CMP0054 OLD )
-endif()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /DVX_API_ENTRY=__declspec(dllexport)")

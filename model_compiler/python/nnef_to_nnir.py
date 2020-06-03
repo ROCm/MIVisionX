@@ -1,3 +1,23 @@
+# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 import nnef
 import math
 from nnir import *
@@ -303,21 +323,27 @@ def nnef_graph_to_ir_graph(nnef_graph):
         graph.convertFp32()
     return graph
 
-def nnef2ir(inputFolder, outputFolder):
+def nnef2ir(inputFolder, outputFolder, node_type_append):
     nnef_graph = nnef.load_graph(inputFolder)
     nnef.infer_shapes(nnef_graph)
     graph = nnef_graph_to_ir_graph(nnef_graph)
-    graph.toFile(outputFolder)
+    graph.toFile(outputFolder, node_type_append)
 
 def main ():
     if len(sys.argv) < 3:
-        print('Usage: python nnef_to_nnir.py <nnefInputFolder> <outputFolder>')
+        print('Usage: python nnef_to_nnir.py <nnefInputFolder> <outputFolder> [--node_type_append 0/1 (optional: appends node type to output tensor name)]')
         sys.exit(1)
     inputFolder = sys.argv[1]
     outputFolder = sys.argv[2]
 
+    #appends node type to output tensor name. 
+    node_type_append = 0
+    if (len(sys.argv) > 3):
+        if (sys.argv[3] == "--node_type_append"):
+            node_type_append = int(sys.argv[4])
+
     print('reading NNEF model from ' + inputFolder + '...')
-    nnef2ir(inputFolder, outputFolder)
+    nnef2ir(inputFolder, outputFolder, node_type_append)
     print('Done')
     
 if __name__ == '__main__':

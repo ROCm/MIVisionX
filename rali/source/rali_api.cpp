@@ -1,7 +1,5 @@
 /*
-MIT License
-
-Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,18 +19,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 #include <string>
 #include <exception>
-#include <parameter_factory.h>
 #include "commons.h"
 #include "context.h"
 #include "rali_api.h"
 
 RaliStatus RALI_API_CALL
-raliRelease(RaliContext rali_context)
+raliRelease(RaliContext p_context)
 {
-    // Deleting rali_context is required to call the destructor of all the member objects
-    delete rali_context;
+    // Deleting context is required to call the destructor of all the member objects
+    auto context = static_cast<Context*>(p_context);
+    delete context;
     return RALI_OK;
 }
 RaliContext RALI_API_CALL
@@ -42,7 +41,7 @@ raliCreate(
         int gpu_id,
         size_t cpu_thread_count)
 {
-    RaliContext rali_context = nullptr;
+    RaliContext context = nullptr;
     try
     {
         auto translate_process_mode = [](RaliProcessMode process_mode)
@@ -57,22 +56,25 @@ raliCreate(
                     THROW("Unkown Rali process mode")
             }
         };
-        rali_context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
+        context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
         // Reset seed in case it's being randomized during context creation
     }
     catch(const std::exception& e)
     {
         ERR( STR("Failed to init the Rali context, ") + STR(e.what()))
     }
-    return rali_context;
+    return context;
 }
 
 RaliStatus RALI_API_CALL
-raliRun(RaliContext context)
+raliRun(RaliContext p_context)
 {
+    auto context = static_cast<Context*>(p_context);
     try
     {
-        context->master_graph->run();
+        auto ret = context->master_graph->run();
+        if(ret != MasterGraph::Status::OK)
+            return RALI_RUNTIME_ERROR;
     }
     catch(const std::exception& e)
     {
@@ -84,8 +86,9 @@ raliRun(RaliContext context)
 }
 
 RaliStatus RALI_API_CALL
-raliVerify(RaliContext context)
+raliVerify(RaliContext p_context)
 {
+    auto context = static_cast<Context*>(p_context);
     try
     {
         context->master_graph->build();

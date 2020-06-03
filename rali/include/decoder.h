@@ -1,10 +1,35 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #pragma once
 
 #include <cstddef>
-
+#include <iostream>
+#include <vector>
+#include "parameter_factory.h"
 enum class DecoderType
 {
     TURBO_JPEG = 0,//!< Can only decode
+    FUSED_TURBO_JPEG = 1, //!< FOR PARTIAL DECODING
     OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
 };
 
@@ -13,9 +38,24 @@ enum class DecoderType
 class DecoderConfig
 {
 public:
+    DecoderConfig() {}
     explicit DecoderConfig(DecoderType type):_type(type){}
     virtual DecoderType type() {return _type; };
     DecoderType _type = DecoderType::TURBO_JPEG;
+    std::vector<Parameter<float>*> _crop_param;
+    void set_crop_param(std::vector<Parameter<float>*> crop_param) { _crop_param = std::move(crop_param); };
+    std::vector<float> get_crop_param(){
+        std::vector<float> crop_mul(4);
+        _crop_param[0]->renew();
+        crop_mul[0] = _crop_param[0]->get();
+        _crop_param[1]->renew();
+        crop_mul[1] = _crop_param[1]->get();
+        _crop_param[2]->renew();
+        crop_mul[2] = _crop_param[2]->get();
+        _crop_param[3]->renew();
+        crop_mul[3] = _crop_param[3]->get();
+        return crop_mul;
+    };
 };
 
 
@@ -55,16 +95,15 @@ public:
       \param input_buffer  User provided buffer containig the encoded image
       \param output_buffer User provided buffer used to write the decoded image into
       \param input_size Size of the compressed data provided in the input_buffer
-      \param desired_width The width user wants the decoded image to be resized to
-      \param desired_height The height user wants the decoded image to be resized to
+      \param max_decoded_width The maximum width user wants the decoded image to be
+      \param max_decoded_height The maximum height user wants the decoded image to be.
 
     */
-    virtual Status decode(unsigned char* input_buffer, 
-                            size_t input_size, 
-                            unsigned char* output_buffer, 
-                            int desired_width, 
-                            int desired_height, 
-                            ColorFormat desired_color) = 0;
+    virtual Decoder::Status decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
+                                   size_t max_decoded_width, size_t max_decoded_height,
+                                   size_t original_image_width, size_t original_image_height,
+                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
+                                   Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original) = 0;
 
     virtual ~Decoder() = default;
 };

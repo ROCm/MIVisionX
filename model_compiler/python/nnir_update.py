@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,12 +22,13 @@ import sys
 from nnir import *
 
 def main():
-    usage = 'Usage: python nnir-update.py [--batch-size <n>] [--fuse-ops 0|1] [--slice-groups 0|1] [--convert-fp16 0|1] [--convert-fp32 0|1] <nnirInputFolder> <nnirOutputFolder>'
+    usage = 'Usage: python nnir-update.py [--batch-size <n>] [--fuse-ops 0|1] [--slice-groups 0|1] [--convert-fp16 0|1] [--convert-fp32 0|1] [--node_type_append 0|1] <nnirInputFolder> <nnirOutputFolder>'
     batchSize = 0
     fuseOps = False
     sliceGroups = False
     convertFp16 = False
     convertFp32 = False
+    node_type_append = 0
     pos = 1
     while len(sys.argv[pos:]) >= 2 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--batch-size':
@@ -44,6 +45,9 @@ def main():
             pos = pos + 2
         elif sys.argv[pos] == '--convert-fp32':
             convertFp32 = False if int(sys.argv[pos+1]) == 0 else True
+            pos = pos + 2
+        elif sys.argv[pos] == '--node_type_append':
+            node_type_append = int(sys.argv[pos+1])
             pos = pos + 2
         else:
             print('ERROR: invalid option: %s' % (sys.argv[pos]))
@@ -68,7 +72,7 @@ def main():
     if  convertFp32:
         graph.convertFp32()   
     print('writing IR model into ' + outputFolder + ' ...')
-    graph.toFile(outputFolder)
+    graph.toFile(outputFolder, node_type_append)
 
 if __name__ == '__main__':
     main()

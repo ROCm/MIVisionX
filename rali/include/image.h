@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #pragma once
 
 #include <VX/vx.h>
@@ -6,8 +28,10 @@
 #include <cstring>
 #include <array>
 #include <queue>
+#include <memory>
 #include "device_manager.h"
 #include "commons.h"
+
 
 /*! \brief Converts Rali Memory type to OpenVX memory type
  *
@@ -43,6 +67,7 @@ struct ROI {
 
 
 /*! \brief Holds the information about an OpenVX image */
+
 struct ImageInfo
 {
     friend struct Image;
@@ -77,6 +102,12 @@ struct ImageInfo
     RaliMemType mem_type() const { return _mem_type; }
     unsigned data_size() const { return _data_size; }
     RaliColorFormat color_format() const {return _color_fmt; }
+    unsigned get_roi_width(int image_batch_idx) const;
+    unsigned get_roi_height(int image_batch_idx) const;
+    uint32_t * get_roi_width() const;
+    uint32_t * get_roi_height() const;
+    const std::vector<uint32_t>& get_roi_width_vec() const;
+    const std::vector<uint32_t>& get_roi_height_vec() const;
 private:
     Type _type = Type::UNKNOWN;//!< image type, whether is virtual image, created from handle or is a regular image
     unsigned _width;//!< image width for a single image in the batch
@@ -86,7 +117,13 @@ private:
     unsigned _data_size;//!< total size of the memory needed to keep the image's data in bytes including all planes
     RaliMemType _mem_type;//!< memory type, currently either OpenCL or Host
     RaliColorFormat _color_fmt;//!< color format of the image
-    std::queue<std::vector<std::string>> _image_names;//!< image name/ids that are stores in the buffer
+    std::shared_ptr<std::vector<uint32_t>> _roi_width;//!< The actual image width stored in the buffer, it's always smaller than _width/_batch_size. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one and observed for all.
+    std::shared_ptr<std::vector<uint32_t>> _roi_height;//!< The actual image height stored in the buffer, it's always smaller than _height. It's created as a vector of pointers to integers, so that if it's passed from one image to another and get updated by one changes can be observed for all.
+
+    void reallocate_image_roi_buffers();
+
+
+
 };
 bool operator==(const ImageInfo& rhs, const ImageInfo& lhs);
 
@@ -104,27 +141,29 @@ struct Image
     Image() = delete;
     void* buffer() { return _mem_handle; }
     vx_image handle() { return vx_handle; }
+    vx_context context() { return _context; }
     unsigned copy_data(cl_command_queue queue, unsigned char* user_buffer, bool sync);
     unsigned copy_data(cl_command_queue queue, cl_mem user_buffer, bool sync);
-    void set_names(const std::vector<std::string> names);
-    std::vector<std::string> get_name();
-    void pop_name();
-
     //! Default destructor
     /*! Releases the OpenVX image */
     ~Image();
 
     //! Constructor accepting the image information as input
-    Image(const ImageInfo& img_info);
+    explicit Image(const ImageInfo& img_info);
 
     int create(vx_context context);
-
-    int create_from_handle(vx_context context, ImageBufferAllocation policy);
+    void update_image_roi(const std::vector<uint32_t> &width, const std::vector<uint32_t> &height);
+    void reset_image_roi() { _info.reallocate_image_roi_buffers(); }
+    // create_from_handle() no internal memory allocation is done here since image's handle should be swapped with external buffers before usage
+    int create_from_handle(vx_context context);
     int create_virtual(vx_context context, vx_graph graph);
 
 private:
-    bool _mem_internally_allocated = false;
-    vx_image vx_handle = 0;//!< The OpenVX image
+    vx_image vx_handle = nullptr;//!< The OpenVX image
     void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
+    vx_context _context = nullptr;
 };
+
+
+

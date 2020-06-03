@@ -25,15 +25,24 @@ RALI can be currently used to perform the following operations either with rando
 * Lens correction
 * Pixelization
 * Exposure modification
+* Hue
+* Saturation
+* ColorTwist
+* Crop
+* Crop Mirror Normalization
+* Resize Crop Mirror
+* Random Crop
 
 
 ## Prerequisites
 *  Ubunto 16.04 or later with
 *  AMD [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
 *  OpenVX (including RPP and Media extension)
+*  Boost lib 1.66 or later 
 *  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or later
 *  Half float library
-
+*  jsoncpp library
+*  Google protobuf 3.11.1 or higher
 
 ## Build instructions
 Rali builds and installs as part of the MIVisonX toolkit. RALI depends on the AMD's Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) library, and it needs to be installed for RALI to build. RALI also needs Turbo JPEG library to decode input JPEG images.  
@@ -44,14 +53,17 @@ Rali builds and installs as part of the MIVisonX toolkit. RALI depends on the AM
 ## Turbo JPEG installation
 Turbo JPEG library is a SIMD optimized library which currently RALI uses to decode input JPEG images. It needs to be built from the source and installed in the default path for libraries and include headers. You can follow the instruction below to download the source, build and install it.
 Note: Make sure you have installed nasm debian package before installation, it's the dependency required by libturbo-jpeg.
-```sh
+
+```
  sudo apt-get install nasm
 ```
+
 Note: You need wget package to download the tar file.
-```sh
+```
  sudo apt-get install wget
 ```
-```sh
+
+````
 wget  https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz
 tar xf libjpeg-turbo-2.0.3.tar.gz
 cd libjpeg-turbo-2.0.3
@@ -63,8 +75,13 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr \
       -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 \
       -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib  \
       ..
-make -j 4
+make -j$nproc
 sudo make install      
+````
+
+## Jsoncpp installation
+```
+sudo apt-get install libjsoncpp-dev
 ```
 
 ## Sample and test applications

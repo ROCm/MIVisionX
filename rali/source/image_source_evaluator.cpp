@@ -1,3 +1,25 @@
+/*
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 #include "image_source_evaluator.h"
 #include "decoder_factory.h"
 #include "reader_factory.h"
@@ -25,7 +47,7 @@ ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
     // Can initialize it to any decoder types if needed
     
 
-    _header_buff.resize(COMPRESSED_SIZE);
+    // _header_buff.resize(COMPRESSED_SIZE);
     _decoder = create_decoder(std::move(decoder_cfg));
     _reader = create_reader(std::move(reader_cfg));
     find_max_dimension();
@@ -39,10 +61,11 @@ ImageSourceEvaluator::find_max_dimension()
 
     while( _reader->count() ) 
     {
-        if( (_reader->open()) == 0 )
+        size_t fsize = _reader->open();
+        if( (fsize) == 0 )
             continue;
-
-        auto actual_read_size = _reader->read(_header_buff.data(), COMPRESSED_SIZE);
+        _header_buff.resize(fsize);
+        auto actual_read_size = _reader->read(_header_buff.data(), fsize);
         _reader->close();
         
         int width, height, jpeg_sub_samp;
@@ -60,7 +83,6 @@ ImageSourceEvaluator::find_max_dimension()
 
     }
     // return the reader read pointer to the begining of the resource
-    _reader->reset();
     _reader->reset();
 }
 

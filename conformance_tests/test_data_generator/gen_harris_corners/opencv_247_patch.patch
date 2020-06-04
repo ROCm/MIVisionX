@@ -1,0 +1,84 @@
+diff --git a/modules/imgproc/include/opencv2/imgproc/imgproc.hpp b/modules/imgproc/include/opencv2/imgproc/imgproc.hpp
+index 2fcccfe..3e11f9f 100644
+--- a/modules/imgproc/include/opencv2/imgproc/imgproc.hpp
++++ b/modules/imgproc/include/opencv2/imgproc/imgproc.hpp
+@@ -475,7 +475,7 @@ CV_EXPORTS_W void cornerSubPix( InputArray image, InputOutputArray corners,
+ CV_EXPORTS_W void goodFeaturesToTrack( InputArray image, OutputArray corners,
+                                      int maxCorners, double qualityLevel, double minDistance,
+                                      InputArray mask=noArray(), int blockSize=3,
+-                                     bool useHarrisDetector=false, double k=0.04 );
++                                     bool useHarrisDetector=false, double k=0.04, int ksize = 3);
+ 
+ //! finds lines in the black-n-white image using the standard or pyramid Hough transform
+ CV_EXPORTS_W void HoughLines( InputArray image, OutputArray lines,
+diff --git a/modules/imgproc/src/featureselect.cpp b/modules/imgproc/src/featureselect.cpp
+index 827fd40..c018189 100644
+--- a/modules/imgproc/src/featureselect.cpp
++++ b/modules/imgproc/src/featureselect.cpp
+@@ -55,7 +55,7 @@ template<typename T> struct greaterThanPtr
+ void cv::goodFeaturesToTrack( InputArray _image, OutputArray _corners,
+                               int maxCorners, double qualityLevel, double minDistance,
+                               InputArray _mask, int blockSize,
+-                              bool useHarrisDetector, double harrisK )
++                              bool useHarrisDetector, double harrisK, int ksize)
+ {
+     Mat image = _image.getMat(), mask = _mask.getMat();
+ 
+@@ -64,9 +64,9 @@ void cv::goodFeaturesToTrack( InputArray _image, OutputArray _corners,
+ 
+     Mat eig, tmp;
+     if( useHarrisDetector )
+-        cornerHarris( image, eig, blockSize, 3, harrisK );
++        cornerHarris( image, eig, blockSize, ksize, harrisK );
+     else
+-        cornerMinEigenVal( image, eig, blockSize, 3 );
++        cornerMinEigenVal( image, eig, blockSize, ksize );
+ 
+     double maxVal = 0;
+     minMaxLoc( eig, 0, &maxVal, 0, 0, mask );
+@@ -93,7 +93,7 @@ void cv::goodFeaturesToTrack( InputArray _image, OutputArray _corners,
+     }
+ 
+     sort( tmpCorners, greaterThanPtr<float>() );
+-    vector<Point2f> corners;
++    vector<Point3f> corners;
+     size_t i, j, total = tmpCorners.size(), ncorners = 0;
+ 
+     if(minDistance >= 1)
+@@ -163,7 +163,7 @@ void cv::goodFeaturesToTrack( InputArray _image, OutputArray _corners,
+                 //    i,x, y, x_cell, y_cell, (int)minDistance, cell_size,x1,y1,x2,y2, grid_width,grid_height,c);
+                 grid[y_cell*grid_width + x_cell].push_back(Point2f((float)x, (float)y));
+ 
+-                corners.push_back(Point2f((float)x, (float)y));
++                corners.push_back(Point3f((float)x, (float)y, *tmpCorners[i]));
+                 ++ncorners;
+ 
+                 if( maxCorners > 0 && (int)ncorners == maxCorners )
+@@ -179,14 +179,25 @@ void cv::goodFeaturesToTrack( InputArray _image, OutputArray _corners,
+             int y = (int)(ofs / eig.step);
+             int x = (int)((ofs - y*eig.step)/sizeof(float));
+ 
+-            corners.push_back(Point2f((float)x, (float)y));
++            corners.push_back(Point3f((float)x, (float)y, *tmpCorners[i]));
+             ++ncorners;
+             if( maxCorners > 0 && (int)ncorners == maxCorners )
+                 break;
+         }
+     }
+ 
+-    Mat(corners).convertTo(_corners, _corners.fixedType() ? _corners.type() : CV_32F);
++    int rtype = _corners.fixedType() ? _corners.type() : CV_32F;
++    if (2 == CV_MAT_CN(rtype))
++    {
++        vector<Point2f> corners2d;
++        for (vector<Point3f>::iterator it = corners.begin(); it != corners.end(); it++)
++        {
++            corners2d.push_back(Point2f((*it).x, (*it).y));
++        }
++        Mat(corners2d).convertTo(_corners, rtype);
++    }
++    else
++        Mat(corners).convertTo(_corners, rtype);
+ 
+     /*
+     for( i = 0; i < total; i++ )

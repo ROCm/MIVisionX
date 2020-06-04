@@ -42,22 +42,31 @@ branches:
 
 install:
   - sudo apt update
-  - sudo apt --yes install cmake git wget unzip libnuma-dev
-  - wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
-  - sudo sh -c 'echo deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main > /etc/apt/sources.list.d/rocm.list'
-  - sudo apt update
-  - sudo apt install rocm-opencl-dev
+  - sudo apt --yes install cmake
 
 before_script:
 
-
 script:
-  - mkdir build-openvx-travis-mode
-  - cd build-openvx-travis-mode
-  - cmake ../
-  - make -j8
+  - export VX_TEST_DATA_PATH=$(pwd)/conformance_tests/test_data
+  - export OPENVX_DIR=$(pwd)/build-openvx
+  - export OPENVX_INC=$(pwd)/amd_openvx/openvx
+  - mkdir build-openvx
+  - cd build-openvx
+  - cmake -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" ../
+  - make
+  - cd ../
+  - mkdir build-cts
+  - cd build-cts
+  - cmake -DOPENVX_INCLUDES=$OPENVX_INC/include -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/libopenvx.so\;$OPENVX_DIR/lib/libvxu.so\;pthread\;dl\;m\;rt ../conformance_tests
+  - cmake --build .
+  - LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance
+  - cd ../
 
 after_success:
+  - lcov --directory . --capture --output-file coverage.info
+  - lcov --remove coverage.info '/usr/*' --output-file coverage.info
+  - lcov --list coverage.info
+  - bash <(curl -s https://codecov.io/bash) || echo "codecov did not collect coverage reports"
 
 notifications:
   email:

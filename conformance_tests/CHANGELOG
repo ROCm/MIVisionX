@@ -1,0 +1,27 @@
+OpenVX conformance tests change log:
+
+2015-05-13:
+* updated vx_uint32/vx_size type policy
+* updated kernel names
+* removed GraphCallback.testRestart test
+* AccumulateSquare: S16 input without negative values
+* Dilate/Erode: boolean images with 0/255 values
+
+2015-04-15:
+* added Array tests
+* added Image CopyWrite/CopyRead tests
+* added AbsDiff S16 tests
+* Scale image test: replaced exact check from some tests
+* HarrisCorners test uses normalization
+
+2014-12-19:
+* fix OpticalFlow check for lost points
+
+2014-12-17:
+* removed Scale tests with BILINEAR interpolation and bit-exact checks
+* fix tolerance check in GaussianPyramid tests
+* tests for OpticalFlow with pre-calculated reference input pyramids
+
+2014-12-08:
+* disabled tests for REPLICATE and CONSTANT borders for filter tests
+* added tests package version information to #REPORT string

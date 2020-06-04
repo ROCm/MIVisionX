@@ -1,0 +1,46 @@
+How to build and run conformance tests on Android
+=================================================
+
+This guide assumes the following:
+- adb is installed and configured (connected to device);
+- Android NDK is installed and configured;
+- you have Android build of tested OpenVX implementation;
+- you use Linux bash or equivalent shell;
+
+Also commands below assume that tested package of OpenVX implementation contains:
+  * 'include' subdirectory that contains OpenVX header files;
+  * 'lib' subdirectory that contains implementation binaries (libopenvx.so and libvxu.so);
+If it is not, then commands below should be updated to actual state.
+
+
+1. Set Android ABI:
+
+    export ANDROID_ABI=armeabi-v7a
+    # or ANDROID_ABI=x86
+    # or ANDROID_ABI=mips
+
+This ABI must be equal to ABI of OpenVX implementation binaries.
+
+2. Change directory:
+
+    cd conformance_tests/android
+
+3. Build conformance tests binaries:
+
+    export OPENVX_DIR=<path to tested OpenVX implementation package>
+    ndk-build OPENVX_INCLUDES=${OPENVX_DIR}/include/ OPENVX_LIBRARIES="-L ${OPENVX_DIR}/lib/ -lopenvx -lvxu" APP_ABI=${ANDROID_ABI}
+
+4. Deploy files on device and run conformance tests. Use commands below as a sample:
+
+    # Upload test executable to device
+    adb push `pwd`/libs/${ANDROID_ABI}/vx_test_conformance /data/local/tmp/openvx/
+    adb shell chmod 777 /data/local/tmp/openvx/vx_test_conformance
+
+    # Upload shared libraries to device (OPTIONAL step, refer to OpenVX implementation documentation)
+    (cd ${OPENVX_DIR}/lib; find ./ -name '*.so' -exec adb push {} /data/local/tmp/openvx/lib/{} \;)
+
+    # Upload test data to device
+    (cd ../test_data; find ./ -exec adb push {} /data/local/tmp/openvx/test_data/{} \;)
+
+    # Run test on device
+    adb shell 'export LD_LIBRARY_PATH=/data/local/tmp/openvx/lib/:${LD_LIBRARY_PATH}; export VX_TEST_DATA_PATH=/data/local/tmp/openvx/test_data/; /data/local/tmp/openvx/vx_test_conformance'

@@ -1,0 +1,102 @@
+
+General configuration for OpenCV 2.4.7 =====================================
+  Version control:               2.4.7
+
+  Platform:
+    Host:                        Linux 3.13.11-100.fc19.x86_64 x86_64
+    CMake:                       2.8.12.2
+    CMake generator:             Unix Makefiles
+    CMake build tool:            /usr/bin/gmake
+    Configuration:               Release
+
+  C/C++:
+    Built as dynamic libs?:      YES
+    C++ Compiler:                /usr/lib64/ccache/c++  (ver 4.8.3)
+    C++ flags (Release):         -fsigned-char -W -Wall -Werror=return-type -Werror=address -Werror=sequence-point -Wformat -Werror=format-security -Wmissing-declarations -Wundef -Winit-self -Wpointer-arith -Wshadow -Wsign-promo -Wno-narrowing -Wno-delete-non-virtual-dtor -fdiagnostics-show-option -Wno-long-long -pthread -fomit-frame-pointer -msse -msse2 -msse3 -ffunction-sections -O3 -DNDEBUG  -DNDEBUG
+    C++ flags (Debug):           -fsigned-char -W -Wall -Werror=return-type -Werror=address -Werror=sequence-point -Wformat -Werror=format-security -Wmissing-declarations -Wundef -Winit-self -Wpointer-arith -Wshadow -Wsign-promo -Wno-narrowing -Wno-delete-non-virtual-dtor -fdiagnostics-show-option -Wno-long-long -pthread -fomit-frame-pointer -msse -msse2 -msse3 -ffunction-sections -g  -O0 -DDEBUG -D_DEBUG -ggdb3
+    C Compiler:                  /usr/lib64/ccache/cc
+    C flags (Release):           -fsigned-char -W -Wall -Werror=return-type -Werror=address -Werror=sequence-point -Wformat -Werror=format-security -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wundef -Winit-self -Wpointer-arith -Wshadow -Wno-narrowing -fdiagnostics-show-option -Wno-long-long -pthread -fomit-frame-pointer -msse -msse2 -msse3 -ffunction-sections -O3 -DNDEBUG  -DNDEBUG
+    C flags (Debug):             -fsigned-char -W -Wall -Werror=return-type -Werror=address -Werror=sequence-point -Wformat -Werror=format-security -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -Wundef -Winit-self -Wpointer-arith -Wshadow -Wno-narrowing -fdiagnostics-show-option -Wno-long-long -pthread -fomit-frame-pointer -msse -msse2 -msse3 -ffunction-sections -g  -O0 -DDEBUG -D_DEBUG -ggdb3
+    Linker flags (Release):      
+    Linker flags (Debug):        
+    Precompiled headers:         YES
+
+  OpenCV modules:
+    To be built:                 core flann imgproc highgui features2d calib3d ml video legacy objdetect photo gpu ocl nonfree contrib java python stitching superres ts videostab
+    Disabled:                    world
+    Disabled by dependency:      -
+    Unavailable:                 androidcamera
+
+  GUI: 
+    QT:                          NO
+    GTK+ 2.x:                    YES (ver 2.24.22)
+    GThread :                    YES (ver 2.36.4)
+    GtkGlExt:                    NO
+    OpenGL support:              NO
+
+  Media I/O: 
+    ZLib:                        /lib64/libz.so (ver 1.2.7)
+    JPEG:                        /lib64/libjpeg.so (ver )
+    PNG:                         /lib64/libpng.so (ver 1.5.13)
+    TIFF:                        /lib64/libtiff.so (ver 42 - 4.0.3)
+    JPEG 2000:                   build (ver 1.900.1)
+    OpenEXR:                     build (ver 1.7.1)
+
+  Video I/O:
+    DC1394 1.x:                  NO
+    DC1394 2.x:                  NO
+    FFMPEG:                      YES
+      codec:                     YES (ver 54.92.100)
+      format:                    YES (ver 54.63.104)
+      util:                      YES (ver 52.18.100)
+      swscale:                   YES (ver 2.2.100)
+      gentoo-style:              YES
+    GStreamer:                   NO
+    OpenNI:                      NO
+    OpenNI PrimeSensor Modules:  NO
+    PvAPI:                       NO
+    GigEVisionSDK:               NO
+    UniCap:                      NO
+    UniCap ucil:                 NO
+    V4L/V4L2:                    NO/YES
+    XIMEA:                       NO
+    Xine:                        NO
+
+  Other third-party libraries:
+    Use IPP:                     NO
+    Use Eigen:                   NO
+    Use TBB:                     NO
+    Use OpenMP:                  NO
+    Use GCD                      NO
+    Use Concurrency              NO
+    Use C=:                      NO
+    Use Cuda:                    NO
+    Use OpenCL:                  YES
+
+  OpenCL:
+    Version:                     dynamic
+    Include path:                /home/alalek/projects/opencv_247/3rdparty/include/opencl/1.2 /opt/clAmdFft-1.10.321/include /opt/clAmdBlas-1.10.321/include
+    Use AMD FFT:                 YES
+    Use AMD BLAS:                YES
+
+  Python:
+    Interpreter:                 /usr/bin/python2 (ver 2.7.5)
+    Libraries:                   /lib64/libpython2.7.so (ver 2.7.5)
+    numpy:                       /usr/lib64/python2.7/site-packages/numpy/core/include (ver 1.7.2)
+    packages path:               lib/python2.7/site-packages
+
+  Java:
+    ant:                         /bin/ant (ver 1.8.4)
+    JNI:                         /usr/lib/jvm/java/include /usr/lib/jvm/java/include/linux /usr/lib/jvm/java/include
+    Java tests:                  YES
+
+  Tests and samples:
+    Tests:                       YES
+    Performance tests:           YES
+    C/C++ Examples:              NO
+
+  Install path:                  /usr/local
+
+  cvconfig.h is in:              /home/alalek/projects/opencv_build/opencv_247_release
+-----------------------------------------------------------------
+

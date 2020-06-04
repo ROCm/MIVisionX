@@ -49,6 +49,7 @@ before_script:
 script:
   - export VX_TEST_DATA_PATH=$(pwd)/conformance_tests/test_data
   - export OPENVX_DIR=$(pwd)/build-openvx
+  - export OPENVX_INC=$(pwd)/amd_openvx/openvx
   - mkdir build-openvx
   - cd build-openvx
   - cmake -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" ../
@@ -56,7 +57,7 @@ script:
   - cd ../
   - mkdir build-cts
   - cd build-cts
-  - cmake -DOPENVX_INCLUDES=../amd_openvx/openvx/include -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/libopenvx.so\;$OPENVX_DIR/lib/libvxu.so\;pthread\;dl\;m\;rt ../conformance_tests
+  - cmake -DOPENVX_INCLUDES=$OPENVX_INC/include -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/libopenvx.so\;$OPENVX_DIR/lib/libvxu.so\;pthread\;dl\;m\;rt ../conformance_tests
   - cmake --build .
   - LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance
   - cd ../

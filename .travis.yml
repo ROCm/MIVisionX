@@ -51,7 +51,7 @@ script:
   - export OPENVX_DIR=$(pwd)/build-openvx
   - mkdir build-openvx
   - cd build-openvx
-  - cmake -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"../
+  - cmake -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" ../
   - make
   - cd ../
   - mkdir build-cts

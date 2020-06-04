@@ -1,0 +1,111 @@
+The OpenVX conformance tests README
+===================================
+
+Building the conformance tests
+------------------------------
+
+The included CMake script provides support for linking the tests with your
+pre-built OpenVX library binaries.
+
+The following CMake variables are supported:
+
+* OPENVX_LIBRARIES   - semicolon separated list of shared/static libraries to link
+                       with. If there are link order dependencies between your
+                       libraries, then the libraries have to be specified in
+                       correct order. Use absolute paths if your librarieas are
+                       not in system path.
+
+* OPENVX_INCLUDES    - absolute path to the OpenVX headers (excluding the "VX"
+                       sub-folder).
+
+* OPENVX_DEFINITIONS - semicolon separated list of preprocessor definitions
+                       required to compile the suite for target platform.
+
+* OPENVX_CFLAGS      - semicolon separated list of extra compiler flags
+                       required to compile/link the suite for target platform.
+
+Example for Linux, use the following commands to build the test suite:
+
+    export OPENVX_DIR=<path to prebuilt OpenVX>
+    cd <build dir>
+    cmake \
+        -DOPENVX_INCLUDES=$OPENVX_DIR/include \
+        -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/libopenvx.so\;pthread\;dl\;m\;rt \
+         ../conformance_tests/
+    cmake --build .
+
+
+Running the tests
+-----------------
+
+1. Set your VX_TEST_DATA_PATH environment variable to point to the
+   "<conformance_tests>/test_data" directory.
+
+2. For Linux/Mac OS X you might need to set the LD_LIBRARY_PATH
+
+3. To run the tests:
+
+    Usage:
+
+    <build binary path>/vx_test_conformance [--filter=<filter>]
+        [--run_disabled] [--global_context=0|1] [--check_any_size=0|1]
+        [--show_test_duration=0|1] [--verbose] [--testid=<testid>]
+        [--list_tests] [--quiet]
+
+    Options:
+
+        --filter=<filter> - selects only matching tests for execution
+
+                 <filter> - specifies a filter as in Google Test: "a
+                            ':'-separated list of wildcard patterns (called the
+                            positive patterns) optionally followed by a '-' and
+                            another ':'-separated pattern list (called the
+                            negative patterns). A test matches the filter if and
+                            only if it matches any of the positive patterns but
+                            does not match any of the negative patterns."
+
+        --run_disabled    - include a set of tests that are disabled by default,
+                            which are not part of the conformance suite
+
+        --global_context  - create new a vx_context for every test (default, "=0")
+                            or execute all the tests inside single vx_context ("=1")
+
+        --check_any_size  - use a restricted set of image sizes (usually VGA) for
+                            testing nodes and immediate mode functions (default,
+                            "=0") or include other sizes as well ("=1").
+                            Conformance only requires the default, restricted set.
+
+        --show_test_duration - enable/disable test time in the test log.  If
+                               this option is not selected (default) no timing
+                               information will be printed.
+
+        --list_tests      - list the tests without running them
+
+        --testid=<testid> - specifies report custom identifier for tests run
+
+        --verbose         - enable extra output
+
+        --quiet           - minimize extra/headers output
+
+
+In order to pass the conformance test, the tests should be run with all the
+options set to their default values, so you can run without specifying any
+options, i.e., just:
+
+     <build binary path>/vx_test_conformance
+
+with no options.  The options are for information and debug purposes only.
+
+
+Test data
+---------
+
+The test data directory contains:
+- several natural images (VGA resolution) used as inputs for tested algorithms;
+- generated reference output data provided by OpenCV 2.4.7 algorithms.
+
+All the required test data is included in the conformance tests package.
+You do NOT need to regenerate this data in most cases.
+
+Refer to the README from the "test_data_generator" directory for more
+information.

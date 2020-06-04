@@ -1,0 +1,52 @@
+The OpenVX conformance tests data generators README
+===================================================
+
+OpenCV 2.4.7 binaries are required to build and run the test data generators.
+
+A patched version of OpenCV 2.4.7 (for the HarrisCorners function) was used for
+test data generation.  To regenerate the test data, please use either the
+patched version of OpenCV from Khronos located at:
+
+  https://www.khronos.org/members/login/groups/Vision/Conformance%20tests/opencv_247_hc_patch.zip
+
+or get a standard release of OpenCV 2.4.7 and apply the patch for the
+HarrisCorners function.  This patch is located in the HarrisCorners generator
+sub-folder.  Apply the patch via the command "patch -p1 < path".
+
+Use the "-DBUILD_HC_TEST_DATA_GENERATOR=ON" CMake option to build the test data
+generators.
+
+Use the "-DOpenCV_DIR=<path to OpenCV binaries>" CMake option to specify the
+location of your OpenCV 2.4.7 binaries.
+
+We used this configuration to generate reference output results:
+- CPU: i5-2500
+- OS: Linux 64-bit (Fedora 19)
+- Compiler: GCC 4.8.3
+- CMake 2.8.12.2
+
+OpenCV_CMake.log file contains CMake log with configuration information.
+
+
+gen_canny
+---------
+
+Generator for Canny test.
+
+Run the executable from the "test_data" directory.
+
+
+gen_harris_corners
+------------------
+
+Generator for Harris Corners test.
+
+Run the executable from the "test_data" directory.
+
+
+gen_optflow_pyrlk
+-----------------
+
+Generator for the Optical Flow PyrLK test.
+
+Run the executable from the "test_data" directory.

@@ -62,8 +62,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>OpenVX.lib;IlmImfd.lib;ippicvmt.lib;zlibd.lib;libwebpd.lib;libjpegd.lib;libtiffd.lib;libpngd.lib;libjasperd.lib;vfw32.lib;opencv_imgcodecs300d.lib;opencv_hal300d.lib;opencv_core300d.lib;opencv_highgui300d.lib;opencv_imgproc300d.lib;opencv_videoio300d.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc12\staticlib;$(AMDAPPSDKROOT)lib\x86_64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenVX.lib;opencv_world340d.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc14\lib;$(OCL_ROOT)\lib\x86_64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -76,7 +76,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\openvx\include;$(OpenCV_DIR)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\amd_openvx\openvx\include;$(OpenCV_DIR)\include</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -85,8 +85,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>OpenVX.lib;IlmImf.lib;ippicvmt.lib;zlib.lib;libwebp.lib;libjpeg.lib;libtiff.lib;libpng.lib;libjasper.lib;vfw32.lib;opencv_imgcodecs300.lib;opencv_hal300.lib;opencv_core300.lib;opencv_highgui300.lib;opencv_imgproc300.lib;opencv_videoio300.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc12\staticlib;$(AMDAPPSDKROOT)lib\x86_64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenVX.lib;opencv_world340.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OutDir);$(OpenCV_DIR)\x64\vc14\lib;$(OCL_ROOT)\lib\x86_64</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

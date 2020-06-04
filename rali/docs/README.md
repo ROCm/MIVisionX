@@ -71,7 +71,7 @@ Rali.types are enums exported from C++ api to python. Some examples include CPU,
 ### installing RALI python plugin (Python 3.6)
 *  Build and install RPP
 *  Build and install MIVisionX which installs rali c++ lib
-*  Go to [rali_pybind](../pybind_python) folder
+*  Go to [rali_pybind](../rali_pybind) folder
 *  sudo ./run.sh
 
 ### Steps to run MLPerf Resnet50 classification training with RALI on a system with MI50 and ROCm

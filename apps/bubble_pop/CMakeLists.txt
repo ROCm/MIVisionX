@@ -58,7 +58,7 @@ add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})
 
 add_executable(vxPop source/AMD_app.cpp)
-target_link_libraries(vxPop openvx ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(vxPop ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES} ${PROJECT_NAME})
 
 install(TARGETS vxPop DESTINATION bin)
 file(COPY image DESTINATION ${CMAKE_BINARY_DIR})

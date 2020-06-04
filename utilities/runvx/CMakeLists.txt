@@ -26,7 +26,7 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(OpenCL QUIET)
 find_package(OpenCV QUIET)
 
-include_directories(../openvx/include)
+include_directories(../../amd_openvx/openvx/include)
 
 list(APPEND SOURCES
 	runvx.cpp

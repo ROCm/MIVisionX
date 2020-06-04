@@ -1,4 +1,7 @@
-# AMD OpenVX 1.0.1
+# AMD OpenVX
+
+<p align="center"><img width="40%" src="https://upload.wikimedia.org/wikipedia/en/thumb/d/dd/OpenVX_logo.svg/1920px-OpenVX_logo.svg.png" /></p>
+
 AMD OpenVX 1.0.1 is a highly optimized open source implementation of the [Khronos OpenVX](https://www.khronos.org/registry/vx/) computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
 The amd_openvx project consists of the following components:

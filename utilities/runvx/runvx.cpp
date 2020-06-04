@@ -24,30 +24,18 @@ THE SOFTWARE.
 #include "vxParamHelper.h"
 #include "vxEngineUtil.h"
 #include "vxEngine.h"
-#include <iostream>
 
-char buf[4096];
-// program and version
-#define RUNVX_VERSION "1.0.0"
-#if _WIN32
-#include <direct.h>
-#define cwd _getcwd
-#define cd _chdir
-#define RUNVX_PROGRAM "runvx.exe"
-#else
-#include "unistd.h"
-#define cwd getcwd
-#define cd chdir
-#define RUNVX_PROGRAM "runvx"
-#endif
+// version
+#define RUNVX_VERSION "0.9.1"
 
 void show_usage(const char * program, bool detail)
 {
+	printf("RUNVX.EXE %s\n", RUNVX_VERSION);
 	printf("\n");
 	printf("Usage:\n");
-	printf("  %s [options] [file] <file.gdf> [argument(s)]\n", RUNVX_PROGRAM);
-	printf("  %s [options] node <kernelName> [argument(s)]\n", RUNVX_PROGRAM);
-	printf("  %s [options] shell [argument(s)]\n", RUNVX_PROGRAM);
+	printf("  runvx.exe [options] file <file.gdf> [argument(s)]\n");
+	printf("  runvx.exe [options] node <kernelName> [argument(s)]\n");
+	printf("  runvx.exe [options] shell [argument(s)]\n");
 	printf("\n");
 	printf("The argument(s) are data objects created using <data-description> syntax.\n");
 	printf("These arguments can be accessed from inside GDF as $1, $2, etc.\n");
@@ -67,18 +55,11 @@ void show_usage(const char * program, bool detail)
 	printf("      Set context affinity to CPU or GPU.\n");
 	printf("  -dump-profile\n");
 	printf("      Print performance profiling information after graph launch.\n");
-	printf("  -enable-profile\n");
-	printf("      use directive VX_DIRECTIVE_AMD_ENABLE_PROFILE_CAPTURE when graph is created\n");
 	printf("  -discard-compare-errors\n");
 	printf("      Continue graph processing even if compare mismatches occur.\n");
 	printf("  -disable-virtual\n");
 	printf("      Replace all virtual data types in GDF with non-virtual data types.\n");
 	printf("      Use of this flag (i.e. for debugging) can make a graph run slower.\n");
-	printf("  -dump-data-config:<dumpFilePrefix>,<object-type>[,object-type[...]]\n");
-	printf("      Automatically dump all non-virtual objects of specified object types\n");
-	printf("      into files '<dumpFilePrefix>dumpdata_####_<object-type>_<object-name>.raw'.\n");
-	printf("  -discard-commands:<cmd>[,cmd[...]]\n");
-	printf("      Discard the listed commands.\n");
 	printf("\n");
 
 	if (!detail) return;
@@ -87,14 +68,13 @@ void show_usage(const char * program, bool detail)
 
 int main(int argc, char * argv[])
 {	
-	printf("%s %s\n", RUNVX_PROGRAM, RUNVX_VERSION);
 	// process command-line options
-	const char * program = RUNVX_PROGRAM;
+	const char * program = "runvx.exe";
 	bool verbose = false;
 	bool enableMultiFrameProcessing = false;
 	bool framesEofRequested = true;
 	bool enableDumpGDF = false, enableScheduleGraph = false;
-	bool pauseBeforeExit = false, noPauseBeforeExit = false;
+	bool pauseBeforeExit = false;
 	bool enableDumpProfile = false;
 	bool disableVirtual = false;
 	bool discardCompareErrors = false;
@@ -105,9 +85,6 @@ int main(int argc, char * argv[])
 	int arg, frameStart = 0, frameEnd = 1;
 	bool frameCountSpecified = false;
 	int waitKeyDelayInMilliSeconds = -1; // -ve indicates no user preference
-	bool enableFullProfile = false, disableNodeFlushForCL = false;
-	std::string dumpDataConfig = "";
-	std::string discardCommandList = "";
 	for (arg = 1; arg < argc; arg++){
 		if (argv[arg][0] == '-'){
 			if (!_stricmp(argv[arg], "-h")) {
@@ -128,17 +105,13 @@ int main(int argc, char * argv[])
 				while (argv[arg][spos]) {
 					if (argv[arg][spos] == ',')
 						spos++;
-					else if (!_strnicmp(&argv[arg][spos], "live", 4)) {
+					else if (!_strnicmp(argv[arg], "live", 4)) {
 						enableMultiFrameProcessing = true;
 						spos += 4;
 					}
-					else if (!_strnicmp(&argv[arg][spos], "eof", 3)) {
+					else if (!_strnicmp(argv[arg], "eof", 3)) {
 						framesEofRequested = true;
 						spos += 3;
-					}
-					else if (!_strnicmp(&argv[arg][spos], "ignore-eof", 10)) {
-						framesEofRequested = false;
-						spos += 10;
 					}
 					else {
 						int k = sscanf(&argv[arg][spos], "%d:%d", &frameStart, &frameEnd);
@@ -160,12 +133,6 @@ int main(int argc, char * argv[])
 			else if (!_stricmp(argv[arg], "-dump-profile")) {
 				enableDumpProfile = true;
 			}
-			else if (!_stricmp(argv[arg], "-enable-profile")) {
-				enableFullProfile = true;
-			}
-			else if (!_stricmp(argv[arg], "-disable-opencl-node-flush")) {
-				disableNodeFlushForCL = true;
-			}
 			else if (!_stricmp(argv[arg], "-dump-gdf") || !_stricmp(argv[arg], "-ago-dump")) { // TBD: remove -ago-dump
 				enableDumpGDF = true;
 			}
@@ -177,12 +144,6 @@ int main(int argc, char * argv[])
 			}
 			else if (!_stricmp(argv[arg], "-disable-virtual")) {
 				disableVirtual = true;
-			}
-			else if (!_strnicmp(argv[arg], "-dump-data-config:", 18)) {
-				dumpDataConfig = &argv[arg][18];
-			}
-			else if (!_strnicmp(argv[arg], "-discard-commands:", 18)) {
-				discardCommandList = &argv[arg][18];
 			}
 			else if (!_strnicmp(argv[arg], "-graph-optimizer-flags:", 23)) {
 				if (sscanf(&argv[arg][23], "%i", &graphOptimizerFlags) == 1) {
@@ -196,37 +157,27 @@ int main(int argc, char * argv[])
 			else if (!_stricmp(argv[arg], "-pause")) {
 				pauseBeforeExit = true;
 			}
-			else if (!_stricmp(argv[arg], "-no-pause")) {
-				noPauseBeforeExit = true;
-			}
 			else { printf("ERROR: invalid option: %s\n", argv[arg]); return -1; }
 		}
 		else break;
 	}
 	if (arg == argc) { show_usage(program, false); return -1; }
-	int argCount = argc - arg - 1;
-	int argParamOffset = 1;
-	if (!_stricmp(argv[arg], "node") || !_stricmp(argv[arg], "file")) {
-		argParamOffset++;
-		argCount--;
-	}
+	int argCount = argc - arg - 2;
 	fflush(stdout);
 
 	CVxEngine engine;
 	int errorCode = 0;
 	try {
 		// initialize engine
-		if (engine.Initialize(argCount, defaultTargetAffinity, defaultTargetInfo, enableScheduleGraph, disableVirtual, enableFullProfile, disableNodeFlushForCL, discardCommandList) < 0) throw - 1;
+		if (engine.Initialize(argCount, defaultTargetAffinity, defaultTargetInfo, enableScheduleGraph, disableVirtual) < 0) throw - 1;
 		if (doSetGraphOptimizerFlags) {
 			engine.SetGraphOptimizerFlags(graphOptimizerFlags);
-		}
-		if (dumpDataConfig.find(",") != std::string::npos) {
-			engine.SetDumpDataConfig(dumpDataConfig);
 		}
 		engine.SetConfigOptions(verbose, discardCompareErrors, enableDumpProfile, enableDumpGDF, waitKeyDelayInMilliSeconds);
 		engine.SetFrameCountOptions(enableMultiFrameProcessing, framesEofRequested, frameCountSpecified, frameStart, frameEnd);
 		fflush(stdout);
 		// pass parameters to the engine: note that shell takes no extra parameters whereas node and file take extra parameter
+		int argParamOffset = (!_stricmp(argv[arg], "shell")) ? 1 : 2;
 		for (int i = 0, j = 0; i < argCount; i++) {
 			char * param = argv[arg + argParamOffset + i];
 			if (engine.SetParameter(j++, param) < 0)
@@ -235,7 +186,16 @@ int main(int argc, char * argv[])
 		fflush(stdout);
 		// get full GDF text
 		char * fullText = nullptr;
-		if (!_stricmp(argv[arg], "node")) {
+		if (!_stricmp(argv[arg], "file")) {
+			if ((arg+1) == argc)
+				ReportError("ERROR: missing file name on command-line (see help for details)\n");
+			arg++;
+			const char * fileName = RootDirUpdated(argv[arg]);
+			size_t size = strlen("include") + 1 + strlen(fileName) + 1;
+			fullText = new char[size];
+			sprintf(fullText, "include %s", fileName);
+		}
+		else if (!_stricmp(argv[arg], "node")) {
 			if ((arg + 1) == argc)
 				ReportError("ERROR: missing kernel name on command-line (see help for details)\n");
 			int paramCount = argc - arg - 2;
@@ -250,39 +210,8 @@ int main(int argc, char * argv[])
 			// nothing to do
 		}
 		else {
-			if (!_stricmp(argv[arg], "file")) {
-				if ((arg + 1) == argc)
-					ReportError("ERROR: missing file name on command-line (see help for details)\n");
-				arg++;
-			}
-            unsigned int lengthOfArgv = (int)(strlen(argv[arg]));
-            char * fileNameToParse = new char[lengthOfArgv];
-            std::string fileNameToParse_s;
-            std::string addToDir_s;
-            std::string gdfName_s;
-            std::string delimiter = "/";
-
-            fileNameToParse_s.assign(argv[arg]);
-
-            int pos = 0;
-            std::string token;
-            while((pos = (int)(fileNameToParse_s.find(delimiter))) != std::string::npos){
-                token = fileNameToParse_s.substr(0, pos);
-                addToDir_s.append(token);
-                addToDir_s.append("/");
-                fileNameToParse_s.erase(0, pos + delimiter.length());
-            }
-            gdfName_s.assign(fileNameToParse_s);
-            strcpy(fileNameToParse, argv[arg]);
-
-            int chdir_status = 0;
-
-            chdir_status = cd(addToDir_s.c_str());
-            const char * fileName = RootDirUpdated(gdfName_s.c_str());
-
-			size_t size = strlen("include") + 1 + strlen(fileName) + 1;
-			fullText = new char[size];
-			sprintf(fullText, "include %s", fileName);
+			printf("ERROR: invalid command: %s (see help for details)\n", argv[arg]);
+			throw -1;
 		}
 
 		if (fullText) {
@@ -311,10 +240,6 @@ int main(int argc, char * argv[])
 		printf("Press ENTER to exit ...\n");
 		while (getchar() != '\n')
 			;
-		engine.DisableWaitForKeyPress();
-	}
-	else if (noPauseBeforeExit) {
-		engine.DisableWaitForKeyPress();
 	}
 	return errorCode;
 }

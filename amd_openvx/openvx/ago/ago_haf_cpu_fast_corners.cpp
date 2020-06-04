@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 DECL_ALIGN(16) unsigned char dataFastCornersPixelMask[7 * 16] ATTR_ALIGN(16) = {
@@ -787,7 +786,6 @@ int HafCpu_FastCorners_XY_U8_Supression
 	*pDstCornerCount = cornerCount;
 	return AGO_SUCCESS;
 }
-
 
 int HafCpu_FastCornerMerge_XY_XY
 	(

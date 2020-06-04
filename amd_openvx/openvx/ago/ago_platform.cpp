@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_platform.h"
 
 // macro to port VisualStudio __cpuid to g++
@@ -144,7 +143,6 @@ int64_t agoGetClockFrequency()
 
 #define VX_SEMAPHORE    1
 #define VX_THREAD       2
-#define VX_CRITICAL_SECTION       3
 
 typedef struct {
 	int type; // should be VX_SEMAPHORE
@@ -153,46 +151,18 @@ typedef struct {
 	condition_variable cv;
 } vx_semaphore;
 
-typedef struct {
-    int type;   // should be VX_THREAD
-    thread thread_obj;
-    void* thread_param;
-} vx_thread;
-
-typedef struct {
-    int type;   // should be VX_CRITICAL_SECTION
-    mutex mtx;
-} vx_critical_section;
-
-
-// Emulates EnterCriticalSection for non_windows platform
-void EnterCriticalSection(CRITICAL_SECTION* cs)
+// TBD
+void EnterCriticalSection(CRITICAL_SECTION cs)
 {
-    vx_critical_section * crit_sec = (vx_critical_section *)*cs;
-    std::lock_guard<std::mutex> lock(crit_sec->mtx);
 }
-
-// Emulates LeaveCriticalSection for non_windows platform
-void LeaveCriticalSection(CRITICAL_SECTION* cs)
+void LeaveCriticalSection(CRITICAL_SECTION cs)
 {
-    vx_critical_section * crit_sec = (vx_critical_section *)*cs;
-    crit_sec->mtx.unlock();
 }
-
-// Emulates InitializeCriticalSection for non_windows platform
-void InitializeCriticalSection(CRITICAL_SECTION* cs)
+void InitializeCriticalSection(CRITICAL_SECTION cs)
 {
-    vx_critical_section *crit_sec = new vx_critical_section;
-    crit_sec->type = VX_CRITICAL_SECTION;
-    *cs = crit_sec;
 }
-
-// Emulates DeleteCriticalSection for non_windows platform
-void DeleteCriticalSection(CRITICAL_SECTION* cs)
+void DeleteCriticalSection(CRITICAL_SECTION cs)
 {
-    vx_critical_section * crit_sec = (vx_critical_section *)*cs;
-    crit_sec->type = 0;
-    delete crit_sec;
 }
 
 HANDLE CreateSemaphore(void *, LONG, LONG, void *)
@@ -202,15 +172,10 @@ HANDLE CreateSemaphore(void *, LONG, LONG, void *)
 	sem->count = 0;
 	return sem;
 }
-
 HANDLE CreateThread(void *, size_t dwStackSize, LPTHREAD_START_ROUTINE lpStartAddress, LPVOID lpParameter, DWORD dwCreationFlags, void *)
 {
-    vx_thread *thd = new vx_thread;
-    thd->type = VX_THREAD;
-    thd->thread_obj = thread(lpStartAddress, lpParameter);
-    return thd;
+	return nullptr;
 }
-
 void CloseHandle(HANDLE h)
 {
 	if(h) {
@@ -220,11 +185,8 @@ void CloseHandle(HANDLE h)
 			delete sem;
 		}
 		else if(*(int*)h == VX_THREAD) {
-            vx_thread * th = (vx_thread *)h;
-            th->type = 0;
-            th->thread_obj.join();
-            delete th;
-        }
+			// TBD
+		}
 	}
 }
 DWORD WaitForSingleObject(HANDLE h, DWORD dwMilliseconds)
@@ -241,14 +203,9 @@ DWORD WaitForSingleObject(HANDLE h, DWORD dwMilliseconds)
 				sem->count--;
 			}
 		}
-    } else
-    {
-        printf("Invalid Handle for WaitObject\n");
-        return -1;
-    }
+	}
 	return 0;
 }
-
 BOOL ReleaseSemaphore(HANDLE h, LONG lReleaseCount, LPLONG lpPreviousCount)
 {
 	if(h) {
@@ -263,12 +220,8 @@ BOOL ReleaseSemaphore(HANDLE h, LONG lReleaseCount, LPLONG lpPreviousCount)
 				sem->cv.notify_one();
 			}
 		}
-    } else
-    {
-        printf("Invalid Handle for Semaphore\n");
-        return 0;
-    }
-    return 1;
+	}
+	return 0;
 }
 
 #endif

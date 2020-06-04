@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 int HafCpu_ColorConvert_IU_RGB
@@ -231,4 +230,3 @@ int HafCpu_Convolve_S16_U8_MxN
 {
 	return AGO_ERROR_HAFCPU_NOT_IMPLEMENTED;
 }
-

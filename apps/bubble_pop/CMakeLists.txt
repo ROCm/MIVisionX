@@ -31,18 +31,19 @@ set(CMAKE_CXX_STANDARD 11)
 find_package(OpenCV REQUIRED)
 
 include_directories(include)
+include_directories(../../amd_openvx/openvx/include)
 
 if(DEFINED OPENVX_INCLUDES)
     message(STATUS "OPENVX_INCLUDES: \t${OPENVX_INCLUDES}")
     include_directories(${OPENVX_INCLUDES})
 else()
-    include_directories (/opt/rocm/mivisionx/include)
+    include_directories (/opt/rocm/mivisionx_lite/include)
 endif()
 
 if(DEFINED OPENVX_LIBRARIES)
     message(STATUS "OPENVX_LIBRARIES: \t${OPENVX_LIBRARIES}")
 else()
-    set(OPENVX_LIBRARIES /opt/rocm/mivisionx/lib/libopenvx.so)
+    set(OPENVX_LIBRARIES /opt/rocm/mivisionx_lite/lib/libopenvx.so)
 endif()
 
 list    (APPEND SOURCES
@@ -59,6 +60,7 @@ target_link_libraries(${PROJECT_NAME} ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES})
 add_executable(vxPop source/AMD_app.cpp)
 target_link_libraries(vxPop ${OPENVX_LIBRARIES} ${OpenCV_LIBRARIES} ${PROJECT_NAME})
 
+install(TARGETS vxPop DESTINATION bin)
 file(COPY image DESTINATION ${CMAKE_BINARY_DIR})
 file(COPY gdf DESTINATION ${CMAKE_BINARY_DIR})
 

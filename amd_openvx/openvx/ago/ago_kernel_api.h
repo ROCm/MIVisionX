@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #ifndef __ago_kernels_api_h__
 #define __ago_kernels_api_h__
 
@@ -29,7 +28,7 @@ THE SOFTWARE.
 // import all kernels into framework
 int agoPublishKernels(AgoContext * acontext);
 
-// OpenVX 1.x built-in kernels
+// OpenVX 1.0 built-in kernels
 int ovxKernel_Invalid(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_ColorConvert(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_ChannelExtract(AgoNode * node, AgoKernelCommand cmd);
@@ -72,8 +71,6 @@ int ovxKernel_FastCorners(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_OpticalFlowPyrLK(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_Remap(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_HalfScaleGaussian(AgoNode * node, AgoKernelCommand cmd);
-int ovxKernel_Copy(AgoNode * node, AgoKernelCommand cmd);
-int ovxKernel_Select(AgoNode * node, AgoKernelCommand cmd);
 
 // AMD low-level kernels
 int agoKernel_Set00_U8(AgoNode * node, AgoKernelCommand cmd);
@@ -352,7 +349,5 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_Max(AgoNode * node, AgoKernel
 int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_MinMax(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_MinMax_Count_MinMax(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MinMaxLocMerge_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
-int agoKernel_Copy_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
-int agoKernel_Select_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
 
 #endif // __ago_kernels_api_h__

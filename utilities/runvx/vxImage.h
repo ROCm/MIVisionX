@@ -36,7 +36,6 @@ public:
 	virtual int Initialize(vx_context context, vx_graph graph, const char * desc);
 	virtual int InitializeIO(vx_context context, vx_graph graph, vx_reference ref, const char * io_params);
 	virtual int Finalize();
-	virtual int SyncFrame(int frameNumber);
 	virtual int ReadFrame(int frameNumber);
 	virtual int WriteFrame(int frameNumber);
 	virtual int CompareFrame(int frameNumber);
@@ -44,7 +43,7 @@ public:
 	virtual void DisableWaitForKeyPress();
 
 protected:
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	int ViewFrame(int frameNumber);
 #endif
 
@@ -58,12 +57,7 @@ private:
 	int m_repeatFrames;
 	int m_countFrames;
 	char m_cameraName[256];
-	vx_enum m_memory_type;
-	int m_active_handle;
-	vx_imagepatch_addressing_t m_addr[4];
-	void * m_memory_handle[2][4];
-	bool m_swap_handles;
-#if ENABLE_OPENCV
+#if USE_OPENCV
 	void * m_cvCapDev;
 	void * m_cvCapMat;
 	void * m_cvWriter;
@@ -76,11 +70,12 @@ private:
 	char m_roiMasterName[64];      // name of ROI image master
 	vx_rectangle_t m_roiRegion;    // rectangle used to save ROI image dimensions
 	vx_rectangle_t m_rectFull;     // rectangle with full image size for use by access/commit
-	vx_pixel_value_t m_uniformValue; // uniform image value
+	vx_uint64 m_uniformValue;      // uniform image value
 
 	// image I/O
 	size_t m_frameSize;
 	std::list<std::string> m_viewKeypointFilenameList;
+	bool m_useSyncOpenCLWriteDirective;
 	float m_comparePixelErrorMin;
 	float m_comparePixelErrorMax;
 	vx_rectangle_t m_rectCompare;  // rectangle used to save rectangular region used for compare
@@ -98,8 +93,6 @@ private:
 	vx_uint32 m_captureWidth;
 	vx_uint32 m_captureHeight;
 	int m_countInitializeIO;
-	int m_colorIndexDefault;
-	float m_radiusDefault;
 };
 
 

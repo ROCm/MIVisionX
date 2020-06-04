@@ -61,38 +61,34 @@ list(APPEND SOURCES
 	api/vxu.cpp
 	api/vx_api.cpp
 	api/vx_nodes.cpp
-)
+	)
 
 add_library(openvx SHARED ${SOURCES})
+add_library(vxu SHARED api/vxu.cpp)
 
 if (OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(openvx ${OpenCL_LIBRARIES})
-	message("-- ${Green}AMD OpenVX -- OpenVX built with OpenCL Support${ColourReset}")
+	message("-- ${Green}AMD OpenVX 1.0.1 -- OpenVX built with OpenCL Support${ColourReset}")
 else(OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
-	message("-- ${Red}WARNING:OpenCL Not Found -- OpenVX built for CPU only${ColourReset}")
+	message("-- ${Red}WARNING:OpenCL Not Found -- OpenVX 1.0.1 built for CPU only${ColourReset}")
 endif(OpenCL_FOUND)
 
 install(TARGETS openvx DESTINATION lib)
+install(TARGETS vxu DESTINATION lib)
 install(FILES include/vx_ext_amd.h DESTINATION include)
-install (FILES
-            include/VX/vx.h
-            include/VX/vx_api.h
-            include/VX/vx_compatibility.h
-            include/VX/vx_import.h
-            include/VX/vx_kernels.h
-            include/VX/vx_khr_icd.h
-            include/VX/vx_khr_ix.h
-            include/VX/vx_khr_nn.h
-            include/VX/vx_khr_tiling.h
-            include/VX/vx_khr_xml.h
-            include/VX/vx_nodes.h
-            include/VX/vx_types.h
-            include/VX/vx_vendors.h
-            include/VX/vxu.h
-         DESTINATION include/VX)
+install(FILES
+        include/VX/vx.h
+        include/VX/vx_api.h
+        include/VX/vx_kernels.h
+        include/VX/vx_nodes.h
+        include/VX/vx_types.h
+        include/VX/vx_vendors.h
+        include/VX/vxu.h
+        DESTINATION include/VX
+       )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
@@ -101,4 +97,3 @@ else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
 	target_link_libraries(openvx dl m)
 endif()
-

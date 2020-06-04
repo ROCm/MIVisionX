@@ -1,6 +1,0 @@
-PROFILER_DEFINE_EVENT(LoomSL, InitializeGraph)
-PROFILER_DEFINE_EVENT(LoomSL, ReinitializeGraph)
-PROFILER_DEFINE_EVENT(LoomSL, SetInputBuffer)
-PROFILER_DEFINE_EVENT(LoomSL, SetOutputBuffer)
-PROFILER_DEFINE_EVENT(LoomSL, ScheduleGraph)
-PROFILER_DEFINE_EVENT(LoomSL, WaitForCompletionGraph)

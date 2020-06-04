@@ -101,9 +101,9 @@ int CVxParamPyramid::Shutdown(void)
 
 int CVxParamPyramid::Initialize(vx_context context, vx_graph graph, const char * desc)
 {
-	// get object parameters: syntax: [virtual-]pyramid:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<format>[:<io-params>]
+	// get object parameters: syntax: pyramid[-virtual]:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<format>[:<io-params>]
 	char objType[64], scaleFactor[64];
-	const char * ioParams = ScanParameters(desc, "pyramid|virtual-pyramid:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<format>", "s:D,s,d,d,c", objType, &m_numLevels, scaleFactor, &m_width, &m_height, &m_format);
+	const char * ioParams = ScanParameters(desc, "pyramid|pyramid-virtual:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<format>", "s:D,s,d,d,c", objType, &m_numLevels, scaleFactor, &m_width, &m_height, &m_format);
 	if (!_strnicmp(scaleFactor, "half", 4)) m_scale = VX_SCALE_PYRAMID_HALF;
 	else if (!_strnicmp(scaleFactor, "orb", 3)) m_scale = VX_SCALE_PYRAMID_ORB;
 	else m_scale = (float)atof(scaleFactor);
@@ -113,7 +113,7 @@ int CVxParamPyramid::Initialize(vx_context context, vx_graph graph, const char *
 	if (!_stricmp(objType, "pyramid")) {
 		m_pyramid = vxCreatePyramid(context, m_numLevels, m_scale, m_width, m_height, m_format);
 	}
-	else if (!_stricmp(objType, "virtual-pyramid") || !_stricmp(objType, "pyramid-virtual")) {
+	else if (!_stricmp(objType, "pyramid-virtual")) {
 		m_pyramid = vxCreateVirtualPyramid(graph, m_numLevels, m_scale, m_width, m_height, m_format);
 		m_isVirtualObject = true;
 	}

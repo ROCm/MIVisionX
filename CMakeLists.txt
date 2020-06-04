@@ -19,17 +19,17 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 2.8)
-project(MIVisionX)
-set(VERSION "1.9.0")
+project(MIVisionX_Lite)
+set(VERSION "0.9.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
+set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx_lite default ROCm installation path")
 # need to do this to avoid setting the default path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)
+  set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx_lite CACHE PATH "mivisionx lite default ROCm installation path" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 if(NOT WIN32)
@@ -41,20 +41,21 @@ if(NOT WIN32)
   set(Blue        "${Esc}[34m")
   set(BoldBlue    "${Esc}[1;34m")
 endif()
-message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
-message("-- ${BoldBlue}MIVisionX install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX Lite Version -- ${VERSION}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX Lite install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
-add_subdirectory(apps)
+#add_subdirectory(apps) #install only for V-0.9
 add_subdirectory(utilities)
-add_subdirectory(rali)
 
+install(DIRECTORY apps DESTINATION .)
 install(DIRECTORY docs DESTINATION .)
+install(DIRECTORY samples DESTINATION .)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
-set(CPACK_PACKAGE_NAME          "mivisionx")
+set(CPACK_PACKAGE_NAME          "mivisionx_lite")
 set(CPACK_PACKAGE_RELEASE       1)
 set(CPACK_PACKAGE_LICENSE       "MIT")
 set(CPACK_PACKAGE_CONTACT       "Kiriti Gowda <Kiriti.NageshGowda@amd.com>")
@@ -62,26 +63,26 @@ set(CPACK_PACKAGE_VENDOR        "AMD Radeon")
 set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/images/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into one.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX Lite toolkit is a comprehensive computer vision, utilities and applications bundled into one.")
 
 # find linux distribution
 find_program(LSB_RELEASE_EXEC lsb_release)
 execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
                 OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
                 OUTPUT_STRIP_TRAILING_WHITESPACE
-                )
+               )
 
 # generate .deb or .rpm package
 if(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
     message("-- Ubuntu detected -- .deb package will be created")
     set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "DEB")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl, protobuf-compiler, libopencv-dev, python-pip")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS    "libopencv-dev")
 else()
     message("-- CentOS detected -- .rpm package will be created")
     set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "RPM")
-    set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl, protobuf, opencv")
+    set(CPACK_RPM_PACKAGE_REQUIRES      "opencv")
     set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
 endif()
 

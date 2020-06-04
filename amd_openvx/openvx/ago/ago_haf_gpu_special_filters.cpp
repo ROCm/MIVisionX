@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_haf_gpu.h"
 
 #if ENABLE_OPENCL
@@ -881,9 +880,9 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 		"  %s_GXY(&gx, &gy, x, y, lbuf, p, stride); // LinearFilter_ANYx2_U8\n"
 		"  uint mask = select(0xffffu, 0u, y < %d); mask = select(0u, mask, y < %d);\n" // (N >> 1), height - (N >> 1)
 		"  U16x8 r; uint mp;\n"
-		"  mp = CannyMagPhase(gx.s0, gy.s0) & mask; mp = select(mp, 0u, (int)x < %d);                           r.s0  =  mp;\n"         // (N>>1)-0
-		"  mp = CannyMagPhase(gx.s1, gy.s1) & mask; mp = select(mp, 0u, (int)x < %d);                           r.s0 |= (mp << 16);\n"  // (N>>1)-1
-		"  mp = CannyMagPhase(gx.s2, gy.s2) & mask; mp = select(mp, 0u, (int)x < %d);                           r.s1  =  mp;\n"         // (N > 5) ? (N>>1)-2 : 0
+		"  mp = CannyMagPhase(gx.s0, gy.s0) & mask; mp = select(mp, 0u, x < %du);                               r.s0  =  mp;\n"         // (N>>1)-0
+		"  mp = CannyMagPhase(gx.s1, gy.s1) & mask; mp = select(mp, 0u, x < %du);                               r.s0 |= (mp << 16);\n"  // (N>>1)-1
+		"  mp = CannyMagPhase(gx.s2, gy.s2) & mask; mp = select(mp, 0u, x < %du);                               r.s1  =  mp;\n"         // (N > 5) ? (N>>1)-2 : 0
 		"  mp = CannyMagPhase(gx.s3, gy.s3) & mask;                                                             r.s1 |= (mp << 16);\n"  // 
 		"  mp = CannyMagPhase(gx.s4, gy.s4) & mask;                                                             r.s2  =  mp;\n"         // 
 		"  mp = CannyMagPhase(gx.s5, gy.s5) & mask;                               mp = select(0u, mp, x < %du); r.s2 |= (mp << 16);\n"  //           width-(N>>1)-5

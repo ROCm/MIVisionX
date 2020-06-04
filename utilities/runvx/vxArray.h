@@ -60,6 +60,7 @@ private:
 	bool m_compareFileIsBinary;
 	int m_compareCountMatches;
 	int m_compareCountMismatches;
+	bool m_useSyncOpenCLWriteDirective;
 	std::string m_fileNameCompareLog;
 	vx_int32 m_errX;
 	vx_int32 m_errY;

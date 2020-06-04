@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 DECL_ALIGN(16) unsigned char dataColorConvert[16 * 26] ATTR_ALIGN(16) = {
@@ -1905,7 +1904,6 @@ int HafCpu_FormatConvert_IYUV_YUYV
 				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);						// V plane, bytes 0..7
 				_mm_storeu_si128((__m128i *) pLocalDstV, pixels0);						// Only lower 8 bytes valid
 
-
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
 				pLocalDstY += 16;
@@ -3018,7 +3016,7 @@ int HafCpu_ColorConvert_Y_RGB
 			float G = (float)*pLocalSrc++;
 			float B = (float)*pLocalSrc++;
 
-			*pLocalDst++ = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+			*pLocalDst++ = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
 		}
 
 		pSrcImage += srcImageStrideInBytes;

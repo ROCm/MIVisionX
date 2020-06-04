@@ -67,35 +67,6 @@ int CVxParamScalar::Initialize(vx_context context, vx_graph graph, const char * 
 		if (m_format == VX_TYPE_STRING_AMD) {
 			m_scalar = vxCreateScalar(context, m_format, value);
 		}
-		else if (m_format == (VX_TYPE_NN_CONVOLUTION_PARAMS) || m_format == (VX_TYPE_NN_DECONVOLUTION_PARAMS) ||
-                 m_format == (VX_TYPE_NN_ROI_POOL_PARAMS) || m_format == (VX_TYPE_TENSOR_MATRIX_MULTIPLY_PARAMS))
-        {
-			if (m_format == VX_TYPE_NN_CONVOLUTION_PARAMS) {
-				vx_nn_convolution_params_t v;
-				if (!GetScalarValueForStructTypes(m_format, value, &v)) {
-					m_scalar= vxCreateScalar(context, m_format, &v);
-				}
-			}
-			else if (m_format == VX_TYPE_NN_DECONVOLUTION_PARAMS) {
-				vx_nn_deconvolution_params_t v;
-				if (!GetScalarValueForStructTypes(m_format, value, &v)) {
-					m_scalar = vxCreateScalar(context, m_format, &v);
-				}
-			}
-			else if (m_format == VX_TYPE_NN_ROI_POOL_PARAMS) {
-				vx_nn_roi_pool_params_t v;
-				if (!GetScalarValueForStructTypes(m_format, value, &v)) {
-					m_scalar = vxCreateScalar(context, m_format, &v);
-				}
-			}
-			else if (m_format == VX_TYPE_TENSOR_MATRIX_MULTIPLY_PARAMS) {
-				vx_tensor_matrix_multiply_params_t v;
-				if (!GetScalarValueForStructTypes(m_format, value, &v)) {
-					m_scalar = vxCreateScalar(context, m_format, &v);
-				}
-			}
-			else ReportError("ERROR: unsupported scalar value: %s [%s:0x%08x]\n", value, format, m_format);
-		}
 		else {
 			vx_uint64 v = 0;
 			if (!GetScalarValueFromString(m_format, value, &v)) {

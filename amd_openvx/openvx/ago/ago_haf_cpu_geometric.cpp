@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 //=======================================
@@ -651,7 +650,6 @@ vx_uint8			* pLocalData
 	}
 	return AGO_SUCCESS;
 }
-
 
 // The dst pixels are nearest affine transformed (truncate towards zero rounding). Bounday_mode is not specified. 
 // If the transformed location is out of bounds: border has to be substituted.
@@ -1373,7 +1371,6 @@ vx_uint8				 * pLocalData
 		srcHeight, pSrcImage, srcImageStrideInBytes, matrix, (unsigned char)0, pLocalData);
 }
 
-
 // This alogorithm implements Constant Denominator method described in 
 // " A Novel Architechture for real time sprite decoding".
 // The idea is to do perpective warping along the lines of constant divisor..
@@ -1387,7 +1384,6 @@ vx_uint8				 * pLocalData
 		y  = ((d-fg)x'+(cg-a)y'+(af-dc))/(eg-dh)x'+(ah-bg)y'+(db-ae))
 
 */
-
 
 int HafCpu_WarpPerspective_U8_U8_Nearest_Constant
 (
@@ -1560,7 +1556,6 @@ vx_uint8				 * pLocalData
 	return HafCpu_WarpPerspective_U8_U8_Bilinear_Constant(dstWidth, dstHeight, pDstImage, dstImageStrideInBytes, srcWidth,
 		srcHeight, pSrcImage, srcImageStrideInBytes, matrix, (unsigned char)0, pLocalData);
 }
-
 
 int HafCpu_WarpPerspective_U8_U8_Bilinear_Constant
 (
@@ -1856,7 +1851,6 @@ vx_uint8				 * pLocalData
 	return AGO_SUCCESS;
 }
 
-
 int HafCpu_ScaleImage_U8_U8_Nearest
 (
 vx_uint32            dstWidth,
@@ -2067,7 +2061,6 @@ ago_scale_matrix_t * matrix
 			rxmm4 = _mm_add_epi16(rxmm4, round);
 			rxmm4 = _mm_srli_epi16(rxmm4, 8);
 
-
 			// *(pDst + x + y*dstStep) = (unsigned char)((ione_minus_y *t1 + ifraction_y * t2) >> FW_WEIGHT)	
 			rxmm1 = _mm_mullo_epi16(rxmm1, rxmm0);	//  ione_minus_y * t1 	
 			rxmm4 = _mm_mullo_epi16(rxmm4, rxmm7);	//  ifraction_y  * t2		
@@ -2089,7 +2082,6 @@ ago_scale_matrix_t * matrix
 
 	return AGO_SUCCESS;
 }
-
 
 int HafCpu_ScaleImage_U8_U8_Bilinear_Replicate
 (
@@ -2205,7 +2197,6 @@ ago_scale_matrix_t * matrix
 			rxmm4 = _mm_add_epi16(rxmm4, pp2.i);
 			rxmm4 = _mm_add_epi16(rxmm4, round);
 			rxmm4 = _mm_srli_epi16(rxmm4, 8);
-
 
 			// *(pDst + x + y*dstStep) = (unsigned char)((ione_minus_y *t1 + ifraction_y * t2) >> FW_WEIGHT)	
 			rxmm1 = _mm_mullo_epi16(rxmm1, rxmm0);	//  ione_minus_y * t1 	
@@ -2364,7 +2355,6 @@ vx_uint8             border
 			rxmm4 = _mm_add_epi16(rxmm4, round);
 			rxmm4 = _mm_srli_epi16(rxmm4, 8);
 
-
 			// *(pDst + x + y*dstStep) = (unsigned char)((ione_minus_y *t1 + ifraction_y * t2) >> FW_WEIGHT)	
 			rxmm1 = _mm_mullo_epi16(rxmm1, rxmm0);	//  ione_minus_y * t1 	
 			rxmm4 = _mm_mullo_epi16(rxmm4, rxmm7);	//  ifraction_y  * t2		
@@ -2401,7 +2391,6 @@ vx_uint8             border
 	return AGO_SUCCESS;
 }
 
-
 // upsample 2x2 (used for 4:2:0 to 4:4:4 conversion)
 int HafCpu_ScaleUp2x2_U8_U8
 (
@@ -2424,22 +2413,6 @@ vx_uint32     srcImageStrideInBytes
 		__m128i * dst = (__m128i*)pchDst;
 		__m128i * dstNext = (__m128i*)(pchDst + dstImageStrideInBytes);
 		__m128i * dstlast = dst + (dstWidth >> 4);
-
-		bool fallbackToC = false;
-
-		// Fallback to C if image width is not divisible by 16.
-		// Or if image width is smaller then 16px.
-		if ((dstWidth & 15) > 0)
-			fallbackToC = true;
-
-		// Fallback to C if image width requires odd number of vectors to process it.
-		// Do not process the last, odd, vector with MSA.
-		if (((dstWidth >> 4) % 2) == 1)
-		{
-			dstlast--;
-			fallbackToC = true;
-		}
-
 		while (dst < dstlast)
 		{
 			pixels1 = _mm_loadu_si128(src++);		// src (0-15)
@@ -2450,23 +2423,6 @@ vx_uint32     srcImageStrideInBytes
 			_mm_store_si128(dstNext++, pixels2);
 			_mm_store_si128(dstNext++, pixels1);
 		}
-
-		if (fallbackToC)
-		{
-			unsigned char *src = (unsigned char *) pSrcImage;
-			unsigned char *dst = (unsigned char *) pchDst;
-			unsigned char *dstNext = (unsigned char *) (pchDst + dstImageStrideInBytes);
-			unsigned char *dstLast = dst + dstWidth - 1;
-
-			while (dst < dstLast)
-			{
-				*dst++ = *src;
-				*dst++ = *src;
-				*dstNext++ = *src;
-				*dstNext++ = *src++;
-			}
-		}
-
 		pchDst += (dstImageStrideInBytes * 2);
 		pSrcImage += srcImageStrideInBytes;
 	}

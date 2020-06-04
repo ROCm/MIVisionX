@@ -1,18 +1,24 @@
 /*
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+ * Copyright (c) 2012-2015 The Khronos Group Inc.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and/or associated documentation files (the
+ * "Materials"), to deal in the Materials without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Materials, and to
+ * permit persons to whom the Materials are furnished to do so, subject to
+ * the following conditions:
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Materials.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY,\todo FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * MATERIALS OR THE USE OR OTHER DEALINGS IN THE MATERIALS.
  */
 
 #ifndef _OPENVX_VENDORS_H_
@@ -50,14 +56,11 @@ enum vx_vendor_id_e {
     VX_ID_CEVA      = 0x013, /*!< \brief CEVA DSP */
     VX_ID_ITSEEZ    = 0x014, /*!< \brief Itseez, Inc. */
     VX_ID_IMAGINATION=0x015, /*!< \brief Imagination Technologies */
-    VX_ID_NXP       = 0x016, /*!< \brief NXP Semiconductors */
+    VX_ID_COGNIVUE  = 0x016, /*!< \brief CogniVue Corporation */
     VX_ID_VIDEANTIS = 0x017, /*!< \brief Videantis */
     VX_ID_SYNOPSYS  = 0x018, /*!< \brief Synopsys */
-    VX_ID_CADENCE   = 0x019, /*!< \brief Cadence */
-    VX_ID_HUAWEI    = 0x01A, /*!< \brief Huawei */
-    VX_ID_SOCIONEXT = 0x01B, /*!< \brief Socionext */
     /* Add new vendor code above this line */
-    VX_ID_USER      = 0xFFE, /*!< \brief For use by vxAllocateUserKernelId and vxAllocateUserKernelLibraryId */
+
     VX_ID_MAX       = 0xFFF,
     /*! \brief For use by all Kernel authors until they can obtain an assigned ID. */
     VX_ID_DEFAULT = VX_ID_MAX,

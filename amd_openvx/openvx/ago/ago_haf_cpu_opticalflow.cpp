@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
 #include "ago_internal.h"
 
 /* Implements OpticalFlow pyramid algorithm*/
@@ -59,8 +58,6 @@ static const float Epsilon = 1.0e-07F;
 // helper functions
 static inline void pt_copy(pt2f &pt1, pt2f &pt2) { pt1.x = pt2.x; pt1.y = pt2.y; }
 static inline void pt_copy_scale(pt2f &pt1, pt2f &pt2, float &s) { pt1.x = pt2.x*s; pt1.y = pt2.y*s; }
-
-
 
 static void ComputeSharr(
 	vx_uint32   dstImageStrideInBytes,

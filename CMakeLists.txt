@@ -46,11 +46,12 @@ message("-- ${BoldBlue}MIVisionX Lite install path set to -- ${CMAKE_INSTALL_PRE
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
-#add_subdirectory(apps) #install only
+#add_subdirectory(apps) #install only for V-0.9
 add_subdirectory(utilities)
 
-install(DIRECTORY docs DESTINATION .)
 install(DIRECTORY apps DESTINATION .)
+install(DIRECTORY docs DESTINATION .)
+install(DIRECTORY samples DESTINATION .)
 
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})

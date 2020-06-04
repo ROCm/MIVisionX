@@ -170,7 +170,7 @@ sudo make install
   ````
   export PATH=$PATH:/opt/rocm/mivisionx_lite/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx_lite/lib
-  runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+  runvx /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf 
   ````
 **Note:** More samples are available [here](samples#samples)
 

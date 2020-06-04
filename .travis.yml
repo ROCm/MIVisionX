@@ -50,7 +50,7 @@ script:
   - export VX_TEST_DATA_PATH=$(pwd)/conformance_tests/test_data
   - export OPENVX_DIR=$(pwd)/build-openvx
   - mkdir build-openvx
-  - cd build-openvx-travis-mode
+  - cd build-openvx
   - cmake -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage"../
   - make
   - cd ../

@@ -1,5 +1,5 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
+[![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=openvx-1.0.1)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
@@ -19,7 +19,7 @@ MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and
 * [Docker](#docker)
 * [Release Notes](#release-notes)
 
-## AMD OpenVX 1.0.1
+## AMD OpenVX - 1.0.1
 
 <p align="center"><img width="30%" src="https://upload.wikimedia.org/wikipedia/en/thumb/d/dd/OpenVX_logo.svg/1920px-OpenVX_logo.svg.png" /></p>
 

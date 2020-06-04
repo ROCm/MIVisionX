@@ -36,4 +36,4 @@ include_directories(../include
 
 pybind11_add_module(rali_pybind rali_pybind.cpp)
 target_link_libraries(rali_pybind PRIVATE rali vx_rpp amd_rpp )
-install (TARGETS rali_pybind DESTINATION lib)
+install(TARGETS rali_pybind DESTINATION lib)

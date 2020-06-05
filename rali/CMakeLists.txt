@@ -22,5 +22,4 @@ cmake_minimum_required(VERSION 2.8)
 project(amd_rali)
 
 add_subdirectory(rali)
-add_subdirectory(third_party_lib)
 add_subdirectory(rali_pybind)

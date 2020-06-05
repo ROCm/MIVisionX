@@ -30,10 +30,12 @@ link_directories(${ROCM_PATH}/mivisionx/lib/
                 )
 
 include_directories(../rali/include/
-                    ../third_party_lib/
+                    third_party_lib/
                     ../../amd_openvx/openvx/include/
                     ${ROCM_PATH}/mivisionx/include/
                    )
+
+add_subdirectory(third_party_lib/pybind11)
 
 pybind11_add_module(rali_pybind rali_pybind.cpp)
 target_link_libraries(rali_pybind PRIVATE rali vx_rpp amd_rpp)

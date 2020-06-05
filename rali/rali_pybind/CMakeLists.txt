@@ -29,7 +29,8 @@ link_directories(${ROCM_PATH}/mivisionx/lib/
                  ${ROCM_PATH}/rpp/lib
                 )
 
-include_directories(../include
+include_directories(../rali/include/
+                    ../third_party_lib/
                     ../../amd_openvx/openvx/include/
                     ${ROCM_PATH}/mivisionx/include/
                    )

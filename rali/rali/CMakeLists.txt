@@ -56,7 +56,6 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_CXX_VER_REQUIRED})
 	message("-- ${Yellow}rali library requires g++ version greater than or equal to ${MIN_CXX_VER_REQUIRED}, currently ${CMAKE_CXX_COMPILER_VERSION} is installed${ColourReset}")
 endif()
 
-
 if(${BUILD_RALI})
 	# Rali uses C++ 17 features
 	set(CMAKE_CXX_STANDARD 17)
@@ -92,18 +91,22 @@ if(${BUILD_RALI})
 			    ../../amd_openvx_extensions/amd_media/include/
 			    include
 			    )
-
+			    
 	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR} /usr/local/lib/)
+
 	file(GLOB SOURCES "./source/*.cpp")
 	add_library(${PROJECT_NAME} SHARED ${SOURCES})
+
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC TFRECORD_ENABLE=0)
 	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
+
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread")
 	add_definitions(-ljsoncpp)
 	message("-- ${Green}${PROJECT_NAME} - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
+
 	if(NOT FFMPEG_FOUND)
 		message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
 		target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp jsoncpp)
@@ -111,6 +114,7 @@ if(${BUILD_RALI})
 		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
 		target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
 	endif()
+
 	install(TARGETS rali DESTINATION lib)
 else()
 	message("-- ${Red}rali library is excluded ${ColourReset}")

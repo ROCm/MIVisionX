@@ -21,23 +21,49 @@
 cmake_minimum_required(VERSION 3.10)
 project(rali_pybind)
 
-set(ROCM_PATH /opt/rocm)
-set(MIN_CXX_VER_REQUIRED 7.4)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
-link_directories(${ROCM_PATH}/mivisionx/lib/
+find_package(OpenCL QUIET)
+find_package(AMDRPP QUIET)
+find_package(TurboJpeg QUIET)
+
+set(MIN_CXX_VER_REQUIRED 7.4)
+set(BUILD_RALI_PYBIND true)
+
+if(NOT OpenCL_FOUND)
+    set(BUILD_RALI_PYBIND false)
+endif()
+if(NOT AMDRPP_FOUND)
+    set(BUILD_RALI_PYBIND false)
+endif()
+if(NOT TurboJpeg_FOUND)
+    set(BUILD_RALI_PYBIND false)
+endif()
+if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_CXX_VER_REQUIRED})
+    set(BUILD_RALI_PYBIND false)
+endif()
+
+if(${BUILD_RALI_PYBIND})
+    set(ROCM_PATH /opt/rocm)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
+    link_directories(${ROCM_PATH}/mivisionx/lib/
                  ${ROCM_PATH}/rpp/lib
                 )
 
-include_directories(../rali/include/
+    include_directories(../rali/include/
                     third_party_lib/
                     ../../amd_openvx/openvx/include/
                     ${ROCM_PATH}/mivisionx/include/
                    )
 
-add_subdirectory(third_party_lib/pybind11)
+    add_subdirectory(third_party_lib/pybind11)
 
-pybind11_add_module(rali_pybind rali_pybind.cpp)
-target_link_libraries(rali_pybind PRIVATE rali vx_rpp amd_rpp)
+    pybind11_add_module(rali_pybind rali_pybind.cpp)
+    target_link_libraries(rali_pybind PRIVATE rali vx_rpp amd_rpp)
 
-install(TARGETS rali_pybind DESTINATION lib)
+    install(TARGETS rali_pybind DESTINATION lib)
+    message("-- ${Green}RALI Pybind included ${ColourReset}")
+else()
+    message("-- ${Red}RALI Pybind is excluded ${ColourReset}")
+endif()

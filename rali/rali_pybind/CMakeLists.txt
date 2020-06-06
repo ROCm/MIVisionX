@@ -45,7 +45,6 @@ endif()
 
 if(${BUILD_RALI_PYBIND})
     set(ROCM_PATH /opt/rocm)
-    set(MIN_CXX_VER_REQUIRED 7.4)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
     link_directories(${ROCM_PATH}/mivisionx/lib/

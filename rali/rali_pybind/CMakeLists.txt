@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 2.8)
 project(rali_pybind)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
@@ -27,6 +27,7 @@ find_package(OpenCL QUIET)
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
 
+set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
 set(BUILD_RALI_PYBIND true)
 
@@ -37,6 +38,9 @@ if(NOT AMDRPP_FOUND)
     set(BUILD_RALI_PYBIND false)
 endif()
 if(NOT TurboJpeg_FOUND)
+    set(BUILD_RALI_PYBIND false)
+endif()
+if(CMAKE_VERSION VERSION_LESS ${MIN_CMAKE_VER_REQUIRED})
     set(BUILD_RALI_PYBIND false)
 endif()
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_CXX_VER_REQUIRED})

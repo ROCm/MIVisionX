@@ -18,10 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (runvx)
+cmake_minimum_required(VERSION 2.8)
+project(runvx)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
 find_package(OpenCV QUIET)
@@ -46,14 +46,14 @@ list(APPEND SOURCES
 	vxThreshold.cpp
 	vxTensor.cpp
 	vxUtils.cpp
-)
+	)
 
 add_executable(runvx ${SOURCES})
 target_link_libraries(runvx openvx)
-install (TARGETS runvx DESTINATION bin)
-install (DIRECTORY ../../samples DESTINATION .)
+install(TARGETS runvx DESTINATION bin)
+install(DIRECTORY ../../samples DESTINATION .)
 
-if (OpenCL_FOUND)
+if(OpenCL_FOUND)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(runvx ${OpenCL_LIBRARIES})
@@ -61,7 +61,7 @@ else(OpenCL_FOUND)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
 endif(OpenCL_FOUND)
 
-if (OpenCV_FOUND)
+if(OpenCV_FOUND)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=1)
 	include_directories(${OpenCV_INCLUDE_DIRS})
 	target_link_libraries(runvx ${OpenCV_LIBRARIES})
@@ -70,18 +70,15 @@ else(OpenCV_FOUND)
 	message("-- ${Red}WARNING:OpenCV Not Found -- runvx built without display support${ColourReset}")
 endif(OpenCV_FOUND)
 
-if( POLICY CMP0054 )
-  cmake_policy( SET CMP0054 OLD )
-endif()
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 	find_path(SSL_INCLUDE
-		NAMES openssl/hmac.h openssl/md5.h
-		HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
-	)
+			  NAMES openssl/hmac.h openssl/md5.h
+			  HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
+			 )
 	if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
 		include_directories(${SSL_INCLUDE})
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")

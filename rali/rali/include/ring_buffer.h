@@ -57,6 +57,7 @@ public:
     RaliMemType mem_type() { return _mem_type; }
     void block_if_empty();
     void block_if_full();
+    void release_if_empty();
 private:
     std::queue<MetaDataNamePair> _meta_ring_buffer;
     MetaDataNamePair _last_image_meta_data;

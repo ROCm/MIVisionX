@@ -18,17 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (vx_amd_media)
+cmake_minimum_required(VERSION 2.8)
+project(vx_amd_media)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-
-# Get rid of warning
-if(POLICY CMP0054)
-	cmake_policy(SET CMP0054 OLD)
-endif()
 
 find_package(OpenCL REQUIRED)
 
@@ -41,24 +36,23 @@ find_library(AVCODEC_LIBRARY avcodec)
 find_library(SWSCALE_LIBRARY swscale)
 find_library(AVFORMAT_LIBRARY avformat)
 
-include_directories(
-    ${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers
-    ${AVUTIL_INCLUDE_DIR} ${AVCODEC_INCLUDE_DIR} ${SWSCALE_INCLUDE_DIR} ${AVFORMAT_INCLUDE_DIR}
-    ../../amd_openvx/openvx/include
-    include
-    )
+include_directories(${OpenCL_INCLUDE_DIRS} 
+                    ${OpenCL_INCLUDE_DIRS}/Headers
+                    ${AVUTIL_INCLUDE_DIR} 
+                    ${AVCODEC_INCLUDE_DIR} 
+                    ${SWSCALE_INCLUDE_DIR} 
+                    ${AVFORMAT_INCLUDE_DIR}
+                    ../../amd_openvx/openvx/include
+                    include
+                    )
 
-list(APPEND SOURCES
-	decoder.cpp
-	encoder.cpp
-        kernels.cpp
-	)
+list(APPEND SOURCES decoder.cpp encoder.cpp kernels.cpp)
 
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${OpenCL_LIBRARIES} ${AVUTIL_LIBRARY} ${AVCODEC_LIBRARY} ${SWSCALE_LIBRARY} ${AVFORMAT_LIBRARY} openvx)
 
-install (TARGETS ${PROJECT_NAME} DESTINATION lib)
-install (FILES include/vx_amd_media.h DESTINATION include)
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
+install(FILES include/vx_amd_media.h DESTINATION include)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")

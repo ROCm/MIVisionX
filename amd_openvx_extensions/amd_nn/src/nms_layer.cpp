@@ -1,5 +1,16 @@
 #include "kernels.h"
 
+
+typedef struct normalizedBox
+{
+    float y1; //y_center for center_type = 1
+    float x1; //x_center
+    float y2; //height
+    float x2; //width
+} bboxes;
+
+
+
 static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[])
 {
     // check tensor dims.
@@ -25,40 +36,393 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &center_point_box, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     if(center_point_box != 0 && center_point_box != 1) return ERRMSG(VX_ERROR_INVALID_VALUE, "validate: NMS: #3 scalar type=%d ('center_point_box' must be between 0/1)\n", center_point_box);
 
-    vx_size max_output_boxes_per_class_dims;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
-    if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #4 input tensor data type=%d (must be int64)\n", type);
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, max_output_boxes_per_class_dims, sizeof(max_output_boxes_per_class_dims)));
-
-    vx_size iou_threshold_dims;
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
-    if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #5 input tensor data type=%d (must be float)\n", type);
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, iou_threshold_dims, sizeof(iou_threshold_dims)));
-
-    vx_size score_threshold_dims;
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
-    if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #6 input tensor data type=%d (must be float)\n", type);
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DIMS, score_threshold_dims, sizeof(score_threshold_dims)));
-
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims != 4 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
     if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #7 output tensor data type=%d (must be int64)\n", type);
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     // output tensor configuration
-    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[6], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[6], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[3], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+    ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+
+    if(parameters[4])
+    {
+        vx_size max_output_boxes_per_class_dims;
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+        if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
+        if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #4 input tensor data type=%d (must be int64)\n", type);
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, max_output_boxes_per_class_dims, sizeof(max_output_boxes_per_class_dims)));
+    }
+
+    if(parameters[5])
+    {
+        vx_size iou_threshold_dims;
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+        if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
+        if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #5 input tensor data type=%d (must be float)\n", type);
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DIMS, iou_threshold_dims, sizeof(iou_threshold_dims)));
+    }
+
+    if(parameters[6])
+    {
+        vx_size score_threshold_dims;
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+        if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
+        if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #6 input tensor data type=%d (must be float)\n", type);
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, score_threshold_dims, sizeof(score_threshold_dims)));
+    }
 
     return VX_SUCCESS;
 }
+
+template <typename T>
+static inline bool sortScorePairDescend(const std::pair<float, T>& pair1, const std::pair<float, T>& pair2)
+{
+    return pair1.first > pair2.first;
+}
+
+void getMaxScoreIndex(const std::vector<float>& scores, const float score_thresh, const int max_output_boxes_per_class,
+                      std::vector<std::pair<float, int>>* score_index_vec)
+{
+    if(!score_index_vec->empty())
+        score_index_vec->clear();
+
+    for (size_t i = 0; i < scores.size(); ++i)
+    {
+        if (scores[i] > score_thresh)
+        {
+            score_index_vec->push_back(std::make_pair(scores[i], i));
+        }
+    }
+
+    std::stable_sort(score_index_vec->begin(), score_index_vec->end(), sortScorePairDescend<int>);
+
+    //score_index_vec->resize(max_output_boxes_per_class);
+}
+
+float computeOverlapCoordinates(bboxes& box1, bboxes &box2)
+{
+    float area1, area2, area12;
+    int top, bottom, left, right;
+    top = std::max(box1.y1, box2.y1);
+    bottom = std::max(box1.y2, box2.y2);
+    left = std::max(box1.x1, box2.x1);
+    right = std::max(box1.x2, box2.x2);
+    if(bottom < top || left > right)
+        return 0;
+    area1 = (box1.y2-box1.y1)*(box1.x2-box1.x1);
+    area2 = (box2.y2-box2.y1)*(box2.x2-box2.x1);
+    area12 = (bottom-top)*(right-left);
+    return (area12/(area1+area2-area12));
+}
+
+float computeOverlapCenter(bboxes& box1, bboxes &box2)
+{
+    //look at struct definition for variable names
+    float area1, area2, area12;
+    int top, bottom, right, left, r11, r12, c11, c12, r21, r22, c21, c22;
+
+    c11 = box1.y1-(box1.x2/2);
+    c12 = box1.y1+(box1.x2/2);
+    r11 = box1.x1-(box1.y2/2);
+    r12 = box1.x1=(box1.y2/2);
+
+    c21 = box2.y1-(box2.x2/2);
+    c22 = box2.y1+(box2.x2/2);
+    r21 = box2.x1-(box2.y2/2);
+    r22 = box2.x1+(box2.y2/2);
+
+    top = std::max(r11, r21);
+    bottom = std::max(r12, r22);
+    left = std::max(c11, c21);
+    right = std::max(c12, c22);
+    if(bottom < top || left > right)
+        return 0;
+    area1 = box1.x2*box1.y2;
+    area2 = box2.x2*box2.y2;
+    area12 = (bottom-top)*(right-left);
+    return (area12/(area1+area2-area12));
+
+}
+
+static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
+{
+    //get tensor dimensions
+    vx_size input_dims_0[4], input_dims_1[4], output_dims[4];
+    vx_size num_of_dims;   
+    vx_enum type;
+
+    //get memory pointers for all inputs
+    vx_map_id map_id;
+    vx_size stride[4];
+    float * ptr;
+    vx_enum usage = VX_READ_ONLY;
+    vx_status status;
+
+    //query and copy boxes(tensor) 
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_0, sizeof(input_dims_0)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+    
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_1, sizeof(input_dims_1)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+
+    //make sure input dimensions match for boxes ans scores
+    if (input_dims_0[0] != input_dims_1[0])
+    {
+        printf("processNMSLayer: nms_layer: num_batches for scores(%d) must match num_batches for boxes(%d)\n", input_dims_0[1], input_dims_0[0]);  
+        exit(0);
+    }
+
+    if (input_dims_0[1] != input_dims_1[2])
+    {
+        printf("processNMSLayer: nms_layer: spatial_dimension for scores(%d) must match spatial_dimension for boxes(%d)\n", input_dims_1[2], input_dims_0[1]);  
+        exit(0);
+    }
+
+    int num_batches = input_dims_1[3];
+    int num_classes = input_dims_1[2];
+    int spatial_dimension = input_dims_1[1];
+
+    //vx_size count_tensor_bboxes = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
+    //float *bboxes = new float[count_tensor_bboxes];
+    std::vector<bboxes> boxes;
+    
+    //vx_size count_tensor_scores = input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*input_dims_1[3];
+    //float *scores = new float[count_tensor_scores];
+    std::vector<std::vector<std::vector<float>>> scores;
+    
+    //map openvx boxes tensor to vector
+    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    if(status)
+    {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
+        return -1;
+    }
+    //memcpy(bboxes, ptr, (count_tensor_bboxes*sizeof(float)));
+    for (size_t b = 0; b < num_batches; ++b)
+    {
+        int idx = b * spatial_dimension * 4;
+        for(size_t i = 0; i < spatial_dimension; ++i)
+        {
+            boxes[i].y1 = ptr[idx + i*4];
+            boxes[i].x1 = ptr[idx + i*4 + 1];
+            boxes[i].y2 = ptr[idx + i*4 + 2];
+            boxes[i].x2 = ptr[idx + i*4 + 3];
+        }
+    }
+    status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
+    if(status) {
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
+        return -1;
+    }
+
+    //map openvx scores tensors to vector
+    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    if(status)
+    {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
+        return -1;
+    }
+
+    //memcpy(scores, ptr, (count_tensor_scores*sizeof(float)));
+    for (size_t b = 0; b < num_batches; ++b)
+    {
+        for (size_t c = 0; c < num_classes; ++c)
+        {
+            int idx = b * num_classes + c * spatial_dimension;
+            for(size_t i = 0; i < spatial_dimension; ++i)
+            {
+                scores[b][c].push_back(ptr[idx + i]);
+            }
+        } 
+    }
+
+    status = vxUnmapTensorPatch((vx_tensor)parameters[1], map_id);
+    if(status) {
+        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#2 (" << status << ")" << std::endl;
+        return -1;
+    }
+
+    vx_int32 center_point_box;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &center_point_box, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+
+    if(parameters[4])
+    {
+        vx_size max_output_dims[1];
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, max_output_dims, sizeof(max_output_dims)));
+        int *max_output_boxes_per_class = new int[max_output_dims[0]];
+    
+        //get memory pointers for all inputs
+        vx_map_id map_id;
+        vx_size stride[1];
+        int * ptr;
+        vx_enum usage = VX_READ_ONLY;
+        vx_status status;
+        status = vxMapTensorPatch((vx_tensor)parameters[4], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+        if(status)
+        {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
+            return -1;
+        }
+    
+        memcpy(max_output_boxes_per_class, ptr, (max_output_dims[0]*sizeof(int)));
+    
+        status = vxUnmapTensorPatch((vx_tensor)parameters[4], map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
+            return -1;
+        }
+    }
+    else
+    {
+        printf("processNMSLayer: nms_layer: returning no ouput since max_output_boxes_per_class = 0\n");
+        return VX_SUCCESS;
+    }
+
+    if(parameters[5])
+    {
+        vx_size iou_thresh_dims[1];
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DIMS, max_output_dims, sizeof(max_output_dims)));
+        float *iou_thresh = new float[iou_thresh_dims[0]];
+    
+        //get memory pointers for all inputs
+        vx_map_id map_id;
+        vx_size stride[1];
+        float * ptr;
+        vx_enum usage = VX_READ_ONLY;
+        vx_status status;
+        status = vxMapTensorPatch((vx_tensor)parameters[5], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+        if(status)
+        {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
+            return -1;
+        }
+    
+        memcpy(iou_thresh, ptr, (iou_thresh_dims[0]*sizeof(float)));
+    
+        status = vxUnmapTensorPatch((vx_tensor)parameters[5], map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
+            return -1;
+        }
+    }
+    else
+    {
+        iou_thresh[0] = 0.0;
+    }
+
+    if(parameters[6])
+    {
+        vx_size score_thresh_dims[1];
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+        ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, max_output_dims, sizeof(max_output_dims)));
+        float *score_thresh = new float[score_thresh_dims[0]];
+    
+        //get memory pointers for all inputs
+        vx_map_id map_id;
+        vx_size stride[1];
+        float * ptr;
+        vx_enum usage = VX_READ_ONLY;
+        vx_status status;
+        status = vxMapTensorPatch((vx_tensor)parameters[6], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+        if(status)
+        {
+            std::cerr << "ERROR: vxMapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
+            return -1;
+        }
+    
+        memcpy(score_thresh, ptr, (iou_thresh_dims[0]*sizeof(float)));
+    
+        status = vxUnmapTensorPatch((vx_tensor)parameters[6], map_id);
+        if(status) {
+            std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
+            return -1;
+        }
+    }
+    else
+    {
+        score_thresh[0] = 0.0;
+    }
+
+    //create memory to store final output
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+
+    //int count_output_final = output_dims[0]*output_dims[1]*output_dims[2]*output_dims[3];
+    vx_size stride_output_final[4] = {sizeof(int), output_dims[0]*sizeof(int), output_dims[0]*output_dims[1]*sizeof(int), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int) }; 
+    //int * final_selected_indices = new int[count_output_final][3];
+    std::vector<std::vector<int>> final_selected_indices;
+
+    //get top_k scores with indices per batch per class. Common for both center point types.
+    for (size_t b = 0; b < num_batches; ++b)
+    {
+        for (size_t c = 0; c < num_classes; ++c)
+        {
+            std::vector<std::pair<float, int>> score_index_vec;
+            getMaxScoreIndex(scores[b][c], score_thresh[0], max_output_boxes_per_class[0], &score_index_vec);
+
+            std::vector<int> selected_indices;
+            selected_indices.clear();
+
+            for(size_t i = 0; i < score_index_vec.size(); ++i)
+            {
+                const int idx = score_index_vec[i].second;
+                bool keep = true;
+                for(int k = 0; k < (int)selected_indices.size() && keep; ++k)
+                {
+                    const int prev_idx = selected_indices[k];
+                    float overlap;
+                    if (center_point_box == 0) /*indicates box data = [y1,x1,y2,x2] - mostly TF models*/
+                    {
+                        overlap = computeOverlapCoordinates(boxes[idx], boxes[prev_idx]);
+                    }
+                    else if(center_point_box == 1) /*indicates box data = [x_center,y_center,width,height] - mostly PyTorch models*/
+                    {
+                        overlap = computeOverlapCenter(boxes[idx], boxes[prev_idx]);
+                    }
+                    keep = overlap <= iou_thresh;
+                }
+                if(keep)
+                    selected_indices.push_back(idx);
+            }
+            if(max_output_boxes_per_class < selected_indices.size())
+                selected_indices.resize(max_output_boxes_per_class);
+            std::std::vector<int> temp;
+            for(size_t f = 0; f < selected_indices.size(); ++f)
+            {
+                temp.push_back(b);
+                temp.push_back(c);
+                temp.push_back(selected_indices[f]);
+                final_selected_indices.push_back(temp);
+            }
+        }
+    }    
+
+    //TODO:copy final_selected_indices to tensor!!!!!
+    int *final_selected_indices_ptr = &final_selected_indices;
+    
+    //printf("output = %f %f %f %f %f %f %f\n", outputData[0],outputData[1],outputData[2],outputData[3],outputData[4], outputData[5],outputData[6]);
+    status =  vxCopyTensorPatch((vx_tensor)parameters[3], 4, nullptr, nullptr, stride_output_final, final_selected_indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    if(status)
+    {
+        std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
+        return -1;
+    }
+
+    return VX_SUCCESS;
+
+}
+
 
 //! \brief The kernel target support callback.
 static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
@@ -67,92 +431,8 @@ static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
     )
 {
 
-    supported_target_affinity = AGO_TARGET_AFFINITY_GPU;
+    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
     return VX_SUCCESS;
-}
-
-static vx_status VX_CALLBACK opencl_codegen(
-    vx_node node,                                  // [input] node
-    const vx_reference parameters[],               // [input] parameters
-    vx_uint32 num,                                 // [input] number of parameters
-    bool opencl_load_function,                     // [input]  false: normal OpenCL kernel; true: reserved
-    char opencl_kernel_function_name[64],          // [output] kernel_name for clCreateKernel()
-    std::string& opencl_kernel_code,               // [output] string for clCreateProgramWithSource()
-    std::string& opencl_build_options,             // [output] options for clBuildProgram()
-    vx_uint32& opencl_work_dim,                    // [output] work_dim for clEnqueueNDRangeKernel()
-    vx_size opencl_global_work[],                  // [output] global_work[] for clEnqueueNDRangeKernel()
-    vx_size opencl_local_work[],                   // [output] local_work[] for clEnqueueNDRangeKernel()
-    vx_uint32& opencl_local_buffer_usage_mask,     // [output] reserved: must be ZERO
-    vx_uint32& opencl_local_buffer_size_in_bytes   // [output] reserved: must be ZERO
-)
-{
-	vx_enum input_type, output_type;
-    vx_size num_dims;
-    vx_size input_dims_1[4], input_dims_2[4],  output_dims[4];
-
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_type, sizeof(input_type)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_1, sizeof(input_dims_1)));
-
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &input_type, sizeof(input_type)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_2, sizeof(input_dims_2)));
-
-    vx_int32 center_point_box;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &center_point_box, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DATA_TYPE, &output_type, sizeof(output_type)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-
-#if ENABLE_DEBUG_PRINT_DIMS
-    if (num_dims == 4) { 
-       	std::cout << "nms input 1" << input_dims_1[3] << " " << input_dims_1[2] << " " << input_dims_1[1] << " " << input_dims_1[0] << " ";
-        std::cout << "nms input 2" << input_dims_2[3] << " " << input_dims_2[2] << " " << input_dims_2[1] << " " << input_dims_2[0] << " ";
-    	std::cout << "nms output " << output_dims[3] << " " << output_dims[2] << " " << output_dims[1] << " " << output_dims[0] << std::endl;
-    }/*
-    else if(num_dims == 2) {
-    	std::cout << "nms input " << " " << input_dims[1] << " " << input_dims[0] << " ";
-    	std::cout << "nms output " << " " << output_dims[1] << " " << output_dims[0] << std::endl;
-    }*/
-    
-#endif
-
-	strcpy(opencl_kernel_function_name, "nms_layer");
-
-    
-    opencl_work_dim = 3;
-    opencl_global_work[0] = input_dims[0];
-    opencl_global_work[1] = input_dims[1];
-    opencl_global_work[2] = input_dims[2] * input_dims[3];
-   
-    // Setting variables required by the interface
-    opencl_local_buffer_usage_mask = 0;
-    opencl_local_buffer_size_in_bytes = 0;
-
-    if (num_dims == 4) {
-        char item[8192];
-        sprintf(item,
-                "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in_1, uint in_1_offset, uint4 in_1_stride, __global uchar * in_2, uint in_2_offset, uint4 in_2_stride, const int center_point_box, 
-                                    __global uchar * max_output_boxes_per_class, uint max_output_boxes_per_class_offset, uint4 max_output_boxes_per_class_stride, 
-                                    __global uchar * iou_threshold, uint iou_threshold_offset, uint4 iou_threshold_stride,
-                                    __global uchar * score_threshold, uint score_threshold_offset, uint4 score_threshold_stride,
-                                    __global uchar * out, uint out_offset, uint4 out_stride) \n"
-                "{ \n"
-                , opencl_kernel_function_name);
-        opencl_kernel_code = item;
-        sprintf(item,
-        "    uint x = get_global_id(0) * %d;\n"
-        "    uint y = get_global_id(1);\n"
-        "    in += in_offset + y * in_stride.s1 + x * in_stride.s0;\n"
-        "    out += out_offset + y * out_stride.s1 + x * out_stride.s0;\n"
-        , input_element_count_multiple_of_4 ? 4 : 1);
-    opencl_kernel_code += item;
-		opencl_kernel_code +=
-        "}\n";
-	}
-	return VX_SUCCESS;
 }
 
 //! \brief The kernel execution.
@@ -164,22 +444,20 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
 //! \brief The kernel publisher.
 vx_status publishNMSLayer(vx_context context)
 {
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.nms_layer", VX_KERNEL_CAST_LAYER_AMD, host_kernel, 7, validate, nullptr, nullptr);
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.nms_layer", VX_KERNEL_CAST_LAYER_AMD, processNMSLayer, 7, validate, nullptr, nullptr);
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
-    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
     ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK, &opencl_codegen_callback_f, sizeof(opencl_codegen_callback_f)));
 
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));    
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));    
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_OPTIONAL));
 
     //finalize and release kernel object.
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
@@ -198,9 +476,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxNMSLayer(vx_graph graph, vx_tensor boxes, vx_
             (vx_reference)boxes,
             (vx_reference)scores,
             (vx_reference)s_center_point_box,
-            (vx_reference)max_output_boxes_per_class,
-            (vx_reference)iou_threshold,
-            (vx_reference)score_threshold,
             (vx_reference)output,
         };
         node = createNode(graph, VX_KERNEL_NMS_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));

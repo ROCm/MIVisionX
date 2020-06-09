@@ -4,7 +4,7 @@
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
-MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™ 1.0.1</a>. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™ 1.0.1</a>. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
@@ -71,7 +71,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-**MIVisionX-Lite-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If directory option is not given, the script will install deps folder in the home directory(~/) by default, else in the user specified location.
+**MIVisionX-Lite-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If the directory option is not given, the script will install the deps folder in the home directory(~/) by default, else in the user-specified location.
 
 ##### Prerequisites for running the script
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
@@ -95,43 +95,16 @@ python MIVisionX-Lite-setup.py --directory [setup directory - optional]
 
 ### Windows
 
-#### Using .msi packages
-
-* [MIVisionX-Lite-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX
-
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
 * Install [Windows Prerequisites](#windows)
 * Use `MIVisionX-Lite.sln` to build for x64 platform
 
 ### Linux
 
-#### Using `apt-get`/`yum`
-
-##### Prerequisites
-1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
-2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
-3. [ROCm OpenCL](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
-
-###### Ubuntu
-````
-sudo apt-get install mivisionx_lite
-````
-###### CentOS
-````
-sudo yum install mivisionx_lite
-````
- 
- **Note:**
-  * source code will not available with apt-get/yum install
-  * executables placed in `/opt/rocm/mivisionx_lite/bin` and libraries in `/opt/rocm/mivisionx_/lib`
-  * OpenVX and module header files into `/opt/rocm/mivisionx_lite/include`
-  * Samples placed in `/opt/rocm/mivisionx`
-  * Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
-
 #### Using `MIVisionX-Lite-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 
 * Install [ROCm OpenCL](https://rocm.github.io/ROCmInstall.html)
-* Use the below commands to setup and build MIVisionX
+* Use the below commands to set up and build MIVisionX
 
 ````
 git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
@@ -162,8 +135,9 @@ sudo make install
 ### Linux
 * The installer will copy all executables into `/opt/rocm/mivisionx_lite/bin` and libraries into `/opt/rocm/mivisionx_lite/lib`
 * The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx_lite/include` folder
-* Apps, Samples, & Documents are placed into `/opt/rocm/mivisionx`
+* Apps, Samples, & Documents are placed into `/opt/rocm/mivisionx_lite`
 * Run samples to verify the installation
+
   * **Canny Edge Detection**
   
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
@@ -171,7 +145,7 @@ sudo make install
   ````
   export PATH=$PATH:/opt/rocm/mivisionx_lite/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx_lite/lib
-  runvx /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf 
+  runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf 
   ````
 **Note:** More samples are available [here](samples#samples)
 
@@ -249,9 +223,9 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 ````
 * Test display with MIVisionX sample
 ````
-export PATH=$PATH:/opt/rocm/mivisionx/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+export PATH=$PATH:/opt/rocm/mivisionx_lite/bin
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx_lite/lib
+runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf 
 ````
 
 ## Release Notes

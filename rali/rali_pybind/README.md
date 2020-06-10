@@ -36,6 +36,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/rpp/lib/
 ```
 #### Run Test Script
 
+test.py [image_folder] [cpu:0/gpu:1] [batch_size]
+
 ```
-python3 example/test.py
+python3 example/test.py ../../data/images/AMD-tinyDataSet/ 0 4
 ```

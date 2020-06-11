@@ -61,6 +61,12 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
+### MacOS
+* [Homebrew](https://brew.sh)
+* CMake - `brew install cmake`
+* **Optional:** Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* **Optional:** Install [OpenCL](https://support.apple.com/en-us/HT202823)
+
 ### Linux
 * Install [ROCm OpenCL](https://rocm.github.io/ROCmInstall.html) 
 * CMake 2.8 or newer [download](http://cmake.org/download/)
@@ -83,7 +89,7 @@ For the convenience of the developer, we here provide the setup script which wil
 ````
 python MIVisionX-Lite-setup.py --directory [setup directory - optional]
                                --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                               --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
+                               --reinstall [Remove previous setup and reinstall - optional (default:no)[options:yes/no]]
 ````
 
 **Note:** use `--installer yum` for **CentOS**
@@ -91,13 +97,37 @@ python MIVisionX-Lite-setup.py --directory [setup directory - optional]
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
-## Build & Install MIVisionX
+## Build & Install MIVisionX-Lite
 
 ### Windows
 
 #### Using `Visual Studio 2017` on 64-bit `Windows 10`
 * Install [Windows Prerequisites](#windows)
 * Use `MIVisionX-Lite.sln` to build for x64 platform
+
+### MacOS
+#### Using `MIVisionX-Lite-setup.py` and `CMake` on MacOS
+
+* Install [Homebrew](https://brew.sh)
+* CMake - `brew install cmake`
+* Git - `brew install git`
+
+````
+git clone -b openvx-1.0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+cd MIVisionX
+````
+
+```
+python MIVisionX-Lite-setup.py
+```
+
+````
+mkdir build
+cd build
+cmake ../
+make -j8
+sudo make install
+````
 
 ### Linux
 
@@ -107,9 +137,8 @@ python MIVisionX-Lite-setup.py --directory [setup directory - optional]
 * Use the below commands to set up and build MIVisionX
 
 ````
-git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+git clone -b openvx-1.0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
 cd MIVisionX
-git checkout openvx-1.0.1
 ````
 
 ```
@@ -132,7 +161,7 @@ sudo make install
 
 ## Verify the Installation
 
-### Linux
+### Linux & MacOS
 * The installer will copy all executables into `/opt/rocm/mivisionx_lite/bin` and libraries into `/opt/rocm/mivisionx_lite/lib`
 * The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx_lite/include` folder
 * Apps, Samples, & Documents are placed into `/opt/rocm/mivisionx_lite`
@@ -145,7 +174,7 @@ sudo make install
   ````
   export PATH=$PATH:/opt/rocm/mivisionx_lite/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx_lite/lib
-  runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf 
+  runvx -affinity:CPU file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
   ````
 **Note:** More samples are available [here](samples#samples)
 

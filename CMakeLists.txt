@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 project(MIVisionX_Lite)
-set(VERSION "0.9.0")
+set(VERSION "0.9.1")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -44,9 +44,12 @@ endif()
 message("-- ${BoldBlue}MIVisionX Lite Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Lite install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH 1)
+endif()
+
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
-#add_subdirectory(apps) #install only for V-0.9
 add_subdirectory(utilities)
 
 install(DIRECTORY apps DESTINATION .)
@@ -73,13 +76,17 @@ execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
                )
 
 # generate .deb or .rpm package
-if(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu")
-    message("-- Ubuntu detected -- .deb package will be created")
+if(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu" AND NOT APPLE)
+    message("-- Ubuntu detected   -- .deb package will be created")
     set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "DEB")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS    "libopencv-dev")
+elseif(APPLE)
+    message("-- Apple detected    -- OSX package will be created")
+    set(CPACK_BUNDLE_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
+    set(CPACK_GENERATOR                 "Bundle")
 else()
-    message("-- CentOS detected -- .rpm package will be created")
+    message("-- CentOS detected   -- .rpm package will be created")
     set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
     set(CPACK_GENERATOR                 "RPM")
     set(CPACK_RPM_PACKAGE_REQUIRES      "opencv")

@@ -2579,8 +2579,11 @@ AgoData::AgoData()
 	  buffer{ nullptr }, buffer_allocated{ nullptr }, reserved{ nullptr }, reserved_allocated{ nullptr }, buffer_sync_flags{ 0 }, 
 #if ENABLE_OPENCL
 	  opencl_buffer{ nullptr }, opencl_buffer_allocated{ nullptr },
+#if defined(CL_VERSION_2_0)
+	  opencl_svm_buffer{ nullptr }, opencl_svm_buffer_allocated{ nullptr },
+#endif 
+	  opencl_buffer_offset{ 0 },
 #endif
-	  opencl_svm_buffer{ nullptr }, opencl_svm_buffer_allocated{ nullptr }, opencl_buffer_offset{ 0 },
 	  isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, siblingIndex{ 0 },
 	  numChildren{ 0 }, children{ nullptr }, parent{ nullptr }, inputUsageCount{ 0 }, outputUsageCount{ 0 }, inoutUsageCount{ 0 },
 	  hierarchical_level{ 0 }, hierarchical_life_start{ 0 }, hierarchical_life_end{ 0 }
@@ -2720,7 +2723,11 @@ AgoContext::AgoContext()
 	  num_active_modules{ 0 }, num_active_references{ 0 }, callback_log{ nullptr }, callback_reentrant{ vx_false_e },
 	  thread_config{ CONFIG_THREAD_DEFAULT }, importing_module_index_plus1{ 0 }, graph_garbage_data{ nullptr }, graph_garbage_node{ nullptr }, graph_garbage_list{ nullptr }
 #if ENABLE_OPENCL
-	, opencl_context_imported{ false }, opencl_context{ nullptr }, opencl_cmdq{ nullptr }, opencl_config_flags{ 0 }, opencl_svmcaps{ 0 }, opencl_num_devices{ 0 }
+	, opencl_context_imported{ false }, opencl_context{ nullptr }, opencl_cmdq{ nullptr }, opencl_config_flags{ 0 },
+#if defined(CL_VERSION_2_0)
+	opencl_svmcaps{ 0 }, 
+#endif
+	opencl_num_devices{ 0 } , opencl_cmdq_properties{ 0 }
 #endif
 {
 	memset(&kernelList, 0, sizeof(kernelList));

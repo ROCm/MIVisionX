@@ -181,8 +181,9 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
         return MV_SUCCESS;
     } 
     else if (backend == OpenVX_WinML) {
-        if (strchr(model_name, '.') != "onnx")
+        if (!strcmp(strchr(model_name, '.'), "onnx")){
             return MV_ERROR_NOT_SUPPORTED;
+        }
         // todo:: do the required initialization for WinML
         // compile and generate single node executable
         return MV_ERROR_NOT_IMPLEMENTED;

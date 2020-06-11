@@ -40,6 +40,8 @@ THE SOFTWARE.
 #include <miopen/miopen.h>
 #include <iostream>
 #include <string.h>
+#include <vector>
+#include <algorithm>
 #if __APPLE__
 #include <opencl.h>
 #else

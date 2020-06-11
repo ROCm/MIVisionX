@@ -73,8 +73,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 * [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   
-#### Prerequisites setup script for Linux - `MIVisionX-Lite-setup.py`
-
+#### Prerequisites setup script - `MIVisionX-Lite-setup.py`
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
 **MIVisionX-Lite-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If the directory option is not given, the script will install the deps folder in the home directory(~/) by default, else in the user-specified location.
@@ -262,6 +261,7 @@ runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
 ### Known issues
 * Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
 * ROCm `3.0` and above has known to slow down OpenCL kernels.
+* If OpenCL failure occurs on **macOS**, set environment variable to run on CPU by default - `export AGO_DEFAULT_TARGET=CPU`
 
 ### Tested configurations
 * Windows 10

@@ -161,7 +161,7 @@ sudo make install
 
 ## Verify the Installation
 
-### Linux
+### Linux & MacOS
 * The installer will copy all executables into `/opt/rocm/mivisionx_lite/bin` and libraries into `/opt/rocm/mivisionx_lite/lib`
 * The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx_lite/include` folder
 * Apps, Samples, & Documents are placed into `/opt/rocm/mivisionx_lite`
@@ -174,7 +174,7 @@ sudo make install
   ````
   export PATH=$PATH:/opt/rocm/mivisionx_lite/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx_lite/lib
-  runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf 
+  runvx -affinity:CPU file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
   ````
 **Note:** More samples are available [here](samples#samples)
 

@@ -81,6 +81,9 @@ docker pull rocm/pytorch:rocm3.3_ubuntu16.04_py3.6_pytorch
 * Step 4: Install MIVisionX on the docker
 * Step 5: Install RALI python_pybind plugin
 * Step 6: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
+```
+git clone -b mlperf-rali https://github.com/rrawther/MLPerf-mGPU
+```
 * Step 7: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
 * Step 8: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```

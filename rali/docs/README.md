@@ -99,7 +99,7 @@ sh ./SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 
 ### MIVisionX Pytorch Docker
 * Refer to the [docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker) page for prerequisites and information on docker
-* Step 1: *Get the docker image for mivisionx pytorch
+* Step 1: Get the [docker image for mivisionx pytorch](https://hub.docker.com/r/mivisionx/pytorch-ubuntu-16.04)
 ```
 sudo docker pull mivisionx/pytorch-ubuntu-16.04
 ```

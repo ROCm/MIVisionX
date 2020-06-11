@@ -72,7 +72,7 @@ if(${BUILD_RALI_PYBIND})
     target_link_libraries(rali_pybind PRIVATE rali vx_rpp amd_rpp)
 
     install(TARGETS rali_pybind DESTINATION lib)
-    message("-- ${Green}RALI Pybind included ${ColourReset}")
+    message("-- ${Green}Radeon Augmentation Library Python Binding - rali_pybind module added ${ColourReset}")
 else()
     message("-- ${Red}WARNING: RALI Pybind module excluded ${ColourReset}")
 endif()

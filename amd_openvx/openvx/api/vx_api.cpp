@@ -724,7 +724,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
 					}
 					else {
 #if defined(CL_VERSION_2_0)
-                        *(vx_uint8 **)ptr = data->opencl_svm_buffer;
+                        *(vx_uint8 **)ptr = image->opencl_svm_buffer;
 #else
                         *(vx_uint8 **)ptr = NULL;
 #endif

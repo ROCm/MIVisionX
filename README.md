@@ -63,7 +63,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 
 ### MacOS
 * [Homebrew](https://brew.sh)
-* CMake - 'brew install cmake'
+* CMake - `brew install cmake`
 * **Optional:** Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * **Optional:** Install [OpenCL](https://support.apple.com/en-us/HT202823)
 
@@ -109,8 +109,8 @@ python MIVisionX-Lite-setup.py --directory [setup directory - optional]
 #### Using `MIVisionX-Lite-setup.py` and `CMake` on MacOS
 
 * Install [Homebrew](https://brew.sh)
-* CMake - 'brew install cmake'
-* Git - 'brew install git'
+* CMake - `brew install cmake`
+* Git - `brew install git`
 
 ````
 git clone -b openvx-1.0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git

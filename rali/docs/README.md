@@ -75,7 +75,7 @@ Rali.types are enums exported from C++ API to python. Some examples include CPU,
 * Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into train and val folders
 * Step 2: Pull and install [ROCm PyTorch Docker].(https://hub.docker.com/r/rocm/pytorch) 
 ```
-docker pull rocm/pytorch:rocm3.3_ubuntu16.04_py3.6_pytorch
+sudo docker pull rocm/pytorch:rocm3.3_ubuntu16.04_py3.6_pytorch
 ```
 * Step 3: Install RPP on the docker
 * Step 4: Install MIVisionX on the docker
@@ -94,6 +94,9 @@ sh ./SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 * Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into the train and Val folders
 * Step 2: Pull and run  [MIVisionX rali_pytorch docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker). The docker already installed with pre-built packages for RALI
 * Step 3: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
+```
+git clone -b mlperf-rali https://github.com/rrawther/MLPerf-mGPU
+```
 * Step 4: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
 * Step 5: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```

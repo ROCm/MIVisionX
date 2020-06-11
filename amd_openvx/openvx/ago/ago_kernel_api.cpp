@@ -2167,18 +2167,19 @@ int ovxKernel_WeightedAverage(AgoNode * node, AgoKernelCommand cmd)
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
 		vx_df_image format = node->paramList[0]->u.img.format;
+		vx_float32 alpha = node->paramList[1]->u.scalar.u.f;
 		if (format != VX_DF_IMAGE_U8 || node->paramList[2]->u.img.format != format) {
 			return VX_ERROR_INVALID_FORMAT;
 		}
-			
 		else if (!width || !height){
 			return VX_ERROR_INVALID_DIMENSION;
-		}
-			
+		}	
 		else if (node->paramList[1]->u.scalar.type != VX_TYPE_FLOAT32) {
 			return VX_ERROR_INVALID_TYPE;
 		}
-			
+		else if (!((alpha >= 0) && (alpha <= 1.0))) {
+			return VX_ERROR_INVALID_VALUE;
+		}
 		// set output image sizes same as input image size
 		vx_meta_format meta;
 		meta = &node->metaList[3];
@@ -19672,6 +19673,7 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[1]->u.img.width;
 		vx_uint32 height = node->paramList[1]->u.img.height;
+		vx_float32 alpha = node->paramList[2]->u.scalar.u.f;
 		vx_df_image format = node->paramList[1]->u.img.format;
 		if (format != VX_DF_IMAGE_U8 || node->paramList[3]->u.img.format != format) {
 			return VX_ERROR_INVALID_FORMAT;
@@ -19681,6 +19683,9 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 		}	
 		else if (node->paramList[2]->u.scalar.type != VX_TYPE_FLOAT32) {
 			return VX_ERROR_INVALID_TYPE;
+		}
+		else if (!((alpha >= 0) && (alpha <= 1.0))) {
+			return VX_ERROR_INVALID_VALUE;
 		}
 		// set output image sizes same as input image size
 		vx_meta_format meta;

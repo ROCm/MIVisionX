@@ -223,7 +223,7 @@ static struct {
 	OVX_KERNEL_ENTRY( VX_KERNEL_HALFSCALE_GAUSSIAN    , HalfScaleGaussian, "halfscale_gaussian",   		AIN_AOUT_AIN,         ATYPE_IIS          , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_COPY                  , Copy, "copy",                              		AIN_AOUT,             ATYPE_RR           , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_SELECT                , Select, "select",                          		AINx3_AOUT,           ATYPE_SRRR         , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_WEIGHTED_AVERAGE      , WeightedAverage, "weightedaverage",        		AINx3_AOUT,		      ATYPE_ISII         , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_WEIGHTED_AVERAGE      , WeightedAverage, "weighted_average",        		AINx3_AOUT,		      ATYPE_ISII         , false ),
 	OVX_KERNEL_ENTRY( VX_KERNEL_NON_LINEAR_FILTER     , NonLinearFilter, "non_linear_filter",      		AINx3_AOUT,	     	  ATYPE_SIMI         , false ),	
 	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_PYRAMID     , LaplacianPyramid, "laplacian_pyramid",     		AINx2_AOUT,	     	  ATYPE_IPI        	 , false ),	
 	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_RECONSTRUCT , LaplacianReconstruct, "laplacian_reconstruct",  AINx2_AOUT,	     	  ATYPE_PII        	 , false ),	

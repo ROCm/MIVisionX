@@ -216,7 +216,6 @@ int agoOptimizeGraph(AgoGraph * agraph)
 		// run DRAMA graph optimizer
 		agraph->status = agoOptimizeDrama(agraph);
 	}
-
 	return agraph->status;
 }
 
@@ -2237,6 +2236,7 @@ int agoExecuteGraph(AgoGraph * graph)
 				if (node->callback) {
 					vx_action action = node->callback(node);
 					if (action == VX_ACTION_ABANDON) {
+    	    			graph->state = VX_GRAPH_STATE_ABANDONED;
 						return VX_ERROR_GRAPH_ABANDONED;
 					}
 				}
@@ -2276,10 +2276,9 @@ int agoExecuteGraph(AgoGraph * graph)
 	agoPerfCaptureStop(&graph->perf);
 	agoPerfProfileEntry(graph, ago_profile_type_exec_end, &graph->ref);
 	graph->execFrameCount++;
+
 	if (status == VX_SUCCESS)
         graph->state = VX_GRAPH_STATE_COMPLETED;
-    else
-        graph->state = VX_GRAPH_STATE_ABANDONED;
 
 	return status;
 }
@@ -2490,13 +2489,11 @@ int agoProcessGraph(AgoGraph * graph)
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidGraph(graph)) {
 		CAgoLock lock(graph->cs);
-
 		// make sure that graph is verified
 		status = VX_SUCCESS;
 		if (!graph->verified) {
 			status = vxVerifyGraph(graph);
 		}
-
 		// execute graph if possible
 		if (status == VX_SUCCESS) {
 			if (graph->verified && graph->isReadyToExecute) {

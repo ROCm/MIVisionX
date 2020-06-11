@@ -3102,8 +3102,11 @@ NODE
 VX_API_ENTRY vx_node VX_API_CALL vxCreateGenericNode(vx_graph graph, vx_kernel kernel)
 {
 	vx_node node = NULL;
-	if (agoIsValidGraph(graph) && agoIsValidKernel(kernel) && !graph->verified && kernel->finalized) {
+	if (agoIsValidGraph(graph) && agoIsValidKernel(kernel) && /*!graph->verified &&*/ kernel->finalized) {
 		CAgoLock lock(graph->cs);
+		// graph->reverify = graph->verified;
+		// graph->verified = vx_false_e;
+		// graph->state = VX_GRAPH_STATE_UNVERIFIED;
 		node = agoCreateNode(graph, kernel);
 		node->ref.external_count++;
 	}
@@ -3339,6 +3342,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxAssignNodeCallback(vx_node node, vx_nodecom
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidNode(node)) {
 		node->callback = callback;
+		
+		// vx_graph graph = (vx_graph)node->ref.scope;
+		// CAgoLock lock(graph->cs);
+		//const char * name = "com.amd.openvx.Box_U8_U8_3x3";
+		// if (agoAssignNodeCallback(&graph->nodeList, node, name, callback)) {
+		// 	agoAddLogEntry(&node->ref, status, "ERROR: vxAssignNodeCallback: failed for %s\n", node->akernel->name);
+		// }	
+		// else {
+		// 	status = VX_SUCCESS;	
+		// }
+
 		status = VX_SUCCESS;
 	}
 	return status;
@@ -3357,6 +3371,7 @@ VX_API_ENTRY vx_nodecomplete_f VX_API_CALL vxRetrieveNodeCallback(vx_node node)
 	if (agoIsValidNode(node)) {
 		callback = node->callback;
 	}
+
 	return callback;
 }
 

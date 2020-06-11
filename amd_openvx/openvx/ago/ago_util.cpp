@@ -325,6 +325,29 @@ AgoKernel * agoRemoveKernel(AgoKernelList * list, AgoKernel * item)
 	return 0;
 }
 
+int agoAssignNodeCallback(AgoNodeList * list, AgoNode * item, const char * name, vx_nodecomplete_f callback)
+{
+	int status = -1;
+	if (!item) {
+		return status;
+	}
+	for (AgoNode * cur = list->head; cur; cur = cur->next) {
+		if (strcmp(cur->akernel->name, name) == 0) {
+			cur->callback = callback;
+			status = 0;
+			break;
+		}
+	}
+	for (AgoNode * cur = list->head; cur; cur = cur->next) {
+		if (cur == item) {
+			cur->callback = callback;
+			status = 0;
+			break;
+		}
+	}
+	return status;
+}
+
 int agoRemoveNode(AgoNodeList * list, AgoNode * item, bool moveToTrash)
 {
 	int status = -1;

@@ -72,23 +72,45 @@ Rali.types are enums exported from C++ API to python. Some examples include CPU,
 *  sudo ./run.sh
 
 ### Steps to run MLPerf Resnet50 classification training with RALI on a system with MI50 and ROCm
+* Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into train and val folders
+* Step 2: Pull and install [ROCm PyTorch Docker].(https://hub.docker.com/r/rocm/pytorch) 
 ```
-Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into train and val folders
-Step 2: Pull and install [ROCm PyTorch Docker] (https://hub.docker.com/r/rocm/pytorch) : tag: rocm/pytorch:rocm3.3_ubuntu16.04_py3.6_pytorch
-Step 3: Install RPP on the docker
-Step 4: Install MIVisionX on the docker
-Step 5: Install RALI python_pybind plugin
-Step 6: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
-Step 7: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
-Step 8: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
-
+docker pull rocm/pytorch:rocm3.3_ubuntu16.04_py3.6_pytorch
+```
+* Step 3: Install RPP on the docker
+* Step 4: Install MIVisionX on the docker
+* Step 5: Install RALI python_pybind plugin
+* Step 6: Clone [MLPerf].(https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
+* Step 7: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
+* Step 8: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
+```
+sh ./SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```
 
 ### Steps to run MLPerf training on rali_pytorch docker
+* Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into the train and Val folders
+* Step 2: Pull and run  [MIVisionX rali_pytorch docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker). The docker already installed with pre-built packages for RALI
+* Step 3: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
+* Step 4: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
+* Step 5: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```
-Step 1: Ensure you have downloaded ILSVRC2012_img_val.tar (6.3GB) and ILSVRC2012_img_train.tar (138 GB) files and unzip into the train and Val folders
-Step 2: Pull and run [MIVisionX rali_pytorch docker] (../docker). The docker already installed with pre-built packages for RALI
-Step 3: Clone [MLPerf](https://github.com/rrawther/MLPerf-mGPU) branch and checkout mlperf-rali branch
-Step 4: Modify SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh to reflect correct path for imagenet directory
-Step 5: Run SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
+sh ./SMC_RN50_FP32_50E_1GPU_MI50_16GB.sh
 ```
+
+### MIVisionX Pytorch Docker
+* Refer to the [docker](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#docker) page for prerequisites and information on docker
+* Step 1: *Get the docker image for mivisionx pytorch
+```
+sudo docker pull mivisionx/pytorch-ubuntu-16.04
+```
+* Step 2: *Run the docker image*
+````
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/pytorch-ubuntu-16.04
+````
+  * Optional: Map localhost directory on the docker image
+    * option to map the localhost directory with imagenet dataset folder to be accessed on the docker image.
+    * usage: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH} 
+````
+sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/pytorch-ubuntu-16.04
+````
+

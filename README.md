@@ -261,7 +261,10 @@ runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
 ### Known issues
 * Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
 * ROCm `3.0` and above has known to slow down OpenCL kernels.
-* If OpenCL failure occurs on **macOS**, set environment variable to run on CPU by default - `export AGO_DEFAULT_TARGET=CPU`
+* If OpenCL failure occurs on **macOS**, set environment variable to run on CPU by default
+  ```
+   export AGO_DEFAULT_TARGET=CPU
+  ```
 
 ### Tested configurations
 * Windows 10

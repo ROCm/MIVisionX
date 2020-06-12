@@ -1,5 +1,6 @@
 # RALI
 The AMD Radeon Augmentation Library (RALI) is designed to efficiently decode and process images and videos from a variety of storage formats and modify them through a processing graph programmable by the user. RALI currently provides C API.
+For more details, go to [docs](docs) page.
 
 ## Supported Operations
 RALI can be currently used to perform the following operations either with randomized or fixed parameters:
@@ -86,4 +87,4 @@ sudo apt-get install libjsoncpp-dev
 
 ## Sample and test applications
 *  [Image augmentation application](../apps/image_augmentation) demonstrates how RALI's C API can be used to load jpeg images from the disk, decode them and augment the loaded images with a variety of modifications.
-*  [Augmentation unit tests](../apps/augmentation_unittest) can be used to test RALI's API individually.
+*  [Augmentation unit tests](../utilities/rali/rali_unittests) can be used to test RALI's API individually.

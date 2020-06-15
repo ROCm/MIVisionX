@@ -598,16 +598,17 @@ class IrGraph:
                     if valueType == 'int64':
                         tensorType = 'I064'
                     
+                    shape = [1]
                     constant_tensor = IrTensor()
                     constant_tensor.setName(tensor_name)
-                    constant_tensor.setInfo(tensorType, input.shape)
+                    constant_tensor.setInfo(tensorType, shape)
                     self.addVariable(constant_tensor)                    
                     self.addBinary(tensor_name, value)
                     
                     node.type = 'copy'
                     local = IrTensor()
                     local.setName(output)
-                    local.setInfo(tensorType, input.shape)
+                    local.setInfo(tensorType, shape)
                     local.setFormat(tensorType)
                     self.addLocal(local)
                 elif node.type in ['upsample']:

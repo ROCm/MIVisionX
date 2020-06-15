@@ -86,6 +86,7 @@ onnx2ir_op_type = {
     'Shape'              : 'shape',  
     'ArgMax'             : 'argmax',
     'Constant'           : 'constant',
+    'ConstantOfShape'    : 'constantofshape',
 }
 
 onnx2ir_data_type = [

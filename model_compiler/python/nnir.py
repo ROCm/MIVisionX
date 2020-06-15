@@ -196,6 +196,7 @@ class IrNode:
             'upsample' : 1,
             'cast' : 1,
             'constant' : 1,
+            'constantofshape' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -584,6 +585,29 @@ class IrGraph:
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(tensorType, shape)
+                    local.setFormat(tensorType)
+                    self.addLocal(local)
+                elif node.type in ['constantofshape']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    constantCount+=1
+                    tensor_name = 'constant_' + str(constantCount)
+                    value = node.attr.get('value')
+                    value = np.atleast_1d(value)
+                    valueType = value.dtype
+                    tensorType = 'F032'
+                    if valueType == 'int64':
+                        tensorType = 'I064'
+                    
+                    constant_tensor = IrTensor()
+                    constant_tensor.setName(tensor_name)
+                    constant_tensor.setInfo(tensorType, input.shape)
+                    self.addVariable(constant_tensor)                    
+                    self.addBinary(tensor_name, value)
+                    
+                    node.type = 'copy'
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(tensorType, input.shape)
                     local.setFormat(tensorType)
                     self.addLocal(local)
                 elif node.type in ['upsample']:

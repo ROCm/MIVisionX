@@ -1,7 +1,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7.8"
+__version__     = "1.7.9"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -20,6 +20,7 @@ parser.add_argument('--directory', type=str, default='',        help='Setup home
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
 parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
+parser.add_argument('--protobuf',  type=str, default='3.12.0',  help='ProtoBuf Version - optional (default:3.12.0)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', type=str, default='no',      help='Remove previous setup and reinstall - optional (default:no) [options:yes/no]')
@@ -29,6 +30,7 @@ setupDir = args.directory
 linuxSystemInstall = args.installer
 MIOpenVersion = args.miopen
 MIOpenGEMMVersion = args.miopengemm
+ProtoBufVersion = args.protobuf
 ffmpegInstall = args.ffmpeg
 rppInstall = args.rpp
 reinstall = args.reinstall
@@ -91,7 +93,7 @@ if(os.path.exists(deps_dir)):
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/MIOpen; sudo '+linuxFlag+' make install -j8)')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' make install -j8)')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' make install -j8)')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install -j8)')
 	if rppInstall == 'yes':
@@ -114,8 +116,8 @@ else:
 		os.system('(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
 	os.system('(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/'+MIOpenVersion+'.zip )')
 	os.system('(cd '+deps_dir+'; unzip '+MIOpenVersion+'.zip )')
-	os.system('(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v3.5.2.zip )')
-	os.system('(cd '+deps_dir+'; unzip v3.5.2.zip )')
+	os.system('(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v'+ProtoBufVersion+'.zip )')
+	os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
 	os.system('(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; unzip 3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; mkdir build )')
@@ -149,25 +151,25 @@ else:
 	os.system('(cd '+deps_dir+'/build/MIOpen; sudo '+linuxFlag+' '+linuxSystemInstall+' autoremove )')
 	# Install ProtoBuf
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install autoconf automake libtool curl make g++ unzip )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install autoconf automake libtool curl make g++ unzip )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' '+linuxSystemInstall+' autoremove )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; ./autogen.sh )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; ./configure )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; make -j8 )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; make check -j8 )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall+' autoremove )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; ./autogen.sh )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; ./configure )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; make -j8 )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; make check -j8 )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' make install )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' make install )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' ldconfig )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' ldconfig )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-pip )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-pip )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' yes | pip install protobuf )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' yes | pip install protobuf )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' yes | pip install pytz )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' yes | pip install pytz )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' yes | pip install numpy )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' yes | pip install numpy )')
 	# Install OpenCV
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev')

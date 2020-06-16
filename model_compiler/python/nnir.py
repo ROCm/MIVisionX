@@ -139,6 +139,7 @@ class IrAttr:
             value_type = type(self.dict_values[name]).__name__
             if value_type == 'list':
                 list_type = value.split(',')
+                list_type[0] = re.sub("^-", "", list_type[0])
                 self.set(name, [int(x) for x in list_type] if (list_type[0].isdigit()) else [float(x) for x in list_type])
             elif value_type == 'float':
                 self.set(name, float(value))

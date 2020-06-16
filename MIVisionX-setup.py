@@ -23,6 +23,7 @@ parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM
 parser.add_argument('--protobuf',  type=str, default='3.12.0',  help='ProtoBuf Version - optional (default:3.12.0)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
+parser.add_argument('--rpp_ver',   type=str, default='0.4',     help='RPP Version - optional (default:0.4)')
 parser.add_argument('--reinstall', type=str, default='no',      help='Remove previous setup and reinstall - optional (default:no) [options:yes/no]')
 args = parser.parse_args()
 
@@ -33,6 +34,7 @@ MIOpenGEMMVersion = args.miopengemm
 ProtoBufVersion = args.protobuf
 ffmpegInstall = args.ffmpeg
 rppInstall = args.rpp
+rppVersion = args.rpp_ver
 reinstall = args.reinstall
 
 # sudo requirement check
@@ -204,7 +206,7 @@ else:
 			os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
 			os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
 			#RPP
-			os.system('(cd '+deps_dir+'; git clone -b 0.3 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
+			os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
 		# Turn off for CentOS - TBD: turn on when RPP is supported on CentOS 
 		#else:
 			# Nasm

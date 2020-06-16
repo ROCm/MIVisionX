@@ -25,6 +25,8 @@ find_package(OpenCV QUIET)
 
 if(OpenCV_FOUND)
     if(${OpenCV_VERSION_MAJOR} EQUAL 3)
+        message("-- ${Blue}OpenCV Include Directories -- ${OpenCV_INCLUDE_DIRS}${ColourReset}")
+        message("-- ${Blue}OpenCV Libraries -- ${OpenCL_LIBRARIES}${ColourReset}")
         add_subdirectory(amd_opencv)
         message("-- ${Green}AMD OpenVX OpenCV Extension -- amd_opencv module added${ColourReset}")
     endif()

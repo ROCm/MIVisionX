@@ -27,11 +27,16 @@
 cmake_minimum_required (VERSION 2.8)
 project (cannyDetect)
 set (CMAKE_CXX_STANDARD 11)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package(OpenCL REQUIRED)
 find_package(OpenCV REQUIRED)
-include_directories (/opt/rocm/mivisionx/include)
-link_directories    (/opt/rocm/mivisionx/lib)
+
+include_directories (/opt/rocm/mivisionx_lite/include)
+link_directories    (/opt/rocm/mivisionx_lite/lib)
+
 add_executable(cannyDetect canny.cpp)
+
 target_link_libraries(${PROJECT_NAME} openvx ${OpenCV_LIBRARIES})
 

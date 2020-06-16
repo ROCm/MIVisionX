@@ -3,7 +3,7 @@ data input  = image:480,360,RGB2
 data output = image:480,360,U008
 
 # specify input source for input image and request for displaying input and output images
-read input  ../images/face1.jpg
+read input  /opt/rocm/mivisionx_lite/samples/images/face1.jpg
 view input  inputWindow
 view output skintoneWindow
 

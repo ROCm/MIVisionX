@@ -33,38 +33,6 @@ static vx_status VX_CALLBACK validateGatherLayer(vx_node node, const vx_referenc
         return VX_ERROR_INVALID_PARAMETERS;
     } 
 
-    for (int i = 0; i < 4; i++) {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[7-i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));  
-    
-        if ((int)(offset[i] < 0)) {
-            printf("validate: gather: Offset should be larger than 0\n");
-            return VX_ERROR_INVALID_PARAMETERS;
-        } 
-        if ((i > new_axis) && ((int)offset[i] != 0)) {
-            printf("validate: gather: Offset(s) before axis should equal 0\n");
-            printf("validate: gather: Axis = %d, Offset[%d] = %d\n", (int)axis, i, (int)offset[3-i]);
-            return VX_ERROR_INVALID_PARAMETERS;
-        }  
-
-        if (i <= new_axis) {
-            //check boundary
-            if ((int)(offset[i] + input_dims2[i]) > (int)input_dims[i]) {
-                printf("validate: gather: Offset out of bound\n");
-                printf("%d + %d > %d\n", (int)offset[i], (int)input_dims2[i], (int)input_dims[i]);
-                return VX_ERROR_INVALID_PARAMETERS;
-            }
-        }
-
-        vx_size val_dim = (i <= new_axis) ? input_dims2[i] : input_dims[i];
-        
-        //check output dimension
-        if (output_dims[i] != val_dim) {
-            printf("validate: gather: Output dimension should match the input dimension based on the axis\n");
-            printf("%d != %d\n", (int)output_dims[i], (int)val_dim);
-            return VX_ERROR_INVALID_PARAMETERS;
-        }
-    }
-        
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, &output_dims, sizeof(output_dims)));
@@ -97,77 +65,74 @@ static vx_status VX_CALLBACK opencl_codegen(
     vx_uint32& opencl_local_buffer_size_in_bytes   // [output] reserved: must be ZERO
 )
 {
-    //get tensor dimensions
+    //get input params
     vx_size input_dims[4], input_dims2[4], output_dims[4];
     vx_size num_of_dims;
     vx_enum type;
+    vx_uint32 axis;
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims2, sizeof(input_dims2)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    
     strcpy(opencl_kernel_function_name, "gather_layer");
 
     vx_uint32 input_dim_size = input_dims[0] * input_dims[1] * input_dims[2] * input_dims[3];
     
+    int ni[4] = [1,1,1,1];
+    int nj[4] = [1,1,1,1];
+    
+    for (int i=0; i<axis; i++) {
+        ni[i] = input_dims[i];
+    }
+    
+    for (int i=axis; i<4; i++) {
+        nj[i] = input_dims[i];
+    }
+    
     opencl_work_dim = 3;
+    opencl_global_work[0] = ni[0] * ni[1] * ni[2] * ni[3];
+    opencl_global_work[1] = input_dims2[0] * input_dims2[1] * input_dims2[2] * input_dims2[3];
+    opencl_global_work[2] = nj[0] * nj[1] * nj[2] * nj[3];
     
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
 
-    vx_uint32 axis;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    
-    for (int i = 0; i < 3; i++) {
-        opencl_global_work[i] = (i <= new_axis) ? input_dims2[i] : input_dims[i];
-    }
-    int opencl_global_work_n = (3 < new_axis) ? input_dims2[3] : input_dims[3];
-
-    // set offset depending on the axis
-    int offset[4];
-
-    for (int i = 0; i < 4; i++) {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4+i], &offset[i], VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    }
-    
     if (num_of_dims == 4) {
         char item[8192];
         if (type == VX_TYPE_FLOAT32) {
         sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis, uint offset1, uint offset2, uint offset3, uint offset4) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
-                "   for (uint n = 0; n < %d; n++) {\n"
-                "       float value = *(__global float*)&in[in_offset + (x+%d)*in_stride.s0 + (y+%d)*in_stride.s1 + (c+%d)*in_stride.s2 + (n+%d)*in_stride.s3];\n"
-                "       uint offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2 + n*out_stride.s3;\n"
-                "       out += offset;\n"
-                "       *(__global float *)&out[0] = value;\n"
-                "       out -= offset;\n"
-                "   }\n"
-                "}\n", opencl_kernel_function_name, opencl_global_work_n, offset[3], offset[2], offset[1], offset[0]);
+                "   float value = *(__global float*)&in[in_offset + x*in_stride.s0 + ind[y*in_stride.s1] + c*in_stride.s2];\n"
+                "   uint offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2;\n"
+                "   out += offset;\n"
+                "   *(__global float *)&out[0] = value;\n"
+                //"   out -= offset;\n"
+                "}\n", opencl_kernel_function_name);
         }
         else {
             sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ref, uint ref_offset, uint4 ref_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis, uint offset1, uint offset2, uint offset3, uint offset4) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
-                "   for (uint n = 0; n < %d; n++) {\n"
-                "       half value = *(__global half*)&in[in_offset + (x+%d)*in_stride.s0 + (y+%d)*in_stride.s1 + (c+%d)*in_stride.s2 + (n+%d)*in_stride.s3];\n"
-                "       uint offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2 + n*out_stride.s3;\n"
-                "       out += offset;\n"
-                "       *(__global half *)&out[0] = value;\n"
-                "       out -= offset;\n"
-                "   }\n"
-                "}\n", opencl_kernel_function_name, opencl_global_work_n, offset[3], offset[2], offset[1], offset[0]);
+                "   half value = *(__global half*)&in[in_offset + x*in_stride.s0 + ind[y*in_stride.s1] + c*in_stride.s2];\n"
+                "   uint offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2;\n"
+                "   out += offset;\n"
+                "   *(__global half *)&out[0] = value;\n"
+                //"   out -= offset;\n"
+                "}\n", opencl_kernel_function_name);
         }
         opencl_kernel_code = item;
     }

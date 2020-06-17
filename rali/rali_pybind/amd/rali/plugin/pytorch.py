@@ -99,6 +99,9 @@ class RALIGenericIterator(object):
     def __len__(self):
         return self.len
 
+    def __del__(self):
+        b.raliRelease(self.loader.handle)
+
 
 class RALIClassificationIterator(RALIGenericIterator):
     """

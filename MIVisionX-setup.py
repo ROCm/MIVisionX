@@ -124,9 +124,9 @@ if(os.path.exists(deps_dir)):
 	if ffmpegInstall == 'yes':
 		os.system('sudo -v')
 		os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install -j8)')
-	print("\nMIVisionX Dependencies Installed\n")
+	print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")
 else:
-	print("\nMIVisionX Dependencies Installation\n")
+	print("\nMIVisionX Dependencies Installation with MIVisionX-setup.py V-"+__version__+"\n")
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install cmake git wget unzip')
 	os.system('(cd '+setupDir+'; mkdir mivisionx-deps)')

@@ -117,5 +117,5 @@ if(${BUILD_RALI})
 
 	install(TARGETS rali DESTINATION lib)
 else()
-	message("-- ${Red}rali library is excluded ${ColourReset}")
+	message("-- ${Red}WARNING: RALI module excluded ${ColourReset}")
 endif()

@@ -87,10 +87,14 @@ private:
     bool _loop;
     bool _shuffle;
     int _read_counter = 0;
+    //!< _num_batches total_number of batches in each shard padded to full batch_size.
+    size_t  _num_batches;
+    //!< __padded_num_batches total_number of batches in each shard padded to make all shards have equal batches of images (usually needed for distributed training).
+    size_t  _padded_num_batches;
     void incremenet_read_ptr();
     int release();
     size_t get_file_shard_id();
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
-
+    void replicate_last_batch_to_pad_partial_shard();
 };

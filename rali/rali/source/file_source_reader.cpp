@@ -39,6 +39,7 @@ FileSourceReader::FileSourceReader()
     _loop = false;
     _file_id = 0;
     _shuffle = false;
+    _padded_num_batches = 0;
 }
 
 unsigned FileSourceReader::count()
@@ -61,6 +62,12 @@ Reader::Status FileSourceReader::initialize(ReaderConfig desc)
     _shuffle = desc.shuffle();
     _loop = desc.loop();
     ret = subfolder_reading();
+    _num_batches = _file_names.size()/_batch_count;
+    _padded_num_batches = (_padded_num_batches%_batch_count)?(_padded_num_batches/_batch_count) + 1 : _padded_num_batches/_batch_count;
+    if (_num_batches < _padded_num_batches) {
+        replicate_last_batch_to_pad_partial_shard();
+    }
+
     //shuffle dataset if set
     if( ret==Reader::Status::OK && _shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
@@ -179,6 +186,7 @@ Reader::Status FileSourceReader::subfolder_reading()
     }
     if(_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
     {
+        _padded_num_batches++;
         replicate_last_image_to_fill_last_shard();
         LOG("FileReader ShardID [" + TOSTR(_shard_id) + "] Replicated " + _folder_path+_last_file_name + " " + TOSTR((_batch_count - _in_batch_read_count) ) + " times to fill the last batch")
     }
@@ -193,6 +201,15 @@ void FileSourceReader::replicate_last_image_to_fill_last_shard()
         _file_names.push_back(_last_file_name);
 }
 
+void FileSourceReader::replicate_last_batch_to_pad_partial_shard()
+{
+    if (_file_names.size() >=  _batch_count) {
+        for (size_t i = 0; i < _batch_count; i++)
+            _file_names.push_back(_file_names[i - _batch_count]);
+    }
+}
+
+
 Reader::Status FileSourceReader::open_folder()
 {
     if ((_src_dir = opendir (_folder_path.c_str())) == nullptr)
@@ -206,6 +223,7 @@ Reader::Status FileSourceReader::open_folder()
 
         if(get_file_shard_id() != _shard_id )
         {
+            _padded_num_batches++;
             incremenet_file_id();
             continue;
         }
@@ -216,6 +234,7 @@ Reader::Status FileSourceReader::open_folder()
         file_path.append(_entity->d_name);
         _last_file_name = file_path;
         _file_names.push_back(file_path);
+        _padded_num_batches++;
         incremenet_file_id();
     }
     if(_file_names.empty())
@@ -229,5 +248,6 @@ size_t FileSourceReader::get_file_shard_id()
 {
     if(_batch_count == 0 || _shard_count == 0)
         THROW("Shard (Batch) size cannot be set to 0")
-    return (_file_id / (_batch_count)) % _shard_count;
+    //return (_file_id / (_batch_count)) % _shard_count;
+    return _file_id  % _shard_count;
 }

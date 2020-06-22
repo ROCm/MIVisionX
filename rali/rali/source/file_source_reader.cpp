@@ -39,7 +39,7 @@ FileSourceReader::FileSourceReader()
     _loop = false;
     _file_id = 0;
     _shuffle = false;
-    _padded_num_batches = 0;
+    _file_count_all_shards = 0;
 }
 
 unsigned FileSourceReader::count()
@@ -62,12 +62,15 @@ Reader::Status FileSourceReader::initialize(ReaderConfig desc)
     _shuffle = desc.shuffle();
     _loop = desc.loop();
     ret = subfolder_reading();
-    _num_batches = _file_names.size()/_batch_count;
-    _padded_num_batches = (_padded_num_batches%_batch_count)?(_padded_num_batches/_batch_count) + 1 : _padded_num_batches/_batch_count;
-    if (_num_batches < _padded_num_batches) {
-        replicate_last_batch_to_pad_partial_shard();
+    // the following code is required to make every shard the same size:: required for multi-gpu training
+    if (_shard_count > 1 && _batch_count > 1) {
+        int _num_batches = _file_names.size()/_batch_count;
+        int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count;
+        max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count;
+        if (_num_batches < max_batches_per_shard) {
+            replicate_last_batch_to_pad_partial_shard();
+        }
     }
-
     //shuffle dataset if set
     if( ret==Reader::Status::OK && _shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
@@ -186,7 +189,6 @@ Reader::Status FileSourceReader::subfolder_reading()
     }
     if(_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
     {
-        _padded_num_batches++;
         replicate_last_image_to_fill_last_shard();
         LOG("FileReader ShardID [" + TOSTR(_shard_id) + "] Replicated " + _folder_path+_last_file_name + " " + TOSTR((_batch_count - _in_batch_read_count) ) + " times to fill the last batch")
     }
@@ -223,7 +225,7 @@ Reader::Status FileSourceReader::open_folder()
 
         if(get_file_shard_id() != _shard_id )
         {
-            _padded_num_batches++;
+            _file_count_all_shards++;
             incremenet_file_id();
             continue;
         }
@@ -234,7 +236,7 @@ Reader::Status FileSourceReader::open_folder()
         file_path.append(_entity->d_name);
         _last_file_name = file_path;
         _file_names.push_back(file_path);
-        _padded_num_batches++;
+        _file_count_all_shards++;
         incremenet_file_id();
     }
     if(_file_names.empty())

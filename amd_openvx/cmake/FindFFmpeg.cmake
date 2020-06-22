@@ -36,7 +36,7 @@
 
 include(FindPackageHandleStandardArgs)
 
-    find_package_handle_standard_args(FFMPEG
+    find_package_handle_standard_args(FFmpeg
         FOUND_VAR FFMPEG_FOUND
         REQUIRED_VARS
             FFMPEG_LIBRARY

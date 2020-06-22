@@ -40,12 +40,12 @@ using namespace cv;
 using namespace std::chrono;
 
 
-int test(int test_case, const char* path, int rgb, int processing_device, int width, int height, int batch_size, int shards);
+int test(int test_case, const char* path, int rgb, int processing_device, int width, int height, int batch_size, int shards, int shuffle);
 int main(int argc, const char ** argv)
 {
     // check command-line usage
     const size_t MIN_ARG_COUNT = 2;
-    printf( "Usage: rali_performance_tests <image-dataset-folder> <width> <height> test_case batch_size gpu=1/cpu=0 rgb=1/grayscale =0  \n" );
+    printf( "Usage: rali_performance_tests <image-dataset-folder> <width> <height> <test_case> <batch_size> <gpu=1/cpu=0> <rgb=1/grayscale=0> <shard_count>  <shuffle=1>\n" );
     if(argc < MIN_ARG_COUNT)
         return -1;
 
@@ -59,6 +59,7 @@ int main(int argc, const char ** argv)
     int test_case = 0;
     int batch_size = 10;
     int shards = 4;
+    int shuffle = 0;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         test_case = atoi(argv[++argIdx]);
@@ -75,12 +76,15 @@ int main(int argc, const char ** argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
 	shards = atoi(argv[++argIdx]);
 
-    test(test_case, path, rgb, processing_device, width, height, batch_size, shards);
+    if (argc >= argIdx + MIN_ARG_COUNT)
+	shuffle = atoi(argv[++argIdx]);
+
+    test(test_case, path, rgb, processing_device, width, height, batch_size, shards, shuffle);
 
     return 0;
 }
 
-int test(int test_case, const char* path, int rgb, int processing_device, int width, int height, int batch_size, int shards)
+int test(int test_case, const char* path, int rgb, int processing_device, int width, int height, int batch_size, int shards, int shuffle)
 {
     size_t num_threads = shards;
     int inputBatchSize = batch_size;
@@ -122,9 +126,9 @@ int test(int test_case, const char* path, int rgb, int processing_device, int wi
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
     if (decode_max_height <= 0 || decode_max_width <= 0)
-        image0 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
+        image0 = raliJpegFileSource(handle, path, color_format, num_threads, false, shuffle, true);
     else
-        image0 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false,
+        image0 = raliJpegFileSource(handle, path, color_format, num_threads, false, shuffle, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 
     if (raliGetStatus(handle) != RALI_OK) {

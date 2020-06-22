@@ -144,7 +144,7 @@ class IrAttr:
             value_type = type(self.dict_values[name]).__name__
             if value_type == 'list':
                 list_type = value.split(',')
-                self.set(name, [int(x) for x in list_type] if (list_type[0].isdigit()) else [float(x) for x in list_type])
+                self.set(name, [int(x) for x in list_type] if (list_type[0].count('.') == 0) else [float(x) for x in list_type])
             elif value_type == 'float':
                 self.set(name, float(value))
             elif value_type == 'str':

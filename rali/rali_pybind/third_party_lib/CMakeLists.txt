@@ -18,19 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-set(ROCM_PATH /opt/rocm)
-cmake_minimum_required(VERSION 3.10)
-set(MIN_CXX_VER_REQUIRED 7.4)
-#set (CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-project(rali_pybind)
-link_directories(${ROCM_PATH}/mivisionx/lib/
-                 ${ROCM_PATH}/rpp/lib
-                )
-include_directories( ../include
-                     ../../amd_openvx/openvx/include/
-                     ${ROCM_PATH}/mivisionx/include/
-                   )
+cmake_minimum_required(VERSION 2.8)
+project(third_party_lib)
+
 add_subdirectory(pybind11)
-pybind11_add_module(rali_pybind rali_pybind.cpp)
-target_link_libraries(rali_pybind PRIVATE rali vx_rpp amd_rpp )

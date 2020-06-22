@@ -1,7 +1,27 @@
+# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 __author__      = "Kiriti Nagesh Gowda"
-__copyright__   = "Copyright 2018, AMD Radeon MIVisionX setup"
+__copyright__   = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7.8"
+__version__     = "1.7.10"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -20,8 +40,10 @@ parser.add_argument('--directory', type=str, default='',        help='Setup home
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
 parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
+parser.add_argument('--protobuf',  type=str, default='3.12.0',  help='ProtoBuf Version - optional (default:3.12.0)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--rpp',       type=str, default='yes',     help='Radeon Performance Primitives (RPP) Installation - optional (default:yes) [options:yes/no]')
+parser.add_argument('--rpp_ver',   type=str, default='0.4',     help='RPP Version - optional (default:0.4)')
 parser.add_argument('--reinstall', type=str, default='no',      help='Remove previous setup and reinstall - optional (default:no) [options:yes/no]')
 args = parser.parse_args()
 
@@ -29,8 +51,10 @@ setupDir = args.directory
 linuxSystemInstall = args.installer
 MIOpenVersion = args.miopen
 MIOpenGEMMVersion = args.miopengemm
+ProtoBufVersion = args.protobuf
 ffmpegInstall = args.ffmpeg
 rppInstall = args.rpp
+rppVersion = args.rpp_ver
 reinstall = args.reinstall
 
 # sudo requirement check
@@ -91,7 +115,7 @@ if(os.path.exists(deps_dir)):
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/MIOpen; sudo '+linuxFlag+' make install -j8)')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' make install -j8)')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' make install -j8)')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install -j8)')
 	if rppInstall == 'yes':
@@ -100,9 +124,9 @@ if(os.path.exists(deps_dir)):
 	if ffmpegInstall == 'yes':
 		os.system('sudo -v')
 		os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install -j8)')
-	print("\nMIVisionX Dependencies Installed\n")
+	print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")
 else:
-	print("\nMIVisionX Dependencies Installation\n")
+	print("\nMIVisionX Dependencies Installation with MIVisionX-setup.py V-"+__version__+"\n")
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install cmake git wget unzip')
 	os.system('(cd '+setupDir+'; mkdir mivisionx-deps)')
@@ -114,8 +138,8 @@ else:
 		os.system('(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
 	os.system('(cd '+deps_dir+'; wget https://github.com/ROCmSoftwarePlatform/MIOpen/archive/'+MIOpenVersion+'.zip )')
 	os.system('(cd '+deps_dir+'; unzip '+MIOpenVersion+'.zip )')
-	os.system('(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v3.5.2.zip )')
-	os.system('(cd '+deps_dir+'; unzip v3.5.2.zip )')
+	os.system('(cd '+deps_dir+'; wget https://github.com/protocolbuffers/protobuf/archive/v'+ProtoBufVersion+'.zip )')
+	os.system('(cd '+deps_dir+'; unzip v'+ProtoBufVersion+'.zip )')
 	os.system('(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; unzip 3.4.0.zip )')
 	os.system('(cd '+deps_dir+'; mkdir build )')
@@ -149,25 +173,25 @@ else:
 	os.system('(cd '+deps_dir+'/build/MIOpen; sudo '+linuxFlag+' '+linuxSystemInstall+' autoremove )')
 	# Install ProtoBuf
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install autoconf automake libtool curl make g++ unzip )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install autoconf automake libtool curl make g++ unzip )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' '+linuxSystemInstall+' autoremove )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; ./autogen.sh )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; ./configure )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; make -j8 )')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; make check -j8 )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall+' autoremove )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; ./autogen.sh )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; ./configure )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; make -j8 )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; make check -j8 )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' make install )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' make install )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' ldconfig )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' ldconfig )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-pip )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-pip )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' yes | pip install protobuf )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' yes | pip install protobuf )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' yes | pip install pytz )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' yes | pip install pytz )')
 	os.system('sudo -v')
-	os.system('(cd '+deps_dir+'/protobuf-3.5.2; sudo '+linuxFlag+' yes | pip install numpy )')
+	os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' yes | pip install numpy )')
 	# Install OpenCV
 	os.system('sudo -v')
 	os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev')
@@ -202,7 +226,7 @@ else:
 			os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
 			os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
 			#RPP
-			os.system('(cd '+deps_dir+'; git clone -b 0.3 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
+			os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
 		# Turn off for CentOS - TBD: turn on when RPP is supported on CentOS 
 		#else:
 			# Nasm
@@ -286,4 +310,4 @@ else:
 			os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
 			os.system('sudo -v')
 			os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' make install )')
-	print("\nMIVisionX Dependencies Installed\n")
+	print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

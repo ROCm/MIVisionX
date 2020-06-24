@@ -236,7 +236,7 @@ def nnef_op_to_ir_node(nnef_graph, nnef_operation):
     
 def nnef_graph_to_ir_graph(nnef_graph):
 
-    graph = IrGraph()
+    graph = IrGraph(False)
 
     scalarCount = 0
     hasFP64 = False

@@ -223,7 +223,7 @@ class IrNode:
             self.attr.fromString(sL[4])
 
 class IrGraph:
-    def __init__(self):
+    def __init__(self, updatedLocals):
         self.inputs = []
         self.outputs = []
         self.output_names = []
@@ -236,6 +236,7 @@ class IrGraph:
         self.tensor_shapes = {}
         self.all_F032 = True
         self.all_F016 = False
+        self.updatedLocals = updatedLocals
 
     def addInput(self,tensor):
         self.inputs.append(tensor)
@@ -512,8 +513,8 @@ class IrGraph:
                             param = (self.readBinary(tensor_name)).tolist()
                         else:
                             param = self.tensor_dict[node.inputs[1]].shape
+                            self.removeTensor(node.inputs[1])
                         node.attr.set('shape', param)
-                        self.removeTensor(node.inputs[1])
                     axis_start = node.attr.get('axis')
                     axis_count = node.attr.get('count')
                     if axis_count == -1:
@@ -1344,5 +1345,6 @@ class IrGraph:
             binaryFile = binaryFolder + '/' + tensor.name + '.raw'
             with open(binaryFile, 'rb') as f:
                 self.binaries[tensor.name] = f.read()
-        self.updateLocals()
-        self.removeUnusedTensors()
+        if self.updatedLocals == False:
+            self.updateLocals()
+            self.removeUnusedTensors()

@@ -157,7 +157,7 @@ def onnx_value_info_to_data(info, dims):
     return tensor
 
 def onnx_graph_to_ir_graph(onnx_graph):
-    graph = IrGraph()
+    graph = IrGraph(False)
     initializerList = []
     shapeList = []
     inputUser = False

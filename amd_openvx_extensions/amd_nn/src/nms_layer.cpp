@@ -40,7 +40,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if (num_dims != 4 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
-    if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #7 output tensor data type=%d (must be int64)\n", type);
+    if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #4 output tensor data type=%d (must be int64)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
     // output tensor configuration
@@ -54,7 +54,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
         if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
-        if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #4 input tensor data type=%d (must be int64)\n", type);
+        if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #5 input tensor data type=%d (must be int64)\n", type);
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, max_output_boxes_per_class_dims, sizeof(max_output_boxes_per_class_dims)));
     }
 
@@ -64,7 +64,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
         if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
-        if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #5 input tensor data type=%d (must be float)\n", type);
+        if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #6 input tensor data type=%d (must be float)\n", type);
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DIMS, iou_threshold_dims, sizeof(iou_threshold_dims)));
     }
 
@@ -74,7 +74,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
         if (num_dims != 1) return VX_ERROR_INVALID_DIMENSION;
-        if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #6 input tensor data type=%d (must be float)\n", type);
+        if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #7 input tensor data type=%d (must be float)\n", type);
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, score_threshold_dims, sizeof(score_threshold_dims)));
     }
     printf("success from validate...\n");
@@ -256,7 +256,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
 
-    int *max_output_boxes_per_class = new int[1];
+    int64_t *max_output_boxes_per_class = new int64_t[1];
     if(parameters[4])
     {
         vx_size max_output_dims[1];
@@ -276,7 +276,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
             return -1;
         }
     
-        memcpy(max_output_boxes_per_class, ptr, (max_output_dims[0]*sizeof(int)));
+        memcpy(max_output_boxes_per_class, ptr, (max_output_dims[0]*sizeof(int64_t)));
     
         status = vxUnmapTensorPatch((vx_tensor)parameters[4], map_id);
         if(status) {
@@ -357,13 +357,13 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     }
 
     //create memory to store final output
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    //ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
 
     //int count_output_final = output_dims[0]*output_dims[1]*output_dims[2]*output_dims[3];
-    vx_size stride_output_final[4] = {sizeof(int), output_dims[0]*sizeof(int), output_dims[0]*output_dims[1]*sizeof(int), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int) }; 
+    //vx_size stride_output_final[4] = {sizeof(int), output_dims[0]*sizeof(int), output_dims[0]*output_dims[1]*sizeof(int), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int) };
     //int * final_selected_indices = new int[count_output_final][3];
-    std::vector<std::vector<int>> final_selected_indices;
+    std::vector<std::vector<int64_t>> final_selected_indices;
 
     //get top_k scores with indices per batch per class. Common for both center point types.
     for (int b = 0; b < num_batches; ++b)
@@ -399,19 +399,27 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
             }
             if(max_output_boxes_per_class[0] < selected_indices.size())
                 selected_indices.resize(max_output_boxes_per_class[0]);
-            std::vector<int> temp;
+            std::vector<int64_t> temp;
             for(size_t f = 0; f < selected_indices.size(); ++f)
             {
-                temp.push_back(b);
-                temp.push_back(c);
-                temp.push_back(selected_indices[f]);
+                temp.push_back((int64_t)b);
+                temp.push_back((int64_t)c);
+                temp.push_back((int64_t)selected_indices[f]);
                 final_selected_indices.push_back(temp);
-                printf("final_selected_indices = %d %d %d\n", final_selected_indices[f][0],final_selected_indices[f][1],final_selected_indices[f][2]);
+                printf("final_selected_indices = %ld %ld %ld\n", final_selected_indices[f][0],final_selected_indices[f][1],final_selected_indices[f][2]);
             }
         }
     }    
 
-    int *final_selected_indices_ptr = &final_selected_indices[0][0];
+    int64_t *final_selected_indices_ptr = &final_selected_indices[0][0];
+    
+    //finding size of nms output and assigning stride
+    output_dims[3] = 1;
+    output_dims[2] = 3; //3 values per index
+    output_dims[1] = final_selected_indices.size(); //number of boxes found
+    output_dims[0] = 1;
+
+    vx_size stride_output_final[4] = {sizeof(int), output_dims[0]*sizeof(int), output_dims[0]*output_dims[1]*sizeof(int), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int) };
     
     status =  vxCopyTensorPatch((vx_tensor)parameters[3], 4, nullptr, nullptr, stride_output_final, final_selected_indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status)
@@ -422,6 +430,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
 
     delete iou_thresh;
     delete score_thresh;
+    delete max_output_boxes_per_class;
 
     return VX_SUCCESS;
 

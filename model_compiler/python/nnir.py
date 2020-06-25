@@ -455,6 +455,8 @@ class IrGraph:
                                 out_shape.append(input.shape[i])
                     else:
                         out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
+                    while len(out_shape) < 4:
+                        out_shape.append(1)
                     node.attr.set('shape', out_shape)
                     node.type = 'reshape'
                     local = IrTensor()
@@ -556,11 +558,17 @@ class IrGraph:
                     self.addVariable(shape_tensor)                    
                     self.addBinary(tensor_name, shape_data)
                     node.inputs[0] = tensor_name
+                    
+                    tensor_shape = shape_tensor.shape
+                    while len(tensor_shape) < 4:
+                        tensor_shape.append(1)
+                    
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo('I064', shape_tensor.shape)
                     local.setFormat(input.format)
-                    self.addLocal(local)
+                    self.addVariable(local)
+                    self.addBinary(output, shape_data)
                 elif node.type in ['constant']:
                     constantCount+=1
                     tensor_name = 'constant_' + str(constantCount)

@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include "coco_meta_data_reader.h"
 #include "text_file_meta_data_reader.h"
 #include "cifar10_meta_data_reader.h"
-
+#include "tf_meta_data_reader.h"
 
 std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& config) {
     switch(config.reader_type()) {
@@ -50,10 +50,15 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;
-
-
-
-            
+        case MetaDataReaderType::TF_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::Label)
+                THROW("TF_META_DATA_READER can only be used to load labels")
+            auto ret = std::make_shared<TFMetaDataReader>();
+            ret->init(config);
+            return ret;
+        }
+            break;            
         case MetaDataReaderType::COCO_META_DATA_READER:
         {
             if(config.type() != MetaDataType::BoundingBox)

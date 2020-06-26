@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import rali_pybind as b
 import amd.rali.types as types

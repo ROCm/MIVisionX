@@ -9,35 +9,34 @@ import tensorflow as tf
 class HybridPipe(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
 		super(HybridPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
-		world_size = 1
-		local_rank = 0
-		
+		# world_size = 1
+		# local_rank = 0		
 		self.input = ops.TFRecordReader(path=data_dir, index_path = ""  , features={
-                'image/encoded':tf.FixedLenFeature((), tf.string, ""),
-                'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
-                'image/class/text':tf.FixedLenFeature([ ], tf.string, ''),
-                'image/object/bbox/xmin':tf.VarLenFeature(dtype=tf.float32),
-                'image/object/bbox/ymin':tf.VarLenFeature(dtype=tf.float32),
-                'image/object/bbox/xmax':tf.VarLenFeature(dtype=tf.float32),
-                'image/object/bbox/ymax':tf.VarLenFeature(dtype=tf.float32)
+		'image/encoded':tf.FixedLenFeature((), tf.string, ""),
+		'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
+		'image/class/text':tf.FixedLenFeature([ ], tf.string, ''),
+		'image/object/bbox/xmin':tf.VarLenFeature(dtype=tf.float32),
+		'image/object/bbox/ymin':tf.VarLenFeature(dtype=tf.float32),
+		'image/object/bbox/xmax':tf.VarLenFeature(dtype=tf.float32),
+		'image/object/bbox/ymax':tf.VarLenFeature(dtype=tf.float32)
                 })
 		rali_device = 'cpu' if rali_cpu else 'gpu'
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
 		host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
 		self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
-													device_memory_padding=device_memory_padding,
-													host_memory_padding=host_memory_padding,
-													random_aspect_ratio=[0.8, 1.25],
-													random_area=[0.1, 1.0],
-													num_attempts=100)
+							device_memory_padding=device_memory_padding,
+							host_memory_padding=host_memory_padding,
+							random_aspect_ratio=[0.8, 1.25],
+							random_area=[0.1, 1.0],
+							num_attempts=100)
 		self.cmnp = ops.CropMirrorNormalize(device="cpu",
-											output_dtype=types.FLOAT,
-											output_layout=types.NCHW,
-											crop=(crop, crop),
-											image_type=types.RGB,
-											mean=[0.485 * 255,0.456 * 255,0.406 * 255],
-											std=[0.229 * 255,0.224 * 255,0.225 * 255])
+						output_dtype=types.FLOAT,
+						output_layout=types.NCHW,
+						crop=(crop, crop),
+						image_type=types.RGB,
+						mean=[0.485 * 255,0.456 * 255,0.406 * 255],
+						std=[0.229 * 255,0.224 * 255,0.225 * 255])
 		self.coin = ops.CoinFlip(probability=0.5)
 		print('rali "{0}" variant'.format(rali_device))
 
@@ -65,7 +64,7 @@ def main():
 	crop_size = 224
 	pipe = HybridPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu) 
 	pipe.build()
-	world_size=1
+	# world_size=1
 	imageIterator = RALIClassificationIterator(pipe)
 	for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
 		if(i % bs == 0):

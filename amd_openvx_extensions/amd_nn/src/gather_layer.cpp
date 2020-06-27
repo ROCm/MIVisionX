@@ -26,13 +26,11 @@ static vx_status VX_CALLBACK validateGatherLayer(vx_node node, const vx_referenc
     vx_uint32 axis;
 
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    
     if (axis < 0 || axis > 3) {
         printf("validate: gather: Axis value should be 0~3\n");
         printf("validate: gather: Axis = %d\n", axis);
         return VX_ERROR_INVALID_PARAMETERS;
     } 
-
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, &output_dims, sizeof(output_dims)));
@@ -66,53 +64,80 @@ static vx_status VX_CALLBACK opencl_codegen(
 )
 {
     //get input params
-    vx_size input_dims[4], input_dims2[4], output_dims[4];
-    vx_size num_of_dims;
+    vx_size num_of_dims, num_of_dims2;
     vx_enum type;
     vx_uint32 axis;
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
+    vx_size input_dims[num_of_dims];
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));    
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims2, sizeof(num_of_dims)));
+    vx_size input_dims2[num_of_dims2];
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims2, sizeof(input_dims2)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+
+    // ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
+    // vx_size output_dims[num_of_dims];
+    // ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     
     strcpy(opencl_kernel_function_name, "gather_layer");
 
-    vx_uint32 input_dim_size = input_dims[0] * input_dims[1] * input_dims[2] * input_dims[3];
-    
-    int ni[4] = [1,1,1,1];
-    int nj[4] = [1,1,1,1];
-    
-    for (int i=0; i<axis; i++) {
-        ni[i] = input_dims[i];
+    //reverse input dims w,h,c,n- > n,c,h,w
+    int start = 0, end = num_of_dims-1;
+    while (start < end) {
+        int temp = input_dims[start];
+        input_dims[start] = input_dims[end];
+        input_dims[end] = temp;
+        start++;
+        end--;
     }
     
-    for (int i=axis; i<4; i++) {
-        nj[i] = input_dims[i];
-    }
-    
+    //vx_uint32 input_dim_size = input_dims[0] * input_dims[1];
+    // printf("num dims: %d %d\n", num_of_dims, num_of_dims2);
+    // printf("input dim: [%d %d]\n", input_dims[0], input_dims[1]);
+    // printf("the axis is %d\n", axis);
+
     opencl_work_dim = 3;
-    opencl_global_work[0] = ni[0] * ni[1] * ni[2] * ni[3];
-    opencl_global_work[1] = input_dims2[0] * input_dims2[1] * input_dims2[2] * input_dims2[3];
-    opencl_global_work[2] = nj[0] * nj[1] * nj[2] * nj[3];
+    opencl_global_work[0] = 1;
+    opencl_global_work[1] = 1;
+    opencl_global_work[2] = 1;
     
+    for (int i=0; i<num_of_dims; i++) {
+        if (i < axis) {
+            printf("multiplying %d by %d\n", opencl_global_work[2], input_dims[i]);
+            opencl_global_work[2] *= input_dims[i]; // n,c,h,w -> w,h,c,n
+        }
+        else if (i > axis) {
+            printf("2 multiplying %d by %d\n", opencl_global_work[0], input_dims[i]);
+            opencl_global_work[0] *= input_dims[i];
+        }
+    }
+    
+    for (int i=0; i<num_of_dims2; i++) {
+        opencl_global_work[1] *= input_dims2[i];
+    }
+
+    printf("they are %d %d %d each \n", opencl_global_work[0], opencl_global_work[1], opencl_global_work[2]);
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;
 
-    if (num_of_dims == 4) {
+    if (num_of_dims) {
         char item[8192];
         if (type == VX_TYPE_FLOAT32) {
-        sprintf(item,
+            printf("float32\n");
+            sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
-                "   float value = *(__global float*)&in[in_offset + x*in_stride.s0 + ind[y*in_stride.s1] + c*in_stride.s2];\n"
+                "   int indices = *(__global float*)&ind[ind_offset + y*ind_stride.s0];\n"
+                "   float value = *(__global float*)&in[in_offset + x*in_stride.s0 + indices*in_stride.s1 + c*in_stride.s2];\n"
                 "   uint offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2;\n"
                 "   out += offset;\n"
                 "   *(__global float *)&out[0] = value;\n"
@@ -122,7 +147,7 @@ static vx_status VX_CALLBACK opencl_codegen(
         else {
             sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
@@ -139,13 +164,16 @@ static vx_status VX_CALLBACK opencl_codegen(
     return VX_SUCCESS;
 }
 
-
-static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num) {
+//! \brief The kernel execution.
+static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * parameters, vx_uint32 num) 
+{
     return VX_ERROR_NOT_IMPLEMENTED;
 }
 
-vx_status publishGatherLayer(vx_context context) {
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.gather_layer", VX_KERNEL_GATHER_LAYER_AMD, host_kernel, 4, validateGatherLayer, NULL, NULL);
+//! \brief The kernel publisher.
+vx_status publishGatherLayer(vx_context context) 
+{
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.gather_layer", VX_KERNEL_GATHER_LAYER_AMD, host_kernel, 4, validateGatherLayer, nullptr, nullptr);
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
@@ -158,12 +186,15 @@ vx_status publishGatherLayer(vx_context context) {
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     
+    //finalize and release kernel object.
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
     ERROR_CHECK_STATUS(vxReleaseKernel(&kernel));
+
     return VX_SUCCESS; 
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis) {
+VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis) 
+{
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

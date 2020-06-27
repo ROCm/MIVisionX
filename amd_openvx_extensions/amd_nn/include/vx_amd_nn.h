@@ -302,4 +302,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorExpNode(vx_graph graph, vx_tensor input
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTensorLogNode(vx_graph graph, vx_tensor input, vx_tensor output);
 
+VX_API_ENTRY vx_node VX_API_CALL vxGatherLayerNode(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis);
+
 #endif

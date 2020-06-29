@@ -3,7 +3,7 @@
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
-MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF™</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF™</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
@@ -34,6 +34,8 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 [AMD OpenVX](amd_openvx#amd-openvx-amd_openvx) is a highly optimized open source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> computer vision specification. It allows for rapid prototyping as well as fast execution on a wide range of computer hardware, including small embedded x86 CPUs and large workstation discrete GPUs.
 
+<a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> 1.0.1 conformant implementation is available in [MIVisionX Lite](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/tree/openvx-1.0.1)
+
 ## AMD OpenVX Extensions
 The OpenVX framework provides a mechanism to add new vision functions to OpenVX by 3rd party vendors. This project has below mentioned OpenVX [modules](amd_openvx_extensions#amd-openvx-extensions-amd_openvx_extensions) and utilities to extend [amd_openvx](amd_openvx#amd-openvx-amd_openvx) project, which contains the AMD OpenVX Core Engine.
 
@@ -53,7 +55,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 * [Bubble Pop](apps/bubble_pop#vx-bubble-pop-sample): This sample application creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 * [Cloud Inference Application](apps/cloud_inference#cloud-inference-application): This sample application does inference using a client-server system.
 * [Digit Test](apps/dg_test#amd-dgtest): This sample application is used to recognize hand written digits.
-* [Image Augmentation](apps/image_augmentation#image-augmentation-application): This sample application demonstrates a basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+* [Image Augmentation](apps/image_augmentation#image-augmentation-application): This sample application demonstrates the basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
 * [MIVisionX Inference Analyzer](apps/mivisionx_inference_analyzer#mivisionx-python-inference-analyzer): This sample application uses pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze and summarize images.
 * [MIVisionX OpenVX Classsification](apps#mivisionx-openvx-classsification): This sample application shows how to run supported pre-trained caffe models with MIVisionX RunTime.
 * [MIVisionX Validation Tool](apps/mivisionx_validation_tool#mivisionx-python-ml-model-validation-tool): This sample application uses pre-trained `ONNX`/`NNEF`/`Caffe` models to analyze, summarize and validate models.
@@ -115,7 +117,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If directory option is not given, the script will install deps folder in the home directory(~/) by default, else in the user specified location.
+**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If the directory option is not given, the script will install the deps folder in the home directory(~/) by default, else in the user-specified location.
 
 ##### Prerequisites for running the script
 1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
@@ -181,7 +183,7 @@ sudo yum install mivisionx
 
 #### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
 * Install [ROCm](https://rocm.github.io/ROCmInstall.html)
-* Use the below commands to setup and build MIVisionX
+* Use the below commands to set up and build MIVisionX
 ````
 git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
 cd MIVisionX

@@ -32,13 +32,15 @@ THE SOFTWARE.
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return Reference to the output image
 extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
                                                         const char* source_path,
-                                                        RaliImageColor color_format,
+                                                        RaliImageColor rali_color_format,
                                                         unsigned internal_shard_count,
                                                         bool is_output,
                                                         bool shuffle = false,
@@ -53,13 +55,15 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
 /// \param shard_id Shard id for this loader
 /// \param shard_count Total shard count
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return
 extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext context,
                                                                    const char* source_path,
-                                                                   RaliImageColor color_format,
+                                                                   RaliImageColor rali_color_format,
                                                                    unsigned shard_id,
                                                                    unsigned shard_count,
                                                                    bool is_output ,
@@ -72,15 +76,21 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext c
 /// \param rali_context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
-/// \param shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
+/// \param num_threads Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
+/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
+/// \param y_drift_factor - Determines from top left corder to height (crop_height), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
+/// \param x_drift_factor - Determines from top left corder to width (crop_width), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
 /// \return Reference to the output image
 extern "C"  RaliImage  RALI_API_CALL raliFusedJpegCrop(RaliContext context,
                                                         const char* source_path,
-                                                        RaliImageColor color_format,
+                                                        RaliImageColor rali_color_format,
                                                         unsigned num_threads,
                                                         bool is_output ,
                                                         bool shuffle = false,
@@ -97,6 +107,7 @@ extern "C"  RaliImage  RALI_API_CALL raliFusedJpegCrop(RaliContext context,
 /// \param internal_shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
 /// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
@@ -117,6 +128,8 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSource(RaliContext p_contex
 /// \param shard_id Shard id for this loader
 /// \param shard_count Total shard count
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle Determines if the user wants to shuffle the dataset or not.
+/// \param loop Determines if the user wants to indefinitely loops through images or not.
 /// \param decode_size_policy
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest

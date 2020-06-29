@@ -61,6 +61,10 @@ public:
 class MetaDataReader
 {
 public:
+    enum class Status
+    {
+        OK = 0
+    };
     virtual ~MetaDataReader()= default;
     virtual void init(const MetaDataConfig& cfg) = 0;
     virtual void read_all(const std::string& path) = 0;// Reads all the meta data information

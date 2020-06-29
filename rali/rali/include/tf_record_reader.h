@@ -104,7 +104,7 @@ private:
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
     void read_image(unsigned char* buff, std::string record_file_name, uint file_size);
-    void read_image_names(std::ifstream &file_contents, uint file_size);
+    Reader::Status read_image_names(std::ifstream &file_contents, uint file_size);
     std::map <std::string, uint> _image_record_starting;
 };
 

@@ -47,8 +47,7 @@ private:
     bool exists(const std::string &image_name);
     void add(std::string image_name, int label);
     bool _last_rec;
-    //std::shared_ptr<TF_Read> _TF_read = nullptr;
-    void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name);
+    MetaDataReader::Status read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name);
     std::map<std::string, std::shared_ptr<Label>> _map_content;
     std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
     std::string _path;

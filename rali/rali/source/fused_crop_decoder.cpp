@@ -87,13 +87,10 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         return (h < height && w < width); 
     };
     int num_of_attempts = 5;
-    double target_area;
-    float in_ratio;
     unsigned int crop_width, crop_height, x1, y1;
     for(int i = 0; i < num_of_attempts; i++)
     {
-        //renew_params();// Should write a member function
-        target_area   = crop_mul_param[0] * original_image_width * original_image_height;
+        double target_area  = crop_mul_param[0] * original_image_width * original_image_height;
         crop_width  = static_cast<size_t>(std::sqrt(target_area * crop_mul_param[1]));
         crop_height = static_cast<size_t>(std::sqrt(target_area * (1 / crop_mul_param[1])));  
         if(is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
@@ -107,6 +104,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     // Fallback on Central Crop
     if( !is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
     {
+        float in_ratio;
         in_ratio = static_cast<float>(original_image_width) / original_image_height;
         if(in_ratio < ASPECT_RATIO_RANGE[0])
         {

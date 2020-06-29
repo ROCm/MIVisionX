@@ -84,7 +84,7 @@ class FileReader(Node):
     
 class TFRecordReader(Node):
     """
-        features (dict }) – Dictionary of names and configuration of features existing in TFRecord file. 
+        features (dict }) – Dictionary of names and configuration of features existing in TFRecord file.
 
         index_path (str or list of str) – List of paths to index files (1 index file for every TFRecord file). Index files may be obtained from TFRecord files using tfrecord2idx script distributed with RALI.
 

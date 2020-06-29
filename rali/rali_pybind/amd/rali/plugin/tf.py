@@ -44,7 +44,6 @@ class RALIGenericIterator(object):
         self.offset = offset
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
-        
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
@@ -117,8 +116,7 @@ class RALIClassificationIterator(RALIGenericIterator):
 
        RALIGenericIterator(pipelines, ["data", "label"], size)
 
- 
-    
+
     """
     def __init__(self,
                  pipelines,
@@ -137,7 +135,7 @@ class RALI_iterator(RALIGenericImageIterator):
     RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
 
-   
+
     """
     def __init__(self,
                  pipelines,

@@ -302,6 +302,16 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorExpNode(vx_graph graph, vx_tensor input
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTensorLogNode(vx_graph graph, vx_tensor input, vx_tensor output);
 
+/* \brief [Graph] Creates a Gather Layer Node.
+ * \details Given data tensor of rank r >= 1, and indices tensor of rank q, gather entries of the axis dimension of data (by default outer-most one as axis=0) 
+ * indexed by indices, and concatenates them in an output tensor of rank q + (r - 1).
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The input tensor data to gather elements on. The type of the tensor can be either float32 or float16.
+ * \param [in] indices The indices tensor containing the index data. The type of the tensor can be either int32 or int64. 
+ * \param [out] output The output tensor data with the same type as the input tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
 VX_API_ENTRY vx_node VX_API_CALL vxGatherLayerNode(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis);
 
 #endif

@@ -85,7 +85,7 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
 
     // uncomment the following to add augmentation if needed
     //image0 = input1;
-    RaliImage image0 = raliResize(handle, input1, 224, 224, true);
+    raliResize(handle, input1, 224, 224, true);
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -115,7 +115,8 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
               (color_format ==  RaliImageColor::RALI_COLOR_RGB_PLANAR )) ? 3 : 1);
     std::cout << "output width "<< w << " output height "<< h << " color planes "<< p << " n "<< n << std::endl;
     const unsigned number_of_cols = 1;    // no augmented case
-    float out_tensor[h*w*p+256];
+    float *out_tensor =new float[h*w*p+256];
+  //  printf("Allocated output tensor of size(flat) %d\n", h*w*p+256);
     auto cv_color_format = ((p==3) ? CV_8UC3 : CV_8UC1);
     cv::Mat mat_output(h, w*number_of_cols, cv_color_format);
     cv::Mat mat_input(h, w, cv_color_format);
@@ -141,8 +142,8 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
 
         if(display)
             raliCopyToOutput(handle, mat_input.data, h*w*p);
-        //else
-        //    raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
+        else
+            raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += batch_size;
         raliGetImageLabels(handle, labels.data());
         for(int i = 0; i < batch_size; i++)
@@ -175,6 +176,7 @@ int thread_func(const char *path, int gpu_mode, RaliImageColor color_format, int
     raliRelease(handle);
     mat_input.release();
     mat_output.release();
+    if (out_tensor) delete [] out_tensor;
     return 0;
 }
 

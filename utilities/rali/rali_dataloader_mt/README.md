@@ -21,5 +21,5 @@ This application demonstrates a basic usage of RALI's C API to use sharded data_
   ````
 ### running the application  
   ````
-  rali_dataloader <path-to-image-dataset>
+  rali_dataloader_mt <image_dataset_folder> <num_gpus(gpu:>=1)/(cpu:0)>  <num_shards> <decode_width> <decode_height> <batch_size> <shuffle>
   ````

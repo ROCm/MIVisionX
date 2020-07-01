@@ -139,7 +139,6 @@ MetaDataReader::Status TFMetaDataReader::read_record(std::ifstream &file_content
 void TFMetaDataReader::read_all(const std::string &path)
 {
     read_files(path);
-    auto ret = MetaDataReader::Status::OK;
     for(unsigned i = 0; i < _file_names.size(); i++)
     {
         std::string fname = path + _file_names[i];
@@ -152,7 +151,7 @@ void TFMetaDataReader::read_all(const std::string &path)
         file_contents.seekg (0, std::ifstream::beg);
         while(!_last_rec)
         {
-            ret = read_record(file_contents, length, _image_name);
+            auto ret = read_record(file_contents, length, _image_name);
             if(ret != MetaDataReader::Status::OK )
                 THROW("TFMetaDataReader: Error in reading TF records");
         }

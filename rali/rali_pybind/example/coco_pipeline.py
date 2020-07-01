@@ -21,15 +21,9 @@ import time
 class COCOPipeline(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir,ann_dir, crop, rali_cpu = True):
 		super(COCOPipeline, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
-
-     
-
-		self.input = ops.COCOReader(file_root = data_dir, annotations_file = ann_dir)
-		
-		
+		self.input = ops.COCOReader(file_root = data_dir, annotations_file = ann_dir)		
 		rali_device = 'cpu' if rali_cpu else 'gpu'
-		decoder_device = 'cpu' if rali_cpu else 'mixed'
-		
+		decoder_device = 'cpu' if rali_cpu else 'mixed'		
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
 		host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
 		self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
@@ -39,22 +33,30 @@ class COCOPipeline(Pipeline):
 													random_area=[0.1, 1.0],
 													num_attempts=100)
 		self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
+		self.twist = ops.ColorTwist(device=rali_device)
 		self.cmnp = ops.CropMirrorNormalize(device="gpu",
 											output_dtype=types.FLOAT,
 											output_layout=types.NCHW,
 											crop=(crop, crop),
 											image_type=types.RGB,
-											mirror=1,
+											mirror=0,
 											mean=[0.485 * 255,0.456 * 255,0.406 * 255],
 											std=[0.229 * 255,0.224 * 255,0.225 * 255])
-		self.coin = ops.CoinFlip(probability=0.5)
+		# Random variables
+		self.rng1 = ops.Uniform(range=[0.5, 1.5])
+		self.rng2 = ops.Uniform(range=[0.875, 1.125])
+		self.rng3 = ops.Uniform(range=[-0.5, 0.5])
 		print('rali "{0}" variant'.format(rali_device))
 
 	def define_graph(self):
-		rng = self.coin()
+		saturation = self.rng1()
+		contrast = self.rng1()
+		brightness = self.rng2()
+		hue = self.rng3()
 		self.jpegs,self.bb, self.labels = self.input(name="Reader")
 		images = self.decode(self.jpegs)
 		images = self.res(images)
+		images = self.twist(images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
 		output = self.cmnp(images)
 		return [output, self.bb, self.labels]
 
@@ -171,7 +173,7 @@ def main():
 	if  len(sys.argv) < 5:
 		print ('Please pass the folder image_folder Annotation_file cpu/gpu batch_size')
 		exit(0)
-    
+
 	image_path = sys.argv[1]
 	ann_path = sys.argv[2]
 	if(sys.argv[3] == "cpu"):
@@ -190,6 +192,5 @@ def main():
 		print(it[1])
 		
 
-    
 if __name__ == '__main__':
 	main()

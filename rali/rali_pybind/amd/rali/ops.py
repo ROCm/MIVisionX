@@ -493,29 +493,44 @@ class ColorTwist(Node):
     def __init__(self, brightness = 1.0, bytes_per_sample_hint = 0, contrast = 1.0, hue = 0.0, image_type = 0, 
                 preserve = False, saturation = 1.0,seed = -1, device = None):
         Node().__init__()
-        self._brightness = brightness
+        self._brightness = b.CreateFloatParameter(brightness)
         self._bytes_per_sample_hint = bytes_per_sample_hint
-        self._contrast = contrast
-        self._hue = hue
+        self._contrast = b.CreateFloatParameter(contrast)
+        self._hue = b.CreateFloatParameter(hue)
         self._image_type = image_type
         self._preserve = preserve
-        self._saturation = saturation
+        self._saturation = b.CreateFloatParameter(saturation)
         self._seed = seed
         self.output = Node()
+        self._temp_brightness = None
+        self._temp_contrast = None
+        self._temp_hue = None
+        self._temp_saturation = None
 
-    def __call__(self,input):
+    def __call__(self,input, hue = None, saturation = None, brightness = None, contrast = None):
         input.next = self
         self.data = "ColorTwist"
         self.prev = input
         self.next = self.output
         self.output.prev = self
         self.output.next = None
+        self._temp_brightness = brightness
+        self._temp_contrast = contrast
+        self._temp_hue = hue
+        self._temp_saturation = saturation
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
         # b.setSeed(self._seed)
-        # output_image = b.ColorTwist(handle, input_image, is_output,None,None,None,None)
-        output_image = b.ColorTwistFixed(handle, input_image, self._brightness,self._contrast,self._hue,self._saturation,is_output)
+        if(self._temp_brightness != None):
+            self._brightness = self._temp_brightness.rali_c_func_call(handle)
+        if(self._temp_contrast != None):
+            self._contrast = self._temp_contrast.rali_c_func_call(handle)
+        if(self._temp_hue != None):
+            self._hue = self._temp_hue.rali_c_func_call(handle)
+        if(self._temp_saturation != None):
+            self._saturation = self._temp_saturation.rali_c_func_call(handle)
+        output_image = b.ColorTwist(handle, input_image, is_output, self._brightness,self._contrast,self._hue,self._saturation)
         return output_image
 
 
@@ -873,9 +888,9 @@ class RandomCrop(Node):
         return output_image
 
 class CoinFlip():
-    def __init__(self,probability=0.5, device = None):
-        self._probablility=probability
-        self.output=Node()
+    def __init__(self, probability = 0.5, device = None):
+        self._probablility = probability
+        self.output = Node()
 
     def __call__(self):
         return self
@@ -885,6 +900,18 @@ class CoinFlip():
         self._frequencies = [1-self._probablility, self._probablility]
         output_arr = b.CreateIntRand(self._values, self._frequencies)
         return output_arr
+
+class Uniform():
+    def __init__(self, range = [-1,1], device = None):
+        self.range = range
+        self.output = Node()
+
+    def __call__(self):
+        return self
+    
+    def rali_c_func_call(self,handle):
+        output_param = b.CreateFloatUniformRand(self.range[0], self.range[1])
+        return output_param
 
 class GammaCorrection(Node):
     def __init__(self,gamma = 0.5, device = None):

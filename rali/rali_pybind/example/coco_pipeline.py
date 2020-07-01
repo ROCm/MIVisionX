@@ -21,9 +21,9 @@ import time
 class COCOPipeline(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir,ann_dir, crop, rali_cpu = True):
 		super(COCOPipeline, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
-		self.input = ops.COCOReader(file_root = data_dir, annotations_file = ann_dir)		
+		self.input = ops.COCOReader(file_root = data_dir, annotations_file = ann_dir)
 		rali_device = 'cpu' if rali_cpu else 'gpu'
-		decoder_device = 'cpu' if rali_cpu else 'mixed'		
+		decoder_device = 'cpu' if rali_cpu else 'mixed'
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
 		host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
 		self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,

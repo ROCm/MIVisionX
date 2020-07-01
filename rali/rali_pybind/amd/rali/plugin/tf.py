@@ -79,11 +79,11 @@ class RALIGenericIterator(object):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        
+
         self.loader.getImageLabels(self.labels)
         tf.reset_default_graph()
         self.labels_tensor = tf.convert_to_tensor(self.labels,np.int32)
-    
+
         if self.tensor_dtype == types.FLOAT:
             return tf.convert_to_tensor(self.out,np.float32), self.labels_tensor
         elif self.tensor_dtype == types.FLOAT16:
@@ -146,8 +146,4 @@ class RALI_iterator(RALIGenericImageIterator):
                  last_batch_padded=False):
         pipe = pipelines
         super(RALI_iterator, self).__init__(pipe)
-
-
-
-
 

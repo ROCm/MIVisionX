@@ -739,9 +739,7 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['nms']:
                     output_type = 'I064'
-                    #boxes = self.tensor_dict[node.inputs[0]]
-                    #scores = self.tensor_dict[node.inputs[1]]
-                    output_shape = [1,1,1,3] 
+                    output_shape = [1,1,,3] 
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(output_type, output_shape)

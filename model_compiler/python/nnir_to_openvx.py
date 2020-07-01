@@ -886,6 +886,22 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """  
     % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'nms':
+                f.write( \
+"""
+    { 
+      vx_size dims[1] = { 1 };
+      vx_tensor tensor_max_output_boxes_per_class = vxCreateVirtualTensor(graph, 1, dims, VX_TYPE_INT64, 0);
+      ERROR_CHECK_OBJECT(tensor_max_output_boxes_per_class);
+      vx_tensor tensor_iou_threshold = vxCreateVirtualTensor(graph, 1, dims, VX_TYPE_FLOAT32, 0);
+      ERROR_CHECK_OBJECT(tensor_iou_threshold);
+      vx_tensor tensor_score_threshold = vxCreateVirtualTensor(graph, 1, dims, VX_TYPE_FLOAT32, 0);
+      ERROR_CHECK_OBJECT(tensor_score_threshold);
+      vx_node node = vxNMSLayer(graph, %s, %s, %d, %s, tensor_max_output_boxes_per_class, tensor_iou_threshold, tensor_score_threshold);
+      ERROR_CHECK_OBJECT(node);     
+        
+"""
+    % (node.inputs[0], node.inputs[1], node.attr.get('center_point_box'), node.outputs[0]))
             elif node.type == 'detection_output':
                 f.write( \
 """

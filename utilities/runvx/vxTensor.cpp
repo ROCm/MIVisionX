@@ -189,6 +189,8 @@ int CVxParamTensor::InitializeIO(vx_context context, vx_graph graph, vx_referenc
 		m_size = 1;
 	else if(m_data_type == VX_TYPE_UINT16 || m_data_type == VX_TYPE_INT16 || m_data_type == VX_TYPE_FLOAT16)
 		m_size = 2;
+	else if(m_data_type == VX_TYPE_INT64)
+		m_size = 8;
 	else
 	    m_size = 4;
 	for (vx_uint32 i = 0; i < m_num_of_dims; i++) {
@@ -270,7 +272,7 @@ int CVxParamTensor::InitializeIO(vx_context context, vx_graph graph, vx_referenc
 				vx_status status = vxCopyTensorPatch(m_tensor, m_num_of_dims, nullptr, nullptr, m_stride, m_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
 				fclose(fp);
 				if (status != VX_SUCCESS)
-					ReportError("ERROR: vxCopyTensorPatch: write failed (%d)\n", status);
+					ReportError("ERROR: vxCopyTensorPatch: write failed #1  (%d)\n", status);
 			}
 		}
 		else if (!_stricmp(ioType, "write"))
@@ -374,7 +376,7 @@ int CVxParamTensor::ReadFrame(int frameNumber)
 	vx_status status = vxCopyTensorPatch(m_tensor, m_num_of_dims, nullptr, nullptr, m_stride, m_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
 	fclose(fp);
 	if (status != VX_SUCCESS)
-		ReportError("ERROR: vxCopyTensorPatch: write failed (%d)\n", status);
+		ReportError("%s ERROR: vxCopyTensorPatch: write failed #2(%d)\n", m_fileNameRead.c_str(),status);
 
 	// process user requested directives
 	if (m_useSyncOpenCLWriteDirective) {
@@ -441,6 +443,7 @@ int CVxParamTensor::WriteFrame(int frameNumber)
 		else if(m_data_type == VX_TYPE_UINT16) h3.data_type = 3, h3.bit_width = 16;
 		else if(m_data_type == VX_TYPE_INT32) h3.data_type = 2, h3.bit_width = 32;
 		else if(m_data_type == VX_TYPE_UINT32) h3.data_type = 3, h3.bit_width = 32;
+		else if(m_data_type == VX_TYPE_INT64) h3.data_type = 2, h3.bit_width = 64;
 		fwrite(&h1, 1, sizeof(h1), fp);
 		fwrite(&h2, 1, h1.num_dims * sizeof(vx_uint32), fp);
 		fwrite(&h3, 1, sizeof(h3), fp);

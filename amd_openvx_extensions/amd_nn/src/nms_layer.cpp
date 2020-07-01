@@ -13,7 +13,6 @@ typedef struct normalizedBox
 
 static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[])
 {
-    printf("in validate...!!\n");
     // check tensor dims.
     vx_enum type;
     vx_size num_dims;
@@ -77,7 +76,6 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
         if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: NMS: #7 input tensor data type=%d (must be float)\n", type);
         ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, score_threshold_dims, sizeof(score_threshold_dims)));
     }
-    printf("success from validate...\n");
     return VX_SUCCESS;
 }
 
@@ -99,26 +97,44 @@ void getMaxScoreIndex(const std::vector<float>& scores, const float score_thresh
         {
             score_index_vec->push_back(std::make_pair(scores[i], i));
         }
+
     }
 
     std::stable_sort(score_index_vec->begin(), score_index_vec->end(), sortScorePairDescend<int>);
-
-    //score_index_vec->resize(max_output_boxes_per_class);
 }
 
 float computeOverlapCoordinates(bboxes& box1, bboxes &box2)
 {
     float area1, area2, area12;
-    int top, bottom, left, right;
-    top = std::max(box1.y1, box2.y1);
-    bottom = std::max(box1.y2, box2.y2);
-    left = std::max(box1.x1, box2.x1);
-    right = std::max(box1.x2, box2.x2);
+    float top, bottom, left, right;
+    float ymin_1, xmin_1, ymax_1, xmax_1, ymin_2, xmin_2, ymax_2, xmax_2;
+
+    ymin_1 = std::min(box1.y1, box1.y2);
+    xmin_1 = std::min(box1.x1, box1.x2);
+    ymax_1 = std::max(box1.y1, box1.y2);
+    xmax_1 = std::max(box1.x1, box1.x2);
+
+    ymin_2 = std::min(box2.y1, box2.y2);
+    xmin_2 = std::min(box2.x1, box2.x2);
+    ymax_2 = std::max(box2.y1, box2.y2);
+    xmax_2 = std::max(box2.x1, box2.x2);
+
+    area1 = (ymax_1 - ymin_1)*(xmax_1 - xmin_1);
+    area2 = (ymax_2 - ymin_2)*(xmax_2 - xmin_2);
+    if (area1 <= 0 || area2 <= 0)
+        return 0.0;
+
+    top = std::max(ymin_1, ymin_2);
+    bottom = std::max(ymax_1, ymax_2);
+    left = std::max(xmin_1, xmin_2);
+    right = std::max(xmax_1, xmax_2);
+
+    area12 = std::max((bottom-top), (float)0)*std::max((right-left), (float)0);
     if(bottom < top || left > right)
         return 0;
-    area1 = (box1.y2-box1.y1)*(box1.x2-box1.x1);
-    area2 = (box2.y2-box2.y1)*(box2.x2-box2.x1);
-    area12 = (bottom-top)*(right-left);
+    if((std::min(xmax_1,xmax_2) < left) || (std::min(ymax_1,ymax_2) < top))
+        return 0;
+    
     return (area12/(area1+area2-area12));
 }
 
@@ -126,23 +142,26 @@ float computeOverlapCenter(bboxes& box1, bboxes &box2)
 {
     //look at struct definition for variable names
     float area1, area2, area12;
-    int top, bottom, right, left, r11, r12, c11, c12, r21, r22, c21, c22;
+    float top, bottom, right, left, r11, r12, c11, c12, r21, r22, c21, c22;
 
-    c11 = box1.y1-(box1.x2/2);
-    c12 = box1.y1+(box1.x2/2);
-    r11 = box1.x1-(box1.y2/2);
-    r12 = box1.x1=(box1.y2/2);
-
-    c21 = box2.y1-(box2.x2/2);
-    c22 = box2.y1+(box2.x2/2);
-    r21 = box2.x1-(box2.y2/2);
-    r22 = box2.x1+(box2.y2/2);
-
+    c11 = box1.x1 - (box1.y2/2);
+    c12 = box1.x1 + (box1.y2/2);
+    r11 = box1.y1 - (box1.x2/2);
+    r12 = box1.y1 + (box1.x2/2);
+        
+    c21 = box2.x1 - (box2.y2/2);
+    c22 = box2.x1 + (box2.y2/2);
+    r21 = box2.y1 - (box2.x2/2);
+    r22 = box2.y1 + (box2.x2/2);
+    
     top = std::max(r11, r21);
     bottom = std::max(r12, r22);
     left = std::max(c11, c21);
     right = std::max(c12, c22);
+
     if(bottom < top || left > right)
+        return 0;
+    if((std::min(c12, c22) < left) || (std::min(r12, r22) < top))
         return 0;
     area1 = box1.x2*box1.y2;
     area2 = box2.x2*box2.y2;
@@ -153,7 +172,6 @@ float computeOverlapCenter(bboxes& box1, bboxes &box2)
 
 static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
-    printf("in process..\n");
     //get tensor dimensions
     vx_size input_dims_0[4], input_dims_1[4], output_dims[4];
     vx_size num_of_dims;   
@@ -165,7 +183,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     float * ptr;
     vx_enum usage = VX_READ_ONLY;
     vx_status status;
-    printf("in process..\n");
+
     //query and copy boxes(tensor) 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_0, sizeof(input_dims_0)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
@@ -180,7 +198,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
         exit(0);
     }
 
-    if (input_dims_0[1] != input_dims_1[2])
+    if (input_dims_0[2] != input_dims_1[1])
     {
         printf("processNMSLayer: nms_layer: spatial_dimension for scores(%lu) must match spatial_dimension for boxes(%lu)\n", input_dims_1[2], input_dims_0[1]);  
         exit(0);
@@ -188,15 +206,10 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
 
     int num_batches = input_dims_1[3];
     int num_classes = input_dims_1[2];
-    int spatial_dimension = input_dims_1[1];
+    const int spatial_dimension = input_dims_1[1];
 
-    //vx_size count_tensor_bboxes = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
-    //float *bboxes = new float[count_tensor_bboxes];
-    std::vector<bboxes> boxes;
-    
-    //vx_size count_tensor_scores = input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*input_dims_1[3];
-    //float *scores = new float[count_tensor_scores];
-    std::vector<std::vector<std::vector<float>>> scores;
+    std::vector<bboxes> boxes(spatial_dimension);
+    std::vector<std::vector<std::vector<float>>> scores(num_batches,std::vector<std::vector<float>>(num_classes, std::vector<float>(spatial_dimension)));
     
     //map openvx boxes tensor to vector
     status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
@@ -236,10 +249,10 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     {
         for (size_t c = 0; c < num_classes; ++c)
         {
-            int idx = b * num_classes + c * spatial_dimension;
+            int idx = b * num_classes * spatial_dimension + c * spatial_dimension;
             for(size_t i = 0; i < spatial_dimension; ++i)
             {
-                scores[b][c].push_back(ptr[idx + i]);
+                scores[b][c][i] = ptr[idx + i];
             }
         } 
     }
@@ -322,7 +335,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     {
         iou_thresh[0] = 0.0;
     }
-
+    
     float *score_thresh = new float[1];
     if(parameters[6])
     {
@@ -357,12 +370,8 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     }
 
     //create memory to store final output
-    //ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
 
-    //int count_output_final = output_dims[0]*output_dims[1]*output_dims[2]*output_dims[3];
-    //vx_size stride_output_final[4] = {sizeof(int), output_dims[0]*sizeof(int), output_dims[0]*output_dims[1]*sizeof(int), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int) };
-    //int * final_selected_indices = new int[count_output_final][3];
     std::vector<std::vector<int64_t>> final_selected_indices;
 
     //get top_k scores with indices per batch per class. Common for both center point types.
@@ -384,7 +393,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
                 {
                     const int prev_idx = selected_indices[k];
                     float overlap;
-                    if (center_point_box == 0) /*indicates box data = [y1,x1,y2,x2] - mostly TF models*/
+                    if (center_point_box == 0) /*indicates box data = [y1,x1,y2,x2] - mostly TF models */
                     {
                         overlap = computeOverlapCoordinates(boxes[idx], boxes[prev_idx]);
                     }
@@ -392,34 +401,41 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
                     {
                         overlap = computeOverlapCenter(boxes[idx], boxes[prev_idx]);
                     }
-                    keep = overlap <= iou_thresh[0];
+                    if(overlap <= iou_thresh[0])
+                        keep = true;
+                    else
+                        keep = false;
+                    //keep = overlap <= iou_thresh[0];
                 }
                 if(keep)
                     selected_indices.push_back(idx);
             }
             if(max_output_boxes_per_class[0] < selected_indices.size())
                 selected_indices.resize(max_output_boxes_per_class[0]);
+
             std::vector<int64_t> temp;
-            for(size_t f = 0; f < selected_indices.size(); ++f)
+
+            for(int f = 0; f < selected_indices.size(); f++)
             {
+                temp.clear();
                 temp.push_back((int64_t)b);
                 temp.push_back((int64_t)c);
                 temp.push_back((int64_t)selected_indices[f]);
                 final_selected_indices.push_back(temp);
-                printf("final_selected_indices = %ld %ld %ld\n", final_selected_indices[f][0],final_selected_indices[f][1],final_selected_indices[f][2]);
             }
         }
     }    
-
+    //for (int ab = 0; ab < final_selected_indices.size(); ab++)
+    //    printf("final_selected_indices = %ld %ld %ld\n", final_selected_indices[ab][0],final_selected_indices[ab][1],final_selected_indices[ab][2]);
     int64_t *final_selected_indices_ptr = &final_selected_indices[0][0];
     
     //finding size of nms output and assigning stride
-    output_dims[3] = 1;
-    output_dims[2] = 3; //3 values per index
-    output_dims[1] = final_selected_indices.size(); //number of boxes found
-    output_dims[0] = 1;
+    output_dims[3] = 1; 
+    output_dims[2] = 1;
+    output_dims[1] = final_selected_indices.size(); //number of boxes found;
+    output_dims[0] = 3; //3 values per index
 
-    vx_size stride_output_final[4] = {sizeof(int), output_dims[0]*sizeof(int), output_dims[0]*output_dims[1]*sizeof(int), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int) };
+    vx_size stride_output_final[4] = {sizeof(int64_t), output_dims[0]*sizeof(int64_t), output_dims[0]*output_dims[1]*sizeof(int64_t), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int64_t) };
     
     status =  vxCopyTensorPatch((vx_tensor)parameters[3], 4, nullptr, nullptr, stride_output_final, final_selected_indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status)
@@ -475,7 +491,6 @@ vx_status publishNMSLayer(vx_context context)
 VX_API_ENTRY vx_node VX_API_CALL vxNMSLayer(vx_graph graph, vx_tensor boxes, vx_tensor scores, vx_int32 center_point_box, vx_tensor output, vx_tensor max_output_boxes_per_class,
                                              vx_tensor iou_threshold, vx_tensor score_threshold)
 {
-    printf("in 1..\n");
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
     if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {

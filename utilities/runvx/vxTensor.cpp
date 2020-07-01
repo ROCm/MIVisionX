@@ -272,7 +272,7 @@ int CVxParamTensor::InitializeIO(vx_context context, vx_graph graph, vx_referenc
 				vx_status status = vxCopyTensorPatch(m_tensor, m_num_of_dims, nullptr, nullptr, m_stride, m_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
 				fclose(fp);
 				if (status != VX_SUCCESS)
-					ReportError("ERROR: vxCopyTensorPatch: write failed #1  (%d)\n", status);
+					ReportError("ERROR: vxCopyTensorPatch: write failed (%d)\n", status);
 			}
 		}
 		else if (!_stricmp(ioType, "write"))
@@ -376,7 +376,7 @@ int CVxParamTensor::ReadFrame(int frameNumber)
 	vx_status status = vxCopyTensorPatch(m_tensor, m_num_of_dims, nullptr, nullptr, m_stride, m_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
 	fclose(fp);
 	if (status != VX_SUCCESS)
-		ReportError("%s ERROR: vxCopyTensorPatch: write failed #2(%d)\n", m_fileNameRead.c_str(),status);
+		ReportError("ERROR: vxCopyTensorPatch: write failed (%d)\n", status);
 
 	// process user requested directives
 	if (m_useSyncOpenCLWriteDirective) {

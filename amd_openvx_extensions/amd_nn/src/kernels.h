@@ -107,7 +107,7 @@ enum user_kernel_e
     VX_KERNEL_TENSOR_EXP_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x012,
     VX_KERNEL_TENSOR_LOG_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x013,
     VX_KERNEL_CAST_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x014,
-    VX_KERNEL_GATHER_LAYER_AMD               = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x015,
+    VX_KERNEL_GATHER_LAYER_AMD               = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x016,
 };
 
 //////////////////////////////////////////////////////////////////////

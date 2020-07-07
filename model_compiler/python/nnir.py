@@ -196,6 +196,7 @@ class IrNode:
             'upsample' : 1,
             'cast' : 1,
             'constant' : 1,
+            'gather' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -743,6 +744,23 @@ class IrGraph:
                 elif node.type in ['detection_output']:
                     input = self.tensor_dict[node.inputs[0]]
                     out_shape = [1,1,1,7]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                elif node.type in ['gather']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    indices = self.tensor_dict[node.inputs[1]]
+                    axis = node.attr.get('axis')
+                    
+                    Ni, Nk = input.shape[:axis], input.shape[axis+1:]
+                    Nj = indices.shape
+                    out_shape = Nk + Nj + Ni
+                    
+                    while len(out_shape) < (len(input.shape) + len(indices.shape) -1):
+                        out_shape.append(1)
+                    
+                    # tbd: verify the out_shape when the model is ready
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)

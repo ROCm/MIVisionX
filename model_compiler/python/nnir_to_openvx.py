@@ -923,6 +923,18 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 """      ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """)
+            elif node.type == 'gather':
+                f.write( \
+"""
+    { 
+      vx_int32 axis = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));      
+      vx_node node = vxGatherLayer(graph, %s, %s, %s, s_axis);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.attr.get('axis'), node.inputs[0], node.inputs[1], node.outputs[0]))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \

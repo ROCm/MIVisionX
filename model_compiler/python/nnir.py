@@ -101,7 +101,12 @@ class IrAttr:
             , 'zoom_factor' : 2
             , 'to' : 1
             , 'count' : -1
+            , 'center_point_box' : 0    #nms corner coordinates default value
+            , 'max_output_boxes_per_class'  : 0
+            , 'iou_threshold' : 0.0
+            , 'score_threshold' : 0.0
             , 'value' : np.array([])
+            
         }
         self.dict_set = []
 
@@ -195,6 +200,7 @@ class IrNode:
             'matmul' : 1,
             'upsample' : 1,
             'cast' : 1,
+            'nms'  : 1,
             'constant' : 1,
             'gather' : 1,
         }
@@ -741,6 +747,14 @@ class IrGraph:
                     local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['nms']:
+                    output_type = 'I064'
+                    output_shape = [1,1,1,3]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['detection_output']:
                     input = self.tensor_dict[node.inputs[0]]
                     out_shape = [1,1,1,7]
@@ -748,6 +762,7 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['gather']:
                     input = self.tensor_dict[node.inputs[0]]
                     indices = self.tensor_dict[node.inputs[1]]

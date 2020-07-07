@@ -2534,7 +2534,7 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     inputFolder = sys.argv[pos]
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
-    graph = IrGraph()
+    graph = IrGraph(True)
     graph.fromFile(inputFolder)
     for tensor in graph.outputs:
         if len(tensor.shape) == 1:

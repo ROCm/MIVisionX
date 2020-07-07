@@ -392,7 +392,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
                 for(int k = 0; k < (int)selected_indices.size() && keep; ++k)
                 {
                     const int prev_idx = selected_indices[k];
-                    float overlap;
+                    float overlap = 0.0;
                     if (center_point_box == 0) /*indicates box data = [y1,x1,y2,x2] - mostly TF models */
                     {
                         overlap = computeOverlapCoordinates(boxes[idx], boxes[prev_idx]);

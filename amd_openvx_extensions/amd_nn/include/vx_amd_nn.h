@@ -302,4 +302,20 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorExpNode(vx_graph graph, vx_tensor input
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTensorLogNode(vx_graph graph, vx_tensor input, vx_tensor output);
 
+
+
+/* \brief [Graph] Creates a TopK Layer Node.
+ * \details Retrieve the top-K largest or smallest elements along a specified axis
+ * This function supports 4D tensors as input and ouput. 
+ * \param [in] graph The handle to the graph.
+ * \param [in] x_tensor The input tensor data.
+ * \param [in] k_tensor The 1-D input tensor data containing a single positive value corresponding to the number of top elements to retrieve.
+ * \param [out] values The output tensor data containing top K values from the input 'x_tensor'.
+ * \param [out] indices The output tensor data containing the corresponding input tensor indices for the top K values.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor, vx_tensor k_tensor, vx_int32 axis, vx_int32 largest, vx_int32 sorted, 
+											vx_tensor values, vx_tensor indices);
+
 #endif

@@ -102,6 +102,8 @@ class IrAttr:
             , 'to' : 1
             , 'count' : -1
             , 'value' : np.array([])
+            , 'largest' : 1
+            , 'sorted' : 1
         }
         self.dict_set = []
 
@@ -196,6 +198,7 @@ class IrNode:
             'upsample' : 1,
             'cast' : 1,
             'constant' : 1,
+            'topk'  : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -738,6 +741,19 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
+                elif node.type in ['topk']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    k = self.tensor_dict[node.inputs[1]]
+                    out_shape = [1,1,input.shape[1], k.shape[0]] #needs to be corrected to get real value if k.
+                    local_values = IrTensor()
+                    local_values.setName(output)
+                    local_values.setInfo(input.type, out_shape)
+                    local_values.setFormat(input.format)
+
+                    local_indices = IrTensor()
+                    local_indices.setName(output)
+                    local_indices.setInfo('I064', out_shape)
+                    local_indices.setFormat(input.format)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

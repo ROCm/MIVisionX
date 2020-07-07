@@ -47,7 +47,9 @@ onnx2ir_attr = {
     'min' : 'min',
     'max' : 'max',
     'to' : 'to', 
-    'value' : 'value'
+    'value' : 'value',
+    'largest' : 'largest',
+    'sorted' : 'sorted'
 }
 
 onnx2ir_op_type = { 
@@ -86,6 +88,7 @@ onnx2ir_op_type = {
     'Shape'              : 'shape',  
     'ArgMax'             : 'argmax',
     'Constant'           : 'constant',
+    'TopK'               : 'topk'
 }
 
 onnx2ir_data_type = [

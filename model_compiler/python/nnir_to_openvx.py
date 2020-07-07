@@ -886,6 +886,16 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """  
     % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'topk':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTopkLayer(graph, %s, %s, %d, %d, %d, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+"""  
+    % (node.inputs[0], node.inputs[1], node.attr.get('axis'), node.attr.get('largest'), node.attr.get('sorted'), node.outputs[0], node.outputs[1]))
             elif node.type == 'detection_output':
                 f.write( \
 """

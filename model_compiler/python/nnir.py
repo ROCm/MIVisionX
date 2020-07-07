@@ -202,6 +202,7 @@ class IrNode:
             'cast' : 1,
             'nms'  : 1,
             'constant' : 1,
+            'gather' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -229,7 +230,7 @@ class IrNode:
             self.attr.fromString(sL[4])
 
 class IrGraph:
-    def __init__(self):
+    def __init__(self, updatedLocals):
         self.inputs = []
         self.outputs = []
         self.output_names = []
@@ -242,6 +243,7 @@ class IrGraph:
         self.tensor_shapes = {}
         self.all_F032 = True
         self.all_F016 = False
+        self.updatedLocals = updatedLocals
 
     def addInput(self,tensor):
         self.inputs.append(tensor)
@@ -460,6 +462,8 @@ class IrGraph:
                                 out_shape.append(input.shape[i])
                     else:
                         out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
+                    while len(out_shape) < 4:
+                        out_shape.append(1)
                     node.attr.set('shape', out_shape)
                     node.type = 'reshape'
                     local = IrTensor()
@@ -518,8 +522,8 @@ class IrGraph:
                             param = (self.readBinary(tensor_name)).tolist()
                         else:
                             param = self.tensor_dict[node.inputs[1]].shape
+                            self.removeTensor(node.inputs[1])
                         node.attr.set('shape', param)
-                        self.removeTensor(node.inputs[1])
                     axis_start = node.attr.get('axis')
                     axis_count = node.attr.get('count')
                     if axis_count == -1:
@@ -561,11 +565,17 @@ class IrGraph:
                     self.addVariable(shape_tensor)                    
                     self.addBinary(tensor_name, shape_data)
                     node.inputs[0] = tensor_name
+                    
+                    tensor_shape = shape_tensor.shape
+                    while len(tensor_shape) < 4:
+                        tensor_shape.append(1)
+                    
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo('I064', shape_tensor.shape)
                     local.setFormat(input.format)
-                    self.addLocal(local)
+                    self.addVariable(local)
+                    self.addBinary(output, shape_data)
                 elif node.type in ['constant']:
                     constantCount+=1
                     tensor_name = 'constant_' + str(constantCount)
@@ -753,6 +763,23 @@ class IrGraph:
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['gather']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    indices = self.tensor_dict[node.inputs[1]]
+                    axis = node.attr.get('axis')
+                    
+                    Ni, Nk = input.shape[:axis], input.shape[axis+1:]
+                    Nj = indices.shape
+                    out_shape = Nk + Nj + Ni
+                    
+                    while len(out_shape) < (len(input.shape) + len(indices.shape) -1):
+                        out_shape.append(1)
+                    
+                    # tbd: verify the out_shape when the model is ready
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 
@@ -1359,5 +1386,6 @@ class IrGraph:
             binaryFile = binaryFolder + '/' + tensor.name + '.raw'
             with open(binaryFile, 'rb') as f:
                 self.binaries[tensor.name] = f.read()
-        self.updateLocals()
-        self.removeUnusedTensors()
+        if self.updatedLocals == False:
+            self.updateLocals()
+            self.removeUnusedTensors()

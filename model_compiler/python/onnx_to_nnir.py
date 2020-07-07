@@ -88,6 +88,7 @@ onnx2ir_op_type = {
     'ArgMax'             : 'argmax',
     'NonMaxSuppression'  : 'nms',
     'Constant'           : 'constant',
+    'Gather'             : 'gather'
 }
 
 onnx2ir_data_type = [
@@ -159,7 +160,7 @@ def onnx_value_info_to_data(info, dims):
     return tensor
 
 def onnx_graph_to_ir_graph(onnx_graph):
-    graph = IrGraph()
+    graph = IrGraph(False)
     initializerList = []
     shapeList = []
     inputUser = False

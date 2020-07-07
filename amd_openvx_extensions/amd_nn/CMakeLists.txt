@@ -80,6 +80,7 @@ list(APPEND SOURCES
     src/detection_output.cpp
     src/cast_layer.cpp
     src/nms_layer.cpp
+    src/gather_layer.cpp
     src/profiler.cpp
     )
 

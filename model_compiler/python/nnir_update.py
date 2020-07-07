@@ -59,7 +59,7 @@ def main():
     inputFolder = sys.argv[pos]
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
-    graph = IrGraph()
+    graph = IrGraph(True)
     graph.fromFile(inputFolder)
     if batchSize > 0:
         graph.updateBatchSize(batchSize)

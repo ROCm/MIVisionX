@@ -302,4 +302,35 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorExpNode(vx_graph graph, vx_tensor input
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTensorLogNode(vx_graph graph, vx_tensor input, vx_tensor output);
 
+
+/* \brief [Graph] Creates a Non Max Suppression Layer Node.
+ * \details Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
+ * This function supports 4D tensors as input and ouput. The type of the tensor is int64.
+ * \param [in] graph The handle to the graph.
+ * \param [in] boxes The input tensor data which has coordinates for all the bounding boxes.
+ * \param [in] scores The input tensor data which has scores for all the bounding boxes.
+ * \param [in] center_point_box The input scalar data which tells the format of the coordinates of bounding boxes.
+ * \param [in] max_output_boxes_per_class The input tensor int64 data representing the maximum number of boxes to be selected per batch per class.
+ * \param [in] iou_threshold The input tensor float data representing the maximum number of boxes to be selected per batch per class.
+ * \param [in] score_threshold The input tensor float data representing the threshold for deciding when to remove boxes based on score.
+ * \param [out] output The output tensor data with the dimensions based on the number of selected boxes.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxNMSLayer(vx_graph graph, vx_tensor boxes, vx_tensor scores, vx_int32 center_point_box, vx_tensor output, vx_tensor max_output_boxes_per_class,
+                                             vx_tensor iou_threshold, vx_tensor score_threshold);
+
+/* \brief [Graph] Creates a Gather Layer Node.
+ * \details Given data tensor of rank r >= 1, and indices tensor of rank q, gather entries of the axis dimension of data (by default outer-most one as axis=0) 
+ * indexed by indices, and concatenates them in an output tensor of rank q + (r - 1).
+ * \param [in] graph The handle to the graph.
+ * \param [in] input The input tensor data to gather elements on. The type of the tensor can be either float32 or float16.
+ * \param [in] indices The indices tensor containing the index data. The type of the tensor can be either int32 or int64. 
+ * \param [out] output The output tensor data with the same type as the input tensor data.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxGatherLayerNode(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis);
+
+
 #endif

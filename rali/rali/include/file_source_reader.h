@@ -26,7 +26,8 @@ THE SOFTWARE.
 #include <memory>
 #include <dirent.h>
 #include "reader.h"
-
+#include "commons.h"
+#include "timing_debug.h"
 
 
 class FileSourceReader : public Reader {
@@ -59,6 +60,7 @@ public:
     ~FileSourceReader() override;
 
     int close() override;
+    unsigned long long get_shuffle_time() {return _shuffle_time.get_timing();};
 
     FileSourceReader();
 
@@ -87,10 +89,14 @@ private:
     bool _loop;
     bool _shuffle;
     int _read_counter = 0;
+    //!< _file_count_all_shards total_number of files in to figure out the max_batch_size (usually needed for distributed training).
+    size_t  _file_count_all_shards;
     void incremenet_read_ptr();
     int release();
     size_t get_file_shard_id();
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
-
+    void replicate_last_batch_to_pad_partial_shard();
+    TimingDBG _shuffle_time;
 };
+

@@ -854,7 +854,7 @@ def extractCaffeNodeInfo(net_parameter, graph, inputsInfo, verbose):
 
 # convert caffe graph to ir graph.
 def caffe_graph_to_ir_graph(net_parameter, input_dims, verbose):
-    graph = IrGraph()
+    graph = IrGraph(False)
     inputMap = extractInput(net_parameter, graph, input_dims)
     inputOutputMap, output_name = extractCaffeNodeInfo(net_parameter, graph, inputMap, verbose)
     outputList = extractOutput(graph, inputOutputMap, output_name, verbose)

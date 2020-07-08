@@ -101,7 +101,12 @@ class IrAttr:
             , 'zoom_factor' : 2
             , 'to' : 1
             , 'count' : -1
+            , 'center_point_box' : 0    #nms corner coordinates default value
+            , 'max_output_boxes_per_class'  : 0
+            , 'iou_threshold' : 0.0
+            , 'score_threshold' : 0.0
             , 'value' : np.array([])
+            
         }
         self.dict_set = []
 
@@ -195,7 +200,9 @@ class IrNode:
             'matmul' : 1,
             'upsample' : 1,
             'cast' : 1,
+            'nms'  : 1,
             'constant' : 1,
+            'gather' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -223,7 +230,7 @@ class IrNode:
             self.attr.fromString(sL[4])
 
 class IrGraph:
-    def __init__(self):
+    def __init__(self, updatedLocals):
         self.inputs = []
         self.outputs = []
         self.output_names = []
@@ -236,6 +243,7 @@ class IrGraph:
         self.tensor_shapes = {}
         self.all_F032 = True
         self.all_F016 = False
+        self.updatedLocals = updatedLocals
 
     def addInput(self,tensor):
         self.inputs.append(tensor)
@@ -454,6 +462,8 @@ class IrGraph:
                                 out_shape.append(input.shape[i])
                     else:
                         out_shape = [input.shape[i] for i in range(len(input.shape)) if i not in axes]
+                    while len(out_shape) < 4:
+                        out_shape.append(1)
                     node.attr.set('shape', out_shape)
                     node.type = 'reshape'
                     local = IrTensor()
@@ -512,8 +522,8 @@ class IrGraph:
                             param = (self.readBinary(tensor_name)).tolist()
                         else:
                             param = self.tensor_dict[node.inputs[1]].shape
+                            self.removeTensor(node.inputs[1])
                         node.attr.set('shape', param)
-                        self.removeTensor(node.inputs[1])
                     axis_start = node.attr.get('axis')
                     axis_count = node.attr.get('count')
                     if axis_count == -1:
@@ -555,11 +565,17 @@ class IrGraph:
                     self.addVariable(shape_tensor)                    
                     self.addBinary(tensor_name, shape_data)
                     node.inputs[0] = tensor_name
+                    
+                    tensor_shape = shape_tensor.shape
+                    while len(tensor_shape) < 4:
+                        tensor_shape.append(1)
+                    
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo('I064', shape_tensor.shape)
                     local.setFormat(input.format)
-                    self.addLocal(local)
+                    self.addVariable(local)
+                    self.addBinary(output, shape_data)
                 elif node.type in ['constant']:
                     constantCount+=1
                     tensor_name = 'constant_' + str(constantCount)
@@ -731,9 +747,35 @@ class IrGraph:
                     local.setInfo(output_type, output_shape)
                     local.setFormat(input.format)
                     self.addLocal(local)
+                elif node.type in ['nms']:
+                    output_type = 'I064'
+                    output_shape = [1,1,1,3]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(output_type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['detection_output']:
                     input = self.tensor_dict[node.inputs[0]]
                     out_shape = [1,1,1,7]
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, out_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['gather']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    indices = self.tensor_dict[node.inputs[1]]
+                    axis = node.attr.get('axis')
+                    
+                    Ni, Nk = input.shape[:axis], input.shape[axis+1:]
+                    Nj = indices.shape
+                    out_shape = Nk + Nj + Ni
+                    
+                    while len(out_shape) < (len(input.shape) + len(indices.shape) -1):
+                        out_shape.append(1)
+                    
+                    # tbd: verify the out_shape when the model is ready
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
@@ -1344,5 +1386,6 @@ class IrGraph:
             binaryFile = binaryFolder + '/' + tensor.name + '.raw'
             with open(binaryFile, 'rb') as f:
                 self.binaries[tensor.name] = f.read()
-        self.updateLocals()
-        self.removeUnusedTensors()
+        if self.updatedLocals == False:
+            self.updateLocals()
+            self.removeUnusedTensors()

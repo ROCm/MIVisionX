@@ -38,7 +38,11 @@ CVDecoder::CVDecoder() {
 }
 Decoder::Status CVDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) {
     //TODO: OpenCV seems not able to decode header separately, remove the imdecode from this call if possible and replace it with a proper function for decoding the header only
-    return Decoder::Status::UNSUPPORTED;
+    m_mat_orig = imread(cv::Mat(1, input_size, CV_8UC1, input_buffer), -1);
+    *width = m_mat_orig.cols;
+    *height = m_mat_orig.rows;
+    *color_comps = 0;       // not known
+    return Status::OK;
 }
 
 Decoder::Status CVDecoder::decode(unsigned char* input_buffer, size_t input_size,  unsigned char* output_buffer,int desired_width, int desired_height, ColorFormat desired_color) {

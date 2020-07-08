@@ -320,6 +320,7 @@ Test code with preprocessing add / multiply values to normalize the input tensor
 |Eltwise|&#9745;|||
 |Exp||&#9745;|&#9745;|
 |Flatten|&#9745;|||
+|Gather||&#9745;||
 |GEMM|&#9745;|&#9745;|&#9745;|
 |GlobalAveragePool||&#9745;|&#9745;|
 |InnerProduct|&#9745;|||

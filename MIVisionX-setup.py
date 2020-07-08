@@ -222,7 +222,7 @@ else:
 			os.system('sudo -v')
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libboost-all-dev clang')
 			#turbo-JPEG
-			os.system('(cd '+deps_dir+'; git clone https://github.com/Indumathi31/libjpeg-turbo.git )')
+			os.system('(cd '+deps_dir+'; git clone -b 2.0.4 https://github.com/Indumathi31/libjpeg-turbo.git )')
 			os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
 			#RPP
 			os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')

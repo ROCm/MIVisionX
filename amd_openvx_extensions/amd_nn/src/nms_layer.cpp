@@ -427,13 +427,24 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     }    
     //for (int ab = 0; ab < final_selected_indices.size(); ab++)
     //    printf("final_selected_indices = %ld %ld %ld\n", final_selected_indices[ab][0],final_selected_indices[ab][1],final_selected_indices[ab][2]);
-    int64_t *final_selected_indices_ptr = &final_selected_indices[0][0];
+    //int64_t *final_selected_indices_ptr = &final_selected_indices[0][0];
     
     //finding size of nms output and assigning stride
     output_dims[3] = 1; 
     output_dims[2] = 1;
     output_dims[1] = final_selected_indices.size(); //number of boxes found;
     output_dims[0] = 3; //3 values per index
+
+    int total_output_count = output_dims[0] * output_dims[1] * output_dims[2] * output_dims[3];
+    int64_t *final_selected_indices_ptr = new int64_t[total_output_count];
+    for (int i = 0; i < final_selected_indices.size(); i++) {
+        for(int j = 0; j < 3; j++) {
+            final_selected_indices_ptr[i*3 + j] = final_selected_indices[i][j];
+        }
+    }
+
+    //for (int i = 0; i < total_output_count; i++)
+    //    printf("final values [%d] =  %ld \n", i, final_selected_indices_ptr[i]);
 
     vx_size stride_output_final[4] = {sizeof(int64_t), output_dims[0]*sizeof(int64_t), output_dims[0]*output_dims[1]*sizeof(int64_t), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int64_t) };
     

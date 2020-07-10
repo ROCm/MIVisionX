@@ -200,12 +200,10 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
             values.push_back(x_tensor[idx[j]]);
             indices.push_back(idx[j]);
         }
-
-        //printf("after sorting = %f %f %f %f\n", x_tensor[idx[0]], x_tensor[idx[1]], x_tensor[idx[2]], x_tensor[idx[3]]);
-        //printf("after sorting = %lu %lu %lu %lu\n", idx[0], idx[1], idx[2], idx[3]);
         x_tensor += input_dims_0[axis];
     }
 
+    //final results
     //for (int i = 0; i < values.size(); i++)
     //    printf("idx = %lu value = %f \n", indices[i], values[i]);
 

@@ -10,13 +10,13 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 4 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
+    if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
     if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: TopK: #1 input tensor data type=%d (must be float32) (other types not supported yet)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_1, sizeof(input_dims_1)));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 4 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
+    if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
     if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: TopK: #2 input tensor data type=%d (must be int64)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_2, sizeof(input_dims_2)));
 
@@ -43,7 +43,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 4 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
+    if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
     if (type != VX_TYPE_FLOAT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: TopK: #6 output tensor data 'values' type=%d (must be float32)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DIMS, output_dims_1, sizeof(output_dims_1)));
 
@@ -54,7 +54,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 4 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
+    if (num_dims != 4) return VX_ERROR_INVALID_DIMENSION;
     if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: TopK: #7 output tensor data 'indices' type=%d (must be int64)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DIMS, output_dims_2, sizeof(output_dims_2)));
 
@@ -75,8 +75,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     vx_enum usage = VX_READ_ONLY;
     vx_status status;
     vx_map_id map_id;
-    vx_size stride_input_0[4];
-    vx_size stride_input_1[4];
+    vx_size stride[4];
 
     //query and copy inputs
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_0, sizeof(input_dims_0)));
@@ -86,7 +85,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
     float *x_tensor = new float[count_input_dims_0]; 
 
-    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride_input_0, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
@@ -111,7 +110,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     vx_size count_input_dims_1 = input_dims_1[0];
     int64_t *k_tensor = new int64_t[count_input_dims_1];
 
-    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride_input_1, (void **)&ptr_input_1, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_1, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for input#2 (" << status << ")" << std::endl;
@@ -147,8 +146,6 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         count = 4 - count;
         axis = axis - count;
     }
-    
-    
 
     vx_int32 largest;
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &largest, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
@@ -177,7 +174,6 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
                 std::stable_sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
                                                { return x_tensor[a] > x_tensor[b];});
             }
-
         }
         else
         {

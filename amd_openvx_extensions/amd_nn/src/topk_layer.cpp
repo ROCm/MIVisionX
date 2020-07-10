@@ -84,8 +84,8 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     float * ptr_input_0;
     vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
     float *x_tensor = new float[count_input_dims_0];
-    // pointer moves later. Save the original
-    float *x_tensor_begin = x_tensor; 
+    // moving ptr
+    float *x_tensor_move = x_tensor;
 
     status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
@@ -94,8 +94,8 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         return -1;
     }
 
-    memcpy(x_tensor, ptr_input_0, (count_input_dims_0*sizeof(float)));
-
+    memcpy(x_tensor_move, ptr_input_0, (count_input_dims_0*sizeof(float)));
+ 
     status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
 
     if(status) 
@@ -168,26 +168,26 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         if (largest)
         {   if (sorted)
             {   
-                std::sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
-                                               { return x_tensor[a] > x_tensor[b];});
+                std::sort(idx.begin(), idx.end(), [&x_tensor_move](const size_t &a, const size_t &b)
+                                               { return x_tensor_move[a] > x_tensor_move[b];});
             }
             else
             {
-                std::stable_sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
-                                               { return x_tensor[a] > x_tensor[b];});
+                std::stable_sort(idx.begin(), idx.end(), [&x_tensor_move](const size_t &a, const size_t &b)
+                                               { return x_tensor_move[a] > x_tensor_move[b];});
             }
         }
         else
         {
             if(sorted)
             {
-                std::sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
-                                               { return x_tensor[a] < x_tensor[b];}); 
+                std::sort(idx.begin(), idx.end(), [&x_tensor_move](const size_t &a, const size_t &b)
+                                               { return x_tensor_move[a] < x_tensor_move[b];}); 
             }
             else
             {
-                std::stable_sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
-                                               { return x_tensor[a] < x_tensor[b];}); 
+                std::stable_sort(idx.begin(), idx.end(), [&x_tensor_move](const size_t &a, const size_t &b)
+                                               { return x_tensor_move[a] < x_tensor_move[b];}); 
             }
         }
         
@@ -195,10 +195,10 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         int keep_elements = (input_dims_0[axis] < k_tensor[0]) ? input_dims_0[axis]:k_tensor[0];
         for (int j = 0; j < keep_elements; j++)
         {
-            values.push_back(x_tensor[idx[j]]);
+            values.push_back(x_tensor_move[idx[j]]);
             indices.push_back(idx[j]);
         }
-        x_tensor += input_dims_0[axis];
+        x_tensor_move += input_dims_0[axis];
     }
 
     float* values_ptr = &values[0];
@@ -232,10 +232,9 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         return -1;
     }
     
-    delete[] x_tensor_begin;
+    delete[] x_tensor;
     delete[] k_tensor;
-    x_tensor = NULL;
-    x_tensor_begin = NULL;
+    x_tensor_move = NULL;
 
     return VX_SUCCESS;
 

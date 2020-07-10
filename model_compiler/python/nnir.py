@@ -203,11 +203,8 @@ class IrNode:
             'cast' : 1,
             'nms'  : 1,
             'constant' : 1,
-<<<<<<< HEAD
-            'topk'  : 1,
-=======
             'gather' : 1,
->>>>>>> upstream/master
+            'topk'  : 1,
         }
 
     def set(self,type,inputs,outputs,attr):

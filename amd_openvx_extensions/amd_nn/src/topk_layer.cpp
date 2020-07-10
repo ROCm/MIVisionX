@@ -234,6 +234,8 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     
     delete[] x_tensor_begin;
     delete[] k_tensor;
+    x_tensor = NULL;
+    x_tensor_begin = NULL;
 
     return VX_SUCCESS;
 

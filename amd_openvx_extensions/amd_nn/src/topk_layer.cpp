@@ -203,10 +203,6 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         x_tensor += input_dims_0[axis];
     }
 
-    //final results
-    //for (int i = 0; i < values.size(); i++)
-    //    printf("idx = %lu value = %f \n", indices[i], values[i]);
-
     float* values_ptr = &values[0];
     int64_t* indices_ptr = &indices[0];
 

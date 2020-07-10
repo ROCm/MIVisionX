@@ -137,7 +137,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     {
         int count = 0, dims_idx = 0;
         //get real dimensions. Ignoring the appended 1s
-        while(input_dims_0[dims_idx] == 1 && dims_idx <= 3)
+        while(dims_idx <= 3 && input_dims_0[dims_idx] == 1)
         {
             count++;
             dims_idx++;
@@ -229,6 +229,9 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
         return -1;
     }
+
+    delete[] x_tensor;
+    delete[] k_tensor;
 
     return VX_SUCCESS;
 

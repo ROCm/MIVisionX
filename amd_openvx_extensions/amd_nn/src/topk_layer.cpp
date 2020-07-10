@@ -83,7 +83,9 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
 
     float * ptr_input_0;
     vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
-    float *x_tensor = new float[count_input_dims_0]; 
+    float *x_tensor = new float[count_input_dims_0];
+    // pointer moves later. Save the original
+    float *x_tensor_begin = x_tensor; 
 
     status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
@@ -229,7 +231,9 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
         return -1;
     }
+    //retrieving original pointer
 
+    x_tensor = x_tensor_begin;
     delete[] x_tensor;
     delete[] k_tensor;
 

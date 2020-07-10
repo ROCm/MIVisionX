@@ -896,6 +896,15 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """  
     % (node.inputs[0], node.inputs[1], node.attr.get('axis'), node.attr.get('largest'), node.attr.get('sorted'), node.outputs[0], node.outputs[1]))
+            elif node.type == 'nms':
+                f.write( \
+"""
+    { 
+      vx_node node = vxNMSLayer(graph, %s, %s, %d, %s, %s, %s, %s);
+      ERROR_CHECK_OBJECT(node);     
+        
+"""
+    % (node.inputs[0], node.inputs[1], node.attr.get('center_point_box'), node.outputs[0], node.inputs[2], node.inputs[3], node.inputs[4]))
             elif node.type == 'detection_output':
                 f.write( \
 """
@@ -933,6 +942,18 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 """      ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """)
+            elif node.type == 'gather':
+                f.write( \
+"""
+    { 
+      vx_int32 axis = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));      
+      vx_node node = vxGatherLayer(graph, %s, %s, %s, s_axis);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.attr.get('axis'), node.inputs[0], node.inputs[1], node.outputs[0]))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \
@@ -2544,7 +2565,7 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     inputFolder = sys.argv[pos]
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
-    graph = IrGraph()
+    graph = IrGraph(True)
     graph.fromFile(inputFolder)
     for tensor in graph.outputs:
         if len(tensor.shape) == 1:

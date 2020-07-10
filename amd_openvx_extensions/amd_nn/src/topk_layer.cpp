@@ -81,6 +81,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     vx_enum usage = VX_READ_ONLY;
     vx_status status;
     vx_map_id map_id;
+    vx_size stride[4]
 
     //query and copy inputs
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_0, sizeof(input_dims_0)));
@@ -94,8 +95,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
 
     float * ptr;
     vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
-    //float *x_tensor = new float[count_input_dims_0];
-    std::vector<float> x_tensor;
+    float *x_tensor = new float[count_input_dims_0]; 
 
     status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
@@ -104,13 +104,17 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         return -1;
     }
 
-    //memcpy(x_tensor, ptr, (count_input_dims_0*sizeof(float)));
-    
+    memcpy(x_tensor, ptr, (count_input_dims_0*sizeof(float)));
+
     status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
+
     if(status) {
         std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
         return -1;
     }
+
+    for (int i = 0; i < count_input_dims_0; i++)
+        printf("%f\n", x_tensor[i]);
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_1, sizeof(input_dims_1)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
@@ -135,88 +139,108 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         return -1;
     }
 
-    //create memory to store final output
-    vx_enum type_output_0, type_output_1;
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DATA_TYPE, &type_output_0, sizeof(type_output_0)));
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[6], VX_TENSOR_DATA_TYPE, &type_output_1, sizeof(type_output_1)));
+    for (int i = 0; i < count_input_dims_1; i++)
+        printf("%f\n", k_tensor[i]);
 
-    /*
-    std::vector<std::vector<int64_t>> final_selected_indices;
+    vx_int32 axis;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
-    //get top_k scores with indices per batch per class. Common for both center point types.
-    for (int b = 0; b < num_batches; ++b)
+    printf("axis = %d\n", axis);
+
+    vx_int32 largest;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &largest, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    printf("largest = %d\n", largest);
+
+    vx_int32 sorted;
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &sorted, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    printf("sorted = %d\n", sorted);
+
+    //output vectors
+    std::vector<float> values;
+    std::vector<int64_t> indices;
+
+    //vector to sort indices
+    std::vector<size_t> idx(input_dims_0[axis]);
+    
+    for(int i = 0; i < count_input_dims_0; i += input_dims_0[axis])
     {
-        for (int c = 0; c < num_classes; ++c)
-        {
-            std::vector<std::pair<float, int>> score_index_vec;
-            getMaxScoreIndex(scores[b][c], score_thresh[0], max_output_boxes_per_class[0], &score_index_vec);
-
-            std::vector<int> selected_indices;
-            selected_indices.clear();
-
-            for(int i = 0; i < score_index_vec.size(); ++i)
-            {
-                const int idx = score_index_vec[i].second;
-                bool keep = true;
-                for(int k = 0; k < (int)selected_indices.size() && keep; ++k)
-                {
-                    const int prev_idx = selected_indices[k];
-                    float overlap;
-                    if (center_point_box == 0) /*indicates box data = [y1,x1,y2,x2] - mostly TF models */
-/*                    {
-                        overlap = computeOverlapCoordinates(boxes[idx], boxes[prev_idx]);
-                    }
-                    else if(center_point_box == 1) /*indicates box data = [x_center,y_center,width,height] - mostly PyTorch models*/
-/*                    {
-                        overlap = computeOverlapCenter(boxes[idx], boxes[prev_idx]);
-                    }
-                    if(overlap <= iou_thresh[0])
-                        keep = true;
-                    else
-                        keep = false;
-                    //keep = overlap <= iou_thresh[0];
-                }
-                if(keep)
-                    selected_indices.push_back(idx);
+        std::iota(idx.begin(), idx.end(), 0); 
+        if (largest)
+        {   if (sorted)
+            {   
+                std::sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
+                                               { return x_tensor[a] > x_tensor[b];});
             }
-            if(max_output_boxes_per_class[0] < selected_indices.size())
-                selected_indices.resize(max_output_boxes_per_class[0]);
-
-            std::vector<int64_t> temp;
-
-            for(int f = 0; f < selected_indices.size(); f++)
+            else
             {
-                temp.clear();
-                temp.push_back((int64_t)b);
-                temp.push_back((int64_t)c);
-                temp.push_back((int64_t)selected_indices[f]);
-                final_selected_indices.push_back(temp);
+                std::stable_sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
+                                               { return x_tensor[a] > x_tensor[b];});
+            }
+
+        }
+        else
+        {
+            if(sorted)
+            {
+                std::sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
+                                               { return x_tensor[a] < x_tensor[b];}); 
+            }
+            else
+            {
+                std::stable_sort(idx.begin(), idx.end(), [&x_tensor](const size_t &a, const size_t &b)
+                                               { return x_tensor[a] < x_tensor[b];}); 
             }
         }
-    }    
-    //for (int ab = 0; ab < final_selected_indices.size(); ab++)
-    //    printf("final_selected_indices = %ld %ld %ld\n", final_selected_indices[ab][0],final_selected_indices[ab][1],final_selected_indices[ab][2]);
-    int64_t *final_selected_indices_ptr = &final_selected_indices[0][0];
+        
+        //keep only top k elements
+        int keep_elements = (input_dims_0[axis] < k) ? input_dims_0[axis]:k;
+        for (int j = 0; j < keep_elements; j++)
+        {
+            values.push_back(x_tensor[idx[j]]);
+            indices.push_back(idx[j]);
+        }
 
-    //finding size of nms output and assigning stride
-    output_dims[3] = 1; 
-    output_dims[2] = 1;
-    output_dims[1] = final_selected_indices.size(); //number of boxes found;
-    output_dims[0] = 3; //3 values per index
+        //printf("after sorting = %f %f %f %f\n", x_tensor[idx[0]], x_tensor[idx[1]], x_tensor[idx[2]], x_tensor[idx[3]]);
+        //printf("after sorting = %lu %lu %lu %lu\n", idx[0], idx[1], idx[2], idx[3]);
+        x_tensor += input_dims_0[axis];
+    }
 
-    vx_size stride_output_final[4] = {sizeof(int64_t), output_dims[0]*sizeof(int64_t), output_dims[0]*output_dims[1]*sizeof(int64_t), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int64_t) };
+    for (int i = 0; i < values.size(); i++)
+        printf("idx = %lu value = %f \n", indices[i], values[i]);
 
-    status =  vxCopyTensorPatch((vx_tensor)parameters[3], 4, nullptr, nullptr, stride_output_final, final_selected_indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    float* values_ptr = &values[0];
+    int64_t indices_ptr = &indices[0];
+
+    //finding size of topk output and assigning stride
+    output_dims_0[3] = 1; 
+    output_dims_0[2] = 1;
+    output_dims_0[1] = 1; 
+    output_dims_0[0] = values.size(); //total count of values. Acts as a 1D array
+
+    output_dims_1[3] = 1; 
+    output_dims_1[2] = 1;
+    output_dims_1[1] = 1; 
+    output_dims_1[0] = indices.size(); //total count of indices. Acts as a 1D array    
+
+    vx_size stride_output_0[4] = {sizeof(float), output_dims_0[0]*sizeof(float), output_dims_0[0]*output_dims_0[1]*sizeof(float), output_dims_0[0]*output_dims_0[1]*output_dims_0[2]*sizeof(float) };
+    vx_size stride_output_1[4] = {sizeof(int64_t), output_dims_1[0]*sizeof(int64_t), output_dims_1[0]*output_dims_1[1]*sizeof(int64_t), output_dims_1[0]*output_dims_1[1]*output_dims_1[2]*sizeof(int64_t) };
+    
+    status =  vxCopyTensorPatch((vx_tensor)parameters[5], 4, nullptr, nullptr, stride_output_0, values_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
         return -1;
     }
 
-    delete iou_thresh;
-    delete score_thresh;
-    delete max_output_boxes_per_class;
-*/
+    status =  vxCopyTensorPatch((vx_tensor)parameters[6], 4, nullptr, nullptr, stride_output_1, indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    if(status)
+    {
+        std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
+        return -1;
+    }
+
     return VX_SUCCESS;
 
 }

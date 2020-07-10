@@ -127,7 +127,7 @@ def main():
     inputFolder = sys.argv[1]
     outputFolder = sys.argv[2]
     print('reading NNIR model from ' + inputFolder + ' ...')
-    graph = IrGraph()
+    graph = IrGraph(True)
     graph.fromFile(inputFolder)
     print('creating NNEF in ' + outputFolder + ' ...')
     generateNNEF(graph,outputFolder)

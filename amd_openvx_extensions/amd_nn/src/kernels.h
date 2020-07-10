@@ -166,12 +166,9 @@ vx_status publishCastLayer(vx_context context);
 vx_status publishTensorExp(vx_context context);
 vx_status publishTensorLog(vx_context context);
 vx_status publishDetectionOutputLayer(vx_context context);
-<<<<<<< HEAD
-vx_status publishTopKLayer(vx_context context);
-=======
 vx_status publishNMSLayer(vx_context context);
 vx_status publishGatherLayer(vx_context context);
->>>>>>> upstream/master
+vx_status publishTopKLayer(vx_context context);
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing/unpublishing kernels

@@ -42,6 +42,7 @@ THE SOFTWARE.
 #include <string.h>
 #include <vector>
 #include <algorithm>
+#include <numeric>
 #if __APPLE__
 #include <opencl.h>
 #else

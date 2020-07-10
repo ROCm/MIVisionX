@@ -16,7 +16,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    if (num_dims != 1 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
+    if (num_dims != 4 /*&& num_dims != 3*/) return VX_ERROR_INVALID_DIMENSION;
     if (type != VX_TYPE_INT64) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: TopK: #2 input tensor data type=%d (must be int64)\n", type);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_2, sizeof(input_dims_2)));
 
@@ -69,14 +69,14 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
 static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
     //get tensor dimensions
-    vx_size input_dims_0[4], input_dims_1[1], output_dims_0[4], output_dims_1[4];
+    vx_size input_dims_0[4], input_dims_1[4], output_dims_0[4], output_dims_1[4];
     vx_size num_of_dims;
 
     vx_enum usage = VX_READ_ONLY;
     vx_status status;
     vx_map_id map_id;
     vx_size stride_input_0[4];
-    vx_size stride_input_1[1];
+    vx_size stride_input_1[4];
 
     //query and copy inputs
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_0, sizeof(input_dims_0)));
@@ -103,9 +103,6 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         return -1;
     }
 
-    for (int i = 0; i < count_input_dims_0; i++)
-        printf("%f\n", x_tensor[i]);
-
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_1, sizeof(input_dims_1)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
 
@@ -130,30 +127,34 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         return -1;
     }
 
-    for (int i = 0; i < count_input_dims_1; i++)
-        printf("k = %ld\n", k_tensor[i]);
-
     vx_int32 axis;
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
-    printf("axis = %d\n", axis);
-
-    //accessing the tensor from last dimension
-    if(axis < 0)
-        axis = num_of_dims + axis;
-    
-    //opposite of onnx
+    //opposite of onnx. Maybe have to remove for model. Works with GDF testing
     axis = 3 - axis;
+    
+    //accessing the tensor from last dimension
+    if(axis > 3)
+    {
+        int count = 0, dims_idx = 0;
+        //get real dimensions. Ignoring the appended 1s
+        while(input_dims_0[dims_idx] == 1 && dims_idx <= 3)
+        {
+            count++;
+            dims_idx++;
+        }
+
+        count = 4 - count;
+        axis = axis - count;
+    }
+    
+    
 
     vx_int32 largest;
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &largest, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
-    printf("largest = %d\n", largest);
-
     vx_int32 sorted;
     ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &sorted, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-    printf("sorted = %d\n", sorted);
 
     //output vectors
     std::vector<float> values;
@@ -194,7 +195,6 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         
         //keep only top k elements
         int keep_elements = (input_dims_0[axis] < k_tensor[0]) ? input_dims_0[axis]:k_tensor[0];
-        printf("keep_elements = %d\n", keep_elements);
         for (int j = 0; j < keep_elements; j++)
         {
             values.push_back(x_tensor[idx[j]]);
@@ -206,8 +206,8 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         x_tensor += input_dims_0[axis];
     }
 
-    for (int i = 0; i < values.size(); i++)
-        printf("idx = %lu value = %f \n", indices[i], values[i]);
+    //for (int i = 0; i < values.size(); i++)
+    //    printf("idx = %lu value = %f \n", indices[i], values[i]);
 
     float* values_ptr = &values[0];
     int64_t* indices_ptr = &indices[0];

@@ -231,10 +231,8 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
         return -1;
     }
-    //retrieving original pointer
-
-    x_tensor = x_tensor_begin;
-    delete[] x_tensor;
+    
+    delete[] x_tensor_begin;
     delete[] k_tensor;
 
     return VX_SUCCESS;

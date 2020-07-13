@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "node_image_loader.h"
 #include "node_image_loader_single_shard.h"
 #include "node_fused_jpeg_crop.h"
+#include "node_fused_jpeg_crop_single_shard.h"
 #include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
@@ -185,6 +186,20 @@ template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const
 
     return node;
 }
+
+template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+{
+    if(_loader_module)
+        THROW("A loader already exists, cannot have more than one loader")
+    auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], _device.resources());
+    _loader_module = node->get_loader_module();
+    _root_nodes.push_back(node);
+    for(auto& output: outputs)
+        _image_map.insert(make_pair(output, node));
+
+    return node;
+}
+
 /*
  * Explicit specialization for Cifar10LoaderNode
  */

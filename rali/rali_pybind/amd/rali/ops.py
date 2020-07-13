@@ -435,19 +435,19 @@ class ImageDecoderRandomCrop(Node):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
             else:
-#                output_image = b.FusedDecoderCrop(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height, None, None)
+                output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+#                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+#                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         else:
             if(self.prev.prev.data == "TFRecordReader"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
             else:
-#                output_image = b.FusedDecoderCrop(handle, input_image, types.RGB, num_threads, is_output, False, types.MOST_FREQUENT_SIZE, 0 , 0, None, None)
+                output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+#                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
+#                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         return output_image
 
 class ColorTwist(Node):

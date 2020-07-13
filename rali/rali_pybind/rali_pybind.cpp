@@ -246,6 +246,24 @@ namespace rali{
             py::arg("aspect_ratio") = NULL,	
             py::arg("y_drift_factor") = NULL,	
             py::arg("x_drift_factor") = NULL);
+m.def("FusedDecoderCropShard",&raliFusedJpegCropSingleShard,"Reads file from the source and decodes them partially to output random crops",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+	    py::arg("shard_id"),
+            py::arg("shard_count"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MAX_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0,
+            py::arg("area_factor") = NULL,
+            py::arg("aspect_ratio") = NULL,
+            py::arg("y_drift_factor") = NULL,
+            py::arg("x_drift_factor") = NULL);
+
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h
         m.def("Resize",&raliResize,

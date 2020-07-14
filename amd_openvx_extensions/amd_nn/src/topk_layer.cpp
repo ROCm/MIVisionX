@@ -84,8 +84,6 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     float * ptr_input_0;
     vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
     float *x_tensor = new float[count_input_dims_0];
-    //temporary moving ptr
-    float *x_tensor_temp = x_tensor;
 
     status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)
@@ -94,7 +92,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         return -1;
     }
 
-    memcpy(x_tensor_temp, ptr_input_0, (count_input_dims_0*sizeof(float)));
+    memcpy(x_tensor, ptr_input_0, (count_input_dims_0*sizeof(float)));
  
 
     status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
@@ -161,7 +159,9 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     std::vector<int64_t> indices;
 
     //vector to sort indices
-    std::vector<size_t> idx(input_dims_0[axis]);
+    std::vector<size_t> idx(input_dims_0[axis]);    
+    //temporary moving ptr
+    float *x_tensor_temp = x_tensor;
     
     for(int i = 0; i < count_input_dims_0; i += input_dims_0[axis])
     {

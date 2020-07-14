@@ -167,29 +167,14 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     {
         std::iota(idx.begin(), idx.end(), 0); 
         if (largest)
-        {   if (sorted)
-            {   
-                std::sort(idx.begin(), idx.end(), [&x_tensor_temp](const size_t &a, const size_t &b)
-                                               { return x_tensor_temp[a] > x_tensor_temp[b];});
-            }
-            else
-            {
-                std::stable_sort(idx.begin(), idx.end(), [&x_tensor_temp](const size_t &a, const size_t &b)
-                                               { return x_tensor_temp[a] > x_tensor_temp[b];});
-            }
+        {   
+            std::sort(idx.begin(), idx.end(), [&x_tensor_temp](const size_t &a, const size_t &b)
+                                                { return x_tensor_temp[a] > x_tensor_temp[b];});   
         }
         else
-        {
-            if(sorted)
-            {
-                std::sort(idx.begin(), idx.end(), [&x_tensor_temp](const size_t &a, const size_t &b)
-                                               { return x_tensor_temp[a] < x_tensor_temp[b];}); 
-            }
-            else
-            {
-                std::stable_sort(idx.begin(), idx.end(), [&x_tensor_temp](const size_t &a, const size_t &b)
-                                               { return x_tensor_temp[a] < x_tensor_temp[b];}); 
-            }
+        { 
+            std::sort(idx.begin(), idx.end(), [&x_tensor_temp](const size_t &a, const size_t &b)
+                                               { return x_tensor_temp[a] < x_tensor_temp[b];});  
         }
         
         //keep only top k elements
@@ -235,7 +220,6 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     
     delete[] x_tensor;
     delete[] k_tensor;
-    x_tensor = nullptr;
 
     return VX_SUCCESS;
 
@@ -298,4 +282,4 @@ VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor,
         node = createNode(graph, VX_KERNEL_TOPK_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
     }
     return node;
-} 
+}

@@ -43,6 +43,7 @@ THE SOFTWARE.
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <memory>
 #if __APPLE__
 #include <opencl.h>
 #else

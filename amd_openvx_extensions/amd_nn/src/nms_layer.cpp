@@ -369,11 +369,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
         score_thresh[0] = 0.0;
     }
 
-    //create memory to store final output
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-
-    std::vector<std::vector<int64_t>> final_selected_indices;
-
+    std::vector<int64_t> final_selected_indices;
     //get top_k scores with indices per batch per class. Common for both center point types.
     for (int b = 0; b < num_batches; ++b)
     {
@@ -413,41 +409,25 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
             if(max_output_boxes_per_class[0] < selected_indices.size())
                 selected_indices.resize(max_output_boxes_per_class[0]);
 
-            std::vector<int64_t> temp;
-
             for(int f = 0; f < selected_indices.size(); f++)
             {
-                temp.clear();
-                temp.push_back((int64_t)b);
-                temp.push_back((int64_t)c);
-                temp.push_back((int64_t)selected_indices[f]);
-                final_selected_indices.push_back(temp);
+                final_selected_indices.push_back((int64_t)b);
+                final_selected_indices.push_back((int64_t)c);
+                final_selected_indices.push_back((int64_t)selected_indices[f]);
             }
         }
     }    
-    //for (int ab = 0; ab < final_selected_indices.size(); ab++)
-    //    printf("final_selected_indices = %ld %ld %ld\n", final_selected_indices[ab][0],final_selected_indices[ab][1],final_selected_indices[ab][2]);
-    //int64_t *final_selected_indices_ptr = &final_selected_indices[0][0];
-    
+
+    // ptr for copying back to tensor
+    int64_t *final_selected_indices_ptr = &final_selected_indices[0];
+        
     //finding size of nms output and assigning stride
     output_dims[3] = 1; 
     output_dims[2] = 1;
     output_dims[1] = final_selected_indices.size(); //number of boxes found;
     output_dims[0] = 3; //3 values per index
 
-    int total_output_count = output_dims[0] * output_dims[1] * output_dims[2] * output_dims[3];
-    int64_t *final_selected_indices_ptr = new int64_t[total_output_count];
-    for (int i = 0; i < final_selected_indices.size(); i++) {
-        for(int j = 0; j < 3; j++) {
-            final_selected_indices_ptr[i*3 + j] = final_selected_indices[i][j];
-        }
-    }
-
-    //for (int i = 0; i < total_output_count; i++)
-    //    printf("final values [%d] =  %ld \n", i, final_selected_indices_ptr[i]);
-
     vx_size stride_output_final[4] = {sizeof(int64_t), output_dims[0]*sizeof(int64_t), output_dims[0]*output_dims[1]*sizeof(int64_t), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(int64_t) };
-    
     status =  vxCopyTensorPatch((vx_tensor)parameters[3], 4, nullptr, nullptr, stride_output_final, final_selected_indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status)
     {

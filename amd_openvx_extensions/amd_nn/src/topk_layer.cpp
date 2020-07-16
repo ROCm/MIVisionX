@@ -83,7 +83,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
 
     float * ptr_input_0;
     vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
-    std::shared_ptr<float[]> x_tensor_buffer(new float[count_input_dims_0]);
+    std::unique_ptr<float[]> x_tensor_buffer(new float[count_input_dims_0]);
 
     status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0);
     if(status)

@@ -259,7 +259,7 @@ vx_status publishTopKLayer(vx_context context)
     return VX_SUCCESS;
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor_buffer, vx_tensor k_tensor_buffer, vx_int32 axis, vx_int32 largest, vx_int32 sorted, 
+VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor, vx_tensor k_tensor, vx_int32 axis, vx_int32 largest, vx_int32 sorted, 
                                             vx_tensor values, vx_tensor indices)
 {
     vx_node node = NULL;
@@ -269,8 +269,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor_
         vx_scalar s_largest = vxCreateScalarWithSize(context, VX_TYPE_INT32, &largest, sizeof(largest));
         vx_scalar s_sorted = vxCreateScalarWithSize(context, VX_TYPE_INT32, &sorted, sizeof(sorted));
         vx_reference params[] = {
-            (vx_reference)x_tensor_buffer,
-            (vx_reference)k_tensor_buffer,
+            (vx_reference)x_tensor,
+            (vx_reference)k_tensor,
             (vx_reference)s_axis,
             (vx_reference)s_largest,
             (vx_reference)s_sorted,

@@ -1,5 +1,14 @@
 #include "kernels.h"
 
+typedef struct TopKLayerLocalData {
+	float *x_tensor_buffer;
+    int64_t k_tensor_buffer[1];
+	vx_int32 axis;
+	vx_int32 largest;
+	vx_int32 sorted;
+}TopKLayerLocalData;
+
+TopKLayerLocalData *data = NULL;
 
 static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[])
 {
@@ -68,7 +77,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
 
 static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
-    //get tensor dimensions
+	//get tensor dimensions
     vx_size input_dims_0[4], input_dims_1[4], output_dims_0[4], output_dims_1[4];
     vx_size num_of_dims;
 
@@ -80,60 +89,41 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
     //query and copy inputs
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_0, sizeof(input_dims_0)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
-
-    float * ptr_input_0;
+	
+	float * ptr_input_0;
     vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
-    std::unique_ptr<float[]> x_tensor_buffer(new float[count_input_dims_0]);
 
-    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0);
-    if(status)
-    {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
-        return -1;
-    }
+	ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0));
 
-    memcpy(x_tensor_buffer.get(), ptr_input_0, (count_input_dims_0*sizeof(float)));
+    memcpy(data->x_tensor_buffer, ptr_input_0, (count_input_dims_0*sizeof(float)));
 
-    status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
-
-    if(status) 
-    {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
-        return -1;
-    }
+    ERROR_CHECK_STATUS(vxUnmapTensorPatch((vx_tensor)parameters[0], map_id));
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims_1, sizeof(input_dims_1)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
-
     
     int64_t * ptr_input_1;
-    vx_size count_input_dims_1 = input_dims_1[0];
-    int64_t *k_tensor_buffer = new int64_t[count_input_dims_1];
+    vx_size count_input_dims_1 = input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*input_dims_1[3];
 
-    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_1, usage, VX_MEMORY_TYPE_HOST, 0);
-    if(status)
-    {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for input#2 (" << status << ")" << std::endl;
-        return -1;
-    }
+    ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_1, usage, VX_MEMORY_TYPE_HOST, 0));
 
-    memcpy(k_tensor_buffer, ptr_input_1, (count_input_dims_1*sizeof(int64_t)));
+    memcpy(&data->k_tensor_buffer, ptr_input_1, (count_input_dims_1*sizeof(int64_t)));
 
-    status = vxUnmapTensorPatch((vx_tensor)parameters[1], map_id);
-    if(status) 
-    {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
-        return -1;
-    }
+    ERROR_CHECK_STATUS(vxUnmapTensorPatch((vx_tensor)parameters[1], map_id));
 
-    vx_int32 axis;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &data->axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &data->largest, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &data->sorted, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+
+    //output vectors
+    std::vector<float> values;
+    std::vector<int64_t> indices;
 
     //opposite of onnx. Maybe have to remove for model. Works with GDF testing
-    axis = 3 - axis;
+    data->axis = 3 - data->axis;
     
     //accessing the tensor from last dimension
-    if(axis > 3)
+    if(data->axis > 3)
     {
         int count = 0, dims_idx = 0;
         //get real dimensions. Ignoring the appended 1s
@@ -144,28 +134,18 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         }
 
         count = 4 - count;
-        axis = axis - count;
+        data->axis = data->axis - count;
     }
 
-    vx_int32 largest;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &largest, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-    vx_int32 sorted;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &sorted, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
-    //output vectors
-    std::vector<float> values;
-    std::vector<int64_t> indices;
-
     //vector to sort indices
-    std::vector<size_t> idx(input_dims_0[axis]);    
+    std::vector<size_t> idx(input_dims_0[data->axis]);  
     //temporary moving ptr
-    float *x_tensor_temp = x_tensor_buffer.get();
+    float *x_tensor_temp = data->x_tensor_buffer;    
     
-    for(int i = 0; i < count_input_dims_0; i += input_dims_0[axis])
+    for(int i = 0; i < count_input_dims_0; i += input_dims_0[data->axis])
     {
         std::iota(idx.begin(), idx.end(), 0); 
-        if (largest)
+        if (data->largest)
         {   
             std::sort(idx.begin(), idx.end(), [&x_tensor_temp](const size_t &a, const size_t &b)
                                                 { return x_tensor_temp[a] > x_tensor_temp[b];});   
@@ -177,13 +157,13 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
         }
         
         //keep only top k elements
-        int keep_elements = (input_dims_0[axis] < k_tensor_buffer[0]) ? input_dims_0[axis]:k_tensor_buffer[0];
+        int keep_elements = (input_dims_0[data->axis] < data->k_tensor_buffer[0]) ? input_dims_0[data->axis]:data->k_tensor_buffer[0];
         for (int j = 0; j < keep_elements; j++)
         {
             values.push_back(x_tensor_temp[idx[j]]);
             indices.push_back(idx[j]);
         }
-        x_tensor_temp += input_dims_0[axis];
+        x_tensor_temp += input_dims_0[data->axis];
     }
 
     float* values_ptr = &values[0];
@@ -202,47 +182,45 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
 
     vx_size stride_output_0[4] = {sizeof(float), output_dims_0[0]*sizeof(float), output_dims_0[0]*output_dims_0[1]*sizeof(float), output_dims_0[0]*output_dims_0[1]*output_dims_0[2]*sizeof(float) };
     vx_size stride_output_1[4] = {sizeof(int64_t), output_dims_1[0]*sizeof(int64_t), output_dims_1[0]*output_dims_1[1]*sizeof(int64_t), output_dims_1[0]*output_dims_1[1]*output_dims_1[2]*sizeof(int64_t) };
-    
-    status =  vxCopyTensorPatch((vx_tensor)parameters[5], 4, nullptr, nullptr, stride_output_0, values_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    if(status)
-    {
-        std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
-        return -1;
-    }
 
-    status =  vxCopyTensorPatch((vx_tensor)parameters[6], 4, nullptr, nullptr, stride_output_1, indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    if(status)
-    {
-        std::cerr << "ERROR: vxCopyTensorPatch() failed for output tensor"  << std::endl;
-        return -1;
-    }
-    
-    delete[] k_tensor_buffer;
+    ERROR_CHECK_STATUS(vxCopyTensorPatch((vx_tensor)parameters[5], 4, nullptr, nullptr, stride_output_0, values_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyTensorPatch((vx_tensor)parameters[6], 4, nullptr, nullptr, stride_output_1, indices_ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 
     return VX_SUCCESS;
-
 }
 
-
-//! \brief The kernel target support callback.
-static vx_status VX_CALLBACK query_target_support(vx_graph graph, vx_node node,
-    vx_bool use_opencl_1_2,              // [input]  false: OpenCL driver is 2.0+; true: OpenCL driver is 1.2
-    vx_uint32& supported_target_affinity // [output] must be set to AGO_TARGET_AFFINITY_CPU or AGO_TARGET_AFFINITY_GPU or (AGO_TARGET_AFFINITY_CPU | AGO_TARGET_AFFINITY_GPU)
-    )
+static vx_status VX_CALLBACK initializeTopK(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
+	data = new TopKLayerLocalData;
+	memset(data, 0, sizeof(*data));
 
-    supported_target_affinity = AGO_TARGET_AFFINITY_CPU;
+	vx_size input_dims_0[4];
+    vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims_0, sizeof(input_dims_0)));
+
+    data->x_tensor_buffer = (float*)malloc(count_input_dims_0*sizeof(float));
+
+    return VX_SUCCESS;
+}
+
+static vx_status VX_CALLBACK uninitializeTopK(vx_node node, const vx_reference *parameters, vx_uint32 num)
+{
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    if(data)
+    {
+    	free(data->x_tensor_buffer);
+    	delete data;
+    }
+
     return VX_SUCCESS;
 }
 
 //! \brief The kernel publisher.
 vx_status publishTopKLayer(vx_context context)
 {
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.topk_layer", VX_KERNEL_TOPK_LAYER_AMD, processTopKLayer, 7, validate, nullptr, nullptr);
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.topk_layer", VX_KERNEL_TOPK_LAYER_AMD, processTopKLayer, 7, validate, initializeTopK, uninitializeTopK);
     ERROR_CHECK_OBJECT(kernel);
-
-    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
 
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
@@ -256,6 +234,7 @@ vx_status publishTopKLayer(vx_context context)
     //finalize and release kernel object.
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
     ERROR_CHECK_STATUS(vxReleaseKernel(&kernel));
+
     return VX_SUCCESS;
 }
 
@@ -268,16 +247,24 @@ VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor,
         vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
         vx_scalar s_largest = vxCreateScalarWithSize(context, VX_TYPE_INT32, &largest, sizeof(largest));
         vx_scalar s_sorted = vxCreateScalarWithSize(context, VX_TYPE_INT32, &sorted, sizeof(sorted));
-        vx_reference params[] = {
-            (vx_reference)x_tensor,
-            (vx_reference)k_tensor,
-            (vx_reference)s_axis,
-            (vx_reference)s_largest,
-            (vx_reference)s_sorted,
-            (vx_reference)values,
-            (vx_reference)indices,
-        };
-        node = createNode(graph, VX_KERNEL_TOPK_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
+        if (vxGetStatus((vx_reference)s_axis) == VX_SUCCESS &&
+                vxGetStatus((vx_reference)s_largest) == VX_SUCCESS &&
+                vxGetStatus((vx_reference)s_sorted) == VX_SUCCESS)
+        {
+	        vx_reference params[] = {
+	            (vx_reference)x_tensor,
+	            (vx_reference)k_tensor,
+	            (vx_reference)s_axis,
+	            (vx_reference)s_largest,
+	            (vx_reference)s_sorted,
+	            (vx_reference)values,
+	            (vx_reference)indices,
+	        };
+        	node = createNode(graph, VX_KERNEL_TOPK_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
+        	vxReleaseScalar(&s_axis);
+            vxReleaseScalar(&s_largest);
+            vxReleaseScalar(&s_sorted);
+        }
     }
     return node;
 }

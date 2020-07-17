@@ -2,7 +2,7 @@
 
 typedef struct TopKLayerLocalData {
 	float *x_tensor_buffer;
-    int64_t k_tensor_buffer[1];
+	int64_t k_tensor_buffer[1];
 	vx_int32 axis;
 	vx_int32 largest;
 	vx_int32 sorted;

@@ -89,7 +89,7 @@ onnx2ir_op_type = {
     'NonMaxSuppression'  : 'nms',
     'Constant'           : 'constant',
     'Gather'             : 'gather',
-    'ReduceMin'			 : 'reduce_min',
+    'ReduceMin'          : 'reduce_min',
 }
 
 onnx2ir_data_type = [

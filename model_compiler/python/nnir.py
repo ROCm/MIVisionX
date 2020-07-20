@@ -203,6 +203,7 @@ class IrNode:
             'nms'  : 1,
             'constant' : 1,
             'gather' : 1,
+            'reduce_min' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -780,6 +781,31 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
+                elif node.type in ['reduce_min']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    axes = node.attr.get('axes')
+                    keepdims = node.attr.get('keepdims')
+                    output_shape = []
+                    if keepdims == 1:
+                        if axes == None:
+                            for i in range(len(input.shape)):
+                                output_shape.append(1)
+                        else:
+                            for i in range(len(input.shape)):
+                                shape = 1 if i in axes else data.shape[i]
+                                output_shape.append(shape)
+                    elif keepdims == 0:
+                        if axes == None:
+                            output_shape.append(1)
+                        else:
+                            for i in range(len(input.shape)):
+                                if i not in axes:
+                                    output_shape.append(input.shape[i])
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 else:
                     raise ValueError("Unsupported IR node type: {}".format(node.type))
 

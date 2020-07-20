@@ -50,6 +50,16 @@ RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_pat
 }
 
 RaliMetaData
+RALI_API_CALL raliCreateTFReader(RaliContext p_context, const char* source_path, bool is_output){
+    auto context = static_cast<Context*>(p_context);
+    if (!context)
+        THROW("Invalid rali context passed to raliCreateTFReader")
+
+    return context->master_graph->create_tf_record_meta_data_reader(source_path);
+
+}
+
+RaliMetaData
 RALI_API_CALL raliCreateTextFileBasedLabelReader(RaliContext p_context, const char* source_path) {
     auto context = static_cast<Context*>(p_context);
     if (!context)

@@ -24,12 +24,22 @@ cmake_minimum_required(VERSION 2.8)
 project(rali)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-
+find_package(Protobuf REQUIRED)	
+if (NOT ${Protobuf_FOUND})	
+    message( FATAL_ERROR "Could not find Protobuf!" )	
+endif() 	
+link_directories(	
+    ${PROTOBUF_LIBRARY_DIRS}	
+)	
+include_directories(	
+    ${PROTOBUF_INCLUDE_DIRS}	
+)
 find_package(OpenCL QUIET)
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
 # If FFMPEG is found, vx_amd_media is expected to be built as well
 find_package(FFmpeg QUIET)
+find_package(OpenCV QUIET)
 
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
@@ -83,7 +93,8 @@ if(${BUILD_RALI})
 		)
 	include_directories(
 			    ${OpenCL_INCLUDE_DIRS}
-			    ${OpenCL_INCLUDE_DIRS}/Headers
+			    ${OpenCL_INCLUDE_DIRS}/Headers	
+				${CMAKE_CURRENT_BINARY_DIR}
 			    ${TurboJpeg_INCLUDE_DIRS}
 			    ${AMDRPP_INCLUDE_DIRS}
 			    ../../amd_openvx/openvx/include/
@@ -91,18 +102,23 @@ if(${BUILD_RALI})
 			    ../../amd_openvx_extensions/amd_media/include/
 			    include
 			    )
-			    
+	protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)
+
 	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR} /usr/local/lib/)
 
 	file(GLOB SOURCES "./source/*.cpp")
-	add_library(${PROJECT_NAME} SHARED ${SOURCES})
+	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS})
 
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBGLOG=0)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC TFRECORD_ENABLE=0)
 	message("-- ${Green}${PROJECT_NAME} built with ENABLE_SIMD")
-
+	if (OpenCV_FOUND)
+		target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=1)
+	else()
+		target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
+	endif()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread")
 	add_definitions(-ljsoncpp)
 	message("-- ${Green}${PROJECT_NAME} - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")

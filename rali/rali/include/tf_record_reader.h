@@ -25,12 +25,20 @@ THE SOFTWARE.
 #include <string>
 #include <memory>
 #include <dirent.h>
+#include <map>
+#include <iterator>
+#include <algorithm>
 #include "reader.h"
+#include "timing_debug.h"
+#include <google/protobuf/message_lite.h>
+#include "example.pb.h"
+#include "feature.pb.h"
 
 
-class CIFAR10DataReader : public Reader {
+class TFRecordReader : public Reader
+        {
 public:
-    //! Looks up the folder which contains the CIFAR10 training/test data which is uncompressed, amd makes up image names
+    //! Reads the TFRecord File, and loads the image ids and other necessary info
     /*!
      \param desc  User provided descriptor containing the files' path.
     */
@@ -46,47 +54,39 @@ public:
      \return The size of the next file, 0 if couldn't access it
     */
     size_t open() override;
-
     //! Resets the object's state to read from the first file in the folder
     void reset() override;
 
-    //! Returns the name of the latest data_id opened
+    //! Returns the id of the latest file opened
     std::string id() override { return _last_id;};
 
     unsigned count() override;
+    unsigned long long get_shuffle_time() {return _shuffle_time.get_timing();};
 
-    ~CIFAR10DataReader() override;
+    ~TFRecordReader() override;
 
     int close() override;
 
-    CIFAR10DataReader();
-
-    unsigned get_file_index() { return _last_file_idx;}
-    unsigned long long get_shuffle_time() override {return 0;}
-
+    TFRecordReader();
 private:
-    //! opens the folder containing the images
-    Reader::Status open_folder();
-    Reader::Status subfolder_reading();
+    //! opens the folder containnig the images
+    Reader::Status tf_record_reader();
+    Reader::Status folder_reading();
     std::string _folder_path;
+    std::string _path;
     DIR *_src_dir;
     DIR *_sub_dir;
     struct dirent *_entity;
     std::vector<std::string> _file_names;
-    std::vector<unsigned> _file_offsets;
-    std::vector<unsigned> _file_idx;
+    std::map<std::string, unsigned int > _file_size;
     unsigned  _curr_file_idx;
-    FILE* _current_fPtr;
     unsigned _current_file_size;
     std::string _last_id;
     std::string _last_file_name;
-    unsigned _last_file_idx;        // index of individual raw file in a batched file
-    // hard_coding the following for now. Eventually needs to add in the ReaderConfig
-    //!< file_name_prefix tells the reader to read only files with the prefix:: eventually needs to be passed through ReaderConfig
-    std::string _file_name_prefix;// = "data_batch_";
-    //!< _raw_file_size of each file to read
-    const size_t _raw_file_size = (32*32*3 + 1);    // todo:: need to add an option in reader config to take this.
-    size_t _total_file_size;
+    unsigned int _last_file_size;
+    size_t _shard_id = 0;
+    size_t _shard_count = 1;// equivalent of batch size
+    bool _last_rec;
     //!< _batch_count Defines the quantum count of the images to be read. It's usually equal to the user's batch size.
     /// The loader will repeat images if necessary to be able to have images available in multiples of the load_batch_count,
     /// for instance if there are 10 images in the dataset and _batch_count is 3, the loader repeats 2 images as if there are 12 images available.
@@ -94,9 +94,20 @@ private:
     size_t _file_id = 0;
     size_t _in_batch_read_count = 0;
     bool _loop;
+    bool _shuffle;
     int _read_counter = 0;
+    // protobuf message objects
+    tensorflow::Example _single_example;
+    tensorflow::Features _features;
+    tensorflow::Feature _single_feature;
     void incremenet_read_ptr();
     int release();
+    size_t get_file_shard_id();
     void incremenet_file_id() { _file_id++; }
-
+    void replicate_last_image_to_fill_last_shard();
+    Reader::Status read_image(unsigned char* buff, std::string record_file_name, uint file_size);
+    Reader::Status read_image_names(std::ifstream &file_contents, uint file_size);
+    std::map <std::string, uint> _image_record_starting;
+    TimingDBG _shuffle_time;
 };
+

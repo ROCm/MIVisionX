@@ -1,7 +1,7 @@
-import torch
 import numpy as np
 import rali_pybind as b
 import amd.rali.types as types
+import tensorflow as tf
 class RALIGenericImageIterator(object):
     def __init__(self, pipeline):
         self.loader = pipeline
@@ -44,7 +44,6 @@ class RALIGenericIterator(object):
         self.offset = offset
         self.reverse_channels = reverse_channels
         self.tensor_dtype = tensor_dtype
-
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
@@ -80,14 +79,15 @@ class RALIGenericIterator(object):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        
+
         self.loader.getImageLabels(self.labels)
-        self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
-    
+        tf.reset_default_graph()
+        self.labels_tensor = tf.convert_to_tensor(self.labels,np.int32)
+
         if self.tensor_dtype == types.FLOAT:
-            return torch.from_numpy(self.out), self.labels_tensor
+            return tf.convert_to_tensor(self.out,np.float32), self.labels_tensor
         elif self.tensor_dtype == types.FLOAT16:
-            return torch.from_numpy(self.out.astype(np.float16)), self.labels_tensor
+            return tf.convert_to_tensor(self.out,np.float16), self.labels_tensor
 
     def reset(self):
         b.raliResetLoaders(self.loader._handle)
@@ -98,10 +98,6 @@ class RALIGenericIterator(object):
 
     def __len__(self):
         return self.len
-
-    def __del__(self):
-        b.raliRelease(self.loader.handle)
-
 
 class RALIClassificationIterator(RALIGenericIterator):
     """
@@ -120,46 +116,7 @@ class RALIClassificationIterator(RALIGenericIterator):
 
        RALIGenericIterator(pipelines, ["data", "label"], size)
 
-    Please keep in mind that Tensors returned by the iterator are
-    still owned by RALI. They are valid till the next iterator call.
-    If the content needs to be preserved please copy it to another tensor.
 
-    Parameters
-    ----------
-    pipelines : list of amd.raliLI.pipeline.Pipeline
-                List of pipelines to use
-    size : int
-           Number of samples in the epoch (Usually the size of the dataset).
-    auto_reset : bool, optional, default = False
-                 Whether the iterator resets itself for the next epoch
-                 or it requires reset() to be called separately.
-    fill_last_batch : bool, optional, default = True
-                 Whether to fill the last batch with data up to 'self.batch_size'.
-                 The iterator would return the first integer multiple
-                 of self._num_gpus * self.batch_size entries which exceeds 'size'.
-                 Setting this flag to False will cause the iterator to return
-                 exactly 'size' entries.
-    dynamic_shape: bool, optional, default = False
-                 Whether the shape of the output of the RALI pipeline can
-                 change during execution. If True, the pytorch tensor will be resized accordingly
-                 if the shape of RALI returned tensors changes during execution.
-                 If False, the iterator will fail in case of change.
-    last_batch_padded : bool, optional, default = False
-                 Whether the last batch provided by RALI is padded with the last sample
-                 or it just wraps up. In the conjunction with `fill_last_batch` it tells
-                 if the iterator returning last batch with data only partially filled with
-                 data from the current epoch is dropping padding samples or samples from
-                 the next epoch. If set to False next epoch will end sooner as data from
-                 it was consumed but dropped. If set to True next epoch would be the
-                 same length as the first one.
-
-    Example
-    -------
-    With the data set [1,2,3,4,5,6,7] and the batch size 2:
-    fill_last_batch = False, last_batch_padded = True  -> last batch = [7], next iteration will return [1, 2]
-    fill_last_batch = False, last_batch_padded = False -> last batch = [7], next iteration will return [2, 3]
-    fill_last_batch = True, last_batch_padded = True   -> last batch = [7, 7], next iteration will return [1, 2]
-    fill_last_batch = True, last_batch_padded = False  -> last batch = [7, 1], next iteration will return [2, 3]
     """
     def __init__(self,
                  pipelines,
@@ -178,7 +135,7 @@ class RALI_iterator(RALIGenericImageIterator):
     RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
 
-   
+
     """
     def __init__(self,
                  pipelines,
@@ -189,3 +146,4 @@ class RALI_iterator(RALIGenericImageIterator):
                  last_batch_padded=False):
         pipe = pipelines
         super(RALI_iterator, self).__init__(pipe)
+

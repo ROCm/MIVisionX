@@ -337,6 +337,8 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.1.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.1.0)
-* Protobuf - [V3.5.2](https://github.com/protocolbuffers/protobuf/releases/tag/v3.5.2)
+* Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* RPP - [0.4](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.4)
 * Dependencies for all the above packages
+* MIVisionX Setup Script - V1.7.11

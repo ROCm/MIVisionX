@@ -48,7 +48,9 @@ onnx2ir_attr = {
     'max' : 'max',
     'to' : 'to', 
     'center_point_box' : 'center_point_box',
-    'value' : 'value'
+    'value' : 'value',
+    'largest' : 'largest',
+    'sorted' : 'sorted',
 }
 
 onnx2ir_op_type = { 
@@ -89,6 +91,7 @@ onnx2ir_op_type = {
     'NonMaxSuppression'  : 'nms',
     'Constant'           : 'constant',
     'Gather'             : 'gather',
+    'TopK'               : 'topk',
     'ReduceMin'          : 'reduce_min',
 }
 

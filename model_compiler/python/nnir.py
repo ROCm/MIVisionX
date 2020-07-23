@@ -106,7 +106,8 @@ class IrAttr:
             , 'iou_threshold' : 0.0
             , 'score_threshold' : 0.0
             , 'value' : np.array([])
-            
+            , 'largest' : 1
+            , 'sorted' : 1
         }
         self.dict_set = []
 
@@ -203,6 +204,7 @@ class IrNode:
             'nms'  : 1,
             'constant' : 1,
             'gather' : 1,
+            'topk'  : 1,
             'reduce_min' : 1,
         }
 
@@ -763,7 +765,6 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
-                    self.addLocal(local)
                 elif node.type in ['gather']:
                     input = self.tensor_dict[node.inputs[0]]
                     indices = self.tensor_dict[node.inputs[1]]
@@ -781,6 +782,21 @@ class IrGraph:
                     local.setName(output)
                     local.setInfo(input.type, out_shape)
                     local.setFormat(input.format)
+                elif node.type in ['topk']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    k = self.tensor_dict[node.inputs[1]]
+                    out_shape = [1,1,input.shape[1], k.shape[0]] #needs to be corrected to get real value if k.
+                    local_values = IrTensor()
+                    local_values.setName(output)
+                    local_values.setInfo(input.type, out_shape)
+                    local_values.setFormat(input.format)
+                    self.addLocal(local_values)
+
+                    local_indices = IrTensor()
+                    local_indices.setName(output)
+                    local_indices.setInfo('I064', out_shape)
+                    local_indices.setFormat(input.format)
+                    self.addLocal(local_indices)
                 elif node.type in ['reduce_min']:
                     input = self.tensor_dict[node.inputs[0]]
                     axes = node.attr.get('axes')

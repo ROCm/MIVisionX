@@ -126,7 +126,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
-                "   int indices = *(__global float*)&ind[ind_offset + y*ind_stride.s0];\n"
+                "   int indices = *(__global int*)&ind[ind_offset + y*ind_stride.s0];\n"
                 "   float value;\n"
                 "   uint offset;\n"
                 "   if (axis == 0) {\n"
@@ -206,18 +206,20 @@ vx_status publishGatherLayer(vx_context context)
     return VX_SUCCESS; 
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis) 
+VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_int32 axis) 
 {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
+    vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS && vxGetStatus((vx_reference)s_axis) == VX_SUCCESS) {
         vx_reference params[] = {
             (vx_reference) input,
             (vx_reference) indices,
             (vx_reference) output,
-            (vx_reference) axis,
+            (vx_reference) s_axis,
         };
         node = createNode(graph, VX_KERNEL_GATHER_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
+        vxReleaseScalar(&s_axis);
     }
 
     return node;

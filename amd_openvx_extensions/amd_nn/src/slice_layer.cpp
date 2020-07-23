@@ -206,7 +206,7 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
         for(auto itr = indices[i].begin(); itr != indices[i].end(); itr++) {
             *ptr++ = *itr;
         }
-        //status = vxUnmapTensorPatch(indices_tensor[i], map_id);
+        status = vxUnmapTensorPatch(indices_tensor[i], map_id);
     }
 
     // calculate output dims and create output tensor
@@ -260,9 +260,21 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
     output_tensor.push_back((vx_tensor)parameters[1]);
 
     for (int i=0; i<num_dims; i++) {
-        vxGatherLayer(graph, input_tensor[i], indices_tensor[i], output_tensor[i], (vx_scalar)axes[i]);
+        vxGatherLayer(graph, input_tensor[i], indices_tensor[i], output_tensor[i], axes[i]);
     }
     
+    status = vxVerifyGraph(graph);
+    if(status) {
+        std::cerr << "ERROR: vxVerifyGraph() failed (" << status << ")" << std::endl;
+        return -1;
+    }
+    
+    status = vxProcessGraph(graph);
+    if(status) {
+        std::cerr << "ERROR: vxProcessGraph() failed (" << status << ")" << std::endl;
+        return -1;
+    }
+
     return VX_SUCCESS;
 }
 

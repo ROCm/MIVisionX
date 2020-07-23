@@ -30,7 +30,6 @@ If you want to run a simple test, use [annInferenceApp.py](annInferenceApp.py) (
                             <folder>|<file(s)>
 ````
 
-
 * Using QMake
 
   If you want to avoid installing QtCreator application (Qt creator app is only needed for debugging and designing purposes), you can also build the app using QMake

@@ -153,7 +153,7 @@ static vx_status VX_CALLBACK opencl_codegen(
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
-                "   int indices = *(__global half*)&ind[ind_offset + y*ind_stride.s0];\n"
+                "   int indices = *(__global int*)&ind[ind_offset + y*ind_stride.s0];\n"
                 "   half value;\n"
                 "   uint offset;\n"
                 "   if (axis == 0) {\n"

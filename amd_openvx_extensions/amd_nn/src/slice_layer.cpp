@@ -204,9 +204,10 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
             return -1;
         }
         for(auto itr = indices[i].begin(); itr != indices[i].end(); itr++) {
+            std::cout << "copying value: " << *itr << std::endl;
             *ptr++ = *itr;
         }
-        status = vxUnmapTensorPatch(indices_tensor[i], map_id);
+        //status = vxUnmapTensorPatch(indices_tensor[i], map_id);
     }
 
     // calculate output dims and create output tensor

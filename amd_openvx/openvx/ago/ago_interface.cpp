@@ -2026,6 +2026,7 @@ int agoExecuteGraph(AgoGraph * graph)
 #if ENABLE_OPENCL
 		// process GPU nodes at current hierarchical level
 		for (auto node = snode; node != enode; node = node->next) {
+			printf("slice gpu %s?\n", node->akernel->name);
 			if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
 				bool launched = true;
 				agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
@@ -2058,6 +2059,7 @@ int agoExecuteGraph(AgoGraph * graph)
 #endif
 		// process CPU nodes at current hierarchical level
 		for (auto node = snode; node != enode; node = node->next) {
+			printf("slice cpu %s?\n", node->akernel->name);
 			if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU) {
 #if ENABLE_OPENCL
 				opencl_buffer_access_enable |= (node->akernel->opencl_buffer_access_enable ? true : false);

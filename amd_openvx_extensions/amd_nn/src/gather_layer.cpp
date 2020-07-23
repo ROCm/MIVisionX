@@ -4,7 +4,7 @@ static vx_status VX_CALLBACK validateGatherLayer(vx_node node, const vx_referenc
     vx_enum type, type2, out_type;
     vx_size num_dims, num_dims2, out_num_dims;
     vx_size input_dims[4], input_dims2[4], output_dims[4];
-
+printf("gather validate called\n");
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
@@ -70,7 +70,7 @@ static vx_status VX_CALLBACK opencl_codegen(
     vx_size num_of_dims, num_of_dims2;
     vx_enum type;
     vx_uint32 axis;
-
+printf("gather opencl called\n");
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
     vx_size input_dims[num_of_dims];
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));    
@@ -93,7 +93,35 @@ static vx_status VX_CALLBACK opencl_codegen(
         start++;
         end--;
     }
+    
+    vx_map_id map_id;
+    vx_size stride[4];
+    float * fptr;
+    int * ptr;
+    printf( "the new dimension is : %d %d\n", input_dims[0], input_dims[1]);
+    printf( "the axis is : %d\n", axis);
+    vx_status status;
 
+    status = vxMapTensorPatch((vx_tensor)parameters[0], 2, nullptr, nullptr, &map_id, stride, (void **)&fptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for indices tensor(" << status << ")" << std::endl;
+        return -1;
+    }
+    for (int i=0; i<8; i++)
+        std::cout << *fptr++ << std::endl;
+
+    printf("indices\n");
+    status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
+
+    status = vxMapTensorPatch((vx_tensor)parameters[1], 1, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for indices tensor(" << status << ")" << std::endl;
+        return -1;
+    }
+    std::cout << *ptr++ << std::endl;
+    status = vxUnmapTensorPatch((vx_tensor)parameters[1], map_id);
+
+    
     opencl_work_dim = 3;
     opencl_global_work[0] = 1;
     opencl_global_work[1] = 1;
@@ -102,16 +130,20 @@ static vx_status VX_CALLBACK opencl_codegen(
     for (int i=0; i<num_of_dims; i++) {
         if (i < axis) {
             opencl_global_work[2] *= input_dims[i];
+            printf("multiplying by %d and now %d\n", input_dims[i], opencl_global_work[2]);
         }
         else if (i > axis) {
             opencl_global_work[0] *= input_dims[i];
+            printf("e multiplying by %d and now %d\n", input_dims[i], opencl_global_work[0]);
         }
     }
     
     for (int i=0; i<num_of_dims2; i++) {
         opencl_global_work[1] *= input_dims2[i];
+        printf("d multiplying by %d and now %d\n", input_dims2[i], opencl_global_work[1]);
     }
 
+    printf("final : %d %d %d\n", opencl_global_work[0], opencl_global_work[1], opencl_global_work[2]);
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
     opencl_local_buffer_size_in_bytes = 0;

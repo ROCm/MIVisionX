@@ -156,7 +156,7 @@ If available, this project uses OpenCV for camera capture and image display.
           Node arguments have to be OpenVX data objects created earlier in GDF or data objects
           specified on command-line accessible as $1, $2, etc. For scalar enumerations as node
           arguments, use !<enumName> syntax (e.g., !VX_CHANNEL_Y for channel_extract node).
-          For optional arguments use NULL/null to set the node argument as a null value.
+          For optional arguments, use NULL/null to set the node argument as a null value.
           (e.g. node com.amd.nn_extension.slice_layer input output starts ends NULL steps)
 
       include <file.gdf>

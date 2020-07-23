@@ -82,8 +82,8 @@ If available, this project uses OpenCV for camera capture and image display.
         
     The supported list of AMD's built-in kernel names is given below:
         com.amd.nn_extension.argmax_layer
-    	com.amd.nn_extension.batch_normalization_layer
-        com.amd.nn_extension.cast_layer
+	com.amd.nn_extension.batch_normalization_layer
+	com.amd.nn_extension.cast_layer
         com.amd.nn_extension.concat_layer
         com.amd.nn_extension.crop_layer
         com.amd.nn_extension.crop_and_resize_layer

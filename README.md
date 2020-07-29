@@ -341,4 +341,4 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.4](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.7.12`
+* MIVisionX Setup Script - `V1.7.13`

@@ -21,7 +21,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7.12"
+__version__     = "1.7.13"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -164,7 +164,7 @@ else:
 	os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo '+linuxFlag+' '+linuxCMake+' -P install_deps.cmake )')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/MIOpen; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev  )')
-	os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake+' -DMIOPEN_BACKEND=OpenCL ../../MIOpen-'+MIOpenVersion+' )')
+	os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake+' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
 	os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
 	os.system('(cd '+deps_dir+'/build/MIOpen; make MIOpenDriver )')
 	os.system('sudo -v')

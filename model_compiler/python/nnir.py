@@ -808,7 +808,7 @@ class IrGraph:
                                 output_shape.append(1)
                         else:
                             for i in range(len(input.shape)):
-                                shape = 1 if i in axes else data.shape[i]
+                                shape = 1 if i in axes else input.shape[i]
                                 output_shape.append(shape)
                     elif keepdims == 0:
                         if axes == None:

@@ -976,28 +976,28 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
                         f.write( \
 """
     { 
-      int axes_list[1] = {%d}; 
+      int axes_list[1] = {%d};
     }
 """ % (axes[0]))
                     elif axes_len == 2:
                         f.write( \
 """
     { 
-      int axes_list[2] = {%d, %d}; 
+      int axes_list[2] = {%d, %d};
     }
 """ % (axes[0], axes[1]))
                     elif axes_len == 3:
                         f.write( \
 """
     { 
-      int axes_list[3] = {%d, %d, %d}; 
+      int axes_list[3] = {%d, %d, %d};
     }
 """ % (axes[0], axes[1], axes[2]))
                     elif axes_len == 4:
                         f.write( \
 """
     { 
-      int axes_list[4] = {%d, %d, %d, %d}; 
+      int axes_list[4] = {%d, %d, %d, %d};
     }
 """ % (axes[0], axes[1], axes[2], axes[3]))
                     f.write( \

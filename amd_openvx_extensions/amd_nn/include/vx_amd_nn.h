@@ -329,7 +329,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxNMSLayer(vx_graph graph, vx_tensor boxes, vx_
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxGatherLayerNode(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis);
+VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_int32 axis);
 
 /* \brief [Graph] Creates a TopK Layer Node.
  * \details Retrieve the top-K largest or smallest elements along a specified axis

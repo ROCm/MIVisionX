@@ -129,7 +129,7 @@ For the convenience of the developer, we here provide the setup script which wil
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:2.1.0)]
+                          --miopen    [MIOpen Version - optional (default:2.5.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
@@ -191,7 +191,7 @@ cd MIVisionX
 ````
 python MIVisionX-setup.py --directory [setup directory - optional]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --miopen    [MIOpen Version - optional (default:2.1.0)]
+                          --miopen    [MIOpen Version - optional (default:2.5.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
                           --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
@@ -336,9 +336,9 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 * ROCm: rocm-dkms - `3.3.0-19`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [2.1.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.1.0)
+* MIOpen - [2.5.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.5.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.4](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - V1.7.11
+* MIVisionX Setup Script - `V1.7.13`

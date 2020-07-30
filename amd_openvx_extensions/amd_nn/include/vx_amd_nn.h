@@ -108,13 +108,16 @@ VX_API_ENTRY vx_node VX_API_CALL vxConcatLayer(vx_graph graph, vx_tensor output,
 /*! \brief [Graph] Creates a Slice Layer Node.
  * \param [in] graph The handle to the graph.
  * \param [in] inputs The input tensor data.
- * \param [out] inputs The output 1 tensor data.
- * \param [out] inputs The output 2 tensor data.
+ * \param [out] output The output tensor data.
+ * \param [in] starts 1-D tensor of starting indices of corresponding axis in `axes`.
+ * \param [in] ends 1-D tensor of ending indices of corresponding axis in `axes`.
+ * \param [in] axes 1-D tensor of axes that `starts` and `ends` apply to.
+ * \param [in] steps 1-D tensor of slice step of corresponding axis in `axes`.
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxSliceLayer(vx_graph graph, vx_tensor input, vx_tensor output1, vx_tensor output2, vx_tensor output3, vx_tensor output4, vx_tensor output5, vx_tensor output6, vx_tensor output7, vx_tensor output8);
+VX_API_ENTRY vx_node VX_API_CALL vxSliceLayer(vx_graph graph, vx_tensor input, vx_tensor output, vx_tensor starts, vx_tensor ends, vx_tensor axes, vx_tensor steps)
 
 /*! \brief [Graph] Creates a Convolutional Network Upsampling Layer Node.
  * \details Upsampling is done on the width and height dimensions of the <tt>\ref vx_tensor</tt>. Therefore, we use here the term x for the width dimension and y for the height dimension.\n

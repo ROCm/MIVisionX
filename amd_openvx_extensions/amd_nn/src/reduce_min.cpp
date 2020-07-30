@@ -6,7 +6,7 @@ typedef struct ReduceMinLocalData {
     int *axes;
 }ReduceMinLocalData;
 
-ReduceMinLocalData *data = NULL;
+ReduceMinLocalData *data_reduce = NULL;
 
 static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[])
 {
@@ -54,7 +54,7 @@ static vx_status VX_CALLBACK validate(vx_node node, const vx_reference *paramete
 static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
     //get tensor dimensions
-    vx_size input_dims[4], output_dims;
+    vx_size input_dims[4], output_dims[4];
     vx_size num_of_dims;
 
     vx_enum usage = VX_READ_ONLY;
@@ -69,25 +69,25 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
     float * ptr_input;
     vx_size count_input_dims = input_dims[0]*input_dims[1]*input_dims[2]*input_dims[3];
     ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input, usage, VX_MEMORY_TYPE_HOST, 0));
-    memcpy(data->input_data, ptr_input, (count_input_dims*sizeof(float)));
+    memcpy(data_reduce->input_data, ptr_input, (count_input_dims*sizeof(float)));
     ERROR_CHECK_STATUS(vxUnmapTensorPatch((vx_tensor)parameters[0], map_id));
 
     int* ptr_axes;
     vx_size axes_numitems;
-    ERROR_CHECK_STATUS(vxQueryArray((vx_tensor)parameters[1], VX_ARRAY_NUMITEMS, &axes_numitems, sizeof(axes_numitems)));
+    ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[1], VX_ARRAY_NUMITEMS, &axes_numitems, sizeof(axes_numitems)));
 
     vx_size stride_axes[axes_numitems];
     ERROR_CHECK_STATUS(vxMapArrayRange((vx_array)parameters[1], 0, axes_numitems, &map_id, stride_axes, (void **)&ptr_axes, usage, VX_MEMORY_TYPE_HOST, 0));
-    memcpy(data->axes, ptr_axes, (axes_numitems*sizeof(int)));
-    ERROR_CHECK_STATUS(vxUnmapArrayrange((vx_array)parameters[1], map_id));
+    memcpy(data_reduce->axes, ptr_axes, (axes_numitems*sizeof(int)));
+    ERROR_CHECK_STATUS(vxUnmapArrayRange((vx_array)parameters[1], map_id));
 
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &data->keepdims, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &data_reduce->keepdims, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
     std::vector<float> reduced;
     //WRITE ALGORITHM
     if(axes_numitems == 1)
     {
-        if(data->axes[0] < 0)
+        if(data_reduce->axes[0] < 0)
         {
             int count = 0, dims_idx = 0;
             //get real dimensions. Ignoring the appended 1s
@@ -98,14 +98,14 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
             }
 
             count = 3 - count;
-            data->axes[0] = data->axes[0] + count;
+            data_reduce->axes[0] = data_reduce->axes[0] + count;
         }
     
-        if(data->axes[0] == 4) //corresponds to axes=None
+        if(data_reduce->axes[0] == 4) //corresponds to axes=None
         {
-            reduced.push_back(*std::min_element(data->input_data, data->input_data+count_input_dims));
+            reduced.push_back(*std::min_element(data_reduce->input_data, data_reduce->input_data+count_input_dims));
         }
-        else if(data->axes[0] == 0 || data->axes[0] == -4) //corresponds to axis = 0/-4
+        else if(data_reduce->axes[0] == 0 || data_reduce->axes[0] == -4) //corresponds to axis = 0/-4
         {
             std::vector<float> temp;
             for(int j = 0; j < (input_dims[1]*input_dims[2]*input_dims[3]); j++)
@@ -113,12 +113,12 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
                 temp.clear();
                 for(int i = 0; i < count_input_dims; i+= (input_dims[1]*input_dims[2]*input_dims[3]))
                 {
-                    temp.push_back(data->input_data[j+i]);
+                    temp.push_back(data_reduce->input_data[j+i]);
                 }
                 reduced.push_back(*std::min_element(temp.begin(), temp.end()));
             }
         }
-        else if(data->axes[0] == 1 || data->axes[0] == -3) //corresponds to axis = 1/-3
+        else if(data_reduce->axes[0] == 1 || data_reduce->axes[0] == -3) //corresponds to axis = 1/-3
         {   
             ///vector to of required elements
             std::vector<float> temp;
@@ -130,13 +130,13 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
                     for(int i = 0; i < input_dims[1]; i++)
                     {
                         int idx = k + j + i*input_dims[2]*input_dims[3];
-                        temp.push_back(data->input_data[idx]);
+                        temp.push_back(data_reduce->input_data[idx]);
                     }
                     reduced.push_back(*std::min_element(temp.begin(), temp.end()));
                 }
             }
         }
-        else if(data->axes[0] == 2 || data->axes[0] == 3 || data->axes[0] == -2 || data->axes[0] == -1) //corresponds to axis = 2/-2; 3\-1
+        else if(data_reduce->axes[0] == 2 || data_reduce->axes[0] == 3 || data_reduce->axes[0] == -2 || data_reduce->axes[0] == -1) //corresponds to axis = 2/-2; 3\-1
         {   
             //vector to of required elements
             std::vector<float> temp;
@@ -145,7 +145,7 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
                 temp.clear();
                 for(int i = 0; i < (input_dims[2]*input_dims[3]); i++)
                 {
-                    temp.push_back(data->input_data[j+i]); 
+                    temp.push_back(data_reduce->input_data[j+i]); 
                 }
                 reduced.push_back(*std::min_element(temp.begin(), temp.end()));
             }
@@ -154,6 +154,7 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
     else
         return VX_ERROR_NOT_SUPPORTED;
 
+    float *reduced_ptr = &reduced[0];
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
     vx_size stride_output[4] = {sizeof(float), output_dims[0]*sizeof(float), output_dims[0]*output_dims[1]*sizeof(float), output_dims[0]*output_dims[1]*output_dims[2]*sizeof(float)};
@@ -164,33 +165,33 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
 
 static vx_status VX_CALLBACK initializeReduceMin(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    data = new ReduceMinLocalData;
-    memset(data, 0, sizeof(*data));
+    data_reduce = new ReduceMinLocalData;
+    memset(data_reduce, 0, sizeof(*data_reduce));
 
     //allocate memory for input data
     vx_size input_dims[4];
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     vx_size count_input_dims = input_dims[0]*input_dims[1]*input_dims[2]*input_dims[3];
-    data->input_data = (float*)malloc(count_input_dims*sizeof(float));
+    data_reduce->input_data = (float*)malloc(count_input_dims*sizeof(float));
 
     //allocate memeory for axes 
     vx_size axes_numitems;
-    ERROR_CHECK_STATUS(vxQueryArray((vx_tensor)parameters[1], VX_ARRAY_NUMITEMS, &axes_numitems, sizeof(axes_numitems)));
-    data->axes = (int*)malloc(axes_numitems*sizeof(int));
-    ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
+    ERROR_CHECK_STATUS(vxQueryArray((vx_array)parameters[1], VX_ARRAY_NUMITEMS, &axes_numitems, sizeof(axes_numitems)));
+    data_reduce->axes = (int*)malloc(axes_numitems*sizeof(int));
+    
+    ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_LOCAL_DATA_PTR, &data_reduce, sizeof(data_reduce)));
 
     return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK uninitializeReduceMin(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-    if(data)
+    ERROR_CHECK_STATUS(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data_reduce, sizeof(data_reduce)));
+    if(data_reduce)
     {
-        free(data->input_data);
-        free(data->axes);
-        feee(data->reduced);
-        delete data;
+        free(data_reduce->input_data);
+        free(data_reduce->axes);
+        delete data_reduce;
     }
 
     return VX_SUCCESS;
@@ -202,11 +203,6 @@ vx_status publishReduceMinLayer(vx_context context)
     vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.reduce_min_layer", VX_KERNEL_REDUCE_MIN_LAYER_AMD, processReduceMin, 4, 
                                         validate, initializeReduceMin, uninitializeReduceMin);
     ERROR_CHECK_OBJECT(kernel);
-
-    amd_kernel_query_target_support_f query_target_support_f = query_target_support;
-    amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f = opencl_codegen;
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT, &query_target_support_f, sizeof(query_target_support_f)));
-    ERROR_CHECK_STATUS(vxSetKernelAttribute(kernel, VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK, &opencl_codegen_callback_f, sizeof(opencl_codegen_callback_f)));
 
     //set kernel parameters.
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
@@ -236,7 +232,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxReduceMinLayer(vx_graph graph, vx_tensor data
                 (vx_reference)reduced,
             };
             node = createNode(graph, VX_KERNEL_REDUCE_MIN_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
-            vxReleaseScalr(&s_keepdims);
+            vxReleaseScalar(&s_keepdims);
         }
     }
     return node;

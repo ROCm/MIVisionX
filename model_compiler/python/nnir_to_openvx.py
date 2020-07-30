@@ -957,7 +957,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
             elif node.type == 'reduce_min':
                 axes = node.attr.get('axes')
                 axes_len = -1
-                if axes == None:
+                if axes is None:
                     axes = 4 #since cpp doesn't recognize None. And axes values can range between [-4,3]
                     axes_len = 0
                 else:

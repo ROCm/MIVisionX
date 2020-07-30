@@ -803,7 +803,7 @@ class IrGraph:
                     keepdims = node.attr.get('keepdims')
                     output_shape = []
                     if keepdims == 1:
-                        if axes == None:
+                        if axes is None:
                             for i in range(len(input.shape)):
                                 output_shape.append(1)
                         else:
@@ -811,7 +811,7 @@ class IrGraph:
                                 shape = 1 if i in axes else input.shape[i]
                                 output_shape.append(shape)
                     elif keepdims == 0:
-                        if axes == None:
+                        if axes is None:
                             output_shape.append(1)
                         else:
                             for i in range(len(input.shape)):

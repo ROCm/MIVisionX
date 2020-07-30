@@ -158,10 +158,6 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
     }
 
     vxUnmapTensorPatch((vx_tensor)parameters[2], map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for starts tensor (" << status << ")" << std::endl;
-        return -1;
-    }
 
     // copy ends index
     status = vxMapTensorPatch((vx_tensor)parameters[3], 1, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
@@ -185,10 +181,6 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
 
 
     vxUnmapTensorPatch((vx_tensor)parameters[3], map_id);
-    if(status) {
-        std::cerr << "ERROR: vxUnmapTensorPatch() failed for ends tensor (" << status << ")" << std::endl;
-        return -1;
-    }
 
     // copy axes index        
     if(parameters[4]) {
@@ -220,7 +212,6 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
         for(int i=0; i<param_dims; i++) {
             steps.push_back((int)ptr[i]);
         }
-
         vxUnmapTensorPatch((vx_tensor)parameters[5], map_id);
     }
     else {

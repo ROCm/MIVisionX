@@ -308,7 +308,11 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
     }
     
     status = vxVerifyGraph(graph);
-    
+    if(status) {
+        std::cerr << "ERROR: vxVerifyGraph() failed (" << status << ")" << std::endl;
+        return -1;
+    }
+
     status = vxProcessGraph(graph);
     if(status) {
         std::cerr << "ERROR: vxProcessGraph() failed (" << status << ")" << std::endl;

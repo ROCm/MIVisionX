@@ -1,8 +1,6 @@
 #include <vx_amd_nn.h>
 #include <kernels.h>
 
-#include <vx_ext_amd.h>
-
 static vx_status VX_CALLBACK validateSliceLayer(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[]) {
     vx_enum type, starts_type, ends_type, axes_type, steps_type, out_type;
     vx_size num_dims, starts_dims, ends_dims, axes_dims, steps_dims, out_num_dims;

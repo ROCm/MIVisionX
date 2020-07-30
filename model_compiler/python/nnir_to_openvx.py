@@ -958,7 +958,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
                 axes = node.attr.get('axes')
                 axes_len = -1
                 if axes == None:
-                    axes = 4 #since cpp doesn't recognize 1. And axes values can range between [-4,3]
+                    axes = 4 #since cpp doesn't recognize None. And axes values can range between [-4,3]
                     axes_len = 0
                 else:
                     axes_len = len(axes)

@@ -60,18 +60,76 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
     vx_enum input_type, type;
     vx_map_id map_id;
     vx_size stride[4];
+    vx_size icount = 1, ocount = 1;
+    std::vector<float> input, output;
     std::vector<int> starts, ends, axes, steps;
+    float * fptr;
     int * ptr;
 
-    vx_size input_num_dims, input_dims[4];
+    vx_size input_num_dims, input_dims[4], param_dims, output_num_dims, output_dims[4];
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &input_num_dims, sizeof(input_num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &input_type, sizeof(input_type)));
 
-    // check the number of dimensions and type
-    vx_size num_dims;
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &num_dims, sizeof(num_dims)));   
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &output_num_dims, sizeof(output_num_dims)));
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+
+    for(int i=0; i<input_num_dims; i++) {
+        icount *= input_dims[i];
+    }
+
+    for(int i=0; i<output_num_dims; i++) {
+        ocount *= output_dims[i];
+    }
+
+    // check the number of param dimensions and type
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &param_dims, sizeof(param_dims)));   
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
+
+    // create array of input/indices/output tensors
+    vx_tensor input_tensor[param_dims], indices_tensor[param_dims], output_tensor[param_dims];
+    
+    // create context & graph
+    vx_context context = vxCreateContext();
+    status = vxGetStatus((vx_reference)context);
+    if(status) {
+        std::cerr << "ERROR: vxCreateContext() failed (" << status << ")" << std::endl;
+        return -1;
+    }
+
+    vxLoadKernels(context, "vx_nn"); // load vx_nn kernels
+
+    vx_graph graph = vxCreateGraph(context);
+    status = vxGetStatus((vx_reference)graph);
+    if(status) {
+        std::cerr << "ERROR: vxCreateGraph() failed (" << status << ")" << std::endl;
+        return -1;
+    }
+
+    // copy input tensor
+    status = vxMapTensorPatch((vx_tensor)parameters[0], 2, nullptr, nullptr, &map_id, stride, (void **)&fptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for input tensor (" << status << ")" << std::endl;
+        return -1;
+    }
+    for(int i=0; i<8; i++) {
+        input.push_back((float)fptr[i]);
+    }
+    status = vxUnmapTensorPatch((vx_tensor)parameters[0], map_id);
+
+    // create tmp_input and copy input tensor
+    vx_tensor tmpi_tensor = vxCreateTensor(context, input_num_dims, input_dims, input_type, 0);
+    status = vxMapTensorPatch(tmpi_tensor, input_num_dims, nullptr, nullptr, &map_id, stride, (void **)&fptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for tmpi tensor (" << status << ")" << std::endl;
+        return -1;
+    }
+    for(int i=0; i<icount; i++) {
+        fptr[i] = input[i];
+    }
+    status = vxUnmapTensorPatch(tmpi_tensor, map_id);
+
+    input_tensor[0]  = tmpi_tensor;
 
     // copy starts index
     status = vxMapTensorPatch((vx_tensor)parameters[2], 1, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
@@ -80,7 +138,7 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
         return -1;
     }
 
-    for(int i=0; i<num_dims; i++) {
+    for(int i=0; i<param_dims; i++) {
         starts.push_back((int)ptr[i]);
     }
 
@@ -97,7 +155,7 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
         return -1;
     }
 
-    for(int i=0; i<num_dims; i++) {
+    for(int i=0; i<param_dims; i++) {
         ends.push_back((int)ptr[i]);
     }
 
@@ -115,7 +173,7 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
             return -1;
         }
 
-        for(int i=0; i<num_dims; i++) {
+        for(int i=0; i<param_dims; i++) {
             axes.push_back((int)ptr[i]);
         }
 
@@ -126,7 +184,7 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
         }
     }
     else {
-        for(int i=0; i<num_dims; i++)
+        for(int i=0; i<param_dims; i++)
             axes.push_back(i);
     }
 
@@ -138,7 +196,7 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
             return -1;
         }
 
-        for(int i=0; i<num_dims; i++) {
+        for(int i=0; i<param_dims; i++) {
             steps.push_back((int)ptr[i]);
         }
 
@@ -149,77 +207,40 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
         }
     }
     else {
-        for(int i=0; i<num_dims; i++)
+        for(int i=0; i<param_dims; i++)
             steps.push_back(1);
     }
 
-    // for (auto itr = starts.begin(); itr!=starts.end(); itr++) {
-    //     printf ("the starts value is %d\n", *itr);
-    // }
-    // for (auto itr = ends.begin(); itr!=ends.end(); itr++) {
-    //     printf ("the ends value is %d\n", *itr);
-    // }
-    // for (auto itr = axes.begin(); itr!=axes.end(); itr++) {
-    //     printf ("the axes value is %d\n", *itr);
-    // }
-    // for (auto itr = steps.begin(); itr!=steps.end(); itr++) {
-    //     printf ("the steps value is %d\n", *itr);
-    // }
-    //std::cout << "calculating to " << num_dims << std::endl;
-    
-    vx_context context = vxCreateContext();
-    status = vxGetStatus((vx_reference)context);
-    if(status) {
-        std::cerr << "ERROR: vxCreateContext() failed (" << status << ")" << std::endl;
-        return -1;
-    }
-    vxLoadKernels(context, "vx_nn");
-
-    vx_graph graph = vxCreateGraph(context);
-    status = vxGetStatus((vx_reference)graph);
-    if(status) {
-        std::cerr << "ERROR: vxCreateGraph() failed (" << status << ")" << std::endl;
-        return -1;
-    }
-
-    std::vector<vx_tensor *> input_tensor(num_dims);
-    std::vector<vx_tensor *> indices_tensor(num_dims);
-    std::vector<vx_tensor *> output_tensor(num_dims);
-
-    input_tensor.push_back((vx_tensor *)parameters[0]);
-
     // calculate and create indices tensor
-    std::vector<std::vector<int>> indices(num_dims);
-    for(int i=0; i<num_dims; i++) {
+    std::vector<std::vector<int>> indices(param_dims);
+    for(int i=0; i<param_dims; i++) {
         int index = starts[i];
-        std::cout << "iteration" << i << std::endl;
         while (index < ends[i]) {
-            std::cout << "inserting index " << index << std::endl;
             indices[i].push_back(index);
             index += steps[i];
         }
 
         vx_size dim[1] = {indices[i].size()};
-        //indices_tensor[i] = &vxCreateTensor(context, 1, dim, type, 0);.
+        
         vx_tensor tmp_tensor = vxCreateTensor(context, 1, dim, type, 0);
-        indices_tensor.push_back(&tmp_tensor);
         status = vxMapTensorPatch(tmp_tensor, 1, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
         if(status) {
             std::cerr << "ERROR: vxMapTensorPatch() failed for indices tensor(" << status << ")" << std::endl;
             return -1;
         }
+        
         for(auto itr = indices[i].begin(); itr != indices[i].end(); itr++) {
-            std::cout << "copying value: " << *itr << std::endl;
             *ptr++ = *itr;
         }
-        //status = vxUnmapTensorPatch((vx_tensor)indices_tensor[i], map_id);
+        status = vxUnmapTensorPatch(tmp_tensor, map_id);
+        indices_tensor[i] = tmp_tensor;
     }
 
     // calculate output dims and create output tensor
     vx_size tmp_num_dims = input_num_dims;
     vx_size *tmp_dims = input_dims;
 
-    for(int i=0; i<(num_dims-1); i++) {
+    for(int i=0; i<(param_dims-1); i++) {
         //reverse input dims w,h,c,n- > n,c,h,w
         int start = 0, end = tmp_num_dims-1;
         while (start < end) {
@@ -251,54 +272,55 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
             start++;
             end--;
         }
-
-        for (int k=0; k<out_dim_rank; k++) {
-            std::cout << "out dim " << k << ": " << out_dims[k] << std::endl;
-        }
-        vx_tensor tmp_tensor = vxCreateTensor(context, out_dim_rank, out_dims, input_type, 0);
-        input_tensor.push_back(&tmp_tensor);
-        output_tensor.push_back(&tmp_tensor);
         
-        //input_tensor[i+1] = vxCreateVirtualTensor(graph, out_dim_rank, out_dims, input_type, 0); 
-        //output_tensor[i] = vxCreateVirtualTensor(graph, out_dim_rank, out_dims, input_type, 0);
-
+        //vx_tensor tmp_tensor = vxCreateTensor(context, out_dim_rank, out_dims, input_type, 0);
+        vx_tensor tmp_tensor = vxCreateVirtualTensor(graph, out_dim_rank, out_dims, input_type, 0);
+        input_tensor[i+1] = tmp_tensor;
+        output_tensor[i] = tmp_tensor;
+        
         tmp_num_dims = out_dim_rank;
         tmp_dims = out_dims;
     }
     
-    output_tensor.push_back((vx_tensor *)parameters[1]);
+    // create temp output tensor which will hold the final output result
+    vx_tensor tmpo_tensor = vxCreateTensor(context, output_num_dims, output_dims, input_type, 0);
+    output_tensor[param_dims-1] = tmpo_tensor;
 
-
-    vx_size dimi[1] = {indices[0].size()};
-    std::cout << "size is :" << indices[0].size() << std::endl;
-    vx_tensor tmpi_tensor = vxCreateTensor(context, 1, dimi, type, 0);
-    status = vxMapTensorPatch(tmpi_tensor, 1, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
-    if(status) {
-        std::cerr << "ERROR: vxMapTensorPatch() failed for indices tensor(" << status << ")" << std::endl;
-        return -1;
+    for (int i=0; i<param_dims; i++) {
+        vxGatherLayer(graph, (vx_tensor)input_tensor[i], (vx_tensor)indices_tensor[i], (vx_tensor)output_tensor[i], axes[i]);
     }
-    for(auto itr = indices[0].begin(); itr != indices[0].end(); itr++) {
-        std::cout << "copying value: " << *itr << std::endl;
-        *ptr++ = (int)*itr;
-    }
-    status = vxUnmapTensorPatch(tmpi_tensor, map_id);
-
-    
-    vx_size dimo[2] = {4,1};
-    vx_tensor tmpo_tensor = vxCreateTensor(context, 2, dimo, input_type, 0);
-    vxGatherLayer(graph, (vx_tensor)parameters[0], tmpi_tensor, tmpo_tensor, 0);
-    //for (int i=0; i<num_dims; i++) {
-        //vxGatherLayer(graph, input_tensor[i], indices_tensor[i], output_tensor[i], axes[i]);
-        //vxCreateNodeByStructure(graph, VX_KERNEL_CHANNEL_EXTRACT, parameters, dimof(parameters));
-//    }
     
     status = vxVerifyGraph(graph);
     
-    // status = vxProcessGraph(graph);
-    // if(status) {
-    //     std::cerr << "ERROR: vxProcessGraph() failed (" << status << ")" << std::endl;
-    //     return -1;
-    // }
+    status = vxProcessGraph(graph);
+    if(status) {
+        std::cerr << "ERROR: vxProcessGraph() failed (" << status << ")" << std::endl;
+        return -1;
+    }
+
+    // copy final output
+    status = vxMapTensorPatch(tmpo_tensor, output_num_dims, nullptr, nullptr, &map_id, stride, (void **)&fptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for temp output tensor (" << status << ")" << std::endl;
+        return -1;
+    }
+    
+    for(int i=0; i<ocount; i++) {
+        output.push_back((float)fptr[i]);
+    }
+    status = vxUnmapTensorPatch(tmpo_tensor, map_id);
+ 
+    // write final output
+    status = vxMapTensorPatch((vx_tensor)parameters[1], 2, nullptr, nullptr, &map_id, stride, (void **)&fptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    if(status) {
+        std::cerr << "ERROR: vxMapTensorPatch() failed for input3 tensor (" << status << ")" << std::endl;
+        return -1;
+    }
+
+    for(int i=0; i<ocount; i++) {
+        fptr[i] = output[i];
+    }
+    status = vxUnmapTensorPatch((vx_tensor)parameters[1], map_id);
 
     return VX_SUCCESS;
 }

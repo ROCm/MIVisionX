@@ -15,6 +15,7 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Deconvolution|vxDeconvolutionLayer|org.khronos.nn_extension.deconvolution_layer |
 | Detection Output|vxDetectionOutputLayer|com.amd.nn_extension.detection_output |
 | Fully Connected|vxFullyConnectedLayer|org.khronos.nn_extension.fully_connected_layer |
+| Gather|vxGatherLayer|com.amd.nn_extension.gather_layer |
 | Local Response Normalization|vxNormalizationLayer|org.khronos.nn_extension.normalization_layer |
 | Non Max Suppression|vxNMSLayer|com.amd.nn_extension.nms_layer |
 | Permute|vxPermuteLayer|com.amd.nn_extension.permute_layer |

@@ -91,7 +91,8 @@ onnx2ir_op_type = {
     'NonMaxSuppression'  : 'nms',
     'Constant'           : 'constant',
     'Gather'             : 'gather',
-    'TopK'               : 'topk'
+    'TopK'               : 'topk',
+    'Slice'              : 'slice',
 }
 
 onnx2ir_data_type = [

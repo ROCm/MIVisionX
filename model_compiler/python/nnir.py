@@ -447,13 +447,24 @@ class IrGraph:
                     self.addLocal(local)
                 elif node.type in ['slice']:
                     input = self.tensor_dict[node.inputs[0]]
-                    shape = [input.shape[0], input.shape[1] // len(node.outputs), input.shape[2], input.shape[3]]
-                    for name in node.outputs:
-                        local = IrTensor()
-                        local.setName(name)
-                        local.setInfo(input.type, shape)
-                        local.setFormat(input.format)
-                        self.addLocal(local)
+                    starts = np.frombuffer(self.binaries[node.inputs[1]], dtype=np.int32)
+                    ends = np.frombuffer(self.binaries[node.inputs[2]], dtype=np.int32)
+                    if node.inputs[3]:
+                        axes = np.frombuffer(self.binaries[node.inputs[3]], dtype=np.int32)
+                    else:
+                        axes = [0,1,2,3]
+                    
+                    if node.inputs[4]:
+                        steps = np.frombuffer(self.binaries[node.inputs[4]], dtype=np.int32)
+                    else:
+                        steps = [1,1,1,1]
+                    
+                    #tbd: check the shape once the model is ready
+                    local = IrTensor()
+                    local.setName(name)
+                    local.setInfo(input.type, input.shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
                 elif node.type in ['squeeze']:
                     input = self.tensor_dict[node.inputs[0]]
                     axes = node.attr.get('axes')

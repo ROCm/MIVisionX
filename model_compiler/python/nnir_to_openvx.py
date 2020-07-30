@@ -717,12 +717,13 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
             elif node.type == 'slice':
                 f.write( \
 """
-    { vx_node node = vxSliceLayer(graph, %s, %s, %s);
+    { 
+      vx_node node = vxSliceLayer(graph, %s, %s, %s, %s, %s, %s);
       ERROR_CHECK_OBJECT(node);
       ERROR_CHECK_STATUS(vxReleaseNode(&node));
-    }
-""" % (node.inputs[0], ', '.join([name for name in node.outputs]), \
-       ', '.join(['NULL' for i in range(8 - len(node.outputs))])))
+    }    
+""" 
+    % (node.inputs[0], node.outputs[0], node.inputs[1], node.inputs[2], node.inputs[3] if len(node.inputs) == 4 else 'NULL', node.inputs[4] if len(node.inputs) == 5 else 'NULL'))
             elif node.type == 'concat':
                 f.write( \
 """

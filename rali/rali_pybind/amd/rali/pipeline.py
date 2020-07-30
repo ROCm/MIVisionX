@@ -134,18 +134,20 @@ class Pipeline(object):
         file_reader = temp
         file_reader.rali_c_func_call(self._handle)
         self._shuffle = file_reader._random_shuffle
+        self._shard_id = file_reader._shard_id
+        self._num_shards = file_reader._num_shards
         temp = temp.next
         operator = temp.next
         while(operator.next.next is not None):
             tensor = operator.next
             if(operator.data in self._check_ops_decoder):
-                tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, False)
+                tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, False)
             else:
                 tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, False)
             operator = operator.next.next
         tensor = last_operator.next
         if(operator.data in self._check_ops_decoder):
-            tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, True)
+            tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, True)
         else:
             tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, True)
         return tensor.data 

@@ -21,7 +21,7 @@
 __author__      = "Kiriti Nagesh Gowda"
 __copyright__   = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__     = "MIT"
-__version__     = "1.7.10"
+__version__     = "1.7.13"
 __maintainer__  = "Kiriti Nagesh Gowda"
 __email__       = "Kiriti.NageshGowda@amd.com"
 __status__      = "Shipping"
@@ -38,7 +38,7 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--directory', type=str, default='',        help='Setup home directory - optional (default:~/)')
 parser.add_argument('--installer', type=str, default='apt-get', help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
-parser.add_argument('--miopen',    type=str, default='2.1.0',   help='MIOpen Version - optional (default:2.1.0)')
+parser.add_argument('--miopen',    type=str, default='2.5.0',   help='MIOpen Version - optional (default:2.5.0)')
 parser.add_argument('--miopengemm',type=str, default='1.1.5',   help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  type=str, default='3.12.0',  help='ProtoBuf Version - optional (default:3.12.0)')
 parser.add_argument('--ffmpeg',    type=str, default='no',      help='FFMPEG Installation - optional (default:no) [options:yes/no]')
@@ -164,7 +164,7 @@ else:
 	os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo '+linuxFlag+' '+linuxCMake+' -P install_deps.cmake )')
 	os.system('sudo -v')
 	os.system('(cd '+deps_dir+'/build/MIOpen; sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev  )')
-	os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake+' -DMIOPEN_BACKEND=OpenCL ../../MIOpen-'+MIOpenVersion+' )')
+	os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake+' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
 	os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
 	os.system('(cd '+deps_dir+'/build/MIOpen; make MIOpenDriver )')
 	os.system('sudo -v')
@@ -222,9 +222,8 @@ else:
 			os.system('sudo -v')
 			os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install libboost-all-dev clang')
 			#turbo-JPEG
-			os.system('(cd '+deps_dir+'; wget https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz )')
-			os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
-			os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
+			os.system('(cd '+deps_dir+'; git clone -b 2.0.4 https://github.com/Indumathi31/libjpeg-turbo.git )')
+			os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
 			#RPP
 			os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
 		# Turn off for CentOS - TBD: turn on when RPP is supported on CentOS 

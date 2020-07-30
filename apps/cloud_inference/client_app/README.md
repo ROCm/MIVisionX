@@ -29,3 +29,17 @@ If you want to run a simple test, use [annInferenceApp.py](annInferenceApp.py) (
                             [-synset:<synset.txt>] [-output:<output.csv>]
                             <folder>|<file(s)>
 ````
+
+* Using QMake
+
+  If you want to avoid installing QtCreator application (Qt creator app is only needed for debugging and designing purposes), you can also build the app using QMake
+  ````
+    sudo apt-get install qt5-qmake
+    cd MIVisionX/apps/cloud_inference/client_app/
+    qmake -o Makefile annInferenceApp.pro
+  ````
+  The above qmake command will generate a Makefile for the application, which can be used to build the application. When your application is successfully built, run the app as you are running ordinary c application.
+  ````
+    make
+    ./annInferenceApp
+  ````

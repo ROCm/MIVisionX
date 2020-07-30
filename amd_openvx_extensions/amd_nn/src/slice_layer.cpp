@@ -4,8 +4,8 @@
 #include <vx_ext_amd.h>
 
 static vx_status VX_CALLBACK validateSliceLayer(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[]) {
-    vx_enum type, out_type;
-    vx_size num_dims, out_num_dims;
+    vx_enum type, starts_type, ends_type, axes_type, steps_type, out_type;
+    vx_size num_dims, starts_dims, ends_dims, axes_dims, steps_dims, out_num_dims;
     vx_size input_dims[4], output_dims[4];
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
@@ -13,33 +13,35 @@ static vx_status VX_CALLBACK validateSliceLayer(vx_node node, const vx_reference
     if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
 
-    printf("validate slice %d\n", num);
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &out_num_dims, sizeof(out_num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
-    // ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[num], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(out_num_dims)));
-    // ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[num], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
-    // if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
-    // ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[num], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
+    
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, &starts_dims, sizeof(starts_dims)));   
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DATA_TYPE, &starts_type, sizeof(starts_type)));
+    if ((starts_type != VX_TYPE_INT32) && (starts_type != VX_TYPE_INT64)) return VX_ERROR_INVALID_TYPE;
 
-    // vx_uint32 starts, ends, axes, steps;
-    // ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[1], &starts, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    // ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[2], &ends, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    // ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axes, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    // if (starts < 0) {
-    //     return ERRMSG(VX_ERROR_INVALID_PARAMETERS, "validate: slice: starts = %d (should be greater than 0)\n", starts);
-    // }
-    // else if (starts < 0) {
-    //     return ERRMSG(VX_ERROR_INVALID_PARAMETERS, "validate: slice: starts = %d (should be greater than 0)\n", starts);
-    // }
-    // else if (end >= starts) {
-    //     return ERRMSG(VX_ERROR_INVALID_PARAMETERS, "validate: slice: starts = %d ends = %d (starts value is greater than ends value)\n", starts, ends);
-    // }
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DIMS, &ends_dims, sizeof(ends_dims)));   
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[3], VX_TENSOR_DATA_TYPE, &ends_type, sizeof(ends_type)));
+    if ((ends_type != VX_TYPE_INT32) && (ends_type != VX_TYPE_INT64)) return VX_ERROR_INVALID_TYPE;
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DIMS, &axes_dims, sizeof(axes_dims)));   
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[4], VX_TENSOR_DATA_TYPE, &axes_type, sizeof(axes_type)));
+    if ((axes_type != VX_TYPE_INT32) && (axes_type != VX_TYPE_INT64)) return VX_ERROR_INVALID_TYPE;
+
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DIMS, &steps_dims, sizeof(steps_dims)));   
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[5], VX_TENSOR_DATA_TYPE, &steps_type, sizeof(steps_type)));
+    if ((steps_type != VX_TYPE_INT32) && (steps_type != VX_TYPE_INT64)) return VX_ERROR_INVALID_TYPE;
+
+    if ((starts_dims != ends_dims) || (starts_dims != axes_dims) || (starts_dims != steps_dims)) {
+        printf("validate:slice: The dimension length of starts, ends, axes, and steps must be the same.\n");
+        return VX_ERROR_INVALID_DIMENSION;
+    }
+
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_NUMBER_OF_DIMS, &out_num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_TENSOR_DIMS, &output_dims, sizeof(output_dims)));
-    printf("validate slice done\n");
     return VX_SUCCESS;
 
 }
@@ -139,7 +141,15 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
     }
 
     for(int i=0; i<param_dims; i++) {
-        starts.push_back((int)ptr[i]);
+        int num_element = input_dims[input_num_dims-1-i];
+        int value = (int)ptr[i];
+        if (value >= num_element) // If the value passed to starts is larger than the n(the number of elements in this dimension), it represents n
+            starts.push_back(num_element);
+        else if (value < 0) {
+            starts.push_back(num_element+value); // If a negative value is passed for any of the starts indices, it represents number of elements before the end of that dimension
+        }
+        else
+            starts.push_back(value);
     }
 
     status = vxUnmapTensorPatch((vx_tensor)parameters[2], map_id);
@@ -155,9 +165,19 @@ static vx_status VX_CALLBACK processSliceLayer(vx_node node, const vx_reference 
         return -1;
     }
 
+    
     for(int i=0; i<param_dims; i++) {
-        ends.push_back((int)ptr[i]);
+        int num_element = input_dims[input_num_dims-1-i];
+        int value = (int)ptr[i];
+        if (value >= num_element) // If the value passed to ends is larger than the n(the number of elements in this dimension), it represents n
+            ends.push_back(num_element);
+        else if (value < 0) {
+            ends.push_back(num_element+value); // If a negative value is passed for any of the ends indices, it represents number of elements before the end of that dimension
+        }
+        else
+            ends.push_back(value);
     }
+
 
     status = vxUnmapTensorPatch((vx_tensor)parameters[3], map_id);
     if(status) {

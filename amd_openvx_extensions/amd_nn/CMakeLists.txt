@@ -83,8 +83,8 @@ list(APPEND SOURCES
     src/gather_layer.cpp
     src/topk_layer.cpp
     src/reduce_min.cpp
-    src/profiler.cpp
     src/tile_layer.cpp
+    src/profiler.cpp
     )
 
 add_library(vx_nn SHARED ${SOURCES})

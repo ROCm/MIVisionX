@@ -82,6 +82,7 @@ list(APPEND SOURCES
     src/nms_layer.cpp
     src/gather_layer.cpp
     src/topk_layer.cpp
+    src/reduce_min.cpp
     src/profiler.cpp
     )
 

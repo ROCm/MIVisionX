@@ -345,5 +345,16 @@ VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, 
 VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor, vx_tensor k_tensor, vx_int32 axis, vx_int32 largest, vx_int32 sorted, 
 											vx_tensor values, vx_tensor indices);
 
+/* \brief [Graph] Creates a Reduce Min Layer Node.
+ * \details Computes the min of the input tensor's element along the provided axes.
+ * \param [in] graph The handle to the graph.
+ * \param [in] data  The input tensor data.
+ * \param [in] axes  A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).
+ * \param [in] keepdims Keep the reduced dimension or not, default 1 mean keep reduced dimension.
+ * \param [out] reduced The output tensor data with the dimensions based axes and keepdims.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxReduceMinLayer(vx_graph graph, vx_tensor data, vx_array axes, vx_int32 keepdims, vx_tensor reduced);
 
 #endif

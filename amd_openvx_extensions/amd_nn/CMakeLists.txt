@@ -1,4 +1,4 @@
-# Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,20 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (amd_nn)
+cmake_minimum_required(VERSION 2.8)
+project(amd_nn)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-set (CMAKE_CXX_STANDARD 11)
-
-# Get rid of warning
-if(POLICY CMP0054)
-	cmake_policy(SET CMP0054 OLD)
-endif()
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL     REQUIRED)
-find_package(miopengemm PATHS /opt/rocm REQUIRED)
-find_package(miopen     PATHS /opt/rocm REQUIRED)
+find_package(miopengemm PATHS ${ROCM_PATH} REQUIRED)
+find_package(miopen     PATHS ${ROCM_PATH} REQUIRED)
 find_package(Protobuf QUIET)
 
 list(APPEND PACKAGE_DEPENDS PACKAGE OpenCL)
@@ -43,13 +38,13 @@ else(Protobuf_FOUND)
 	message("-- ${Red}WARNING:Protobuf Not Found -- utilities/inference_generator module excluded${ColourReset}")	
 endif(Protobuf_FOUND)
 
-include_directories(
-    ../../amd_openvx/openvx/include
-    src
-    include
-	../../utilities/inference_generator
-    )
-include_directories(${OpenCL_INCLUDE_DIRS})
+include_directories(../../amd_openvx/openvx/include
+                    ${OpenCL_INCLUDE_DIRS}
+                    src
+                    include
+	                ../../utilities/inference_generator
+                    )
+
 list(APPEND SOURCES
     src/kernels.cpp
     src/activation_layer.cpp
@@ -84,6 +79,10 @@ list(APPEND SOURCES
     src/crop_and_resize_layer.cpp
     src/detection_output.cpp
     src/cast_layer.cpp
+    src/nms_layer.cpp
+    src/gather_layer.cpp
+    src/topk_layer.cpp
+    src/reduce_min.cpp
     src/profiler.cpp
     src/tile_layer.cpp
     )
@@ -91,11 +90,11 @@ list(APPEND SOURCES
 add_library(vx_nn SHARED ${SOURCES})
 target_link_libraries(vx_nn openvx MIOpen miopengemm)
 
-install (TARGETS vx_nn DESTINATION lib)
-install (FILES include/vx_amd_nn.h DESTINATION include)
-install (DIRECTORY ../../model_compiler DESTINATION .)
-install (DIRECTORY ../../toolkit DESTINATION .)
-install (DIRECTORY ../../apps DESTINATION .)
+install(TARGETS vx_nn DESTINATION lib)
+install(FILES include/vx_amd_nn.h DESTINATION include)
+install(DIRECTORY ../../model_compiler DESTINATION .)
+install(DIRECTORY ../../toolkit DESTINATION .)
+install(DIRECTORY ../../apps DESTINATION .)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")

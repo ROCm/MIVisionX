@@ -1,4 +1,4 @@
-# Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -73,7 +73,7 @@ graph nnir (%s) -> (%s) {
 """    
     %s = %s(%s, size=[1,1,%d,%d], stride=[%s], dilation=[%s], padding=[%s], border = 'ignore');
 """ % (node.outputs[0], node.type, node.inputs[0], kernel_shape[0], kernel_shape[1], \
-       stride, dilation, padding, node.outputs[0], node.outputs[0], kernel_shape[0], kernel_shape[1]))
+       stride, dilation, padding))
             elif node.type == 'relu' or node.type == 'softmax':
                 f.write( \
 """    %s = %s(%s);
@@ -127,7 +127,7 @@ def main():
     inputFolder = sys.argv[1]
     outputFolder = sys.argv[2]
     print('reading NNIR model from ' + inputFolder + ' ...')
-    graph = IrGraph()
+    graph = IrGraph(True)
     graph.fromFile(inputFolder)
     print('creating NNEF in ' + outputFolder + ' ...')
     generateNNEF(graph,outputFolder)

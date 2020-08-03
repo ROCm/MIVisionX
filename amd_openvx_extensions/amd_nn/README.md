@@ -15,10 +15,13 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Deconvolution|vxDeconvolutionLayer|org.khronos.nn_extension.deconvolution_layer |
 | Detection Output|vxDetectionOutputLayer|com.amd.nn_extension.detection_output |
 | Fully Connected|vxFullyConnectedLayer|org.khronos.nn_extension.fully_connected_layer |
+| Gather|vxGatherLayer|com.amd.nn_extension.gather_layer |
 | Local Response Normalization|vxNormalizationLayer|org.khronos.nn_extension.normalization_layer |
+| Non Max Suppression|vxNMSLayer|com.amd.nn_extension.nms_layer |
 | Permute|vxPermuteLayer|com.amd.nn_extension.permute_layer |
 | Pooling|vxPoolingLayer|org.khronos.nn_extension.pooling_layer |
 | Prior Box|vxPriorBoxLayer|com.amd.nn_extension.prior_box_layer|
+| Reduce Min|vxReduceMinLayer|com.amd.nn_extension.reduce_min_layer|
 | ROI Pooling|vxROIPoolingLayer|org.khronos.nn_extension.roi_pooling_layer |
 | Scale|vxScaleLayer|com.amd.nn_extension.scale_layer |
 | Slice|vxSliceLayer|com.amd.nn_extension.slice_layer |
@@ -34,6 +37,7 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Tensor Min|vxTensorMinNode|com.amd.nn_extension.tensor_min |
 | Tensor Multiply|vxTensorMultiplyNode|org.khronos.openvx.tensor_multiply |
 | Tensor Subtract|vxTensorSubtractNode|org.khronos.openvx.tensor_subtract |
+| TopK|vxTopKLayer|com.amd.nn_extension.topk_layer|
 | Upsample Nearest Neighborhood|vxUpsampleNearestLayer|com.amd.nn_extension.upsample_nearest_layer |
 
 ### Example 1: Convert an image to a tensor of type float32

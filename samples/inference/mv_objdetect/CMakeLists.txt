@@ -2,7 +2,7 @@
 #
 # MIT License
 #
-# Copyright (c) 2019 Advanced Micro Devices, Inc.
+# Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ find_package(OpenCV QUIET)
 include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
 include_directories (/opt/rocm/mivisionx/include ${PROJECT_SOURCE_DIR} )
 link_directories    (/opt/rocm/mivisionx/lib ${PROJECT_SOURCE_DIR}/lib)
-option (USE_POSTPROC  "Use postprocessing module implementation" OFF)
+option (USE_POSTPROC  "Use postprocessing module implementation" ON)
 set(SOURCES mvobjdetect.cpp mvdeploy_api.cpp visualize.cpp)
 add_executable(mvobjdetect ${SOURCES})
 if (OpenCV_FOUND)

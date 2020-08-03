@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright (c) 2019 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2019 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -181,8 +181,9 @@ static mv_status MIVID_API_CALL mvLoadUpdateAndCompileModelForBackend(mivid_back
         return MV_SUCCESS;
     } 
     else if (backend == OpenVX_WinML) {
-        if (strchr(model_name, '.') != "onnx")
+        if (!strcmp(strchr(model_name, '.'), "onnx")){
             return MV_ERROR_NOT_SUPPORTED;
+        }
         // todo:: do the required initialization for WinML
         // compile and generate single node executable
         return MV_ERROR_NOT_IMPLEMENTED;

@@ -2,7 +2,7 @@
 # 
 # MIT License
 # 
-# Copyright (c) 2017 Advanced Micro Devices, Inc.
+# Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@
 
 include(FindPackageHandleStandardArgs)
 
-    find_package_handle_standard_args(FFMPEG
+    find_package_handle_standard_args(FFmpeg
         FOUND_VAR FFMPEG_FOUND
         REQUIRED_VARS
             FFMPEG_LIBRARY

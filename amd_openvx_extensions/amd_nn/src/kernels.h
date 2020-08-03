@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -40,6 +40,10 @@ THE SOFTWARE.
 #include <miopen/miopen.h>
 #include <iostream>
 #include <string.h>
+#include <vector>
+#include <algorithm>
+#include <numeric>
+#include <memory>
 #if __APPLE__
 #include <opencl.h>
 #else
@@ -107,7 +111,11 @@ enum user_kernel_e
     VX_KERNEL_TENSOR_EXP_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x012,
     VX_KERNEL_TENSOR_LOG_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x013,
     VX_KERNEL_CAST_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x014,
-    VX_KERNEL_TILE_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x015,
+    VX_KERNEL_NMS_LAYER_AMD                  = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x015,
+    VX_KERNEL_GATHER_LAYER_AMD               = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x016,
+    VX_KERNEL_TOPK_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x017,
+    VX_KERNEL_REDUCE_MIN_LAYER_AMD           = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x018,
+    VX_KERNEL_TILE_LAYER_AMD                 = VX_KERNEL_BASE(VX_ID_AMD, NN_EXTENSION_LIBRARY) + 0x019,
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -162,7 +170,14 @@ vx_status publishCastLayer(vx_context context);
 vx_status publishTensorExp(vx_context context);
 vx_status publishTensorLog(vx_context context);
 vx_status publishDetectionOutputLayer(vx_context context);
+<<<<<<< HEAD
 vx_status publishTileLayer(vx_context context);
+=======
+vx_status publishNMSLayer(vx_context context);
+vx_status publishGatherLayer(vx_context context);
+vx_status publishTopKLayer(vx_context context);
+vx_status publishReduceMinLayer(vx_context context);
+>>>>>>> upstream/master
 
 //////////////////////////////////////////////////////////////////////
 //! \brief The module entry point for publishing/unpublishing kernels

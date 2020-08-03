@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,21 +18,19 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required (VERSION 2.8)
-project (runcl)
+cmake_minimum_required(VERSION 2.8)
+project(runcl)
 
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
 
-list(APPEND SOURCES
-	runcl.cpp
-)
+list(APPEND SOURCES runcl.cpp)
 
 add_executable(runcl ${SOURCES})
 install (TARGETS runcl DESTINATION bin)
 
-if (OpenCL_FOUND)
+if(OpenCL_FOUND)
 	target_compile_definitions(runcl PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(runcl ${OpenCL_LIBRARIES})
@@ -40,10 +38,7 @@ else(OpenCL_FOUND)
 	target_compile_definitions(runcl PUBLIC ENABLE_OPENCL=0)
 endif(OpenCL_FOUND)
 
-if( POLICY CMP0054 )
-  cmake_policy( SET CMP0054 OLD )
-endif()
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()

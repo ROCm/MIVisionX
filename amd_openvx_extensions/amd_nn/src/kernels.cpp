@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 Advanced Micro Devices, Inc. All rights reserved.
+Copyright (c) 2017 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -249,6 +249,10 @@ SHARED_PUBLIC vx_status VX_API_CALL vxPublishKernels(vx_context context)
     ERROR_CHECK_STATUS(publishDetectionOutputLayer(context));
     ERROR_CHECK_STATUS(publishTensorExp(context));
     ERROR_CHECK_STATUS(publishTensorLog(context));
+    ERROR_CHECK_STATUS(publishNMSLayer(context));
+    ERROR_CHECK_STATUS(publishGatherLayer(context));
+    ERROR_CHECK_STATUS(publishTopKLayer(context));
+    ERROR_CHECK_STATUS(publishReduceMinLayer(context));
     ERROR_CHECK_STATUS(publishTileLayer(context));
 
     // register drama rules

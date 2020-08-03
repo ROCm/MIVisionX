@@ -1,9 +1,30 @@
+# Copyright (c) 2018 - 2020 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 
 from  rali_common import *
 import numpy as np
 
 class ImageIterator:
     def __init__(self, pipeline,tensor_layout = TensorLayout.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype = TensorDataType.FLOAT32):
+        print("coming to Image itertor")
         self.loader = pipeline
         self.tensor_format =tensor_layout
         self.multiplier = multiplier
@@ -15,7 +36,7 @@ class ImageIterator:
         self.w = pipeline.getOutputWidth()
         self.h = pipeline.getOutputHeight()
         self.b = pipeline.getBatchSize()
-        self.n = pipeline.getOutputImageCount()
+        self.n = pipeline.raliGetAugmentationBranchCount()
         color_format = self.loader.getOutputColorFormat()
         self.p = (1 if color_format is ColorFormat.IMAGE_U8 else 3)
         height = self.h*self.n

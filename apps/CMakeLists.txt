@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,14 +19,14 @@
 # THE SOFTWARE.
 
 cmake_minimum_required (VERSION 2.8)
-project (applications)
+project(applications)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 find_package(OpenCV QUIET)
 find_package(OpenCL QUIET)
-find_package(miopengemm PATHS /opt/rocm QUIET)
-find_package(miopen     PATHS /opt/rocm QUIET)
+find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
+find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 
 if(OpenCL_FOUND AND miopengemm_FOUND AND miopen_FOUND)
     if(OpenCV_FOUND)

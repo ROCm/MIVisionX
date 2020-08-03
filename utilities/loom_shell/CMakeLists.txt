@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,24 +18,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+cmake_minimum_required(VERSION 2.8)
+project(loom_shell)
 
-cmake_minimum_required (VERSION 2.8)
-project (loom_shell)
-
-set (CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
 find_package(OpenCL QUIET)
 
-include_directories(../../amd_openvx/openvx/include ../../amd_openvx_extensions/amd_loomsl)
+include_directories(../../amd_openvx/openvx/include 
+                    ../../amd_openvx_extensions/amd_loomsl
+                   )
 
-list(APPEND SOURCES
-	loom_shell_util.cpp
-	loom_shell.cpp
-	help.cpp
-)
+list(APPEND SOURCES loom_shell_util.cpp loom_shell.cpp help.cpp)
 
 add_executable(loom_shell ${SOURCES})
-install (TARGETS loom_shell DESTINATION bin)
+install(TARGETS loom_shell DESTINATION bin)
 
 target_link_libraries(loom_shell vx_loomsl openvx pthread)
 
@@ -44,9 +41,6 @@ if (OpenCL_FOUND)
 	target_link_libraries(loom_shell ${OpenCL_LIBRARIES})
 endif(OpenCL_FOUND)
 
-if( POLICY CMP0054 )
-  cmake_policy( SET CMP0054 OLD )
-endif()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")

@@ -53,7 +53,7 @@ void TFMetaDataReader::add(std::string _image_name, int label)
         WRN("Entity with the same name exists")
         return;
     }
-    _map_content.insert(pair<std::string, std::shared_ptr<Label>>(_image_name, info));
+    _map_content.insert(std::pair<std::string, std::shared_ptr<Label>>(_image_name, info));
 }
 
 void TFMetaDataReader::lookup(const std::vector<std::string> &_image_names)

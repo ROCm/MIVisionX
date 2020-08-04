@@ -829,11 +829,11 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path)
+MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::TF_META_DATA_READER, source_path);
+    MetaDataConfig config(label_type, reader_type, source_path);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);

@@ -32,7 +32,8 @@ enum class MetaDataReaderType
     TEXT_FILE_META_DATA_READER,// Used when metadata is stored in a text file
     COCO_META_DATA_READER,
     CIFAR10_META_DATA_READER,    // meta_data for cifar10 data which is store as part of bin file
-    TF_META_DATA_READER
+    TF_META_DATA_READER,
+    TF_DETECTION_META_DATA_READER
 };
 enum class MetaDataType
 {

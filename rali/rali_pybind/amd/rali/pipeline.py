@@ -6,7 +6,6 @@ class Pipeline(object):
 
     """Pipeline class internally calls RaliCreate which returns context which will have all 
     the info set by the user.
-
     Parameters
     ----------
     `batch_size` : int, optional, default = -1
@@ -87,7 +86,7 @@ class Pipeline(object):
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
         self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop"]
-        self._check_ops_reader = ["FileReader","TFRecordReader","COCOReader"]
+        self._check_ops_reader = ["FileReader","TFRecordReaderClassification","TFRecordReaderDetection","COCOReader","Caffe2Reader","Caffe2ReaderDetection","CaffeReader","CaffeReaderDetection"]
         self._batch_size = batch_size
         self._num_threads = num_threads
         self._device_id = device_id
@@ -106,7 +105,7 @@ class Pipeline(object):
         self._img_h = None
         self._img_w = None
         self._shuffle = None
-
+        self._name = None
     def store_values(self, operator):
         """
             Check if ops is one of those functionality to determine tensor_layout and tensor_dtype and crop.
@@ -136,6 +135,7 @@ class Pipeline(object):
         self._shuffle = file_reader._random_shuffle
         self._shard_id = file_reader._shard_id
         self._num_shards = file_reader._num_shards
+        self._name = file_reader.data
         temp = temp.next
         operator = temp.next
         while(operator.next.next is not None):
@@ -175,7 +175,6 @@ class Pipeline(object):
     def define_graph(self):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
-
         It returns a list of outputs created by calling RALI Operators."""
         raise NotImplementedError
 
@@ -209,7 +208,7 @@ class Pipeline(object):
     
     def GetBBCords(self, array, idx):
         return b.getBBCords(self._handle, array, idx)
-  
+
     def GetImageLabels(self, array):
         return b.getImageLabels(self._handle, array)
 

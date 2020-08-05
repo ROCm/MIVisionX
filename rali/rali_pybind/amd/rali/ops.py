@@ -149,13 +149,18 @@ class TFRecordReader(Node):
 
 
     def __call__(self,name = ""):
-            self.data = "TFRecordReader"
-            self.prev = None
-            self.next = self.output
-            self.output.prev = self
-            self.output.next = None
-            self.output.data = self._path
-            return self._features
+        key="image/object/bbox/xmin"
+        if key in (self._features).keys():
+            self.data = "TFRecordReaderDetection"
+        else:
+            self.data = "TFRecordReaderClassification"
+
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._path
+        return self._features
 
     def rali_c_func_call(self,handle):
         key="image/object/bbox/xmin"
@@ -166,7 +171,187 @@ class TFRecordReader(Node):
         else:
             b.TFReader(handle ,self._path, True) 
 
+class CaffeReader(Node):
+    """
+path (str or list of str) – List of paths to Caffe LMDB directories.
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+image_available (bool, optional, default = True) – If image is available at all in this LMDB.
+initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
+label_available (bool, optional, default = True) – If label is available at all.
+lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
+num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
+pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
+prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
+read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+shard_id (int, optional, default = 0) – Id of the part to read.
+skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
+stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
+tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
+    """
 
+    def __init__(self, path,bbox =False, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_available = True, 
+    lazy_init = False,  num_shards = 1,
+                pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
+                seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
+        Node().__init__()
+        self._path = path
+        self._bbox = bbox
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._image_available = image_available
+        self._initial_fill = initial_fill
+        self._label_available = label_available
+        self._lazy_init = lazy_init
+        self._num_shards = num_shards
+        self._pad_last_batch = pad_last_batch
+        self._prefetch_queue_depth = prefetch_queue_depth
+        self._preserve = preserve
+        self._random_shuffle = random_shuffle
+        self._read_ahead = read_ahead
+        self._seed = seed
+        self._shard_id = shard_id
+        self._skip_cached_images = skip_cached_images
+        self._stick_to_shard = stick_to_shard
+        self._tensor_init_bytes = tensor_init_bytes
+        self._labels = []
+        self._bboxes  = []
+        self._device = device
+        self.output = Node()
+    
+    def __call__(self,name = ""):
+        if(self._bbox==True):
+            self.data = "CaffeReaderDetection"
+        else:
+            self.data = "CaffeReader"
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._path
+        if(self._bbox==True):
+            return self.output,self._bboxes,self._labels
+        else:
+            return self.output,self._labels
+
+        
+
+    def rali_c_func_call(self,handle):
+        # b.labelReader(handle,self._file_root)
+        if(self._bbox==True):
+            b.CaffeReaderDetection(handle, self._path)
+        else:
+
+            b.CaffeReader(handle, self._path)
+        return self._path
+
+class Caffe2Reader(Node):
+    """
+ path (str or list of str) – List of paths to Caffe2 LMDB directories.
+
+additional_inputs (int, optional, default = 0) – Additional auxiliary data tensors provided for each sample.
+
+bbox (bool, optional, default = False) – Denotes if bounding-box information is present.
+
+bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+image_available (bool, optional, default = True) – If image is available at all in this LMDB.
+
+initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
+
+label_type (int, optional, default = 0) –
+Type of label stored in dataset.
+
+0 = SINGLE_LABEL : single integer label for multi-class classification
+
+1 = MULTI_LABEL_SPARSE : sparse active label indices for multi-label classification
+
+2 = MULTI_LABEL_DENSE : dense label embedding vector for label embedding regression
+
+3 = MULTI_LABEL_WEIGHTED_SPARSE : sparse active label indices with per-label weights for multi-label classification.
+
+4 = NO_LABEL : no label is available.
+
+lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
+
+num_labels (int, optional, default = 1) – Number of classes in dataset. Required when sparse labels are used.
+
+num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
+
+pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
+
+prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
+
+preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
+
+read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
+
+seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+shard_id (int, optional, default = 0) – Id of the part to read.
+
+skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
+
+stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
+
+tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
+    """
+
+    def __init__(self, path,bbox = False, additional_inputs = 0, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_type = 0, 
+    lazy_init = False,num_labels =1,  num_shards = 1,
+                pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
+                seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
+        
+        Node().__init__()
+        self._path = path
+        self._bbox = bbox
+        self._additional_inputs = additional_inputs
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._image_available = image_available
+        self._initial_fill = initial_fill
+        self._label_type = label_type
+        self._lazy_init = lazy_init
+        self._num_labels = num_labels
+        self._num_shards = num_shards
+        self._pad_last_batch = pad_last_batch
+        self._prefetch_queue_depth = prefetch_queue_depth
+        self._preserve = preserve
+        self._random_shuffle = random_shuffle
+        self._read_ahead = read_ahead
+        self._seed = seed
+        self._shard_id = shard_id
+        self._skip_cached_images = skip_cached_images
+        self._stick_to_shard = stick_to_shard
+        self._tensor_init_bytes = tensor_init_bytes
+        self._labels = []
+        self._bboxes = []
+        self._device = device
+        self.output = Node()
+    
+    def __call__(self,name = ""):
+        if(self._bbox == True):
+            self.data = "Caffe2ReaderDetection"
+        else:
+            self.data = "Caffe2Reader"
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._path
+        if(self._bbox == True):
+            return self.output,self._bboxes,self._labels
+        else:
+            return self.output,self._labels
+
+    def rali_c_func_call(self,handle):
+        if(self._bbox == True):
+            b.Caffe2ReaderDetection(handle, self._path, True)
+        else:
+            b.Caffe2Reader(handle, self._path, True)
+        return self._path
 
 
 class COCOReader(Node):
@@ -358,15 +543,23 @@ class ImageDecoder(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            if(self.prev.prev.data == "TFRecordReader"):
+            if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
+            elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
-            if(self.prev.prev.data == "TFRecordReader"):
+            if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 # output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, 4*224, 4*224)
+            elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+            elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
@@ -437,18 +630,30 @@ class ImageDecoderRandomCrop(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-            if(self.prev.prev.data == "TFRecordReader"):
+            if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+            elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)            
+            elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             else:
                 output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
 #                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
 #                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         else:
-            if(self.prev.prev.data == "TFRecordReader"):
+            if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+            elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+            elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             else:
                 output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)

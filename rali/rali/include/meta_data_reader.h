@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <string>
 #include <memory>
 #include "meta_data.h"
+#include "reader.h"
 
 enum class MetaDataReaderType
 {
@@ -48,14 +49,16 @@ private:
     MetaDataReaderType _reader_type;
     std::string _path;
     std::string _file_prefix;           // if we want to read only filenames with prefix (needed for cifar10 meta data)
+    std::map<std::string, std::string> _feature_key_map; 
 public:
-    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::string file_prefix=std::string())
-                    :_type(type), _reader_type(reader_type),  _path(path), _file_prefix(file_prefix){}
+    MetaDataConfig(const MetaDataType& type, const MetaDataReaderType& reader_type, const std::string& path, const std::map<std::string, std::string> &feature_key_map=std::map<std::string, std::string>(), const std::string file_prefix=std::string())
+                    :_type(type), _reader_type(reader_type),  _path(path), _feature_key_map(feature_key_map), _file_prefix(file_prefix){}
     MetaDataConfig() = delete;
     MetaDataType type() const { return _type; }
     MetaDataReaderType reader_type() const { return _reader_type; }
     std::string path() const { return  _path; }
     std::string file_prefix() const { return  _file_prefix; }
+    std::map<std::string, std::string> feature_key_map() const {return _feature_key_map; }
 };
 
 

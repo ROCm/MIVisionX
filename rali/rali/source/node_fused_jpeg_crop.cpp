@@ -39,7 +39,7 @@ void FusedJpegCropNode::init(unsigned internal_shard_count, const std::string &s
         THROW("Shard count should be greater than or equal to one")
     _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the FusedJpegCropNode
-    auto reader_cfg = ReaderConfig(storage_type, source_path, shuffle, loop);
+    auto reader_cfg = ReaderConfig(storage_type, source_path, std::map<std::string, std::string>(), shuffle, loop);
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
     auto decoder_cfg = DecoderConfig(decoder_type);

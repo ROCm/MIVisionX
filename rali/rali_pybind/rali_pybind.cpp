@@ -226,6 +226,8 @@ namespace rali{
             py::arg("rali_color_format"),
             py::arg("internal_shard_count"),
             py::arg("is_output"),
+            py::arg("user_key_for_encoded"),
+            py::arg("user_key_for_filename"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,

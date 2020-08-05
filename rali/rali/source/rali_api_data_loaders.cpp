@@ -222,6 +222,7 @@ raliJpegFileSource(
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path,
+                                                                          std::map<std::string, std::string>(),
                                                                           StorageType::FILE_SYSTEM,
                                                                           DecoderType::TURBO_JPEG,
                                                                           shuffle,
@@ -331,6 +332,8 @@ raliJpegTFRecordSource(
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         bool is_output,
+        const char* user_key_for_encoded,
+        const char* user_key_for_filename,
         bool shuffle,
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
@@ -341,6 +344,15 @@ raliJpegTFRecordSource(
     auto context = static_cast<Context*>(p_context);
     try
     {
+        std::string user_key_for_encoded_str(user_key_for_encoded);
+        std::string user_key_for_filename_str(user_key_for_filename);
+
+        std::map<std::string, std::string> feature_key_map = {
+            {"image/encoded",user_key_for_encoded_str},
+            {"image/filename",user_key_for_filename_str},
+        };
+
+
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE);
 
         if(internal_shard_count < 1 )
@@ -371,6 +383,7 @@ raliJpegTFRecordSource(
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path,
+                                                                             feature_key_map,
                                                                              StorageType::TF_RECORD,
                                                                              DecoderType::TURBO_JPEG,
                                                                              shuffle,

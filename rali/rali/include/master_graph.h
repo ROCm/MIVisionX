@@ -70,6 +70,8 @@ public:
     Image *create_loader_output_image(const ImageInfo &info);
     MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
     MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output);
+    MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
+    MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_tf_record_meta_data_reader(const char *source_path);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();

@@ -46,6 +46,33 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateCOCOReader(RaliContext rali_cont
 /// \param source_path path to the file that contains the metadata file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateTextFileBasedLabelReader(RaliContext rali_context, const char* source_path);
+
+///
+/// \param rali_context
+/// \param source_path path to the Caffe LMDB records for Classification
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+extern "C" RaliMetaData RALI_API_CALL raliCreateCaffeLMDBLabelReader(RaliContext rali_context, const char* source_path);
+
+///
+/// \param rali_context
+/// \param source_path path to the Caffe LMDB records for Object Detection
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+extern "C" RaliMetaData RALI_API_CALL raliCreateCaffeLMDBReaderDetection(RaliContext rali_context, const char* source_path);
+
+///
+/// \param rali_context
+/// \param source_path path to the Caffe2LMDB records for Classification
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+
+extern "C" RaliMetaData RALI_API_CALL raliCreateCaffe2LMDBLabelReader(RaliContext rali_context, const char* source_path, bool is_output);
+
+///
+/// \param rali_context
+/// \param source_path path to the Caffe2LMDB records for Object Detection
+/// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
+
+extern "C" RaliMetaData RALI_API_CALL raliCreateCaffe2LMDBReaderDetection(RaliContext rali_context, const char* source_path, bool is_output);
+
 ///
 /// \param rali_context
 /// \param buf user buffer provided to be filled with output image name

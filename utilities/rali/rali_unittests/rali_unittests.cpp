@@ -37,12 +37,13 @@ THE SOFTWARE.
 using namespace cv;
 
 #define DISPLAY
+
 // #define PARTIAL_DECODE 
 
 // #define COCO_READER
-// #define LABEL_READER 
-// #define TF_READER 
-#define TF_READER_DETECTION
+#define LABEL_READER 
+//#define TF_READER 
+//#define TF_READER_DETECTION
 //#define CAFFE2_READER
 //#define CAFFE2_READER_DETECTION
 //#define CAFFE_READER
@@ -128,18 +129,38 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
-#if defined TF_READER
+#ifdef CAFFE_READER
+    meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
+#elif defined CAFFE_READER_DETECTION
+    meta_data = raliCreateCaffeLMDBReaderDetection(handle, path);
+#elif defined CAFFE2_READER
+    meta_data = raliCreateCaffe2LMDBLabelReader(handle, path, true);
+#elif defined CAFFE2_READER_DETECTION
+    meta_data = raliCreateCaffe2LMDBReaderDetection(handle, path, true);
+#elif defined TF_READER
     meta_data = raliCreateTFReader(handle, path, true);
 #elif defined TF_READER_DETECTION
     meta_data = raliCreateTFReaderDetection(handle, path, true);
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
-    RaliImage input1;
 
+    RaliImage input1;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
-#if defined  TF_READER
+#ifdef CAFFE_READER
+    input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height); 
+#elif defined CAFFE_READER_DETECTION
+    input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);   
+#elif defined CAFFE2_READER
+    input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined CAFFE2_READER_DETECTION
+    input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined  TF_READER
     input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined TF_READER_DETECTION
@@ -151,8 +172,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     else
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
-#endif 
-
+#endif
+                                    
      if (raliGetStatus(handle) != RALI_OK) {
         std::cout << "JPEG source could not initialize : " << raliGetErrorMessage(handle) << std::endl;
         return -1;
@@ -491,7 +512,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
                 for(int idx = 0; idx < 4; idx++, j++)
                     std::cerr << "\tbbox: [" << idx << "] :" << bb_coords[j] << std::endl;
             }
-            }
+         }
 #else
         int label_id[inputBatchSize];     
         raliGetImageLabels(handle, label_id);
@@ -506,7 +527,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
         raliCopyToOutput(handle, mat_input.data, h * w * p);
 
         std::vector<int> compression_params;
-        compression_params.push_back(IMWRITE_PNG_COMPRESSION);
+	compression_params.push_back(IMWRITE_PNG_COMPRESSION);
         compression_params.push_back(9);
 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));

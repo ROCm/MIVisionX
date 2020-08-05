@@ -121,6 +121,46 @@ RALI_API_CALL raliGetTimingInfo(RaliContext p_context)
     return {info.image_read_time, info.image_decode_time, info.image_process_time, info.copy_to_output};
 }
 
+RaliMetaData
+RALI_API_CALL raliCreateCaffe2LMDBLabelReader(RaliContext p_context, const char* source_path, bool is_output){
+    auto context = static_cast<Context*>(p_context);
+    if (!context)
+        THROW("Invalid rali context passed to raliCreateCaffe2LMDBLabelReader")
+
+    return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE2_META_DATA_READER , MetaDataType::Label);
+
+}
+
+RaliMetaData
+RALI_API_CALL raliCreateCaffe2LMDBReaderDetection(RaliContext p_context, const char* source_path, bool is_output){
+    auto context = static_cast<Context*>(p_context);
+    if (!context)
+        THROW("Invalid rali context passed to raliCreateCaffe2LMDBReaderDetection")
+
+    return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE2_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox);
+
+}
+
+RaliMetaData
+RALI_API_CALL raliCreateCaffeLMDBLabelReader(RaliContext p_context, const char* source_path){
+    auto context = static_cast<Context*>(p_context);
+    if (!context)
+        THROW("Invalid rali context passed to raliCreateCaffeLMDBLabelReader")
+
+    return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE_META_DATA_READER , MetaDataType::Label);
+
+}
+
+RaliMetaData
+RALI_API_CALL raliCreateCaffeLMDBReaderDetection(RaliContext p_context, const char* source_path){
+    auto context = static_cast<Context*>(p_context);
+    if (!context)
+        THROW("Invalid rali context passed to raliCreateCaffeLMDBReaderDetection")
+
+    return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path, MetaDataReaderType::CAFFE_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox);
+
+}
+
 size_t RALI_API_CALL raliIsEmpty(RaliContext p_context)
 {
     auto context = static_cast<Context*>(p_context);

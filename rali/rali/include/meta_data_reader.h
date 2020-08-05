@@ -34,6 +34,10 @@ enum class MetaDataReaderType
     COCO_META_DATA_READER,
     CIFAR10_META_DATA_READER,    // meta_data for cifar10 data which is store as part of bin file
     TF_META_DATA_READER,
+    CAFFE_META_DATA_READER,
+    CAFFE_DETECTION_META_DATA_READER,
+    CAFFE2_META_DATA_READER,
+    CAFFE2_DETECTION_META_DATA_READER,
     TF_DETECTION_META_DATA_READER
 };
 enum class MetaDataType

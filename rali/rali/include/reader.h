@@ -27,7 +27,9 @@ enum class StorageType
 {
     FILE_SYSTEM = 0,
     TF_RECORD = 1,
-    UNCOMPRESSED_BINARY_DATA = 3        // experimental: added for supporting cifar10 data set
+    UNCOMPRESSED_BINARY_DATA = 2,        // experimental: added for supporting cifar10 data set
+    CAFFE_LMDB_RECORD = 3,
+    CAFFE2_LMDB_RECORD = 4,
 };
 
 struct ReaderConfig
@@ -109,4 +111,7 @@ public:
 
     virtual ~Reader() = default;
 
+    #define E(expr) CHECK_CAFFE((rc = (expr)) == MDB_SUCCESS, #expr)
+    #define CHECK_CAFFE(test, msg); ((test) ? (void)0 : ((void)fprintf(stderr, \
+    "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 };

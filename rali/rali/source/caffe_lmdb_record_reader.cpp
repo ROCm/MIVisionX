@@ -1,0 +1,256 @@
+#include <cassert>
+#include <commons.h>
+#include <boost/filesystem.hpp>
+#include <boost/algorithm/string.hpp>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <sstream>
+#include <fstream>
+#include <stdint.h>
+#include "caffe_lmdb_record_reader.h"
+
+using namespace std;
+using caffe_protos::Datum;
+
+namespace filesys = boost::filesystem;
+
+CaffeLMDBRecordReader::CaffeLMDBRecordReader()
+{
+    _sub_dir = nullptr;
+    _curr_file_idx = 0;
+    _current_file_size = 0;
+    _loop = false;
+    _shuffle = false;
+    _file_id = 0;
+    _last_rec = false;
+}
+
+unsigned CaffeLMDBRecordReader::count()
+{
+    if (_loop)
+        return _file_names.size();
+
+    int ret = ((int)_file_names.size() - _read_counter);
+    return ((ret < 0) ? 0 : ret);
+}
+
+Reader::Status CaffeLMDBRecordReader::initialize(ReaderConfig desc)
+{
+    auto ret = Reader::Status::OK;
+    _file_id = 0;
+    _folder_path = desc.path();
+    _path = desc.path();
+    _shard_id = desc.get_shard_id();
+    _shard_count = desc.get_shard_count();
+    _batch_count = desc.get_batch_size();
+    _loop = desc.loop();
+    _shuffle = desc.shuffle();
+    ret = folder_reading();
+    //shuffle dataset if set
+    if( ret==Reader::Status::OK && _shuffle)
+        std::random_shuffle(_file_names.begin(), _file_names.end());
+
+    return ret;
+
+}
+
+void CaffeLMDBRecordReader::incremenet_read_ptr()
+{
+    _read_counter++;
+    _curr_file_idx = (_curr_file_idx + 1) % _file_names.size();
+}
+size_t CaffeLMDBRecordReader::open()
+{
+    auto file_path = _file_names[_curr_file_idx]; // Get next file name
+    _last_id = file_path;
+    _current_file_size = _file_size[_file_names[_curr_file_idx]];
+    return _current_file_size;
+}
+
+size_t CaffeLMDBRecordReader::read(unsigned char *buf, size_t read_size)
+{
+    read_image(buf, _file_names[_curr_file_idx]);
+    incremenet_read_ptr();
+    return read_size;
+}
+
+int CaffeLMDBRecordReader::close()
+{
+    return release();
+}
+
+CaffeLMDBRecordReader::~CaffeLMDBRecordReader()
+{
+    release();
+}
+
+int CaffeLMDBRecordReader::release()
+{
+    mdb_cursor_close(mdb_cursor);
+    mdb_txn_abort(mdb_txn);
+    mdb_close(mdb_env, mdb_dbi);
+
+    mdb_env_close(mdb_env);
+    mdb_cursor = nullptr;
+    mdb_txn = nullptr;
+    mdb_env = nullptr;
+    return 0;
+}
+
+void CaffeLMDBRecordReader::reset()
+{
+    if (_shuffle)
+        std::random_shuffle(_file_names.begin(), _file_names.end());
+    _read_counter = 0;
+    _curr_file_idx = 0;
+}
+
+Reader::Status CaffeLMDBRecordReader::folder_reading()
+{
+    if ((_sub_dir = opendir(_folder_path.c_str())) == nullptr)
+        THROW("CaffeLMDBRecordReader ShardID [" + TOSTR(_shard_id) + "] ERROR: Failed opening the directory at " + _folder_path);
+
+    std::string _full_path = _folder_path;
+    auto ret = Reader::Status::OK;
+    if (Caffe_LMDB_reader() != Reader::Status::OK)
+        WRN("CaffeLMDBRecordReader ShardID [" + TOSTR(_shard_id) + "] CaffeLMDBRecordReader cannot access the storage at " + _folder_path);
+
+    if (_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
+    {
+        replicate_last_image_to_fill_last_shard();
+        std::cout << "CaffeLMDBRecordReader ShardID [" << TOSTR(_shard_id) << "] Replicated " << _folder_path + _last_file_name << " " << TOSTR((_batch_count - _in_batch_read_count)) << " times to fill the last batch" << std::endl;
+    }
+    if (!_file_names.empty())
+        std::cout << "CaffeLMDBRecordReader ShardID [" << TOSTR(_shard_id) << "] Total of " << TOSTR(_file_names.size()) << " images loaded from " << _full_path << std::endl;
+    closedir(_sub_dir);
+    return ret;
+}
+void CaffeLMDBRecordReader::replicate_last_image_to_fill_last_shard()
+{
+    for (size_t i = _in_batch_read_count; i < _batch_count; i++)
+    {
+        _file_names.push_back(_last_file_name);
+        _file_size.insert(pair<std::string, unsigned int>(_last_file_name, _last_file_size));
+    }
+}
+
+Reader::Status CaffeLMDBRecordReader::Caffe_LMDB_reader()
+{
+    string tmp1 = _folder_path + "/data.mdb";
+    string tmp2 = _folder_path + "/lock.mdb";
+    uint file_size, file_size1;
+
+    ifstream in_file(tmp1, ios::binary);
+    in_file.seekg(0, ios::end);
+    file_size = in_file.tellg();
+    ifstream in_file1(tmp2, ios::binary);
+    in_file1.seekg(0, ios::end);
+    file_size1 = in_file1.tellg();
+    _file_byte_size = file_size + file_size1;
+    read_image_names();
+    return Reader::Status::OK;
+}
+
+size_t CaffeLMDBRecordReader::get_file_shard_id()
+{
+    if (_batch_count == 0 || _shard_count == 0)
+        THROW("Shard (Batch) size cannot be set to 0")
+    return (_file_id / (_batch_count)) % _shard_count;
+}
+
+void CaffeLMDBRecordReader::read_image_names()
+{
+    int rc;
+    // Creating an LMDB environment handle
+    E(mdb_env_create(&mdb_env));
+    // Setting the size of the memory map to use for this environment.
+    // The size of the memory map is also the maximum size of the database.
+    E(mdb_env_set_mapsize(mdb_env, _file_byte_size));
+    // Opening an environment handle.
+    E(mdb_env_open(mdb_env, _path.c_str(), MDB_RDONLY, 0664));
+    // Creating a transaction for use with the environment
+    E(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn));
+    // Opening a database in the environment.
+    E(mdb_open(mdb_txn, NULL, 0, &mdb_dbi));
+    // Creating a cursor handle.
+    // A cursor is associated with a specific transaction and database
+    E(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor));
+
+    // Retrieve by cursor. It retrieves key/data pairs from the database
+    while ((rc = mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_NEXT)) == 0)
+    {
+        Datum datum;
+        caffe_protos::AnnotatedDatum annotatedDatum_protos;
+        annotatedDatum_protos.ParseFromArray((char *)mdb_value.mv_data, mdb_value.mv_size);
+        // Checking image Datum
+        int check_image_datum = annotatedDatum_protos.has_datum();
+
+        if (check_image_datum)
+            datum = annotatedDatum_protos.datum(); // parse datum for detection
+        else
+            datum.ParseFromArray((const void *)mdb_value.mv_data, mdb_value.mv_size); //parse datum for classification
+
+        if (get_file_shard_id() != _shard_id)
+        {
+            incremenet_file_id();
+            continue;
+        }
+        _in_batch_read_count++;
+        _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
+
+        string image_key = string((char *)mdb_key.mv_data);
+
+        _file_names.push_back(image_key.c_str());
+        _last_file_name = image_key.c_str();
+
+        incremenet_file_id();
+
+        _last_file_size = datum.data().size();
+        _file_size.insert(pair<std::string, unsigned int>(_last_file_name, _last_file_size));
+    }
+
+    release();
+}
+
+void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_name)
+{
+    int rc;
+    // Creating an LMDB environment handle
+    E(mdb_env_create(&mdb_env));
+    // Setting the size of the memory map to use for this environment.
+    // The size of the memory map is also the maximum size of the database.
+    E(mdb_env_set_mapsize(mdb_env, _file_byte_size));
+    // Opening an environment handle.
+    E(mdb_env_open(mdb_env, _path.c_str(), MDB_RDONLY, 0664));
+    // Creating a transaction for use with the environment
+    E(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn));
+    // Opening a database in the environment.
+    E(mdb_open(mdb_txn, NULL, 0, &mdb_dbi));
+    // Creating a cursor handle.
+    // A cursor is associated with a specific transaction and database
+    E(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor));
+
+    // Retrieve by cursor. It retrieves key/data pairs from the database
+    while ((rc = mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_NEXT)) == 0)
+    {
+        Datum datum;
+        string image_key = string((char *)mdb_key.mv_data);
+        if (image_key == file_name)
+        {
+        caffe_protos::AnnotatedDatum annotatedDatum_protos;
+        annotatedDatum_protos.ParseFromArray((char *)mdb_value.mv_data, mdb_value.mv_size);
+        // Checking image Datum
+        int check_image_datum = annotatedDatum_protos.has_datum();
+
+        if (check_image_datum)
+            datum = annotatedDatum_protos.datum(); // parse datum for detection
+        else
+            datum.ParseFromArray((const void *)mdb_value.mv_data, mdb_value.mv_size); //parse datum for classification
+            
+        memcpy(buff, datum.data().c_str(), datum.data().size());
+        break;
+        }
+    }
+    release();
+}

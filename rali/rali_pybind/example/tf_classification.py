@@ -1,4 +1,4 @@
-from amd.rali.plugin.tf import RALIClassificationIterator
+from amd.rali.plugin.tf import RALIIterator
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
 import amd.rali.types as types
@@ -9,8 +9,8 @@ class HybridPipe(Pipeline):
 	def __init__(self, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
 		super(HybridPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
 		self.input = ops.TFRecordReader(path=data_dir, index_path = ""  , features={
-                'image/encoded':tf.FixedLenFeature((), tf.string, ""),
-                'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1) })
+			'image/encoded':tf.FixedLenFeature((), tf.string, ""),
+			'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1) })
 		rali_device = 'cpu' if rali_cpu else 'gpu'
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -55,11 +55,11 @@ def main():
 	crop_size = 224
 	pipe = HybridPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu) 
 	pipe.build()
-	imageIterator = RALIClassificationIterator(pipe)
+	imageIterator = RALIIterator(pipe)
 	for i, (image_batch, image_tensor) in enumerate(imageIterator, 0):
 		with tf.Session() as sess:
 				print(sess.run([image_batch,image_tensor]))
-				print("Comes to images ---in a batch,IMAGE TENSOR:",image_batch)
-				print("Comes to images ---in a batch,LABEL TENSOR:",image_tensor)
+				print("For a batch,IMAGE TENSOR:",image_batch)
+				print("For a batch,LABEL TENSOR:",image_tensor)
 if __name__ == '__main__':
-    main() 
+	main() 

@@ -2,6 +2,9 @@ import torch
 import numpy as np
 import rali_pybind as b
 import amd.rali.types as types
+import ctypes
+from ctypes import *
+
 class RALIGenericImageIterator(object):
     def __init__(self, pipeline):
         self.loader = pipeline
@@ -12,6 +15,7 @@ class RALIGenericImageIterator(object):
         self.p = (1 if color_format is types.GRAY else 3)
         height = self.h*self.n
         self.out_tensor = None
+        self.out_bbox = None
         self.out_image = np.zeros((height, self.w, self.p), dtype = "uint8")
         self.bs = pipeline._batch_size
 
@@ -26,7 +30,20 @@ class RALIGenericImageIterator(object):
             raise StopIteration
 
         self.loader.copyImage(self.out_image)
-        return self.out_image , self.out_tensor
+        if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
+         
+            for i in range(self.bs):
+                size = b.getImageNameLen(self.loader._handle,i)
+                print(size)
+                self.array = np.array(["                 "])
+                
+                self.out=np.frombuffer(self.array, dtype=(self.array).dtype)
+            
+                b.getImageName(self.loader._handle, self.out ,i)
+                # print("IMAGE NAME ::", self.out)
+            return self.out_image ,self.out_bbox, self.out_tensor
+        else:
+            return self.out_image , self.out_tensor
 
     def reset(self):
         b.raliResetLoaders(self.loader._handle)
@@ -81,13 +98,56 @@ class RALIGenericIterator(object):
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         
-        self.loader.getImageLabels(self.labels)
-        self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
-    
-        if self.tensor_dtype == types.FLOAT:
-            return torch.from_numpy(self.out), self.labels_tensor
-        elif self.tensor_dtype == types.FLOAT16:
-            return torch.from_numpy(self.out.astype(np.float16)), self.labels_tensor
+        if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
+            sum = 0
+            self.lis =[] #Empty list for bboxes
+            self.lis_lab=[] # Empty list of labels 
+            for idx in range(self.bs):
+                sum=self.loader.GetBoundingBoxCount(idx)
+                self.labels = np.zeros(sum,dtype = "int32")
+                self.bboxes = np.zeros(sum*4,dtype = "float32" )
+                self.loader.GetBBLabels(self.labels,idx)
+                self.loader.GetBBCords(self.bboxes,idx)
+                
+                self.bb_2d_numpy = np.reshape(self.bboxes, (-1, 4)).tolist()
+                self.label_2d_numpy = np.reshape(self.labels, (-1, 1)).tolist()
+                
+                self.lis.append(self.bb_2d_numpy)
+                self.lis_lab.append(self.label_2d_numpy)
+
+            self.target = self.lis
+            self.target1 = self.lis_lab
+            max_cols = max([len(row) for batch in self.target for row in batch])
+            # print("max_cols",max_cols)
+            max_rows = max([len(batch) for batch in self.target])
+            # print("max_rows",max_rows)
+            self.bb_padded = [batch + [[0] * (max_cols)] * (max_rows - len(batch)) for batch in self.target]
+            self.bb_padded = torch.FloatTensor([row + [0] * (max_cols - len(row)) for batch in self.bb_padded for row in batch])
+            self.bb_padded = self.bb_padded.view(-1, max_rows, max_cols)
+            # print(self.bb_padded)
+
+            max_cols1 = max([len(row) for batch in self.target1 for row in batch])
+            # print("max_cols1",max_cols1)
+            max_rows1 = max([len(batch) for batch in self.target1])
+            # print("max_rows1",max_rows1)
+            self.labels_padded = [batch + [[0] * (max_cols1)] * (max_rows1 - len(batch)) for batch in self.target1]
+            self.labels_padded = torch.LongTensor([row + [0] * (max_cols1 - len(row)) for batch in self.labels_padded for row in batch])
+            self.labels_padded = self.labels_padded.view(-1, max_rows1, max_cols1)
+            # print(self.labels_padded)
+
+            if self.tensor_dtype == types.FLOAT:
+                return torch.from_numpy(self.out),self.bb_padded, self.labels_padded
+            elif self.tensor_dtype == types.FLOAT16:
+                return torch.from_numpy(self.out.astype(np.float16)),self.bb_padded, self.labels_padded
+
+        else:
+            self.loader.getImageLabels(self.labels)
+            self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
+
+            if self.tensor_dtype == types.FLOAT:
+                return torch.from_numpy(self.out), self.labels_tensor
+            elif self.tensor_dtype == types.FLOAT16:
+                return torch.from_numpy(self.out.astype(np.float16)), self.labels_tensor
 
     def reset(self):
         b.raliResetLoaders(self.loader._handle)
@@ -175,7 +235,6 @@ class RALI_iterator(RALIGenericImageIterator):
     RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
 
-   
     """
     def __init__(self,
                  pipelines,

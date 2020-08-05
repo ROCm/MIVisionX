@@ -1,4 +1,4 @@
-from amd.rali.plugin.tf import RALIClassificationIteratorDetection
+from amd.rali.plugin.tf import RALIIterator
 from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
 import amd.rali.types as types
@@ -12,14 +12,13 @@ class HybridPipe(Pipeline):
 		local_rank = 0
 		
 		self.input = ops.TFRecordReader(path=data_dir, index_path = ""  , features={
-                'image/encoded':tf.FixedLenFeature((), tf.string, ""),
-                'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
-                'image/class/text':tf.FixedLenFeature([ ], tf.string, ''),
-                'image/object/bbox/xmin':tf.VarLenFeature(dtype=tf.float32),
-                'image/object/bbox/ymin':tf.VarLenFeature(dtype=tf.float32),
-                'image/object/bbox/xmax':tf.VarLenFeature(dtype=tf.float32),
-                'image/object/bbox/ymax':tf.VarLenFeature(dtype=tf.float32)
-                })
+			'image/encoded':tf.FixedLenFeature((), tf.string, ""),
+			'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
+			'image/class/text':tf.FixedLenFeature([ ], tf.string, ''),
+			'image/object/bbox/xmin':tf.VarLenFeature(dtype=tf.float32),
+			'image/object/bbox/ymin':tf.VarLenFeature(dtype=tf.float32),
+			'image/object/bbox/xmax':tf.VarLenFeature(dtype=tf.float32),
+			'image/object/bbox/ymax':tf.VarLenFeature(dtype=tf.float32)})
 		rali_device = 'cpu' if rali_cpu else 'gpu'
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -65,17 +64,18 @@ def main():
 	pipe = HybridPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu) 
 	pipe.build()
 	world_size=1
-	imageIterator = RALIClassificationIteratorDetection(pipe)
+	imageIterator = RALIIterator(pipe)
 	for i, (image_batch, bb, label_tensor) in enumerate(imageIterator, 0):
 		with tf.Session() as sess:
 				
-				print("Comes to images ---in a batch,IMAGE TENSOR:",image_batch)
-				print("Comes to images ---in a batch,BBOX TENSOR:",bb)
-				print("Comes to images ---in a batch,LABEL TENSOR:",label_tensor)
-				print("LABELS TENSOR AFTER SESSION RUN: ",sess.run(label_tensor))
+				print("\nFor a batch,IMAGE TENSOR:",image_batch)
+				print("\nFor a batch,BBOX TENSOR:",bb)
+				print("\nFor a batch,LABEL TENSOR:",label_tensor)
+				print("\nLABELS TENSOR AFTER SESSION RUN: ",sess.run(label_tensor))
 				print(sess.run([image_batch,bb,label_tensor]))
+				
 			
 		
 
 if __name__ == '__main__':
-    main() 
+	main() 

@@ -27,7 +27,7 @@ THE SOFTWARE.
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
@@ -49,7 +49,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSource(RaliContext context,
                                                         unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param shard_id Shard id for this loader
@@ -72,9 +72,9 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext c
                                                                    RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                                    unsigned max_width = 0, unsigned max_height = 0);
 
-/// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
+/// Creates JPEG image reader and decoder for Caffe LMDB. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param internal_shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
@@ -85,7 +85,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext c
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return Reference to the output image
-extern "C"  RaliImage  RALI_API_CALL raliJpegCaffeLMDBRecordSource(RaliContext p_context,
+extern "C"  RaliImage  RALI_API_CALL raliJpegCaffeLMDBRecordSource(RaliContext context,
                                                             const char* source_path,
                                                             RaliImageColor rali_color_format,
                                                             unsigned internal_shard_count,
@@ -95,9 +95,9 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegCaffeLMDBRecordSource(RaliContext p
                                                             RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                             unsigned max_width = 0, unsigned max_height = 0);
 
-/// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe2 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
+/// Creates JPEG image reader and decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored in Caffe2 LMDB Records. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param internal_shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
@@ -108,7 +108,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegCaffeLMDBRecordSource(RaliContext p
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return Reference to the output image
-extern "C"  RaliImage  RALI_API_CALL raliJpegCaffe2LMDBRecordSource(RaliContext p_context,
+extern "C"  RaliImage  RALI_API_CALL raliJpegCaffe2LMDBRecordSource(RaliContext context,
                                                             const char* source_path,
                                                             RaliImageColor rali_color_format,
                                                             unsigned internal_shard_count,
@@ -118,8 +118,8 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegCaffe2LMDBRecordSource(RaliContext 
                                                             RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                             unsigned max_width = 0, unsigned max_height = 0);
 
-/// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the Caffe2 LMDB Records. It accepts external sharding information to load a singe shard. only
-/// \param rali_context Rali context
+/// Creates JPEG image reader and decoder for Caffe2 LMDB records. It allocates the resources and objects required to read and decode Jpeg images stored on the Caffe2 LMDB Records. It accepts external sharding information to load a singe shard. only
+/// \param p_context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param shard_id Shard id for this loader
@@ -144,7 +144,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegCaffe2LMDBRecordSourceSingleShard(R
 
 /// Creates JPEG image reader and partial decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored and Crops t
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param num_threads Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
@@ -172,7 +172,7 @@ extern "C"  RaliImage  RALI_API_CALL raliFusedJpegCrop(RaliContext context,
                                                         RaliFloatParam y_drift_factor = NULL, RaliFloatParam x_drift_factor = NULL);
 
 /// Creates JPEG image reader and partial decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param shard_id Shard id for this loader
@@ -197,7 +197,7 @@ extern "C"  RaliImage  RALI_API_CALL raliFusedJpegCropSingleShard(RaliContext co
 
 /// Creates TensorFlow records JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location of the TF records on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param internal_shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
@@ -208,7 +208,7 @@ extern "C"  RaliImage  RALI_API_CALL raliFusedJpegCropSingleShard(RaliContext co
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return Reference to the output image
-extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSource(RaliContext p_context,
+extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSource(RaliContext context,
                                                             const char* source_path,
                                                             RaliImageColor rali_color_format,
                                                             unsigned internal_shard_count,
@@ -218,7 +218,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSource(RaliContext p_contex
                                                             RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                             unsigned max_width = 0, unsigned max_height = 0);
 /// Creates TensorFlow records JPEG image reader and decoder. It allocates the resources and objects required to read and decode Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location of the TF records on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param shard_id Shard id for this loader
@@ -230,7 +230,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSource(RaliContext p_contex
 /// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
 /// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
 /// \return
-extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSourceSingleShard(RaliContext p_context,
+extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSourceSingleShard(RaliContext context,
                                                                         const char* source_path,
                                                                         RaliImageColor rali_color_format,
                                                                         unsigned shard_id,
@@ -241,7 +241,7 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSourceSingleShard(RaliConte
                                                                         RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                                         unsigned max_width = 0, unsigned max_height = 0);
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
@@ -255,7 +255,7 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         bool is_output ,
                                                         unsigned width , unsigned height, bool loop = false );
 /// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
-/// \param rali_context Rali context
+/// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
 /// \param rali_color_format The color format the images will be decoded to.
 /// \param is_output Determines if the user wants the loaded images to be part of the output or not.
@@ -271,7 +271,7 @@ extern "C"  RaliImage  RALI_API_CALL raliRawCIFAR10Source(RaliContext context,
                                                         bool loop = false);
 
 ///
-/// \param rali_context
+/// \param context
 /// \return
 extern "C"  RaliStatus  RALI_API_CALL raliResetLoaders(RaliContext context);
 

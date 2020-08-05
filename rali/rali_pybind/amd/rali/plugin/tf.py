@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import rali_pybind as b
 import amd.rali.types as types
@@ -38,16 +37,11 @@ class RALIGenericImageIterator(object):
 
 
 
-
 class RALIGenericIteratorDetection(object):
     def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
-        self.loader = pipeline
-        self.tensor_format =tensor_layout
-        self.multiplier = multiplier
         self.offset = offset
         self.reverse_channels = reverse_channels
-        self.tensor_dtype = tensor_dtype
-        
+        self.tensor_dtype = tensor_dtype        
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)

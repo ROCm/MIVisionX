@@ -113,6 +113,8 @@ ImageReadAndDecode::load(unsigned char* buff,
                          const size_t max_decoded_height,
                          std::vector<uint32_t> &roi_width,
                          std::vector<uint32_t> &roi_height,
+                         std::vector<uint32_t> &actual_width,
+                         std::vector<uint32_t> &actual_height,
                          RaliColorFormat output_color_format,
                          bool decoder_keep_original )
 {
@@ -169,6 +171,8 @@ ImageReadAndDecode::load(unsigned char* buff,
         {
             continue;
         }
+        _original_height[i] = original_height;
+        _original_width[i]  = original_width;
 #if 0
         if((unsigned)original_width != max_decoded_width || (unsigned)original_height != max_decoded_height)
             // Seeting the whole buffer to zero in case resizing to exact output dimension is not possible.
@@ -194,6 +198,8 @@ ImageReadAndDecode::load(unsigned char* buff,
         names[i] = _image_names[i];
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
+        actual_width[i] = _original_width[i];
+        actual_height[i] = _original_height[i];
     }
 
     _decode_time.end();// Debug timing

@@ -51,6 +51,10 @@ public:
     virtual Timing timing() = 0;// Returns timing info
     virtual std::vector<std::string> get_id() = 0; // returns the id of the last batch of images/frames loaded
     virtual void start_loading() = 0; // starts internal loading thread
+    virtual  std::vector<uint32_t> get_original_width() = 0;
+    virtual  std::vector<uint32_t> get_original_height() = 0;
+    virtual  std::vector<uint32_t> get_roi_width() = 0;
+    virtual  std::vector<uint32_t> get_roi_height() = 0;
 };
 
 using pLoaderModule = std::shared_ptr<LoaderModule>;

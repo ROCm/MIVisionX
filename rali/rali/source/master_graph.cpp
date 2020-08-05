@@ -693,6 +693,7 @@ void MasterGraph::output_routine()
 
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
+            pMetaDataBatch augmented_batch_meta_data = nullptr; 
 
             if (_loader_module->remaining_count() < _user_batch_size)
             {
@@ -721,6 +722,11 @@ void MasterGraph::output_routine()
                     break;
 
                 auto this_cycle_names =  _loader_module->get_id();
+                auto original_width = _loader_module->get_original_width();
+                auto original_height = _loader_module->get_original_height();
+                auto roi_width = _loader_module->get_roi_width();
+                auto roi_height = _loader_module->get_roi_height();
+                
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -750,22 +756,22 @@ void MasterGraph::output_routine()
                     break;
 
                 update_node_parameters();
-                _process_time.start();
-                _graph->process();
-                _process_time.end();
-
-                //process metadata, _augmented_meta_data contains the results after the call to process
-                if (_meta_data_graph)
-                    _meta_data_graph->process();
-
-                // concatenating metadata using the this cycle's internal batch
                 if(_augmented_meta_data)
                 {
+                    //process metadata, _augmented_meta_data contains the results after the call to process
+                    if (_meta_data_graph)
+                    {
+                        _meta_data_graph->update_meta_data(_augmented_meta_data, original_width, original_height, roi_width, roi_height);
+                        _meta_data_graph->process(_augmented_meta_data);
+                    }
                     if (full_batch_meta_data)
                         full_batch_meta_data->concatenate(_augmented_meta_data);
                     else
                         full_batch_meta_data = _augmented_meta_data->clone();
                 }
+                _process_time.start();
+                _graph->process();
+                _process_time.end();
             }
 
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);

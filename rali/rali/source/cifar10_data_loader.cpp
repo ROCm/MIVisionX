@@ -278,3 +278,21 @@ std::vector<std::string> CIFAR10DataLoader::get_id()
 {
     return _output_names;
 }
+
+std::vector<uint32_t> CIFAR10DataLoader::get_original_width()
+{
+    return _original_width;
+}
+std::vector<uint32_t> CIFAR10DataLoader::get_original_height()
+{
+    return _original_height;
+}
+
+std::vector<uint32_t> CIFAR10DataLoader::get_roi_width()
+{
+    return _roi_width;
+}
+std::vector<uint32_t> CIFAR10DataLoader::get_roi_height()
+{
+    return _roi_height;
+}

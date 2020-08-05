@@ -555,6 +555,13 @@ extern "C" RaliImage RALI_API_CALL raliRandomCrop(  RaliContext context, RaliIma
                                                     RaliFloatParam crop_pos_x = NULL,
                                                     RaliFloatParam crop_pos_y = NULL);
 
+extern "C" RaliImage RALI_API_CALL raliSSDRandomCrop(  RaliContext context, RaliImage input,
+                                                    bool is_output,
+                                                    RaliFloatParam threshold = raliCreateFloatParameter(float(0.5)),
+                                                    RaliFloatParam crop_area_factor  = NULL,
+                                                    RaliFloatParam crop_aspect_ratio = NULL,
+                                                    RaliFloatParam crop_pos_x = NULL,
+                                                    RaliFloatParam crop_pos_y = NULL);
 // /// Accepts U8 and RGB24 input. The output image dimension can be set to new values allowing the rotated image to fit,
 // /// otherwise; the image is cropped to fit the result.
 // /// \param context Rali context

@@ -33,6 +33,11 @@ public:
     RotateNode() = delete;
     void init(float angle);
     void init(FloatParam *angle);
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    vx_array get_src_width() { return _src_roi_width; }
+    vx_array get_src_height() { return _src_roi_height; }
+    vx_array get_angle() { return _angle.default_array(); }
 
 protected:
     void create_node() override;

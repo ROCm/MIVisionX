@@ -170,6 +170,8 @@ ImageLoader::load_routine()
                                              _output_image->info().height_single(),
                                              _decoded_img_info._roi_width,
                                              _decoded_img_info._roi_height,
+                                             _decoded_img_info._original_width,
+                                             _decoded_img_info._original_height,
                                              _output_image->info().color_format(), _decoder_keep_original );
 
             if(load_status == LoaderModuleStatus::OK)
@@ -292,4 +294,22 @@ LoaderModuleStatus ImageLoader::set_cpu_sched_policy(struct sched_param sched_po
 std::vector<std::string> ImageLoader::get_id()
 {
     return _output_names;
+}
+
+std::vector<uint32_t> ImageLoader::get_original_width()
+{
+    return _original_width;
+}
+std::vector<uint32_t> ImageLoader::get_original_height()
+{
+    return _original_height;
+}
+
+std::vector<uint32_t> ImageLoader::get_roi_width()
+{
+    return _roi_width;
+}
+std::vector<uint32_t> ImageLoader::get_roi_height()
+{
+    return _roi_height;
 }

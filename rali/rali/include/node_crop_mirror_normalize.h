@@ -32,6 +32,8 @@ public:
                             const std::vector<Image *> &outputs);
     CropMirrorNormalizeNode() = delete;
     void init(int crop_h, int crop_w, float start_x, float start_y, float mean, float std_dev, IntParam *mirror);
+    vx_array return_mirror(){ return _mirror.default_array();  }
+    std::shared_ptr<RaliCropParam> return_crop_param() { return _crop_param; }
 protected:
     void create_node() override ;
     void update_node() override;

@@ -21,31 +21,28 @@ THE SOFTWARE.
 */
 
 #pragma once
+#include <set>
+#include <memory>
+#include <algorithm>
+#include "bounding_box_graph.h"
+#include "meta_data.h"
 #include "node.h"
+#include "node_rotate.h"
 #include "parameter_vx.h"
-#include "parameter_factory.h"
-#include "parameter_crop_factory.h"
+#define PI 3.14159265
+#define RAD(deg) (deg * PI / 180)
 
-class CropParam;
-
-class ResizeCropMirrorNode : public Node
+class RotateMetaNode:public MetaNode
 {
-public:
-    ResizeCropMirrorNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
-    ResizeCropMirrorNode() = delete;
-    void init(unsigned int crop_h, unsigned int crop_w, IntParam *mirror);
-    void init( FloatParam *crop_h_factor, FloatParam *crop_w_factor, IntParam *mirror);
-    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
-    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
-    std::shared_ptr<RaliCropParam> get_crop_param() { return _crop_param; }
-    vx_array get_mirror() { return _mirror.default_array(); }
-protected:
-    void create_node() override;
-    void update_node() override;
-private:
-    std::shared_ptr<RaliCropParam> _crop_param;
-    vx_array _dst_roi_width ,_dst_roi_height;
-    ParameterVX<int> _mirror; 
-    constexpr static int MIRROR_RANGE [2] =  {0, 1};
+    public:
+        RotateMetaNode() {};
+        void update_parameters(MetaDataBatch* input_meta_data)override;
+        std::shared_ptr<RotateNode> _node = nullptr;
+    private:
+        vx_array _src_width, _src_height;
+        std::vector<uint> _src_width_val, _src_height_val;
+        unsigned int _dst_width, _dst_height;
+        vx_array _angle;
+        std::vector<float> _angle_val;
+        void initialize();
 };
-

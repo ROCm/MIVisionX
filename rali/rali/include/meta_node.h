@@ -21,31 +21,41 @@ THE SOFTWARE.
 */
 
 #pragma once
+#include <set>
+#include <memory>
+#include "meta_data_graph.h"
+#include "meta_data.h"
 #include "node.h"
-#include "parameter_vx.h"
 #include "parameter_factory.h"
-#include "parameter_crop_factory.h"
 
-class CropParam;
-
-class ResizeCropMirrorNode : public Node
+class MetaNode
 {
 public:
-    ResizeCropMirrorNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
-    ResizeCropMirrorNode() = delete;
-    void init(unsigned int crop_h, unsigned int crop_w, IntParam *mirror);
-    void init( FloatParam *crop_h_factor, FloatParam *crop_w_factor, IntParam *mirror);
-    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
-    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
-    std::shared_ptr<RaliCropParam> get_crop_param() { return _crop_param; }
-    vx_array get_mirror() { return _mirror.default_array(); }
-protected:
-    void create_node() override;
-    void update_node() override;
-private:
-    std::shared_ptr<RaliCropParam> _crop_param;
-    vx_array _dst_roi_width ,_dst_roi_height;
-    ParameterVX<int> _mirror; 
-    constexpr static int MIRROR_RANGE [2] =  {0, 1};
+    MetaNode() {}
+    virtual ~MetaNode() {};
+    virtual void update_parameters(MetaDataBatch* input_meta_data) = 0;
+    double BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou) const;
+    int _batch_size;
+    float _iou_threshold = 0.25;
 };
 
+inline double MetaNode::BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false) const
+{
+    double iou;
+    float xA = std::max(box1.x, box2.x);
+    float yA = std::max(box1.y, box2.y);
+    float xB = std::min(box1.x + box1.w, box2.x + box2.w);
+    float yB = std::min(box1.y + box1.h, box2.y + box2.h);
+
+    float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
+
+    float box1_area = box1.h * box1.w;
+    float box2_area = box2.h * box2.w;
+
+    if(is_iou)
+        iou = intersection_area / float(box1_area + box2_area - intersection_area);
+    else
+        iou = intersection_area / float(box1_area);
+
+    return iou;
+}

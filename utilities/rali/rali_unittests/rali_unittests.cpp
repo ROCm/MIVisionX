@@ -37,12 +37,19 @@ THE SOFTWARE.
 using namespace cv;
 
 #define DISPLAY
-using namespace std::chrono;
 
+// #define PARTIAL_DECODE 
+
+// #define COCO_READER
+// #define LABEL_READER 
+#define TF_READER 
+//#define TF_READER_DETECTION
 //#define CAFFE2_READER
 //#define CAFFE2_READER_DETECTION
 //#define CAFFE_READER
-#define CAFFE_READER_DETECTION
+//#define CAFFE_READER_DETECTION
+
+using namespace std::chrono;
 
 int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height);
 int main(int argc, const char ** argv)
@@ -81,8 +88,8 @@ int main(int argc, const char ** argv)
 int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height)
 {
     size_t num_threads = 1;
-    int inputBatchSize = 2;
-    int decode_max_width = 500;
+    int inputBatchSize = 1;
+    int decode_max_width =500;
     int decode_max_height = 500;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , "<< (rgb ? " Color ":" Grayscale ")<< std::endl;
@@ -121,7 +128,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
-RaliMetaData meta_data;
+    RaliMetaData meta_data;
 #ifdef CAFFE_READER
     meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
 #elif defined CAFFE_READER_DETECTION
@@ -130,28 +137,36 @@ RaliMetaData meta_data;
     meta_data = raliCreateCaffe2LMDBLabelReader(handle, path, true);
 #elif defined CAFFE2_READER_DETECTION
     meta_data = raliCreateCaffe2LMDBReaderDetection(handle, path, true);
+#elif defined TF_READER
+    meta_data = raliCreateTFReader(handle, path, true);
+#elif defined TF_READER_DETECTION
+    meta_data = raliCreateTFReaderDetection(handle, path, true);
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
 
-    
-    RaliImage input1;
-
+    RaliInput input1;
+    // The jpeg file loader can automatically select the best size to decode all images to that size
+    // User can alternatively set the size or change the policy that is used to automatically find the size
 #ifdef CAFFE_READER
     input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height); 
 #elif defined CAFFE_READER_DETECTION
     input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
-                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);                                                      
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);   
 #elif defined CAFFE2_READER
     input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined CAFFE2_READER_DETECTION
     input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#if defined  TF_READER
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined TF_READER_DETECTION
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false,false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);  
 #else
-    // The jpeg file loader can automatically select the best size to decode all images to that size
-    // User can alternatively set the size or change the policy that is used to automatically find the size
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
     else
@@ -476,24 +491,21 @@ RaliMetaData meta_data;
     while (raliGetRemainingImages(handle) >= inputBatchSize) {
         if (raliRun(handle) != 0)
             break;
-
-        auto last_colot_temp = raliGetIntValue(color_temp_adj);
-        raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
-
-        raliCopyToOutput(handle, mat_input.data, h * w * p);
-
-	char img_name[50];
-#if defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION
+        char img_name[50];
+#if defined COCO_READER || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         for(int i = 0; i < (int)inputBatchSize; i++)
         {
             raliGetImageName(handle, img_name, i);
             int size = raliGetBoundingBoxCount(handle, i);
             int bb_labels[size];
             float bb_coords[size*4];
+            int img_size[2];
             raliGetBoundingBoxLabel(handle, bb_labels, i);
             raliGetBoundingBoxCords(handle, bb_coords, i);
+            // raliGetImageSizes(handle, img_size, i);
             std::cerr << "\nPrinting image Name : " << img_name << "\t number of bbox : " << size << std::endl;
-            std::cerr << "\nLabel Id " << std::endl;
+            // std::cerr << "\nLabel Id " << std::endl;
+            // std::cerr << "\nIMAGE  width :" << img_size[0]<<"\t image height : "<< img_size[1]<<std::endl;
             for(int id = 0, j = id; id < size; id++)
             {
                 std::cerr << "\n Label_id : " << bb_labels[id] << std::endl;
@@ -503,15 +515,19 @@ RaliMetaData meta_data;
             }
 #else
         int label_id[inputBatchSize];     
-        raliGetImageLabels(handle, label_id);        
-        for(int i = 0; i < (int)inputBatchSize; i++) {
+        raliGetImageLabels(handle, label_id);
+        for(int i = 0; i < inputBatchSize; i++) {
             raliGetImageName(handle, img_name, i);
-           std::cerr << "\nPrinting image name : " << img_name<<"\t Printing label_id : " << label_id[i] << std::endl;
+            std::cerr << "\nPrinting image name : " << img_name<<"\t Printing label_id : " << label_id[i] << std::endl;
         }
 #endif
+        auto last_colot_temp = raliGetIntValue(color_temp_adj);
+        raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
+
+        raliCopyToOutput(handle, mat_input.data, h * w * p);
 
         std::vector<int> compression_params;
-        compression_params.push_back(IMWRITE_PNG_COMPRESSION);
+	compression_params.push_back(IMWRITE_PNG_COMPRESSION);
         compression_params.push_back(9);
 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));

@@ -158,9 +158,15 @@ class TFRecordReader(Node):
             return self._features
 
     def rali_c_func_call(self,handle):
-        # output = b.LabelReader(handle,self._file_root)
-        b.TFLabelReader(handle ,self._path, True)
-        return self._index_path
+        key="image/object/bbox/xmin"
+        if key in (self._features).keys():
+        # if (self._features).has_key("image/object/bbox/xmin"): 
+            b.TFReaderDetection(handle,self._path,True)
+
+        else:
+            b.TFReader(handle ,self._path, True) 
+
+
 
 
 class COCOReader(Node):

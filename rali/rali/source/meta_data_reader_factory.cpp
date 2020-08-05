@@ -33,6 +33,7 @@ THE SOFTWARE.
 #include "caffe_meta_data_reader_detection.h"
 #include "caffe2_meta_data_reader.h"
 #include "caffe2_meta_data_reader_detection.h"
+#include "tf_meta_data_reader_detection.h"
 
 std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& config) {
     switch(config.reader_type()) {
@@ -63,6 +64,15 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;            
+        case MetaDataReaderType::TF_DETECTION_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::BoundingBox)
+                THROW("FOLDER_BASED_LABEL_READER can only be used to load bounding boxes")
+            auto ret = std::make_shared<TFMetaDataReaderDetection>();
+            ret->init(config);
+            return ret;
+        }
+            break;          
         case MetaDataReaderType::COCO_META_DATA_READER:
         {
             if(config.type() != MetaDataType::BoundingBox)

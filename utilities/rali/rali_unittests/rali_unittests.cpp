@@ -41,8 +41,8 @@ using namespace cv;
 // #define PARTIAL_DECODE 
 
 // #define COCO_READER
-// #define LABEL_READER 
-#define TF_READER 
+#define LABEL_READER 
+//#define TF_READER 
 //#define TF_READER_DETECTION
 //#define CAFFE2_READER
 //#define CAFFE2_READER_DETECTION
@@ -145,7 +145,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     meta_data = raliCreateLabelReader(handle, path);
 #endif
 
-    RaliInput input1;
+    RaliImage input1;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
 #ifdef CAFFE_READER
@@ -160,7 +160,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 #elif defined CAFFE2_READER_DETECTION
     input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
-#if defined  TF_READER
+#elif defined  TF_READER
     input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined TF_READER_DETECTION
@@ -512,7 +512,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
                 for(int idx = 0; idx < 4; idx++, j++)
                     std::cerr << "\tbbox: [" << idx << "] :" << bb_coords[j] << std::endl;
             }
-            }
+         }
 #else
         int label_id[inputBatchSize];     
         raliGetImageLabels(handle, label_id);

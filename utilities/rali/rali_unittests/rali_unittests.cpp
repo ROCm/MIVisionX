@@ -41,9 +41,9 @@ using namespace cv;
 // #define PARTIAL_DECODE 
 
 // #define COCO_READER
-#define LABEL_READER 
-//#define TF_READER 
-//#define TF_READER_DETECTION
+// #define LABEL_READER 
+// #define TF_READER 
+#define TF_READER_DETECTION
 //#define CAFFE2_READER
 //#define CAFFE2_READER_DETECTION
 //#define CAFFE_READER
@@ -129,6 +129,16 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
+    char key1[25] ="image/encoded";
+    char key2[25] ="image/class/label";
+    char key3[25] ="image/class/text";
+    char key4[25] ="image/object/bbox/xmin";
+    char key5[25] ="image/object/bbox/ymin";
+    char key6[25] ="image/object/bbox/xmax";
+    char key7[25] ="image/object/bbox/ymax";
+    char key8[25] ="image/filename";
+
+  
 #ifdef CAFFE_READER
     meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
 #elif defined CAFFE_READER_DETECTION
@@ -138,9 +148,9 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 #elif defined CAFFE2_READER_DETECTION
     meta_data = raliCreateCaffe2LMDBReaderDetection(handle, path, true);
 #elif defined TF_READER
-    meta_data = raliCreateTFReader(handle, path, true);
+    meta_data = raliCreateTFReader(handle, path, true,key2,key8);
 #elif defined TF_READER_DETECTION
-    meta_data = raliCreateTFReaderDetection(handle, path, true);
+    meta_data = raliCreateTFReaderDetection(handle, path, true,key2, key3, key4, key5, key6,  key7, key8);
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
@@ -161,10 +171,10 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined  TF_READER
-    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false, false,
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false,key1,key8, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined TF_READER_DETECTION
-    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false,false,
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false,key1 ,key8, false,false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);  
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)

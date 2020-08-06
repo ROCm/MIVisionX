@@ -294,6 +294,7 @@ raliJpegCaffe2LMDBRecordSource(
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path,
+                                                                             std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE2_LMDB_RECORD,
                                                                              DecoderType::TURBO_JPEG,
                                                                              shuffle,
@@ -440,6 +441,7 @@ raliJpegCaffeLMDBRecordSource(
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                              source_path,
+                                                                             std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE_LMDB_RECORD,
                                                                              DecoderType::TURBO_JPEG,
                                                                              shuffle,

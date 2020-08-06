@@ -36,12 +36,9 @@ THE SOFTWARE.
 
 using namespace cv;
 
-#define DISPLAY
-
-// #define PARTIAL_DECODE 
-
-#define COCO_READER
-//#define LABEL_READER 
+//#define PARTIAL_DECODE 
+#define LABEL_READER
+//#define COCO_READER
 //#define TF_READER 
 //#define TF_READER_DETECTION
 //#define CAFFE2_READER
@@ -130,7 +127,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     RaliMetaData meta_data;
 #ifdef COCO_READER
-    char* json_path = "/home/shobana/swetha_coco/instances_val2017.json";
+    char* json_path = "";
     if(json_path == "")
     {
         std::cout<<"\n json_path has to be set in rali_unit test manually";
@@ -156,7 +153,9 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     RaliImage input1;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
-#ifdef CAFFE_READER
+#ifdef PARTIAL_DECODE
+        input1 = raliFusedJpegCrop(handle, path, color_format, num_threads, false, false);
+#elif defined CAFFE_READER
     input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height); 
 #elif defined CAFFE_READER_DETECTION
@@ -196,9 +195,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     int resize_w = width, resize_h = height; // height and width
 
-    //RaliImage image0 = input1;
-    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);// input1; 
-    RaliImage image0_b = raliRotate(handle, image0,false);
+    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
 
     RaliFlipAxis axis_h = RALI_FLIP_HORIZONTAL;
     RaliFlipAxis axis_v = RALI_FLIP_VERTICAL;
@@ -249,6 +246,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 8: {
             std::cout << ">>>>>>> Running " << "raliBlend" << std::endl;
+            RaliImage image0_b = raliRotate(handle, image0,false);
             image1 = raliBlend(handle, image0, image0_b, true);
         }
             break;
@@ -382,6 +380,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 36: {
             std::cout << ">>>>>>> Running " << "raliBlendFixed" << std::endl;
+            RaliImage image0_b = raliRotate(handle, image0,false);
             image1 = raliBlendFixed(handle, image0, image0_b, 0.5, true);
         }
             break;

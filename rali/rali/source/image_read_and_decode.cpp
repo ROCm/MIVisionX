@@ -81,7 +81,8 @@ ImageReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _decompressed_buff_ptrs.resize(_batch_size);
     _actual_decoded_width.resize(_batch_size);
     _actual_decoded_height.resize(_batch_size);
-
+    _original_height.resize(_batch_size);
+    _original_width.resize(_batch_size);
     _decoder_config = decoder_config;
 
     for(int i = 0; i < batch_size; i++)
@@ -189,7 +190,6 @@ ImageReadAndDecode::load(unsigned char* buff,
         {
             continue;
         }
-
         _actual_decoded_width[i] = scaledw;
         _actual_decoded_height[i] = scaledh;
     }

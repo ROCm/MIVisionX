@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "node.h"
 #include "node_random_crop.h"
 #include "parameter_vx.h"
+
 class SSDRandomCropMetaNode : public MetaNode
 {
 public:
@@ -47,6 +48,7 @@ private:
     std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val, _x2_val, _y2_val;
     unsigned int _dst_width, _dst_height;
     float _threshold = 0.5;
+    int   _num_of_attempts = 20;
     void initialize();
     constexpr static float ASPECT_RATIO_RANGE[2] = {0.7500, 1.333};
     BoundingBoxCord generate_random_crop(int img_idx);

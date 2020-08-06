@@ -675,7 +675,7 @@ class ImageDecoderRandomCrop(Node):
             multiplier = 4
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None) 
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 #output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
                 output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
@@ -696,7 +696,7 @@ class ImageDecoderRandomCrop(Node):
         else:
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 #output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)

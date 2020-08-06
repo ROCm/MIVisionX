@@ -44,6 +44,18 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_image_name(RaliContext context, py::array_t<char[12]> array,unsigned image_idx)
+    {
+        auto buf = array.request();
+        char* ptr = (char*) buf.ptr;
+        // call pure C++ function
+        
+        raliGetImageName(context,ptr,image_idx);
+        std::cout<<"Image Name::"<<ptr;
+        std::string s(ptr); 
+        return py::bytes(s);
+    }
+
     py::object wrapper_tensor32(RaliContext context, py::array_t<float> array,
                                 RaliTensorLayout tensor_format, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
@@ -100,6 +112,15 @@ namespace rali{
         float* ptr = (float*) buf.ptr;
         // call pure C++ function
         raliGetBoundingBoxCords(context,ptr,image_idx);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_img_sizes_copy(RaliContext context, py::array_t<int> array,unsigned image_idx)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetImageSizes(context,ptr,image_idx);
         return py::cast<py::none>(Py_None);
     }
 
@@ -179,6 +200,7 @@ namespace rali{
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
+        m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&raliGetBoundingBoxCount);
         m.def("isEmpty",&raliIsEmpty);
         m.def("getTimingInfo",raliGetTimingInfo);
@@ -223,18 +245,19 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
-        // m.def("COCO_ImageDecoder",&raliJpegCOCOFileSource,"Reads file from the source given and decodes it according to the policy",
-        //     py::return_value_policy::reference,
-        //     py::arg("context"),
-        //     py::arg("source_path"),
-        //     py::arg("color_format"),
-        //     py::arg("num_threads"),
-        //     py::arg("is_output"),
-        //     py::arg("shuffle") = false,
-        //     py::arg("loop") = false,
-        //     py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
-        //     py::arg("max_width") = 0,
-        //     py::arg("max_height") = 0);
+        m.def("COCO_ImageDecoder",&raliJpegCOCOFileSource,"Reads file from the source given and decodes it according to the policy",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("json_path"),
+            py::arg("color_format"),
+            py::arg("num_threads"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
         m.def("TF_ImageDecoder",&raliJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",	
             py::return_value_policy::reference,	
             py::arg("p_context"),	

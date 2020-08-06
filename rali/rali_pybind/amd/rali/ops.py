@@ -494,7 +494,7 @@ class COCOReader(Node):
         self.next = self.output
         self.output.prev = self
         self.output.next = None
-        self.output.data = self._file_root
+        self.output.data = [self._file_root,self._annotations_file]
         return self.output, self._bboxes, self._labels
 
     def rali_c_func_call(self,handle):
@@ -582,7 +582,7 @@ class ImageDecoder(Node):
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.COCO_ImageDecoder(handle, input_image[0], input_image[1], types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
                 # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
@@ -590,13 +590,13 @@ class ImageDecoder(Node):
         else:
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 # output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, 4*224, 4*224)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
                 output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
             elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.COCO_ImageDecoder(handle, input_image[0], input_image[1], types.RGB, num_threads, is_output, shuffle, False)
                 # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
@@ -671,7 +671,7 @@ class ImageDecoderRandomCrop(Node):
             multiplier = 4
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)            
@@ -679,7 +679,7 @@ class ImageDecoderRandomCrop(Node):
                 output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
+                output_image = b.COCO_ImageDecoder(handle, input_image[0], input_image[1], types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
                 # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             else:
@@ -690,7 +690,7 @@ class ImageDecoderRandomCrop(Node):
         else:
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
@@ -698,7 +698,7 @@ class ImageDecoderRandomCrop(Node):
                 output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.COCO_ImageDecoder(handle, input_image[0], input_image[1], types.RGB, num_threads, is_output, shuffle, False)
                 # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             else:

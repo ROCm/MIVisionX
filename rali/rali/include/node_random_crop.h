@@ -24,21 +24,30 @@ THE SOFTWARE.
 #include "node.h"
 #include "parameter_factory.h"
 #include "parameter_crop_factory.h"
-#include "parameter_rali_crop.h"
 
 class RandomCropNode : public Node
 {
 public:
     RandomCropNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     RandomCropNode() = delete;
-    void init(float area , float aspect_ratio, float x_drift, float y_drift);
-    void init( FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam * x_drift, FloatParam * y_drift);
+    void init(float area, float aspect_ratio, float x_drift, float y_drift);
+    void init(FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift);
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
+    void set_crop_param(std::shared_ptr<RaliRandomCropParam> crop_param) { _crop_param = crop_param; }
+    void update_output_dims();
+    float get_threshold(){return _threshold;}
+
 protected:
-    void create_node() override ;
+    void create_node() override;
     void update_node() override;
+
 private:
     size_t _dest_width;
     size_t _dest_height;
+    float  _threshold = 0.05;
+    int    _num_of_attempts = 20;
     std::shared_ptr<RaliRandomCropParam> _crop_param;
 };
 

@@ -36,18 +36,15 @@ THE SOFTWARE.
 
 using namespace cv;
 
-#define DISPLAY
 
 // #define PARTIAL_DECODE 
-
 // #define COCO_READER
-#define LABEL_READER 
-//#define TF_READER 
-//#define TF_READER_DETECTION
-//#define CAFFE2_READER
-//#define CAFFE2_READER_DETECTION
-//#define CAFFE_READER
-//#define CAFFE_READER_DETECTION
+// #define TF_READER 
+// #define TF_READER_DETECTION
+// #define CAFFE2_READER
+// #define CAFFE2_READER_DETECTION
+// #define CAFFE_READER
+// #define CAFFE_READER_DETECTION
 
 using namespace std::chrono;
 
@@ -88,7 +85,7 @@ int main(int argc, const char ** argv)
 int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height)
 {
     size_t num_threads = 1;
-    int inputBatchSize = 1;
+    int inputBatchSize = 2;
     int decode_max_width =500;
     int decode_max_height = 500;
     std::cout << ">>> test case " << test_case << std::endl;
@@ -129,7 +126,24 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
-#ifdef CAFFE_READER
+    char key1[25] ="image/encoded";
+    char key2[25] ="image/class/label";
+    char key3[25] ="image/class/text";
+    char key4[25] ="image/object/bbox/xmin";
+    char key5[25] ="image/object/bbox/ymin";
+    char key6[25] ="image/object/bbox/xmax";
+    char key7[25] ="image/object/bbox/ymax";
+    char key8[25] ="image/filename";
+
+#ifdef COCO_READER
+    char* json_path = "";
+    if(json_path == "")
+    {
+        std::cout<<"\n json_path has to be set in rali_unit test manually";
+        exit(0);
+    }
+    meta_data = raliCreateCOCOReader(handle, json_path, true );  
+#elif defined CAFFE_READER
     meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
 #elif defined CAFFE_READER_DETECTION
     meta_data = raliCreateCaffeLMDBReaderDetection(handle, path);
@@ -138,9 +152,9 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 #elif defined CAFFE2_READER_DETECTION
     meta_data = raliCreateCaffe2LMDBReaderDetection(handle, path, true);
 #elif defined TF_READER
-    meta_data = raliCreateTFReader(handle, path, true);
+    meta_data = raliCreateTFReader(handle, path, true,key2,key8);
 #elif defined TF_READER_DETECTION
-    meta_data = raliCreateTFReaderDetection(handle, path, true);
+    meta_data = raliCreateTFReaderDetection(handle, path, true,key2, key3, key4, key5, key6,  key7, key8);
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
@@ -148,7 +162,9 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     RaliImage input1;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
-#ifdef CAFFE_READER
+#ifdef PARTIAL_DECODE
+        input1 = raliFusedJpegCrop(handle, path, color_format, num_threads, false, false);
+#elif defined CAFFE_READER
     input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height); 
 #elif defined CAFFE_READER_DETECTION
@@ -161,10 +177,16 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined  TF_READER
-    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false, false,
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false,key1,key8, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined TF_READER_DETECTION
-    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false,false,
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false,key1 ,key8, false,false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined COCO_READER
+    if (decode_max_height <= 0 || decode_max_width <= 0)
+        input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
+    else
+        input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);  
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
@@ -182,9 +204,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     int resize_w = width, resize_h = height; // height and width
 
-    //RaliImage image0 = input1;
-    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);// input1; 
-    RaliImage image0_b = raliRotate(handle, image0,false);
+    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
 
     RaliFlipAxis axis_h = RALI_FLIP_HORIZONTAL;
     RaliFlipAxis axis_v = RALI_FLIP_VERTICAL;
@@ -235,6 +255,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 8: {
             std::cout << ">>>>>>> Running " << "raliBlend" << std::endl;
+            RaliImage image0_b = raliRotate(handle, image0,false);
             image1 = raliBlend(handle, image0, image0_b, true);
         }
             break;
@@ -368,6 +389,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 36: {
             std::cout << ">>>>>>> Running " << "raliBlendFixed" << std::endl;
+            RaliImage image0_b = raliRotate(handle, image0,false);
             image1 = raliBlendFixed(handle, image0, image0_b, 0.5, true);
         }
             break;

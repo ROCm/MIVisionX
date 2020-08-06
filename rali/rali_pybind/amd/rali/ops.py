@@ -82,10 +82,17 @@ class FileReader(Node):
         b.labelReader(handle,self._file_root)
         return self._file_root
     
+
 class TFRecordReader(Node):
     """
-        features (dict }) – Dictionary of names and configuration of features existing in TFRecord file.
+        reader_type (int) - Type of TFRecordReader (0 being for image classification with 2 features read, 1 being for object detection with 7 features read)
 
+    user_feature_key_map (dict) – Dictionary of either 2 or 7 key names accepted by RALI TFRecordReader for classification or detection, and the corresponding values being the matching key names in the user's TFRecords
+
+    features (dict) – Dictionary of names and configuration of features existing in TFRecord file. 
+        
+        features (dict }) – Dictionary of names and configuration of features existing in TFRecord file.
+        
         index_path (str or list of str) – List of paths to index files (1 index file for every TFRecord file). Index files may be obtained from TFRecord files using tfrecord2idx script distributed with RALI.
 
         path (str or list of str) – List of paths to TFRecord files.
@@ -120,10 +127,11 @@ class TFRecordReader(Node):
 
     """
 
-    def __init__(self, features, path, index_path="", bytes_per_sample_hint=0, initial_fill = 1024, lazy_init = False, num_shards = 1,
-                pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False, read_ahead = False, seed = -1,
-                shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None) :
+    def __init__(self, path, user_feature_key_map, features, index_path="", reader_type=0, bytes_per_sample_hint=0, initial_fill = 1024, lazy_init = False, num_shards = 1, pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False, read_ahead = False, seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576,  device = None) :
+
         Node().__init__()
+        self._reader_type = reader_type
+        self._user_feature_key_map = user_feature_key_map
         self._features = features
         self._index_path = index_path
         self._path = path
@@ -149,10 +157,20 @@ class TFRecordReader(Node):
 
 
     def __call__(self,name = ""):
-        key="image/object/bbox/xmin"
-        if key in (self._features).keys():
+
+        if self._reader_type == 1:
+            for key in (self._features).keys():
+                if key not in (self._user_feature_key_map).keys():
+                    print("For Object Detection, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
+                    print("image/encoded\nimage/class/label\nimage/class/text\nimage/object/bbox/xmin\nimage/object/bbox/ymin\nimage/object/bbox/xmax\nimage/object/bbox/ymax\n")
+                    exit()
             self.data = "TFRecordReaderDetection"
         else:
+            for key in (self._features).keys():
+                if key not in (self._user_feature_key_map).keys():
+                    print("For Image Classification, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
+                    print("image/encoded\nimage/class/label\n")
+                    exit()
             self.data = "TFRecordReaderClassification"
 
         self.prev = None
@@ -163,12 +181,25 @@ class TFRecordReader(Node):
         return self._features
 
     def rali_c_func_call(self,handle):
-        key="image/object/bbox/xmin"
-        if key in (self._features).keys(): 
-            b.TFReaderDetection(handle,self._path,True)
-
+        if self._reader_type == 1:
+            b.TFReaderDetection(
+                handle, self._path, True,
+                self._user_feature_key_map["image/class/label"],
+                self._user_feature_key_map["image/class/text"],
+                self._user_feature_key_map["image/object/bbox/xmin"],
+                self._user_feature_key_map["image/object/bbox/ymin"],
+                self._user_feature_key_map["image/object/bbox/xmax"],
+                self._user_feature_key_map["image/object/bbox/ymax"],
+                self._user_feature_key_map["image/filename"]
+            )
         else:
-            b.TFReader(handle ,self._path, True) 
+            b.TFReader(
+                handle, self._path, True, 
+                self._user_feature_key_map["image/class/label"],
+                self._user_feature_key_map["image/filename"]
+            )
+
+        return self._index_path
 
 class CaffeReader(Node):
     """
@@ -477,7 +508,7 @@ class COCOReader(Node):
         self.next = self.output
         self.output.prev = self
         self.output.next = None
-        self.output.data = self._file_root
+        self.output.data = [self._file_root,self._annotations_file]
         return self.output, self._bboxes, self._labels
 
     def rali_c_func_call(self,handle):
@@ -521,10 +552,11 @@ class ImageDecoder(Node):
 
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
-    def __init__(self, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
+    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
                 cache_type = '', device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, output_type = 0,
                 preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
         Node().__init__()
+        self._user_feature_key_map = user_feature_key_map
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._cache_batch_copy = cache_batch_copy
@@ -558,22 +590,32 @@ class ImageDecoder(Node):
         if decode_width != None and decode_height != None:
             multiplier = 4
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                #output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                #output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            elif(self.prev.prev.data == "COCOReader") :
+                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 # output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, 4*224, 4*224)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                #output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                #output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+            elif(self.prev.prev.data == "COCOReader") :
+                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
@@ -610,10 +652,11 @@ class ImageDecoderRandomCrop(Node):
 
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
-    def __init__(self, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, 
+    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, 
                 num_attempts = 10, output_type = 0,preserve = False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
                 seed = 1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
         Node().__init__()
+        self._user_feature_key_map = user_feature_key_map
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._device_memory_padding = device_memory_padding
@@ -645,36 +688,76 @@ class ImageDecoderRandomCrop(Node):
         if decode_width != None and decode_height != None:
             multiplier = 4
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
+                #output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)            
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                #output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+            elif(self.prev.prev.data == "COCOReader") :
+                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
+                # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             else:
-                output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
+                #output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
-#                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-#                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         else:
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                #output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                #output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+            elif(self.prev.prev.data == "COCOReader") :
+                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                # output_image = b.COCO_ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
             else:
-                output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
+                #output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-#                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
-#                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
+                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         return output_image
 
+class SSDRandomCrop(Node):
+    """
+    bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+    num_attempts (int, optional, default = 1) – Number of attempts.
+    preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+    seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+    """
+    def __init__(self, bytes_per_sample_hint = 0, num_attempts = 1.0, preserve = False, seed = -1, device = None):
+        Node().__init__()
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._preserve = preserve
+        self._seed = seed
+        self.output = Node()
+    
+    def __call__(self,input):
+        input.next = self
+        self.data = "SSDRandomCrop"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, is_output):
+        # b.setSeed(self._seed)
+        # threshold = b.CreateFloatParameter(0.5)
+        output_image = b.SSDRandomCrop(handle, input_image, is_output, None, None, None, None, None)
+        return output_image
 class ColorTwist(Node):
     """
         brightness (float, optional, default = 1.0) –

@@ -28,6 +28,10 @@ class ResizeNode : public Node
 public:
     ResizeNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     ResizeNode() = delete;
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    vx_array get_src_width() { return _src_roi_width; }
+    vx_array get_src_height() { return _src_roi_height; }
 protected:
     void create_node() override;
     void update_node() override;

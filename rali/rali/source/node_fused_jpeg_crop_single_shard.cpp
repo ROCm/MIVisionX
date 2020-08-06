@@ -8,7 +8,7 @@ FusedJpegCropSingleShardNode::FusedJpegCropSingleShardNode(Image *output, Device
     _loader_module = std::make_shared<ImageLoader>(device_resources);
 }
 
-void FusedJpegCropSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, StorageType storage_type,
+void FusedJpegCropSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path, StorageType storage_type,
                            DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type,
                            FloatParam *area_factor, FloatParam *aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
 {
@@ -20,7 +20,7 @@ void FusedJpegCropSingleShardNode::init(unsigned shard_id, unsigned shard_count,
         THROW("Shard is should be smaller than shard count")
     _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the FusedJpegCropSingleShardNode
-    auto reader_cfg = ReaderConfig(storage_type, source_path, shuffle, loop);
+    auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, std::map<std::string, std::string>(), shuffle, loop);
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
     reader_cfg.set_batch_count(load_batch_count);

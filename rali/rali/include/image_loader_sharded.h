@@ -39,6 +39,10 @@ public:
     void reset() override;
     void start_loading() override;
     std::vector<std::string> get_id() override;
+    std::vector<uint32_t> get_original_width() override;
+    std::vector<uint32_t> get_original_height() override;
+    std::vector<uint32_t> get_roi_width() override;
+    std::vector<uint32_t> get_roi_height() override;
     Timing timing() override;
 private:
     void increment_loader_idx();

@@ -6,6 +6,7 @@ class Pipeline(object):
 
     """Pipeline class internally calls RaliCreate which returns context which will have all 
     the info set by the user.
+
     Parameters
     ----------
     `batch_size` : int, optional, default = -1
@@ -106,6 +107,7 @@ class Pipeline(object):
         self._img_w = None
         self._shuffle = None
         self._name = None
+
     def store_values(self, operator):
         """
             Check if ops is one of those functionality to determine tensor_layout and tensor_dtype and crop.
@@ -208,6 +210,9 @@ class Pipeline(object):
     
     def GetBBCords(self, array, idx):
         return b.getBBCords(self._handle, array, idx)
+    
+    def GetImgSizes(self, array, idx):
+        return b.getImgSizes(self._handle, array, idx)
 
     def GetImageLabels(self, array):
         return b.getImageLabels(self._handle, array)
@@ -217,6 +222,12 @@ class Pipeline(object):
 
     def GetBoundingBox(self,array):
         return array    
+
+    def GetImageName(self, array, idx):
+        return b.getImageName(self._handle, array , idx)
+
+    def GetImageNameLength(self,idx):
+        return b.getImageNameLen(self._handle,idx)
 
     def getOutputWidth(self):
         return b.getOutputWidth(self._handle)

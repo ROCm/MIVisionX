@@ -63,6 +63,8 @@ public:
             const size_t max_decoded_height,
             std::vector<uint32_t> &roi_width,
             std::vector<uint32_t> &roi_height,
+            std::vector<uint32_t> &actual_width,
+            std::vector<uint32_t> &actual_height,
             RaliColorFormat output_color_format,
             bool decoder_keep_original=false);
 
@@ -79,6 +81,8 @@ private:
     std::vector<unsigned char*> _decompressed_buff_ptrs;
     std::vector<size_t> _actual_decoded_width;
     std::vector<size_t> _actual_decoded_height;
+    std::vector<size_t> _original_width;
+    std::vector<size_t> _original_height;
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;

@@ -34,6 +34,8 @@ public:
     }
     void set_area_factor(Parameter<float>*   crop_h_factor);
     void set_aspect_ratio(Parameter<float>*  crop_w_factor);
+    Parameter<float> * get_area_factor() {return  area_factor;}
+    Parameter<float> * get_aspect_ratio() {return  aspect_ratio;}
     void update_array() override;
 private:
     constexpr static float AREA_FACTOR_RANGE[2]  = {0.08, 0.99}; 

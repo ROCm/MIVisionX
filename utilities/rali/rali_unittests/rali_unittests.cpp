@@ -478,7 +478,12 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             image1 = raliResizeCropMirrorFixed(handle, image0, 100, 100, true, 50, 50, 0);
         }
             break;
-	
+        case 54: {
+             std::cout << ">>>>>>> Running " << "raliSSDRandomCrop" << std::endl;
+             image1 = raliSSDRandomCrop(handle, input1, true);
+        }
+        break;
+
 	default:
             std::cout << "Not a valid option! Exiting!\n";
             return -1;

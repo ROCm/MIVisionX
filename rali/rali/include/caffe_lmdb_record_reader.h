@@ -10,9 +10,10 @@
 #include <google/protobuf/message_lite.h>
 #include <lmdb.h>
 #include "caffe_protos.pb.h"
+#include "timing_debug.h"
 
-class CaffeLMDBRecordReader : public Reader
-        {
+
+class CaffeLMDBRecordReader : public Reader{
 public:
     //! Reads the TFRecord File, and loads the image ids and other necessary info
     /*!
@@ -43,6 +44,7 @@ public:
     int close() override;
 
     CaffeLMDBRecordReader();
+    unsigned long long get_shuffle_time() override {return 0;}
 private:
     //! opens the folder containnig the images
     Reader::Status folder_reading();
@@ -83,5 +85,6 @@ private:
     void read_image(unsigned char* buff, std::string _file_name);
     void read_image_names();
     std::map <std::string, uint> _image_record_starting;
+    TimingDBG _shuffle_time;
 };
 

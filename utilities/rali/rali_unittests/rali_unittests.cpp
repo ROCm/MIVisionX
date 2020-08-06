@@ -40,8 +40,8 @@ using namespace cv;
 
 // #define PARTIAL_DECODE 
 
-// #define COCO_READER
-#define LABEL_READER 
+#define COCO_READER
+//#define LABEL_READER 
 //#define TF_READER 
 //#define TF_READER_DETECTION
 //#define CAFFE2_READER
@@ -88,7 +88,7 @@ int main(int argc, const char ** argv)
 int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height)
 {
     size_t num_threads = 1;
-    int inputBatchSize = 1;
+    int inputBatchSize = 2;
     int decode_max_width =500;
     int decode_max_height = 500;
     std::cout << ">>> test case " << test_case << std::endl;
@@ -129,7 +129,15 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
-#ifdef CAFFE_READER
+#ifdef COCO_READER
+    char* json_path = "/home/shobana/swetha_coco/instances_val2017.json";
+    if(json_path == "")
+    {
+        std::cout<<"\n json_path has to be set in rali_unit test manually";
+        exit(0);
+    }
+    meta_data = raliCreateCOCOReader(handle, json_path, true );
+#elif defined CAFFE_READER
     meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
 #elif defined CAFFE_READER_DETECTION
     meta_data = raliCreateCaffeLMDBReaderDetection(handle, path);
@@ -165,6 +173,12 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined TF_READER_DETECTION
     input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false, false,false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined COCO_READER
+    if (decode_max_height <= 0 || decode_max_width <= 0)
+        input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
+    else
+        input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);  
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)

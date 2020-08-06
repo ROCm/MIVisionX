@@ -29,15 +29,17 @@ enum class StorageType
     UNCOMPRESSED_BINARY_DATA = 2,        // experimental: added for supporting cifar10 data set
     CAFFE_LMDB_RECORD = 3,
     CAFFE2_LMDB_RECORD = 4,
+    COCO_FILE_SYSTEM = 5
 };
 
 struct ReaderConfig
 {
-    explicit ReaderConfig(StorageType type, std::string path = "", bool shuffle = false, bool loop = false):_type(type), _path(path), _shuffle(shuffle), _loop(loop) {}
+    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "", bool shuffle = false, bool loop = false):_type(type), _path(path), _json_path(json_path), _shuffle(shuffle), _loop(loop) {}
     virtual StorageType type() { return _type; };
     void set_path(const std::string& path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
     void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
+    void set_json_path(const std::string& json_path) { _json_path = json_path;}
     /// \param read_batch_count Tells the reader it needs to read the images in multiples of load_batch_count. If available images not divisible to load_batch_count,
     /// the reader will repeat images to make available images an even multiple of this load_batch_count
     void set_batch_count(size_t read_batch_count) { _batch_count = read_batch_count; }
@@ -50,11 +52,13 @@ struct ReaderConfig
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
     std::string path() { return _path; }
+    std::string json_path() { return _json_path;}
     void set_file_prefix(const std::string &prefix) {_file_prefix = prefix;}
     std::string file_prefix() {return _file_prefix;}
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";
+    std::string _json_path = "";
     size_t _shard_count= 1 ;
     size_t _shard_id = 0;
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.

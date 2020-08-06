@@ -157,6 +157,22 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf, unsigne
     ptr += sizeof(BoundingBoxCord)*sizeof(float);
 }
 
+void
+RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf, unsigned image_idx )
+{
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+
+    if(!meta_data.second)
+    {
+        WRN("No label has been loaded for this output image")
+        return;
+    }
+    auto ptr = buf;
+    memcpy(ptr,meta_data.second->get_img_sizes_batch()[image_idx].data(), meta_data.second->get_img_sizes_batch()[image_idx].size() * sizeof(ImgSize));
+    ptr += sizeof(ImgSize)*sizeof(int);
+}
+
 RaliMetaData
 RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext p_context, const char* source_path, const char* file_prefix) {
     auto context = static_cast<Context*>(p_context);

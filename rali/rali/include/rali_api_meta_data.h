@@ -108,6 +108,7 @@ extern "C" unsigned RALI_API_CALL raliGetBoundingBoxCount(RaliContext rali_conte
 /// \param buf The user's buffer that will be filled with bounding box info. It needs to be of size bounding box len returned by a call to the raliGetBoundingBoxCount
 extern "C" void RALI_API_CALL raliGetBoundingBoxLabel(RaliContext rali_context, int* buf, unsigned image_idx );
 extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, float* buf, unsigned image_idx );
+extern "C" void RALI_API_CALL raliGetImageSizes(RaliContext rali_context, int* buf, unsigned image_idx );
 
 ///
 /// \param rali_context

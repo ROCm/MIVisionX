@@ -42,52 +42,36 @@ bool COCOMetaDataReader::exists(const std::string& image_name)
 
 void COCOMetaDataReader::lookup(const std::vector<std::string> &image_names) {
 
-    if(image_names.empty())
+    if (image_names.empty())
     {
         WRN("No image names passed")
         return;
     }
-    if(image_names.size() != (unsigned)_output->size())   
+    if (image_names.size() != (unsigned)_output->size())
         _output->resize(image_names.size());
 
-    for(unsigned i = 0; i < image_names.size(); i++)
+    for (unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
-	/*
-	 * User should provide the coco train or val folder containing images with respect to json file.
-	 * If the processed COCO image was not in the map, returns BoundingBox meta data values as zero since 
-	 * those images doesn't have annotations.
-	 */
-        if(_map_content.end() == it){
-
-            BoundingBoxCords bb_coords;
-            BoundingBoxLabels bb_labels;
-            BoundingBoxCord box;
-
-            box.x = box.y = box.w = box.h = 0;
-            bb_coords.push_back(box);
-            bb_labels.push_back(0);
-	    _output->get_bb_cords_batch()[i] = bb_coords;
-	    _output->get_bb_labels_batch()[i] = bb_labels;
-        }
-	else{
+        if (_map_content.end() == it) 
+            THROW("ERROR: Given name not present in the map" + image_name)    
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
-	}
+        _output->get_img_sizes_batch()[i] = it->second->get_img_sizes();
     }
 }
 
-void COCOMetaDataReader::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels)
+void COCOMetaDataReader::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels, ImgSizes image_size)
 {
-    if(exists(image_name))
+    if (exists(image_name))
     {
         auto it = _map_content.find(image_name);
         it->second->get_bb_cords().push_back(bb_coords[0]);
         it->second->get_bb_labels().push_back(bb_labels[0]);
         return;
     }
-    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels);
+    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels,image_size);
     _map_content.insert(pair<std::string, std::shared_ptr<BoundingBox>>(image_name, info));
 }
 
@@ -95,13 +79,17 @@ void COCOMetaDataReader::print_map_contents()
 {
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
+    ImgSizes img_sizes;
 
     std::cerr << "\nMap contents: \n";
     for (auto& elem : _map_content) {
         std::cerr << "Name :\t " << elem.first;
         bb_coords = elem.second->get_bb_cords() ;
         bb_labels = elem.second->get_bb_labels();
+        img_sizes = elem.second->get_img_sizes();
+
         std::cerr << "\nsize of the element  : "<< bb_coords.size() << std::endl;
+        std::cerr << "\nImage original width::\t<<    : "<<img_sizes[0].w<< "\nImage original height::\t<<    : "<<img_sizes[0].h;
         for(unsigned int i = 0; i < bb_coords.size(); i++){
             std::cerr << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << std::endl;
             std::cerr  << "Label Id : " << bb_labels[i] << std::endl;
@@ -118,7 +106,8 @@ void COCOMetaDataReader::read_all(const std::string &path) {
 	std::string str;
 	str.assign(std::istreambuf_iterator<char>(fin), std::istreambuf_iterator<char>());
 	BoundingBoxCords bb_coords;
-    	BoundingBoxLabels bb_labels;
+    BoundingBoxLabels bb_labels;
+    ImgSizes img_sizes;
 
 	Json::Reader reader;
 	Json::Value root;
@@ -126,28 +115,48 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         WRN("Failed to parse Json: " + reader.getFormattedErrorMessages());
 	}
 
-	Json::Value annotation = root["annotations"];
-	Json::Value image = root["images"];
-    
-	BoundingBoxCord box;
+    Json::Value annotation = root["annotations"];
+    Json::Value image = root["images"];
 
-        for (auto iterator = annotation.begin(); iterator != annotation.end(); iterator++) {
-            box.x = (*iterator)["bbox"][0].asFloat();
-            box.y = (*iterator)["bbox"][1].asFloat();
-            box.w = (*iterator)["bbox"][2].asFloat();
-            box.h = (*iterator)["bbox"][3].asFloat();
-            int label = (*iterator)["category_id"].asInt();
-            int id = (*iterator)["image_id"].asInt();
-	    char buffer[13];
-	    sprintf(buffer, "%012d", id);
-	    string str(buffer);
-	    std::string file_name = str + ".jpg";
-            bb_coords.push_back(box);
-            bb_labels.push_back(label);
-            add(file_name, bb_coords, bb_labels);
-            bb_coords.clear();
-            bb_labels.clear();
-        }
+    BoundingBoxCord box;
+    ImgSize img_size;
+    
+    for (auto iterator = image.begin(); iterator != image.end(); iterator++)
+    {
+        // std::map<int, int,int> id_img_sizes;
+        img_size.h = (*iterator)["height"].asInt();
+        img_size.w = (*iterator)["width"].asInt();
+        img_sizes.push_back(img_size);
+        string image_name  = (*iterator)["file_name"].asString();
+        
+        _map_img_sizes.insert(pair<std::string,std::vector<ImgSize> >(image_name, img_sizes));
+        img_sizes.clear();
+
+    }
+    
+    for (auto iterator = annotation.begin(); iterator != annotation.end(); iterator++)
+    {
+        box.x = (*iterator)["bbox"][0].asFloat();
+        box.y = (*iterator)["bbox"][1].asFloat();
+        box.w = (*iterator)["bbox"][2].asFloat();
+        box.h = (*iterator)["bbox"][3].asFloat();
+        int label = (*iterator)["category_id"].asInt();
+        int id = (*iterator)["image_id"].asInt();
+        char buffer[13];
+        sprintf(buffer, "%012d", id);
+        string str(buffer);
+        std::string file_name = str + ".jpg";
+
+        auto it = _map_img_sizes.find(file_name);
+        ImgSizes image_size = it->second;        
+
+        bb_coords.push_back(box);
+        bb_labels.push_back(label);
+        add(file_name, bb_coords, bb_labels,image_size);
+        bb_coords.clear();
+        bb_labels.clear();
+    } 
+    fin.close();
     //print_map_contents();
 }
 
@@ -162,6 +171,7 @@ void COCOMetaDataReader::release(std::string image_name) {
 
 void COCOMetaDataReader::release() {
     _map_content.clear();
+    _map_img_sizes.clear();
 }
 
 COCOMetaDataReader::COCOMetaDataReader()

@@ -40,7 +40,6 @@ class RALIGenericImageIterator(object):
 
 
 
-
 class RALIGenericIteratorDetection(object):
     def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
         self.loader = pipeline
@@ -151,11 +150,11 @@ class RALIGenericIteratorDetection(object):
 
 class RALIIterator(RALIGenericIteratorDetection):
     """
-    RALI iterator for detection tasks for PyTorch. It returns 2 outputs
-    (data and label) in the form of PyTorch's Tensor.
+    RALI iterator for detection and classification tasks for PyTorch. It returns 2 or 3 outputs
+    (data and label) or (data , bbox , labels) in the form of PyTorch's Tensor.
     Calling
     .. code-block:: python
-       RALIClassificationIterator(pipelines, size)
+       RALIIterator(pipelines, size)
     is equivalent to calling
     .. code-block:: python
        RALIGenericIteratorDetection(pipelines, ["data", "label"], size)

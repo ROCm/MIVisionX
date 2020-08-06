@@ -178,7 +178,6 @@ class TFRecordReader(Node):
         self.output.prev = self
         self.output.next = None
         self.output.data = self._path
-
         return self._features
 
     def rali_c_func_call(self,handle):

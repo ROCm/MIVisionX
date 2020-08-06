@@ -140,9 +140,10 @@ class RALICOCOIterator(object):
             self.loader.GetImageName(self.img_name,idx)
 
             ###converting image name to image ID
-            self.img_name = np.char.strip(self.img_name, chars ='0')
-            self.img_name1=str(self.img_name)
-            self.img_name=self.img_name.astype(np.int)
+            self.img_name=self.img_name.tostring()
+            self.img_name=self.img_name.decode('utf_8')
+            self.img_name = np.char.lstrip(self.img_name, chars ='0')
+            self.img_name=int(self.img_name)
 
             print("NUMPY img_names  int type::",self.img_name)
             print("NUMPY image sizes::",self.img_size)

@@ -51,7 +51,6 @@ namespace rali{
         // call pure C++ function
         
         raliGetImageName(context,ptr,image_idx);
-        std::cout<<"Image Name::"<<ptr;
         std::string s(ptr); 
         return py::bytes(s);
     }
@@ -372,6 +371,16 @@ namespace rali{
 
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h
+        m.def("SSDRandomCrop",&raliSSDRandomCrop,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+	        py::arg("p_threshold"),
+            py::arg("crop_area_factor") = NULL,
+            py::arg("crop_aspect_ratio") = NULL,
+            py::arg("crop_pos_x") = NULL,
+            py::arg("crop_pos_y") = NULL);
         m.def("Resize",&raliResize,
             py::return_value_policy::reference,
             py::arg("context"),

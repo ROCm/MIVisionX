@@ -37,7 +37,8 @@ using caffe_protos::Datum;
 
 namespace filesys = boost::filesystem;
 
-CaffeLMDBRecordReader::CaffeLMDBRecordReader()
+CaffeLMDBRecordReader::CaffeLMDBRecordReader():
+_shuffle_time("shuffle_time", DBG_TIMING)
 {
     _sub_dir = nullptr;
     _curr_file_idx = 0;
@@ -70,8 +71,10 @@ Reader::Status CaffeLMDBRecordReader::initialize(ReaderConfig desc)
     _shuffle = desc.shuffle();
     ret = folder_reading();
     //shuffle dataset if set
+    _shuffle_time.start();
     if( ret==Reader::Status::OK && _shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
+    _shuffle_time.end();
 
     return ret;
 
@@ -122,8 +125,10 @@ int CaffeLMDBRecordReader::release()
 
 void CaffeLMDBRecordReader::reset()
 {
+    _shuffle_time.start();
     if (_shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
+    _shuffle_time.end();
     _read_counter = 0;
     _curr_file_idx = 0;
 }

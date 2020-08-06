@@ -6,6 +6,7 @@
 #include "reader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
+#include "timing_debug.h"
 
 
 
@@ -35,6 +36,7 @@ public:
     std::string id() override { return _last_id;};
 
     unsigned count() override;
+    unsigned long long get_shuffle_time() {return _shuffle_time.get_timing();};
 
     ~COCOFileSourceReader() override;
 
@@ -79,5 +81,5 @@ private:
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
     void replicate_last_batch_to_pad_partial_shard();
-
+    TimingDBG _shuffle_time;
 };

@@ -181,7 +181,6 @@ class TFRecordReader(Node):
         return self._features
 
     def rali_c_func_call(self,handle):
-
         if self._reader_type == 1:
             b.TFReaderDetection(
                 handle, self._path, True,
@@ -204,23 +203,39 @@ class TFRecordReader(Node):
 
 class CaffeReader(Node):
     """
-path (str or list of str) – List of paths to Caffe LMDB directories.
-bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
-image_available (bool, optional, default = True) – If image is available at all in this LMDB.
-initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
-label_available (bool, optional, default = True) – If label is available at all.
-lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
-num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
-pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
-prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
-preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
-random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
-read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
-seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
-shard_id (int, optional, default = 0) – Id of the part to read.
-skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
-stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
-tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
+        path (str or list of str) – List of paths to Caffe LMDB directories.
+
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+        
+        image_available (bool, optional, default = True) – If image is available at all in this LMDB.
+        
+        initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
+        
+        label_available (bool, optional, default = True) – If label is available at all.
+        
+        lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
+        
+        num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
+        
+        pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
+        
+        prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
+        
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+        
+        random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
+        
+        read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
+        
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+        
+        shard_id (int, optional, default = 0) – Id of the part to read.
+        
+        skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
+        
+        stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
+        
+        tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
     def __init__(self, path,bbox =False, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_available = True, 
@@ -269,7 +284,6 @@ tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memor
         
 
     def rali_c_func_call(self,handle):
-        # b.labelReader(handle,self._file_root)
         if(self._bbox==True):
             b.CaffeReaderDetection(handle, self._path)
         else:
@@ -279,56 +293,56 @@ tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memor
 
 class Caffe2Reader(Node):
     """
- path (str or list of str) – List of paths to Caffe2 LMDB directories.
+        path (str or list of str) – List of paths to Caffe2 LMDB directories.
 
-additional_inputs (int, optional, default = 0) – Additional auxiliary data tensors provided for each sample.
+        additional_inputs (int, optional, default = 0) – Additional auxiliary data tensors provided for each sample.
 
-bbox (bool, optional, default = False) – Denotes if bounding-box information is present.
+        bbox (bool, optional, default = False) – Denotes if bounding-box information is present.
 
-bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
 
-image_available (bool, optional, default = True) – If image is available at all in this LMDB.
+        image_available (bool, optional, default = True) – If image is available at all in this LMDB.
 
-initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
+        initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
 
-label_type (int, optional, default = 0) –
-Type of label stored in dataset.
+        label_type (int, optional, default = 0) –
+        Type of label stored in dataset.
 
-0 = SINGLE_LABEL : single integer label for multi-class classification
+        0 = SINGLE_LABEL : single integer label for multi-class classification
 
-1 = MULTI_LABEL_SPARSE : sparse active label indices for multi-label classification
+        1 = MULTI_LABEL_SPARSE : sparse active label indices for multi-label classification
 
-2 = MULTI_LABEL_DENSE : dense label embedding vector for label embedding regression
+        2 = MULTI_LABEL_DENSE : dense label embedding vector for label embedding regression
 
-3 = MULTI_LABEL_WEIGHTED_SPARSE : sparse active label indices with per-label weights for multi-label classification.
+        3 = MULTI_LABEL_WEIGHTED_SPARSE : sparse active label indices with per-label weights for multi-label classification.
 
-4 = NO_LABEL : no label is available.
+        4 = NO_LABEL : no label is available.
 
-lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
+        lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
 
-num_labels (int, optional, default = 1) – Number of classes in dataset. Required when sparse labels are used.
+        num_labels (int, optional, default = 1) – Number of classes in dataset. Required when sparse labels are used.
 
-num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
+        num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
 
-pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
+        pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
 
-prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
+        prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
 
-preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
 
-random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
+        random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
 
-read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
+        read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
 
-seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
 
-shard_id (int, optional, default = 0) – Id of the part to read.
+        shard_id (int, optional, default = 0) – Id of the part to read.
 
-skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
+        skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
 
-stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
+        stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
 
-tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
+        tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
     def __init__(self, path,bbox = False, additional_inputs = 0, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_type = 0, 

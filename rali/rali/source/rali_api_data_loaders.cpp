@@ -375,7 +375,7 @@ raliJpegCaffe2LMDBRecordSourceSingleShard(
                                                                                         shuffle,
                                                                                         loop,
                                                                                         context->user_batch_size(),
-                                                                                        context->master_graph->mem_type(),decoder_keep_original);
+                                                                                        context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)

@@ -47,7 +47,10 @@ onnx2ir_attr = {
     'min' : 'min',
     'max' : 'max',
     'to' : 'to', 
-    'value' : 'value'
+    'center_point_box' : 'center_point_box',
+    'value' : 'value',
+    'largest' : 'largest',
+    'sorted' : 'sorted',
 }
 
 onnx2ir_op_type = { 
@@ -85,7 +88,11 @@ onnx2ir_op_type = {
     'Cast'               : 'cast',
     'Shape'              : 'shape',  
     'ArgMax'             : 'argmax',
+    'NonMaxSuppression'  : 'nms',
     'Constant'           : 'constant',
+    'Gather'             : 'gather',
+    'TopK'               : 'topk',
+    'ReduceMin'          : 'reduce_min',
 }
 
 onnx2ir_data_type = [
@@ -157,7 +164,7 @@ def onnx_value_info_to_data(info, dims):
     return tensor
 
 def onnx_graph_to_ir_graph(onnx_graph):
-    graph = IrGraph()
+    graph = IrGraph(False)
     initializerList = []
     shapeList = []
     inputUser = False

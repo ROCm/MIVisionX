@@ -886,6 +886,25 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """  
     % (node.inputs[0], node.outputs[0]))
+            elif node.type == 'topk':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTopkLayer(graph, %s, %s, %d, %d, %d, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+"""  
+    % (node.inputs[0], node.inputs[1], node.attr.get('axis'), node.attr.get('largest'), node.attr.get('sorted'), node.outputs[0], node.outputs[1]))
+            elif node.type == 'nms':
+                f.write( \
+"""
+    { 
+      vx_node node = vxNMSLayer(graph, %s, %s, %d, %s, %s, %s, %s);
+      ERROR_CHECK_OBJECT(node);     
+        
+"""
+    % (node.inputs[0], node.inputs[1], node.attr.get('center_point_box'), node.outputs[0], node.inputs[2], node.inputs[3], node.inputs[4]))
             elif node.type == 'detection_output':
                 f.write( \
 """
@@ -923,6 +942,76 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 """      ERROR_CHECK_STATUS(vxReleaseNode(&node));
     }
 """)
+            elif node.type == 'gather':
+                f.write( \
+"""
+    { 
+      vx_int32 axis = %d;
+      vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));      
+      vx_node node = vxGatherLayer(graph, %s, %s, %s, s_axis);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.attr.get('axis'), node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'reduce_min':
+                axes = node.attr.get('axes')
+                axes_len = -1
+                if axes is None:
+                    axes = 4 #since cpp doesn't recognize None. And axes values can range between [-4,3]
+                    axes_len = 0
+                else:
+                    axes_len = len(axes)
+                if axes_len == 0:
+                    f.write(\
+"""
+    {
+      vx_node node = vxReduceMinLayer(graph, %s, %d, %d, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (node.inputs[0], axes, node.attr.get('keepdims'), node.outputs[0]))
+                else:
+                    if axes_len == 1:
+                        f.write( \
+"""
+    { 
+      int axes_list[1] = {%d};
+    }
+""" % (axes[0]))
+                    elif axes_len == 2:
+                        f.write( \
+"""
+    { 
+      int axes_list[2] = {%d, %d};
+    }
+""" % (axes[0], axes[1]))
+                    elif axes_len == 3:
+                        f.write( \
+"""
+    { 
+      int axes_list[3] = {%d, %d, %d};
+    }
+""" % (axes[0], axes[1], axes[2]))
+                    elif axes_len == 4:
+                        f.write( \
+"""
+    { 
+      int axes_list[4] = {%d, %d, %d, %d};
+    }
+""" % (axes[0], axes[1], axes[2], axes[3]))
+                    f.write( \
+"""
+    { 
+      vx_array axes =  vxCreateArray(context, VX_TYPE_INT32, %d);
+      ERROR_CHECK_STATUS(vxTruncateArray(axes,0));
+      int *axes_ptr = &axes_list[0];
+      ERROR_CHECK_STATUS(vxAddArrayItems(axes, %d, axes_ptr, sizeof(int)));
+      vx_node node = vxReduceMinLayer(graph, %s, axes, %d, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }
+""" % (axes_len, axes_len, node.inputs[0], node.attr.get('keepdims'), node.outputs[0]))
             else:
                 raise ValueError("Unsupported node by OpenVX: {}".format(node.type))
         f.write( \
@@ -2534,7 +2623,7 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     inputFolder = sys.argv[pos]
     outputFolder = sys.argv[pos+1]
     print('reading IR model from ' + inputFolder + ' ...')
-    graph = IrGraph()
+    graph = IrGraph(True)
     graph.fromFile(inputFolder)
     for tensor in graph.outputs:
         if len(tensor.shape) == 1:

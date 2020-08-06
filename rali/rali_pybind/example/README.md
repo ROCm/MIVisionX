@@ -1,34 +1,26 @@
 ## TensorFlow classification training examples - Demo with RALI pipeline
-The RALI pipeline for image augmentations can be integrated with a tensorflow image classification training graph. The 2 examples below show this use case. Please follow the following steps to replicate these trainings:
+The RALI pipeline for image augmentations can be integrated with a tensorflow image classification training graph. The example below shows this use case. Please follow the following steps to replicate the training:
 
 - Install docker using https://docs.docker.com/engine/install/ubuntu/ on a host machine running Ubuntu Bionic 18.04 (LTS) or Ubuntu Xenial 16.04 (LTS)
 - Install AMD ROCm using https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html
-- Pull the docker image containing the examples:
+- Pull the docker image containing the example:
 ```
-sudo docker pull abishekr/mlperf_rocm3.3_tf1.15:v0.2.0
+sudo docker pull abishekr/mlperf_rocm3.5_tf1.15:v0.1.0
 ```
 - Initiate a docker container:
 ```
-sudo docker run -it --network=host --device=/dev/kfd --device=/dev/dri --ipc=host --shm-size 16G --group-add video --cap-add=SYS_PTRACE --security-opt seccomp=unconfined abishekr/mlperf_rocm3.3_tf1.15:v0.2.0
-```
-
-### RALI-TensorFlow training on flowers dataset
-This example uses the RALI FileReader to read images from the disk, perform the necessary augmentations and run a classification training on the flowers dataset.
-```
-cd /root/tf_flowersTrainingExample
-```
-
-For first run, to setup the dataset, edit "train_withRALI.py" and set "DATASET_DOWNLOAD_AND_PREPROCESS = True"
-For subsequent runs, after the dataset has already been downloaded and preprocessed, set "DATASET_DOWNLOAD_AND_PREPROCESS = False"
-
-```
-python3 train_withRALI.py
+sudo docker run -it --network=host --device=/dev/kfd --device=/dev/dri --ipc=host --shm-size 16G --group-add video --cap-add=SYS_PTRACE --security-opt seccomp=unconfined abishekr/mlperf_rocm3.5_tf1.15:v0.1.0
 ```
 
 ### RALI-TensorFlow training on pets dataset
 This example uses the RALI TFRecordReader to read images from the disk, perform the necessary augmentations and run a classification training on the pets dataset.
 ```
 cd /root/tf_petsTrainingExample
+```
+
+This example can also be obtained by cloning this repository inside the docker container. This "tf_petsTrainingExample folder is present in the repository under:"
+```
+cd rali/rali_pybind/example/tf_petsTrainingExample
 ```
 
 For first run, to setup the dataset, edit "train_withRALI_withTFRecordReader.py" and set "DATASET_DOWNLOAD_AND_PREPROCESS = True"

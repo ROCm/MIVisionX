@@ -122,8 +122,10 @@ int TFRecordReader::release()
 
 void TFRecordReader::reset()
 {
+    _shuffle_time.start();
     if (_shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
+    _shuffle_time.end();
     _read_counter = 0;
     _curr_file_idx = 0;
 }

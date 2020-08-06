@@ -1,8 +1,0 @@
-.vscode
-build*
-utilities/rali/rali_unittests/build/
-apps/image_augmentation/build/
-build.sh
-rali/rali_pybind/amd_rali.egg-info/
-rali/rali_pybind/dist/
-rali/rali_pybind/example/1.2.3/

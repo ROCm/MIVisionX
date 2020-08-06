@@ -835,11 +835,11 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)
-{
+ MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type, std::map<std::string, std::string> feature_key_map)
+ {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(label_type, reader_type, source_path);
+    MetaDataConfig config(label_type, reader_type, source_path, feature_key_map);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -902,7 +902,7 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, file_prefix);
+    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);    
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);

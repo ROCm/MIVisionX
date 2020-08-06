@@ -39,6 +39,7 @@ class RALIGenericImageIterator(object):
 
 
 
+
 class RALIGenericIteratorDetection(object):
     def __init__(self, pipeline, tensor_layout = types.NCHW, reverse_channels = False, multiplier = [1.0,1.0,1.0], offset = [0.0, 0.0, 0.0], tensor_dtype=types.FLOAT):
         self.loader = pipeline
@@ -93,39 +94,51 @@ class RALIGenericIteratorDetection(object):
                 self.bboxes = np.zeros(sum*4,dtype = "float32" )
                 self.loader.GetBBLabels(self.labels,idx)
                 self.loader.GetBBCords(self.bboxes,idx)
+                
                 self.bb_2d_numpy = np.reshape(self.bboxes, (-1, 4)).tolist()
                 self.label_2d_numpy = np.reshape(self.labels, (-1, 1)).tolist()
+                
                 self.lis.append(self.bb_2d_numpy)
                 self.lis_lab.append(self.label_2d_numpy[0])
 
             self.target = self.lis
             self.target1 = self.lis_lab
 
-            tf.reset_default_graph()
+            # tf.reset_default_graph()
+
             max_cols = max([len(row) for batch in self.target for row in batch])
             max_rows = max([len(batch) for batch in self.target])
             bb_padded = [batch + [[0] * (max_cols)] * (max_rows - len(batch)) for batch in self.target]
             bb_padded_1=[row + [0] * (max_cols - len(row)) for batch in bb_padded for row in batch]
-            t=tf.convert_to_tensor(bb_padded_1)
-            self.res=tf.reshape(t, [-1,max_rows, max_cols],name="bboxes")
-            self.l = tf.convert_to_tensor(self.target1)
-            self.labels_tensor = tf.reshape(self.l, [self.bs,-1],name="label")
-
+            # t=tf.convert_to_tensor(bb_padded_1)
+            # self.res=tf.reshape(t, [-1,max_rows, max_cols],name="bboxes")
+            arr = np.asarray(bb_padded_1)
+            self.res = np.reshape(arr, (-1, max_rows, max_cols))
+            
+            # self.l = tf.convert_to_tensor(self.target1)
+            # self.labels_tensor = tf.reshape(self.l, [self.bs,-1],name="label")
+            self.l = np.asarray(self.target1)
+            self.l = np.reshape(self.l, (self.bs, -1))
+            
             if self.tensor_dtype == types.FLOAT:
-                return tf.convert_to_tensor(self.out,np.float32), self.res,self.labels_tensor
+                # return tf.convert_to_tensor(self.out,np.float32), self.res,self.labels_tensor
+                return self.out.astype(np.float32), self.res, self.l
             elif self.tensor_dtype == types.FLOAT16:
-                return tf.convert_to_tensor(self.out,np.float16), self.res,self.labels_tensor
+                # return tf.convert_to_tensor(self.out,np.float16), self.res,self.labels_tensor
+                return self.out.astype(np.float16), self.res, self.l
         elif (self.loader._name == "TFRecordReaderClassification"):
             self.labels = np.zeros((self.bs),dtype = "int32")
 
             self.loader.getImageLabels(self.labels)
-            tf.reset_default_graph()
-            self.labels_tensor = tf.convert_to_tensor(self.labels,np.int32)
+            # tf.reset_default_graph()
+            # self.labels_tensor = tf.convert_to_tensor(self.labels,np.int32)
         
             if self.tensor_dtype == types.FLOAT:
-                return tf.convert_to_tensor(self.out,np.float32), self.labels_tensor
+                # return tf.convert_to_tensor(self.out,np.float32), self.labels_tensor
+                return self.out.astype(np.float32), self.labels
             elif self.tensor_dtype == types.TensorDataType.FLOAT16:
-                return tf.convert_to_tensor(self.out,np.float16), self.labels_tensor
+                # return tf.convert_to_tensor(self.out,np.float16), self.labels_tensor
+                return self.out.astype(np.float16), self.labels
         
     def reset(self):
         b.raliResetLoaders(self.loader._handle)
@@ -165,6 +178,7 @@ class RALI_iterator(RALIGenericImageIterator):
     """
     RALI iterator for classification tasks for PyTorch. It returns 2 outputs
     (data and label) in the form of PyTorch's Tensor.
+   
     """
     def __init__(self,
                  pipelines,
@@ -175,4 +189,3 @@ class RALI_iterator(RALIGenericImageIterator):
                  last_batch_padded=False):
         pipe = pipelines
         super(RALI_iterator, self).__init__(pipe)
-

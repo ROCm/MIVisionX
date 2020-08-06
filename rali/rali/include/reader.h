@@ -21,7 +21,8 @@ THE SOFTWARE.
 */
 
 #pragma once
-
+#include <string>
+#include <map>
 enum class StorageType
 {
     FILE_SYSTEM = 0,
@@ -34,8 +35,10 @@ enum class StorageType
 
 struct ReaderConfig
 {
-    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "", bool shuffle = false, bool loop = false):_type(type), _path(path), _json_path(json_path), _shuffle(shuffle), _loop(loop) {}
-    virtual StorageType type() { return _type; };
+    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "", 
+        const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
+        bool shuffle = false, bool loop = false):_type(type), _path(path), _json_path(json_path), _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop) {}
+        virtual StorageType type() { return _type; };
     void set_path(const std::string& path) { _path = path; }
     void set_shard_id(size_t shard_id) { _shard_id = shard_id; }
     void set_shard_count(size_t shard_count) { _shard_count = shard_count; }
@@ -53,12 +56,14 @@ struct ReaderConfig
     size_t get_batch_size() { return _batch_count; }
     std::string path() { return _path; }
     std::string json_path() { return _json_path;}
+    std::map<std::string, std::string> feature_key_map() {return _feature_key_map; }
     void set_file_prefix(const std::string &prefix) {_file_prefix = prefix;}
     std::string file_prefix() {return _file_prefix;}
 private:
     StorageType _type = StorageType::FILE_SYSTEM;
     std::string _path = "";
     std::string _json_path = "";
+    std::map<std::string, std::string> _feature_key_map;
     size_t _shard_count= 1 ;
     size_t _shard_id = 0;
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.

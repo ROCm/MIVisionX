@@ -51,8 +51,10 @@ private:
     void add(std::string image_name, BoundingBoxCords bbox, BoundingBoxLabels b_labels);
     bool _last_rec;
     //std::shared_ptr<TF_Read> _TF_read = nullptr;
-    void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name);
-    // std::map<std::string, std::shared_ptr<Label>> _map_content;
+    void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name, 
+        std::string user_label_key, std::string user_text_key, 
+        std::string user_xmin_key, std::string user_ymin_key, std::string user_xmax_key, std::string user_ymax_key,
+        std::string user_filename_key);    // std::map<std::string, std::shared_ptr<Label>> _map_content;
     // std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
     // //bbox map contents
     std::map<std::string, std::shared_ptr<BoundingBox>> _map_content;
@@ -61,6 +63,7 @@ private:
     BoundingBoxBatch* _output;
     DIR *_src_dir;
     struct dirent *_entity;
+    std::map<std::string, std::string> _feature_key_map;
     std::vector<std::string> _file_names;
     std::vector<std::string> _subfolder_file_names;
     std::vector<std::string> _image_name;

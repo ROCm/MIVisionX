@@ -284,6 +284,8 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSource(RaliContext p_contex
                                                             RaliImageColor rali_color_format,
                                                             unsigned internal_shard_count,
                                                             bool is_output,
+                                                            const char* user_key_for_encoded,
+                                                            const char* user_key_for_filename,
                                                             bool shuffle = false,
                                                             bool loop = false,
                                                             RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,

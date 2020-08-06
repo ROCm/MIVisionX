@@ -37,7 +37,7 @@ void Cifar10LoaderNode::init(const std::string &source_path, const std::string &
         THROW("ERROR: loader module is not set for Cifar10LoaderNode, cannot initialize")
     _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the Cifar10LoaderNode
-    auto reader_cfg = ReaderConfig(storage_type, json_path, source_path, loop);
+    auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, std::map<std::string, std::string>(), loop);
     reader_cfg.set_batch_count(load_batch_count);
     reader_cfg.set_file_prefix(file_prefix);
     // DecoderConfig will be ignored in loader. Just passing it for api match

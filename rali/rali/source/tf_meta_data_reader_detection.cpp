@@ -36,6 +36,7 @@ using namespace std;
 void TFMetaDataReaderDetection::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
+    _feature_key_map = cfg.feature_key_map();
     _output = new BoundingBoxBatch();
     _last_rec = false;
 }
@@ -45,16 +46,6 @@ bool TFMetaDataReaderDetection::exists(const std::string& _image_name)
     return _map_content.find(_image_name) != _map_content.end();
 }
 
-// void TFMetaDataReaderDetection::add(std::string _image_name, int label)
-// {
-//     pMetaData info = std::make_shared<Label>(label);
-//     if(exists(_image_name))
-//     {
-//         WRN("Entity with the same name exists")
-//         return;
-//     }
-//     _map_content.insert(pair<std::string, std::shared_ptr<Label>>(_image_name, info));
-// }
 
 void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels)
 {
@@ -71,8 +62,6 @@ void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_
 
 void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_names)
 {
-    
-    
     if(image_names.empty())
     {
         WRN("No image names passed")
@@ -85,11 +74,7 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
     {
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
-	/*
-	 * User should provide the coco train or val folder containing images with respect to json file.
-	 * If the processed COCO image was not in the map, returns BoundingBox meta data values as zero since 
-	 * those images doesn't have annotations.
-	 */
+	
         if(_map_content.end() == it){
 
             BoundingBoxCords bb_coords;
@@ -111,18 +96,10 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
     }
 
 
-
-
-    
-
 }
 
 void TFMetaDataReaderDetection::print_map_contents()
 {
-    // std::cerr << "\nMap contents: \n";
-    // for (auto& elem : _map_content) {
-    //     std::cerr << "Name :\t " << elem.first << "\t ID:  " << elem.second->get_label() << std::endl;
-    // }
 
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
@@ -140,8 +117,14 @@ void TFMetaDataReaderDetection::print_map_contents()
     }
 }
 
-void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &_image_name)
+void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &_image_name,
+    std::string user_label_key, std::string user_text_key, 
+    std::string user_xmin_key, std::string user_ymin_key, std::string user_xmax_key, std::string user_ymax_key,
+    std::string user_filename_key)
 {
+    // std::cerr << "The user_label_key is " << user_label_key << ", and the user_filename_key is " << user_filename_key << "\n";
+    // std::cerr << "user_xmin_key is " << user_xmin_key << ", user_ymin_key is " << user_ymin_key << "\n";
+    // std::cerr << "user_xmax_key is " << user_xmax_key << ", user_ymax_key is " << user_ymax_key << "\n";
     uint length;
     length = file_contents.tellg();
 
@@ -168,46 +151,35 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     single_example.ParseFromArray(data,data_length);
     tensorflow::Features features = single_example.features();
 
-//..............
-    // tensorflow::Features features = single_example.features();
-    // features.PrintDebugString();
-//..............
 
     auto feature = features.feature();
     tensorflow::Feature single_feature,sf_xmin,sf_ymin,sf_xmax,sf_ymax,sf_fname,sf_label;
     
-    single_feature = feature.at("image/filename");
+    single_feature = feature.at(user_filename_key);
     std::string fname = single_feature.bytes_list().value()[0];
     
-    
     float bbox_xmin,bbox_ymin,size_b_xmin,bbox_xmax,bbox_ymax;
-    single_feature = feature.at("image/object/bbox/xmin");
+    single_feature = feature.at(user_xmin_key);
     size_b_xmin = single_feature.float_list().value().size();
     
-
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
     BoundingBoxCord box;
 
-    
 
     int label;
-    single_feature = feature.at("image/class/label");
+    single_feature = feature.at(user_label_key);
     label = single_feature.int64_list().value()[0];
-
-    sf_xmin = feature.at("image/object/bbox/xmin");
-    sf_ymin = feature.at("image/object/bbox/ymin");
-    sf_xmax = feature.at("image/object/bbox/xmax");
-    sf_ymax = feature.at("image/object/bbox/ymax");
-    
+    sf_xmin = feature.at(user_xmin_key);
+    sf_ymin = feature.at(user_ymin_key);
+    sf_xmax = feature.at(user_xmax_key);
+    sf_ymax = feature.at(user_ymax_key);
     for(int i=0;i<size_b_xmin;i++)
     {
-      
       bbox_xmin = sf_xmin.float_list().value()[i];
       bbox_ymin = sf_ymin.float_list().value()[i];
       bbox_xmax = sf_xmax.float_list().value()[i];
-      bbox_ymax = sf_ymax.float_list().value()[i];
-       
+      bbox_ymax = sf_ymax.float_list().value()[i]; 
       box.x = bbox_xmin;
       box.y = bbox_ymin;
       box.w = bbox_xmax;
@@ -219,7 +191,10 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       bb_labels.clear();
     }
 
+    
 
+    
+    
     file_contents.read(footer_crc, sizeof(data_crc));
     memcpy(&data_crc, footer_crc, sizeof(data_crc));
     free(header_length);
@@ -230,25 +205,40 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
 
 void TFMetaDataReaderDetection::read_all(const std::string &path)
 {
+    std::string label_key = "image/class/label";
+    std::string text_key = "image/class/text";
+    std::string xmin_key = "image/object/bbox/xmin";
+    std::string ymin_key = "image/object/bbox/ymin";
+    std::string xmax_key = "image/object/bbox/xmax";
+    std::string ymax_key = "image/object/bbox/ymax";
+    std::string filename_key = "image/filename";
+    label_key = _feature_key_map.at(label_key);
+    text_key = _feature_key_map.at(text_key);
+    xmin_key = _feature_key_map.at(xmin_key);
+    ymin_key = _feature_key_map.at(ymin_key);
+    xmax_key = _feature_key_map.at(xmax_key);
+    ymax_key = _feature_key_map.at(ymax_key);
+    filename_key = _feature_key_map.at(filename_key);
+
     read_files(path);
     for(unsigned i = 0; i < _file_names.size(); i++)
     {
         std::string fname = path + _file_names[i];
         uint length;
-        std::cerr<< "file_name:: "<<fname<<std::endl;
+        std::cerr<< "Reading for object detection - file_name:: "<<fname<<std::endl;
         std::ifstream file_contents(fname.c_str(),std::ios::binary);
         file_contents.seekg (0, std::ifstream::end);
         length = file_contents.tellg();
         file_contents.seekg (0, std::ifstream::beg);
         while(!_last_rec)
         {
-            read_record(file_contents, length, _image_name);
+            read_record(file_contents, length, _image_name, label_key, text_key, xmin_key, ymin_key, xmax_key, ymax_key, filename_key);
         }
         _last_rec = false;
         file_contents.close();
     }
   //google::protobuf::ShutdownProtobufLibrary();
-    print_map_contents();
+    // print_map_contents();
 
 }
 

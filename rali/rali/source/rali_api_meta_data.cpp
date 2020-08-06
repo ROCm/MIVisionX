@@ -50,22 +50,48 @@ RALI_API_CALL raliCreateCOCOReader(RaliContext p_context, const char* source_pat
 }
 
 RaliMetaData
-RALI_API_CALL raliCreateTFReader(RaliContext p_context, const char* source_path, bool is_output){
-    auto context = static_cast<Context*>(p_context);
+RALI_API_CALL raliCreateTFReader(RaliContext p_context, const char* source_path, bool is_output,const char* user_key_for_label, const char* user_key_for_filename)
+{    auto context = static_cast<Context*>(p_context);
     if (!context)
         THROW("Invalid rali context passed to raliCreateTFReader")
+    std::string user_key_for_label_str(user_key_for_label);
+    std::string user_key_for_filename_str(user_key_for_filename);
 
-        return context->master_graph->create_tf_record_meta_data_reader(source_path , MetaDataReaderType::TF_META_DATA_READER , MetaDataType::Label);
-}
+
+    std::map<std::string, std::string> feature_key_map = {
+        {"image/class/label", user_key_for_label_str},
+        {"image/filename",user_key_for_filename_str}
+    };
+    return context->master_graph->create_tf_record_meta_data_reader(source_path , MetaDataReaderType::TF_META_DATA_READER , MetaDataType::Label, feature_key_map);}
 
 RaliMetaData
-RALI_API_CALL raliCreateTFReaderDetection(RaliContext p_context, const char* source_path, bool is_output){
-    auto context = static_cast<Context*>(p_context);
+RALI_API_CALL raliCreateTFReaderDetection(RaliContext p_context, const char* source_path, bool is_output,
+    const char* user_key_for_label, const char* user_key_for_text, 
+    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax, 
+    const char* user_key_for_filename)
+{    auto context = static_cast<Context*>(p_context);
     if (!context)
         THROW("Invalid rali context passed to raliCreateTFReader")
 
-    return context->master_graph->create_tf_record_meta_data_reader(source_path , MetaDataReaderType::TF_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox);
+    std::string user_key_for_label_str(user_key_for_label);
+    std::string user_key_for_text_str(user_key_for_text);
+    std::string user_key_for_xmin_str(user_key_for_xmin);
+    std::string user_key_for_ymin_str(user_key_for_ymin);
+    std::string user_key_for_xmax_str(user_key_for_xmax);
+    std::string user_key_for_ymax_str(user_key_for_ymax);
+    std::string user_key_for_filename_str(user_key_for_filename);
 
+    std::map<std::string, std::string> feature_key_map = {
+        {"image/class/label", user_key_for_label_str},
+        {"image/class/text", user_key_for_text_str},
+        {"image/object/bbox/xmin", user_key_for_xmin_str},
+        {"image/object/bbox/ymin", user_key_for_ymin_str},
+        {"image/object/bbox/xmax", user_key_for_xmax_str},
+        {"image/object/bbox/ymax", user_key_for_ymax_str},
+        {"image/filename",user_key_for_filename_str}
+    };
+
+    return context->master_graph->create_tf_record_meta_data_reader(source_path , MetaDataReaderType::TF_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox, feature_key_map);
 }
 
 RaliMetaData

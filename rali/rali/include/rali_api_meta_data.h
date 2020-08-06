@@ -33,14 +33,18 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateLabelReader(RaliContext rali_con
 /// \param rali_context
 /// \param source_path path to the coco json file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
-extern "C" RaliMetaData RALI_API_CALL raliCreateTFReader(RaliContext rali_context, const char* source_path, bool is_output);
+extern "C" RaliMetaData RALI_API_CALL raliCreateTFReader(RaliContext rali_context, const char* source_path, bool is_output,
+    const char* user_key_for_label, const char* user_key_for_filename);
 
 
 ///
 /// \param rali_context
 /// \param source_path path to the coco json file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
-extern "C" RaliMetaData RALI_API_CALL raliCreateTFReaderDetection(RaliContext rali_context, const char* source_path, bool is_output);
+extern "C" RaliMetaData RALI_API_CALL raliCreateTFReaderDetection(RaliContext rali_context, const char* source_path, bool is_output,
+    const char* user_key_for_label, const char* user_key_for_text, 
+    const char* user_key_for_xmin, const char* user_key_for_ymin, const char* user_key_for_xmax, const char* user_key_for_ymax, 
+    const char* user_key_for_filename);
 
 ///
 /// \param rali_context

@@ -557,22 +557,16 @@ class ImageDecoder(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-<<<<<<< HEAD
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
                 output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-=======
-            if(self.prev.prev.data == "TFRecordReader"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
->>>>>>> AMD-master
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
-<<<<<<< HEAD
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 # output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, 4*224, 4*224)
@@ -580,11 +574,6 @@ class ImageDecoder(Node):
                 output_image = b.Caffe2_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-=======
-            if(self.prev.prev.data == "TFRecordReader"):
-                # output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, False)
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, 4*224, 4*224)
->>>>>>> AMD-master
             else:
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
@@ -655,7 +644,6 @@ class ImageDecoderRandomCrop(Node):
         num_threads = 1
         if decode_width != None and decode_height != None:
             multiplier = 4
-<<<<<<< HEAD
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
                 output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
                 output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
@@ -685,25 +673,6 @@ class ImageDecoderRandomCrop(Node):
                 # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
 #                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
 #                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
-=======
-            if(self.prev.prev.data == "TFRecordReader"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
-            else:
-#                output_image = b.FusedDecoderCrop(handle, input_image, types.RGB, num_threads, False, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height, None, None)
-                # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False, types.USER_GIVEN_SIZE_ORIG, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
-        else:
-            if(self.prev.prev.data == "TFRecordReader"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
-            else:
-#                output_image = b.FusedDecoderCrop(handle, input_image, types.RGB, num_threads, is_output, False, types.MOST_FREQUENT_SIZE, 0 , 0, None, None)
-                # output_image = b.ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, shuffle, False)
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
-                output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
->>>>>>> AMD-master
         return output_image
 
 class ColorTwist(Node):

@@ -160,7 +160,7 @@ class RALIGenericIterator(object):
         return self.len
 
     def __del__(self):
-        b.raliRelease(self.loader.handle)
+        b.raliRelease(self.loader._handle)
 
 
 class RALIClassificationIterator(RALIGenericIterator):

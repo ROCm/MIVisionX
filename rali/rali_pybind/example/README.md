@@ -1,8 +1,8 @@
 ## TensorFlow classification training examples - Demo with RALI pipeline
 The RALI pipeline for image augmentations can be integrated with a tensorflow image classification training graph. The example below shows this use case. Please follow the following steps to replicate the training:
 
-- Install docker using https://docs.docker.com/engine/install/ubuntu/ on a host machine running Ubuntu Bionic 18.04 (LTS) or Ubuntu Xenial 16.04 (LTS)
-- Install AMD ROCm using https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html
+- Install docker using <https://docs.docker.com/engine/install/ubuntu/> on a host machine running Ubuntu Bionic 18.04 (LTS) or Ubuntu Xenial 16.04 (LTS)
+- Install AMD ROCm using <https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html>
 - Pull the docker image containing the example:
 ```
 sudo docker pull abishekr/mlperf_rocm3.5_tf1.15:v0.1.0
@@ -60,7 +60,7 @@ features =
 
 Since the key names in your dataset's TFRecords might vary from those expected by RALI's TFRecordReader, please provide the following 'featureKeyMap' that maps your dataset's TFRecord key names to those expected by the TFRecordReader:
 
-### Format:
+### Format
 ```
 featureKeyMap = 
 {
@@ -69,7 +69,7 @@ featureKeyMap =
 }
 ```
 
-### Possible example for Image Classification:
+### Possible example for Image Classification
 ```
 featureKeyMap = 
 {
@@ -88,7 +88,7 @@ featureKeyMap =
 }
 ```
 
-### Possible example for Object Detection:
+### Possible example for Object Detection
 ```
 featureKeyMap = 
 {
@@ -103,7 +103,7 @@ featureKeyMap =
 }
 ```
 
-### Other Notes:
+### Other Notes
 - All necessary keys for RALI TFRecordReader are mentioned above.
 - Please ignore any additional keys that may be present in your dataset's TFRecords, and do not include them as part of "featureKeyMap".
 - The "features" argument passed to ops.TFRecordReader() remains same as described in tf_classification.py and tf_detection.py irrespective of changes in the "featureKeyMap" argument passed by the user from main().

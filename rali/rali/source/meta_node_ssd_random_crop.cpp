@@ -92,8 +92,6 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
                 //aspect ratio check
                 if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
                     continue;
-                //std::cout << "h_factor * w_factor attempt number external number" << w_factor * h_factor << " " << j << "  "
-                //            << count << std::endl;
                 break;
             }
             //Got the crop;
@@ -103,7 +101,7 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
             crop_box.x = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.w));
             crop_box.y = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.h));
             invalid_bboxes = false;
-            for (int j = 0; j < bb_count; j++)
+            for (uint j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
                 jth_box.x = coords_buf[m];
@@ -128,7 +126,7 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
                 continue;
             int valid_bbox_count = 0;
             auto left = crop_box.x, top = crop_box.y, right = crop_box.x + crop_box.w, bottom = crop_box.y + crop_box.h;
-            for (int j = 0; j < bb_count; j++)
+            for (uint j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
                 auto x_c = 0.5f * (coords_buf[m] + coords_buf[m + 2]);
@@ -162,7 +160,7 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
         _y2_val[i] = _y1_val[i] + _crop_height_val[i];
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
-        for (int j = 0, m = 0; j < bb_count; j++)
+        for (uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
             box.x = coords_buf[m++];
@@ -183,9 +181,6 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
                 bb_labels.push_back(labels_buf[j]);
             }
         }
-        //std::cout << "Output boxes:" << bb_coords.size() << std::endl;
-        //std::cout << "Input Boxes:" << bb_count << std::endl;
-        //std::cout << "Cropping Ratio" << (crop_box.w * crop_box.h) / (in_height[i] * in_width[i]) << std::endl;
         if (bb_coords.size() == 0)
         {
             std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ENOCOUNTED CASE of ZERO BBOX!!!!!" << std::endl;

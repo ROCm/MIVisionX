@@ -57,9 +57,9 @@ private:
     DIR *_src_dir;
     struct dirent *_entity;
     std::vector<std::string> _file_names;
-    MDB_env* mdb_env;
-    MDB_dbi mdb_dbi;
-    MDB_val mdb_key, mdb_value;
-    MDB_txn* mdb_txn;
-    MDB_cursor* mdb_cursor;
+    MDB_env* _mdb_env;
+    MDB_dbi _mdb_dbi;
+    MDB_val _mdb_key, _mdb_value;
+    MDB_txn* _mdb_txn;
+    MDB_cursor* _mdb_cursor;
 };

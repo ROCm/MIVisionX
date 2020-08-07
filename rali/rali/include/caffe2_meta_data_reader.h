@@ -47,7 +47,6 @@ private:
     bool exists(const std::string &image_name);
     void add(std::string image_name, int label);
     bool _last_rec;
-    //std::shared_ptr<Caffe2_Read> _Caffe2_read = nullptr;
     void read_lmdb_record(std::string file_name, uint file_size);
     std::map<std::string, std::shared_ptr<Label>> _map_content;
     std::map<std::string, std::shared_ptr<Label>>::iterator _itr;

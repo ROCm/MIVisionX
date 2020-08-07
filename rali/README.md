@@ -81,8 +81,10 @@ sudo make install
 ````
 
 ### Jsoncpp installation
+```sudo apt-get install libjsoncpp-dev
 ```
-sudo apt-get install libjsoncpp-dev
+### LMDB installation
+```sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 ```
 
 ## Sample and test applications

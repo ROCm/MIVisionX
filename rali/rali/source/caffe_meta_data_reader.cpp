@@ -126,32 +126,32 @@ void CaffeMetaDataReader::read_lmdb_record(std::string _path, uint file_byte_siz
 {
     int rc;
     // Creating an LMDB environment handle
-    E(mdb_env_create(&mdb_env));
+    E(mdb_env_create(&_mdb_env));
     // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(mdb_env, file_byte_size)); 
+    E(mdb_env_set_mapsize(_mdb_env, file_byte_size)); 
     // Opening an environment handle.
-    E(mdb_env_open(mdb_env, _path.c_str(), MDB_RDONLY, 0664));
+    E(mdb_env_open(_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
     // Creating a transaction for use with the environment
-    E(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn));
+    E(mdb_txn_begin(_mdb_env, NULL, MDB_RDONLY, &_mdb_txn));
     // Opening a database in the environment.
-    E(mdb_open(mdb_txn, NULL, 0, &mdb_dbi));
+    E(mdb_open(_mdb_txn, NULL, 0, &_mdb_dbi));
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor));
+    E(mdb_cursor_open(_mdb_txn, _mdb_dbi, &_mdb_cursor));
 
     Datum datum; 
     // Retrieve by cursor. It retrieves key/data pairs from the database   
-	while((rc = mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_NEXT)) == 0)
+	while((rc = mdb_cursor_get(_mdb_cursor, &_mdb_key, &_mdb_value, MDB_NEXT)) == 0)
     {
-        std::string file_name = string((char*) mdb_key.mv_data);
-        datum.ParseFromArray((const void*)mdb_value.mv_data, mdb_value.mv_size);
+        std::string file_name = string((char*) _mdb_key.mv_data);
+        datum.ParseFromArray((const void*)_mdb_value.mv_data, _mdb_value.mv_size);
         add(file_name.c_str(), datum.label());
     }
 
     // Closing all the LMDB environment and cursor handles
-    mdb_cursor_close(mdb_cursor);
-    mdb_close(mdb_env, mdb_dbi);
-    mdb_txn_abort(mdb_txn);
-    mdb_env_close(mdb_env);
+    mdb_cursor_close(_mdb_cursor);
+    mdb_close(_mdb_env, _mdb_dbi);
+    mdb_txn_abort(_mdb_txn);
+    mdb_env_close(_mdb_env);
 }

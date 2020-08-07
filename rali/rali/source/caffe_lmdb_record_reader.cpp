@@ -112,14 +112,14 @@ CaffeLMDBRecordReader::~CaffeLMDBRecordReader()
 
 int CaffeLMDBRecordReader::release()
 {
-    mdb_cursor_close(mdb_cursor);
-    mdb_txn_abort(mdb_txn);
-    mdb_close(mdb_env, mdb_dbi);
+    mdb_cursor_close(_mdb_cursor);
+    mdb_txn_abort(_mdb_txn);
+    mdb_close(_mdb_env, _mdb_dbi);
 
-    mdb_env_close(mdb_env);
-    mdb_cursor = nullptr;
-    mdb_txn = nullptr;
-    mdb_env = nullptr;
+    mdb_env_close(_mdb_env);
+    _mdb_cursor = nullptr;
+    _mdb_txn = nullptr;
+    _mdb_env = nullptr;
     return 0;
 }
 
@@ -190,33 +190,33 @@ void CaffeLMDBRecordReader::read_image_names()
 {
     int rc;
     // Creating an LMDB environment handle
-    E(mdb_env_create(&mdb_env));
+    E(mdb_env_create(&_mdb_env));
     // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(mdb_env, _file_byte_size));
+    E(mdb_env_set_mapsize(_mdb_env, _file_byte_size));
     // Opening an environment handle.
-    E(mdb_env_open(mdb_env, _path.c_str(), MDB_RDONLY, 0664));
+    E(mdb_env_open(_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
     // Creating a transaction for use with the environment
-    E(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn));
+    E(mdb_txn_begin(_mdb_env, NULL, MDB_RDONLY, &_mdb_txn));
     // Opening a database in the environment.
-    E(mdb_open(mdb_txn, NULL, 0, &mdb_dbi));
+    E(mdb_open(_mdb_txn, NULL, 0, &_mdb_dbi));
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor));
+    E(mdb_cursor_open(_mdb_txn, _mdb_dbi, &_mdb_cursor));
 
     // Retrieve by cursor. It retrieves key/data pairs from the database
-    while ((rc = mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_NEXT)) == 0)
+    while ((rc = mdb_cursor_get(_mdb_cursor, &_mdb_key, &_mdb_value, MDB_NEXT)) == 0)
     {
         Datum datum;
         caffe_protos::AnnotatedDatum annotatedDatum_protos;
-        annotatedDatum_protos.ParseFromArray((char *)mdb_value.mv_data, mdb_value.mv_size);
+        annotatedDatum_protos.ParseFromArray((char *)_mdb_value.mv_data, _mdb_value.mv_size);
         // Checking image Datum
         int check_image_datum = annotatedDatum_protos.has_datum();
 
         if (check_image_datum)
             datum = annotatedDatum_protos.datum(); // parse datum for detection
         else
-            datum.ParseFromArray((const void *)mdb_value.mv_data, mdb_value.mv_size); //parse datum for classification
+            datum.ParseFromArray((const void *)_mdb_value.mv_data, _mdb_value.mv_size); //parse datum for classification
 
         if (get_file_shard_id() != _shard_id)
         {
@@ -226,7 +226,7 @@ void CaffeLMDBRecordReader::read_image_names()
         _in_batch_read_count++;
         _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
 
-        string image_key = string((char *)mdb_key.mv_data);
+        string image_key = string((char *)_mdb_key.mv_data);
 
         _file_names.push_back(image_key.c_str());
         _last_file_name = image_key.c_str();
@@ -244,36 +244,36 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
 {
     int rc;
     // Creating an LMDB environment handle
-    E(mdb_env_create(&mdb_env));
+    E(mdb_env_create(&_mdb_env));
     // Setting the size of the memory map to use for this environment.
     // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(mdb_env, _file_byte_size));
+    E(mdb_env_set_mapsize(_mdb_env, _file_byte_size));
     // Opening an environment handle.
-    E(mdb_env_open(mdb_env, _path.c_str(), MDB_RDONLY, 0664));
+    E(mdb_env_open(_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
     // Creating a transaction for use with the environment
-    E(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn));
+    E(mdb_txn_begin(_mdb_env, NULL, MDB_RDONLY, &_mdb_txn));
     // Opening a database in the environment.
-    E(mdb_open(mdb_txn, NULL, 0, &mdb_dbi));
+    E(mdb_open(_mdb_txn, NULL, 0, &_mdb_dbi));
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor));
+    E(mdb_cursor_open(_mdb_txn, _mdb_dbi, &_mdb_cursor));
 
     // Retrieve by cursor. It retrieves key/data pairs from the database
-    while ((rc = mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_NEXT)) == 0)
+    while ((rc = mdb_cursor_get(_mdb_cursor, &_mdb_key, &_mdb_value, MDB_NEXT)) == 0)
     {
         Datum datum;
-        string image_key = string((char *)mdb_key.mv_data);
+        string image_key = string((char *)_mdb_key.mv_data);
         if (image_key == file_name)
         {
         caffe_protos::AnnotatedDatum annotatedDatum_protos;
-        annotatedDatum_protos.ParseFromArray((char *)mdb_value.mv_data, mdb_value.mv_size);
+        annotatedDatum_protos.ParseFromArray((char *)_mdb_value.mv_data, _mdb_value.mv_size);
         // Checking image Datum
         int check_image_datum = annotatedDatum_protos.has_datum();
 
         if (check_image_datum)
             datum = annotatedDatum_protos.datum(); // parse datum for detection
         else
-            datum.ParseFromArray((const void *)mdb_value.mv_data, mdb_value.mv_size); //parse datum for classification
+            datum.ParseFromArray((const void *)_mdb_value.mv_data, _mdb_value.mv_size); //parse datum for classification
             
         memcpy(buff, datum.data().c_str(), datum.data().size());
         break;

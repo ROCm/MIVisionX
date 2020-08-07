@@ -110,7 +110,7 @@ void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byt
 	MDB_val key, data;
 	MDB_txn *txn;
 	MDB_cursor *cursor;
-    string str_key, str_data;
+    string str_key;
 
     // Creating an LMDB environment handle
 	E(mdb_env_create(&env));
@@ -132,12 +132,8 @@ void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byt
 	while((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0)
     {		
         // Reading the key value for each record from LMDB 
-        str_key = string((char *) key.mv_data);                                                                                                                                                                                                        
-        // cout << "kEY_SIZE: "  << key.mv_size << endl;                                                                           
-        // cout << "KEY DATA: " << str_key << endl;
-        // Reading the data value for each record from LMDB
-        str_data = string((char *) data.mv_data);        
-        // cout << "DATA_SIZE: " << data.mv_size << endl;   
+        str_key = string((char *) key.mv_data); 
+        // str_data = string((char *) data.mv_data); 
         
         // Parsing Image and Label Protos using the key and data values
         // read from LMDB records
@@ -156,7 +152,6 @@ void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byt
             {
                 // Parsing label data
                 auto label_data = label_proto.int32_data(0);
-                // cout << "Label Data: " << label_data << endl;
                 add(str_key.c_str(), (int)label_data);
             }
         }

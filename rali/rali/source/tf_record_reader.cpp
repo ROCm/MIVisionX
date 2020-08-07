@@ -214,7 +214,11 @@ void TFRecordReader::read_image_names(std::ifstream &file_contents, uint file_si
         char *header_crc = new char[uint32_size];
         char *footer_crc = new char[uint32_size];
         file_contents.read(header_length, uint64_size);
+        if(!file_contents)
+            THROW("TFRecordReader: Error in reading TF records")
         file_contents.read(header_crc, uint32_size);
+        if(!file_contents)
+            THROW("TFRecordReader: Error in reading TF records")
         memcpy(&data_length, header_length, sizeof(data_length));
         memcpy(&length_crc, header_crc, sizeof(length_crc));
         if(uint(length + data_length + 16) == file_size)
@@ -224,6 +228,8 @@ void TFRecordReader::read_image_names(std::ifstream &file_contents, uint file_si
         }
         char *data = new char[data_length];
         file_contents.read(data,data_length);
+        if(!file_contents)
+            THROW("TFRecordReader: Error in reading TF records")
         _single_example.ParseFromArray(data,data_length);
         _features = _single_example.features();
         auto feature = _features.feature();
@@ -240,6 +246,8 @@ void TFRecordReader::read_image_names(std::ifstream &file_contents, uint file_si
         {
             incremenet_file_id();
             file_contents.read(footer_crc, sizeof(data_crc));
+            if(!file_contents)
+                THROW("TFRecordReader: Error in reading TF records")
             continue;
         }
         _file_names.push_back(file_path);
@@ -248,17 +256,20 @@ void TFRecordReader::read_image_names(std::ifstream &file_contents, uint file_si
         _single_feature = feature.at(_encoded_key);
         _last_file_size  = _single_feature.bytes_list().value()[0].size();
         _file_size.insert(std::pair<std::string, unsigned int>(_last_file_name, _last_file_size));
-	file_contents.read(footer_crc, sizeof(data_crc));
+	    file_contents.read(footer_crc, sizeof(data_crc));
+        if(!file_contents)
+            THROW("TFRecordReader: Error in reading TF records")
         memcpy(&data_crc, footer_crc, sizeof(data_crc));
-        free(header_length);
-        free(header_crc);
-        free(footer_crc);
-        free(data);
+        delete[] header_length;
+        delete[] header_crc;
+        delete[] footer_crc;
+        delete[] data;
     }
 }
 
-void TFRecordReader::read_image(unsigned char* buff, std::string file_name, uint file_size)
+Reader::Status TFRecordReader::read_image(unsigned char* buff, std::string file_name, uint file_size)
 {
+    auto ret = Reader::Status::OK;
     std::string temp = file_name.substr(0, file_name.find_last_of("\\/"));
     const size_t last_slash_idx = file_name.find_last_of("\\/");
     if (std::string::npos != last_slash_idx)
@@ -282,11 +293,17 @@ void TFRecordReader::read_image(unsigned char* buff, std::string file_name, uint
     char *header_crc = new char[uint32_size];
     char *footer_crc = new char[uint32_size];
     file_contents.read(header_length, uint64_size);
+    if(!file_contents)
+        THROW("TFRecordReader: Error in reading TF records")
     file_contents.read(header_crc, uint32_size);
+    if(!file_contents)
+        THROW("TFRecordReader: Error in reading TF records")
     memcpy(&data_length, header_length, sizeof(data_length));
     memcpy(&length_crc, header_crc, sizeof(length_crc));
     char *data = new char[data_length];
     file_contents.read(data, data_length);
+    if(!file_contents)
+        THROW("TFRecordReader: Error in reading TF records")
     _single_example.ParseFromArray(data,data_length);
     _features = _single_example.features();
     auto feature = _features.feature();
@@ -298,10 +315,13 @@ void TFRecordReader::read_image(unsigned char* buff, std::string file_name, uint
         memcpy(buff, _single_feature.bytes_list().value()[0].c_str(),_single_feature.bytes_list().value()[0].size());
     }
     file_contents.read(footer_crc, sizeof(data_crc));
+    if(!file_contents)
+        THROW("TFRecordReader: Error in reading TF records")
     memcpy(&data_crc, footer_crc, sizeof(data_crc));
-    free(header_length);
-    free(header_crc);
-    free(footer_crc);
+    delete[] header_length;
+    delete[] header_crc;
+    delete[] footer_crc;
+    delete[] data;
     file_contents.close();
-    free(data);
+    return ret;
 }

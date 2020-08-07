@@ -39,12 +39,11 @@ void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     vxCopyArrayRange((vx_array)_src_height, 0, _batch_size, sizeof(uint),_src_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     _dst_width = _node->get_dst_width();
     _dst_height = _node->get_dst_height();
-    unsigned bb_count;
     for(int i = 0; i < _batch_size; i++)
     {
         _dst_to_src_width_ratio = _dst_width / float(_src_width_val[i]);
         _dst_to_src_height_ratio = _dst_height / float(_src_height_val[i]);
-        bb_count = input_meta_data->get_bb_labels_batch()[i].size();
+        auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         int labels_buf[bb_count];
         float coords_buf[bb_count*4];
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);

@@ -47,11 +47,10 @@ void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     vxCopyArrayRange((vx_array)_y1, 0, _batch_size, sizeof(uint),_y1_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_x2, 0, _batch_size, sizeof(uint),_x2_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_y2, 0, _batch_size, sizeof(uint),_y2_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    unsigned bb_count;
+
     for(int i = 0; i < _batch_size; i++)
     {
-        // std::cerr<<"\n x1:: "<<_x1_val[i]<<"\t y1:: "<<_y1_val[i];
-        bb_count = input_meta_data->get_bb_labels_batch()[i].size();
+        auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         int labels_buf[bb_count];
         float coords_buf[bb_count*4];
         memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);

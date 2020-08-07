@@ -122,9 +122,6 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     std::string user_xmin_key, std::string user_ymin_key, std::string user_xmax_key, std::string user_ymax_key,
     std::string user_filename_key)
 {
-    // std::cerr << "The user_label_key is " << user_label_key << ", and the user_filename_key is " << user_filename_key << "\n";
-    // std::cerr << "user_xmin_key is " << user_xmin_key << ", user_ymin_key is " << user_ymin_key << "\n";
-    // std::cerr << "user_xmax_key is " << user_xmax_key << ", user_ymax_key is " << user_ymax_key << "\n";
     uint length;
     length = file_contents.tellg();
 
@@ -138,7 +135,11 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     char * header_crc = new char [uint32_size];
     char * footer_crc = new char [uint32_size];
     file_contents.read(header_length, uint64_size);
+    if(!file_contents)
+        THROW("TFMetaDataReaderDetection: Error in reading TF records")
     file_contents.read(header_crc, uint32_size);
+    if(!file_contents)
+        THROW("TFMetaDataReaderDetection: Error in reading TF records")
     memcpy(&data_length, header_length, sizeof(data_length));
     memcpy(&length_crc, header_crc, sizeof(length_crc));
 
@@ -147,25 +148,24 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     }
     char *data = new char[data_length];
     file_contents.read(data,data_length);
+    if(!file_contents)
+        THROW("TFMetaDataReaderDetection: Error in reading TF records")
     tensorflow::Example single_example;
     single_example.ParseFromArray(data,data_length);
     tensorflow::Features features = single_example.features();
-
 
     auto feature = features.feature();
     tensorflow::Feature single_feature,sf_xmin,sf_ymin,sf_xmax,sf_ymax,sf_fname,sf_label;
     
     single_feature = feature.at(user_filename_key);
     std::string fname = single_feature.bytes_list().value()[0];
-    
-    float bbox_xmin,bbox_ymin,size_b_xmin,bbox_xmax,bbox_ymax;
+    float  size_b_xmin;
     single_feature = feature.at(user_xmin_key);
     size_b_xmin = single_feature.float_list().value().size();
     
     BoundingBoxCords bb_coords;
     BoundingBoxLabels bb_labels;
     BoundingBoxCord box;
-
 
     int label;
     single_feature = feature.at(user_label_key);
@@ -174,8 +174,9 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     sf_ymin = feature.at(user_ymin_key);
     sf_xmax = feature.at(user_xmax_key);
     sf_ymax = feature.at(user_ymax_key);
-    for(int i=0;i<size_b_xmin;i++)
+    for(int i = 0; i < size_b_xmin; i++)
     {
+      float bbox_xmin, bbox_ymin,bbox_xmax, bbox_ymax;
       bbox_xmin = sf_xmin.float_list().value()[i];
       bbox_ymin = sf_ymin.float_list().value()[i];
       bbox_xmax = sf_xmax.float_list().value()[i];
@@ -190,17 +191,14 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       bb_coords.clear();
       bb_labels.clear();
     }
-
-    
-
-    
-    
     file_contents.read(footer_crc, sizeof(data_crc));
+    if(!file_contents)
+        THROW("TFMetaDataReaderDetection: Error in reading TF records")
     memcpy(&data_crc, footer_crc, sizeof(data_crc));
-    free(header_length);
-    free(header_crc);
-    free(footer_crc);
-    free(data);
+    delete[] header_length;
+    delete[] header_crc;
+    delete[] footer_crc;
+    delete[] data;
 }
 
 void TFMetaDataReaderDetection::read_all(const std::string &path)

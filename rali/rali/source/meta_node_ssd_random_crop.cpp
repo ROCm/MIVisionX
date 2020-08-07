@@ -64,10 +64,9 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
     in_height = _meta_crop_param->in_height;
     bool invalid_bboxes = true;
     BoundingBoxCord crop_box, jth_box;
-    int bb_count;
     for (int i = 0; i < _batch_size; i++)
     {
-        bb_count = input_meta_data->get_bb_labels_batch()[i].size();
+        auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         std::vector<int> labels_buf(bb_count);
         memcpy(labels_buf.data(), input_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         std::vector<float> coords_buf(bb_count * 4);

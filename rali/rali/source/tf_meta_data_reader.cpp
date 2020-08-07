@@ -101,7 +101,11 @@ void TFMetaDataReader::read_record(std::ifstream &file_contents, uint file_size,
     char * header_crc = new char [uint32_size];
     char * footer_crc = new char [uint32_size];
     file_contents.read(header_length, uint64_size);
+    if(!file_contents)
+        THROW("TFMetaDataReader: Error in reading TF records")
     file_contents.read(header_crc, uint32_size);
+    if(!file_contents)
+        THROW("TFMetaDataReader: Error in reading TF records")
     memcpy(&data_length, header_length, sizeof(data_length));
     memcpy(&length_crc, header_crc, sizeof(length_crc));
     if(length + data_length + 16 == file_size){
@@ -109,6 +113,8 @@ void TFMetaDataReader::read_record(std::ifstream &file_contents, uint file_size,
     }
     char *data = new char[data_length];
     file_contents.read(data,data_length);
+    if(!file_contents)
+        THROW("TFMetaDataReader: Error in reading TF records")
     tensorflow::Example single_example;
     single_example.ParseFromArray(data,data_length);
     tensorflow::Features features = single_example.features();
@@ -126,11 +132,13 @@ void TFMetaDataReader::read_record(std::ifstream &file_contents, uint file_size,
     label = single_feature.int64_list().value()[0];
     add(fname, label);
     file_contents.read(footer_crc, sizeof(data_crc));
+    if(!file_contents)
+        THROW("TFMetaDataReader: Error in reading TF records")
     memcpy(&data_crc, footer_crc, sizeof(data_crc));
-    free(header_length);
-    free(header_crc);
-    free(footer_crc);
-    free(data);
+    delete[] header_length;
+    delete[] header_crc;
+    delete[] footer_crc;
+    delete[] data;
 }
 
 void TFMetaDataReader::read_all(const std::string &path)

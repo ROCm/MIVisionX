@@ -37,6 +37,7 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Tensor Min|vxTensorMinNode|com.amd.nn_extension.tensor_min |
 | Tensor Multiply|vxTensorMultiplyNode|org.khronos.openvx.tensor_multiply |
 | Tensor Subtract|vxTensorSubtractNode|org.khronos.openvx.tensor_subtract |
+| Tile|vxTileLayer|com.amd.nn_extension.tile_layer |
 | TopK|vxTopKLayer|com.amd.nn_extension.topk_layer|
 | Upsample Nearest Neighborhood|vxUpsampleNearestLayer|com.amd.nn_extension.upsample_nearest_layer |
 

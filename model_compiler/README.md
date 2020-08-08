@@ -351,6 +351,7 @@ Test code with preprocessing add / multiply values to normalize the input tensor
 |Squeeze||&#9745;|&#9745;|
 |Sub||&#9745;|&#9745;|
 |Sum||&#9745;||
+|Tile||&#9745;||
 |TopK||&#9745;||
 |Transpose||&#9745;|&#9745;|
 |Unsqueeze||&#9745;|&#9745;|

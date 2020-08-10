@@ -37,19 +37,17 @@ public:
     std::shared_ptr<RandomCropNode> _node = nullptr;
     std::vector<uint32_t> in_width, in_height;
     void set_threshold(float threshold) { _threshold = threshold; }
-    Parameter<float> *area_factor;
-    Parameter<float> *aspect_ratio_factor;
+    void set_num_of_attempts(int num_of_attempts){_num_of_attempts = num_of_attempts;}
     Parameter<float> *x_drift_factor;
     Parameter<float> *y_drift_factor;
 
 private:
-    void initialize();
-    BoundingBoxCord generate_random_crop(int img_idx);
     std::shared_ptr<RaliRandomCropParam> _meta_crop_param;
     vx_array _crop_width, _crop_height, _x1, _y1, _x2, _y2;
     std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val, _x2_val, _y2_val;
     unsigned int _dst_width, _dst_height;
     float _threshold = 0.5;
     int   _num_of_attempts = 20;
-    constexpr static float ASPECT_RATIO_RANGE[2] = {0.7500, 1.333};
+    bool  _enitire_iou = true; // For entire_iou - true and For relative iou - false
+    void initialize();
 };

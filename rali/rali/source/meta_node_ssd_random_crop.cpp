@@ -38,6 +38,7 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
         _batch_size = input_meta_data->size();
     }
     set_threshold(_node->get_threshold());
+    set_num_of_attempts(_node->get_num_of_attempts());
     _meta_crop_param = _node->get_crop_param();
     _dst_width = _node->get_dst_width();
     _dst_height = _node->get_dst_height();
@@ -54,19 +55,25 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
     vxCopyArrayRange((vx_array)_x2, 0, _batch_size, sizeof(uint), _x2_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_y2, 0, _batch_size, sizeof(uint), _y2_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 
-    area_factor = _meta_crop_param->get_area_factor();
-    aspect_ratio_factor = _meta_crop_param->get_aspect_ratio();
     x_drift_factor = _meta_crop_param->get_x_drift_factor();
     y_drift_factor = _meta_crop_param->get_y_drift_factor();
 
-    //These Two Variable are suffincient for now
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 6);
+    const std::vector<std::pair<float, float>> IOU = {std::make_pair(0.0f, 1.0f), std::make_pair(0.1f, 1.0f), std::make_pair(0.3f, 1.0f),
+                                            std::make_pair(0.5f, 1.0f), std::make_pair(0.45f, 1.0f), std::make_pair(0.35f, 1.0f), std::make_pair(0.0f, 1.0f) };   
+    int sample_option;
+    std::pair<float, float> iou;
+    float min_iou, max_iou;
     in_width = _meta_crop_param->in_width;
     in_height = _meta_crop_param->in_height;
     bool invalid_bboxes = true;
+    _enitire_iou = true;
     BoundingBoxCord crop_box, jth_box;
     for (int i = 0; i < _batch_size; i++)
     {
-        auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
+        int bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         std::vector<int> labels_buf(bb_count);
         memcpy(labels_buf.data(), input_meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         std::vector<float> coords_buf(bb_count * 4);
@@ -75,14 +82,26 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
         crop_box.w = _crop_width_val[i];
         crop_box.x = _x1_val[i];
         crop_box.y = _y1_val[i];
-        int count = 1000;
-        int min_left = INT32_MAX, min_top = INT32_MAX, max_right = INT32_MIN, max_bottom = INT32_MIN;
-        while (--count)
+        while (true)
         {
+            sample_option = dis(gen);
+            iou =  IOU[sample_option];
+            min_iou = iou.first;
+            max_iou = iou.second;
+            sample_option = 0;
+            if (!sample_option)
+            {
+                crop_box.x = 0;
+                crop_box.y = 0;
+                crop_box.h = in_height[i];
+                crop_box.w = in_width[i];
+                break;
+            }
+
             for (int j = 0; j < _num_of_attempts; j++)
             {
                 x_drift_factor->renew();
-                float factor = 0.5f;
+                float factor = 0.3f;
                 auto w_factor = factor + (x_drift_factor->get() * (1 - factor));
                 crop_box.w = w_factor * in_width[i];
                 y_drift_factor->renew();
@@ -101,91 +120,104 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
             crop_box.x = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.w));
             crop_box.y = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.h));
             invalid_bboxes = false;
-            for (uint j = 0; j < bb_count; j++)
+
+            for (int j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
                 jth_box.x = coords_buf[m];
                 jth_box.y = coords_buf[m + 1];
                 jth_box.w = coords_buf[m + 2];
                 jth_box.h = coords_buf[m + 3];
-                min_left = std::min(min_left, (int)coords_buf[m]);
-                min_top = std::min(min_top, (int)coords_buf[m + 1]);
-                max_right = std::max(max_right, (int)(coords_buf[m] + coords_buf[m + 2]));
-                max_bottom = std::max(max_bottom, (int)(coords_buf[m + 1] + coords_buf[m + 3]));
-                if (BBoxIntersectionOverUnion(jth_box, crop_box, false) < 0.5)
+                float bb_iou = BBoxIntersectionOverUnion(jth_box, crop_box, _enitire_iou); 
+                if (bb_iou < min_iou || bb_iou > max_iou )
                 {
                     invalid_bboxes = true;
                     break;
                 }
-            }
-            min_left = std::max(min_left, 0);
-            min_top = std::max(min_top, 0);
-            max_right = std::min(max_right, (int)in_width[i]);
-            max_bottom = std::min(max_bottom, (int)in_height[i]);
+            }  
+
             if (invalid_bboxes)
                 continue;
             int valid_bbox_count = 0;
             auto left = crop_box.x, top = crop_box.y, right = crop_box.x + crop_box.w, bottom = crop_box.y + crop_box.h;
-            for (uint j = 0; j < bb_count; j++)
+            for (int j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
-                auto x_c = 0.5f * (coords_buf[m] + coords_buf[m + 2]);
-                auto y_c = 0.5f * (coords_buf[m + 1] + coords_buf[m + 3]);
+                auto x_c = 0.5f * (2 * coords_buf[m] + coords_buf[m + 2]);
+                auto y_c = 0.5f * (2 * coords_buf[m + 1] + coords_buf[m + 3]);
                 if ((x_c >= left) && (x_c <= right) && (y_c >= top) && (y_c <= bottom))
                     valid_bbox_count++;
             }
-            if (valid_bbox_count == 0 && bb_count != 0)
+            if (valid_bbox_count == 0)
                 continue;
             break;
-        }               // while loop
-        if (count == 0) // Did not get a crop even after 1000 attempts of random crops
-        {
-            _x1_val[i] = std::min(static_cast<size_t>(min_left), static_cast<size_t>(0.1 * in_width[i]));
-            _y1_val[i] = std::min(static_cast<size_t>(min_top), static_cast<size_t>(0.1 * in_height[i]));
-            _crop_width_val[i] = std::max(static_cast<size_t>(max_right), static_cast<size_t>(0.8 * in_width[i]));
-            _crop_height_val[i] = std::max(static_cast<size_t>(max_bottom), static_cast<size_t>(0.8 * in_height[i]));
-            crop_box.x = _x1_val[i];
-            crop_box.y = _y1_val[i];
-            crop_box.w = _crop_width_val[i];
-            crop_box.h = _crop_height_val[i];
-        }
-        else
-        {
-            _crop_height_val[i] = crop_box.h;
-            _crop_width_val[i] = crop_box.w;
-            _x1_val[i] = crop_box.x;
-            _y1_val[i] = crop_box.y;
-        }
-        _x2_val[i] = _x1_val[i] + _crop_width_val[i];
-        _y2_val[i] = _y1_val[i] + _crop_height_val[i];
+        } // while loop
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
-        for (uint j = 0, m = 0; j < bb_count; j++)
+        for (int j = 0; j < bb_count; j++)
         {
+            int m = j*4;
             BoundingBoxCord box;
             box.x = coords_buf[m++];
             box.y = coords_buf[m++];
             box.w = coords_buf[m++];
             box.h = coords_buf[m++];
-            if (BBoxIntersectionOverUnion(box, crop_box, false) >= 0.5)
+            if(sample_option)
             {
-                float xA = std::max(crop_box.x, box.x);
-                float yA = std::max(crop_box.y, box.y);
-                float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
-                float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-                box.x = xA - _x1_val[i];
-                box.y = yA - _y1_val[i];
-                box.w = xB - xA;
-                box.h = yB - yA;
+                auto x_c = 0.5f * (box.x + box.x + box.w);
+                auto y_c = 0.5f * (box.y + box.y + box.h);
+                if ((x_c >= crop_box.x) && (x_c <= crop_box.x + crop_box.w) && (y_c >= crop_box.y) && (y_c <= crop_box.y + crop_box.h))
+                {
+                    float bb_iou = BBoxIntersectionOverUnion(jth_box, crop_box, _enitire_iou); 
+                    if (bb_iou >= min_iou && bb_iou <= max_iou)
+                    {
+                        float xA = std::max(crop_box.x, box.x);
+                        float yA = std::max(crop_box.y, box.y);
+                        float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
+                        float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
+                        box.x =  xA - crop_box.x;
+                        box.y =  yA - crop_box.y;
+                        box.w = xB - xA;
+                        box.h = yB - yA;
+                        bb_coords.push_back(box);
+                        bb_labels.push_back(labels_buf[j]);
+                    }
+                }    
+            }
+            else
+            {
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }
         }
-        if (bb_coords.size() == 0)
+        #if 0
+        std::cout << " BBox Information!!!!!! " << std::endl;
+        std::cout << " number of input bboxes " << bb_count << std::endl;
+        for (int j = 0; j < bb_count; j++)
         {
-            std::cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ENOCOUNTED CASE of ZERO BBOX!!!!!" << std::endl;
-            exit(-1);
+            int m = j*4;
+            BoundingBoxCord box;
+            box.x = coords_buf[m++];
+            box.y = coords_buf[m++];
+            box.w = coords_buf[m++];
+            box.h = coords_buf[m++];
+            std::cout << "Input Box  " << box.x << " " << box.y << " " << box.w << " " << box.h << " Label :" << labels_buf[j] << std::endl;  
         }
+        std::cout << " number of output bboxes " << bb_coords.size() << std::endl;
+        for(int j = 0 ; j < bb_coords.size(); j++)
+        {
+            BoundingBoxCord box = bb_coords[j];
+            std::cout << "Output Box  " << box.x << " " << box.y << " " << box.w << " " << box.h << " Label :" << bb_labels[j] << std::endl;  
+        }
+        std::cout << " BBox Information!!!!!! " << std::endl;
+        #endif
+        
+        _x1_val[i] = crop_box.x;
+        _y1_val[i] = crop_box.y;
+        _crop_width_val[i] = crop_box.w;
+        _crop_height_val[i] = crop_box.h;
+        _x2_val[i] = _x1_val[i] + crop_box.w;
+        _y2_val[i] = _y2_val[i] + crop_box.h;
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;
     }

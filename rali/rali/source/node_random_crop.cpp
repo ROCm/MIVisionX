@@ -68,10 +68,11 @@ void RandomCropNode::init(float crop_area_factor, float crop_aspect_ratio, float
 {
    
 }
-void RandomCropNode::init(FloatParam *crop_area_factor, FloatParam  *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
+void RandomCropNode::init(FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift, int num_of_attempts)
 {
     _crop_param->set_x_drift_factor(core(x_drift));
     _crop_param->set_y_drift_factor(core(y_drift));
     _crop_param->set_area_factor(core(crop_area_factor));
-    _crop_param->set_aspect_ratio(core(crop_aspect_ratio));  
+    _crop_param->set_aspect_ratio(core(crop_aspect_ratio));
+    _num_of_attempts = num_of_attempts;
 }

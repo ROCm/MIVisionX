@@ -1744,47 +1744,8 @@ raliRandomCrop(
         RaliFloatParam p_crop_area_factor,
         RaliFloatParam p_crop_aspect_ratio,
         RaliFloatParam p_crop_pox_x,
-        RaliFloatParam p_crop_pos_y)
-{
-    Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);
-    auto input = static_cast<Image*>(p_input);
-    auto crop_area_factor  = static_cast<FloatParam*>(p_crop_area_factor);
-    auto crop_aspect_ratio = static_cast<FloatParam*>(p_crop_aspect_ratio);
-    auto x_drift = static_cast<FloatParam*>(p_crop_pox_x);
-    auto y_drift = static_cast<FloatParam*>(p_crop_pos_y);
-
-    try
-    {
-        if(!input || !context)
-            THROW("Null values passed as input")
-        ImageInfo output_info = input->info();
-        output_info.width(input->info().width());
-        output_info.height(input->info().height_single());
-        output = context->master_graph->create_image(output_info, is_output);
-        output->reset_image_roi();
-        context->master_graph->add_node<RandomCropNode>({input}, {output})->init(crop_area_factor, crop_aspect_ratio,
-                                                                           x_drift, y_drift);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-    }
-    return output;
-}
-
-
-extern "C" RaliImage RALI_API_CALL
-raliSSDRandomCrop(
-        RaliContext p_context,
-        RaliImage p_input,
-        bool is_output,
-        RaliFloatParam p_threshold,
-        RaliFloatParam p_crop_area_factor,
-        RaliFloatParam p_crop_aspect_ratio,
-        RaliFloatParam p_crop_pox_x,
-        RaliFloatParam p_crop_pos_y)
+        RaliFloatParam p_crop_pos_y,
+        int num_of_attempts)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -1804,7 +1765,7 @@ raliSSDRandomCrop(
         output = context->master_graph->create_image(output_info, is_output);
         output->reset_image_roi();
         std::shared_ptr<RandomCropNode> crop_node =  context->master_graph->add_node<RandomCropNode>({input}, {output});
-        crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift);
+        crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts);
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
     }
@@ -1816,51 +1777,39 @@ raliSSDRandomCrop(
     return output;
 }
 
-
-
-RaliImage  RALI_API_CALL
-raliCopy(
+extern "C" RaliImage RALI_API_CALL
+raliSSDRandomCrop(
         RaliContext p_context,
         RaliImage p_input,
-        bool is_output)
+        bool is_output,
+        RaliFloatParam p_threshold,
+        RaliFloatParam p_crop_area_factor,
+        RaliFloatParam p_crop_aspect_ratio,
+        RaliFloatParam p_crop_pox_x,
+        RaliFloatParam p_crop_pos_y,
+        int num_of_attempts)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
+    auto crop_area_factor  = static_cast<FloatParam*>(p_crop_area_factor);
+    auto crop_aspect_ratio = static_cast<FloatParam*>(p_crop_aspect_ratio);
+    auto x_drift = static_cast<FloatParam*>(p_crop_pox_x);
+    auto y_drift = static_cast<FloatParam*>(p_crop_pos_y);
+
     try
     {
         if(!input || !context)
             THROW("Null values passed as input")
-
-        output = context->master_graph->create_image(input->info(), is_output);
-
-        context->master_graph->add_node<CopyNode>({input}, {output});
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-    }
-    return output;
-}
-
-RaliImage  RALI_API_CALL
-raliNop(
-        RaliContext p_context,
-        RaliImage p_input,
-        bool is_output)
-{
-    Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);
-    auto input = static_cast<Image*>(p_input);
-    try
-    {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
-        output = context->master_graph->create_image(input->info(), is_output);
-
-        context->master_graph->add_node<NopNode>({input}, {output});
+        ImageInfo output_info = input->info();
+        output_info.width(input->info().width());
+        output_info.height(input->info().height_single());
+        output = context->master_graph->create_image(output_info, is_output);
+        output->reset_image_roi();
+        std::shared_ptr<RandomCropNode> crop_node =  context->master_graph->add_node<RandomCropNode>({input}, {output});
+        crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts);
+        if (context->master_graph->meta_data_graph())
+            context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
     }
     catch(const std::exception& e)
     {

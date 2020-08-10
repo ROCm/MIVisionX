@@ -35,8 +35,8 @@ class CropMirrorNormalizeMetaNode:public MetaNode
         void update_parameters(MetaDataBatch* input_meta_data)override;
         std::shared_ptr<CropMirrorNormalizeNode> _node = nullptr;
     private:
+        void initialize();
         std::shared_ptr<RaliCropParam> _meta_crop_param;
         vx_array _dstImgWidth, _dstImgHeight, _x1, _y1, _mirror;
         std::vector<uint> _width_val, _height_val, _x1_val, _y1_val, _mirror_val;
-        void initialize();
 };

@@ -35,9 +35,9 @@ class ResizeMetaNode:public MetaNode
         void update_parameters(MetaDataBatch* input_meta_data)override;
         std::shared_ptr<ResizeNode> _node = nullptr;
     private:
+        void initialize();
         vx_array _src_width, _src_height;
         std::vector<uint> _src_width_val, _src_height_val;
         unsigned int _dst_width, _dst_height;
         float _dst_to_src_width_ratio, _dst_to_src_height_ratio;
-        void initialize();
 };

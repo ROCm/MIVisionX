@@ -47,3 +47,4 @@ private:
     std::map<std::string ,std::vector<ImgSize>> _map_img_sizes;
     std::map<std::string , std::vector<ImgSize> > ::iterator itr;
 };
+

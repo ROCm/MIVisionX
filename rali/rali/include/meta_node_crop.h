@@ -35,9 +35,9 @@ class CropMetaNode:public MetaNode
         void update_parameters(MetaDataBatch* input_meta_data)override;
         std::shared_ptr<CropNode> _node = nullptr;
     private:
+        void initialize();
         std::shared_ptr<RaliCropParam> _meta_crop_param;
         vx_array _crop_width, _crop_height, _x1, _y1;
         std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val;
         unsigned int _dst_width, _dst_height;
-        void initialize();
 };

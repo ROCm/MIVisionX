@@ -43,13 +43,13 @@ public:
     Parameter<float> *y_drift_factor;
 
 private:
+    void initialize();
+    BoundingBoxCord generate_random_crop(int img_idx);
     std::shared_ptr<RaliRandomCropParam> _meta_crop_param;
     vx_array _crop_width, _crop_height, _x1, _y1, _x2, _y2;
     std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val, _x2_val, _y2_val;
     unsigned int _dst_width, _dst_height;
     float _threshold = 0.5;
     int   _num_of_attempts = 20;
-    void initialize();
     constexpr static float ASPECT_RATIO_RANGE[2] = {0.7500, 1.333};
-    BoundingBoxCord generate_random_crop(int img_idx);
 };

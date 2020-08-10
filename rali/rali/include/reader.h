@@ -122,3 +122,4 @@ public:
     #define CHECK_CAFFE(test, msg); ((test) ? (void)0 : ((void)fprintf(stderr, \
     "%s:%d: %s: %s\n", __FILE__, __LINE__, msg, mdb_strerror(rc)), abort()))
 };
+

@@ -60,8 +60,7 @@ def main():
 		_rali_type = True
 	else:
 		_rali_type = False
-	
-	
+
 	nt = 1
 	di = 0
 	crop_size = 224

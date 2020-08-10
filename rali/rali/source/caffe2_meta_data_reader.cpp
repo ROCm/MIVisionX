@@ -133,7 +133,6 @@ void Caffe2MetaDataReader::read_lmdb_record(std::string file_name, uint file_byt
     {		
         // Reading the key value for each record from LMDB 
         str_key = string((char *) key.mv_data); 
-        // str_data = string((char *) data.mv_data); 
         
         // Parsing Image and Label Protos using the key and data values
         // read from LMDB records

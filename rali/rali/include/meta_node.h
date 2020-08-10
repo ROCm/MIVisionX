@@ -59,3 +59,4 @@ inline double MetaNode::BBoxIntersectionOverUnion(const BoundingBoxCord &box1, c
 
     return iou;
 }
+

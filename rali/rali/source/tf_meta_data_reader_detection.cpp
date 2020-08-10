@@ -176,7 +176,7 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     sf_ymax = feature.at(user_ymax_key);
     for(int i = 0; i < size_b_xmin; i++)
     {
-      float bbox_xmin, bbox_ymin,bbox_xmax, bbox_ymax;
+      float bbox_xmin, bbox_ymin, bbox_xmax, bbox_ymax;
       bbox_xmin = sf_xmin.float_list().value()[i];
       bbox_ymin = sf_ymin.float_list().value()[i];
       bbox_xmax = sf_xmax.float_list().value()[i];

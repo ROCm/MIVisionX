@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #pragma once
 #include <list>
+#include "circular_buffer.h"
 #include "meta_data.h"
 #include "parameter_factory.h"
 #include "node.h"
@@ -32,8 +33,7 @@ class MetaDataGraph
 public:
     virtual ~MetaDataGraph()= default;
     virtual void process(MetaDataBatch* meta_data) = 0;
-    virtual void update_meta_data(MetaDataBatch* meta_data, std::vector<uint32_t> original_width, std::vector<uint32_t> original_height,
-    std::vector<uint32_t> roi_width, std::vector<uint32_t> roi_height) = 0;
+    virtual void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decoded_image_info) = 0;
     std::list<std::shared_ptr<MetaNode>> _meta_nodes;
 };
 

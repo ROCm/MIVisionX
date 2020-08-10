@@ -722,11 +722,7 @@ void MasterGraph::output_routine()
                     break;
 
                 auto this_cycle_names =  _loader_module->get_id();
-                auto original_width = _loader_module->get_original_width();
-                auto original_height = _loader_module->get_original_height();
-                auto roi_width = _loader_module->get_roi_width();
-                auto roi_height = _loader_module->get_roi_height();
-                
+                auto decode_image_info = _loader_module->get_decode_image_info();                
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -761,7 +757,7 @@ void MasterGraph::output_routine()
                     //process metadata, _augmented_meta_data contains the results after the call to process
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->update_meta_data(_augmented_meta_data, original_width, original_height, roi_width, roi_height);
+                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)

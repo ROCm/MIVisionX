@@ -45,10 +45,7 @@ public:
     LoaderModuleStatus set_cpu_affinity(cpu_set_t cpu_mask);
     LoaderModuleStatus set_cpu_sched_policy(struct sched_param sched_policy);
     std::vector<std::string> get_id() override;
-    std::vector<uint32_t> get_original_width() override;
-    std::vector<uint32_t> get_original_height() override;
-    std::vector<uint32_t> get_roi_width() override;
-    std::vector<uint32_t> get_roi_height() override;
+    decoded_image_info get_decode_image_info() override;
 private:
     bool is_out_of_data();
     void de_init();
@@ -58,16 +55,13 @@ private:
     LoaderModuleStatus load_routine();
     Image* _output_image;
     std::vector<std::string> _output_names;//!< image name/ids that are stores in the _output_image
-    std::vector<uint32_t> _original_width;
-    std::vector<uint32_t> _original_height;
-    std::vector<uint32_t> _roi_width;
-    std::vector<uint32_t> _roi_height;
     size_t _output_mem_size;
     bool _internal_thread_running;
     size_t _batch_size;
     std::thread _load_thread;
     RaliMemType _mem_type;
     decoded_image_info _decoded_img_info;
+    decoded_image_info _output_decoded_img_info;
     CircularBuffer _circ_buff;
     TimingDBG _swap_handle_time;
     bool _is_initialized;

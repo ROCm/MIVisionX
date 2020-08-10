@@ -28,7 +28,6 @@ class BoundingBoxGraph : public MetaDataGraph
 {
 public:
     void process(MetaDataBatch* meta_data) override;
-    void update_meta_data(MetaDataBatch* meta_data, std::vector<uint32_t> original_width, std::vector<uint32_t> original_height,
-    std::vector<uint32_t> roi_width, std::vector<uint32_t> roi_height) override;
+    void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decode_image_info) override;
 };
 

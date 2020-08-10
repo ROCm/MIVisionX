@@ -29,9 +29,12 @@ void BoundingBoxGraph::process(MetaDataBatch* meta_data)
         node->update_parameters(meta_data);
     }
 }
-void BoundingBoxGraph::update_meta_data(MetaDataBatch* input_meta_data, std::vector<uint32_t> original_width, std::vector<uint32_t> original_height,
-                                        std::vector<uint32_t> roi_width, std::vector<uint32_t> roi_height)
+void BoundingBoxGraph::update_meta_data(MetaDataBatch* input_meta_data, decoded_image_info decode_image_info)
 {
+    std::vector<uint32_t> original_height = decode_image_info._original_height;
+    std::vector<uint32_t> original_width = decode_image_info._original_width;
+    std::vector<uint32_t> roi_width = decode_image_info._roi_width;
+    std::vector<uint32_t> roi_height = decode_image_info._roi_height;
     for(int i = 0; i < input_meta_data->size(); i++)
     {
         float _dst_to_src_width_ratio = roi_width[i] / float(original_width[i]);

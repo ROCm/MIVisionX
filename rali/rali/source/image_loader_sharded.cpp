@@ -35,30 +35,9 @@ std::vector<std::string> ImageLoaderSharded::get_id()
     return _loaders[_loader_idx]->get_id();
 }
 
-std::vector<uint32_t> ImageLoaderSharded::get_original_width()
+decoded_image_info ImageLoaderSharded::get_decode_image_info()
 {
-    if(!_initialized)
-        THROW("get_original_width() should be called after initialize() function");
-   return _loaders[_loader_idx]->get_original_width();
-}
-std::vector<uint32_t> ImageLoaderSharded::get_original_height()
-{
-    if(!_initialized)
-        THROW("get_original_height() should be called after initialize() function");
-    return _loaders[_loader_idx]->get_original_height();
-}
-
-std::vector<uint32_t> ImageLoaderSharded::get_roi_width()
-{
-    if(!_initialized)
-        THROW("get_roi_width() should be called after initialize() function");
-    return _loaders[_loader_idx]->get_roi_width();
-}
-std::vector<uint32_t> ImageLoaderSharded::get_roi_height()
-{
-    if(!_initialized)
-        THROW("get_roi_height() should be called after initialize() function");
-    return _loaders[_loader_idx]->get_roi_height();
+    return _loaders[_loader_idx]->get_decode_image_info();
 }
 
 ImageLoaderSharded::~ImageLoaderSharded()

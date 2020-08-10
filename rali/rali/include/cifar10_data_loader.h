@@ -39,10 +39,7 @@ public:
     void reset() override;
     void start_loading() override;
     std::vector<std::string> get_id() override;
-    std::vector<uint32_t> get_original_width() override;
-    std::vector<uint32_t> get_original_height() override;
-    std::vector<uint32_t> get_roi_width() override;
-    std::vector<uint32_t> get_roi_height() override;
+    decoded_image_info get_decode_image_info() override;
     Timing timing() override;
 private:
     void increment_loader_idx();
@@ -54,7 +51,8 @@ private:
     std::shared_ptr<Reader> _reader;
 
     const DeviceResources _dev_resources;
-    decoded_image_info _raw_img_info;       // image info to store the names. In this case the ID of image is stored in _roi_width field
+    decoded_image_info _raw_img_info;       // image info to store the names. In this case the ID of image is stored in _roi_width field 
+    decoded_image_info _output_decoded_img_info;
     bool _initialized = false;
     RaliMemType _mem_type;
     size_t _output_mem_size;
@@ -65,10 +63,6 @@ private:
     std::vector<unsigned char *> _load_buff;
     std::vector<size_t> _actual_read_size;
     std::vector<std::string> _output_names;
-    std::vector<uint32_t> _original_width;
-    std::vector<uint32_t> _original_height;
-    std::vector<uint32_t> _roi_width;
-    std::vector<uint32_t> _roi_height;
     CircularBuffer _circ_buff;
     const static size_t CIRC_BUFFER_DEPTH = 3; // Used for circular buffer's internal buffer
     TimingDBG _file_load_time, _swap_handle_time;

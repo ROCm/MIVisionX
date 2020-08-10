@@ -120,10 +120,6 @@ ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, Rali
     _loop = reader_cfg.loop();
     _decoder_keep_original = decoder_keep_original;
     _image_loader = std::make_shared<ImageReadAndDecode>();
-    _original_height.resize(batch_size);
-    _original_width.resize(batch_size);
-    _roi_height.resize(batch_size);
-    _roi_width.resize(batch_size);
     try
     {
         _image_loader->create(reader_cfg, decoder_cfg, _batch_size);
@@ -252,13 +248,9 @@ ImageLoader::update_output_image()
     if(_stopped)
         return LoaderModuleStatus::OK;
 
-    decoded_image_info d_img_info = _circ_buff.get_image_info();
-    _output_names = d_img_info._image_names;
-    _output_image->update_image_roi(d_img_info._roi_width, d_img_info._roi_height);
-    _original_width = d_img_info._original_width;
-    _original_height = d_img_info._original_height;
-    _roi_width = d_img_info._roi_width;
-    _roi_height = d_img_info._roi_height;
+    _output_decoded_img_info = _circ_buff.get_image_info();
+    _output_names = _output_decoded_img_info._image_names;
+    _output_image->update_image_roi(_output_decoded_img_info._roi_width, _output_decoded_img_info._roi_height);
 
     _circ_buff.pop();
     if(!_loop)
@@ -306,20 +298,8 @@ std::vector<std::string> ImageLoader::get_id()
     return _output_names;
 }
 
-std::vector<uint32_t> ImageLoader::get_original_width()
+decoded_image_info ImageLoader::get_decode_image_info()
 {
-    return _original_width;
-}
-std::vector<uint32_t> ImageLoader::get_original_height()
-{
-    return _original_height;
+    return _output_decoded_img_info;
 }
 
-std::vector<uint32_t> ImageLoader::get_roi_width()
-{
-    return _roi_width;
-}
-std::vector<uint32_t> ImageLoader::get_roi_height()
-{
-    return _roi_height;
-}

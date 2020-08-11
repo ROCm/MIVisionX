@@ -65,7 +65,7 @@ def main():
 	di = 0
 	crop_size = 224
 	image_path = sys.argv[1]
-	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu, rali_type=_rali_type)        
+	pipe = HybridTrainPipe(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, crop=crop_size, rali_cpu=_rali_cpu, rali_type=_rali_type)
 	pipe.build()
 	imageIterator = RALIClassificationIterator(pipe)
 	num_classes = len(next(os.walk(image_path))[1])

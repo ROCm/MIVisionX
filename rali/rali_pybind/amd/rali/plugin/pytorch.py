@@ -98,7 +98,7 @@ class RALIGenericIterator(object):
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
             sum = 0
             self.lis =[] #Empty list for bboxes
-            self.lis_lab=[] # Empty list of labels 
+            self.lis_lab=[] # Empty list of labels
             for idx in range(self.bs):
                 sum=self.loader.GetBoundingBoxCount(idx)
                 self.labels = np.zeros(sum,dtype = "int32")

@@ -87,12 +87,12 @@ class TFRecordReader(Node):
     """
         reader_type (int) - Type of TFRecordReader (0 being for image classification with 2 features read, 1 being for object detection with 7 features read)
 
-    user_feature_key_map (dict) – Dictionary of either 2 or 7 key names accepted by RALI TFRecordReader for classification or detection, and the corresponding values being the matching key names in the user's TFRecords
+        user_feature_key_map (dict) – Dictionary of either 2 or 7 key names accepted by RALI TFRecordReader for classification or detection, and the corresponding values being the matching key names in the user's TFRecords
 
-    features (dict) – Dictionary of names and configuration of features existing in TFRecord file. 
-        
+        features (dict) – Dictionary of names and configuration of features existing in TFRecord file.
+
         features (dict }) – Dictionary of names and configuration of features existing in TFRecord file.
-        
+
         index_path (str or list of str) – List of paths to index files (1 index file for every TFRecord file). Index files may be obtained from TFRecord files using tfrecord2idx script distributed with RALI.
 
         path (str or list of str) – List of paths to TFRecord files.
@@ -194,7 +194,7 @@ class TFRecordReader(Node):
             )
         else:
             b.TFReader(
-                handle, self._path, True, 
+                handle, self._path, True,
                 self._user_feature_key_map["image/class/label"],
                 self._user_feature_key_map["image/filename"]
             )
@@ -238,7 +238,7 @@ class CaffeReader(Node):
         tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
-    def __init__(self, path,bbox =False, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_available = True, 
+    def __init__(self, path,bbox =False, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_available = True,
     lazy_init = False,  num_shards = 1,
                 pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
                 seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
@@ -345,7 +345,7 @@ class Caffe2Reader(Node):
         tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
-    def __init__(self, path,bbox = False, additional_inputs = 0, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_type = 0, 
+    def __init__(self, path,bbox = False, additional_inputs = 0, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_type = 0,
     lazy_init = False,num_labels =1,  num_shards = 1,
                 pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
                 seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
@@ -643,7 +643,7 @@ class ImageDecoderRandomCrop(Node):
 
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
-    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, 
+    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000,
                 num_attempts = 10, output_type = 0,preserve = False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
                 seed = 1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
         Node().__init__()
@@ -725,6 +725,10 @@ class SSDRandomCrop(Node):
         self._preserve = preserve
         self._seed = seed
         self.output = Node()
+        if(num_attempts == 1):
+            self._num_attempts = 20
+        else:
+            self._num_attempts = num_attempts
     
     def __call__(self,input):
         input.next = self
@@ -738,8 +742,9 @@ class SSDRandomCrop(Node):
     def rali_c_func_call(self, handle, input_image, is_output):
         # b.setSeed(self._seed)
         # threshold = b.CreateFloatParameter(0.5)
-        output_image = b.SSDRandomCrop(handle, input_image, is_output, None, None, None, None, None)
+        output_image = b.SSDRandomCrop(handle, input_image, is_output, None, None, None, None, None, self._num_attempts)
         return output_image
+
 class ColorTwist(Node):
     """
         brightness (float, optional, default = 1.0) –
@@ -1160,8 +1165,7 @@ class RandomCrop(Node):
         self._crop_pox_x = crop_pox_x
         self._crop_pox_y = crop_pox_y
         self.output = Node()
-        self._temp = None
-
+        self._num_attempts = 20
 
     def __call__(self, input, is_output = False):
         input.next = self
@@ -1174,7 +1178,7 @@ class RandomCrop(Node):
 
     def rali_c_func_call(self, handle, input_image, is_output):
         output_image = []
-        output_image = b.RandomCrop(handle, input_image, is_output, None, None, None, None)
+        output_image = b.RandomCrop(handle, input_image, is_output, None, None, None, None, self._num_attempts)
         return output_image
 
 class CoinFlip():

@@ -38,7 +38,7 @@ VAL_RECORDS_DIR = RECORDS_DIR + 'val/'
 class HybridPipe(Pipeline):
 	def __init__(self, feature_key_map, tfrecordreader_type, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
 		super(HybridPipe, self).__init__(batch_size, num_threads, device_id, seed=12 + device_id,rali_cpu=rali_cpu)
-		self.input = ops.TFRecordReader(path=data_dir, index_path = "", reader_type=tfrecordreader_type, user_feature_key_map=feature_key_map, 
+		self.input = ops.TFRecordReader(path=data_dir, index_path = "", reader_type=tfrecordreader_type, user_feature_key_map=feature_key_map,
 			features={
 				'image/encoded':tf.FixedLenFeature((), tf.string, ""),
 				'image/class/label':tf.FixedLenFeature([1], tf.int64,  -1),
@@ -136,7 +136,7 @@ def main():
 	}
 
 	trainPipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=TRAIN_BATCH_SIZE, num_threads=1, device_id=0, data_dir=TRAIN_RECORDS_DIR, crop=crop_size, rali_cpu=RUN_ON_HOST)
-	valPipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=TRAIN_BATCH_SIZE, num_threads=1, device_id=0, data_dir=VAL_RECORDS_DIR, crop=crop_size, rali_cpu=RUN_ON_HOST) 
+	valPipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=TRAIN_BATCH_SIZE, num_threads=1, device_id=0, data_dir=VAL_RECORDS_DIR, crop=crop_size, rali_cpu=RUN_ON_HOST)
 	trainPipe.build()
 	valPipe.build()
 	trainIterator = RALIIterator(trainPipe)

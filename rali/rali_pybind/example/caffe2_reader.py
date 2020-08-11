@@ -80,16 +80,12 @@ def main():
 				sys.stdout.write("\r Mini-batch " + str(i))
 				print("Images",image_batch)
 				print("Labels",labels)
-
-			
 		else:
 			for i, (image_batch , bboxes, labels) in enumerate(imageIterator, 0): # Detection
 				sys.stdout.write("\r Mini-batch " + str(i))
 				print("Images",image_batch)
 				print("Bboxes",bboxes)
 				print("Labels",labels)
-
-				
 
 	print('Finished Training')
 

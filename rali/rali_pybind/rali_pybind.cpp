@@ -380,7 +380,8 @@ namespace rali{
             py::arg("crop_area_factor") = NULL,
             py::arg("crop_aspect_ratio") = NULL,
             py::arg("crop_pos_x") = NULL,
-            py::arg("crop_pos_y") = NULL);
+            py::arg("crop_pos_y") = NULL,
+            py::arg("num_of_attempts") = 20);
         m.def("Resize",&raliResize,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -399,8 +400,16 @@ namespace rali{
             py::arg("aspect_ratio") = NULL,
             py::arg("x_center_drift") = NULL,
             py::arg("y_center_drift") = NULL);
-        m.def("raliCopy",&raliCopy);
-        m.def("raliNop",&raliNop);
+        m.def("raliCopy",&raliCopy,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"));
+        m.def("raliNop",&raliNop,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"));
         m.def("ColorTwist",&raliColorTwist,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -591,6 +600,7 @@ namespace rali{
             py::arg("crop_area_factor") = NULL,
             py::arg("crop_aspect_ratio") = NULL,
             py::arg("crop_pos_x") = NULL,
-            py::arg("crop_pos_y") = NULL);
+            py::arg("crop_pos_y") = NULL,
+            py::arg("num_of_attempts") = 20);
     }
 }

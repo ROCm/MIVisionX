@@ -71,6 +71,7 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
     bool invalid_bboxes = true;
     _enitire_iou = true;
     BoundingBoxCord crop_box, jth_box;
+    jth_box.x = jth_box.y = jth_box.w = jth_box.h = 0; // Initializing to supress warnings. 
     for (int i = 0; i < _batch_size; i++)
     {
         int bb_count = input_meta_data->get_bb_labels_batch()[i].size();

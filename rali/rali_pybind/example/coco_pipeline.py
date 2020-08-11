@@ -24,8 +24,8 @@ class COCOPipeline(Pipeline):
 		self.input = ops.COCOReader(file_root = data_dir, annotations_file = ann_dir)
 		rali_device = 'cpu' if rali_cpu else 'gpu'
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
-		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
-		host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
+		# device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
+		# host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
 		# self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
 		# 											device_memory_padding=device_memory_padding,
 		# 											host_memory_padding=host_memory_padding,

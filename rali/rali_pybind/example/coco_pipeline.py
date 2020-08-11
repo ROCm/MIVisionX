@@ -26,13 +26,14 @@ class COCOPipeline(Pipeline):
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
 		host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
-		self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
-													device_memory_padding=device_memory_padding,
-													host_memory_padding=host_memory_padding,
-													random_aspect_ratio=[0.8, 1.25],
-													random_area=[0.1, 1.0],
-													num_attempts=100)
-		#self.crop = ops.SSDRandomCrop(num_attempts=5)
+		# self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
+		# 											device_memory_padding=device_memory_padding,
+		# 											host_memory_padding=host_memory_padding,
+		# 											random_aspect_ratio=[0.8, 1.25],
+		# 											random_area=[0.1, 1.0],
+		# 											num_attempts=100)
+		self.decode = ops.ImageDecoder(device=decoder_device, output_type=types.RGB)
+		self.crop = ops.SSDRandomCrop(num_attempts=5)
 		self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
 		self.twist = ops.ColorTwist(device=rali_device)
 		self.cmnp = ops.CropMirrorNormalize(device="gpu",
@@ -56,7 +57,7 @@ class COCOPipeline(Pipeline):
 		hue = self.rng3()
 		self.jpegs,self.bb, self.labels = self.input(name="Reader")
 		images = self.decode(self.jpegs)
-		#images = self.crop(images)
+		images = self.crop(images)
 		images = self.res(images)
 		images = self.twist(images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
 		output = self.cmnp(images)

@@ -725,6 +725,10 @@ class SSDRandomCrop(Node):
         self._preserve = preserve
         self._seed = seed
         self.output = Node()
+        if(num_attempts == 1):
+            self._num_attempts = 20
+        else:
+            self._num_attempts = num_attempts
     
     def __call__(self,input):
         input.next = self
@@ -738,8 +742,9 @@ class SSDRandomCrop(Node):
     def rali_c_func_call(self, handle, input_image, is_output):
         # b.setSeed(self._seed)
         # threshold = b.CreateFloatParameter(0.5)
-        output_image = b.SSDRandomCrop(handle, input_image, is_output, None, None, None, None, None)
+        output_image = b.SSDRandomCrop(handle, input_image, is_output, None, None, None, None, None, self._num_attempts)
         return output_image
+
 class ColorTwist(Node):
     """
         brightness (float, optional, default = 1.0) –
@@ -1160,8 +1165,7 @@ class RandomCrop(Node):
         self._crop_pox_x = crop_pox_x
         self._crop_pox_y = crop_pox_y
         self.output = Node()
-        self._temp = None
-
+        self._num_attempts = 20
 
     def __call__(self, input, is_output = False):
         input.next = self
@@ -1174,7 +1178,7 @@ class RandomCrop(Node):
 
     def rali_c_func_call(self, handle, input_image, is_output):
         output_image = []
-        output_image = b.RandomCrop(handle, input_image, is_output, None, None, None, None)
+        output_image = b.RandomCrop(handle, input_image, is_output, None, None, None, None, self._num_attempts)
         return output_image
 
 class CoinFlip():

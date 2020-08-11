@@ -1818,3 +1818,55 @@ raliSSDRandomCrop(
     }
     return output;
 }
+
+RaliImage  RALI_API_CALL	
+raliCopy(	
+        RaliContext p_context,	
+        RaliImage p_input,	
+        bool is_output)	
+{	
+    Image* output = nullptr;	
+    auto context = static_cast<Context*>(p_context);	
+    auto input = static_cast<Image*>(p_input);	
+    try	
+    {	
+        if(!input || !context)	
+            THROW("Null values passed as input")	
+
+        output = context->master_graph->create_image(input->info(), is_output);	
+
+        context->master_graph->add_node<CopyNode>({input}, {output});	
+    }	
+    catch(const std::exception& e)	
+    {	
+        context->capture_error(e.what());	
+        ERR(e.what())	
+    }	
+    return output;	
+}	
+
+RaliImage  RALI_API_CALL	
+raliNop(	
+        RaliContext p_context,	
+        RaliImage p_input,	
+        bool is_output)	
+{	
+    Image* output = nullptr;	
+    auto context = static_cast<Context*>(p_context);	
+    auto input = static_cast<Image*>(p_input);	
+    try	
+    {	
+        if(!input || !context)	
+            THROW("Null values passed as input")	
+
+        output = context->master_graph->create_image(input->info(), is_output);	
+
+        context->master_graph->add_node<NopNode>({input}, {output});	
+    }	
+    catch(const std::exception& e)	
+    {	
+        context->capture_error(e.what());	
+        ERR(e.what())	
+    }	
+    return output;	
+}

@@ -88,7 +88,7 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
             iou =  IOU[sample_option];
             min_iou = iou.first;
             max_iou = iou.second;
-            sample_option = 0;
+            //sample_option = 0;
             if (!sample_option)
             {
                 crop_box.x = 0;

@@ -93,6 +93,7 @@ onnx2ir_op_type = {
     'Gather'             : 'gather',
     'TopK'               : 'topk',
     'ReduceMin'          : 'reduce_min',
+    'Tile'               : 'tile',
 }
 
 onnx2ir_data_type = [

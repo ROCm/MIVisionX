@@ -42,7 +42,7 @@ class RALIGenericIteratorDetection(object):
         self.multiplier = multiplier
         self.offset = offset
         self.reverse_channels = reverse_channels
-        self.tensor_dtype = tensor_dtype        
+        self.tensor_dtype = tensor_dtype
         self.w = b.getOutputWidth(self.loader._handle)
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
@@ -70,7 +70,6 @@ class RALIGenericIteratorDetection(object):
         if self.loader.run() != 0:
             raise StopIteration
 
-        
         if(types.NCHW == self.tensor_format):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
@@ -79,7 +78,7 @@ class RALIGenericIteratorDetection(object):
         if(self.loader._name == "TFRecordReaderDetection"):
             sum = 0
             self.lis =[] #Empty list for bboxes
-            self.lis_lab=[] # Empty list of labels 
+            self.lis_lab=[] # Empty list of labels
 
 
             for idx in range(self.bs):
@@ -152,8 +151,8 @@ class RALIIterator(RALIGenericIteratorDetection):
     is equivalent to calling
     .. code-block:: python
        RALIGenericIteratorDetection(pipelines, ["data", "label"], size)
- 
-    
+
+
     """
     def __init__(self,
                  pipelines,

@@ -47,6 +47,7 @@ THE SOFTWARE.
 #include "node_saturation.h"
 #include "node_crop_mirror_normalize.h"
 #include "node_resize_crop_mirror.h"
+#include "node_ssd_random_crop.h"
 #include "node_crop.h"
 #include "node_random_crop.h"
 #include "node_copy.h"
@@ -1766,8 +1767,8 @@ raliRandomCrop(
         output->reset_image_roi();
         std::shared_ptr<RandomCropNode> crop_node =  context->master_graph->add_node<RandomCropNode>({input}, {output});
         crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts);
-        if (context->master_graph->meta_data_graph())
-            context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
+        // if (context->master_graph->meta_data_graph())
+        //     context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
     }
     catch(const std::exception& e)
     {
@@ -1806,10 +1807,10 @@ raliSSDRandomCrop(
         output_info.height(input->info().height_single());
         output = context->master_graph->create_image(output_info, is_output);
         output->reset_image_roi();
-        std::shared_ptr<RandomCropNode> crop_node =  context->master_graph->add_node<RandomCropNode>({input}, {output});
+        std::shared_ptr<SSDRandomCropNode> crop_node =  context->master_graph->add_node<SSDRandomCropNode>({input}, {output});
         crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts);
         if (context->master_graph->meta_data_graph())
-            context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
+            context->master_graph->meta_add_node<SSDRandomCropMetaNode,SSDRandomCropNode>(crop_node);
     }
     catch(const std::exception& e)
     {

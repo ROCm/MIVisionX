@@ -74,7 +74,7 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
             auto y_c = 0.5f * ( 2 * box.y + box.h );
             bool is_center_in_crop = (x_c >= crop_box.x && x_c <= crop_box.x + crop_box.w) && (y_c >= crop_box.y && y_c <= crop_box.y + crop_box.h);
             float bb_iou = BBoxIntersectionOverUnion(box, crop_box, entire_iou);
-            if (bb_iou >= iou_range[j].first && bb_iou <= iou_range[j].second)
+            if (bb_iou >= iou_range[j].first && bb_iou <= iou_range[j].second && is_center_in_crop)
             {
                 float xA = std::max(crop_box.x, box.x);
                 float yA = std::max(crop_box.y, box.y);

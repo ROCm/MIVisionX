@@ -70,6 +70,9 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
             box.y = coords_buf[m++];
             box.w = coords_buf[m++];
             box.h = coords_buf[m++];
+            auto x_c = 0.5f * ( 2 * box.x + box.w );
+            auto y_c = 0.5f * ( 2 * box.y + box.h );
+            bool is_center_in_crop = (x_c >= crop_box.x && x_c <= crop_box.x + crop_box.w) && (y_c >= crop_box.y && y_c <= crop_box.y + crop_box.h);
             float bb_iou = BBoxIntersectionOverUnion(box, crop_box, entire_iou);
             if (bb_iou >= iou_range[j].first && bb_iou <= iou_range[j].second)
             {
@@ -84,15 +87,6 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }
-        }
-        if(bb_coords.size() == 0)
-        {
-            temp_box.x = 0;
-            temp_box.y = 0;
-            temp_box.w =  crop_box.w - 1;
-	        temp_box.h =  crop_box.h - 1;
-            bb_coords.push_back(temp_box);
-            bb_labels.push_back(-1);
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;

@@ -13,7 +13,8 @@ public:
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
     std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
     float get_threshold(){return _threshold;}
-    int get_num_of_attempts(){return _num_of_attempts;}
+    std::vector<std::pair<float,float>> get_iou_range(){return _iou_range;}
+    bool is_entire_iou(){return _entire_iou;}
     void set_meta_data_batch() {}
 
 protected:
@@ -29,6 +30,7 @@ private:
     size_t _dest_width;
     size_t _dest_height;
     float  _threshold = 0.05;
+    std::vector<std::pair<float,float>> _iou_range;
     int _num_of_attempts = 20;
     bool _entire_iou = false;
     std::shared_ptr<RaliRandomCropParam> _crop_param;

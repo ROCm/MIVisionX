@@ -35,7 +35,9 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
     {
         _batch_size = input_meta_data->size();
     }
-    _meta_crop_param = _node->get_crop_param();    
+    _meta_crop_param = _node->get_crop_param();
+    std::vector<std::pair<float, float>> iou_range = _node->get_iou_range();
+    bool entire_iou = _node->is_entire_iou();
     _dst_width = _node->get_dst_width();
     _dst_height = _node->get_dst_height();
     _crop_width = _meta_crop_param->cropw_arr;
@@ -61,7 +63,6 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
         crop_box.y = _y1_val[i];
         crop_box.w = _crop_width_val[i];
         crop_box.h = _crop_height_val[i];
-        // std::cout << "crop values in meta ssd "<< crop_box.x << " " << crop_box.y << " " << crop_box.w << " " << crop_box.h << std::endl; 
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
@@ -69,7 +70,8 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
             box.y = coords_buf[m++];
             box.w = coords_buf[m++];
             box.h = coords_buf[m++];
-            if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
+            float bb_iou = BBoxIntersectionOverUnion(box, crop_box, entire_iou);
+            if (bb_iou >= iou_range[j].first && bb_iou <= iou_range[j].second)
             {
                 float xA = std::max(crop_box.x, box.x);
                 float yA = std::max(crop_box.y, box.y);

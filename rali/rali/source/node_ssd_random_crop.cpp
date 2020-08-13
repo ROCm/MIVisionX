@@ -19,6 +19,7 @@ void SSDRandomCropNode::create_node()
     _y1_val.resize(_batch_size);
     _x2_val.resize(_batch_size);
     _y2_val.resize(_batch_size);
+    _iou_range.resize(_batch_size);
     if (_node)
         return;
 
@@ -91,11 +92,11 @@ void SSDRandomCropNode::update_node()
         crop_box.w = _crop_width_val[i];
         crop_box.x = _x1_val[i];
         crop_box.y = _y1_val[i];
-        // std::cout << "crop values befor ssd "<< crop_box.x << " " << crop_box.y << " " << crop_box.w << " " << crop_box.h << std::endl; 
         while (true)
         {
             sample_option = dis(gen);
             iou =  IOU[sample_option];
+            _iou_range[i] = iou;
             min_iou = iou.first;
             max_iou = iou.second;
             //sample_option = 0;

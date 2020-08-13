@@ -89,7 +89,7 @@ void CropMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             temp_box.w =  crop_box.w - 1;
 	        temp_box.h =  crop_box.h - 1;
             bb_coords.push_back(temp_box);
-            bb_labels.push_back(-1);
+            bb_labels.push_back(0);
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;

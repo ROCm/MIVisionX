@@ -48,11 +48,18 @@ if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
 endif()
 
+option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
+option(RALI       "Build MIVisionX with RALI Support"         ON)
+
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(apps)
 add_subdirectory(utilities)
-add_subdirectory(rali)
+if(RALI)
+  add_subdirectory(rali)
+else()
+  message("-- ${BoldBlue}RALI Module turned OFF by user option -DRALI=OFF ${ColourReset}")
+endif()
 
 install(DIRECTORY docs DESTINATION .)
 

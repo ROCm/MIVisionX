@@ -127,12 +127,16 @@ For the convenience of the developer, we here provide the setup script which wil
 
 **usage:**
 ````
-python MIVisionX-setup.py --directory [setup directory - optional]
+python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                          --opencv    [OpenCV Version - optional (default:3.4.0)]
                           --miopen    [MIOpen Version - optional (default:2.5.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
-                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
-                          --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
+                          --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
+                          --rpp       [RPP Version - optional (default:0.4)]
+                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
+                          --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
+                          --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ````
 **Note:** use `--installer yum` for **CentOS**
@@ -189,12 +193,16 @@ git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
 cd MIVisionX
 ````
 ````
-python MIVisionX-setup.py --directory [setup directory - optional]
+python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                          --opencv    [OpenCV Version - optional (default:3.4.0)]
                           --miopen    [MIOpen Version - optional (default:2.5.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
-                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:Install ffmpeg - yes]]
-                          --rpp       [RPP Installation - optional (default:yes) [options:yes/no]]
+                          --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
+                          --rpp       [RPP Version - optional (default:0.4)]
+                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
+                          --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
+                          --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ````
 **Note:** Use `--installer yum` for **CentOS**
@@ -341,4 +349,4 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.4](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.4)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.7.13`
+* MIVisionX Setup Script - `V1.8.0`

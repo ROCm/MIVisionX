@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 project(MIVisionX)
-set(VERSION "1.9.1")
+set(VERSION "1.9.2")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -50,6 +50,7 @@ endif()
 
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
 option(RALI       "Build MIVisionX with RALI Support"         ON)
+option(LOOM       "Build MIVisionX with LOOM Support"         ON)
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

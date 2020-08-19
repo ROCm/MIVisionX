@@ -86,8 +86,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 {
     size_t num_threads = 1;
     int inputBatchSize = 2;
-    int decode_max_width =500;
-    int decode_max_height = 500;
+    int decode_max_width = width;
+    int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , "<< (rgb ? " Color ":" Grayscale ")<< std::endl;
 
@@ -193,7 +193,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
     else
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false,
-                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+        RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #endif
                                     
      if (raliGetStatus(handle) != RALI_OK) {
@@ -214,8 +214,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     switch (test_case) {
         case 0: {
             std::cout << ">>>>>>> Running " << "raliResize" << std::endl;
-            auto image_int = raliResize(handle, image0, resize_w / 3, resize_h / 3, false);
-            image1 = raliResize(handle, image_int, resize_w, resize_h, true);
+            //auto image_int = raliResize(handle, image0, resize_w , resize_h , false);
+            image1 = raliResize(handle, image0, resize_w, resize_h, true);
         }
             break;
         case 1: {

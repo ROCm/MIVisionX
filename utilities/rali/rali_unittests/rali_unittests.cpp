@@ -359,7 +359,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
         case 30: {
              std::cout << ">>>>>>> Running " << "raliCropResizeFixed" << std::endl;
-             image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.25, 1.2, 0.6, -0.4);
+             image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.25, 1.2, 0.6, 0.4);
          }
              break;
 	case 31: {

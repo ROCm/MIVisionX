@@ -465,7 +465,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 51: {
             std::cout << ">>>>>>> Running " << "raliCropFixed" << std::endl;
-            image1 = raliCropFixed(handle, image0, 100, 100, 1, true, 25, 25, 2);
+            image1 = raliCropFixed(handle, input1, 50, 50, 1, true, 0, 0, 2);
         }
             break;
         case 52: {

@@ -120,8 +120,6 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
   + FFMPEG is required for amd_media & mv_deploy modules
 
-  
-
 #### Prerequisites setup script for Linux - `MIVisionX-setup.py`
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
@@ -131,9 +129,8 @@ For the convenience of the developer, we here provide the setup script which wil
 ##### Prerequisites for running the script
 
 1. Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
-2. X Window
-3. [ROCm supported hardware](https://rocm.github.io/hardware.html)
-4. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
+2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
+3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
 **usage:**
 
@@ -151,9 +148,11 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ```
 
-**Note:** use `--installer yum` for **CentOS**
+**Note:** 
 
-**Note:** ROCm upgrade with `sudo apt upgrade` requires the setup script rerun. 
+  + use `--installer yum` for **CentOS**
+  + ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
+  + use `X Window` / `X11` for remote GUI app control 
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
@@ -214,7 +213,7 @@ git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
 cd MIVisionX
 ```
 
-``
+``` 
 python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
 
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
@@ -227,9 +226,11 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
                           --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
+```
 
-``
-**Note:** Use `--installer yum` for **CentOS**
+**Note:** 
+
+  + use `--installer yum` for **CentOS**
 
 ``` 
 mkdir build
@@ -240,9 +241,9 @@ sudo make install
 ```
 
   **Note:**
-   * vx_winml is not supported on Linux
-   * the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
-   * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
+   + vx_winml is not supported on Linux
+   + the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
+   + the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 
 #### Using `CMake` on Linux (Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6` ) with ROCm
 
@@ -270,17 +271,20 @@ sudo make install
 * The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
 * Apps, Samples, Documents, Model Compiler and Toolkit are placed into `/opt/rocm/mivisionx`
 * Run samples to verify the installation
-  + **Canny Edge Detection**
 
-  <p align="center"><img width="60%" src="samples/images/canny_image. PNG" /></p>
+**Canny Edge Detection**
+  <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
   
+
 ``` 
   export PATH=$PATH:/opt/rocm/mivisionx/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
   runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
 ```
 
-**Note:** More samples are available [here](samples#samples)
+**Note:** 
+
+  + More samples are available [here](samples#samples)
 
 ### Windows
 
@@ -320,13 +324,13 @@ sudo apt install libnuma-dev
 sudo reboot
 ```
 
-``
+``` 
 wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
 echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
 sudo apt update
 sudo apt install rocm-dkms
 sudo reboot
-``
+```
 
 * Step 2 - *Setup Docker*
 

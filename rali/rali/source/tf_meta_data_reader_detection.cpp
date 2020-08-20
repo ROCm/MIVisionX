@@ -167,16 +167,16 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     BoundingBoxLabels bb_labels;
     BoundingBoxCord box;
 
-    int label;
-    single_feature = feature.at(user_label_key);
-    label = single_feature.int64_list().value()[0];
+    sf_label = feature.at(user_label_key);
     sf_xmin = feature.at(user_xmin_key);
     sf_ymin = feature.at(user_ymin_key);
     sf_xmax = feature.at(user_xmax_key);
     sf_ymax = feature.at(user_ymax_key);
     for(int i = 0; i < size_b_xmin; i++)
     {
+      int label;
       float bbox_xmin, bbox_ymin, bbox_xmax, bbox_ymax;
+      label = sf_label.int64_list().value()[i];
       bbox_xmin = sf_xmin.float_list().value()[i];
       bbox_ymin = sf_ymin.float_list().value()[i];
       bbox_xmax = sf_xmax.float_list().value()[i];

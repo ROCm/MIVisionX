@@ -124,31 +124,40 @@ if(os.path.exists(deps_dir) and reinstall == 'yes'):
 
 # MIVisionX setup
 if(os.path.exists(deps_dir)):
+    # opencv
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
               linuxFlag+' make install -j8)')
-    if neuralNetInstall == 'yes':
+    if raliInstall == 'yes' or neuralNetInstall == 'yes':
+        # half.hpp
         os.system('sudo -v')
         os.system(
             '(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
+    if neuralNetInstall == 'yes':
+        # rocm-cmake
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
                   linuxFlag+' make install -j8)')
+        # MIOpenGEMM
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
                   linuxFlag+' make install -j8)')
+        # MIOpen
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
                   linuxFlag+' make install -j8)')
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
+        # ProtoBuf
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                   '; sudo '+linuxFlag+' make install -j8)')
     if raliInstall == 'yes':
+        # RPP
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/rpp/build; sudo ' +
                   linuxFlag+' make install -j8)')
     if ffmpegInstall == 'yes':
+        # FFMPEG
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
                   linuxFlag+' make install -j8)')
@@ -182,6 +191,14 @@ else:
         os.system(
             '(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
     # Install
+    if raliInstall == 'yes' or neuralNetInstall == 'yes':
+        # Install half.hpp
+        os.system(
+            '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')
+        os.system('(cd '+deps_dir+'; unzip half-1.12.0.zip -d half-files )')
+        os.system('sudo -v')
+        os.system(
+            '(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
     if neuralNetInstall == 'yes':
         os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen)')
         # Install ROCm-CMake
@@ -226,13 +243,6 @@ else:
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                   linuxSystemInstall_check+' install qt5-default qtcreator')
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
-        # Install half.hpp
-        os.system(
-            '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')
-        os.system('(cd '+deps_dir+'; unzip half-1.12.0.zip -d half-files )')
-        os.system('sudo -v')
-        os.system(
-            '(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
         # Install ProtoBuf
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall +
@@ -253,9 +263,10 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                   '; sudo '+linuxFlag+' ldconfig )')
+        # Install Packages for Apps
         os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag +
-                  ' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install python-pip )')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                  linuxSystemInstall_check+' install python-pip')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' yes | pip install protobuf')
         os.system('sudo -v')
@@ -269,7 +280,7 @@ else:
               ' install build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev')
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev')
+              ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev')
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
               ' -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')

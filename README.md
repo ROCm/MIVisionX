@@ -94,7 +94,9 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
 * APU: Carrizo or above [optional]
 
-**Note:** Some modules in MIVisionX can be built for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or AMD APUs.
+  **Note:** 
+
+    - Some modules in MIVisionX can be built for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or AMD APUs.
 
 ### Windows
 
@@ -148,11 +150,11 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ```
 
-**Note:** 
+  **Note:**
 
-  + use `--installer yum` for **CentOS**
-  + ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
-  + use `X Window` / `X11` for remote GUI app control 
+    - use `--installer yum` for **CentOS**
+    - ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
+    - use `X Window` / `X11` for remote GUI app control 
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
@@ -170,7 +172,9 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
 * Install [Windows Prerequisites](#windows)
 * Use `MIVisionX.sln` to build for x64 platform
 
-**NOTE:** vx_nn is not supported on Windows in this release
+  **NOTE:** 
+
+    - `vx_nn` is not supported on `Windows` in this release
 
 ### Linux
 
@@ -194,14 +198,14 @@ sudo apt-get install mivisionx
 sudo yum install mivisionx
 ```
 
- **Note:**
+  **Note:**
 
-  + vx_winml is not supported on linux
-  + source code will not available with apt-get/yum install
-  + executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
-  + OpenVX and module header files into `/opt/rocm/mivisionx/include`
-  + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
-  + Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
+    - `vx_winml` is not supported on `linux`
+    - source code will not available with `apt-get` / `yum` install
+    - executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
+    - OpenVX and module header files into `/opt/rocm/mivisionx/include`
+    - model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+    - Package (.deb & .rpm) install requires `OpenCV v3.4.0` to execute `AMD OpenCV extensions`
 
 #### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6` ) with ROCm
 
@@ -215,7 +219,6 @@ cd MIVisionX
 
 ``` 
 python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
                           --opencv    [OpenCV Version - optional (default:3.4.0)]
                           --miopen    [MIOpen Version - optional (default:2.5.0)]
@@ -228,9 +231,9 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ```
 
-**Note:** 
+  **Note:** 
 
-  + use `--installer yum` for **CentOS**
+    - use `--installer yum` for **CentOS**
 
 ``` 
 mkdir build
@@ -270,9 +273,10 @@ sudo make install
 * The installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
 * The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
 * Apps, Samples, Documents, Model Compiler and Toolkit are placed into `/opt/rocm/mivisionx`
-* Run samples to verify the installation
+* Run below sample to verify the installation
 
 **Canny Edge Detection**
+
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
   
 
@@ -282,9 +286,9 @@ sudo make install
   runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
 ```
 
-**Note:** 
+  **Note:** 
 
-  + More samples are available [here](samples#samples)
+    - More samples are available [here](samples#samples)
 
 ### Windows
 
@@ -364,7 +368,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
 ```
 
-**Note:** **Display option with docker**
+##### Display option with docker
 
 * Using host display
 
@@ -385,8 +389,8 @@ runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf
 
 ### Known issues
 
-* Package (.deb & .rpm) install requires **OpenCV `v3.4.0` ** to execute AMD OpenCV extensions
-* ROCm `3.0` and above has known to slow down OpenCL kernels.
+* Package (.deb & .rpm) install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
+* **ROCm** `3.0` and above has known to slow down OpenCL kernels.
 
 ### Tested configurations
 

@@ -266,7 +266,7 @@ sudo make install
 
 * The installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
 * The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
-* Apps, Samples, Documents, Model Compiler and Toolkit are placed into `/opt/rocm/mivisionx`
+* Apps, Samples, Documents, Model Compiler, and Toolkit are placed into `/opt/rocm/mivisionx`
 * Run below sample to verify the installation
 
 **Canny Edge Detection**

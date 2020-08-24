@@ -1,10 +1,10 @@
 #include <kernels.h>
 
-static vx_status VX_CALLBACK validateGatherLayer(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[]) {
+static vx_status VX_CALLBACK validateTileLayer(vx_node node, const vx_reference *parameters, vx_uint32 num, vx_meta_format metas[]) {
     vx_enum type, type2, out_type;
     vx_size num_dims, num_dims2, out_num_dims;
     vx_size input_dims[4], input_dims2[4], output_dims[4];
-
+    
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
     if ((type != VX_TYPE_FLOAT32) && (type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
@@ -20,24 +20,14 @@ static vx_status VX_CALLBACK validateGatherLayer(vx_node node, const vx_referenc
     if ((out_type != VX_TYPE_FLOAT32) && (out_type != VX_TYPE_FLOAT16)) return VX_ERROR_INVALID_TYPE;
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
-    // the output num_dim should equal to (input_dim + input_dim2 - 1)
-    if (num_dims + num_dims2 - 1 != out_num_dims) {
-        printf("validate: gather: The [rank(output tensor)] should equal to [rank(input tensor) + rank(indices tensor) - 1)]\n");
-        printf("validate: gather: %d != %d + %d - 1\n", (int)out_num_dims, (int)num_dims, (int)num_dims2);
-        return VX_ERROR_INVALID_DIMENSION;
+    if ((num_dims != out_num_dims) || (num_dims != input_dims2[0])) {
+        printf("validate: tile: Ranks of input, repeat, and output tensors should be equal\n");
+        return VX_ERROR_INVALID_DIMENSION;        
     }
-    
-    vx_uint32 axis;
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    if (axis < 0 || axis > 3) {
-        printf("validate: gather: Axis value should be 0~2\n");
-        printf("validate: gather: Axis = %d\n", axis);
-        return VX_ERROR_INVALID_PARAMETERS;
-    } 
+
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DATA_TYPE, &out_type, sizeof(out_type)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_NUMBER_OF_DIMS, &out_num_dims, sizeof(num_dims)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[2], VX_TENSOR_DIMS, &output_dims, sizeof(output_dims)));
-
     return VX_SUCCESS;
 
 }
@@ -66,51 +56,29 @@ static vx_status VX_CALLBACK opencl_codegen(
     vx_uint32& opencl_local_buffer_size_in_bytes   // [output] reserved: must be ZERO
 )
 {
-    //get input params
-    vx_size num_of_dims, num_of_dims2;
+    //get tensor dimensions
+    vx_size input_dims[4], output_dims[4];
+    vx_size num_of_dims;
     vx_enum type;
-    vx_uint32 axis;
 
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
-    vx_size input_dims[num_of_dims];
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));    
-
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims2, sizeof(num_of_dims)));
-    vx_size input_dims2[num_of_dims2];
-    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[1], VX_TENSOR_DIMS, input_dims2, sizeof(input_dims2)));
-
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DIMS, input_dims, sizeof(input_dims)));
     ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[0], VX_TENSOR_DATA_TYPE, &type, sizeof(type)));
-    ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[3], &axis, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    
-    strcpy(opencl_kernel_function_name, "gather_layer");
+    ERROR_CHECK_STATUS(vxQueryTensor((vx_tensor)parameters[2], VX_TENSOR_DIMS, output_dims, sizeof(output_dims)));
 
-    //reverse input dims w,h,c,n- > n,c,h,w
-    int start = 0, end = num_of_dims-1;
-    while (start < end) {
-        int temp = input_dims[start];
-        input_dims[start] = input_dims[end];
-        input_dims[end] = temp;
-        start++;
-        end--;
-    }
-
-    opencl_work_dim = 3;
-    opencl_global_work[0] = 1;
-    opencl_global_work[1] = 1;
-    opencl_global_work[2] = 1;
-    
-    for (int i=0; i<num_of_dims; i++) {
-        if (i < axis) {
-            opencl_global_work[2] *= input_dims[i];
-        }
-        else if (i > axis) {
-            opencl_global_work[0] *= input_dims[i];
+    for (int i=0; i<4; i++) {  //convert input tensor to 4-D
+        if(i >= num_of_dims) {
+            input_dims[i] = 1;
+            output_dims[i] = 1;
         }
     }
-    
-    for (int i=0; i<num_of_dims2; i++) {
-        opencl_global_work[1] *= input_dims2[i];
-    }
+
+    strcpy(opencl_kernel_function_name, "tile_layer");
+
+    opencl_work_dim = 3;    
+    opencl_global_work[0] = output_dims[0];
+    opencl_global_work[1] = output_dims[1];
+    opencl_global_work[2] = output_dims[2] * output_dims[3];
 
     // Setting variables required by the interface
     opencl_local_buffer_usage_mask = 0;
@@ -121,56 +89,36 @@ static vx_status VX_CALLBACK opencl_codegen(
         if (type == VX_TYPE_FLOAT32) {
             sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * rep, uint rep_offset, uint4 rep_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
-                "   int indices = *(__global int*)&ind[ind_offset + y*ind_stride.s0];\n"
-                "   float value;\n"
-                "   uint offset;\n"
-                "   if (axis == 0) {\n"
-                "       value = *(__global float*)&in[in_offset + x*in_stride.s0 + indices*in_stride.s1 + c*in_stride.s2];\n"
-                "       offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2;\n"
-                "   }\n"
-                "   else if (axis == 1) {\n"
-                "       value = *(__global float*)&in[in_offset + indices*in_stride.s0 + c*in_stride.s1];\n"
-                "       offset = out_offset + y*out_stride.s0 + c*out_stride.s1;\n"
-                "   }\n"
-                "   else if (axis == 2) {\n"
-                "       value = *(__global float*)&in[in_offset + c*in_stride.s0];\n"
-                "       offset = out_offset + c*out_stride.s0;\n"
-                "   }\n"
+                "   uint nx = x %% %d;\n"
+                "   uint ny = y %% %d;\n"
+                "   uint nc = c %% %d;\n"
+                "   float value = *(__global float *)&in[in_offset + nx*in_stride.s0 + ny*in_stride.s1 + nc*in_stride.s2];\n"
+                "   uint offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2;\n"
                 "   out += offset;\n"
                 "   *(__global float *)&out[0] = value;\n"
-                "}\n", opencl_kernel_function_name);
+                "}\n", opencl_kernel_function_name, (int)input_dims[0], (int)input_dims[1], (int)input_dims[2]);
         }
         else {
             sprintf(item,
                 "#pragma OPENCL EXTENSION cl_amd_media_ops : enable\n"
-                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * ind, uint ind_offset, uint4 ind_stride, __global uchar * out, uint out_offset, uint4 out_stride, uint axis) \n"
+                "__kernel void %s(__global uchar * in, uint in_offset, uint4 in_stride, __global uchar * rep, uint rep_offset, uint4 rep_stride, __global uchar * out, uint out_offset, uint4 out_stride) \n"
                 "{ \n"
                 "   uint x = get_global_id(0);\n"
                 "   uint y = get_global_id(1);\n"
                 "   uint c = get_global_id(2);\n"
-                "   int indices = *(__global int*)&ind[ind_offset + y*ind_stride.s0];\n"
-                "   half value;\n"
-                "   uint offset;\n"
-                "   if (axis == 0) {\n"
-                "       value = *(__global half*)&in[in_offset + x*in_stride.s0 + indices*in_stride.s1 + c*in_stride.s2];\n"
-                "       offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2;\n"
-                "   }\n"
-                "   else if (axis == 1) {\n"
-                "       value = *(__global half*)&in[in_offset + indices*in_stride.s0 + c*in_stride.s1];\n"
-                "       offset = out_offset + y*out_stride.s0 + c*out_stride.s1;\n"
-                "   }\n"
-                "   else if (axis == 2) {\n"
-                "       value = *(__global half*)&in[in_offset + c*in_stride.s0];\n"
-                "       offset = out_offset + c*out_stride.s0;\n"
-                "   }\n"
+                "   uint nx = x %% %d;\n"
+                "   uint ny = y %% %d;\n"
+                "   uint nc = c %% %d;\n"
+                "   half value = *(__global half *)&in[in_offset + nx*in_stride.s0 + ny*in_stride.s1 + nc*in_stride.s2];\n"
+                "   uint offset = out_offset + x*out_stride.s0 + y*out_stride.s1 + c*out_stride.s2;\n"
                 "   out += offset;\n"
                 "   *(__global half *)&out[0] = value;\n"
-                "}\n", opencl_kernel_function_name);
+                "}\n", opencl_kernel_function_name, (int)input_dims[0], (int)input_dims[1], (int)input_dims[2]);
         }
         opencl_kernel_code = item;
     }
@@ -184,9 +132,8 @@ static vx_status VX_CALLBACK host_kernel(vx_node node, const vx_reference * para
 }
 
 //! \brief The kernel publisher.
-vx_status publishGatherLayer(vx_context context) 
-{
-    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.gather_layer", VX_KERNEL_GATHER_LAYER_AMD, host_kernel, 4, validateGatherLayer, nullptr, nullptr);
+vx_status publishTileLayer(vx_context context) {
+    vx_kernel kernel = vxAddUserKernel(context, "com.amd.nn_extension.tile_layer", VX_KERNEL_TILE_LAYER_AMD, host_kernel, 3, validateTileLayer, nullptr, nullptr);
     ERROR_CHECK_OBJECT(kernel);
 
     amd_kernel_query_target_support_f query_target_support_f = query_target_support;
@@ -197,29 +144,22 @@ vx_status publishGatherLayer(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_INPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_TENSOR, VX_PARAMETER_STATE_REQUIRED));
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED));
     
-    //finalize and release kernel object.
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));
     ERROR_CHECK_STATUS(vxReleaseKernel(&kernel));
-
     return VX_SUCCESS; 
 }
 
-VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_int32 axis) 
-{
+VX_API_ENTRY vx_node VX_API_CALL vxTileLayer(vx_graph graph, vx_tensor input, vx_tensor repeats, vx_tensor output) {
     vx_node node = NULL;
     vx_context context = vxGetContext((vx_reference)graph);
-    vx_scalar s_axis = vxCreateScalarWithSize(context, VX_TYPE_INT32, &axis, sizeof(axis));
-    if (vxGetStatus((vx_reference)context) == VX_SUCCESS && vxGetStatus((vx_reference)s_axis) == VX_SUCCESS) {
+    if (vxGetStatus((vx_reference)context) == VX_SUCCESS) {
         vx_reference params[] = {
             (vx_reference) input,
-            (vx_reference) indices,
+            (vx_reference) repeats,
             (vx_reference) output,
-            (vx_reference) s_axis,
         };
-        node = createNode(graph, VX_KERNEL_GATHER_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
-        vxReleaseScalar(&s_axis);
+        node = createNode(graph, VX_KERNEL_TILE_LAYER_AMD, params, sizeof(params) / sizeof(params[0]));
     }
 
     return node;

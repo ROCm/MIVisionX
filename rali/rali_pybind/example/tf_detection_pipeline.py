@@ -4,6 +4,7 @@ import amd.rali.ops as ops
 import amd.rali.types as types
 import sys
 import tensorflow as tf
+import numpy as np
 
 class HybridPipe(Pipeline):
 	def __init__(self, feature_key_map, tfrecordreader_type, batch_size, num_threads, device_id, data_dir, crop, rali_cpu = True):
@@ -54,19 +55,39 @@ class HybridPipe(Pipeline):
 		output = self.cmnp(images, mirror=rng)
 		return [output, labels]
 
+def get_onehot(image_labels_array, numClasses):
+	one_hot_vector_list = []
+	for label in image_labels_array:
+		one_hot_vector = np.zeros(numClasses)
+		if label[0] != 0:
+			np.put(one_hot_vector, label[0] - 1, 1)
+		one_hot_vector_list.append(one_hot_vector)
+		
+	one_hot_vector_array = np.array(one_hot_vector_list)
+
+	return one_hot_vector_array
+
+def get_weights(num_bboxes):
+	weights_array = np.zeros(100)
+	for pos in list(range(num_bboxes)):
+		np.put(weights_array, pos, 1)
+	
+	return weights_array
+
 def main():
-	if  len(sys.argv) < 4:
-		print ('Please pass the TensorFlowrecord  cpu/gpu batch_size')
+	if  len(sys.argv) < 5:
+		print ('Please pass <TensorFlow record path> <Number of classes> <"cpu"/"gpu"> <batch_size>')
 		exit(0)
 	imagePath = sys.argv[1]
-	if(sys.argv[2] == "cpu"):
+	numClasses = int(sys.argv[2])
+	if(sys.argv[3] == "cpu"):
 		raliCPU = True
 	else:
 		raliCPU = False
-	bs = int(sys.argv[3])
+	bs = int(sys.argv[4])
 	nt = 1
 	di = 0
-	cropSize = 224
+	cropSize = 320
 	TFRecordReaderType = 1
 	featureKeyMap = {
 		'image/encoded':'image/encoded',
@@ -83,15 +104,29 @@ def main():
 	pipe.build()
 	
 	imageIterator =  RALIIterator(pipe)
-	for i, (images_array, bb, labels_array) in enumerate(imageIterator, 0):
-		print("\nIMAGES ARRAY TYPE:\n",type(images_array))
-		print("\nIMAGES ARRAY:\n",images_array)
+	sum = 0
+	for i, (images_array, bboxes_array, labels_array, num_bboxes_array) in enumerate(imageIterator, 0):
+		images_array = np.transpose(images_array, [0, 2, 3, 1])
+		print("RALI augmentation pipeline - Processing batch %d....." % i)
+		for element in list(range(bs)):
+			print("Processing image %d....." % element)
+			features_dict = {
+				"image" : images_array[element],
+				"true_image_shape" : np.array([len(images_array[element]), len(images_array[element,0]), len(images_array[element,0,0])])
+			}
+			labels_dict = {
+				"num_groundtruth_boxes" : num_bboxes_array[element],
+				"groundtruth_boxes" : bboxes_array[element],
+				"groundtruth_classes" : get_onehot(labels_array[element], numClasses),
+				"groundtruth_weights" : get_weights(num_bboxes_array[element])
+			}
+			processed_tensors = (features_dict, labels_dict)
+			print("\nPROCESSED_TENSORS:\n",processed_tensors)
+			sum += 1
 		
-		print("\nBBOXS ARRAY TYPE:\n",type(bb))
-		print("\nBBOXS ARRAY:\n",bb)
+		break
 
-		print("\nLABELS ARRAY TYPE:\n",type(labels_array))
-		print("\nLABELS ARRAY:\n",labels_array)
+	print("\n\nPrinted first batch with", sum, "images!")		
 			
 		
 

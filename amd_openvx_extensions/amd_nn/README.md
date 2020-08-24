@@ -1,9 +1,11 @@
 # OpenVX Neural Network Extension Library (vx_nn)
-vx_nn is an OpenVX Neural Network extension module. This implementation supports only floating-point tensor datatype and does not support 8-bit and 16-bit fixed-point datatypes specified in the OpenVX specification.
+
+vx_nn is an OpenVX Neural Network extension module. This implementation supports only floating-point tensor data type and does not support 8-bit and 16-bit fixed-point data types specified in the OpenVX specification.
 
 ### List of supported tensor and neural network layers:
-| Layer name | Function|Kernel name |
-| ------|---------------|------------ |
+
+| Layer name | Function | Kernel name |
+| ---------- |--------- | ----------- |
 | Activation|vxActivationLayer|org.khronos.nn_extension.activation_layer |
 | Argmax|vxArgmaxLayerNode|com.amd.nn_extension.argmax_layer |
 | Batch Normalization|vxBatchNormalizationLayer|com.amd.nn_extension.batch_normalization_layer |
@@ -42,11 +44,13 @@ vx_nn is an OpenVX Neural Network extension module. This implementation supports
 | Upsample Nearest Neighborhood|vxUpsampleNearestLayer|com.amd.nn_extension.upsample_nearest_layer |
 
 ### Example 1: Convert an image to a tensor of type float32
+
 Use the below GDF with RunVX.
-```
+
+``` 
 import vx_nn
 
-data input  = image:32,32,RGB2
+data input = image:32,32,RGB2
 data output = tensor:4,{32,32,3,1},VX_TYPE_FLOAT32,0
 data a = scalar:FLOAT32,1.0
 data b = scalar:FLOAT32,0.0
@@ -57,14 +61,16 @@ write output input.f32
 ```
 
 ### Example 2: 2x2 Upsample a tensor of type float32
+
 Use the below GDF with RunVX.
-```
+
+``` 
 import vx_nn
 
-data input  = tensor:4,{80,80,3,1},VX_TYPE_FLOAT32,0
+data input = tensor:4,{80,80,3,1},VX_TYPE_FLOAT32,0
 data output = tensor:4,{160,160,3,1},VX_TYPE_FLOAT32,0
 
-read input  tensor.f32
+read input tensor.f32
 node com.amd.nn_extension.upsample_nearest_layer input output
 write output upsample.f32
 ```

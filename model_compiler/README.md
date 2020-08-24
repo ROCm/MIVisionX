@@ -12,7 +12,6 @@ Neural Net Model Compiler & Optimizer converts pre-trained neural network models
 * [Models & Operators currently supported](#models--operators-currently-supported)
 * [Contributing to Model Compiler](#contributing-to-model-compiler)
 
-
 Pre-trained models in [ONNX](https://onnx.ai/), [NNEF](https://www.khronos.org/nnef), & [Caffe](http://caffe.berkeleyvision.org/) formats are supported by the model compiler & optimizer. The model compiler first converts the pre-trained models to AMD Neural Net Intermediate Representation (NNIR), once the model has been translated into AMD NNIR (AMD's internal open format), the Optimizer goes through the NNIR and applies various optimizations which would allow the model to be deployed on to target hardware most efficiently. Finally, AMD NNIR is converted into OpenVX C code, which could be compiled and deployed on any targeted AMD hardware.
 
 <p align="center"><img width="100%" src="../docs/images/frameworks.png" /></p>
@@ -25,26 +24,31 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 ## Pre-requisites
 
-* Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
+* Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
 * [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX  
+
 **Note:** MIVisionX installs model compiler scripts at `/opt/rocm/mivisionx/model_compiler/python/`
 
 #### ONNX
+
 * numpy
 * onnx
 
-````
+``` 
 % pip install onnx numpy
-````
+```
+
 **Note:** ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
 
 #### NNEF
+
 * numpy
 * [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools) - Build the nnef python module
-	
-````
+
+``` 
 % pip install numpy
-````
+```
+
 **Note:** NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
 
 ## Model Compiler Samples - Run Efficient Inference
@@ -64,7 +68,7 @@ In this [sample](../samples/model_compiler_samples#mivisionx-model-compiler-samp
 
 To convert a pre-trained caffemodel into AMD NNIR model:
 
-```
+``` 
 % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
 ```
 
@@ -72,46 +76,54 @@ To convert a pre-trained caffemodel into AMD NNIR model:
 
 To convert an ONNX model into AMD NNIR model:
 
-```
+``` 
 % python onnx_to_nnir.py <model.onnx> <nnirModelFolder> [OPTIONS]
 
 OPTIONS:
 	--input_dims n,c,h,w
 ```
+
 #### NNEF
 
 To convert a NNEF model into AMD NNIR model:
 
-```
+``` 
 % python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
 ```
+
 **Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools) or try NNEF models at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
 
 ### Step 2 - Apply Optimizations
 
 To update batch size in AMD NNIR model:
-````
+
+``` 
 % python nnir_update.py --batch-size <N> <nnirModelFolder> <nnirModelFolderN>
-````
+```
 
 To fuse operations in AMD NNIR model (like batch normalization into convolution):
-````
+
+``` 
 % python nnir_update.py --fuse-ops <1> <nnirModelFolderN> <nnirModelFolderFused>
-````
+```
 
 To quantize the model to float 16
-````
+
+``` 
 % python nnir_update.py --convert-fp16 <1> <nnirModelFolderN> <nnirModelFolderFused>
-````
+```
 
 To workaround groups using slice and concat operations in AMD NNIR model:
-````
+
+``` 
 % python nnir_update.py --slice-groups <1> <nnirModelFolderFused> <nnirModelFolderSliced>
-````
+```
+
 ### Step 3 - Convert AMD NNIR to OpenVX C code
 
 To convert an AMD NNIR model into OpenVX C code:
-````
+
+``` 
 % python nnir_to_openvx.py --help
 
 Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
@@ -132,35 +144,45 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
     R0 G0 B0 A0
     R1 G1 B1 A1
     ...
-````
+```
+
 ## Sample workflow for Model Compiler
 
 ### Trained Caffe Model conversion to AMD NNIR to OpenVX Graph
 
 1. Convert net.caffemodel into NNIR model using the following command
-   ````
+
+``` 
 	    % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
-   ````
+```
+
 2. Compile NNIR model into OpenVX C code with CMakelists.txt for compiling and building inference library
-   ````
+
+``` 
 	    % python nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
-   ````
+```
+
 3. cmake and make the project inside the nnirModelOutputFolder
-   ````
+
+``` 
 	    % cd nnirModelOutputFolder
 	    % cmake .
 	    % make
-   ````
+```
+
 4. Run anntest application for testing the inference with input and output tensor
-   ````
+
+``` 
 	    % ./anntest weights.bin
-   ````
+```
+
 5. The shared C library (libannmodule.so) can be used in any customer application
 
 ## Examples for OpenVX C code generation
 
 Generate OpenVX and test code that can be used dump and compare raw tensor data:
-````
+
+``` 
 % python nnir_to_openvx.py nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
@@ -189,10 +211,11 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]<--ad
 
 % ./anntest ../weights.bin input.f32 output.f32,reference.f32,1e-6,1e-9 --add -2.1,-2.07,-1.8 --multiply 0.017,0.017,0.017
 ...
-````
+```
 
 Generate OpenVX and test code with argmax that can be used dump and compare 16-bit argmax output tensor:
-````
+
+``` 
 % python nnir_to_openvx.py --argmax UINT16 nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
@@ -216,10 +239,11 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 
 % ./anntest ../weights.bin input-%04d.png output.u16,reference.u16,0.01
 ...
-````
+```
 
 Generate OpenVX and test code with argmax and LUT that is designed for semantic segmentation use cases. You can dump output in raw format or PNGs and additionally compare with reference data in raw format.
-````
+
+``` 
 % python nnir_to_openvx.py --argmax lut-rgb.txt nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
@@ -247,50 +271,52 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 ...
 % ./anntest ../weights.bin input-%04d.png output-%04d.png,reference.rgb,0.01
 ...
-````
+```
 
 Test code with preprocessing add / multiply values to normalize the input tensor. Some models(e.g. Inception v4) require input tensor to be normalized. You can pass the preprocessing values using --add & --multiply option.
 
-````
+``` 
 % ./anntest ../weights.bin input.f32 output.f32 --add -2.1,-2.07,-1.8 --multiply 0.017,0.017,0.017
 ...
-````
+```
 
 ## Models & Operators currently supported
+
 ###  Models
 
 <p align="center"><img width="60%" src="../docs/images/modelTrainedFrameWorks.png" /></p>
 
 |Networks|Caffe|ONNX|NNEF|
 |--------|-----|----|----|
-|AlexNet||&#9745;|&#9745;|
-|Caffenet||&#9745;||
-|DenseNet||&#9745;||						
-|Googlenet|&#9745;|&#9745;|&#9745;|		
-|Inception-V1||&#9745;|&#9745;|			
-|Inception-V2||&#9745;|&#9745;|			
+|AlexNet||&#9745; |&#9745; |
+|Caffenet||&#9745; ||
+|DenseNet||&#9745; ||						
+|Googlenet|&#9745; |&#9745; |&#9745; |		
+|Inception-V1||&#9745; |&#9745; |			
+|Inception-V2||&#9745; |&#9745; |			
 |Inception-V3||||			
-|Inception-V4|&#9745;|||			
-|MNIST|&#9745;||&#9745;|		
-|Mobilenet||&#9745;|&#9745;|		
-|MobilenetV2|||&#9745;|
-|ResNet-18|||&#9745;|			
-|ResNet-34|||&#9745;|			
-|ResNet-50|&#9745;|&#9745;|&#9745;|			
-|ResNet-101|&#9745;||&#9745;|			
-|ResNet-152|&#9745;||&#9745;|			
-|ResNetV2-18|||&#9745;|			
-|ResNetV2-34|||&#9745;|			
-|ResNetV2-50|||&#9745;|			
-|ResNetV2-101|||&#9745;|			
-|Squeezenet||&#9745;|&#9745;|			
-|Tiny-Yolo-V2|&#9745;|||			
-|VGGNet-16|&#9745;||&#9745;|			
-|VGGNet-19|&#9745;|&#9745;|&#9745;|			
-|Yolo-V3|&#9745;|||			
-|ZFNet||&#9745;||
+|Inception-V4|&#9745; |||			
+|MNIST|&#9745; ||&#9745; |		
+|Mobilenet||&#9745; |&#9745; |		
+|MobilenetV2|||&#9745; |
+|ResNet-18|||&#9745; |			
+|ResNet-34|||&#9745; |			
+|ResNet-50|&#9745; |&#9745; |&#9745; |			
+|ResNet-101|&#9745; ||&#9745; |			
+|ResNet-152|&#9745; ||&#9745; |			
+|ResNetV2-18|||&#9745; |			
+|ResNetV2-34|||&#9745; |			
+|ResNetV2-50|||&#9745; |			
+|ResNetV2-101|||&#9745; |			
+|Squeezenet||&#9745; |&#9745; |			
+|Tiny-Yolo-V2|&#9745; |||			
+|VGGNet-16|&#9745; ||&#9745; |			
+|VGGNet-19|&#9745; |&#9745; |&#9745; |			
+|Yolo-V3|&#9745; |||			
+|ZFNet||&#9745; ||
 
 **Note:**
+
 * Currently supporting [ONNX models](https://github.com/onnx/models) with `release 1.1` and `release 1.3` tags
 
 ### Operators
@@ -299,65 +325,63 @@ Test code with preprocessing add / multiply values to normalize the input tensor
 
 |Layers|Caffe|ONNX|NNEF|
 |-------|----|----|----|
-|Add||&#9745;|&#9745;|
-|Argmax||&#9745;|&#9745;|
-|AveragePool||&#9745;|&#9745;|
-|BatchNormalization|&#9745;|&#9745;|&#9745;|
-|Cast||&#9745;||
-|Clamp|||&#9745;|
-|Clip||&#9745;||
-|Concat|&#9745;|&#9745;|&#9745;|
-|Constant||&#9745;||
-|Conv|&#9745;|&#9745;|&#9745;|
-|ConvTranspose|&#9745;|&#9745;|&#9745;|
-|Copy||&#9745;|&#9745;|
-|Crop|&#9745;|||
+|Add||&#9745; |&#9745; |
+|Argmax||&#9745; |&#9745; |
+|AveragePool||&#9745; |&#9745; |
+|BatchNormalization|&#9745; |&#9745; |&#9745; |
+|Cast||&#9745; ||
+|Clamp|||&#9745; |
+|Clip||&#9745; ||
+|Concat|&#9745; |&#9745; |&#9745; |
+|Constant||&#9745; ||
+|Conv|&#9745; |&#9745; |&#9745; |
+|ConvTranspose|&#9745; |&#9745; |&#9745; |
+|Copy||&#9745; |&#9745; |
+|Crop|&#9745; |||
 |CropAndResize||||
-|Deconv|&#9745;|&#9745;|&#9745;|
-|DetectionOutput|&#9745;|||
-|Div||&#9745;|&#9745;|
+|Deconv|&#9745; |&#9745; |&#9745; |
+|DetectionOutput|&#9745; |||
+|Div||&#9745; |&#9745; |
 |Dropout||||
-|Eltwise|&#9745;|||
-|Exp||&#9745;|&#9745;|
-|Flatten|&#9745;|||
-|Gather||&#9745;||
-|GEMM|&#9745;|&#9745;|&#9745;|
-|GlobalAveragePool||&#9745;|&#9745;|
-|InnerProduct|&#9745;|||
-|Interp|&#9745;|||
-|LeakyRelu||&#9745;|&#9745;|
-|Linear|||&#9745;|
-|Log||&#9745;|&#9745;|
-|LRN|&#9745;|&#9745;|&#9745;|
-|Matmul||&#9745;|&#9745;|
-|Max||&#9745;|&#9745;|
-|MaxPool||&#9745;|&#9745;|
-|MeanReduce|||&#9745;|
-|Min||&#9745;|&#9745;|
-|Mul||&#9745;|&#9745;|
+|Eltwise|&#9745; |||
+|Exp||&#9745; |&#9745; |
+|Flatten|&#9745; |||
+|Gather||&#9745; ||
+|GEMM|&#9745; |&#9745; |&#9745; |
+|GlobalAveragePool||&#9745; |&#9745; |
+|InnerProduct|&#9745; |||
+|Interp|&#9745; |||
+|LeakyRelu||&#9745; |&#9745; |
+|Linear|||&#9745; |
+|Log||&#9745; |&#9745; |
+|LRN|&#9745; |&#9745; |&#9745; |
+|Matmul||&#9745; |&#9745; |
+|Max||&#9745; |&#9745; |
+|MaxPool||&#9745; |&#9745; |
+|MeanReduce|||&#9745; |
+|Min||&#9745; |&#9745; |
+|Mul||&#9745; |&#9745; |
 |MulAdd||||
-|NonMaxSuppression||&#9745;||
-|Permute|&#9745;||&#9745;|
-|PriorBox|&#9745;|||
-|ReduceMin||&#9745;||
-|Relu|&#9745;|&#9745;|&#9745;|
-|Reshape|&#9745;|&#9745;|&#9745;|
-|Shape||&#9745;||
-|Sigmoid||&#9745;|&#9745;|
-|Slice||&#9745;|&#9745;|
-|Split|&#9745;|||
-|Softmax|&#9745;|&#9745;|&#9745;|
-|SoftmaxWithLoss|&#9745;|||
-|Squeeze||&#9745;|&#9745;|
-|Sub||&#9745;|&#9745;|
-|Sum||&#9745;||
-|Tile||&#9745;||
-|TopK||&#9745;||
-|Transpose||&#9745;|&#9745;|
-|Unsqueeze||&#9745;|&#9745;|
-|Upsample|&#9745;||&#9745;|
-
-
+|NonMaxSuppression||&#9745; ||
+|Permute|&#9745; ||&#9745; |
+|PriorBox|&#9745; |||
+|ReduceMin||&#9745; ||
+|Relu|&#9745; |&#9745; |&#9745; |
+|Reshape|&#9745; |&#9745; |&#9745; |
+|Shape||&#9745; ||
+|Sigmoid||&#9745; |&#9745; |
+|Slice||&#9745; |&#9745; |
+|Split|&#9745; |||
+|Softmax|&#9745; |&#9745; |&#9745; |
+|SoftmaxWithLoss|&#9745; |||
+|Squeeze||&#9745; |&#9745; |
+|Sub||&#9745; |&#9745; |
+|Sum||&#9745; ||
+|Tile||&#9745; ||
+|TopK||&#9745; ||
+|Transpose||&#9745; |&#9745; |
+|Unsqueeze||&#9745; |&#9745; |
+|Upsample|&#9745; ||&#9745; |
 
 ## Contributing to Model Compiler
 

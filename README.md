@@ -94,7 +94,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 * GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
 * APU: Carrizo or above [optional]
 
-**Note:** Some modules in MIVisionX can be built for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or AMD APUs.
+  **Note:** Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
 
 ### Windows
 
@@ -148,11 +148,10 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ```
 
-**Note:** 
-
-  + use `--installer yum` for **CentOS**
-  + ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
-  + use `X Window` / `X11` for remote GUI app control 
+  **Note:**
+  * use `--installer yum` for **CentOS**
+  * ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
+  * use `X Window` / `X11` for remote GUI app control 
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
@@ -170,7 +169,7 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
 * Install [Windows Prerequisites](#windows)
 * Use `MIVisionX.sln` to build for x64 platform
 
-**NOTE:** vx_nn is not supported on Windows in this release
+  **NOTE:** `vx_nn` is not supported on `Windows` in this release
 
 ### Linux
 
@@ -194,14 +193,14 @@ sudo apt-get install mivisionx
 sudo yum install mivisionx
 ```
 
- **Note:**
-
-  + vx_winml is not supported on linux
-  + source code will not available with apt-get/yum install
-  + executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
-  + OpenVX and module header files into `/opt/rocm/mivisionx/include`
-  + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
-  + Package (.deb & .rpm) install requires OpenCV v3.4.0 to execute AMD OpenCV extensions
+  **Note:**
+  
+  * `vx_winml` is not supported on `linux`
+  * source code will not available with `apt-get` / `yum` install
+  * executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
+  * OpenVX and module header files into `/opt/rocm/mivisionx/include`
+  * model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+  * Package (.deb & .rpm) install requires `OpenCV v3.4.0` to execute `AMD OpenCV extensions`
 
 #### Using `MIVisionX-setup.py` and `CMake` on Linux (Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6` ) with ROCm
 
@@ -215,7 +214,6 @@ cd MIVisionX
 
 ``` 
 python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-
                           --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
                           --opencv    [OpenCV Version - optional (default:3.4.0)]
                           --miopen    [MIOpen Version - optional (default:2.5.0)]
@@ -228,9 +226,7 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
 ```
 
-**Note:** 
-
-  + use `--installer yum` for **CentOS**
+  **Note:** use `--installer yum` for **CentOS**
 
 ``` 
 mkdir build
@@ -240,10 +236,11 @@ make -j8
 sudo make install
 ```
 
-  **Note:**
-   + vx_winml is not supported on Linux
-   + the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
-   + the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
+**Note:**
+
++ vx_winml is not supported on Linux
++ the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
++ the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx/include` folder
 
 #### Using `CMake` on Linux (Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6` ) with ROCm
 
@@ -269,10 +266,11 @@ sudo make install
 
 * The installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
 * The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
-* Apps, Samples, Documents, Model Compiler and Toolkit are placed into `/opt/rocm/mivisionx`
-* Run samples to verify the installation
+* Apps, Samples, Documents, Model Compiler, and Toolkit are placed into `/opt/rocm/mivisionx`
+* Run below sample to verify the installation
 
 **Canny Edge Detection**
+
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
   
 
@@ -281,10 +279,7 @@ sudo make install
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
   runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
 ```
-
-**Note:** 
-
-  + More samples are available [here](samples#samples)
+**Note:** More samples are available [here](samples#samples)
 
 ### Windows
 
@@ -355,38 +350,36 @@ sudo docker pull mivisionx/ubuntu-16.04
 ``` 
 sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
 ```
+  **Note:** 
+  ##### 1. Map host directory on the docker image
+  
+  * map the localhost directory to be accessed on the docker image.
+  * use `-v` option with docker run command: `-v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}`
+  * usage:
+  ``` 
+  sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
+  ```
+  
+  ##### 2. Display option with docker
+  * Using host display
+  ``` 
+  xhost +local:root
+  sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --  privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:latest
+  ```
 
-  + Optional: Map localhost directory on the docker image
-    - option to map the localhost directory with trained caffe models to be accessed on the docker image.
-    - usage: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH} 
-
-``` 
-sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
-```
-
-**Note:** **Display option with docker**
-
-* Using host display
-
-``` 
-xhost +local:root
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:latest
-```
-
-* Test display with MIVisionX sample
-
-``` 
-export PATH=$PATH:/opt/rocm/mivisionx/bin
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
-```
+  * Test display with MIVisionX sample
+  ``` 
+  export PATH=$PATH:/opt/rocm/mivisionx/bin
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+  runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+  ```
 
 ## Release Notes
 
 ### Known issues
 
-* Package (.deb & .rpm) install requires **OpenCV `v3.4.0` ** to execute AMD OpenCV extensions
-* ROCm `3.0` and above has known to slow down OpenCL kernels.
+* Package (.deb & .rpm) install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
+* **ROCm** `3.0` and above has known to slow down OpenCL kernels.
 
 ### Tested configurations
 

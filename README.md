@@ -356,22 +356,23 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
   * map the localhost directory to be accessed on the docker image.
   * use `-v` option with docker run command: `-v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}`
   * usage:
-    ``` 
-    sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
-    ```
+  ``` 
+  sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
+  ```
   
   ##### 2. Display option with docker
   * Using host display
-    ``` 
-    xhost +local:root
-    sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --  privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:latest
-    ```
+  ``` 
+  xhost +local:root
+  sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --  privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:latest
+  ```
+
   * Test display with MIVisionX sample
-    ``` 
-    export PATH=$PATH:/opt/rocm/mivisionx/bin
-    export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
-    runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
-    ```
+  ``` 
+  export PATH=$PATH:/opt/rocm/mivisionx/bin
+  export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
+  runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
+  ```
 
 ## Release Notes
 

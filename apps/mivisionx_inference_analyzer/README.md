@@ -156,9 +156,8 @@ usage: python mivisionx_inference_analyzer.py
 	% tar -xvf squeezenet.tar.gz
 ```
 
-	**Note:** pre-trained model - `squeezenet/model.onnx`
+  **Note:** pre-trained model - `squeezenet/model.onnx`
 	
-
 <p align="center"><img width="100%" src="../../docs/images/sample-1-3.png" /></p>
 
 * **Step 3:** Use the command below to run the inference analyzer
@@ -172,11 +171,9 @@ usage: python mivisionx_inference_analyzer.py
 
   + Run SqueezeNet Inference Analyzer
 
-	
-
-``` 
-	% python mivisionx_inference_analyzer.py --model_format onnx --model_name SqueezeNet --model ~/sample-1/squeezenet/model.onnx --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --label ./sample/labels.txt --output_dir ~/sample-1/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes
-	```
+    ``` 
+    % python mivisionx_inference_analyzer.py --model_format onnx --model_name SqueezeNet --model ~/sample-1/squeezenet/model.onnx --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --label ./sample/labels.txt --output_dir ~/sample-1/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes
+    ```
 
 <p align="center"><img width="100%" src="../../docs/images/sample-1-4.png" /></p>
 
@@ -209,16 +206,16 @@ usage: python mivisionx_inference_analyzer.py
 
   + View inference analyzer usage
 
-``` 
-	% cd ~/sample-2/MIVisionX-inference-analyzer/
-	% python mivisionx_inference_analyzer.py -h
-```
+    ``` 
+    % cd ~/sample-2/MIVisionX-inference-analyzer/
+    % python mivisionx_inference_analyzer.py -h
+    ```
 
   + Run VGGNet-16 Inference Analyzer
 
-``` 
-	% python mivisionx_inference_analyzer.py --model_format caffe --model_name VggNet-16-Caffe --model ~/sample-2/VGG_ILSVRC_16_layers.caffemodel --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --label ./sample/labels.txt --output_dir ~/sample-2/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes
-```
+    ``` 
+    % python mivisionx_inference_analyzer.py --model_format caffe --model_name VggNet-16-Caffe --model ~/sample-2/VGG_ILSVRC_16_layers.caffemodel --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --label ./sample/labels.txt --output_dir ~/sample-2/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes
+    ```
 
 <p align="center"><img width="100%" src="../../docs/images/sample-2-2.png" /></p>
 
@@ -254,16 +251,16 @@ usage: python mivisionx_inference_analyzer.py
 
   + View inference analyzer usage
 
-``` 
+    ``` 
 	% cd ~/sample-3/MIVisionX-inference-analyzer/
 	% python mivisionx_inference_analyzer.py -h
-```
+    ```
 
   + Run VGGNet-16 Inference Analyzer
 
-``` 
+    ``` 
 	% python mivisionx_inference_analyzer.py --model_format nnef --model_name VggNet-16-NNEF --model ~/sample-3/vgg16/ --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --label ./sample/labels.txt --output_dir ~/sample-3/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes
-```
+    ```
 
 * **Preprocessing the model:** Use the --add/--multiply option to preprocess the input images
 

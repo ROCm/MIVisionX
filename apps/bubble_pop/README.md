@@ -48,8 +48,6 @@ make
  ./vxPop --bubble
  ```
 
- 
-
  - **Donuts**
 
  ``` 

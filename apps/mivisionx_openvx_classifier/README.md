@@ -68,27 +68,27 @@ Here is the sample download [link](https://github.com/SnailTyan/caffe-model-zoo)
 
  + Convert the pre-trained caffemodel into AMD NNIR model:
 
-``` 
-% python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
-```
+  ``` 
+  % python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
+  ```
 
- Sample:
+  Sample:
 
- ``` 
- % python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel VGG16_NNIR --input-dims 1,3,224,224
- ```
+    ``` 
+    % python /opt/rocm/mivisionx/model_compiler/python/caffe_to_nnir.py VGG_ILSVRC_16_layers.caffemodel VGG16_NNIR --input-dims 1,3,224,224
+    ```
 
  + Convert an AMD NNIR model into OpenVX C code:
 
- ``` 
- % python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
- ```
+  ``` 
+  % python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
+  ```
 
- Sample:
+  Sample:
 
- ``` 
- % python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py VGG16_NNIR VGG16_OpenVX
- ```
+    ``` 
+    % python /opt/rocm/mivisionx/model_compiler/python/nnir_to_openvx.py VGG16_NNIR VGG16_OpenVX
+    ```
 
  **Note:** The weights.bin file will be generated inside the OpenVX folder and you can use that as an input for this project.
 

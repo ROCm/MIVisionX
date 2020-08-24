@@ -35,45 +35,49 @@ See the [OpenVX documentation](https://www.khronos.org/registry/OpenVX/specs/1.0
 
 ### Build using Cmake on Linux (Ubuntu 16.04 64bit)
 
+```
  mkdir build
  cd build
  cmake ..
  make
+```
 
 ### Usage
 
- Usage: ./DGtest [weights.bin]\n"
+ Usage: 
  
- [weights.bin]
- The name of the weights file to be used for the inference. It is created by running a caffemodel converter.
- See the below section for using your caffemodel.
+ ```
+ ./DGtest [weights.bin]
+ ```
  
-
+**weights.bin:** The name of the weights file to be used for the inference. It is created by running a caffemodel converter.
+See the below section for using your caffemodel.
+ 
 ### Testing with your Caffemodel
 
 You can test your trained MNIST caffemodel using the [model compiler](https://github.com/GPUOpen-ProfessionalCompute-Libraries/amdovx-modules/tree/develop/utils/model_compiler)
 
- 
-
  1. Convert your caffemodel->NNIR->openvx using the model compiler.
- 2. From the generated files, copy 
+ 2. From the generated files, copy
 
- 
+```
  annmodule.cpp
  annmodule.h
  weights.bin
- 
+```
  to the DGtest folder.
 
  3. Build the program again.
 
+```
  make
+```
  
-
 ### Example
 
+```
  ./DGTest ../data/weights.bin
-
+```
  
 <p align="center">
  <img src="../../docs/images/dg_test_sample.png">

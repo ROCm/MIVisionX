@@ -81,6 +81,9 @@ list(APPEND SOURCES
     src/cast_layer.cpp
     src/nms_layer.cpp
     src/gather_layer.cpp
+    src/topk_layer.cpp
+    src/reduce_min.cpp
+    src/tile_layer.cpp
     src/profiler.cpp
     )
 

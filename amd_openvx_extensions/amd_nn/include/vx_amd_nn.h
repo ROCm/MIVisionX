@@ -302,7 +302,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorExpNode(vx_graph graph, vx_tensor input
  */
 VX_API_ENTRY vx_node VX_API_CALL vxTensorLogNode(vx_graph graph, vx_tensor input, vx_tensor output);
 
-
 /* \brief [Graph] Creates a Non Max Suppression Layer Node.
  * \details Filter out boxes that have high intersection-over-union (IOU) overlap with previously selected boxes.
  * This function supports 4D tensors as input and ouput. The type of the tensor is int64.
@@ -330,7 +329,43 @@ VX_API_ENTRY vx_node VX_API_CALL vxNMSLayer(vx_graph graph, vx_tensor boxes, vx_
  * \return <tt> vx_node</tt>.
  * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  */
-VX_API_ENTRY vx_node VX_API_CALL vxGatherLayerNode(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_scalar axis);
+VX_API_ENTRY vx_node VX_API_CALL vxGatherLayer(vx_graph graph, vx_tensor input, vx_tensor indices, vx_tensor output, vx_int32 axis);
 
+/* \brief [Graph] Creates a TopK Layer Node.
+ * \details Retrieve the top-K largest or smallest elements along a specified axis
+ * This function supports 4D tensors as input and ouput. 
+ * \param [in] graph The handle to the graph.
+ * \param [in] x_tensor The input tensor data.
+ * \param [in] k_tensor The 1-D input tensor data containing a single positive value corresponding to the number of top elements to retrieve.
+ * \param [out] values The output tensor data containing top K values from the input 'x_tensor'.
+ * \param [out] indices The output tensor data containing the corresponding input tensor indices for the top K values.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor, vx_tensor k_tensor, vx_int32 axis, vx_int32 largest, vx_int32 sorted, 
+											vx_tensor values, vx_tensor indices);
+
+/* \brief [Graph] Creates a Reduce Min Layer Node.
+ * \details Computes the min of the input tensor's element along the provided axes.
+ * \param [in] graph The handle to the graph.
+ * \param [in] data  The input tensor data.
+ * \param [in] axes  A list of integers, along which to reduce. The default is to reduce over all the dimensions of the input tensor. Accepted range is [-r, r-1] where r = rank(data).
+ * \param [in] keepdims Keep the reduced dimension or not, default 1 mean keep reduced dimension.
+ * \param [out] reduced The output tensor data with the dimensions based axes and keepdims.
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxReduceMinLayer(vx_graph graph, vx_tensor data, vx_array axes, vx_int32 keepdims, vx_tensor reduced);
+
+/* \brief [Graph] Creates a Tile Layer Node.
+ * \details Constructs a tensor by tiling a given tensor.
+ * \param [in]  graph   The handle to the graph.
+ * \param [in]  input   The input tensor data.
+ * \param [in]  repeats 1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.
+ * \param [out] output  Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTileLayer(vx_graph graph, vx_tensor input, vx_tensor repeats, vx_tensor output);
 
 #endif

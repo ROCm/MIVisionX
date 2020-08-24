@@ -1,13 +1,15 @@
 <p align="center"><img src="../../docs/images/LOOM_LOGO_250X125.png" /></p>
 
 # Radeon Loom Stitching Library
+
 Radeon Loom Stitching Library (beta preview) is a highly optimized library for 360-degree video stitching applications. This library consists of:
+
 * **Live Stitch API**: stitching framework built on top of OpenVX kernels. Look into [live_stitch_api.h](live_stitch_api.h) for information on the API.
 * **vx_loomsl**: additional OpenVX kernels needed for 360 degree video stitching
 
 The [loom_shell](../../utilities/loom_shell/README.md) command-line tool can be used to build your application quickly. It provides direct access to Live Stitch API by encapsulating the calls to enable rapid prototyping.
 
-This software is provided under an MIT-style license,  see the file COPYRIGHT.txt for details.
+This software is provided under an MIT-style license, see the file COPYRIGHT.txt for details.
 
 [![Loom Stitch](../../docs/images/loom-4.png)](https://youtu.be/E8pPU04iZjw)
 
@@ -34,10 +36,11 @@ This software is provided under an MIT-style license,  see the file COPYRIGHT.tx
 **Note:** The output stitched image is saved as LoomOutputStitch.bmp
 
 ## Live Stitch API: Simple Example
+
 Let's consider a 360 rig that has 3 1080p cameras with Circular FishEye lenses. 
 The below example demonstrates how to stitch images from these cameras into a 4K Equirectangular buffer.
 
-````
+``` 
     #include "vx_loomsl/live_stitch_api.h"
     #include "utils/loom_shell/loom_shell_util.h"
 
@@ -84,11 +87,13 @@ The below example demonstrates how to stitch images from these cameras into a 4K
       
       return 0;
     }
-````
+```
+
 ## Live Stitch API: Real-time Live Stitch using LoomIO
+
 This example makes use of a 3rd party LoomIO plug-ins for live camera capture and display.
 
-````
+``` 
     #include "vx_loomsl/live_stitch_api.h"
     int main()
     {
@@ -116,4 +121,4 @@ This example makes use of a 3rd party LoomIO plug-ins for live camera capture an
 
         return 0;
     }
-````
+```

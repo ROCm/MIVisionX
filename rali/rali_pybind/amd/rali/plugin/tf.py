@@ -74,7 +74,7 @@ class RALIGenericIteratorDetection(object):
             self.loader.copyToTensorNCHW(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         else:
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
-        
+                    
         if(self.loader._name == "TFRecordReaderDetection"):
             sum = 0
             self.lis =[] #Empty list for bboxes

@@ -150,19 +150,19 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
 ### Trained Caffe Model conversion to AMD NNIR to OpenVX Graph
 
-1. Convert net.caffemodel into NNIR model using the following command
+* Step 1: Convert net.caffemodel into NNIR model using the following command
 
 ``` 
 	    % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
 ```
 
-2. Compile NNIR model into OpenVX C code with CMakelists.txt for compiling and building inference library
+* Step 2: Compile NNIR model into OpenVX C code with CMakelists.txt for compiling and building inference library
 
 ``` 
 	    % python nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
 ```
 
-3. cmake and make the project inside the nnirModelOutputFolder
+* Step 3: cmake and make the project inside the nnirModelOutputFolder
 
 ``` 
 	    % cd nnirModelOutputFolder
@@ -170,13 +170,13 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 	    % make
 ```
 
-4. Run anntest application for testing the inference with input and output tensor
+* Step 4: Run anntest application for testing the inference with input and output tensor
 
 ``` 
 	    % ./anntest weights.bin
 ```
 
-5. The shared C library (libannmodule.so) can be used in any customer application
+* Step 5: The shared C library (libannmodule.so) can be used in any customer application
 
 ## Examples for OpenVX C code generation
 

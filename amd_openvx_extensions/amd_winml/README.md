@@ -12,11 +12,13 @@ The WinML extension will allow developers to import a pre-trained ONNX model int
 
 The following is a list of WinML functions that have been included in the vx_winml module.
 
+```
  onnxToMivisionX com.winml.onnx_to_mivisionx
  convertImageToTensor com.winml.convert_image_to_tensor
  getTopKLabels com.winml.get_top_k_labels
+```
 
-**NOTE** - For the list of OpenVX API calls for WinML-interop refer include/[vx_ext_winml.h](include/vx_ext_winml.h)
+**NOTE:** For the list of OpenVX API calls for WinML-interop refer include/[vx_ext_winml.h](include/vx_ext_winml.h)
 
 ## Build Instructions
 
@@ -25,15 +27,12 @@ The following is a list of WinML functions that have been included in the vx_win
 * Windows 10, [version `1809` or later](https://www.microsoft.com/software-download/windows10)
 * Windows SDK, [build `17763` or later](https://developer.microsoft.com/en-us/windows/downloads/windows-10-sdk)
 * Visual Studio 2017, [version `15.7.4` or later](https://developer.microsoft.com/en-us/windows/downloads)
-
- - Visual Studio extension for C++/WinRT
-
+  + Visual Studio extension for C++/WinRT
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
 * Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
-
- + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
- + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
+  + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
+  + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
 ### Build using `Visual Studio 2017` on 64-bit Windows 10
 
@@ -52,10 +51,8 @@ This [utility](utilities/MIVisionX-WinML-Validate#mivisionx-onnx-model-validatio
 [Samples](samples#samples) to run inference on a single image and a live camera is provided in the samples folder.
 
 * [SqueezeNet](samples#sample---squeezenet)
-
- - [Single Image Inference](samples#winml-imagegdf---single-image-inference)
- - [Live Inference](samples#winml-livegdf---live-inference-using-a-camera)
-
+  + [Single Image Inference](samples#winml-imagegdf---single-image-inference)
+  + [Live Inference](samples#winml-livegdf---live-inference-using-a-camera)
 * [FER+ Emotion Recognition](samples#sample---fer-emotion-recognition)
 * [VGG 19](samples#sample---vgg19)
 * [Multiple Models](samples#winml-live-multiplemodelsgdf---live-inference-using-a-camera)

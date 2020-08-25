@@ -66,15 +66,15 @@ vx_graph annCreateGraphWithInputImageWithArgmaxImageWithLut(
 
 | option | description |
 | ------ | ----------- |
-| --[no-]error-messages     | do/don't enable error messages (default: ON) |
-| --[no-]virtual-buffers    | do/don't use virtual buffers (default: ON) |
-| --[no-]generate-gdf       | do/don't generate RunVX GDF with weight/bias initialization (default: ON) |
-| --[no-]generate-vx-code   | do/don't generate OpenVX C Code with weight/bias initialization (default: ON) |
+| --(no-)error-messages     | do/don't enable error messages (default: ON) |
+| --(no-)virtual-buffers    | do/don't use virtual buffers (default: ON) |
+| --(no-)generate-gdf       | do/don't generate RunVX GDF with weight/bias initialization (default: ON) |
+| --(no-)generate-vx-code   | do/don't generate OpenVX C Code with weight/bias initialization (default: ON) |
 | --output-dir <folder>     | specify output folder for weights/biases, GDF, and OpenVX C Code (default: current) |
 | --input-rgb <a> <b> <rev> | convert input from RGB image into tensor using (a*x+b) conversion: rev=(BGR?1:0) |
 | --input-u8  <a> <b>       | convert input from U8 image into tensor using (a*x+b) conversion |
-| --argmax-tensor u8|u16 k  | return argmax output with specified tensor type and top_k |
-| --argmax-image u8|u16     | return argmax output with specified image type |
+| --argmax-tensor u8/u16 k  | return argmax output with specified tensor type and top_k |
+| --argmax-image u8/u16     | return argmax output with specified image type |
 | --argmax-lut <rgbLut.txt> | argmax color table: one R G B entry per label |
 | --flags <int>             | specify custom flags (default: 0) |
 

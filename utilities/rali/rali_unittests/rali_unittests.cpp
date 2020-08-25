@@ -491,7 +491,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     // Calling the API to verify and build the augmentation graph
     raliVerify(handle);
-    image1 = nullptr;
     if (raliGetStatus(handle) != RALI_OK) {
         std::cout << "Could not verify the augmentation graph " << raliGetErrorMessage(handle);
         return -1;
@@ -579,7 +578,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     raliRelease(handle);
     mat_input.release();
     mat_output.release();
-
+    if(!image1) return -1;
     return 0;
 }
 

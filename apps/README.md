@@ -6,13 +6,13 @@ MIVisionX has several applications built on top of OpenVX and its modules, it us
 
 This sample [application](./bubble_pop) creates bubbles and donuts to pop using OpenVX & OpenCV functionality.
 
-<p align="center"> <img src="../docs/images/vx-pop-app.gif"> </p>
+<p align="center"> <img width="90%" src="../docs/images/vx-pop-app.gif"> </p>
 
 ## Cloud Application
 
 This sample [application](./cloud_inference#cloud-inference-application) does inference using a client-server system.
 
-[![Radeon Inference](../docs/images/inferenceVideo.png)](http://www.youtube.com/watch?v=0GLmnrpMSYs)
+<p align="center"> <a href="http://www.youtube.com/watch?v=0GLmnrpMSYs"> <img width="90%" src="../docs/images/inferenceVideo.png"> </a></p>
 
 ## DG Test
 
@@ -30,7 +30,7 @@ This sample [application](./image_augmentation#image-augmentation-application) d
 
 [MIVisionX Inference Analyzer Application](./mivisionx_inference_analyzer#mivisionx-python-inference-analyzer) using pre-trained `ONNX` / `NNEF` / `Caffe` models to analyze and summarize images.
 
-<p align="center"><img width="60%" src="../docs/images/inference_analyzer.gif" /></p>
+<p align="center"><img width="90%" src="../docs/images/inference_analyzer.gif" /></p>
 
 ## MIVisionX OpenVX Classsification
 

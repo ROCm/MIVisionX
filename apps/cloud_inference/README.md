@@ -2,7 +2,7 @@
 
 | Inference Application Development Workflow | Sample Cloud Inference Application |
 |-------------------------|-------------------------|
-| <p align="center"><img width="80%" src="../../docs/images/block_diagram_inference_workflow.png"/></p> | <p align="center"><img width="80%" src="../../docs/images/block_diagram_inference_sample.png"/></p> |
+| <img width="80%" src="../../docs/images/block_diagram_inference_workflow.png"/> | <img width="80%" src="../../docs/images/block_diagram_inference_sample.png"/>|
 
 ## Cloud Inference Engine
 

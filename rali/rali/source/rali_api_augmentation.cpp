@@ -362,6 +362,8 @@ raliCropResize(
         RaliFloatParam p_y_center_drift)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context )
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto area = static_cast<FloatParam*>(p_area);
@@ -370,8 +372,6 @@ raliCropResize(
     auto y_center_drift = static_cast<FloatParam*>(p_y_center_drift);
     try
     {
-        if(!input || !context )
-            THROW("Null values passed as input")
         if(dest_width == 0 || dest_height == 0)
             THROW("CropResize node needs tp receive non-zero destination dimensions")
         // For the crop resize node, user can create an image with a different width and height
@@ -451,13 +451,12 @@ raliResize(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context || dest_width == 0 || dest_height == 0)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context || dest_width == 0 || dest_height == 0)
-            THROW("Null values passed as input")
-
         // For the resize node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
         output_info.width(dest_width);
@@ -489,14 +488,14 @@ raliBrightness(
         RaliIntParam p_beta)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto alpha = static_cast<FloatParam*>(p_alpha);
     auto beta = static_cast<IntParam*>(p_beta);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -519,12 +518,12 @@ raliBrightnessFixed(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 

@@ -74,6 +74,9 @@ private:
     Reader::Status folder_reading();
     std::string _folder_path;
     std::string _path;
+    std::map<std::string, std::string> _feature_key_map;
+    std::string _encoded_key;
+    std::string _filename_key;
     DIR *_src_dir;
     DIR *_sub_dir;
     struct dirent *_entity;
@@ -110,4 +113,3 @@ private:
     std::map <std::string, uint> _image_record_starting;
     TimingDBG _shuffle_time;
 };
-

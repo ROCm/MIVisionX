@@ -44,6 +44,17 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_image_name(RaliContext context, py::array_t<char[12]> array,unsigned image_idx)
+    {
+        auto buf = array.request();
+        char* ptr = (char*) buf.ptr;
+        // call pure C++ function
+        
+        raliGetImageName(context,ptr,image_idx);
+        std::string s(ptr); 
+        return py::bytes(s);
+    }
+
     py::object wrapper_tensor32(RaliContext context, py::array_t<float> array,
                                 RaliTensorLayout tensor_format, float multiplier0,
                                 float multiplier1, float multiplier2, float offset0,
@@ -100,6 +111,15 @@ namespace rali{
         float* ptr = (float*) buf.ptr;
         // call pure C++ function
         raliGetBoundingBoxCords(context,ptr,image_idx);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_img_sizes_copy(RaliContext context, py::array_t<int> array,unsigned image_idx)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetImageSizes(context,ptr,image_idx);
         return py::cast<py::none>(Py_None);
     }
 
@@ -165,15 +185,21 @@ namespace rali{
         m.def("getImageWidth",&raliGetImageWidth);
         m.def("getImageHeight",&raliGetImageHeight);
         m.def("getImagePlanes",&raliGetImagePlanes);
-        m.def("getImageName",&raliGetImageName);
+        m.def("getImageName",&wrapper_image_name);
         m.def("getImageNameLen",&raliGetImageNameLen);
         m.def("getStatus",&raliGetStatus);
         m.def("labelReader",&raliCreateLabelReader);
-        m.def("TFLabelReader",&raliCreateTFReader);
+        m.def("TFReader",&raliCreateTFReader);
+        m.def("TFReaderDetection",&raliCreateTFReaderDetection);
+        m.def("CaffeReader",&raliCreateCaffeLMDBLabelReader);
+        m.def("Caffe2Reader",&raliCreateCaffe2LMDBLabelReader);
+        m.def("CaffeReaderDetection",&raliCreateCaffeLMDBReaderDetection);
+        m.def("Caffe2ReaderDetection",&raliCreateCaffe2LMDBReaderDetection);
         m.def("COCOReader",&raliCreateCOCOReader);
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
+        m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&raliGetBoundingBoxCount);
         m.def("isEmpty",&raliIsEmpty);
         m.def("getTimingInfo",raliGetTimingInfo);
@@ -218,12 +244,91 @@ namespace rali{
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
             py::arg("max_width") = 0,
             py::arg("max_height") = 0);
+        m.def("COCO_ImageDecoder",&raliJpegCOCOFileSource,"Reads file from the source given and decodes it according to the policy",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("json_path"),
+            py::arg("color_format"),
+            py::arg("num_threads"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
+        m.def("COCO_ImageDecoderShard",&raliJpegCOCOFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+	        py::arg("json_path"),
+            py::arg("color_format"),
+            py::arg("shard_id"),
+            py::arg("shard_count"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
         m.def("TF_ImageDecoder",&raliJpegTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",	
             py::return_value_policy::reference,	
             py::arg("p_context"),	
             py::arg("source_path"),	
             py::arg("rali_color_format"),
             py::arg("internal_shard_count"),
+            py::arg("is_output"),
+            py::arg("user_key_for_encoded"),
+            py::arg("user_key_for_filename"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
+        m.def("Caffe_ImageDecoder",&raliJpegCaffeLMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("rali_color_format"),
+            py::arg("num_threads"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
+        m.def("Caffe_ImageDecoderShard",&raliJpegCaffeLMDBRecordSourceSingleShard, "Reads file from the source given and decodes it according to the shard id and number of shards",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("rali_color_format"),
+            py::arg("shard_id"),
+            py::arg("shard_count"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
+        m.def("Caffe2_ImageDecoder",&raliJpegCaffe2LMDBRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("rali_color_format"),
+            py::arg("num_threads"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0);
+        m.def("Caffe2_ImageDecoderShard",&raliJpegCaffe2LMDBRecordSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
+            py::return_value_policy::reference,
+            py::arg("p_context"),
+            py::arg("source_path"),
+            py::arg("rali_color_format"),
+            py::arg("shard_id"),
+            py::arg("shard_count"),
             py::arg("is_output"),
             py::arg("shuffle") = false,
             py::arg("loop") = false,
@@ -246,8 +351,37 @@ namespace rali{
             py::arg("aspect_ratio") = NULL,	
             py::arg("y_drift_factor") = NULL,	
             py::arg("x_drift_factor") = NULL);
+        m.def("FusedDecoderCropShard",&raliFusedJpegCropSingleShard,"Reads file from the source and decodes them partially to output random crops",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("color_format"),
+	        py::arg("shard_id"),
+            py::arg("shard_count"),
+            py::arg("is_output"),
+            py::arg("shuffle") = false,
+            py::arg("loop") = false,
+            py::arg("decode_size_policy") = RALI_USE_MAX_SIZE,
+            py::arg("max_width") = 0,
+            py::arg("max_height") = 0,
+            py::arg("area_factor") = NULL,
+            py::arg("aspect_ratio") = NULL,
+            py::arg("y_drift_factor") = NULL,
+            py::arg("x_drift_factor") = NULL);
+
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h
+        m.def("SSDRandomCrop",&raliSSDRandomCrop,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"),
+	        py::arg("p_threshold"),
+            py::arg("crop_area_factor") = NULL,
+            py::arg("crop_aspect_ratio") = NULL,
+            py::arg("crop_pos_x") = NULL,
+            py::arg("crop_pos_y") = NULL,
+            py::arg("num_of_attempts") = 20);
         m.def("Resize",&raliResize,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -266,8 +400,16 @@ namespace rali{
             py::arg("aspect_ratio") = NULL,
             py::arg("x_center_drift") = NULL,
             py::arg("y_center_drift") = NULL);
-        m.def("raliCopy",&raliCopy);
-        m.def("raliNop",&raliNop);
+        m.def("raliCopy",&raliCopy,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"));
+        m.def("raliNop",&raliNop,
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("input"),
+            py::arg("is_output"));
         m.def("ColorTwist",&raliColorTwist,
             py::return_value_policy::reference,
             py::arg("context"),
@@ -458,6 +600,7 @@ namespace rali{
             py::arg("crop_area_factor") = NULL,
             py::arg("crop_aspect_ratio") = NULL,
             py::arg("crop_pos_x") = NULL,
-            py::arg("crop_pos_y") = NULL);
+            py::arg("crop_pos_y") = NULL,
+            py::arg("num_of_attempts") = 20);
     }
 }

@@ -54,19 +54,25 @@ void RandomCropNode::update_node()
 {
     _crop_param->set_image_dimensions(_inputs[0]->info().get_roi_width_vec(), _inputs[0]->info().get_roi_height_vec());
     _crop_param->update_array();
+    update_output_dims();
+}
+
+void RandomCropNode::update_output_dims()
+{
     std::vector<uint32_t> crop_h_dims, crop_w_dims;
     _crop_param->get_crop_dimensions(crop_w_dims, crop_h_dims);
-    _outputs[0]->update_image_roi(crop_w_dims, crop_h_dims);
+    _outputs[0]->update_image_roi(crop_w_dims, crop_h_dims);  
 }
 
 void RandomCropNode::init(float crop_area_factor, float crop_aspect_ratio, float x_drift, float y_drift)
 {
    
 }
-void RandomCropNode::init(FloatParam *crop_area_factor, FloatParam  *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift)
+void RandomCropNode::init(FloatParam *crop_area_factor, FloatParam *crop_aspect_ratio, FloatParam *x_drift, FloatParam *y_drift, int num_of_attempts)
 {
     _crop_param->set_x_drift_factor(core(x_drift));
     _crop_param->set_y_drift_factor(core(y_drift));
     _crop_param->set_area_factor(core(crop_area_factor));
-    _crop_param->set_aspect_ratio(core(crop_aspect_ratio));  
+    _crop_param->set_aspect_ratio(core(crop_aspect_ratio));
+    _num_of_attempts = num_of_attempts;
 }

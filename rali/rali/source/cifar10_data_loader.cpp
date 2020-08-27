@@ -133,6 +133,8 @@ CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg
     _raw_img_info._image_names.resize(_batch_size);
     _raw_img_info._roi_width.resize(_batch_size);           // used to store the individual image in a big raw file
     _raw_img_info._roi_height.resize(batch_size);
+    _raw_img_info._original_height.resize(_batch_size);
+    _raw_img_info._original_width.resize(_batch_size);
     _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
     LOG("Loader module initialized");
@@ -255,9 +257,9 @@ CIFAR10DataLoader::update_output_image()
     if(_stopped)
         return LoaderModuleStatus::OK;
 
-    decoded_image_info d_img_info = _circ_buff.get_image_info();
-    _output_names = d_img_info._image_names;
-    _output_image->update_image_roi(d_img_info._roi_width, d_img_info._roi_height);
+    _output_decoded_img_info = _circ_buff.get_image_info();
+    _output_names = _output_decoded_img_info._image_names;
+    _output_image->update_image_roi(_output_decoded_img_info._roi_width, _output_decoded_img_info._roi_height);
 
     _circ_buff.pop();
     if(!_loop)
@@ -278,3 +280,9 @@ std::vector<std::string> CIFAR10DataLoader::get_id()
 {
     return _output_names;
 }
+
+decoded_image_info CIFAR10DataLoader::get_decode_image_info()
+{
+    return _output_decoded_img_info;
+}
+

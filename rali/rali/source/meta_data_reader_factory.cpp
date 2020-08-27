@@ -29,6 +29,11 @@ THE SOFTWARE.
 #include "text_file_meta_data_reader.h"
 #include "cifar10_meta_data_reader.h"
 #include "tf_meta_data_reader.h"
+#include "caffe_meta_data_reader.h"
+#include "caffe_meta_data_reader_detection.h"
+#include "caffe2_meta_data_reader.h"
+#include "caffe2_meta_data_reader_detection.h"
+#include "tf_meta_data_reader_detection.h"
 
 std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& config) {
     switch(config.reader_type()) {
@@ -59,6 +64,15 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;            
+        case MetaDataReaderType::TF_DETECTION_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::BoundingBox)
+                THROW("FOLDER_BASED_LABEL_READER can only be used to load bounding boxes")
+            auto ret = std::make_shared<TFMetaDataReaderDetection>();
+            ret->init(config);
+            return ret;
+        }
+            break;          
         case MetaDataReaderType::COCO_META_DATA_READER:
         {
             if(config.type() != MetaDataType::BoundingBox)
@@ -77,6 +91,42 @@ std::shared_ptr<MetaDataReader> create_meta_data_reader(const MetaDataConfig& co
             return ret;
         }
             break;
+        case MetaDataReaderType::CAFFE_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::Label)
+                THROW("CAFFE_META_DATA_READER can only be used to load labels")
+            auto ret = std::make_shared<CaffeMetaDataReader>();
+            ret->init(config);
+            return ret;
+        }
+            break;
+        case MetaDataReaderType::CAFFE_DETECTION_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::BoundingBox)
+                THROW("CAFFE_DETECTION_META_DATA_READER can only be used to load labels")
+            auto ret = std::make_shared<CaffeMetaDataReaderDetection>();
+            ret->init(config);
+            return ret;
+        }
+            break;
+        case MetaDataReaderType::CAFFE2_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::Label)
+                THROW("CAFFE2_META_DATA_READER can only be used to load labels")
+            auto ret = std::make_shared<Caffe2MetaDataReader>();
+            ret->init(config);
+            return ret;
+        }
+            break;
+        case MetaDataReaderType::CAFFE2_DETECTION_META_DATA_READER:
+        {
+            if(config.type() != MetaDataType::BoundingBox)
+                THROW("CAFFE2_DETECTION_META_DATA_READER can only be used to load labels")
+            auto ret = std::make_shared<Caffe2MetaDataReaderDetection>();
+            ret->init(config);
+            return ret;
+        }
+	    break;
         default:
             THROW("MetaDataReader type is unsupported : "+ TOSTR(config.reader_type()));
     }

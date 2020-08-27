@@ -11,7 +11,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 * **vx_loomsl**: Radeon LOOM stitching library for live 360 degree video applications
 * **vx_nn**: OpenVX neural network module that was built on top of [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen)
 * **vx_opencv**: OpenVX module that implemented a mechanism to access OpenCV functionality as OpenVX kernels
-* **vx_rpp]**: OpenVX extension providing an interface to some of the Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [RALI](../rali/README.md) to perform image augmentation.
+* **vx_rpp**: OpenVX extension providing an interface to some of the Radeon Performance Primitives ([RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)) functions. This extension is used to enable [RALI](../rali/README.md) to perform image augmentation.
 * **vx_winml**: OpenVX module that implemented a mechanism to access Windows Machine Learning(WinML) functionality as OpenVX kernels
 
 ## Features
@@ -26,13 +26,10 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 * CPU: SSE4.1 or above CPU, 64-bit.
 * GPU: Radeon Professional Graphics Cards or Vega Family of Products (16GB required for vx_loomsl and vx_nn libraries)
-
- + Windows: install the latest drivers and OpenCL SDK [download](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases)
- + Linux: install [ROCm](https://rocm.github.io/ROCmInstall.html)
-
+  + Windows: install the latest drivers and OpenCL SDK [download](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases)
+  + Linux: install [ROCm](https://rocm.github.io/ROCmInstall.html)
 * OpenCV 3.4+ [download](https://github.com/opencv/opencv/releases) for RunVX & AMD OpenCV Extensions
-
- + Set OpenCV_DIR environment variable to OpenCV/build folder
+  + Set OpenCV_DIR environment variable to OpenCV/build folder
 
 ## Build Instructions
 
@@ -46,9 +43,7 @@ Build this project to generate AMD OpenVX library and RunVX executable.
 ### Build using `Visual Studio 2017` on 64-bit `Windows 10`
 
 * Install OpenCV with/without contrib [download](https://github.com/opencv/opencv/releases) for RunVX tool to support camera capture and image display (optional)
-
- * OpenCV_DIR environment variable should point to OpenCV/build folder
-
+  + OpenCV_DIR environment variable should point to OpenCV/build folder
 * Use amd_openvx/amd_openvx.sln to build for x64 platform
 * If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in openvx/openvx.vcxproj and runvx/runvx.vcxproj.
 
@@ -56,9 +51,7 @@ Build this project to generate AMD OpenVX library and RunVX executable.
 
 * Install CMake 2.8 or newer [download](http://cmake.org/download/).
 * Install OpenCV with/without contrib [download](https://github.com/opencv/opencv/releases) for RunVX tool to support camera capture and image display (optional)
-
- * OpenCV_DIR environment variable should point to OpenCV/build folder
-
+  + OpenCV_DIR environment variable should point to OpenCV/build folder
 * Install libssl-dev on Linux (optional)
 * Use CMake to configure and generate Makefile
 * If AMD GPU (or OpenCL) is not available, use build flag -DCMAKE_DISABLE_FIND_PACKAGE_OpenCL=TRUE.

@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.0"
+__version__ = "1.8.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -49,8 +49,8 @@ parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
-parser.add_argument('--rpp',   		type=str, default='0.4',
-                    help='RPP Version - optional (default:0.4)')
+parser.add_argument('--rpp',   		type=str, default='0.5',
+                    help='RPP Version - optional (default:0.5)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',

@@ -693,6 +693,7 @@ void MasterGraph::output_routine()
 
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
+            pMetaDataBatch augmented_batch_meta_data = nullptr; 
 
             if (_loader_module->remaining_count() < _user_batch_size)
             {
@@ -721,6 +722,7 @@ void MasterGraph::output_routine()
                     break;
 
                 auto this_cycle_names =  _loader_module->get_id();
+                auto decode_image_info = _loader_module->get_decode_image_info();                
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -750,22 +752,22 @@ void MasterGraph::output_routine()
                     break;
 
                 update_node_parameters();
-                _process_time.start();
-                _graph->process();
-                _process_time.end();
-
-                //process metadata, _augmented_meta_data contains the results after the call to process
-                if (_meta_data_graph)
-                    _meta_data_graph->process();
-
-                // concatenating metadata using the this cycle's internal batch
                 if(_augmented_meta_data)
                 {
+                    //process metadata, _augmented_meta_data contains the results after the call to process
+                    if (_meta_data_graph)
+                    {
+                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
+                        _meta_data_graph->process(_augmented_meta_data);
+                    }
                     if (full_batch_meta_data)
                         full_batch_meta_data->concatenate(_augmented_meta_data);
                     else
                         full_batch_meta_data = _augmented_meta_data->clone();
                 }
+                _process_time.start();
+                _graph->process();
+                _process_time.end();
             }
 
             _ring_buffer.set_meta_data(full_batch_image_names, full_batch_meta_data);
@@ -829,11 +831,11 @@ MetaDataBatch * MasterGraph::create_coco_meta_data_reader(const char *source_pat
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path)
-{
+ MetaDataBatch * MasterGraph::create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type, std::map<std::string, std::string> feature_key_map)
+ {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::TF_META_DATA_READER, source_path);
+    MetaDataConfig config(label_type, reader_type, source_path, feature_key_map);
     _meta_data_graph = create_meta_data_graph(config);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
@@ -860,11 +862,43 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     return _meta_data_reader->get_output();
 }
 
+MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)
+{
+    if( _meta_data_reader)
+        THROW("A metadata reader has already been created")
+    MetaDataConfig config(label_type, reader_type, source_path);
+    _meta_data_graph = create_meta_data_graph(config);
+    _meta_data_reader = create_meta_data_reader(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
+    if (_augmented_meta_data)
+        THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
+    else
+        _augmented_meta_data = _meta_data_reader->get_output();
+    return _meta_data_reader->get_output();
+}
+
+MetaDataBatch * MasterGraph::create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)
+{
+    if( _meta_data_reader)
+        THROW("A metadata reader has already been created")
+    MetaDataConfig config(label_type, reader_type, source_path);
+    _meta_data_graph = create_meta_data_graph(config);
+    _meta_data_reader = create_meta_data_reader(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
+    if (_augmented_meta_data)
+        THROW("Metadata output already defined, there can only be a single output for metadata augmentation")
+    else
+        _augmented_meta_data = _meta_data_reader->get_output();
+    return _meta_data_reader->get_output();
+}
+
 MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path, const char *file_prefix)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, file_prefix);
+    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);    
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);

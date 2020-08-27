@@ -34,6 +34,9 @@ public:
     void init(unsigned int crop_h, unsigned int crop_w, float x_drift, float y_drift);
     void init(unsigned int crop_h, unsigned int crop_w);
     void init( FloatParam *crop_h_factor, FloatParam *crop_w_factor, FloatParam * x_drift, FloatParam * y_drift);
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    std::shared_ptr<RaliCropParam> get_crop_param() { return _crop_param; }
 protected:
     void create_node() override ;
     void update_node() override;

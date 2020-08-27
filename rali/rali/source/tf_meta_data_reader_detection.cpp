@@ -155,7 +155,7 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     tensorflow::Features features = single_example.features();
 
     auto feature = features.feature();
-    tensorflow::Feature single_feature,sf_xmin,sf_ymin,sf_xmax,sf_ymax,sf_fname,sf_label;
+    tensorflow::Feature single_feature,sf_xmin,sf_ymin,sf_xmax,sf_ymax,sf_fname,sf_label,sf_height,sf_width;
     
     single_feature = feature.at(user_filename_key);
     std::string fname = single_feature.bytes_list().value()[0];
@@ -174,6 +174,14 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     sf_ymin = feature.at(user_ymin_key);
     sf_xmax = feature.at(user_xmax_key);
     sf_ymax = feature.at(user_ymax_key);
+
+    sf_height = feature.at("image/height");
+    sf_width = feature.at("image/width");
+    
+    int image_height, image_width;
+    image_height = sf_height.int64_list().value()[0];
+    image_width = sf_width.int64_list().value()[0];
+
     for(int i = 0; i < size_b_xmin; i++)
     {
       float bbox_xmin, bbox_ymin, bbox_xmax, bbox_ymax;
@@ -181,10 +189,10 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       bbox_ymin = sf_ymin.float_list().value()[i];
       bbox_xmax = sf_xmax.float_list().value()[i];
       bbox_ymax = sf_ymax.float_list().value()[i]; 
-      box.x = bbox_xmin;
-      box.y = bbox_ymin;
-      box.w = bbox_xmax;
-      box.h = bbox_ymax;
+      box.x = bbox_xmin * image_width;
+      box.w = (bbox_xmax * image_width) - box.x;
+      box.y = bbox_ymin * image_height;
+      box.h = (bbox_ymax * image_height) - box.y;
       bb_coords.push_back(box);
       bb_labels.push_back(label);
       add(fname, bb_coords, bb_labels);

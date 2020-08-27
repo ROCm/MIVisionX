@@ -69,10 +69,6 @@ public:
     virtual void update_array() {};
     Parameter<float> * get_x_drift_factor() {return x_drift_factor;}
     Parameter<float> * get_y_drift_factor() {return y_drift_factor;}
-    std::vector<uint32_t> get_x1_arr_val() {return x1_arr_val;}
-    std::vector<uint32_t> get_y1_arr_val() {return y1_arr_val;}
-    std::vector<uint32_t> get_croph_arr_val() {return croph_arr_val;}
-    std::vector<uint32_t> get_cropw_arr_val() {return cropw_arr_val;}
     void get_crop_dimensions(std::vector<uint32_t> &crop_w_dim, std::vector<uint32_t> &crop_h_dim);
 protected:
     constexpr static float CROP_X_DRIFT_RANGE [2]  = {0.01, 0.99};

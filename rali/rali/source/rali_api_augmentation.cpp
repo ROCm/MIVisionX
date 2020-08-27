@@ -47,7 +47,6 @@ THE SOFTWARE.
 #include "node_saturation.h"
 #include "node_crop_mirror_normalize.h"
 #include "node_resize_crop_mirror.h"
-#include "node_ssd_random_crop.h"
 #include "node_crop.h"
 #include "node_random_crop.h"
 #include "node_copy.h"
@@ -363,6 +362,8 @@ raliCropResize(
         RaliFloatParam p_y_center_drift)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context )
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto area = static_cast<FloatParam*>(p_area);
@@ -371,8 +372,6 @@ raliCropResize(
     auto y_center_drift = static_cast<FloatParam*>(p_y_center_drift);
     try
     {
-        if(!input || !context )
-            THROW("Null values passed as input")
         if(dest_width == 0 || dest_height == 0)
             THROW("CropResize node needs tp receive non-zero destination dimensions")
         // For the crop resize node, user can create an image with a different width and height
@@ -452,13 +451,12 @@ raliResize(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context || dest_width == 0 || dest_height == 0)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context || dest_width == 0 || dest_height == 0)
-            THROW("Null values passed as input")
-
         // For the resize node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
         output_info.width(dest_width);
@@ -490,14 +488,14 @@ raliBrightness(
         RaliIntParam p_beta)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto alpha = static_cast<FloatParam*>(p_alpha);
     auto beta = static_cast<IntParam*>(p_beta);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -520,12 +518,12 @@ raliBrightnessFixed(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1767,8 +1765,8 @@ raliRandomCrop(
         output->reset_image_roi();
         std::shared_ptr<RandomCropNode> crop_node =  context->master_graph->add_node<RandomCropNode>({input}, {output});
         crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts);
-        // if (context->master_graph->meta_data_graph())
-        //     context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
+        if (context->master_graph->meta_data_graph())
+            context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
     }
     catch(const std::exception& e)
     {
@@ -1807,10 +1805,10 @@ raliSSDRandomCrop(
         output_info.height(input->info().height_single());
         output = context->master_graph->create_image(output_info, is_output);
         output->reset_image_roi();
-        std::shared_ptr<SSDRandomCropNode> crop_node =  context->master_graph->add_node<SSDRandomCropNode>({input}, {output});
+        std::shared_ptr<RandomCropNode> crop_node =  context->master_graph->add_node<RandomCropNode>({input}, {output});
         crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts);
         if (context->master_graph->meta_data_graph())
-            context->master_graph->meta_add_node<SSDRandomCropMetaNode,SSDRandomCropNode>(crop_node);
+            context->master_graph->meta_add_node<SSDRandomCropMetaNode,RandomCropNode>(crop_node);
     }
     catch(const std::exception& e)
     {

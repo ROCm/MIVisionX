@@ -357,4 +357,15 @@ VX_API_ENTRY vx_node VX_API_CALL vxTopKLayer(vx_graph graph, vx_tensor x_tensor,
  */
 VX_API_ENTRY vx_node VX_API_CALL vxReduceMinLayer(vx_graph graph, vx_tensor data, vx_array axes, vx_int32 keepdims, vx_tensor reduced);
 
+/* \brief [Graph] Creates a Tile Layer Node.
+ * \details Constructs a tensor by tiling a given tensor.
+ * \param [in]  graph   The handle to the graph.
+ * \param [in]  input   The input tensor data.
+ * \param [in]  repeats 1D int64 tensor of the same length as input's dimension number, includes numbers of repeated copies along input's dimensions.
+ * \param [out] output  Output tensor of the same dimension and type as tensor input. output_dim[i] = input_dim[i] * repeats[i]
+ * \return <tt> vx_node</tt>.
+ * \returns A node reference <tt>\ref vx_node</tt>. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxTileLayer(vx_graph graph, vx_tensor input, vx_tensor repeats, vx_tensor output);
+
 #endif

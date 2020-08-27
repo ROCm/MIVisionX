@@ -1,0 +1,5 @@
+# Hashes of file build rules.
+43aee732f066efb619ffd838b6ec6d8a rali/rali/caffe2_protos.pb.cc
+058b06ebbabb2ef0afe08a8d49578521 rali/rali/caffe_protos.pb.cc
+6e971bec03ef1b256ddfb4505c38e259 rali/rali/example.pb.cc
+e133d42edf45e88e67343d3b1415ce49 rali/rali/feature.pb.cc

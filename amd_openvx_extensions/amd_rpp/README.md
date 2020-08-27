@@ -1,7 +1,9 @@
 # AMD RPP Extension
+
 The AMD VX RPP extension (vx_rpp) is an OpenVX module that implements an interface to access RPP functionality as OpenVX kernels. These kernels can be accessed from within OpenVX framework using OpenVX API call [vxLoadKernels](https://www.khronos.org/registry/vx/specs/1.0.1/html/da/d83/group__group__user__kernels.html#gae00b6343fbb0126e3bf0f587b09393a3)(context, "vx_rpp").
 
 ## List of RPP functions 
+
 The following is a list of RPP functions that have been included in the vx_rpp module.
 
     Blend                       org.rpp.Blend
@@ -31,10 +33,12 @@ The following is a list of RPP functions that have been included in the vx_rpp m
 ## Build Instructions
 
 ### Pre-requisites
+
 * AMD OpenVX library
 * [AMD RPP library](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
 * OpenCL (optional)
 * CMake 2.8 or newer
 
 ### Build using CMake on Linux
+
 * Use CMake to configure and generate Makefile

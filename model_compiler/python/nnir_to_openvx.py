@@ -954,6 +954,16 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
     }    
 """ 
     % (node.attr.get('axis'), node.inputs[0], node.inputs[1], node.outputs[0]))
+            elif node.type == 'tile':
+                f.write( \
+"""
+    { 
+      vx_node node = vxTileLayer(graph, %s, %s, %s);
+      ERROR_CHECK_OBJECT(node);
+      ERROR_CHECK_STATUS(vxReleaseNode(&node));
+    }    
+""" 
+    % (node.inputs[0], node.inputs[1], node.outputs[0]))
             elif node.type == 'reduce_min':
                 axes = node.attr.get('axes')
                 axes_len = -1

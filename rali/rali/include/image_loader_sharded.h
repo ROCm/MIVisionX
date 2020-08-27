@@ -39,6 +39,7 @@ public:
     void reset() override;
     void start_loading() override;
     std::vector<std::string> get_id() override;
+    decoded_image_info get_decode_image_info() override;
     Timing timing() override;
 private:
     void increment_loader_idx();

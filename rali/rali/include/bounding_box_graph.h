@@ -21,20 +21,13 @@ THE SOFTWARE.
 */
 
 #pragma once
+#include <list>
 #include "meta_data_graph.h"
+#include "meta_node.h"
 class BoundingBoxGraph : public MetaDataGraph
 {
 public:
-    void process() override {};
-    void build() override {};
-    MetaDataBatch * cropMirrorNormalize(MetaDataBatch *input, int w, int h, int, int x, int y, IntParam* mirror) override { return input; };
-    MetaDataBatch * crop_resize(MetaDataBatch *input, unsigned dest_width, unsigned dest_height,
-                                bool is_output,
-                                FloatParam* area,
-                                FloatParam* x_center_drift,
-                                FloatParam* y_center_drift ) override  { return input; };
-
-    MetaDataBatch * resize(MetaDataBatch * input, unsigned dest_width, unsigned dest_height) override  { return input; };
-private:
+    void process(MetaDataBatch* meta_data) override;
+    void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decode_image_info) override;
 };
 

@@ -103,11 +103,12 @@ if(${BUILD_RALI})
 			    include
 			    )
 	protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)
-
+	protobuf_generate_cpp(CAFFE2_PROTO_SRCS CAFFE2_PROTO_HEADERS proto/caffe2_protos.proto)
+    protobuf_generate_cpp(CAFFE_PROTO_SRCS CAFFE_PROTO_HEADERS proto/caffe_protos.proto)
 	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR} /usr/local/lib/)
 
 	file(GLOB SOURCES "./source/*.cpp")
-	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS})
+	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})
 
 	target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_SIMD=1)
 	target_compile_definitions(${PROJECT_NAME} PUBLIC DBG_TIMING=1)
@@ -125,10 +126,10 @@ if(${BUILD_RALI})
 
 	if(NOT FFMPEG_FOUND)
 		message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
-		target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp jsoncpp)
+		target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp jsoncpp)
 	else()
 		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
-		target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
+		target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
 	endif()
 
 	install(TARGETS rali DESTINATION lib)

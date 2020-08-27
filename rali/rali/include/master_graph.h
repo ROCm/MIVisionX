@@ -32,6 +32,7 @@ THE SOFTWARE.
 #include "node_image_loader.h"
 #include "node_image_loader_single_shard.h"
 #include "node_fused_jpeg_crop.h"
+#include "node_fused_jpeg_crop_single_shard.h"
 #include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
@@ -65,16 +66,20 @@ public:
     void release();
     template <typename T>
     std::shared_ptr<T> add_node(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
+    template <typename T, typename M> std::shared_ptr<T> meta_add_node(std::shared_ptr<M> node);
     Image *create_image(const ImageInfo &info, bool is_output);
     Image *create_loader_output_image(const ImageInfo &info);
     MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
     MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output);
-    MetaDataBatch* create_tf_record_meta_data_reader(const char *source_path);
+    MetaDataBatch *create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type, const std::map<std::string, std::string> feature_key_map);   
+    MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
+    MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
     bool empty() { return (remaining_images_count() < _user_batch_size); }
     size_t internal_batch_size() { return _internal_batch_size; }
+    std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -98,6 +103,7 @@ private:
     std::list<Image*> _internal_images;//!< Keeps all the ovx images (virtual/non-virtual) either intermediate images, or input images that feed the graph
     std::list<std::shared_ptr<Node>> _nodes;//!< List of all the nodes
     std::list<std::shared_ptr<Node>> _root_nodes;//!< List of all root nodes (image/video loaders)
+    std::list<std::shared_ptr<Node>> _meta_data_nodes;//!< List of nodes where meta data has to be updated after augmentation
     std::map<Image*, std::shared_ptr<Node>> _image_map;//!< key: image, value : Parent node
     cl_mem _output_tensor;//!< In the GPU processing case , is used to convert the U8 samples to float32 before they are being transfered back to host
     std::shared_ptr<Graph> _graph = nullptr;
@@ -146,6 +152,17 @@ std::shared_ptr<T> MasterGraph::add_node(const std::vector<Image *> &inputs, con
     return node;
 }
 
+template <typename T, typename M>
+std::shared_ptr<T> MasterGraph::meta_add_node(std::shared_ptr<M> node)
+{
+    auto meta_node = std::make_shared<T>();
+    _meta_data_graph->_meta_nodes.push_back(meta_node);
+    meta_node->_node = node;
+    meta_node->_batch_size = _user_batch_size;
+    return meta_node;
+}
+
+
 /*
  * Explicit specialization for ImageLoaderNode
  */
@@ -185,6 +202,20 @@ template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const
 
     return node;
 }
+
+template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
+{
+    if(_loader_module)
+        THROW("A loader already exists, cannot have more than one loader")
+    auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], _device.resources());
+    _loader_module = node->get_loader_module();
+    _root_nodes.push_back(node);
+    for(auto& output: outputs)
+        _image_map.insert(make_pair(output, node));
+
+    return node;
+}
+
 /*
  * Explicit specialization for Cifar10LoaderNode
  */

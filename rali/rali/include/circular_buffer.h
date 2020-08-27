@@ -32,6 +32,8 @@ struct decoded_image_info
     std::vector<std::string> _image_names;
     std::vector<uint32_t> _roi_width;
     std::vector<uint32_t> _roi_height;
+    std::vector<uint32_t> _original_width;
+    std::vector<uint32_t> _original_height;
 };
 
 class CircularBuffer

@@ -142,7 +142,7 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --miopen    [MIOpen Version - optional (default:2.5.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                          --rpp       [RPP Version - optional (default:0.4)]
+                          --rpp       [RPP Version - optional (default:0.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
                           --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
                           --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
@@ -220,7 +220,7 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                           --miopen    [MIOpen Version - optional (default:2.5.0)]
                           --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                           --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                          --rpp       [RPP Version - optional (default:0.4)]
+                          --rpp       [RPP Version - optional (default:0.5)]
                           --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
                           --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
                           --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
@@ -254,7 +254,7 @@ sudo make install
   + [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) -- make sure to use `-DMIOPEN_BACKEND=OpenCL` option with cmake
 * install [protobuf](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* install [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.4)
+* install [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.5)
 * install [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
 * build and install (using `cmake` and `% make install` )
   + executables will be placed in `bin` folder
@@ -385,6 +385,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 
 * Package install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
 * **ROCm** `3.0` and above has known to slow down OpenCL kernels.
+* **OpenCL** from ROCm `3.3` and beyond has - `cl_version.h: CL_TARGET_OPENCL_VERSION is not defined` warning
 
 ### Tested configurations
 
@@ -396,6 +397,6 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * MIOpen - [2.5.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.5.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* RPP - [0.4](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.4)
+* RPP - [0.5](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.5)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.8.0`
+* MIVisionX Setup Script - `V1.8.1`

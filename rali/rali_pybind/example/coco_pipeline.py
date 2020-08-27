@@ -24,14 +24,16 @@ class COCOPipeline(Pipeline):
 		self.input = ops.COCOReader(file_root = data_dir, annotations_file = ann_dir)
 		rali_device = 'cpu' if rali_cpu else 'gpu'
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
-		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
-		host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
-		self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
-													device_memory_padding=device_memory_padding,
-													host_memory_padding=host_memory_padding,
-													random_aspect_ratio=[0.8, 1.25],
-													random_area=[0.1, 1.0],
-													num_attempts=100)
+		# device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
+		# host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
+		# self.decode = ops.ImageDecoderRandomCrop(device=decoder_device, output_type=types.RGB,
+		# 											device_memory_padding=device_memory_padding,
+		# 											host_memory_padding=host_memory_padding,
+		# 											random_aspect_ratio=[0.8, 1.25],
+		# 											random_area=[0.1, 1.0],
+		# 											num_attempts=100)
+		self.decode = ops.ImageDecoder(device=decoder_device, output_type=types.RGB)
+		self.crop = ops.SSDRandomCrop(num_attempts=5)
 		self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
 		self.twist = ops.ColorTwist(device=rali_device)
 		self.cmnp = ops.CropMirrorNormalize(device="gpu",
@@ -55,6 +57,7 @@ class COCOPipeline(Pipeline):
 		hue = self.rng3()
 		self.jpegs,self.bb, self.labels = self.input(name="Reader")
 		images = self.decode(self.jpegs)
+		images = self.crop(images)
 		images = self.res(images)
 		images = self.twist(images, saturation=saturation, contrast=contrast, brightness=brightness, hue=hue)
 		output = self.cmnp(images)
@@ -126,10 +129,25 @@ class RALICOCOIterator(object):
 
         for idx in range(self.bs):
             sum=self.loader.GetBoundingBoxCount(idx)
+
+            self.img_name = np.empty(1,dtype="S12")
             self.labels = np.zeros(sum,dtype = "int32")
             self.bboxes = np.zeros(sum*4,dtype = "float32" )
+            self.img_size = np.zeros(2,dtype = "int32")
+
             self.loader.GetBBLabels(self.labels,idx)
             self.loader.GetBBCords(self.bboxes,idx)
+            self.loader.GetImgSizes(self.img_size,idx)
+            self.loader.GetImageName(self.img_name,idx)
+
+            ###converting image name to image ID
+            self.img_name=self.img_name.tostring()
+            self.img_name=self.img_name.decode('utf_8')
+            self.img_name = np.char.lstrip(self.img_name, chars ='0')
+            self.img_name=int(self.img_name)
+
+            print("NUMPY img_names  int type::",self.img_name)
+            print("NUMPY image sizes::",self.img_size)
             
             self.bb_2d_numpy = np.reshape(self.bboxes, (-1, 4)).tolist()
             self.label_2d_numpy = np.reshape(self.labels, (-1, 1)).tolist()

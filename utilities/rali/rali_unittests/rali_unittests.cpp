@@ -36,7 +36,16 @@ THE SOFTWARE.
 
 using namespace cv;
 
-#define DISPLAY
+
+// #define PARTIAL_DECODE 
+// #define COCO_READER
+// #define TF_READER 
+// #define TF_READER_DETECTION
+// #define CAFFE2_READER
+// #define CAFFE2_READER_DETECTION
+// #define CAFFE_READER
+// #define CAFFE_READER_DETECTION
+
 using namespace std::chrono;
 
 int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height);
@@ -76,9 +85,9 @@ int main(int argc, const char ** argv)
 int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height)
 {
     size_t num_threads = 1;
-    int inputBatchSize = 1;
-    int decode_max_width = 0;
-    int decode_max_height = 0;
+    int inputBatchSize = 2;
+    int decode_max_width = width;
+    int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , "<< (rgb ? " Color ":" Grayscale ")<< std::endl;
 
@@ -116,17 +125,76 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
-    RaliMetaData meta_data = raliCreateLabelReader(handle, path);
-    
-    RaliImage input1;
+    RaliMetaData meta_data;
+    char key1[25] ="image/encoded";
+    char key2[25] ="image/class/label";
+    char key3[25] ="image/class/text";
+    char key4[25] ="image/object/bbox/xmin";
+    char key5[25] ="image/object/bbox/ymin";
+    char key6[25] ="image/object/bbox/xmax";
+    char key7[25] ="image/object/bbox/ymax";
+    char key8[25] ="image/filename";
 
+#ifdef COCO_READER
+    char* json_path = "";
+    if(strcmp(json_path,"") == 0)
+    {
+        std::cout<<"\n json_path has to be set in rali_unit test manually";
+        exit(0);
+    }
+    meta_data = raliCreateCOCOReader(handle, json_path, true );  
+#elif defined CAFFE_READER
+    meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
+#elif defined CAFFE_READER_DETECTION
+    meta_data = raliCreateCaffeLMDBReaderDetection(handle, path);
+#elif defined CAFFE2_READER
+    meta_data = raliCreateCaffe2LMDBLabelReader(handle, path, true);
+#elif defined CAFFE2_READER_DETECTION
+    meta_data = raliCreateCaffe2LMDBReaderDetection(handle, path, true);
+#elif defined TF_READER
+    meta_data = raliCreateTFReader(handle, path, true,key2,key8);
+#elif defined TF_READER_DETECTION
+    meta_data = raliCreateTFReaderDetection(handle, path, true,key2, key3, key4, key5, key6,  key7, key8);
+#else
+    meta_data = raliCreateLabelReader(handle, path);
+#endif
+
+    RaliImage input1;
     // The jpeg file loader can automatically select the best size to decode all images to that size
     // User can alternatively set the size or change the policy that is used to automatically find the size
+#ifdef PARTIAL_DECODE
+        input1 = raliFusedJpegCrop(handle, path, color_format, num_threads, false, false);
+#elif defined CAFFE_READER
+    input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height); 
+#elif defined CAFFE_READER_DETECTION
+    input1 = raliJpegCaffeLMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);   
+#elif defined CAFFE2_READER
+    input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined CAFFE2_READER_DETECTION
+    input1 = raliJpegCaffe2LMDBRecordSource(handle, path, color_format, num_threads, false, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined  TF_READER
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false,key1,key8, false, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined TF_READER_DETECTION
+    input1 = raliJpegTFRecordSource(handle, path, color_format, num_threads, false,key1 ,key8, false,false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined COCO_READER
+    if (decode_max_height <= 0 || decode_max_width <= 0)
+        input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false);
+    else
+        input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false,
+                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);  
+#else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
     else
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, false, false,
-                                    RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+        RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#endif
                                     
      if (raliGetStatus(handle) != RALI_OK) {
         std::cout << "JPEG source could not initialize : " << raliGetErrorMessage(handle) << std::endl;
@@ -136,9 +204,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     int resize_w = width, resize_h = height; // height and width
 
-    //RaliImage image0 = input1;
-    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);// input1; 
-    RaliImage image0_b = raliRotate(handle, image0,false);
+    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
 
     RaliFlipAxis axis_h = RALI_FLIP_HORIZONTAL;
     RaliFlipAxis axis_v = RALI_FLIP_VERTICAL;
@@ -148,8 +214,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     switch (test_case) {
         case 0: {
             std::cout << ">>>>>>> Running " << "raliResize" << std::endl;
-            auto image_int = raliResize(handle, image0, resize_w / 3, resize_h / 3, false);
-            image1 = raliResize(handle, image_int, resize_w, resize_h, true);
+            //auto image_int = raliResize(handle, image0, resize_w , resize_h , false);
+            image1 = raliResize(handle, image0, resize_w, resize_h, true);
         }
             break;
         case 1: {
@@ -189,6 +255,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 8: {
             std::cout << ">>>>>>> Running " << "raliBlend" << std::endl;
+            RaliImage image0_b = raliRotate(handle, image0,false);
             image1 = raliBlend(handle, image0, image0_b, true);
         }
             break;
@@ -292,7 +359,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
         case 30: {
              std::cout << ">>>>>>> Running " << "raliCropResizeFixed" << std::endl;
-             image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.25, 1.2, 0.6, -0.4);
+             image1 = raliCropResizeFixed(handle, image0, resize_w, resize_h, true,  0.25, 1.2, 0.6, 0.4);
          }
              break;
 	case 31: {
@@ -322,6 +389,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 36: {
             std::cout << ">>>>>>> Running " << "raliBlendFixed" << std::endl;
+            RaliImage image0_b = raliRotate(handle, image0,false);
             image1 = raliBlendFixed(handle, image0, image0_b, 0.5, true);
         }
             break;
@@ -397,7 +465,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             break;
         case 51: {
             std::cout << ">>>>>>> Running " << "raliCropFixed" << std::endl;
-            image1 = raliCropFixed(handle, image0, 100, 100, 1, true, 25, 25, 2);
+            image1 = raliCropFixed(handle, input1, 50, 50, 1, true, 0, 0, 2);
         }
             break;
         case 52: {
@@ -410,7 +478,12 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             image1 = raliResizeCropMirrorFixed(handle, image0, 100, 100, true, 50, 50, 0);
         }
             break;
-	
+        case 54: {
+             std::cout << ">>>>>>> Running " << "raliSSDRandomCrop" << std::endl;
+             image1 = raliSSDRandomCrop(handle, input1, true);
+        }
+        break;
+
 	default:
             std::cout << "Not a valid option! Exiting!\n";
             return -1;
@@ -418,7 +491,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     // Calling the API to verify and build the augmentation graph
     raliVerify(handle);
-
     if (raliGetStatus(handle) != RALI_OK) {
         std::cout << "Could not verify the augmentation graph " << raliGetErrorMessage(handle);
         return -1;
@@ -445,22 +517,43 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     while (raliGetRemainingImages(handle) >= inputBatchSize) {
         if (raliRun(handle) != 0)
             break;
-        
         char img_name[50];
+#if defined COCO_READER || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
+        for(int i = 0; i < (int)inputBatchSize; i++)
+        {
+            raliGetImageName(handle, img_name, i);
+            int size = raliGetBoundingBoxCount(handle, i);
+            int bb_labels[size];
+            float bb_coords[size*4];
+            int img_size[2];
+            raliGetBoundingBoxLabel(handle, bb_labels, i);
+            raliGetBoundingBoxCords(handle, bb_coords, i);
+            // raliGetImageSizes(handle, img_size, i);
+            std::cerr << "\nPrinting image Name : " << img_name << "\t number of bbox : " << size << std::endl;
+            // std::cerr << "\nLabel Id " << std::endl;
+            // std::cerr << "\nIMAGE  width :" << img_size[0]<<"\t image height : "<< img_size[1]<<std::endl;
+            for(int id = 0, j = id; id < size; id++)
+            {
+                std::cerr << "\n Label_id : " << bb_labels[id] << std::endl;
+                for(int idx = 0; idx < 4; idx++, j++)
+                    std::cerr << "\tbbox: [" << idx << "] :" << bb_coords[j] << std::endl;
+            }
+         }
+#else
         int label_id[inputBatchSize];     
         raliGetImageLabels(handle, label_id);
         for(int i = 0; i < inputBatchSize; i++) {
             raliGetImageName(handle, img_name, i);
             std::cerr << "\nPrinting image name : " << img_name<<"\t Printing label_id : " << label_id[i] << std::endl;
         }
-
+#endif
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
 
         raliCopyToOutput(handle, mat_input.data, h * w * p);
 
         std::vector<int> compression_params;
-        compression_params.push_back(IMWRITE_PNG_COMPRESSION);
+	compression_params.push_back(IMWRITE_PNG_COMPRESSION);
         compression_params.push_back(9);
 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
@@ -485,6 +578,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     raliRelease(handle);
     mat_input.release();
     mat_output.release();
-
+    if(!image1) return -1;
     return 0;
 }
+

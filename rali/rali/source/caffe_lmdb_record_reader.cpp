@@ -258,16 +258,20 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
     // A cursor is associated with a specific transaction and database
     E(mdb_cursor_open(_mdb_txn, _mdb_dbi, &_mdb_cursor));
 
-    size_t last_index = file_name.find_last_of(".JPEG");
+    /*size_t last_index = file_name.find_last_of(".JPEG");
     std::string filename = file_name.substr(0, last_index+1);
     _mdb_key.mv_size = filename.size();
     _mdb_key.mv_data = (void*)filename.c_str();
     int _mdb_status = mdb_cursor_get(_mdb_cursor, &_mdb_key, &_mdb_value, MDB_SET_RANGE);
     if(_mdb_status == MDB_NOTFOUND)
             std::cerr << "\nKey Not found" << std::endl;
-    else
+    else*/
+    while ((rc = mdb_cursor_get(_mdb_cursor, &_mdb_key, &_mdb_value, MDB_NEXT)) == 0)
     {
         Datum datum;
+        string image_key = string((char *)_mdb_key.mv_data);
+        if (image_key == file_name)
+        {
         caffe_protos::AnnotatedDatum annotatedDatum_protos;
         annotatedDatum_protos.ParseFromArray((char *)_mdb_value.mv_data, _mdb_value.mv_size);
         // Checking image Datum
@@ -279,6 +283,8 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
             datum.ParseFromArray((const void *)_mdb_value.mv_data, _mdb_value.mv_size); //parse datum for classification
             
         memcpy(buff, datum.data().c_str(), datum.data().size());
+        break;
+        }
     }
     release();
 }

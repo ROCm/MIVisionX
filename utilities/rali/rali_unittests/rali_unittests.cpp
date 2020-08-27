@@ -44,7 +44,7 @@ using namespace cv;
 // #define CAFFE2_READER
 // #define CAFFE2_READER_DETECTION
 // #define CAFFE_READER
-// #define CAFFE_READER_DETECTION
+ #define CAFFE_READER_DETECTION
 
 using namespace std::chrono;
 
@@ -529,10 +529,10 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
             int img_size[2];
             raliGetBoundingBoxLabel(handle, bb_labels, i);
             raliGetBoundingBoxCords(handle, bb_coords, i);
-            // raliGetImageSizes(handle, img_size, i);
+            raliGetImageSizes(handle, img_size, i);
             std::cerr << "\nPrinting image Name : " << img_name << "\t number of bbox : " << size << std::endl;
-            // std::cerr << "\nLabel Id " << std::endl;
-            // std::cerr << "\nIMAGE  width :" << img_size[0]<<"\t image height : "<< img_size[1]<<std::endl;
+            std::cerr << "\nLabel Id " << std::endl;
+            std::cerr << "\nIMAGE  width :" << img_size[0]<<"\t image height : "<< img_size[1]<<std::endl;
             for(int id = 0, j = id; id < size; id++)
             {
                 std::cerr << "\n Label_id : " << bb_labels[id] << std::endl;

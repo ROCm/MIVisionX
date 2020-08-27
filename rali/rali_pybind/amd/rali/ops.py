@@ -450,6 +450,44 @@ class ImageDecoderRandomCrop(Node):
                 output_image = b.RandomCrop(handle, output_image, is_output, None, None, None, None)
         return output_image
 
+class ImageDecoderRaw(Node):
+    """
+        output_type (int, optional, default = 0) – The color space of output image.
+
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+    """
+    def __init__(self, output_type = 0, preserve = False, seed = -1, device = None):
+        Node().__init__()
+        self._output_type = output_type
+        self._preserve = preserve
+        self._seed = seed
+        self.output = Node()
+
+    def __call__(self,input, num_threads=1):
+        input.next = self
+        self.data = "ImageDecoderRaw"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, shuffle, shard_id, num_shards, is_output):
+        if decode_width != None and decode_height != None:
+            if(self.prev.prev.data == "TFRecordReader"):
+                output_image = b.TF_ImageDecoderRaw(handle, input_image, self._output_type, is_output, shuffle, False, decode_width, decode_height)
+            else:
+                output_image = b.ImageDecoderShard(handle, input_image, self._output_type, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, decode_width, decode_height)
+        else:
+            if(self.prev.prev.data == "TFRecordReader"):
+                output_image = b.TF_ImageDecoderRaw(handle, input_image, self._output_type, is_output, shuffle, False,  224, 224)
+            else:
+                output_image = b.ImageDecoderShard(handle, input_image, self._output_type,  shard_id, num_shards, is_output, shuffle, False)
+        return output_image
+
 class ColorTwist(Node):
     """
         brightness (float, optional, default = 1.0) –

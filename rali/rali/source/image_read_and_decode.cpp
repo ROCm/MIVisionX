@@ -128,10 +128,33 @@ ImageReadAndDecode::load(unsigned char* buff,
     const Decoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
     const bool keep_original = decoder_keep_original;
+    const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     // Decode with the height and size equal to a single image  
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start();// Debug timing
+    if (_decoder_config._type == DecoderType::SKIP_DECODE) {
+        while ((file_counter != _batch_size) && _reader->count() > 0)
+        {
+            auto read_ptr = buff + image_size * file_counter;
+            size_t fsize = _reader->open();
+            if (fsize == 0) {
+                WRN("Opened file " + _reader->id() + " of size 0");
+                continue;
+            }
+
+            _actual_read_size[file_counter] = _reader->read(read_ptr, fsize);
+            _image_names[file_counter] = _reader->id();
+            _reader->close();
+           // _compressed_image_size[file_counter] = fsize;
+            names[file_counter] = _image_names[file_counter];
+            roi_width[file_counter] = max_decoded_width;
+            roi_height[file_counter] = max_decoded_height;
+            file_counter++;
+        }
+        _file_load_time.end();// Debug timing
+        return LoaderModuleStatus::OK;
+    }
 
     while ((file_counter != _batch_size) && _reader->count() > 0)
     {
@@ -151,7 +174,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     }
 
     _file_load_time.end();// Debug timing
-    const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
+   // const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     for(size_t i = 0; i < _batch_size; i++)
         _decompressed_buff_ptrs[i] = buff + image_size * i;

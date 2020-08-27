@@ -94,6 +94,9 @@ private:
     bool _loop;
     bool _shuffle;
     int _read_counter = 0;
+    //!< _record_name_prefix tells the reader to read only files with the prefix
+    std::string _record_name_prefix;
+
     // protobuf message objects
     tensorflow::Example _single_example;
     tensorflow::Features _features;

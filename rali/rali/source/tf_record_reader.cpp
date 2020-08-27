@@ -45,6 +45,7 @@ TFRecordReader::TFRecordReader()
     _shuffle = false;
     _file_id = 0;
     _last_rec = false;
+    _record_name_prefix = "";
 }
 
 unsigned TFRecordReader::count()
@@ -67,6 +68,7 @@ Reader::Status TFRecordReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
     _shuffle = desc.shuffle();
+    _record_name_prefix = desc.file_prefix();
     ret = folder_reading();
     //shuffle dataset if set
     if (ret == Reader::Status::OK && _shuffle)
@@ -171,23 +173,24 @@ void TFRecordReader::replicate_last_image_to_fill_last_shard()
 Reader::Status TFRecordReader::tf_record_reader()
 {
     std::string fname = _folder_path;
-
-    uint file_size;
-    std::ifstream file_contents(fname.c_str(), std::ios::binary);
-    if(!file_contents)
-        THROW("TFRecordReader: Failed to open file "+fname);
-    file_contents.seekg(0, std::ifstream::end);
-    file_size = file_contents.tellg();
-    // std::cerr<<"\n length of the file:: "<<length<<std::endl;
-    file_contents.seekg(0, std::ifstream::beg);
-    auto ret = read_image_names(file_contents, file_size);
-    if(ret != Reader::Status::OK )
-        THROW("TFRecordReader: Error in reading TF records");
-    _last_rec = false;
-    if (_file_names.size() != _file_size.size())
-        std::cerr << "\n Size of vectors are not same";
-    file_contents.close();
-
+    // if _record_name_prefix is specified, read only the records with prefix
+    if  (_record_name_prefix.empty() || fname.find(_record_name_prefix) != std::string::npos) {
+        uint file_size;
+        std::ifstream file_contents(fname.c_str(), std::ios::binary);
+        if (!file_contents)
+            THROW("TFRecordReader: Failed to open file " + fname);
+        file_contents.seekg(0, std::ifstream::end);
+        file_size = file_contents.tellg();
+        // std::cerr<<"\n length of the file:: "<<length<<std::endl;
+        file_contents.seekg(0, std::ifstream::beg);
+        auto ret = read_image_names(file_contents, file_size);
+        if (ret != Reader::Status::OK)
+            THROW("TFRecordReader: Error in reading TF records");
+        _last_rec = false;
+        if (_file_names.size() != _file_size.size())
+            std::cerr << "\n Size of vectors are not same";
+        file_contents.close();
+    }
     return Reader::Status::OK;
 }
 
@@ -201,35 +204,28 @@ size_t TFRecordReader::get_file_shard_id()
 Reader::Status TFRecordReader::read_image_names(std::ifstream &file_contents, uint file_size)
 {
     auto ret = Reader::Status::OK;
-    uint length;
-    size_t uint64_size, uint32_size;
-    uint64_t data_length;
-    uint32_t length_crc, data_crc;
-    uint64_size = sizeof(uint64_t);
-    uint32_size = sizeof(uint32_t);
     while (!_last_rec)
     {
+        uint length;
+        uint64_t data_length;
+        uint32_t length_crc, data_crc;
+
         length = file_contents.tellg();
-        char *header_length = new char[uint64_size];
-        char *header_crc = new char[uint32_size];
-        char *footer_crc = new char[uint32_size];
-        file_contents.read(header_length, uint64_size);
+        file_contents.read((char *)&data_length, sizeof(data_length));
         if(!file_contents)
             THROW("TFRecordReader: Error in reading TF records")
-        file_contents.read(header_crc, uint32_size);
+        file_contents.read((char *)&length_crc, sizeof(length_crc));
         if(!file_contents)
             THROW("TFRecordReader: Error in reading TF records")
-        memcpy(&data_length, header_length, sizeof(data_length));
-        memcpy(&length_crc, header_crc, sizeof(length_crc));
         if (uint(length + data_length + 16) == file_size)
         {
             _last_rec = true;
         }
-        char *data = new char[data_length];
-        file_contents.read(data, data_length);
+        std::unique_ptr<char[]> data(new char[data_length]);
+        file_contents.read(data.get(), data_length);
         if(!file_contents)
             THROW("TFRecordReader: Error in reading TF records")  
-        _single_example.ParseFromArray(data, data_length);
+        _single_example.ParseFromArray(data.get(), data_length);
         _features = _single_example.features();
         auto feature = _features.feature();
         _single_feature = feature.at("image/filename");
@@ -244,25 +240,19 @@ Reader::Status TFRecordReader::read_image_names(std::ifstream &file_contents, ui
         if (get_file_shard_id() != _shard_id)
         {
             incremenet_file_id();
-            file_contents.read(footer_crc, sizeof(data_crc));
+            file_contents.read((char *)&data_crc, sizeof(data_crc));
             if(!file_contents)
                 THROW("TFRecordReader: Error in reading TF records")
             continue;
         }
         _file_names.push_back(file_path);
         incremenet_file_id();
-
         _single_feature = feature.at("image/encoded");
         _last_file_size = _single_feature.bytes_list().value()[0].size();
         _file_size.insert(std::pair<std::string, unsigned int>(_last_file_name, _last_file_size));
-        file_contents.read(footer_crc, sizeof(data_crc));
+        file_contents.read((char *)&data_crc, sizeof(data_crc));
         if(!file_contents)
             THROW("TFRecordReader: Error in reading TF records")
-        memcpy(&data_crc, footer_crc, sizeof(data_crc));
-        delete[] header_length;
-        delete[] header_crc;
-        delete[] footer_crc;
-        delete[] data;
     }
     return ret;
 }
@@ -289,24 +279,17 @@ Reader::Status TFRecordReader::read_image(unsigned char *buff, std::string file_
     size_t uint64_size, uint32_size;
     uint64_t data_length;
     uint32_t length_crc, data_crc;
-    uint64_size = sizeof(uint64_t);
-    uint32_size = sizeof(uint32_t);
-    char *header_length = new char[uint64_size];
-    char *header_crc = new char[uint32_size];
-    char *footer_crc = new char[uint32_size];
-    file_contents.read(header_length, uint64_size);
+    file_contents.read((char *)&data_length, sizeof(data_length));
     if(!file_contents)
         THROW("TFRecordReader: Error in reading TF records")
-    file_contents.read(header_crc, uint32_size);
+    file_contents.read((char *)&length_crc, sizeof(length_crc));
     if(!file_contents)
         THROW("TFRecordReader: Error in reading TF records")
-    memcpy(&data_length, header_length, sizeof(data_length));
-    memcpy(&length_crc, header_crc, sizeof(length_crc));
-    char *data = new char[data_length];
-    file_contents.read(data, data_length);
+    std::unique_ptr<char[]> data(new char[data_length]);
+    file_contents.read(data.get(), data_length);
     if(!file_contents)
         THROW("TFRecordReader: Error in reading TF records")
-    _single_example.ParseFromArray(data, data_length);
+    _single_example.ParseFromArray(data.get(), data_length);
     _features = _single_example.features();
     auto feature = _features.feature();
     _single_feature = feature.at("image/filename");
@@ -316,14 +299,9 @@ Reader::Status TFRecordReader::read_image(unsigned char *buff, std::string file_
         _single_feature = feature.at("image/encoded");
         memcpy(buff, _single_feature.bytes_list().value()[0].c_str(), _single_feature.bytes_list().value()[0].size());
     }
-    file_contents.read(footer_crc, sizeof(data_crc));
+    file_contents.read((char *)&data_crc, sizeof(data_crc));
     if(!file_contents)
         THROW("TFRecordReader: Error in reading TF records")
-    memcpy(&data_crc, footer_crc, sizeof(data_crc));
-    delete[] header_length;
-    delete[] header_crc;
-    delete[] footer_crc;
-    delete[] data;
     file_contents.close();
     return ret;
 }

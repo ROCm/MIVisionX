@@ -86,7 +86,7 @@ class Pipeline(object):
             raise Exception("Failed creating the pipeline")
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
-        self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop"]
+        self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop", "ImageDecoderRaw"]
         self._check_ops_reader = ["FileReader","TFRecordReader","COCOReader"]
         self._batch_size = batch_size
         self._num_threads = num_threads

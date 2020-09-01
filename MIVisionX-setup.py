@@ -192,7 +192,7 @@ else:
             '(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
     # Install
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
-        # package dependencies 
+        # package dependencies
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                   linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-dev libboost-system-dev libboost-filesystem-dev')

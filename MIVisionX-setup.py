@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.1"
+__version__ = "1.8.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -169,7 +169,7 @@ else:
     os.system('(cd '+deps_dir+'; mkdir build )')
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install cmake git wget unzip')
+              linuxSystemInstall_check+' install cmake git wget unzip pkg-config')
     # Get Installation Source
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
@@ -192,6 +192,10 @@ else:
             '(cd '+deps_dir+'; git clone --recursive -b n4.0.4 https://git.ffmpeg.org/ffmpeg.git )')
     # Install
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
+        # package dependencies
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                  linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
         # Install half.hpp
         os.system(
             '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')
@@ -209,6 +213,10 @@ else:
         os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
                   linuxFlag+' make install )')
         # Install MIOpenGEMM
+        # package dependencies 
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                  linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev')
         os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake +
                   ' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
@@ -219,9 +227,6 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
                   linuxFlag+' '+linuxCMake+' -P install_deps.cmake )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/MIOpen; sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install libssl-dev libboost-dev libboost-system-dev libboost-filesystem-dev  )')
         os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
                   ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
@@ -277,7 +282,7 @@ else:
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' install build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev')
+              ' install build-essential cmake git libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
               ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev')
@@ -306,7 +311,7 @@ else:
             # clang+boost
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                      linuxSystemInstall_check+' install libboost-all-dev clang')
+                      linuxSystemInstall_check+' install clang')
             # turbo-JPEG
             os.system(
                 '(cd '+deps_dir+'; git clone -b 2.0.4 https://github.com/Indumathi31/libjpeg-turbo.git )')

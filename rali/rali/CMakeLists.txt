@@ -40,7 +40,6 @@ find_package(TurboJpeg QUIET)
 # If FFMPEG is found, vx_amd_media is expected to be built as well
 find_package(FFmpeg QUIET)
 find_package(OpenCV QUIET)
-find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
@@ -127,7 +126,7 @@ if(${BUILD_RALI})
 
 	if(NOT FFMPEG_FOUND)
 		message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
-		target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb ${Boost_SYSTEM_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} turbojpeg openvx vx_rpp jsoncpp)
+		target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp jsoncpp)
 	else()
 		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
 		target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp)

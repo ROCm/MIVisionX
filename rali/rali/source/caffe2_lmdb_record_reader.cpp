@@ -106,6 +106,12 @@ int Caffe2LMDBRecordReader::close()
 
 Caffe2LMDBRecordReader::~Caffe2LMDBRecordReader()
 {
+    _open_env = 0; 
+    mdb_txn_abort(_read_mdb_txn);
+    mdb_close(_read_mdb_env, _read_mdb_dbi);
+    mdb_env_close(_read_mdb_env);
+    _read_mdb_txn = nullptr;
+    _read_mdb_env = nullptr;
     release();
 }
 
@@ -145,6 +151,7 @@ Reader::Status Caffe2LMDBRecordReader::folder_reading()
     closedir(_sub_dir);
     return ret;
 }
+
 void Caffe2LMDBRecordReader::replicate_last_image_to_fill_last_shard()
 {
     for(size_t i = _in_batch_read_count; i < _batch_count; i++)
@@ -156,6 +163,7 @@ void Caffe2LMDBRecordReader::replicate_last_image_to_fill_last_shard()
 
 Reader::Status Caffe2LMDBRecordReader::Caffe2_LMDB_reader()
 {
+    _open_env = 0;
     string tmp1 = _folder_path + "/data.mdb";   
     string tmp2 = _folder_path + "/lock.mdb";
     uint file_size, file_size1;
@@ -245,47 +253,57 @@ void Caffe2LMDBRecordReader::read_image_names()
     mdb_env_close(env);
 }
 
+void Caffe2LMDBRecordReader::open_env_for_read_image()
+{
+    // Creating an LMDB environment handle
+    E(mdb_env_create(&_read_mdb_env));
+    // Setting the size of the memory map to use for this environment.
+    E(mdb_env_set_mapsize(_read_mdb_env, _file_byte_size)); 
+    // The size of the memory map is also the maximum size of the database. 
+    // Opening an environment handle.
+    E(mdb_env_open(_read_mdb_env, _folder_path.c_str(), MDB_RDONLY, 0664));
+    // Creating a transaction for use with the environment. 
+    E(mdb_txn_begin(_read_mdb_env, NULL, MDB_RDONLY, &_read_mdb_txn));
+    // Opening a database in the environment. 
+    E(mdb_open(_read_mdb_txn, NULL, 0, &_read_mdb_dbi)); 
+    _open_env = 1; 
+}
+
 void Caffe2LMDBRecordReader::read_image(unsigned char* buff, std::string file_name)
 {
-    int rc;
-    MDB_env *env;
-    MDB_dbi dbi;
-    MDB_val key, data;
-    MDB_txn *txn;
-    MDB_cursor *cursor;
     string str_key, str_data;
 
-    // Creating an LMDB environment handle
-    E(mdb_env_create(&env));
-    // Setting the size of the memory map to use for this environment.
-    // The size of the memory map is also the maximum size of the database. 
-    E(mdb_env_set_mapsize(env, _file_byte_size));
-    // Opening an environment handle.
-    E(mdb_env_open(env, _folder_path.c_str(), 0, 0664));
-    // Creating a transaction for use with the environment. 
-    E(mdb_txn_begin(env, NULL, MDB_RDONLY, &txn));
-    // Opening a database in the environment. 
-    E(mdb_dbi_open(txn, NULL, 0, &dbi));
+    if(_open_env == 0)                                                                                                      {                                                                                                                           open_env_for_read_image();                                                                                              cout << "INSIDE ENV OPEN" << endl;                                                                                  } 
 
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(txn, dbi, &cursor));
+    E(mdb_cursor_open(_read_mdb_txn, _read_mdb_dbi, &_read_mdb_cursor)); 
 
-    // Retrieve by cursor. It retrieves key/data pairs from the database
-    while((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT)) == 0)
+    string checkedStr = string((char *)file_name.c_str());
+    string newStr = checkedStr.substr(0, checkedStr.find(".")) + ".JPEG"; 
+   
+    _read_mdb_key.mv_size = newStr.size();
+    _read_mdb_key.mv_data = (char *)newStr.c_str();
+    
+    int _mdb_status = mdb_cursor_get(_read_mdb_cursor, &_read_mdb_key, &_read_mdb_value, MDB_SET_RANGE); 
+    if(_mdb_status == MDB_NOTFOUND)
+	    std::cerr << "\nKey Not found" << std::endl; 
+    else 
     {
-        str_key = string((char *) key.mv_data);                                                                                                                                                                                                      
+	str_key = string((char *) _read_mdb_key.mv_data);                                                                                                                                                                                
         if(str_key == file_name)
         {
             // std::cerr<<"\n str_key:: "<<str_key;
             // std::cerr<<"\t file_name:: "<<file_name;
             // Reading the data value for each record from LMDB
-            str_data = string((char *) data.mv_data);
+            str_data = string((char *) _read_mdb_value.mv_data);
             
             // Parsing Image and Label Protos using the key and data values
             // read from LMDB records
             caffe2_protos::TensorProtos tens_protos;
-            tens_protos.ParseFromArray((char *)data.mv_data, data.mv_size);
+
+            tens_protos.ParseFromArray((char *)_read_mdb_value.mv_data, _read_mdb_value.mv_size);
+
             // Checking size of the protos
             int protos_size = tens_protos.protos_size();   
             if(protos_size != 0)
@@ -308,15 +326,9 @@ void Caffe2LMDBRecordReader::read_image(unsigned char* buff, std::string file_na
                 cout << "Parsing Protos Failed" << endl;
             }
         }
-        else
-        {
-            continue;
-        }
         
     }
-    // Closing all the LMDB environment and cursor handles
-    mdb_cursor_close(cursor);
-    mdb_txn_abort(txn);
-    mdb_close(env, dbi);
-    mdb_env_close(env);
+    // Closing cursor handles
+    mdb_cursor_close(_read_mdb_cursor);
+    _read_mdb_cursor = nullptr;
 }

@@ -43,8 +43,8 @@ using namespace cv;
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER
 // #define CAFFE2_READER_DETECTION
-// #define CAFFE_READER
- #define CAFFE_READER_DETECTION
+ #define CAFFE_READER
+// #define CAFFE_READER_DETECTION
 
 using namespace std::chrono;
 

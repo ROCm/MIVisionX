@@ -93,11 +93,11 @@ private:
     bool _loop;
     bool _shuffle;
     int _read_counter = 0;
-    MDB_env* _mdb_env;
-    MDB_dbi _mdb_dbi;
-    MDB_val _mdb_key, _mdb_value;
-    MDB_txn* _mdb_txn;
-    MDB_cursor* _mdb_cursor;
+    MDB_env* _mdb_env,  *_read_mdb_env;
+    MDB_dbi _mdb_dbi, _read_mdb_dbi;
+    MDB_val _mdb_key, _mdb_value, _read_mdb_key, _read_mdb_value;
+    MDB_txn* _mdb_txn, *_read_mdb_txn;
+    MDB_cursor* _mdb_cursor, *_read_mdb_cursor;
     uint _file_byte_size;
     void incremenet_read_ptr();
     int release();
@@ -108,5 +108,8 @@ private:
     void read_image_names();
     std::map <std::string, uint> _image_record_starting;
     TimingDBG _shuffle_time;
+    int _open_env = 1;
+    int rc;
+    void open_env_for_read_image();
 };
 

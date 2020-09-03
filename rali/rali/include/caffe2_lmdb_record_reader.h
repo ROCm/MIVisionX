@@ -106,5 +106,12 @@ private:
     void read_image_names();
     std::map <std::string, uint> _image_record_starting;
     TimingDBG _shuffle_time;
+    int _open_env = 1;                                                                                                      int rc;
+    MDB_env* _read_mdb_env;
+    MDB_dbi _read_mdb_dbi; 
+    MDB_val _read_mdb_key, _read_mdb_value; 
+    MDB_txn* _read_mdb_txn;
+    MDB_cursor* _read_mdb_cursor;
+    void open_env_for_read_image();
 };
 

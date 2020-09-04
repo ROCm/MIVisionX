@@ -298,7 +298,7 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
         if (check_image_datum)
             datum = annotatedDatum_protos.datum(); // parse datum for detection
         else
-            //datum.ParseFromArray((const void *)_read_mdb_value.mv_data, _read_mdb_value.mv_size); //parse datum for classification
+            datum.ParseFromArray((const void *)_read_mdb_value.mv_data, _read_mdb_value.mv_size); //parse datum for classification
             
         memcpy(buff, datum.data().c_str(), datum.data().size());
 

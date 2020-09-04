@@ -137,7 +137,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
 #ifdef COCO_READER
     char* json_path = "";
-    if(json_path == "")
+    if(strcmp(json_path,"") == 0)
     {
         std::cout<<"\n json_path has to be set in rali_unit test manually";
         exit(0);
@@ -491,7 +491,6 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     // Calling the API to verify and build the augmentation graph
     raliVerify(handle);
-
     if (raliGetStatus(handle) != RALI_OK) {
         std::cout << "Could not verify the augmentation graph " << raliGetErrorMessage(handle);
         return -1;
@@ -579,6 +578,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     raliRelease(handle);
     mat_input.release();
     mat_output.release();
-
+    if(!image1) return -1;
     return 0;
 }
+

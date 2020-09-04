@@ -75,15 +75,14 @@ raliRotate(
         unsigned dest_width,
         unsigned dest_height)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto angle = static_cast<FloatParam*>(p_angle);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         if(dest_width == 0 || dest_height == 0)
         {
             dest_width = input->info().width();
@@ -121,14 +120,13 @@ raliRotateFixed(
         unsigned dest_width,
         unsigned dest_height)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         if(dest_width == 0 || dest_height == 0)
         {
             dest_width = input->info().width();
@@ -165,16 +163,14 @@ raliFlip(
         RaliFlipAxis axis,
         bool is_output)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<FlipNode>({input}, {output});
     }
     catch(const std::exception& e)
@@ -193,17 +189,15 @@ raliGamma(
         bool is_output,
         RaliFloatParam p_alpha)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto alpha = static_cast<FloatParam*>(p_alpha);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<GammaNode>({input}, {output})->init(alpha);
     }
     catch(const std::exception& e)
@@ -221,16 +215,15 @@ raliGammaFixed(
         float alpha,
         bool is_output)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
+
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<GammaNode>({input}, {output})->init(alpha);
     }
     catch(const std::exception& e)
@@ -248,17 +241,16 @@ raliHue(
         bool is_output,
         RaliFloatParam p_hue)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
+
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto hue = static_cast<FloatParam*>(p_hue);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<HueNode>({input}, {output})->init(hue);
     }
     catch(const std::exception& e)
@@ -276,16 +268,14 @@ raliHueFixed(
         float hue,
         bool is_output)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<HueNode>({input}, {output})->init(hue);
     }
     catch(const std::exception& e)
@@ -303,17 +293,15 @@ raliSaturation(
         bool is_output,
         RaliFloatParam p_sat)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto sat = static_cast<FloatParam*>(p_sat);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<SatNode>({input}, {output})->init(sat);
     }
     catch(const std::exception& e)
@@ -363,6 +351,8 @@ raliCropResize(
         RaliFloatParam p_y_center_drift)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context )
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto area = static_cast<FloatParam*>(p_area);
@@ -371,8 +361,6 @@ raliCropResize(
     auto y_center_drift = static_cast<FloatParam*>(p_y_center_drift);
     try
     {
-        if(!input || !context )
-            THROW("Null values passed as input")
         if(dest_width == 0 || dest_height == 0)
             THROW("CropResize node needs tp receive non-zero destination dimensions")
         // For the crop resize node, user can create an image with a different width and height
@@ -410,13 +398,13 @@ raliCropResizeFixed(
         float x_center_drift,
         float y_center_drift)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
         if(dest_width == 0 || dest_height == 0)
             THROW("CropResize node needs tp receive non-zero destination dimensions")
         // For the crop resize node, user can create an image with a different width and height
@@ -452,13 +440,12 @@ raliResize(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context || dest_width == 0 || dest_height == 0)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context || dest_width == 0 || dest_height == 0)
-            THROW("Null values passed as input")
-
         // For the resize node, user can create an image with a different width and height
         ImageInfo output_info = input->info();
         output_info.width(dest_width);
@@ -490,14 +477,14 @@ raliBrightness(
         RaliIntParam p_beta)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto alpha = static_cast<FloatParam*>(p_alpha);
     auto beta = static_cast<IntParam*>(p_beta);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -520,15 +507,13 @@ raliBrightnessFixed(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<BrightnessNode>({input}, {output})->init(alpha, beta);
     }
     catch(const std::exception& e)
@@ -546,17 +531,15 @@ raliBlur(
         bool is_output,
         RaliIntParam p_sdev)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto sdev = static_cast<IntParam*>(p_sdev);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<BlurNode>({input}, {output})->init(sdev);
     }
     catch(const std::exception& e)
@@ -574,16 +557,14 @@ raliBlurFixed(
         int sdev,
         bool is_output)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<BlurNode>({input}, {output})->init(sdev);
     }
     catch(const std::exception& e)
@@ -603,20 +584,17 @@ raliBlend(
         RaliFloatParam p_ratio)
 {
     Image* output = nullptr;
+    if(!p_input1 || !p_input2 || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input1 = static_cast<Image*>(p_input1);
     auto input2 = static_cast<Image*>(p_input2);
     auto ratio = static_cast<FloatParam*>(p_ratio);
     try
     {
-        if(!input1 || !input2 || !context)
-            THROW("Null values passed as input")
-
         if(!(input1->info() == input2->info()))
             THROW("Input images to the blend operation must have the same info")
-
         output = context->master_graph->create_image(input1->info(), is_output);
-
         context->master_graph->add_node<BlendNode>({input1, input2}, {output})->init(ratio);
     }
     catch(const std::exception& e)
@@ -636,13 +614,13 @@ raliBlendFixed(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_input1 || !p_input2 || !p_context)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input1 = static_cast<Image*>(p_input1);
     auto input2 = static_cast<Image*>(p_input2);
     try
     {
-        if(!input1 || !input2 || !context)
-            THROW("Null values passed as input")
 
         if(!(input1->info() == input2->info()))
             THROW("Input images to the blend operation must have the same info")
@@ -670,6 +648,8 @@ raliWarpAffine(
         RaliFloatParam p_y0, RaliFloatParam p_y1,
         RaliFloatParam p_o0, RaliFloatParam p_o1)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -681,9 +661,6 @@ raliWarpAffine(
     auto o1 = static_cast<FloatParam*>(p_o1);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         if(dest_width == 0 || dest_height == 0)
         {
             dest_width = input->info().width();
@@ -721,13 +698,13 @@ raliWarpAffineFixed(
         unsigned int dest_height,
         unsigned int dest_width)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         if(dest_width == 0 || dest_height == 0)
         {
@@ -761,13 +738,13 @@ raliFishEye(
         RaliImage p_input,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -788,14 +765,14 @@ raliVignette(
         bool is_output,
         RaliFloatParam p_sdev)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto sdev = static_cast<FloatParam*>(p_sdev);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -816,14 +793,13 @@ raliVignetteFixed(
         float sdev,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
 
         context->master_graph->add_node<VignetteNode>({input}, {output})->init(sdev);
@@ -843,6 +819,8 @@ raliJitter(
         bool is_output,
         RaliIntParam p_kernel_size)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -871,13 +849,12 @@ raliJitterFixed(
         int kernel_size,
         bool is_output)
 {
+
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -905,8 +882,6 @@ raliSnPNoise(
     auto sdev = static_cast<FloatParam*>(p_sdev);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -927,13 +902,13 @@ raliSnPNoiseFixed(
         float sdev,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -954,14 +929,14 @@ raliFlip(
         bool is_output,
         RaliIntParam p_flip_axis)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto flip_axis = static_cast<IntParam*>(p_flip_axis);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -987,8 +962,6 @@ raliFlipFixed(
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1011,6 +984,8 @@ raliContrast(
         RaliIntParam p_min,
         RaliIntParam p_max)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1018,8 +993,6 @@ raliContrast(
     auto max = static_cast<IntParam*>(p_max);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1041,13 +1014,13 @@ raliContrastFixed(
         unsigned max,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1068,14 +1041,14 @@ raliSnow(
         bool is_output,
         RaliFloatParam p_shift)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto shift = static_cast<FloatParam*>(p_shift);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1096,13 +1069,13 @@ raliSnowFixed(
         float shift,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1126,6 +1099,8 @@ raliRain(
         RaliIntParam p_rain_height,
         RaliFloatParam p_rain_transparency)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1135,8 +1110,6 @@ raliRain(
     auto rain_value = static_cast<FloatParam*>(p_rain_value);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1160,16 +1133,14 @@ raliRainFixed(
         float rain_transparency,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<RainNode>({input}, {output})->init(rain_value, rain_width, rain_height, rain_transparency);
     }
     catch(const std::exception& e)
@@ -1187,17 +1158,15 @@ raliColorTemp(
         bool is_output,
         RaliIntParam p_adj_value_param)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto adj_value_param = static_cast<IntParam*>(p_adj_value_param);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<ColorTemperatureNode>({input}, {output})->init(adj_value_param);
     }
     catch(const std::exception& e)
@@ -1215,13 +1184,13 @@ raliColorTempFixed(
         int adj_value_param,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1243,15 +1212,14 @@ raliFog(
         bool is_output,
         RaliFloatParam p_fog_param)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto fog_param = static_cast<FloatParam*>(p_fog_param);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
 
         context->master_graph->add_node<FogNode>({input}, {output})->init(fog_param);
@@ -1271,13 +1239,13 @@ raliFogFixed(
         float fog_param,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1297,13 +1265,13 @@ raliPixelate(
         RaliImage p_input,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
 
@@ -1325,6 +1293,8 @@ raliLensCorrection(
         RaliFloatParam p_strength,
         RaliFloatParam p_zoom)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1332,9 +1302,6 @@ raliLensCorrection(
     auto zoom = static_cast<FloatParam*>(p_zoom);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
 
         context->master_graph->add_node<LensCorrectionNode>({input}, {output})->init(strength, zoom);
@@ -1355,16 +1322,14 @@ raliLensCorrectionFixed(
         float zoom,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<LensCorrectionNode>({input}, {output})->init(strength, zoom);
     }
     catch(const std::exception& e)
@@ -1382,17 +1347,15 @@ raliExposure(
         bool is_output,
         RaliFloatParam p_shift)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto shift = static_cast<FloatParam*>(p_shift);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<ExposureNode>({input}, {output})->init(shift);
     }
     catch(const std::exception& e)
@@ -1410,16 +1373,15 @@ raliExposureFixed(
         float shift,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
 
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<ExposureNode>({input}, {output})->init(shift);
     }
     catch(const std::exception& e)
@@ -1440,6 +1402,8 @@ raliColorTwist(
         RaliFloatParam p_hue,
         RaliFloatParam p_sat)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1449,11 +1413,7 @@ raliColorTwist(
     auto sat = static_cast<FloatParam*>(p_sat);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<ColorTwistBatchNode>({input}, {output})->init(alpha, beta, hue, sat);
     }
     catch(const std::exception& e)
@@ -1474,16 +1434,14 @@ raliColorTwistFixed(
         float sat,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
-
         context->master_graph->add_node<ColorTwistBatchNode>({input}, {output})->init(alpha, beta, hue, sat);
     }
     catch(const std::exception& e)
@@ -1499,6 +1457,8 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
                                     unsigned crop_width, float start_x, float start_y, float start_z, std::vector<float> &mean,
                                     std::vector<float> &std_dev, bool is_output, RaliIntParam p_mirror)
 {
+    if(!p_context || !p_input )
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1514,7 +1474,7 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
 
    try
     {
-        if(!input || !context || crop_width == 0 || crop_height == 0)
+        if( crop_width == 0 || crop_height == 0)
             THROW("Null values passed as input")
 
         // For the crop mirror normalize resize node, user can create an image with a different width and height
@@ -1551,6 +1511,8 @@ raliCrop(
         RaliFloatParam p_crop_pos_y,
         RaliFloatParam p_crop_pos_z)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1561,8 +1523,6 @@ raliCrop(
 
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
         ImageInfo output_info = input->info();
         output_info.width(input->info().width());
         output_info.height(input->info().height_single());
@@ -1593,13 +1553,13 @@ raliCropFixed(
         float crop_pos_y,
         float crop_pos_z)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context )
-            THROW("Null values passed as input")
         if(crop_width == 0 || crop_height == 0 || crop_depth == 0)
             THROW("Crop node needs tp receive non-zero destination dimensions")
         // For the crop node, user can create an image with a different width and height
@@ -1630,13 +1590,13 @@ raliCropCenterFixed(
         unsigned crop_depth,
         bool is_output)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context )
-            THROW("Null values passed as input")
         if(crop_width == 0 || crop_height == 0 || crop_depth == 0)
             THROW("Crop node needs tp receive non-zero destination dimensions")
         // For the crop node, user can create an image with a different width and height
@@ -1671,14 +1631,14 @@ raliResizeCropMirrorFixed(
         RaliIntParam p_mirror
         )
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto mirror = static_cast<IntParam *>(p_mirror);
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context )
-            THROW("Null values passed as input")
         if(dest_width == 0 || dest_height == 0)
             THROW("Crop Mirror node needs tp receive non-zero destination dimensions")
         // For the crop node, user can create an image with a different width and height
@@ -1706,6 +1666,8 @@ extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context
                                                             RaliFloatParam p_crop_width, RaliIntParam p_mirror 
                                                             )
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1714,8 +1676,6 @@ extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context
     auto mirror  = static_cast<IntParam*>(p_mirror);
     try
     {
-        if(!input || !context )
-            THROW("Null values passed as input")
         if(dest_width == 0 || dest_height == 0)
             THROW("Crop Mirror node needs tp receive non-zero destination dimensions")
         // For the crop node, user can create an image with a different width and height
@@ -1748,6 +1708,8 @@ raliRandomCrop(
         RaliFloatParam p_crop_pos_y,
         int num_of_attempts)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1758,8 +1720,6 @@ raliRandomCrop(
 
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
         ImageInfo output_info = input->info();
         output_info.width(input->info().width());
         output_info.height(input->info().height_single());
@@ -1790,6 +1750,8 @@ raliSSDRandomCrop(
         RaliFloatParam p_crop_pos_y,
         int num_of_attempts)
 {
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
@@ -1800,8 +1762,6 @@ raliSSDRandomCrop(
 
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
         ImageInfo output_info = input->info();
         output_info.width(input->info().width());
         output_info.height(input->info().height_single());
@@ -1825,18 +1785,16 @@ raliCopy(
         RaliContext p_context,	
         RaliImage p_input,	
         bool is_output)	
-{	
-    Image* output = nullptr;	
+{
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
+    Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);	
     auto input = static_cast<Image*>(p_input);	
     try	
     {	
-        if(!input || !context)	
-            THROW("Null values passed as input")	
-
-        output = context->master_graph->create_image(input->info(), is_output);	
-
-        context->master_graph->add_node<CopyNode>({input}, {output});	
+        output = context->master_graph->create_image(input->info(), is_output);
+        context->master_graph->add_node<CopyNode>({input}, {output});
     }	
     catch(const std::exception& e)	
     {	
@@ -1851,18 +1809,16 @@ raliNop(
         RaliContext p_context,	
         RaliImage p_input,	
         bool is_output)	
-{	
-    Image* output = nullptr;	
+{
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
+    Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);	
     auto input = static_cast<Image*>(p_input);	
     try	
     {	
-        if(!input || !context)	
-            THROW("Null values passed as input")	
-
-        output = context->master_graph->create_image(input->info(), is_output);	
-
-        context->master_graph->add_node<NopNode>({input}, {output});	
+        output = context->master_graph->create_image(input->info(), is_output);
+        context->master_graph->add_node<NopNode>({input}, {output});
     }	
     catch(const std::exception& e)	
     {	

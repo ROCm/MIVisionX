@@ -98,9 +98,9 @@ raliGetRemainingImages(RaliContext p_context)
 
 RaliStatus RALI_API_CALL raliGetStatus(RaliContext p_context)
 {
-    auto context = static_cast<Context*>(p_context);
-    if(!context)
+    if(!p_context)
         return RALI_CONTEXT_INVALID;
+    auto context = static_cast<Context*>(p_context);
 
     if(context->no_error())
         return RALI_OK;
@@ -124,19 +124,19 @@ RALI_API_CALL raliGetTimingInfo(RaliContext p_context)
 
 RaliMetaData
 RALI_API_CALL raliCreateCaffe2LMDBLabelReader(RaliContext p_context, const char* source_path, bool is_output){
-    auto context = static_cast<Context*>(p_context);
-    if (!context)
+
+    if (!p_context)
         THROW("Invalid rali context passed to raliCreateCaffe2LMDBLabelReader")
 
+    auto context = static_cast<Context*>(p_context);
     return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE2_META_DATA_READER , MetaDataType::Label);
-
 }
 
 RaliMetaData
 RALI_API_CALL raliCreateCaffe2LMDBReaderDetection(RaliContext p_context, const char* source_path, bool is_output){
-    auto context = static_cast<Context*>(p_context);
-    if (!context)
+    if (!p_context)
         THROW("Invalid rali context passed to raliCreateCaffe2LMDBReaderDetection")
+    auto context = static_cast<Context*>(p_context);
 
     return context->master_graph->create_caffe2_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE2_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox);
 
@@ -144,19 +144,18 @@ RALI_API_CALL raliCreateCaffe2LMDBReaderDetection(RaliContext p_context, const c
 
 RaliMetaData
 RALI_API_CALL raliCreateCaffeLMDBLabelReader(RaliContext p_context, const char* source_path){
-    auto context = static_cast<Context*>(p_context);
-    if (!context)
+
+    if (!p_context)
         THROW("Invalid rali context passed to raliCreateCaffeLMDBLabelReader")
-
+    auto context = static_cast<Context*>(p_context);
     return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path , MetaDataReaderType::CAFFE_META_DATA_READER , MetaDataType::Label);
-
 }
 
 RaliMetaData
 RALI_API_CALL raliCreateCaffeLMDBReaderDetection(RaliContext p_context, const char* source_path){
-    auto context = static_cast<Context*>(p_context);
-    if (!context)
+    if (!p_context)
         THROW("Invalid rali context passed to raliCreateCaffeLMDBReaderDetection")
+    auto context = static_cast<Context*>(p_context);
 
     return context->master_graph->create_caffe_lmdb_record_meta_data_reader(source_path, MetaDataReaderType::CAFFE_DETECTION_META_DATA_READER,  MetaDataType::BoundingBox);
 
@@ -164,6 +163,8 @@ RALI_API_CALL raliCreateCaffeLMDBReaderDetection(RaliContext p_context, const ch
 
 size_t RALI_API_CALL raliIsEmpty(RaliContext p_context)
 {
+    if (!p_context)
+        THROW("Invalid rali context passed to raliIsEmpty")
     auto context = static_cast<Context*>(p_context);
     size_t ret = 0;
     try

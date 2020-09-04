@@ -35,15 +35,8 @@ void SSDRandomCropMetaNode::update_parameters(MetaDataBatch *input_meta_data)
     {
         _batch_size = input_meta_data->size();
     }
-    _meta_crop_param = _node->get_crop_param();
     std::vector<std::pair<float, float>> iou_range = _node->get_iou_range();
     bool entire_iou = _node->is_entire_iou();
-    _dst_width = _node->get_dst_width();
-    _dst_height = _node->get_dst_height();
-    _crop_width = _meta_crop_param->cropw_arr;
-    _crop_height = _meta_crop_param->croph_arr;
-    _x1 = _meta_crop_param->x1_arr;
-    _y1 = _meta_crop_param->y1_arr;
     vxCopyArrayRange((vx_array)_crop_width, 0, _batch_size, sizeof(uint),_crop_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_crop_height, 0, _batch_size, sizeof(uint),_crop_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_x1, 0, _batch_size, sizeof(uint),_x1_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);

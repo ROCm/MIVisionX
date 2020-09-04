@@ -178,7 +178,7 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
                 
                 bb_coords.push_back(box);
                 bb_labels.push_back(label);
-                add(file_name.c_str(), bb_coords, bb_labels,img_sizes);
+                add(file_name.c_str(), bb_coords, bb_labels, img_sizes);
                 bb_coords.clear();
                 bb_labels.clear();
             }
@@ -188,10 +188,9 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
             box.x = box.y = box.w = box.h = 0;
             bb_coords.push_back(box);
             bb_labels.push_back(0);
-            add(file_name.c_str(), bb_coords, bb_labels,img_sizes);
+            add(file_name.c_str(), bb_coords, bb_labels, img_sizes);
         }
     }
-
     // Closing all the LMDB environment and cursor handles
     mdb_cursor_close(_mdb_cursor);
     mdb_close(_mdb_env, _mdb_dbi);

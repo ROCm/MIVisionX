@@ -206,6 +206,7 @@ class IrNode:
             'gather' : 1,
             'topk'  : 1,
             'reduce_min' : 1,
+            'tile' : 1,
         }
 
     def set(self,type,inputs,outputs,attr):
@@ -817,6 +818,25 @@ class IrGraph:
                             for i in range(len(input.shape)):
                                 if i not in axes:
                                     output_shape.append(input.shape[i])
+                    local = IrTensor()
+                    local.setName(output)
+                    local.setInfo(input.type, output_shape)
+                    local.setFormat(input.format)
+                    self.addLocal(local)
+                elif node.type in ['tile']:
+                    input = self.tensor_dict[node.inputs[0]]
+                    if node.inputs[1] not in self.binaries:
+                        raise ValueError("tile: tile by local tensor is unsupported: " + node.inputs[1])
+
+                    repeats = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
+
+                    repeats = np.flip(repeats)
+                    while len(repeats) < 4:
+                        repeats.add(1)
+                        
+                    for i in range(len(input.shape)):
+                        output_shape = input.shape[i] * repeats[i]
+
                     local = IrTensor()
                     local.setName(output)
                     local.setInfo(input.type, output_shape)

@@ -81,7 +81,7 @@ void SSDRandomCropNode::update_node()
     _y1_val = _crop_param->get_y1_arr_val();
     _crop_width_val = _crop_param->get_cropw_arr_val();
     _crop_height_val = _crop_param->get_croph_arr_val();
-    for (int i = 0; i < _batch_size; i++)
+    for (uint i = 0; i < _batch_size; i++)
     {
         bb_count = _meta_data_info->get_bb_labels_batch()[i].size();
         std::vector<int> labels_buf(bb_count);

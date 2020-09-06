@@ -58,7 +58,7 @@ void Caffe2MetaDataReaderDetection::add(std::string image_name, BoundingBoxCords
 }
 
 void Caffe2MetaDataReaderDetection::lookup(const std::vector<std::string> &_image_names)
-{
+{   
     if (_image_names.empty())
     {
         WRN("No image names passed")
@@ -205,9 +205,6 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
                 bb_labels.push_back(0);
                 add(str_key.c_str(), bb_coords, bb_labels,img_sizes);
             }
-        }
-        else
-        {
             cout << "Parsing Protos Failed" << endl;
         }
     }

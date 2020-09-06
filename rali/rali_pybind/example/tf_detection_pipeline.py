@@ -25,6 +25,8 @@ class HybridPipe(Pipeline):
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
 		host_memory_padding = 140544512 if decoder_device == 'mixed' else 0
+		# self.decode = ops.ImageDecoder(user_feature_key_map=feature_key_map,
+		# 										device=decoder_device, output_type=types.RGB)
 		self.decode = ops.ImageDecoderRandomCrop(user_feature_key_map=feature_key_map,
 												device=decoder_device, output_type=types.RGB,
 												device_memory_padding=device_memory_padding,
@@ -32,6 +34,7 @@ class HybridPipe(Pipeline):
 												random_aspect_ratio=[0.8, 1.25],
 												random_area=[0.1, 1.0],
 												num_attempts=100)
+		self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
 		self.cmnp = ops.CropMirrorNormalize(device="cpu",
 											output_dtype=types.FLOAT,
 											output_layout=types.NCHW,
@@ -47,6 +50,7 @@ class HybridPipe(Pipeline):
 		images = inputs["image/encoded"]
 		labels = inputs["image/class/label"]
 		images = self.decode(images)
+		images = self.res(images)
 		rng = self.coin()
 		output = self.cmnp(images, mirror=rng)
 		return [output, labels]
@@ -87,8 +91,8 @@ def main():
 	TFRecordReaderType = 1
 	featureKeyMap = {
 		'image/encoded':'image/encoded',
-		'image/class/label':'image/class/label',
-		'image/class/text':'image/class/text',
+		'image/class/label':'image/object/class/label',
+		'image/class/text':'image/object/class/text',
 		'image/object/bbox/xmin':'image/object/bbox/xmin',
 		'image/object/bbox/ymin':'image/object/bbox/ymin',
 		'image/object/bbox/xmax':'image/object/bbox/xmax',

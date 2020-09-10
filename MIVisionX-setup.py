@@ -195,7 +195,14 @@ else:
         # package dependencies
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
+                  #linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
+                  linuxSystemInstall_check+' install libssl-dev')
+        # Boost V 1.74.0 from source
+            os.system('(cd '+deps_dir+'; curl -O -L https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.bz2 )')
+            os.system('(cd '+deps_dir+'; tar xjvf boost_1_74_0.tar.bz2 )')
+            os.system('(cd '+deps_dir+'/boost_1_74_0/; ./bootstrap.sh --prefix=/usr/lib --with-python=python3 )')
+            os.system('(cd '+deps_dir+'/boost_1_74_0/; ./b2 stage -j16 threading=multi )')
+            os.system('(cd '+deps_dir+'/boost_1_74_0/; ./b2 install threading=multi )')
         # Install half.hpp
         os.system(
             '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')

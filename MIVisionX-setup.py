@@ -202,7 +202,7 @@ else:
         os.system('(cd '+deps_dir+'; tar xjvf boost_1_74_0.tar.bz2 )')
         os.system('(cd '+deps_dir+'/boost_1_74_0/; ./bootstrap.sh --prefix=/usr/lib --with-python=python3 )')
         os.system('(cd '+deps_dir+'/boost_1_74_0/; ./b2 stage -j16 threading=multi )')
-        os.system('(cd '+deps_dir+'/boost_1_74_0/; sudo ./b2 install threading=multi link=static --with-system --with-filesystem)')
+        os.system('(cd '+deps_dir+'/boost_1_74_0/; sudo ./b2 install threading=multi --with-system --with-filesystem)')
         # Install half.hpp
         os.system(
             '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')

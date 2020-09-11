@@ -200,7 +200,7 @@ else:
         # Boost V 1.74.0 from source
         os.system('(cd '+deps_dir+'; curl -O -L https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.bz2 )')
         os.system('(cd '+deps_dir+'; tar xjvf boost_1_74_0.tar.bz2 )')
-        os.system('(cd '+deps_dir+'/boost_1_74_0/; ./bootstrap.sh --prefix=/usr/lib --with-python=python3 )')
+        os.system('(cd '+deps_dir+'/boost_1_74_0/; ./bootstrap.sh --prefix=/usr/local/lib --with-python=python3 )')
         os.system('(cd '+deps_dir+'/boost_1_74_0/; ./b2 stage -j16 threading=multi )')
         os.system('(cd '+deps_dir+'/boost_1_74_0/; sudo ./b2 install threading=multi --with-system --with-filesystem)')
         # Install half.hpp
@@ -315,7 +315,7 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                       linuxSystemInstall_check+' install libjsoncpp-dev')
-            # clang+boost
+            # clang
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                       linuxSystemInstall_check+' install clang')

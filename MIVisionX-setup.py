@@ -195,7 +195,7 @@ else:
         # package dependencies
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  #linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
+                  #linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-python-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
                   linuxSystemInstall_check+' install libssl-dev')
         # Boost V 1.74.0 from source
         os.system('(cd '+deps_dir+'; curl -O -L https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.bz2 )')
@@ -247,7 +247,7 @@ else:
         # Install Packages for NN Apps
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install inxi aha libboost-python-dev build-essential')
+                  linuxSystemInstall_check+' install inxi aha build-essential')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                   ' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')

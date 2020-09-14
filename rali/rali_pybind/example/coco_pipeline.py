@@ -158,22 +158,22 @@ class RALICOCOIterator(object):
         self.target = self.lis
         self.target1 = self.lis_lab
         max_cols = max([len(row) for batch in self.target for row in batch])
-        print("max_cols",max_cols)
+        # print("max_cols",max_cols)
         max_rows = max([len(batch) for batch in self.target])
-        print("max_rows",max_rows)
+        # print("max_rows",max_rows)
         self.bb_padded = [batch + [[0] * (max_cols)] * (max_rows - len(batch)) for batch in self.target]
         self.bb_padded = torch.FloatTensor([row + [0] * (max_cols - len(row)) for batch in self.bb_padded for row in batch])
         self.bb_padded = self.bb_padded.view(-1, max_rows, max_cols)
-        print(self.bb_padded)
+        # print(self.bb_padded)
 
         max_cols1 = max([len(row) for batch in self.target1 for row in batch])
-        print("max_cols1",max_cols1)
+        # print("max_cols1",max_cols1)
         max_rows1 = max([len(batch) for batch in self.target1])
-        print("max_rows1",max_rows1)
+        # print("max_rows1",max_rows1)
         self.labels_padded = [batch + [[0] * (max_cols1)] * (max_rows1 - len(batch)) for batch in self.target1]
         self.labels_padded = torch.LongTensor([row + [0] * (max_cols1 - len(row)) for batch in self.labels_padded for row in batch])
         self.labels_padded = self.labels_padded.view(-1, max_rows1, max_cols1)
-        print(self.labels_padded)
+        # print(self.labels_padded)
 
         if self.tensor_dtype == types.FLOAT:
             return torch.from_numpy(self.out),self.bb_padded, self.labels_padded
@@ -204,11 +204,15 @@ def main():
 	crop_size = 224
 	pipe = COCOPipeline(batch_size=bs, num_threads=nt, device_id=di, data_dir=image_path, ann_dir= ann_path, crop=crop_size, rali_cpu=_rali_cpu)        
 	pipe.build()
-	imageIterator = RALICOCOIterator(pipe)
+	imageIterator = RALICOCOIterator(pipe,multiplier=pipe._multiplier, offset=pipe._offset)
 	for i,it in enumerate(imageIterator,0):
 		print("**************",i,"*******************")
-		print(it[1])
-		
+		print("**************starts*******************")
+		print("\nBBOXES:\n",it[1])
+		print("\nLABELS:\n",it[2])
+		print("**************ends*******************")
+		print("**************",i,"*******************")
+
 
 if __name__ == '__main__':
 	main()

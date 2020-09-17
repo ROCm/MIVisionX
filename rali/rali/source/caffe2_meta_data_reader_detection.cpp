@@ -205,8 +205,12 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
                 bb_labels.push_back(0);
                 add(str_key.c_str(), bb_coords, bb_labels,img_sizes);
             }
-            cout << "Parsing Protos Failed" << endl;
         }
+        else
+        {
+            THROW("Parsing Protos Failed");
+        }
+        
     }
 
     // Closing all the LMDB environment and cursor handles

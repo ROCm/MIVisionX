@@ -241,7 +241,7 @@ void Caffe2LMDBRecordReader::read_image_names()
             }
             else
             {
-                std::cerr<<"\n Image parsing failed";
+                THROW("\n Image parsing failed");
             }
         }   
         incremenet_file_id();
@@ -271,9 +271,9 @@ void Caffe2LMDBRecordReader::open_env_for_read_image()
 
 void Caffe2LMDBRecordReader::read_image(unsigned char* buff, std::string file_name)
 {
-    string str_key, str_data;
 
-    if(_open_env == 0)                                                                                                      {                                                                                                                           open_env_for_read_image();                                                                                              cout << "INSIDE ENV OPEN" << endl;                                                                                  } 
+    if(_open_env == 0)
+        open_env_for_read_image(); 
 
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
@@ -286,18 +286,11 @@ void Caffe2LMDBRecordReader::read_image(unsigned char* buff, std::string file_na
     _read_mdb_key.mv_data = (char *)newStr.c_str();
     
     int _mdb_status = mdb_cursor_get(_read_mdb_cursor, &_read_mdb_key, &_read_mdb_value, MDB_SET_RANGE); 
-    if(_mdb_status == MDB_NOTFOUND)
-	    std::cerr << "\nKey Not found" << std::endl; 
+    if(_mdb_status == MDB_NOTFOUND) {
+	    THROW("Key Not found");
+    }
     else 
     {
-	str_key = string((char *) _read_mdb_key.mv_data);                                                                                                                                                                                
-        if(str_key == file_name)
-        {
-            // std::cerr<<"\n str_key:: "<<str_key;
-            // std::cerr<<"\t file_name:: "<<file_name;
-            // Reading the data value for each record from LMDB
-            str_data = string((char *) _read_mdb_value.mv_data);
-            
             // Parsing Image and Label Protos using the key and data values
             // read from LMDB records
             caffe2_protos::TensorProtos tens_protos;
@@ -318,15 +311,13 @@ void Caffe2LMDBRecordReader::read_image(unsigned char* buff, std::string file_na
                 }
                 else
                 {
-                    cout << "Image Parsing Failed" << endl;
+                    THROW("Image Parsing Failed");
                 }
             }
             else
             {
-                cout << "Parsing Protos Failed" << endl;
+                THROW("Parsing Protos Failed");
             }
-        }
-        
     }
     // Closing cursor handles
     mdb_cursor_close(_read_mdb_cursor);

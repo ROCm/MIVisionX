@@ -195,8 +195,6 @@ size_t CaffeLMDBRecordReader::get_file_shard_id()
 
 void CaffeLMDBRecordReader::read_image_names()
 {
-    cout << "INSIDE READ IMAGE NAMES" << endl;
-
     int rc;
     // Creating an LMDB environment handle
     E(mdb_env_create(&_mdb_env));
@@ -270,7 +268,6 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
     if(_open_env == 0)
     {
 	open_env_for_read_image();
-	cout << "INSIDE ENV OPEN" << endl;
     }
 
     // Creating a cursor handle.
@@ -284,8 +281,9 @@ void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_nam
     _read_mdb_key.mv_data = (char *)newStr.c_str();
     
     int _mdb_status = mdb_cursor_get(_read_mdb_cursor, &_read_mdb_key, &_read_mdb_value, MDB_SET_RANGE);
-    if(_mdb_status == MDB_NOTFOUND)
-            std::cerr << "\nKey Not found" << std::endl;
+    if(_mdb_status == MDB_NOTFOUND) {
+        THROW("\nKey Not found");
+    }
     else
     {
         Datum datum;

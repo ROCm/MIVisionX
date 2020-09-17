@@ -40,10 +40,10 @@ using namespace cv;
 // #define PARTIAL_DECODE 
 // #define COCO_READER
 // #define TF_READER 
-#define TF_READER_DETECTION
+// #define TF_READER_DETECTION
 // #define CAFFE2_READER
 // #define CAFFE2_READER_DETECTION
- #define CAFFE_READER
+//  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
 
 using namespace std::chrono;
@@ -127,7 +127,11 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
 
     RaliMetaData meta_data;
     char key1[25] ="image/encoded";
+    #ifdef TF_READER
+    char key2[25] ="image/class/label";
+    #elif defined TF_READER_DETECTION
     char key2[25] ="image/object/class/label";
+    #endif
     char key3[25] ="image/object/class/text";
     char key4[25] ="image/object/bbox/xmin";
     char key5[25] ="image/object/bbox/ymin";

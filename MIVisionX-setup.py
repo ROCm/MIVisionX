@@ -196,7 +196,7 @@ else:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                   # linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-python-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
-                  linuxSystemInstall_check+' install libssl-dev')
+                  linuxSystemInstall_check+' install libssl-dev python-dev python3-dev')
         # Boost V 1.72.0 from source
         os.system(
             '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')

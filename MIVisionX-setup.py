@@ -197,16 +197,16 @@ else:
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                   # linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-python-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
                   linuxSystemInstall_check+' install libssl-dev')
-        # Boost V 1.74.0 from source
+        # Boost V 1.72.0 from source
         os.system(
-            '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.bz2 )')
-        os.system('(cd '+deps_dir+'; tar xjvf boost_1_74_0.tar.bz2 )')
+            '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
+        os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
         os.system(
-            '(cd '+deps_dir+'/boost_1_74_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python3 )')
+            '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python3 )')
         os.system(
-            '(cd '+deps_dir+'/boost_1_74_0/; ./b2 stage -j16 threading=multi link=shared )')
+            '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=shared )')
         os.system(
-            '(cd '+deps_dir+'/boost_1_74_0/; sudo ./b2 install threading=multi link=shared --with-system --with-filesystem)')
+            '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=shared --with-system --with-filesystem)')
         # Install half.hpp
         os.system(
             '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')

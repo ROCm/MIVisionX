@@ -60,8 +60,8 @@ static int agoOptimizeDramaAllocRemoveUnusedData(AgoGraph * agraph)
 	return 0;
 }
 
-#if ENABLE_OPENCL
-int agoGpuOclAllocBuffers(AgoGraph * graph)
+#if (ENABLE_OPENCL || ENABLE_HIP)
+int agoGpuAllocBuffers(AgoGraph * graph)
 {
 	// get default target
 	vx_uint32 bufferMergeFlags = 0;
@@ -161,13 +161,23 @@ int agoGpuOclAllocBuffers(AgoGraph * graph)
 		}
 	}
 
-	// get data groups (Gd)
+#if ENABLE_OPENCL
+    // get data groups (Gd)
 	auto getMemObjectType = [=](AgoData * data) -> cl_mem_object_type {
-		cl_mem_object_type obj_type = CL_MEM_OBJECT_BUFFER;
+        cl_mem_object_type obj_type = CL_MEM_OBJECT_BUFFER;
 		if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_UINT8)
 			obj_type = CL_MEM_OBJECT_IMAGE1D;
-		return obj_type;
+        return (vx_uint32)obj_type;
 	};
+#elif ENABLE_HIP
+    auto getMemObjectType = [=](AgoData * data) -> vx_uint32 {
+        vx_uint32 obj_type = HIP_MEM_KIND_BUFFER;
+        if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_UINT8)
+            obj_type = HIP_MEM_KIND_IMAGE1D;
+        return (vx_uint32)obj_type;
+    };
+#endif
+
 	auto getMemObjectSize = [=](AgoData * data) -> size_t {
 		return data->opencl_buffer_offset + data->size;
 	};
@@ -183,9 +193,9 @@ int agoGpuOclAllocBuffers(AgoGraph * graph)
 			possible = true;
 			vx_uint32 s = data->hierarchical_life_start;
 			vx_uint32 e = data->hierarchical_life_end;
-			cl_mem_object_type dataMemType = getMemObjectType(data);
+            vx_uint32 dataMemType = getMemObjectType(data);
 			for (auto d : G) {
-				cl_mem_object_type dMemType = getMemObjectType(d);
+                vx_uint32 dMemType = getMemObjectType(d);
 				if((dataMemType != dMemType) ||
 				   (s >= d->hierarchical_life_start && s <= d->hierarchical_life_end) ||
 				   (e >= d->hierarchical_life_start && e <= d->hierarchical_life_end))
@@ -254,6 +264,7 @@ int agoGpuOclAllocBuffers(AgoGraph * graph)
 			if(getMemObjectSize(Gd[j][i]) > getMemObjectSize(Gd[j][k]))
 				k = i;
 		}
+#if ENABLE_OPENCL
 		if (agoGpuOclAllocBuffer(Gd[j][k]) < 0) {
 			return -1;
 		}
@@ -274,6 +285,23 @@ int agoGpuOclAllocBuffers(AgoGraph * graph)
 				Gd[j][i]->opencl_buffer_offset = Gd[j][k]->opencl_buffer_offset;
 			}
 		}
+#else
+        if (agoGpuHipAllocBuffer(Gd[j][k]) < 0) {
+            return -1;
+        }
+        for (size_t i = 0; i < Gd[j].size(); i++) {
+            if(i != k) {
+                if(Gd[j][i]->alias_offset > 0) {
+                    Gd[j][i]->hip_memory = Gd[j][k]->hip_memory + Gd[j][i]->alias_offset;
+                    Gd[j][i]->hip_memory_allocated = Gd[j][k]->hip_memory;
+                }
+                else {
+                    Gd[j][i]->hip_memory = Gd[j][k]->hip_memory;
+                }
+                Gd[j][i]->opencl_buffer_offset = Gd[j][k]->opencl_buffer_offset;
+            }
+        }
+#endif
 	}
 
 	// allocate GPU buffers if node scheduled on GPU using OpenCL or using opencl_buffer_access_enable
@@ -283,15 +311,25 @@ int agoGpuOclAllocBuffers(AgoGraph * graph)
 		{
 			for (vx_uint32 i = 0; i < node->paramCount; i++) {
 				AgoData * data = node->paramList[i];
-				if (data && !data->opencl_buffer && !data->isVirtual) {
-					if (agoIsPartOfDelay(data)) {
+#if ENABLE_OPENCL
+                if (data && !data->opencl_buffer && !data->isVirtual) {
+#elif ENABLE_HIP
+                if (data && !data->hip_memory && !data->isVirtual) {
+#endif
+                    if (agoIsPartOfDelay(data)) {
 						int siblingTrace[AGO_MAX_DEPTH_FROM_DELAY_OBJECT], siblingTraceCount = 0;
 						data = agoGetSiblingTraceToDelayForUpdate(data, siblingTrace, siblingTraceCount);
 						if (!data) return -1;
 					}
-					if (agoGpuOclAllocBuffer(data) < 0) {
+#if ENABLE_OPENCL
+                    if (agoGpuOclAllocBuffer(data) < 0) {
 						return -1;
 					}
+#elif ENABLE_HIP
+                    if (agoGpuHipAllocBuffer(data) < 0) {
+                        return -1;
+                    }
+#endif
 				}
 			}
 		}
@@ -310,7 +348,8 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 		}
 	}
 	if (gpuNeeded) {
-		// make sure to allocate context and command queue
+        // make sure to allocate context and command queue for OPENCL or HIP
+#if ENABLE_OPENCL
 		if (!graph->opencl_cmdq) {
 			// make sure that the context has been created
 			vx_context context = graph->ref.context;
@@ -333,6 +372,14 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 				return -1;
 			}
 		}
+#elif ENABLE_HIP
+        vx_context context = graph->ref.context;
+        if (context->hip_device_id < 0) {
+            if (agoGpuHipCreateContext(context, -1) < 0) {
+                return -1;
+            }
+        }
+#endif
 	}
 
 	// identify GPU groups and make sure that they all have same affinity
@@ -348,10 +395,11 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 			}
 		}
 		else if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
+#if ENABLE_OPENCL
 			node->opencl_build_options = node->ref.context->opencl_build_options;
 			if (node->akernel->func) {
 				// generate kernel function code
-				int status = node->akernel->func(node, ago_kernel_cmd_opencl_codegen);
+                int status = node->akernel->func(node, ago_kernel_cmd_opencl_codegen);
 				if (status == VX_SUCCESS) {
 					if (node->opencl_type & NODE_OPENCL_TYPE_FULL_KERNEL) {
 						strcpy(node->opencl_name, NODE_OPENCL_KERNEL_NAME);
@@ -410,8 +458,30 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 				agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: doesn't support kernel %s on GPU\n", node->akernel->name);
 				return -1;
 			}
+#elif ENABLE_HIP
+            if (node->akernel->func) {
+                // generate kernel function code
+                int status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
+                if (status == VX_SUCCESS) {
+                    node->hip_kernel_name = "Hip_Kernel";
+                }
+                else if (status != AGO_ERROR_KERNEL_NOT_IMPLEMENTED) {
+                    agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: kernel %s failed to generate HIP code (error %d)\n", node->akernel->name, status);
+                    return -1;
+                }
+            }
+            else if (node->akernel->opencl_codegen_callback_f) {
+                agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: codegen callback is not supported for HIP GPU\n", node->akernel->name);
+                return -1;
+            }
+            else {
+                agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: doesn't support kernel %s on GPU\n", node->akernel->name);
+                return -1;
+            }
+#endif
 		}
 	}
+#if (ENABLE_OPENCL || ENABLE_HIP)
 	// create a supernode for each group
 	for (auto itgroup = groupMap.begin(); itgroup != groupMap.end(); itgroup++) {
 		AgoSuperNode * supernode = NULL;
@@ -427,11 +497,18 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 				node->supernode = supernode;
 				// initialize supernode with OpenCL information
 				supernode->isGpuOclSuperNode = true;
-				supernode->opencl_cmdq = graph->opencl_cmdq;
 				// add node functionality into supernode
-				if (agoGpuOclSuperNodeMerge(graph, supernode, node) < 0) {
+#if ENABLE_OPENCL
+                supernode->opencl_cmdq = graph->opencl_cmdq;
+                if (agoGpuOclSuperNodeMerge(graph, supernode, node) < 0) {
 					return -1;
 				}
+#else
+                supernode->hip_stream0 = graph->hip_stream0;
+                if (agoGpuHipSuperNodeMerge(graph, supernode, node) < 0) {
+                    return -1;
+                }
+#endif
 			}
 		}
 		if (supernode) {
@@ -443,17 +520,22 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 
 	// update supernodes for buffer usage and hierarchical levels
 	for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
-		if (agoGpuOclSuperNodeUpdate(graph, supernode) < 0) {
-			return -1;
+#if ENABLE_OPENCL
+        if (agoGpuOclSuperNodeUpdate(graph, supernode) < 0) {
+#else
+        if (agoGpuHipSuperNodeUpdate(graph, supernode) < 0) {
+#endif
+            return -1;
 		}
 	}
-
+#endif
 	// allocate GPU buffers if node scheduled on GPU using OpenCL or using opencl_buffer_access_enable
-	if (agoGpuOclAllocBuffers(graph) < 0) {
+    if (agoGpuAllocBuffers(graph) < 0) {
 		return -1;
 	}
 
-	// finalize all GPU supernodes and single nodes
+#if ENABLE_OPENCL
+    // finalize all GPU supernodes and single nodes
 	for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
 		if (agoGpuOclSuperNodeFinalize(graph, supernode) < 0) {
 			return -1;
@@ -466,6 +548,20 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 			}
 		}
 	}
+#elif ENABLE_HIP
+    for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
+        if (agoGpuHipSuperNodeFinalize(graph, supernode) < 0) {
+            return -1;
+        }
+    }
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU && node->attr_affinity.group == 0) {
+            if (agoGpuHipSingleNodeFinalize(graph, node) < 0) {
+                return -1;
+            }
+        }
+    }
+#endif
 
 	return 0;
 }
@@ -636,7 +732,7 @@ static int agoOptimizeDramaAllocSetDefaultTargets(AgoGraph * agraph)
 	return 0;
 }
 
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL || ENABLE_HIP)
 static int agoOptimizeDramaAllocMergeSuperNodes(AgoGraph * graph)
 {
 	// initialize groupInfo list with SuperNodeInfo
@@ -797,20 +893,18 @@ int agoOptimizeDramaAlloc(AgoGraph * agraph)
 		return -1;
 	}
 
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL || ENABLE_HIP)
 	if (!(agraph->optimizer_flags & AGO_GRAPH_OPTIMIZER_FLAG_NO_SUPERNODE_MERGE)) {
 		// merge super nodes
 		if (agoOptimizeDramaAllocMergeSuperNodes(agraph) < 0) {
 			return -1;
 		}
 	}
-
 	// allocate GPU resources
 	if (agoOptimizeDramaAllocGpuResources(agraph) < 0) {
 		return -1;
 	}
 #endif
-
 	// remove unused data
 	if (agoOptimizeDramaAllocRemoveUnusedData(agraph)) return -1;
 

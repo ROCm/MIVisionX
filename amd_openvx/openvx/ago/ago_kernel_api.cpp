@@ -24,7 +24,9 @@ THE SOFTWARE.
 #include "ago_internal.h"
 #include "ago_kernel_api.h"
 #include "ago_haf_gpu.h"
-
+#if ENABLE_HIP
+#include "../hipvx/hip_kernels.h"
+#endif
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Local Utility Functions
 //
@@ -6791,9 +6793,9 @@ int agoKernel_AbsDiff_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg0 = node->paramList[1];
 		AgoData * iImg1 = node->paramList[2];
-		if (HafCpu_AbsDiff_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
-			status = VX_FAILURE;
-		}
+        if (HafCpu_AbsDiff_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        status = VX_FAILURE;
+        }
 	}
 	else if (cmd == ago_kernel_cmd_validate) {
 		status = ValidateArguments_Img_1OUT_2IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
@@ -6823,7 +6825,9 @@ int agoKernel_AbsDiff_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
-#endif                 
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
+#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -6836,6 +6840,17 @@ int agoKernel_AbsDiff_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = min(inp1->u.img.rect_valid.end_x, inp2->u.img.rect_valid.end_x);
 		out->u.img.rect_valid.end_y = min(inp1->u.img.rect_valid.end_y, inp2->u.img.rect_valid.end_y);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg0 = node->paramList[1];
+        AgoData * iImg1 = node->paramList[2];
+        if (HipExec_AbsDiff_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 

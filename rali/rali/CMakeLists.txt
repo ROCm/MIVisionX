@@ -45,6 +45,10 @@ set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
 set(BUILD_RALI true)
 
+if("${BACKEND}" STREQUAL "HIP")
+    SET(BUILD_RALI false)
+endif()
+
 if(NOT OpenCL_FOUND)
 	set(BUILD_RALI false)
 	message("-- ${Yellow}rali library requires OpenCL, Not Found ${ColourReset}")

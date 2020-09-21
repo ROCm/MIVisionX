@@ -58,6 +58,8 @@ using namespace std;
 #else
 #include <dlfcn.h>
 #include <x86intrin.h>
+#include <smmintrin.h>
+#include <immintrin.h>
 #if __APPLE__
 #include <cstdlib>
 #include <cmath>
@@ -73,6 +75,14 @@ using namespace std;
 #else
 #include <CL/cl.h>
 #endif
+#endif
+
+#if ENABLE_HIP
+#define HIPRTC_GET_TYPE_NAME
+#define __HIP_PLATFORM_HCC__
+#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime.h"
+#include "hip/hiprtc.h"
 #endif
 
 // platform specific shared library file extension

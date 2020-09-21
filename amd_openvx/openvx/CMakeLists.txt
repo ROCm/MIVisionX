@@ -18,12 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.8)
-project(openvx)
+cmake_minimum_required( VERSION 3.5 )
+project(openvx CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
-find_package(OpenCL QUIET)
+if( "${BACKEND}" STREQUAL "OPENCL")
+    find_package(OpenCL QUIET)
+elseif( "${BACKEND}" STREQUAL "HIP")
+    SET(OpenCL_FOUND FALSE)
+endif()
 
 include_directories(include ago api)
 
@@ -58,22 +62,94 @@ list(APPEND SOURCES
 	ago/ago_platform.cpp
 	ago/ago_util.cpp
 	ago/ago_util_opencl.cpp
+    ago/ago_util_hip.cpp
 	api/vxu.cpp
 	api/vx_api.cpp
 	api/vx_nodes.cpp
 )
 
-add_library(openvx SHARED ${SOURCES})
 
-if (OpenCL_FOUND)
-	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
-	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
-	target_link_libraries(openvx ${OpenCL_LIBRARIES})
-	message("-- ${Green}AMD OpenVX -- OpenVX built with OpenCL Support${ColourReset}")
-else(OpenCL_FOUND)
-	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
-	message("-- ${Red}WARNING:OpenCL Not Found -- OpenVX built for CPU only${ColourReset}")
-endif(OpenCL_FOUND)
+#add_library(openvx SHARED ${SOURCES})
+
+# Backend Specific Settings
+if ("${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
+    add_library(openvx SHARED ${SOURCES})
+    target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
+    target_compile_definitions(openvx PUBLIC ENABLE_HIP=0)
+    include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
+    target_link_libraries(openvx ${OpenCL_LIBRARIES})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
+    message("-- ${Green}AMD OpenVX -- OpenVX built with OpenCL Support${ColourReset}")
+
+elseif ("${BACKEND}" STREQUAL "HIP")
+    # Setup HIPCC compiler
+    if(NOT DEFINED HIP_PATH)
+      if(NOT DEFINED ENV{HIP_PATH})
+        set(HIP_PATH "/opt/rocm/hip" CACHE PATH "Path to which HIP has been installed")
+      else()
+        set(HIP_PATH $ENV{HIP_PATH} CACHE PATH "Path to which HIP has been installed")
+      endif()
+    endif()
+    set(HCC_HOME "${HIP_PATH}/../hcc")
+    set(HCC_PATH "${HIP_PATH}/../hcc")
+    find_package(HIP QUIET REQUIRED)
+    if(HIP_FOUND)
+      message(STATUS "Found HIP: " ${HIP_VERSION} ${HIP_PATH} ${HCC_HOME})
+    else()
+      message(FATAL_ERROR "Could'nt find HIP. Ensure that HIP is either installed in /opt/rocm/hip or the variable HIP_PATH is set.")
+    endif()
+    # build hip_sources if any
+    #these sources will be compiled using HIPCC compiler
+    list (APPEND HIP_SOURCES hipvx/arithmetic_kernels.cpp)
+    set (CMAKE_LINKER "${HIP_PATH}/bin/hipcc_cmake_linker_helper")
+
+    set (CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_LINKER> ${HIP_PATH}/../hcc <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <SONAME_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")
+    if(HIP_PLATFORM STREQUAL "hcc")
+        include(CheckCXXCompilerFlag)
+        # A hack to make this work without the device enumerator
+        link_libraries(-amdgpu-target=gfx803 -amdgpu-target=gfx900 -Wno-unused-command-line-argument)
+        CHECK_CXX_COMPILER_FLAG("-amdgpu-target=gfx906 -Werror" GFX_906_FLAG_VALID)
+        if(GFX_906_FLAG_VALID)
+            link_libraries(-amdgpu-target=gfx906)
+        endif()
+
+        CHECK_CXX_COMPILER_FLAG(-amdgpu-target=gfx908 -Werror, GFX_908_FLAG_VALID)
+        if(GFX_908_FLAG_VALID)
+            link_libraries(-amdgpu-target=gfx908)
+        endif()
+        # end hack
+    else()
+        # Hcc's clang always defines __HCC__ even when not using hcc driver
+        add_definitions(-U__HCC__)
+    endif()
+
+    set_source_files_properties(${HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+    set(HIP_HCC_FLAGS -std=c++14)
+    hip_add_library(openvx_hip ${HIP_SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}" HCC_OPTIONS "${HIP_HCC_FLAGS}" SHARED)
+    target_compile_definitions(openvx_hip PRIVATE __HIP_PLATFORM_HCC__)
+    set_source_files_properties(${HIP_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+    list(APPEND HIP_CXX_FLAGS "-msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -std=c++14")
+    set(HIP_HCC_FLAGS ${HIP_CXX_FLAGS})
+    message("Cmake CXX compiler " ${CMAKE_CXX_COMPILER})
+
+    add_library(openvx SHARED ${SOURCES})
+    set_target_properties(openvx PROPERTIES LINKER_LANGUAGE CXX)
+    set_target_properties(openvx PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    include_directories(${HIP_PATH}/include ${HIP_PATH}/../hcc/include ${HIP_PATH}/../hsa/include)
+    include_directories(hipvx)
+    target_compile_definitions(openvx PUBLIC ENABLE_HIP=1 )
+    target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
+    target_link_libraries (openvx openvx_hip hip_hcc)
+    message("-- ${Green}AMD OpenVX -- OpenVX built with HIP Support${ColourReset}")
+    install(TARGETS openvx_hip DESTINATION lib)
+else()
+    add_library(openvx SHARED ${SOURCES} hip/hip_kernels.h)
+    target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
+    target_compile_definitions(openvx PUBLIC ENABLE_HIP=0)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
+    message("-- ${Red}WARNING:OpenCL/HIP Not Found -- OpenVX built for CPU only${ColourReset}")
+endif()
 
 install(TARGETS openvx DESTINATION lib)
 install(FILES include/vx_ext_amd.h DESTINATION include)
@@ -98,7 +174,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /DVX_API_ENTRY=__declspec(dllexport)")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
 	target_link_libraries(openvx dl m)
 endif()
 

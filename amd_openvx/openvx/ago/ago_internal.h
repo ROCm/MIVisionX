@@ -80,7 +80,7 @@ THE SOFTWARE.
 #define AGO_KERNEL_FLAG_VALID_RECT_RESET 0x2000 // kernel valid_rect_reset is true
 
 // AGO default target priority
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
 #define AGO_KERNEL_TARGET_DEFAULT        AGO_KERNEL_FLAG_DEVICE_GPU // pick CPU or GPU
 #else
 #define AGO_KERNEL_TARGET_DEFAULT        AGO_KERNEL_FLAG_DEVICE_CPU // pick CPU or GPU
@@ -150,7 +150,22 @@ THE SOFTWARE.
 #define CONFIG_OPENCL_SVM_AS_FGS           0x0020  // use OpenCL SVM as fine grain system
 #define CONFIG_OPENCL_SVM_AS_CLMEM         0x0040  // use OpenCL SVM as cl_mem
 #endif
+#elif ENABLE_HIP
+#define NODE_HIP_TYPE_REG2REG              1 // register to register
+#define NODE_HIP_TYPE_MEM2REG              2 // memory to register
+#define NODE_HIP_TYPE_NEED_IMGSIZE         8 // need image size as argument for memory operation
+#define NODE_HIP_TYPE_FULL_KERNEL         16 // node is a single kernel
+
+// additional bit-fields for dataFlags[]
+#define DATA_HIP_FLAG_BUFFER        (1 <<  8) // marks that the data is a buffer
+#define DATA_HIP_FLAG_NEED_LOAD_R2R (1 <<  9) // marks that the data needs to load for REG2REG
+#define DATA_HIP_FLAG_NEED_LOAD_M2R (1 << 10) // marks that the data needs to load for MEM2REG
+#define DATA_HIP_FLAG_NEED_LOCAL    (1 << 11) // marks that the data needs to load into local buffer
+#define DATA_HIP_FLAG_DISCARD_PARAM (1 << 12) // marks that the data needs to be discarded
+#define DATA_HIP_FLAG_PASS_BY_VALUE (1 << 13) // marks that the data needs to be passed by value
 #endif
+// opencl related constants
+#define DATA_OPENCL_ARRAY_OFFSET             16  // first 16 bytes of array buffer will be used for numitems
 // opencl image fixed byte offset
 #define OPENCL_IMAGE_FIXED_OFFSET             256
 
@@ -197,8 +212,13 @@ typedef enum {
 	ago_kernel_cmd_query_target_support       =  5,
 #if ENABLE_OPENCL
 	ago_kernel_cmd_opencl_codegen             =  6,
+#elif ENABLE_HIP
+    ago_kernel_cmd_hip_codegen                =  6,
 #endif
 	ago_kernel_cmd_valid_rect_callback        =  7,
+#if ENABLE_HIP
+	ago_kernel_cmd_hip_execute                =  8,     // adding it for HIP kernels to execute without codegen
+#endif
 } AgoKernelCommand;
 typedef enum {
 	ago_profile_type_launch_begin,
@@ -404,6 +424,10 @@ struct AgoData {
 	vx_uint8 * opencl_svm_buffer;
 	vx_uint8 * opencl_svm_buffer_allocated;
 #endif
+#elif ENABLE_HIP
+    vx_uint8*     hip_memory;
+    vx_uint8*     hip_memory_allocated;
+    vx_bool       hip_need_as_argument;
 #endif
 	vx_uint32  opencl_buffer_offset;
 	vx_bool isVirtual;
@@ -514,6 +538,9 @@ struct AgoSuperNode {
 	cl_event opencl_event;
 	size_t opencl_global_work[3];
 	size_t opencl_local_work[3];
+#elif ENABLE_HIP
+    hipStream_t  hip_stream0;       // default stream for the graph
+    hipEvent_t   hip_event_start, hip_event_stop;
 #endif
 	vx_uint32 hierarchical_level_start;
 	vx_uint32 hierarchical_level_end;
@@ -573,6 +600,11 @@ struct AgoNode {
 	cl_program opencl_program;
 	cl_kernel opencl_kernel;
 	cl_event opencl_event;
+#elif ENABLE_HIP
+    std::string hip_kernel_name;
+    std::string hip_code;
+    hiprtcProgram hip_program;
+    hipEvent_t   hip_event_start, hip_event_stop;
 #endif
 public:
 	AgoNode();
@@ -619,12 +651,16 @@ struct AgoGraph {
 	bool verified;
 	std::vector<vx_parameter> parameters;
 	std::vector<AgoData *> autoAgeDelayList;
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
 	std::vector<AgoNode *> opencl_nodeListQueued;
 	AgoSuperNode * supernodeList;
-	cl_command_queue opencl_cmdq;
-	cl_device_id opencl_device;
 	bool enable_node_level_opencl_flush;
+#if ENABLE_OPENCL
+    cl_command_queue opencl_cmdq;
+    cl_device_id opencl_device;
+#elif ENABLE_HIP
+    hipStream_t  hip_stream0;       // default stream for the graph
+#endif
 #endif
 	AgoTargetAffinityInfo_ attr_affinity;
 	vx_uint32 execFrameCount;
@@ -700,6 +736,17 @@ struct AgoContext {
 	vx_size opencl_mem_alloc_size;
 	vx_size opencl_mem_alloc_count;
 	vx_size opencl_mem_release_count;
+#elif ENABLE_HIP
+    bool hip_context_imported;
+    hipDeviceProp_t hip_dev_prop;
+    int hip_num_devices;
+    int hip_device_id;
+    hipDevice_t hip_device;
+    //hipCtx_t    hip_context;
+    hipStream_t hip_stream;
+    vx_size hip_mem_alloc_size;
+    vx_size hip_mem_alloc_count;
+    vx_size hip_mem_release_count;
 #endif
 	AgoTargetAffinityInfo_ attr_affinity;
 public:
@@ -817,8 +864,11 @@ void agoPerfCopyNormalize(AgoContext * context, vx_perf_t * perfDst, vx_perf_t *
 // log
 void agoRegisterLogCallback(vx_context context, vx_log_callback_f callback, vx_bool reentrant);
 void agoAddLogEntry(AgoReference * ref, vx_status status, const char *message, ...);
-#if ENABLE_OPENCL
-// OpenCL
+
+#if (ENABLE_OPENCL || ENABLE_HIP)
+int agoGpuOclAllocBuffers(AgoGraph * graph);
+
+#if ENABLE_OPENCL// OpenCL
 int agoGpuOclDataSetBufferAsKernelArg(AgoData * data, cl_kernel opencl_kernel, vx_uint32 kernelArgIndex, vx_uint32 group);
 int agoGpuOclReleaseContext(AgoContext * context);
 int agoGpuOclReleaseGraph(AgoGraph * graph);
@@ -826,7 +876,6 @@ int agoGpuOclReleaseSuperNode(AgoSuperNode * supernode);
 int agoGpuOclReleaseData(AgoData * data);
 int agoGpuOclCreateContext(AgoContext * context, cl_context opencl_context);
 int agoGpuOclAllocBuffer(AgoData * data);
-int agoGpuOclAllocBuffers(AgoGraph * graph);
 int agoGpuOclSuperNodeMerge(AgoGraph * graph, AgoSuperNode * supernode, AgoNode * node);
 int agoGpuOclSuperNodeUpdate(AgoGraph * graph, AgoSuperNode * supernode);
 int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode);
@@ -835,6 +884,23 @@ int agoGpuOclSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode);
 int agoGpuOclSingleNodeFinalize(AgoGraph * graph, AgoNode * node);
 int agoGpuOclSingleNodeLaunch(AgoGraph * graph, AgoNode * node);
 int agoGpuOclSingleNodeWait(AgoGraph * graph, AgoNode * node);
+#elif ENABLE_HIP
+int agoGpuHipCreateContext(AgoContext * context, int deviceID = -1);
+int agoGpuHipReleaseContext(AgoContext * context);
+int agoGpuHipReleaseGraph(AgoGraph * graph);
+int agoGpuHipReleaseSuperNode(AgoSuperNode * supernode);
+int agoGpuHipReleaseData(AgoData * data);
+int agoGpuHipAllocBuffer(AgoData * data);
+int agoGpuHipSingleNodeWait(AgoGraph * graph, AgoNode * node);
+int agoGpuHipSuperNodeMerge(AgoGraph * graph, AgoSuperNode * supernode, AgoNode * node);
+int agoGpuHipSuperNodeUpdate(AgoGraph * graph, AgoSuperNode * supernode);
+int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node);
+int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode);
+int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node);
+int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode);
+#define HIP_MEM_KIND_BUFFER         0x10F0
+#define HIP_MEM_KIND_IMAGE1D          0x10F4
+#endif
 #endif
 
 ///////////////////////////////////////////////////////////

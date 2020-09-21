@@ -51,6 +51,10 @@ endif()
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
 option(RALI       "Build MIVisionX with RALI Support"         ON)
 option(LOOM       "Build MIVisionX with LOOM Support"         ON)
+if (NOT DEFINED BACKEND)
+    SET(BACKEND "OPENCL")   # set default backend to OPENCL
+    message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
+endif()
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)

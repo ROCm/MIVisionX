@@ -13,7 +13,7 @@
 #include <vx_ext_amd.h>
 #include <string>
 #include <chrono>
-#define DUMP_IMAGE  1
+#define DUMP_IMAGE  0
 
 #define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; } }
 #define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return -1; } }
@@ -190,6 +190,8 @@ int main(int argc, const char ** argv) {
         hipMalloc((void**)&ptr[0], width*height);
         hipMalloc((void**)&ptr[1], width*height);
         hipMalloc((void**)&ptr[2], width*height);
+        hipMemset(ptr[2], 0, width*height);
+  //      printf("Main: dst: %p src1: %p src2: %p <%dx%d>\n", ptr[2], ptr[0], ptr[1], width, height);
 
         ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[0], VX_MEMORY_TYPE_HIP));
         ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[1], VX_MEMORY_TYPE_HIP));

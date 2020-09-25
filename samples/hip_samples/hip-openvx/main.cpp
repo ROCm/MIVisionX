@@ -131,6 +131,7 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 
 int main(int argc, const char ** argv) {
 
+    void *ptr[3] = {nullptr, nullptr, nullptr};     // hip
     int64_t freq = clockFrequency(), t0, t1;
     vx_image img1, img2, img_out;
     vx_uint32 width = atoi(argv[1]);
@@ -182,7 +183,6 @@ int main(int argc, const char ** argv) {
     }else
     {
         vx_imagepatch_addressing_t addr = { 0};
-        void *ptr[3] = {nullptr, nullptr, nullptr};
         addr.dim_x = width;
         addr.dim_y = height;
         addr.stride_x = 1;
@@ -248,6 +248,9 @@ int main(int argc, const char ** argv) {
     ERROR_CHECK_STATUS( vxUnmapImagePatch( img_out, map_id ) );
 
     // free the resources on host side
+    if (ptr[0]) hipFree(ptr[0]);
+    if (ptr[1]) hipFree(ptr[1]);
+    if (ptr[1]) hipFree(ptr[1]);
     free(outImgBuffer);
     vxReleaseContext(&context);
 

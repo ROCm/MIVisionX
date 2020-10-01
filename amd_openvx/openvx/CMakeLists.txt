@@ -64,6 +64,7 @@ list(APPEND SOURCES
 )
 
 add_library(openvx SHARED ${SOURCES})
+add_library(vxu SHARED api/vxu.cpp)
 
 if (OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
@@ -76,6 +77,7 @@ else(OpenCL_FOUND)
 endif(OpenCL_FOUND)
 
 install(TARGETS openvx DESTINATION lib)
+install(TARGETS vxu DESTINATION lib)
 install(FILES include/vx_ext_amd.h DESTINATION include)
 install (FILES
             include/VX/vx.h

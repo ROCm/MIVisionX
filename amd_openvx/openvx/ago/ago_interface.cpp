@@ -93,11 +93,16 @@ int agoReleaseContext(AgoContext * acontext)
 
 	if (!agoIsValidContext(acontext))
 		return -1;
-
-	EnterCriticalSection(&acontext->cs);
-	// release all the resources
-	LeaveCriticalSection(&acontext->cs);
-	delete acontext;
+	
+	vx_reference ref = (vx_reference)acontext;
+	ref->external_count = ref->external_count - 1;
+	
+	if(&ref->external_count == 0) {
+		EnterCriticalSection(&acontext->cs);
+		// release all the resources
+		LeaveCriticalSection(&acontext->cs);
+		delete acontext;
+	}
 	return 0;
 }
 

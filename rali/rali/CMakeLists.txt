@@ -24,19 +24,11 @@ cmake_minimum_required(VERSION 2.8)
 project(rali)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
-find_package(Protobuf REQUIRED)	
-if (NOT ${Protobuf_FOUND})	
-    message( FATAL_ERROR "Could not find Protobuf!" )	
-endif() 	
-link_directories(	
-    ${PROTOBUF_LIBRARY_DIRS}	
-)	
-include_directories(	
-    ${PROTOBUF_INCLUDE_DIRS}	
-)
+		
 find_package(OpenCL QUIET)
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
+find_package(Protobuf QUIET)
 # If FFMPEG is found, vx_amd_media is expected to be built as well
 find_package(FFmpeg QUIET)
 find_package(OpenCV QUIET)
@@ -56,6 +48,10 @@ endif()
 if(NOT TurboJpeg_FOUND)
 	set(BUILD_RALI false)
 	message("-- ${Yellow}rali library requires TurboJpeg, Not Found ${ColourReset}")
+endif()
+if(NOT Protobuf_FOUND)
+	set(BUILD_RALI false)
+	message("-- ${Yellow}rali library requires Protobuf, Not Found ${ColourReset}")
 endif()
 if(CMAKE_VERSION VERSION_LESS ${MIN_CMAKE_VER_REQUIRED})
 	set(BUILD_RALI false)
@@ -96,6 +92,7 @@ if(${BUILD_RALI})
 			    ${OpenCL_INCLUDE_DIRS}/Headers	
 				${CMAKE_CURRENT_BINARY_DIR}
 			    ${TurboJpeg_INCLUDE_DIRS}
+				${PROTOBUF_INCLUDE_DIRS}
 			    ${AMDRPP_INCLUDE_DIRS}
 			    ../../amd_openvx/openvx/include/
 			    ../../amd_openvx_extensions/amd_rpp/include/
@@ -105,7 +102,7 @@ if(${BUILD_RALI})
 	protobuf_generate_cpp(TF_PROTO_SRCS TF_PROTO_HEADERS proto/example.proto proto/feature.proto)
 	protobuf_generate_cpp(CAFFE2_PROTO_SRCS CAFFE2_PROTO_HEADERS proto/caffe2_protos.proto)
     protobuf_generate_cpp(CAFFE_PROTO_SRCS CAFFE_PROTO_HEADERS proto/caffe_protos.proto)
-	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR} /usr/local/lib/)
+	link_directories(${AMDRPP_LIBRARIES_DIR} ${TurboJpeg_LIBRARIES_DIR} ${PROTOBUF_LIBRARY_DIRS} /usr/local/lib/)
 
 	file(GLOB SOURCES "./source/*.cpp")
 	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${TF_PROTO_SRCS} ${TF_PROTO_HEADERS} ${CAFFE_PROTO_HEADERS} ${CAFFE_PROTO_SRCS} ${CAFFE2_PROTO_SRCS} ${CAFFE2_PROTO_HEADERS})

@@ -73,6 +73,7 @@ if (OpenCL_FOUND)
 	message("-- ${Green}AMD OpenVX -- OpenVX built with OpenCL Support${ColourReset}")
 else(OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
+	target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=0)
 	message("-- ${Red}WARNING:OpenCL Not Found -- OpenVX built for CPU only${ColourReset}")
 endif(OpenCL_FOUND)
 

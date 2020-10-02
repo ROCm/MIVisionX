@@ -13487,7 +13487,7 @@ int agoKernel_SobelPhase_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_initialize) {
 		int alignedWidth = (node->paramList[0]->u.img.width + 15) & ~15;	// Next highest multiple of 16, so that the buffer is aligned for all three lines
 		int alignedStride = (node->paramList[0]->u.img.stride_in_bytes + 15) & ~15;
-		node->localDataSize = (alignedStride * node->paramList[0]->u.img.height * sizeof(vx_int16) * 2) + (6 * alignedWidth * sizeof(vx_int16));	// Two buffers for Gx and Gy and Three rows (+some extra) worth of scratch memory
+		node->localDataSize = (vx_size)((unsigned long)((unsigned long)(alignedStride * node->paramList[0]->u.img.height) * sizeof(vx_int16) * 2)) + (6 * alignedWidth * sizeof(vx_int16));	// Two buffers for Gx and Gy and Three rows (+some extra) worth of scratch memory
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_shutdown) {
@@ -14049,7 +14049,7 @@ int agoKernel_FastCorners_XY_U8_Supression(AgoNode * node, AgoKernelCommand cmd)
 	}
 #endif
 	else if (cmd == ago_kernel_cmd_initialize) {
-		node->localDataSize = node->paramList[2]->u.img.width * node->paramList[2]->u.img.height;
+		node->localDataSize = (vx_size)((unsigned long)(node->paramList[2]->u.img.width * node->paramList[2]->u.img.height));
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_shutdown) {
@@ -17572,7 +17572,7 @@ int agoKernel_HarrisMergeSortAndPick_XY_XYS(AgoNode * node, AgoKernelCommand cmd
 			vx_uint32 cellSize = (vx_uint32)floor(min_distance / M_SQRT2);
 			vx_uint32 gridWidth = (width + cellSize - 1) / cellSize;
 			vx_uint32 gridHeight = (height + cellSize - 1) / cellSize;
-			vx_uint32 gridBufSize = (vx_uint32)(gridWidth * gridHeight * sizeof(ago_coord2d_short_t));
+			vx_uint32 gridBufSize = (vx_uint32)((unsigned long)(gridWidth * gridHeight) * sizeof(ago_coord2d_short_t));
 			node->localDataSize = sizeof(ago_harris_grid_header_t) + gridBufSize;
 			node->localDataPtr = (vx_uint8 *)agoAllocMemory(node->localDataSize); if (!node->localDataPtr) return VX_ERROR_NO_MEMORY;
 			ago_harris_grid_header_t * gridInfo = (ago_harris_grid_header_t *)node->localDataPtr;

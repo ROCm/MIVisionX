@@ -41,6 +41,10 @@ int agoDramaDivideAppend(AgoNodeList * nodeList, AgoNode * anode, vx_enum new_ke
 	anode->drama_divide_invoked = true;
 	// transfer attributes from anode to childnode
 	agoImportNodeConfig(childnode, anode);
+
+	// set childnode for future reference
+	anode->childnode = childnode;
+
 	// verify the node
 	return agoVerifyNode(childnode);
 }

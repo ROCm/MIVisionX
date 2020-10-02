@@ -2832,8 +2832,9 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
 				data->ref.external_count--;
 		}
 		else {
-			if (data->ref.internal_count > 0)
+			if (data->ref.internal_count > 0) {
 				data->ref.internal_count--;
+			}
 		}
 		if (data->ref.external_count == 0 && data->ref.internal_count == 0) {
 			// clear child link in it's paren link

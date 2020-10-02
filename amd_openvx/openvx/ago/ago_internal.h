@@ -570,6 +570,7 @@ struct AgoNode {
 	vx_int32 funcExchange[AGO_MAX_PARAMS];
 	vx_nodecomplete_f callback;
 	AgoSuperNode * supernode;
+	AgoNode * childnode;
 	bool initialized;
 	bool drama_divide_invoked;
 	vx_uint32 valid_rect_num_inputs;

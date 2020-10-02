@@ -2477,7 +2477,7 @@ int agoAllocData(AgoData * data)
 	else if (data->ref.type == VX_TYPE_REMAP) {
 		// allocate buffer and get aligned buffer with 16-byte alignment
 		data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
-		data->reserved = data->reserved_allocated = (vx_uint8 *)agoAllocMemory((unsigned long)(data->u.remap.dst_width * data->u.remap.dst_height * sizeof(ago_coord2d_float_t)));
+		data->reserved = data->reserved_allocated = (vx_uint8 *)agoAllocMemory((unsigned long)(data->u.remap.dst_width * data->u.remap.dst_height) * sizeof(ago_coord2d_float_t));
 		if (!data->buffer_allocated || !data->reserved_allocated)
 			return -1;
 	}

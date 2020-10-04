@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.3"
+__version__ = "1.8.4"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -207,6 +207,8 @@ else:
             '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=shared )')
         os.system(
             '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=shared --with-system --with-filesystem)')
+        os.system(
+            '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=static --with-system --with-filesystem)')
         # Install half.hpp
         os.system(
             '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')

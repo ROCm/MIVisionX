@@ -1221,8 +1221,8 @@ VX_API_ENTRY vx_size VX_API_CALL vxComputeImagePatchSize(vx_image image_,
 		if (image->children) {
 			img = image->children[plane_index];
 		}
-		size = ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img) *
-			    ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2);
+		size = (vx_size)((unsigned long) ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img) *
+			    ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2));
 	}
 	return size;
 }

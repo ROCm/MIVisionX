@@ -399,4 +399,4 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.5](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.5)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.8.3`
+* MIVisionX Setup Script - `V1.8.4`

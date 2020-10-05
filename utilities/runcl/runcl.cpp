@@ -224,7 +224,7 @@ static int read_clfile(char * fname, char * source, char * incdir)
 {
     { for (char * p = fname; *p; p++) if (*p == '\\') *p = '/'; } // replace backslash in the source filename to forward slash
     FILE * fp = fopen(fname, "r"); if (!fp) { fprintf(stderr, "ERROR: unable to open '%s'\n", fname); return -1; }
-    char line[4096];
+    char line[8192];
     char srcdir[4096];
     strcpy(srcdir, fname);
     { char * p = 0; for (char * q = srcdir; *q; q++) if (*q == '/' || *q == '\\') p = q; if (p) *p = 0; else srcdir[0] = 0; }
@@ -1057,7 +1057,7 @@ main(int argc, char * argv[])
         if ((int)binsize > sourcesize) { fprintf(stderr, "ERROR: binary size exceeded internal buffer size of %d bytes\n", sourcesize); return !!- 1; }
         err = clGetProgramInfo(prog, CL_PROGRAM_BINARIES, ndevs*sizeof(unsigned char *), binlist, NULL);
         if (err != CL_SUCCESS) { fprintf(stderr, "ERROR: clGetProgramInfo(*,CL_PROGRAM_BINARIES,...) => %d\n", err); return !!- 1; }
-        char fname[1024]; sprintf(fname, "%s.elf", kernel_name);
+        char fname[2048]; sprintf(fname, "%s.elf", kernel_name);
         FILE * fp;
         if ((fp = fopen(fname, "wb")) == NULL) { fprintf(stderr, "ERROR: unable to create '%s'\n", fname); return !!- 1; }
         char * elfsrc = source + 2 * sizeof(size_t);
@@ -1078,7 +1078,7 @@ main(int argc, char * argv[])
             return !!- 1;
         }
 #else
-        char isa_file[2048];
+        char isa_file[4096];
         sprintf(isa_file, "%s_0_%s_&__OpenCL_%s_kernel.isa", dumpilisa_prefix, device_name, kernel_name);
         if (isa_statistics(kernel_name, device_name, isa_file) < 0) {
             sprintf(isa_file, "%s_0_%s_%s.isa", dumpilisa_prefix, device_name, kernel_name);

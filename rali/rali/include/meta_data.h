@@ -31,15 +31,19 @@ THE SOFTWARE.
 typedef  struct { float x; float y; float w; float h; } BoundingBoxCord;
 typedef  std::vector<BoundingBoxCord> BoundingBoxCords;
 typedef  std::vector<int> BoundingBoxLabels;
+typedef  struct { int w; int h; } ImgSize;
+typedef  std::vector<ImgSize> ImgSizes;
 
 struct MetaData
 {
     int& get_label() { return _label_id; }
     BoundingBoxCords& get_bb_cords() { return _bb_cords; }
     BoundingBoxLabels& get_bb_labels() { return _bb_label_ids; }
+    ImgSizes& get_img_sizes() {return _img_sizes; }
 protected:
     BoundingBoxCords _bb_cords = {}; // For bb use
     BoundingBoxLabels _bb_label_ids = {};// For bb use
+    ImgSizes _img_sizes = {};
     int _label_id = -1; // For label use only
 };
 
@@ -57,8 +61,15 @@ struct BoundingBox : public MetaData
         _bb_cords =std::move(bb_cords);
         _bb_label_ids = std::move(bb_label_ids);
     }
+    BoundingBox(BoundingBoxCords bb_cords,BoundingBoxLabels bb_label_ids ,ImgSizes img_sizes)
+    {
+        _bb_cords =std::move(bb_cords);
+        _bb_label_ids = std::move(bb_label_ids);
+        _img_sizes = std::move(img_sizes);
+    }
     void set_bb_cords(BoundingBoxCords bb_cords) { _bb_cords =std::move(bb_cords); }
     void set_bb_labels(BoundingBoxLabels bb_label_ids) {_bb_label_ids = std::move(bb_label_ids); }
+    void set_img_sizes(ImgSizes img_sizes) { _img_sizes =std::move(img_sizes); }
 };
 
 struct MetaDataBatch
@@ -77,10 +88,12 @@ struct MetaDataBatch
     std::vector<int>& get_label_batch() { return _label_id; }
     std::vector<BoundingBoxCords>& get_bb_cords_batch() { return _bb_cords; }
     std::vector<BoundingBoxLabels>& get_bb_labels_batch() { return _bb_label_ids; }
+    std::vector<ImgSizes>& get_img_sizes_batch() { return _img_sizes; }
 protected:
     std::vector<int> _label_id = {}; // For label use only
     std::vector<BoundingBoxCords> _bb_cords = {};
     std::vector<BoundingBoxLabels> _bb_label_ids = {};
+    std::vector<ImgSizes> _img_sizes = {};
 };
 
 struct LabelBatch : public MetaDataBatch
@@ -119,17 +132,20 @@ struct BoundingBoxBatch: public MetaDataBatch
     {
         _bb_cords.clear();
         _bb_label_ids.clear();
+        _img_sizes.clear();
     }
     MetaDataBatch&  operator += (MetaDataBatch& other) override
     {
         _bb_cords.insert(_bb_cords.end(),other.get_bb_cords_batch().begin(), other.get_bb_cords_batch().end());
         _bb_label_ids.insert(_bb_label_ids.end(), other.get_bb_labels_batch().begin(), other.get_bb_labels_batch().end());
+        _img_sizes.insert(_img_sizes.end(),other.get_img_sizes_batch().begin(), other.get_img_sizes_batch().end());
         return *this;
     }
     void resize(int batch_size) override
     {
         _bb_cords.resize(batch_size);
         _bb_label_ids.resize(batch_size);
+        _img_sizes.resize(batch_size);
     }
     int size() override
     {

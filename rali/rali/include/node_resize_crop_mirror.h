@@ -35,6 +35,10 @@ public:
     ResizeCropMirrorNode() = delete;
     void init(unsigned int crop_h, unsigned int crop_w, IntParam *mirror);
     void init( FloatParam *crop_h_factor, FloatParam *crop_w_factor, IntParam *mirror);
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    std::shared_ptr<RaliCropParam> get_crop_param() { return _crop_param; }
+    vx_array get_mirror() { return _mirror.default_array(); }
 protected:
     void create_node() override;
     void update_node() override;

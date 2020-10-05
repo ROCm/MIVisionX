@@ -4,7 +4,7 @@
 
 # OpenVX Samples
 
-<a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> is an open, royalty-free standard for cross-platform acceleration of computer vision applications. OpenVX enables performance and power-optimized computer vision processing, especially important in embedded and real-time use cases such as face, body, and gesture tracking, smart video surveillance, advanced driver assistance systems (ADAS), object and scene reconstruction, augmented reality, visual inspection, robotics and more.
+<a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> is an open, royalty-free standard for cross-platform acceleration of computer vision applications. OpenVX enables a performance and power-optimized computer vision processing, especially important in embedded and real-time use cases such as face, body, and gesture tracking, smart video surveillance, advanced driver assistance systems (ADAS), object and scene reconstruction, augmented reality, visual inspection, robotics and more.
 
 In this project, we provide OpenVX sample applications to use with any conformant implementation of OpenVX.
 
@@ -26,7 +26,7 @@ In this sample we will create an OpenVX graph to run VX Bubble Pop on a live cam
 
 * **Step - 1:** Clone the MIVisionX project
 
-```
+``` 
 cd ~/ && mkdir OpenVX-bubble-pop
 cd OpenVX-bubble-pop/
 git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX
@@ -34,7 +34,7 @@ git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX
 
 * **Step - 2:** CMake and Build the pop application
 
-```
+``` 
 mkdir pop-build && cd pop-build
 cmake ../MIVisionX/apps/bubble_pop/
 make
@@ -42,14 +42,14 @@ make
 
 * **Step - 3:** Run VX Pop application
 
-    * **Bubbles**
-    
-    ```
-    ./vxPop --bubble
-    ```
-    
-    * **Donuts**
-    
-    ````
-    ./vxPop --donut
-    ````
+ - **Bubbles**
+
+ ``` 
+ ./vxPop --bubble
+ ```
+
+ - **Donuts**
+
+ ``` 
+ ./vxPop --donut
+ ````

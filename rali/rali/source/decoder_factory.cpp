@@ -36,10 +36,6 @@ std::shared_ptr<Decoder> create_decoder(DecoderConfig config) {
         case DecoderType::FUSED_TURBO_JPEG:
             return std::make_shared<FusedCropTJDecoder>();
             break;
-        case DecoderType::SKIP_DECODE:
-            //return std::make_shared<FusedCropTJDecoder>();    //todo:: make null deocder which skips decoding
-            return nullptr;
-            break;
         default:
             THROW("Unsupported decoder type "+ TOSTR(config.type()));
     }

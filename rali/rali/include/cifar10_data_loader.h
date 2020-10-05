@@ -39,6 +39,7 @@ public:
     void reset() override;
     void start_loading() override;
     std::vector<std::string> get_id() override;
+    decoded_image_info get_decode_image_info() override;
     Timing timing() override;
 private:
     void increment_loader_idx();
@@ -50,7 +51,8 @@ private:
     std::shared_ptr<Reader> _reader;
 
     const DeviceResources _dev_resources;
-    decoded_image_info _raw_img_info;       // image info to store the names. In this case the ID of image is stored in _roi_width field
+    decoded_image_info _raw_img_info;       // image info to store the names. In this case the ID of image is stored in _roi_width field 
+    decoded_image_info _output_decoded_img_info;
     bool _initialized = false;
     RaliMemType _mem_type;
     size_t _output_mem_size;

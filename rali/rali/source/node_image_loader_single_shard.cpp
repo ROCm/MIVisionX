@@ -31,9 +31,9 @@ ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, DeviceReso
 }
 
 void
-ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path,
+ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path,
                                  StorageType storage_type, DecoderType decoder_type, bool shuffle, bool loop,
-                                 size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_original)
+                                 size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_original, const std::map<std::string, std::string> feature_key_map)
 {
     if(!_loader_module)
         THROW("ERROR: loader module is not set for ImageLoaderNode, cannot initialize")
@@ -43,7 +43,7 @@ ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const 
         THROW("Shard is should be smaller than shard count")
     _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the ImageLoaderNode
-    auto reader_cfg = ReaderConfig(storage_type, source_path, shuffle, loop);
+    auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, feature_key_map, shuffle, loop);
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
     reader_cfg.set_batch_count(load_batch_count);

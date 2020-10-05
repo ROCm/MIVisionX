@@ -34,7 +34,8 @@ THE SOFTWARE.
 
 namespace filesys = boost::filesystem;
 
-TFRecordReader::TFRecordReader()
+TFRecordReader::TFRecordReader():
+    _shuffle_time("shuffle_time", DBG_TIMING)
 {
     _src_dir = nullptr;
     _sub_dir = nullptr;
@@ -46,6 +47,7 @@ TFRecordReader::TFRecordReader()
     _file_id = 0;
     _last_rec = false;
     _record_name_prefix = "";
+    _file_count_all_shards = 0;
 }
 
 unsigned TFRecordReader::count()
@@ -63,16 +65,29 @@ Reader::Status TFRecordReader::initialize(ReaderConfig desc)
     _file_id = 0;
     _folder_path = desc.path();
     _path = desc.path();
+    _feature_key_map = desc.feature_key_map();
     _shard_id = desc.get_shard_id();
     _shard_count = desc.get_shard_count();
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
     _shuffle = desc.shuffle();
     _record_name_prefix = desc.file_prefix();
+    _encoded_key = _feature_key_map.at("image/encoded");
+    _filename_key = _feature_key_map.at("image/filename");
     ret = folder_reading();
+    if (_shard_count > 1 && _batch_count > 1) {
+        int _num_batches = _file_names.size()/_batch_count;
+        int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count;
+        max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count;
+        if (_num_batches < max_batches_per_shard) {
+            replicate_last_batch_to_pad_partial_shard();
+        }
+    }
     //shuffle dataset if set
+    _shuffle_time.start();
     if (ret == Reader::Status::OK && _shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
+    _shuffle_time.end();
     return ret;
 }
 
@@ -120,8 +135,10 @@ int TFRecordReader::release()
 
 void TFRecordReader::reset()
 {
+    _shuffle_time.start();
     if (_shuffle)
         std::random_shuffle(_file_names.begin(), _file_names.end());
+    _shuffle_time.end();
     _read_counter = 0;
     _curr_file_idx = 0;
 }
@@ -170,6 +187,15 @@ void TFRecordReader::replicate_last_image_to_fill_last_shard()
     }
 }
 
+void TFRecordReader::replicate_last_batch_to_pad_partial_shard()
+{
+    if (_file_names.size() >=  _batch_count) {
+        for (size_t i = 0; i < _batch_count; i++)
+            _file_names.push_back(_file_names[i - _batch_count]);
+    }
+}
+
+
 Reader::Status TFRecordReader::tf_record_reader()
 {
     std::string fname = _folder_path;
@@ -198,7 +224,7 @@ size_t TFRecordReader::get_file_shard_id()
 {
     if (_batch_count == 0 || _shard_count == 0)
         THROW("Shard (Batch) size cannot be set to 0")
-    return (_file_id / (_batch_count)) % _shard_count;
+    return _file_id  % _shard_count;
 }
 
 Reader::Status TFRecordReader::read_image_names(std::ifstream &file_contents, uint file_size)
@@ -228,18 +254,27 @@ Reader::Status TFRecordReader::read_image_names(std::ifstream &file_contents, ui
         _single_example.ParseFromArray(data.get(), data_length);
         _features = _single_example.features();
         auto feature = _features.feature();
-        _single_feature = feature.at("image/filename");
-        std::string fname = _single_feature.bytes_list().value()[0];
+        std::string file_path = _folder_path;
+        std::string fname;
+        if (!_filename_key.empty()) {
+            _single_feature = feature.at(_filename_key);
+            fname = _single_feature.bytes_list().value()[0];
+            file_path.append("/");
+            file_path.append(fname);
+        } else {
+            // generate filename based on file_id
+            fname = std::to_string(_file_id);
+            file_path.append("/");
+            file_path.append(fname);
+        }
         _image_record_starting.insert(std::pair<std::string, uint>(fname, length));
         _in_batch_read_count++;
         _in_batch_read_count = (_in_batch_read_count % _batch_count == 0) ? 0 : _in_batch_read_count;
-        std::string file_path = _folder_path;
-        file_path.append("/");
-        file_path.append(fname);
         _last_file_name = file_path;
         if (get_file_shard_id() != _shard_id)
         {
             incremenet_file_id();
+            _file_count_all_shards++;
             file_contents.read((char *)&data_crc, sizeof(data_crc));
             if(!file_contents)
                 THROW("TFRecordReader: Error in reading TF records")
@@ -247,7 +282,8 @@ Reader::Status TFRecordReader::read_image_names(std::ifstream &file_contents, ui
         }
         _file_names.push_back(file_path);
         incremenet_file_id();
-        _single_feature = feature.at("image/encoded");
+        _file_count_all_shards++;
+        _single_feature = feature.at(_encoded_key);
         _last_file_size = _single_feature.bytes_list().value()[0].size();
         _file_size.insert(std::pair<std::string, unsigned int>(_last_file_name, _last_file_size));
         file_contents.read((char *)&data_crc, sizeof(data_crc));
@@ -292,11 +328,16 @@ Reader::Status TFRecordReader::read_image(unsigned char *buff, std::string file_
     _single_example.ParseFromArray(data.get(), data_length);
     _features = _single_example.features();
     auto feature = _features.feature();
-    _single_feature = feature.at("image/filename");
-    std::string fname = _single_feature.bytes_list().value()[0];
-    if (fname == file_name)
+    std::string fname;
+    if (!_filename_key.empty()) {
+        _single_feature = feature.at(_filename_key);
+        fname = _single_feature.bytes_list().value()[0];
+    }
+    // if _filename key is empty, just read the encoded/raw feature
+    if (_filename_key.empty() || (fname == file_name))
     {
-        _single_feature = feature.at("image/encoded");
+        _single_feature = feature.at(_encoded_key);
+        std::cout << "read_image writing " << _single_feature.bytes_list().value()[0].size() << " bytes" << std::endl;
         memcpy(buff, _single_feature.bytes_list().value()[0].c_str(), _single_feature.bytes_list().value()[0].size());
     }
     file_contents.read((char *)&data_crc, sizeof(data_crc));

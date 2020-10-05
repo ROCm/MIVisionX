@@ -79,7 +79,29 @@ If available, this project uses OpenCV for camera capture and image display.
         org.khronos.openvx.optical_flow_pyr_lk
         org.khronos.openvx.remap
         org.khronos.openvx.halfscale_gaussian
-    
+        
+    The supported list of AMD's built-in kernel names is given below:
+        com.amd.nn_extension.argmax_layer
+        com.amd.nn_extension.batch_normalization_layer
+        com.amd.nn_extension.cast_layer
+        com.amd.nn_extension.concat_layer
+        com.amd.nn_extension.crop_layer
+        com.amd.nn_extension.crop_and_resize_layer
+        com.amd.nn_extension.detection_output
+        com.amd.nn_extension.permute_layer
+        com.amd.nn_extension.prior_box_layer
+        com.amd.nn_extension.scale_layer
+        com.amd.nn_extension.slice_layer
+        com.amd.nn_extension.convert_image_to_tensor
+        com.amd.nn_extension.convert_tensor_to_image
+        com.amd.nn_extension.tensor_exp
+        com.amd.nn_extension.tensor_log
+        com.amd.nn_extension.upsample_nearest_layer
+        com.amd.nn_extension.reshape_layer
+        com.amd.nn_extension.gather_layer
+        com.amd.nn_extension.topk_layer
+        com.amd.nn_extension.nms_layer
+        
     The available GDF commands are:
       import <libraryName>
           Import kernels in a library using vxLoadKernel API.
@@ -109,6 +131,7 @@ If available, this project uses OpenCV for camera capture and image display.
               tensor:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>
               tensor-from-roi:<master-tensor>,<num-of-dims>,{<start0>,<start1>,...},{<end0>,<end1>,...}
               tensor-from-handle:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>,{<stride0>,<stride1>,...},<num-alloc-handles>,<memory-type>
+				
           For virtual object in default graph use the below syntax for
           <data-description>:
               virtual-array:<data-type>,<capacity>
@@ -129,11 +152,12 @@ If available, this project uses OpenCV for camera capture and image display.
               <space> can be vx_color_space_e enums BT709 or BT601_525 or BT601_625
 
       node <kernelName> [<argument(s)>]
-          Create a node of specified kernel in the default graph with specified
-          node arguments. Node arguments have to be OpenVX data objects created
-          earlier in GDF or data objects specified on command-line accessible as
-          $1, $2, etc. For scalar enumerations as node arguments, use !<enumName>
-          syntax (e.g., !VX_CHANNEL_Y for channel_extract node).
+          Create a node of specified kernel in the default graph with specified node arguments. 
+          Node arguments have to be OpenVX data objects created earlier in GDF or data objects
+          specified on command-line accessible as $1, $2, etc. For scalar enumerations as node
+          arguments, use !<enumName> syntax (e.g., !VX_CHANNEL_Y for channel_extract node).
+          For optional arguments, use NULL/null to set the node argument as a null value.
+          (e.g. node com.amd.nn_extension.slice_layer input output starts ends NULL steps)
 
       include <file.gdf>
           Specify inclusion of another GDF file.

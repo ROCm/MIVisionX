@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include <iterator>
 #include <algorithm>
 #include "reader.h"
+#include "timing_debug.h"
 #include <google/protobuf/message_lite.h>
 #include "example.pb.h"
 #include "feature.pb.h"
@@ -60,6 +61,7 @@ public:
     std::string id() override { return _last_id;};
 
     unsigned count() override;
+    unsigned long long get_shuffle_time() {return _shuffle_time.get_timing();};
 
     ~TFRecordReader() override;
 
@@ -72,6 +74,9 @@ private:
     Reader::Status folder_reading();
     std::string _folder_path;
     std::string _path;
+    std::map<std::string, std::string> _feature_key_map;
+    std::string _encoded_key;
+    std::string _filename_key;
     DIR *_src_dir;
     DIR *_sub_dir;
     struct dirent *_entity;
@@ -94,9 +99,9 @@ private:
     bool _loop;
     bool _shuffle;
     int _read_counter = 0;
+    size_t  _file_count_all_shards;
     //!< _record_name_prefix tells the reader to read only files with the prefix
     std::string _record_name_prefix;
-
     // protobuf message objects
     tensorflow::Example _single_example;
     tensorflow::Features _features;
@@ -106,8 +111,9 @@ private:
     size_t get_file_shard_id();
     void incremenet_file_id() { _file_id++; }
     void replicate_last_image_to_fill_last_shard();
+    void replicate_last_batch_to_pad_partial_shard();
     Reader::Status read_image(unsigned char* buff, std::string record_file_name, uint file_size);
     Reader::Status read_image_names(std::ifstream &file_contents, uint file_size);
     std::map <std::string, uint> _image_record_starting;
+    TimingDBG _shuffle_time;
 };
-

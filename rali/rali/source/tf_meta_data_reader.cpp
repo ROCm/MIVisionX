@@ -36,6 +36,7 @@ using namespace std;
 void TFMetaDataReader::init(const MetaDataConfig &cfg)
 {
     _path = cfg.path();
+    _feature_key_map = cfg.feature_key_map();
     _output = new LabelBatch();
     _last_rec = false;
 }
@@ -45,15 +46,15 @@ bool TFMetaDataReader::exists(const std::string& _image_name)
     return _map_content.find(_image_name) != _map_content.end();
 }
 
-void TFMetaDataReader::add(std::string _image_name, int label)
+void TFMetaDataReader::add(std::string image_name, int label)
 {
     pMetaData info = std::make_shared<Label>(label);
-    if(exists(_image_name))
+    if(exists(image_name))
     {
         WRN("Entity with the same name exists")
         return;
     }
-    _map_content.insert(pair<std::string, std::shared_ptr<Label>>(_image_name, info));
+    _map_content.insert(std::pair<std::string, std::shared_ptr<Label>>(image_name, info));
 }
 
 void TFMetaDataReader::lookup(const std::vector<std::string> &_image_names)
@@ -85,75 +86,77 @@ void TFMetaDataReader::print_map_contents()
     }
 }
 
-MetaDataReader::Status TFMetaDataReader::read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &_image_name)
+void TFMetaDataReader::read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &_image_name, std::string user_label_key, std::string user_filename_key)
 {
-    auto ret = MetaDataReader::Status::OK;
+    // std::cerr << "The user_label_key is " << user_label_key << ", and the user_filename_key is " << user_filename_key << "\n";
     uint length;
-    length = file_contents.tellg();
-    size_t uint64_size, uint32_size;
     uint64_t data_length;
     uint32_t length_crc, data_crc;
-    uint64_size = sizeof(uint64_t); 
-    uint32_size = sizeof(uint32_t); 
-    char * header_length = new char [uint64_size];
-    char * header_crc = new char [uint32_size];
-    char * footer_crc = new char [uint32_size];
-    file_contents.read(header_length, uint64_size);
+
+    length = file_contents.tellg();
+    file_contents.read((char *)&data_length, sizeof(data_length));
     if(!file_contents)
         THROW("TFMetaDataReader: Error in reading TF records")
-    file_contents.read(header_crc, uint32_size);
+    file_contents.read((char *)&length_crc, sizeof(length_crc));
     if(!file_contents)
         THROW("TFMetaDataReader: Error in reading TF records")
-    memcpy(&data_length, header_length, sizeof(data_length));
-    memcpy(&length_crc, header_crc, sizeof(length_crc));
     if(length + data_length + 16 == file_size){
         _last_rec = true;
     }
     char *data = new char[data_length];
     file_contents.read(data,data_length);
     if(!file_contents)
-        THROW("TFMetaDataReader: Error in reading TF records");
+        THROW("TFMetaDataReader: Error in reading TF records")
     tensorflow::Example single_example;
     single_example.ParseFromArray(data,data_length);
     tensorflow::Features features = single_example.features();
+//..............
+    // tensorflow::Features features = single_example.features();
+    // features.PrintDebugString();
+//..............
     auto feature = features.feature();
     tensorflow::Feature single_feature;
-    single_feature = feature.at("image/filename");
-    std::string fname = single_feature.bytes_list().value()[0];
+    std::string fname;
+    if (!user_filename_key.empty()) {
+        single_feature = feature.at(user_filename_key);
+        fname = single_feature.bytes_list().value()[0];
+    } else {
+        // adding for raw images
+        fname = std::to_string(_file_id);
+        incremenet_file_id();
+    }
     _image_name.push_back(fname);
     uint label;
-    single_feature = feature.at("image/class/label");
+    single_feature = feature.at(user_label_key);
     label = single_feature.int64_list().value()[0];
+    //std::cout << "TFMeta read record <name, label>" << fname << " " << label << std::endl;
     add(fname, label);
-    file_contents.read(footer_crc, sizeof(data_crc));
+    file_contents.read((char *)&data_crc, sizeof(data_crc));
     if(!file_contents)
-        THROW("TFMetaDataReader: Error in reading TF records");
-    memcpy(&data_crc, footer_crc, sizeof(data_crc));
-    delete[] header_length;
-    delete[] header_crc;
-    delete[] footer_crc;
+        THROW("TFMetaDataReader: Error in reading TF records")
     delete[] data;
-    return ret;
 }
 
 void TFMetaDataReader::read_all(const std::string &path)
 {
+    std::string label_key = "image/class/label";
+    std::string filename_key = "image/filename";
+    label_key = _feature_key_map.at(label_key);
+    filename_key = _feature_key_map.at(filename_key);
+
     read_files(path);
     for(unsigned i = 0; i < _file_names.size(); i++)
     {
-        std::string fname = path + _file_names[i];
+        std::string fname = path + "/" + _file_names[i];
         uint length;
-        std::ifstream file_contents(fname.c_str(),std::ios::binary);
-        if(!file_contents)
-            THROW("TFMetaDataReader: Failed to open file "+fname);
+        std::cerr<< "Reading for image classification - file_name:: "<<fname<<std::endl;
+        std::ifstream file_contents(fname.c_str(), std::ios::binary);
         file_contents.seekg (0, std::ifstream::end);
         length = file_contents.tellg();
         file_contents.seekg (0, std::ifstream::beg);
         while(!_last_rec)
         {
-            auto ret = read_record(file_contents, length, _image_name);
-            if(ret != MetaDataReader::Status::OK )
-                THROW("TFMetaDataReader: Error in reading TF records");
+            read_record(file_contents, length, _image_name, label_key, filename_key);
         }
         _last_rec = false;
         file_contents.close();

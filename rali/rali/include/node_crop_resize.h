@@ -32,6 +32,9 @@ public:
     CropResizeNode() = delete;
     void init(float area, float aspect_ratio, float x_center_drift, float y_center_drift);
     void init(FloatParam* area, FloatParam *aspect_ratio, FloatParam * x_drift_factor, FloatParam * y_drift_factor);
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
 protected:
     void create_node() override;
     void update_node() override;

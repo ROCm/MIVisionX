@@ -4037,8 +4037,8 @@ VX_API_ENTRY vx_delay VX_API_CALL vxCreateDelay(vx_context context,
 	AgoData * data = NULL;
 	if (agoIsValidContext(context) && agoIsValidReference(exemplar) && slots > 0) {
 		CAgoLock lock(context->cs);
-		char desc_exemplar[512]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
-		char desc[512]; sprintf(desc, "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
+		char desc_exemplar[1024]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+		char desc[1024]; sprintf(desc, "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
 		data = agoCreateDataFromDescription(context, NULL, desc, true);
 		if (data) {
 			agoGenerateDataName(context, "delay", data->name);
@@ -7150,7 +7150,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromView(vx_tensor tensor, vx_s
 			sprintf(startStr + strlen(startStr), "%s%u", i ? "," : "", (vx_uint32)roi_start[i]);
 			sprintf(endStr + strlen(endStr), "%s%u", i ? "," : "", (vx_uint32)roi_end[i]);
 		}
-		char desc[128];
+		char desc[256];
 		sprintf(desc, "tensor-from-roi:%s,%u,{%s},{%s}", master_tensor->name.c_str(), (vx_uint32)num_of_dims, startStr, endStr);
 		if (master_tensor->isVirtual) {
 			vx_graph graph = (vx_graph)master_tensor->ref.scope;

@@ -483,7 +483,7 @@ void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
 				// make sure that adata is the owner parent, before clearing the parent link
 				if (adata->children[i]->parent == adata) {
 					if (dataName[0] && !adata->children[i]->name.length()) {
-						char nameChild[256];
+						char nameChild[512];
 						sprintf(nameChild, "%s!%d!", dataName, i);
 						adata->children[i]->name = nameChild;
 					}
@@ -546,7 +546,7 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
 		for (vx_uint32 i = 0; i < dataFind->numChildren; i++) {
 			if (dataFind->children[i]) {
 				if (dataName[0] && !dataFind->children[i]->name.length()) {
-					char nameChild[256];
+					char nameChild[512];
 					sprintf(nameChild, "%s!%d!", dataName, i);
 					dataFind->children[i]->name = nameChild;
 				}

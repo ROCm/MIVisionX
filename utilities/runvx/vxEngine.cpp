@@ -928,12 +928,12 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 		for (size_t arg = 2; arg < wordList.size(); arg++) {
 			const char * paramDesc = wordList[arg];
 			if (!_strnicmp(paramDesc, "attr:border_mode:", 17)) {
-				char mode[64];
+				char mode[128];
 				const char * p = ScanParameters(&paramDesc[17], "<border-mode>", "s", mode);
 				if (!_stricmp(mode, "UNDEFINED") || !_stricmp(mode, "REPLICATE") || !_stricmp(mode, "CONSTANT")) {
 					// add prefix "VX_BORDER_MODE_"
 					// TBD: this needs to be removed
-					char item[64];
+					char item[128];
 					sprintf(item, "VX_BORDER_MODE_%s", mode);
 					strcpy(mode, item);
 				}

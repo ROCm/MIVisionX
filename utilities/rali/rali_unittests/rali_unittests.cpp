@@ -522,6 +522,8 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     while (raliGetRemainingImages(handle) >= inputBatchSize) {
         if (raliRun(handle) != 0)
             break;
+        int label_id[inputBatchSize];     
+        int image_name_length[inputBatchSize];
 #if defined COCO_READER || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];

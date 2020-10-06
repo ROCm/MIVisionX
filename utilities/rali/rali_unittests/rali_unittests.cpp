@@ -46,6 +46,7 @@ using namespace cv;
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
 
+
 using namespace std::chrono;
 
 int test(int test_case, const char* path, const char* outName, int rgb, int gpu, int width, int height);
@@ -146,7 +147,7 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
         std::cout<<"\n json_path has to be set in rali_unit test manually";
         exit(0);
     }
-    meta_data = raliCreateCOCOReader(handle, json_path, true );  
+    meta_data = raliCreateCOCOReader(handle, json_path, true);    
 #elif defined CAFFE_READER
     meta_data = raliCreateCaffeLMDBLabelReader(handle, path);
 #elif defined CAFFE_READER_DETECTION
@@ -521,34 +522,25 @@ int test(int test_case, const char* path, const char* outName, int rgb, int gpu,
     while (raliGetRemainingImages(handle) >= inputBatchSize) {
         if (raliRun(handle) != 0)
             break;
-        char img_name[50];
 #if defined COCO_READER || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
-        for(int i = 0; i < (int)inputBatchSize; i++)
-        {
-            raliGetImageName(handle, img_name, i);
-            int size = raliGetBoundingBoxCount(handle, i);
-            int bb_labels[size];
-            float bb_coords[size*4];
-            int img_size[2];
-            raliGetBoundingBoxLabel(handle, bb_labels, i);
-            raliGetBoundingBoxCords(handle, bb_coords, i);
-            raliGetImageSizes(handle, img_size, i);
-            std::cerr << "\nPrinting image Name : " << img_name << "\t number of bbox : " << size << std::endl;
-            std::cerr << "\nIMAGE  width :" << img_size[0]<<"\t image height : "<< img_size[1]<<std::endl;
-            for(int id = 0, j = id; id < size; id++)
-            {
-                std::cerr << "\n Label_id : " << bb_labels[id] << std::endl;
-                for(int idx = 0; idx < 4; idx++, j++)
-                    std::cerr << "\tbbox: [" << idx << "] :" << bb_coords[j] << std::endl;
-            }
-         }
+        int img_size = raliGetImageNameLen(handle, image_name_length);
+        char img_name[img_size];
+        raliGetImageName(handle, img_name);
+        std::cerr << "\nPrinting image names of batch: " << img_name;
+        int bb_label_count[inputBatchSize];
+        int size = raliGetBoundingBoxCount(handle, bb_label_count);
+        for(int i = 0; i < inputBatchSize; i++)
+            std::cerr << "\n Number of box:  " << bb_label_count[i];
+        int bb_labels[size];
+        raliGetBoundingBoxLabel(handle, bb_labels);
+        float bb_coords[size * 4];
+        raliGetBoundingBoxCords(handle, bb_coords);
 #else
-        int label_id[inputBatchSize];     
-        raliGetImageLabels(handle, label_id);
-        for(int i = 0; i < inputBatchSize; i++) {
-            raliGetImageName(handle, img_name, i);
-            std::cerr << "\nPrinting image name : " << img_name<<"\t Printing label_id : " << label_id[i] << std::endl;
-        }
+        raliGetImageLabels(handle, label_id);        
+        int img_size = raliGetImageNameLen(handle, image_name_length);
+        char img_name[img_size];
+        raliGetImageName(handle, img_name);
+        std::cerr << "\nPrinting image names of batch: " << img_name;
 #endif
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);

@@ -50,7 +50,7 @@ namespace rali{
         char* ptr = (char*) buf.ptr;
         // call pure C++ function
         
-        raliGetImageName(context,ptr,image_idx);
+        //raliGetImageName(context,ptr,image_idx);
         std::string s(ptr); 
         return py::bytes(s);
     }
@@ -101,7 +101,7 @@ namespace rali{
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetBoundingBoxLabel(context,ptr,image_idx);
+        //raliGetBoundingBoxLabel(context,ptr,image_idx);
         return py::cast<py::none>(Py_None);
     }
 
@@ -110,7 +110,7 @@ namespace rali{
         auto buf = array.request();
         float* ptr = (float*) buf.ptr;
         // call pure C++ function
-        raliGetBoundingBoxCords(context,ptr,image_idx);
+        //raliGetBoundingBoxCords(context,ptr,image_idx);
         return py::cast<py::none>(Py_None);
     }
 

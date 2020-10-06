@@ -104,25 +104,37 @@ RALI_API_CALL raliCreateTextFileBasedLabelReader(RaliContext p_context, const ch
 
 }
 
-
 void
-RALI_API_CALL raliGetImageName(RaliContext p_context,  char* buf, unsigned image_idx)
+RALI_API_CALL raliGetImageName(RaliContext p_context,  char* buf)
 {
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
-    if(image_idx >= meta_data.first.size())
-        THROW("Image idx is out of batch size range")
-    memcpy(buf, meta_data.first[image_idx].c_str(), meta_data.first[image_idx].size());
+    size_t meta_data_batch_size = meta_data.first.size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    auto ptr = buf;
+    for(unsigned int i = 0; i < meta_data_batch_size; i++)
+    {
+        memcpy(ptr, meta_data.first[i].c_str(), meta_data.first[i].size());
+        ptr += meta_data.first[i].size() * sizeof(char);
+    }
 }
 
 unsigned
-RALI_API_CALL raliGetImageNameLen(RaliContext p_context, unsigned image_idx)
+RALI_API_CALL raliGetImageNameLen(RaliContext p_context, int* buf)
 {
+    unsigned size = 0;
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
-    if(image_idx >= meta_data.first.size())
-        THROW("Image idx is out of batch size range")
-    return meta_data.first[image_idx].size();
+    size_t meta_data_batch_size = meta_data.first.size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    for(unsigned int i = 0; i < meta_data_batch_size; i++)
+    {
+        buf[i] = meta_data.first[i].size();
+        size += buf[i];
+    }
+    return size;
 }
 
 void
@@ -141,46 +153,66 @@ RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
 }
 
 unsigned
-RALI_API_CALL raliGetBoundingBoxCount(RaliContext p_context, unsigned image_idx )
+RALI_API_CALL raliGetBoundingBoxCount(RaliContext p_context, int* buf)
 {
+    unsigned size = 0;
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_bb_labels_batch().size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
     if(!meta_data.second)
+        THROW("No label has been loaded for this output image")
+    for(unsigned i = 0; i < meta_data_batch_size; i++)
     {
-        WRN("No label has been loaded for this output image")
-        return 0;
+        buf[i] = meta_data.second->get_bb_labels_batch()[i].size();
+        size += buf[i];
     }
-    return meta_data.second->get_bb_labels_batch()[image_idx].size();
+    return size;
 }
 
 void
-RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf, unsigned image_idx )
+RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
 {
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
-    if(!meta_data.second)
-    {
-        WRN("No label has been loaded for this output image")
-        return;
-    }
-    unsigned bb_count = meta_data.second->get_bb_labels_batch()[image_idx].size();
-    memcpy(buf, meta_data.second->get_bb_labels_batch()[image_idx].data(),  sizeof(int)*bb_count);
-}
-
-void
-RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf, unsigned image_idx )
-{
-    auto context = static_cast<Context*>(p_context);
-    auto meta_data = context->master_graph->meta_data();
-
+    size_t meta_data_batch_size = meta_data.second->get_bb_labels_batch().size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
     if(!meta_data.second)
     {
         WRN("No label has been loaded for this output image")
         return;
     }
     auto ptr = buf;
-    memcpy(ptr,meta_data.second->get_bb_cords_batch()[image_idx].data(), meta_data.second->get_bb_cords_batch()[image_idx].size() * sizeof(BoundingBoxCord));
-    ptr += sizeof(BoundingBoxCord)*sizeof(float);
+    for(unsigned i = 0; i < meta_data_batch_size; i++)
+    { 
+        unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
+        memcpy(ptr, meta_data.second->get_bb_labels_batch()[i].data(),  sizeof(int) * bb_count);
+        ptr += bb_count;
+    }
+}
+
+void
+RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
+{
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_bb_cords_batch().size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+    if(!meta_data.second)
+    {
+        WRN("No label has been loaded for this output image")
+        return;
+    }
+    auto ptr = buf;
+    for(unsigned i = 0; i < meta_data_batch_size; i++)
+    { 
+        unsigned bb_count = meta_data.second->get_bb_cords_batch()[i].size();
+        memcpy(ptr, meta_data.second->get_bb_cords_batch()[i].data(), bb_count * sizeof(BoundingBoxCord));
+        ptr += (bb_count * 4);
+    }
 }
 
 void

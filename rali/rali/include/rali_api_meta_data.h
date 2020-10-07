@@ -111,7 +111,7 @@ extern "C" unsigned RALI_API_CALL raliGetBoundingBoxCount(RaliContext rali_conte
 extern "C" void RALI_API_CALL raliGetBoundingBoxLabel(RaliContext rali_context, int* buf);
 extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, float* buf);
 
-extern "C" void RALI_API_CALL raliGetImageSizes(RaliContext rali_context, int* buf, unsigned image_idx );
+extern "C" void RALI_API_CALL raliGetImageSizes(RaliContext rali_context, int* buf);
 
 ///
 /// \param rali_context

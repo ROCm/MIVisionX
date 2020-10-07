@@ -216,10 +216,12 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
 }
 
 void
-RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf, unsigned image_idx )
+RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
 {
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
+    size_t meta_data_batch_size = meta_data.second->get_img_sizes_batch().size();
+
 
     if(!meta_data.second)
     {
@@ -227,8 +229,12 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf, unsigned image_
         return;
     }
     auto ptr = buf;
-    memcpy(ptr,meta_data.second->get_img_sizes_batch()[image_idx].data(), meta_data.second->get_img_sizes_batch()[image_idx].size() * sizeof(ImgSize));
-    ptr += sizeof(ImgSize)*sizeof(int);
+    
+    for(unsigned i = 0; i < meta_data_batch_size; i++)
+    { 
+        memcpy(ptr, meta_data.second->get_img_sizes_batch()[i].data(), sizeof(ImgSize));
+        ptr += 2;
+    }
 }
 
 RaliMetaData

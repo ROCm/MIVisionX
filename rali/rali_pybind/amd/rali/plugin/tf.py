@@ -80,19 +80,38 @@ class RALIGenericIteratorDetection(object):
             self.label_list=[]
             self.num_bboxes_list=[]
 
-            for idx in range(self.bs):
-                num_bboxes=self.loader.GetBoundingBoxCount(idx)
-                self.labels = np.zeros(num_bboxes,dtype = "int32")
-                self.bboxes = np.zeros(num_bboxes*4,dtype = "float32" )
-                self.loader.GetBBLabels(self.labels,idx)
-                self.loader.GetBBCords(self.bboxes,idx)
+
+            #Count of labels/ bboxes in a batch
+            self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
+            self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
+            self.num_bboxes_list = self.bboxes_label_count.tolist()
+            # 1D labels array in a batch
+            self.labels = np.zeros(self.count_batch, dtype="int32")
+            self.loader.GetBBLabels(self.labels)
+            # 1D bboxes array in a batch
+            self.bboxes = np.zeros((self.count_batch*4), dtype="float32")
+            self.loader.GetBBCords(self.bboxes)
+            #1D Image sizes array of image in a batch
+            self.img_size = np.zeros((self.bs * 2),dtype = "int32")
+            self.loader.GetImgSizes(self.img_size)
+            
+            count =0 # number of bboxes per image
+            sum_count=0 # sum of the no. of the bboxes 
+            for i in range(self.bs):
+                count = self.bboxes_label_count[i]
                 
-                self.bb_2d_numpy = np.reshape(self.bboxes, (-1, 4)).tolist()
-                self.label_2d_numpy = np.reshape(self.labels, (-1, 1)).tolist()
+                self.label_2d_numpy = (self.labels[sum_count : sum_count+count])
+                self.label_2d_numpy = np.reshape(self.label_2d_numpy, (-1, 1)).tolist()
+                self.bb_2d_numpy = (self.bboxes[sum_count*4 : (sum_count+count)*4])
+                self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
+               
                 
-                self.bbox_list.append(self.bb_2d_numpy)
                 self.label_list.append(self.label_2d_numpy)
-                self.num_bboxes_list.append(num_bboxes)
+                self.bbox_list.append(self.bb_2d_numpy)
+                
+                sum_count = sum_count +count
+        
+            
 
             self.target = self.bbox_list
             self.target1 = self.label_list

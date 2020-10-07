@@ -140,19 +140,9 @@ class RALICOCOIterator(object):
         self.img_names_size = self.loader.GetImageNameLen(self.img_names_length)
         print("Image name length:",self.img_names_size)
 # Images names of a batch
-        # self.img_names = np.empty(1, dtype="S"+str(img_names_size))
-        # self.img_names = np.chararray((img_names_size, 1))
-        # self.img_names  = np.chararray(1,img_names_size)
-        # self.Img_name = self.loader.GetImageName(self.img_names_size)
-        # self.img_names = self.img_names.view(-1, self.bs,16)
-        # print("Image names in a batch 1",self.Img_name)
-        # self.Img_name=self.Img_name.tostring()
-        # self.img_names=self.img_names.decode('utf_8')
-        # self.img_names=self.img_names.decode('ISO-8859-1')
-        # print("Image names in a batch 2 ",self.Img_name)
-        # self.img_names = np.char.lstrip(self.img_names, chars ='0')
-        # self.img_names=int(self.img_names)
-        # print("Image names in a batch 3 ",self.img_names)
+        
+        self.Img_name = self.loader.GetImageName(self.img_names_size)
+        print("Image names in a batch ",self.Img_name)
         
 #Count of labels/ bboxes in a batch
         self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
@@ -181,14 +171,19 @@ class RALICOCOIterator(object):
             print("labels:",self.labels[sum_count : sum_count+count])
             print("bboxes:",self.bboxes[sum_count*4 : (sum_count+count)*4])
             print("Image w & h:",self.img_size[i*2:(i*2)+2])
+            print("Image names:",self.Img_name[i*16:(i*16)+12])
+            
+            
+            self.img_name = self.Img_name[i*16:(i*16)+12]
+            self.img_name = np.char.lstrip(self.img_name, chars ='0')
+            print("Image names:",self.img_name)
             
             
             self.label_2d_numpy = (self.labels[sum_count : sum_count+count])
             self.label_2d_numpy = np.reshape(self.label_2d_numpy, (-1, 1)).tolist()
             self.bb_2d_numpy = (self.bboxes[sum_count*4 : (sum_count+count)*4])
             self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
-            print("Numpy labels:",self.label_2d_numpy)
-            print("Numpy bboxes:",self.bb_2d_numpy)
+            
             
             self.lis_lab.append(self.label_2d_numpy)
             self.lis.append(self.bb_2d_numpy)

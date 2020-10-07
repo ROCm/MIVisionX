@@ -56,14 +56,12 @@ namespace rali{
 
     py::object wrapper_image_name(RaliContext context,  int array_len)
     {
-        std::cout<<"comes inside";
-        py::array_t< char[sizeof(array_len)/sizeof(int)]> array;
+        py::array_t<char> array;
         auto buf = array.request();
         char* ptr = (char*) buf.ptr;
+        ptr = (char *)malloc(array_len * sizeof(char));
         // call pure C++ function
-        std::cout<<"UUU";
         raliGetImageName(context,ptr);
-        std::cout<<"HII";
         std::string s(ptr); 
         return py::cast(s);
     }
@@ -119,6 +117,7 @@ namespace rali{
         
         return py::cast(count);
     }
+
 
     py::object wrapper_BB_label_copy(RaliContext context, py::array_t<int> array)
     {

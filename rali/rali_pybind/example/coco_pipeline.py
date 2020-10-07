@@ -175,6 +175,7 @@ class RALICOCOIterator(object):
             
             
             self.img_name = self.Img_name[i*16:(i*16)+12]
+            self.img_name=self.img_name.decode('utf_8')
             self.img_name = np.char.lstrip(self.img_name, chars ='0')
             print("Image names:",self.img_name)
             

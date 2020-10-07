@@ -325,29 +325,6 @@ AgoKernel * agoRemoveKernel(AgoKernelList * list, AgoKernel * item)
 	return 0;
 }
 
-int agoAssignNodeCallback(AgoNodeList * list, AgoNode * item, const char * name, vx_nodecomplete_f callback)
-{
-	int status = -1;
-	if (!item) {
-		return status;
-	}
-	for (AgoNode * cur = list->head; cur; cur = cur->next) {
-		if (strcmp(cur->akernel->name, name) == 0) {
-			cur->callback = callback;
-			status = 0;
-			break;
-		}
-	}
-	for (AgoNode * cur = list->head; cur; cur = cur->next) {
-		if (cur == item) {
-			cur->callback = callback;
-			status = 0;
-			break;
-		}
-	}
-	return status;
-}
-
 int agoRemoveNode(AgoNodeList * list, AgoNode * item, bool moveToTrash)
 {
 	int status = -1;
@@ -2903,6 +2880,9 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
 	node->localDataPtr = NULL;
 	node->paramCount = kernel->argCount;
 	node->valid_rect_reset = (kernel->flags & AGO_KERNEL_FLAG_VALID_RECT_RESET) ? vx_true_e : vx_false_e;
+	node->newchildnode = NULL;
+	node->local_data_change_is_enabled = vx_false_e;
+	node->local_data_set_by_implementation = vx_false_e;
 	memcpy(node->parameters, kernel->parameters, sizeof(node->parameters));
 	for (vx_uint32 i = 0; i < node->paramCount; i++) {
 		agoResetReference(&node->parameters[i].ref, VX_TYPE_PARAMETER, graph->ref.context, &graph->ref);

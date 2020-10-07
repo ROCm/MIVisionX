@@ -77,7 +77,7 @@ elseif ("${BACKEND}" STREQUAL "HIP")
 	set_source_files_properties(${SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 
 	include_directories(${HIP_PATH}/include ${HIP_PATH}/../include )
-	target_link_libraries (runvx openvx hip_hcc)
+	target_link_libraries (runvx openvx)
 	message("-- ${Green}runvx built with HIP Support${ColourReset}")
 else()
 	add_executable(runvx ${SOURCES})

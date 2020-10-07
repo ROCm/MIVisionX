@@ -26,7 +26,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
+if(NOT DEFINED ENV{ROCM_PATH})
+    set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
+else()
+    set(ROCM_PATH ENV{ROCM_PATH} CACHE PATH "mivisionx default ROCm installation path")
+endif()
 # need to do this to avoid setting the default path to /usr/local
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX ${ROCM_PATH}/mivisionx CACHE PATH "mivisionx default ROCm installation path" FORCE)

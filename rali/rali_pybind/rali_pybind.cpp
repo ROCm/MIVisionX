@@ -63,7 +63,8 @@ namespace rali{
         // call pure C++ function
         raliGetImageName(context,ptr);
         std::string s(ptr); 
-        return py::cast(s);
+        free(ptr);
+        return py::bytes(s);
     }
 
     py::object wrapper_tensor32(RaliContext context, py::array_t<float> array,

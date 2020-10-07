@@ -218,30 +218,25 @@ class Pipeline(object):
 
     def GetImageNameLen(self, array):
         return b.getImageNameLen(self._handle, array)
-        
+
     def GetImageName(self, array_len):
-        print("IN pipeline")
-        # out = np.frombuffer(array, dtype=array.dtype)
-        # print("Type of the array",array.dtype)
-        # return b.getImageName(self._handle,  np.ascontiguousarray(out, dtype=array.dtype))
+
         return b.getImageName(self._handle,array_len)
         
     def GetBoundingBoxCount(self, array):
         return b.getBoundingBoxCount(self._handle, array)
-    
+
     def GetBBLabels(self, array):
         return b.getBBLabels(self._handle, array)
-    
+
     def GetBBCords(self, array):
         return b.getBBCords(self._handle, array)
-    
-    
-    
+
+
     def getImageLabels(self, array):
         b.getImageLabels(self._handle, array)
 
-    
-    
+
     def GetImgSizes(self, array):
         return b.getImgSizes(self._handle, array)
 
@@ -250,8 +245,7 @@ class Pipeline(object):
 
 
     def GetBoundingBox(self,array):
-        return array    
-
+        return array
 
     def GetImageNameLength(self,idx):
         return b.getImageNameLen(self._handle,idx)
@@ -263,10 +257,10 @@ class Pipeline(object):
         return b.getOutputHeight(self._handle) 
 
     def getOutputImageCount(self):
-        return b.getOutputImageCount(self._handle)   
+        return b.getOutputImageCount(self._handle)
 
     def getOutputColorFormat(self):
-        return b.getOutputColorFormat(self._handle)  
+        return b.getOutputColorFormat(self._handle)
 
     def getRemainingImages(self):
         return b.getRemainingImages(self._handle)

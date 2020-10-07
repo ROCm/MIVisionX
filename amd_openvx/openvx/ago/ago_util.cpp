@@ -483,7 +483,7 @@ void agoRemoveDataInGraph(AgoGraph * agraph, AgoData * adata)
 				// make sure that adata is the owner parent, before clearing the parent link
 				if (adata->children[i]->parent == adata) {
 					if (dataName[0] && !adata->children[i]->name.length()) {
-						char nameChild[256];
+						char nameChild[512];
 						sprintf(nameChild, "%s!%d!", dataName, i);
 						adata->children[i]->name = nameChild;
 					}
@@ -546,7 +546,7 @@ void agoReplaceDataInGraph(AgoGraph * agraph, AgoData * dataFind, AgoData * data
 		for (vx_uint32 i = 0; i < dataFind->numChildren; i++) {
 			if (dataFind->children[i]) {
 				if (dataName[0] && !dataFind->children[i]->name.length()) {
-					char nameChild[256];
+					char nameChild[512];
 					sprintf(nameChild, "%s!%d!", dataName, i);
 					dataFind->children[i]->name = nameChild;
 				}
@@ -2174,7 +2174,7 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 				data->size = ALIGN16(data->u.img.height) * data->u.img.stride_in_bytes;
 			}
 			else {
-				data->size = data->u.img.height * data->u.img.stride_in_bytes;
+				data->size = (vx_size)((unsigned long)(data->u.img.height * data->u.img.stride_in_bytes));
 			}
 			if (!data->size)
 				return -1;
@@ -2278,7 +2278,7 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 		else
 			data->u.remap.remap_fractional_bits = AGO_REMAP_FRACTIONAL_BITS;
 		// calculate other attributes and buffer size
-		data->size = data->u.remap.dst_width * data->u.remap.dst_height * sizeof(ago_coord2d_ushort_t);
+		data->size = (vx_size)((unsigned long)(data->u.remap.dst_width * data->u.remap.dst_height) * sizeof(ago_coord2d_ushort_t));
 		if (!data->size) 
 			return -1;
 	}
@@ -2479,7 +2479,7 @@ int agoAllocData(AgoData * data)
 	else if (data->ref.type == VX_TYPE_REMAP) {
 		// allocate buffer and get aligned buffer with 16-byte alignment
 		data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
-		data->reserved = data->reserved_allocated = (vx_uint8 *)agoAllocMemory(data->u.remap.dst_width * data->u.remap.dst_height * sizeof(ago_coord2d_float_t));
+		data->reserved = data->reserved_allocated = (vx_uint8 *)agoAllocMemory((unsigned long)(data->u.remap.dst_width * data->u.remap.dst_height) * sizeof(ago_coord2d_float_t));
 		if (!data->buffer_allocated || !data->reserved_allocated)
 			return -1;
 	}

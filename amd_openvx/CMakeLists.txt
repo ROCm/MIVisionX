@@ -20,7 +20,6 @@
 
 cmake_minimum_required(VERSION 2.8)
 project(amd_openvx)
-
 if(NOT DEFINED HIP_PATH)
     if(NOT DEFINED ENV{HIP_PATH})
         set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")

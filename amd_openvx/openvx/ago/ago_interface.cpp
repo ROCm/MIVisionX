@@ -1403,7 +1403,7 @@ vx_status agoVerifyNode(AgoNode * node)
 					}
 					// re-initialize, if updated
 					if (updated) {
-						char scale[64], desc[64];
+						char scale[256], desc[512];
 						if (data->u.pyr.scale == VX_SCALE_PYRAMID_HALF) sprintf(scale, "HALF");
 						else if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) sprintf(scale, "ORB");
 						else sprintf(scale, "%g", data->u.pyr.scale);

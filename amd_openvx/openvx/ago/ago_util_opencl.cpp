@@ -2004,7 +2004,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 	// the output file name will be "$(AGO_DUMP_GPU)-<group>.cl"
 	char textBuffer[1024];
 	if (agoGetEnvironmentVariable("AGO_DUMP_GPU", textBuffer, sizeof(textBuffer))) {
-		char fileName[1024];
+		char fileName[2048];
 		sprintf(fileName, "%s-%d.cl", textBuffer, supernode->group);
 		FILE * fp = fopen(fileName, "w");
 		if (!fp) agoAddLogEntry(NULL, VX_FAILURE, "ERROR: unable to create: %s\n", fileName);
@@ -2155,7 +2155,7 @@ int agoGpuOclSingleNodeFinalize(AgoGraph * graph, AgoNode * node)
 	// the output file name will be "$(AGO_DUMP_GPU)-0.<counter>.cl"
 	char textBuffer[1024];
 	if (agoGetEnvironmentVariable("AGO_DUMP_GPU", textBuffer, sizeof(textBuffer))) {
-		char fileName[1024]; static int counter = 0;
+		char fileName[2048]; static int counter = 0;
 		sprintf(fileName, "%s-0.%04d.cl", textBuffer, counter++);
 		FILE * fp = fopen(fileName, "w");
 		if (!fp) agoAddLogEntry(NULL, VX_FAILURE, "ERROR: unable to create: %s\n", fileName);

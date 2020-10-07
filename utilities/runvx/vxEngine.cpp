@@ -933,7 +933,7 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 				if (!_stricmp(mode, "UNDEFINED") || !_stricmp(mode, "REPLICATE") || !_stricmp(mode, "CONSTANT")) {
 					// add prefix "VX_BORDER_MODE_"
 					// TBD: this needs to be removed
-					char item[128];
+					char item[256];
 					sprintf(item, "VX_BORDER_MODE_%s", mode);
 					strcpy(mode, item);
 				}

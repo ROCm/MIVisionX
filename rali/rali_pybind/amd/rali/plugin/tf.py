@@ -75,7 +75,6 @@ class RALIGenericIteratorDetection(object):
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         
         if(self.loader._name == "TFRecordReaderDetection"):
-            num_bboxes = 0
             self.bbox_list =[]
             self.label_list=[]
             self.num_bboxes_list=[]
@@ -96,7 +95,7 @@ class RALIGenericIteratorDetection(object):
             self.loader.GetImgSizes(self.img_size)
             
             count =0 # number of bboxes per image
-            sum_count=0 # sum of the no. of the bboxes 
+            sum_count=0 # sum of the no. of the bboxes
             for i in range(self.bs):
                 count = self.bboxes_label_count[i]
                 

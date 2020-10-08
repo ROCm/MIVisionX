@@ -125,10 +125,7 @@ def main():
 			sum += 1
 		
 		break
-
-	print("\n\nPrinted first batch with", sum, "images!")		
-			
-		
+    print("\n\nPrinted first batch with", sum, "images!")
 
 if __name__ == '__main__':
 	main() 

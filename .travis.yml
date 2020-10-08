@@ -13,6 +13,7 @@ branches:
   - master
 
 install:
+  - lscpu
   - sudo apt update
   #- sudo apt --yes install cmake git wget unzip libnuma-dev
   #- wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
@@ -40,19 +41,19 @@ before_script:
 script:
   # Level 1 - [cmake gcc g++] - CPU Only OpenVX
   - docker exec mivisionx-1 cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
-  - docker exec mivisionx-1 cmake --build /_build
+  - docker exec mivisionx-1 cmake --build /_build --clean-first -- -j8
   # Level 2 - [ROCm OpenCL + Level 1] - CPU + OpenCL Components
   - docker exec mivisionx-2 cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
-  - docker exec mivisionx-2 cmake --build /_build
+  - docker exec mivisionx-2 cmake --build /_build --clean-first -- -j8
   # Level 3 - [OpenCV FFMPEG + Level 2] - CPU + OpenCL Components + OpenCV EXT + amd_media
   - docker exec mivisionx-3 cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
-  - docker exec mivisionx-3 cmake --build /_build
+  - docker exec mivisionx-3 cmake --build /_build --clean-first -- -j8
   # Level 4 - [MIOpenGEMM MIOpen ProtoBuf + Level 3] - CPU + OpenCL Components + OpenCV EXT + amd_media + Neural Net Components
   - docker exec mivisionx-4 cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
-  - docker exec mivisionx-4 cmake --build /_build
+  - docker exec mivisionx-4 cmake --build /_build --clean-first -- -j8
   # Level 5 - [AMD_RPP RALI Deps + Level 4] - CPU + OpenCL Components + OpenCV EXT + amd_media + Neural Net Components + RALI
   - docker exec mivisionx-5 cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
-  - docker exec mivisionx-5 cmake --build /_build
+  - docker exec mivisionx-5 cmake --build /_build --clean-first -- -j8
 
 after_success:
 

@@ -96,7 +96,6 @@ class RALIGenericIterator(object):
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
-            sum = 0
             self.lis = []  # Empty list for bboxes
             self.lis_lab = []  # Empty list of labels
             

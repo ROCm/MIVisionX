@@ -124,7 +124,6 @@ class RALICOCOIterator(object):
 
         if self.loader.run() != 0:
             raise StopIteration
-        sum = 0
         self.lis = []  # Empty list for bboxes
         self.lis_lab = []  # Empty list of labels
 

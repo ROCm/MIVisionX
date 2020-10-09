@@ -319,14 +319,13 @@ raliSaturationFixed(
         float sat,
         bool is_output)
 {
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
     {
-        if(!input || !context)
-            THROW("Null values passed as input")
-
         output = context->master_graph->create_image(input->info(), is_output);
 
         context->master_graph->add_node<SatNode>({input}, {output})->init(sat);
@@ -851,6 +850,8 @@ raliJitterFixed(
 {
 
     Image* output = nullptr;
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
@@ -877,6 +878,8 @@ raliSnPNoise(
         RaliFloatParam p_sdev)
 {
     Image* output = nullptr;
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     auto sdev = static_cast<FloatParam*>(p_sdev);
@@ -958,6 +961,8 @@ raliFlipFixed(
         bool is_output)
 {
     Image* output = nullptr;
+    if(!p_context || !p_input)
+        THROW("Null values passed as input")
     auto context = static_cast<Context*>(p_context);
     auto input = static_cast<Image*>(p_input);
     try
@@ -1767,8 +1772,7 @@ raliSSDRandomCrop(
         output_info.height(input->info().height_single());
         output = context->master_graph->create_image(output_info, is_output);
         output->reset_image_roi();
-        std::shared_ptr<SSDRandomCropNode> crop_node;
-        crop_node =  context->master_graph->add_node<SSDRandomCropNode>({input}, {output});
+        std::shared_ptr<SSDRandomCropNode> crop_node =  context->master_graph->add_node<SSDRandomCropNode>({input}, {output});
         crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts);
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<SSDRandomCropMetaNode,SSDRandomCropNode>(crop_node);

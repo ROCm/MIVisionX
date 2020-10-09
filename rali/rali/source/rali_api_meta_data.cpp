@@ -112,11 +112,10 @@ RALI_API_CALL raliGetImageName(RaliContext p_context,  char* buf)
     size_t meta_data_batch_size = meta_data.first.size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    auto ptr = buf;
     for(unsigned int i = 0; i < meta_data_batch_size; i++)
     {
-        memcpy(ptr, meta_data.first[i].c_str(), meta_data.first[i].size());
-        ptr += meta_data.first[i].size() * sizeof(char);
+        memcpy(buf, meta_data.first[i].c_str(), meta_data.first[i].size());
+        buf += meta_data.first[i].size() * sizeof(char);
     }
 }
 
@@ -184,12 +183,11 @@ RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
         WRN("No label has been loaded for this output image")
         return;
     }
-    auto ptr = buf;
     for(unsigned i = 0; i < meta_data_batch_size; i++)
     { 
         unsigned bb_count = meta_data.second->get_bb_labels_batch()[i].size();
-        memcpy(ptr, meta_data.second->get_bb_labels_batch()[i].data(),  sizeof(int) * bb_count);
-        ptr += bb_count;
+        memcpy(buf, meta_data.second->get_bb_labels_batch()[i].data(),  sizeof(int) * bb_count);
+        buf += bb_count;
     }
 }
 
@@ -206,12 +204,11 @@ RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
         WRN("No label has been loaded for this output image")
         return;
     }
-    auto ptr = buf;
     for(unsigned i = 0; i < meta_data_batch_size; i++)
     { 
         unsigned bb_count = meta_data.second->get_bb_cords_batch()[i].size();
-        memcpy(ptr, meta_data.second->get_bb_cords_batch()[i].data(), bb_count * sizeof(BoundingBoxCord));
-        ptr += (bb_count * 4);
+        memcpy(buf, meta_data.second->get_bb_cords_batch()[i].data(), bb_count * sizeof(BoundingBoxCord));
+        buf += (bb_count * 4);
     }
 }
 
@@ -228,12 +225,10 @@ RALI_API_CALL raliGetImageSizes(RaliContext p_context, int* buf)
         WRN("No label has been loaded for this output image")
         return;
     }
-    auto ptr = buf;
-    
     for(unsigned i = 0; i < meta_data_batch_size; i++)
     { 
-        memcpy(ptr, meta_data.second->get_img_sizes_batch()[i].data(), sizeof(ImgSize));
-        ptr += 2;
+        memcpy(buf, meta_data.second->get_img_sizes_batch()[i].data(), sizeof(ImgSize));
+        buf += 2;
     }
 }
 

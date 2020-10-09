@@ -73,7 +73,6 @@ void SSDRandomCropNode::update_node()
     in_height = _crop_param->in_height;
     bool invalid_bboxes = true;
     _entire_iou = true;
-    int bb_count;
     BoundingBoxCord crop_box, jth_box;
     Parameter<float> * x_drift_factor = _crop_param->get_x_drift_factor();
     Parameter<float> * y_drift_factor = _crop_param->get_y_drift_factor();
@@ -83,7 +82,7 @@ void SSDRandomCropNode::update_node()
     _crop_height_val = _crop_param->get_croph_arr_val();
     for (uint i = 0; i < _batch_size; i++)
     {
-        bb_count = _meta_data_info->get_bb_labels_batch()[i].size();
+        int bb_count = _meta_data_info->get_bb_labels_batch()[i].size();
         std::vector<int> labels_buf(bb_count);
         memcpy(labels_buf.data(), _meta_data_info->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         std::vector<float> coords_buf(bb_count * 4);

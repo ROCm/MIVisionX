@@ -123,13 +123,12 @@ RALI_API_CALL raliGetImageName(RaliContext p_context,  char* buf)
 unsigned
 RALI_API_CALL raliGetImageNameLen(RaliContext p_context, int* buf)
 {
-    unsigned size = 0;
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
     size_t meta_data_batch_size = meta_data.first.size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    for(unsigned int i = 0; i < meta_data_batch_size; i++)
+    for(unsigned int i = 0, unsigned size = 0; i < meta_data_batch_size; i++)
     {
         buf[i] = meta_data.first[i].size();
         size += buf[i];

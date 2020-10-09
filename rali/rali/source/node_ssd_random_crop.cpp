@@ -74,14 +74,13 @@ void SSDRandomCropNode::update_node()
     bool invalid_bboxes = true;
     _entire_iou = true;
     BoundingBoxCord crop_box, jth_box;
-    int bb_count;
     Parameter<float> * x_drift_factor = _crop_param->get_x_drift_factor();
     Parameter<float> * y_drift_factor = _crop_param->get_y_drift_factor();
     _x1_val = _crop_param->get_x1_arr_val();
     _y1_val = _crop_param->get_y1_arr_val();
     _crop_width_val = _crop_param->get_cropw_arr_val();
     _crop_height_val = _crop_param->get_croph_arr_val();
-    for (uint i = 0; i < _batch_size; i++)
+    for (uint i = 0, int bb_count; i < _batch_size; i++)
     {
         bb_count = _meta_data_info->get_bb_labels_batch()[i].size();
         std::vector<int> labels_buf(bb_count);

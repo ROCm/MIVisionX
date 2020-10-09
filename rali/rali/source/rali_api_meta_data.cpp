@@ -123,12 +123,13 @@ RALI_API_CALL raliGetImageName(RaliContext p_context,  char* buf)
 unsigned
 RALI_API_CALL raliGetImageNameLen(RaliContext p_context, int* buf)
 {
+    unsigned size = 0;
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
     size_t meta_data_batch_size = meta_data.first.size();
     if(context->user_batch_size() != meta_data_batch_size)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
-    for(unsigned int i = 0, unsigned size = 0; i < meta_data_batch_size; i++)
+    for(unsigned int i = 0; i < meta_data_batch_size; i++)
     {
         buf[i] = meta_data.first[i].size();
         size += buf[i];
@@ -154,6 +155,7 @@ RALI_API_CALL raliGetImageLabels(RaliContext p_context, int* buf)
 unsigned
 RALI_API_CALL raliGetBoundingBoxCount(RaliContext p_context, int* buf)
 {
+    unsigned size = 0;
     auto context = static_cast<Context*>(p_context);
     auto meta_data = context->master_graph->meta_data();
     size_t meta_data_batch_size = meta_data.second->get_bb_labels_batch().size();
@@ -161,7 +163,7 @@ RALI_API_CALL raliGetBoundingBoxCount(RaliContext p_context, int* buf)
         THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
     if(!meta_data.second)
         THROW("No label has been loaded for this output image")
-    for(unsigned i = 0, unsigned size = 0; i < meta_data_batch_size; i++)
+    for(unsigned i = 0; i < meta_data_batch_size; i++)
     {
         buf[i] = meta_data.second->get_bb_labels_batch()[i].size();
         size += buf[i];

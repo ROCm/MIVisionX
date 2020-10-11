@@ -3960,8 +3960,8 @@ int HafCpu_SobelPhase_U8_U8_3x3
 	vx_uint32 dstride = (dstWidth + 15)&~15;
 
 	Gx = (vx_int16*)pScratch;
-	Gy = (vx_int16*)(pScratch + ((dstride + 15) & ~15) * dstHeight * sizeof(vx_int16));
-	scratchPad = pScratch + ((dstride + 15) & ~15) * dstHeight * sizeof(vx_int16) * 2;
+	Gy = (vx_int16*)(pScratch + (unsigned long)(((dstride + 15) & ~15) * dstHeight) * sizeof(vx_int16));
+	scratchPad = pScratch + (unsigned long)(((dstride + 15) & ~15) * dstHeight) * sizeof(vx_int16) * 2;
 
 	HafCpu_Sobel_S16S16_U8_3x3_GXY(dstWidth, dstHeight, Gx, dstride, Gy, dstride, pSrcImage, srcImageStrideInBytes, scratchPad);
 	HafCpu_Phase_U8_S16S16(dstWidth, dstHeight, pDstPhaseImage, dstPhaseImageStrideInBytes, Gx, dstride, Gy, dstride);

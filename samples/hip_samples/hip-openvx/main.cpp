@@ -51,7 +51,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
                 image_data[i*width + j] = 255;
             }
         }
-        vx_rectangle_t rect = { 0, 0, width, height };
+        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
         vx_imagepatch_addressing_t addr;
         addr.dim_x = width;
         addr.dim_y = height;
@@ -59,7 +59,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
         addr.stride_y = width;
         ERROR_CHECK_STATUS(vxCopyImagePatch(img, &rect, 0, &addr, image_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     } else {
-        vx_rectangle_t rect = { 0, 0, width, height };
+        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
         vx_map_id map_id;
         vx_imagepatch_addressing_t addrId;
         vx_uint8 * ptr;
@@ -95,7 +95,7 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
                     image_data[i*width + j] = 255;
             }
         }
-        vx_rectangle_t rect = { 0, 0, height, width };
+        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
         vx_imagepatch_addressing_t addr;
         addr.dim_x = width;
         addr.dim_y = height;
@@ -103,7 +103,7 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
         addr.stride_y = width;
         ERROR_CHECK_STATUS(vxCopyImagePatch(img, &rect, 0, &addr, image_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     } else {
-        vx_rectangle_t rect = { 0, 0, width, height };
+        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
         vx_map_id map_id;
         vx_imagepatch_addressing_t addrId;
         vx_uint8 * ptr;

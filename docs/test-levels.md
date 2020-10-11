@@ -1,7 +1,15 @@
 <p align="center"><img width="60%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/raw/master/docs/images/MIVisionX.png" /></p>
 
 
+### Latest Release
+
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+
+### Docker Image
+
+[![Docker Automated build](https://img.shields.io/docker/automated/kiritigowda/ubuntu-18.04?style=for-the-badge)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04)
+
+**Docker Image:** `docker pull kiritigowda/ubuntu-18.04:tagname`
 
 - ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `new component added`
 - ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `existing component`

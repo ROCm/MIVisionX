@@ -1,3 +1,8 @@
+<p align="center"><img width="60%" src="https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/raw/master/docs/images/MIVisionX.png" /></p>
+
+
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+
 | Test Level | MIVisionX Dependencies | Modules | Libraries and Executables |
 |------------|------------------------|---------|---------------------------|
 | `Level_1` |cmake <br> gcc <br> g++|amd_openvx|libopenvx.so <br> libvxu.so|

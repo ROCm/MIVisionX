@@ -102,7 +102,7 @@ int HipExec_Not_U8_U8U8
         vx_uint8     * pHipDstImage,
         vx_uint32     dstImageStrideInBytes,
         const vx_uint8    * pHipSrcImage,
-        vx_uint32     srcImage1StrideInBytes,
+        vx_uint32     srcImage1StrideInBytes
         );
 
 #endif //MIVISIONX_HIP_KERNELS_H

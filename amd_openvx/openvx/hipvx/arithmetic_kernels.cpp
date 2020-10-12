@@ -245,7 +245,7 @@ Hip_And_U8_U8U8
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = ucharTofloat4(pSrcImage1[src1Idx]);
     float4 src2 = ucharTofloat4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(src1.x&src2.x, src1.y&src2.y, src1.z&src2.z, src1.w&src2.w);
+    float4 dst = make_float4((int)src1.x&(int)src2.x, (int)src1.y&(int)src2.y,(int) src1.z&(int)src2.z, (int)src1.w&(int)src2.w);
     pDstImage[dstIdx] = ((int)dst.x&0xFF) | (((int)dst.y&0xFF)<<8) | (((int)dst.z&0xFF)<<16)| (((int)dst.w&0xFF) << 24);
 }
 
@@ -307,7 +307,7 @@ Hip_Or_U8_U8U8
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = ucharTofloat4(pSrcImage1[src1Idx]);
     float4 src2 = ucharTofloat4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(src1.x|src2.x, src1.y|src2.y, src1.z|src2.z, src1.w|src2.w);
+    float4 dst = make_float4((int)src1.x|(int)src2.x, (int)src1.y|(int)src2.y, (int)src1.z|(int)src2.z,(int)src1.w|(int)src2.w);
     pDstImage[dstIdx] = ((int)dst.x&0xFF) | (((int)dst.y&0xFF)<<8) | (((int)dst.z&0xFF)<<16)| (((int)dst.w&0xFF) << 24);
 }
 
@@ -369,7 +369,7 @@ Hip_Xor_U8_U8U8
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = ucharTofloat4(pSrcImage1[src1Idx]);
     float4 src2 = ucharTofloat4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(src1.x^src2.x, src1.y^src2.y, src1.z^src2.z, src1.w^src2.w);
+    float4 dst = make_float4((int)src1.x^(int)src2.x, (int)src1.y^(int)src2.y, (int)src1.z^(int)src2.z, (int)src1.w^(int)src2.w);
     pDstImage[dstIdx] = ((int)dst.x&0xFF) | (((int)dst.y&0xFF)<<8) | (((int)dst.z&0xFF)<<16)| (((int)dst.w&0xFF) << 24);
 }
 
@@ -426,8 +426,8 @@ Hip_Not_U8_U8U8
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + x;
-    float4 src = ucharTofloat4(pSrcImage[src1Idx]);
-    float4 dst = make_float4(~src.x, ~src.y, src.z, src1.w);
+    float4 src = ucharTofloat4(pSrcImage[srcIdx]);
+    float4 dst = make_float4(~(int)src.x, ~(int)src.y, (int)src.z,(int) src.w);
     pDstImage[dstIdx] = ((int)dst.x&0xFF) | (((int)dst.y&0xFF)<<8) | (((int)dst.z&0xFF)<<16)| (((int)dst.w&0xFF) << 24);
 }
 
@@ -438,7 +438,7 @@ int HipExec_Not_U8_U8U8
     vx_uint8     * pHipDstImage,
     vx_uint32     dstImageStrideInBytes,
     const vx_uint8    * pHipSrcImage,
-    vx_uint32     srcImage1StrideInBytes,
+    vx_uint32     srcImage1StrideInBytes
     )
 {
     hipEvent_t start, stop;
@@ -451,7 +451,7 @@ int HipExec_Not_U8_U8U8
     hipEventCreate(&stop);
     float eventMs = 1.0f;
     hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_Xor_U8_U8U8,
+    hipLaunchKernelGGL(Hip_Not_U8_U8U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,

@@ -95,12 +95,13 @@ int agoReleaseContext(AgoContext * acontext)
 		return -1;
 	
 	vx_reference ref = (vx_reference)acontext;
-	ref->external_count = ref->external_count - 1;
-	
+	ref->external_count = ref->external_count- 1;
+
 	if(&ref->external_count == 0) {
 		EnterCriticalSection(&acontext->cs);
 		// release all the resources
 		LeaveCriticalSection(&acontext->cs);
+
 		delete acontext;
 	}
 	return 0;
@@ -127,6 +128,7 @@ AgoGraph * agoCreateGraph(AgoContext * acontext)
 		CAgoLock lock(acontext->cs);
 		agoAddGraph(&acontext->graphList, agraph);
 		agraph->ref.external_count++;
+		acontext->num_active_references++;
 	}
 	if (acontext->thread_config & 1) {
 		// create semaphore and thread for graph scheduling: limit 1000 pending requests
@@ -163,6 +165,7 @@ int agoReleaseGraph(AgoGraph * agraph)
 	agraph->ref.external_count--;
 	if (agraph->ref.external_count == 0) {
         EnterCriticalSection(&agraph->cs);
+        agraph->ref.context->num_active_references--;
         // stop graph thread
         if (agraph->hThread) {
             agraph->threadThreadTerminationState = 1;

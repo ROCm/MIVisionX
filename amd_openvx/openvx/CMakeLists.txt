@@ -26,7 +26,7 @@ set(CMAKE_CXX_STANDARD 11)
 if(OPENCL_SUPPORT)
 	find_package(OpenCL QUIET)
 else()
-	message("-- ${BoldBlue}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
 endif()
 
 include_directories(include ago api)

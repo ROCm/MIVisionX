@@ -78,8 +78,6 @@ class RALIGenericIteratorDetection(object):
             self.bbox_list =[]
             self.label_list=[]
             self.num_bboxes_list=[]
-
-
             #Count of labels/ bboxes in a batch
             self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
             self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
@@ -93,28 +91,20 @@ class RALIGenericIteratorDetection(object):
             #1D Image sizes array of image in a batch
             self.img_size = np.zeros((self.bs * 2),dtype = "int32")
             self.loader.GetImgSizes(self.img_size)
-            
             count =0 # number of bboxes per image
             sum_count=0 # sum of the no. of the bboxes
             for i in range(self.bs):
                 count = self.bboxes_label_count[i]
-                
                 self.label_2d_numpy = (self.labels[sum_count : sum_count+count])
                 self.label_2d_numpy = np.reshape(self.label_2d_numpy, (-1, 1)).tolist()
                 self.bb_2d_numpy = (self.bboxes[sum_count*4 : (sum_count+count)*4])
                 self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
-               
-                
                 self.label_list.append(self.label_2d_numpy)
                 self.bbox_list.append(self.bb_2d_numpy)
-                
                 sum_count = sum_count +count
-        
-            
 
             self.target = self.bbox_list
             self.target1 = self.label_list
-
             max_cols = max([len(row) for batch in self.target for row in batch])
             # max_rows = max([len(batch) for batch in self.target])
             max_rows = 100
@@ -122,7 +112,6 @@ class RALIGenericIteratorDetection(object):
             bb_padded_1=[row + [0] * (max_cols - len(row)) for batch in bb_padded for row in batch]
             arr = np.asarray(bb_padded_1)
             self.res = np.reshape(arr, (-1, max_rows, max_cols))
-
             max_cols = max([len(row) for batch in self.target1 for row in batch])
             # max_rows = max([len(batch) for batch in self.target1])
             max_rows = 100
@@ -130,7 +119,6 @@ class RALIGenericIteratorDetection(object):
             lab_padded_1=[row + [0] * (max_cols - len(row)) for batch in lab_padded for row in batch]
             labarr = np.asarray(lab_padded_1)
             self.l = np.reshape(labarr, (-1, max_rows, max_cols))
-            
             self.num_bboxes_arr = np.array(self.num_bboxes_list)
 
             if self.tensor_dtype == types.FLOAT:

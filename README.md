@@ -412,8 +412,8 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 
 **Docker Image:** `docker pull kiritigowda/ubuntu-18.04:tagname`
 
-- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `new component added`
-- ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `existing component`
+- ![#c5f015](https://via.placeholder.com/15/c5f015/000000?text=+) `new component added to the level`
+- ![#1589F0](https://via.placeholder.com/15/1589F0/000000?text=+) `existing component from the previous level`
 
 | Build Level | MIVisionX Dependencies | Modules | Libraries and Executables | Docker Tag |
 |-------------|------------------------|---------|---------------------------|------------|

@@ -23,8 +23,12 @@ project(applications)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
+if(OPENCL_SUPPORT)
+    find_package(OpenCL QUIET)
+else()
+	message("-- ${BoldBlue}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+endif()
 find_package(OpenCV QUIET)
-find_package(OpenCL QUIET)
 find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
 find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 

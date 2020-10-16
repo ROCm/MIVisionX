@@ -53,7 +53,7 @@ list(APPEND SOURCES
 	)
 
 add_executable(runvx ${SOURCES})
-target_link_libraries(runvx openvx)
+target_link_libraries(runvx openvx pthread)
 install(TARGETS runvx DESTINATION bin)
 install(DIRECTORY ../../samples DESTINATION .)
 

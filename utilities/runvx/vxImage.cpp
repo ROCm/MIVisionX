@@ -281,7 +281,7 @@ int CVxParamImage::Initialize(vx_context context, vx_graph graph, const char * d
 				// allocate all handles on host
 				for (int active_handle = 0; active_handle < 2; active_handle++) {
 					for (vx_size plane = 0; plane < m_planes; plane++) {
-						vx_size size = m_addr[plane].dim_y * m_addr[plane].stride_y;
+						vx_size size = (vx_size) m_addr[plane].dim_y * m_addr[plane].stride_y;
 						m_memory_handle[active_handle][plane] = malloc(size);
 						if (!m_memory_handle[active_handle][plane])
 							ReportError("ERROR: malloc(%d) failed\n", (int)size);

@@ -36,7 +36,7 @@ node com.amd.amd_media.decode vid1 nvimg NULL loop opencl_out
 
 ### Example 2: decode video with runvx using hardware decoder
 
-Following is an example gdf to decode 1 video stream using hardware and decoded images will be written to output.yuv file
+Following is an example gdf to encode 1 video stream using hardware and decoded images will be written to output.yuv file
 
 ``` 
 import vx_amd_media
@@ -51,7 +51,7 @@ node com.amd.amd_media.decode vid1 nvimg NULL loop opencl_out
 
 ### Example 3: Encoding from yuv image to .264 file
 
-Following is an example gdf to decode 1 video stream using hardware and decoded images will be written to output.yuv file
+Following is an example gdf to encode to .h264 stream from a YUV input file
 
 ``` 
 import vx_amd_media

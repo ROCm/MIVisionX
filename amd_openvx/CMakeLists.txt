@@ -24,3 +24,4 @@ project(amd_openvx)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 add_subdirectory(openvx)
+message("-- ${Green}MIVisionX AMD_OpenVX -- OpenVX module added${ColourReset}")

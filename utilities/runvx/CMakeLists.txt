@@ -72,7 +72,7 @@ if(OpenCV_FOUND)
 	target_link_libraries(runvx ${OpenCV_LIBRARIES})
 else(OpenCV_FOUND)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=0)
-	message("-- ${Yellow}NOTE:OpenCV Not Found -- runvx built without display support${ColourReset}")
+	message("-- ${Yellow}NOTE:OpenCV Not Found -- runVX built without display support${ColourReset}")
 endif(OpenCV_FOUND)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

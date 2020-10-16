@@ -7340,7 +7340,6 @@ int HafCpu_Histogram_DATA_U8
 	return AGO_SUCCESS;
 }
 
-
 int HafCpu_HistogramMerge_DATA_DATA
 (
 	vx_uint32     dstHist[],

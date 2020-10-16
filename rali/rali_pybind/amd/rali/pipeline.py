@@ -86,7 +86,7 @@ class Pipeline(object):
             raise Exception("Failed creating the pipeline")
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
-        self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop"]
+        self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop", "ImageDecoderRaw"]
         self._check_ops_reader = ["FileReader","TFRecordReaderClassification","TFRecordReaderDetection","COCOReader","Caffe2Reader","Caffe2ReaderDetection","CaffeReader","CaffeReaderDetection"]
         self._batch_size = batch_size
         self._num_threads = num_threads
@@ -118,6 +118,9 @@ class Pipeline(object):
             self._tensor_dtype = operator._output_dtype
             self._multiplier = list(map(lambda x: 1/x ,operator._std))
             self._offset = list(map(lambda x,y: -(x/y), operator._mean, operator._std))
+            #changing operator std and mean to (1,0) to make sure there is no double normalization
+            operator._std = [1.0]
+            operator._mean = [0.0]
             if operator._crop_h != 0 and operator._crop_w != 0:
                 self._img_w = operator._crop_w
                 self._img_h = operator._crop_h

@@ -312,7 +312,6 @@ Reader::Status TFRecordReader::read_image(unsigned char *buff, std::string file_
     }
     // std::cerr<<"\n image present at loc:: "<<it->second;
     file_contents.seekg(it->second, std::ifstream::beg);
-    size_t uint64_size, uint32_size;
     uint64_t data_length;
     uint32_t length_crc, data_crc;
     file_contents.read((char *)&data_length, sizeof(data_length));
@@ -337,7 +336,6 @@ Reader::Status TFRecordReader::read_image(unsigned char *buff, std::string file_
     if (_filename_key.empty() || (fname == file_name))
     {
         _single_feature = feature.at(_encoded_key);
-        std::cout << "read_image writing " << _single_feature.bytes_list().value()[0].size() << " bytes" << std::endl;
         memcpy(buff, _single_feature.bytes_list().value()[0].c_str(), _single_feature.bytes_list().value()[0].size());
     }
     file_contents.read((char *)&data_crc, sizeof(data_crc));

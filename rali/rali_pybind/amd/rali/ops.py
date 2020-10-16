@@ -712,6 +712,87 @@ class ImageDecoderRandomCrop(Node):
                 output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
         return output_image
 
+class ImageDecoderRaw(Node):
+    """
+        affine (bool, optional, default = True) – `mixed` backend only If internal threads should be affined to CPU cores
+
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+        cache_batch_copy (bool, optional, default = True) – `mixed` backend only If true, multiple images from cache are copied with a single batched copy kernel call; otherwise, each image is copied using cudaMemcpy unless order in the batch is the same as in the cache
+
+        cache_debug (bool, optional, default = False) – `mixed` backend only Print debug information about decoder cache.
+
+        cache_size (int, optional, default = 0) – `mixed` backend only Total size of the decoder cache in megabytes. When provided, decoded images bigger than cache_threshold will be cached in GPU memory.
+
+        cache_threshold (int, optional, default = 0) – `mixed` backend only Size threshold (in bytes) for images (after decoding) to be cached.
+
+        cache_type (str, optional, default = '') – `mixed` backend only Choose cache type: threshold: Caches every image with size bigger than cache_threshold until cache is full. Warm up time for threshold policy is 1 epoch. largest: Store largest images that can fit the cache. Warm up time for largest policy is 2 epochs To take advantage of caching, it is recommended to use the option stick_to_shard=True with the reader operators, to limit the amount of unique images seen by the decoder in a multi node environment
+
+        device_memory_padding (int, optional, default = 16777216) – `mixed` backend only Padding for nvJPEG’s device memory allocations in bytes. This parameter helps to avoid reallocation in nvJPEG whenever a bigger image is encountered and internal buffer needs to be reallocated to decode it.
+
+        host_memory_padding (int, optional, default = 8388608) – `mixed` backend only Padding for nvJPEG’s host memory allocations in bytes. This parameter helps to avoid reallocation in nvJPEG whenever a bigger image is encountered and internal buffer needs to be reallocated to decode it.
+
+        hybrid_huffman_threshold (int, optional, default = 1000000) – `mixed` backend only Images with number of pixels (height * width) above this threshold will use the nvJPEG hybrid Huffman decoder. Images below will use the nvJPEG full host huffman decoder. N.B.: Hybrid Huffman decoder still uses mostly the CPU.
+
+        output_type (int, optional, default = 0) – The color space of output image.
+
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+        split_stages (bool, optional, default = False) – `mixed` backend only Split into separated CPU stage and GPU stage operators
+
+        use_chunk_allocator (bool, optional, default = False) – Experimental, `mixed` backend only Use chunk pinned memory allocator, allocating chunk of size batch_size*prefetch_queue_depth during the construction and suballocate them in runtime. Ignored when split_stages is false.
+
+        use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
+    """
+    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
+                 cache_type = '', device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, output_type = 0,
+                 preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
+        Node().__init__()
+        self._user_feature_key_map = user_feature_key_map
+        self._affine = affine
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._cache_batch_copy = cache_batch_copy
+        self._cache_debug = cache_debug
+        self._cache_size = cache_size
+        self._cache_threshold = cache_threshold
+        self._cache_type = cache_type
+        self._device_memory_padding = device_memory_padding
+        self._host_memory_padding = host_memory_padding
+        self._hybrid_huffman_threshold = hybrid_huffman_threshold
+        self._output_type = output_type
+        self._preserve = preserve
+        self._seed = seed
+        self._split_stages = split_stages
+        self._use_chunk_allocator = use_chunk_allocator
+        self._use_fast_idct = use_fast_idct
+        self.output = Node()
+
+
+    def __call__(self,input, num_threads=1):
+        input.next = self
+        self.data = "ImageDecoderRaw"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, shuffle, shard_id, num_shards, is_output):
+        #b.setSeed(self._seed)
+        if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
+            output_image = b.TF_ImageDecoderRaw(handle, input_image, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], types.GRAY, is_output, shuffle, False, decode_width, decode_height)
+        #elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+        #    output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        #elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+        #    output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        #elif(self.prev.prev.data == "COCOReader") :
+        #    output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        #else:
+        #    output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        return output_image
+
 class SSDRandomCrop(Node):
     """
     bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
@@ -991,7 +1072,6 @@ class  CropMirrorNormalize(Node):
     def rali_c_func_call(self, handle, input_image, is_output):
         b.setSeed(self._seed)
         output_image = []
-        # output_image = b.CropMirrorNormalize(handle, input_image, 500, 500, is_output,None, None, None, None, None, None, None)
         if self._temp is not None:
             mirror = self._temp.rali_c_func_call(handle)
             output_image = b.CropMirrorNormalize(handle, input_image, self._crop_d, self._crop_h, self._crop_w, 1,

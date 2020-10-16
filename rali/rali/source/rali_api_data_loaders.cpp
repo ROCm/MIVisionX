@@ -941,6 +941,9 @@ raliRawTFRecordSource(
         const char* record_name_prefix)
 {
     Image* output = nullptr;
+    if(!p_context)
+        THROW("Invalid context passed as input")
+
     auto context = static_cast<Context*>(p_context);
     try
     {
@@ -960,8 +963,6 @@ raliRawTFRecordSource(
         }
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
-
-
         auto info = ImageInfo(out_width, out_height,
                               context->internal_batch_size(),
                               num_of_planes,

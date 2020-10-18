@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 project(MIVisionX_Lite)
-set(VERSION "1.0")
+set(VERSION "1.0.1")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -40,12 +40,19 @@ if(NOT WIN32)
   set(Yellow      "${Esc}[33m")
   set(Blue        "${Esc}[34m")
   set(BoldBlue    "${Esc}[1;34m")
+  set(Magenta     "${Esc}[35m")
+  set(Cyan        "${Esc}[36m")
+  set(White       "${Esc}[37m")
 endif()
 message("-- ${BoldBlue}MIVisionX Lite Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX Lite install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
+option(OPENCL_SUPPORT "Build MIVisionX with OpenCL Support"   ON)
+
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
+  set(OPENCL_SUPPORT OFF)
+  message("-- ${Magenta}Apple macOS Detected -- OpenCL Support turned OFF${ColourReset}")
 endif()
 
 add_subdirectory(amd_openvx)

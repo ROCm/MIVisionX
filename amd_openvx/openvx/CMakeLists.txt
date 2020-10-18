@@ -23,7 +23,11 @@ project(openvx)
 
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(OpenCL QUIET)
+if(OPENCL_SUPPORT)
+	find_package(OpenCL QUIET)
+else()
+	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+endif()
 
 include_directories(include ago api)
 
@@ -68,6 +72,7 @@ add_library(vxu SHARED api/vxu.cpp)
 
 if (OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
+	target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(openvx ${OpenCL_LIBRARIES})
 	message("-- ${Blue}OpenCL Include Directories -- ${OpenCL_INCLUDE_DIRS}${ColourReset}")
@@ -75,7 +80,8 @@ if (OpenCL_FOUND)
 	message("-- ${Green}AMD OpenVX 1.0.1 -- OpenVX built with OpenCL Support${ColourReset}")
 else(OpenCL_FOUND)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=0)
-	message("-- ${Red}WARNING:OpenCL Not Found -- OpenVX 1.0.1 built for CPU only${ColourReset}")
+	target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=0)
+	message("-- ${Yellow}Note:OpenCL Not Found -- OpenVX 1.0.1 built for CPU only${ColourReset}")
 endif(OpenCL_FOUND)
 
 install(TARGETS openvx DESTINATION lib)

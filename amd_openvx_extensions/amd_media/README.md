@@ -1,13 +1,13 @@
-# OpenVX Neural Network Extension Library (vx_nn)
+# OpenVX Media Extension Library (amd_media)
 
-vx_amd_media is an OpenVX AMD media extension module. This module has mainly two OpenVX extension nodes. amd.media.decode node for video/jpeg 
-decoding and amd.media.encode node for video encoding
-### List of OpenVX Nodes:
+vx_amd_media is an OpenVX AMD media extension module. This module has mainly two OpenVX extension nodes. amd.media.decode node for video/jpeg decoding and amd.media.encode node for video encoding
 
-| Node name | Function | Parameters |
-| ---------- |--------- | ----------- |
-| com.amd.amd_media.decode|Video/Jpeg decoder |Supports MP4/JPEG input files and outputs YUV or RGB |
-| com.amd.amd_media.encode|Video encoder |Supports input YUV/RGB input and .264 elementary stream output |
+### List of OpenVX Media Extension Nodes:
+
+| Node name                | Function           | Parameters                                                     |
+|--------------------------|--------------------|----------------------------------------------------------------|
+| com.amd.amd_media.decode | Video/JPEG decoder | Supports MP4/JPEG input files and outputs YUV or RGB           |
+| com.amd.amd_media.encode | Video encoder      | Supports input YUV/RGB input and .264 elementary stream output |
 
 ## Build Instructions
 
@@ -15,9 +15,9 @@ decoding and amd.media.encode node for video encoding
 
 * AMD OpenVX library
 * FFMPEG 4.0 or above, installed via MIVisionX setup script or download from following link
-    - [download] (https://ffmpeg.org/download.html)
+    - [download](https://ffmpeg.org/download.html)
 * amdgpu Linux mesa driver for hardware support. Install with --no-dkms after installing ROCm.
-    - [amdgpu] https://amdgpu-install.readthedocs.io/en/latest/
+    - [amdgpu](https://amdgpu-install.readthedocs.io/en/latest/)
     
 ### Example 1: decode video with runvx using software decoder
 

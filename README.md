@@ -4,7 +4,7 @@
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
-MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™ 1.0.1</a>. The toolkit allows for rapid prototyping and deployment of optimized workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™ 1.0.1</a>. The toolkit allows for rapid prototyping and deployment of optimized computer vision workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
@@ -173,7 +173,7 @@ sudo make install
   ````
   export PATH=$PATH:/opt/rocm/mivisionx_lite/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx_lite/lib
-  runvx -affinity:CPU file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
+  runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
   ````
 **Note:** More samples are available [here](samples#samples)
 
@@ -181,7 +181,7 @@ sudo make install
 * MIVisionX-Lite.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
 ```
-./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
+./runvx.exe file PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
 ```
 
 ## Docker
@@ -261,14 +261,12 @@ runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
 ### Known issues
 * Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
 * ROCm `3.0` and above has known to slow down OpenCL kernels.
-* If OpenCL failure occurs on **macOS**, set environment variable to run on CPU by default
-  ```
-   export AGO_DEFAULT_TARGET=CPU
-  ```
+* OpenCL from ROCm 3.3 and beyond has - cl_version.h: CL_TARGET_OPENCL_VERSION is not defined warning
 
 ### Tested configurations
 * Windows 10
 * Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
+* macOS 
 * ROCm: rocm-opencl-dev - `2.0.20191`
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * Dependencies for all the above packages

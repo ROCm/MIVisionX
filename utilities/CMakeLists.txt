@@ -23,12 +23,20 @@ project(utilities)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
-find_package(OpenCL QUIET)
+if(OPENCL_SUPPORT)
+	find_package(OpenCL QUIET)
+else()
+	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+endif()
 
 if(OpenCL_FOUND)
-    add_subdirectory(runvx)
     add_subdirectory(runcl)
-    message("-- ${Green}MIVisionX Utilities -- runvx, & runcl modules added${ColourReset}")
+    message("-- ${Green}MIVisionX Utilities -- runCL modules added${ColourReset}")
 else()
-    message("-- ${Red}WARNING:OpenCL Not Found -- runvx, & runcl modules excluded${ColourReset}")
+    message("-- ${Red}WARNING:OpenCL Not Found -- runCL modules excluded${ColourReset}")
 endif(OpenCL_FOUND)
+
+add_subdirectory(runvx)
+message("-- ${Green}MIVisionX Utilities -- runVX modules added${ColourReset}")
+
+

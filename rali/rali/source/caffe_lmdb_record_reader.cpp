@@ -107,6 +107,12 @@ int CaffeLMDBRecordReader::close()
 
 CaffeLMDBRecordReader::~CaffeLMDBRecordReader()
 {
+    _open_env = 0;
+    mdb_txn_abort(_read_mdb_txn);
+    mdb_close(_read_mdb_env, _read_mdb_dbi);
+    mdb_env_close(_read_mdb_env);
+    _read_mdb_txn = nullptr;
+    _read_mdb_env = nullptr;
     release();
 }
 
@@ -164,6 +170,7 @@ void CaffeLMDBRecordReader::replicate_last_image_to_fill_last_shard()
 
 Reader::Status CaffeLMDBRecordReader::Caffe_LMDB_reader()
 {
+    _open_env = 0;
     string tmp1 = _folder_path + "/data.mdb";
     string tmp2 = _folder_path + "/lock.mdb";
     uint file_size, file_size1;
@@ -240,44 +247,61 @@ void CaffeLMDBRecordReader::read_image_names()
     release();
 }
 
+void CaffeLMDBRecordReader::open_env_for_read_image() 
+{
+    // Creating an LMDB environment handle 
+    E(mdb_env_create(&_read_mdb_env)); 
+    // Setting the size of the memory map to use for this environment. 
+    // The size of the memory map is also the maximum size of the database.
+    E(mdb_env_set_mapsize(_read_mdb_env, _file_byte_size)); 
+    // Opening an environment handle.
+    E(mdb_env_open(_read_mdb_env, _path.c_str(), MDB_RDONLY, 0664)); 
+    // Creating a transaction for use with the environment
+    E(mdb_txn_begin(_read_mdb_env, NULL, MDB_RDONLY, &_read_mdb_txn));
+    // Opening a database in the environment.
+    E(mdb_open(_read_mdb_txn, NULL, 0, &_read_mdb_dbi));
+    _open_env = 1;
+}
+
 void CaffeLMDBRecordReader::read_image(unsigned char *buff, std::string file_name)
 {
-    int rc;
-    // Creating an LMDB environment handle
-    E(mdb_env_create(&_mdb_env));
-    // Setting the size of the memory map to use for this environment.
-    // The size of the memory map is also the maximum size of the database.
-    E(mdb_env_set_mapsize(_mdb_env, _file_byte_size));
-    // Opening an environment handle.
-    E(mdb_env_open(_mdb_env, _path.c_str(), MDB_RDONLY, 0664));
-    // Creating a transaction for use with the environment
-    E(mdb_txn_begin(_mdb_env, NULL, MDB_RDONLY, &_mdb_txn));
-    // Opening a database in the environment.
-    E(mdb_open(_mdb_txn, NULL, 0, &_mdb_dbi));
+    if(_open_env == 0)
+    {
+	open_env_for_read_image();
+    }
+
     // Creating a cursor handle.
     // A cursor is associated with a specific transaction and database
-    E(mdb_cursor_open(_mdb_txn, _mdb_dbi, &_mdb_cursor));
+    E(mdb_cursor_open(_read_mdb_txn, _read_mdb_dbi, &_read_mdb_cursor));
 
-    // Retrieve by cursor. It retrieves key/data pairs from the database
-    while ((rc = mdb_cursor_get(_mdb_cursor, &_mdb_key, &_mdb_value, MDB_NEXT)) == 0)
+    string checkedStr = string((char *)file_name.c_str());
+    string newStr = checkedStr.substr(0, checkedStr.find(".")) + ".JPEG";
+
+    _read_mdb_key.mv_size = newStr.size();
+    _read_mdb_key.mv_data = (char *)newStr.c_str();
+    
+    int _mdb_status = mdb_cursor_get(_read_mdb_cursor, &_read_mdb_key, &_read_mdb_value, MDB_SET_RANGE);
+    if(_mdb_status == MDB_NOTFOUND) {
+        THROW("\nKey Not found");
+    }
+    else
     {
         Datum datum;
-        string image_key = string((char *)_mdb_key.mv_data);
-        if (image_key == file_name)
-        {
         caffe_protos::AnnotatedDatum annotatedDatum_protos;
-        annotatedDatum_protos.ParseFromArray((char *)_mdb_value.mv_data, _mdb_value.mv_size);
+        annotatedDatum_protos.ParseFromArray((char *)_read_mdb_value.mv_data, _read_mdb_value.mv_size);
+
         // Checking image Datum
         int check_image_datum = annotatedDatum_protos.has_datum();
 
         if (check_image_datum)
             datum = annotatedDatum_protos.datum(); // parse datum for detection
         else
-            datum.ParseFromArray((const void *)_mdb_value.mv_data, _mdb_value.mv_size); //parse datum for classification
+            datum.ParseFromArray((const void *)_read_mdb_value.mv_data, _read_mdb_value.mv_size); //parse datum for classification
             
         memcpy(buff, datum.data().c_str(), datum.data().size());
-        break;
-        }
+
     }
-    release();
+    
+    mdb_cursor_close(_read_mdb_cursor);
+    _read_mdb_cursor = nullptr;
 }

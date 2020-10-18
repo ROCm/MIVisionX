@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <memory>
 #include "graph.h"
 #include "image.h"
+#include "meta_data_graph.h"
 class Node
 {
 public:
@@ -40,6 +41,8 @@ public:
     void add_next(const std::shared_ptr<Node>& node) {} // To be implemented
     void add_previous(const std::shared_ptr<Node>& node) {} //To be implemented
     std::shared_ptr<Graph> graph() { return _graph; }
+    void set_meta_data(MetaDataBatch* meta_data_info){_meta_data_info = meta_data_info;}
+    bool _is_ssd = false;
 protected:
     virtual void create_node() = 0;
     virtual void update_node() = 0;
@@ -51,4 +54,5 @@ protected:
     vx_array _src_roi_height = nullptr;
     vx_node _node = nullptr;
     size_t _batch_size;
+    MetaDataBatch* _meta_data_info;
 };

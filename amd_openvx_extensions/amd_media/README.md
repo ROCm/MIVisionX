@@ -1,6 +1,6 @@
-# OpenVX Media Extension Library (amd_media)
+# OpenVX Media Extension Library
 
-vx_amd_media is an OpenVX AMD media extension module. This module has mainly two OpenVX extension nodes. amd.media.decode node for video/jpeg decoding and amd.media.encode node for video encoding
+`vx_amd_media` is an OpenVX AMD media extension module. This module has mainly two OpenVX extension nodes. `com.amd.amd_media.decode` node for video/jpeg decoding and `com.amd.amd_media.encode` node for video encoding
 
 ### List of OpenVX Media Extension Nodes:
 

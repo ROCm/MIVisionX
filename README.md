@@ -8,8 +8,9 @@ MIVisionX toolkit is a set of comprehensive computer vision and machine intellig
 
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
-  + [Loom 360 Video Stitch Library](amd_openvx_extensions/amd_loomsl)
-  + [Neural Net Library](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
+  + [360 Video Stitch Extension](amd_openvx_extensions/amd_loomsl)
+  + [Media Extension](amd_openvx_extensions/amd_media)
+  + [Neural Net Extension](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn)
   + [OpenCV Extension](amd_openvx_extensions/amd_opencv#amd-opencv-extension)
   + [RPP Extension](amd_openvx_extensions/amd_rpp)
   + [WinML Extension](amd_openvx_extensions/amd_winml#amd-winml-extension)
@@ -44,6 +45,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 <p align="center"><img width="70%" src="docs/images/MIVisionX-OpenVX-Extensions.png" /></p>
 
 * [amd_loomsl](amd_openvx_extensions/amd_loomsl): AMD Radeon Loom stitching library for live 360 degree video applications
+* [amd_media](amd_openvx_extensions/amd_media): `vx_amd_media` is an OpenVX AMD media extension module for encode and decode
 * [amd_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module
 * [amd_opencv](amd_openvx_extensions/amd_opencv#amd-module-for-opencv-interop-from-openvx-vx_opencv): OpenVX module that implements a mechanism to access OpenCV functionality as OpenVX kernels
 * [amd_rpp](amd_openvx_extensions/amd_rpp): OpenVX extension providing an interface to some of the [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)'s (Radeon Performance Primitives) functions. This extension is used to enable [RALI](rali/README.md) to perform image augmentation.

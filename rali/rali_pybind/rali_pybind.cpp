@@ -12,7 +12,7 @@
 #include "rali_api_data_transfer.h"
 #include "rali_api_info.h"
 namespace py = pybind11;
-	
+
 using float16 = half_float::half;	
 static_assert(sizeof(float16) == 2, "Bad size");	
 namespace pybind11
@@ -44,14 +44,26 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_image_name(RaliContext context, py::array_t<char[12]> array,unsigned image_idx)
+    py::object wrapper_image_name_length(RaliContext context, py::array_t<int> array)
     {
         auto buf = array.request();
-        char* ptr = (char*) buf.ptr;
+        int* ptr = (int*) buf.ptr;
         // call pure C++ function
+        int length =raliGetImageNameLen(context,ptr);
         
-        raliGetImageName(context,ptr,image_idx);
+        return py::cast(length);
+    }
+
+    py::object wrapper_image_name(RaliContext context,  int array_len)
+    {
+        py::array_t<char> array;
+        auto buf = array.request();
+        char* ptr = (char*) buf.ptr;
+        ptr = (char *)malloc(array_len * sizeof(char));
+        // call pure C++ function
+        raliGetImageName(context,ptr);
         std::string s(ptr); 
+        free(ptr);
         return py::bytes(s);
     }
 
@@ -96,30 +108,42 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_BB_label_copy(RaliContext context, py::array_t<int> array,unsigned image_idx)
+    py::object wrapper_labels_BB_count_copy(RaliContext context, py::array_t<int> array)
+    
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetBoundingBoxLabel(context,ptr,image_idx);
+        int count =raliGetBoundingBoxCount(context,ptr);
+        
+        return py::cast(count);
+    }
+
+
+    py::object wrapper_BB_label_copy(RaliContext context, py::array_t<int> array)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetBoundingBoxLabel(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_BB_cord_copy(RaliContext context, py::array_t<float> array,unsigned image_idx)
+    py::object wrapper_BB_cord_copy(RaliContext context, py::array_t<float> array)
     {
         auto buf = array.request();
         float* ptr = (float*) buf.ptr;
         // call pure C++ function
-        raliGetBoundingBoxCords(context,ptr,image_idx);
+        raliGetBoundingBoxCords(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
-    py::object wrapper_img_sizes_copy(RaliContext context, py::array_t<int> array,unsigned image_idx)
+    py::object wrapper_img_sizes_copy(RaliContext context, py::array_t<int> array)
     {
         auto buf = array.request();
         int* ptr = (int*) buf.ptr;
         // call pure C++ function
-        raliGetImageSizes(context,ptr,image_idx);
+        raliGetImageSizes(context,ptr);
         return py::cast<py::none>(Py_None);
     }
 
@@ -186,7 +210,7 @@ namespace rali{
         m.def("getImageHeight",&raliGetImageHeight);
         m.def("getImagePlanes",&raliGetImagePlanes);
         m.def("getImageName",&wrapper_image_name);
-        m.def("getImageNameLen",&raliGetImageNameLen);
+        m.def("getImageNameLen",&wrapper_image_name_length);
         m.def("getStatus",&raliGetStatus);
         m.def("labelReader",&raliCreateLabelReader);
         m.def("TFReader",&raliCreateTFReader);
@@ -200,7 +224,7 @@ namespace rali{
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
-        m.def("getBoundingBoxCount",&raliGetBoundingBoxCount);
+        m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
         m.def("isEmpty",&raliIsEmpty);
         m.def("getTimingInfo",raliGetTimingInfo);
         // rali_api_parameter.h

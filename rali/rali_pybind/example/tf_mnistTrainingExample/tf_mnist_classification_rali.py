@@ -137,6 +137,7 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 	with tf.Session() as sess:
 		sess.run(tf.initialize_all_variables())
 		for epoch in range(num_epochs):
+			print('\n\n----------------------------Training Model for Epoch: ', epoch, "-----------------------------------------------")
 			epoch_loss = 0
 			train_accuracy = 0
 			#for _ in range(int(mnist.train.num_examples/batch_size)):
@@ -155,7 +156,7 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 			#run evaluation for every epoch
 			mean_acc = 0
 			#mean_loss = 0
-			print("\n\n----------------------------Evaluating Model -------------------------------------------------------------------")
+			print("\n\n----------------------------Evaluating Model ---------------------------------------------------------------")
 			for j, (val_image_ndArray, val_label_ndArray) in enumerate(valIterator, 0):
 				#val_image_ndArray_transposed = np.transpose(val_image_ndArray, [0, 2, 3, 1])
 				val_image_ndArray_res = val_image_ndArray.reshape(batch_size, 784)
@@ -176,7 +177,7 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 
 def main():
 	if  len(sys.argv) < 4:
-		print ('Please pass mnistTFRecord  cpu/gpu batch_size')
+		print ('Please pass mnistTFRecord_dir  cpu/gpu batch_size')
 		exit(0)
 	image_path = sys.argv[1]
 	if(sys.argv[2] == "cpu"):

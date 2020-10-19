@@ -47,7 +47,7 @@ bool TFMetaDataReaderDetection::exists(const std::string& _image_name)
 }
 
 
-void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels)
+void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels,ImgSizes image_size)
 {
     if(exists(image_name))
     {
@@ -56,7 +56,7 @@ void TFMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_
         it->second->get_bb_labels().push_back(bb_labels[0]);
         return;
     }
-    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels);
+    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels, image_size);
     _map_content.insert(pair<std::string, std::shared_ptr<BoundingBox>>(image_name, info));
 }
 
@@ -80,19 +80,26 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
             BoundingBoxCords bb_coords;
             BoundingBoxLabels bb_labels;
             BoundingBoxCord box;
+            ImgSizes img_sizes;
+            ImgSize img_size;
+
 
             box.x = box.y = box.w = box.h = 0;
+            img_size.w = img_size.h =0;
             bb_coords.push_back(box);
             bb_labels.push_back(0);
+            img_sizes.push_back(img_size);
             // bb_coords={};
 
 	    _output->get_bb_cords_batch()[i] = bb_coords;
 	    _output->get_bb_labels_batch()[i] = bb_labels;
+        _output->get_img_sizes_batch()[i] = img_sizes;
         }
 	else{
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
-	}
+        _output->get_img_sizes_batch()[i] = it->second->get_img_sizes();
+    }
     }
 
 
@@ -155,7 +162,7 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     tensorflow::Features features = single_example.features();
 
     auto feature = features.feature();
-    tensorflow::Feature single_feature,sf_xmin,sf_ymin,sf_xmax,sf_ymax,sf_fname,sf_label;
+    tensorflow::Feature single_feature,sf_xmin,sf_ymin,sf_xmax,sf_ymax,sf_fname,sf_label,sf_height,sf_width;
     
     single_feature = feature.at(user_filename_key);
     std::string fname = single_feature.bytes_list().value()[0];
@@ -167,27 +174,44 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
     BoundingBoxLabels bb_labels;
     BoundingBoxCord box;
 
-    int label;
-    single_feature = feature.at(user_label_key);
-    label = single_feature.int64_list().value()[0];
+    sf_label = feature.at(user_label_key);
     sf_xmin = feature.at(user_xmin_key);
     sf_ymin = feature.at(user_ymin_key);
     sf_xmax = feature.at(user_xmax_key);
     sf_ymax = feature.at(user_ymax_key);
+
+    sf_height = feature.at("image/height");
+    sf_width = feature.at("image/width");
+    
+    int image_height, image_width;
+    image_height = sf_height.int64_list().value()[0];
+    image_width = sf_width.int64_list().value()[0];
+
+    ImgSizes img_sizes;
+    ImgSize img_size;
+    img_size.w = image_width;
+    img_size.h = image_height;
+
+    img_sizes.push_back(img_size);
+
+
+
     for(int i = 0; i < size_b_xmin; i++)
     {
+      int label;
       float bbox_xmin, bbox_ymin, bbox_xmax, bbox_ymax;
+      label = sf_label.int64_list().value()[i];
       bbox_xmin = sf_xmin.float_list().value()[i];
       bbox_ymin = sf_ymin.float_list().value()[i];
       bbox_xmax = sf_xmax.float_list().value()[i];
       bbox_ymax = sf_ymax.float_list().value()[i]; 
-      box.x = bbox_xmin;
-      box.y = bbox_ymin;
-      box.w = bbox_xmax;
-      box.h = bbox_ymax;
+      box.x = bbox_xmin * image_width;
+      box.w = (bbox_xmax * image_width) - box.x;
+      box.y = bbox_ymin * image_height;
+      box.h = (bbox_ymax * image_height) - box.y;
       bb_coords.push_back(box);
       bb_labels.push_back(label);
-      add(fname, bb_coords, bb_labels);
+      add(fname, bb_coords, bb_labels,img_sizes);
       bb_coords.clear();
       bb_labels.clear();
     }

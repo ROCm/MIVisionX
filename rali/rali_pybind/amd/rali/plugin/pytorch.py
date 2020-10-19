@@ -96,21 +96,36 @@ class RALIGenericIterator(object):
             self.loader.copyToTensorNHWC(self.out, self.multiplier, self.offset, self.reverse_channels, int(self.tensor_dtype))
         
         if((self.loader._name == "Caffe2ReaderDetection") or (self.loader._name == "CaffeReaderDetection")):
-            sum = 0
-            self.lis =[] #Empty list for bboxes
-            self.lis_lab=[] # Empty list of labels
-            for idx in range(self.bs):
-                sum=self.loader.GetBoundingBoxCount(idx)
-                self.labels = np.zeros(sum,dtype = "int32")
-                self.bboxes = np.zeros(sum*4,dtype = "float32" )
-                self.loader.GetBBLabels(self.labels,idx)
-                self.loader.GetBBCords(self.bboxes,idx)
+            self.lis = []  # Empty list for bboxes
+            self.lis_lab = []  # Empty list of labels
+            
+            #Count of labels/ bboxes in a batch
+            self.bboxes_label_count = np.zeros(self.bs, dtype="int32")
+            self.count_batch = self.loader.GetBoundingBoxCount(self.bboxes_label_count)
+            # 1D labels array in a batch
+            self.labels = np.zeros(self.count_batch, dtype="int32")
+            self.loader.GetBBLabels(self.labels)
+            # 1D bboxes array in a batch
+            self.bboxes = np.zeros((self.count_batch*4), dtype="float32")
+            self.loader.GetBBCords(self.bboxes)
+            #Image sizes of a batch
+            self.img_size = np.zeros((self.bs * 2),dtype = "int32")
+            self.loader.GetImgSizes(self.img_size)
+            
+            count =0
+            sum_count=0
+            for i in range(self.bs):
+                count = self.bboxes_label_count[i]
+  
+                self.label_2d_numpy = (self.labels[sum_count : sum_count+count])
+                self.label_2d_numpy = np.reshape(self.label_2d_numpy, (-1, 1)).tolist()
+                self.bb_2d_numpy = (self.bboxes[sum_count*4 : (sum_count+count)*4])
+                self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
                 
-                self.bb_2d_numpy = np.reshape(self.bboxes, (-1, 4)).tolist()
-                self.label_2d_numpy = np.reshape(self.labels, (-1, 1)).tolist()
-                
-                self.lis.append(self.bb_2d_numpy)
                 self.lis_lab.append(self.label_2d_numpy)
+                self.lis.append(self.bb_2d_numpy)
+                
+                sum_count = sum_count +count
 
             self.target = self.lis
             self.target1 = self.lis_lab

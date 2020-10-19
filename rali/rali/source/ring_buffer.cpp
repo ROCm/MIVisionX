@@ -185,24 +185,25 @@ void RingBuffer::reset()
 
 RingBuffer::~RingBuffer()
 {
-    if(_mem_type!= RaliMemType::OCL)
-        return;
+    //  if(_mem_type!= RaliMemType::OCL)
+    //      return;
+    if (_mem_type == RaliMemType::HOST) {
+        for (unsigned idx = 0; idx < _host_master_buffers.size(); idx++)
+            if (_host_master_buffers[idx]) {
+                free(_host_master_buffers[idx]);
+            }
 
-    for(unsigned idx=0; idx < _host_master_buffers.size(); idx++)
-        if(_host_master_buffers[idx])
-            free(_host_master_buffers[idx]);
-
-    _host_master_buffers.clear();
-    _host_sub_buffers.clear();
-
-    for(size_t buffIdx = 0; buffIdx <_dev_sub_buffer.size(); buffIdx++)
-        for(unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
-            if(_dev_sub_buffer[buffIdx][sub_buf_idx])
-                if(clReleaseMemObject((cl_mem)_dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
-                    ERR("Could not release ocl memory in the ring buffer")
-
-
-
+        _host_master_buffers.clear();
+        _host_sub_buffers.clear();
+    }
+    else if (_mem_type == RaliMemType::OCL) {
+        for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
+            for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
+                if (_dev_sub_buffer[buffIdx][sub_buf_idx])
+                    if (clReleaseMemObject((cl_mem) _dev_sub_buffer[buffIdx][sub_buf_idx]) != CL_SUCCESS)
+                        ERR("Could not release ocl memory in the ring buffer")
+        _dev_sub_buffer.clear();
+    }
 }
 
 bool RingBuffer::empty()

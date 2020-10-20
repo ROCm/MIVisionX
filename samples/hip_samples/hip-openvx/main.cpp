@@ -48,7 +48,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 		vx_uint8 image_data[width*height];
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				image_data[i*width + j] = 120;
+				image_data[i*width + j] = 140;
 			}
 		}
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
@@ -66,7 +66,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				ptr[i*width + j] = 120;
+				ptr[i*width + j] = 140;
 			}
 		}
 		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -175,8 +175,9 @@ int main(int argc, const char ** argv) {
 			// TESTING KERNELS FOR HOST
 
 			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
-			vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
-		
+			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+			vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+			// vx_node node = vxMultiplyNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
 		
 			if (node)
 			{
@@ -223,11 +224,19 @@ int main(int argc, const char ** argv) {
 
 			ERROR_CHECK_STATUS(vxSetGraphAttribute(graph, VX_GRAPH_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity)));
 			
+
+
+
 			// TESTING KERNELS FOR HOST
 
 			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			
+
+
+
+
 			if (node)
 			{
 				status = vxVerifyGraph(graph);
@@ -249,18 +258,33 @@ int main(int argc, const char ** argv) {
 	vx_imagepatch_addressing_t addr = {0};
 	addr.stride_x = 1;
 	addr.stride_y = width;
-	vx_uint8 *out_buf;
+	
+	
+	// TESTING FOR DIFFERENT OUTPUT BIT DEPTHS
+	
+	// vx_uint8 *out_buf;
+	vx_int16 *out_buf;
 
+	
+	
 	ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &rect, 0, &map_id, &addr, (void **)&out_buf, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 	//ERROR_CHECK_STATUS(vxCopyImagePatch(img_out, &rect, 0, &addr, outImgBuffer, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 
 	
+
+
+
 	// VERIFYING KERNELS
 	
 	// int expected = 20*60*255;     // white only in roi 
 	// int expected = (115 * 20 * 60); // AbsDiff
-	int expected = (240 * 100 * 100) + (5 * 20 * 60); // Add
+	// int expected = (120 * 100 * 100) + (5 * 20 * 60) +  (120 * ((100 * 100) - (20 * 60))); // Add
+	int expected = (140 * 100 * 100) + (5 * 20 * 60) +  (140 * ((100 * 100) - (20 * 60))); // Add
 	
+
+
+
+
 	
 	int sum = 0;
 	for (int i = 0; i < width*height; i++) {

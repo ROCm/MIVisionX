@@ -31,7 +31,12 @@ int HipExec_AbsDiff_U8_U8U8(
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
         );
-int HipExec_Add_U8_U8U8(
+int HipExec_Add_U8_U8U8_Wrap(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+        );
+int HipExec_Add_U8_U8U8_Sat(
         vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
@@ -55,6 +60,16 @@ int HipExec_Add_S16_U8U8(
 // logical_kernels
 
 // statistical_kernels
+
+// color_kernels
+
+// filter_kernels
+
+// geometric_kernels
+
+// vision_kernels
+
+// miscellaneous_kernels
 
 
 

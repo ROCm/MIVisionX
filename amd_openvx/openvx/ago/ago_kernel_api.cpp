@@ -3734,7 +3734,7 @@ int agoKernel_Add_U8_U8U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_U8_U8U8_Wrap(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -3803,7 +3803,7 @@ int agoKernel_Add_U8_U8U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_U8_U8U8_Sat(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}

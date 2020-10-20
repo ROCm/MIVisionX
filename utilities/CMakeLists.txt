@@ -35,7 +35,7 @@ message("-- ${Green}MIVisionX Utilities -- runvx module added${ColourReset}")
 
 if(OpenCL_FOUND)
     add_subdirectory(runcl)
-    add_subdirectory(loom_shell)
+    #add_subdirectory(loom_shell)
     if(FFMPEG_FOUND)
         add_subdirectory(mv_deploy)
         message("-- ${Green}MIVisionX Utilities -- runcl, loom_shell, & mv_deploy modules added${ColourReset}")

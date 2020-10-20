@@ -6,6 +6,8 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 <p align="center"><img width="80%" src="../docs/images/loom-2.jpg" /></p>
 
+* [amd_media](amd_media): `vx_amd_media` is an OpenVX AMD media extension module. This module has mainly two OpenVX extension nodes. `com.amd.amd_media.decode` node for video/jpeg decoding and `com.amd.amd_media.encode` node for video encoding
+
 * [amd_nn](amd_nn#openvx-neural-network-extension-library-vx_nn): OpenVX neural network module. Learn more about neural net workflow in [Neural Net Model Compiler & Optimizer](../model_compiler#neural-net-model-compiler--optimizer)
 
 <p align="center"><img width="80%" src="../docs/images/modelCompilerWorkflow.png" /></p>

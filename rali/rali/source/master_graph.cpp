@@ -751,10 +751,18 @@ void MasterGraph::output_routine()
                 if (!_processing)
                     break;
 
+                for(auto node: _nodes)
+                {
+                    if(node->_is_ssd)
+                    {
+                        // std::cerr<<"\n Comes to set meta data in ssd random crop in output routine";
+                        node->set_meta_data(_augmented_meta_data);
+                    }
+                }
+
                 update_node_parameters();
                 if(_augmented_meta_data)
                 {
-                    //process metadata, _augmented_meta_data contains the results after the call to process
                     if (_meta_data_graph)
                     {
                         _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);

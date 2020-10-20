@@ -35,9 +35,6 @@ public:
     unsigned int get_dst_width() { return _outputs[0]->info().width(); }
     unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
     std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
-    void set_crop_param(std::shared_ptr<RaliRandomCropParam> crop_param) { _crop_param = crop_param; }
-    void update_output_dims();
-    float get_threshold(){return _threshold;}
     int get_num_of_attempts(){return _num_of_attempts;}
 
 protected:
@@ -47,7 +44,6 @@ protected:
 private:
     size_t _dest_width;
     size_t _dest_height;
-    float  _threshold = 0.05;
     int    _num_of_attempts = 20;
     std::shared_ptr<RaliRandomCropParam> _crop_param;
 };

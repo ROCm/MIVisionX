@@ -54,11 +54,6 @@ void RandomCropNode::update_node()
 {
     _crop_param->set_image_dimensions(_inputs[0]->info().get_roi_width_vec(), _inputs[0]->info().get_roi_height_vec());
     _crop_param->update_array();
-    update_output_dims();
-}
-
-void RandomCropNode::update_output_dims()
-{
     std::vector<uint32_t> crop_h_dims, crop_w_dims;
     _crop_param->get_crop_dimensions(crop_w_dims, crop_h_dims);
     _outputs[0]->update_image_roi(crop_w_dims, crop_h_dims);  

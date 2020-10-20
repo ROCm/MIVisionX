@@ -86,15 +86,14 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateCaffe2LMDBReaderDetection(RaliCo
 
 ///
 /// \param rali_context
-/// \param buf user buffer provided to be filled with output image name
-/// \param image_idx the imageIdx in the output batch
-extern "C" void RALI_API_CALL raliGetImageName(RaliContext rali_context,  char* buf, unsigned image_idx);
+/// \param buf user buffer provided to be filled with output image names for images in the output batch.
+extern "C" void RALI_API_CALL raliGetImageName(RaliContext rali_context,  char* buf);
 
 ///
 /// \param rali_context
-/// \param image_idx the imageIdx in the output batch
-/// \return The length of the name of the image associated with image_idx in the output batch
-extern "C" unsigned RALI_API_CALL raliGetImageNameLen(RaliContext rali_context,  unsigned image_idx);
+/// \param buf userbuffer provided to be filled with the length of the image names in the output batch
+/// \return The size of the buffer needs to be provided by user to get the image names of the output batch
+extern "C" unsigned RALI_API_CALL raliGetImageNameLen(RaliContext rali_context, int* buf);
 
 /// \param meta_data RaliMetaData object that contains info about the images and labels
 /// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
@@ -102,17 +101,17 @@ extern "C" void RALI_API_CALL raliGetImageLabels(RaliContext rali_context, int* 
 
 ///
 /// \param rali_context
-/// \param image_idx the imageIdx in the output batch
-/// \return The size of the buffer needs to be provided by user to get bounding box info associated with image_idx in the output batch.
-extern "C" unsigned RALI_API_CALL raliGetBoundingBoxCount(RaliContext rali_context, unsigned image_idx );
+/// \param buf The user's buffer that will be filled with number of object in the images.
+/// \return The size of the buffer needs to be provided by user to get bounding box info for all images in the output batch.
+extern "C" unsigned RALI_API_CALL raliGetBoundingBoxCount(RaliContext rali_context, int* buf);
 
 ///
 /// \param rali_context
-/// \param image_idx the imageIdx in the output batch
-/// \param buf The user's buffer that will be filled with bounding box info. It needs to be of size bounding box len returned by a call to the raliGetBoundingBoxCount
-extern "C" void RALI_API_CALL raliGetBoundingBoxLabel(RaliContext rali_context, int* buf, unsigned image_idx );
-extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, float* buf, unsigned image_idx );
-extern "C" void RALI_API_CALL raliGetImageSizes(RaliContext rali_context, int* buf, unsigned image_idx );
+/// \param buf The user's buffer that will be filled with bounding box label info for the images in the output batch. It needs to be of size returned by a call to the raliGetBoundingBoxCount
+extern "C" void RALI_API_CALL raliGetBoundingBoxLabel(RaliContext rali_context, int* buf);
+extern "C" void RALI_API_CALL raliGetBoundingBoxCords(RaliContext rali_context, float* buf);
+
+extern "C" void RALI_API_CALL raliGetImageSizes(RaliContext rali_context, int* buf);
 
 ///
 /// \param rali_context

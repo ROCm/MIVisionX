@@ -149,6 +149,9 @@ ImageReadAndDecode::load(unsigned char* buff,
             }
 
             _actual_read_size[file_counter] = _reader->read(read_ptr, fsize);
+            if(_actual_read_size[file_counter] < fsize)
+                LOG("Reader read less than requested bytes of size: " + _actual_read_size[file_counter]);
+
             _image_names[file_counter] = _reader->id();
             _reader->close();
            // _compressed_image_size[file_counter] = fsize;

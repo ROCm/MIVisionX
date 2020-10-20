@@ -5,7 +5,6 @@ from amd.rali.pipeline import Pipeline
 import amd.rali.ops as ops
 import amd.rali.types as types
 import sys
-import os
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 import numpy as np
@@ -109,7 +108,6 @@ def compute_accuracy(predictions, labels):
 def train_mnist_rali(data_path, _rali_cpu, batch_size):
 
 	# setup keep_prob
-	#keep_prob = tf.placeholder(tf.float32)
 	input_X = tf.placeholder('float32',shape = (batch_size,784))
 	labels = tf.placeholder('float32',shape = (batch_size,10))
 	logits = neural_net(input_X)
@@ -117,7 +115,7 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 	optimizer = tf.train.AdamOptimizer().minimize(cost)
 	train_prediction = tf.nn.softmax(logits)
 	accuracy = compute_accuracy(train_prediction, labels)
-	correct_label = tf.argmax(labels, 1)
+	#correct_label = tf.argmax(labels, 1)
 	num_epochs = 10
 	crop_size = 28
 	TFRecordReaderType = 0
@@ -140,7 +138,6 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 			print('\n\n----------------------------Training Model for Epoch: ', epoch, "-----------------------------------------------")
 			epoch_loss = 0
 			train_accuracy = 0
-			#for _ in range(int(mnist.train.num_examples/batch_size)):
 			for i, (image_train, label_train) in enumerate(trainIterator, 0):
 				image_train_res = image_train.reshape(batch_size, 784)
 				if 0:
@@ -155,7 +152,6 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 			print('Epoch', epoch, 'completed out of',num_epochs,'loss:',epoch_loss, 'accuracy:',(train_accuracy*100)/i, 'count :', i)
 			#run evaluation for every epoch
 			mean_acc = 0
-			#mean_loss = 0
 			print("\n\n----------------------------Evaluating Model ---------------------------------------------------------------")
 			for j, (val_image_ndArray, val_label_ndArray) in enumerate(valIterator, 0):
 				#val_image_ndArray_transposed = np.transpose(val_image_ndArray, [0, 2, 3, 1])
@@ -166,7 +162,7 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 					feed_dict={input_X: val_image_ndArray_res, labels: val_label_one_hot_list})
 				mean_acc += val_accuracy
 				#mean_loss = mean_loss + val_loss
-				num_correct_predicate = 0
+				#num_correct_predicate = 0
 				#for predicate in correct_predicate:
 				#	if predicate == True:
 				#		num_correct_predicate += 1
@@ -184,7 +180,6 @@ def main():
 		_rali_cpu = True
 	else:
 		_rali_cpu = False
-
 	bs = int(sys.argv[3])
 	train_mnist_rali(image_path, _rali_cpu, bs)
 

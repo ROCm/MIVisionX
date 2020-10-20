@@ -99,7 +99,7 @@ def convert_to_tf_record(data_directory:str):
     """
 
     mnist = input_data.read_data_sets(
-        data_directory, dtype=tf.uint8, 
+        data_directory, dtype=tf.uint8,
         reshape=False
     )
     
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     
     parser.add_argument(
-        '--data-directory', 
+        '--data-directory',
         default='/tmp/mnist',
         help='Directory where TFRecords will be stored')
 

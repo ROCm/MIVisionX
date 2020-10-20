@@ -238,7 +238,7 @@ int HipExec_Add_S16_U8U8(
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExec_Add_U8_U8U8: Kernel time: %f\n", eventMs);
+    printf("HipExec_Add_S16_U8U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

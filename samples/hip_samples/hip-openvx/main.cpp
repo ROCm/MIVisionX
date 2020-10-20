@@ -48,7 +48,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 		vx_uint8 image_data[width*height];
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				image_data[i*width + j] = 140;
+				image_data[i*width + j] = 120;
 			}
 		}
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
@@ -66,7 +66,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				ptr[i*width + j] = 140;
+				ptr[i*width + j] = 120;
 			}
 		}
 		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -278,8 +278,8 @@ int main(int argc, const char ** argv) {
 	
 	// int expected = 20*60*255;     // white only in roi 
 	// int expected = (115 * 20 * 60); // AbsDiff
-	// int expected = (120 * 100 * 100) + (5 * 20 * 60) +  (120 * ((100 * 100) - (20 * 60))); // Add
-	int expected = (140 * 100 * 100) + (5 * 20 * 60) +  (140 * ((100 * 100) - (20 * 60))); // Add
+	int expected = (120 * 100 * 100) + (5 * 20 * 60) +  (120 * ((100 * 100) - (20 * 60))); // Add
+	// int expected = (140 * 100 * 100) + (5 * 20 * 60) +  (140 * ((100 * 100) - (20 * 60))); // Add
 	
 
 

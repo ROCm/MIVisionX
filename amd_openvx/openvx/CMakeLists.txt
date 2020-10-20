@@ -115,7 +115,15 @@ elseif ("${BACKEND}" STREQUAL "HIP")
     endif()
 
     # build hip_sources if any
-    list (APPEND HIP_SOURCES hipvx/arithmetic_kernels.cpp)
+    list (APPEND HIP_SOURCES 
+    hipvx/arithmetic_kernels.cpp 
+    hipvx/logical_kernels.cpp
+    hipvx/statistical_kernels.cpp
+    hipvx/color_kernels.cpp
+    hipvx/filter_kernels.cpp
+    hipvx/geometric_kernels.cpp
+    hipvx/vision_kernels.cpp
+    hipvx/miscellaneous_kernels.cpp)
     #set (CMAKE_LINKER "${HIP_PATH}/bin/hipcc_cmake_linker_helper")
 
     #set (CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_LINKER> ${HIP_PATH}/../hcc <CMAKE_SHARED_LIBRARY_CXX_FLAGS> <LANGUAGE_COMPILE_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS> <SONAME_FLAG><TARGET_SONAME> -o <TARGET> <OBJECTS> <LINK_LIBRARIES>")

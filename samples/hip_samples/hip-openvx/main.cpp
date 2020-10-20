@@ -45,10 +45,11 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 	ERROR_CHECK_OBJECT((vx_reference)img);
 
 	if (mem_type == VX_MEMORY_TYPE_HOST) {
+		// vx_int16 image_data[width*height];
 		vx_uint8 image_data[width*height];
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				image_data[i*width + j] = 120;
+				image_data[i*width + j] = 100;
 			}
 		}
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
@@ -62,11 +63,12 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
 		vx_map_id map_id;
 		vx_imagepatch_addressing_t addrId;
+		// vx_int16 * ptr;
 		vx_uint8 * ptr;
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				ptr[i*width + j] = 120;
+				ptr[i*width + j] = 100;
 			}
 		}
 		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -90,9 +92,9 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
 				if ( i>=40 && i < 60 && j >= 20 && j<80 )
-					image_data[i*width + j] = 5;
+					image_data[i*width + j] = 50;
 				else
-					image_data[i*width + j] = 120;
+					image_data[i*width + j] = 100;
 			}
 		}
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
@@ -111,9 +113,9 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
 				if ( i>=40 && i < 60 && j >= 20 && j<80 )
-					ptr[i*width + j] = 5;
+					ptr[i*width + j] = 50;
 				else
-					ptr[i*width + j] = 120;
+					ptr[i*width + j] = 100;
 			}
 		}
 		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -162,8 +164,8 @@ int main(int argc, const char ** argv) {
 			// img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 			img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 			// img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
-			// img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-			img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+			img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+			// img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 			
 			
 			ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
@@ -176,7 +178,9 @@ int main(int argc, const char ** argv) {
 
 			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
-			vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+			vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			// vx_node node = vxMultiplyNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
 		
 			if (node)
@@ -213,8 +217,8 @@ int main(int argc, const char ** argv) {
 		// ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &addr, &ptr[0], VX_MEMORY_TYPE_HIP));
 		ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[1], VX_MEMORY_TYPE_HIP));
 		// ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &addr, &ptr[1], VX_MEMORY_TYPE_HIP));
-		// ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[2], VX_MEMORY_TYPE_HIP));
-		ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &addr, &ptr[2], VX_MEMORY_TYPE_HIP));
+		ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[2], VX_MEMORY_TYPE_HIP));
+		// ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &addr, &ptr[2], VX_MEMORY_TYPE_HIP));
 		
 		if (graph)
 		{
@@ -230,8 +234,11 @@ int main(int argc, const char ** argv) {
 			// TESTING KERNELS FOR HOST
 
 			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
-			vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+			vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+
 			
 
 
@@ -260,10 +267,10 @@ int main(int argc, const char ** argv) {
 	addr.stride_y = width;
 	
 	
-	// TESTING FOR DIFFERENT OUTPUT BIT DEPTHS
+	// TESTING FOR DIFFERENT OUTPUT BIT DEPTHS 
 	
-	// vx_uint8 *out_buf;
-	vx_int16 *out_buf;
+	vx_uint8 *out_buf;
+	// vx_int16 *out_buf;
 
 	
 	
@@ -278,9 +285,10 @@ int main(int argc, const char ** argv) {
 	
 	// int expected = 20*60*255;     // white only in roi 
 	// int expected = (115 * 20 * 60); // AbsDiff
-	int expected = (120 * 100 * 100) + (5 * 20 * 60) +  (120 * ((100 * 100) - (20 * 60))); // Add
+	// int expected = (120 * 100 * 100) + (5 * 20 * 60) +  (120 * ((100 * 100) - (20 * 60))); // Add
 	// int expected = (140 * 100 * 100) + (5 * 20 * 60) +  (140 * ((100 * 100) - (20 * 60))); // Add
-	
+	// int expected = 20 * 60 * 5; //ADD_S16_S16U8_Wrap
+	int expected = 20 * 60 * 50 ; //SUB_U8_U8U8_Wrap & SUB_U8_U8U8_Sat
 
 
 

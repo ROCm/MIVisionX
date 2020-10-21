@@ -45,28 +45,28 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
     ERROR_CHECK_OBJECT((vx_reference)img);
 
     if (mem_type == VX_MEMORY_TYPE_HOST) {
-        vx_uint8 image_data[width*height];
+        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
+        vx_map_id map_id;
+        vx_imagepatch_addressing_t addrId;
+        vx_uint8 * ptr;
+        ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+        vx_size stride = addrId.stride_y;
         for (int i= 0; i< height; i++ ){
             for (int j=0; j < width; j++) {
-                image_data[i*width + j] = 255;
+                ptr[i*stride + j] = 240;
             }
         }
-        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-        vx_imagepatch_addressing_t addr;
-        addr.dim_x = width;
-        addr.dim_y = height;
-        addr.stride_x = 1;
-        addr.stride_y = width;
-        ERROR_CHECK_STATUS(vxCopyImagePatch(img, &rect, 0, &addr, image_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
     } else {
         vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
         vx_map_id map_id;
         vx_imagepatch_addressing_t addrId;
         vx_uint8 * ptr;
         ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+        vx_size stride = addrId.stride_y;
         for (int i= 0; i< height; i++ ){
             for (int j=0; j < width; j++) {
-                ptr[i*width + j] = 255;
+                ptr[i*stride + j] = 240;
             }
         }
         ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -86,34 +86,34 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
     ERROR_CHECK_OBJECT((vx_reference)img);
 
     if (mem_type == VX_MEMORY_TYPE_HOST) {
-        vx_uint8 image_data[width*height];
+        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
+        vx_map_id map_id;
+        vx_imagepatch_addressing_t addrId;
+        vx_uint8 * ptr;
+        ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+        vx_size stride = addrId.stride_y;
         for (int i= 0; i< height; i++ ){
             for (int j=0; j < width; j++) {
-                if ( i>=40 && i < 60 && j >= 20 && j<80 )
-                    image_data[i*width + j] = 0;
-                else
-                    image_data[i*width + j] = 255;
+                //if ( i>=40 && i < 60 && j >= 20 && j<80 )
+                    ptr[i*stride + j] = 120;
+                //else
+                //    ptr[i*stride + j] = 255;
             }
         }
-        vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-        vx_imagepatch_addressing_t addr;
-        addr.dim_x = width;
-        addr.dim_y = height;
-        addr.stride_x = 1;
-        addr.stride_y = width;
-        ERROR_CHECK_STATUS(vxCopyImagePatch(img, &rect, 0, &addr, image_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
     } else {
         vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
         vx_map_id map_id;
         vx_imagepatch_addressing_t addrId;
         vx_uint8 * ptr;
         ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+        vx_size stride = addrId.stride_y;
         for (int i= 0; i< height; i++ ){
             for (int j=0; j < width; j++) {
-                if ( i>=40 && i < 60 && j >= 20 && j<80 )
-                    ptr[i*width + j] = 0;
-                else
-                    ptr[i*width + j] = 255;
+              //  if ( i>=40 && i < 60 && j >= 20 && j<80 )
+                    ptr[i*stride + j] = 120;
+               // else
+               //     ptr[i*width + j] = 255;
             }
         }
         ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -186,11 +186,11 @@ int main(int argc, const char ** argv) {
         addr.dim_x = width;
         addr.dim_y = height;
         addr.stride_x = 1;
-        addr.stride_y = width;
-        hipMalloc((void**)&ptr[0], width*height);
-        hipMalloc((void**)&ptr[1], width*height);
-        hipMalloc((void**)&ptr[2], width*height);
-        hipMemset(ptr[2], 0, width*height);
+        addr.stride_y = (width+3)&~3;   // stride has to be a multiple of 4 since we process 4 pixels at a time
+        hipMalloc((void**)&ptr[0], width*addr.stride_y);
+        hipMalloc((void**)&ptr[1], width*addr.stride_y);
+        hipMalloc((void**)&ptr[2], width*addr.stride_y);
+        hipMemset(ptr[2], 0, width*addr.stride_y);
   //      printf("Main: dst: %p src1: %p src2: %p <%dx%d>\n", ptr[2], ptr[0], ptr[1], width, height);
 
         ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[0], VX_MEMORY_TYPE_HIP));
@@ -223,21 +223,22 @@ int main(int argc, const char ** argv) {
     vx_rectangle_t rect = { 0, 0, width, height };
     vx_map_id  map_id;
     vx_imagepatch_addressing_t addr = {0};
-    addr.stride_x = 1;
-    addr.stride_y = width;
     vx_uint8 *out_buf;
 
     ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &rect, 0, &map_id, &addr, (void **)&out_buf, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-    //ERROR_CHECK_STATUS(vxCopyImagePatch(img_out, &rect, 0, &addr, outImgBuffer, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 
     // verify the results
-    int expected = 20*60*255;     // white only in roi 
+    int expected = width*height*120;
     int sum = 0;
-    for (int i = 0; i < width*height; i++) {
-        sum +=  out_buf[i];
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            sum += out_buf[i * addr.stride_y + j];
+            printf("sum<%x,%d>: %d\t", i, j, out_buf[i * addr.stride_y + j]);
+        }
+        printf("\n");
     }
     if (sum != expected) {
-        printf("FAILED: sum = %d \n", sum);
+        printf("FAILED: sum = %d expected: %d \n", sum, expected);
     } else {
         printf("PASSED!\n");
     }

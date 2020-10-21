@@ -14,7 +14,7 @@
 #include <string>
 #include <chrono>
 #define DUMP_IMAGE  0
-// #define PRINT_OUTPUT 
+#define PRINT_OUTPUT 
 
 #define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; } }
 #define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return -1; } }
@@ -249,7 +249,7 @@ int main(int argc, const char ** argv) {
 		
 			/*********************** TESTING KERNELS FOR HOST ***********************/
 
-			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
+			vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
@@ -258,7 +258,7 @@ int main(int argc, const char ** argv) {
 			// vx_node node =vxAndNode(graph, img1, img2, img_out);
 			// vx_node node = vxOrNode(graph, img1, img2, img_out);
 			// vx_node node = vxXorNode(graph, img1, img2, img_out);
-			vx_node node = vxNotNode(graph,img2, img_out);
+			// vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
 
 			
 
@@ -314,7 +314,7 @@ int main(int argc, const char ** argv) {
 
 		/*********************** TESTING KERNELS FOR GPU ***********************/
 
-			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
+			vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
@@ -322,7 +322,7 @@ int main(int argc, const char ** argv) {
 			// vx_node node =vxAndNode(graph, img1, img2, img_out);
 			// vx_node node = vxOrNode(graph, img1, img2, img_out);
 			// vx_node node = vxXorNode(graph, img1, img2, img_out);
-			vx_node node = vxNotNode(graph,img2, img_out);
+			// vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
 			
 
 
@@ -373,7 +373,9 @@ int main(int argc, const char ** argv) {
 	// int expected =  ((h_rect*w_rect) * (pix_img1 & pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 & pix_outer_img2)); // And_U8_U8U8
 	// int expected =  ((h_rect*w_rect) * (pix_img1 | pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 | pix_outer_img2)); // Or_U8_U8U8
 	// int expected =  ((h_rect*w_rect) * (pix_img1 ^ pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 ^ pix_outer_img2)); // Xor_U8_U8U8
-	int expected = ((h_rect*w_rect) * (255-pix_inner_img2)) + (((width * height) * (255-pix_outer_img2) )- ((h_rect*w_rect) * (255 - pix_outer_img2)));
+	// int expected = ((h_rect*w_rect) * (255-pix_inner_img2)) + (((width * height) * (255-pix_outer_img2) )- ((h_rect*w_rect) * (255 - pix_outer_img2)));//Not_U8_U8U8
+	int expected =  ((h_rect*w_rect) * ((pix_img1 >= pix_inner_img2) ? (pix_img1 - pix_inner_img2) : (pix_inner_img2 - pix_img1)) ) + 
+(((width * height) - (h_rect*w_rect)) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
 	
 	/*********************** PRINT OUTPUT IMAGE ***********************/
 #ifdef PRINT_OUTPUT

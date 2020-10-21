@@ -58,7 +58,7 @@ Hip_And_U8_U8U8
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
@@ -81,7 +81,7 @@ int HipExec_And_U8_U8U8
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     //printf("HipExec_And_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
      //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
     hipEventCreate(&start);

@@ -124,7 +124,7 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*width )
+				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
 					image_data[i*width + j] = inner_pix_val;
 				else
 					image_data[i*width + j] = outer_pix_val;
@@ -160,7 +160,7 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*width )
+				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
 					ptr[i*width + j] = inner_pix_val;
 				else
 					ptr[i*width + j] = outer_pix_val;
@@ -360,7 +360,9 @@ int main(int argc, const char ** argv) {
 	// int expected =  (width*height * pix_img1) + (width*height*pix_outer_img2 - (0.2*width *0.6*height *pix_outer_img2) + (0.2*width *0.6*height *pix_inner_img2)); //ADD
 	// int expected = 20 * 60 * 5; //ADD_S16_S16U8_Wrap
 	// int expected =  (width*height * pix_img1) - (width*height*pix_outer_img2 - (0.2*width *0.6*height *pix_outer_img2) + (0.2*width *0.6*height *pix_inner_img2)); //SUB_U8_U8U8_Wrap & SUB_U8_U8U8_Sat
-	int expected = 	(width*height*(pix_img1 & pix_outer_img2) -  (((int)(0.6*width) -(int)(0.4*width)) *((int)(0.8*height)-(int)(0.2*height)) *(pix_img1 & pix_outer_img2) )  +(((int)(0.6*width) -(int)(0.4*width)) *((int)(0.8*height)-(int)(0.2*height)) *(pix_img1 & pix_inner_img2) ) );//AND 
+	int h_rect = (int)(0.8*height)-(int)(0.2*height);
+	int w_rect = (int)(0.6*width) -(int)(0.4*width);
+	int expected = 	(width*height*(pix_img1 & pix_outer_img2) -  ((w_rect) *(h_rect) *(pix_img1 & pix_outer_img2) )  +((w_rect) *(h_rect) *(pix_img1 & pix_inner_img2) ) );//AND 
 
 	/*********************** PRINT OUTPUT IMAGE ***********************/
 #ifdef PRINT_OUTPUT

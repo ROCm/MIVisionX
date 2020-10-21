@@ -105,6 +105,11 @@ int HipExec_Xor_U8_U8U8(
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
         );
+int HipExec_Not_U8_U8U8(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
 
 // statistical_kernels
 

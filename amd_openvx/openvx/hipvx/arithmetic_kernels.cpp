@@ -40,7 +40,6 @@ __device__ __forceinline__ float2 s16Tofloat2( int src)
     //  return make_float4((float)(src&0xFFFF), (float)((src&0xFFFF0000)>>16), (float)((src&0xFFFF00000000)>>32), (float)((src&0xFFFF000000000000)>>48));
 }
 
-
 __device__ __forceinline__ uint float4ToUint(float4 src)
 {
   return ((int)src.x&0xFF) | (((int)src.y&0xFF)<<8) | (((int)src.z&0xFF)<<16)| (((int)src.w&0xFF) << 24);
@@ -59,7 +58,7 @@ Hip_AbsDiff_U8_U8U8(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
@@ -77,7 +76,7 @@ int HipExec_AbsDiff_U8_U8U8(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     //printf("HipExec_AbsDiff_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
      //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
@@ -112,7 +111,7 @@ Hip_Add_U8_U8U8_Wrap(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
@@ -129,8 +128,8 @@ int HipExec_Add_U8_U8U8_Wrap(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
-    //printf("HipExec_AbsDiff_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    //printf("HipExec_Add_U8_U8U8_Wrap: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
      //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
     hipEventCreate(&start);
@@ -160,7 +159,7 @@ Hip_Add_U8_U8U8_Sat(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
@@ -177,8 +176,8 @@ int HipExec_Add_U8_U8U8_Sat(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *p
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
-    //printf("HipExec_AbsDiff_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    //printf("HipExec_Add_U8_U8U8_Sat: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
      //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
     hipEventCreate(&start);
@@ -314,7 +313,7 @@ int HipExec_Add_S16_S16U8_Wrap(
 // ----------------------------------------------------------------------------
 // VxSub kernels for hip backend
 // ----------------------------------------------------------------------------
-// VxSubtract kernel for hip backend
+
 __global__ void __attribute__((visibility("default")))
 Hip_Subtract_U8_U8U8_Wrap
 	(

@@ -91,7 +91,7 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		vx_uint8 image_data[width*height];
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=0.4*height && i < 0.6*height && j >= 0.2*width && j<0.8*width )
+				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
 					image_data[i*width + j] = inner_pix_val;
 				else
 					image_data[i*width + j] = outer_pix_val;
@@ -112,7 +112,7 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=0.4*height && i < 0.6*height && j >= 0.2*width && j<0.8*width )
+				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
 					ptr[i*width + j] = inner_pix_val;
 				else
 					ptr[i*width + j] = outer_pix_val;
@@ -299,10 +299,9 @@ int main(int argc, const char ** argv) {
 
 
 	// VERIFYING KERNELS
-	int h_rect = (int)(0.6*height) - (int)(0.4*height);
-	int w_rect = (int)(0.8*width) - (int)(0.2*width);
+	int h_rect = (int)(0.6*width) - (int)(0.4*width);
+	int w_rect = (int)(0.8*height) - (int)(0.2*height);
 	// int expected = 20*60*255;     // white only in roi 
-	// int expected = (115 * 20 * 60); // AbsDiff
 
 	// int expected =  ((h_rect*w_rect) * (pix_img1 + pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 + pix_outer_img2)); //Add_U8_U8U8_Wrap & Add_U8_U8U8_Sat
 	int expected =  ((h_rect*w_rect) * (pix_img1 - pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 - pix_outer_img2)); //Sub_U8_U8U8_Wrap & Sub_U8_U8U8_Sat

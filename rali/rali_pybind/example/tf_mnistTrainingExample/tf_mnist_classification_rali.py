@@ -184,4 +184,4 @@ def main():
 	train_mnist_rali(image_path, _rali_cpu, bs)
 
 if __name__ == '__main__':
-    main() 
+	main()

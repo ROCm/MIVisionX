@@ -9,7 +9,7 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 
 def _data_path(data_directory:str, name:str) -> str:
-    """Construct a full path to a TFRecord file to be stored in the 
+    """Construct a full path to a TFRecord file to be stored in the
     data_directory. Will also ensure the data directory exists
     
     Args:

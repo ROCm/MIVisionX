@@ -14,6 +14,7 @@
 #include <string>
 #include <chrono>
 #define DUMP_IMAGE  0
+#define PRINT_OUTPUT 
 
 #define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; } }
 #define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return -1; } }
@@ -40,7 +41,7 @@ inline int64_t clockFrequency()
 	return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
 }
 
-vx_status makeInputImage1(vx_context context, vx_image img, int width, int height, int mem_type)
+vx_status makeInputImage1(vx_context context, vx_image img, int width, int height, int mem_type, int pix_val)
 {
 	ERROR_CHECK_OBJECT((vx_reference)img);
 
@@ -49,7 +50,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 		vx_uint8 image_data[width*height];
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				image_data[i*width + j] = 100;
+				image_data[i*width + j] = pix_val;
 			}
 		}
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
@@ -68,7 +69,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				ptr[i*width + j] = 100;
+				ptr[i*width + j] = pix_val;
 			}
 		}
 		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -83,7 +84,7 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 	return VX_SUCCESS;
 }
 
-vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, int mem_type)
+vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, int mem_type, int outer_pix_val,int inner_pix_val)
 {
 	ERROR_CHECK_OBJECT((vx_reference)img);
 
@@ -91,10 +92,10 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		vx_uint8 image_data[width*height];
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=40 && i < 60 && j >= 20 && j<80 )
-					image_data[i*width + j] = 50;
+				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*width )
+					image_data[i*width + j] = inner_pix_val;
 				else
-					image_data[i*width + j] = 100;
+					image_data[i*width + j] = outer_pix_val;
 			}
 		}
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
@@ -112,10 +113,10 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=40 && i < 60 && j >= 20 && j<80 )
-					ptr[i*width + j] = 50;
+				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*width )
+					ptr[i*width + j] = inner_pix_val;
 				else
-					ptr[i*width + j] = 100;
+					ptr[i*width + j] = outer_pix_val;
 			}
 		}
 		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
@@ -133,11 +134,25 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 
 int main(int argc, const char ** argv) {
 
+	 // check command-line usage
+    const size_t MIN_ARG_COUNT = 7;
+    if(argc < MIN_ARG_COUNT){
+   	 printf( "Usage: ./hipvx_sample <width> <height> <gpu=1/cpu=0> <image1 pixel value> <image2 outer pixel value> <image2 inner pixel value>\n" );
+        return -1;
+    }
+	//image pixel values  user given
+	int pix_img1, pix_outer_img2, pix_inner_img2;
+	pix_img1 =  atoi(argv[4]);
+	pix_outer_img2 =  atoi(argv[5]);
+	pix_inner_img2 =  atoi(argv[6]);
+
+
 	void *ptr[3] = {nullptr, nullptr, nullptr};     // hip
 	int64_t freq = clockFrequency(), t0, t1;
 	vx_image img1, img2, img_out;
 	vx_uint32 width = atoi(argv[1]);
 	vx_uint32 height = atoi(argv[2]);
+	
 	int affinity = atoi(argv[3]);           // 0 for CPU and 1 for GPU
 	if (width <= 0) width = 100;
 	if (height <= 0) height = 100;
@@ -186,8 +201,8 @@ int main(int argc, const char ** argv) {
 			if (node)
 			{
 				status = vxVerifyGraph(graph);
-				ERROR_CHECK_STATUS(makeInputImage1(context, img1, width, height, VX_MEMORY_TYPE_HOST));
-				ERROR_CHECK_STATUS(makeInputImage2(context, img2, width, height, VX_MEMORY_TYPE_HOST));
+				ERROR_CHECK_STATUS(makeInputImage1(context, img1, width, height, VX_MEMORY_TYPE_HOST, pix_img1));
+				ERROR_CHECK_STATUS(makeInputImage2(context, img2, width, height, VX_MEMORY_TYPE_HOST, pix_outer_img2, pix_inner_img2));
 				printf("After makeInputImage\n");
 				if (status == VX_SUCCESS)
 				{
@@ -247,8 +262,8 @@ int main(int argc, const char ** argv) {
 			if (node)
 			{
 				status = vxVerifyGraph(graph);
-				ERROR_CHECK_STATUS(makeInputImage1(context, img1, width, height, VX_MEMORY_TYPE_HIP));
-				ERROR_CHECK_STATUS(makeInputImage2(context, img2, width, height, VX_MEMORY_TYPE_HIP));
+				ERROR_CHECK_STATUS(makeInputImage1(context, img1, width, height, VX_MEMORY_TYPE_HIP, pix_img1));
+				ERROR_CHECK_STATUS(makeInputImage2(context, img2, width, height, VX_MEMORY_TYPE_HIP, pix_outer_img2, pix_inner_img2));
 				if (status == VX_SUCCESS)
 				{
 					status = vxProcessGraph(graph);
@@ -288,10 +303,18 @@ int main(int argc, const char ** argv) {
 	// int expected = (120 * 100 * 100) + (5 * 20 * 60) +  (120 * ((100 * 100) - (20 * 60))); // Add
 	// int expected = (140 * 100 * 100) + (5 * 20 * 60) +  (140 * ((100 * 100) - (20 * 60))); // Add
 	// int expected = 20 * 60 * 5; //ADD_S16_S16U8_Wrap
-	int expected = 20 * 60 * 50 ; //SUB_U8_U8U8_Wrap & SUB_U8_U8U8_Sat
-
-
-
+	int expected =  (width*height * pix_img1) -(width*height*pix_outer_img2 - (0.2*width *0.6*height *pix_outer_img2) + (0.2*width *0.6*height *pix_inner_img2)); //SUB_U8_U8U8_Wrap & SUB_U8_U8U8_Sat
+	//PRINT OUTPUT IMAGE
+#ifdef PRINT_OUTPUT
+	 int i,j;
+       for ( i = 0; i< height ; i++, printf("\n"))
+       {
+               for(j=0 ; j<width ; j++)
+               {
+                       printf("%d \t",out_buf[i*width + j]);
+               }
+       }
+#endif
 
 	
 	int sum = 0;

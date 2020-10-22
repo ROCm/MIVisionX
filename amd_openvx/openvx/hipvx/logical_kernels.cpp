@@ -56,7 +56,7 @@ Hip_And_U8_U8U8
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
@@ -79,7 +79,7 @@ int HipExec_And_U8_U8U8
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     //printf("HipExec_And_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
      //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
     hipEventCreate(&start);
@@ -218,7 +218,60 @@ int HipExec_Xor_U8_U8U8(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipD
 // ----------------------------------------------------------------------------
 // VxNot kernels for hip backend
 // ----------------------------------------------------------------------------
+// VxNot(Bitwise NOT) kernel for hip backend
+__global__ void __attribute__((visibility("default")))
+Hip_Not_U8_U8U8
+	(
+        vx_uint32     dstWidth,
+        vx_uint32     dstHeight,
+        unsigned int     * pDstImage,
+        unsigned int     dstImageStrideInBytes,
+        const unsigned int    * pSrcImage,
+        unsigned int     srcImageStrideInBytes
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x>= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
+    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + x;
+    float4 src = ucharTofloat4(pSrcImage[srcIdx]);
+    float4 dst = make_float4(~(int)src.x, ~(int)src.y, ~(int)src.z,~(int) src.w);
+    pDstImage[dstIdx] = ((int)dst.x&0xFF) | (((int)dst.y&0xFF)<<8) | (((int)dst.z&0xFF)<<16)| (((int)dst.w&0xFF) << 24);
+}
 
+int HipExec_Not_U8_U8U8
+    (
+    vx_uint32     dstWidth,
+    vx_uint32     dstHeight,
+    vx_uint8     * pHipDstImage,
+    vx_uint32     dstImageStrideInBytes,
+    const vx_uint8    * pHipSrcImage,
+    vx_uint32     srcImage1StrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    //printf("HipExec_AbsDiff_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
+     //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Not_U8_U8U8,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage, srcImage1StrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("HipExec_Not_U8_U8U8: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
 
 
 

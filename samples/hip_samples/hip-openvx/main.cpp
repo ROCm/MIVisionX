@@ -248,10 +248,10 @@ int main(int argc, const char ** argv) {
 		
 			/*********************** TESTING KERNELS FOR HOST ***********************/
 
-			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
+			vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
-			vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			// vx_node node = vxMultiplyNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
 			// vx_node node =vxAndNode(graph, img1, img2, img_out);
@@ -311,10 +311,10 @@ int main(int argc, const char ** argv) {
 
 		/*********************** TESTING KERNELS FOR GPU ***********************/
 
-			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
+			vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
-			vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			// vx_node node =vxAndNode(graph, img1, img2, img_out);
 			// vx_node node = vxOrNode(graph, img1, img2, img_out);
@@ -362,9 +362,10 @@ int main(int argc, const char ** argv) {
 	int h_rect = (int)(0.8*height)-(int)(0.2*height);
 	int w_rect = (int)(0.6*width) -(int)(0.4*width);
 	// int expected = 20*60*255;     // white only in roi 
-
+	int expected =  ((h_rect*w_rect) * ((pix_img1 > pix_inner_img2) ? (pix_img1 - pix_inner_img2) : (pix_inner_img2 - pix_img1)) ) + 
+					(((width * height) - (h_rect*w_rect)) * ((pix_img1 > pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
 	// int expected =  ((h_rect*w_rect) * (pix_img1 + pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 + pix_outer_img2)); //Add_U8_U8U8_Wrap & Add_U8_U8U8_Sat
-	int expected =  ((h_rect*w_rect) * (pix_img1 - pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 - pix_outer_img2)); //Sub_U8_U8U8_Wrap & Sub_U8_U8U8_Sat
+	// int expected =  ((h_rect*w_rect) * (pix_img1 - pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 - pix_outer_img2)); //Sub_U8_U8U8_Wrap & Sub_U8_U8U8_Sat
 
 	// int expected =  ((h_rect*w_rect) * (pix_img1 & pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 & pix_outer_img2)); // And_U8_U8U8
 	// int expected =  ((h_rect*w_rect) * (pix_img1 | pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 | pix_outer_img2)); // Or_U8_U8U8

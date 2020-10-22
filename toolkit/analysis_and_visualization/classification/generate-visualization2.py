@@ -158,10 +158,10 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
         for img in resultDataBase:
             imgName = img[0]
             gt = int(img[1])
-
             labels = [int(x) for x in img[2:2+topk]]
             labelTexts = [labelLines[l] for l in labels]
             probs = [float(x) for x in img[2+topk: 2+topk+topk]]
+
             if gt >= 0:
                 gtLabelText = labelLines[gt]
                 match = 0
@@ -277,16 +277,26 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
             stat['avgPassProb'] = topTotProb[i] / topCounts[i]
         topKStats.append(stat)
 
+    return stats, topCounts, topKStats
+
+
+def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores, matchCounts):
+
     with open(os.path.join(resultsDirectory, 'results_1.js'), 'w') as resJson:
         currentDateString = (
             datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        jsonString = json.dumps({'stats': stats, 'topCounts': topCounts,
+        scores = {}
+        scores['modelScores'] = modelScores
+        scores['matchCounts'] = matchCounts
+
+        jsonString = json.dumps({'stats': stats,
+                                 'topCounts': topCounts,
                                  'topKStats': topKStats,
-                                 'summaryGenerationDate': currentDateString})
+                                 'summaryGenerationDate': currentDateString,
+                                 'scores': scores})
+
         jsScript = "var data = " + jsonString
         resJson.write(jsScript)
-
-    return stats, topCounts, topKStats
 
 
 def generateCompareResultSummary(toolKit_dir, modelName, dataFolder, stats):
@@ -302,7 +312,7 @@ def generateCompareResultSummary(toolKit_dir, modelName, dataFolder, stats):
         os.makedirs(modelFolderName)
 
     summaryFileName = os.path.join(folderName, 'modelRunHistoryList.json')
-    stats['modelName'] = modelName
+    stats['modelName'] = modelName or 'Generic Model'
     stats['genDate'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     if os.path.exists(summaryFileName):
@@ -335,6 +345,142 @@ def generateCompareResultSummary(toolKit_dir, modelName, dataFolder, stats):
     #     next(savedResultFileCSV, None)  # skip header
     #     savedResultDataBase = [r for r in savedResultFileCSV]
     #     savedResultElements = len(savedResultDataBase)
+
+
+def processHierarchy(resultDataBase, labelLines, hierarchyDataBase):
+    topk = 5
+    topKPassFail = np.zeros(shape=(100, 2))
+    topKHierarchyPassFail = np.zeros(shape=(100, 12))
+    for img in resultDataBase:
+        imgName = img[0]
+        gt = int(img[1])
+        labels = [int(x) for x in img[2:2+topk]]
+        labelTexts = [labelLines[l] for l in labels]
+        probs = [float(x) for x in img[2+topk: 2+topk+topk]]
+
+        if gt >= 0:
+            if gt == labels[0]:
+                count = 0
+                f = 0.0
+                while f < 1:
+                    if probs[0] < (f+0.01) and probs[0] > f:
+                        topKPassFail[count][0] += 1
+                        topKHierarchyPassFail[count][0] += 1
+                        topKHierarchyPassFail[count][2] += 1
+                        topKHierarchyPassFail[count][4] += 1
+                        topKHierarchyPassFail[count][6] += 1
+                        topKHierarchyPassFail[count][8] += 1
+                        topKHierarchyPassFail[count][10] += 1
+
+                    count += 1
+                    f += 0.01
+            else:
+                count = 0
+                f = 0
+                while f < 1:
+                    if((probs[0] < (f + 0.01)) and probs[0] > f):
+                        topKPassFail[count][1] += 1
+                        truthHierarchy = hierarchyDataBase[gt]
+                        resultHierarchy = hierarchyDataBase[labels[0]]
+                        token_result = ''
+                        token_truth = ''
+                        previousTruth = 0
+                        catCount = 0
+                        while catCount < 6:
+                            token_truth = truthHierarchy[catCount]
+                            token_result = resultHierarchy[catCount]
+                            if((token_truth != '') and (token_truth == token_result)):
+                                topKHierarchyPassFail[count][catCount*2] += 1
+                                previousTruth = 1
+                            elif((previousTruth == 1) and (token_truth == '' and token_result == '')):
+                                topKHierarchyPassFail[count][catCount*2] += 1
+                            else:
+                                topKHierarchyPassFail[count][catCount*2 + 1] += 1
+                                previousTruth = 0
+                            catCount += 1
+                    count += 1
+                    f += 0.01
+
+    return topKPassFail, topKHierarchyPassFail
+
+
+def generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFail):
+    print("hierarchySummary.csv generation ..")
+    orig_stdout = sys.stdout
+    sys.stdout = open(resultsDirectory+'/hierarchySummary.csv', 'w')
+    print("Probability,Pass,Fail,cat-1 pass,cat-1 fail,cat-2 pass, cat-2 fail,"
+          "cat-3 pass,cat-3 fail,cat-4 pass,cat-4 fail,cat-5 pass,cat-5 fail,cat-6 pass,cat-6 fail")
+    i = 99
+    f = 0.99
+    while i >= 0:
+        print("%.2f,%d,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f" % (f, topKPassFail[i][0], topKPassFail[i][1],
+                                                                                          topKHierarchyPassFail[i][0], topKHierarchyPassFail[
+                                                                                              i][1], topKHierarchyPassFail[i][2],
+                                                                                          topKHierarchyPassFail[i][3], topKHierarchyPassFail[
+                                                                                              i][4], topKHierarchyPassFail[i][5],
+                                                                                          topKHierarchyPassFail[i][6], topKHierarchyPassFail[
+                                                                                              i][7], topKHierarchyPassFail[i][8],
+                                                                                          topKHierarchyPassFail[i][9], topKHierarchyPassFail[i][10], topKHierarchyPassFail[i][11]))
+        f = f - 0.01
+        i = i - 1
+
+    sys.stdout = orig_stdout
+    print("hierarchySummary.csv generated ..")
+
+
+def readHierarchyFile(hierarchyFile):
+    if hierarchyFile != '':
+        hierarchyElements = 0
+        with open(hierarchyFile) as hierarchy:
+            hierarchyCSV = csv.reader(hierarchy)
+            hierarchyDataBase = [r for r in hierarchyCSV]
+            hierarchyElements = len(hierarchyDataBase)
+        return hierarchyDataBase, hierarchyElements
+
+
+def calculateHierarchyPenalty(truth, result, hierarchyDataBase):
+    if hierarchyDataBase == None:
+        return 0
+
+    penaltyValue = 0
+    penaltyMultiplier = 0
+    truthHierarchy = hierarchyDataBase[truth]
+    resultHierarchy = hierarchyDataBase[result]
+    token_result = ''
+    token_truth = ''
+    previousTruth = 0
+    catCount = 0
+
+    while catCount < 6:
+        token_truth = truthHierarchy[catCount]
+        token_result = resultHierarchy[catCount]
+        if((token_truth != '') and (token_truth == token_result)):
+            previousTruth = 1
+        elif((previousTruth == 1) and (token_truth == '' and token_result == '')):
+            previousTruth = 1
+        else:
+            previousTruth = 0
+            penaltyMultiplier += 1
+        catCount += 1
+
+    penaltyMultiplier = float(penaltyMultiplier - 1)
+    penaltyValue = (0.2 * penaltyMultiplier)
+
+    return penaltyValue
+
+
+def createScoreSummary(stats, topCounts):
+    topk = 5
+    topScores = [float(t) for t in topCounts]
+    modelScores = [0.0] * topk
+    matchCounts = [0] * topk
+
+    for i in range(topk):
+        modelScores[i] = (sum(topScores[:i+1]) /
+                          stats['netSummaryImages']) * 100.0
+        matchCounts[i] = sum(topCounts[:i+1])
+
+    return modelScores, matchCounts
 
 
 def main():
@@ -387,15 +533,34 @@ def main():
 
     toolkit_dir, resultsDirectory = copyHtmlAssets(outputDirectory, fileName)
     imageDir = None
-
     if inputImageDirectory:
         imageDir = copyImages(inputImageDirectory, toolkit_dir)
 
     generateTop1Result(resultsDirectory, resultDataBase, labelLines)
+
     stats, topCounts, topKStats = generateComprehensiveResults(
         resultsDirectory, resultDataBase, labelLines, imageDir)
-
     generateCompareResultSummary(toolkit_dir, modelName, 'images', stats)
+
+    if args.hierarchy:
+        hierarchyDataBase, hierarchyElements = readHierarchyFile(hierarchyFile)
+        if hierarchyElements != labelElements:
+            print("ERROR Invalid Hierarchy file / label File")
+            exit()
+
+        topKPassFail, topKHierarchyPassFail = processHierarchy(
+            resultDataBase, labelLines, hierarchyDataBase)
+
+        generateHierarchySummary(
+            resultsDirectory, topKPassFail, topKHierarchyPassFail)
+    else:
+        hierarchyDataBase = None
+
+    modelScores, matchCounts = createScoreSummary(stats, topCounts)
+
+    # Write to result json
+    writeResultsJson(resultsDirectory, stats, topCounts, topKStats,
+                     modelScores, matchCounts)
 
 
 if __name__ == '__main__':

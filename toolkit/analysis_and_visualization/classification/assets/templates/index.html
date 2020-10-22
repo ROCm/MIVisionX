@@ -294,54 +294,203 @@
         </h1>
     </a>
 
-    <table id="filterTable" class="center" style="width: 60%">
+    <table id="filterTable" class="center" style="width: 80%">
         <tr>
-            <td><input type="text" size="10" id="fli_gtText" data-compare="contains" onkeyup="filterResultTable(event)"
-                    placeholder="Ground Truth Text" title="Ground Truth Text"></td>
-            <td><input type="text" size="10" id="fli_gt" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_gtText">
+                    <option value="eq">=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains" selected>Inc.</option>
+                </select>
+                <input type="text" size="10" id="fli_gtText" data-compare="contains" onkeyup="filterResultTable(event)"
+                    placeholder="Ground Truth Text" title="Ground Truth Text">
+
+            </td>
+            <td>
+                <select id="fli_op_gt">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+                <input type="text" size="10" id="fli_gt" onkeyup="filterResultTable(event)"
                     placeholder="Ground Truth ID" title="Ground Truth ID"></td>
-            <td><input type="text" size="10" maxlength="2" id="fli_match" onkeyup="filterResultTable(9,id)"
+            <td>
+                <select id="fli_op_match">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+
+                <input type="text" size="10" maxlength="2" id="fli_match" onkeyup="filterResultTable(9,id)"
                     placeholder="Matched" title="Type in a name"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_labels_0" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_labels_0">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+
+                <input type="text" size="10" data-is-array="true" id="fli_labels_0" onkeyup="filterResultTable(event)"
                     placeholder="1st Match" title="1st Match"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_probs_0" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_probs_0">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+
+                <input type="text" size="10" data-is-array="true" id="fli_probs_0" onkeyup="filterResultTable(event)"
                     placeholder="1st Match Conf" title="1st Match Prob"></td>
-            <td><input type="text" size="10" data-is-array="true" data-compare="contains" id="fli_labelTexts_0"
+            <td>
+                <select id="fli_op_labelTexts_0">
+                    <option value="eq">=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains" selected>Inc.</option>
+                </select>
+
+                <input type="text" size="10" data-is-array="true" data-compare="contains" id="fli_labelTexts_0"
                     onkeyup="filterResultTable(10,id)" placeholder="Text 1" title="Text1"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_labels_1" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_labels_1">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+
+                <input type="text" size="10" data-is-array="true" id="fli_labels_1" onkeyup="filterResultTable(event)"
                     placeholder="2nd Match" title="2nd Match"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_probs_1" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_probs_1">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+
+                <input type="text" size="10" data-is-array="true" id="fli_probs_1" onkeyup="filterResultTable(event)"
                     placeholder="2nd Match Conf" title="2nd Match Prob"></td>
         </tr>
         <tr>
-            <td><input type="text" size="10" data-is-array="true" id="fli_labels_2" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_labels_2">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+
+                <input type="text" size="10" data-is-array="true" id="fli_labels_2" onkeyup="filterResultTable(event)"
                     placeholder="3rd Match" title="3rd Match"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_probs_2" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_probs_2">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+                <input type="text" size="10" data-is-array="true" id="fli_probs_2" onkeyup="filterResultTable(event)"
                     placeholder="3rd Match Conf" title="3rd Match Prob"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_labels_3" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_labels_3">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+                <input type="text" size="10" data-is-array="true" id="fli_labels_3" onkeyup="filterResultTable(event)"
                     placeholder="4th Match" title="4th Match"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_probs_3" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_probs_3">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+                <input type="text" size="10" data-is-array="true" id="fli_probs_3" onkeyup="filterResultTable(event)"
                     placeholder="4th Match Conf" title="4th Match Prob"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_labels_4" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_labels_4">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+                <input type="text" size="10" data-is-array="true" id="fli_labels_4" onkeyup="filterResultTable(event)"
                     placeholder="5th Match" title="5th Match"></td>
-            <td><input type="text" size="10" data-is-array="true" id="fli_probs_4" onkeyup="filterResultTable(event)"
+            <td>
+                <select id="fli_op_probs_4">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                    <option value="gt">&gt;</option>
+                    <option value="lt">&lt;</option>
+                    <option value="gte">&gt;=</option>
+                    <option value="lte">&lt;=</option>
+                    <option value="contains">Inc.</option>
+                </select>
+                <input type="text" size="10" data-is-array="true" id="fli_probs_4" onkeyup="filterResultTable(event)"
                     placeholder="5th Match Conf" title="5th Match Prob"></td>
             <td></td>
-            <td align="center"><button style="background-color:yellow;" onclick="clearResultFilter()">Clear
+            <td><button style="background-color:yellow;" onclick="clearResultFilter()">Clear
                     Filter</button></td>
         </tr>
         <tr>
             <td colspan="3">
                 <input type="radio" name="filterType" value="and" checked>And
                 <input type="radio" name="filterType" value="or">Or
-                <input type="radio" name="filterType" value="not">Not
+                <input id="not-op" type="checkbox" name="filterType" value="true">Not
             </td>
-            <td align="center"><button style="background-color:salmon;" onclick="notResultFilter()">Not Filter</button>
+            <!-- <td align="center"><button style="background-color:salmon;" onclick="notResultFilter()">Not Filter</button>
             </td>
             <td align="center"><button style="background-color:salmon;" onclick="andResultFilter()">AND Filter</button>
             </td>
             <td align="center"><button style="background-color:salmon;" onclick="orResultFilter()">OR Filter</button>
-            </td>
+            </td> -->
         </tr>
     </table>
     <br>
@@ -406,6 +555,37 @@
     <div class="row" id="compare-result-graphs">
 
     </div>
+
+
+
+    <!-- Scores -->
+    <a name="table6">
+        <h1 class="header">
+            <br><br><em>Model Score
+            </em>
+        </h1>
+    </a>
+    <br>
+    <h1 class="center score-heading">
+        Standard Scoring
+    </h1>
+
+    <table id="standard-scoring-table" class="center marron-header scoring-table">
+        <thead>
+            <th>1st Match</th>
+            <th>2nd Match</th>
+            <th>3rd Match</th>
+            <th>4th Match</th>
+            <th>5th Match</th>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Loading..</td>
+            </tr>
+        </tbody>
+    </table>
+
+
 
 
 

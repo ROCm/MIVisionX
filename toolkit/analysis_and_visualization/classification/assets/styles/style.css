@@ -364,3 +364,17 @@ select {
     float: left;
     width: 25%;
 }
+
+.marron-header th {
+    color: maroon
+}
+
+.scoring-table {
+    font-weight: bold;
+    width: 40%;
+}
+
+.score-heading {
+    color: darksalmon;
+    font-size: large;
+}

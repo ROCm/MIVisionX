@@ -44,9 +44,20 @@ function loadLabelSummary(labelSummaryLocal) {
         var row = $('<tr>');
         var id = label.id;
         var totalImageClass = label.totalImages > 0 ? 'color-green' : '';
-        var misclassifiedClass = label.misclassifiedTop1 == 0 ? 'color-green' : label.totalImages > 0 ? 'color-black' : 'color-red';
-        row.append($('<td>').attr('class', 'blue').text(label.id));
-        row.append($('<td>').attr('class', 'blue left-align').text(label.label));
+
+        var misclassifiedClass = label.misclassifiedTop1 == 0 ? 'color-green' : (label.totalImages > 0 ? 'color-red' : 'color-black');
+
+
+        row.append($('<td>').attr({
+            'class': 'blue filter-image',
+            'data-id': label.id
+        }).text(label.id));
+
+        row.append($('<td>').attr({
+            'class': 'blue left-align filter-image',
+            'data-id': label.id
+        }).text(label.label));
+
         row.append($('<td>').attr('class', 'blue ' + totalImageClass).text(label.totalImages));
         row.append($('<td>').attr('class', 'blue').text(label.matchedTop1Per.toFixed(2)));
         row.append($('<td>').attr('class', 'blue').text(label.matchedTop5Per.toFixed(2)));
@@ -55,7 +66,12 @@ function loadLabelSummary(labelSummaryLocal) {
         row.append($('<td>').attr('class', 'blue').text(label.match3));
         row.append($('<td>').attr('class', 'blue').text(label.match4));
         row.append($('<td>').attr('class', 'blue').text(label.match4));
-        row.append($('<td>').attr('class', 'blue ' + misclassifiedClass).text(label.misclassifiedTop1));
+        row.append($('<td>').attr({
+            'class': 'blue filter-image ' + misclassifiedClass,
+            'data-id': label.id,
+            'data-type': 'misclassified'
+        }).text(label.misclassifiedTop1));
+
         row.append($('<td>').html('<input id="id_"' + id + ' name="id[' + id + ']" type="checkbox" value="' + id + '" onClick="highlightRow(this);"></input>'));
         myTableBody.append(row);
     });
@@ -102,29 +118,33 @@ function clearLabelFilter() {
 
 function highlightRow(element) {
     var parentRow = element.parentElement.parentElement;
-
     parentRow.classList.toggle("highlight-row");
     console.log(element.parentElement.parentElement);
 
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    $('#generation-date').html(data.summaryGenerationDate);
-
-    insertIntoTopKTable();
-    showStatsOnTable();
-    loadLabelSummary(labelSummary);
-    // loadImageResults(imageSummary);
-});
 
 //Create copy of imageSummary
 var imageSummaryFiltered = JSON.parse(JSON.stringify(imageSummary));
 
+function clearResultFilter() {
+    $('input[id ^= "fli_"]').val('');
+    imageSummaryFiltered = JSON.parse(JSON.stringify(imageSummary));
+    loadImageResults(imageSummaryFiltered);
+    updateItems();
+}
+
 function filterResultTable(e) {
     imageSummaryFiltered = [];
     var allEmpty = true;
-    var code = (e.keyCode ? e.keyCode : e.which);
+    if (e) {
+        var code = (e.keyCode ? e.keyCode : e.which);
+
+    }
     var combinationOp = $("input:radio[name='filterType']:checked").val();
+    var notOp = $('#not-op').is(":checked");
+
+
     var filters = {};
     var count = 0;
 
@@ -137,34 +157,49 @@ function filterResultTable(e) {
         var allNames = this.id.split("_");
         var property = allNames[1];
         var property_index = null;
+        var prop_name_new = allNames[1];
+
         if (allNames[2]) {
             property_index = parseInt(allNames[2]);
+            prop_name_new = prop_name_new + '_' + property_index;
         }
         var value = this.value;
         var compare = this.getAttribute('data-compare');
         var isArrayProp = this.getAttribute('data-is-array');
 
+        var op = $('#fli_op_' + prop_name_new).val();
+
+        // if (!op) {
+        //     op = 'eq';
+        // }
 
         if (value) {
             allEmpty = false;
-            filters[this.id] = value;
+            filters[this.id] = []
+            // if (compare)
+            //     filters[this.id].push('includes');
+            // else
+            //     filters[this.id].push('eq');
+            filters[this.id].push(op);
 
-            imageSummary.forEach(function (label) {
+            filters[this.id].push(value)
 
-                var compareResult = false;
-                var propertyValue = label[property];
-                if (isArrayProp) {
-                    propertyValue = propertyValue[property_index];
-                }
-                if (compare == 'contains') {
-                    compareResult = propertyValue.toLowerCase().includes(value.toLowerCase());
-                } else {
-                    compareResult = propertyValue == value;
-                }
-                if (compareResult) {
-                    imageSummaryFiltered.push(label);
-                }
-            });
+            // imageSummary.forEach(function (label) {
+
+            //     var compareResult = false;
+            //     var propertyValue = label[property];
+            //     if (isArrayProp) {
+            //         propertyValue = propertyValue[property_index];
+            //     }
+            //     if (compare == 'contains') {
+            //         compareResult = propertyValue.toLowerCase().includes(value.toLowerCase());
+            //     } else {
+            //         compareResult = propertyValue == value;
+            //     }
+            //     if (compareResult) {
+            //         imageSummaryFiltered.push(label);
+            //     }
+            // });
         }
 
 
@@ -173,30 +208,48 @@ function filterResultTable(e) {
 
     });
 
-    // console.log(filters);
+    console.log(filters);
 
-    // imageSummary.filter(function (item) {
+    imageSummaryFiltered = imageSummary.filter(function (item) {
+        // return item['gt'] == 1;
+        var allTrue = true;
+        var anyTrue = false;
 
-    //     for (var key in filters) {
-    //         var allNames = key.split("_");
-    //         var property = allNames[1];
-    //         var property_index = null;
-    //         if (allNames[2]) {
-    //             property_index = parseInt(allNames[2]);
-    //         }
-    //         var itemValue = item[property];
-    //         console.log(itemValue == filters[key]);
+        for (var key in filters) {
+            // console.log(key)
+            var allNames = key.split("_");
+            var property = allNames[1];
+            var property_index = null;
+            if (allNames[2]) {
+                property_index = parseInt(allNames[2]);
+            }
+            var itemValue = item[property];
+            if (allNames[2] >= 0) {
+                itemValue = itemValue[property_index];
+            }
 
-    //         if (property_index >= 0) {
-    //             itemValue = itemValue[property_index];
-    //         }
+            if (!compare(itemValue, filters[key][1], filters[key][0])) {
+                allTrue = false;
+            } else {
+                anyTrue = true;
+            }
 
-    //         if (itemValue == undefined || itemValue != filters[key]) {
-    //             return false;
-    //         }
-    //         return true;
-    //     }
-    // });
+
+        }
+
+        if (notOp == true) {
+            anyTrue = !anyTrue;
+            allTrue = !allTrue;
+        }
+        if (combinationOp == 'or') {
+            return anyTrue;
+        } else if (combinationOp == 'and') {
+            return allTrue
+        }
+
+        return true;
+
+    });
 
     if (allEmpty) {
         var perPage = 40;
@@ -369,4 +422,91 @@ jQuery(function ($) {
 
 
 
+});
+
+
+
+
+
+function loadScorings() {
+    var myTableBody = $('#standard-scoring-table').find("tbody");
+    myTableBody.empty();
+    var row = $('<tr>');
+    data.scores.matchCounts.forEach(function (value) {
+        row.append($('<td>').text(value));
+    });
+    myTableBody.append(row);
+
+    row = $('<tr>');
+    data.scores.modelScores.forEach(function (value) {
+        row.append($('<td>').text(value.toFixed(2) + "%"));
+    });
+    myTableBody.append(row)
+
+
+}
+
+
+function compare(a, b, operator) {
+
+    switch (operator) {
+        case 'contains':
+            return a.toString().toLowerCase().includes(b.toString().toLowerCase());
+            break;
+        case 'eq':
+            return a == b;
+        case 'neq':
+            return a != b;
+        case 'gt':
+            return a > b;
+        case 'lt':
+            return a < b;
+        case 'gte':
+            return a >= b;
+        case 'lte':
+            return a <= b;
+        default:
+            return a == b;
+    }
+}
+
+
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    $('#generation-date').html(data.summaryGenerationDate);
+
+    insertIntoTopKTable();
+    showStatsOnTable();
+    loadLabelSummary(labelSummary);
+    loadScorings();
+
+    $('.filter-image').on('click', function (event) {
+        var element = event.target;
+        var targetValue = element.dataset.id;
+        var toMisclassified = element.dataset.type;
+        console.log(element)
+        console.log(targetValue)
+        console.log(toMisclassified)
+        $('input[id ^= "fli_"]').val('');
+
+        if (!toMisclassified) {
+            $('#fli_gt').val(targetValue)
+        } else {
+            $('#fli_labels_0').val(targetValue);
+            $('#fli_match').val(1);
+            $('#fli_op_match').val('neq')
+        }
+        filterResultTable(event);
+        window.location.href = '#table4';
+
+    });
+
+    $('#not-op').click(function () {
+        filterResultTable();
+    });
+    $("input:radio[name='filterType']").click(function () {
+        filterResultTable();
+    });
+    // loadImageResults(imageSummary);
 });

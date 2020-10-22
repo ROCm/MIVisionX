@@ -46,11 +46,16 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
 	ERROR_CHECK_OBJECT((vx_reference)img);
 
 	if (mem_type == VX_MEMORY_TYPE_HOST) {
-		vx_uint8 image_data[width*height];
+		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
+        vx_map_id map_id;
+        vx_imagepatch_addressing_t addrId;
+        vx_uint8 * ptr;
 
+		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+		vx_size stride = addrId.stride_y;
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				image_data[i*width + j] = pix_val;
+				ptr[i*stride + j] = pix_val;
 			}
 		}
 #ifdef PRINT_OUTPUT
@@ -59,44 +64,40 @@ vx_status makeInputImage1(vx_context context, vx_image img, int width, int heigh
        {
                for(int j=0 ; j<width ; j++)
                {
-                       printf("%d \t",image_data[i*width + j]);
+                       printf("%d \t",ptr[i*stride + j]);
                }
        }
 #endif
-		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-		vx_imagepatch_addressing_t addr;
-		addr.dim_x = width;
-		addr.dim_y = height;
-		addr.stride_x = 1;
-		addr.stride_y = width;
-		ERROR_CHECK_STATUS(vxCopyImagePatch(img, &rect, 0, &addr, image_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
+
 	} else {
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
 		vx_map_id map_id;
 		vx_imagepatch_addressing_t addrId;
 
 		/*********************** TESTING IMAGE DATA TYPES FOR GPU ***********************/
-
 		// vx_int16 * ptr;
 		vx_uint8 * ptr;
 
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+		vx_size stride = addrId.stride_y;
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				ptr[i*width + j] = pix_val;
+				ptr[i*stride + j] = pix_val;
 			}
 		}
+		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
 #ifdef PRINT_OUTPUT
 		printf("Image1::\n");
 		for (int i = 0; i< height ; i++, printf("\n"))
        {
                for(int j=0 ; j<width ; j++)
                {
-                       printf("%d \t",ptr[i*width + j]);
+                       printf("%d \t",ptr[i*stride + j]);
                }
        }
 #endif
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
+
 #if DUMP_IMAGE
 		FILE *fp = fopen("input1.bin", "wb");
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
@@ -115,34 +116,32 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 	if (mem_type == VX_MEMORY_TYPE_HOST) {
 		/*********************** TESTING IMAGE DATA TYPES FOR HOST ***********************/
 
-		// vx_int16 image_data[width*height];
-		vx_uint8 image_data[width*height];
+		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
+        vx_map_id map_id;
+        vx_imagepatch_addressing_t addrId;
+        vx_uint8 * ptr;
 
+		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+		vx_size stride = addrId.stride_y;
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
-					image_data[i*width + j] = inner_pix_val;
-				else
-					image_data[i*width + j] = outer_pix_val;
+				// if ( i>=0.4*stride && i < 0.6*stride && j >= 0.2*height && j<0.8*height )
+				// 	ptr[i*stride + j] = inner_pix_val;
+				// else
+					ptr[i*stride + j] = outer_pix_val;
 			}
 		}
+		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
 #ifdef PRINT_OUTPUT
 		printf("Image2::\n");
        for (int i = 0; i< height ; i++, printf("\n"))
        {
                for(int j=0 ; j<width ; j++)
                {
-                       printf("%d \t",image_data[i*width + j]);
+                       printf("%d \t",ptr[i*width + j]);
                }
        }
 #endif
-		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-		vx_imagepatch_addressing_t addr;
-		addr.dim_x = width;
-		addr.dim_y = height;
-		addr.stride_x = 1;
-		addr.stride_y = width;
-		ERROR_CHECK_STATUS(vxCopyImagePatch(img, &rect, 0, &addr, image_data, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 	} else {
 		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
 		vx_map_id map_id;
@@ -154,25 +153,27 @@ vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_
 		vx_uint8 * ptr;
 
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+		vx_size stride = addrId.stride_y;
 		for (int i= 0; i< height; i++ ){
 			for (int j=0; j < width; j++) {
-				if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
-					ptr[i*width + j] = inner_pix_val;
-				else
-					ptr[i*width + j] = outer_pix_val;
+				// if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
+					// ptr[i*stride + j] = inner_pix_val;
+				// else
+					ptr[i*stride + j] = outer_pix_val;
 			}
 		}
+		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
 #ifdef PRINT_OUTPUT
 		printf("Image2::\n");
        for (int i = 0; i< height ; i++, printf("\n"))
        {
                for(int j=0 ; j<width ; j++)
                {
-                       printf("%d \t",ptr[i*width + j]);
+                       printf("%d \t",ptr[i*stride + j]);
                }
        }
 #endif
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
+		
 #if DUMP_IMAGE
 		FILE *fp = fopen("input2.bin", "wb");
 		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
@@ -211,7 +212,7 @@ int main(int argc, const char ** argv) {
 	int pix_img1, pix_outer_img2, pix_inner_img2;
 	pix_img1 = (argc < 5) ?  100 : atoi(argv[4]);
 	pix_outer_img2 =  (argc < 6) ?  100 : atoi(argv[5]);
-	pix_inner_img2 =  (argc < 7) ?  100 : atoi(argv[6]);
+	pix_inner_img2 =  (argc < 7) ?  50 : atoi(argv[6]);
 
 
 
@@ -249,7 +250,7 @@ int main(int argc, const char ** argv) {
 		
 			/*********************** TESTING KERNELS FOR HOST ***********************/
 
-			vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
+			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
@@ -258,7 +259,7 @@ int main(int argc, const char ** argv) {
 			// vx_node node =vxAndNode(graph, img1, img2, img_out);
 			// vx_node node = vxOrNode(graph, img1, img2, img_out);
 			// vx_node node = vxXorNode(graph, img1, img2, img_out);
-			// vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
+			vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
 
 			
 
@@ -285,11 +286,11 @@ int main(int argc, const char ** argv) {
 		addr.dim_x = width;
 		addr.dim_y = height;
 		addr.stride_x = 1;
-		addr.stride_y = width;
-		hipMalloc((void**)&ptr[0], width*height);
-		hipMalloc((void**)&ptr[1], width*height);
-		hipMalloc((void**)&ptr[2], width*height);
-		hipMemset(ptr[2], 0, width*height);
+		addr.stride_y = (width+3)&~3;
+		hipMalloc((void**)&ptr[0], width*addr.stride_y);
+		hipMalloc((void**)&ptr[1], width*addr.stride_y);
+		hipMalloc((void**)&ptr[2], width*addr.stride_y);
+		hipMemset(ptr[2], 0, width*addr.stride_y);
     	// printf("Main: dst: %p src1: %p src2: %p <%dx%d>\n", ptr[2], ptr[0], ptr[1], width, height);
 
 		/*********************** TESTING IMAGE TYPES FOR GPU-HIP ***********************/
@@ -314,7 +315,7 @@ int main(int argc, const char ** argv) {
 
 		/*********************** TESTING KERNELS FOR GPU ***********************/
 
-			vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
+			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
@@ -322,7 +323,7 @@ int main(int argc, const char ** argv) {
 			// vx_node node =vxAndNode(graph, img1, img2, img_out);
 			// vx_node node = vxOrNode(graph, img1, img2, img_out);
 			// vx_node node = vxXorNode(graph, img1, img2, img_out);
-			// vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
+			vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
 			
 
 
@@ -346,8 +347,8 @@ int main(int argc, const char ** argv) {
 	vx_rectangle_t rect = { 0, 0, width, height };
 	vx_map_id  map_id;
 	vx_imagepatch_addressing_t addr = {0};
-	addr.stride_x = 1;
-	addr.stride_y = width;
+	// addr.stride_x = 1;
+	// addr.stride_y = width;
 	
 	
 	
@@ -363,11 +364,22 @@ int main(int argc, const char ** argv) {
 
 	/*********************** VERIFYING KERNELS WITH EXPECTED OUTPUTS***********************/
 
-	int h_rect = (int)(0.8*height)-(int)(0.2*height);
-	int w_rect = (int)(0.6*width) -(int)(0.4*width);
-	// int expected = 20*60*255;     // white only in roi 
-	int expected =  ((h_rect*w_rect) * ((pix_img1 >= pix_inner_img2) ? (pix_img1 - pix_inner_img2) : (pix_inner_img2 - pix_img1)) ) + 
-					(((width * height) - (h_rect*w_rect)) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
+	// int h_rect = (int)(0.8*height)-(int)(0.2*height);
+	// int w_rect = (int)(0.6*stride) -(int)(0.4*stride);
+	// int expected = ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))*width*height;     // white only in roi 
+	// int expected = (pix_img1 + pix_outer_img2)*width*height; //Add_U8_U8U8_Wrap or Add_U8_U8U8_Sat
+	// int expected = (pix_img1 - pix_outer_img2)*width*height; //Sub_U8_U8U8_Wrap or Sub_U8_U8U8_Sat
+	// int expected = (pix_img1 & pix_outer_img2)*width*height; // And_U8_U8U8
+	// int expected = (pix_img1 | pix_outer_img2)*width*height; // Or_U8_U8U8
+	// int expected = (pix_img1 ^ pix_outer_img2)*width*height; // Xor_U8_U8U8
+	int expected = (255 - pix_outer_img2)*width*height; // Not_U8_U8U8
+	
+	
+	
+	/*Expected values calculation for Rect in img 2  TBD*/
+	
+	// int expected =  ((h_rect*w_rect) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1)) ) + 
+						// (((stride * height) - (h_rect*w_rect)) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
 	// int expected =  ((h_rect*w_rect) * (pix_img1 + pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 + pix_outer_img2)); //Add_U8_U8U8_Wrap & Add_U8_U8U8_Sat
 	// int expected =  ((h_rect*w_rect) * (pix_img1 - pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 - pix_outer_img2)); //Sub_U8_U8U8_Wrap & Sub_U8_U8U8_Sat
 
@@ -375,8 +387,7 @@ int main(int argc, const char ** argv) {
 	// int expected =  ((h_rect*w_rect) * (pix_img1 | pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 | pix_outer_img2)); // Or_U8_U8U8
 	// int expected =  ((h_rect*w_rect) * (pix_img1 ^ pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 ^ pix_outer_img2)); // Xor_U8_U8U8
 	// int expected = ((h_rect*w_rect) * (255-pix_inner_img2)) + (((width * height) * (255-pix_outer_img2) )- ((h_rect*w_rect) * (255 - pix_outer_img2)));//Not_U8_U8U8
-	int expected =  ((h_rect*w_rect) * ((pix_img1 >= pix_inner_img2) ? (pix_img1 - pix_inner_img2) : (pix_inner_img2 - pix_img1)) ) + 
-(((width * height) - (h_rect*w_rect)) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
+
 	
 	/*********************** PRINT OUTPUT IMAGE ***********************/
 #ifdef PRINT_OUTPUT
@@ -385,15 +396,19 @@ int main(int argc, const char ** argv) {
        {
                for(j=0 ; j<width ; j++)
                {
-                       printf("%d \t",out_buf[i*width + j]);
+                       printf("sum<%d,%d>: %d\t",i, j, out_buf[i* addr.stride_y + j]);
                }
        }
 #endif
 
 	
 	int sum = 0;
-	for (int i = 0; i < width*height; i++) {
-		sum +=  out_buf[i];
+	for (int i = 0; i < height; i++) 
+	{
+		for (int j = 0; j < width; j++) 
+		{
+			sum += out_buf[i * addr.stride_y + j];
+        }
 	}
 	if (sum != expected) {
 		printf("FAILED: sum = %d expected = %d\n", sum, expected);

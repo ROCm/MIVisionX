@@ -366,8 +366,8 @@ int main(int argc, const char ** argv) {
 	int h_rect = (int)(0.8*height)-(int)(0.2*height);
 	int w_rect = (int)(0.6*width) -(int)(0.4*width);
 	// int expected = 20*60*255;     // white only in roi 
-	int expected =  ((h_rect*w_rect) * ((pix_img1 > pix_inner_img2) ? (pix_img1 - pix_inner_img2) : (pix_inner_img2 - pix_img1)) ) + 
-					(((width * height) - (h_rect*w_rect)) * ((pix_img1 > pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
+	int expected =  ((h_rect*w_rect) * ((pix_img1 >= pix_inner_img2) ? (pix_img1 - pix_inner_img2) : (pix_inner_img2 - pix_img1)) ) + 
+					(((width * height) - (h_rect*w_rect)) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
 	// int expected =  ((h_rect*w_rect) * (pix_img1 + pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 + pix_outer_img2)); //Add_U8_U8U8_Wrap & Add_U8_U8U8_Sat
 	// int expected =  ((h_rect*w_rect) * (pix_img1 - pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 - pix_outer_img2)); //Sub_U8_U8U8_Wrap & Sub_U8_U8U8_Sat
 

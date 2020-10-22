@@ -28,12 +28,13 @@
 </head>
 
 <body>
-
+    <!-- Modal dialog element -->
     <div id="myModal" class="modal"> <span class="close" onclick="closeModal()">&times;</span> <img
             class="modal-content" id="img01">
         <div id="caption"></div>
     </div>
 
+    <!-- Navigation menus -->
     <div id="mySidenav" class="sidenav">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
         <a class="nav-item" href="#table0">
@@ -60,6 +61,7 @@
     </div>
 
 
+    <!-- Top navbar -->
     <div class="navbar">
         <a href="#">
             <div id="main">
@@ -77,6 +79,7 @@
     </div>
 
 
+    <!-- Overall Summary -->
     <a name="table0">
         <h1 class="header">
             <br><br><em>Generic Model Overall Summary</em>
@@ -91,7 +94,7 @@
                 Images <b>With Ground Truth</b>
             </td>
             <td onclick="findImagesWithGroundTruthLabel()" class="center">
-                <b id="stat_totalImages" data-round="0">258</b>
+                <b id="stat_totalImages" data-round="0">loading..</b>
             </td>
         </tr>
         <tr>
@@ -212,6 +215,8 @@
         </div>
     </div>
 
+
+    <!-- Label SUmmary Filter -->
     <a name="table3">
         <h1 class="header">
             <br><br><em>Label Summary (stats per image class)
@@ -286,7 +291,7 @@
         </tbody>
     </table>
 
-
+    <!-- Label SUmmary Main Table -->
     <a name="table4">
         <h1 class="header">
             <br><br><em>Image Results
@@ -294,6 +299,8 @@
         </h1>
     </a>
 
+
+    <!-- Image Results FIlter -->
     <table id="filterTable" class="center" style="width: 80%">
         <tr>
             <td>
@@ -495,36 +502,34 @@
     </table>
     <br>
 
-
     <div style="padding:10px">
         <div class="item-count" id='table-item-count' style="display: inline-block;"></div>
         <div class="pagination-page" style="float:right"></div>
     </div>
 
-
-    <table id="image-results-table" class="sortable center">
+    <table id="image-results-table" class="center">
         <thead>
             <tr>
                 <th>Image</th>
                 <th>FileName</th>
-                <th>Ground Truth Text</th>
-                <th>Ground Truth</th>
-                <th>1st</th>
-                <th>2nd</th>
-                <th>3rd</th>
-                <th>4th</th>
-                <th>5th</th>
-                <th>Matched</th>
-                <th>Text-1</th>
-                <th>Text-2</th>
-                <th>Text-3</th>
-                <th>Text-4</th>
-                <th>Text-5</th>
-                <th>Conf-1</th>
-                <th>Conf-2</th>
-                <th>Conf-3</th>
-                <th>Conf-4</th>
-                <th>Conf-5</th>
+                <th class="sort-field" data-field="gtText">Ground Truth Text<span></span></th>
+                <th class="sort-field" data-field="gt">Ground Truth<span></span></th>
+                <th class="sort-field" data-field="labels_0">1st<span></span></th>
+                <th class="sort-field" data-field="labels_1">2nd<span></span></th>
+                <th class="sort-field" data-field="labels_2">3rd<span></span></th>
+                <th class="sort-field" data-field="labels_3">4th<span></span></th>
+                <th class="sort-field" data-field="labels_4">5th<span></span></th>
+                <th class="sort-field" data-field="match">Matched<span></span></th>
+                <th class="sort-field" data-field="labelTexts_0">Text-1<span></span></th>
+                <th class="sort-field" data-field="labelTexts_1">Text-2<span></span></th>
+                <th class="sort-field" data-field="labelTexts_2">Text-3<span></span></th>
+                <th class="sort-field" data-field="labelTexts_3">Text-4<span></span></th>
+                <th class="sort-field" data-field="labelTexts_4">Text-5<span></span></th>
+                <th class="sort-field" data-field="probs_0">Conf-1<span></span></th>
+                <th class="sort-field" data-field="probs_1">Conf-2<span></span></th>
+                <th class="sort-field" data-field="probs_2">Conf-3<span></span></th>
+                <th class="sort-field" data-field="probs_3">Conf-4<span></span></th>
+                <th class="sort-field" data-field="probs_4">Conf-5<span></span></th>
             </tr>
         </thead>
 

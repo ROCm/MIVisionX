@@ -261,7 +261,7 @@ select {
 
 .header {
     color: dodgerblue;
-    font-size: 3em;
+    font-size: 2em;
     text-align: center;
 }
 
@@ -377,4 +377,8 @@ select {
 .score-heading {
     color: darksalmon;
     font-size: large;
+}
+
+.sort-field {
+    cursor: pointer;
 }

@@ -470,6 +470,28 @@ function compare(a, b, operator) {
     }
 }
 
+function sortImageResults(fieldName, direction) {
+    var fieldNameArr = fieldName.split('_');
+    var propertyName = fieldNameArr[0];
+    var propertyIndex;
+    if (fieldNameArr[1]) {
+        propertyIndex = parseInt(fieldNameArr[1]);
+    }
+    imageSummaryFiltered.sort(function (a, b) {
+        var aVal = a[propertyName];
+        var bVal = b[propertyName];
+        if (fieldNameArr[1]) {
+            aVal = aVal[propertyIndex];
+            bVal = bVal[propertyIndex];
+        }
+        var result = (aVal < bVal) ? 1 : -1;
+        if (direction == -1) {
+            result = result * -1;
+        }
+        return result;
+    });
+    loadImageResults(imageSummaryFiltered);
+}
 
 
 
@@ -509,4 +531,24 @@ document.addEventListener('DOMContentLoaded', function () {
         filterResultTable();
     });
     // loadImageResults(imageSummary);
+
+    $('select[id ^= "fli_op_"]').change(function () {
+        filterResultTable();
+    })
+
+
+    $('.sort-field').click(function (event) {
+        var targetField = $(this).data('field');
+        var direction = $(this).data('sort-dir');
+
+        $('.sort-field span').html('');
+
+        direction = direction ? parseInt(direction) : 1;
+        sortImageResults(targetField, direction);
+        direction = direction * -1;
+        $(this).data("sort-dir", direction);
+        var $this = $(this).find('span');
+        $this.html(direction == -1 ? '&nbsp;&#x25B4;' : '&nbsp;&#x25BE;');
+
+    });
 });

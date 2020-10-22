@@ -96,6 +96,11 @@ def copyHtmlAssets(outputDirectory, fileName):
     if not os.path.exists(resultsDirectory):
         os.makedirs(resultsDirectory)
 
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    fromDirectory = os.path.join(dir_path, 'assets', 'scripts')
+    toDirectory = os.path.join(toolKit_Dir, 'scripts')
+    copy_tree(fromDirectory, toDirectory)
+
     return toolKit_dir, resultsDirectory
 
 
@@ -327,24 +332,6 @@ def generateCompareResultSummary(toolKit_dir, modelName, dataFolder, stats):
 
     with open(os.path.join(toolKit_dir, 'results', 'resultHistory.js'), 'w') as f:
         f.write("var modelHistories="+json.dumps(data))
-
-    # header = None
-    # if os.path.exists(summaryFileName):
-    #     header = ["Model Name", "Image DataBase",
-    #               "Number Of Images", "Match, MisMatch"]
-
-    # with open(summaryFileName, 'a') as outFile:
-    #     csvwriter = csv.writer(outFile)
-    #     if(header):
-    #         csvwriter.writerow(header)
-    #     csvwriter.writerow([modelName, dataFolder, stats['totalImages'],
-    #                         stats['passCount'], stats['totalMismatch']])
-
-    # with open(SummaryFileName) as savedResultFile:
-    #     savedResultFileCSV = csv.reader(savedResultFile)
-    #     next(savedResultFileCSV, None)  # skip header
-    #     savedResultDataBase = [r for r in savedResultFileCSV]
-    #     savedResultElements = len(savedResultDataBase)
 
 
 def processHierarchy(resultDataBase, labelLines, hierarchyDataBase):

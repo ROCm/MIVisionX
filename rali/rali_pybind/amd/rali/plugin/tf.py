@@ -8,7 +8,7 @@ class RALIGenericImageIterator(object):
         self.h = b.getOutputHeight(self.loader._handle)
         self.n = b.getOutputImageCount(self.loader._handle)
         color_format = b.getOutputColorFormat(self.loader._handle)
-        self.p = (1 if color_format is int(types.GRAY) else 3)
+        self.p = (1 if (color_format == int(types.GRAY)) else 3)
         height = self.h*self.n
         self.out_tensor = None
         self.out_image = np.zeros((height, self.w, self.p), dtype = "uint8")
@@ -47,7 +47,7 @@ class RALIGenericIteratorDetection(object):
         self.n = b.getOutputImageCount(self.loader._handle)
         self.bs = pipeline._batch_size
         color_format = b.getOutputColorFormat(self.loader._handle)
-        self.p = (1 if color_format is int(types.GRAY) else 3)
+        self.p = (1 if (color_format == int(types.GRAY)) else 3)
 
         if self.tensor_dtype == types.FLOAT:
             self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")

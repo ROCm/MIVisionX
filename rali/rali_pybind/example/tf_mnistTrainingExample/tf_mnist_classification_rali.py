@@ -140,10 +140,6 @@ def train_mnist_rali(data_path, _rali_cpu, batch_size):
 			train_accuracy = 0
 			for i, (image_train, label_train) in enumerate(trainIterator, 0):
 				image_train_res = image_train.reshape(batch_size, 784)
-				if 0:
-					fname = 'img_rali' + str(i)
-					np.save(fname, image_train_res, allow_pickle=False)
-					#	print(label_train)
 				train_label_one_hot_list = get_label_one_hot(label_train)
 				_, c, tacc = sess.run([optimizer, cost, accuracy], feed_dict={input_X:image_train_res, labels: train_label_one_hot_list})
 				epoch_loss += c

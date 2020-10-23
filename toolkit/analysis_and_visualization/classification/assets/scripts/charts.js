@@ -64,6 +64,14 @@ function drawResultChart() {
 document.addEventListener('DOMContentLoaded', function () {
     addResultHistory();
 
+    google.charts.load('current', {
+        packages: ['corechart', 'line']
+    });
+
+    google.charts.setOnLoadCallback(drawPassFailGraph);
+    google.charts.setOnLoadCallback(drawLnPassFailGraphs);
+    google.charts.setOnLoadCallback(drawHierarchyPassFailGraph);
+
 });
 
 
@@ -71,7 +79,6 @@ function addResultHistory() {
 
     combinedArrayData = [];
     combinedArrayData.push(['Model', 'Match', 'Mismatch']);
-
 
     modelHistories.forEach((model, index) => {
 
@@ -86,6 +93,8 @@ function addResultHistory() {
         google.charts.load('current', {
             'packages': ['bar']
         });
+
+
 
         google.charts.setOnLoadCallback(function () {
 
@@ -136,11 +145,130 @@ function addResultHistory() {
 
         });
 
+    });
+}
+
+
+function drawPassFailGraph() {
+
+    var chartParentDiv = document.createElement('div');
+    chartParentDiv.className = "column";
+
+    var chartDiv = document.createElement('div');
+    chartDiv.classList.add("pass-fail-chart");
 
 
 
+    var chartData = new google.visualization.DataTable();
+    chartData.addColumn('number', 'X');
+    chartData.addColumn('number', 'Match');
+    chartData.addColumn('number', 'Mismatch');
+    chartData.addRows(data.chartData.passFailData);
+    var options = {
+        title: 'Cummulative Success/Failure',
+        hAxis: {
+            title: 'Confidence',
+            direction: '-1'
+        },
+        vAxis: {
+            title: 'Percentage of Dataset'
+        },
+        series: {
+            0.01: {
+                curveType: 'function'
+            }
+        },
+        width: 700,
+        height: 400
+    };
+    var chart = new google.visualization.LineChart(chartDiv);
+    chart.draw(chartData, options);
+    chartParentDiv.appendChild(chartDiv);
+    document.getElementById('passFailGraphs').appendChild(chartParentDiv);
+}
 
 
 
-    })
+function drawLnPassFailGraphs() {
+
+    for (var i = 0; i < data.chartData.lnPassFailData.length; i++) {
+
+        // There is no L6 so do not plot L6 SUccess Failure
+        if (i == 5)
+            continue;
+
+        var chartParentDiv = document.createElement('div');
+        chartParentDiv.className = "column";
+
+        var chartDiv = document.createElement('div');
+        chartDiv.classList.add("pass-fail-chart");
+
+
+        var chartData = new google.visualization.DataTable();
+
+        chartData.addColumn('number', 'X');
+        chartData.addColumn('number', 'Match');
+        chartData.addColumn('number', 'Mismatch');
+        chartData.addRows(data.chartData.lnPassFailData[i]);
+        var options = {
+            title: 'Cummulative L' + (i + 1) + ' Success/Failure',
+            hAxis: {
+                title: 'Confidence',
+                direction: '-1'
+            },
+            vAxis: {
+                title: 'Percentage of Dataset'
+            },
+            series: {
+                0.01: {
+                    curveType: 'function'
+                }
+            },
+            width: 700,
+            height: 400
+        };
+        var chart = new google.visualization.LineChart(chartDiv);
+        chart.draw(chartData, options);
+        chartParentDiv.appendChild(chartDiv);
+        document.getElementById('passFailGraphs').appendChild(chartParentDiv);
+    }
+}
+
+
+function drawHierarchyPassFailGraph() {
+    var chartData = new google.visualization.DataTable();
+    chartData.addColumn('number', 'X');
+    chartData.addColumn('number', 'L1 Match');
+    chartData.addColumn('number', 'L1 Mismatch');
+    chartData.addColumn('number', 'L2 Match');
+    chartData.addColumn('number', 'L2 Mismatch');
+    chartData.addColumn('number', 'L3 Match');
+    chartData.addColumn('number', 'L3 Mismatch');
+    chartData.addColumn('number', 'L4 Match');
+    chartData.addColumn('number', 'L4 Mismatch');
+    chartData.addColumn('number', 'L5 Match');
+    chartData.addColumn('number', 'L5 Mismatch');
+    chartData.addColumn('number', 'L6 Match');
+    chartData.addColumn('number', 'L6 Mismatch');
+    chartData.addRows(data.chartData.lnPassFailCombinedData);
+    var options = {
+        title: 'Cummulative Hierarchy Levels Success/Failure',
+        hAxis: {
+            title: 'Confidence',
+            direction: '-1'
+        },
+        vAxis: {
+            title: 'Percentage of Dataset'
+        },
+        series: {
+            0.01: {
+                curveType: 'function'
+            }
+        },
+        width: 1400,
+        height: 800
+    };
+    var chart = new google.visualization.LineChart(document.getElementById('Hierarchy_pass_fail_chart'));
+    chart.draw(chartData, options);
+
 }

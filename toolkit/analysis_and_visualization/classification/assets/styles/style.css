@@ -382,3 +382,12 @@ select {
 .sort-field {
     cursor: pointer;
 }
+
+.hidden {
+    display: none;
+}
+
+.pass-fail-chart {
+    border: 0px solid #ccc;
+    display: inline-block
+}

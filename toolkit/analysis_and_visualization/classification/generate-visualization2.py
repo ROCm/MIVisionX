@@ -24,6 +24,7 @@ import sys
 import os
 import argparse
 from distutils.dir_util import copy_tree
+import shutil
 import logging
 import numpy as np
 import json
@@ -97,9 +98,16 @@ def copyHtmlAssets(outputDirectory, fileName):
         os.makedirs(resultsDirectory)
 
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    fromDirectory = os.path.join(dir_path, 'assets', 'scripts')
-    toDirectory = os.path.join(toolKit_Dir, 'scripts')
-    copy_tree(fromDirectory, toDirectory)
+
+    dirsToCopy = ['scripts', 'styles']
+    for srcDir in dirsToCopy:
+        fromDirectory = os.path.join(dir_path, 'assets', srcDir)
+        toDirectory = os.path.join(toolKit_Dir, srcDir)
+        copy_tree(fromDirectory, toDirectory)
+
+    # COpy the main template files
+    shutil.copy(os.path.join(dir_path, 'assets', 'templates',
+                             'index.html'), os.path.join(toolKit_Dir, 'index.html'))
 
     return toolKit_dir, resultsDirectory
 
@@ -285,7 +293,7 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
     return stats, topCounts, topKStats
 
 
-def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores, matchCounts):
+def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores, matchCounts, methodScores, chartData):
 
     with open(os.path.join(resultsDirectory, 'results_1.js'), 'w') as resJson:
         currentDateString = (
@@ -294,13 +302,30 @@ def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores,
         scores['modelScores'] = modelScores
         scores['matchCounts'] = matchCounts
 
+        hasHierarchy = False
+
+        if(methodScores):
+            scores['method1Scores'] = methodScores[0]
+            scores['method2Scores'] = methodScores[1]
+            scores['method3Scores'] = methodScores[2]
+            hasHierarchy = True
+
+        chartDataDict = {}
+
+        if chartData:
+            chartDataDict['passFailData'] = chartData[0]
+            chartDataDict['lnPassFailData'] = chartData[1]
+            chartDataDict['lnPassFailCombinedData'] = chartData[2]
+
         jsonString = json.dumps({'stats': stats,
                                  'topCounts': topCounts,
                                  'topKStats': topKStats,
                                  'summaryGenerationDate': currentDateString,
-                                 'scores': scores})
+                                 'scores': scores,
+                                 'hasHierarchy': hasHierarchy,
+                                 'chartData': chartDataDict})
 
-        jsScript = "var data = " + jsonString
+        jsScript = "var data = " + jsonString + ';'
         resJson.write(jsScript)
 
 
@@ -358,7 +383,6 @@ def processHierarchy(resultDataBase, labelLines, hierarchyDataBase):
                         topKHierarchyPassFail[count][6] += 1
                         topKHierarchyPassFail[count][8] += 1
                         topKHierarchyPassFail[count][10] += 1
-
                     count += 1
                     f += 0.01
             else:
@@ -387,7 +411,6 @@ def processHierarchy(resultDataBase, labelLines, hierarchyDataBase):
                             catCount += 1
                     count += 1
                     f += 0.01
-
     return topKPassFail, topKHierarchyPassFail
 
 
@@ -457,6 +480,8 @@ def calculateHierarchyPenalty(truth, result, hierarchyDataBase):
 
 
 def createScoreSummary(stats, topCounts):
+    logger.debug('Calculating scores')
+
     topk = 5
     topScores = [float(t) for t in topCounts]
     modelScores = [0.0] * topk
@@ -468,6 +493,207 @@ def createScoreSummary(stats, topCounts):
         matchCounts[i] = sum(topCounts[:i+1])
 
     return modelScores, matchCounts
+
+
+def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hierarchyDataBase):
+    topk = 5
+
+    hierarchyPenalty = np.zeros(shape=(100, topk))
+    top5PassFail = np.zeros(shape=(100, topk*2))
+
+    for img in resultDataBase:
+        imgName = img[0]
+        gt = int(img[1])
+        labels = [int(x) for x in img[2:2+topk]]
+        labelTexts = [labelLines[l] for l in labels]
+        probs = [float(x) for x in img[2+topk: 2+topk+topk]]
+
+        if(gt >= 0):
+            if(gt == labels[0]):
+                count = 0
+                f = 0
+                while f < 1:
+                    if((probs[0] <= (f + 0.01)) and probs[0] > f):
+                        top5PassFail[count][0] += 1
+                    count += 1
+                    f += 0.01
+
+            elif(gt == labels[1]):
+                count = 0
+                f = 0
+                while f < 1:
+                    if((probs[0] <= (f + 0.01)) and probs[0] > f):
+                        top5PassFail[count][1] += 1
+                        hierarchyPenalty[count][0] += calculateHierarchyPenalty(
+                            gt, labels[0], hierarchyDataBase)
+                    if((probs[1] <= (f + 0.01)) and probs[1] > f):
+                        top5PassFail[count][2] += 1
+                    count += 1
+                    f += 0.01
+            elif(gt == labels[2]):
+                count = 0
+                f = 0
+                while f < 1:
+                    if((probs[0] <= (f + 0.01)) and probs[0] > f):
+                        top5PassFail[count][1] += 1
+                        hierarchyPenalty[count][0] += calculateHierarchyPenalty(
+                            gt, labels[0], hierarchyDataBase)
+                    if((probs[1] <= (f + 0.01)) and probs[1] > f):
+                        top5PassFail[count][3] += 1
+                        hierarchyPenalty[count][1] += calculateHierarchyPenalty(
+                            gt, labels[1], hierarchyDataBase)
+                    if((probs[2] <= (f + 0.01)) and probs[2] > f):
+                        top5PassFail[count][4] += 1
+                    count += 1
+                    f += 0.01
+
+            elif(gt == labels[3]):
+                count = 0
+                f = 0
+                while f < 1:
+                    if((probs[0] <= (f + 0.01)) and probs[0] > f):
+                        top5PassFail[count][1] += 1
+                        hierarchyPenalty[count][0] += calculateHierarchyPenalty(
+                            gt, labels[0], hierarchyDataBase)
+                    if((probs[1] <= (f + 0.01)) and probs[1] > f):
+                        top5PassFail[count][3] += 1
+                        hierarchyPenalty[count][1] += calculateHierarchyPenalty(
+                            gt, labels[1], hierarchyDataBase)
+                    if((probs[2] <= (f + 0.01)) and probs[2] > f):
+                        top5PassFail[count][5] += 1
+                        hierarchyPenalty[count][2] += calculateHierarchyPenalty(
+                            gt, labels[2], hierarchyDataBase)
+                    if((probs[3] <= (f + 0.01)) and probs[3] > f):
+                        top5PassFail[count][6] += 1
+                    count += 1
+                    f += 0.01
+            elif(gt == labels[4]):
+                count = 0
+                f = 0
+                while f < 1:
+                    if((probs[0] <= (f + 0.01)) and probs[0] > f):
+                        top5PassFail[count][1] += 1
+                        hierarchyPenalty[count][0] += calculateHierarchyPenalty(
+                            gt, labels[0], hierarchyDataBase)
+                    if((probs[1] <= (f + 0.01)) and probs[1] > f):
+                        top5PassFail[count][3] += 1
+                        hierarchyPenalty[count][1] += calculateHierarchyPenalty(
+                            gt, labels[1], hierarchyDataBase)
+                    if((probs[2] <= (f + 0.01)) and probs[2] > f):
+                        top5PassFail[count][5] += 1
+                        hierarchyPenalty[count][2] += calculateHierarchyPenalty(
+                            gt, labels[2], hierarchyDataBase)
+                    if((probs[3] <= (f + 0.01)) and probs[3] > f):
+                        top5PassFail[count][7] += 1
+                        hierarchyPenalty[count][3] += calculateHierarchyPenalty(
+                            gt, labels[3], hierarchyDataBase)
+                    if((probs[4] <= (f + 0.01)) and probs[4] > f):
+                        top5PassFail[count][8] += 1
+                    count += 1
+                    f += 0.01
+            else:
+                count = 0
+                f = 0
+                while f < 1:
+                    if((probs[0] <= (f + 0.01)) and probs[0] > f):
+                        top5PassFail[count][1] += 1
+                        hierarchyPenalty[count][0] += calculateHierarchyPenalty(
+                            gt, labels[0], hierarchyDataBase)
+                    if((probs[1] <= (f + 0.01)) and probs[1] > f):
+                        top5PassFail[count][3] += 1
+                        hierarchyPenalty[count][1] += calculateHierarchyPenalty(
+                            gt, labels[1], hierarchyDataBase)
+                    if((probs[2] <= (f + 0.01)) and probs[2] > f):
+                        top5PassFail[count][5] += 1
+                        hierarchyPenalty[count][2] += calculateHierarchyPenalty(
+                            gt, labels[2], hierarchyDataBase)
+                    if((probs[3] <= (f + 0.01)) and probs[3] > f):
+                        top5PassFail[count][7] += 1
+                        hierarchyPenalty[count][3] += calculateHierarchyPenalty(
+                            gt, labels[3], hierarchyDataBase)
+                    if((probs[4] <= (f + 0.01)) and probs[4] > f):
+                        top5PassFail[count][9] += 1
+                        hierarchyPenalty[count][4] += calculateHierarchyPenalty(
+                            gt, labels[4], hierarchyDataBase)
+                    count += 1
+                    f += 0.01
+
+    topKPassScore = [0] * topk
+    topKFailScore = [0] * topk
+    topKHierarchyPenalty = [0] * topk
+
+    confID = 0.99
+    i = 99
+    passIndex = 0
+    failIndex = 1
+    while confID >= 0:
+        for j in range(topk):
+            # Every even index is pass score, every odd is fail score
+            topKPassScore[j] += confID * top5PassFail[i][j*2]
+            topKFailScore[j] += confID * top5PassFail[i][j*2+1]
+
+            topKHierarchyPenalty[j] += hierarchyPenalty[i][j]
+
+        confID -= 0.01
+        i = i-1
+
+    netSummaryImages = stats['netSummaryImages']
+    # Method 1 scores
+    method1Score = [0]*topk
+    method2Score = [0]*topk
+    method3Score = [0]*topk
+
+    for i in range(topk):
+        topKPassScoreSum = float(sum(topKPassScore[:i+1]))
+        method1Score[i] = (topKPassScoreSum / netSummaryImages)*100.0
+        method2Score[i] = (
+            (topKPassScoreSum - topKFailScore[i])/netSummaryImages) * 100.0
+        method3Score[i] = ((topKPassScoreSum -
+                            (topKFailScore[i] + topKHierarchyPenalty[i]))/netSummaryImages) * 100.0
+
+    return method1Score, method2Score, method3Score
+
+
+def getSuccessFailureChartData(stats, topKPassFail, topKHierarchyPassFail):
+
+    fVal = 0.99
+    sumPass = 0.0
+    sumFail = 0.0
+    netSummaryImages = stats['netSummaryImages']
+    i = 99
+    passFailData = [[1, 0, 0]]
+
+    lnPassFailData = [[[1, 0, 0]], [[1, 0, 0]], [
+        [1, 0, 0]], [[1, 0, 0]], [[1, 0, 0]], [[1, 0, 0]]]
+    lnSumPass = [0.0]*6
+    lnSumFail = [0.0]*6
+
+    lnCombinedPassFailData = [[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+    while i >= 0:
+        sumPass = float(sumPass + topKPassFail[i][0])
+        sumFail = float(sumFail + topKPassFail[i][1])
+        passFailData.append(
+            [fVal, sumPass/netSummaryImages, sumFail/netSummaryImages])
+        dTemp = [fVal]
+
+        for j in range(6):
+            lnSumPass[j] = float(lnSumPass[j] + topKHierarchyPassFail[i][j*2])
+            lnSumFail[j] = float(
+                lnSumPass[j] + topKHierarchyPassFail[i][j*2+1])
+
+            lnPassFailData[j].append(
+                [fVal, lnSumPass[j]/netSummaryImages, lnSumFail[j]/netSummaryImages])
+
+            dTemp.append(float(lnSumPass[j]/netSummaryImages))
+            dTemp.append(float(lnSumFail[j]/netSummaryImages))
+
+        lnCombinedPassFailData.append(dTemp)
+
+        fVal = round(fVal - 0.01, 2)
+        i = i-1
+
+    return passFailData, lnPassFailData, lnCombinedPassFailData
 
 
 def main():
@@ -529,6 +755,9 @@ def main():
         resultsDirectory, resultDataBase, labelLines, imageDir)
     generateCompareResultSummary(toolkit_dir, modelName, 'images', stats)
 
+    methodScores = None
+    chartData = None
+
     if args.hierarchy:
         hierarchyDataBase, hierarchyElements = readHierarchyFile(hierarchyFile)
         if hierarchyElements != labelElements:
@@ -540,14 +769,18 @@ def main():
 
         generateHierarchySummary(
             resultsDirectory, topKPassFail, topKHierarchyPassFail)
-    else:
-        hierarchyDataBase = None
+
+        methodScores = createHirerchySummaryScore(
+            stats, topCounts, resultDataBase, labelLines, hierarchyDataBase)
+
+        chartData = getSuccessFailureChartData(
+            stats, topKPassFail, topKHierarchyPassFail)
 
     modelScores, matchCounts = createScoreSummary(stats, topCounts)
 
     # Write to result json
     writeResultsJson(resultsDirectory, stats, topCounts, topKStats,
-                     modelScores, matchCounts)
+                     modelScores, matchCounts, methodScores, chartData)
 
 
 if __name__ == '__main__':

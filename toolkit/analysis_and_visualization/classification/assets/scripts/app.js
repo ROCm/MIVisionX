@@ -441,7 +441,33 @@ function loadScorings() {
     data.scores.modelScores.forEach(function (value) {
         row.append($('<td>').text(value.toFixed(2) + "%"));
     });
-    myTableBody.append(row)
+    myTableBody.append(row);
+
+
+    if (data.hasHierarchy) {
+        var tableIds = ['#method1-scoring-table', '#method2-scoring-table', '#method3-scoring-table'];
+        var scores = [data.scores.method1Scores, data.scores.method2Scores, data.scores.method3Scores];
+
+        tableIds.forEach(function (tableId, i) {
+            myTableBody = $(tableId).find("tbody");
+            myTableBody.empty();
+            var row = $('<tr>');
+
+            data.scores.matchCounts.forEach(function (value) {
+                row.append($('<td>').text(value));
+            });
+            myTableBody.append(row);
+
+            row = $('<tr>');
+            scores[i].forEach(function (value) {
+                row.append($('<td>').text(value.toFixed(2) + "%"));
+            });
+            myTableBody.append(row);
+
+
+        });
+        $('#hierarchial-scoring').toggleClass('hidden');
+    }
 
 
 }

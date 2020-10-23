@@ -956,6 +956,7 @@ def generateOverallSummary(modelName, passCount, top1Count, top2Count, top3Count
     print("\tvar chart = new google.visualization.PieChart(document.getElementById('result_chart_div'));")
     print("\tchart.draw(data, options);}")
     print("\t")
+
     # Cummulative Success/Failure
     print(
         "\tgoogle.charts.load('current', {packages: ['corechart', 'line']});")
@@ -1844,6 +1845,7 @@ def generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count
                         top5PassFail[count][2] += 1
                     count += 1
                     f += 0.01
+
             elif(truth == label_3):
                 count = 0
                 f = 0
@@ -1860,6 +1862,7 @@ def generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count
                         top5PassFail[count][4] += 1
                     count += 1
                     f += 0.01
+
             elif(truth == label_4):
                 count = 0
                 f = 0
@@ -2781,11 +2784,10 @@ def generateHTML(toolKit_dir, modelName, hierarchy, passCount, top1Count, top2Co
 
     generateLabelSummaryResult(topLabelMatch, LabelLines)
     generateImageSummary(numElements, resultDataBase, LabelLines, dataFolder)
-    
-    
+
     generateCompareResultSummary(
         toolKit_dir, modelName, dataFolder, numElements, passCount, totalMismatch)
-    
+
     generateModelScore(numElements, resultDataBase, hierarchyDataBase, top1Count,
                        top2Count, top3Count, top4Count, top5Count, topKPassFail, netSummaryImages)
     generateHelp()

@@ -87,6 +87,7 @@ int main(int argc, const char ** argv) {
 	vx_int32 pix_img1 = (argc < 6) ?  155 : atoi(argv[5]);
 	vx_int32 pix_img2 =  (argc < 7) ?  102 : atoi(argv[6]);
 	vx_int32 missing_function_flag = 0;
+	vx_int32 return_value = 0;
 
 	if (width <= 0) width = (vx_uint32) 100;
 	if (height <= 0) height = (vx_uint32) 100;
@@ -206,7 +207,9 @@ int main(int argc, const char ** argv) {
 	vxRegisterLogCallback(context, log_callback, vx_false_e);
 	vx_graph graph = vxCreateGraph(context);
 	vx_node node;
-	vx_uint8 *out_buf;
+	vx_uint8 *out_buf_uint8;
+	vx_int16 *out_buf_int16;
+	vx_uint32 out_buf_type;
 	vx_int32 expected_image_sum, returned_image_sum;
 	vx_rectangle_t out_rect = {0, 0, width, height};
 	vx_map_id  out_map_id;
@@ -233,6 +236,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAbsDiffNode(graph, img1, img2, img_out);
 					expected_image_sum = abs(pix_img1 - pix_img2) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 3:
@@ -244,6 +248,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 					expected_image_sum = ((pix_img1 + pix_img2) % 256) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 4:
@@ -255,6 +260,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 					expected_image_sum = ((vx_int32) PIXELCHECKU8(pix_img1 + pix_img2)) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 5:
@@ -266,6 +272,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 					expected_image_sum = (pix_img1 + pix_img2) * width * height;
+					out_buf_type = 1;
 					break;
 				}
 				default:
@@ -322,6 +329,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxAbsDiffNode(graph, img1, img2, img_out);
 					expected_image_sum = abs(pix_img1 - pix_img2) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 3:
@@ -332,6 +340,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 					expected_image_sum = ((pix_img1 + pix_img2) % 256) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 4:
@@ -342,6 +351,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 					expected_image_sum = ((vx_int32) PIXELCHECKU8(pix_img1 + pix_img2)) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 5:
@@ -352,6 +362,7 @@ int main(int argc, const char ** argv) {
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 					expected_image_sum = (pix_img1 + pix_img2) * width * height;
+					out_buf_type = 1;
 					break;
 				}
 				default:
@@ -383,30 +394,47 @@ int main(int argc, const char ** argv) {
 
 	if (missing_function_flag == 1)
 	{
-		printf("\n\nThe functionality at case %d doesn't exist!", case_number);
-		return -1;
+		printf("\n\nThe functionality at case %d doesn't exist!\n", case_number);
+		return 0;
 	}
 
-	ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-
-#ifdef PRINT_OUTPUT
-	printf("\nOutput Image: ");
-	printf("stride_x = %d, stride_y = %d | width = %d, height = %d\n", out_addr.stride_x, out_addr.stride_y, width, height);
-	printImage(out_buf, out_addr.stride_x, out_addr.stride_y, width, height);
-#endif
-
+	// print output and compute image sum according to output buffer type
 	returned_image_sum = 0;
-	for (int i = 0; i < height; i++) 
+	if (out_buf_type == 0)
 	{
-		for (int j = 0; j < width; j++) 
-		{
-			returned_image_sum += out_buf[i * out_addr.stride_y + j];
-        }
+		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_uint8, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+#ifdef PRINT_OUTPUT
+		printf("\nOutput Image: ");
+		printf("stride_x = %d, stride_y = %d | width = %d, height = %d\n", out_addr.stride_x, out_addr.stride_y, width, height);
+		printImage(out_buf_uint8, out_addr.stride_x, out_addr.stride_y, width, height);
+#endif
+		for (int i = 0; i < height; i++) 
+			for (int j = 0; j < width; j++) 
+				returned_image_sum += out_buf_uint8[i * out_addr.stride_y + j];
 	}
+	else if (out_buf_type == 1)
+	{
+		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_int16, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+#ifdef PRINT_OUTPUT
+		printf("\nOutput Image: ");
+		printf("stride_x = %d, stride_y = %d | width = %d, height = %d\n", out_addr.stride_x, out_addr.stride_y, width, height);
+		printImage(out_buf_int16, out_addr.stride_x, out_addr.stride_y, width, height);
+#endif
+		for (int i = 0; i < height; i++) 
+			for (int j = 0; j < width; j++) 
+				returned_image_sum += out_buf_int16[i * out_addr.stride_y + j];
+	}
+	
 	if (returned_image_sum != expected_image_sum)
+	{
 		printf("\nTEST FAILED: returned_image_sum = %d expected_image_sum = %d\n", returned_image_sum, expected_image_sum);
+		return_value = -1;
+	}
 	else
+	{
 		printf("\nTEST PASSED: returned_image_sum = %d expected_image_sum = %d\n", returned_image_sum, expected_image_sum);
+		return_value = 1;
+	}
 
 	ERROR_CHECK_STATUS(vxUnmapImagePatch( img_out, out_map_id));
 
@@ -417,5 +445,5 @@ int main(int argc, const char ** argv) {
 	if (ptr[2]) hipFree(ptr[2]);
 	vxReleaseContext(&context);
 
-	return 0;
+	return return_value;
 }

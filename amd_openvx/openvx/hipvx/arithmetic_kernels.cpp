@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
+#define PIXELSATURATEU8(pixel) (pixel < 0) ? 0 : ((pixel < 255) ? pixel : 255)
+
 __device__ __forceinline__ float4 ucharTofloat4(unsigned int src)
 {
     return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
@@ -77,8 +79,6 @@ int HipExec_AbsDiff_U8_U8U8(
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
-    //printf("HipExec_AbsDiff_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
-     //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
     hipEventCreate(&start);
     hipEventCreate(&stop);
@@ -94,7 +94,7 @@ int HipExec_AbsDiff_U8_U8U8(
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExec_AbsDiff_U8_U8U8: Kernel time: %f\n", eventMs);
+    printf("\nHipExec_AbsDiff_U8_U8U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -129,8 +129,6 @@ int HipExec_Add_U8_U8U8_Wrap(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
-    //printf("HipExec_Add_U8_U8U8_Wrap: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
-     //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
     hipEventCreate(&start);
     hipEventCreate(&stop);
@@ -146,7 +144,7 @@ int HipExec_Add_U8_U8U8_Wrap(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExec_Add_U8_U8U8_Wrap: Kernel time: %f\n", eventMs);
+    printf("\nHipExec_Add_U8_U8U8_Wrap: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -165,7 +163,7 @@ Hip_Add_U8_U8U8_Sat(
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = ucharTofloat4(pSrcImage1[src1Idx]);
     float4 src2 = ucharTofloat4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(src1.x+src2.x, src1.y+src2.y, src1.z+src2.z, src1.w+src2.w);
+    float4 dst = make_float4(PIXELSATURATEU8(src1.x+src2.x), PIXELSATURATEU8(src1.y+src2.y), PIXELSATURATEU8(src1.z+src2.z), PIXELSATURATEU8(src1.w+src2.w));
     pDstImage[dstIdx] = ((int)dst.x&0xFF) | (((int)dst.y&0xFF)<<8) | (((int)dst.z&0xFF)<<16)| (((int)dst.w&0xFF) << 24);
 }
 
@@ -177,8 +175,6 @@ int HipExec_Add_U8_U8U8_Sat(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *p
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
-    //printf("HipExec_Add_U8_U8U8_Sat: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
-     //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
     hipEventCreate(&start);
     hipEventCreate(&stop);
@@ -194,7 +190,7 @@ int HipExec_Add_U8_U8U8_Sat(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *p
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExec_Add_U8_U8U8_Sat: Kernel time: %f\n", eventMs);
+    printf("\nHipExec_Add_U8_U8U8_Sat: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -229,8 +225,8 @@ int HipExec_Add_S16_U8U8(
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
-    //printf("HipExec_AbsDiff_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
-     //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
+    printf("HipExec_Add_S16_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
+           dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
     hipEventCreate(&start);
     hipEventCreate(&stop);
@@ -246,7 +242,7 @@ int HipExec_Add_S16_U8U8(
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExec_Add_S16_U8U8: Kernel time: %f\n", eventMs);
+    printf("\nHipExec_Add_S16_U8U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

@@ -1,9 +1,3 @@
-#include <iostream>
-
-//#define __HIP_PLATFORM_HCC__
-
-// hip header file
-#include <xmmintrin.h>
 #define __HIP_PLATFORM_HCC__
 #include "hip/hip_runtime.h"
 #include <VX/vx.h>
@@ -11,13 +5,20 @@
 #include <VX/vx_khr_nn.h>
 #include <VX/vxu.h>
 #include <vx_ext_amd.h>
-#include <string>
-#include <chrono>
-#define DUMP_IMAGE  0
-#define PRINT_OUTPUT 
+#include <xmmintrin.h>
+#include <string.h>
+#include <iostream>
+
+using namespace std;
+
+#define PRINT_INPUT
+#define PRINT_OUTPUT
 
 #define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; } }
 #define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return -1; } }
+
+#define PIXELCHECKU8(pixel) (pixel < (vx_int32)0) ? ((vx_uint8)0) : ((pixel < (vx_int32)255) ? (vx_uint8)pixel : ((vx_uint8)255))
+// #define PIXELCHECKS16(pixel) (pixel < (vx_int32)(−32768)) ? ((vx_int32)(−32768)) : ((pixel < (vx_int32)(32767)) ? pixel : ((vx_int32)(32767)))
 
 static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
 {
@@ -30,251 +31,264 @@ static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_st
 	}
 }
 
-
-inline int64_t clockCounter()
+template <typename T>
+vx_status printImage(T *buffer, vx_uint32 stride_x, vx_uint32 stride_y, vx_uint32 width, vx_uint32 height)
 {
-	return std::chrono::high_resolution_clock::now().time_since_epoch().count();
-}
-
-inline int64_t clockFrequency()
-{
-	return std::chrono::high_resolution_clock::period::den / std::chrono::high_resolution_clock::period::num;
-}
-
-vx_status makeInputImage1(vx_context context, vx_image img, int width, int height, int mem_type, int pix_val)
-{
-	ERROR_CHECK_OBJECT((vx_reference)img);
-
-	if (mem_type == VX_MEMORY_TYPE_HOST) {
-		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-        vx_map_id map_id;
-        vx_imagepatch_addressing_t addrId;
-        vx_uint8 * ptr;
-
-		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-		vx_size stride = addrId.stride_y;
-		for (int i= 0; i< height; i++ ){
-			for (int j=0; j < width; j++) {
-				ptr[i*stride + j] = pix_val;
-			}
-		}
-#ifdef PRINT_OUTPUT
-		printf("Image1::\n");
-		for (int i = 0; i< height ; i++, printf("\n"))
-       {
-               for(int j=0 ; j<width ; j++)
-               {
-                       printf("%d \t",ptr[i*stride + j]);
-               }
-       }
-#endif
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
-
-	} else {
-		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-		vx_map_id map_id;
-		vx_imagepatch_addressing_t addrId;
-
-		/*********************** TESTING IMAGE DATA TYPES FOR GPU ***********************/
-		// vx_int16 * ptr;
-		vx_uint8 * ptr;
-
-		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-		vx_size stride = addrId.stride_y;
-		for (int i= 0; i< height; i++ ){
-			for (int j=0; j < width; j++) {
-				ptr[i*stride + j] = pix_val;
-			}
-		}
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
-#ifdef PRINT_OUTPUT
-		printf("Image1::\n");
-		for (int i = 0; i< height ; i++, printf("\n"))
-       {
-               for(int j=0 ; j<width ; j++)
-               {
-                       printf("%d \t",ptr[i*stride + j]);
-               }
-       }
-#endif
-
-#if DUMP_IMAGE
-		FILE *fp = fopen("input1.bin", "wb");
-		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-		if (fp) fwrite(ptr, 1, width*height, fp);
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
-#endif
-	}
-	vxReleaseImage(&img);
+	for (int i = 0; i < height; i++, printf("\n"))
+		for(int j = 0; j < width; j++)
+			printf("<%d,%d>: %d\t",i, j, buffer[i * stride_y + j * stride_x]);
+	
 	return VX_SUCCESS;
 }
 
-vx_status makeInputImage2(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, int mem_type, int outer_pix_val,int inner_pix_val)
+template <typename T>
+vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, int mem_type, T pix_val)
 {
 	ERROR_CHECK_OBJECT((vx_reference)img);
-
-	if (mem_type == VX_MEMORY_TYPE_HOST) {
-		/*********************** TESTING IMAGE DATA TYPES FOR HOST ***********************/
-
-		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-        vx_map_id map_id;
-        vx_imagepatch_addressing_t addrId;
-        vx_uint8 * ptr;
-
-		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-		vx_size stride = addrId.stride_y;
-		for (int i= 0; i< height; i++ ){
-			for (int j=0; j < width; j++) {
-				// if ( i>=0.4*stride && i < 0.6*stride && j >= 0.2*height && j<0.8*height )
-				// 	ptr[i*stride + j] = inner_pix_val;
-				// else
-					ptr[i*stride + j] = outer_pix_val;
-			}
-		}
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
-#ifdef PRINT_OUTPUT
-		printf("Image2::\n");
-       for (int i = 0; i< height ; i++, printf("\n"))
-       {
-               for(int j=0 ; j<width ; j++)
-               {
-                       printf("%d \t",ptr[i*width + j]);
-               }
-       }
+	vx_rectangle_t rect = {0, 0, width, height};
+	vx_map_id map_id;
+	vx_imagepatch_addressing_t addrId;
+	T *ptr;
+	ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+	for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++)
+				ptr[i * addrId.stride_y + j] = pix_val;
+	ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
+#ifdef PRINT_INPUT
+	printf("\nInput Image: ");
+	printf("stride_x = %d, stride_y = %d | width = %d, height = %d\n", addrId.stride_x, addrId.stride_y, width, height);
+	printImage(ptr, addrId.stride_x, addrId.stride_y, width, height);
 #endif
-	} else {
-		vx_rectangle_t rect = { 0, 0, (vx_uint32)width, (vx_uint32)height };
-		vx_map_id map_id;
-		vx_imagepatch_addressing_t addrId;
-
-		/*********************** TESTING IMAGE DATA TYPES FOR GPU ***********************/
-
-		// vx_int16 *ptr;
-		vx_uint8 * ptr;
-
-		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-		vx_size stride = addrId.stride_y;
-		for (int i= 0; i< height; i++ ){
-			for (int j=0; j < width; j++) {
-				// if ( i>=0.4*width && i < 0.6*width && j >= 0.2*height && j<0.8*height )
-					// ptr[i*stride + j] = inner_pix_val;
-				// else
-					ptr[i*stride + j] = outer_pix_val;
-			}
-		}
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
-#ifdef PRINT_OUTPUT
-		printf("Image2::\n");
-       for (int i = 0; i< height ; i++, printf("\n"))
-       {
-               for(int j=0 ; j<width ; j++)
-               {
-                       printf("%d \t",ptr[i*stride + j]);
-               }
-       }
-#endif
-		
-#if DUMP_IMAGE
-		FILE *fp = fopen("input2.bin", "wb");
-		ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-		if (fp) fwrite(ptr, 1, width*height, fp);
-		ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
-#endif
-	}
 	vxReleaseImage(&img);
 	return VX_SUCCESS;
 }
-
 
 int main(int argc, const char ** argv) {
 
 	 // check command-line usage
-    const size_t MIN_ARG_COUNT = 4;
-    if(argc < MIN_ARG_COUNT){
-   	 printf( "Usage: ./hipvx_sample <width> <height> <gpu=1/cpu=0> <image1 pixel value> <image2 outer pixel value> <image2 inner pixel value>\n" );
-	 printf("\nOptional Arguments: <image1 pixel value> <image2 outer pixel value> <image2 inner pixel value>\n\n");
-        return -1;
+    const size_t MIN_ARG_COUNT = 5;
+    if(argc < MIN_ARG_COUNT)
+	{
+		printf("\nUsage: ./hipvx_sample <case number (0:9)> <width> <height> <gpu=1/cpu=0> <image1 constant pixel value (optional)> <image2 constant pixel value (optional)>\n");
+		return -1;
     }
 	
-	void *ptr[3] = {nullptr, nullptr, nullptr};     // hip
-	int64_t freq = clockFrequency(), t0, t1;
+	// setup void ptr for HIP
+	void *ptr[3] = {nullptr, nullptr, nullptr};
+
+	// input and output images
 	vx_image img1, img2, img_out;
-	vx_uint32 width = atoi(argv[1]);
-	vx_uint32 height = atoi(argv[2]);
-	
-	int affinity = atoi(argv[3]);           // 0 for CPU and 1 for GPU
-	if (width <= 0) width = 100;
-	if (height <= 0) height = 100;
-	if (affinity <= 0) affinity = 0;
-	char* outImgBuffer = new char[width*height];
 
-	//image pixel values  user given
-	int pix_img1, pix_outer_img2, pix_inner_img2;
-	pix_img1 = (argc < 5) ?  100 : atoi(argv[4]);
-	pix_outer_img2 =  (argc < 6) ?  100 : atoi(argv[5]);
-	pix_inner_img2 =  (argc < 7) ?  50 : atoi(argv[6]);
+	// setup argument reads and defaults
+	vx_uint32 case_number = atoi(argv[1]);
+	vx_uint32 width = atoi(argv[2]);
+	vx_uint32 height = atoi(argv[3]);
+	vx_uint32 device_affinity = atoi(argv[4]);
+	vx_int32 pix_img1 = (argc < 6) ?  155 : atoi(argv[5]);
+	vx_int32 pix_img2 =  (argc < 7) ?  102 : atoi(argv[6]);
+	vx_int32 missing_function_flag = 0;
 
+	if (width <= 0) width = (vx_uint32) 100;
+	if (height <= 0) height = (vx_uint32) 100;
+	if (device_affinity <= 0) device_affinity = 0;
 
+	// case functionality list for reference
 
-	// create context, input, output, and graph
+	// case 1 - agoKernel_AbsDiff_U8_U8U8
+	// case 2 - agoKernel_AbsDiff_S16_S16S16_Sat
+	// case 3 - agoKernel_Add_U8_U8U8_Wrap
+	// case 4 - agoKernel_Add_U8_U8U8_Sat
+	// case 5 - agoKernel_Add_S16_U8U8
+	// case 6 - agoKernel_Add_S16_S16U8_Wrap
+	// case 7 - agoKernel_Add_S16_S16U8_Sat
+	// case 8 - agoKernel_Add_S16_S16S16_Wrap
+	// case 9 - agoKernel_Add_S16_S16S16_Sat
+	// case 10 - agoKernel_Sub_U8_U8U8_Wrap
+	// case 11 - agoKernel_Sub_U8_U8U8_Sat
+	// case 12 - agoKernel_Sub_S16_U8U8
+	// case 13 - agoKernel_Sub_S16_S16U8_Wrap
+	// case 14 - agoKernel_Sub_S16_S16U8_Sat
+	// case 15 - agoKernel_Sub_S16_U8S16_Wrap
+	// case 16 - agoKernel_Sub_S16_U8S16_Sat
+	// case 17 - agoKernel_Sub_S16_S16S16_Wrap
+	// case 18 - agoKernel_Sub_S16_S16S16_Sat
+	// case 19 - agoKernel_Mul_U8_U8U8_Wrap_Trunc
+	// case 20 - agoKernel_Mul_U8_U8U8_Wrap_Round
+	// case 21 - agoKernel_Mul_U8_U8U8_Sat_Trunc
+	// case 22 - agoKernel_Mul_U8_U8U8_Sat_Round
+	// case 23 - agoKernel_Mul_S16_U8U8_Wrap_Trunc
+	// case 24 - agoKernel_Mul_S16_U8U8_Wrap_Round
+	// case 25 - agoKernel_Mul_S16_U8U8_Sat_Trunc
+	// case 26 - agoKernel_Mul_S16_U8U8_Sat_Round
+	// case 27 - agoKernel_Mul_S16_S16U8_Wrap_Trunc
+	// case 28 - agoKernel_Mul_S16_S16U8_Wrap_Round
+	// case 29 - agoKernel_Mul_S16_S16U8_Sat_Trunc
+	// case 30 - agoKernel_Mul_S16_S16U8_Sat_Round
+	// case 31 - agoKernel_Mul_S16_S16S16_Wrap_Trunc
+	// case 32 - agoKernel_Mul_S16_S16S16_Wrap_Round
+	// case 33 - agoKernel_Mul_S16_S16S16_Sat_Trunc
+	// case 34 - agoKernel_Mul_S16_S16S16_Sat_Round
+	// case 35 - agoKernel_Mul_U24_U24U8_Sat_Round
+	// case 36 - agoKernel_Mul_U32_U32U8_Sat_Round
+	// case 37 - agoKernel_And_U8_U8U8
+	// case 38 - agoKernel_And_U8_U8U1
+	// case 39 - agoKernel_And_U8_U1U8
+	// case 40 - agoKernel_And_U8_U1U1
+	// case 41 - agoKernel_And_U1_U8U8
+	// case 42 - agoKernel_And_U1_U8U1
+	// case 43 - agoKernel_And_U1_U1U8
+	// case 44 - agoKernel_And_U1_U1U1
+	// case 45 - agoKernel_Not_U8_U8
+	// case 46 - agoKernel_Not_U8_U1
+	// case 47 - agoKernel_Not_U1_U8
+	// case 48 - agoKernel_Not_U1_U1
+	// case 49 - agoKernel_Or_U8_U8U8
+	// case 50 - agoKernel_Or_U8_U8U1
+	// case 51 - agoKernel_Or_U8_U1U8
+	// case 52 - agoKernel_Or_U8_U1U1
+	// case 53 - agoKernel_Or_U1_U8U8
+	// case 54 - agoKernel_Or_U1_U8U1
+	// case 55 - agoKernel_Or_U1_U1U8
+	// case 56 - agoKernel_Or_U1_U1U1
+	// case 57 - agoKernel_Xor_U8_U8U8
+	// case 58 - agoKernel_Xor_U8_U8U1
+	// case 59 - agoKernel_Xor_U8_U1U8
+	// case 60 - agoKernel_Xor_U8_U1U1
+	// case 61 - agoKernel_Xor_U1_U8U8
+	// case 62 - agoKernel_Xor_U1_U8U1
+	// case 63 - agoKernel_Xor_U1_U1U8
+	// case 64 - agoKernel_Xor_U1_U1U1
+	// case 65 - agoKernel_Magnitude_S16_S16S16
+	// case 66 - agoKernel_Phase_U8_S16S16
+	// case 67 - agoKernel_ChannelCopy_U8_U8
+	// case 68 - agoKernel_ChannelCopy_U8_U1
+	// case 69 - agoKernel_ChannelCopy_U1_U8
+	// case 70 - agoKernel_ChannelCopy_U1_U1
+	// case 71 - agoKernel_ChannelExtract_U8_U16_Pos0
+	// case 72 - agoKernel_ChannelExtract_U8_U16_Pos1
+	// case 73 - agoKernel_ChannelExtract_U8_U24_Pos0
+	// case 74 - agoKernel_ChannelExtract_U8_U24_Pos1
+	// case 75 - agoKernel_ChannelExtract_U8_U24_Pos2
+	// case 76 - agoKernel_ChannelExtract_U8_U32_Pos0
+	// case 77 - agoKernel_ChannelExtract_U8_U32_Pos1
+	// case 78 - agoKernel_ChannelExtract_U8_U32_Pos2
+	// case 79 - agoKernel_ChannelExtract_U8_U32_Pos3
+	// case 80 - agoKernel_ChannelExtract_U8U8U8_U24
+	// case 81 - agoKernel_ChannelExtract_U8U8U8_U32
+	// case 82 - agoKernel_ChannelExtract_U8U8U8U8_U32
+	// case 83 - agoKernel_ChannelCombine_U16_U8U8
+	// case 84 - agoKernel_ChannelCombine_U24_U8U8U8_RGB
+	// case 85 - agoKernel_ChannelCombine_U32_U8U8U8_UYVY
+	// case 86 - agoKernel_ChannelCombine_U32_U8U8U8_YUYV
+	// case 87 - agoKernel_ChannelCombine_U32_U8U8U8U8_RGBX
+	// case 88 - agoKernel_Lut_U8_U8
+	// case 89 - agoKernel_Threshold_U8_U8_Binary
+	// case 90 - agoKernel_Threshold_U8_U8_Range
+	// case 91 - agoKernel_Threshold_U1_U8_Binary
+	// case 92 - agoKernel_Threshold_U1_U8_Range
+	// case 93 - agoKernel_ThresholdNot_U8_U8_Binary
+	// case 94 - agoKernel_ThresholdNot_U8_U8_Range
+	// case 95 - agoKernel_ThresholdNot_U1_U8_Binary
+	// case 96 - agoKernel_ThresholdNot_U1_U8_Range
+	// case 97 - agoKernel_Max_U8_U8
+	// case 98 - agoKernel_Min_U8_U8
+	// case 99 - agoKernel_WeightedAverage_U8_U8
+
+	// create context, create graph, set affinity, run graph, retrieve output
 	vxRegisterLogCallback(NULL, log_callback, vx_false_e);
 	vx_context context = vxCreateContext();
 	vx_status status = vxGetStatus((vx_reference)context);
-	if(status) {
+	if(status)
+	{
 		printf("ERROR: vxCreateContext() failed\n");
 		return -1;
 	}
 	vxRegisterLogCallback(context, log_callback, vx_false_e);
 	vx_graph graph = vxCreateGraph(context);
-	// create graph and set affinity
-	if (!affinity)
+	vx_node node;
+	vx_uint8 *out_buf;
+	vx_int32 expected_image_sum, returned_image_sum;
+	vx_rectangle_t out_rect = {0, 0, width, height};
+	vx_map_id  out_map_id;
+	vx_imagepatch_addressing_t out_addr = {0};
+	AgoTargetAffinityInfo affinity;
+	affinity.device_info = 0;
+
+	if (!device_affinity)
 	{
+		affinity.device_type = AGO_TARGET_AFFINITY_CPU;
+
 		if (graph)
-		{ 
-
-			/*********************** TESTING IMAGE TYPES FOR HOST ***********************/
-
-			img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-			// img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
-			img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-			// img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
-			img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-			// img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
-			
-			
-			ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-			AgoTargetAffinityInfo affinity;
-			affinity.device_type = AGO_TARGET_AFFINITY_CPU;
-			affinity.device_info = 0;
+		{
 			ERROR_CHECK_STATUS(vxSetGraphAttribute(graph, VX_GRAPH_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity)));
+
+			switch(case_number)
+			{
+				case 1:
+				{
+					// test_case_name = "agoKernel_AbsDiff_U8_U8U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAbsDiffNode(graph, img1, img2, img_out);
+					expected_image_sum = abs(pix_img1 - pix_img2) * width * height;
+					break;
+				}
+				case 3:
+				{
+					// test_case_name = "agoKernel_Add_U8_U8U8_Wrap";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+					expected_image_sum = ((pix_img1 + pix_img2) % 256) * width * height;
+					break;
+				}
+				case 4:
+				{
+					// test_case_name = "agoKernel_Add_U8_U8U8_Sat";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+					expected_image_sum = ((vx_int32) PIXELCHECKU8(pix_img1 + pix_img2)) * width * height;
+					break;
+				}
+				case 5:
+				{
+					// test_case_name = "agoKernel_Add_S16_U8U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+					expected_image_sum = (pix_img1 + pix_img2) * width * height;
+					break;
+				}
+				default:
+				{
+					missing_function_flag = 1;
+					break;
+				}
+			}
 		
-			/*********************** TESTING KERNELS FOR HOST ***********************/
-
-			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
-			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
-			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
-			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
-			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
-			// vx_node node = vxMultiplyNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
-			// vx_node node =vxAndNode(graph, img1, img2, img_out);
-			// vx_node node = vxOrNode(graph, img1, img2, img_out);
-			// vx_node node = vxXorNode(graph, img1, img2, img_out);
-			vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
-
-			
-
-		
-			if (node)
+			if (node && !missing_function_flag)
 			{
 				status = vxVerifyGraph(graph);
-				ERROR_CHECK_STATUS(makeInputImage1(context, img1, width, height, VX_MEMORY_TYPE_HOST, pix_img1));
-				ERROR_CHECK_STATUS(makeInputImage2(context, img2, width, height, VX_MEMORY_TYPE_HOST, pix_outer_img2, pix_inner_img2));
-				printf("After makeInputImage\n");
-				if (status == VX_SUCCESS)
+				if ((case_number == 1) || (case_number == 3) || (case_number == 4) || (case_number == 5))
 				{
-					status = vxProcessGraph(graph);
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, PIXELCHECKU8(pix_img1)));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, PIXELCHECKU8(pix_img2)));
 				}
-				printf("After ProcessGraph\n");
+				else if (case_number == 2)
+				{
+
+				}
+				if (status == VX_SUCCESS)
+					status = vxProcessGraph(graph);
 				vxReleaseNode(&node);
 			}
 			vxReleaseGraph(&graph);
@@ -282,150 +296,125 @@ int main(int argc, const char ** argv) {
 	}
 	else
 	{
-		vx_imagepatch_addressing_t addr = { 0};
-		addr.dim_x = width;
-		addr.dim_y = height;
-		addr.stride_x = 1;
-		addr.stride_y = (width+3)&~3;
-		hipMalloc((void**)&ptr[0], width*addr.stride_y);
-		hipMalloc((void**)&ptr[1], width*addr.stride_y);
-		hipMalloc((void**)&ptr[2], width*addr.stride_y);
-		hipMemset(ptr[2], 0, width*addr.stride_y);
-    	// printf("Main: dst: %p src1: %p src2: %p <%dx%d>\n", ptr[2], ptr[0], ptr[1], width, height);
+		vx_imagepatch_addressing_t hip_addr = {0};
+		hip_addr.dim_x = width;
+		hip_addr.dim_y = height;
+		hip_addr.stride_x = 1;
+		hip_addr.stride_y = (width+3)&~3;
+		hipMalloc((void**)&ptr[0], width*hip_addr.stride_y);
+		hipMalloc((void**)&ptr[1], width*hip_addr.stride_y);
+		hipMalloc((void**)&ptr[2], width*hip_addr.stride_y);
+		hipMemset(ptr[2], 0, width*hip_addr.stride_y);
 
-		/*********************** TESTING IMAGE TYPES FOR GPU-HIP ***********************/
-		
-		ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[0], VX_MEMORY_TYPE_HIP));
-		// ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &addr, &ptr[0], VX_MEMORY_TYPE_HIP));
-		ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[1], VX_MEMORY_TYPE_HIP));
-		// ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &addr, &ptr[1], VX_MEMORY_TYPE_HIP));
-		ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &addr, &ptr[2], VX_MEMORY_TYPE_HIP));
-		// ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &addr, &ptr[2], VX_MEMORY_TYPE_HIP));
+		affinity.device_type = AGO_TARGET_AFFINITY_GPU;
 		
 		if (graph)
 		{
-			AgoTargetAffinityInfo affinity;
-			affinity.device_type = AGO_TARGET_AFFINITY_GPU;
-			affinity.device_info = 0;
-
 			ERROR_CHECK_STATUS(vxSetGraphAttribute(graph, VX_GRAPH_ATTRIBUTE_AMD_AFFINITY, &affinity, sizeof(affinity)));
 			
-
-
-
-		/*********************** TESTING KERNELS FOR GPU ***********************/
-
-			// vx_node node = vxAbsDiffNode(graph, img1, img2, img_out);
-			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
-			// vx_node node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
-			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
-			// vx_node node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
-			// vx_node node =vxAndNode(graph, img1, img2, img_out);
-			// vx_node node = vxOrNode(graph, img1, img2, img_out);
-			// vx_node node = vxXorNode(graph, img1, img2, img_out);
-			vx_node node = vxNotNode(graph,img2, img_out); //Only Image 2 is used
+			switch(case_number)
+			{
+				case 1:
+				{
+					// test_case_name = "agoKernel_AbsDiff_U8_U8U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAbsDiffNode(graph, img1, img2, img_out);
+					expected_image_sum = abs(pix_img1 - pix_img2) * width * height;
+					break;
+				}
+				case 3:
+				{
+					// test_case_name = "agoKernel_Add_U8_U8U8_Wrap";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+					expected_image_sum = ((pix_img1 + pix_img2) % 256) * width * height;
+					break;
+				}
+				case 4:
+				{
+					// test_case_name = "agoKernel_Add_U8_U8U8_Sat";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+					expected_image_sum = ((vx_int32) PIXELCHECKU8(pix_img1 + pix_img2)) * width * height;
+					break;
+				}
+				case 5:
+				{
+					// test_case_name = "agoKernel_Add_S16_U8U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+					expected_image_sum = (pix_img1 + pix_img2) * width * height;
+					break;
+				}
+				default:
+				{
+					missing_function_flag = 1;
+					break;
+				}
+			}
 			
-
-
-			
-			if (node)
+			if (node && !missing_function_flag)
 			{
 				status = vxVerifyGraph(graph);
-				ERROR_CHECK_STATUS(makeInputImage1(context, img1, width, height, VX_MEMORY_TYPE_HIP, pix_img1));
-				ERROR_CHECK_STATUS(makeInputImage2(context, img2, width, height, VX_MEMORY_TYPE_HIP, pix_outer_img2, pix_inner_img2));
-				if (status == VX_SUCCESS)
+				if ((case_number == 1) || (case_number == 3) || (case_number == 4) || (case_number == 5))
 				{
-					status = vxProcessGraph(graph);
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, PIXELCHECKU8(pix_img1)));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, PIXELCHECKU8(pix_img2)));
 				}
+				else if (case_number == 2)
+				{
+
+				}
+				if (status == VX_SUCCESS)
+					status = vxProcessGraph(graph);
 				vxReleaseNode(&node);
 			}
 			vxReleaseGraph(&graph);
 		}
 	}
 
-	// check output values
-	vx_rectangle_t rect = { 0, 0, width, height };
-	vx_map_id  map_id;
-	vx_imagepatch_addressing_t addr = {0};
-	// addr.stride_x = 1;
-	// addr.stride_y = width;
-	
-	
-	
-	/*********************** TESTING FOR DIFFERENT OUTPUT BIT DEPTHS ***********************/
-	
-	vx_uint8 *out_buf;
-	// vx_int16 *out_buf;
+	if (missing_function_flag == 1)
+	{
+		printf("\n\nThe functionality at case %d doesn't exist!", case_number);
+		return -1;
+	}
 
-	ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &rect, 0, &map_id, &addr, (void **)&out_buf, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
-	//ERROR_CHECK_STATUS(vxCopyImagePatch(img_out, &rect, 0, &addr, outImgBuffer, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
-	
+	ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 
-
-	/*********************** VERIFYING KERNELS WITH EXPECTED OUTPUTS***********************/
-
-	// int h_rect = (int)(0.8*height)-(int)(0.2*height);
-	// int w_rect = (int)(0.6*stride) -(int)(0.4*stride);
-	// int expected = ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))*width*height;     // white only in roi 
-	// int expected = (pix_img1 + pix_outer_img2)*width*height; //Add_U8_U8U8_Wrap or Add_U8_U8U8_Sat
-	// int expected = (pix_img1 - pix_outer_img2)*width*height; //Sub_U8_U8U8_Wrap or Sub_U8_U8U8_Sat
-	// int expected = (pix_img1 & pix_outer_img2)*width*height; // And_U8_U8U8
-	// int expected = (pix_img1 | pix_outer_img2)*width*height; // Or_U8_U8U8
-	// int expected = (pix_img1 ^ pix_outer_img2)*width*height; // Xor_U8_U8U8
-	int expected = (255 - pix_outer_img2)*width*height; // Not_U8_U8U8
-	
-	
-	
-	/*Expected values calculation for Rect in img 2  TBD*/
-	
-	// int expected =  ((h_rect*w_rect) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1)) ) + 
-						// (((stride * height) - (h_rect*w_rect)) * ((pix_img1 >= pix_outer_img2) ? (pix_img1 - pix_outer_img2) : (pix_outer_img2 - pix_img1))); //AbsDiff_U8_U8U8
-	// int expected =  ((h_rect*w_rect) * (pix_img1 + pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 + pix_outer_img2)); //Add_U8_U8U8_Wrap & Add_U8_U8U8_Sat
-	// int expected =  ((h_rect*w_rect) * (pix_img1 - pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 - pix_outer_img2)); //Sub_U8_U8U8_Wrap & Sub_U8_U8U8_Sat
-
-	// int expected =  ((h_rect*w_rect) * (pix_img1 & pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 & pix_outer_img2)); // And_U8_U8U8
-	// int expected =  ((h_rect*w_rect) * (pix_img1 | pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 | pix_outer_img2)); // Or_U8_U8U8
-	// int expected =  ((h_rect*w_rect) * (pix_img1 ^ pix_inner_img2)) + (((width * height) - (h_rect*w_rect)) * (pix_img1 ^ pix_outer_img2)); // Xor_U8_U8U8
-	// int expected = ((h_rect*w_rect) * (255-pix_inner_img2)) + (((width * height) * (255-pix_outer_img2) )- ((h_rect*w_rect) * (255 - pix_outer_img2)));//Not_U8_U8U8
-
-	
-	/*********************** PRINT OUTPUT IMAGE ***********************/
 #ifdef PRINT_OUTPUT
-	 int i,j;
-       for ( i = 0; i< height ; i++, printf("\n"))
-       {
-               for(j=0 ; j<width ; j++)
-               {
-                       printf("sum<%d,%d>: %d\t",i, j, out_buf[i* addr.stride_y + j]);
-               }
-       }
+	printf("\nOutput Image: ");
+	printf("stride_x = %d, stride_y = %d | width = %d, height = %d\n", out_addr.stride_x, out_addr.stride_y, width, height);
+	printImage(out_buf, out_addr.stride_x, out_addr.stride_y, width, height);
 #endif
 
-	
-	int sum = 0;
+	returned_image_sum = 0;
 	for (int i = 0; i < height; i++) 
 	{
 		for (int j = 0; j < width; j++) 
 		{
-			sum += out_buf[i * addr.stride_y + j];
+			returned_image_sum += out_buf[i * out_addr.stride_y + j];
         }
 	}
-	if (sum != expected) {
-		printf("FAILED: sum = %d expected = %d\n", sum, expected);
-	} else {
-		printf("PASSED: sum = %d expected = %d\n", sum, expected);
-	}
-#if DUMP_IMAGE
-	FILE *fp = fopen("output.bin", "wb");
-	if (fp) fwrite(out_buf, 1, width*height, fp);
-#endif
-	ERROR_CHECK_STATUS( vxUnmapImagePatch( img_out, map_id ) );
+	if (returned_image_sum != expected_image_sum)
+		printf("\nTEST FAILED: returned_image_sum = %d expected_image_sum = %d\n", returned_image_sum, expected_image_sum);
+	else
+		printf("\nTEST PASSED: returned_image_sum = %d expected_image_sum = %d\n", returned_image_sum, expected_image_sum);
 
-	// free the resources on host side
+	ERROR_CHECK_STATUS(vxUnmapImagePatch( img_out, out_map_id));
+
+	// free resources
+
 	if (ptr[0]) hipFree(ptr[0]);
 	if (ptr[1]) hipFree(ptr[1]);
 	if (ptr[2]) hipFree(ptr[2]);
-	free(outImgBuffer);
 	vxReleaseContext(&context);
 
 	return 0;

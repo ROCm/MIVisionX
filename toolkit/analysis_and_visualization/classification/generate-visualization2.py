@@ -317,6 +317,9 @@ def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores,
             chartDataDict['lnPassFailData'] = chartData[1]
             chartDataDict['lnPassFailCombinedData'] = chartData[2]
 
+            chartDataDict['modelScoreChartData'] = methodScores[3]
+            chartDataDict['methodScoreChartData'] = methodScores[4]
+
         jsonString = json.dumps({'stats': stats,
                                  'topCounts': topCounts,
                                  'topKStats': topKStats,
@@ -495,11 +498,16 @@ def createScoreSummary(stats, topCounts):
     return modelScores, matchCounts
 
 
-def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hierarchyDataBase):
+def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hierarchyDataBase, topKPassFail):
     topk = 5
 
     hierarchyPenalty = np.zeros(shape=(100, topk))
     top5PassFail = np.zeros(shape=(100, topk*2))
+
+    method1ModelScores = []
+    method2ModelScores = []
+    method3ModelScores = []
+    methodStandardaModelScores = []
 
     for img in resultDataBase:
         imgName = img[0]
@@ -651,7 +659,138 @@ def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hie
         method3Score[i] = ((topKPassScoreSum -
                             (topKFailScore[i] + topKHierarchyPenalty[i]))/netSummaryImages) * 100.0
 
-    return method1Score, method2Score, method3Score
+    # TODO: Refactor This ------------------------
+    # Scores here are same as calculated above
+    # This section is kept as it is-------------
+    top5ModelScore = np.zeros(shape=(100, 20))
+
+    standardPassTop1 = 0
+    standardPassTop2 = 0
+    standardPassTop3 = 0
+    standardPassTop4 = 0
+    standardPassTop5 = 0
+
+    Top1PassScore = 0
+    Top1FailScore = 0
+    Top2PassScore = 0
+    Top2FailScore = 0
+    Top3PassScore = 0
+    Top3FailScore = 0
+    Top4PassScore = 0
+    Top4FailScore = 0
+    Top5PassScore = 0
+    Top5FailScore = 0
+    Top1HierarchyPenalty = 0
+    Top2HierarchyPenalty = 0
+    Top3HierarchyPenalty = 0
+    Top4HierarchyPenalty = 0
+    Top5HierarchyPenalty = 0
+
+    confID = 0.99
+    i = 99
+    while i >= 0:
+        Top1PassScore += confID * topKPassFail[i][0]
+        Top1FailScore += confID * topKPassFail[i][1]
+        Top2PassScore += confID * top5PassFail[i][2]
+        Top2FailScore += confID * top5PassFail[i][3]
+        Top3PassScore += confID * top5PassFail[i][4]
+        Top3FailScore += confID * top5PassFail[i][5]
+        Top4PassScore += confID * top5PassFail[i][6]
+        Top4FailScore += confID * top5PassFail[i][7]
+        Top5PassScore += confID * top5PassFail[i][8]
+        Top5FailScore += confID * top5PassFail[i][9]
+
+        Top1HierarchyPenalty += hierarchyPenalty[i][0]
+        Top2HierarchyPenalty += hierarchyPenalty[i][1]
+        Top3HierarchyPenalty += hierarchyPenalty[i][2]
+        Top4HierarchyPenalty += hierarchyPenalty[i][3]
+        Top5HierarchyPenalty += hierarchyPenalty[i][4]
+
+        # method 1
+        top5ModelScore[i][1] = (float(Top1PassScore)/netSummaryImages)*100
+        top5ModelScore[i][3] = (
+            float(Top1PassScore + Top2PassScore)/netSummaryImages)*100
+        top5ModelScore[i][5] = (
+            float(Top1PassScore + Top2PassScore + Top3PassScore)/netSummaryImages)*100
+        top5ModelScore[i][7] = (float(
+            Top1PassScore + Top2PassScore + Top3PassScore + Top4PassScore)/netSummaryImages)*100
+        top5ModelScore[i][9] = (float(Top1PassScore + Top2PassScore +
+                                      Top3PassScore + Top4PassScore + Top5PassScore)/netSummaryImages)*100
+
+        # method 2
+        top5ModelScore[i][0] = (
+            float(Top1PassScore - Top1FailScore)/netSummaryImages)*100
+        top5ModelScore[i][4] = (float(
+            (Top1PassScore + Top2PassScore + Top3PassScore) - Top3FailScore)/netSummaryImages)*100
+        top5ModelScore[i][6] = (float((Top1PassScore + Top2PassScore +
+                                       Top3PassScore + Top4PassScore) - Top4FailScore)/netSummaryImages)*100
+        top5ModelScore[i][8] = (float((Top1PassScore + Top2PassScore + Top3PassScore +
+                                       Top4PassScore + Top5PassScore) - Top5FailScore)/netSummaryImages)*100
+
+        # method 3
+        top5ModelScore[i][15] = (float(
+            Top1PassScore - (Top1FailScore + Top1HierarchyPenalty))/netSummaryImages)*100
+        top5ModelScore[i][16] = (float((Top1PassScore + Top2PassScore) -
+                                       (Top2FailScore + Top2HierarchyPenalty))/netSummaryImages)*100
+        top5ModelScore[i][17] = (float((Top1PassScore + Top2PassScore + Top3PassScore) - (
+            Top3FailScore + Top3HierarchyPenalty))/netSummaryImages)*100
+        top5ModelScore[i][18] = (float((Top1PassScore + Top2PassScore + Top3PassScore +
+                                        Top4PassScore) - (Top4FailScore + Top4HierarchyPenalty))/netSummaryImages)*100
+        top5ModelScore[i][19] = (float((Top1PassScore + Top2PassScore + Top3PassScore + Top4PassScore +
+                                        Top5PassScore) - (Top5FailScore + Top5HierarchyPenalty))/netSummaryImages)*100
+
+        # standard method
+        standardPassTop1 += float(topKPassFail[i][0])
+        standardPassTop2 += float(topKPassFail[i][0] + top5PassFail[i][2])
+        standardPassTop3 += float(topKPassFail[i][0] +
+                                  top5PassFail[i][2] + top5PassFail[i][4])
+        standardPassTop4 += float(topKPassFail[i][0] + top5PassFail[i]
+                                  [2] + top5PassFail[i][4] + top5PassFail[i][6])
+        standardPassTop5 += float(topKPassFail[i][0] + top5PassFail[i][2] +
+                                  top5PassFail[i][4] + top5PassFail[i][6] + top5PassFail[i][8])
+        top5ModelScore[i][10] = (standardPassTop1/netSummaryImages)*100
+        top5ModelScore[i][11] = (standardPassTop2/netSummaryImages)*100
+        top5ModelScore[i][12] = (standardPassTop3/netSummaryImages)*100
+        top5ModelScore[i][13] = (standardPassTop4/netSummaryImages)*100
+        top5ModelScore[i][14] = (standardPassTop5/netSummaryImages)*100
+        confID = confID - 0.01
+        i = i - 1
+    # end of section graph data calculation
+
+    # Make arrays for chart plotting ----------------------------
+    modelScoreChartData = [[[1, 0, 0, 0, 0]] for i in range(topk)]
+    modelChartDataIndices = [[10, 1, 0, 15],
+                             [11, 3, 2, 16],
+                             [12, 5, 4, 17],
+                             [13, 7, 6, 18],
+                             [14, 9, 8, 19]]
+
+    scoreMethodChartData = [[[1, 0, 0, 0, 0, 0]] for i in range(4)]
+    scoreMethodChartIndices = [[10, 11, 12, 13, 14],  # Standard
+                               [1, 3, 5, 7, 9],  # method 1
+                               [0, 2, 4, 6, 8],  # method 2
+                               [15, 16, 17, 18, 19]]  # method3
+
+    fVal = 0.99
+    i = 99
+    while i >= 0:
+        for j in range(topk):
+            modelScoreDataFromIndices = [top5ModelScore[i][k]
+                                         for k in modelChartDataIndices[j]]
+            modelScoreChartData[j].append([fVal, *modelScoreDataFromIndices])
+
+        # DIfferent methods now - Standard, method1, method2, method3
+
+        for j in range(4):
+            scoreMethodFromIndices = [top5ModelScore[i][k]
+                                      for k in scoreMethodChartIndices[j]]
+
+            scoreMethodChartData[j].append([fVal, *scoreMethodFromIndices])
+
+        fVal = round(fVal-0.01, 2)
+        i = i - 1
+
+    return method1Score, method2Score, method3Score, modelScoreChartData, scoreMethodChartData
 
 
 def getSuccessFailureChartData(stats, topKPassFail, topKHierarchyPassFail):
@@ -771,7 +910,7 @@ def main():
             resultsDirectory, topKPassFail, topKHierarchyPassFail)
 
         methodScores = createHirerchySummaryScore(
-            stats, topCounts, resultDataBase, labelLines, hierarchyDataBase)
+            stats, topCounts, resultDataBase, labelLines, hierarchyDataBase, topKPassFail)
 
         chartData = getSuccessFailureChartData(
             stats, topKPassFail, topKHierarchyPassFail)

@@ -391,3 +391,25 @@ select {
     border: 0px solid #ccc;
     display: inline-block
 }
+
+.result-history-check {
+    display: block;
+}
+
+#old-data-list {
+    text-align: left;
+    height: 600px;
+    margin-left: 10px;
+    overflow: auto;
+}
+
+
+.col-30 {
+    width: 30%;
+    float: left;
+}
+
+.col-70 {
+    width: 70%;
+    float: left;
+}

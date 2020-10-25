@@ -570,7 +570,30 @@
         </h1>
     </a>
 
-    <div class="center" id="Model_Stats_master" style="border: 1px solid #ccc; width:50%"></div>
+    <div class="row">
+        <div class="col-30">
+            <div id="old-data-list">
+                <table class="sortable">
+                    <thead>
+                        <th>Select</th>
+                        <th>Name</th>
+                        <th id="date_sort_header">Gen Date</th>
+                        <th>Total Images</th>
+                    </thead>
+                    <tbody id="history-tbody">
+
+                    </tbody>
+                </table>
+
+
+            </div>
+
+        </div>
+        <div class="col-70">
+            <div id="Model_Stats_master" style="border: 1px solid #ccc; width:50%"></div>
+
+        </div>
+    </div>
 
 
     <div class="row" id="compare-result-graphs">
@@ -664,6 +687,10 @@
                 </tr>
             </tbody>
         </table>
+    </div>
+
+    <div id="score-chart-div" class="row">
+
     </div>
 
 

@@ -478,7 +478,6 @@ function compare(a, b, operator) {
     switch (operator) {
         case 'contains':
             return a.toString().toLowerCase().includes(b.toString().toLowerCase());
-            break;
         case 'eq':
             return a == b;
         case 'neq':
@@ -529,6 +528,10 @@ document.addEventListener('DOMContentLoaded', function () {
     loadLabelSummary(labelSummary);
     loadScorings();
 
+    addToOldDataList();
+
+
+
     $('.filter-image').on('click', function (event) {
         var element = event.target;
         var targetValue = element.dataset.id;
@@ -560,7 +563,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     $('select[id ^= "fli_op_"]').change(function () {
         filterResultTable();
-    })
+    });
 
 
     $('.sort-field').click(function (event) {
@@ -578,3 +581,57 @@ document.addEventListener('DOMContentLoaded', function () {
 
     });
 });
+
+
+function addToOldDataList() {
+    modelHistories.forEach(function (model, index) {
+        var tbody = document.getElementById('history-tbody');
+
+        var row = document.createElement('tr');
+
+        var col = document.createElement('td');
+        var label = document.createElement('label');
+        label.classList.add('result-history-check');
+        var elem = document.createElement('input');
+        elem.type = 'checkbox';
+        elem.classList.add('history_check');
+        elem.dataset.id = index;
+        elem.id = 'history_' + index;
+        if (index > modelHistories.length - 5)
+            elem.checked = true;
+        // elem.classList.add('result-history-check');
+        label.appendChild(elem);
+        var labelText = document.createTextNode(model.modelName + ' | ' + model.genDate);
+
+        col.append(label);
+        row.append(col);
+
+        col = document.createElement('td');
+        col.append(document.createTextNode(model.modelName));
+        row.appendChild(col);
+
+        col = document.createElement('td');
+        col.append(document.createTextNode(model.genDate));
+        row.appendChild(col);
+
+        col = document.createElement('td');
+        col.append(document.createTextNode(model.totalImages));
+        row.appendChild(col);
+
+        tbody.appendChild(row);
+
+        // label.appendChild(labelText);
+        // document.getElementById('old-data-list').appendChild(label);
+
+    });
+
+    //Shortcut to use table sort to filter by date
+    setTimeout(function () {
+        document.getElementById('date_sort_header').click();
+    }, 1000);
+    setTimeout(function () {
+        document.getElementById('date_sort_header').click();
+    }, 2000);
+
+
+}

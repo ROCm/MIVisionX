@@ -62,25 +62,58 @@ function drawResultChart() {
 
 
 document.addEventListener('DOMContentLoaded', function () {
+    $('.history_check').click(function () {
+        addResultHistory();
+
+    });
     addResultHistory();
+
 
     google.charts.load('current', {
         packages: ['corechart', 'line']
     });
 
-    google.charts.setOnLoadCallback(drawPassFailGraph);
-    google.charts.setOnLoadCallback(drawLnPassFailGraphs);
-    google.charts.setOnLoadCallback(drawHierarchyPassFailGraph);
+    if (data.hasHierarchy) {
+        google.charts.setOnLoadCallback(drawPassFailGraph);
+        google.charts.setOnLoadCallback(drawLnPassFailGraphs);
+        google.charts.setOnLoadCallback(drawHierarchyPassFailGraph);
+
+        google.charts.setOnLoadCallback(drawTopKModelScoreGraph);
+        google.charts.setOnLoadCallback(drawMethodScoreChartGraphs);
+    }
+
 
 });
 
 
 function addResultHistory() {
 
-    combinedArrayData = [];
+    var combinedArrayData = [];
+
+
+
     combinedArrayData.push(['Model', 'Match', 'Mismatch']);
+    toDrawModelHistories = [];
+    var selectedIndices = [];
+    $('.history_check').each(function (index, item) {
+        if ($(item).is(":checked")) {
+            id = $(item).data('id');
+            selectedIndices.push(parseInt(id));
+        }
+    });
 
     modelHistories.forEach((model, index) => {
+        if (selectedIndices.indexOf(index) >= 0) {
+            toDrawModelHistories.push(model);
+        }
+    });
+
+    document.getElementById('Model_Stats_master').innerHTML = "";
+    document.getElementById('compare-result-graphs').innerHTML = "";
+
+
+
+    toDrawModelHistories.forEach((model, index) => {
 
         combinedArrayData.push([model.modelName, model.passCount, model.totalMismatch])
 
@@ -93,7 +126,6 @@ function addResultHistory() {
         google.charts.load('current', {
             'packages': ['bar']
         });
-
 
 
         google.charts.setOnLoadCallback(function () {
@@ -271,4 +303,113 @@ function drawHierarchyPassFailGraph() {
     var chart = new google.visualization.LineChart(document.getElementById('Hierarchy_pass_fail_chart'));
     chart.draw(chartData, options);
 
+}
+
+
+function drawTopKModelScoreGraph() {
+
+    for (var i = 0; i < data.chartData.modelScoreChartData.length; i++) {
+
+        // There is no L6 so do not plot L6 SUccess Failure
+        if (i == 5)
+            continue;
+
+        var chartParentDiv = document.createElement('div');
+        chartParentDiv.className = "column";
+
+        var chartDiv = document.createElement('div');
+        chartDiv.classList.add("pass-fail-chart");
+
+
+        var chartData = new google.visualization.DataTable();
+
+        chartData.addColumn('number', 'X');
+        chartData.addColumn('number', 'Standard');
+        chartData.addColumn('number', 'Method 1');
+        chartData.addColumn('number', 'Method 2');
+        chartData.addColumn('number', 'Method 3');
+        chartData.addRows(data.chartData.modelScoreChartData[i]);
+
+        var options = {
+            title: 'Model Score Top ' + (i + 1),
+            hAxis: {
+                title: 'Confidence',
+                direction: '-1'
+            },
+            vAxis: {
+                title: 'Score Percentage'
+            },
+            series: {
+                0.01: {
+                    curveType: 'function'
+                }
+            },
+            width: 700,
+            height: 400
+        };
+        var chart = new google.visualization.LineChart(chartDiv);
+        chart.draw(chartData, options);
+        chartParentDiv.appendChild(chartDiv);
+        document.getElementById('score-chart-div').appendChild(chartParentDiv);
+    }
+
+    // var data = new google.visualization.DataTable();
+    // data.addColumn('number', 'X');
+    // data.addColumn('number', 'Standard');
+    // data.addColumn('number', 'Method 1');
+    // data.addColumn('number', 'Method 2');
+    // data.addColumn('number', 'Method 3');
+    // data.addRows(
+}
+
+
+
+function drawMethodScoreChartGraphs() {
+
+
+    for (var i = 0; i < data.chartData.methodScoreChartData.length; i++) {
+
+        // There is no L6 so do not plot L6 SUccess Failure
+        if (i == 5)
+            continue;
+
+        var chartParentDiv = document.createElement('div');
+        chartParentDiv.className = "column";
+
+        var chartDiv = document.createElement('div');
+        chartDiv.classList.add("pass-fail-chart");
+
+
+        var chartData = new google.visualization.DataTable();
+
+        chartData.addColumn('number', 'X');
+        chartData.addColumn('number', 'Top 1');
+        chartData.addColumn('number', 'Top 2');
+        chartData.addColumn('number', 'Top 3');
+        chartData.addColumn('number', 'Top 4');
+        chartData.addColumn('number', 'Top 5');
+        chartData.addRows(data.chartData.methodScoreChartData[i]);
+
+        var options = {
+            title: i > 0 ? 'Method ' + (i) + ' Scoring' : 'Standard Scoring Method',
+            hAxis: {
+                title: 'Confidence',
+                direction: '-1'
+            },
+            vAxis: {
+                title: 'Score Percentage'
+            },
+            series: {
+                0.01: {
+                    curveType: 'function'
+                }
+            },
+            width: 700,
+            height: 400
+        };
+        var chart = new google.visualization.LineChart(chartDiv);
+        chart.draw(chartData, options);
+        chartParentDiv.appendChild(chartDiv);
+        document.getElementById('score-chart-div').appendChild(chartParentDiv);
+    }
 }

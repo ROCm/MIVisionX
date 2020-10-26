@@ -64,8 +64,6 @@ _known_types={
 	BGR : ("BGR", BGR),
     RGB : ("RGB", RGB),
 	GRAY : ("GRAY", GRAY)
-
-
 }
 
 

@@ -397,7 +397,7 @@ function drawMethodScoreChartGraphs() {
                 direction: '-1'
             },
             vAxis: {
-                title: 'Score Percentage'
+                title: 'Score Percentage',
             },
             series: {
                 0.01: {

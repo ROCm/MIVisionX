@@ -1,0 +1,9 @@
+
+# $1 data $1 = image:1280,720,IYUV:READ,inputs\stm_1280x720.yuv
+data inter_luma = image:1280,720,U008
+node org.khronos.openvx.channel_extract $1 !CHANNEL_Y inter_luma
+
+# $2 data input_remap_table = remap:1280,720,1280,720:READ,inputs/remap_1280x720_mirror.txt
+# $3 data output_remap = image:1280,720,U008:WRITE,~\tc3040_remap_1280x720.yuv
+node org.khronos.openvx.remap inter_luma $2 !NEAREST_NEIGHBOR $3 attr:BORDER_MODE:CONSTANT,0
+

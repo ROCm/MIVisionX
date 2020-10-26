@@ -1,0 +1,7 @@
+
+# $1 data $1 = image:1280,720,IYUV:READ,inputs\stm_1280x720.yuv
+data inter_luma = image:1280,720,U008
+node org.khronos.openvx.channel_extract $1 !CHANNEL_Y inter_luma
+
+# $2 data output_gaussian_pyramid = pyramid:4,HALF,1280,720,U008:WRITE,~\tc3021_gaussianpyramid%d_1280x720.yuv
+node org.khronos.openvx.gaussian_pyramid inter_luma $2

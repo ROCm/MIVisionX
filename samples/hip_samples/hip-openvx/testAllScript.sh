@@ -20,7 +20,7 @@ echo "##########################################################################
 passed_host=0
 failed_host=0
 na_host=0
-for ((case=1;case<7;case++))
+for ((case=1;case<100;case++))
 do
 printf "\n\n\n\n"
 echo "--------------------------------"
@@ -54,7 +54,7 @@ echo "##########################################################################
 passed_hip=0
 failed_hip=0
 na_hip=0
-for ((case=1;case<7;case++))
+for ((case=1;case<100;case++))
 do
 printf "\n\n\n\n"
 echo "--------------------------------"

@@ -44,7 +44,7 @@ bool Caffe2MetaDataReaderDetection::exists(const std::string &_image_name)
     return _map_content.find(_image_name) != _map_content.end();
 }
 
-void Caffe2MetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels)
+void Caffe2MetaDataReaderDetection::add(std::string image_name, BoundingBoxCords bb_coords, BoundingBoxLabels bb_labels,ImgSizes image_size)
 {
     if (exists(image_name))
     {
@@ -53,12 +53,12 @@ void Caffe2MetaDataReaderDetection::add(std::string image_name, BoundingBoxCords
         it->second->get_bb_labels().push_back(bb_labels[0]);
         return;
     }
-    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels);
+    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels, image_size);
     _map_content.insert(pair<std::string, std::shared_ptr<BoundingBox>>(image_name, info));
 }
 
 void Caffe2MetaDataReaderDetection::lookup(const std::vector<std::string> &_image_names)
-{
+{   
     if (_image_names.empty())
     {
         WRN("No image names passed")
@@ -75,6 +75,7 @@ void Caffe2MetaDataReaderDetection::lookup(const std::vector<std::string> &_imag
             THROW("ERROR: Given name not present in the map" + image_name)
         _output->get_bb_cords_batch()[i] = it->second->get_bb_cords();
         _output->get_bb_labels_batch()[i] = it->second->get_bb_labels();
+        _output->get_img_sizes_batch()[i] = it->second->get_img_sizes();
     }
 }
 
@@ -164,6 +165,17 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
             BoundingBoxLabels bb_labels;
             BoundingBoxCord box;
 
+            ImgSizes img_sizes;
+            ImgSize img_size;
+
+             caffe2_protos::TensorProto image_proto = tens_protos.protos(0);
+            // Parsing width of image
+            img_size.w= image_proto.dims(0);
+            // Parsing height of image
+            img_size.h = image_proto.dims(1);
+            
+            img_sizes.push_back(img_size);
+
             if (boundBox_size != 0)
             {
                 int boundIter = 0;
@@ -181,7 +193,7 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
 
                     bb_coords.push_back(box);
                     bb_labels.push_back(label);
-                    add(str_key.c_str(), bb_coords, bb_labels);
+                    add(str_key.c_str(), bb_coords, bb_labels,img_sizes);
                     bb_coords.clear();
                     bb_labels.clear();
                 }
@@ -191,13 +203,14 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
                 box.x = box.y = box.w = box.h = 0;
                 bb_coords.push_back(box);
                 bb_labels.push_back(0);
-                add(str_key.c_str(), bb_coords, bb_labels);
+                add(str_key.c_str(), bb_coords, bb_labels,img_sizes);
             }
         }
         else
         {
-            cout << "Parsing Protos Failed" << endl;
+            THROW("Parsing Protos Failed");
         }
+        
     }
 
     // Closing all the LMDB environment and cursor handles

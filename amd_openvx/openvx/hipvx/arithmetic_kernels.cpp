@@ -30,7 +30,7 @@ THE SOFTWARE.
 // static const float VAL = -32768;
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 // #define PIXELSATURATES16(pixel)     (pixel < VAL) ? VAL : ((pixel < 32767) ? pixel : 32767)
-#define PIXELSATURATES16(pixel)     (pixel < INT16_MIN) ? INT16_MIN : (pixel < INT16_MAX) ? pixel : INT16_MAX)
+#define PIXELSATURATES16(pixel)     (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
 __device__ __forceinline__ float4 uchars_to_float4(uint src)

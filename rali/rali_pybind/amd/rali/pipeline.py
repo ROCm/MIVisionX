@@ -1,6 +1,7 @@
 import rali_pybind as b
 import amd.rali.types as types
 import numpy as np
+import torch
 
 
 class Pipeline(object):
@@ -111,6 +112,9 @@ class Pipeline(object):
         self._img_w = None
         self._shuffle = None
         self._name = None
+        self._anchors = None
+        self._BoxEncoder = None
+        self._encode_tensor = None
 
     def store_values(self, operator):
         """
@@ -168,6 +172,37 @@ class Pipeline(object):
         """
         outputs = self.define_graph()
         self.process_calls(outputs[0])
+        print(type(outputs))
+        print(len(outputs))
+        # exit(0)
+        #Checks for Box Encoding
+        
+        if(len(outputs)==3):
+            if(isinstance(outputs[1],list)== False):
+                if(outputs[1].prev is not None):
+                    print("YES1")
+                    if(outputs[2].prev is not None):
+                        print("YES2")
+                        if(outputs[2].prev.data == "BoxEncoder"):
+                            print("Inside Box Encoder ops.py")
+                            self._BoxEncoder = True
+                            self._anchors = outputs[2].data
+                            self._encode_tensor = outputs[2]
+       
+                            
+        # exit(0)
+            
+                
+        #Checks for One Hot Encoding
+        # if(isinstance(outputs[1],list)== False):
+        #     if(len(outputs)==2):
+        #         if(outputs[1].prev is not None):
+        #             print(type(outputs[1]))
+        #             if(outputs[1].prev.data == "OneHotLabel"):
+        #                 print("Comes to if condition")
+        #                 self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
+        #                 self._oneHotEncoding = True
+            
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
@@ -214,7 +249,11 @@ class Pipeline(object):
             b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
-
+    def encode(self, bboxes_in, labels_in):
+        bboxes_tensor = torch.tensor(bboxes_in).float()
+        labels_tensor=  torch.tensor(labels_in).long()
+        return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
+                            
 
     def GetImageNameLen(self, array):
         return b.getImageNameLen(self._handle, array)

@@ -1,11 +1,15 @@
 import rali_pybind as b
 import amd.rali.types as types
+import torch
+
+
 
 class Node:
     def __init__(self):
         self.data = None
         self.prev = None
         self.next = None
+
 
 class FileReader(Node):
     """
@@ -44,10 +48,10 @@ class FileReader(Node):
     tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
-    def __init__(self, file_root, bytes_per_sample_hint = 0, file_list = '', initial_fill = '', lazy_init = '', num_shards = 1,
-                pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
-                seed = -1, shard_id = 0, shuffle_after_epoch = False, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
-        
+    def __init__(self, file_root, bytes_per_sample_hint=0, file_list='', initial_fill='', lazy_init='', num_shards=1,
+                 pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False,
+                 seed=-1, shard_id=0, shuffle_after_epoch=False, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, device=None):
+
         Node().__init__()
         self._file_root = file_root
         self._bytes_per_sample_hint = bytes_per_sample_hint
@@ -68,20 +72,20 @@ class FileReader(Node):
         self._tensor_init_bytes = tensor_init_bytes
         self._labels = []
         self.output = Node()
-    
-    def __call__(self,name = ""):
+
+    def __call__(self, name=""):
         self.data = "FileReader"
         self.prev = None
         self.next = self.output
         self.output.prev = self
         self.output.next = None
         self.output.data = self._file_root
-        return self.output,self._labels
+        return self.output, self._labels
 
-    def rali_c_func_call(self,handle):
-        b.labelReader(handle,self._file_root)
+    def rali_c_func_call(self, handle):
+        b.labelReader(handle, self._file_root)
         return self._file_root
-    
+
 
 class TFRecordReader(Node):
     """
@@ -127,7 +131,7 @@ class TFRecordReader(Node):
 
     """
 
-    def __init__(self, path, user_feature_key_map, features, index_path="", reader_type=0, bytes_per_sample_hint=0, initial_fill = 1024, lazy_init = False, num_shards = 1, pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False, read_ahead = False, seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576,  device = None) :
+    def __init__(self, path, user_feature_key_map, features, index_path="", reader_type=0, bytes_per_sample_hint=0, initial_fill=1024, lazy_init=False, num_shards=1, pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False, seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576,  device=None):
 
         Node().__init__()
         self._reader_type = reader_type
@@ -142,7 +146,7 @@ class TFRecordReader(Node):
         self._pad_last_batch = pad_last_batch
         self._prefetch_queue_depth = prefetch_queue_depth
         self._preserve = preserve
-        self._random_shuffle =random_shuffle
+        self._random_shuffle = random_shuffle
         self._read_ahead = read_ahead
         self._seed = seed
         self._shard_id = shard_id
@@ -152,23 +156,24 @@ class TFRecordReader(Node):
         self._device = device
         self.output = Node()
         self._labels = []
-        self._features["image/encoded"]=self.output
-        self._features["image/class/label"]=self._labels
+        self._features["image/encoded"] = self.output
+        self._features["image/class/label"] = self._labels
 
-
-    def __call__(self,name = ""):
+    def __call__(self, name=""):
 
         if self._reader_type == 1:
             for key in (self._features).keys():
                 if key not in (self._user_feature_key_map).keys():
-                    print("For Object Detection, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
+                    print(
+                        "For Object Detection, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
                     print("image/encoded\nimage/class/label\nimage/class/text\nimage/object/bbox/xmin\nimage/object/bbox/ymin\nimage/object/bbox/xmax\nimage/object/bbox/ymax\n")
                     exit()
             self.data = "TFRecordReaderDetection"
         else:
             for key in (self._features).keys():
                 if key not in (self._user_feature_key_map).keys():
-                    print("For Image Classification, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
+                    print(
+                        "For Image Classification, RALI TFRecordReader needs all the following keys in the featureKeyMap:")
                     print("image/encoded\nimage/class/label\n")
                     exit()
             self.data = "TFRecordReaderClassification"
@@ -180,7 +185,7 @@ class TFRecordReader(Node):
         self.output.data = self._path
         return self._features
 
-    def rali_c_func_call(self,handle):
+    def rali_c_func_call(self, handle):
         if self._reader_type == 1:
             b.TFReaderDetection(
                 handle, self._path, True,
@@ -201,47 +206,48 @@ class TFRecordReader(Node):
 
         return self._index_path
 
+
 class CaffeReader(Node):
     """
         path (str or list of str) – List of paths to Caffe LMDB directories.
 
         bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
-        
+
         image_available (bool, optional, default = True) – If image is available at all in this LMDB.
-        
+
         initial_fill (int, optional, default = 1024) – Size of the buffer used for shuffling. If random_shuffle is off then this parameter is ignored.
-        
+
         label_available (bool, optional, default = True) – If label is available at all.
-        
+
         lazy_init (bool, optional, default = False) – If set to true, Loader will parse and prepare the dataset metadata only during the first Run instead of in the constructor.
-        
+
         num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
-        
+
         pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size. It means that the remainder of the batch or even the whole batch can be artificially added when the data set size is not equally divisible by the number of shards, and the shard is not equally divisible by the batch size. In the end, the shard size will be equalized between shards.
-        
+
         prefetch_queue_depth (int, optional, default = 1) – Specifies the number of batches prefetched by the internal Loader. To be increased when pipeline processing is CPU stage-bound, trading memory consumption for better interleaving with the Loader thread.
-        
+
         preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
-        
+
         random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
-        
+
         read_ahead (bool, optional, default = False) – Whether accessed data should be read ahead. In case of big files like LMDB, RecordIO or TFRecord it will slow down first access but will decrease the time of all following accesses.
-        
+
         seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
-        
+
         shard_id (int, optional, default = 0) – Id of the part to read.
-        
+
         skip_cached_images (bool, optional, default = False) – If set to true, loading data will be skipped when the sample is present in the decoder cache. In such case the output of the loader will be empty
-        
+
         stick_to_shard (bool, optional, default = False) – Whether reader should stick to given data shard instead of going through the whole dataset. When decoder caching is used, it reduces significantly the amount of data to be cached, but could affect accuracy in some cases
-        
+
         tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
-    def __init__(self, path,bbox =False, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_available = True,
-    lazy_init = False,  num_shards = 1,
-                pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
-                seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
+    def __init__(self, path, bbox=False, bytes_per_sample_hint=0, image_available=True, initial_fill=1024, label_available=True,
+                 lazy_init=False,  num_shards=1,
+                 pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False,
+                 seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, device=None):
         Node().__init__()
         self._path = path
         self._bbox = bbox
@@ -262,12 +268,12 @@ class CaffeReader(Node):
         self._stick_to_shard = stick_to_shard
         self._tensor_init_bytes = tensor_init_bytes
         self._labels = []
-        self._bboxes  = []
+        self._bboxes = []
         self._device = device
         self.output = Node()
-    
-    def __call__(self,name = ""):
-        if(self._bbox==True):
+
+    def __call__(self, name=""):
+        if(self._bbox == True):
             self.data = "CaffeReaderDetection"
         else:
             self.data = "CaffeReader"
@@ -276,20 +282,19 @@ class CaffeReader(Node):
         self.output.prev = self
         self.output.next = None
         self.output.data = self._path
-        if(self._bbox==True):
-            return self.output,self._bboxes,self._labels
+        if(self._bbox == True):
+            return self.output, self._bboxes, self._labels
         else:
-            return self.output,self._labels
+            return self.output, self._labels
 
-        
-
-    def rali_c_func_call(self,handle):
-        if(self._bbox==True):
+    def rali_c_func_call(self, handle):
+        if(self._bbox == True):
             b.CaffeReaderDetection(handle, self._path)
         else:
 
             b.CaffeReader(handle, self._path)
         return self._path
+
 
 class Caffe2Reader(Node):
     """
@@ -345,11 +350,11 @@ class Caffe2Reader(Node):
         tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
-    def __init__(self, path,bbox = False, additional_inputs = 0, bytes_per_sample_hint = 0, image_available = True, initial_fill = 1024,label_type = 0,
-    lazy_init = False,num_labels =1,  num_shards = 1,
-                pad_last_batch = False, prefetch_queue_depth = 1, preserve = False, random_shuffle = False,read_ahead = False,
-                seed = -1, shard_id = 0, skip_cached_images = False, stick_to_shard = False, tensor_init_bytes = 1048576, device = None):
-        
+    def __init__(self, path, bbox=False, additional_inputs=0, bytes_per_sample_hint=0, image_available=True, initial_fill=1024, label_type=0,
+                 lazy_init=False, num_labels=1,  num_shards=1,
+                 pad_last_batch=False, prefetch_queue_depth=1, preserve=False, random_shuffle=False, read_ahead=False,
+                 seed=-1, shard_id=0, skip_cached_images=False, stick_to_shard=False, tensor_init_bytes=1048576, device=None):
+
         Node().__init__()
         self._path = path
         self._bbox = bbox
@@ -375,8 +380,8 @@ class Caffe2Reader(Node):
         self._bboxes = []
         self._device = device
         self.output = Node()
-    
-    def __call__(self,name = ""):
+
+    def __call__(self, name=""):
         if(self._bbox == True):
             self.data = "Caffe2ReaderDetection"
         else:
@@ -387,11 +392,11 @@ class Caffe2Reader(Node):
         self.output.next = None
         self.output.data = self._path
         if(self._bbox == True):
-            return self.output,self._bboxes,self._labels
+            return self.output, self._bboxes, self._labels
         else:
-            return self.output,self._labels
+            return self.output, self._labels
 
-    def rali_c_func_call(self,handle):
+    def rali_c_func_call(self, handle):
         if(self._bbox == True):
             b.Caffe2ReaderDetection(handle, self._path, True)
         else:
@@ -464,12 +469,12 @@ class COCOReader(Node):
         tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
 
 
-    """  
+    """
 
-    def __init__(self,file_root, annotations_file ='', bytes_per_sample_hint = 0, dump_meta_files =False ,dump_meta_files_path = '', file_list ='', initial_fill = 1024,  lazy_init = False ,ltrb = False,masks = False, meta_files_path ='', num_shards = 1, pad_last_batch =False, prefetch_queue_depth=1,
-     preserve = False, random_shuffle=False, ratio=False ,read_ahead=False,
-     save_img_ids =False , seed =-1 ,shard_id =0, shuffle_after_epoch=False , size_threshold =0.1, 
-     skip_cached_images=False, skip_empty=False, stick_to_shard=False, tensor_init_bytes= 1048576):
+    def __init__(self, file_root, annotations_file='', bytes_per_sample_hint=0, dump_meta_files=False, dump_meta_files_path='', file_list='', initial_fill=1024,  lazy_init=False, ltrb=False, masks=False, meta_files_path='', num_shards=1, pad_last_batch=False, prefetch_queue_depth=1,
+                 preserve=False, random_shuffle=False, ratio=False, read_ahead=False,
+                 save_img_ids=False, seed=-1, shard_id=0, shuffle_after_epoch=False, size_threshold=0.1,
+                 skip_cached_images=False, skip_empty=False, stick_to_shard=False, tensor_init_bytes=1048576):
         Node().__init__()
         self._file_root = file_root
         self._annotations_file = annotations_file
@@ -498,24 +503,146 @@ class COCOReader(Node):
         self._skip_empty = skip_empty
         self._stick_to_shard = stick_to_shard
         self._tensor_init_bytes = tensor_init_bytes
-        self._labels= []
-        self._bboxes= []
+        self._labels = []
+        self._bboxes = []
         self.output = Node()
 
-    def __call__(self,name = ""):
+    def __call__(self, name=""):
         self.data = "COCOReader"
         self.prev = None
         self.next = self.output
         self.output.prev = self
         self.output.next = None
-        self.output.data = [self._file_root,self._annotations_file]
+        self.output.data = [self._file_root, self._annotations_file]
         return self.output, self._bboxes, self._labels
 
-    def rali_c_func_call(self,handle):
-        b.COCOReader(handle , self._annotations_file, True)
+    def rali_c_func_call(self, handle):
+        b.COCOReader(handle, self._annotations_file, True)
         # b.labelReader(handle,self._file_root)
         return self._file_root
 
+
+class BoxEncoder(Node):
+
+
+    """
+        anchors (float or list of float) – Anchors to be used for encoding. List of floats in "ltrb" format.
+
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+
+        criteria (float, optional, default = 0.5) – Threshold IOU for matching bounding boxes with anchors. Value between 0 and 1.
+
+        means (float or list of float, optional, default = [0.0, 0.0, 0.0, 0.0]) – [x y w h] means for offset normalization.
+
+        offset (bool, optional, default = False) – Returns normalized offsets ((encoded_bboxes*scale - anchors*scale) - mean) / stds in EncodedBBoxes using std, mean and scale arguments (default values are transparent).
+
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+        scale (float, optional, default = 1.0) – Rescale the box and anchors values before offset calculation (e.g. to get back to absolute values).
+
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+        stds (float or list of float, optional, default = [1.0, 1.0, 1.0, 1.0]) – [x y w h] standard deviations for offset normalization.
+    """
+
+    def __init__(self, anchors, bytes_per_sample_hint=0, criteria=0.5, means=[0.0, 0.0, 0.0, 0.0], offset=False, preserve=False,
+                 scale=1.0, seed=-1, stds=[1.0, 1.0, 1.0, 1.0],device = None):
+        Node().__init__()
+        self._anchors = anchors
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._criteria = criteria
+        self._means = means
+        self._offset = offset
+        self._preserve = preserve
+        self._scale = scale
+        self._seed = seed
+        self._stds = stds
+        self.output = Node()
+
+    def __call__(self, bboxes, labels):
+        self.data = "BoxEncoder"
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._anchors
+        return self.output, self.output 
+
+    def rali_c_func_call(self, handle, bboxes_tensor, labels_tensor, criteria=0.5):
+        
+        
+        def calc_iou_tensor(box1, box2):
+                    """ Calculation of IoU based on two boxes tensor,
+                        Reference to https://github.com/kuangliu/pytorch-src
+                        input:
+                            box1 (N, 4)
+                            box2 (M, 4)
+                        output:
+                            IoU (N, M)
+                    """
+                    N = box1.size(0)
+                    M = box2.size(0)
+                   
+                    be1 = box1.unsqueeze(1).expand(-1, M, -1)
+                    be2 = box2.unsqueeze(0).expand(N, -1, -1)
+                   
+                    # Left Top & Right Bottom
+                    lt = torch.max(be1[:,:,:2], be2[:,:,:2])
+                    rb = torch.min(be1[:,:,2:], be2[:,:,2:])
+
+                    delta = rb - lt
+                    delta[delta < 0] = 0
+                    intersect = delta[:,:,0]*delta[:,:,1]
+
+                    delta1 = be1[:,:,2:] - be1[:,:,:2]
+                    area1 = delta1[:,:,0]*delta1[:,:,1]
+                    delta2 = be2[:,:,2:] - be2[:,:,:2]
+                    area2 = delta2[:,:,0]*delta2[:,:,1]
+
+                    iou = intersect/(area1 + area2 - intersect)
+                    return iou
+        #Pass the bbox and labels for Encoding
+        def encode(bboxes_in , labels_in, criteria = 0.5):
+                    self.default_boxes = self._anchors
+                    self.dboxes = torch.tensor(self.default_boxes, dtype=torch.float)	
+                    self.dboxes.clamp_(min=0, max=1)	
+                    # For IoU calculation	
+                    self.dboxes_ltrb = self.dboxes.clone()
+                    self.dboxes_ltrb[:, 0] = self.dboxes[:, 0] - 0.5 * self.dboxes[:, 2]	
+                    self.dboxes_ltrb[:, 1] = self.dboxes[:, 1] - 0.5 * self.dboxes[:, 3]	
+                    self.dboxes_ltrb[:, 2] = self.dboxes[:, 0] + 0.5 * self.dboxes[:, 2]	
+                    self.dboxes_ltrb[:, 3] = self.dboxes[:, 1] + 0.5 * self.dboxes[:, 3]
+                    
+                    self.nboxes = self.dboxes.size(0)
+                    
+                    ious = calc_iou_tensor(bboxes_in, self.dboxes)
+                    best_dbox_ious, best_dbox_idx = ious.max(dim=0)
+                    best_bbox_ious, best_bbox_idx = ious.max(dim=1)
+
+                    # set best ious 2.0
+                    best_dbox_ious.index_fill_(0, best_bbox_idx, 2.0)
+
+                    idx = torch.arange(0, best_bbox_idx.size(0), dtype=torch.int64)
+                    best_dbox_idx[best_bbox_idx[idx]] = idx
+
+                    # filter IoU > 0.5
+                    masks = best_dbox_ious > criteria
+                    labels_out = torch.zeros(self.nboxes, dtype=torch.long)
+                    labels_out[masks] = labels_in[best_dbox_idx[masks]]
+                    bboxes_out = self.dboxes.clone()
+                    bboxes_out[masks, :] = bboxes_in[best_dbox_idx[masks], :]
+                    # Transform format to xywh format
+                    x, y, w, h = 0.5*(bboxes_out[:, 0] + bboxes_out[:, 2]), \
+                                0.5*(bboxes_out[:, 1] + bboxes_out[:, 3]), \
+                                -bboxes_out[:, 0] + bboxes_out[:, 2], \
+                                -bboxes_out[:, 1] + bboxes_out[:, 3]
+                    bboxes_out[:, 0] = x
+                    bboxes_out[:, 1] = y
+                    bboxes_out[:, 2] = w
+                    bboxes_out[:, 3] = h
+                    return bboxes_out, labels_out
+        return encode(bboxes_in=bboxes_tensor ,labels_in = labels_tensor)
+        
 
 
 class ImageDecoder(Node):
@@ -552,9 +679,10 @@ class ImageDecoder(Node):
 
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
-    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
-                cache_type = '', device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, output_type = 0,
-                preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
+
+    def __init__(self, user_feature_key_map={}, affine=True, bytes_per_sample_hint=0, cache_batch_copy= True, cache_debug = False, cache_size = 0, cache_threshold = 0,
+                 cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold= 1000000, output_type = 0,
+                 preserve=False, seed=-1, split_stages=False, use_chunk_allocator= False, use_fast_idct = False, device = None):
         Node().__init__()
         self._user_feature_key_map = user_feature_key_map
         self._affine = affine
@@ -575,8 +703,7 @@ class ImageDecoder(Node):
         self._use_fast_idct = use_fast_idct
         self.output = Node()
 
-
-    def __call__(self,input, num_threads=1):
+    def __call__(self, input, num_threads=1):
         input.next = self
         self.data = "ImageDecoder"
         self.prev = input
@@ -590,26 +717,36 @@ class ImageDecoder(Node):
         if decode_width != None and decode_height != None:
             multiplier = 4
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map[
+                                                 "image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,
+                                                          is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-            elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output,
+                                                         shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            elif(self.prev.prev.data == "COCOReader"):
+                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards,
+                                                        is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             else:
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output,
+                                                   shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output,
+                                                 self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.Caffe2_ImageDecoderShard(
+                    handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
-            elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.Caffe_ImageDecoderShard(
+                    handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+            elif(self.prev.prev.data == "COCOReader"):
+                output_image = b.COCO_ImageDecoderShard(
+                    handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
             else:
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.ImageDecoderShard(
+                    handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
         return output_image
 
 
@@ -643,9 +780,10 @@ class ImageDecoderRandomCrop(Node):
 
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
-    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000,
-                num_attempts = 10, output_type = 0,preserve = False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
-                seed = 1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
+
+    def __init__(self, user_feature_key_map={}, affine=True, bytes_per_sample_hint=0, device_memory_padding= 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000,
+                 num_attempts=10, output_type=0, preserve=False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
+                 seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct= False, device = None):
         Node().__init__()
         self._user_feature_key_map = user_feature_key_map
         self._affine = affine
@@ -679,38 +817,59 @@ class ImageDecoderRandomCrop(Node):
         if decode_width != None and decode_height != None:
             multiplier = 4
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map[
+                                                 "image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output,
+                                                         shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
-            elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE,multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,
+                                                          is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
+            elif(self.prev.prev.data == "COCOReader"):
+                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards,
+                                                        is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
             else:
-                #output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                # output_image = b.FusedDecoderCropShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False, types.MAX_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
+                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output,
+                                                   shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
         else:
             if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
-                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output,
+                                                 self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
-                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.Caffe_ImageDecoderShard(
+                    handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
             elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
-                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
-            elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.Caffe2_ImageDecoderShard(
+                    handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
+            elif(self.prev.prev.data == "COCOReader"):
+                output_image = b.COCO_ImageDecoderShard(
+                    handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
             else:
-                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
-                output_image = b.Crop(handle, output_image, is_output, None, None, None, None, None, None)
+                output_image = b.ImageDecoderShard(
+                    handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.Crop(
+                    handle, output_image, is_output, None, None, None, None, None, None)
         return output_image
+
 
 class SSDRandomCrop(Node):
     """
@@ -719,7 +878,8 @@ class SSDRandomCrop(Node):
     preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
     seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
     """
-    def __init__(self, bytes_per_sample_hint = 0, num_attempts = 1.0, preserve = False, seed = -1, device = None):
+
+    def __init__(self, bytes_per_sample_hint=0, num_attempts=1.0, preserve=False, seed= -1, device = None):
         Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._preserve = preserve
@@ -729,8 +889,8 @@ class SSDRandomCrop(Node):
             self._num_attempts = 20
         else:
             self._num_attempts = num_attempts
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "SSDRandomCrop"
         self.prev = input
@@ -742,8 +902,10 @@ class SSDRandomCrop(Node):
     def rali_c_func_call(self, handle, input_image, is_output):
         # b.setSeed(self._seed)
         # threshold = b.CreateFloatParameter(0.5)
-        output_image = b.SSDRandomCrop(handle, input_image, is_output, None, None, None, None, None, self._num_attempts)
+        output_image = b.SSDRandomCrop(
+            handle, input_image, is_output, None, None, None, None, None, self._num_attempts)
         return output_image
+
 
 class ColorTwist(Node):
     """
@@ -785,8 +947,9 @@ class ColorTwist(Node):
 
         seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
     """
-    def __init__(self, brightness = 1.0, bytes_per_sample_hint = 0, contrast = 1.0, hue = 0.0, image_type = 0, 
-                preserve = False, saturation = 1.0,seed = -1, device = None):
+
+    def __init__(self, brightness=1.0, bytes_per_sample_hint=0, contrast=1.0, hue = 0.0, image_type = 0,
+                 preserve=False, saturation=1.0, seed=-1, device = None):
         Node().__init__()
         self._brightness = b.CreateFloatParameter(brightness)
         self._bytes_per_sample_hint = bytes_per_sample_hint
@@ -802,7 +965,7 @@ class ColorTwist(Node):
         self._temp_hue = None
         self._temp_saturation = None
 
-    def __call__(self,input, hue = None, saturation = None, brightness = None, contrast = None):
+    def __call__(self, input, hue=None, saturation=None, brightness=None, contrast= None):
         input.next = self
         self.data = "ColorTwist"
         self.prev = input
@@ -825,7 +988,8 @@ class ColorTwist(Node):
             self._hue = self._temp_hue.rali_c_func_call(handle)
         if(self._temp_saturation != None):
             self._saturation = self._temp_saturation.rali_c_func_call(handle)
-        output_image = b.ColorTwist(handle, input_image, is_output, self._brightness,self._contrast,self._hue,self._saturation)
+        output_image = b.ColorTwist(handle, input_image, is_output,
+                                    self._brightness, self._contrast, self._hue, self._saturation)
         return output_image
 
 
@@ -875,9 +1039,10 @@ class Resize(Node):
 
         temp_buffer_hint (int, optional, default = 0) – Initial size, in bytes, of a temporary buffer for resampling. Ingored for CPU variant.
     """
-    def __init__(self, bytes_per_sample_hint = 0, image_type = 0, interp_type = 1, mag_filter = 1, max_size = [0.0, 0.0], min_filter = 1,
-                minibatch_size = 32, preserve = False, resize_longer = 0.0, resize_shorter = 0.0, resize_x = 0.0, resize_y = 0.0,
-                save_attrs = False,seed = 1, temp_buffer_hint = 0, device = None):
+
+    def __init__(self, bytes_per_sample_hint=0, image_type=0, interp_type=1, mag_filter= 1, max_size = [0.0, 0.0], min_filter = 1,
+                 minibatch_size=32, preserve=False, resize_longer=0.0, resize_shorter= 0.0, resize_x = 0.0, resize_y = 0.0,
+                 save_attrs=False, seed=1, temp_buffer_hint=0, device = None):
         Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
@@ -895,8 +1060,8 @@ class Resize(Node):
         self._seed = seed
         self._temp_buffer_hint = temp_buffer_hint
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Resize"
         self.prev = input
@@ -904,12 +1069,14 @@ class Resize(Node):
         self.output.prev = self
         self.output.next = None
         return self.output
-    
+
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Resize(handle, input_image, self._resize_x, self._resize_y, is_output)
+        output_image = b.Resize(handle, input_image,
+                                self._resize_x, self._resize_y, is_output)
         return output_image
 
-class  CropMirrorNormalize(Node):
+
+class CropMirrorNormalize(Node):
     """
         bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
 
@@ -945,9 +1112,10 @@ class  CropMirrorNormalize(Node):
 
         std (float or list of float, optional, default = [1.0]) – Standard deviation values for image normalization.
     """
-    def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 0, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
-                crop_w = 0 , image_type = 0, mean = [0.0], mirror = 0, output_dtype = types.FLOAT, output_layout = types.NCHW, pad_output = False, 
-                preserve = False, seed = 1, std = [1.0], device = None):
+
+    def __init__(self, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=0, crop_h= 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
+                 crop_w=0, image_type=0, mean= [0.0], mirror = 0, output_dtype = types.FLOAT, output_layout = types.NCHW, pad_output = False,
+                 preserve=False, seed=1, std=[1.0], device= None):
         Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._crop = crop
@@ -967,7 +1135,7 @@ class  CropMirrorNormalize(Node):
         self._crop_pos_y = crop_pos_y
         self._crop_pos_z = crop_pos_z
         self._image_type = image_type
-        self._mean = mean 
+        self._mean = mean
         self._mirror = mirror
         self._output_dtype = output_dtype
         self._output_layout = output_layout
@@ -978,7 +1146,7 @@ class  CropMirrorNormalize(Node):
         self.output = Node()
         self._temp = None
 
-    def __call__(self, input, mirror = None):
+    def __call__(self, input, mirror=None):
         input.next = self
         self.data = "CropMirrorNormalize"
         self.prev = input
@@ -987,7 +1155,7 @@ class  CropMirrorNormalize(Node):
         self.output.next = None
         self._temp = mirror
         return self.output
-    
+
     def rali_c_func_call(self, handle, input_image, is_output):
         b.setSeed(self._seed)
         output_image = []
@@ -995,19 +1163,18 @@ class  CropMirrorNormalize(Node):
         if self._temp is not None:
             mirror = self._temp.rali_c_func_call(handle)
             output_image = b.CropMirrorNormalize(handle, input_image, self._crop_d, self._crop_h, self._crop_w, 1,
-                                            1, 1, self._mean, self._std, is_output, mirror)
+                                                 1, 1, self._mean, self._std, is_output, mirror)
         else:
             if(self._mirror == 0):
                 mirror = b.CreateIntParameter(0)
             else:
                 mirror = b.CreateIntParameter(1)
             output_image = b.CropMirrorNormalize(handle, input_image, self._crop_d, self._crop_h, self._crop_w, self._crop_pos_x,
-                                            self._crop_pos_y, self._crop_pos_z, self._mean, self._std, is_output, mirror)
+                                                 self._crop_pos_y, self._crop_pos_z, self._mean, self._std, is_output, mirror)
         return output_image
 
 
 class Crop(Node):
-    
 
     """
 bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
@@ -1036,9 +1203,10 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
 
     """
-    def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 1, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
-                crop_w = 0 , image_type = 0, output_dtype = types.FLOAT, preserve = False, seed = 1, device = None):
-        Node().__init__()      
+
+    def __init__(self, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=1, crop_h= 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
+                 crop_w=0, image_type=0, output_dtype=types.FLOAT, preserve = False, seed = 1, device = None):
+        Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._crop = crop
         if(len(crop) == 2):
@@ -1063,8 +1231,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         self.output = Node()
         self._temp = None
 
-                
-    def __call__(self, input, is_output = False):
+    def __call__(self, input, is_output=False):
         input.next = self
         self.data = "Crop"
         self.prev = input
@@ -1072,19 +1239,21 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         self.output.prev = self
         self.output.next = None
         return self.output
-    
+
     def rali_c_func_call(self, handle, input_image, is_output):
         b.setSeed(self._seed)
         output_image = []
         if ((self._crop_w == 0) and (self._crop_h == 0)):
-            output_image = b.Crop(handle, input_image, is_output, None, None, None, None, None, None)
+            output_image = b.Crop(
+                handle, input_image, is_output, None, None, None, None, None, None)
         else:
-            output_image = b.CropFixed(handle, input_image,self._crop_w, self._crop_h, self._crop_d, is_output,  self._crop_pos_x, self._crop_pos_y, self._crop_pos_z)
+            output_image = b.CropFixed(handle, input_image, self._crop_w, self._crop_h,
+                                       self._crop_d, is_output,  self._crop_pos_x, self._crop_pos_y, self._crop_pos_z)
 
-        return output_image 
+        return output_image
+
 
 class CentreCrop(Node):
-    
 
     """
 bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
@@ -1113,9 +1282,10 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
 
     """
-    def __init__(self, bytes_per_sample_hint = 0, crop = [0.0, 0.0], crop_d = 1, crop_h = 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
-                crop_w = 0 , image_type = 0, output_dtype = types.FLOAT, preserve = False, seed = 1, device = None):
-        Node().__init__()      
+
+    def __init__(self, bytes_per_sample_hint=0, crop=[0.0, 0.0], crop_d=1, crop_h= 0, crop_pos_x = 0.5, crop_pos_y = 0.5, crop_pos_z = 0.5,
+                 crop_w=0, image_type=0, output_dtype=types.FLOAT, preserve = False, seed = 1, device = None):
+        Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._crop = crop
         if(len(crop) == 2):
@@ -1140,8 +1310,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         self.output = Node()
         self._temp = None
 
-                
-    def __call__(self, input, is_output = False):
+    def __call__(self, input, is_output=False):
         input.next = self
         self.data = "CentreCrop"
         self.prev = input
@@ -1149,16 +1318,18 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         self.output.prev = self
         self.output.next = None
         return self.output
-    
+
     def rali_c_func_call(self, handle, input_image, is_output):
         b.setSeed(self._seed)
         output_image = []
-        output_image = b.CenterCropFixed(handle, input_image,self._crop_w, self._crop_h, self._crop_d, is_output)
-        return output_image 
+        output_image = b.CenterCropFixed(
+            handle, input_image, self._crop_w, self._crop_h, self._crop_d, is_output)
+        return output_image
+
 
 class RandomCrop(Node):
 
-    def __init__(self, crop_area_factor = [0.08, 1], crop_aspect_ratio = [0.75, 1.333333], crop_pox_x = 0, crop_pox_y = 0, device = None):
+    def __init__(self, crop_area_factor=[0.08, 1], crop_aspect_ratio=[0.75, 1.333333], crop_pox_x=0, crop_pox_y=0, device = None):
         Node().__init__()
         self._crop_area_factor = crop_area_factor
         self._crop_aspect_ratio = crop_aspect_ratio
@@ -1167,7 +1338,7 @@ class RandomCrop(Node):
         self.output = Node()
         self._num_attempts = 20
 
-    def __call__(self, input, is_output = False):
+    def __call__(self, input, is_output=False):
         input.next = self
         self.data = "RandomCrop"
         self.prev = input
@@ -1178,11 +1349,13 @@ class RandomCrop(Node):
 
     def rali_c_func_call(self, handle, input_image, is_output):
         output_image = []
-        output_image = b.RandomCrop(handle, input_image, is_output, None, None, None, None, self._num_attempts)
+        output_image = b.RandomCrop(
+            handle, input_image, is_output, None, None, None, None, self._num_attempts)
         return output_image
 
+
 class CoinFlip():
-    def __init__(self, probability = 0.5, device = None):
+    def __init__(self, probability=0.5, device=None):
         self._probablility = probability
         self.output = Node()
 
@@ -1190,29 +1363,31 @@ class CoinFlip():
         return self
 
     def rali_c_func_call(self, handle):
-        self._values = [0,1]
+        self._values = [0, 1]
         self._frequencies = [1-self._probablility, self._probablility]
         output_arr = b.CreateIntRand(self._values, self._frequencies)
         return output_arr
 
+
 class Uniform():
-    def __init__(self, range = [-1,1], device = None):
+    def __init__(self, range=[-1, 1], device=None):
         self.range = range
         self.output = Node()
 
     def __call__(self):
         return self
-    
-    def rali_c_func_call(self,handle):
+
+    def rali_c_func_call(self, handle):
         output_param = b.CreateFloatUniformRand(self.range[0], self.range[1])
         return output_param
 
+
 class GammaCorrection(Node):
-    def __init__(self,gamma = 0.5, device = None):
+    def __init__(self, gamma=0.5, device=None):
         Node().__init__()
         self._gamma = gamma
         self.output = Node()
-    
+
     def __call__(self, input):
         input.next = self
         self.data = "GammaCorrection"
@@ -1226,13 +1401,13 @@ class GammaCorrection(Node):
         output_image = b.GammaCorrection(handle, input_image, is_output, None)
         return output_image
 
-       
+
 class Snow(Node):
-    def __init__(self,snow = 0.5, device = None):
+    def __init__(self, snow=0.5, device=None):
         Node().__init__()
         self._snow = snow
         self.output = Node()
-    
+
     def __call__(self, input):
         input.next = self
         self.data = "Snow"
@@ -1246,13 +1421,14 @@ class Snow(Node):
         output_image = b.Snow(handle, input_image, is_output, None)
         return output_image
 
+
 class Rain(Node):
-    def __init__(self,rain = 0.5, device = None):
+    def __init__(self, rain=0.5, device=None):
         Node().__init__()
         self._rain = rain
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Rain"
         self.prev = input
@@ -1262,10 +1438,9 @@ class Rain(Node):
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Rain(handle, input_image, is_output,None,None,None,None)
+        output_image = b.Rain(handle, input_image,
+                              is_output, None, None, None, None)
         return output_image
-
-
 
 
 class Blur(Node):
@@ -1273,12 +1448,13 @@ class Blur(Node):
     BLUR
 
     '''
-    def __init__(self,blur = 3, device = None):
+
+    def __init__(self, blur=3, device=None):
         Node().__init__()
         self._blur = blur
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Blur"
         self.prev = input
@@ -1288,9 +1464,8 @@ class Blur(Node):
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Blur(handle, input_image, is_output,None)
+        output_image = b.Blur(handle, input_image, is_output, None)
         return output_image
-
 
 
 class Contrast(Node):
@@ -1315,16 +1490,16 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
     """
 
-    def __init__(self,bytes_per_sample_hint = 0, contrast = 1.0 ,image_type = 0, preserve = False, seed = -1, device = None):
+    def __init__(self, bytes_per_sample_hint=0, contrast=1.0, image_type= 0, preserve = False, seed = -1, device = None):
         Node().__init__()
-        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._bytes_per_sample_hint = bytes_per_sample_hint
         self._contrast = contrast
         self._image_type = image_type
-        self._preserve=preserve
+        self._preserve = preserve
         self._seed = seed
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Contrast"
         self.prev = input
@@ -1336,9 +1511,6 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     def rali_c_func_call(self, handle, input_image, is_output):
         output_image = b.Contrast(handle, input_image, is_output, None, None)
         return output_image
-
-
-
 
 
 class Jitter(Node):
@@ -1365,20 +1537,19 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
 
     """
-    
 
-    def __init__(self,bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 0, mask = 1, nDegree = 2 , preserve = False, seed = -1, device = None):
+    def __init__(self, bytes_per_sample_hint=0, fill_value=0.0, interp_type= 0, mask = 1, nDegree = 2, preserve = False, seed = -1, device = None):
         Node().__init__()
-        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._bytes_per_sample_hint = bytes_per_sample_hint
         self._fill_value = fill_value
         self._interp_type = interp_type
         self._mask = mask
         self._nDegree = nDegree
-        self._preserve=preserve
+        self._preserve = preserve
         self._seed = seed
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Jitter"
         self.prev = input
@@ -1388,12 +1559,8 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Jitter(handle, input_image, is_output,None)
+        output_image = b.Jitter(handle, input_image, is_output, None)
         return output_image
-
-
-
-
 
 
 class Rotate(Node):
@@ -1420,24 +1587,23 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 size (float or list of float, optional, default = []) – Output size, in pixels/points. Non-integer sizes are rounded to nearest integer. Channel dimension should be excluded (e.g. for RGB images specify (480,640), not (480,640,3).
 
     """
-    
 
-    def __init__(self,angle = 0, axis = [], bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 1, keep_size = False, output_dtype = -1 , preserve = False, seed = -1, size = [], device = None):
+    def __init__(self, angle=0, axis=[], bytes_per_sample_hint= 0, fill_value = 0.0, interp_type = 1, keep_size = False, output_dtype = -1, preserve = False, seed = -1, size = [], device = None):
         Node().__init__()
         self._angle = angle
         self._axis = axis
-        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._bytes_per_sample_hint = bytes_per_sample_hint
         self._fill_value = fill_value
         self._interp_type = interp_type
         self._keep_size = keep_size
         self._output_dtype = output_dtype
-        self._preserve=preserve
+        self._preserve = preserve
         self._seed = seed
         self._size = size
-        
+
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Rotate"
         self.prev = input
@@ -1447,12 +1613,8 @@ size (float or list of float, optional, default = []) – Output size, in pixels
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Rotate(handle, input_image, is_output,None,0,0)
+        output_image = b.Rotate(handle, input_image, is_output, None, 0, 0)
         return output_image
-
-
-
-
 
 
 class Hue(Node):
@@ -1468,18 +1630,17 @@ preserve (bool, optional, default = False) – Do not remove the Op from the gra
 seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
 
     """
-    
 
-    def __init__(self, bytes_per_sample_hint = 0,  hue = 0.0, image_type = 0, preserve = False, seed = -1, device = None):
+    def __init__(self, bytes_per_sample_hint=0,  hue=0.0, image_type=0, preserve=False, seed = -1, device = None):
         Node().__init__()
         self._hue = hue
-        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
-        self._preserve=preserve
+        self._preserve = preserve
         self._seed = seed
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Hue"
         self.prev = input
@@ -1489,10 +1650,8 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Hue(handle, input_image, is_output,None)
+        output_image = b.Hue(handle, input_image, is_output, None)
         return output_image
-
-
 
 
 class Saturation(Node):
@@ -1514,18 +1673,17 @@ Saturation change factor. Values >= 0 are supported. For example:
 seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
 
     """
-    
 
-    def __init__(self, bytes_per_sample_hint = 0,  saturation = 1.0, image_type = 0, preserve = False, seed = -1, device = None):
+    def __init__(self, bytes_per_sample_hint=0,  saturation=1.0, image_type=0, preserve=False, seed = -1, device = None):
         Node().__init__()
         self._saturation = saturation
-        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
-        self._preserve=preserve
+        self._preserve = preserve
         self._seed = seed
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Saturation"
         self.prev = input
@@ -1535,10 +1693,8 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Saturation(handle, input_image, is_output,None)
+        output_image = b.Saturation(handle, input_image, is_output, None)
         return output_image
-
-
 
 
 class WarpAffine(Node):
@@ -1565,21 +1721,20 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
 size (float or list of float, optional, default = []) – Output size, in pixels/points. Non-integer sizes are rounded to nearest integer. Channel dimension should be excluded (e.g. for RGB images specify (480,640), not (480,640,3).
     """
-    
 
-    def __init__(self,bytes_per_sample_hint = 0, fill_value = 0.0 , interp_type = 1,matrix = [], output_dtype = -1 , preserve = False, seed = -1, size = [], device = None):
+    def __init__(self, bytes_per_sample_hint=0, fill_value=0.0, interp_type = 1, matrix = [], output_dtype = -1, preserve = False, seed = -1, size = [], device = None):
         Node().__init__()
-        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._bytes_per_sample_hint = bytes_per_sample_hint
         self._fill_value = fill_value
         self._interp_type = interp_type
         self._matrix = matrix
         self._output_dtype = output_dtype
-        self._preserve=preserve
+        self._preserve = preserve
         self._seed = seed
         self._size = size
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "WarpAffine"
         self.prev = input
@@ -1589,10 +1744,8 @@ size (float or list of float, optional, default = []) – Output size, in pixels
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.WarpAffine(handle, input_image, is_output,0, 0 ,None ,None, None ,None, None ,None)
+        output_image = b.WarpAffine(handle, input_image, is_output, 0, 0, None, None, None, None, None , None)
         return output_image
-
-
 
 
 class HSV(Node):
@@ -1612,21 +1765,20 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 
 value (float, optional, default = 1.0) – Set multiplicative change of value. 1 denotes no-op
     """
-    
 
-    def __init__(self,bytes_per_sample_hint = 0,dtype = 0,hue = 0.0 , saturation = 1.0 , preserve = False, seed = -1, value = 1.0, device = None):
+    def __init__(self, bytes_per_sample_hint=0, dtype= 0, hue = 0.0, saturation = 1.0, preserve = False, seed = -1, value = 1.0, device = None):
         Node().__init__()
-        self._bytes_per_sample_hint=bytes_per_sample_hint
+        self._bytes_per_sample_hint = bytes_per_sample_hint
         self._interp_type = interp_type
         self._dtype = dtype
         self._hue = hue
         self._saturation = saturation
-        self._preserve=preserve
+        self._preserve = preserve
         self._seed = seed
         self._value = value
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "HSV"
         self.prev = input
@@ -1636,18 +1788,18 @@ value (float, optional, default = 1.0) – Set multiplicative change of value. 1
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image0 = b.Hue(handle, input_image, is_output,None)
-        output_image = b.Saturation(handle, output_image0, is_output,None)
+        output_image0 = b.Hue(handle, input_image, is_output, None)
+        output_image = b.Saturation(handle, output_image0, is_output, None)
         return output_image
 
 
 class Fog(Node):
-    def __init__(self,fog = 0.5, device = None):
+    def __init__(self, fog=0.5, device=None):
         Node().__init__()
         self._fog = fog
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Fog"
         self.prev = input
@@ -1657,17 +1809,16 @@ class Fog(Node):
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Fog(handle, input_image, is_output,None)
+        output_image = b.Fog(handle, input_image, is_output, None)
         return output_image
 
 
-
 class FishEye(Node):
-    def __init__(self, device = None):
+    def __init__(self, device=None):
         Node().__init__()
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "FishEye"
         self.prev = input
@@ -1679,7 +1830,6 @@ class FishEye(Node):
     def rali_c_func_call(self, handle, input_image, is_output):
         output_image = b.FishEye(handle, input_image, is_output)
         return output_image
-
 
 
 class Brightness(Node):
@@ -1703,8 +1853,8 @@ preserve (bool, optional, default = False) – Do not remove the Op from the gra
 seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
     """
 
-    def __init__(self, brightness = 1.0, bytes_per_sample_hint = 0, image_type = 0, 
-                preserve = False ,seed = -1, device = None):
+    def __init__(self, brightness=1.0, bytes_per_sample_hint=0, image_type=0,
+                 preserve=False, seed=-1, device= None):
         Node().__init__()
         self._brightness = brightness
         self._bytes_per_sample_hint = bytes_per_sample_hint
@@ -1712,8 +1862,8 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         self._preserve = preserve
         self._seed = seed
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Brightness"
         self.prev = input
@@ -1723,20 +1873,18 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Brightness(handle, input_image, is_output,None , None)
+        output_image = b.Brightness(handle, input_image, is_output, None, None)
         return output_image
 
 
-
-
 class Vignette(Node):
-    
-    def __init__(self,vignette = 0.5, device = None):
+
+    def __init__(self, vignette=0.5, device=None):
         Node().__init__()
         self._vignette = vignette
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Vignette"
         self.prev = input
@@ -1750,15 +1898,14 @@ class Vignette(Node):
         return output_image
 
 
-
 class SnPNoise(Node):
 
-    def __init__(self,snpNoise = 0.5, device = None):
+    def __init__(self, snpNoise=0.5, device=None):
         Node().__init__()
         self._snpNoise = snpNoise
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "SnPNoise"
         self.prev = input
@@ -1772,15 +1919,13 @@ class SnPNoise(Node):
         return output_image
 
 
-
-
 class Exposure(Node):
-    def __init__(self,exposure = 0.5, device = None):
+    def __init__(self, exposure=0.5, device=None):
         Node().__init__()
         self._exposure = exposure
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Exposure"
         self.prev = input
@@ -1794,15 +1939,12 @@ class Exposure(Node):
         return output_image
 
 
-
-
-
 class Pixelate(Node):
-    def __init__(self, device = None):
+    def __init__(self, device=None):
         Node().__init__()
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Pixelate"
         self.prev = input
@@ -1816,16 +1958,14 @@ class Pixelate(Node):
         return output_image
 
 
-
-
 class Blend(Node):
-    def __init__(self,blend = 0.5, device = None):
+    def __init__(self, blend=0.5, device=None):
         Node().__init__()
         self._blend = blend
         self.output = Node()
-    
-    def __call__(self,input1,input2):
-        self._input2=input2
+
+    def __call__(self, input1, input2):
+        self._input2 = input2
         input1.next = self
         self.data = "Blend"
         self.prev = input1
@@ -1835,19 +1975,18 @@ class Blend(Node):
         return self.output
 
     def rali_c_func_call(self, handle, input_image, is_output):
-        output_image = b.Blend(handle, input_image,self._input2, is_output, None)
+        output_image = b.Blend(handle, input_image,
+                               self._input2, is_output, None)
         return output_image
 
 
-
-
 class Flip(Node):
-    def __init__(self,flip = 0, device = None):
+    def __init__(self, flip=0, device=None):
         Node().__init__()
         self._flip = flip
         self.output = Node()
-    
-    def __call__(self,input):
+
+    def __call__(self, input):
         input.next = self
         self.data = "Flip"
         self.prev = input

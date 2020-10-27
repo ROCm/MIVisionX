@@ -204,7 +204,7 @@ int main(int argc, const char ** argv)
     const size_t MIN_ARG_COUNT = 5;
     if(argc < MIN_ARG_COUNT)
 	{
-		printf("\nUsage: ./hipvx_sample <case number (0:9)> <width> <height> <gpu=1/cpu=0> <image1 constant pixel value (optional)> <image2 constant pixel value (optional)>\n");
+		printf("\nUsage: ./hipvx_sample <case number (1:99)> <width> <height> <gpu=1/cpu=0> <image1 constant pixel value (optional)> <image2 constant pixel value (optional)>\n");
 		return -1;
     }
 	

@@ -80,6 +80,7 @@ public:
     bool empty() { return (remaining_images_count() < _user_batch_size); }
     size_t internal_batch_size() { return _internal_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
+    std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -172,6 +173,7 @@ template<> inline std::shared_ptr<ImageLoaderNode> MasterGraph::add_node(const s
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_meta_data_reader(_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -184,6 +186,7 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_meta_data_reader(_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -196,6 +199,8 @@ template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_meta_data_reader(_meta_data_reader);
+    std::cerr << "\nInside add node.. master_graph.h";
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -209,6 +214,7 @@ template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_meta_data_reader(_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));

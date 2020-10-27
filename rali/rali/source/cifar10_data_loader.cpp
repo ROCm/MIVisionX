@@ -106,6 +106,11 @@ CIFAR10DataLoader::set_output_image (Image* output_image)
     _output_mem_size = _output_image->info().data_size();
 }
 
+void CIFAR10DataLoader::set_meta_data_reader (std::shared_ptr<MetaDataReader> meta_data_reader)
+{
+    _meta_data_reader = meta_data_reader;
+}
+
 void
 CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size)
 {

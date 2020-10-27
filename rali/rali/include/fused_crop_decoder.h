@@ -55,6 +55,7 @@ public:
 
 
     ~FusedCropTJDecoder() override;
+    bool is_partial_decoder() { return _is_partial_decoder; };
 
 private:
     tjhandle m_jpegDecompressor;
@@ -77,4 +78,5 @@ private:
             { 1, 4 },
             { 1, 8 }
     };
+    bool _is_partial_decoder = true;
 };

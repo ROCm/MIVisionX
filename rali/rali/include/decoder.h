@@ -106,4 +106,6 @@ public:
                                    Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original) = 0;
 
     virtual ~Decoder() = default;
+
+    virtual bool is_partial_decoder() = 0;
 };

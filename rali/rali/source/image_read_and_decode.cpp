@@ -183,6 +183,18 @@ ImageReadAndDecode::load(unsigned char* buff,
 
         // decode the image and get the actual decoded image width and height
         size_t scaledw, scaledh;
+        if(_decoder[i]->is_partial_decoder())
+        {
+            std::cerr<<"\n It is partial decoder";
+            // we have got image_read_and_decode->_bbox_vector till here
+            // Declare vector of vector for bounding boxes
+            // Deep or shallow copy image_read_and_decode->_bbox_vector to partial decoder bbox  vector
+        }
+        else
+        {
+            std::cerr<<"\n It is normal decoder";
+        }
+
         if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,

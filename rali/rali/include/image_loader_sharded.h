@@ -35,6 +35,7 @@ public:
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
     void set_output_image (Image* output_image) override;
+    void set_meta_data_reader(std::shared_ptr<MetaDataReader> meta_data_reader) override;
     size_t remaining_count() override;
     void reset() override;
     void start_loading() override;
@@ -51,4 +52,6 @@ private:
     void fast_forward_through_empty_loaders();
 
     Image *_output_image;
+    std::shared_ptr<MetaDataReader> _meta_data_reader;
+
 };

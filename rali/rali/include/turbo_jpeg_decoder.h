@@ -56,6 +56,7 @@ public:
                            Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false) override;
 
     ~TJDecoder() override;
+    bool is_partial_decoder() { return _is_partial_decoder; };
 private:
     tjhandle m_jpegDecompressor;
     const static unsigned SCALING_FACTORS_COUNT =  16;
@@ -77,4 +78,5 @@ private:
             { 1, 4 },
             { 1, 8 }
     };
+    bool _is_partial_decoder = false;
 };

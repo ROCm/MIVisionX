@@ -35,7 +35,7 @@ THE SOFTWARE.
 
 using namespace cv;
 
-// #define PARTIAL_DECODE
+ #define PARTIAL_DECODE
 // #define COCO_READER
 // #define TF_READER
 // #define TF_READER_DETECTION
@@ -140,7 +140,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     char key8[25] = "image/filename";
 
 #ifdef COCO_READER
-    char *json_path = "";
+    char *json_path = "/home/shobana/sample_test/coco_10_samples/10_instances_train2017.json";
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";

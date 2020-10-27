@@ -62,6 +62,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
                                   Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original_size)
 {
+    // 
     int tjpf = TJPF_RGB;
     int planes = 1;
     switch (desired_decoded_color_format) {
@@ -80,51 +81,55 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     };
     actual_decoded_width = max_decoded_width;
     actual_decoded_height = max_decoded_height;
+    // You need get the output of random bbox crop 
+    // check the vector size for bounding box. If its more than zero go for random bbox crop
+    // else go to random crop
+    //if(1){
+        std::vector<float> crop_mul_param =  decoder_config.get_crop_param();
+        auto is_valid_crop = [](uint h, uint w, uint height, uint width)
+        {
+            return (h < height && w < width); 
+        };
+        int num_of_attempts = 5;
+        unsigned int crop_width, crop_height, x1, y1;
+        for(int i = 0; i < num_of_attempts; i++)
+        {
+            double target_area  = crop_mul_param[0] * original_image_width * original_image_height;
+            crop_width  = static_cast<size_t>(std::sqrt(target_area * crop_mul_param[1]));
+            crop_height = static_cast<size_t>(std::sqrt(target_area * (1 / crop_mul_param[1])));  
+            if(is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
+            {
+                x1 = static_cast<size_t>(crop_mul_param[2] * (original_image_width  - crop_width));
+                y1 = static_cast<size_t>(crop_mul_param[3] * (original_image_height - crop_height));
+                break ;
+            }
+        }
+        constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
+        // Fallback on Central Crop
+        if( !is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
+        {
+            float in_ratio;
+            in_ratio = static_cast<float>(original_image_width) / original_image_height;
+            if(in_ratio < ASPECT_RATIO_RANGE[0])
+            {
+                crop_width =  original_image_width;
+                crop_height = crop_width / ASPECT_RATIO_RANGE[0];
+            }
+            else if(in_ratio > ASPECT_RATIO_RANGE[1])
+            {
+                crop_height = original_image_height;
+                crop_width  = crop_height  * ASPECT_RATIO_RANGE[1];
+            } 
+            else
+            {
+                crop_height = original_image_height;
+                crop_width  = original_image_width;
+            }
+            x1 =  (original_image_width - crop_width) / 2;
+            y1 =  (original_image_height - crop_height) / 2;
+        }
+    //}
     
-    std::vector<float> crop_mul_param =  decoder_config.get_crop_param();
-    auto is_valid_crop = [](uint h, uint w, uint height, uint width)
-    {
-        return (h < height && w < width); 
-    };
-    int num_of_attempts = 5;
-    unsigned int crop_width, crop_height, x1, y1;
-    for(int i = 0; i < num_of_attempts; i++)
-    {
-        double target_area  = crop_mul_param[0] * original_image_width * original_image_height;
-        crop_width  = static_cast<size_t>(std::sqrt(target_area * crop_mul_param[1]));
-        crop_height = static_cast<size_t>(std::sqrt(target_area * (1 / crop_mul_param[1])));  
-        if(is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
-        {
-            x1 = static_cast<size_t>(crop_mul_param[2] * (original_image_width  - crop_width));
-            y1 = static_cast<size_t>(crop_mul_param[3] * (original_image_height - crop_height));
-            break ;
-        }
-    }
-    constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
-    // Fallback on Central Crop
-    if( !is_valid_crop(crop_height, crop_width, original_image_height, original_image_width)) 
-    {
-        float in_ratio;
-        in_ratio = static_cast<float>(original_image_width) / original_image_height;
-        if(in_ratio < ASPECT_RATIO_RANGE[0])
-        {
-            crop_width =  original_image_width;
-            crop_height = crop_width / ASPECT_RATIO_RANGE[0];
-        }
-        else if(in_ratio > ASPECT_RATIO_RANGE[1])
-        {
-            crop_height = original_image_height;
-            crop_width  = crop_height  * ASPECT_RATIO_RANGE[1];
-        } 
-        else
-        {
-            crop_height = original_image_height;
-            crop_width  = original_image_width;
-        }
-        x1 =  (original_image_width - crop_width) / 2;
-        y1 =  (original_image_height - crop_height) / 2;
-    }
-
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
                       input_buffer,

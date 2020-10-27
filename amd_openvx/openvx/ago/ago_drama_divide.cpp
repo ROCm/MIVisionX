@@ -1396,7 +1396,8 @@ int agoDramaDivideHalfscaleGaussianNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[1] = paramList[0];
 	anode->paramCount = 2;
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
-	if (paramList[2]->u.scalar.u.i == 3) new_kernel_id = VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_3x3;
+	if (paramList[2]->u.scalar.u.i == 1) new_kernel_id = VX_KERNEL_AMD_SCALE_IMAGE_U8_U8_NEAREST;
+	else if (paramList[2]->u.scalar.u.i == 3) new_kernel_id = VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_3x3;
 	else if (paramList[2]->u.scalar.u.i == 5) new_kernel_id = VX_KERNEL_AMD_SCALE_GAUSSIAN_HALF_U8_U8_5x5;
 	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }

@@ -2059,7 +2059,7 @@ int ovxKernel_HalfScaleGaussian(AgoNode * node, AgoKernelCommand cmd)
 			return VX_ERROR_INVALID_DIMENSION;
 		else if (node->paramList[2]->u.scalar.type != VX_TYPE_INT32)
 			return VX_ERROR_INVALID_TYPE;
-		else if (node->paramList[2]->u.scalar.u.i != 3 && node->paramList[2]->u.scalar.u.i != 5)
+		else if (node->paramList[2]->u.scalar.u.i != 1 && node->paramList[2]->u.scalar.u.i != 3 && node->paramList[2]->u.scalar.u.i != 5)
 			return VX_ERROR_INVALID_VALUE;
 		// set output image sizes are same as input image size
 		vx_meta_format meta;

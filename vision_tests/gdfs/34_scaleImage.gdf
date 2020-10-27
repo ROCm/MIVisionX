@@ -1,7 +1,6 @@
-
-# $1 data $1 = image:1280,720,IYUV:READ,inputs\stm_1280x720.yuv
+data input_iyuv = image:1280,720,IYUV:READ,inputs\stm_1280x720.yuv
 data inter_luma = image:1280,720,U008
-node org.khronos.openvx.channel_extract $1 !CHANNEL_Y inter_luma
+node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_Y inter_luma
 
-# $2 data output_lumascaled = image:640,360,U008:WRITE,~\tc3007_scaleimage_640x360.yuv
-node org.khronos.openvx.scale_image inter_luma $2 !BILINEAR
+data output_lumascaled = image:640,360,U008:WRITE,~\openvx_test_results\34_scaleimage_640x360.yuv
+node org.khronos.openvx.scale_image inter_luma output_lumascaled !BILINEAR

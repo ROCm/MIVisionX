@@ -1,11 +1,10 @@
-
-# $1 data $1 = image:1280,720,IYUV:READ,inputs\stm_1280x720.yuv
+data input_iyuv_1 = image:1280,720,IYUV:READ,inputs\stm_1280x720.yuv
 data inter_luma = image:1280,720,U008
-node org.khronos.openvx.channel_extract $1 !CHANNEL_Y inter_luma
+node org.khronos.openvx.channel_extract input_iyuv_1 !CHANNEL_Y inter_luma
 
-# $2 data $2 = image:1280,720,IYUV:READ,inputs\stm_1280x720_copy.yuv
+data input_iyuv_2 = image:1280,720,IYUV:READ,inputs\stm_1280x720_copy.yuv
 data inter_luma_2 = image:1280,720,U008
-node org.khronos.openvx.channel_extract $2 !CHANNEL_Y inter_luma_2
+node org.khronos.openvx.channel_extract input_iyuv_2 !CHANNEL_Y inter_luma_2
 
-# $3 data output_xor = image:1280,720,U008:WRITE,~\tc3030_xor_1280x720.yuv
-node org.khronos.openvx.xor inter_luma inter_luma_2 $3
+data output_xor = image:1280,720,U008:WRITE,~\openvx_test_results\41_xor_1280x720.yuv
+node org.khronos.openvx.xor inter_luma inter_luma_2 output_xor

@@ -104,7 +104,7 @@ int HipExec_And(
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_Or_U8_U8U8(
+Hip_Or(
     vx_uint32 dstWidth, vx_uint32 dstHeight, unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -122,7 +122,7 @@ Hip_Or_U8_U8U8(
     pDstImage[dstIdx] = int4_to_uchars(dst);
 }
 
-int HipExec_Or_U8_U8U8(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+int HipExec_Or(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
     const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
     )
@@ -135,7 +135,7 @@ int HipExec_Or_U8_U8U8(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDs
     hipEventCreate(&stop);
     float eventMs = 1.0f;
     hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_Or_U8_U8U8,
+    hipLaunchKernelGGL(Hip_Or,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
@@ -145,7 +145,7 @@ int HipExec_Or_U8_U8U8(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDs
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
 
-    printf("HipExec_Or_U8_U8U8: Kernel time: %f\n", eventMs);
+    printf("HipExec_Or: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

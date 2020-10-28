@@ -170,7 +170,7 @@ int HipExec_Mul_S16_S16S16_Sat_Round(
 
 // logical_kernels
 
-int HipExec_And_U8_U8U8(
+int HipExec_And(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
@@ -195,6 +195,19 @@ int HipExec_Not_U8_U8U8(
         );
 
 // statistical_kernels
+
+int HipExec_Threshold_U8_U8_Binary(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    vx_int32 thresholdValue
+    );
+int HipExec_Threshold_U8_U8_Range(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    vx_int32 thresholdLower, vx_int32 thresholdUpper
+    );
 
 // color_kernels
 

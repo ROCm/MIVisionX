@@ -27,16 +27,6 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
-__device__ __forceinline__ float4 ucharTofloat4(unsigned int src)
-{
-    return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
-}
-
-__device__ __forceinline__ uint float4ToUint(float4 src)
-{
-  return ((int)src.x&0xFF) | (((int)src.y&0xFF)<<8) | (((int)src.z&0xFF)<<16)| (((int)src.w&0xFF) << 24);
-}
-
 // ----------------------------------------------------------------------------
 // VxFastCorners kernels for hip backend
 // ----------------------------------------------------------------------------

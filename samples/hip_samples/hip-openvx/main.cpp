@@ -125,6 +125,7 @@ using namespace std;
 #define ERROR_CHECK_OBJECT(obj) { vx_status status = vxGetStatus((vx_reference)(obj)); if(status != VX_SUCCESS) { vxAddLogEntry((vx_reference)context, status     , "ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return status; } }
 #define ERROR_CHECK_STATUS(call) { vx_status status = (call); if(status != VX_SUCCESS) { printf("ERROR: failed with status = (%d) at " __FILE__ "#%d\n", status, __LINE__); return -1; } }
 
+#define PIXELCHECKU1(pixel) (pixel == (vx_int32)0) ? ((vx_uint8)0) : ((vx_uint8)1)
 #define PIXELCHECKU8(pixel) (pixel < (vx_int32)0) ? ((vx_uint8)0) : ((pixel < (vx_int32)UINT8_MAX) ? (vx_uint8)pixel : ((vx_uint8)UINT8_MAX))
 #define PIXELCHECKS16(pixel) (pixel < (vx_int32)INT16_MIN) ? ((vx_int16)INT16_MIN) : ((pixel < (vx_int32)INT16_MAX) ? (vx_int16)pixel : ((vx_int16)INT16_MAX))
 #define PIXELROUNDF32(value) ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
@@ -161,7 +162,7 @@ vx_status printBuffer(T *buffer, vx_uint32 width, vx_uint32 height)
 {
 	T *bufferTemp;
 	bufferTemp = buffer;
-	for (int i = 0; i < height * width; i++)
+	for (int i = 0; i < height * width * 2; i++)
 		printf("%d ", bufferTemp[i]);
 	printf(".....\n");
 	
@@ -224,6 +225,8 @@ int main(int argc, const char ** argv)
 	// required variables and initializations
 	vx_int32 missing_function_flag = 0;
 	vx_int32 return_value = 0;
+	vx_int32 pix_img1_u1 = (vx_int32) PIXELCHECKU1(pix_img1);
+	vx_int32 pix_img2_u1 = (vx_int32) PIXELCHECKU1(pix_img2);
 	vx_int32 pix_img1_u8 = (vx_int32) PIXELCHECKU8(pix_img1);
 	vx_int32 pix_img2_u8 = (vx_int32) PIXELCHECKU8(pix_img2);
 	vx_int32 pix_img1_s16 = (vx_int32) PIXELCHECKS16(pix_img1);
@@ -257,8 +260,16 @@ int main(int argc, const char ** argv)
 	affinity.device_info = 0;
 
 	// arguments for specific functionalities
-	vx_float32 mul_scale_float = (vx_float32) (1.0 / 8.0);
-	vx_scalar mul_scale_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &mul_scale_float);
+	vx_float32 Mul_scale_float = (vx_float32) (1.0 / 16.0);
+	vx_scalar Mul_scale_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &Mul_scale_float);
+	vx_int32 Threshold_thresholdValue_int32 = (vx_int32) 100;
+	vx_int32 Threshold_thresholdLower_int32 = (vx_int32) 100;
+	vx_int32 Threshold_thresholdUpper_int32 = (vx_int32) 200;
+	vx_threshold Threshold_thresholdObjectBinary_threshold = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+	vx_threshold Threshold_thresholdObjectRange_threshold = vxCreateThreshold(context, VX_THRESHOLD_TYPE_RANGE, VX_TYPE_UINT8);
+	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
+	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
+	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
 
 	if (!device_affinity)
 	{
@@ -435,8 +446,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -447,8 +458,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = generic_mod((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = generic_mod((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -459,8 +470,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -471,8 +482,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -531,8 +542,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = (vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = (vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -543,8 +554,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = (vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = (vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -555,8 +566,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float))) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -567,8 +578,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float))) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -581,6 +592,90 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAndNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u8 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 38:
+				{
+					// test_case_name = "agoKernel_And_U8_U8U1";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u8 & pix_img2_u1) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 39:
+				{
+					// test_case_name = "agoKernel_And_U8_U1U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u1 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 40:
+				{
+					// test_case_name = "agoKernel_And_U8_U1U1";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u1 & pix_img2_u1) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 41:
+				{
+					// test_case_name = "agoKernel_And_U1_U8U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u8 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 42:
+				{
+					// test_case_name = "agoKernel_And_U1_U8U1";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u8 & pix_img2_u1) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 43:
+				{
+					// test_case_name = "agoKernel_And_U1_U1U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u1 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 44:
+				{
+					// test_case_name = "agoKernel_And_U1_U1U1";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (vx_int32)(pix_img1_u1 & pix_img2_u1) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -619,6 +714,26 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 89:
+				{
+					// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 90:
+				{
+					// test_case_name = "agoKernel_Threshold_U8_U8_Range";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				default:
 				{
 					missing_function_flag = 1;
@@ -629,17 +744,19 @@ int main(int argc, const char ** argv)
 			if (node && !missing_function_flag)
 			{
 				status = vxVerifyGraph(graph);
+				// U8U8 inputs
 				if (
 					(case_number == 1) || (case_number == 3) || (case_number == 4) || (case_number == 5) || 
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) ||
-					(case_number == 49) || (case_number == 57)
+					(case_number == 41) || (case_number == 49) || (case_number == 57)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u8));
 				}
+				// S16U8 inputs
 				else if (
 					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)
 					)
@@ -647,18 +764,45 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u8));
 				}
+				// S16S16 inputs
 				else if (
-					(case_number == 2) || (case_number == 8) || (case_number == 31) || (case_number == 32) || (case_number == 33) || (case_number == 34)
+					(case_number == 2) || (case_number == 8) || (case_number == 31) || (case_number == 32) || 
+					(case_number == 33) || (case_number == 34)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img2_s16));
 				}
+				// U8 input
 				else if(
-					(case_number == 45)
+					(case_number == 45) || (case_number == 89) || (case_number == 90)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
+				}
+				// U1U1 inputs
+				else if(
+					(case_number == 40) || (case_number == 44)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u1));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u1));
+				}
+				// U8U1 inputs
+				else if(
+					(case_number == 38) || (case_number == 42)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u1));
+				}
+				// U1U8 inputs
+				else if(
+					(case_number == 39) || (case_number == 43)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u1));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u8));
 				}
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);
@@ -848,8 +992,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -859,8 +1003,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = generic_mod((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = generic_mod((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -870,8 +1014,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -881,8 +1025,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -936,8 +1080,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = (vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = (vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -947,8 +1091,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = (vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = (vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -958,8 +1102,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float))) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -969,8 +1113,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * mul_scale_float))) * width * height;
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_s16)) * Mul_scale_float))) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -982,6 +1126,83 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxAndNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u8 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 38:
+				{
+					// test_case_name = "agoKernel_And_U8_U8U1";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u8 & pix_img2_u1) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 39:
+				{
+					// test_case_name = "agoKernel_And_U8_U1U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u1 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 40:
+				{
+					// test_case_name = "agoKernel_And_U8_U1U1";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u1 & pix_img2_u1) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 41:
+				{
+					// test_case_name = "agoKernel_And_U1_U8U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u8 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 42:
+				{
+					// test_case_name = "agoKernel_And_U1_U8U1";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u8 & pix_img2_u1) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 43:
+				{
+					// test_case_name = "agoKernel_And_U1_U1U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u1 & pix_img2_u8) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 44:
+				{
+					// test_case_name = "agoKernel_And_U1_U1U1";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxAndNode(graph, img1, img2, img_out);
+					expected_image_sum = (pix_img1_u1 & pix_img2_u1) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1017,6 +1238,26 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 89:
+				{
+					// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 90:
+				{
+					// test_case_name = "agoKernel_Threshold_U8_U8_Range";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				default:
 				{
 					missing_function_flag = 1;
@@ -1027,17 +1268,19 @@ int main(int argc, const char ** argv)
 			if (node && !missing_function_flag)
 			{
 				status = vxVerifyGraph(graph);
+				// U8U8 inputs
 				if (
 					(case_number == 1) || (case_number == 3) || (case_number == 4) || (case_number == 5) || 
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) || 
-					(case_number == 49) || (case_number == 57)
+					(case_number == 41) || (case_number == 49) || (case_number == 57)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img2_u8));
 				}
+				// S16U8 inputs
 				else if (
 					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)
 					)
@@ -1045,18 +1288,45 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img2_u8));
 				}
+				// S16S16 inputs
 				else if (
-					(case_number == 2) || (case_number == 8) || (case_number == 31) || (case_number == 32) || (case_number == 33) || (case_number == 34)
+					(case_number == 2) || (case_number == 8) || (case_number == 31) || (case_number == 32) || 
+					(case_number == 33) || (case_number == 34)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img2_s16));
 				}
+				// U8 input
 				else if (
-					(case_number == 45)
+					(case_number == 45) || (case_number == 89) || (case_number == 90)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
+				}
+				// U1U1 inputs
+				else if(
+					(case_number == 40) || (case_number == 44)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u1));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img2_u1));
+				}
+				// U8U1 inputs
+				else if(
+					(case_number == 38) || (case_number == 42)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img2_u1));
+				}
+				// U1U8 inputs
+				else if(
+					(case_number == 39) || (case_number == 43)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u1));
+					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img2_u8));
 				}
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);

@@ -75,6 +75,28 @@ visionTestConfig = [
     '41_xor.gdf'
 ]
 
+#  Popular Video Sizes
+# { 2160p: 3840x2160, 1440p: 2560x1440, 1080p: 1920x1080, 720p: 1280x720, 480p: 854x480, 360p: 640x360, 240p: 426x240 }
+
+openvxNodeTestConfig = [
+    # absdiff U8 - U8
+    ('absdiff-240p-u8', 'org.khronos.openvx.absdiff image:426,240,U008 image:426,240,U008 image:426,240,U008'),
+    ('absdiff-360p-u8', 'org.khronos.openvx.absdiff image:640,360,U008 image:640,360,U008 image:640,360,U008'),
+    ('absdiff-480p-u8', 'org.khronos.openvx.absdiff image:854,480,U008 image:854,480,U008 image:854,480,U008'),
+    ('absdiff-720p-u8', 'org.khronos.openvx.absdiff image:1280,720,U008 image:1280,720,U008 image:1280,720,U008'),
+    ('absdiff-1080p-u8', 'org.khronos.openvx.absdiff image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('absdiff-1440p-u8', 'org.khronos.openvx.absdiff image:2560,1440,U008 image:2560,1440,U008 image:2560,1440,U008'),
+    ('absdiff-2160p-u8', 'org.khronos.openvx.absdiff image:3840,2160,U008 image:3840,2160,U008 image:3840,2160,U008'),
+    # absdiff S16 - S16
+    ('absdiff-240p-s16', 'org.khronos.openvx.absdiff image:426,240,S016 image:426,240,S016 image:426,240,S016'),
+    ('absdiff-360p-s16', 'org.khronos.openvx.absdiff image:640,360,S016 image:640,360,S016 image:640,360,S016'),
+    ('absdiff-480p-s16', 'org.khronos.openvx.absdiff image:854,480,S016 image:854,480,S016 image:854,480,S016'),
+    ('absdiff-720p-s16', 'org.khronos.openvx.absdiff image:1280,720,S016 image:1280,720,S016 image:1280,720,S016'),
+    ('absdiff-1080p-s16', 'org.khronos.openvx.absdiff image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,S016'),
+    ('absdiff-1440p-s16', 'org.khronos.openvx.absdiff image:2560,1440,S016 image:2560,1440,S016 image:2560,1440,S016'),
+    ('absdiff-2160p-s16', 'org.khronos.openvx.absdiff image:3840,2160,S016 image:3840,2160,S016 image:3840,2160,S016')
+]
+
 # Import arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--runvx_directory',    type=str, default='',
@@ -104,8 +126,17 @@ os.system('(cd gdfs; mkdir openvx_test_results)')
 for i in range(len(visionTestConfig)):
     testFileName = visionTestConfig[i]
     print("Running Test Script: "+testFileName)
-    os.system('(cd gdfs; ./../'+runvx_exe_dir+' -affinity:' +
-              hardwareMode+' -frames:100 -dump-profile file '+testFileName+')')
+    os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
+              hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
+    print("\n")
+
+print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
+os.system('mkdir openvx_node_results')
+for i in range(len(openvxNodeTestConfig)):
+    nodeTestName, nodeTest = openvxNodeTestConfig[i]
+    print("Running OpenVX Node: "+nodeTestName)
+    os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:' +
+              hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
     print("\n")
 
 print("\nrunVisionTests.py completed - V:"+__version__+"\n")

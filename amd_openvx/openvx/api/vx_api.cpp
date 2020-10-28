@@ -2598,7 +2598,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseGraph(vx_graph *graph)
 VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 {
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	printf("vxVerifyGraph Called \n");
 	if (agoIsValidGraph(graph)) {
 		CAgoLock lock(graph->cs);
 		CAgoLock lock2(graph->ref.context->cs);

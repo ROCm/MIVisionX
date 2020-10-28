@@ -84,11 +84,14 @@ int agoGpuHipReleaseContext(AgoContext * context)
 int agoGpuHipReleaseGraph(AgoGraph * graph)
 {
     if (graph->hip_stream0) {
-        hipError_t status = hipStreamDestroy(graph->hip_stream0);
+        // graph->hip_stream0 is used from context, hence no need to destroy here
+    #if 0
+        //hipError_t status = hipStreamDestroy(graph->hip_stream0);
         if (status != hipSuccess) {
             agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoGpuHipReleaseGraph: hipStreamDestroy(%p) failed (%d)\n", graph->hip_stream0, status);
             return -1;
         }
+    #endif
         graph->hip_stream0 = NULL;
     }
     return 0;
@@ -122,23 +125,28 @@ int agoGpuHipReleaseData(AgoData * data)
 int agoGpuHipReleaseSuperNode(AgoSuperNode * supernode)
 {
     if (supernode->hip_stream0) {
+        // supernode->hip_stream0 is used from context, hence no need to destroy here
+    #if 0
         hipError_t status = hipStreamDestroy(supernode->hip_stream0);
         if (status != hipSuccess) {
             //agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: agoGpuHipReleaseGraph: hipStreamDestroy(%p) failed (%d)\n", graph->hip_stream0, status);
             return -1;
         }
+    #endif
         supernode->hip_stream0 = NULL;
     }
     return 0;
 }
 
 // create HIP device memory
-static void agoGpuHipCreateBuffer(AgoContext * context, void * host_ptr, size_t size, hipError_t errcode_ret)
+static void agoGpuHipCreateBuffer(AgoContext * context, void ** host_ptr, size_t size, hipError_t &errcode_ret)
 {
-        errcode_ret = hipMalloc((void **) &host_ptr, size);
+        errcode_ret = hipMalloc( host_ptr, size);
         if (host_ptr && (errcode_ret == hipSuccess) ) {
             context->hip_mem_alloc_count++;
             context->hip_mem_alloc_size += size;
+        } else{
+            agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: hipMalloc Failed with status: %d\n", errcode_ret);
         }
         return;
 }
@@ -157,12 +165,13 @@ int agoGpuHipAllocBuffer(AgoData * data)
             hipError_t err = hipSuccess;
             {
                 // allocate hip_memory
-                dataMaster->hip_memory = 0;
-                agoGpuHipCreateBuffer(context, dataMaster->hip_memory, dataMaster->size + dataMaster->opencl_buffer_offset, err);
+                dataMaster->hip_memory = nullptr;
+                agoGpuHipCreateBuffer(context, (void **)&dataMaster->hip_memory, dataMaster->size + dataMaster->opencl_buffer_offset, err);
                 dataMaster->hip_memory_allocated = dataMaster->hip_memory;
             }
             if (!dataMaster->hip_memory || err) {
-                agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)dataMaster->size + dataMaster->opencl_buffer_offset);
+                agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED with status <%p, %d>\n",
+                        (int)dataMaster->size + dataMaster->opencl_buffer_offset, dataMaster->hip_memory, err);
                 return -1;
             }
             if (dataMaster->u.img.isUniform) {
@@ -194,7 +203,7 @@ int agoGpuHipAllocBuffer(AgoData * data)
             {
                 // normal opencl_buffer allocation
                 data->hip_memory = 0;
-                agoGpuHipCreateBuffer(context, data->hip_memory, data->size + data->opencl_buffer_offset, err);
+                agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
                 data->hip_memory_allocated = data->hip_memory;
                 if (data->hip_memory) {
                     // initialize array header which containts numitems
@@ -220,7 +229,7 @@ int agoGpuHipAllocBuffer(AgoData * data)
             else {
                 // normal opencl_buffer allocation
                 data->hip_memory = 0;
-                agoGpuHipCreateBuffer(context, data->hip_memory, data->size + data->opencl_buffer_offset, err);
+                agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
                 data->hip_memory_allocated = data->hip_memory;
                 if (err) {
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)data->size + data->opencl_buffer_offset);
@@ -233,7 +242,7 @@ int agoGpuHipAllocBuffer(AgoData * data)
         hipError_t err = hipSuccess;
         if (!data->hip_memory) {
             data->hip_memory = 0;
-            agoGpuHipCreateBuffer(context, data->hip_memory, data->size + data->opencl_buffer_offset, err);
+            agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
             data->hip_memory_allocated = data->hip_memory;
             if (err) {
                 agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)data->size + data->opencl_buffer_offset);
@@ -246,7 +255,7 @@ int agoGpuHipAllocBuffer(AgoData * data)
         if (!data->hip_memory) {
             hipError_t err = hipSuccess;
             data->hip_memory = 0;
-            agoGpuHipCreateBuffer(context, data->hip_memory, data->size + data->opencl_buffer_offset, err);
+            agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
             data->hip_memory_allocated = data->hip_memory;
             if (err) {
                 agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)data->size + data->opencl_buffer_offset);
@@ -260,7 +269,7 @@ int agoGpuHipAllocBuffer(AgoData * data)
         if (!dataMaster->hip_memory) {
             hipError_t err = hipSuccess;
             dataMaster->hip_memory = 0;
-            agoGpuHipCreateBuffer(context, dataMaster->hip_memory, dataMaster->size + dataMaster->opencl_buffer_offset, err);
+            agoGpuHipCreateBuffer(context, (void **)&dataMaster->hip_memory, dataMaster->size + dataMaster->opencl_buffer_offset, err);
             dataMaster->hip_memory_allocated = dataMaster->hip_memory;
             if (err) {
                 agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)dataMaster->size + dataMaster->opencl_buffer_offset);
@@ -569,9 +578,44 @@ int agoGpuHipSuperNodeUpdate(AgoGraph * graph, AgoSuperNode * supernode)
             supernode->hierarchical_level_end = max(supernode->hierarchical_level_end, node->hierarchical_level);
         }
     }
-
     return 0;
 }
+
+int agoGpuHipSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode)
+{
+	// wait for completion
+	int64_t stime = agoGetClockCounter();
+	hipError_t err;
+	err = hipStreamSynchronize(supernode->hip_stream0);
+	if (err != hipSuccess) {
+		agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: hipStreamSynchronize(1,%p) failed(%d) for group#%d\n", supernode->hip_stream0, err, supernode->group);
+		return -1;
+	}
+	int64_t etime = agoGetClockCounter();
+	graph->opencl_perf.kernel_wait += etime - stime;
+#if 0 // TODO::ENABLE_DEBUG_DUMP_HIP_BUFFERS implement to dump hip buffers
+	// dump supernode outputs
+	for (size_t index = 0; index < supernode->dataList.size(); index++) {
+		if (!(supernode->dataInfo[index].data_type_flags & DATA_OPENCL_FLAG_DISCARD_PARAM)) {
+			bool need_access = supernode->dataInfo[index].needed_as_a_kernel_argument;
+			bool need_write_access = supernode->dataInfo[index].argument_usage[VX_OUTPUT] || supernode->dataInfo[index].argument_usage[VX_BIDIRECTIONAL];
+			auto data = supernode->dataList[index];
+			if (data->ref.type == VX_TYPE_IMAGE) {
+				if (need_access) { // only use image objects that need write access
+					if (need_write_access) {
+						auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
+						char fileName[128]; sprintf(fileName, "output_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
+						clDumpBuffer(fileName, opencl_cmdq, dataToSync);
+						//printf("Press ENTER to continue... ");  char line[256]; gets(line);
+					}
+				}
+			}
+		}
+	}
+#endif
+	return 0;
+}
+
 
 
 int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node)
@@ -601,12 +645,33 @@ int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node)
     return 0;
 }
 
-int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * node)
+int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 {
-// Super node is not supported in hip yet
-// HIP:: make sure HIP program is created in the node... as well as setting parameters;
+    // Super node is not fully supported in hip yet
+	// clear the data flags
+	for (size_t index = 0; index < supernode->dataList.size(); index++) {
+		supernode->dataInfo[index].data_type_flags = 0;
+	}
+	for (size_t index = 0; index < supernode->nodeList.size(); index++) {
+		AgoNode * node = supernode->nodeList[index];
+    	int status = VX_ERROR_NOT_IMPLEMENTED;
+		if (node->akernel->func) {
+			node->hip_code = "";
+			status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
+        #if 0    
+			for(vx_size dim = node->opencl_work_dim; dim < 3; dim++) {
+				node->opencl_global_work[dim] = 1;
+				node->opencl_local_work[dim] = 1;
+			}
+			node->opencl_work_dim = 3;
+        #endif            
+		}
+		else if (node->akernel->opencl_codegen_callback_f) {
+            // TODO:: not supported in HIP yet
+        }
+    }
 
-    return -1;
+    return 0;       // nothing to do
 }
 
 

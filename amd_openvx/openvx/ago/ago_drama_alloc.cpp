@@ -379,6 +379,8 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
                 return -1;
             }
         }
+		// create stream for graph
+		graph->hip_stream0 = context->hip_stream;
 #endif
 	}
 
@@ -459,6 +461,7 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 				return -1;
 			}
 #elif ENABLE_HIP
+			node->hip_stream0 = graph->hip_stream0;
             if (node->akernel->func) {
                 // generate kernel function code
                 int status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
@@ -488,6 +491,8 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 		// add individual nodes into supernode
 		for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
 			if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU && node->attr_affinity.group == itgroup->first) {
+            // add supernode only for OPenCL flow. Not supported in HIP for now
+#if ENABLE_OPENCL
 				// make sure supernode is created for GPU
 				if (!supernode) {
 					supernode = new AgoSuperNode; if (!supernode) return -1;
@@ -498,15 +503,16 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 				// initialize supernode with OpenCL information
 				supernode->isGpuOclSuperNode = true;
 				// add node functionality into supernode
-#if ENABLE_OPENCL
                 supernode->opencl_cmdq = graph->opencl_cmdq;
                 if (agoGpuOclSuperNodeMerge(graph, supernode, node) < 0) {
 					return -1;
 				}
 #else
-                supernode->hip_stream0 = graph->hip_stream0;
-                if (agoGpuHipSuperNodeMerge(graph, supernode, node) < 0) {
-                    return -1;
+                if (supernode) {
+                    supernode->hip_stream0 = graph->hip_stream0;
+                    if (agoGpuHipSuperNodeMerge(graph, supernode, node) < 0) {
+                        return -1;
+                    }
                 }
 #endif
 			}

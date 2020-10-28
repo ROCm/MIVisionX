@@ -47,17 +47,10 @@ project(hipvx_sample)
 set (CMAKE_CXX_STANDARD 14)
 list (APPEND SOURCES main.cpp)
 
-
-message("CMAKE source dir ${CMAKE_SOURCE_DIR}")
 include_directories (${ROCM_PATH}/include ${ROCM_PATH}/mivisionx/include ${HIP_PATH}/include ${HCC_PATH}/include ${HSA_PATH}/include)
-#link_directories(${CMAKE_SOURCE_DIR}/lib ${HIP_PATH}/lib)
-#set_source_files_properties(${SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 list(APPEND HIP_CXX_FLAGS -std=c++14)
-#list(APPEND HIP_CXX_FLAGS -D__HIP_PLATFORM_HCC__=1)
-
 link_directories(${ROCM_PATH}/mivisionx/lib ${HIP_PATH}/lib)
 hip_add_executable(hipvx_sample ${SOURCES})
 target_compile_options(hipvx_sample PUBLIC ${HIP_CXX_FLAGS})
 target_link_libraries(hipvx_sample openvx pthread ${hip_library_name})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -msse4.2")
-#target_compile_definitions(hiprtc_test PRIVATE __HIP_PLATFORM_HCC__)

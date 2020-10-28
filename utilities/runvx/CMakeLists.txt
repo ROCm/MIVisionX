@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.8)
-project(runvx)
+cmake_minimum_required(VERSION 3.5)
+project(runvx CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -55,7 +55,6 @@ if ("${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(runvx ${OpenCL_LIBRARIES})
 elseif ("${BACKEND}" STREQUAL "HIP")
-	# Setup HIPCC compiler
 	if(NOT DEFINED HIP_PATH)
 		if(NOT DEFINED ENV{HIP_PATH})
 			set(HIP_PATH $ENV{ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
@@ -89,13 +88,15 @@ elseif ("${BACKEND}" STREQUAL "HIP")
 	message("HIP library name: ${hip_library_name}")
 	#FIND_LIBRARY(MIVISIONX_HIP_HCC_LIBRARIES ${hip_library_name} HINTS ${HIP_PATH}/lib)
 
+	list(APPEND HIP_CXX_FLAGS -std=c++14)
+	#set_source_files_properties(${SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+	include_directories (${ROCM_PATH}/include ${ROCM_PATH}/mivisionx/include ${HIP_PATH}/include ${HCC_PATH}/include ${HSA_PATH}/include)
+	link_directories(${ROCM_PATH}/mivisionx/lib ${HIP_PATH}/lib)
 	hip_add_executable(runvx ${SOURCES})
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
 	target_compile_definitions(runvx PUBLIC ENABLE_HIP=1)
-	set_source_files_properties(${SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-
-	include_directories(${HIP_PATH}/include ${HCC_PATH}/include ${HSA_PATH}/include)
-	target_link_libraries (runvx openvx ${hip_library_name})
+	target_compile_options(runvx PUBLIC ${HIP_CXX_FLAGS})
+	target_link_libraries (runvx openvx openvx_hip)
 	message("-- ${Green}runvx built with HIP Support${ColourReset}")
 else()
 	add_executable(runvx ${SOURCES})
@@ -127,6 +128,9 @@ else()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
 		target_link_libraries(runvx crypto)
 	endif()
+endif()
+if ("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
+	target_link_libraries(runvx ${hip_library_name})
 endif()
 install(TARGETS runvx DESTINATION bin)
 install(DIRECTORY ../../samples DESTINATION .)

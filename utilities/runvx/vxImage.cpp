@@ -122,7 +122,7 @@ int CVxParamImage::Shutdown(void)
 		}
 	}
 #elif ENABLE_HIP
-    else if (m_memory_type == VX_MEMORY_TYPE_OPENCL) {
+    else if (m_memory_type == VX_MEMORY_TYPE_HIP) {
 		for (int active_handle = 0; active_handle < 2; active_handle++) {
 			for (vx_size plane = 0; plane < m_planes; plane++) {
 				if (m_memory_handle[active_handle][plane]) {

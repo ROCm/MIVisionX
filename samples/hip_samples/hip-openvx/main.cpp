@@ -363,7 +363,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAddNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
-					expected_image_sum = (vx_int16)(pix_img1_s16 + pix_img2_s16) * width * height;
+					expected_image_sum = ((vx_int16)(pix_img1_s16 + pix_img2_s16)) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -376,7 +376,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
 					// expected_image_sum = generic_mod(pix_img1_u8 - pix_img2_u8, 256) * width * height;
-					expected_image_sum = (vx_uint8)(pix_img1_u8 - pix_img2_u8) * width * height;
+					expected_image_sum = ((vx_uint8)(pix_img1_u8 - pix_img2_u8)) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -474,6 +474,54 @@ int main(int argc, const char ** argv)
 					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
 					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
 					out_buf_type = 0;
+					break;
+				}
+				case 23:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Wrap_Trunc";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 24:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Wrap_Round";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = generic_mod((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 25:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Sat_Trunc";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 26:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Sat_Round";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKS16((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					out_buf_type = 1;
 					break;
 				}
 				case 31:
@@ -584,7 +632,8 @@ int main(int argc, const char ** argv)
 				if (
 					(case_number == 1) || (case_number == 3) || (case_number == 4) || (case_number == 5) || 
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
-					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 37) || 
+					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
+					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) ||
 					(case_number == 49) || (case_number == 57)
 					)
 				{
@@ -837,6 +886,50 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 23:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Wrap_Trunc";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 24:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Wrap_Round";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = generic_mod((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float), 256) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 25:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Sat_Trunc";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 26:
+				{
+					// test_case_name = "agoKernel_Mul_S16_U8U8_Sat_Round";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * mul_scale_float))) * width * height;
+					out_buf_type = 1;
+					break;
+				}
 				case 31:
 				{
 					// test_case_name = "agoKernel_Mul_S16_S16S16_Wrap_Trunc";
@@ -937,7 +1030,8 @@ int main(int argc, const char ** argv)
 				if (
 					(case_number == 1) || (case_number == 3) || (case_number == 4) || (case_number == 5) || 
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
-					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 37) || 
+					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
+					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) || 
 					(case_number == 49) || (case_number == 57)
 					)
 				{

@@ -155,7 +155,7 @@ def copyImages(imagesSource, toolkit_dir):
 def generateTop1Result(resultsDirectory, resultDataBase, labelLines):
     logger.debug("Generating top 1 result file")
     outputCsvFile = os.path.join(resultsDirectory, 'results.csv')
-    outputJsonFile = os.path.join(resultsDirectory, 'results.json')
+
     result = {}
 
     headerText = [
@@ -186,7 +186,6 @@ def generateTop1Result(resultsDirectory, resultDataBase, labelLines):
 
 def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, imageDir):
 
-    useAbsolutePath = False
     # 0 to 4 are top1 to top5 data
     topk = 5
     logger.debug("Comprehenive csv generation")
@@ -203,7 +202,7 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
         writer = csv.writer(csvFile)
 
         for img in resultDataBase:
-            imgName = img[0]
+            # imgName = img[0]
             gt = int(img[1])
             labels = [int(x) for x in img[2:2+topk]]
             labelTexts = [labelLines[l] for l in labels]
@@ -232,8 +231,8 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
                 gtLabelText = 'Unknown'
                 totalNoGroundTruth += 1
 
-            writer.writerow([img[0], *labels, gt, match, *
-                             labelTexts, gtLabelText, *probs])
+            writer.writerow([img[0], *labels, gt, match,
+                             *labelTexts, gtLabelText, *probs])
 
             imgRes = {}
 
@@ -401,10 +400,10 @@ def processHierarchy(resultDataBase, labelLines, hierarchyDataBase):
     topKPassFail = np.zeros(shape=(100, 2))
     topKHierarchyPassFail = np.zeros(shape=(100, 12))
     for img in resultDataBase:
-        imgName = img[0]
+        # imgName = img[0]
         gt = int(img[1])
         labels = [int(x) for x in img[2:2+topk]]
-        labelTexts = [labelLines[l] for l in labels]
+        # labelTexts = [labelLines[l] for l in labels]
         probs = [float(x) for x in img[2+topk: 2+topk+topk]]
 
         if gt >= 0:
@@ -475,16 +474,6 @@ def generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFa
     logger.debug("hierarchySummary.csv generated ..")
 
 
-def readHierarchyFile(hierarchyFile):
-    if hierarchyFile != '':
-        hierarchyElements = 0
-        with open(hierarchyFile) as hierarchy:
-            hierarchyCSV = csv.reader(hierarchy)
-            hierarchyDataBase = [r for r in hierarchyCSV]
-            hierarchyElements = len(hierarchyDataBase)
-        return hierarchyDataBase, hierarchyElements
-
-
 def calculateHierarchyPenalty(truth, result, hierarchyDataBase):
     if hierarchyDataBase == None:
         return 0
@@ -538,10 +527,10 @@ def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hie
     hierarchyPenalty = np.zeros(shape=(100, topk))
     top5PassFail = np.zeros(shape=(100, topk*2))
 
-    method1ModelScores = []
-    method2ModelScores = []
-    method3ModelScores = []
-    methodStandardaModelScores = []
+    # method1ModelScores = []
+    # method2ModelScores = []
+    # method3ModelScores = []
+    # methodStandardaModelScores = []
 
     for img in resultDataBase:
         imgName = img[0]
@@ -666,8 +655,8 @@ def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hie
 
     confID = 0.99
     i = 99
-    passIndex = 0
-    failIndex = 1
+    # passIndex = 0
+    # failIndex = 1
     while confID >= 0:
         for j in range(topk):
             # Every even index is pass score, every odd is fail score

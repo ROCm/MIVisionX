@@ -17,7 +17,9 @@ python generate-visualization.py -h
 ````
 
 ### Script Inputs:
+
 ````
+
 usage: generate-visualization.py  [-h] 
                                   --inference_results INFERENCE_RESULTS
                                   --label LABEL
@@ -43,7 +45,6 @@ usage: generate-visualization.py  [-h]
 
 | Image File Name | Ground Truth Label | Output Label 1 | Output Label 2 | Output Label 3 | Output Label 4 | Output Label 5 | Prob 1 | Prob 2 | Prob 3 | Prob 4 | Prob 5 |
 | --------------- | ------------------ | -------------- | -------------- | -------------- | -------------- | -------------- | ------ | ------ | ------ | ------ | ------ |
-
 
 The  ```"Image File Name"``` field can have full path of image and does not need ```image_dir``` argument to be specified. This also avoids copying of images to ADAT results directory.
 

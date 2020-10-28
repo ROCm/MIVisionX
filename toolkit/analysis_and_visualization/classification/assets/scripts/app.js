@@ -1,4 +1,5 @@
-/*global data, labelSummary, imageSummary, jQuery, $, modelHistories*/
+/* eslint-disable eqeqeq */
+/*global data, labelSummary, imageSummary, $, modelHistories*/
 
 // eslint-disable-next-line no-unused-vars
 function openNav() {
@@ -51,7 +52,7 @@ function loadLabelSummary(labelSummaryLocal) {
         var id = label.id;
         var totalImageClass = label.totalImages > 0 ? "color-green" : "";
 
-        var misclassifiedClass = label.misclassifiedTop1 == 0 ? "color-green" : (label.totalImages > 0 ? "color-red" : "color-black");
+        var misclassifiedClass = label.misclassifiedTop1 === 0 ? "color-green" : (label.totalImages > 0 ? "color-red" : "color-black");
 
 
         row.append($("<td>").attr({
@@ -130,7 +131,6 @@ function clearLabelFilter() {
 function highlightRow(element) {
     var parentRow = element.parentElement.parentElement;
     parentRow.classList.toggle("highlight-row");
-    console.log(element.parentElement.parentElement);
 
 }
 
@@ -179,8 +179,6 @@ function filterResultTable(e) {
 
         }
     });
-
-    console.log(filters);
 
     imageSummaryFiltered = imageSummary.filter(function (item) {
         var allTrue = true;
@@ -248,7 +246,9 @@ function loadImageResults(imageSummaryLocal) {
         count++;
 
         var row = $("<tr>");
-        var id = im.imgName;
+
+        // var id = im.imgName;
+
         var matchClass = im.match > 0 ? "color-green" : "color-red";
         // var imgLink = $('a').attr('href', im.filePath).attr('target', '_blank').text(im.imageName);
 
@@ -284,7 +284,6 @@ function loadImageResults(imageSummaryLocal) {
 
 // eslint-disable-next-line no-unused-vars
 function showModal(event) {
-    console.log(event.target);
     var modal = document.getElementById("myModal");
     var modalImg = document.getElementById("img01");
     var modalCaption = document.getElementById("caption");
@@ -467,71 +466,6 @@ function sortImageResults(fieldName, direction) {
 }
 
 
-
-document.addEventListener("DOMContentLoaded", function () {
-    $("#generation-date").html(data.summaryGenerationDate);
-
-    insertIntoTopKTable();
-    showStatsOnTable();
-    loadLabelSummary(labelSummary);
-    loadScorings();
-
-    addToOldDataList();
-
-
-
-    $(".filter-image").on("click", function (event) {
-        var element = event.target;
-        var targetValue = element.dataset.id;
-        var toMisclassified = element.dataset.type;
-        console.log(element);
-        console.log(targetValue);
-        console.log(toMisclassified);
-        $("input[id ^= \"fli_\"]").val("");
-
-        if (!toMisclassified) {
-            $("#fli_gt").val(targetValue);
-        } else {
-            $("#fli_labels_0").val(targetValue);
-            $("#fli_match").val(1);
-            $("#fli_op_match").val("neq");
-        }
-        filterResultTable(event);
-        window.location.href = "#table4";
-
-    });
-
-    $("#not-op").click(function () {
-        filterResultTable();
-    });
-    $("input:radio[name='filterType']").click(function () {
-        filterResultTable();
-    });
-    // loadImageResults(imageSummary);
-
-    $("select[id ^= \"fli_op_\"]").change(function () {
-        filterResultTable();
-    });
-
-
-    // eslint-disable-next-line no-unused-vars
-    $(".sort-field").click(function (event) {
-        var targetField = $(this).data("field");
-        var direction = $(this).data("sort-dir");
-
-        $(".sort-field span").html("");
-
-        direction = direction ? parseInt(direction, 10) : 1;
-        sortImageResults(targetField, direction);
-        direction = direction * -1;
-        $(this).data("sort-dir", direction);
-        var $this = $(this).find("span");
-        $this.html(direction == -1 ? "&nbsp;&#x25B4;" : "&nbsp;&#x25BE;");
-
-    });
-});
-
-
 function addToOldDataList() {
     modelHistories.forEach(function (model, index) {
         var tbody = document.getElementById("history-tbody");
@@ -576,3 +510,63 @@ function addToOldDataList() {
 
 
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    $("#generation-date").html(data.summaryGenerationDate);
+
+    insertIntoTopKTable();
+    showStatsOnTable();
+    loadLabelSummary(labelSummary);
+    loadScorings();
+
+    addToOldDataList();
+
+
+
+    $(".filter-image").on("click", function (event) {
+        var element = event.target;
+        var targetValue = element.dataset.id;
+        var toMisclassified = element.dataset.type;
+        $("input[id ^= \"fli_\"]").val("");
+
+        if (!toMisclassified) {
+            $("#fli_gt").val(targetValue);
+        } else {
+            $("#fli_labels_0").val(targetValue);
+            $("#fli_match").val(1);
+            $("#fli_op_match").val("neq");
+        }
+        filterResultTable(event);
+        window.location.href = "#table4";
+
+    });
+
+    $("#not-op").click(function () {
+        filterResultTable();
+    });
+    $("input:radio[name='filterType']").click(function () {
+        filterResultTable();
+    });
+    // loadImageResults(imageSummary);
+
+    $("select[id ^= \"fli_op_\"]").change(function () {
+        filterResultTable();
+    });
+
+
+    // eslint-disable-next-line no-unused-vars
+    $(".sort-field").click(function (event) {
+        var targetField = $(this).data("field");
+        var direction = $(this).data("sort-dir");
+
+        $(".sort-field span").html("");
+
+        direction = direction ? parseInt(direction, 10) : 1;
+        sortImageResults(targetField, direction);
+        direction = direction * -1;
+        $(this).data("sort-dir", direction);
+        var $this = $(this).find("span");
+        $this.html(direction == -1 ? "&nbsp;&#x25B4;" : "&nbsp;&#x25BE;");
+
+    });
+});

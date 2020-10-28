@@ -1,6 +1,7 @@
 /* eslint-disable no-useless-escape */
 /* eslint-disable no-empty */
-/*global jQuery, define*/
+/* eslint-disable eqeqeq */
+/*global define*/
 
 /*
  * pagination.js 2.1.5

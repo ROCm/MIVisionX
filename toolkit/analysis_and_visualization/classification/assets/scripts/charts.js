@@ -63,132 +63,6 @@ function drawResultChart() {
 }
 
 
-
-document.addEventListener("DOMContentLoaded", function () {
-    $(".history_check").click(function () {
-        addResultHistory();
-
-    });
-    addResultHistory();
-
-
-    google.charts.load("current", {
-        packages: ["corechart", "bar", "line"]
-    });
-
-    google.charts.setOnLoadCallback(drawChart);
-    google.charts.setOnLoadCallback(drawResultChart);
-    google.charts.setOnLoadCallback(drawTopKResultChart);
-
-
-
-    if (data.hasHierarchy) {
-        google.charts.setOnLoadCallback(drawPassFailGraph);
-        google.charts.setOnLoadCallback(drawLnPassFailGraphs);
-        google.charts.setOnLoadCallback(drawHierarchyPassFailGraph);
-
-        google.charts.setOnLoadCallback(drawTopKModelScoreGraph);
-        google.charts.setOnLoadCallback(drawMethodScoreChartGraphs);
-    }
-
-
-});
-
-
-function addResultHistory() {
-
-    var combinedArrayData = [];
-
-
-    combinedArrayData.push(["Model", "Match", "Mismatch"]);
-    var toDrawModelHistories = [];
-    var selectedIndices = [];
-    $(".history_check").each(function (index, item) {
-        if ($(item).is(":checked")) {
-            var id = $(item).data("id");
-            selectedIndices.push(parseInt(id));
-        }
-    });
-
-    modelHistories.forEach(function (model, index) {
-        if (selectedIndices.indexOf(index) >= 0) {
-            toDrawModelHistories.push(model);
-        }
-    });
-
-    document.getElementById("Model_Stats_master").innerHTML = "";
-    document.getElementById("compare-result-graphs").innerHTML = "";
-
-
-
-    toDrawModelHistories.forEach(function (model, index) {
-
-        combinedArrayData.push([model.modelName, model.passCount, model.totalMismatch]);
-
-        var divChild = document.createElement("div");
-        divChild.id = "model-history-" + index;
-        divChild.className = "column-3";
-
-        document.getElementById("compare-result-graphs").appendChild(divChild);
-
-        google.charts.load("current", {
-            "packages": ["bar"]
-        });
-
-
-        google.charts.setOnLoadCallback(function () {
-
-            $(function () {
-                var chartData = google.visualization.arrayToDataTable([
-                    ["  ", "Match", "Mismatch"],
-                    ["Summary", model.passCount, model.totalMismatch]
-                ]);
-                var options = {
-                    title: "Generic Model Overall Result Summary",
-                    vAxis: {
-                        title: "Images"
-                    },
-                    width: 400,
-                    height: 400
-                };
-                var chart = new google.charts.Bar(document.getElementById("model-history-" + index));
-                chart.draw(chartData, google.charts.Bar.convertOptions(options));
-            });
-
-        });
-
-        google.charts.setOnLoadCallback(function () {
-            var chartData = google.visualization.arrayToDataTable(combinedArrayData);
-            var options = {
-                title: "Overall Result Summary",
-                vAxis: {
-                    title: "Images"
-                },
-                width: 800,
-                height: 600,
-                bar: {
-                    groupWidth: "30%"
-                },
-                isStacked: true,
-                series: {
-                    0: {
-                        color: "green"
-                    },
-                    1: {
-                        color: "Indianred"
-                    }
-                }
-            };
-            var chart = new google.charts.Bar(document.getElementById("Model_Stats_master"));
-            chart.draw(chartData, google.charts.Bar.convertOptions(options));
-
-
-        });
-
-    });
-}
-
-
 function drawPassFailGraph() {
 
     var chartParentDiv = document.createElement("div");
@@ -418,3 +292,129 @@ function drawMethodScoreChartGraphs() {
         document.getElementById("score-chart-div").appendChild(chartParentDiv);
     }
 }
+
+
+
+
+function addResultHistory() {
+
+    var combinedArrayData = [];
+
+
+    combinedArrayData.push(["Model", "Match", "Mismatch"]);
+    var toDrawModelHistories = [];
+    var selectedIndices = [];
+    $(".history_check").each(function (index, item) {
+        if ($(item).is(":checked")) {
+            var id = $(item).data("id");
+            selectedIndices.push(parseInt(id));
+        }
+    });
+
+    modelHistories.forEach(function (model, index) {
+        if (selectedIndices.indexOf(index) >= 0) {
+            toDrawModelHistories.push(model);
+        }
+    });
+
+    document.getElementById("Model_Stats_master").innerHTML = "";
+    document.getElementById("compare-result-graphs").innerHTML = "";
+
+
+
+    toDrawModelHistories.forEach(function (model, index) {
+
+        combinedArrayData.push([model.modelName, model.passCount, model.totalMismatch]);
+
+        var divChild = document.createElement("div");
+        divChild.id = "model-history-" + index;
+        divChild.className = "column-3";
+
+        document.getElementById("compare-result-graphs").appendChild(divChild);
+
+        google.charts.load("current", {
+            "packages": ["bar"]
+        });
+
+
+        google.charts.setOnLoadCallback(function () {
+
+            $(function () {
+                var chartData = google.visualization.arrayToDataTable([
+                    ["  ", "Match", "Mismatch"],
+                    ["Summary", model.passCount, model.totalMismatch]
+                ]);
+                var options = {
+                    title: "Generic Model Overall Result Summary",
+                    vAxis: {
+                        title: "Images"
+                    },
+                    width: 400,
+                    height: 400
+                };
+                var chart = new google.charts.Bar(document.getElementById("model-history-" + index));
+                chart.draw(chartData, google.charts.Bar.convertOptions(options));
+            });
+
+        });
+
+        google.charts.setOnLoadCallback(function () {
+            var chartData = google.visualization.arrayToDataTable(combinedArrayData);
+            var options = {
+                title: "Overall Result Summary",
+                vAxis: {
+                    title: "Images"
+                },
+                width: 800,
+                height: 600,
+                bar: {
+                    groupWidth: "30%"
+                },
+                isStacked: true,
+                series: {
+                    0: {
+                        color: "green"
+                    },
+                    1: {
+                        color: "Indianred"
+                    }
+                }
+            };
+            var chart = new google.charts.Bar(document.getElementById("Model_Stats_master"));
+            chart.draw(chartData, google.charts.Bar.convertOptions(options));
+
+
+        });
+
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    $(".history_check").click(function () {
+        addResultHistory();
+
+    });
+    addResultHistory();
+
+
+    google.charts.load("current", {
+        packages: ["corechart", "bar", "line"]
+    });
+
+    google.charts.setOnLoadCallback(drawChart);
+    google.charts.setOnLoadCallback(drawResultChart);
+    google.charts.setOnLoadCallback(drawTopKResultChart);
+
+
+
+    if (data.hasHierarchy) {
+        google.charts.setOnLoadCallback(drawPassFailGraph);
+        google.charts.setOnLoadCallback(drawLnPassFailGraphs);
+        google.charts.setOnLoadCallback(drawHierarchyPassFailGraph);
+
+        google.charts.setOnLoadCallback(drawTopKModelScoreGraph);
+        google.charts.setOnLoadCallback(drawMethodScoreChartGraphs);
+    }
+
+
+});

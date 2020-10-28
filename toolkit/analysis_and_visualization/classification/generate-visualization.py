@@ -100,7 +100,7 @@ def readInferenceResultFile(inputCSVFile):
 
 def copyHtmlAssets(outputDirectory, fileName):
     """Makes required output directories and copies all required html files.
-    Copies icons, tablesort file inside util directory, all scripts, styles and 
+    Copies icons, tablesort file inside util directory, all scripts, styles and
     main html file  inside the output directory
 
     Args:
@@ -533,10 +533,10 @@ def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hie
     # methodStandardaModelScores = []
 
     for img in resultDataBase:
-        imgName = img[0]
+        # imgName = img[0]
         gt = int(img[1])
         labels = [int(x) for x in img[2:2+topk]]
-        labelTexts = [labelLines[l] for l in labels]
+        # labelTexts = [labelLines[l] for l in labels]
         probs = [float(x) for x in img[2+topk: 2+topk+topk]]
 
         if(gt >= 0):
@@ -897,7 +897,8 @@ def main():
         os.makedirs(outputDirectory)
 
     # read inference results file
-    resultDataBase, numElements = readInferenceResultFile(inputCSVFile)
+    resultDataBase, _ = readInferenceResultFile(inputCSVFile)
+
     # read label file
     labelLines, labelElements = readLabelFile(labelFile)
 

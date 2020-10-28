@@ -30,7 +30,9 @@ THE SOFTWARE.
 static const float VAL = (float)-32768;
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 // #define PIXELSATURATES16(pixel)     (pixel < VAL) ? VAL : ((pixel < 32767) ? pixel : 32767)
-#define PIXELSATURATES16(pixel) ((vx_int16)pixel < (vx_int16)INT16_MIN) ? (vx_int16)INT16_MIN : (((vx_int16)pixel < (vx_int16)INT16_MAX) ? (vx_int16)pixel : (vx_int16)INT16_MAX)
+#define PIXELSATURATES16(pixel) (pixel < (vx_int32)INT16_MIN) ? ((vx_int16)INT16_MIN) : ((pixel < (vx_int32)INT16_MAX) ? (vx_int16)pixel : ((vx_int16)INT16_MAX))
+
+// #define PIXELSATURATES16(pixel) ((vx_int16)pixel < (vx_int16)INT16_MIN) ? (vx_int16)INT16_MIN : (((vx_int16)pixel < (vx_int16)INT16_MAX) ? (vx_int16)pixel : (vx_int16)INT16_MAX)
 #define PIXELROUNDF32(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
 __device__ __forceinline__ float4 uchars_to_float4(uint src)
@@ -831,6 +833,58 @@ int HipExec_Sub_S16_U8S16_Wrap(
     hipEventElapsedTime(&eventMs, start, stop);
 
     printf("HipExec_Sub_S16_U8S16_Wrap: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Sub_S16_U8S16_Sat(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    int *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    int *pSrcImage2, unsigned int srcImage2StrideInBytes
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
+    float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
+    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 dst = make_float4(PIXELSATURATES16(src1.x-src2.x), PIXELSATURATES16(src1.y-src2.y), PIXELSATURATES16(src1.z-src2.z), PIXELSATURATES16(src1.w-src2.w)); //doesnt work for neg numbers
+        // (vx_int16)max(min(temp, INT16_MAX), INT16_MIN)
+
+    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
+    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+}
+int HipExec_Sub_S16_U8S16_Sat(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Sub_S16_U8S16_Sat,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (int *)pHipDstImage , dstImageStrideInBytes,
+                    (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (int *)pHipSrcImage2, srcImage2StrideInBytes);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("HipExec_Sub_S16_U8S16_Sat: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

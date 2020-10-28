@@ -115,6 +115,8 @@ class Pipeline(object):
         self._anchors = None
         self._BoxEncoder = None
         self._encode_tensor = None
+        self._numOfClasses = None
+        self._oneHotEncoding = False
 
     def store_values(self, operator):
         """
@@ -188,20 +190,17 @@ class Pipeline(object):
                             self._BoxEncoder = True
                             self._anchors = outputs[2].data
                             self._encode_tensor = outputs[2]
-       
-                            
-        # exit(0)
-            
-                
+
         #Checks for One Hot Encoding
-        # if(isinstance(outputs[1],list)== False):
-        #     if(len(outputs)==2):
-        #         if(outputs[1].prev is not None):
-        #             print(type(outputs[1]))
-        #             if(outputs[1].prev.data == "OneHotLabel"):
-        #                 print("Comes to if condition")
-        #                 self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
-        #                 self._oneHotEncoding = True
+        if(isinstance(outputs[1],list)== False):
+            if(len(outputs)==2):
+                if(outputs[1].prev is not None):
+                    print(type(outputs[1]))
+                    if(outputs[1].prev.data == "OneHotLabel"):
+                        print("Comes to if condition")
+                        self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
+                        self._oneHotEncoding = True
+        
             
         status = b.raliVerify(self._handle)
         if(status != types.OK):
@@ -253,7 +252,9 @@ class Pipeline(object):
         bboxes_tensor = torch.tensor(bboxes_in).float()
         labels_tensor=  torch.tensor(labels_in).long()
         return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
-                            
+    
+    def GetOneHotEncodedLabels(self, array):
+        return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
 
     def GetImageNameLen(self, array):
         return b.getImageNameLen(self._handle, array)

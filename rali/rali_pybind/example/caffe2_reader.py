@@ -30,12 +30,14 @@ class HybridTrainPipe(Pipeline):
 											mean=[0.485 * 255,0.456 * 255,0.406 * 255],
 											std=[0.229 * 255,0.224 * 255,0.225 * 255])
 		self.coin = ops.CoinFlip(probability=0.5)
+		self.one_hot_labels = ops.OneHot(num_classes=1000)
 		print('rali "{0}" variant'.format(rali_device))
 
 	def define_graph(self):
 		rng = self.coin()
 		if self.rali_type :
 			self.jpegs, self.labels = self.input(name="Reader") #Classification
+			self.labels = self.one_hot_labels(self.labels)
 		else:
 			self.jpegs,self.bb, self.labels = self.input(name="Reader") # Detection
 		images = self.decode(self.jpegs)

@@ -191,7 +191,9 @@ class RALICOCOIterator(object):
             if(self.loader._BoxEncoder == True):
                 
                 # Converting from "xywh" to "ltrb" format , 
-                # where the values of l, t, r, b always lie between 0 & 1
+                # where the values of l, t, r, b always lie between 0 & 1 
+                # input : N x 4 , "xywh" format
+                # output : 8732 x 4 , "ltrb" format
                 htot, wtot = 300, 300
                 bbox_sizes = []
                 bbox_labels = []
@@ -204,7 +206,7 @@ class RALICOCOIterator(object):
                     bbox_size = (l/wtot, t/htot, r/wtot, b/htot)
                     bbox_sizes.append(bbox_size)
                     i=i+1
-                
+
                 encoded_bboxes, encodded_labels = self.loader.encode(bboxes_in=bbox_sizes, labels_in=self.label_2d_numpy)
                 self.lis.append(encoded_bboxes)
                 self.lis_lab.append(encodded_labels)

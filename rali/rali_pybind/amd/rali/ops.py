@@ -11,6 +11,53 @@ class Node:
         self.next = None
 
 
+class OneHot(Node):
+    """
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory
+        dtype (nvidia.dali.types.DALIDataType, optional, default = DALIDataType.FLOAT) – Data type for the output
+        num_classes (int, optional, default = 0) – Number of all classes in the data
+        off_value (float, optional, default = 0.0) –
+        Value that will be used to fill the output when input[j] != i.
+            It will be cast to dtype type
+        on_value (float, optional, default = 1.0) –
+        Value that will be used to fill the output when input[j] = i.
+            It will be cast to dtype type
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+    """
+    def __init__(self,bytes_per_sample_hint=0,dtype = types.FLOAT,num_classes = 0,off_value =0.0,
+      on_value=1.0, preserve = False, seed =-1,  device = None):
+
+        Node().__init__()
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._dtype = dtype
+        self._num_classes =num_classes
+        self._off_value = off_value
+        self._on_value= on_value
+        self._preserve = preserve
+        self._seed = seed
+        self._labels = []
+        self.output = Node()
+        print("ops.py init",self._num_classes)
+
+
+    def __call__(self,name = ""):
+        self.data = "OneHotLabel"
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._num_classes
+        print("ops.py __call__",self._num_classes)
+
+        return self.output
+
+    def rali_c_func_call(self,handle):
+        # b.labelReader(handle,self._file_root)
+        # Dummy Varibale
+        print("ops.py",self._num_classes)
+        return self._num_classes
+
 class FileReader(Node):
     """
     file_root (str) – Path to a directory containing data files. FileReader supports flat directory structure. file_root directory should contain directories with images in them. To obtain labels FileReader sorts directories in file_root in alphabetical order and takes an index in this order as a class label.

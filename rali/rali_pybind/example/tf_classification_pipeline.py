@@ -33,6 +33,7 @@ class HybridPipe(Pipeline):
 											image_type=types.RGB,
 											mean=[0.485 * 255,0.456 * 255,0.406 * 255],
 											std=[0.229 * 255,0.224 * 255,0.225 * 255])
+		self.one_hot_labels = ops.OneHot(num_classes=1000)
 		self.coin = ops.CoinFlip(probability=0.5)
 		print('rali "{0}" variant'.format(rali_device))
 
@@ -40,6 +41,7 @@ class HybridPipe(Pipeline):
 		inputs = self.input(name ="Reader")
 		images = inputs["image/encoded"]
 		labels = inputs["image/class/label"]
+		labels = self.one_hot_labels(labels)
 		images = self.decode(images)
 		rng = self.coin()
 		output = self.cmnp(images, mirror=rng)

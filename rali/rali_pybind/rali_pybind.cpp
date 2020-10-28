@@ -147,6 +147,15 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_one_hot_label_copy(RaliContext context, py::array_t<int> array , unsigned numOfClasses)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetOneHotImageLabels(context, ptr, numOfClasses);
+        return py::cast<py::none>(Py_None);
+    }
+
 
 
     PYBIND11_MODULE(rali_pybind, m) {
@@ -225,6 +234,7 @@ namespace rali{
         m.def("getBBCords",&wrapper_BB_cord_copy);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
+        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
         m.def("isEmpty",&raliIsEmpty);
         m.def("getTimingInfo",raliGetTimingInfo);
         // rali_api_parameter.h

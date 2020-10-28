@@ -192,6 +192,43 @@ RALI_API_CALL raliGetBoundingBoxLabel(RaliContext p_context, int* buf)
 }
 
 void
+RALI_API_CALL raliGetOneHotImageLabels(RaliContext p_context, int* buf, int numOfClasses)
+{
+    auto context = static_cast<Context*>(p_context);
+    auto meta_data = context->master_graph->meta_data();
+    if(!meta_data.second) {
+        WRN("No label has been loaded for this output image")
+        return;
+    }
+    size_t meta_data_batch_size = meta_data.second->get_label_batch().size();
+    if(context->user_batch_size() != meta_data_batch_size)
+        THROW("meta data batch size is wrong " + TOSTR(meta_data_batch_size) + " != "+ TOSTR(context->user_batch_size() ))
+
+    int labels_buf[meta_data_batch_size];
+    int one_hot_encoded[meta_data_batch_size*numOfClasses];
+    memset(one_hot_encoded, 0, sizeof(int) * meta_data_batch_size * numOfClasses);
+    memcpy(labels_buf, meta_data.second->get_label_batch().data(),  sizeof(int)*meta_data_batch_size);
+    int label_index;
+    for(int i=0; i<meta_data_batch_size; i++)
+    {
+        label_index =  labels_buf[i];
+        if (label_index >0 && label_index<= numOfClasses )
+        {
+        one_hot_encoded[(i*numOfClasses)+label_index-1]=1;
+
+        }
+        else if(label_index == 0)
+        {
+          one_hot_encoded[(i*numOfClasses)+numOfClasses-1]=1;  
+        }
+
+    }
+    memcpy(buf,one_hot_encoded, sizeof(int) * meta_data_batch_size * numOfClasses);
+
+}
+
+
+void
 RALI_API_CALL raliGetBoundingBoxCords(RaliContext p_context, float* buf)
 {
     auto context = static_cast<Context*>(p_context);

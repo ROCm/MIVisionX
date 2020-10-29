@@ -605,8 +605,47 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
-					// expected_image_sum = ((vx_int32)((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
-					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
+					expected_image_sum = ((vx_int32)((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
+					// expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 28:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Wrap_Round";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int16)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float)) * width * height;
+					// expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 29:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Sat_Trunc";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int16)(PIXELCHECKS16((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float)))) * width * height;
+					// expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 30:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Sat_Round";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
+					// expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -987,6 +1026,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+					break;
+				}
 				case 65:
 				{
 					// test_case_name = "agoKernel_Magnitude_S16_S16S16";
@@ -1069,7 +1110,7 @@ int main(int argc, const char ** argv)
 				}
 				// S16U8 inputs
 				else if (
-					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)|| (case_number == 27)
+					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)|| (case_number == 27)|| (case_number == 28)|| (case_number == 29)|| (case_number == 30)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
@@ -1464,8 +1505,43 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
-					// expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
 					expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
+
+					out_buf_type = 1;
+					break;
+				}
+				case 28:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Wrap_Round";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float)) * width * height;
+
+					out_buf_type = 1;
+					break;
+				}
+				case 29:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Sat_Trunc";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)(PIXELCHECKS16((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float)))) * width * height;
+
+					out_buf_type = 1;
+					break;
+				}
+				case 30:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Sat_Round";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
+					expected_image_sum = ((vx_int16)(PIXELCHECKS16((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float)))) * width * height;
 
 					out_buf_type = 1;
 					break;
@@ -1815,6 +1891,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+					break;
+				}
 				case 65:
 				{
 					// test_case_name = "agoKernel_Magnitude_S16_S16S16";
@@ -1894,7 +1972,7 @@ int main(int argc, const char ** argv)
 				}
 				// S16U8 inputs
 				else if (
-					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)|| (case_number == 27)
+					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)|| (case_number == 27)|| (case_number == 28)|| (case_number == 29)|| (case_number == 30)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));
@@ -2038,3 +2116,4 @@ int main(int argc, const char ** argv)
 
 	return return_value;
 }
+	

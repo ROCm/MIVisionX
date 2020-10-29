@@ -270,6 +270,8 @@ int main(int argc, const char ** argv)
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
+	vx_float32 WeightedAverage_alpha_float = (vx_float32) (0.25);
+	vx_scalar WeightedAverage_alpha_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &WeightedAverage_alpha_float);
 
 	if (!device_affinity)
 	{
@@ -854,6 +856,18 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 99:
+				{
+					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				default:
 				{
 					missing_function_flag = 1;
@@ -870,7 +884,8 @@ int main(int argc, const char ** argv)
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) ||
-					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57)
+					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57) ||
+					(case_number == 99)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -1495,6 +1510,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 99:
+				{
+					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				default:
 				{
 					missing_function_flag = 1;
@@ -1511,7 +1537,8 @@ int main(int argc, const char ** argv)
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) || 
-					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57)
+					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57) ||
+					(case_number == 99)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));

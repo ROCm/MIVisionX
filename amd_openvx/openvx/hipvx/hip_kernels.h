@@ -208,6 +208,13 @@ int HipExec_Mul_S16_S16S16_Sat_Round(
         const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
         vx_float32 scale
         );
+int HipExec_WeightedAverage_U8_U8U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+    vx_float32 alpha
+    );
 
 
 // logical_kernels

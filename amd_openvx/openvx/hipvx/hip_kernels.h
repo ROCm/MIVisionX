@@ -218,6 +218,18 @@ int HipExec_Mul_S16_S16S16_Sat_Round(
         const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
         vx_float32 scale
         );
+int HipExec_Magnitude_S16_S16S16(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+        );
+int HipExec_Phase_U8_S16S16(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+        );
 int HipExec_WeightedAverage_U8_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

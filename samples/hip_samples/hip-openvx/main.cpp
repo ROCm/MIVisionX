@@ -941,6 +941,28 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+				case 65:
+				{
+					// test_case_name = "agoKernel_Magnitude_S16_S16S16";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMagnitudeNode(graph, img1, img2, img_out);
+					vx_int16 z = ((vx_int16) (sqrt ((double)((vx_uint32)(pix_img1_s16 * pix_img2_s16) + (vx_uint32)(pix_img1_s16 * pix_img2_s16))) + 0.5)); 
+					expected_image_sum = (z > INT16_MAX ? INT16_MAX : z) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 66:
+				{
+					// test_case_name = "agoKernel_Phase_U8_S16S16";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxPhaseNode(graph, img1, img2, img_out); 
+					expected_image_sum = ((vx_uint8)(atan2(((double)pix_img1_s16) , ((double)pix_img2_s16)))) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1011,7 +1033,7 @@ int main(int argc, const char ** argv)
 				else if (
 					(case_number == 2) || (case_number == 8) || (case_number == 9) || (case_number == 17) || 
 					(case_number == 18) || (case_number == 31) || (case_number == 32) || (case_number == 33) || 
-					(case_number == 34)
+					(case_number == 34) || (case_number == 65) || (case_number == 66)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
@@ -1697,6 +1719,26 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+				case 65:
+				{
+					// test_case_name = "agoKernel_Magnitude_S16_S16S16";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMagnitudeNode(graph, img1, img2, img_out);
+					vx_int16 z = ((vx_int16) (sqrt ((double)((vx_uint32)(pix_img1_s16 * pix_img2_s16) + (vx_uint32)(pix_img1_s16 * pix_img2_s16))) + 0.5)); 
+					expected_image_sum = (z > INT16_MAX ? INT16_MAX : z) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 66:
+				{
+					// test_case_name = "agoKernel_Phase_U8_S16S16";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxPhaseNode(graph, img1, img2, img_out);
+					expected_image_sum = ((vx_uint8)(atan2(((double)pix_img1_s16) , ((double)pix_img2_s16)))) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1766,7 +1808,7 @@ int main(int argc, const char ** argv)
 				else if (
 					(case_number == 2) || (case_number == 8) || (case_number == 9) || (case_number == 17) || 
 					(case_number == 18) || (case_number == 31) || (case_number == 32) || (case_number == 33) || 
-					(case_number == 34)
+					(case_number == 34) || (case_number == 65) || (case_number == 66)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));

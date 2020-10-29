@@ -22,6 +22,7 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 import argparse
 import os
+import shutil, sys
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018-2020, AMD MIVision Generate Full Report"
@@ -104,7 +105,8 @@ openvxNodes = [
      'org.khronos.openvx.box_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('canny_edge_detector-1080p-u8',
      'org.khronos.openvx.canny_edge_detector image:1920,1080,U008 threshold:RANGE,UINT8:INIT,80,100 scalar:INT32,3 !NORM_L1 image:1920,1080,U008'),
-    ('channel_combine-1080p-u8', 'org.khronos.openvx.channel_combine image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 !NULL image:1920,1080,RGB2'),
+    ('channel_combine-1080p-u8',
+     'org.khronos.openvx.channel_combine image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,RGB2'),
     ('dilate_3x3-1080p-u8',
      'org.khronos.openvx.dilate_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('erode_3x3-1080p-u8',
@@ -221,15 +223,30 @@ print("\nrunVisionTests - OpenVX Node Performance V-"+__version__+"\n")
 outputDirectory = 'openvx_node_results'
 if not os.path.exists(outputDirectory):
     os.makedirs(outputDirectory)
+else:
+    shutil.rmtree(outputDirectory)
+    os.makedirs(outputDirectory)
 for i in range(len(openvxNodes)):
     nodeName, nodeFormat = openvxNodes[i]
-    print("Running OpenVX Node:"+nodeName)
-    echo1 = 'Running OpenVX Node:'+nodeName
+    echo1 = 'Running OpenVX Node - '+nodeName
     os.system('echo '+echo1 +
               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
     os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
     print("\n")
+
+
+orig_stdout = sys.stdout
+sys.stdout = open('openvx_node_results/nodePerformance.md','a')
+echo_1 = '| OpenVX Node | Frames Count | tmp (ms) | avg (ms) | min (ms) | max (ms) |'
+print(echo_1)
+echo_2 = '|-------------|--------------|----------|----------|----------|----------|'
+print(echo_2)
+sys.stdout = orig_stdout
+print(echo_1)
+print(echo_2)
+runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-30s | %3d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
+os.system(runAwk_csv)
 
 # get data
 platform_name = shell('hostname')
@@ -271,6 +288,11 @@ with open(report_filename, 'w') as f:
 
     f.write("\n\nBenchmark Report\n")
     f.write("--------\n")
+    f.write("Hardware: %s\n" % hardwareMode)
+    f.write("\n")
+    with open('openvx_node_results/nodePerformance.md') as benchmarkFile:
+        for line in benchmarkFile:
+            f.write("%s" % line)
     f.write("\n")
 
     f.write("\n\n---\nCopyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"\n")

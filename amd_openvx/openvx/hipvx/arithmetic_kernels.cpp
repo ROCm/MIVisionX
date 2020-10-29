@@ -1585,6 +1585,56 @@ int HipExec_Mul_S16_S16S16_Sat_Round(
     return VX_SUCCESS;
 }
 
+
+__global__ void __attribute__((visibility("default")))
+Hip_Mul_S16_S16U8_Wrap_Trunc(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes,
+    float scale
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
+    float4 src1 =  s16s_to_float4_ungrouped(pSrcImage1[src1Idx],pSrcImage1[src1Idx+1],pSrcImage1[src1Idx+2],pSrcImage1[src1Idx+3]);
+    float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
+    float4 dst = make_float4((src1.x*src2.x*scale), (src1.y*src2.y*scale), (src1.z*src2.z*scale),(src1.w*src2.w*scale));
+    float4_to_s16s(pDstImage, dstIdx, dst);
+}
+int HipExec_Mul_S16_S16U8_Wrap_Trunc(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+        vx_float32 scale
+        )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Mul_S16_S16U8_Wrap_Trunc,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (unsigned int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("HipExec_Mul_S16_S16U8_Wrap_Trunc: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
 // ----------------------------------------------------------------------------
 // VxWeightedAverage kernels for hip backend
 // ----------------------------------------------------------------------------

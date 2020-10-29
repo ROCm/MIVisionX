@@ -1951,6 +1951,7 @@ AgoData * agoCreateDataFromDescription(AgoContext * acontext, AgoGraph * agraph,
 	agoResetReference(&data->ref, data->ref.type, acontext, data->isVirtual ? &agraph->ref : NULL);
 	if (isForExternalUse) {
 		data->ref.external_count = 1;
+		acontext->num_active_references++;
 	}
 	else {
 		data->ref.internal_count = 1;
@@ -2728,6 +2729,7 @@ void agoRetainData(AgoGraph * graph, AgoData * data, bool isForExternalUse)
 {
 	if (isForExternalUse) {
 		data->ref.external_count++;
+		//data->ref.context->num_active_references++;
 	}
 	else {
 		data->ref.internal_count++;
@@ -2773,6 +2775,8 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
 			if (data->ref.internal_count > 0)
 				data->ref.internal_count--;
 		}
+		if(data->ref.external_count >= 0 && isForExternalUse && data->ref.internal_count >= 0)
+			graph->ref.context->num_active_references--;
 		if (data->ref.external_count == 0 && data->ref.internal_count == 0) {
 			// clear child link in it's paren link
 			if (data->parent) {
@@ -2813,6 +2817,8 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
 				data->ref.internal_count--;
 			}
 		}
+		if(data->ref.external_count >= 0 && isForExternalUse && data->ref.internal_count >= 0)
+			context->num_active_references--;
 		if (data->ref.external_count == 0 && data->ref.internal_count == 0) {
 			// clear child link in it's paren link
 			if (data->parent) {

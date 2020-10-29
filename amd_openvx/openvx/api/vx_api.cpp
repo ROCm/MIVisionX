@@ -2057,6 +2057,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromChannel(vx_image img, vx_enum
 	}
 	if (subImage) {
 		subImage->ref.external_count++;
+		subImage->ref.context->num_active_references++;
 	}
 	return (vx_image)subImage;
 }
@@ -2330,8 +2331,6 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddKernel(vx_context context,
 			kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
 			kernel->user_kernel = vx_false_e;
 			agoAddKernel(&context->kernelList, kernel);
-			// update reference count
-			kernel->ref.context->num_active_references++;
 		}
 	}
 	return kernel;
@@ -2391,8 +2390,6 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddUserKernel(vx_context context,
 			kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
 			kernel->user_kernel = vx_true_e;
 			agoAddKernel(&context->kernelList, kernel);
-			// update reference count
-			kernel->ref.context->num_active_references++;
 		}
 	}
 	return kernel;
@@ -3645,6 +3642,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryParameter(vx_parameter param, vx_enum 
 							// TBD: handle optimized buffers and kernels
 							if (ref) {
 								ref->external_count++;
+								ref->context->num_active_references++;
 							}
 							status = VX_SUCCESS;
 						}
@@ -4156,10 +4154,20 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
 				break;
 			case VX_REFERENCE_NAME:			
 				if (size == sizeof(vx_char*)) {
-					AgoData * data = (AgoData *)ref;
-					//strncpy((char *)ptr, data->name.c_str(), size);
-					*(vx_char**)ptr = &data->name[0];
-					status = VX_SUCCESS;
+					if(ref->type == VX_TYPE_GRAPH)
+					{
+						AgoGraph * graph = (AgoGraph *)ref;
+						//strncpy((char *)ptr, data->name.c_str(), size);
+						*(vx_char**)ptr = &graph->name[0];
+						status = VX_SUCCESS;
+					}
+					else
+					{
+						AgoData * data = (AgoData *)ref;
+						//strncpy((char *)ptr, data->name.c_str(), size);
+						*(vx_char**)ptr = &data->name[0];
+						status = VX_SUCCESS;
+					}
 				}
 				break;
 			default:
@@ -4265,6 +4273,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxRetainReference(vx_reference ref)
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidReference(ref)) {
 		ref->external_count++;
+		if (ref->type != VX_TYPE_KERNEL && ref->type != VX_TYPE_NODE && ref->type != VX_TYPE_PARAMETER)
+			ref->context->num_active_references++;
 		status = VX_SUCCESS;
 	}
 	return status;
@@ -4297,7 +4307,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
 	if (agoIsValidReference(ref) && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || 
 		(ref->type == VX_TYPE_TENSOR) ||
-		(ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END) || (ref->type == VX_TYPE_GRAPH)))
+		(ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)))
 	{
 		AgoData * data = (AgoData *)ref;
 		//printf("%s %s %lu\n", data->name.c_str(), name, strlen(name));
@@ -4311,6 +4321,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx
 		//printf("after:::strlen(data name) = %lu\n", data->name.length());
 		//printf("after == %s\n", data->name.c_str());
 		
+		status = VX_SUCCESS;
+	}
+	else if(agoIsValidReference(ref) && (ref->type == VX_TYPE_GRAPH))
+	{
+		AgoGraph * graph = (AgoGraph *)ref;
+		graph->name = name;
 		status = VX_SUCCESS;
 	}
 	return status;
@@ -6978,6 +6994,7 @@ VX_API_ENTRY vx_image VX_API_CALL vxGetPyramidLevel(vx_pyramid pyr, vx_uint32 in
 	if (agoIsValidData(data, VX_TYPE_PYRAMID) && (index < data->u.pyr.levels) && !data->isNotFullyConfigured) {
 		img = data->children[index];
 		agoRetainData((AgoGraph *)data->ref.scope, img, true);
+		data->ref.context->num_active_references++;
 	}
 	return (vx_image)img;
 }
@@ -8598,6 +8615,8 @@ VX_API_ENTRY vx_reference VX_API_CALL vxGetObjectArrayItem(vx_object_array arr, 
 		// convert the index from 0..-(N-1) to 0..N-1
 		if (index < data->u.objarr.numitems) {
 			item = data->children[index];
+			agoRetainData((AgoGraph *)data->ref.scope, item, true);
+			data->ref.context->num_active_references++;
 		}
 	}
 	return (vx_reference)item;

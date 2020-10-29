@@ -628,6 +628,7 @@ struct AgoNodeList {
 };
 struct AgoGraph {
 	AgoReference ref;
+	std::string name;
 	AgoGraph * next;
 	CRITICAL_SECTION cs;
 	HANDLE hThread, hSemToThread, hSemFromThread;

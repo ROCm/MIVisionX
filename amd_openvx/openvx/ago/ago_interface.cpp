@@ -96,6 +96,8 @@ int agoReleaseContext(AgoContext * acontext)
 	
 	vx_reference ref = (vx_reference)acontext;
 	ref->external_count = ref->external_count- 1;
+	if(ref->external_count >= 0)
+		acontext->num_active_references--;
 
 	if(ref->external_count == 0)
 	{
@@ -163,9 +165,10 @@ int agoReleaseGraph(AgoGraph * agraph)
 
 	int status = 0;
 	agraph->ref.external_count--;
+	if(agraph->ref.external_count >= 0)
+        agraph->ref.context->num_active_references--;
 	if (agraph->ref.external_count == 0) {
         EnterCriticalSection(&agraph->cs);
-        agraph->ref.context->num_active_references--;
         // stop graph thread
         if (agraph->hThread) {
             agraph->threadThreadTerminationState = 1;

@@ -153,7 +153,7 @@ int HipExec_Or(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDstImage, 
 // VxXor kernels for hip backend
 // ----------------------------------------------------------------------------
 __global__ void __attribute__((visibility("default")))
-Hip_Xor_U8_U8U8(
+Hip_Xor(
     vx_uint32 dstWidth, vx_uint32 dstHeight, unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -171,7 +171,7 @@ Hip_Xor_U8_U8U8(
     pDstImage[dstIdx] = int4_to_uchars(dst);
 }
 
-int HipExec_Xor_U8_U8U8(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+int HipExec_Xor(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
     const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
     )
@@ -184,7 +184,7 @@ int HipExec_Xor_U8_U8U8(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipD
     hipEventCreate(&stop);
     float eventMs = 1.0f;
     hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_Xor_U8_U8U8,
+    hipLaunchKernelGGL(Hip_Xor,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,

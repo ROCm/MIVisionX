@@ -41,10 +41,6 @@ __device__ __forceinline__ float4 s16s_to_float4_grouped(int src1, int src2)
     return make_float4((float)(src1&0xFFFF), (float)((src1&0xFFFF0000)>>16), (float)(src2&0xFFFF), (float)((src2&0xFFFF0000)>>16));
 }
 
-__device__ __forceinline__ double4 s16s_to_double4(int src1, int src2)
-{
-    return make_double4((double)(src1&0xFFFF), (double)((src1&0xFFFF0000)>>16), (double)(src2&0xFFFF), (double)((src2&0xFFFF0000)>>16));
-}
 __device__ __forceinline__ float4 s16s_to_float4_ungrouped(short int src1, short int src2, short int src3,  short int src4)
 {
     return make_float4((float)src1, (float)src2, (float)src3, (float)src4);
@@ -1178,7 +1174,7 @@ int HipExec_Mul_U8_U8U8_Sat_Round(
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_U8U8_Wrap_Trunc(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
@@ -1187,14 +1183,13 @@ Hip_Mul_S16_U8U8_Wrap_Trunc(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(src1.x*src2.x*scale, src1.y*src2.y*scale, src1.z*src2.z*scale, src1.w*src2.w*scale);
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_U8U8_Wrap_Trunc(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1216,7 +1211,7 @@ int HipExec_Mul_S16_U8U8_Wrap_Trunc(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -1229,7 +1224,7 @@ int HipExec_Mul_S16_U8U8_Wrap_Trunc(
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_U8U8_Wrap_Round(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
@@ -1238,14 +1233,13 @@ Hip_Mul_S16_U8U8_Wrap_Round(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELROUNDF32(src1.x*src2.x*scale), PIXELROUNDF32(src1.y*src2.y*scale), PIXELROUNDF32(src1.z*src2.z*scale), PIXELROUNDF32(src1.w*src2.w*scale));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_U8U8_Wrap_Round(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1267,7 +1261,7 @@ int HipExec_Mul_S16_U8U8_Wrap_Round(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -1280,7 +1274,7 @@ int HipExec_Mul_S16_U8U8_Wrap_Round(
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_U8U8_Sat_Trunc(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
@@ -1289,14 +1283,13 @@ Hip_Mul_S16_U8U8_Sat_Trunc(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x*src2.x*scale), PIXELSATURATES16(src1.y*src2.y*scale), PIXELSATURATES16(src1.z*src2.z*scale), PIXELSATURATES16(src1.w*src2.w*scale));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_U8U8_Sat_Trunc(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1318,7 +1311,7 @@ int HipExec_Mul_S16_U8U8_Sat_Trunc(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -1331,7 +1324,7 @@ int HipExec_Mul_S16_U8U8_Sat_Trunc(
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_U8U8_Sat_Round(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
@@ -1340,14 +1333,13 @@ Hip_Mul_S16_U8U8_Sat_Round(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(PIXELROUNDF32(src1.x*src2.x*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.y*src2.y*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.z*src2.z*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.w*src2.w*scale)));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_U8U8_Sat_Round(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1369,7 +1361,7 @@ int HipExec_Mul_S16_U8U8_Sat_Round(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -1379,28 +1371,25 @@ int HipExec_Mul_S16_U8U8_Sat_Round(
     return VX_SUCCESS;
 }
 
-// -----------------------------------
-
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_S16S16_Wrap_Trunc(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int *pSrcImage2, unsigned int srcImage2StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(src1.x*src2.x*scale, src1.y*src2.y*scale, src1.z*src2.z*scale, src1.w*src2.w*scale);
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_S16S16_Wrap_Trunc(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1422,8 +1411,8 @@ int HipExec_Mul_S16_S16S16_Wrap_Trunc(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
@@ -1435,23 +1424,22 @@ int HipExec_Mul_S16_S16S16_Wrap_Trunc(
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_S16S16_Wrap_Round(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int *pSrcImage2, unsigned int srcImage2StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(PIXELROUNDF32(src1.x*src2.x*scale), PIXELROUNDF32(src1.y*src2.y*scale), PIXELROUNDF32(src1.z*src2.z*scale), PIXELROUNDF32(src1.w*src2.w*scale));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_S16S16_Wrap_Round(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1473,8 +1461,8 @@ int HipExec_Mul_S16_S16S16_Wrap_Round(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
@@ -1486,23 +1474,23 @@ int HipExec_Mul_S16_S16S16_Wrap_Round(
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_S16S16_Sat_Trunc(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int *pSrcImage2, unsigned int srcImage2StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);;
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x*src2.x*scale), PIXELSATURATES16(src1.y*src2.y*scale), PIXELSATURATES16(src1.z*src2.z*scale), PIXELSATURATES16(src1.w*src2.w*scale));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
+    
 }
 int HipExec_Mul_S16_S16S16_Sat_Trunc(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1524,8 +1512,8 @@ int HipExec_Mul_S16_S16S16_Sat_Trunc(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
@@ -1537,23 +1525,22 @@ int HipExec_Mul_S16_S16S16_Sat_Trunc(
 __global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_S16S16_Sat_Round(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int *pSrcImage2, unsigned int srcImage2StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes,
     float scale
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(PIXELSATURATES16(PIXELROUNDF32(src1.x*src2.x*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.y*src2.y*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.z*src2.z*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.w*src2.w*scale)));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_S16S16_Sat_Round(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1575,8 +1562,8 @@ int HipExec_Mul_S16_S16S16_Sat_Round(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
@@ -1646,24 +1633,23 @@ int HipExec_WeightedAverage_U8_U8U8(
 __global__ void __attribute__((visibility("default")))
 Hip_Magnitude_S16_S16S16(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const int *pSrcImage2, unsigned int srcImage2StrideInBytes
+    short int *pDstImage, unsigned int  dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x*2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x*2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
     // printf("\nKernel - dstIdx, src1Idx, src2Idx = %d, %d, %d", dstIdx, src1Idx, src2Idx);
 
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
-    float4 dst = make_float4((hypotf(src1.x,src2.x)+0.5), (hypotf(src1.y,src2.y)+0.5), (hypotf(src1.z,src2.z)+0.5), (hypotf(src1.w,src2.w)+0.5));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 dst = make_float4((hypotf(src1.x,src2.x)), (hypotf(src1.y,src2.y)), (hypotf(src1.z,src2.z)), (hypotf(src1.w,src2.w)));
+    float4_to_s16s(pDstImage, dstIdx, dst);
     // printf("\n&pDstImage[dstIdx], &pDstImage[dstIdx + 1]: %p, %p", (void*)(&pDstImage[dstIdx]), (void*)(&pDstImage[dstIdx + 1]));
 }
 int HipExec_Magnitude_S16_S16S16(
@@ -1687,8 +1673,8 @@ int HipExec_Magnitude_S16_S16S16(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const int *)pHipSrcImage2, srcImage2StrideInBytes);
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
 
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -1704,20 +1690,20 @@ __global__ void __attribute__((visibility("default")))
 Hip_Phase_U8_S16S16(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const int *pSrcImage2, unsigned int srcImage2StrideInBytes
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x*2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x*2);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
     // printf("\nKernel - dstIdx, src1Idx, src2Idx = %d, %d, %d", dstIdx, src1Idx, src2Idx);
 
-    double4 src1 = s16s_to_double4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    double4 src2 = s16s_to_double4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(atan2(src1.x,src2.x), atan2(src1.y,src2.y), atan2(src1.z,src2.z), atan2(src1.w,src2.w));
     pDstImage[dstIdx] = float4_to_uchars(dst);
     // printf("\n&pDstImage[dstIdx], &pDstImage[dstIdx + 1]: %p, %p", (void*)(&pDstImage[dstIdx]), (void*)(&pDstImage[dstIdx + 1]));
@@ -1743,8 +1729,8 @@ int HipExec_Phase_U8_S16S16(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const int *)pHipSrcImage2, srcImage2StrideInBytes);
+                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
 
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);

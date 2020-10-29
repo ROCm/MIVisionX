@@ -216,7 +216,7 @@ int HipExec_Xor_U8_U8U8(vx_uint32 dstWidth, vx_uint32 dstHeight, vx_uint8 *pHipD
 // ----------------------------------------------------------------------------
 // VxNot(Bitwise NOT) kernel for hip backend
 __global__ void __attribute__((visibility("default")))
-Hip_Not_U8_U8U8
+Hip_Not
 	(
         vx_uint32     dstWidth,
         vx_uint32     dstHeight,
@@ -236,7 +236,7 @@ Hip_Not_U8_U8U8
     pDstImage[dstIdx] = int4_to_uchars(dst);
 }
 
-int HipExec_Not_U8_U8U8
+int HipExec_Not
     (
     vx_uint32     dstWidth,
     vx_uint32     dstHeight,
@@ -254,7 +254,7 @@ int HipExec_Not_U8_U8U8
     hipEventCreate(&stop);
     float eventMs = 1.0f;
     hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_Not_U8_U8U8,
+    hipLaunchKernelGGL(Hip_Not,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
@@ -263,6 +263,6 @@ int HipExec_Not_U8_U8U8
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
     
-    printf("HipExec_Not_U8_U8U8: Kernel time: %f\n", eventMs);
+    printf("HipExec_Not: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }

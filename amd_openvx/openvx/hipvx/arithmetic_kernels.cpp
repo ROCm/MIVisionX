@@ -1670,7 +1670,7 @@ int HipExec_Mul_S16_S16U8_Wrap_Round(
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
 
-    printf("HipExec_Mul_S16_S16S16_Wrap_Round: Kernel time: %f\n", eventMs);
+    printf("HipExec_Mul_S16_S16U8_Wrap_Round: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1721,7 +1721,7 @@ int HipExec_Mul_S16_S16U8_Sat_Trunc(
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
 
-    printf("HipExec_Mul_S16_S16S16_Sat_Trunc: Kernel time: %f\n", eventMs);
+    printf("HipExec_Mul_S16_S16U8_Sat_Trunc: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1772,7 +1772,7 @@ int HipExec_Mul_S16_S16U8_Sat_Round(
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
 
-    printf("HipExec_Mul_S16_S16S16_Sat_Round: Kernel time: %f\n", eventMs);
+    printf("HipExec_Mul_S16_S16U8_Sat_Round: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 // ----------------------------------------------------------------------------

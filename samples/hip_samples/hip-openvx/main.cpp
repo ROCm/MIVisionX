@@ -1052,6 +1052,19 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 67:
+				{
+					// test_case_name = "agoKernel_ChannelCopy_U8_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					// node = vxCopyNode(graph,(vx_reference) img1, (vx_reference)img_out );
+					// node = ??
+					expected_image_sum = ((vx_uint8)(pix_img1_u8)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				case 89:
 				{
 					// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
@@ -1135,7 +1148,7 @@ int main(int argc, const char ** argv)
 				}
 				// U8 input
 				else if(
-					(case_number == 45) || (case_number == 47) || (case_number == 89) || (case_number == 90)
+					(case_number == 45) || (case_number == 47) || (case_number == 89) || (case_number == 90)|| (case_number == 67)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -1915,6 +1928,16 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 67:
+				{
+					// test_case_name = "agoKernel_ChannelCopy_U8_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					// node = ??
+					expected_image_sum = ((vx_uint8)(img1)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				case 89:
 				{
 					// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
@@ -1998,7 +2021,7 @@ int main(int argc, const char ** argv)
 				}
 				// U8 input
 				else if (
-					(case_number == 45) || (case_number == 47) || (case_number == 89) || (case_number == 90)
+					(case_number == 45) || (case_number == 47) || (case_number == 89) || (case_number == 90)|| (case_number == 67)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));

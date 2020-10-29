@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(openvx_hip CXX)
 
-list(APPEND SOURCES
+set(HIPVX_SOURCES
     arithmetic_kernels.cpp
     fmtconvert_kernels.cpp
     )
@@ -33,12 +33,9 @@ else()
 endif()
 #message("HIP library name: ${hip_library_name}")
 
-set_source_files_properties(${SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
+set_source_files_properties(${HIPVX_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 set(HIP_HCC_FLAGS -std=c++14)
-hip_add_library(openvx_hip ${SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}" HCC_OPTIONS "${HIP_HCC_FLAGS}" SHARED)
+hip_add_library(openvx_hip ${HIPVX_SOURCES} HIPCC_OPTIONS "${HIP_HCC_FLAGS}" HCC_OPTIONS "${HIP_HCC_FLAGS}" SHARED)
 target_compile_definitions(openvx_hip PRIVATE __HIP_PLATFORM_HCC__)
-set_source_files_properties(${SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
-list(APPEND HIP_CXX_FLAGS "-msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -std=c++14")
-set(HIP_HCC_FLAGS ${HIP_CXX_FLAGS})
 message("Cmake CXX compiler " ${CMAKE_CXX_COMPILER})
 install(TARGETS openvx_hip DESTINATION lib)

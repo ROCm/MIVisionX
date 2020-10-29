@@ -1,10 +1,11 @@
 import rali_pybind as b
 import amd.rali.types as types
 import numpy as np
-class Pipeline(object):
-                
 
-    """Pipeline class internally calls RaliCreate which returns context which will have all 
+
+class Pipeline(object):
+
+    """Pipeline class internally calls RaliCreate which returns context which will have all
     the info set by the user.
 
     Parameters
@@ -63,7 +64,7 @@ class Pipeline(object):
     `default_cuda_stream_priority` : int, optional, default = 0
         CUDA stream priority used by RALI. See `cudaStreamCreateWithPriority` in CUDA documentation
     """
-    '''. 
+    '''.
     Args: batch_size
           rali_cpu
           gpu_id (default 0)
@@ -71,22 +72,24 @@ class Pipeline(object):
     This returns a context'''
     _handle = None
 
-    def __init__(self, batch_size = -1, num_threads = -1, device_id = -1, seed = -1,
+    def __init__(self, batch_size=-1, num_threads=-1, device_id=-1, seed=-1,
                  exec_pipelined=True, prefetch_queue_depth=2,
                  exec_async=True, bytes_per_sample=0,
-                 rali_cpu=False, max_streams=-1, default_cuda_stream_priority = 0):
+                 rali_cpu=False, max_streams=-1, default_cuda_stream_priority=0):
         if(rali_cpu):
-            #print("comes to cpu")
-            self._handle = b.raliCreate(batch_size, types.CPU, device_id, num_threads)
+            # print("comes to cpu")
+            self._handle = b.raliCreate(
+                batch_size, types.CPU, device_id, num_threads)
         else:
-            self._handle = b.raliCreate(batch_size, types.GPU, device_id, num_threads)
+            self._handle = b.raliCreate(
+                batch_size, types.GPU, device_id, num_threads)
         if(b.getStatus(self._handle) == types.OK):
             print("Pipeline has been created succesfully")
         else:
             raise Exception("Failed creating the pipeline")
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
-        self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop"]
+        self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop", "ImageDecoderRaw"]
         self._check_ops_reader = ["FileReader","TFRecordReaderClassification","TFRecordReaderDetection","COCOReader","Caffe2Reader","Caffe2ReaderDetection","CaffeReader","CaffeReaderDetection"]
         self._batch_size = batch_size
         self._num_threads = num_threads
@@ -118,6 +121,9 @@ class Pipeline(object):
             self._tensor_dtype = operator._output_dtype
             self._multiplier = list(map(lambda x: 1/x ,operator._std))
             self._offset = list(map(lambda x,y: -(x/y), operator._mean, operator._std))
+            #changing operator std and mean to (1,0) to make sure there is no double normalization
+            operator._std = [1.0]
+            operator._mean = [0.0]
             if operator._crop_h != 0 and operator._crop_w != 0:
                 self._img_w = operator._crop_w
                 self._img_h = operator._crop_h
@@ -125,10 +131,10 @@ class Pipeline(object):
             self._img_w = operator._resize_x
             self._img_h = operator._resize_y
 
-    def process_calls(self,output_image):
+    def process_calls(self, output_image):
         last_operator = output_image.prev
         temp = output_image
-        while(temp.prev is not None):    
+        while(temp.prev is not None):
             if(temp.data in (self._check_ops + self._check_crop_ops + self._check_ops_reader)):
                 self.store_values(temp)
             temp = temp.prev
@@ -143,16 +149,20 @@ class Pipeline(object):
         while(operator.next.next is not None):
             tensor = operator.next
             if(operator.data in self._check_ops_decoder):
-                tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, False)
+                tensor.data = operator.rali_c_func_call(
+                    self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, False)
             else:
-                tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, False)
+                tensor.data = operator.rali_c_func_call(
+                    self._handle, operator.prev.data, False)
             operator = operator.next.next
         tensor = last_operator.next
         if(operator.data in self._check_ops_decoder):
-            tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, True)
+            tensor.data = operator.rali_c_func_call(
+                self._handle, operator.prev.data, self._img_w, self._img_h, self._shuffle, self._shard_id, self._num_shards, True)
         else:
-            tensor.data = operator.rali_c_func_call(self._handle, operator.prev.data, True)
-        return tensor.data 
+            tensor.data = operator.rali_c_func_call(
+                self._handle, operator.prev.data, True)
+        return tensor.data
 
     def build(self):
         """Build the pipeline using raliVerify call
@@ -173,7 +183,6 @@ class Pipeline(object):
             print("Rali Run failed")
         return status
 
-    
     def define_graph(self):
         """This function is defined by the user to construct the
         graph of operations for their pipeline.
@@ -185,46 +194,59 @@ class Pipeline(object):
 
     def copyImage(self, array):
         out = np.frombuffer(array, dtype=array.dtype)
-        b.raliCopyToOutput(self._handle, np.ascontiguousarray(out, dtype=array.dtype))
-        
+        b.raliCopyToOutput(
+            self._handle, np.ascontiguousarray(out, dtype=array.dtype))
 
     def copyToTensorNHWC(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NHWC,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
     def copyToTensorNCHW(self, array,  multiplier, offset, reverse_channels, tensor_dtype):
         out = np.frombuffer(array, dtype=array.dtype)
         if tensor_dtype == types.FLOAT:
-            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+            b.raliCopyToOutputTensor32(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
         elif tensor_dtype == types.FLOAT16:
-            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW, multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
-    
+            b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
+                                       multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
+
+
+
+    def GetImageNameLen(self, array):
+        return b.getImageNameLen(self._handle, array)
+
+    def GetImageName(self, array_len):
+
+        return b.getImageName(self._handle,array_len)
+        
+    def GetBoundingBoxCount(self, array):
+        return b.getBoundingBoxCount(self._handle, array)
+
+    def GetBBLabels(self, array):
+        return b.getBBLabels(self._handle, array)
+
+    def GetBBCords(self, array):
+        return b.getBBCords(self._handle, array)
+
+
     def getImageLabels(self, array):
         b.getImageLabels(self._handle, array)
 
-    def GetBBLabels(self, array, idx):
-        return b.getBBLabels(self._handle, array, idx)
-    
-    def GetBBCords(self, array, idx):
-        return b.getBBCords(self._handle, array, idx)
-    
-    def GetImgSizes(self, array, idx):
-        return b.getImgSizes(self._handle, array, idx)
+
+    def GetImgSizes(self, array):
+        return b.getImgSizes(self._handle, array)
 
     def GetImageLabels(self, array):
         return b.getImageLabels(self._handle, array)
 
-    def GetBoundingBoxCount(self,idx):
-        return b.getBoundingBoxCount(self._handle,idx)
 
     def GetBoundingBox(self,array):
-        return array    
-
-    def GetImageName(self, array, idx):
-        return b.getImageName(self._handle, array , idx)
+        return array
 
     def GetImageNameLength(self,idx):
         return b.getImageNameLen(self._handle,idx)
@@ -236,10 +258,10 @@ class Pipeline(object):
         return b.getOutputHeight(self._handle) 
 
     def getOutputImageCount(self):
-        return b.getOutputImageCount(self._handle)   
+        return b.getOutputImageCount(self._handle)
 
     def getOutputColorFormat(self):
-        return b.getOutputColorFormat(self._handle)  
+        return b.getOutputColorFormat(self._handle)
 
     def getRemainingImages(self):
         return b.getRemainingImages(self._handle)

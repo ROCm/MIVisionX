@@ -654,17 +654,17 @@ int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 	}
 	for (size_t index = 0; index < supernode->nodeList.size(); index++) {
 		AgoNode * node = supernode->nodeList[index];
-    	int status = VX_ERROR_NOT_IMPLEMENTED;
+        int status = VX_ERROR_NOT_IMPLEMENTED;
 		if (node->akernel->func) {
 			node->hip_code = "";
 			status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
-        #if 0    
+        #if 0
 			for(vx_size dim = node->opencl_work_dim; dim < 3; dim++) {
 				node->opencl_global_work[dim] = 1;
 				node->opencl_local_work[dim] = 1;
 			}
 			node->opencl_work_dim = 3;
-        #endif            
+        #endif
 		}
 		else if (node->akernel->opencl_codegen_callback_f) {
             // TODO:: not supported in HIP yet

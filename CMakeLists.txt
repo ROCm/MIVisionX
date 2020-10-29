@@ -40,20 +40,34 @@ if(NOT WIN32)
   set(Yellow      "${Esc}[33m")
   set(Blue        "${Esc}[34m")
   set(BoldBlue    "${Esc}[1;34m")
+  set(Magenta     "${Esc}[35m")
+  set(Cyan        "${Esc}[36m")
+  set(White       "${Esc}[37m")
 endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
-if(APPLE)
-  set(CMAKE_MACOSX_RPATH 1)
-endif()
-
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
 option(RALI       "Build MIVisionX with RALI Support"         ON)
 option(LOOM       "Build MIVisionX with LOOM Support"         ON)
+
 if (NOT DEFINED BACKEND)
     SET(BACKEND "OPENCL")   # set default backend to OPENCL
     message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
+endif()
+
+option(OPENCL_SUPPORT "Build MIVisionX with OpenCL Support"   ON)
+
+message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
+message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D RALI=OFF [Turn OFF RALI Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D OpenCL=OFF [Turn OFF OpenCL Modules (default:ON)]${ColourReset}")
+
+if(APPLE)
+  set(CMAKE_MACOSX_RPATH 1)
+  set(OPENCL_SUPPORT OFF)
+  message("-- ${Magenta}Apple macOS Detected -- OpenCL Support turned OFF${ColourReset}")
 endif()
 
 add_subdirectory(amd_openvx)
@@ -63,7 +77,7 @@ add_subdirectory(utilities)
 if(RALI)
   add_subdirectory(rali)
 else()
-  message("-- ${BoldBlue}RALI Module turned OFF by user option -DRALI=OFF ${ColourReset}")
+  message("-- ${Cyan}RALI Module turned OFF by user option -D RALI=OFF ${ColourReset}")
 endif()
 
 install(DIRECTORY docs DESTINATION .)

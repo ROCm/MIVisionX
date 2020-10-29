@@ -8758,17 +8758,15 @@ int agoKernel_ChannelCopy_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 			status = VX_FAILURE;
 		}
 	}
+#if ENABLE_HIP
 	if (cmd == ago_kernel_cmd_hip_execute) {
 		status = VX_SUCCESS;
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
-#if ENABLE_HIP
 		if (HipExec_ChannelCopy(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
             status = VX_FAILURE;
-#else
-		status = VX_FAILURE;
-#endif
 	}
+#endif
 	else if (cmd == ago_kernel_cmd_validate) {
 		status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
 	}

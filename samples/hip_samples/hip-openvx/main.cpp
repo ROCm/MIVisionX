@@ -128,7 +128,7 @@ using namespace std;
 #define PIXELCHECKU1(pixel) (pixel == (vx_int32)0) ? ((vx_uint8)0) : ((vx_uint8)1)
 #define PIXELCHECKU8(pixel) (pixel < (vx_int32)0) ? ((vx_uint8)0) : ((pixel < (vx_int32)UINT8_MAX) ? (vx_uint8)pixel : ((vx_uint8)UINT8_MAX))
 #define PIXELCHECKS16(pixel) (pixel < (vx_int32)INT16_MIN) ? ((vx_int16)INT16_MIN) : ((pixel < (vx_int32)INT16_MAX) ? (vx_int16)pixel : ((vx_int16)INT16_MAX))
-#define PIXELROUNDF32(value) ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
+#define PIXELROUNDF32(value) ((value - (int)(value)) >= 0.5) ? (value + 1) : (value)
 
 static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
 {
@@ -270,6 +270,8 @@ int main(int argc, const char ** argv)
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
+	vx_float32 WeightedAverage_alpha_float = (vx_float32) (0.25);
+	vx_scalar WeightedAverage_alpha_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &WeightedAverage_alpha_float);
 
 	if (!device_affinity)
 	{
@@ -472,6 +474,30 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 					expected_image_sum = ((vx_int16) PIXELCHECKS16(pix_img1_u8 - pix_img2_s16)) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 17:
+				{
+					// test_case_name = "agoKernel_Sub_S16_S16S16_Wrap";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+					expected_image_sum = ((vx_int16)(pix_img1_s16 - pix_img2_s16)) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 18:
+				{
+					// test_case_name = "agoKernel_Sub_S16_S16S16_Sat";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+					expected_image_sum = ((vx_int32)(PIXELCHECKS16(pix_img1_s16 - pix_img2_s16))) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -879,6 +905,18 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 99:
+				{
+					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				default:
 				{
 					missing_function_flag = 1;
@@ -895,7 +933,8 @@ int main(int argc, const char ** argv)
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) ||
-					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57)
+					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57) ||
+					(case_number == 99)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -911,8 +950,9 @@ int main(int argc, const char ** argv)
 				}
 				// S16S16 inputs
 				else if (
-					(case_number == 2) || (case_number == 8) ||  (case_number == 9) || (case_number == 31) || (case_number == 32) || 
-					(case_number == 33) || (case_number == 34) || (case_number == 65) || (case_number == 66)
+					(case_number == 2) || (case_number == 8) || (case_number == 9) || (case_number == 17) || 
+					(case_number == 18) || (case_number == 31) || (case_number == 32) || (case_number == 33) || 
+					(case_number == 34) || (case_number == 65) || (case_number == 66)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
@@ -1168,6 +1208,28 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
 					expected_image_sum = ((vx_int16)(PIXELCHECKS16(pix_img1_u8 - pix_img2_s16))) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 17:
+				{
+					// test_case_name = "agoKernel_Sub_S16_S16S16_Wrap";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_WRAP, img_out);
+					expected_image_sum = (vx_int16)(pix_img1_s16 - pix_img2_s16) * width * height;
+					out_buf_type = 1;
+					break;
+				}
+				case 18:
+				{
+					// test_case_name = "agoKernel_Sub_S16_S16S16_Sat";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxSubtractNode(graph, img1, img2, VX_CONVERT_POLICY_SATURATE, img_out);
+					expected_image_sum = ((vx_int32)(PIXELCHECKS16(pix_img1_s16 - pix_img2_s16))) * width * height;
 					out_buf_type = 1;
 					break;
 				}
@@ -1543,6 +1605,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 99:
+				{
+					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				default:
 				{
 					missing_function_flag = 1;
@@ -1559,7 +1632,8 @@ int main(int argc, const char ** argv)
 					(case_number == 10) || (case_number == 11) || (case_number == 12) || (case_number == 19) || 
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) || 
-					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57)
+					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57) ||
+					(case_number == 99)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -1575,8 +1649,9 @@ int main(int argc, const char ** argv)
 				}
 				// S16S16 inputs
 				else if (
-					(case_number == 2) || (case_number == 8) || (case_number == 9)|| (case_number == 31) || (case_number == 32) || 
-					(case_number == 33) || (case_number == 34) || (case_number == 65) || (case_number == 66)
+					(case_number == 2) || (case_number == 8) || (case_number == 9) || (case_number == 17) || 
+					(case_number == 18) || (case_number == 31) || (case_number == 32) || (case_number == 33) || 
+					(case_number == 34) || (case_number == 65) || (case_number == 66)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));

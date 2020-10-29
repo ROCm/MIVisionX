@@ -115,14 +115,24 @@ int HipExec_Sub_S16_U8S16_Wrap(
         vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
-        
         );
 int HipExec_Sub_S16_U8S16_Sat(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
         vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
-        
+        );
+int HipExec_Sub_S16_S16S16_Wrap(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+        );
+int HipExec_Sub_S16_S16S16_Sat(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
         );
 int HipExec_Mul_U8_U8U8_Wrap_Trunc(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -220,6 +230,14 @@ int HipExec_Phase_U8_S16S16(
         const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
         );
+int HipExec_WeightedAverage_U8_U8U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+    vx_float32 alpha
+    );
+
 
 // logical_kernels
 

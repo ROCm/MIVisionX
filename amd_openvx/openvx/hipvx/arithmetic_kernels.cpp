@@ -27,12 +27,8 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
-static const float VAL = (float)-32768;
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
-// #define PIXELSATURATES16(pixel)     (pixel < VAL) ? VAL : ((pixel < 32767) ? pixel : 32767)
-#define PIXELSATURATES16(pixel) (pixel < (vx_int32)INT16_MIN) ? ((vx_int16)INT16_MIN) : ((pixel < (vx_int32)INT16_MAX) ? (vx_int16)pixel : ((vx_int16)INT16_MAX))
-
-// #define PIXELSATURATES16(pixel) ((vx_int16)pixel < (vx_int16)INT16_MIN) ? (vx_int16)INT16_MIN : (((vx_int16)pixel < (vx_int16)INT16_MAX) ? (vx_int16)pixel : (vx_int16)INT16_MAX)
+#define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
 __device__ __forceinline__ float4 uchars_to_float4(uint src)
@@ -40,7 +36,7 @@ __device__ __forceinline__ float4 uchars_to_float4(uint src)
     return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
 }
 
-__device__ __forceinline__ float4 s16s_to_float4(int src1, int src2)
+__device__ __forceinline__ float4 s16s_to_float4_grouped(int src1, int src2)
 {
     return make_float4((float)(src1&0xFFFF), (float)((src1&0xFFFF0000)>>16), (float)(src2&0xFFFF), (float)((src2&0xFFFF0000)>>16));
 }
@@ -48,6 +44,10 @@ __device__ __forceinline__ float4 s16s_to_float4(int src1, int src2)
 __device__ __forceinline__ double4 s16s_to_double4(int src1, int src2)
 {
     return make_double4((double)(src1&0xFFFF), (double)((src1&0xFFFF0000)>>16), (double)(src2&0xFFFF), (double)((src2&0xFFFF0000)>>16));
+}
+__device__ __forceinline__ float4 s16s_to_float4_ungrouped(short int src1, short int src2, short int src3,  short int src4)
+{
+    return make_float4((float)src1, (float)src2, (float)src3, (float)src4);
 }
 
 __device__ __forceinline__ uint float4_to_uchars(float4 src)
@@ -63,6 +63,15 @@ __device__ __forceinline__ int float4_to_s16s_lower(float4 src)
 __device__ __forceinline__ int float4_to_s16s_upper(float4 src)
 {
     return ((int)src.z&0xFFFF) | (((int)src.w&0xFFFF)<<16);
+}
+
+__device__ __forceinline__ vx_status float4_to_s16s(short int *dst_s16s, unsigned int dstIdx, float4 dst_float4)
+{
+    dst_s16s[dstIdx] = (short int) dst_float4.x;
+    dst_s16s[dstIdx + 1] = (short int) dst_float4.y;
+    dst_s16s[dstIdx + 2] = (short int) dst_float4.z;
+    dst_s16s[dstIdx + 3] = (short int) dst_float4.w;
+    return VX_SUCCESS;
 }
 
 __device__ __forceinline__ float4 generic_mod_float4(float4 src, int b)
@@ -134,26 +143,21 @@ int HipExec_AbsDiff_U8_U8U8(
 __global__ void __attribute__((visibility("default")))
 Hip_AbsDiff_S16_S16S16_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const int *pSrcImage2, unsigned int srcImage2StrideInBytes
+    short int *pDstImage, unsigned int  dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x*2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x*2);
-    // printf("\nKernel - dstIdx, src1Idx, src2Idx = %d, %d, %d", dstIdx, src1Idx, src2Idx);
-
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(PIXELSATURATES16(fabsf(src1.x-src2.x)), PIXELSATURATES16(fabsf(src1.y-src2.y)), PIXELSATURATES16(fabsf(src1.z-src2.z)), PIXELSATURATES16(fabsf(src1.w-src2.w)));
-    // float4 dst = make_float4((src1.x-src2.x), (src1.y-src2.y), (src1.z-src2.z), (src1.w-src2.w));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
-    // printf("\n&pDstImage[dstIdx], &pDstImage[dstIdx + 1]: %p, %p", (void*)(&pDstImage[dstIdx]), (void*)(&pDstImage[dstIdx + 1]));
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_AbsDiff_S16_S16S16_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -166,8 +170,6 @@ int HipExec_AbsDiff_S16_S16S16_Sat(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
-
     hipEventCreate(&start);
     hipEventCreate(&stop);
     float eventMs = 1.0f;
@@ -176,12 +178,12 @@ int HipExec_AbsDiff_S16_S16S16_Sat(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const int *)pHipSrcImage2, srcImage2StrideInBytes);
-
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
+
     printf("\nHipExec_AbsDiff_S16_S16S16_Sat: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
@@ -290,7 +292,7 @@ int HipExec_Add_U8_U8U8_Sat(
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
@@ -298,14 +300,13 @@ Hip_Add_S16_U8U8(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(src1.x+src2.x, src1.y+src2.y, src1.z+src2.z, src1.w+src2.w);
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Add_S16_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -326,7 +327,7 @@ int HipExec_Add_S16_U8U8(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -339,22 +340,21 @@ int HipExec_Add_S16_U8U8(
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_S16U8_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(src1.x+src2.x, src1.y+src2.y, src1.z+src2.z, src1.w+src2.w);
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Add_S16_S16U8_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -375,7 +375,7 @@ int HipExec_Add_S16_S16U8_Wrap(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -388,22 +388,21 @@ int HipExec_Add_S16_S16U8_Wrap(
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_S16U8_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x+src2.x), PIXELSATURATES16(src1.y+src2.y), PIXELSATURATES16(src1.z+src2.z), PIXELSATURATES16(src1.w+src2.w));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Add_S16_S16U8_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -424,7 +423,7 @@ int HipExec_Add_S16_S16U8_Sat(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -437,25 +436,21 @@ int HipExec_Add_S16_S16U8_Sat(
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_S16S16_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const int *pSrcImage2, unsigned int srcImage2StrideInBytes
+    short int *pDstImage, unsigned int  dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x*2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x*2);
-    // printf("\nKernel - dstIdx, src1Idx, src2Idx = %d, %d, %d", dstIdx, src1Idx, src2Idx);
-
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4((src1.x+src2.x), (src1.y+src2.y), (src1.z+src2.z), (src1.w+src2.w));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
-    // printf("\n&pDstImage[dstIdx], &pDstImage[dstIdx + 1]: %p, %p", (void*)(&pDstImage[dstIdx]), (void*)(&pDstImage[dstIdx + 1]));
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Add_S16_S16S16_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -468,8 +463,6 @@ int HipExec_Add_S16_S16S16_Wrap(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
-
     hipEventCreate(&start);
     hipEventCreate(&stop);
     float eventMs = 1.0f;
@@ -478,12 +471,12 @@ int HipExec_Add_S16_S16S16_Wrap(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const int *)pHipSrcImage2, srcImage2StrideInBytes);
-
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
+
     printf("\nHipExec_Add_S16_S16S16_Wrap: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
@@ -491,25 +484,21 @@ int HipExec_Add_S16_S16S16_Wrap(
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_S16S16_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const int *pSrcImage2, unsigned int srcImage2StrideInBytes
+    short int *pDstImage, unsigned int  dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x*2);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x*2);
-    // printf("\nKernel - dstIdx, src1Idx, src2Idx = %d, %d, %d", dstIdx, src1Idx, src2Idx);
-
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x+src2.x), PIXELSATURATES16(src1.y+src2.y), PIXELSATURATES16(src1.z+src2.z), PIXELSATURATES16(src1.w+src2.w));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
-    // printf("\n&pDstImage[dstIdx], &pDstImage[dstIdx + 1]: %p, %p", (void*)(&pDstImage[dstIdx]), (void*)(&pDstImage[dstIdx + 1]));
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Add_S16_S16S16_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -522,8 +511,6 @@ int HipExec_Add_S16_S16S16_Sat(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
-
     hipEventCreate(&start);
     hipEventCreate(&stop);
     float eventMs = 1.0f;
@@ -532,12 +519,12 @@ int HipExec_Add_S16_S16S16_Sat(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const int *)pHipSrcImage2, srcImage2StrideInBytes);
-
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
+
     printf("\nHipExec_Add_S16_S16S16_Sat: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
@@ -647,7 +634,7 @@ int HipExec_Sub_U8_U8U8_Sat(
 __global__ void __attribute__((visibility("default")))
 Hip_Sub_S16_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
@@ -655,14 +642,13 @@ Hip_Sub_S16_U8U8(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(src1.x-src2.x, src1.y-src2.y, src1.z-src2.z, src1.w-src2.w);
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Sub_S16_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -683,7 +669,7 @@ int HipExec_Sub_S16_U8U8(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -696,22 +682,21 @@ int HipExec_Sub_S16_U8U8(
 __global__ void __attribute__((visibility("default")))
 Hip_Sub_S16_S16U8_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(src1.x-src2.x, src1.y-src2.y, src1.z-src2.z, src1.w-src2.w);
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Sub_S16_S16U8_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -732,7 +717,7 @@ int HipExec_Sub_S16_S16U8_Wrap(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -745,22 +730,21 @@ int HipExec_Sub_S16_S16U8_Wrap(
 __global__ void __attribute__((visibility("default")))
 Hip_Sub_S16_S16U8_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
-    const int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x-src2.x), PIXELSATURATES16(src1.y-src2.y), PIXELSATURATES16(src1.z-src2.z), PIXELSATURATES16(src1.w-src2.w));
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Sub_S16_S16U8_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -781,7 +765,7 @@ int HipExec_Sub_S16_S16U8_Sat(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes, (const int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
@@ -794,22 +778,21 @@ int HipExec_Sub_S16_S16U8_Sat(
 __global__ void __attribute__((visibility("default")))
 Hip_Sub_S16_U8S16_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int *pSrcImage2, unsigned int srcImage2StrideInBytes
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(src1.x-src2.x, src1.y-src2.y, src1.z-src2.z, src1.w-src2.w);
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Sub_S16_U8S16_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -830,9 +813,9 @@ int HipExec_Sub_S16_U8S16_Wrap(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes,
                     (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (int *)pHipSrcImage2, srcImage2StrideInBytes);
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
@@ -844,24 +827,21 @@ int HipExec_Sub_S16_U8S16_Wrap(
 __global__ void __attribute__((visibility("default")))
 Hip_Sub_S16_U8S16_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    int *pDstImage, unsigned int dstImageStrideInBytes,
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int *pSrcImage2, unsigned int srcImage2StrideInBytes
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x-src2.x), PIXELSATURATES16(src1.y-src2.y), PIXELSATURATES16(src1.z-src2.z), PIXELSATURATES16(src1.w-src2.w)); //doesnt work for neg numbers
-        // (vx_int16)max(min(temp, INT16_MAX), INT16_MIN)
-
-    pDstImage[dstIdx] = float4_to_s16s_lower(dst);
-    pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
+    float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Sub_S16_U8S16_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -882,14 +862,112 @@ int HipExec_Sub_S16_U8S16_Sat(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (int *)pHipDstImage , dstImageStrideInBytes,
+                    (short int *)pHipDstImage , dstImageStrideInBytes,
                     (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (int *)pHipSrcImage2, srcImage2StrideInBytes);
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
 
     printf("HipExec_Sub_S16_U8S16_Sat: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Sub_S16_S16S16_Wrap(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 dst = make_float4(src1.x-src2.x, src1.y-src2.y, src1.z-src2.z, src1.w-src2.w);
+    float4_to_s16s(pDstImage, dstIdx, dst);
+}
+int HipExec_Sub_S16_S16S16_Wrap(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Sub_S16_S16S16_Wrap,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (short int *)pHipDstImage , dstImageStrideInBytes,
+                    (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("HipExec_Sub_S16_S16S16_Wrap: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Sub_S16_S16S16_Sat(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 dst = make_float4(PIXELSATURATES16(src1.x-src2.x), PIXELSATURATES16(src1.y-src2.y), PIXELSATURATES16(src1.z-src2.z), PIXELSATURATES16(src1.w-src2.w)); //doesnt work for neg numbers
+    float4_to_s16s(pDstImage, dstIdx, dst);
+}
+int HipExec_Sub_S16_S16S16_Sat(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Sub_S16_S16S16_Sat,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (short int *)pHipDstImage , dstImageStrideInBytes,
+                    (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("HipExec_Sub_S16_S16S16_Sat: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1318,8 +1396,8 @@ Hip_Mul_S16_S16S16_Wrap_Trunc(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
     float4 dst = make_float4(src1.x*src2.x*scale, src1.y*src2.y*scale, src1.z*src2.z*scale, src1.w*src2.w*scale);
     pDstImage[dstIdx] = float4_to_s16s_lower(dst);
     pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
@@ -1369,8 +1447,8 @@ Hip_Mul_S16_S16S16_Wrap_Round(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
     float4 dst = make_float4(PIXELROUNDF32(src1.x*src2.x*scale), PIXELROUNDF32(src1.y*src2.y*scale), PIXELROUNDF32(src1.z*src2.z*scale), PIXELROUNDF32(src1.w*src2.w*scale));
     pDstImage[dstIdx] = float4_to_s16s_lower(dst);
     pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
@@ -1420,8 +1498,8 @@ Hip_Mul_S16_S16S16_Sat_Trunc(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x*src2.x*scale), PIXELSATURATES16(src1.y*src2.y*scale), PIXELSATURATES16(src1.z*src2.z*scale), PIXELSATURATES16(src1.w*src2.w*scale));
     pDstImage[dstIdx] = float4_to_s16s_lower(dst);
     pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
@@ -1471,8 +1549,8 @@ Hip_Mul_S16_S16S16_Sat_Round(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x * 2);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + (x * 2);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + (x * 2);
-    float4 src1 = s16s_to_float4(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
-    float4 src2 = s16s_to_float4(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
+    float4 src1 = s16s_to_float4_grouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1]);
+    float4 src2 = s16s_to_float4_grouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1]);
     float4 dst = make_float4(PIXELSATURATES16(PIXELROUNDF32(src1.x*src2.x*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.y*src2.y*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.z*src2.z*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.w*src2.w*scale)));
     pDstImage[dstIdx] = float4_to_s16s_lower(dst);
     pDstImage[dstIdx + 1] = float4_to_s16s_upper(dst);
@@ -1504,6 +1582,61 @@ int HipExec_Mul_S16_S16S16_Sat_Round(
     hipEventElapsedTime(&eventMs, start, stop);
 
     printf("HipExec_Mul_S16_S16S16_Sat_Round: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+// ----------------------------------------------------------------------------
+// VxWeightedAverage kernels for hip backend
+// ----------------------------------------------------------------------------
+
+__global__ void __attribute__((visibility("default")))
+Hip_WeightedAverage_U8_U8U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes,
+    float alpha, float invAlpha
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
+    float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
+    float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
+    float4 dst = make_float4(src1.x*invAlpha+src2.x*alpha, src1.y*invAlpha+src2.y*alpha, src1.z*invAlpha+src2.z*alpha, src1.w*invAlpha+src2.w*alpha);
+    pDstImage[dstIdx] = float4_to_uchars(dst);
+}
+int HipExec_WeightedAverage_U8_U8U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+    vx_float32 alpha
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    vx_float32 invAlpha = (vx_float32)1 - alpha;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_WeightedAverage_U8_U8U8,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes, alpha, invAlpha);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("\nHipExec_WeightedAverage_U8_U8U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

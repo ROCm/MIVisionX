@@ -61,6 +61,9 @@ script:
   - cmake --build .
   - LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance
   - cd ../
+  - cd vision_tests
+  - python runVisionTests.py --runvx_directory ../build-openvx/bin/
+  - cd ../
 
 after_success:
   - lcov --directory . --capture --output-file coverage.info

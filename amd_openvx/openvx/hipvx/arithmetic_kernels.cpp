@@ -31,6 +31,13 @@ THE SOFTWARE.
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
+#define atan2_p0        (0.273*0.3183098862f)
+#define atan2_p1		(0.9997878412794807f*57.29577951308232f)
+#define atan2_p3		(-0.3258083974640975f*57.29577951308232f)
+#define atan2_p5		(0.1555786518463281f*57.29577951308232f)
+#define atan2_p7		(-0.04432655554792128f*57.29577951308232f)
+#define DBL_EPSILON __DBL_EPSILON__
+
 __device__ __forceinline__ float4 uchars_to_float4(uint src)
 {
     return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
@@ -51,15 +58,15 @@ __device__ __forceinline__ uint float4_to_uchars(float4 src)
     return ((uint)src.x&0xFF) | (((uint)src.y&0xFF)<<8) | (((uint)src.z&0xFF)<<16)| (((uint)src.w&0xFF) << 24);
 }
 
-__device__ __forceinline__ int float4_to_s16s_lower(float4 src)
-{
-    return ((int)src.x&0xFFFF) | (((int)src.y&0xFFFF)<<16);
-}
+// __device__ __forceinline__ int float4_to_s16s_lower(float4 src)
+// {
+//     return ((int)src.x&0xFFFF) | (((int)src.y&0xFFFF)<<16);
+// }
 
-__device__ __forceinline__ int float4_to_s16s_upper(float4 src)
-{
-    return ((int)src.z&0xFFFF) | (((int)src.w&0xFFFF)<<16);
-}
+// __device__ __forceinline__ int float4_to_s16s_upper(float4 src)
+// {
+//     return ((int)src.z&0xFFFF) | (((int)src.w&0xFFFF)<<16);
+// }
 
 __device__ __forceinline__ vx_status float4_to_s16s(short int *dst_s16s, unsigned int dstIdx, float4 dst_float4)
 {
@@ -79,6 +86,33 @@ __device__ __forceinline__ float4 generic_mod_float4(float4 src, int b)
 	return src;
 }
 
+__device__ float Norm_Atan2_deg (float Gx, float Gy)
+{
+    float scale = (float)128 / 180.f;
+	vx_uint16 ax, ay;
+	ax = fabsf(Gx), ay = fabsf(Gy);
+	float a, c, c2;
+	if (ax >= ay)
+	{
+		c = (float)ay / ((float)ax + (float)DBL_EPSILON);
+		c2 = c*c;
+		a = (((atan2_p7*c2 + atan2_p5)*c2 + atan2_p3)*c2 + atan2_p1)*c;
+	}
+	else
+	{
+		c = (float)ax / ((float)ay + (float)DBL_EPSILON);
+		c2 = c*c;
+		a = 90.f - (((atan2_p7*c2 + atan2_p5)*c2 + atan2_p3)*c2 + atan2_p1)*c;
+	}
+	if (Gx < 0)
+		a = 180.f - a;
+	if (Gy < 0)
+		a = 360.f - a;
+
+    // normalize and copy to dst
+    float arct_norm = (a*scale + 0.5);
+	return arct_norm;
+}
 // ----------------------------------------------------------------------------
 // VxAbsDiff kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -1372,6 +1406,56 @@ int HipExec_Mul_S16_U8U8_Sat_Round(
 }
 
 __global__ void __attribute__((visibility("default")))
+Hip_Mul_S16_S16U8_Wrap_Trunc(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes,
+    float scale
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
+    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
+    float4 dst = make_float4(src1.x*src2.x*scale, src1.y*src2.y*scale, src1.z*src2.z*scale, src1.w*src2.w*scale);
+    float4_to_s16s(pDstImage, dstIdx, dst);
+}
+int HipExec_Mul_S16_S16U8_Wrap_Trunc(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+        vx_float32 scale
+        )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Mul_S16_S16U8_Wrap_Trunc,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes, scale);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("HipExec_Mul_S16_S16U8_Wrap_Trunc: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
 Hip_Mul_S16_S16S16_Wrap_Trunc(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     short int *pDstImage, unsigned int dstImageStrideInBytes,
@@ -1704,7 +1788,7 @@ Hip_Phase_U8_S16S16(
 
     float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
-    float4 dst = make_float4(atan2(src1.x,src2.x), atan2(src1.y,src2.y), atan2(src1.z,src2.z), atan2(src1.w,src2.w));
+    float4 dst = make_float4(Norm_Atan2_deg(src1.x,src2.x), Norm_Atan2_deg(src1.y,src2.y), Norm_Atan2_deg(src1.z,src2.z), Norm_Atan2_deg(src1.w,src2.w));
     pDstImage[dstIdx] = float4_to_uchars(dst);
     // printf("\n&pDstImage[dstIdx], &pDstImage[dstIdx + 1]: %p, %p", (void*)(&pDstImage[dstIdx]), (void*)(&pDstImage[dstIdx + 1]));
 }

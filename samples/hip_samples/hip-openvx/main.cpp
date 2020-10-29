@@ -130,6 +130,13 @@ using namespace std;
 #define PIXELCHECKS16(pixel) (pixel < (vx_int32)INT16_MIN) ? ((vx_int16)INT16_MIN) : ((pixel < (vx_int32)INT16_MAX) ? (vx_int16)pixel : ((vx_int16)INT16_MAX))
 #define PIXELROUNDF32(value) ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
+#define DBL_EPSILON      __DBL_EPSILON__
+#define atan2_p0        (0.273*0.3183098862f)
+#define atan2_p1		(0.9997878412794807f*57.29577951308232f)
+#define atan2_p3		(-0.3258083974640975f*57.29577951308232f)
+#define atan2_p5		(0.1555786518463281f*57.29577951308232f)
+#define atan2_p7		(-0.04432655554792128f*57.29577951308232f)
+
 static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
 {
 	size_t len = strlen(string);
@@ -145,6 +152,33 @@ int generic_mod(int a, int b)
 {
 	int val = a % b < 0 ? a % b + b : a % b;
 	return val;
+}
+
+vx_uint8 Norm_Atan2_deg(vx_int16 Gx, vx_int16 Gy)
+{
+	float scale = (float)128 / 180.f;
+	vx_uint16 ax, ay;
+	ax = std::abs(Gx), ay = std::abs(Gy);
+	float a, c, c2;
+	if (ax >= ay)
+	{
+		c = (float)ay / ((float)ax + (float)DBL_EPSILON);
+		c2 = c*c;
+		a = (((atan2_p7*c2 + atan2_p5)*c2 + atan2_p3)*c2 + atan2_p1)*c;
+	}
+	else
+	{
+		c = (float)ax / ((float)ay + (float)DBL_EPSILON);
+		c2 = c*c;
+		a = 90.f - (((atan2_p7*c2 + atan2_p5)*c2 + atan2_p3)*c2 + atan2_p1)*c;
+	}
+	if (Gx < 0)
+		a = 180.f - a;
+	if (Gy < 0)
+		a = 360.f - a;
+	// normalize and copy to dst
+	vx_uint8 norm_arct = (vx_uint8)((vx_uint32)(a*scale + 0.5) & 0xFF);
+	return norm_arct;
 }
 
 template <typename T>
@@ -597,6 +631,18 @@ int main(int argc, const char ** argv)
 					out_buf_type = 1;
 					break;
 				}
+				case 27:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Wrap_Trunc";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_u8)) * Mul_scale_float)) * width * height;
+					out_buf_type = 1;
+					break;
+				}
 				case 31:
 				{
 					// test_case_name = "agoKernel_Mul_S16_S16S16_Wrap_Trunc";
@@ -967,13 +1013,14 @@ int main(int argc, const char ** argv)
 				}
 				case 64:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U1U1";
+					// test_case_name = "agoKernel_Xor_U1_U1U1";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+				}
 				case 65:
 				{
 					// test_case_name = "agoKernel_Magnitude_S16_S16S16";
@@ -995,7 +1042,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxPhaseNode(graph, img1, img2, img_out); 
-					expected_image_sum = ((vx_uint8)(atan2(((double)pix_img1_s16) , ((double)pix_img2_s16)))) * width * height;
+					expected_image_sum = Norm_Atan2_deg(pix_img1_s16, pix_img2_s16) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1056,7 +1103,7 @@ int main(int argc, const char ** argv)
 				}
 				// S16U8 inputs
 				else if (
-					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)
+					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14) || (case_number == 27)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
@@ -1444,6 +1491,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 1;
 					break;
 				}
+				case 27:
+				{
+					// test_case_name = "agoKernel_Mul_S16_S16U8_Wrap_Trunc";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_WRAP, VX_ROUND_POLICY_TO_ZERO, img_out);
+					expected_image_sum = ((vx_int32)(((vx_float32)(pix_img1_s16 * pix_img2_u8)) * Mul_scale_float)) * width * height;
+					out_buf_type = 1;
+					break;
+				}
 				case 31:
 				{
 					// test_case_name = "agoKernel_Mul_S16_S16S16_Wrap_Trunc";
@@ -1783,12 +1841,13 @@ int main(int argc, const char ** argv)
 				}
 				case 64:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U1U1";
+					// test_case_name = "agoKernel_Xor_U1_U1U1";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+				}
 				case 65:
 				{
 					// test_case_name = "agoKernel_Magnitude_S16_S16S16";
@@ -1808,7 +1867,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxPhaseNode(graph, img1, img2, img_out);
-					expected_image_sum = ((vx_uint8)(atan2(((double)pix_img1_s16) , ((double)pix_img2_s16)))) * width * height;
+					expected_image_sum = Norm_Atan2_deg(pix_img1_s16, pix_img2_s16) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1868,7 +1927,7 @@ int main(int argc, const char ** argv)
 				}
 				// S16U8 inputs
 				else if (
-					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14)
+					(case_number == 6) || (case_number == 7) || (case_number == 13) || (case_number == 14) || (case_number == 27)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));
@@ -2011,4 +2070,4 @@ int main(int argc, const char ** argv)
 	vxReleaseContext(&context);
 
 	return return_value;
-}
+} 

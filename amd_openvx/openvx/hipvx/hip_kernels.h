@@ -343,7 +343,15 @@ int HipExec_ThresholdNot_U1_U8_Range(
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         vx_int32 thresholdLower, vx_int32 thresholdUpper
         );
+
 // color_kernels
+
+int HipExec_Lut_U8_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    vx_uint8 *lut
+    );
 
 // filter_kernels
 
@@ -352,6 +360,7 @@ int HipExec_ThresholdNot_U1_U8_Range(
 // vision_kernels
 
 // miscellaneous_kernels
+
 int HipExec_ChannelCopy_U8_U8(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

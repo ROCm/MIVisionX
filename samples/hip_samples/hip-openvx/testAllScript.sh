@@ -70,7 +70,7 @@ printf "\n\n\n\n"
 echo "--------------------------------"
 printf "Running case $case...\n"
 echo "--------------------------------"
-printf "\n./hipvx_sample $case $width $height 0\n"
+printf "\n./hipvx_sample $case $width $height 1\n"
 ./hipvx_sample $case $width $height 1
 out=$?
 if [[ "$out" -eq 255 ]]

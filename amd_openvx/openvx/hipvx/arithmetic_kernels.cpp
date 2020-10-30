@@ -1727,7 +1727,7 @@ Hip_Mul_S16_S16U8_Sat_Trunc(
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(PIXELSATURATEU8(src1.x*src2.x*scale), PIXELSATURATEU8(src1.y*src2.y*scale), PIXELSATURATEU8(src1.z*src2.z*scale), PIXELSATURATEU8(src1.w*src2.w*scale));
+    float4 dst = make_float4(PIXELSATURATES16(src1.x*src2.x*scale), PIXELSATURATES16(src1.y*src2.y*scale), PIXELSATURATES16(src1.z*src2.z*scale), PIXELSATURATES16(src1.w*src2.w*scale));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_S16U8_Sat_Trunc(
@@ -1778,7 +1778,7 @@ Hip_Mul_S16_S16U8_Sat_Round(
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(PIXELSATURATEU8(PIXELROUNDF32(src1.x*src2.x*scale)), PIXELSATURATEU8(PIXELROUNDF32(src1.y*src2.y*scale)), PIXELSATURATEU8(PIXELROUNDF32(src1.z*src2.z*scale)), PIXELSATURATEU8(PIXELROUNDF32(src1.w*src2.w*scale)));
+    float4 dst = make_float4(PIXELSATURATES16(PIXELROUNDF32(src1.x*src2.x*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.y*src2.y*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.z*src2.z*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.w*src2.w*scale)));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Mul_S16_S16U8_Sat_Round(

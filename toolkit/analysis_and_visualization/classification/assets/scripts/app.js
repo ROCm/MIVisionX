@@ -1,5 +1,5 @@
 /* eslint-disable eqeqeq */
-/*global data, labelSummary, imageSummary, $, modelHistories*/
+/*global data, labelSummary, imageSummary, $, modelHistories, hierarchyData*/
 
 // eslint-disable-next-line no-unused-vars
 function openNav() {
@@ -41,6 +41,30 @@ function showStatsOnTable() {
             this.innerHTML = data.stats[property].toFixed(round);
 
     });
+
+    $("#modelNameText").html(data.stats.modelName + " Overall Summary");
+}
+
+function loadHierarchySummary() {
+    var myTableBody = $("#hierarchy-summary-table").find("tbody");
+    myTableBody.empty();
+    var f = 0.99;
+    var topKPassFail = hierarchyData.topKPassFail;
+    var topKHierarchyPassFail = hierarchyData.topKHierarchyPassFail;
+
+    for (var i = 99; i >= 0; i--) {
+
+        var row = $("<tr>");
+        row.append($("<td>").attr("class", "blue").text(f.toFixed(2)));
+        row.append($("<td>").attr("class", "blue").text(topKPassFail[i][0]));
+        row.append($("<td>").attr("class", "blue").text(topKPassFail[i][1]));
+
+        for (var j = 0; j < 12; j++) {
+            row.append($("<td>").attr("class", "blue").text(topKHierarchyPassFail[i][j]));
+        }
+        myTableBody.append(row);
+        f = f - 0.01;
+    }
 }
 
 
@@ -53,8 +77,6 @@ function loadLabelSummary(labelSummaryLocal) {
         var totalImageClass = label.totalImages > 0 ? "color-green" : "";
 
         var misclassifiedClass = label.misclassifiedTop1 === 0 ? "color-green" : (label.totalImages > 0 ? "color-red" : "color-black");
-
-
         row.append($("<td>").attr({
             "class": "blue filter-image",
             "data-id": label.id
@@ -522,6 +544,10 @@ document.addEventListener("DOMContentLoaded", function () {
     addToOldDataList();
 
 
+    if (data.hasHierarchy) {
+        $(".has-hierarchy").toggleClass("hidden");
+        loadHierarchySummary();
+    }
 
     $(".filter-image").on("click", function (event) {
         var element = event.target;

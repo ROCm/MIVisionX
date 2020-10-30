@@ -184,7 +184,7 @@ def generateTop1Result(resultsDirectory, resultDataBase, labelLines):
     logger.debug("Written file %s", outputCsvFile)
 
 
-def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, imageDir):
+def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, imageDir, modelName):
 
     # 0 to 4 are top1 to top5 data
     topk = 5
@@ -231,8 +231,18 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
                 gtLabelText = 'Unknown'
                 totalNoGroundTruth += 1
 
-            writer.writerow([img[0], *labels, gt, match,
-                             *labelTexts, gtLabelText, *probs])
+            wr = [img]
+            wr.extend(labels)
+            wr.extend([gt, match])
+            wr.extend(labelTexts)
+            wr.append(gtLabelText)
+            wr.extend(probs)
+
+            # Follwoing syntax can be used in python > 3.5
+            # writer.writerow([img[0], *labels, gt, match,
+            #                  *labelTexts, gtLabelText, *probs])
+
+            writer.writerow(wr)
 
             imgRes = {}
 
@@ -256,18 +266,24 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
         imageSummaryJson.write('var imageSummary = ' +
                                json.dumps(allImageResults))
     logger.debug("Comprehenive csv generation completed")
-
     logger.debug("Label summary generation started")
     labelSummaryComplete = []
 
     with open(os.path.join(resultsDirectory, 'labelSummary.csv'), 'w') as labelSummaryCsv:
         writer = csv.writer(labelSummaryCsv)
         for i, label in enumerate(labelLines):
-            writer.writerow([i, *labelSummary[i], label])
+
+            wr = [i]
+            wr.extend(labelSummary[i])
+            wr.append(label)
+            writer.writerow(wr)
+
+            # writer.writerow([i, *labelSummary[i], label])
 
             if sum(labelSummary[i]) > 0:
                 labelDict = {}
                 labelDict['id'] = int(i)
+                labelDict['modelName'] = modelName
                 labelDict['label'] = label
                 labelDict['totalImages'] = int(labelSummary[i][0])
                 labelDict['match1'] = int(labelSummary[i][1])
@@ -362,6 +378,17 @@ def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores,
                                  'chartData': chartDataDict})
 
         jsScript = "var data = " + jsonString + ';'
+        resJson.write(jsScript)
+
+
+def writeHierarchyJson(resultsDirectory, topKPassFail, topKHierarchyPassFail):
+    with open(os.path.join(resultsDirectory, 'hierarchySummary.js'), 'w') as resJson:
+        result = {}
+        if(topKPassFail is not None and topKHierarchyPassFail is not None):
+            result['topKPassFail'] = topKPassFail.tolist()
+            result['topKHierarchyPassFail'] = topKHierarchyPassFail.tolist()
+
+        jsScript = "var hierarchyData = " + json.dumps(result) + ';'
         resJson.write(jsScript)
 
 
@@ -800,7 +827,11 @@ def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hie
         for j in range(topk):
             modelScoreDataFromIndices = [top5ModelScore[i][k]
                                          for k in modelChartDataIndices[j]]
-            modelScoreChartData[j].append([fVal, *modelScoreDataFromIndices])
+
+            modelScoreChartData[j].append(
+                [fVal].extend(modelScoreDataFromIndices))
+
+            # modelScoreChartData[j].append([fVal, *modelScoreDataFromIndices])
 
         # DIfferent methods now - Standard, method1, method2, method3
 
@@ -808,7 +839,10 @@ def createHirerchySummaryScore(stats, topCounts, resultDataBase, labelLines, hie
             scoreMethodFromIndices = [top5ModelScore[i][k]
                                       for k in scoreMethodChartIndices[j]]
 
-            scoreMethodChartData[j].append([fVal, *scoreMethodFromIndices])
+            scoreMethodChartData[j].append(
+                [fVal].extend(scoreMethodFromIndices))
+
+            # scoreMethodChartData[j].append([fVal, *scoreMethodFromIndices])
 
         fVal = round(fVal-0.01, 2)
         i = i - 1
@@ -879,7 +913,8 @@ def main():
                         help='output ADAT file name                     [required]')
     args = parser.parse_args()
 
-    modelName = args.model_name or 'Generic Model'
+    modelName = args.model_name if args.model_name else 'Generic Model'
+
     inputCSVFile = args.inference_results
     inputImageDirectory = args.image_dir
     labelFile = args.label
@@ -917,7 +952,8 @@ def main():
     generateTop1Result(resultsDirectory, resultDataBase, labelLines)
 
     stats, topCounts, topKStats = generateComprehensiveResults(
-        resultsDirectory, resultDataBase, labelLines, imageDir)
+        resultsDirectory, resultDataBase, labelLines, imageDir, modelName)
+
     generateCompareResultSummary(toolkit_dir, modelName, 'images', stats)
 
     methodScores = None
@@ -942,11 +978,19 @@ def main():
         chartData = getSuccessFailureChartData(
             stats, topKPassFail, topKHierarchyPassFail)
 
+
+             # Write hierarchy json, if no hierarchy creates an empty file
+        writeHierarchyJson(resultsDirectory, topKPassFail, topKHierarchyPassFail)
+    else:
+         writeHierarchyJson(resultsDirectory, None, None)
+
     modelScores, matchCounts = createScoreSummary(stats, topCounts)
 
     # Write to result json
     writeResultsJson(resultsDirectory, stats, topCounts, topKStats,
-                     modelScores, matchCounts, methodScores, chartData)
+                     modelScores, matchCounts, methodScores, chartData, )
+
+   
 
     logger.debug("HTML generation complete")
 

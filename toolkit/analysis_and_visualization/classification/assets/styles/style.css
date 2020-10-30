@@ -15,7 +15,7 @@ p {
   display: none;
 }
 
-a.comment-indicator:hover + .comment {
+a.comment-indicator:hover+.comment {
   background: #ffd;
   position: absolute;
   display: block;
@@ -380,7 +380,7 @@ select {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .pass-fail-chart {
@@ -407,4 +407,13 @@ select {
 .col-70 {
   width: 70%;
   float: left;
+}
+
+#hierarchy-summary-table {
+  width: 80%;
+}
+
+#hierarchy-summary-table tbody {
+  font-size: small;
+  font-weight: bold;
 }

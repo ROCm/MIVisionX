@@ -13,17 +13,10 @@
         integrity="sha512-9Dh726RTZVE1k5R1RNEzk1ex4AoRjxNMFKtZdcWaG2KUgjEmFYN3n17YLUrbHm47CRQB1mvVBHDFXrcnx/deDA=="
         crossorigin="anonymous"></script>
 
-    <!-- <script src="../scripts/results_1.js"></script>
-    <script src="../scripts/labelSummary.js"></script>
-    <script src="../scripts/imageSummary.js"></script>
-    <script src="../scripts/app.js"></script>
-    <script src="../utils/sorttable.js"></script>
-    <script src="../scripts/resultHistory.js"></script> -->
-
-
     <script src="results/results_1.js"></script>
     <script src="results/labelSummary.js"></script>
     <script src="results/imageSummary.js"></script>
+    <script src="results/hierarchySummary.js"></script>
 
     <script src="scripts/app.js"></script>
     <script src="utils/sorttable.js"></script>
@@ -51,6 +44,9 @@
         <a class="nav-item" href="#table1">
             Graphs
         </a><br>
+        <a class="nav-item hidden has-hierarchy" href="#table2">
+            Hierarchy
+        </a><br class="hidden has-hierarchy">
         <a class="nav-item" href="#table3">
             Labels
         </a><br>
@@ -90,7 +86,7 @@
     <!-- Overall Summary -->
     <a id="table0">
         <h1 class="header">
-            <br><br><em>Generic Model Overall Summary</em>
+            <br><br><em id="modelNameText">Generic Model Overall Summary</em>
         </h1>
     </a>
 
@@ -208,7 +204,7 @@
         </h1>
     </a>
 
-    <div style="text-align:center">
+    <div style="text-align: center;">
         <div id="Model_Stats" class="center" style="border: 1px solid #ccc; display: inline-block;"></div>
     </div>
 
@@ -233,6 +229,38 @@
         </div>
     </div>
 
+
+    <div class="hierarchy-summary-div has-hierarchy hidden">
+        <a id="table2">
+            <h1 class="header">
+                <br><br><em>Hierarchy Summary (by Confidence level)</em>
+            </h1>
+        </a>
+
+        <table class="center marron-header" id="hierarchy-summary-table">
+            <thead>
+                <th>Confidence</th>
+                <th>Pass</th>
+                <th>Fail</th>
+                <th>Category 1 Pass</th>
+                <th>Category 1 Fail</th>
+                <th>Category 2 Pass</th>
+                <th>Category 2 Fail</th>
+                <th>Category 3 Pass</th>
+                <th>Category 3 Fail</th>
+                <th>Category 4 Pass</th>
+                <th>Category 4 Fail</th>
+                <th>Category 5 Pass</th>
+                <th>Category 5 Fail</th>
+                <th>Category 6 Pass</th>
+                <th>Category 6 Fail</th>
+            </thead>
+
+            <tbody>
+                <tr></tr>
+            </tbody>
+        </table>
+    </div>
 
 
     <!-- Label SUmmary Filter -->
@@ -291,7 +319,7 @@
                 <th>Label ID</th>
                 <th>Label Description</th>
                 <th>Images in Database</th>
-                <th>mAtched Top1%</th>
+                <th>Matched Top1%</th>
                 <th>Matched Top5%</th>
                 <th>Matched 1st</th>
                 <th>Matched 2nd</th>
@@ -317,6 +345,7 @@
             </em>
         </h1>
     </a>
+
 
 
     <!-- Image Results FIlter -->

@@ -2808,7 +2808,7 @@ int agoKernel_Not_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HipExec_Not(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+        if (HipExec_Not_U8_U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
 			status = VX_FAILURE;
         }
 	}
@@ -2873,7 +2873,7 @@ int agoKernel_Not_U8_U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HipExec_Not(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+        if (HipExec_Not_U8_U1(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
 			status = VX_FAILURE;
         }
 	}
@@ -2938,7 +2938,7 @@ int agoKernel_Not_U1_U8(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HipExec_Not(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+        if (HipExec_Not_U1_U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
 			status = VX_FAILURE;
         }
 	}
@@ -3001,7 +3001,7 @@ int agoKernel_Not_U1_U1(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        if (HipExec_Not(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+        if (HipExec_Not_U1_U1(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
 			status = VX_FAILURE;
         }
 	}

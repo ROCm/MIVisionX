@@ -6,8 +6,8 @@ cd build
 cmake ..
 make
 
-width=5
-height=5
+width=16
+height=16
 
 
 

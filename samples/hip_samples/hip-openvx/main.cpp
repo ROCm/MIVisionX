@@ -248,7 +248,7 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 	printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 	printImage(ptr, stride_x_pixels, stride_y_pixels, width, height);
 	printf("Input Buffer: ");
-	printBuffer(ptr, width*height);
+	printBuffer(ptr, width, height);
 #endif
 	vxReleaseImage(&img);
 	return VX_SUCCESS;
@@ -1008,7 +1008,7 @@ int main(int argc, const char ** argv)
 				}
 				case 58:
 				{
-					// test_case_name = "agoKernel_XOr_U8_U8U1";
+					// test_case_name = "agoKernel_Xor_U8_U8U1";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -1020,7 +1020,7 @@ int main(int argc, const char ** argv)
 				}
 				case 59:
 				{
-					// test_case_name = "agoKernel_XOr_U8_U1U8";
+					// test_case_name = "agoKernel_Xor_U8_U1U8";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -1032,7 +1032,7 @@ int main(int argc, const char ** argv)
 				}
 				case 60:
 				{
-					// test_case_name = "agoKernel_XOr_U8_U1U1";
+					// test_case_name = "agoKernel_Xor_U8_U1U1";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -1044,7 +1044,7 @@ int main(int argc, const char ** argv)
 				}
 				case 61:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U8U8";
+					// test_case_name = "agoKernel_Xor_U1_U8U8";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -1056,7 +1056,7 @@ int main(int argc, const char ** argv)
 				}
 				case 62:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U8U1";
+					// test_case_name = "agoKernel_Xor_U1_U8U1";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -1068,7 +1068,7 @@ int main(int argc, const char ** argv)
 				}
 				case 63:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U1U8";
+					// test_case_name = "agoKernel_Xor_U1_U1U8";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -1087,6 +1087,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 65:
@@ -1965,7 +1966,7 @@ int main(int argc, const char ** argv)
 				}
 				case 58:
 				{
-					// test_case_name = "agoKernel_XOr_U8_U8U1";
+					// test_case_name = "agoKernel_Xor_U8_U8U1";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
@@ -1976,7 +1977,7 @@ int main(int argc, const char ** argv)
 				}
 				case 59:
 				{
-					// test_case_name = "agoKernel_XOr_U8_U1U8";
+					// test_case_name = "agoKernel_Xor_U8_U1U8";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
@@ -1987,7 +1988,7 @@ int main(int argc, const char ** argv)
 				}
 				case 60:
 				{
-					// test_case_name = "agoKernel_XOr_U8_U1U1";
+					// test_case_name = "agoKernel_Xor_U8_U1U1";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
@@ -1998,7 +1999,7 @@ int main(int argc, const char ** argv)
 				}
 				case 61:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U8U8";
+					// test_case_name = "agoKernel_Xor_U1_U8U8";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
@@ -2009,7 +2010,7 @@ int main(int argc, const char ** argv)
 				}
 				case 62:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U8U1";
+					// test_case_name = "agoKernel_Xor_U1_U8U1";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
@@ -2020,7 +2021,7 @@ int main(int argc, const char ** argv)
 				}
 				case 63:
 				{
-					// test_case_name = "agoKernel_XOr_U1_U1U8";
+					// test_case_name = "agoKernel_Xor_U1_U1U8";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
@@ -2037,6 +2038,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxXorNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 ^ pix_img2_u1) * width * height;
+					out_buf_type = 0;
 					break;
 				}
 				case 65:
@@ -2296,7 +2298,8 @@ int main(int argc, const char ** argv)
 		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, width, height);
 		printf("Output Buffer: ");
-		printBufferBits(out_buf_uint8, width*height);
+		printBuffer(out_buf_uint8, width, height);
+		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
 #endif
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
@@ -2334,7 +2337,7 @@ int main(int argc, const char ** argv)
 		return_value = 1;
 	}
 
-	ERROR_CHECK_STATUS(vxUnmapImagePatch( img_out, out_map_id));
+	ERROR_CHECK_STATUS(vxUnmapImagePatch(img_out, out_map_id));
 
 	// free resources
 
@@ -2342,6 +2345,7 @@ int main(int argc, const char ** argv)
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
 	vxReleaseThreshold(&Threshold_thresholdObjectBinary_threshold);
 	vxReleaseThreshold(&Threshold_thresholdObjectRange_threshold);
+	vxReleaseLUT(&Lut_lutObject_lut)
 	if (ptr[0]) hipFree(ptr[0]);
 	if (ptr[1]) hipFree(ptr[1]);
 	if (ptr[2]) hipFree(ptr[2]);

@@ -204,6 +204,28 @@ vx_status printBuffer(T *buffer, vx_uint32 width, vx_uint32 height)
 }
 
 template <typename T>
+vx_status printBufferBits(T *buffer, vx_uint32 bufferLength)
+{
+    T *bufferTemp;
+	bufferTemp = buffer;
+	unsigned int size = sizeof(T);
+    unsigned int maxPow = 1<<(size*8-1);
+	for (int i = 0; i < bufferLength; i++)
+	{
+		T packedVal = *bufferTemp;
+		for (int j = 0; j < size * 8; ++j)
+		{
+			// print last bit and shift left.
+			printf("%u ",packedVal&maxPow ? 1 : 0);
+			packedVal = packedVal<<1;
+		}
+		bufferTemp++;
+	}
+	printf("\n");
+	return VX_SUCCESS;
+}
+
+template <typename T>
 vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, vx_enum mem_type, T pix_val)
 {
 	ERROR_CHECK_OBJECT((vx_reference)img);
@@ -226,7 +248,7 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 	printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 	printImage(ptr, stride_x_pixels, stride_y_pixels, width, height);
 	printf("Input Buffer: ");
-	printBuffer(ptr, width, height);
+	printBuffer(ptr, width*height);
 #endif
 	vxReleaseImage(&img);
 	return VX_SUCCESS;
@@ -296,6 +318,7 @@ int main(int argc, const char ** argv)
 	// arguments for specific functionalities
 	vx_float32 Mul_scale_float = (vx_float32) (1.0 / 16.0);
 	vx_scalar Mul_scale_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &Mul_scale_float);
+	// vx_lut LUT = vxCreateLUT(context, VX_TYPE_UINT8, 256);
 	vx_int32 Threshold_thresholdValue_int32 = (vx_int32) 100;
 	vx_int32 Threshold_thresholdLower_int32 = (vx_int32) 100;
 	vx_int32 Threshold_thresholdUpper_int32 = (vx_int32) 200;
@@ -318,8 +341,8 @@ int main(int argc, const char ** argv)
 			switch(case_number)
 			{
 				case 1:
-				{
-					// test_case_name = "agoKernel_AbsDiff_U8_U8U8";
+				{					
+					// test_case_name = "agoKernel_AbsDiff_U8_U8U8"; 
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -902,7 +925,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxOrNode(graph, img1, img2, img_out);
-					expected_image_sum = (pix_img1_u8 | pix_img2_u1) * width * height;
+					expected_image_sum = (pix_img1_u1 | pix_img2_u8) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -914,7 +937,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxOrNode(graph, img1, img2, img_out);
-					expected_image_sum = (pix_img1_u8 | pix_img2_u1) * width * height;
+					expected_image_sum = (pix_img1_u1 | pix_img2_u1) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -923,10 +946,10 @@ int main(int argc, const char ** argv)
 					// test_case_name = "agoKernel_Or_U1_U8U8";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1_AMD);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxOrNode(graph, img1, img2, img_out);
-					expected_image_sum = (pix_img1_u8 | pix_img2_u1) * width * height;
+					expected_image_sum = (pix_img1_u8 | pix_img2_u8) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -950,7 +973,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxOrNode(graph, img1, img2, img_out);
-					expected_image_sum = (pix_img1_u8 | pix_img2_u1) * width * height;
+					expected_image_sum = (pix_img1_u1 | pix_img2_u8) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -962,7 +985,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxOrNode(graph, img1, img2, img_out);
-					expected_image_sum = (pix_img1_u8 | pix_img2_u1) * width * height;
+					expected_image_sum = (pix_img1_u1 | pix_img2_u1) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1133,7 +1156,7 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name = "agoKernel_Threshold_U1_U8_Range";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1_AMD);
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
 					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 1)) * width * height;
 					out_buf_type = 0;
@@ -1243,7 +1266,7 @@ int main(int argc, const char ** argv)
 				// U8 input
 				else if(
 					(case_number == 45) || (case_number == 47) || (case_number == 67) || (case_number == 89) || 
-					(case_number == 90) || (case_number == 91) || (case_number == 92) || (case_number == 93) ||
+					(case_number == 90) || (case_number == 91) || (case_number == 92) || (case_number == 93) || 
 					(case_number == 94) || (case_number == 95) || (case_number == 96)
 				)
 				{
@@ -2058,7 +2081,7 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name = "agoKernel_Threshold_U1_U8_Binary";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U1_AMD, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
 					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 1 : 0) * width * height;
 					out_buf_type = 0;
@@ -2248,7 +2271,7 @@ int main(int argc, const char ** argv)
 		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, width, height);
 		printf("Output Buffer: ");
-		printBuffer(out_buf_uint8, width, height);
+		printBufferBits(out_buf_uint8, width*height);
 #endif
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
@@ -2268,7 +2291,7 @@ int main(int argc, const char ** argv)
 		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 		printImage(out_buf_int16, stride_x_pixels, stride_y_pixels, width, height);
 		printf("Output Buffer: ");
-		printBuffer(out_buf_int16, width, height);
+		printBufferBits(out_buf_int16, width* height);
 #endif
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)

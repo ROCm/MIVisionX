@@ -46,19 +46,18 @@ __device__ __forceinline__ unsigned int uint4_to_uchars(uint4 src)
 __global__ void __attribute__((visibility("default")))
 Hip_Lut_U8_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    unsigned char *pDstImage, unsigned int  dstImageStrideInBytes,
+    const unsigned char *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned char *lut
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    uint4 src1 = uchars_to_uint4(pSrcImage1[src1Idx]);
-    uint4 dst = make_uint4((unsigned int)lut[src1.x], (unsigned int)lut[src1.y], (unsigned int)lut[src1.z], (unsigned int)lut[src1.w]);
-    pDstImage[dstIdx] = uint4_to_uchars(dst);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + (x * 2);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + (x * 2);
+    for (int i = 0; i < 4; i++)
+        pDstImage[dstIdx + i] = lut[pSrcImage1[src1Idx + i]];
 }
 int HipExec_Lut_U8_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -71,10 +70,9 @@ int HipExec_Lut_U8_U8(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    printf("\n");
-    for(int i = 0; i < 256; i++)
-        printf("%d ", lut[i]);
-
+    vx_uint8 *hipLut;
+    hipMalloc(&hipLut, 2048);
+    hipMemcpy(hipLut, lut, 2048, hipMemcpyHostToDevice);
     hipEventCreate(&start);
     hipEventCreate(&stop);
     float eventMs = 1.0f;
@@ -83,8 +81,8 @@ int HipExec_Lut_U8_U8(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, 
-                    (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes, (const unsigned char *)lut);
+                    (unsigned char *)pHipDstImage , dstImageStrideInBytes, 
+                    (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes, (const unsigned char *)hipLut);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);

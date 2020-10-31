@@ -256,7 +256,7 @@ int main(int argc, char * argv[])
 				arg++;
 			}
             unsigned int lengthOfArgv = (int)(strlen(argv[arg]));
-            char * fileNameToParse = new char[lengthOfArgv];
+            char * fileNameToParse = new char[lengthOfArgv + 1]; //+1 space to null-terminate the string.
             std::string fileNameToParse_s;
             std::string addToDir_s;
             std::string gdfName_s;

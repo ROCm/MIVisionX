@@ -25,8 +25,10 @@ private:
     bool exists(const std::string &image_name);
     void add(std::string image_name, int label);
     bool _last_rec;
+    size_t _file_id = 0;
     //std::shared_ptr<TF_Read> _TF_read = nullptr;
     void read_record(std::ifstream &file_contents, uint file_size, std::vector<std::string> &image_name, std::string user_label_key, std::string user_filename_key);
+    void incremenet_file_id() { _file_id++; }
     std::map<std::string, std::shared_ptr<Label>> _map_content;
     std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
     std::string _path;

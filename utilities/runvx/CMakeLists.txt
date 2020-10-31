@@ -23,7 +23,11 @@ project(runvx)
 
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(OpenCL QUIET)
+if(OPENCL_SUPPORT)
+    find_package(OpenCL QUIET)
+else()
+	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+endif()
 find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include)
@@ -47,9 +51,13 @@ list(APPEND SOURCES
 	vxTensor.cpp
 	vxUtils.cpp
 	)
-if ("${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
-	add_executable(runvx ${SOURCES})
-	target_link_libraries(runvx openvx)
+
+add_executable(runvx ${SOURCES})
+target_link_libraries(runvx openvx pthread)
+install(TARGETS runvx DESTINATION bin)
+install(DIRECTORY ../../samples DESTINATION .)
+
+if(OpenCL_FOUND)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=1)
 	target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
@@ -101,8 +109,8 @@ else()
 	add_executable(runvx ${SOURCES})
 	target_link_libraries(runvx openvx)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
-	target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
-endif()
+	message("-- ${Yellow}NOTE:OpenCL Not Found -- runVX built for CPU only${ColourReset}")
+endif(OpenCL_FOUND)
 
 if(OpenCV_FOUND)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=1)
@@ -110,7 +118,7 @@ if(OpenCV_FOUND)
 	target_link_libraries(runvx ${OpenCV_LIBRARIES})
 else(OpenCV_FOUND)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=0)
-	message("-- ${Red}WARNING:OpenCV Not Found -- runvx built without display support${ColourReset}")
+	message("-- ${Yellow}NOTE:OpenCV Not Found -- runVX built without display support${ColourReset}")
 endif(OpenCV_FOUND)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

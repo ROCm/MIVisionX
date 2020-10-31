@@ -185,8 +185,8 @@ void RingBuffer::reset()
 
 RingBuffer::~RingBuffer()
 {
-  //  if(_mem_type!= RaliMemType::OCL)
-  //      return;
+    //  if(_mem_type!= RaliMemType::OCL)
+    //      return;
     if (_mem_type == RaliMemType::HOST) {
         for (unsigned idx = 0; idx < _host_master_buffers.size(); idx++)
             if (_host_master_buffers[idx]) {

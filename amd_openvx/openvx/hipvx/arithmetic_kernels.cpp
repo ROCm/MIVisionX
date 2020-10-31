@@ -22,10 +22,9 @@ THE SOFTWARE.
 
 
 
-//#include "../ago/ago_internal.h"
-#include "hip_kernels.h"
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
+#include "hip_kernels.h"
 
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
@@ -1976,3 +1975,4 @@ int HipExec_Phase_U8_S16S16(
     printf("\nHipExec_Phase_U8_S16S16: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
+

@@ -1594,8 +1594,7 @@ int agoVerifyGraph(AgoGraph * graph)
 	// if all nodes run on GPU, clear enable_node_level_opencl_flush
 	bool cpuTargetBufferNodesExists = false;
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
-		if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU &&
-			!node->akernel->opencl_buffer_access_enable)
+		if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU && !node->akernel->opencl_buffer_access_enable)
 			cpuTargetBufferNodesExists = true;
 	}
 	if(!cpuTargetBufferNodesExists) {
@@ -1926,8 +1925,24 @@ static int agoWaitForNodesCompletion(AgoGraph * graph)
         for (vx_size i = 0; i < graph->opencl_nodeListQueued.size(); i++) {
             AgoNode * node = graph->opencl_nodeListQueued[i];
             if (node->supernode) {
-                agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: supernode is not supported under HIP\n");
-                return VX_FAILURE;
+                if (!node->supernode->launched || agoGpuHipSuperNodeWait(graph, node->supernode) < 0) {
+                    agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: launched=%d supernode wait failed\n", node->supernode->launched);
+                    return VX_FAILURE;
+                }
+                agoPerfCaptureStop(&node->perf);
+                for (size_t index = 0; index < node->supernode->nodeList.size(); index++) {
+                    AgoNode * anode = node->supernode->nodeList[index];
+                    // node callback
+                    if (anode->callback) {
+                        vx_action action = anode->callback(anode);
+                        if (action == VX_ACTION_ABANDON) {
+                            status = VX_ERROR_GRAPH_ABANDONED;
+                            break;
+                        }
+                    }
+                }
+                //agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: supernode is not supported under HIP\n");
+                //return VX_FAILURE;
             }
             else {
                 if (agoGpuHipSingleNodeWait(graph, node) < 0) {
@@ -2180,6 +2195,7 @@ int agoExecuteGraph(AgoGraph * graph)
         for (auto node = snode; node != enode; node = node->next) {
             if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
                 bool launched = true;
+				node->hip_stream0 = graph->hip_stream0;
                 agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
                 agoPerfCaptureStart(&node->perf);
                 if (!node->supernode) {

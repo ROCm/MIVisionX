@@ -50,6 +50,12 @@ message("-- ${BoldBlue}MIVisionX install path set to -- ${CMAKE_INSTALL_PREFIX}$
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
 option(RALI       "Build MIVisionX with RALI Support"         ON)
 option(LOOM       "Build MIVisionX with LOOM Support"         ON)
+
+if (NOT DEFINED BACKEND)
+    SET(BACKEND "OPENCL")   # set default backend to OPENCL
+    message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
+endif()
+
 option(OPENCL_SUPPORT "Build MIVisionX with OpenCL Support"   ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")

@@ -601,6 +601,7 @@ struct AgoNode {
 	cl_kernel opencl_kernel;
 	cl_event opencl_event;
 #elif ENABLE_HIP
+	hipStream_t hip_stream0;
     std::string hip_kernel_name;
     std::string hip_code;
     hiprtcProgram hip_program;
@@ -898,6 +899,7 @@ int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode);
 int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode);
+int agoGpuHipSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode);
 #define HIP_MEM_KIND_BUFFER         0x10F0
 #define HIP_MEM_KIND_IMAGE1D          0x10F4
 #endif

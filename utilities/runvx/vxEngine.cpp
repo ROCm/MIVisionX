@@ -1272,7 +1272,6 @@ int CVxEngine::Shutdown()
 		m_graph = nullptr;
 	}
 
-
 	if (m_context) {
 		vxReleaseContext(&m_context);
 		m_context = nullptr;

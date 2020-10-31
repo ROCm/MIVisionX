@@ -428,7 +428,7 @@ int HipExec_Not_U1_U8(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
         );
-int HipExec_NotU1_U1(
+int HipExec_Not_U1_U1(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes

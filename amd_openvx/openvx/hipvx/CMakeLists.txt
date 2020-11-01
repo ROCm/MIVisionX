@@ -22,7 +22,14 @@ cmake_minimum_required(VERSION 3.5)
 project(openvx_hip CXX)
 
 set(HIPVX_SOURCES
-    arithmetic_kernels.cpp
+    arithmetic_kernels.cpp 
+    logical_kernels.cpp
+    statistical_kernels.cpp
+    color_kernels.cpp
+    filter_kernels.cpp
+    geometric_kernels.cpp
+    vision_kernels.cpp
+    miscellaneous_kernels.cpp
     fmtconvert_kernels.cpp
     )
 
@@ -31,7 +38,6 @@ if(HIP_COMPILER STREQUAL clang)
 else()
     set(hip_library_name hip_hcc)
 endif()
-#message("HIP library name: ${hip_library_name}")
 
 set_source_files_properties(${HIPVX_SOURCES} PROPERTIES HIP_SOURCE_PROPERTY_FORMAT 1)
 set(HIP_HCC_FLAGS -std=c++14)

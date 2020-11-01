@@ -23,6 +23,8 @@ THE SOFTWARE.
 #ifndef MIVISIONX_HIP_KERNELS_H
 #define MIVISIONX_HIP_KERNELS_H
 #include <VX/vx.h>
+#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime.h"
 
 // arithmetic_kernels
 

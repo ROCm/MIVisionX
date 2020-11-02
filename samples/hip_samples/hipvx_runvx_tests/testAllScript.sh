@@ -2,7 +2,7 @@
 
 ############# Edit GDF path and file names #############
 GDF_PATH="../../../vision_tests/gdfs"
-GDF_FILE_LIST="01_absDiff.gdf"
+GDF_FILE_LIST="01_absDiff.gdf 02_accumulate.gdf 03_accumulateSquared.gdf 04_accumulateWeighted.gdf 05_add.gdf 06_and.gdf"
 AFFINITY_LIST="CPU GPU"
 ############# Edit GDF path and file names #############
 

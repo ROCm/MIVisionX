@@ -52,6 +52,7 @@ class COCOPipeline(Pipeline):
         self.boxEncoder = ops.BoxEncoder(device=rali_device,
                                          criteria=0.5,
                                          anchors=default_boxes)
+        self.cast = ops.Cast(device=rali_device, dtype=types.FLOAT)
         # self.box_encoder = self.box_encoder_cpu_offsets = ops.BoxEncoder(
         #     device=rali_device,
         #     criteria=0.5,
@@ -72,6 +73,7 @@ class COCOPipeline(Pipeline):
         hue = self.rng3()
         self.jpegs, self.bb, self.labels = self.input(name="Reader")
         encoded_bboxes, encoded_labels = self.boxEncoder(self.bb, self.labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
+        # encoded_labels = self.cast(encoded_labels)
         images = self.decode(self.jpegs)
         images = self.crop(images)
         images = self.res(images)
@@ -193,7 +195,7 @@ class RALICOCOIterator(object):
                 # Converting from "xywh" to "ltrb" format , 
                 # where the values of l, t, r, b always lie between 0 & 1 
                 # input : N x 4 , "xywh" format
-                # output : 8732 x 4 , "ltrb" format
+                # output : 8732 x 4 , "ltrb" format and normalized
                 htot, wtot = 300, 300
                 bbox_sizes = []
                 bbox_labels = []
@@ -208,6 +210,8 @@ class RALICOCOIterator(object):
                     i=i+1
 
                 encoded_bboxes, encodded_labels = self.loader.encode(bboxes_in=bbox_sizes, labels_in=self.label_2d_numpy)
+                if(self.loader._castLabels == True):
+                    encodded_labels = encodded_labels.type(torch.FloatTensor)
                 self.lis.append(encoded_bboxes)
                 self.lis_lab.append(encodded_labels)
             else:
@@ -294,9 +298,7 @@ def main():
                 for i, j in itertools.product(range(sfeat), repeat=2):
                     cx, cy = (j+0.5)/fk[idx], (i+0.5)/fk[idx]
                     default_boxes.append((cx, cy, w, h))
-        print("BBOXES: *****************************************")
-        print(type(default_boxes))
-        
+
         return default_boxes
 
     dboxes = coco_anchors()

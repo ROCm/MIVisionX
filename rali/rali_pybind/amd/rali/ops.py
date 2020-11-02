@@ -38,7 +38,6 @@ class OneHot(Node):
         self._seed = seed
         self._labels = []
         self.output = Node()
-        print("ops.py init",self._num_classes)
 
 
     def __call__(self,name = ""):
@@ -48,15 +47,48 @@ class OneHot(Node):
         self.output.prev = self
         self.output.next = None
         self.output.data = self._num_classes
-        print("ops.py __call__",self._num_classes)
 
         return self.output
 
     def rali_c_func_call(self,handle):
-        # b.labelReader(handle,self._file_root)
-        # Dummy Varibale
-        print("ops.py",self._num_classes)
         return self._num_classes
+
+class Cast(Node):
+    """
+       
+        dtype (nvidia.dali.types.DALIDataType) – Output data type.
+
+        bytes_per_sample_hint (int, optional, default = 0) – Output size hint, in bytes per sample.
+
+        If specified, the operator’s outputs residing in GPU or page-locked host memory will be preallocated to accommodate a batch of samples of this size.
+
+        preserve (bool, optional, default = False) – Prevents the operator from being removed from the graph even if its outputs are not used.
+
+        seed (int, optional, default = -1) – Random seed.
+
+        If not provided, it will be populated based on the global seed of the pipeline.
+    """
+    def __init__(self,dtype = types.FLOAT, bytes_per_sample_hint=0, preserve = False, seed =-1,  device = None):
+
+        Node().__init__()
+        
+        self._dtype = dtype
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._preserve = preserve
+        self._seed = seed
+        self.output = Node()
+
+    def __call__(self,input):
+        input.next = self
+        self.data = "Cast"
+        self.prev = input
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._dtype
+        return self.output
+
+    def rali_c_func_call(self,handle):
+        return self._dtype
 
 class FileReader(Node):
     """
@@ -649,7 +681,7 @@ class BoxEncoder(Node):
                     iou = intersect/(area1 + area2 - intersect)
                     return iou
         #Pass the bbox and labels for Encoding
-        def encode(bboxes_in , labels_in, criteria = 0.5):
+        def encode(bboxes_in , labels_in, criteria = self._criteria):
                     self.default_boxes = self._anchors
                     self.dboxes = torch.tensor(self.default_boxes, dtype=torch.float)	
                     self.dboxes.clamp_(min=0, max=1)	

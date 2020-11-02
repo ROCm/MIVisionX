@@ -117,6 +117,7 @@ class Pipeline(object):
         self._encode_tensor = None
         self._numOfClasses = None
         self._oneHotEncoding = False
+        self._castLabels = False
 
     def store_values(self, operator):
         """
@@ -174,30 +175,33 @@ class Pipeline(object):
         """
         outputs = self.define_graph()
         self.process_calls(outputs[0])
-        print(type(outputs))
-        print(len(outputs))
-        # exit(0)
-        #Checks for Box Encoding
-        
+
+        #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
+        if(len(outputs)==3):
+            if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
+                if(outputs[2].prev.data == "Cast") :
+                    self._castLabels = True
+                    if(outputs[2].prev.prev.prev.data is not None):
+                        if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
+                            self._BoxEncoder = True
+                            self._anchors = outputs[2].prev.prev.data
+                            self._encode_tensor = outputs[2].prev.prev
+        #Checks for Box Encoding as the Last Node
         if(len(outputs)==3):
             if(isinstance(outputs[1],list)== False):
                 if(outputs[1].prev is not None):
-                    print("YES1")
                     if(outputs[2].prev is not None):
-                        print("YES2")
                         if(outputs[2].prev.data == "BoxEncoder"):
-                            print("Inside Box Encoder ops.py")
                             self._BoxEncoder = True
                             self._anchors = outputs[2].data
                             self._encode_tensor = outputs[2]
 
-        #Checks for One Hot Encoding
+        #Checks for One Hot Encoding as the last Node
         if(isinstance(outputs[1],list)== False):
             if(len(outputs)==2):
                 if(outputs[1].prev is not None):
                     print(type(outputs[1]))
                     if(outputs[1].prev.data == "OneHotLabel"):
-                        print("Comes to if condition")
                         self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
                         self._oneHotEncoding = True
         

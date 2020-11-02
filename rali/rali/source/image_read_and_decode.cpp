@@ -107,7 +107,6 @@ ImageReadAndDecode::count()
     return _reader->count();
 }
 
-
 LoaderModuleStatus 
 ImageReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
@@ -189,10 +188,18 @@ ImageReadAndDecode::load(unsigned char* buff,
             // we have got image_read_and_decode->_bbox_vector till here
             // Declare vector of vector for bounding boxes
             // Deep or shallow copy image_read_and_decode->_bbox_vector to partial decoder bbox  vector
+            std::cerr << "\nsize of _bbox_vector : " << _bbox_coords.size();
+            _decoder[i]->set_bbox_coords(_bbox_coords);
         }
         else
         {
             std::cerr<<"\n It is normal decoder";
+            //just for checking..We should remove this portion
+            std::cerr << "\nsize of _bbox_vector : " << _bbox_coords.size();
+            for(int i = 0; i < _bbox_coords.size(); i++) 
+            {
+                std::cerr << "\t size of each vector : " << _bbox_coords[i].size();
+            }
         }
 
         if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],

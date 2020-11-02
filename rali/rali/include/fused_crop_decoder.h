@@ -56,6 +56,7 @@ public:
 
     ~FusedCropTJDecoder() override;
     bool is_partial_decoder() { return _is_partial_decoder; };
+    void set_bbox_coords(std::vector<std::vector <float>> bbox_coords) { _bbox_coords = bbox_coords;};
 
 private:
     tjhandle m_jpegDecompressor;
@@ -79,4 +80,5 @@ private:
             { 1, 8 }
     };
     bool _is_partial_decoder = true;
+    std::vector<std::vector <float>> _bbox_coords;
 };

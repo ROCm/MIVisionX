@@ -47,6 +47,7 @@ public:
     size_t count();
     void reset();
     void create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size);
+    void set_bbox_vector(std::vector<std::vector <float>> bbox_coords) { _bbox_coords = bbox_coords;};
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     /// \param buff User's buffer provided to be filled with decoded image samples
@@ -88,5 +89,6 @@ private:
     size_t _batch_size;
     DecoderConfig _decoder_config;
     bool decoder_keep_original;
+    std::vector<std::vector <float>> _bbox_coords;
 };
 

@@ -2345,7 +2345,7 @@ int main(int argc, const char ** argv)
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
 	vxReleaseThreshold(&Threshold_thresholdObjectBinary_threshold);
 	vxReleaseThreshold(&Threshold_thresholdObjectRange_threshold);
-	vxReleaseLUT(&Lut_lutObject_lut)
+	vxReleaseLUT(&Lut_lutObject_lut);
 	if (ptr[0]) hipFree(ptr[0]);
 	if (ptr[1]) hipFree(ptr[1]);
 	if (ptr[2]) hipFree(ptr[2]);

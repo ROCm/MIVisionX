@@ -1192,8 +1192,7 @@ int agoUnloadModule(AgoContext * context, const char * module)
 					status = unpublish_kernels_f(context);
 					if (status == VX_SUCCESS) {
 						agoCloseModule(context->modules[index].hmodule);
-						context->modules[index].hmodule = nullptr;
-						context->modules[index].module_path[0] = '\0';
+						context->num_active_modules--;
 					}
 				}
 				break;

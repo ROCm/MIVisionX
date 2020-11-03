@@ -2317,8 +2317,7 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddKernel(vx_context context,
 			}
 			// add kernel object to context
 			kernel->external_kernel = true;
-			kernel->ref.internal_count = 1;
-			kernel->ref.external_count = 1;
+			kernel->ref.external_count++;
 			kernel->id = enumeration;
 			kernel->flags = AGO_KERNEL_FLAG_GROUP_USER | AGO_KERNEL_FLAG_DEVICE_CPU | AGO_KERNEL_FLAG_VALID_RECT_RESET;
 			strcpy(kernel->name, name);
@@ -2377,8 +2376,7 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddUserKernel(vx_context context,
 			}
 			// add kernel object to context
 			kernel->external_kernel = true;
-			kernel->ref.internal_count = 1;
-			kernel->ref.external_count = 1;
+			kernel->ref.external_count++;
 			kernel->id = enumeration;
 			kernel->flags = AGO_KERNEL_FLAG_GROUP_USER | AGO_KERNEL_FLAG_DEVICE_CPU | AGO_KERNEL_FLAG_VALID_RECT_RESET;
 			strcpy(kernel->name, name);
@@ -2495,6 +2493,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxRemoveKernel(vx_kernel kernel)
 			 kernel->ref.internal_count < 2 && kernel->ref.external_count == 0*/))
 		{
 			CAgoLock lock(kernel->ref.context->cs);
+			kernel->finalized = false;
 			if (!agoReleaseKernel(kernel, true)) {
 				status = VX_SUCCESS;
 			}

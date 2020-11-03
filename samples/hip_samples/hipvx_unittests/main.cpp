@@ -127,6 +127,7 @@ using namespace std;
 
 #define PIXELCHECKU1(pixel) (pixel == (vx_int32)0) ? ((vx_uint8)0) : ((vx_uint8)1)
 #define PIXELCHECKU8(pixel) (pixel < (vx_int32)0) ? ((vx_uint8)0) : ((pixel < (vx_int32)UINT8_MAX) ? (vx_uint8)pixel : ((vx_uint8)UINT8_MAX))
+#define PIXELCHECKU16(pixel) (pixel < (vx_int32)0) ? ((vx_uint8)0) : ((pixel < (vx_int32)UINT16_MAX) ? (vx_uint8)pixel : ((vx_uint8)UINT16_MAX))
 #define PIXELCHECKS16(pixel) (pixel < (vx_int32)INT16_MIN) ? ((vx_int16)INT16_MIN) : ((pixel < (vx_int32)INT16_MAX) ? (vx_int16)pixel : ((vx_int16)INT16_MAX))
 #define PIXELROUNDF32(value) ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
@@ -285,6 +286,7 @@ int main(int argc, const char ** argv)
 	vx_int32 pix_img2_u1 = (vx_int32) PIXELCHECKU1(pix_img2);
 	vx_int32 pix_img1_u8 = (vx_int32) PIXELCHECKU8(pix_img1);
 	vx_int32 pix_img2_u8 = (vx_int32) PIXELCHECKU8(pix_img2);
+	vx_int32 pix_img1_u16 = (vx_int32) PIXELCHECKU16(pix_img1);
 	vx_int32 pix_img1_s16 = (vx_int32) PIXELCHECKS16(pix_img1);
 	vx_int32 pix_img2_s16 = (vx_int32) PIXELCHECKS16(pix_img2);
 	vx_uint8 *out_buf_uint8;
@@ -315,7 +317,7 @@ int main(int argc, const char ** argv)
 	AgoTargetAffinityInfo affinity;
 	affinity.device_info = 0;
 
-	// arguments for specific functionalities
+	// arguments for specific functionalities	
 	vx_float32 Mul_scale_float = (vx_float32) (1.0 / 16.0);
 	vx_scalar Mul_scale_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &Mul_scale_float);
 	// vx_lut LUT = vxCreateLUT(context, VX_TYPE_UINT8, 256);
@@ -1118,14 +1120,39 @@ int main(int argc, const char ** argv)
 				case 67:
 				{
 					// test_case_name = "agoKernel_ChannelCopy_U8_U8";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxChannelExtractNode(graph, img1, 0, img_out);
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_Y, img_out);
 					expected_image_sum = pix_img1_u8 * width * height;
 					out_buf_type = 0;
 					break;
 				}
+				case 71:
+				{
+					// test_case_name = "agoKernel_ChannelExtract_U8_U16_Pos0";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_YUYV);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_Y, img_out);
+					expected_image_sum = pix_img1_u16 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 72:
+				{
+					// test_case_name = "agoKernel_ChannelExtract_U8_U16_Pos1";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_UYVY);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_Y, img_out);
+					expected_image_sum = pix_img1_u16 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				 
 				case 88:
 				{
 					// test_case_name = "agoKernel_Lut_U8_U8";
@@ -1320,6 +1347,13 @@ int main(int argc, const char ** argv)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u1));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u8));
+				}
+				// U16 inputs
+				else if(
+					(case_number == 71)  || (case_number == 72)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint16) pix_img1_u16));
 				}
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);

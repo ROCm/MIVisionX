@@ -52,15 +52,15 @@ python imageDataBaseCreator.py 	-d [input image directory] 	--- required
 
 ## Outputs
 
-* 1. output image directory - this folder contains all the images resized and renamed
+1. Output Image Directory - this folder contains all the images resized and renamed
 
-* 2. `fileName-val.txt` - this is the classification label validation text file (fileName -- -f option )
+2. `fileName-val.txt` - this is the classification label validation text file (fileName -- -f option )
 ``` 
 imagename_1.JPEG 122
 imagename_2.JPEG 928
 ```
 
-* 3. `fileName-scriptOutput` - this folder contains all the logs and error files
+3. `fileName-scriptOutput` - this folder contains all the logs and error files
 
  + `fileName-fileNameTanslation.csv`
  + `fileName-fileNameWithErrors.csv`
@@ -80,7 +80,7 @@ Run **step-1.py** to resize and rename your image to the required width and heig
 python step-1.py 	-d [input image directory] 	--- required 
  					-o [output image directory] --- required
  					-f [new image file name] 	--- required 
- 					-w [resize width] 			--- optional
+ 					-w [resize width] 		    --- optional
  					-h [resize height] 			--- optional
  					-p [padding value] 			--- optional
 ```

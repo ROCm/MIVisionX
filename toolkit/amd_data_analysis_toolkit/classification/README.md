@@ -4,7 +4,7 @@
 
 ## Usage
 
-### ADAT - Visualization Tool Generation Script Usage:
+### ADAT - Visualization Tool Generation Script Usage
 
 ### Script Help 
 

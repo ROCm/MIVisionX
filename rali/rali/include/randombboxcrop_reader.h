@@ -22,32 +22,33 @@ THE SOFTWARE.
 
 #pragma once
 #include <map>
+#include <vx_ext_rpp.h>
+#include <graph.h>
 #include "commons.h"
-#include "randombboxcrop_meta_data.h"
 #include "randombboxcrop_meta_data_reader.h"
+#include "parameter_factory.h"
+#include "parameter_crop_factory.h"
 
 class RandomBBoxCropReader: public RandomBBoxCrop_MetaDataReader
 {
 public:
     void init(const RandomBBoxCrop_MetaDataConfig& cfg) override;
-    void lookup(const std::vector<std::string>& image_names) override;
+    void lookup(const std::string& image_name) override;
     void read_all() override;
-    void release(std::string image_name);
     void release() override;
     void print_map_contents();
-    RandomBBoxCrop_MetaDataBatch * get_output() override { return _output; }
     RandomBBoxCropReader();
-    ~RandomBBoxCropReader() override { delete _output; }
+    ~RandomBBoxCropReader() override { }
 private:
-    CropBoxBatch* _output;
+    std::shared_ptr<RaliRandomCropParam> _meta_crop_param;
     int _all_boxes_overlap;
     int _no_crop;
     int _has_shape;
     int _crop_width;
     int _crop_height;
-    void add(std::string image_name, CropBoxCords bbox, CropBoxLabels b_labels);
+    void add(std::string image_name, CropCord bbox);
     bool exists(const std::string &image_name);
-    std::map<std::string, std::shared_ptr<CropBox>> _map_content;
-    std::map<std::string, std::shared_ptr<CropBox>>::iterator _itr;
+    std::map<std::string, std::shared_ptr<CropCord>> _map_content;
+    std::map<std::string, std::shared_ptr<CropCord>>::iterator _itr;
 };
 

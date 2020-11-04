@@ -41,7 +41,6 @@ typedef void * RaliIntParam;
 typedef void * RaliContext;
 typedef void * RaliImage;
 typedef void * RaliMetaData;
-typedef void * RaliRandomBBCrop;
 
 struct TimingInfo
 {

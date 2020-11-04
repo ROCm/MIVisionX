@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <algorithm>
 #include<fstream>
 
-using namespace std;
+//using namespace std;
 
 void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg) {
     _all_boxes_overlap = cfg.all_boxes_overlap();
@@ -34,7 +34,7 @@ void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg) {
     _has_shape = cfg.has_shape();
     _crop_width = cfg.crop_width();
     _crop_height = cfg.crop_height();
-    _output = new CropBoxBatch();
+    //_crop_param = std::make_shared<RaliRandomCropParam>(_batch_size);
 }
 
 bool RandomBBoxCropReader::exists(const std::string& image_name)
@@ -42,8 +42,8 @@ bool RandomBBoxCropReader::exists(const std::string& image_name)
     return _map_content.find(image_name) != _map_content.end();
 }
 
-void RandomBBoxCropReader::lookup(const std::vector<std::string> &image_names) {
-
+void RandomBBoxCropReader::lookup(const std::string &image_names) {
+//fetch
     /*if (image_names.empty())
     {
         WRN("No image names passed")
@@ -64,7 +64,7 @@ void RandomBBoxCropReader::lookup(const std::vector<std::string> &image_names) {
     }*/
 }
 
-void RandomBBoxCropReader::add(std::string image_name, CropBoxCords bb_coords, CropBoxLabels bb_labels)
+void RandomBBoxCropReader::add(std::string image_name, CropCord bb_coords)
 {/*
     if (exists(image_name))
     {
@@ -160,15 +160,9 @@ void RandomBBoxCropReader::read_all() {
     } 
     fin.close();
     //print_map_contents();*/
-}
 
-void RandomBBoxCropReader::release(std::string image_name) {
-    if(!exists(image_name))
-    {
-        WRN("ERROR: Given name not present in the map" + image_name);
-        return;
-    }
-    _map_content.erase(image_name);
+
+
 }
 
 void RandomBBoxCropReader::release() {

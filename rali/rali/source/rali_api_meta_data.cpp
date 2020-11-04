@@ -28,13 +28,13 @@ THE SOFTWARE.
 #include "context.h"
 #include "rali_api.h"
 
-RaliRandomBBCrop
+void
 RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height) {
     auto context = static_cast<Context*>(p_context);
     if (!context)
         THROW("Invalid rali context passed to raliCreateLabelReader")
 
-    return context->master_graph->create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader, RandomBBoxCrop_MetaDataType::BoundingBox, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
+    context->master_graph->create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader, RandomBBoxCrop_MetaDataType::BoundingBox, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
 
 }
 

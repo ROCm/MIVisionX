@@ -55,20 +55,18 @@ python imageDataBaseCreator.py 	-d [input image directory] 	--- required
 * 1. output image directory - this folder contains all the images resized and renamed
 
 * 2. `fileName-val.txt` - this is the classification label validation text file (fileName -- -f option )
-**output example:** (fileName. JPEG Label)
-
-	``` 
- 	imagename_1.JPEG 122
- 	imagename_2.JPEG 928
-	```
+``` 
+imagename_1.JPEG 122
+imagename_2.JPEG 928
+```
 
 * 3. `fileName-scriptOutput` - this folder contains all the logs and error files
 
- * `fileName-fileNameTanslation.csv`
- * `fileName-fileNameWithErrors.csv`
- * `fileName-fileNameWithLabels.csv`
- * `fileName-invalidLabelsFile.csv`
- * `fileName-multipleLabelsFile.csv`
+ + `fileName-fileNameTanslation.csv`
+ + `fileName-fileNameWithErrors.csv`
+ + `fileName-fileNameWithLabels.csv`
+ + `fileName-invalidLabelsFile.csv`
+ + `fileName-multipleLabelsFile.csv`
 
 ## Scripts
 

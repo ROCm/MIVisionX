@@ -43,9 +43,9 @@ usage: generate-visualization.py  [-h/--help]
 | Image File Name | Ground Truth Label | Output Label 1 | Output Label 2 | Output Label 3 | Output Label 4 | Output Label 5 | Prob 1 | Prob 2 | Prob 3 | Prob 4 | Prob 5 |
 | --------------- | ------------------ | -------------- | -------------- | -------------- | -------------- | -------------- | ------ | ------ | ------ | ------ | ------ |
 
-**NOTE:** The `` `"Image File Name"` ` ` field can have the full path of image and does not need ` ` `image_dir` `` argument to be specified. This also avoids the copying of images to the ADAT results directory.
+**NOTE:** The  `"Image File Name"` field can have the full path of image and does not need `image_dir` argument to be specified. This also avoids the copying of images to the ADAT results directory.
 
-If the images are to be copied to the local ADAT results directory, `` `image_dir` `` argument needs to be specified. 
+If the images are to be copied to the local ADAT results directory, `image_dir` argument needs to be specified. 
 
 ## Sample 
 

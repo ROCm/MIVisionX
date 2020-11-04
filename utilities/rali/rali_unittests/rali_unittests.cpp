@@ -628,6 +628,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
+        int numOfClasses = 2;
         int image_name_length[inputBatchSize];
 #if defined COCO_READER || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         int img_size = raliGetImageNameLen(handle, image_name_length);
@@ -655,7 +656,27 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
         raliGetImageName(handle, img_name);
-        std::cerr << "\nPrinting image names of batch: " << img_name;
+        int label_one_hot_encoded[inputBatchSize * numOfClasses];
+        raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+        std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
+        for (int i = 0; i < inputBatchSize; i++)
+
+        {   
+            std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
+            std::cout << "One Hot Encoded labels:"<<"\t";
+            for (int j = 0; j < numOfClasses; j++)
+            {
+                int idx_value = label_one_hot_encoded[(i*numOfClasses)+j];
+                if(idx_value == 0)
+                std::cout << idx_value;
+                else
+                {
+                    std::cout << idx_value;
+                }
+
+            }
+            std::cout << "\n";
+        }
 #endif
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);

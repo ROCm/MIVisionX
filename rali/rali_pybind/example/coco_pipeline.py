@@ -53,13 +53,6 @@ class COCOPipeline(Pipeline):
                                          criteria=0.5,
                                          anchors=default_boxes)
         self.cast = ops.Cast(device=rali_device, dtype=types.FLOAT)
-        # self.box_encoder = self.box_encoder_cpu_offsets = ops.BoxEncoder(
-        #     device=rali_device,
-        #     criteria=0.5,
-        #     offset=True,
-        #     scale=2,
-        #     stds=[0.1, 0.1, 0.2, 0.2],
-        #     anchors=default_boxes) # This case is yet to be handled
         # Random variables
         self.rng1 = ops.Uniform(range=[0.5, 1.5])
         self.rng2 = ops.Uniform(range=[0.875, 1.125])

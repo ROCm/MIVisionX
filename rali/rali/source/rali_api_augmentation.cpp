@@ -113,51 +113,6 @@ raliRotate(
 }
 
 RaliImage  RALI_API_CALL
-raliRandomBBoxCrop(
-        RaliContext p_context,
-        RaliImage p_input,
-        bool is_output,
-        RaliFloatParam p_threshold,
-        RaliFloatParam p_crop_area_factor,
-        RaliFloatParam p_crop_aspect_ratio,
-        RaliFloatParam p_crop_pox_x,
-        RaliFloatParam p_crop_pos_y,
-        int num_of_attempts,
-        int all_boxes_overlap,
-        int no_crop,
-        int has_shape,
-        int crop_width,
-        int crop_height)
-{
-    if(!p_context || !p_input)
-        THROW("Null values passed as input")
-    Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);
-    auto input = static_cast<Image*>(p_input);
-    auto crop_area_factor  = static_cast<FloatParam*>(p_crop_area_factor);
-    auto crop_aspect_ratio = static_cast<FloatParam*>(p_crop_aspect_ratio);
-    auto x_drift = static_cast<FloatParam*>(p_crop_pox_x);
-    auto y_drift = static_cast<FloatParam*>(p_crop_pos_y);
-
-    try
-    {
-        ImageInfo output_info = input->info();
-        output_info.width(input->info().width());
-        output_info.height(input->info().height_single());
-        output = context->master_graph->create_image(output_info, is_output);
-        output->reset_image_roi();
-        std::shared_ptr<RandomBBoxCropNode> crop_node =  context->master_graph->add_node<RandomBBoxCropNode>({input}, {output});
-        crop_node->init(crop_area_factor, crop_aspect_ratio, x_drift, y_drift, num_of_attempts, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
-    }
-    catch(const std::exception& e)
-    {
-        context->capture_error(e.what());
-        ERR(e.what())
-    }
-    return output;
-}
-
-RaliImage  RALI_API_CALL
 raliRotateFixed(
         RaliContext p_context,
         RaliImage p_input,

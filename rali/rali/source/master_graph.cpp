@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "ocl_setup.h"
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
+#include "randombboxcrop_meta_data_reader_factory.h"
 
 using half_float::half;
 
@@ -868,6 +869,18 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     else
         _augmented_meta_data = _meta_data_reader->get_output();
     return _meta_data_reader->get_output();
+}
+
+
+RandomBBoxCrop_MetaDataBatch * MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height)
+{
+    if( _randombboxcrop_meta_data_reader)
+        THROW("A metadata reader has already been created")
+    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
+    _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
+    _randombboxcrop_meta_data_reader->init(config);
+    _randombboxcrop_meta_data_reader->read_all();
+    return _randombboxcrop_meta_data_reader->get_output();
 }
 
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)

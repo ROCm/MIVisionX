@@ -120,5 +120,7 @@ extern "C" void RALI_API_CALL raliGetImageSizes(RaliContext rali_context, int* b
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext rali_context, const char* source_path, const char* file_prefix);
 
+extern "C" RaliRandomBBCrop RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height);
+
 
 #endif //MIVISIONX_RALI_API_META_DATA_H

@@ -58,6 +58,7 @@ inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const B
 
 void RandomBBoxCropNode::update_node()
 {
+    std::cerr << "\nINside randombboxcrop.cpp";
     _crop_param->set_image_dimensions(_inputs[0]->info().get_roi_width_vec(), _inputs[0]->info().get_roi_height_vec());
     _crop_param->update_array();
     std::random_device rd;
@@ -124,43 +125,21 @@ void RandomBBoxCropNode::update_node()
             }
             else // If it has no shape, then area and aspect ratio thing should be provided
             {
-                /*for (int j = 0; j < _num_of_attempts; j++)
+                for (int j = 0; j < _num_of_attempts; j++)
                 {
-                    //_scale_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
-                    //auto w_factor = _scale_factor->get();
-                    
+                    x_drift_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
+                    auto w_factor = x_drift_factor->get();                    
                     crop_box.w = w_factor * in_width[i];
-                    //_scale_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
-                    //auto h_factor = _scale_factor->get();
+                    y_drift_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
+                    y_drift_factor->renew();
+                    auto h_factor = y_drift_factor->get();
                     crop_box.h = h_factor * in_height[i];
                     if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
                         continue;
                     break;
                 }
                 if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
-                    continue;*/
-                for (int j = 0; j < _num_of_attempts; j++)
-                {
-                    area_factor->renew(); //_scale_factor is a random_number picked from [min-max] range 
-                    auto w_factor =  area_factor->get();
-                    crop_box.w = w_factor * in_width[i];
-                    area_factor->renew(); //_scale_factor is a random_number picked from [min-max] range 
-                    auto h_factor = area_factor->get();
-                    crop_box.h = h_factor * in_height[i];
-                    //aspect ratio check
-                    aspect_ratio_factor->renew(); // _aspect ratio factor is a random number piced in [minx/y and maxx/y] params
-                    auto min_ar = aspect_ratio_factor->get();
-                    aspect_ratio_factor->renew();
-                    auto max_ar = aspect_ratio_factor->get();
-                    if(min_ar == max_ar) {min_ar = 0.5; max_ar = 2.0;} // No need to try more to get this..in stead go ached with the input min and max
-                    if(min_ar > max_ar) std::swap(min_ar, max_ar);
-                    if ((crop_box.w / crop_box.h < min_ar) || (crop_box.w / crop_box.h > max_ar))
-                        continue;
-                    break;
-                }
-                // if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.)) if it is not stilll successfull aszpect ratio - force somethng default
-                //     continue;
-                //Got the crop;
+                    continue;
             }
 
             x_drift_factor->renew();

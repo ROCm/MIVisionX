@@ -45,6 +45,8 @@ using namespace cv;
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
 
+#define RANDOMBBOXCROP
+
 using namespace std::chrono;
 
 int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height);
@@ -141,12 +143,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     char key8[25] = "image/filename";
 
 #if defined RANDOMBBOXCROP
-    int _all_boxes_overlap = 1;
-    int _no_crop = 1;
-    int _has_shape = 0;
+    int all_boxes_overlap = 1;
+    int no_crop = 1;
+    int has_shape = 0;
     int crop_width = 500;
     int crop_height = 500;
-
 #endif
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
@@ -174,8 +175,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #ifdef RANDOMBBOXCROP
-    RaliImage input;
-    raliRandomBBoxCrop(handle, input, true);
+    raliRandomBBoxCrop(handle, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
 #endif
 
     RaliImage input1;

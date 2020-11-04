@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
+#include "randombboxcrop_meta_data_reader.h"
 
 class MasterGraph
 {
@@ -75,6 +76,7 @@ public:
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
+    RandomBBoxCrop_MetaDataBatch *create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
     bool empty() { return (remaining_images_count() < _user_batch_size); }
@@ -119,6 +121,7 @@ private:
     TimingDBG _process_time;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
+    std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
     bool _first_run = true;
     bool _processing;//!< Indicates if internal processing thread should keep processing or not
     const static unsigned OUTPUT_RING_BUFFER_DEPTH = 3;

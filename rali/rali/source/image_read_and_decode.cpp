@@ -195,11 +195,11 @@ ImageReadAndDecode::load(unsigned char* buff,
         {
             std::cerr<<"\n It is normal decoder";
             //just for checking..We should remove this portion
-            std::cerr << "\nsize of _bbox_vector : " << _bbox_coords.size();
+            /*std::cerr << "\nsize of _bbox_vector : " << _bbox_coords.size();
             for(int i = 0; i < _bbox_coords.size(); i++) 
             {
                 std::cerr << "\t size of each vector : " << _bbox_coords[i].size();
-            }
+            }*/
         }
 
         if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],

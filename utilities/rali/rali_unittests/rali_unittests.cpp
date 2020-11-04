@@ -36,8 +36,8 @@ THE SOFTWARE.
 using namespace cv;
 
  //#define PARTIAL_DECODE
- #define COCO_READER
-//#define COCO_READER_PARTIAL
+// #define COCO_READER
+#define COCO_READER_PARTIAL
 // #define TF_READER
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER
@@ -140,6 +140,15 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     char key7[25] = "image/object/bbox/ymax";
     char key8[25] = "image/filename";
 
+#if defined RANDOMBBOXCROP
+    int _all_boxes_overlap = 1;
+    int _no_crop = 1;
+    int _has_shape = 0;
+    int crop_width = 500;
+    int crop_height = 500;
+
+#endif
+
 #if defined COCO_READER || defined COCO_READER_PARTIAL
     char *json_path = "/home/shobana/sample_test/coco_10_samples/10_instances_train2017.json";
     if (strcmp(json_path, "") == 0)
@@ -162,6 +171,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     meta_data = raliCreateTFReaderDetection(handle, path, true, key2, key3, key4, key5, key6, key7, key8);
 #else
     meta_data = raliCreateLabelReader(handle, path);
+#endif
+
+#ifdef RANDOMBBOXCROP
+    RaliImage input;
+    raliRandomBBoxCrop(handle, input, true);
 #endif
 
     RaliImage input1;

@@ -79,6 +79,15 @@ extern "C"  RaliImage  RALI_API_CALL raliRotate(RaliContext context, RaliImage i
                                                 RaliFloatParam angle = NULL,  unsigned dest_width = 0,
                                                 unsigned dest_height = 0);
 
+extern "C"  RaliImage  RALI_API_CALL raliRandomBBoxCrop(RaliContext context, RaliImage input, bool is_output,
+                                                    RaliFloatParam threshold = NULL,
+                                                    RaliFloatParam crop_pos_x = NULL,
+                                                    RaliFloatParam crop_pos_y = NULL,
+                                                    int num_of_attempts = 20,
+                                                    int all_boxes_overlap = 1,
+                                                    int no_crop = 1,
+                                                    int has_shape = 1);
+
 /// Accepts U8 and RGB24 input. The output image dimension can be set to new values allowing the rotated image to fit,
 /// otherwise; the image is cropped to fit the result.
 /// \param context Rali context

@@ -55,6 +55,7 @@ python imageDataBaseCreator.py 	-d [input image directory] 	--- required
 1. Output Image Directory - this folder contains all the images resized and renamed
 
 2. `fileName-val.txt` - this is the classification label validation text file (fileName -- -f option )
+
 ``` 
 imagename_1.JPEG 122
 imagename_2.JPEG 928

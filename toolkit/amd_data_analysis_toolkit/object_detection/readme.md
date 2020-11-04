@@ -3,7 +3,7 @@
 # ADAT - Object Detection Visualization
 
 ## Usage
-### ADAT - Visualization Tool Generation Script:
+### ADAT - Visualization Tool Generation Script
 ````
 python generate-visualization.py
 ````
@@ -28,7 +28,6 @@ python generate-visualization.py
 * -f    : **Output File Name**
 * -g    : **Input Ground Truth File**
 * -g    : **Input Bounding Box Tool Truth File**
-
 
 ## Sample 
 
@@ -80,4 +79,3 @@ This section compares the results of a database or the model between different s
 ### Model Score 
 
 The section does an experimental scoring for the given model.
-

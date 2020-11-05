@@ -516,6 +516,54 @@ class COCOReader(Node):
         # b.labelReader(handle,self._file_root)
         return self._file_root
 
+class BBFlip(Node):
+
+    """
+        bytes_per_sample_hint (int, optional, default = 0) –
+
+        Output size hint, in bytes per sample.
+
+        If specified, the operator’s outputs residing in GPU or page-locked host memory will be preallocated to accommodate a batch of samples of this size.
+
+        horizontal (int, optional, default = 1) – Flip horizontal dimension.
+
+        ltrb (bool, optional, default = False) – True for ltrb or False for xywh.
+
+        preserve (bool, optional, default = False) – Prevents the operator from being removed from the graph even if its outputs are not used.
+
+        seed (int, optional, default = -1) –
+
+        Random seed.
+
+        If not provided, it will be populated based on the global seed of the pipeline.
+
+        vertical (int, optional, default = 0) – Flip vertical dimension.
+
+    """
+    def __init__(self, bytes_per_sample_hint = 0, horizontal = 1, ltrb = False, preserve =  False,seed = -1, vertical = 0, device = None):
+        Node().__init__()
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._horizontal = horizontal
+        self._ltrb = ltrb
+        self._preserve = preserve
+        self._seed = seed
+        self._vertical = vertical
+        self.output = Node()
+
+
+    def __call__(self,bboxes, horizontal=1):
+        
+        self.data = "BBFlip"
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = horizontal
+        return self.output
+
+def rali_c_func_call(self,input, is_output):
+        return 0
+    
 
 
 class ImageDecoder(Node):

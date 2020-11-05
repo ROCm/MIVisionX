@@ -21,14 +21,6 @@ THE SOFTWARE.
 */
 
 #pragma once
-#include <list>
-#include "meta_data_graph.h"
-#include "meta_node.h"
-class BoundingBoxGraph : public MetaDataGraph
-{
-public:
-    void process(MetaDataBatch* meta_data) override;
-    void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decode_image_info) override;
-    void update_random_bbox_meta_data(CropCordBatch* _random_bbox_crop_cords_data, MetaDataBatch* meta_data, decoded_image_info decoded_image_info) override;
-};
-
+#include "randombboxcrop_meta_data_reader.h"
+#include "randombboxcrop_reader.h"
+std::shared_ptr<RandomBBoxCrop_MetaDataReader> create_meta_data_reader(const RandomBBoxCrop_MetaDataConfig& config);

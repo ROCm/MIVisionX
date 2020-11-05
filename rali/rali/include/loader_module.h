@@ -27,6 +27,8 @@ THE SOFTWARE.
 #include "commons.h"
 #include "image.h"
 #include "circular_buffer.h"
+#include "meta_data_reader.h"
+#include "meta_data_graph.h"
 
 enum class LoaderModuleStatus
 {
@@ -53,6 +55,8 @@ public:
     virtual std::vector<std::string> get_id() = 0; // returns the id of the last batch of images/frames loaded
     virtual void start_loading() = 0; // starts internal loading thread
     virtual decoded_image_info get_decode_image_info() = 0;
+    // introduce meta data reader
+    virtual void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader) = 0;
 };
 
 using pLoaderModule = std::shared_ptr<LoaderModule>;

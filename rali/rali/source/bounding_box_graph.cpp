@@ -71,3 +71,84 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;
     }
 }
+
+inline double BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const BoundingBoxCord &box2, bool is_iou = false)
+{
+    double iou;
+    float xA = std::max(box1.x, box2.x);
+    float yA = std::max(box1.y, box2.y);
+    float xB = std::min(box1.x + box1.w, box2.x + box2.w);
+    float yB = std::min(box1.y + box1.h, box2.y + box2.h);
+
+    float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
+
+    float box1_area = box1.h * box1.w;
+    float box2_area = box2.h * box2.w;
+
+    if(is_iou)
+        iou = intersection_area / float(box1_area + box2_area - intersection_area);
+    else
+        iou = intersection_area / float(box1_area);
+
+    return iou;
+}
+
+void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch* _random_bbox_crop_cords_data, MetaDataBatch* input_meta_data, decoded_image_info decode_image_info)
+{
+    std::vector<uint32_t> original_height = decode_image_info._original_height;
+    std::vector<uint32_t> original_width = decode_image_info._original_width;
+    std::vector<uint32_t> roi_width = decode_image_info._roi_width;
+    std::vector<uint32_t> roi_height = decode_image_info._roi_height;
+    auto crop_cords = _random_bbox_crop_cords_data->get_bb_cords_batch();
+    float _iou_threshold = 0.25;
+    for (int i = 0; i < input_meta_data->size(); i++)
+    {
+        auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
+        int labels_buf[bb_count];
+        float coords_buf[bb_count*4];
+        memcpy(labels_buf, input_meta_data->get_bb_labels_batch()[i].data(),  sizeof(int)*bb_count);
+        memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
+        BoundingBoxCords bb_coords;
+        BoundingBoxCord temp_box;
+        BoundingBoxLabels bb_labels;
+        BoundingBoxCord crop_box;
+        crop_box.x = crop_cords[i]->crop_x;
+        crop_box.y = crop_cords[i]->crop_y;
+        crop_box.w = crop_cords[i]->crop_width;
+        crop_box.h = crop_cords[i]->crop_height;
+        for(uint j = 0, m = 0; j < bb_count; j++)
+        {
+            BoundingBoxCord box;
+            box.x = coords_buf[m++];
+            box.y = coords_buf[m++];
+            box.w = coords_buf[m++];
+            box.h = coords_buf[m++];
+            if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
+            {
+                float xA = std::max(crop_box.x, box.x);
+                float yA = std::max(crop_box.y, box.y);
+                float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
+                float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
+                box.x = xA - crop_box.x;
+                box.y = yA - crop_box.y;
+                box.w = xB - xA;
+                box.h = yB - yA;
+                bb_coords.push_back(box);
+                bb_labels.push_back(labels_buf[j]);
+            }
+        }
+        if(bb_coords.size() == 0)
+        {
+            temp_box.x = 0;
+            temp_box.y = 0;
+            temp_box.w =  crop_box.w - 1;
+	        temp_box.h =  crop_box.h - 1;
+            bb_coords.push_back(temp_box);
+            bb_labels.push_back(0);
+        }
+        input_meta_data->get_bb_cords_batch()[i] = bb_coords;
+        input_meta_data->get_bb_labels_batch()[i] = bb_labels;
+    }
+
+}
+

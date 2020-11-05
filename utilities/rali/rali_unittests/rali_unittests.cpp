@@ -35,14 +35,17 @@ THE SOFTWARE.
 
 using namespace cv;
 
-// #define PARTIAL_DECODE
+ //#define PARTIAL_DECODE
 // #define COCO_READER
+#define COCO_READER_PARTIAL
 // #define TF_READER
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER
 // #define CAFFE2_READER_DETECTION
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
+
+#define RANDOMBBOXCROP
 
 using namespace std::chrono;
 
@@ -139,8 +142,16 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     char key7[25] = "image/object/bbox/ymax";
     char key8[25] = "image/filename";
 
-#ifdef COCO_READER
-    char *json_path = "";
+#if defined RANDOMBBOXCROP
+    int all_boxes_overlap = 1;
+    int no_crop = 1;
+    int has_shape = 0;
+    int crop_width = 500;
+    int crop_height = 500;
+#endif
+
+#if defined COCO_READER || defined COCO_READER_PARTIAL
+    char *json_path = "/home/shobana/sample_test/coco_10_samples/10_instances_train2017.json";
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -161,6 +172,10 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     meta_data = raliCreateTFReaderDetection(handle, path, true, key2, key3, key4, key5, key6, key7, key8);
 #else
     meta_data = raliCreateLabelReader(handle, path);
+#endif
+
+#ifdef RANDOMBBOXCROP
+    raliRandomBBoxCrop(handle, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
 #endif
 
     RaliImage input1;
@@ -192,6 +207,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     else
         input1 = raliJpegCOCOFileSource(handle, path, json_path, color_format, num_threads, false, true, false,
                                         RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
+#elif defined COCO_READER_PARTIAL
+        input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
@@ -630,7 +647,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         int label_id[inputBatchSize];
         int numOfClasses = 2;
         int image_name_length[inputBatchSize];
-#if defined COCO_READER || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
+#if defined COCO_READER || defined COCO_READER_PARTIAL || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
         raliGetImageName(handle, img_name);

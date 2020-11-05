@@ -48,6 +48,7 @@ THE SOFTWARE.
 #include "node_crop_mirror_normalize.h"
 #include "node_resize_crop_mirror.h"
 #include "node_ssd_random_crop.h"
+#include "node_randombboxcrop.h"
 #include "node_crop.h"
 #include "node_random_crop.h"
 #include "node_copy.h"

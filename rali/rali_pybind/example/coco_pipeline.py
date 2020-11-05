@@ -40,6 +40,7 @@ class COCOPipeline(Pipeline):
         self.crop = ops.SSDRandomCrop(num_attempts=5)
         self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
         self.twist = ops.ColorTwist(device=rali_device)
+        self.bbflip = ops.BBFlip(device=rali_device, ltrb=True)
         self.cmnp = ops.CropMirrorNormalize(device="gpu",
                                             output_dtype=types.FLOAT,
                                             output_layout=types.NCHW,
@@ -57,6 +58,7 @@ class COCOPipeline(Pipeline):
         self.rng1 = ops.Uniform(range=[0.5, 1.5])
         self.rng2 = ops.Uniform(range=[0.875, 1.125])
         self.rng3 = ops.Uniform(range=[-0.5, 0.5])
+        self.coin_flip = ops.CoinFlip(probability=0.5) 
         print('rali "{0}" variant'.format(rali_device))
 
     def define_graph(self):
@@ -66,7 +68,6 @@ class COCOPipeline(Pipeline):
         hue = self.rng3()
         self.jpegs, self.bb, self.labels = self.input(name="Reader")
         encoded_bboxes, encoded_labels = self.boxEncoder(self.bb, self.labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
-        # encoded_labels = self.cast(encoded_labels)
         images = self.decode(self.jpegs)
         images = self.crop(images)
         images = self.res(images)

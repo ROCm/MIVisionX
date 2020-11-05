@@ -20,15 +20,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#pragma once
-#include <list>
-#include "meta_data_graph.h"
-#include "meta_node.h"
-class BoundingBoxGraph : public MetaDataGraph
-{
-public:
-    void process(MetaDataBatch* meta_data) override;
-    void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decode_image_info) override;
-    void update_random_bbox_meta_data(CropCordBatch* _random_bbox_crop_cords_data, MetaDataBatch* meta_data, decoded_image_info decoded_image_info) override;
-};
 
+#include <memory>
+#include "randombboxcrop_meta_data_reader_factory.h"
+#include "exception.h"
+
+std::shared_ptr<RandomBBoxCrop_MetaDataReader> create_meta_data_reader(const RandomBBoxCrop_MetaDataConfig& config) {
+    switch(config.reader_type()) {
+        case RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader:
+        {
+            if(config.type() != RandomBBoxCrop_MetaDataType::BoundingBox)
+                THROW("RANDOMBBOXCROP can only be used to load CROP OUTPUTS")
+            auto ret = std::make_shared<RandomBBoxCropReader>();
+            ret->init(config);
+            return ret;
+        }
+            break;
+        default:
+            THROW("RandomBBoxCrop_MetaDataReader type is unsupported : "+ TOSTR(config.reader_type()));
+    }
+}

@@ -65,6 +65,7 @@ public:
     const unsigned int batch_size;
     void set_batch_size(unsigned int batch_size);
     vx_array x1_arr, y1_arr, croph_arr, cropw_arr, x2_arr, y2_arr;
+    void array_init();
     void create_array(std::shared_ptr<Graph> graph);
     virtual void update_array() {};
     Parameter<float> * get_x_drift_factor() {return x_drift_factor;}

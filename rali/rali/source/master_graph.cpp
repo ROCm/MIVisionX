@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "ocl_setup.h"
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
+#include "randombboxcrop_meta_data_reader_factory.h"
 
 using half_float::half;
 
@@ -765,7 +766,18 @@ void MasterGraph::output_routine()
                 {
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
+                        if(_is_random_bbox_crop)
+                        {
+                            std::cerr<<"\n Im master graph output routine comes to is_random_bbox_crop";
+                            // _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
+                            // std::cerr<<"\n Returs from look up";
+                            // _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
+                            // std::cerr<<"\n Returnds from update random bbox meta data";
+                        }
+                        else
+                        {
+                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
+                        }
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -868,6 +880,23 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     else
         _augmented_meta_data = _meta_data_reader->get_output();
     return _meta_data_reader->get_output();
+}
+
+
+void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height)
+{
+    if( _randombboxcrop_meta_data_reader)
+        THROW("A metadata reader has already been created")
+    _is_random_bbox_crop = true;
+    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
+    _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
+    // _randombboxcrop_meta_data_reader->init(config);
+    _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
+    _randombboxcrop_meta_data_reader->read_all();
+    if (_random_bbox_crop_cords_data)
+        THROW("Metadata can only have a single output")
+    else
+        _random_bbox_crop_cords_data = _randombboxcrop_meta_data_reader->get_output();
 }
 
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)

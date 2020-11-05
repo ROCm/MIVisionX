@@ -140,6 +140,11 @@ CIFAR10DataLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg
     LOG("Loader module initialized");
 }
 
+void CIFAR10DataLoader::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader)
+{
+    _randombboxcrop_meta_data_reader = randombboxcrop_meta_data_reader;
+}
+
 void
 CIFAR10DataLoader::start_loading()
 {

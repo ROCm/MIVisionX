@@ -60,6 +60,7 @@ THE SOFTWARE.
 #include "meta_node_resize_crop_mirror.h"
 #include "meta_node_rotate.h"
 #include "meta_node_ssd_random_crop.h"
+#include "meta_node_flip.h"
 
 #include "commons.h"
 #include "context.h"
@@ -172,7 +173,9 @@ raliFlip(
     try
     {
         output = context->master_graph->create_image(input->info(), is_output);
-        context->master_graph->add_node<FlipNode>({input}, {output});
+        std::shared_ptr<FlipNode> flip_node =  context->master_graph->add_node<FlipNode>({input}, {output});
+        if (context->master_graph->meta_data_graph())
+            context->master_graph->meta_add_node<FlipMetaNode,FlipNode>(flip_node);
     }
     catch(const std::exception& e)
     {

@@ -21,27 +21,25 @@ THE SOFTWARE.
 */
 
 #pragma once
+#include <set>
+#include <memory>
+#include <algorithm>
+#include "bounding_box_graph.h"
+#include "meta_data.h"
 #include "node.h"
+#include "node_flip.h"
 #include "parameter_vx.h"
-#include "parameter_factory.h"
 
-class FlipNode : public Node
+class FlipMetaNode:public MetaNode
 {
-public:
-    FlipNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
-    FlipNode() = delete;
-    void init(int flip_axis);
-    void init(IntParam *flip_axis);
-    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
-    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
-    vx_array get_src_width() { return _src_roi_width; }
-    vx_array get_src_height() { return _src_roi_height; }
-    vx_array get_flip_axis() { return _flip_axis.default_array(); }
-protected:
-    void create_node() override;
-    void update_node() override;
-private:
-    int _axis;
-    ParameterVX<int> _flip_axis;
-    constexpr static int   FLIP_SIZE [2] =  {0, 2};
+    public:
+        FlipMetaNode() {};
+        void update_parameters(MetaDataBatch* input_meta_data)override;
+        std::shared_ptr<FlipNode> _node = nullptr;
+    private:
+        void initialize();
+        vx_array _src_width, _src_height;
+        std::vector<uint> _src_width_val, _src_height_val;
+        vx_array _flip_axis;
+        std::vector<int> _flip_axis_val;
 };

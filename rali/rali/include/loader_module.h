@@ -56,7 +56,7 @@ public:
     virtual void start_loading() = 0; // starts internal loading thread
     virtual decoded_image_info get_decode_image_info() = 0;
     // introduce meta data reader
-    virtual void set_meta_data_reader(std::shared_ptr<MetaDataReader> _meta_data_reader) = 0;
+    virtual void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader) = 0;
 };
 
 using pLoaderModule = std::shared_ptr<LoaderModule>;

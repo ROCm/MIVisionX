@@ -49,7 +49,7 @@ public:
     bool is_entire_iou(){return _entire_iou;}
 
     void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) override;
-    pCropCord get_crop_cord(const std::string &image_names);
+    pCropCord get_crop_cord(const std::string &image_names) override;
 
     RandomBBoxCropReader();
     ~RandomBBoxCropReader() override {}

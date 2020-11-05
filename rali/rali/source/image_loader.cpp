@@ -90,9 +90,9 @@ void ImageLoader::set_output_image(Image *output_image)
     _output_mem_size = _output_image->info().data_size();
 }
 
-void ImageLoader::set_meta_data_reader(std::shared_ptr<MetaDataReader> meta_data_reader)
+void ImageLoader::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader)
 {
-    _meta_data_reader = meta_data_reader;
+    _randombboxcrop_meta_data_reader = randombboxcrop_meta_data_reader;
 }
 
 void ImageLoader::stop_internal_thread()
@@ -135,6 +135,7 @@ void ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg,
     _decoded_img_info._original_width.resize(_batch_size);
     _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
+    _image_loader->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     LOG("Loader module initialized");
 }
 
@@ -169,6 +170,10 @@ ImageLoader::load_routine()
             // for images_name vector:
             //     fetch meta data using lookup
             //     convert Bboxcords to image_read_and_decode->_bbox_vector
+            // _meta_data_reader->lookup(_decoded_img_info._image_names);
+            // _meta_data = _meta_data_reader->get_output();
+            // std::cerr << "\nMeta data size ; " << _meta_data->size();
+
             load_status = _image_loader->load(data,
                                               _decoded_img_info._image_names,
                                               _output_image->info().width(),
@@ -177,22 +182,8 @@ ImageLoader::load_routine()
                                               _decoded_img_info._roi_height,
                                               _decoded_img_info._original_width,
                                               _decoded_img_info._original_height,
-                                              _output_image->info().color_format(), _decoder_keep_original);
-            _meta_data_reader->lookup(_decoded_img_info._image_names);
-            _meta_data = _meta_data_reader->get_output();
-            std::cerr << "\nMeta data size ; " << _meta_data->size();
-            for (int i = 0; i < _meta_data->size(); i++)
-            {
-                unsigned bb_count = _meta_data->get_bb_labels_batch()[i].size();
-                std::vector<int> labels_buf(bb_count);
-                std::vector<float> coords_buf(bb_count * 4);
-                memcpy(labels_buf.data(), _meta_data->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
-                memcpy(coords_buf.data(), _meta_data->get_bb_cords_batch()[i].data(), _meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
-                std::cerr << "\nBox size : [" << i << "]" << bb_count;
-                _bbox_coords.push_back(coords_buf);
-            }
-            _image_loader->set_bbox_vector(_bbox_coords);
-            _bbox_coords.clear();
+                                              _output_image->info().color_format(), _decoder_keep_original);          
+
 
             if (load_status == LoaderModuleStatus::OK)
             {

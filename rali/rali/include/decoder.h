@@ -108,5 +108,5 @@ public:
     virtual ~Decoder() = default;
 
     virtual bool is_partial_decoder() = 0;
-    virtual void set_bbox_coords(std::vector<std::vector <float>> bbox_coords) = 0;
+    virtual void set_bbox_coords(std::vector <float> bbox_coords) = 0;
 };

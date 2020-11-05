@@ -215,15 +215,15 @@ void RandomBBoxCropReader::read_all()
             {
                 crop_box.x = 0;
                 crop_box.y = 0;
-                crop_box.h = in_height[i];
-                crop_box.w = in_width[i];
+                crop_box.h = in_height[i] - 1;
+                crop_box.w = in_width[i] - 1;
                 break;
             }
 
             if (_has_shape)
             {
-                crop_box.w = _crop_width;  // Given By user
-                crop_box.h = _crop_height; // Given By user
+                crop_box.w = _crop_width - 1;  // Given By user
+                crop_box.h = _crop_height - 1; // Given By user
             }
             else // If it has no shape, then area and aspect ratio thing should be provided
             {
@@ -305,9 +305,10 @@ void RandomBBoxCropReader::read_all()
             crop_success = true;
         }                                    // while loop
         // std::cerr<<"**************************\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
+        // std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
         add(image_name, crop_box);
     }
-    print_map_contents();
+    // print_map_contents();
 }
 
 void RandomBBoxCropReader::release()

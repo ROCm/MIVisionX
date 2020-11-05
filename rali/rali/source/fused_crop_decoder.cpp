@@ -84,14 +84,24 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     // You need get the output of random bbox crop 
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
-    //if(1){
+    unsigned int crop_width, crop_height, x1, y1;
+    if(_bbox_coord.size() != 0)
+    {
+        x1 = _bbox_coord[0];
+        y1 = _bbox_coord[1];
+        crop_width = _bbox_coord[2];
+        crop_height = _bbox_coord[3];
+        // std::cerr<<"\n Original Image width :: "<<original_image_width<<"\t Crop width :: "<<crop_width;
+        // std::cerr<<"\n Original Image Height :: "<<original_image_height<<"\t Crop height :: "<<crop_height;
+    }
+    else
+    {
         std::vector<float> crop_mul_param =  decoder_config.get_crop_param();
         auto is_valid_crop = [](uint h, uint w, uint height, uint width)
         {
             return (h < height && w < width); 
         };
         int num_of_attempts = 5;
-        unsigned int crop_width, crop_height, x1, y1;
         for(int i = 0; i < num_of_attempts; i++)
         {
             double target_area  = crop_mul_param[0] * original_image_width * original_image_height;
@@ -128,7 +138,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
             x1 =  (original_image_width - crop_width) / 2;
             y1 =  (original_image_height - crop_height) / 2;
         }
-    //}
+    }
     
     //TODO : Turbo Jpeg supports multiple color packing and color formats, add more as an option to the API TJPF_RGB, TJPF_BGR, TJPF_RGBX, TJPF_BGRX, TJPF_RGBA, TJPF_GRAY, TJPF_CMYK , ...
     if( tjDecompress2_partial(m_jpegDecompressor,
@@ -140,7 +150,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                       max_decoded_height,
                       tjpf,
                       TJFLAG_FASTDCT,
-		      x1, y1, crop_width, crop_height) != 0)
+		              x1, y1, crop_width, crop_height) != 0)
 
     {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))

@@ -179,7 +179,6 @@ template<> inline std::shared_ptr<ImageLoaderNode> MasterGraph::add_node(const s
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
-    _loader_module->set_meta_data_reader(_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -192,7 +191,6 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
-    _loader_module->set_meta_data_reader(_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -205,8 +203,7 @@ template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
-    _loader_module->set_meta_data_reader(_meta_data_reader);
-    std::cerr << "\nInside add node.. master_graph.h";
+    _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -220,7 +217,7 @@ template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
-    _loader_module->set_meta_data_reader(_meta_data_reader);
+    _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));

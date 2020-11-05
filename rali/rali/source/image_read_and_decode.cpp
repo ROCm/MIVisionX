@@ -107,6 +107,12 @@ ImageReadAndDecode::count()
     return _reader->count();
 }
 
+void ImageReadAndDecode::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader)
+{
+    _randombboxcrop_meta_data_reader = randombboxcrop_meta_data_reader;
+}
+
+
 LoaderModuleStatus 
 ImageReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
@@ -154,6 +160,18 @@ ImageReadAndDecode::load(unsigned char* buff,
     }
 
     _file_load_time.end();// Debug timing
+    for (int i = 0; i < _batch_size; i++)
+    {
+        std::string temp = _image_names[i];
+        _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);
+        std::vector<float> coords_buf(4);
+        coords_buf[0] = _CropCord->crop_x;
+        coords_buf[1] = _CropCord->crop_y;
+        coords_buf[2] = _CropCord->crop_width;
+        coords_buf[3] = _CropCord->crop_height;
+        _bbox_coords.push_back(coords_buf);
+        coords_buf.clear();
+    }
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     for(size_t i = 0; i < _batch_size; i++)
@@ -184,24 +202,15 @@ ImageReadAndDecode::load(unsigned char* buff,
         size_t scaledw, scaledh;
         if(_decoder[i]->is_partial_decoder())
         {
-            std::cerr<<"\n It is partial decoder";
-            // we have got image_read_and_decode->_bbox_vector till here
-            // Declare vector of vector for bounding boxes
-            // Deep or shallow copy image_read_and_decode->_bbox_vector to partial decoder bbox  vector
-            std::cerr << "\nsize of _bbox_vector : " << _bbox_coords.size();
-            _decoder[i]->set_bbox_coords(_bbox_coords);
-        }
-        else
-        {
-            std::cerr<<"\n It is normal decoder";
-            //just for checking..We should remove this portion
-            /*std::cerr << "\nsize of _bbox_vector : " << _bbox_coords.size();
-            for(int i = 0; i < _bbox_coords.size(); i++) 
+            std::vector <float> temp;
+            temp = _bbox_coords[i];
+            if(temp[2] > original_width || temp[3] > original_height)
             {
-                std::cerr << "\t size of each vector : " << _bbox_coords[i].size();
-            }*/
+               temp[2] /= 2;
+               temp[3] /= 2;
+            }
+            _decoder[i]->set_bbox_coords(temp);
         }
-
         if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,

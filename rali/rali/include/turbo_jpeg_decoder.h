@@ -57,7 +57,7 @@ public:
 
     ~TJDecoder() override;
     bool is_partial_decoder() { return _is_partial_decoder; };
-    void set_bbox_coords(std::vector<std::vector <float>> bbox_coords) { _bbox_coords = bbox_coords;};
+    void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord;};
 private:
     tjhandle m_jpegDecompressor;
     const static unsigned SCALING_FACTORS_COUNT =  16;
@@ -80,5 +80,5 @@ private:
             { 1, 8 }
     };
     bool _is_partial_decoder = false;
-    std::vector<std::vector <float>> _bbox_coords;
+    std::vector <float> _bbox_coord;
 };

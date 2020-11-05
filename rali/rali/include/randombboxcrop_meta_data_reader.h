@@ -76,4 +76,5 @@ public:
     virtual void release() = 0; // Deletes the loaded information
     virtual void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) = 0;
     virtual CropCordBatch * get_output() = 0;
+    virtual pCropCord get_crop_cord(const std::string &image_names) = 0;
 };

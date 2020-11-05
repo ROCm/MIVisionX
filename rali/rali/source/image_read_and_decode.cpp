@@ -160,7 +160,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     }
 
     _file_load_time.end();// Debug timing
-    for (int i = 0; i < _batch_size; i++)
+    for (uint i = 0; i < _batch_size; i++)
     {
         std::string temp = _image_names[i];
         _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);

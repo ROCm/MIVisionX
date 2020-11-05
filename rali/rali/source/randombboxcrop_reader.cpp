@@ -125,7 +125,7 @@ void RandomBBoxCropReader::add(std::string image_name, BoundingBoxCord crop_box)
     pCropCord random_bbox_cords = std::make_shared<CropCord>(crop_box.x, crop_box.y, crop_box.w, crop_box.h);
     if (exists(image_name))
     {
-        auto it = _map_content.find(image_name);
+        // auto it = _map_content.find(image_name);
         return;
     }
     _map_content.insert(std::pair<std::string, std::shared_ptr<CropCord>>(image_name,random_bbox_cords));
@@ -143,15 +143,6 @@ void RandomBBoxCropReader::print_map_contents()
     }
 }
 
-// void update_meta_data()
-// {
-//     for (auto& elem : _meta_bbox_map_content)
-//     {
-
-//     }
-
-// }
-
 void RandomBBoxCropReader::read_all()
 {
     std::random_device rd;
@@ -162,14 +153,14 @@ void RandomBBoxCropReader::read_all()
                                                                 std::make_pair(false, 0.5f), std::make_pair(false, 0.6f), std::make_pair(false, 0.75f), std::make_pair(false, 0.9f)};
     int sample_option;
     std::pair<bool, float> option;
-    float min_iou, max_iou;
+    float min_iou; // max_iou;
     // in_width = _crop_param->in_width;
     // in_height = _crop_param->in_height;
     bool invalid_bboxes = true;
     _entire_iou = true;
     bool _overlap_iou = false;
     BoundingBoxCord crop_box, jth_box;
-    int bb_count;
+    uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
     int i = 0;
     for (auto& elem : _meta_bbox_map_content)
@@ -252,7 +243,7 @@ void RandomBBoxCropReader::read_all()
             bool entire_iou = !_overlap_iou; //
             if (_all_boxes_overlap)
             {
-                for (int j = 0; j < bb_count; j++)
+                for (uint j = 0; j < bb_count; j++)
                 {
                     int m = j * 4;
                     jth_box.x = coords_buf[m];
@@ -272,7 +263,7 @@ void RandomBBoxCropReader::read_all()
             else // at lease one box shoud overlap
             {
 
-                for (int j = 0; j < bb_count; j++)
+                for (uint j = 0; j < bb_count; j++)
                 {
                     int m = j * 4;
                     jth_box.x = coords_buf[m];
@@ -292,7 +283,7 @@ void RandomBBoxCropReader::read_all()
 
             int valid_bbox_count = 0;
             auto left = crop_box.x, top = crop_box.y, right = crop_box.x + crop_box.w, bottom = crop_box.y + crop_box.h;
-            for (int j = 0; j < bb_count; j++)
+            for (uint j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
                 auto x_c = 0.5f * (2 * coords_buf[m] + coords_buf[m + 2]);

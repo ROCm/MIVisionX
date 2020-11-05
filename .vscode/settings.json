@@ -63,7 +63,8 @@
         "cfenv": "cpp",
         "valarray": "cpp",
         "iterator": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "*.inc": "cpp"
     },
     "files.autoSave": "afterDelay"
 }

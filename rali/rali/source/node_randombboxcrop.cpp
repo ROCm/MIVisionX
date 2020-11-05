@@ -69,7 +69,7 @@ void RandomBBoxCropNode::update_node()
                                                                 std::make_pair(false, 0.5f), std::make_pair(false, 0.6f), std::make_pair(false, 0.75f), std::make_pair(false, 0.9f)};
     int sample_option;
     std::pair<bool, float> option;
-    float min_iou, max_iou;
+    float min_iou; // max_iou;
     in_width = _crop_param->in_width;
     in_height = _crop_param->in_height;
     bool invalid_bboxes = true;
@@ -79,8 +79,8 @@ void RandomBBoxCropNode::update_node()
     int bb_count;
     Parameter<float> *x_drift_factor = _crop_param->get_x_drift_factor();
     Parameter<float> *y_drift_factor = _crop_param->get_y_drift_factor();
-    Parameter<float> *area_factor = _crop_param->get_area_factor();
-    Parameter<float> *aspect_ratio_factor = _crop_param->get_aspect_ratio();
+    // Parameter<float> *area_factor = _crop_param->get_area_factor();
+    // Parameter<float> *aspect_ratio_factor = _crop_param->get_aspect_ratio();
     _x1_val = _crop_param->get_x1_arr_val();
     _y1_val = _crop_param->get_y1_arr_val();
     _crop_width_val = _crop_param->get_cropw_arr_val();

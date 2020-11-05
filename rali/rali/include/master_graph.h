@@ -83,6 +83,7 @@ public:
     size_t internal_batch_size() { return _internal_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
+    bool is_random_bbox_crop() {return _is_random_bbox_crop; }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -99,6 +100,7 @@ private:
     bool no_more_processed_data();
     RingBuffer _ring_buffer;//!< The queue that keeps the images that have benn processed by the internal thread (_output_thread) asynchronous to the user's thread
     MetaDataBatch* _augmented_meta_data = nullptr;//!< The output of the meta_data_graph,
+    CropCordBatch* _random_bbox_crop_cords_data = nullptr;
     std::thread _output_thread;
     DeviceManager   _device;//!< Keeps the device related constructs needed for running on GPU
     ImageInfo _output_image_info;//!< Keeps the information about RALI's output image , it includes all images of a batch stacked on top of each other
@@ -132,6 +134,7 @@ private:
     const size_t _internal_batch_size;//!< In the host processing case , internal batch size can be different than _user_batch_size. This batch size used internally throughout.
     const size_t _user_to_internal_batch_ratio;
     bool _output_routine_finished_processing = false;
+    bool _is_random_bbox_crop = false;
 };
 
 template <typename T>

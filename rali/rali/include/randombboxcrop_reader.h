@@ -28,27 +28,57 @@ THE SOFTWARE.
 #include "randombboxcrop_meta_data_reader.h"
 #include "parameter_factory.h"
 #include "parameter_crop_factory.h"
+#include "meta_data_reader.h"
+#include "coco_meta_data_reader.h"
 
 class RandomBBoxCropReader: public RandomBBoxCrop_MetaDataReader
 {
 public:
     void init(const RandomBBoxCrop_MetaDataConfig& cfg) override;
-    void lookup(const std::string& image_name) override;
+    void lookup(const std::vector<std::string>& image_names) override;
     void read_all() override;
     void release() override;
     void print_map_contents();
+    void update_meta_data();
+
+    CropCordBatch * get_output() override { return _output; }
+    
+    std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
+    float get_threshold(){return _threshold;}
+    std::vector<std::pair<bool, float>> get_iou_range(){return _iou_range;}
+    bool is_entire_iou(){return _entire_iou;}
+
+    void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) override;
+    pCropCord get_crop_cord(const std::string &image_names);
+
     RandomBBoxCropReader();
-    ~RandomBBoxCropReader() override { }
+    ~RandomBBoxCropReader() override {}
 private:
     std::shared_ptr<RaliRandomCropParam> _meta_crop_param;
+    std::shared_ptr<COCOMetaDataReader> _meta_data_reader = nullptr;
+    std::map<std::string, std::shared_ptr<BoundingBox>> _meta_bbox_map_content;
+    std::vector<uint> _crop_width_val, _crop_height_val, _x1_val, _y1_val, _x2_val, _y2_val;
+    std::vector<uint32_t> in_width, in_height;
+    float  _threshold = 0.05;
+    int _batch_size = 1;
+    std::vector<std::pair<bool, float>> _iou_range;
     int _all_boxes_overlap;
     int _no_crop;
     int _has_shape;
     int _crop_width;
     int _crop_height;
-    void add(std::string image_name, CropCord bbox);
+    int _num_of_attempts = 20;
+    bool _entire_iou = false;
+    FloatParam *crop_area_factor = NULL;
+    FloatParam *crop_aspect_ratio = NULL;
+    FloatParam *x_drift = NULL;
+    FloatParam *y_drift = NULL;
+    std::shared_ptr<RaliRandomCropParam> _crop_param;
+    void add(std::string image_name, BoundingBoxCord bbox);
     bool exists(const std::string &image_name);
     std::map<std::string, std::shared_ptr<CropCord>> _map_content;
     std::map<std::string, std::shared_ptr<CropCord>>::iterator _itr;
+    std::shared_ptr<Graph> _graph = nullptr;
+    CropCordBatch* _output;
 };
 

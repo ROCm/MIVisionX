@@ -28,4 +28,67 @@ THE SOFTWARE.
 #include "commons.h"
 
 
-typedef  struct { float crop_x; float crop_y; float crop_width; float crop_height; } CropCord;
+struct CropCord
+{
+    CropCord()
+    {
+        crop_x = 0;
+        crop_y = 0;
+        crop_width = 0;
+        crop_height = 0;
+    }
+    CropCord(float x, float y, float c_w, float c_h)
+    {
+        crop_x = x;
+        crop_y = y;
+        crop_width = c_w;
+        crop_height = c_h;
+    }
+    float crop_x;
+    float crop_y;
+    float crop_width;
+    float crop_height;
+};
+
+using pCropCord = std::shared_ptr<CropCord>;
+
+struct CropCordBatch
+{
+    virtual ~CropCordBatch() = default;
+    void clear()
+    {
+        _crop_cords.clear();
+    }
+    void resize(int batch_size)
+    {
+        _crop_cords.resize(batch_size);
+    }
+    int size()
+    {
+        pCropCord temp;
+        std::cerr<<"\n temp :: "<<temp->crop_x<<"\t "<<temp->crop_y<<"\t "<<temp->crop_width<<"\t "<<temp->crop_height;
+        _crop_cords.push_back(temp);
+        std::cerr<<"\n Inserted temp in crop cords";
+        // _crop_cords.resize(2);
+        std::cerr<<"\n _crop_cords.size():: "<<_crop_cords.size();
+        return _crop_cords.size();
+    }
+    CropCordBatch&  operator += (CropCordBatch& other)
+    {
+        _crop_cords.insert(_crop_cords.end(),other.get_bb_cords_batch().begin(), other.get_bb_cords_batch().end());
+        return *this;
+    }
+    CropCordBatch* concatenate(CropCordBatch* other)
+    {
+        *this += *other;
+        return this;
+    }
+    std::shared_ptr<CropCordBatch> clone()
+    {
+
+        return std::make_shared<CropCordBatch>(*this);
+    }
+    std::vector<pCropCord>& get_bb_cords_batch() { return _crop_cords; }
+protected:
+    std::vector<pCropCord> _crop_cords = {};
+};

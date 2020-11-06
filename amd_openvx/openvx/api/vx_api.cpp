@@ -4423,6 +4423,11 @@ VX_API_ENTRY vx_delay VX_API_CALL vxCreateDelay(vx_context context,
 				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
 					if (data->children[i]->children[j]) {
 						agoAddData(&context->dataList, data->children[i]->children[j]);
+						for (vx_uint32 k = 0; k < data->children[i]->children[j]->numChildren; k++) {
+							if (data->children[i]->children[j]->children[k]) {
+								agoAddData(&context->dataList, data->children[i]->children[j]->children[k]);
+							}
+						}
 					}
 				}
 			}

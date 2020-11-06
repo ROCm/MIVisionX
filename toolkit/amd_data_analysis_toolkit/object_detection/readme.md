@@ -1,15 +1,9 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-# MIVisionX - Object Detection Visualization
-
-## MIVision Toolset
-
-AMD MIVisionX is a comprehensive set of help tools for neural net creation, development, training and deployment. The ToolKit provides you with help tools to design, develop, quantize, prune, retrain, and infer your neural network work in any framework. The ToolKit is designed to help you deploy your work to any supported AMD or 3rd party hardware, from embedded to servers.
-
-MIVision ToolKit provides you with tools for accomplishing your tasks throughout the whole neural net life-cycle, from creating a model to deploying them for your target platforms.
+# ADAT - Object Detection Visualization
 
 ## Usage
-### Visualization Tool Generation Script:
+### ADAT - Visualization Tool Generation Script
 ````
 python generate-visualization.py
 ````
@@ -34,7 +28,6 @@ python generate-visualization.py
 * -f    : **Output File Name**
 * -g    : **Input Ground Truth File**
 * -g    : **Input Bounding Box Tool Truth File**
-
 
 ## Sample 
 
@@ -86,4 +79,3 @@ This section compares the results of a database or the model between different s
 ### Model Score 
 
 The section does an experimental scoring for the given model.
-

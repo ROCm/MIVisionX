@@ -54,8 +54,8 @@ Hip_Lut_U8_U8(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes) + (x * 2);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + (x * 2);
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + (x * 4);
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + (x * 4);
     for (int i = 0; i < 4; i++)
         pDstImage[dstIdx + i] = lut[pSrcImage1[src1Idx + i]];
 }

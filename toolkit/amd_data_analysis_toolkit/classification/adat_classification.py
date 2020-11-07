@@ -905,14 +905,6 @@ def getSuccessFailureChartData(stats, topKPassFail, topKHierarchyPassFail):
 
 
 def readIni(filename, args):
-    # Check if python3 or 2 and do appropriate import
-    try:
-        from configparser import ConfigParser
-        config = ConfigParser()
-    except ImportError:
-        from ConfigParser import SafeConfigParser
-        config = SafeConfigParser()
-
     config.read(filename)
     sectionName = "main"
     configDict = {}

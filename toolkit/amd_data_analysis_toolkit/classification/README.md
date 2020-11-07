@@ -6,28 +6,29 @@
 
 ### ADAT - Visualization Tool Generation Script Usage
 
-### Script Help 
+### Script Help
 
-``` 
+```bash
 python generate-visualization.py -h
 ```
 
-### Script Inputs:
+### Script Inputs
 
-``` 
-usage: generate-visualization.py  [-h/--help] 
+```bash
+usage: generate-visualization.py  [-h/--help]
                                   --inference_results INFERENCE_RESULTS
                                   --label LABEL
                                   [--image_dir IMAGE_DIR ]
                                   [--hierarchy HIERARCHY]
-                                  [--model_name MODEL_NAME] 
-                                  --output_dir OUTPUT_DIR 
+                                  [--model_name MODEL_NAME]
+                                  --output_dir OUTPUT_DIR
                                   --output_name OUTPUT_NAME
+                                  [--file FILE_NAME]
 ```
 
 #### Input Help
 
-``` 
+```bash
  -h, --help           show this help message and exit
  --inference_results  input inference results CSV file [required] (File Format:ImgFileName, GroundTruth, L1, L2, L3, L4, L5, P1, P2, P3, P4, P5)
  --label              input labels text file [required]
@@ -36,9 +37,10 @@ usage: generate-visualization.py  [-h/--help]
  --model_name         input inferece model name [optional]
  --output_dir         output dir to store ADAT results [required]
  --output_name        output ADAT file name [required]
+ --file               json/ini file to load arguments from [optional]
 ```
 
-* --inference_results : **Result CSV File** 
+* --inference_results : **Result CSV File**
 
 | Image File Name | Ground Truth Label | Output Label 1 | Output Label 2 | Output Label 3 | Output Label 4 | Output Label 5 | Prob 1 | Prob 2 | Prob 3 | Prob 4 | Prob 5 |
 | --------------- | ------------------ | -------------- | -------------- | -------------- | -------------- | -------------- | ------ | ------ | ------ | ------ | ------ |
@@ -49,9 +51,62 @@ If the images are to be copied to the local ADAT results directory, `image_dir` 
 
 ## Sample 
 
-``` 
-python generate-visualization.py --inference_results sample/inceptionV4-results.csv --image_dir ../../data/images/AMD-tinyDataSet/ --label sample/labels.txt --hierarchy sample/hierarchy.csv --model_name inceptionV4 --output_dir outputFolder --output_name classificationVisualized 
+```bash
+python generate-visualization.py --inference_results sample/inceptionV4-results.csv --image_dir ../../data/images/AMD-tinyDataSet/ --label sample/labels.txt --hierarchy sample/hierarchy.csv --model_name inceptionV4 --output_dir outputFolder --output_name classificationVisualized
 ```
+
+## Loading arguments from a file
+
+### Json file
+
+```bash
+python generate-visualization.py --file config.json
+```
+
+The format for the json config file is as follows
+
+```json
+{
+    "inference_results": "[csv file path -> required]",
+    "label": "[label file path -> required]",
+    "hierarchy": "[hierarchy file path -> optional]",
+    "output_dir": "[output directory -> required]",
+    "image_dir": "[Images dir -> optional]",
+    "output_name": "[output name -> required]",
+    "model_name": "[model name -> optional]"
+}
+```
+
+### INI File
+
+```bash
+python generate-visualization.py --file config.json
+```
+
+The format of ini file
+
+```ini
+[main]
+inference_results = ./sample/inceptionV4-results.csv
+label = ./sample/labels.txt
+hierarchy = ./sample/hierarchy.csv
+output_dir = ./output
+image_dir = ../../../data/images/AMD-tinyDataSet/
+output_name = classificationVisualized
+model_name = model1
+```
+
+## Using GUI to load settings
+
+The gui can be launched using following command:
+
+```bash
+python adat_gui.py
+```
+
+<p align="center"><img width="90%" src="../../../docs/images/adat_classification_gui.png" /></p>
+
+
 
 ## List of Features Available in this release
 

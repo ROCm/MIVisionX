@@ -33,15 +33,22 @@
      <property name="sizeConstraint">
       <enum>QLayout::SetMinimumSize</enum>
      </property>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_6">
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Model Name</string>
+        <string>Label File</string>
        </property>
       </widget>
      </item>
-     <item row="9" column="1">
-      <widget class="QLineEdit" name="txtHierarchyFile"/>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="txtInputFile"/>
+     </item>
+     <item row="4" column="2">
+      <widget class="QPushButton" name="btnFileBrowse">
+       <property name="text">
+        <string>Browse..</string>
+       </property>
+      </widget>
      </item>
      <item row="5" column="2">
       <widget class="QPushButton" name="btnLabelBrowse">
@@ -50,12 +57,73 @@
        </property>
       </widget>
      </item>
+     <item row="9" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Hierarchy File</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="1">
+      <widget class="QLineEdit" name="txtOutputDir"/>
+     </item>
      <item row="4" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Input File</string>
        </property>
       </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="txtModelName"/>
+     </item>
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Image Directory</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Model Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Output DIrectory</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Output Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="2">
+      <widget class="QPushButton" name="btnOutputBrowse">
+       <property name="text">
+        <string>Browse..</string>
+       </property>
+      </widget>
+     </item>
+     <item row="9" column="2">
+      <widget class="QPushButton" name="btnHierarchyFileBrowse">
+       <property name="text">
+        <string>Browse..</string>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
+      <widget class="QLineEdit" name="txtImageDir"/>
+     </item>
+     <item row="7" column="1">
+      <widget class="QLineEdit" name="txtOutputName"/>
      </item>
      <item row="8" column="2">
       <widget class="QPushButton" name="btnImageDirBrowse">
@@ -67,76 +135,25 @@
      <item row="5" column="1">
       <widget class="QLineEdit" name="txtLabelFile"/>
      </item>
-     <item row="9" column="0">
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>Hierarchy File</string>
-       </property>
-      </widget>
+     <item row="9" column="1">
+      <widget class="QLineEdit" name="txtHierarchyFile"/>
      </item>
-     <item row="4" column="2">
-      <widget class="QPushButton" name="btnFileBrowse">
+     <item row="11" column="2">
+      <widget class="QPushButton" name="btnCompareBrowse">
        <property name="text">
         <string>Browse..</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="2">
-      <widget class="QPushButton" name="btnOutputBrowse">
+     <item row="11" column="0">
+      <widget class="QLabel" name="label_8">
        <property name="text">
-        <string>Browse..</string>
+        <string>Compare File</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Image Directory</string>
-       </property>
-      </widget>
-     </item>
-     <item row="8" column="1">
-      <widget class="QLineEdit" name="txtImageDir"/>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label_3">
-       <property name="text">
-        <string>Output DIrectory</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1">
-      <widget class="QLineEdit" name="txtOutputName"/>
-     </item>
-     <item row="9" column="2">
-      <widget class="QPushButton" name="btnHierarchyFileBrowse">
-       <property name="text">
-        <string>Browse..</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="label_4">
-       <property name="text">
-        <string>Output Name</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLineEdit" name="txtInputFile"/>
-     </item>
-     <item row="6" column="1">
-      <widget class="QLineEdit" name="txtOutputDir"/>
-     </item>
-     <item row="3" column="1">
-      <widget class="QLineEdit" name="txtModelName"/>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Label File</string>
-       </property>
-      </widget>
+     <item row="11" column="1">
+      <widget class="QLineEdit" name="txtCompareFile"/>
      </item>
     </layout>
    </widget>

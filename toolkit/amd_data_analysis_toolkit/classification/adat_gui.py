@@ -32,6 +32,7 @@ class inference_control(QtGui.QMainWindow):
         self.btnLabelBrowse.clicked.connect(self.browseLabel)
         self.btnImageDirBrowse.clicked.connect(self.browseImage)
         self.btnHierarchyFileBrowse.clicked.connect(self.browseHier)
+        self.btnCompareBrowse.clicked.connect(self.browseCompare)
 
         self.btnGenerate.clicked.connect(self.runGenerate)
 
@@ -47,6 +48,7 @@ class inference_control(QtGui.QMainWindow):
         self.txtHierarchyFile.setPlaceholderText("[optional]")
         self.txtOutputName.setPlaceholderText("[optional]")
         self.txtModelName.setPlaceholderText("[optional]")
+        self.txtCompareFile.setPlaceholderText("[optional]")
 
         # self.close_pushButton.setStyleSheet(
         #     "color: white; background-color: darkRed")
@@ -55,6 +57,10 @@ class inference_control(QtGui.QMainWindow):
 
     def browseFile(self):
         self.txtInputFile.setText(
+            QtGui.QFileDialog.getOpenFileName(self, 'Open File', './', '*.csv'))
+
+    def browseCompare(self):
+        self.txtCompareFile.setText(
             QtGui.QFileDialog.getOpenFileName(self, 'Open File', './', '*.csv'))
 
     def browseOutput(self):
@@ -80,12 +86,13 @@ class inference_control(QtGui.QMainWindow):
     def setConfigDict(self, configDict):
         self.configDict = configDict
         self.txtModelName.setText(self.configDict.get('model_name', ''))
-        self.txtInputFile.setText(self.configDict.get('inference_results', ''))    
-        self.txtLabelFile.setText(self.configDict.get('label', ''))        
-        self.txtHierarchyFile.setText(self.configDict.get('hierarchy', ''))        
-        self.txtOutputDir.setText(self.configDict.get('output_dir', ''))        
-        self.txtImageDir.setText(self.configDict.get('image_dir', ''))        
+        self.txtInputFile.setText(self.configDict.get('inference_results', ''))
+        self.txtLabelFile.setText(self.configDict.get('label', ''))
+        self.txtHierarchyFile.setText(self.configDict.get('hierarchy', ''))
+        self.txtOutputDir.setText(self.configDict.get('output_dir', ''))
+        self.txtImageDir.setText(self.configDict.get('image_dir', ''))
         self.txtOutputName.setText(self.configDict.get('output_name', ''))
+        self.txtCompareFile.setText(self.configDict.get('compare', ''))
 
     def loadConfig(self):
         filename = QtGui.QFileDialog.getOpenFileName(
@@ -140,6 +147,8 @@ class inference_control(QtGui.QMainWindow):
         self.configDict['image_dir'] = self.getVal(self.txtImageDir.text())
         self.configDict['output_name'] = self.getVal(
             self.txtOutputName.text())
+        self.configDict['compare'] = self.getVal(
+            self.txtCompareFile.text())
 
     def runGenerate(self):
         self.getConfig()

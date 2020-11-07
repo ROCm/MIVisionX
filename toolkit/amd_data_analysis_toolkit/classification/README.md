@@ -104,7 +104,7 @@ The gui can be launched using following command:
 python adat_gui.py
 ```
 
-<p align="center"><img width="90%" src="../../../docs/images/adat_classification_gui.png" /></p>
+<p align="center"><img width="50%" src="../../../docs/images/adat_classification_gui.png" /></p>
 
 
 

@@ -276,13 +276,15 @@ function loadImageResults(imageSummaryLocal) {
 
         var imgHtml = "<img onclick=\"showModal(event)\" src=\"" +
             im.filePath +
-            "\" data-alt=\"<b>GROUND TRUTH:</b>" +
+            "\" data-gt=\"" + im.gt + "\" data-alt=\"<b>GROUND TRUTH:</b>" +
             im.gtText + "<br><b>CLASSIFIED AS:</b>" +
             im.labelTexts[0] + "\" width=\"30\" height=\"30\">";
         var imgLinkHtml = "<a href=\"" + im.filePath + "\" target=\"_blank\">" + im.imageName + "</a>";
 
         row.append($("<td>").attr("class", "imgcell").html(imgHtml));
         row.append($("<td>").html(imgLinkHtml));
+
+
         row.append($("<td>").attr("class", "imgcell left-align").text(im.gtText));
         row.append($("<td>").attr("class", "imgcell").text(im.gt));
 
@@ -298,6 +300,8 @@ function loadImageResults(imageSummaryLocal) {
         for (i = 0; i < 5; i++) {
             row.append($("<td>").attr("class", "imgcell").text(im.probs[i].toFixed(4)));
         }
+
+
         myTableBody.append(row);
     });
 
@@ -312,7 +316,29 @@ function showModal(event) {
     modal.style.display = "block";
     modalCaption.innerHTML = event.target.dataset.alt;
     modalImg.src = event.target.src;
+
+
+    var hierarchyInfoLabel = document.getElementById("hierarchyInfoLabel");
+    var gtId = event.target.dataset.gt;
+
+    if (gtId) {
+        gtId = parseInt(gtId, 10);
+    }
+    var hierarchy = [];
+    if (hierarchyData && hierarchyData.hierarchyDetails) {
+
+        hierarchy = hierarchyData.hierarchyDetails[gtId];
+        console.log(hierarchy);
+    }
+    hierarchyInfoLabel.innerHTML = "";
+    if (hierarchy && hierarchy.length > 0) {
+        hierarchy.forEach(function (item) {
+            hierarchyInfoLabel.innerHTML = hierarchyInfoLabel.innerHTML + " > " + item;
+        });
+    }
+
 }
+
 
 // eslint-disable-next-line no-unused-vars
 function closeModal() {

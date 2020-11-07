@@ -281,7 +281,6 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
     with open(os.path.join(resultsDirectory, 'labelSummary.csv'), 'w') as labelSummaryCsv:
         writer = csv.writer(labelSummaryCsv)
         for i, label in enumerate(labelLines):
-
             wr = [i]
             wr.extend(labelSummary[i])
             wr.append(label)
@@ -391,12 +390,13 @@ def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores,
         resJson.write(jsScript)
 
 
-def writeHierarchyJson(resultsDirectory, topKPassFail, topKHierarchyPassFail):
+def writeHierarchyJson(resultsDirectory, topKPassFail, topKHierarchyPassFail, hierarchyDataBase):
     with open(os.path.join(resultsDirectory, 'hierarchySummary.js'), 'w') as resJson:
         result = {}
         if(topKPassFail is not None and topKHierarchyPassFail is not None):
             result['topKPassFail'] = topKPassFail.tolist()
             result['topKHierarchyPassFail'] = topKHierarchyPassFail.tolist()
+            result['hierarchyDetails'] = hierarchyDataBase
 
         jsScript = "var hierarchyData = " + json.dumps(result) + ';'
         resJson.write(jsScript)
@@ -1084,9 +1084,9 @@ def generateAnalysisOutput(argsDict):
 
         # Write hierarchy json, if no hierarchy creates an empty file
         writeHierarchyJson(resultsDirectory, topKPassFail,
-                           topKHierarchyPassFail)
+                           topKHierarchyPassFail, hierarchyDataBase)
     else:
-        writeHierarchyJson(resultsDirectory, None, None)
+        writeHierarchyJson(resultsDirectory, None, None, None)
 
     modelScores, matchCounts = createScoreSummary(stats, topCounts)
 

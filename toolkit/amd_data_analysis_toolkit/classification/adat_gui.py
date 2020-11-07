@@ -79,13 +79,13 @@ class inference_control(QtGui.QMainWindow):
 
     def setConfigDict(self, configDict):
         self.configDict = configDict
-        self.txtModelName.setText(self.configDict['model_name'])
-        self.txtInputFile.setText(self.configDict['inference_results'])
-        self.txtLabelFile.setText(self.configDict['label'])
-        self.txtHierarchyFile.setText(self.configDict['hierarchy'])
-        self.txtOutputDir.setText(self.configDict['output_dir'])
-        self.txtImageDir.setText(self.configDict['image_dir'])
-        self.txtOutputName.setText(self.configDict['output_name'])
+        self.txtModelName.setText(self.configDict.get('model_name', ''))
+        self.txtInputFile.setText(self.configDict.get('inference_results', ''))    
+        self.txtLabelFile.setText(self.configDict.get('label', ''))        
+        self.txtHierarchyFile.setText(self.configDict.get('hierarchy', ''))        
+        self.txtOutputDir.setText(self.configDict.get('output_dir', ''))        
+        self.txtImageDir.setText(self.configDict.get('image_dir', ''))        
+        self.txtOutputName.setText(self.configDict.get('output_name', ''))
 
     def loadConfig(self):
         filename = QtGui.QFileDialog.getOpenFileName(

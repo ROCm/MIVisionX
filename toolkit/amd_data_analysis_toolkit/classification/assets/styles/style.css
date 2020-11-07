@@ -75,7 +75,6 @@ tr:nth-of-type(odd) {
   color: white;
   font-size: 18px;
   padding: 10px 0;
-  height: 150px;
 }
 
 .modal-content,
@@ -416,4 +415,29 @@ select {
 #hierarchy-summary-table tbody {
   font-size: small;
   font-weight: bold;
+}
+
+.hierarchy-cell {
+  font-size: large;
+  font-weight: bold;
+}
+
+.hierarchy-info {
+  color: white;
+  font-size: 16px;
+  max-width: 700px;
+  margin-right: auto;
+  margin-left: auto;
+  list-style: none;
+}
+
+.hierarchy-info-div {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  text-align: center;
+  color: white;
+  font-size: 18px;
+  padding: 10px 0;
 }

@@ -7,3 +7,4 @@ node_modules
 .stylelintrc.json
 package.json
 package-lock.json
+*.pyc

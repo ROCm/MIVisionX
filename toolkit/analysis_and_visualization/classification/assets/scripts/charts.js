@@ -249,7 +249,7 @@ function drawMethodScoreChartGraphs() {
     for (var i = 0; i < data.chartData.methodScoreChartData.length; i++) {
 
         // There is no L6 so do not plot L6 SUccess Failure
-        if (i == 5)
+        if (i === 5)
             continue;
 
         var chartParentDiv = document.createElement("div");
@@ -345,7 +345,7 @@ function addResultHistory() {
                     ["Summary", model.passCount, model.totalMismatch]
                 ]);
                 var options = {
-                    title: "Generic Model Overall Result Summary",
+                    title: model.modelName + " Overall Result Summary",
                     vAxis: {
                         title: "Images"
                     },

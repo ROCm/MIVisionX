@@ -51,6 +51,10 @@ def main():
                         help='output ADAT file name                     [required]')
     parser.add_argument('--file',               type=str, required=False,
                         help='Config File                               [optional]')
+
+    parser.add_argument('--compare',               type=str, required=False,
+                        help='File to compare image results with                [optional]')
+
     args = parser.parse_args()
     if args.file:
         if not os.path.exists(args.file):

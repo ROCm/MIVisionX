@@ -441,3 +441,7 @@ select {
   font-size: 18px;
   padding: 10px 0;
 }
+
+.diff-text {
+  background: rgba(245, 248, 77, 0.39)
+}

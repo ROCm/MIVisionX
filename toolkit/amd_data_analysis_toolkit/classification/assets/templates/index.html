@@ -535,7 +535,13 @@
                 </select>
                 <input type="text" size="10" data-is-array="true" id="fli_probs_4" onkeyup="filterResultTable(event)"
                     placeholder="5th Match Conf" title="5th Match Prob"></td>
-            <td></td>
+            <td>
+                <select id="fli_op_hasDiff">
+                    <option value="eq" selected>=</option>
+                    <option value="neq">!=</option>
+                </select>
+                <input type="text" size="10" data-is-array="true" id="fli_hasDiff" onkeyup="filterResultTable(event)"
+                    placeholder="Has Difference (0 or 1)" title="Has Difference"></td>
             <td><button style="background-color:yellow;" onclick="clearResultFilter()">Clear
                     Filter</button></td>
         </tr>
@@ -583,6 +589,8 @@
                 <th class="sort-field" data-field="probs_2">Conf-3<span></span></th>
                 <th class="sort-field" data-field="probs_3">Conf-4<span></span></th>
                 <th class="sort-field" data-field="probs_4">Conf-5<span></span></th>
+                <th class="sort-field" data-field="hasDiff">Diff<span></span></th>
+
             </tr>
         </thead>
 

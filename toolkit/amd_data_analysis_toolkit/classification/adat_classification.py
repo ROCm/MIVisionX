@@ -193,7 +193,48 @@ def generateTop1Result(resultsDirectory, resultDataBase, labelLines):
     logger.debug("Written file %s", outputCsvFile)
 
 
-def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, imageDir, modelName):
+def diffAddMatchValue(diff, gt):
+    labelFields = ['outputLabel-1',
+                   'outputLabel-2', 'outputLabel-3', 'outputLabel-4']
+    newDict = {}
+    newDict['fields'] = {}
+    matched = 0
+
+    # if gt has changed, handle that
+
+    if diff['fields'].get('groundTruthLabel'):
+        gt = int(diff['fields']['groundTruthLabel']['to'])
+
+    for field in diff['fields']:
+        newDict['fields'][field] = diff['fields'][field]
+        if field in labelFields:
+            if gt == int(diff['fields'][field]['to']):
+                matched = labelFields.index(field) + 1
+
+    newDict['fields']['match'] = {'to': matched}
+    return newDict
+
+
+def diffLabels(diff, labellines):
+    allFields = ['outputLabel-1', 'outputLabel-2', 'outputLabel-3', 'outputLabel-4',
+                 'outputLabel-5', 'Prob-1', 'Prob-2', 'Prob-3', 'Prob-4', 'Prob-5']
+    labelFields = ['groundTruthLabel', 'outputLabel-1',
+                   'outputLabel-2', 'outputLabel-3', 'outputLabel-4']
+    newDict = {}
+    newDict['fields'] = {}
+
+    for field in diff['fields']:
+        newDict['fields'][field] = diff['fields'][field]
+        if field in labelFields:
+            fieldName = field + '-text'
+            changedLabel = int(diff['fields'][field]['to'])
+            newText = labellines[changedLabel]
+            newDict['fields'][fieldName] = {'to': newText}
+
+    return newDict
+
+
+def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, imageDir, modelName, diffPatch=None):
 
     # 0 to 4 are top1 to top5 data
     topk = 5
@@ -239,7 +280,6 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
                 match = -1
                 gtLabelText = 'Unknown'
                 totalNoGroundTruth += 1
-
             wr = [img]
             wr.extend(labels)
             wr.extend([gt, match])
@@ -264,7 +304,19 @@ def generateComprehensiveResults(resultsDirectory, resultDataBase, labelLines, i
             imgRes['labelTexts'] = labelTexts
             imgRes['gtText'] = gtLabelText
             imgRes['probs'] = probs
+            imgRes['hasDiff'] = False
 
+            if diffPatch is not None:
+                imgDiff = [x for x in diffPatch['changed']
+                           if x['key'][0] == img[0]]
+                if len(imgDiff) > 0:
+                    imgDiff = imgDiff[0]
+                    imgDiff = diffLabels(imgDiff, labelLines)
+                    imgDiff = diffAddMatchValue(imgDiff, gt)
+                    imgRes['hasDiff'] = True
+                else:
+                    imgDiff = {}
+                imgRes['diff'] = imgDiff
             allImageResults.append(imgRes)
 
             # imgRes['filename'] = img[0]
@@ -1031,6 +1083,7 @@ def generateAnalysisOutput(argsDict):
     modelName = argsDict['model_name']
     outputDirectory = argsDict['output_dir']
     fileName = argsDict['output_name']
+    compareFile = argsDict['compare']
 
     if not os.path.exists(outputDirectory):
         os.makedirs(outputDirectory)
@@ -1040,6 +1093,10 @@ def generateAnalysisOutput(argsDict):
 
     # read label file
     labelLines, labelElements = readLabelFile(labelFile)
+
+    diffPatch = None
+    if compareFile:
+        diffPatch = getDifferencePatch(inputCSVFile, compareFile, ['FileName'])
 
     if hierarchyFile:
         hierarchyDataBase, hierarchyElements = readHierarchyFile(
@@ -1056,7 +1113,7 @@ def generateAnalysisOutput(argsDict):
     generateTop1Result(resultsDirectory, resultDataBase, labelLines)
 
     stats, topCounts, topKStats = generateComprehensiveResults(
-        resultsDirectory, resultDataBase, labelLines, imageDir, modelName)
+        resultsDirectory, resultDataBase, labelLines, imageDir, modelName, diffPatch)
 
     generateCompareResultSummary(toolkit_dir, modelName, 'images', stats)
 
@@ -1095,3 +1152,14 @@ def generateAnalysisOutput(argsDict):
                      modelScores, matchCounts, methodScores, chartData, )
 
     logger.debug("HTML generation complete")
+
+
+def getDifferencePatch(csv1, csv2, id_field):
+    import csvdiff
+    patch = csvdiff.diff_files(csv1, csv2, id_field)
+    return patch
+
+
+if __name__ == "__main__":
+    getDifference('./sample/inceptionV4-results.csv',
+                  'sample/inceptionV4-results3.csv', ['FileName'])

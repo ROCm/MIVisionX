@@ -254,7 +254,25 @@ function filterResultTable(e) {
     updateItems();
 }
 
+function getColHtmlWithDiff(diff, fieldName, originalValue, extraClasses) {
+    var diffValue = "";
 
+    if (!$.isEmptyObject(diff)) {
+        if (diff["fields"]) {
+            if (diff["fields"][fieldName]) {
+                diffValue = diff["fields"][fieldName]["to"];
+            }
+        }
+    }
+    var col = $("<td>").attr("class", "imgcell left-align " + extraClasses);
+    col.text(originalValue);
+
+    if (diffValue) {
+        col.append($("<br>"));
+        col.append($("<span>").attr("class", "diff-text").text(diffValue));
+    }
+    return col;
+}
 
 function loadImageResults(imageSummaryLocal) {
     var myTableBody = $("#image-results-table").find("tbody");
@@ -280,26 +298,42 @@ function loadImageResults(imageSummaryLocal) {
             im.gtText + "<br><b>CLASSIFIED AS:</b>" +
             im.labelTexts[0] + "\" width=\"30\" height=\"30\">";
         var imgLinkHtml = "<a href=\"" + im.filePath + "\" target=\"_blank\">" + im.imageName + "</a>";
-
         row.append($("<td>").attr("class", "imgcell").html(imgHtml));
         row.append($("<td>").html(imgLinkHtml));
 
 
-        row.append($("<td>").attr("class", "imgcell left-align").text(im.gtText));
-        row.append($("<td>").attr("class", "imgcell").text(im.gt));
+        row.append(getColHtmlWithDiff(im.diff, "groundTruthLabel-text", im.gtText));
+        row.append(getColHtmlWithDiff(im.diff, "groundTruthLabel", im.gt));
 
+        var fName = "";
         for (var i = 0; i < 5; i++) {
-            row.append($("<td>").attr("class", "imgcell").text(im.labels[i]));
-        }
-        row.append($("<td>").attr("class", "imgcell bold " + matchClass).text(im.match));
-
-        for (i = 0; i < 5; i++) {
-            row.append($("<td>").attr("class", "imgcell left-align").text(im.labelTexts[i]));
+            fName = "outputLabel-" + (i + 1);
+            row.append(getColHtmlWithDiff(im.diff, fName, im.labels[i]));
         }
 
+        row.append(getColHtmlWithDiff(im.diff, "match", im.match, " bold " + matchClass));
+
+        // row.append($("<td>").attr("class", "imgcell bold " + matchClass).text(im.match));
+
         for (i = 0; i < 5; i++) {
-            row.append($("<td>").attr("class", "imgcell").text(im.probs[i].toFixed(4)));
+            fName = "outputLabel-" + (i + 1) + "-text";
+            row.append(getColHtmlWithDiff(im.diff, fName, im.labelTexts[i]));
         }
+
+        for (i = 0; i < 5; i++) {
+            fName = "Prob-" + (i + 1);
+            row.append(getColHtmlWithDiff(im.diff, fName, im.probs[i].toFixed(4)));
+        }
+
+        row.append($("<input>", {
+            type: "checkbox",
+            checked: im.hasDiff,
+            disabled: "true",
+            value: true
+        }));
+
+
+
 
 
         myTableBody.append(row);

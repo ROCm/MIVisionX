@@ -24,6 +24,7 @@ usage: generate-visualization.py  [-h/--help]
                                   --output_dir OUTPUT_DIR
                                   --output_name OUTPUT_NAME
                                   [--file FILE_NAME]
+                                  [-compare COMPARE_WITH]
 ```
 
 #### Input Help
@@ -37,7 +38,9 @@ usage: generate-visualization.py  [-h/--help]
  --model_name         input inferece model name [optional]
  --output_dir         output dir to store ADAT results [required]
  --output_name        output ADAT file name [required]
- --file               json/ini file to load arguments from [optional]
+ --file               json/ini file to load arguments from
+ --compare            csv file to compare the results with, the compare results are visible in the "Image Results" table
+ [optional]
 ```
 
 * --inference_results : **Result CSV File**
@@ -73,7 +76,8 @@ The format for the json config file is as follows
     "output_dir": "[output directory -> required]",
     "image_dir": "[Images dir -> optional]",
     "output_name": "[output name -> required]",
-    "model_name": "[model name -> optional]"
+    "model_name": "[model name -> optional]",
+    "compare":"[compare csv file -> optional]"
 }
 ```
 
@@ -94,6 +98,7 @@ output_dir = ./output
 image_dir = ../../../data/images/AMD-tinyDataSet/
 output_name = classificationVisualized
 model_name = model1
+compare = ./sample/new_results.csv
 ```
 
 ## Using GUI to load settings

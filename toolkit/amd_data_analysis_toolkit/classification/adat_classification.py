@@ -22,7 +22,6 @@ import datetime
 import csv
 import sys
 import os
-import argparse
 from distutils.dir_util import copy_tree
 import shutil
 import logging
@@ -168,7 +167,7 @@ def generateTop1Result(resultsDirectory, resultDataBase, labelLines):
     result = {}
 
     headerText = [
-        'Image', 'Ground Truth', 'Top 1' 'Label', 'Match', 'Top 1 Confidence', 'Ground Truth Text', 'Top 1 Label Text']
+        'Image', 'Ground Truth', 'Top 1 Label', 'Match', 'Top 1 Confidence', 'Ground Truth Text', 'Top 1 Label Text']
     fieldNames = ['image', 'gt', 'top1', 'match',
                   'top1_prob', 'gt_text', 'top1_text']
 
@@ -216,8 +215,10 @@ def diffAddMatchValue(diff, gt):
 
 
 def diffLabels(diff, labellines):
-    allFields = ['outputLabel-1', 'outputLabel-2', 'outputLabel-3', 'outputLabel-4',
-                 'outputLabel-5', 'Prob-1', 'Prob-2', 'Prob-3', 'Prob-4', 'Prob-5']
+
+    # allFields = ['outputLabel-1', 'outputLabel-2', 'outputLabel-3', 'outputLabel-4',
+    #              'outputLabel-5', 'Prob-1', 'Prob-2', 'Prob-3', 'Prob-4', 'Prob-5']
+
     labelFields = ['groundTruthLabel', 'outputLabel-1',
                    'outputLabel-2', 'outputLabel-3', 'outputLabel-4']
     newDict = {}
@@ -564,7 +565,7 @@ def generateHierarchySummary(resultsDirectory, topKPassFail, topKHierarchyPassFa
 
 
 def calculateHierarchyPenalty(truth, result, hierarchyDataBase):
-    if hierarchyDataBase == None:
+    if hierarchyDataBase is None:
         return 0
 
     penaltyValue = 0
@@ -956,20 +957,6 @@ def getSuccessFailureChartData(stats, topKPassFail, topKHierarchyPassFail):
     return passFailData, lnPassFailData, lnCombinedPassFailData
 
 
-def readIni(filename, args):
-    config.read(filename)
-    sectionName = "main"
-    configDict = {}
-
-    # Read keys from file if not defined in argument
-    # Command line args have higher preference than config
-    for key in args:
-        if not args[key]:
-            configDict[key] = config.get(sectionName, key)
-
-    return configDict
-
-
 def readJson(filename, args):
     with open(filename, 'r') as f:
         configDict = json.load(f)
@@ -1080,10 +1067,10 @@ def generateAnalysisOutput(argsDict):
     inputImageDirectory = argsDict['image_dir']
     labelFile = argsDict['label']
     hierarchyFile = argsDict['hierarchy']
-    modelName = argsDict['model_name']
     outputDirectory = argsDict['output_dir']
     fileName = argsDict['output_name']
-    compareFile = argsDict['compare']
+
+    compareFile = argsDict.get('compare', None)
 
     if not os.path.exists(outputDirectory):
         os.makedirs(outputDirectory)
@@ -1158,8 +1145,3 @@ def getDifferencePatch(csv1, csv2, id_field):
     import csvdiff
     patch = csvdiff.diff_files(csv1, csv2, id_field)
     return patch
-
-
-if __name__ == "__main__":
-    getDifference('./sample/inceptionV4-results.csv',
-                  'sample/inceptionV4-results3.csv', ['FileName'])

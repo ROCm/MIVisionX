@@ -306,14 +306,13 @@ function loadImageResults(imageSummaryLocal) {
         row.append(getColHtmlWithDiff(im.diff, "groundTruthLabel", im.gt));
 
         var fName = "";
-        for (var i = 0; i < 5; i++) {
+        var i = 0;
+        for (i = 0; i < 5; i++) {
             fName = "outputLabel-" + (i + 1);
             row.append(getColHtmlWithDiff(im.diff, fName, im.labels[i]));
         }
 
         row.append(getColHtmlWithDiff(im.diff, "match", im.match, " bold " + matchClass));
-
-        // row.append($("<td>").attr("class", "imgcell bold " + matchClass).text(im.match));
 
         for (i = 0; i < 5; i++) {
             fName = "outputLabel-" + (i + 1) + "-text";
@@ -331,10 +330,6 @@ function loadImageResults(imageSummaryLocal) {
             disabled: "true",
             value: true
         }));
-
-
-
-
 
         myTableBody.append(row);
     });

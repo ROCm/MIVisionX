@@ -6,7 +6,7 @@ from subprocess import call
 
 opts, args = getopt.getopt(sys.argv[1:], 'd:m:n:b:f:s:a:c:p:')
 
-buildDir = '../../model_compiler/python/'
+buildDir = '../../../model_compiler/python/'
 modelDir = 'VGG_ILSVRC_16_layers.caffemodel'
 network = 'vgg16'
 batchsize = 1

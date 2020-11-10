@@ -496,6 +496,39 @@ int HipExec_Lut_U8_U8(
     vx_uint8 *lut
     );
 
+int HipExec_ChannelExtract_U8_U16_Pos0(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+int HipExec_ChannelExtract_U8_U16_Pos1(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+int HipExec_ChannelExtract_U8_U32_Pos0(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+int HipExec_ChannelExtract_U8_U32_Pos1(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+int HipExec_ChannelExtract_U8_U32_Pos2(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+int HipExec_ChannelExtract_U8_U32_Pos3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+
+
+
 // filter_kernels
 
 // geometric_kernels
@@ -511,21 +544,6 @@ int HipExec_ChannelCopy_U8_U8(
         );
 
 
-
-
-
-
-// int HipExec_AbsDiff_U8_U8U8
-// (
-//         vx_uint32     dstWidth,
-//         vx_uint32     dstHeight,
-//         vx_uint8     * pHipDstImage,
-//         vx_uint32     dstImageStrideInBytes,
-//         const vx_uint8    * pHipSrcImage1,
-//         vx_uint32     srcImage1StrideInBytes,
-//         const vx_uint8    * pHipSrcImage2,
-//         vx_uint32     srcImage2StrideInBytes
-// );
 int HipExec_ChannelCopy
 (
         hipStream_t  stream,

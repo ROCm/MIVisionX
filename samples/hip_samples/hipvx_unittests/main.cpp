@@ -270,7 +270,8 @@ vx_status makeInputImageYUYV(vx_context context, vx_image img, vx_uint32 width, 
 	vx_uint32 stride_x_bytes, stride_x_pixels, stride_y_bytes, stride_y_pixels;
 	ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 	// addrId.stride_x = 1;
-	stride_x_bytes = 1;
+	// stride_x_bytes = 1;
+	stride_x_bytes = addrId.stride_x;
 	stride_x_pixels = stride_x_bytes / sizeof(T);
 	stride_y_bytes = addrId.stride_y;
 	stride_y_pixels = stride_y_bytes / sizeof(T);
@@ -1506,7 +1507,9 @@ int main(int argc, const char ** argv)
 				}
 				// U16  & U32 inputs
 				else if(
-					(case_number == 71)  || (case_number == 72) 
+					(case_number == 71)  || (case_number == 72) ||
+					(case_number == 76)  || (case_number == 77) ||
+					(case_number == 78)  || (case_number == 79)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
@@ -1546,6 +1549,27 @@ int main(int argc, const char ** argv)
 		hipMalloc((void**)&ptr[1], height * hip_addr_int16.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_int16.stride_y);
 		hipMemset(ptr[2], 0, height * hip_addr_int16.stride_y);
+
+		vx_imagepatch_addressing_t hip_addr_uint8_yuyv_uyuv_in = {0};
+		hip_addr_uint8_yuyv_uyuv_in.dim_x = width;
+		hip_addr_uint8_yuyv_uyuv_in.dim_y = height;
+		hip_addr_uint8_yuyv_uyuv_in.stride_x = 2;
+		hip_addr_uint8_yuyv_uyuv_in.stride_y = (width+15)&~15;
+		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_in.stride_y);
+		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_in.stride_y);
+		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_in.stride_y);
+		hipMemset(ptr[2], 0, height * hip_addr_uint8_yuyv_uyuv_in.stride_y);
+
+
+		vx_imagepatch_addressing_t hip_addr_uint8_yuyv_uyuv_out = {0};
+		hip_addr_uint8_yuyv_uyuv_out.dim_x = width/2;
+		hip_addr_uint8_yuyv_uyuv_out.dim_y = height;
+		hip_addr_uint8_yuyv_uyuv_out.stride_x = 1;
+		hip_addr_uint8_yuyv_uyuv_out.stride_y = ((width+15)&~15);
+		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
+		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
+		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
+		hipMemset(ptr[2], 0, height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
 
 		affinity.device_type = AGO_TARGET_AFFINITY_GPU;
 		
@@ -2271,6 +2295,108 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 71:
+				{
+					// test_case_name = "agoKernel_ChannelExtract_U8_U16_Pos0";
+					/* Doubtfull
+					if(width%2 != 0)
+						width = (width + 1)&~1;
+					if(height%2 != 0)
+						height = (height + 1)&~1;
+						*/
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
+					expected_image_sum = pix_img1_u8 * width* height; //Needs Change
+					out_buf_type = 0;
+					break;
+				}
+				case 72:
+				{
+					// test_case_name = "agoKernel_ChannelExtract_U8_U16_Pos1";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 0;
+					break;
+				}
+				case 73:
+				{
+				// case 73 - agoKernel_ChannelExtract_U8_U24_Pos0
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_R, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 74:
+				{
+				// case 74 - agoKernel_ChannelExtract_U8_U24_Pos1
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_G, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 75:
+				{
+				// case 75 - agoKernel_ChannelExtract_U8_U24_Pos2
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_B, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 76:
+				{
+				// case 76 - agoKernel_ChannelExtract_U8_U32_Pos0
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_yuyv_uyuv_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_U, img_out);
+					expected_image_sum = pix_img1_u8 * width/2 * height;
+					out_buf_type = 2;
+					break;
+				}
+				case 77:
+				{
+				// case 77 - agoKernel_ChannelExtract_U8_U32_Pos1
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_yuyv_uyuv_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_U, img_out);
+					expected_image_sum = pix_img1_u8 * width/2 * height;
+					out_buf_type = 2;
+					break;
+				}
+				case 78:
+				{
+				// case 78 - agoKernel_ChannelExtract_U8_U32_Pos2
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_yuyv_uyuv_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_V, img_out);
+					expected_image_sum = pix_img1_u8 * width/2 * height;
+					out_buf_type = 2;
+					break;
+				}
+				case 79:
+				{
+				// case 79 - agoKernel_ChannelExtract_U8_U32_Pos3
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_yuyv_uyuv_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_V, img_out);
+					expected_image_sum = pix_img1_u8 * width/2 * height;
+					out_buf_type = 2;
+					break;
+				}	
 				case 88:
 				{
 					// test_case_name = "agoKernel_Lut_U8_U8";
@@ -2465,6 +2591,22 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u1));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img2_u8));
 				}
+				// U16  & U32 inputs
+				else if(
+					(case_number == 71)  || (case_number == 72) ||
+					(case_number == 76)  || (case_number == 77) ||
+					(case_number == 78)  || (case_number == 79)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
+								}
+				// U24 inputs
+				else if(
+					(case_number == 73) || (case_number == 74) || (case_number == 75)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImageRGB(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
+								}
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);
 				vxReleaseNode(&node);
@@ -2502,7 +2644,7 @@ int main(int argc, const char ** argv)
 			for (int j = 0; j < width; j++)
 				returned_image_sum += out_buf_uint8[i * stride_y_pixels + j * stride_x_pixels];
 	}
-	// for uint8 outputs of half the dimensions of input image
+	// for uint8 outputs of half the dimensions of width of input image
 	if (out_buf_type == 2)
 	{
 		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect_half, 0, &out_map_id, &out_addr, (void **)&out_buf_uint8, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
@@ -2518,8 +2660,8 @@ int main(int argc, const char ** argv)
 		printBuffer(out_buf_uint8, width, height);
 		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
 #endif
-		for (int i = 0; i < height/2; i++)
-			for (int j = 0; j < width/2; j++)
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++)
 				returned_image_sum += out_buf_uint8[i * stride_y_pixels + j * stride_x_pixels];
 	}
 

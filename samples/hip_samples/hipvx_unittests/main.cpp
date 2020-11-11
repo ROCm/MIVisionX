@@ -99,8 +99,42 @@
 // case 95 - agoKernel_ThresholdNot_U1_U8_Binary
 // case 96 - agoKernel_ThresholdNot_U1_U8_Range
 // case 97 - agoKernel_Max_U8_U8
-// case 98 - agoKernel_Min_U8_U8
-// case 99 - agoKernel_WeightedAverage_U8_U8
+// case 98 - agoKernel_Max_S16_S16
+// case 99 - agoKernel_Min_U8_U8
+// case 100 - agoKernel_Min_S16_S16
+// case 101 - agoKernel_TensorMultiply
+// case 102 - agoKernel_TensorAdd
+// case 103 - agoKernel_TensorSubtract
+// case 104 - agoKernel_WeightedAverage_U8_U8
+// case 133 - agoKernel_Box_U8_U8_3x3
+// case 134 - agoKernel_Dilate_U8_U8_3x3
+// case 135 - agoKernel_Dilate_U1_U8_3x3
+// case 136 - agoKernel_Dilate_U1_U1_3x3
+// case 137 - agoKernel_Dilate_U8_U1_3x3
+// case 138 - agoKernel_Erode_U8_U8_3x3
+// case 139 - agoKernel_Erode_U1_U8_3x3
+// case 140 - agoKernel_Erode_U1_U1_3x3
+// case 141 - agoKernel_Erode_U8_U1_3x3
+// case 142 - agoKernel_Median_U8_U8_3x3
+// case 143 - agoKernel_Gaussian_U8_U8_3x3
+// case 144 - agoKernel_SobelMagnitude_S16_U8_3x3
+// case 145 - agoKernel_SobelPhase_U8_U8_3x3
+// case 146 - agoKernel_SobelMagnitudePhase_S16U8_U8_3x3
+// case 147 - agoKernel_Sobel_S16S16_U8_3x3_GXY
+// case 148 - agoKernel_Sobel_S16_U8_3x3_GX
+// case 149 - agoKernel_Sobel_S16_U8_3x3_GY
+// case 150 - agoKernel_Convolve_U8_U8
+// case 151 - agoKernel_Convolve_S16_U8
+// case 152 - agoKernel_LinearFilter_ANY_ANY
+// case 153 - agoKernel_LinearFilter_ANYx2_ANY
+// case 154 - agoKernel_ScaleImage_U8_U8_Nearest
+// case 155 - agoKernel_ScaleImage_U8_U8_Bilinear
+// case 156 - agoKernel_ScaleImage_U8_U8_Bilinear_Replicate
+// case 157 - agoKernel_ScaleImage_U8_U8_Bilinear_Constant
+// case 158 - agoKernel_ScaleImage_U8_U8_Area
+// case 159 - agoKernel_ScaleGaussianHalf_U8_U8_3x3
+// case 160 - agoKernel_ScaleGaussianHalf_U8_U8_5x5
+// case 161 - agoKernel_ScaleGaussianOrb_U8_U8_5x5
 
 
 #define __HIP_PLATFORM_HCC__
@@ -1400,7 +1434,7 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
-				case 99:
+				case 104:
 				{
 					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
@@ -1412,6 +1446,62 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 133:
+				{
+					// test_case_name = "agoKernel_Box_U8_U8_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxBox3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = (6 * pix_img1_u8) / 9;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 134:
+				{
+					// test_case_name = "agoKernel_Dilate_U8_U8_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxDilate3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 138:
+				{
+					// test_case_name = "agoKernel_Erode_U8_U8_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxErode3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = 0;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 142:
+				{
+					// test_case_name = "agoKernel_Median_U8_U8_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMedian3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 143:
+				{
+					// test_case_name = "agoKernel_Gaussian_U8_U8_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxGaussian3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+
 				default:
 				{
 					missing_function_flag = 1;
@@ -1429,7 +1519,7 @@ int main(int argc, const char ** argv)
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) ||
 					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57) ||
-					(case_number == 61) || (case_number == 99)
+					(case_number == 61) || (case_number == 104)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -1466,7 +1556,9 @@ int main(int argc, const char ** argv)
 				else if(
 					(case_number == 45) || (case_number == 47) || (case_number == 67) || (case_number == 88) || 
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
-					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96)
+					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
+					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
+					(case_number == 143)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -2501,7 +2593,7 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
-				case 99:
+				case 104:
 				{
 					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
@@ -2509,6 +2601,61 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					// node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out); // vxWeightedAverageNode not implemented
 					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 133:
+				{
+					// test_case_name = "agoKernel_Box_U8_U8_3x3";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxBox3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = (6 * pix_img1_u8) / 9;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 134:
+				{
+					// test_case_name = "agoKernel_Dilate_U8_U8_3x3";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxDilate3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 138:
+				{
+					// test_case_name = "agoKernel_Erode_U8_U8_3x3";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxErode3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = 0;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 142:
+				{
+					// test_case_name = "agoKernel_Median_U8_U8_3x3";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxMedian3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 143:
+				{
+					// test_case_name = "agoKernel_Gaussian_U8_U8_3x3";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxGaussian3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
 					out_buf_type = 0;
 					break;
 				}
@@ -2529,7 +2676,7 @@ int main(int argc, const char ** argv)
 					(case_number == 20) || (case_number == 21) || (case_number == 22) || (case_number == 23) || 
 					(case_number == 24) || (case_number == 25) || (case_number == 26) || (case_number == 37) || 
 					(case_number == 41) || (case_number == 49) || (case_number == 53) || (case_number == 57) ||
-					(case_number == 61) || (case_number == 99)
+					(case_number == 61) || (case_number == 104)
 					)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -2566,7 +2713,9 @@ int main(int argc, const char ** argv)
 				else if (
 					(case_number == 45) || (case_number == 47) || (case_number == 67) || (case_number == 88) || 
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
-					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96)
+					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
+					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
+					(case_number == 143)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));

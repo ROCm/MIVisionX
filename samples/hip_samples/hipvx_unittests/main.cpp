@@ -1571,6 +1571,26 @@ int main(int argc, const char ** argv)
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
 		hipMemset(ptr[2], 0, height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
 
+		vx_imagepatch_addressing_t hip_addr_uint8_rgb_in = {0};
+		hip_addr_uint8_rgb_in.dim_x = width;
+		hip_addr_uint8_rgb_in.dim_y = height;
+		hip_addr_uint8_rgb_in.stride_x = 3;
+		hip_addr_uint8_rgb_in.stride_y = (width+15)&~15;
+		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_in.stride_y);
+		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_in.stride_y);
+		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_in.stride_y);
+		hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_in.stride_y);
+
+		vx_imagepatch_addressing_t hip_addr_uint8_rgb_out = {0};
+		hip_addr_uint8_rgb_out.dim_x = width;
+		hip_addr_uint8_rgb_out.dim_y = height;
+		hip_addr_uint8_rgb_out.stride_x = 1;
+		hip_addr_uint8_rgb_out.stride_y = (width+15)&~15;
+		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_out.stride_y);
+		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_out.stride_y);
+		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_out.stride_y);
+		hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_out.stride_y);
+
 		affinity.device_type = AGO_TARGET_AFFINITY_GPU;
 		
 		if (graph)
@@ -2324,36 +2344,30 @@ int main(int argc, const char ** argv)
 				case 73:
 				{
 				// case 73 - agoKernel_ChannelExtract_U8_U24_Pos0
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_R, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_rgb_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_R, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
 					out_buf_type = 0;
 					break;
 				}
 				case 74:
 				{
 				// case 74 - agoKernel_ChannelExtract_U8_U24_Pos1
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_G, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_rgb_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_G, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
 					out_buf_type = 0;
 					break;
 				}
 				case 75:
 				{
 				// case 75 - agoKernel_ChannelExtract_U8_U24_Pos2
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_B, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_rgb_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_B, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
 					out_buf_type = 0;
 					break;
 				}

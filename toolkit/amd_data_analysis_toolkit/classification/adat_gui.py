@@ -1,6 +1,5 @@
 import os
 from PyQt4 import QtGui, uic
-
 import adat_classification as ac
 
 
@@ -13,7 +12,8 @@ class inference_control(QtGui.QMainWindow):
         self.initUI()
 
     def initUI(self):
-        uic.loadUi("adatui.ui", self)
+        dirpath = os.path.dirname(os.path.realpath(__file__))
+        uic.loadUi(os.path.join(dirpath, "adatui.ui"), self)
         # self.setStyleSheet("background-color: white")
         self.btnGenerate.setEnabled(False)
         self.btnOpenHtml.setEnabled(False)
@@ -46,7 +46,7 @@ class inference_control(QtGui.QMainWindow):
         self.txtLabelFile.setPlaceholderText("[required]")
         self.txtImageDir.setPlaceholderText("[optional]")
         self.txtHierarchyFile.setPlaceholderText("[optional]")
-        self.txtOutputName.setPlaceholderText("[optional]")
+        self.txtOutputName.setPlaceholderText("[required]")
         self.txtModelName.setPlaceholderText("[optional]")
         self.txtCompareFile.setPlaceholderText("[optional]")
 
@@ -175,9 +175,13 @@ class inference_control(QtGui.QMainWindow):
             exit(0)
 
 
-if __name__ == "__main__":
+def start_adat_gui():
     import sys
     app = QtGui.QApplication(sys.argv)
     mainWindow = inference_control()
     mainWindow.show()
     sys.exit(app.exec_())
+
+
+if __name__ == "__main__":
+    start_adat_gui()

@@ -18,8 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+import argparse
 from adat_classification import *
-
+import adat_gui
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018-2019, AMD Dataset Analysis Tool"
@@ -51,19 +52,21 @@ def main():
                         help='output ADAT file name                     [required]')
     parser.add_argument('--file',               type=str, required=False,
                         help='Config File                               [optional]')
-
     parser.add_argument('--compare',               type=str, required=False,
                         help='File to compare image results with                [optional]')
 
-    args = parser.parse_args()
-    if args.file:
-        if not os.path.exists(args.file):
-            logger.error("ERROR: Cannot find the config file")
-            exit()
-        argsDict = readConfig(args.file, args.__dict__)
+    if len(sys.argv) > 1:
+        args = parser.parse_args()
+        if args.file:
+            if not os.path.exists(args.file):
+                logger.error("ERROR: Cannot find the config file")
+                exit()
+            argsDict = readConfig(args.file, args.__dict__)
+        else:
+            argsDict = args.__dict__
+        generateAnalysisOutput(argsDict)
     else:
-        argsDict = args.__dict__
-    generateAnalysisOutput(argsDict)
+        adat_gui.start_adat_gui()
 
 
 if __name__ == '__main__':

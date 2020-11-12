@@ -56,7 +56,7 @@ message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D RALI=OFF [Turn OFF RALI Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D OpenCL=OFF [Turn OFF OpenCL Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D OPENCL_SUPPORT=OFF [Turn OFF OpenCL Modules (default:ON)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)

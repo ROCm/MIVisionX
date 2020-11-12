@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>672</width>
-    <height>426</height>
+    <width>666</width>
+    <height>468</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -24,7 +24,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>5</y>
+      <y>50</y>
       <width>661</width>
       <height>311</height>
      </rect>
@@ -161,7 +161,7 @@
     <property name="geometry">
      <rect>
       <x>0</x>
-      <y>320</y>
+      <y>360</y>
       <width>661</width>
       <height>56</height>
      </rect>
@@ -210,13 +210,42 @@
      </item>
     </layout>
    </widget>
+   <widget class="QLabel" name="label_9">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>10</y>
+      <width>661</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>18</pointsize>
+      <weight>75</weight>
+      <bold>true</bold>
+     </font>
+    </property>
+    <property name="layoutDirection">
+     <enum>Qt::LeftToRight</enum>
+    </property>
+    <property name="text">
+     <string>AMD Data Analysis Toolkit</string>
+    </property>
+    <property name="scaledContents">
+     <bool>false</bool>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>672</width>
+     <width>666</width>
      <height>22</height>
     </rect>
    </property>

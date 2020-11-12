@@ -103,10 +103,10 @@ compare = ./sample/new_results.csv
 
 ## Using GUI to load settings
 
-The gui can be launched using following command:
+The GUI is launched if no arguments are passed.
 
 ```bash
-python adat_gui.py
+python generate-visualization.py
 ```
 
 <p align="center"><img width="50%" src="../../../docs/images/adat_classification_gui.png" /></p>

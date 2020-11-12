@@ -453,6 +453,7 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM                           , 1, 1, CannySobel_U16_U8_7x7_L2NORM, AOUT_AIN,                       ATYPE_II                , KOP_FIXED(7)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8_U16_3x3                         , 0, 1, CannySuppThreshold_U8_U16_3x3, AOUT_AINx2_AOPTIN,             ATYPE_IITS              , KOP_FIXED(3)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3                       , 1, 1, CannySuppThreshold_U8XY_U16_3x3, AOUTx2_AINx2_AOPTIN,         ATYPE_IcITS             , KOP_FIXED(3)  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7                       , 1, 1, CannySuppThreshold_U8XY_U16_7x7, AOUTx2_AINx2_AOPTIN,         ATYPE_IcITS             , KOP_FIXED(3)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3                                 , 0, 1, NonMaxSupp_XY_ANY_3x3, AOUT_AIN,                              ATYPE_AI                , KOP_FIXED(3)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U8_U8_NEAREST                                     , 1, 1, Remap_U8_U8_Nearest, AOUT_AINx2,                              ATYPE_IIR               , KOP_UNKNOWN   , true  ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U8_U8_NEAREST_CONSTANT                            , 1, 1, Remap_U8_U8_Nearest_Constant, AOUT_AINx3,                     ATYPE_IIRS              , KOP_UNKNOWN   , true  ),

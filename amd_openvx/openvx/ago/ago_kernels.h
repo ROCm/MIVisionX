@@ -360,7 +360,7 @@ enum vx_kernel_amd_e {
 
 	// Fixed Neighbors: U8xy = U16(mag,phase) (1)
 	VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3,
-
+	VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7,
 	// Fixed Neighbors: xy = ANY (1)
 	VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3,
 

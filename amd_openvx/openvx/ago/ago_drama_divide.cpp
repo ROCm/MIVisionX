@@ -1601,7 +1601,11 @@ int agoDramaDivideCannyEdgeDetectorNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[3] = paramList[1];
 	anode->paramList[4] = paramList[2];
 	anode->paramCount = 5;
-	status |= agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3);
+	if (gradient_size == 7) {
+		status |= agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7);	
+	}
+	else 
+		status |= agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3);
 #endif
 	// run edge trace
 	anode->paramList[0] = paramList[4];

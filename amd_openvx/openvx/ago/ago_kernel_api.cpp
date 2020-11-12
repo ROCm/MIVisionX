@@ -15738,6 +15738,62 @@ int agoKernel_CannySuppThreshold_U8XY_U16_3x3(AgoNode * node, AgoKernelCommand c
 	return status;
 }
 
+int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand cmd)
+{
+    vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+    if (cmd == ago_kernel_cmd_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * oStack = node->paramList[1];
+		AgoData * iImg = node->paramList[2];
+		AgoData * iThr = node->paramList[3];
+		
+		// divide the threshold values by 4 if gradient size = 7
+		iThr->u.thr.threshold_lower.U1 /= 4;
+		iThr->u.thr.threshold_upper.U1 /= 4;
+
+		oStack->u.cannystack.stackTop = 0;
+		if (HafCpu_CannySuppThreshold_U8XY_U16_3x3(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
+			oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
+			(vx_uint16 *)iImg->buffer, iImg->u.img.stride_in_bytes,
+			iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1))
+		{
+			status = VX_FAILURE;
+		}
+	}
+	else if (cmd == ago_kernel_cmd_validate) {
+		status = ValidateArguments_CannySuppThreshold_U8XY(node, VX_DF_IMAGE_U16, 1, 1);
+	}
+	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
+		status = VX_SUCCESS;
+	}
+#if ENABLE_OPENCL
+	else if (cmd == ago_kernel_cmd_opencl_codegen) {
+		status = HafGpu_CannySuppThreshold(node);
+	}
+#endif
+    else if (cmd == ago_kernel_cmd_query_target_support) {
+        node->target_support_flags = 0
+                    | AGO_KERNEL_FLAG_DEVICE_CPU
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#endif                 
+                    ;
+        status = VX_SUCCESS;
+    }
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[2];
+		vx_uint32 width = out->u.img.width;
+		vx_uint32 height = out->u.img.height;
+		out->u.img.rect_valid.start_x = min(inp->u.img.rect_valid.start_x + 1, width);
+		out->u.img.rect_valid.start_y = min(inp->u.img.rect_valid.start_y + 1, height);
+		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 1, 0);
+		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 1, 0);
+	}
+	return status;
+}
+
 int agoKernel_NonMaxSupp_XY_ANY_3x3(AgoNode * node, AgoKernelCommand cmd)
 {
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;

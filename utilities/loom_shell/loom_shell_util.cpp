@@ -128,7 +128,7 @@ static cl_command_queue GetCmdqCached(cl_mem mem)
 			cmdq = globalClCtx2CmdqMap[opencl_context];
 		}
 		else {
-			  /* First, get the size of device list data */
+			/* First, get the size of device list data */
 			size_t device_list_size_;
 			cl_int err; 
   			err = clGetContextInfo(opencl_context, CL_CONTEXT_DEVICES, 0, NULL, &device_list_size_);
@@ -147,6 +147,8 @@ static cl_command_queue GetCmdqCached(cl_mem mem)
 			// save the command-queue
 			globalClCtx2CmdqMap[opencl_context] = cmdq;
 			globalClMem2CmdqMap[mem] = cmdq;
+			// free mem
+			free(devices_);
 		}
 	}
 	return cmdq;

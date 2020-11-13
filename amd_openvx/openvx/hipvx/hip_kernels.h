@@ -571,6 +571,18 @@ int HipExec_Gaussian_U8_U8_3x3(
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
+int HipExec_Convolve_U8_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight
+    );
+int HipExec_Convolve_S16_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight
+    );
 
 // geometric_kernels
 

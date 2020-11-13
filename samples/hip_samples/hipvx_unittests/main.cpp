@@ -438,7 +438,30 @@ int main(int argc, const char ** argv)
 		Lut_lutPtr_uint8[i] = (vx_uint8)(255 - i);
 	vx_lut Lut_lutObject_lut = vxCreateLUT(context, VX_TYPE_UINT8, (vx_size)256);
 	ERROR_CHECK_STATUS(vxCopyLUT(Lut_lutObject_lut, (void*)Lut_lutPtr_uint8, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
-
+	vx_uint32 scale = 1;
+	vx_int16 filter3x3[3][3] = {
+		{ 1, 2, 1},
+		{ 2, 4, 2},
+		{ 1, 2, 1},
+	};
+	vx_int16 filter5x5[5][5] = {
+		{ 1, 2, 4, 2, 1},
+		{ 2, 4, 8, 4, 2},
+		{ 4, 8, 12, 8, 4},
+		{ 2, 4, 8, 4, 2},
+		{ 1, 2, 4, 2, 1},
+	};
+	vx_int16 filter7x7[7][7] = {
+		{ 1, 2, 4, 6, 4, 2, 1},
+		{ 2, 4, 6, 8, 6, 4, 2},
+		{ 4, 8, 10, 12, 10, 8, 4},
+		{ 2, 4, 6, 8, 6, 4, 2},
+		{ 1, 2, 4, 6, 4, 2, 1},
+	};
+	vx_convolution Convolve_conv_convolution = vxCreateConvolution(context, 5, 5);
+	ERROR_CHECK_STATUS(vxCopyConvolutionCoefficients(Convolve_conv_convolution, (vx_int16*)filter5x5, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+	ERROR_CHECK_STATUS(vxSetConvolutionAttribute(Convolve_conv_convolution, VX_CONVOLUTION_SCALE, &scale, sizeof(scale)));
+	
 	if (!device_affinity)
 	{
 		affinity.device_type = AGO_TARGET_AFFINITY_CPU;
@@ -1496,9 +1519,35 @@ int main(int argc, const char ** argv)
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					node = vxGaussian3x3Node(graph, img1, img_out);
-					vx_int32 firstColVal = pix_img1_u8;
+					vx_int32 firstColVal = (vx_int32)PIXELCHECKU8((float)pix_img1_u8 * ((2 * 0.0625) + (3 * 0.125) + 0.25));
 					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
 					out_buf_type = 0;
+					break;
+				}
+				case 150:
+				{
+					// test_case_name = "agoKernel_Convolve_U8_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxConvolveNode(graph, img1, Convolve_conv_convolution, img_out);
+					vx_int32 firstColVal = pix_img1_u8 * (12 + (8 * 3) + (4 * 5) + (2 * 4) + (1 * 2));
+					vx_int32 secondColVal = firstColVal + (pix_img1_u8 * ((2 * 2) + (2 * 4) + (1 * 8)));
+					vx_int32 remainingVal = 96 * pix_img1_u8;
+					expected_image_sum = (remainingVal * (width - 4) * (height - 4)) + (2 * (height - 4) * (firstColVal + secondColVal));
+					out_buf_type = 0;
+					break;
+				}
+				case 151:
+				{
+					// test_case_name = "agoKernel_Convolve_S16_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					node = vxConvolveNode(graph, img1, Convolve_conv_convolution, img_out);
+					vx_int32 firstColVal = pix_img1_u8 * (12 + (8 * 3) + (4 * 5) + (2 * 4) + (1 * 2));
+					vx_int32 secondColVal = firstColVal + (pix_img1_u8 * ((2 * 2) + (2 * 4) + (1 * 8)));
+					vx_int32 remainingVal = 96 * pix_img1_u8;
+					expected_image_sum = (remainingVal * (width - 4) * (height - 4)) + (2 * (height - 4) * (firstColVal + secondColVal));
+					out_buf_type = 1;
 					break;
 				}
 
@@ -1558,7 +1607,7 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143)
+					(case_number == 143) || (case_number == 150) || (case_number == 151)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -2654,11 +2703,38 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxGaussian3x3Node(graph, img1, img_out);
-					vx_int32 firstColVal = pix_img1_u8;
+					vx_int32 firstColVal = (vx_int32)PIXELCHECKU8((float)pix_img1_u8 * ((2 * 0.0625) + (3 * 0.125) + 0.25));
 					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
 					out_buf_type = 0;
 					break;
 				}
+				case 150:
+				{
+					// test_case_name = "agoKernel_Convolve_U8_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxConvolveNode(graph, img1, Convolve_conv_convolution, img_out);
+					vx_int32 firstColVal = pix_img1_u8 * (12 + (8 * 3) + (4 * 5) + (2 * 4) + (1 * 2));
+					vx_int32 secondColVal = firstColVal + (pix_img1_u8 * ((2 * 2) + (2 * 4) + (1 * 8)));
+					vx_int32 remainingVal = 96 * pix_img1_u8;
+					expected_image_sum = (remainingVal * (width - 4) * (height - 4)) + (2 * (height - 4) * (firstColVal + secondColVal));
+					out_buf_type = 0;
+					break;
+				}
+				case 151:
+				{
+					// test_case_name = "agoKernel_Convolve_S16_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxConvolveNode(graph, img1, Convolve_conv_convolution, img_out);
+					vx_int32 firstColVal = pix_img1_u8 * (12 + (8 * 3) + (4 * 5) + (2 * 4) + (1 * 2));
+					vx_int32 secondColVal = firstColVal + (pix_img1_u8 * ((2 * 2) + (2 * 4) + (1 * 8)));
+					vx_int32 remainingVal = 96 * pix_img1_u8;
+					expected_image_sum = (remainingVal * (width - 4) * (height - 4)) + (2 * (height - 4) * (firstColVal + secondColVal));
+					out_buf_type = 1;
+					break;
+				}
+
 				default:
 				{
 					missing_function_flag = 1;
@@ -2715,7 +2791,7 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143)
+					(case_number == 143) || (case_number == 150) || (case_number == 151)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -2841,7 +2917,7 @@ int main(int argc, const char ** argv)
 		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 		printImage(out_buf_int16, stride_x_pixels, stride_y_pixels, width, height);
 		printf("Output Buffer: ");
-		printBufferBits(out_buf_int16, width* height);
+		printBuffer(out_buf_int16, width, height);
 #endif
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)

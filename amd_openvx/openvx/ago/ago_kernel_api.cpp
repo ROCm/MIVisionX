@@ -14311,6 +14311,8 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -14327,6 +14329,25 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - M, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - N, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iConv = node->paramList[2];
+		vx_uint32 convolutionWidth = (vx_uint32)iConv->u.conv.columns;
+		vx_uint32 convolutionHeight = (vx_uint32)iConv->u.conv.rows;
+		if ((convolutionWidth != 3) && (convolutionWidth != 5) && (convolutionWidth != 7) && (convolutionWidth != 9))
+			status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+		else if (HipExec_Convolve_U8_U8(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -14399,6 +14420,8 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -14415,6 +14438,25 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - M, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - N, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iConv = node->paramList[2];
+		vx_uint32 convolutionWidth = (vx_uint32)iConv->u.conv.columns;
+		vx_uint32 convolutionHeight = (vx_uint32)iConv->u.conv.rows;
+		if ((convolutionWidth != 3) && (convolutionWidth != 5) && (convolutionWidth != 7) && (convolutionWidth != 9))
+			status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+		else if (HipExec_Convolve_S16_U8(
+			oImg->u.img.width, oImg->u.img.height, 
+			(vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 

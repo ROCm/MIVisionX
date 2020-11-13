@@ -129,7 +129,7 @@ static cl_command_queue GetCmdqCached(cl_mem mem)
 		}
 		else {
 			// create OpenCL cmd_queue using first device in the context
-			cl_int err; cl_device_id device_id[8] = {nullptr};
+			cl_int err; cl_device_id device_id[64] = {nullptr};
 			err = clGetContextInfo(opencl_context, CL_CONTEXT_DEVICES, sizeof(device_id[0]), &device_id, nullptr);
 			if (err) { Error("ERROR: clGetContextInfo(*,CL_CONTEXT_DEVICES) failed (%d)", err); return nullptr; }
 #if defined(CL_VERSION_2_0)

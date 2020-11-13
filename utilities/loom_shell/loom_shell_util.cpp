@@ -129,13 +129,13 @@ static cl_command_queue GetCmdqCached(cl_mem mem)
 		}
 		else {
 			// create OpenCL cmd_queue using first device in the context
-			cl_int err; cl_device_id device_id = nullptr;
-			err = clGetContextInfo(opencl_context, CL_CONTEXT_DEVICES, sizeof(device_id), &device_id, nullptr);
+			cl_int err; cl_device_id device_id[8] = {nullptr};
+			err = clGetContextInfo(opencl_context, CL_CONTEXT_DEVICES, sizeof(device_id[0]), &device_id, nullptr);
 			if (err) { Error("ERROR: clGetContextInfo(*,CL_CONTEXT_DEVICES) failed (%d)", err); return nullptr; }
 #if defined(CL_VERSION_2_0)
-			cmdq = clCreateCommandQueueWithProperties(opencl_context, device_id, NULL, &err);
+			cmdq = clCreateCommandQueueWithProperties(opencl_context, device_id[0], NULL, &err);
 #else
-			cmdq = clCreateCommandQueue(opencl_context, device_id, 0, &err);
+			cmdq = clCreateCommandQueue(opencl_context, device_id[0], 0, &err);
 #endif
 			if (!cmdq) { Error("ERROR: clCreateCommandQueueWithProperties: failed (%d)", err); return nullptr; }
 			// save the command-queue

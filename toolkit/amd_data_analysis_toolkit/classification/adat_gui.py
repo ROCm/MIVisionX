@@ -1,4 +1,5 @@
 import os
+import json
 from PyQt4 import QtGui, uic
 import adat_classification as ac
 
@@ -14,6 +15,11 @@ class inference_control(QtGui.QMainWindow):
     def initUI(self):
         dirpath = os.path.dirname(os.path.realpath(__file__))
         uic.loadUi(os.path.join(dirpath, "adatui.ui"), self)
+
+        self.grpSummary.setVisible(False)
+        self.setFixedWidth(680)
+        self.setFixedHeight(450)
+
         # self.setStyleSheet("background-color: white")
         self.btnGenerate.setEnabled(False)
         self.btnOpenHtml.setEnabled(False)
@@ -164,6 +170,32 @@ class inference_control(QtGui.QMainWindow):
             self.configDict['output_dir'], self.configDict['output_name']+'-toolKit', 'index.html')
 
         self.btnOpenHtml.setEnabled(True)
+        self.grpSummary.setVisible(True)
+        self.setFixedHeight(700)
+
+        try:
+            jsonFile = os.path.join(
+                self.configDict['output_dir'], self.configDict['output_name']+'-toolKit', 'results', 'results.json')
+            with open(jsonFile, 'r') as jf:
+                res = json.load(jf)
+                stat = res['stats']
+                self.lblGtCount.setText(str(stat['netSummaryImages']))
+                self.lblGtCountWo.setText(str(stat['totalNoGroundTruth']))
+                self.lblTotalImages.setText(str(stat['totalImages']))
+
+                self.lblAccuracyTop5.setText(
+                    str(round(stat['accuracyPer'], 2)))
+                self.lblAvgMismatchConfidence .setText(str(round(
+                    stat['avgMismatchProb'], 2)))
+                self.lblAvgPassConfidence.setText(str(
+                    round(stat['avgPassProb'], 2)))
+                self.lblMismatchPercent.setText(
+                    str(round(stat['mismatchPer'], 2)))
+                self.lblTotalMismatch.setText(str(stat['totalMismatch']))
+                self.lblTop5Match.setText(str(stat['passCount']))
+
+        except Exception as ex:
+            print(ex)
 
     def openHtml(self):
         import webbrowser

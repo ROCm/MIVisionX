@@ -442,6 +442,9 @@ def writeResultsJson(resultsDirectory, stats, topCounts, topKStats, modelScores,
         jsScript = "var data = " + jsonString + ';'
         resJson.write(jsScript)
 
+        with open(os.path.join(resultsDirectory, 'results.json'), 'w') as js:
+            js.write(jsonString)
+
 
 def writeHierarchyJson(resultsDirectory, topKPassFail, topKHierarchyPassFail, hierarchyDataBase):
     with open(os.path.join(resultsDirectory, 'hierarchySummary.js'), 'w') as resJson:
@@ -1051,6 +1054,23 @@ def validateConfig(configDict):
         if not os.path.exists(configDict['hierarchy']):
             raise Exception("ERROR: Invalid HierarchyFile")
 
+    if configDict['compare']:
+        if not os.path.exists(configDict['compare']):
+            raise Exception("ERROR: Invalid Compare file")
+
+        ncol = check_number_of_cols(configDict['compare'])
+        if ncol != 12:
+            raise Exception(
+                "Given compare csv file is not in correct format. The compare file should have same format as the inference file.")
+
+
+def check_number_of_cols(filename):
+    with open(filename, 'r') as f:
+        reader = csv.reader(f)
+        ncol = len(next(reader))
+
+    return ncol
+
 
 def generateAnalysisOutput(argsDict):
     # Refactored so that this is callable from external python library
@@ -1136,7 +1156,7 @@ def generateAnalysisOutput(argsDict):
 
     # Write to result json
     writeResultsJson(resultsDirectory, stats, topCounts, topKStats,
-                     modelScores, matchCounts, methodScores, chartData, )
+                     modelScores, matchCounts, methodScores, chartData)
 
     logger.debug("HTML generation complete")
 

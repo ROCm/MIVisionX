@@ -131,10 +131,10 @@ Hip_ChannelExtract_U8_U16_Pos0(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x*2;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x*4;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x*4;
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x*8;
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 4; i++)
         pDstImage[dstIdx + i] = pSrcImage1[src1Idx + i*2];
 }
 int HipExec_ChannelExtract_U8_U16_Pos0(
@@ -182,10 +182,10 @@ Hip_ChannelExtract_U8_U16_Pos1(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x*2;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x*4;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x*4;
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x*8;
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 4; i++)
         pDstImage[dstIdx + i] = pSrcImage1[src1Idx + i*2 + 1];
     // printf("\n&pDstImage[dstIdx], &pDstImage[dstIdx + 1]: %p, %p", (void*)(&pDstImage[dstIdx]), (void*)(&pDstImage[dstIdx + 1]));
 }
@@ -233,7 +233,7 @@ Hip_ChannelExtract_U8_U32_Pos0(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth*4) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
 //unsigned int
     // unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     // unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x * 4;
@@ -251,8 +251,7 @@ Hip_ChannelExtract_U8_U32_Pos0(
     unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x * 4 ;
 
-    for(int i =0;i<1;i++)
-        pDstImage[dstIdx+i]  = pSrcImage1[src1Idx+(i*4)];   
+    pDstImage[dstIdx]  = pSrcImage1[src1Idx];   
 }
 int HipExec_ChannelExtract_U8_U32_Pos0(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -262,9 +261,9 @@ int HipExec_ChannelExtract_U8_U32_Pos0(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
 
-    // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
+    printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
 
     hipEventCreate(&start);
     hipEventCreate(&stop);
@@ -298,13 +297,12 @@ Hip_ChannelExtract_U8_U32_Pos1(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth*4) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     // unsigned char
-    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x*2;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x *4 ;
 
-    for(int i =0;i<4;i++)
-        pDstImage[dstIdx+i]  = pSrcImage1[src1Idx+(i*4)+1]; 
+    pDstImage[dstIdx]  = pSrcImage1[src1Idx+1]; 
 }
 int HipExec_ChannelExtract_U8_U32_Pos1(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -314,7 +312,7 @@ int HipExec_ChannelExtract_U8_U32_Pos1(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
 
     // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
@@ -351,7 +349,7 @@ Hip_ChannelExtract_U8_U32_Pos2(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth*4) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     // unsigned char
     unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x *4 ;
@@ -365,7 +363,7 @@ int HipExec_ChannelExtract_U8_U32_Pos2(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
 
     // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
@@ -403,13 +401,12 @@ Hip_ChannelExtract_U8_U32_Pos3(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth*4) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     // unsigned char
-    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x*2;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x *4 ;
 
-    for(int i =0;i<4;i++)
-        pDstImage[dstIdx+i]  = pSrcImage1[src1Idx+(i*4)+3]; 
+    pDstImage[dstIdx]  = pSrcImage1[src1Idx+3]; 
 }
 int HipExec_ChannelExtract_U8_U32_Pos3(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -419,7 +416,7 @@ int HipExec_ChannelExtract_U8_U32_Pos3(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
 
     // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
@@ -457,7 +454,7 @@ Hip_ChannelExtract_U8_U24_Pos0(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth*4) || (y >= dstHeight)) return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x *3 ;
 
@@ -471,7 +468,7 @@ int HipExec_ChannelExtract_U8_U24_Pos0(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
 
     // printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d, srcImage2StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
 
@@ -508,7 +505,7 @@ Hip_ChannelExtract_U8_U24_Pos1(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth*4) || (y >= dstHeight)) return;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x *3 ;
 
@@ -560,7 +557,7 @@ Hip_ChannelExtract_U8_U24_Pos2(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth*4) || (y >= dstHeight)) return;
+    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
     unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x *3 ;
 

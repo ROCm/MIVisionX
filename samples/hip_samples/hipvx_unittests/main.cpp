@@ -1695,7 +1695,7 @@ int main(int argc, const char ** argv)
 		hip_addr_uint8_yuyv_uyuv_in.dim_x = width;
 		hip_addr_uint8_yuyv_uyuv_in.dim_y = height;
 		hip_addr_uint8_yuyv_uyuv_in.stride_x = 2;
-		hip_addr_uint8_yuyv_uyuv_in.stride_y = (width+15)&~15;
+		hip_addr_uint8_yuyv_uyuv_in.stride_y = ((width+3)&~3)*2;
 		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_in.stride_y);
 		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_in.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_in.stride_y);
@@ -1706,7 +1706,7 @@ int main(int argc, const char ** argv)
 		hip_addr_uint8_yuyv_uyuv_out.dim_x = width/2;
 		hip_addr_uint8_yuyv_uyuv_out.dim_y = height;
 		hip_addr_uint8_yuyv_uyuv_out.stride_x = 1;
-		hip_addr_uint8_yuyv_uyuv_out.stride_y = ((width+15)&~15);
+		hip_addr_uint8_yuyv_uyuv_out.stride_y = ((width+3)&~3);
 		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
 		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_out.stride_y);
@@ -1716,7 +1716,7 @@ int main(int argc, const char ** argv)
 		hip_addr_uint8_rgb_in.dim_x = width;
 		hip_addr_uint8_rgb_in.dim_y = height;
 		hip_addr_uint8_rgb_in.stride_x = 3;
-		hip_addr_uint8_rgb_in.stride_y = (width+15)&~15;
+		hip_addr_uint8_rgb_in.stride_y = ((width+3)&~3)*3;
 		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_in.stride_y);
 		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_in.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_in.stride_y);
@@ -1726,7 +1726,7 @@ int main(int argc, const char ** argv)
 		hip_addr_uint8_rgb_out.dim_x = width;
 		hip_addr_uint8_rgb_out.dim_y = height;
 		hip_addr_uint8_rgb_out.stride_x = 1;
-		hip_addr_uint8_rgb_out.stride_y = (width+15)&~15;
+		hip_addr_uint8_rgb_out.stride_y = ((width+3)&~3);
 		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_out.stride_y);
 		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_out.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_out.stride_y);
@@ -2465,7 +2465,7 @@ int main(int argc, const char ** argv)
 					if(height%2 != 0)
 						height = (height + 1)&~1;
 						*/
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
 					expected_image_sum = pix_img1_u8 * width* height; //Needs Change
@@ -2475,7 +2475,7 @@ int main(int argc, const char ** argv)
 				case 72:
 				{
 					// test_case_name = "agoKernel_ChannelExtract_U8_U16_Pos1";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
 					expected_image_sum = pix_img1_u8 * width * height; //Needs Change

@@ -14788,7 +14788,7 @@ int agoKernel_HarrisSobel_HG3_U8_7x7(AgoNode * node, AgoKernelCommand cmd)
 	}
 	else if (cmd == ago_kernel_cmd_initialize) {
 		int alignedWidth = (node->paramList[0]->u.img.width + 15) & ~15;		// Next highest multiple of 16, so that the buffer is aligned for all three lines
-		node->localDataSize = 14 * alignedWidth * sizeof(vx_int16);				// Seven rows (one vx_int16 for Gx and one for Gy + some extra) worth of scratch memory			
+		node->localDataSize = 14 * alignedWidth * sizeof(vx_int32);				// Seven rows (one vx_int16 for Gx and one for Gy + some extra) worth of scratch memory			
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_shutdown) {

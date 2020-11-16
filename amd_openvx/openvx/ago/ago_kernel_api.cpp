@@ -14815,6 +14815,8 @@ int agoKernel_Sobel_S16S16_U8_3x3_GXY(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -14834,6 +14836,21 @@ int agoKernel_Sobel_S16S16_U8_3x3_GXY(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 1, 0);
 		out2->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 1, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+        AgoData * oImg1 = node->paramList[0];
+		AgoData * oImg2 = node->paramList[1];
+		AgoData * iImg = node->paramList[2];
+		if (HipExec_Sobel_S16S16_U8_3x3_GXY(
+			oImg1->u.img.width, oImg1->u.img.height, 
+			(vx_int16 *) oImg1->hip_memory, oImg1->u.img.stride_in_bytes, 
+			(vx_int16 *) oImg2->hip_memory, oImg2->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 

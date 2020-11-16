@@ -173,6 +173,8 @@ using namespace std;
 #define atan2_p5		(0.1555786518463281f*57.29577951308232f)
 #define atan2_p7		(-0.04432655554792128f*57.29577951308232f)
 
+int global_case = 0;
+
 static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
 {
 	size_t len = strlen(string);
@@ -276,9 +278,18 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 	stride_x_pixels = stride_x_bytes / sizeof(T);
 	stride_y_bytes = addrId.stride_y;
 	stride_y_pixels = stride_y_bytes / sizeof(T);
-	for (int i = 0; i < height; i++)
+	if (global_case == 147)
+	{
+		for (int i = 0; i < height/2; i++)
+			for (int j = 0; j < width/2; j++)
+				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
+	}
+	else
+	{
+		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
+	}
 	ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
 #ifdef PRINT_INPUT
 	printf("\nInput Image: ");
@@ -369,7 +380,7 @@ int main(int argc, const char ** argv)
 	void *ptr[3] = {nullptr, nullptr, nullptr};
 
 	// input and output images
-	vx_image img1, img2, img_out;
+	vx_image img1, img2, img_out, img_out2;
 
 	// setup argument reads and defaults
 	vx_uint32 case_number = atoi(argv[1]);
@@ -378,6 +389,7 @@ int main(int argc, const char ** argv)
 	vx_uint32 device_affinity = atoi(argv[4]);
 	vx_int32 pix_img1 = (argc < 6) ?  125 : atoi(argv[5]);
 	vx_int32 pix_img2 =  (argc < 7) ?  132 : atoi(argv[6]);
+	global_case = case_number;
 
 	// required variables and initializations
 	vx_int32 missing_function_flag = 0;
@@ -1524,6 +1536,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 147:
+				{
+					// test_case_name = "agoKernel_Sobel_S16S16_U8_3x3_GXY";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					node = vxSobel3x3Node(graph, img1, img_out, img_out2);
+					expected_image_sum = 0;
+					out_buf_type = 1;
+					break;
+				}
 				case 150:
 				{
 					// test_case_name = "agoKernel_Convolve_U8_U8";
@@ -1607,7 +1630,7 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143) || (case_number == 150) || (case_number == 151)
+					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -2708,6 +2731,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 147:
+				{
+					// test_case_name = "agoKernel_Sobel_S16S16_U8_3x3_GXY";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxSobel3x3Node(graph, img1, img_out, img_out2);
+					expected_image_sum = 0;
+					out_buf_type = 1;
+					break;
+				}
 				case 150:
 				{
 					// test_case_name = "agoKernel_Convolve_U8_U8";
@@ -2791,7 +2825,7 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143) || (case_number == 150) || (case_number == 151)
+					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -2922,6 +2956,22 @@ int main(int argc, const char ** argv)
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				returned_image_sum += out_buf_int16[i * stride_y_pixels + j * stride_x_pixels];
+		if (case_number == 147)
+		{
+			ERROR_CHECK_STATUS(vxMapImagePatch(img_out2, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_int16, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+			stride_x_bytes = out_addr.stride_x;
+			stride_x_pixels = stride_x_bytes / sizeof(vx_int16);
+			stride_y_bytes = out_addr.stride_y;
+			stride_y_pixels = stride_y_bytes / sizeof(vx_int16);
+#ifdef PRINT_OUTPUT
+			printf("\nOutput Image 2: ");
+			printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
+			printImage(out_buf_int16, stride_x_pixels, stride_y_pixels, width, height);
+			printf("Output Buffer 2: ");
+			printBuffer(out_buf_int16, width, height);
+#endif
+			returned_image_sum = 0;
+		}
 	}
 	
 	if (returned_image_sum != expected_image_sum)

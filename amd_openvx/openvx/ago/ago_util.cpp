@@ -1201,7 +1201,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		desc += 10;
 		// get configuration
 		data->ref.type = VX_TYPE_IMAGE;
-		data->u.img.isROI = vx_true_e;
+		//data->u.img.isROI = vx_true_e;
 		const char *s = strstr(desc, ","); if (!s) return -1;
 		char master_name[128];
 		memcpy(master_name, desc, s - desc); master_name[s - desc] = 0;
@@ -2548,12 +2548,10 @@ int agoAllocData(AgoData * data)
 			}
 		}
 		else if (data->u.img.isROI) {
-            // make sure that the master image has been allocated
+            // make sure that the master image has been allocated. Shouldn't allocate new memory for image created from handle
 			if (!data->u.img.roiMasterImage->buffer) {
-				if (agoAllocData(data->u.img.roiMasterImage) < 0) {
 					data->u.img.mem_handle = vx_true_e;
 					return -1;
-				}
 			}
 			// get the region from master image
 			data->buffer = data->u.img.roiMasterImage->buffer +

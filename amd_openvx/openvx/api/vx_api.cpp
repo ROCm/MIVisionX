@@ -1013,9 +1013,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxSwapImageHandle(vx_image image_, void* cons
 {
 	AgoData * image = (AgoData *)image_;
 	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE) && !image->u.img.roiMasterImage) {
+	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
 		CAgoLock lock(image->ref.context->cs);
 		status = VX_ERROR_INVALID_PARAMETERS;
+		if(image->u.img.roiMasterImage) {
+			return status;
+		}		
 		if (image->import_type == VX_MEMORY_TYPE_HOST && num_planes == image->u.img.planes) {
 			status = VX_SUCCESS;
 			if (image->children) {
@@ -1028,9 +1031,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxSwapImageHandle(vx_image image_, void* cons
 					}
 					// propagate to ROIs
 					for (auto roi = image->children[i]->roiDepList.begin(); roi != image->children[i]->roiDepList.end(); roi++) {
-						(*roi)->buffer = image->children[i]->buffer +
-							image->children[i]->u.img.rect_roi.start_y * image->children[i]->u.img.stride_in_bytes +
-							ImageWidthInBytesFloor(image->children[i]->u.img.rect_roi.start_x, image->children[i]);
+						if(image->buffer) {
+							(*roi)->buffer = image->children[i]->buffer +
+								(*roi)->children[i]->u.img.rect_roi.start_y * (*roi)->children[i]->u.img.stride_in_bytes +
+								ImageWidthInBytesFloor((*roi)->children[i]->u.img.rect_roi.start_x, (*roi)->children[i]);
+						}
+						else {
+							(*roi)->buffer = nullptr;
+						}
 					}
 					image->children[i]->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
 				}
@@ -1044,9 +1052,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxSwapImageHandle(vx_image image_, void* cons
 				}
 				// propagate to ROIs
 				for (auto roi = image->roiDepList.begin(); roi != image->roiDepList.end(); roi++) {
-					(*roi)->buffer = image->buffer +
-						image->u.img.rect_roi.start_y * image->u.img.stride_in_bytes +
-						ImageWidthInBytesFloor(image->u.img.rect_roi.start_x, image);
+					if(image->buffer) {
+						(*roi)->buffer = image->buffer +
+							(*roi)->u.img.rect_roi.start_y * image->u.img.stride_in_bytes +
+							ImageWidthInBytesFloor((*roi)->u.img.rect_roi.start_x, image);
+					}
+					else {
+						(*roi)->buffer = nullptr;
+					}
 				}
 				image->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
 			}

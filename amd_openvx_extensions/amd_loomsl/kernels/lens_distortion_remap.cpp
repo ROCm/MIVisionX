@@ -248,7 +248,7 @@ static void CalculateLensDistortionAndWarpMapsUsingLensModel(
 				// only consider pixels within 180 degrees field of view for non-circular fisheye lens
 			if (Y[2] > 0.0f || lens_type == ptgui_lens_fisheye_circ) {
 				float ph = atan2f(Y[1], Y[0]);
-				float th = asinf(sqrtf(fmin(fmax(Y[0] * Y[0] + Y[1] * Y[1], 0.0f), 1.0f)));
+				float th = asinf(sqrtf((float)fmin(fmax(Y[0] * Y[0] + Y[1] * Y[1], 0.0f), 1.0f)));
 				float rd = lens_model_f(th, f[0], k1, k2, k3, k0);
 				float rr;
 				x_src = f[1] * rd * cosf(ph);
@@ -281,7 +281,7 @@ static void CalculateLensDistortionAndWarpMapsUsingLensModel(
 				else{ x_src = y_src = -1.0f; }
 				// pick default camera index
 				if (validCamIndex) {
-					vx_float32 zindicator = fabs(Y[2]);
+					vx_float32 zindicator = (float)fabs(Y[2]);
 					if (zindicator > internalBufferForCamIndex[pixelPosition]) {
 						defaultCamIndex[pixelPosition] = camId;
 						internalBufferForCamIndex[pixelPosition] = zindicator;

@@ -326,6 +326,45 @@ vx_status makeInputImageYUYV(vx_context context, vx_image img, vx_uint32 width, 
 
 
 
+
+template <typename T>
+vx_status makeInputImageRGBX(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, vx_enum mem_type, T pix_val)
+{
+	ERROR_CHECK_OBJECT((vx_reference)img);
+	vx_rectangle_t rect = {0, 0, width, height};
+	vx_map_id map_id;
+	vx_imagepatch_addressing_t addrId;
+	T *ptr;
+	printf("pix_val = %d",pix_val);
+	vx_uint32 stride_x_bytes, stride_x_pixels, stride_y_bytes, stride_y_pixels;
+	ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+	// addrId.stride_x = 1;
+	// stride_x_bytes = 1;
+	stride_x_bytes = addrId.stride_x;
+	stride_x_pixels = stride_x_bytes / sizeof(T);
+	stride_y_bytes = addrId.stride_y;
+	stride_y_pixels = stride_y_bytes / sizeof(T);
+	for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++){
+				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
+				ptr[i * stride_y_pixels + j * stride_x_pixels+1] = 0;
+				ptr[i * stride_y_pixels + j * stride_x_pixels+2] = 0;
+				ptr[i * stride_y_pixels + j * stride_x_pixels+3] = 255;
+			}
+	ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
+#ifdef PRINT_INPUT
+	printf("\nInput Image: ");
+	printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
+	printImage(ptr, stride_x_pixels, stride_y_pixels, width, height);
+	printf("Input Buffer: ");
+	printBuffer(ptr, width, height);
+#endif
+	vxReleaseImage(&img);
+	return VX_SUCCESS;
+}
+
+
+
 template <typename T>
 vx_status makeInputImageRGB(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, vx_enum mem_type, T pix_val)
 {
@@ -343,7 +382,7 @@ vx_status makeInputImageRGB(vx_context context, vx_image img, vx_uint32 width, v
 	stride_y_pixels = stride_y_bytes / sizeof(T);
 	for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
-				ptr[i * stride_y_pixels + j * stride_x_pixels] = i * stride_y_pixels + j * stride_x_pixels;
+				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
 	ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
 #ifdef PRINT_INPUT
 	printf("\nInput Image: ");
@@ -1446,16 +1485,28 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 105:
+				{
+				// case 105 - agoKernel_ColorConvert_RGB_RGBX
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				case 111:
 				{
-				// case 73 - color convert
+				// case 111 - agoKernel_ColorConvert_RGBX_RGB
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
-					out_buf_type = 0;
+					expected_image_sum = (pix_img1_u8 * width * height) + (255 * width * height);
+					out_buf_type = 4;
 					break;
 				}
 				case 133:
@@ -1613,18 +1664,27 @@ int main(int argc, const char ** argv)
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79) || (case_number == 111)
+					(case_number == 78)  || (case_number == 79) 
+					
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
 				// U24 inputs
 				else if(
-					(case_number == 73) || (case_number == 74) || (case_number == 75)
+					(case_number == 73) || (case_number == 74) || (case_number == 75) || (case_number == 111) 
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageRGB(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
+				//RGBX input
+				else if(
+					(case_number == 105) 
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImageRGBX(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
+								}
+				
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);
 				vxReleaseNode(&node);
@@ -2626,13 +2686,23 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 105:
+				{
+				// test_case_name  = " agoKernel_ChannelConvert_RGB_RGBX"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 0;
+					break;
+				}
 				case 111:
 				{
-				// case 75 - agoKernel_ChannelConvert_RGBX_RGB
+				// test_case_name  = " agoKernel_ChannelConvert_RGBX_RGB"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8 * width * height )+ (255 * width * height); 
 					out_buf_type = 0;
 					break;
 				}
@@ -2790,17 +2860,25 @@ int main(int argc, const char ** argv)
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79) || (case_number == 111)
+					(case_number == 78)  || (case_number == 79) 
+					
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
 				// U24 inputs
 				else if(
-					(case_number == 73) || (case_number == 74) || (case_number == 75)
+					(case_number == 73) || (case_number == 74) || (case_number == 75) || (case_number == 111) 
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageRGB(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
+								}
+				//RGBX input
+				else if(
+					(case_number == 105) 
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImageRGBX(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);
@@ -2879,6 +2957,26 @@ int main(int argc, const char ** argv)
 			for (int j = 0; j < width; j++)
 				returned_image_sum += out_buf_int16[i * stride_y_pixels + j * stride_x_pixels];
 	}
+	// for RGBX outputs
+	{
+		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_uint8, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+		stride_x_bytes = out_addr.stride_x;
+		stride_x_pixels = stride_x_bytes / sizeof(vx_uint8);
+		stride_y_bytes = out_addr.stride_y;
+		stride_y_pixels = stride_y_bytes / sizeof(vx_uint8);
+#ifdef PRINT_OUTPUT
+		printf("\nOutput Image: ");
+		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
+		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, width, height);
+		printf("Output Buffer: ");
+		printBuffer(out_buf_uint8, width, height);
+		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
+#endif
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++)
+				returned_image_sum = returned_image_sum + out_buf_uint8[i * stride_y_pixels + j * stride_x_pixels] + 255;
+	}
+	//
 	
 	if (returned_image_sum != expected_image_sum)
 	{

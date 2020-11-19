@@ -651,6 +651,55 @@ int HipExec_ColorConvert_RGBX_RGB(
 }
 
 
+__global__ void __attribute__((visibility("default")))
+
+Hip_ColorConvert_RGB_RGBX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    unsigned char *pDstImage, unsigned int  dstImageStrideInBytes,
+    const unsigned char *pSrcImage1, unsigned int srcImage1StrideInBytes
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x*3;
+    unsigned int src1Idx =  y*(srcImage1StrideInBytes) + x*4 ;
+
+    pDstImage[dstIdx]  = pSrcImage1[src1Idx]; 
+    pDstImage[dstIdx+1]  = pSrcImage1[src1Idx+1]; 
+    pDstImage[dstIdx+2]  = pSrcImage1[src1Idx+2]; 
+}
+int HipExec_ColorConvert_RGB_RGBX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+
+    printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorConvert_RGB_RGBX,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (unsigned char *)pHipDstImage , dstImageStrideInBytes, 
+                    (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_ColorConvert_RGB_RGBX: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+
 // ----------------------------------------------------------------------------
 // VxFormatConvert kernels for hip backend
 // ----------------------------------------------------------------------------

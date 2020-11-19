@@ -489,6 +489,17 @@ int HipExec_ThresholdNot_U1_U8_Range(
 
 // color_kernels
 
+int HipExec_ColorConvert_RGBX_RGB(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+// int HipExec_ColorConvert_RGB_RGBX(
+//         vx_uint32 dstWidth, vx_uint32 dstHeight, 
+//         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+//         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+//         );
+
 int HipExec_Lut_U8_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

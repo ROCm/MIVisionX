@@ -1446,6 +1446,18 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 111:
+				{
+				// case 73 - color convert
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				case 133:
 				{
 					// test_case_name = "agoKernel_Box_U8_U8_3x3";
@@ -1597,11 +1609,11 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u1));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u8));
 				}
-				// U16  & U32 inputs
+				// U16  & U32 inputs 
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79)
+					(case_number == 78)  || (case_number == 79) || (case_number == 111)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
@@ -1672,6 +1684,16 @@ int main(int argc, const char ** argv)
 		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_in.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_in.stride_y);
 		hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_in.stride_y);
+
+		vx_imagepatch_addressing_t hip_addr_uint8_rgbx_in = {0};
+		hip_addr_uint8_rgbx_in.dim_x = width;
+		hip_addr_uint8_rgbx_in.dim_y = height;
+		hip_addr_uint8_rgbx_in.stride_x = 4;
+		hip_addr_uint8_rgbx_in.stride_y = ((width+3)&~3)*4;
+		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgbx_in.stride_y);
+		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgbx_in.stride_y);
+		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgbx_in.stride_y);
+		hipMemset(ptr[2], 0, height * hip_addr_uint8_rgbx_in.stride_y);
 
 		vx_imagepatch_addressing_t hip_addr_uint8_rgb_out = {0};
 		hip_addr_uint8_rgb_out.dim_x = width;
@@ -2604,6 +2626,16 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 111:
+				{
+				// case 75 - agoKernel_ChannelConvert_RGBX_RGB
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 0;
+					break;
+				}
 				case 133:
 				{
 					// test_case_name = "agoKernel_Box_U8_U8_3x3";
@@ -2758,7 +2790,7 @@ int main(int argc, const char ** argv)
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79)
+					(case_number == 78)  || (case_number == 79) || (case_number == 111)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	

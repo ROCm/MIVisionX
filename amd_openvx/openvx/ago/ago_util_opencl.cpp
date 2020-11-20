@@ -702,10 +702,14 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
 	else if (data->ref.type == VX_TYPE_THRESHOLD) {
 		size_t size = sizeof(cl_uint);
 		cl_uint2 value;
-		value.s0 = data->u.thr.threshold_lower;
-		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
 			size = sizeof(cl_uint2);
-			value.s1 = data->u.thr.threshold_upper;
+			value.s0 = data->u.thr.threshold_value.U1;
+		}
+		else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+			size = sizeof(cl_uint2);
+			value.s0 = data->u.thr.threshold_lower.U1;
+			value.s1 = data->u.thr.threshold_upper.U1;
 		}
 		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
 		if (err) { 
@@ -948,10 +952,14 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
 	else if (data->ref.type == VX_TYPE_THRESHOLD) {
 		size_t size = sizeof(cl_uint);
 		cl_uint2 value;
-		value.s0 = data->u.thr.threshold_lower;
-		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
 			size = sizeof(cl_uint2);
-			value.s1 = data->u.thr.threshold_upper;
+			value.s0 = data->u.thr.threshold_value.U1;
+		}
+		else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+			size = sizeof(cl_uint2);
+			value.s0 = data->u.thr.threshold_lower.U1;
+			value.s1 = data->u.thr.threshold_upper.U1;
 		}
 		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
 		if (err) { 
@@ -1729,6 +1737,25 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"	r |= (p1.s1 >> 10) &  64;\n"
 		"	r |= (p1.s1 >> 17) & 128;\n"
 		"	*p0 = r;\n"
+		"}\n"
+		"void Convert_U8_S16 (U8x8 *p0, S16X8 p1)\n"
+		"{\n"
+		"  	U8x8 r;\n"
+		"	p1.s0 = (~p1.s0) + 1; \n"
+		"	p1.s1 = (~p1.s1) + 1; \n"
+		"	p1.s2 = (~p1.s2) + 1; \n"
+		"	p1.s3 = (~p1.s3) + 1; \n"
+		"  	r  =  p1.s0        &  0x000000ff;\n"
+		"  	r |= (p1.s0 >> 15) &  0x0000ff00;\n"
+		"	r |= (p1.s1) 	   &  0x000000ff;\n"
+		"  	r |= (p1.s1 >> 15) &  0x0000ff00;\n"
+		"  	p0.s0 = r;\n"
+		"  	U8x8 q;\n"
+		"  	q  =  p1.s2        &  0x000000ff;\n"
+		"  	q |= (p1.s2 >> 15) &  0x0000ff00;\n"
+		"	q |= (p1.s3) 	   &  0x000000ff;\n"
+		"  	q |= (p1.s3 >> 15) &  0x0000ff00;\n"
+		"  	p0.s1 = q;\n"
 		"}\n"
 		);
 	for (size_t index = 0; index < supernode->nodeList.size(); index++) {

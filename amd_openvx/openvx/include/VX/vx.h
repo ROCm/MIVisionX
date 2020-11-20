@@ -1,6 +1,5 @@
-/* 
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+/*
+ * Copyright (c) 2012-2019 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ * NOTE: Some safety-critical environments may enforce software development
+ *       guidelines (for example MISRA C:2012) to facilitate code quality,
+ *       safety, security, portability and reliability. In order to meet
+ *       such guidelines, developers may modify OpenVX standard header files
+ *       without deviating from the OpenVX specification.
  */
 
 #ifndef _OPENVX_H_

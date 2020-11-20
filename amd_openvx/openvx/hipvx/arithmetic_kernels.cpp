@@ -1830,7 +1830,7 @@ Hip_WeightedAverage_U8_U8U8(
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(src1.x*invAlpha+src2.x*alpha, src1.y*invAlpha+src2.y*alpha, src1.z*invAlpha+src2.z*alpha, src1.w*invAlpha+src2.w*alpha);
+    float4 dst = make_float4(src2.x*invAlpha+src1.x*alpha, src2.y*invAlpha+src1.y*alpha, src2.z*invAlpha+src1.z*alpha, src2.w*invAlpha+src1.w*alpha);
     pDstImage[dstIdx] = float4_to_uchars(dst);
 }
 int HipExec_WeightedAverage_U8_U8U8(

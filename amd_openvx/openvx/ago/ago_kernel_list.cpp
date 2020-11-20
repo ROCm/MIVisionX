@@ -97,9 +97,13 @@ THE SOFTWARE.
 #define ATYPE_IIICC                            { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_CONVOLUTION, VX_TYPE_CONVOLUTION }
 #define ATYPE_ICI                              { VX_TYPE_IMAGE, VX_TYPE_CONVOLUTION, VX_TYPE_IMAGE }
 #define ATYPE_IP                               { VX_TYPE_IMAGE, VX_TYPE_PYRAMID }
+#define ATYPE_IPI                              { VX_TYPE_IMAGE, VX_TYPE_PYRAMID, VX_TYPE_IMAGE }
+#define ATYPE_PII                              { VX_TYPE_PYRAMID, VX_TYPE_IMAGE, VX_TYPE_IMAGE }
+#define ATYPE_IIP                              { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_PYRAMID }
 #define ATYPE_ISSAASS                          { VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_ARRAY, VX_TYPE_ARRAY, VX_TYPE_SCALAR, VX_TYPE_SCALAR }
 #define ATYPE_IISSSI                           { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_IMAGE }
 #define ATYPE_IISI                             { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_IMAGE }
+#define ATYPE_ISII                             { VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_IMAGE, VX_TYPE_IMAGE }
 #define ATYPE_IISS                             { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_SCALAR }
 #define ATYPE_IISSS                            { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_SCALAR }
 #define ATYPE_ITSSI                            { VX_TYPE_IMAGE, VX_TYPE_THRESHOLD, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_IMAGE }
@@ -109,6 +113,8 @@ THE SOFTWARE.
 #define ATYPE_PPAAASSSSS                       { VX_TYPE_PYRAMID, VX_TYPE_PYRAMID, VX_TYPE_ARRAY, VX_TYPE_ARRAY, VX_TYPE_ARRAY, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_SCALAR, VX_TYPE_SCALAR }
 #define ATYPE_IRSI                             { VX_TYPE_IMAGE, VX_TYPE_REMAP, VX_TYPE_SCALAR, VX_TYPE_IMAGE }
 #define ATYPE_IIIS                             { VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_IMAGE, VX_TYPE_SCALAR }
+#define ATYPE_SISI                             { VX_TYPE_SCALAR, VX_TYPE_IMAGE, VX_TYPE_SCALAR, VX_TYPE_IMAGE }
+#define ATYPE_SIMI                             { VX_TYPE_SCALAR, VX_TYPE_IMAGE, VX_TYPE_MATRIX, VX_TYPE_IMAGE }
 #define ATYPE_AI                               { VX_TYPE_ARRAY, VX_TYPE_IMAGE }
 #define ATYPE_AIS                              { VX_TYPE_ARRAY, VX_TYPE_IMAGE, VX_TYPE_SCALAR }
 #define ATYPE_ASIS                             { VX_TYPE_ARRAY, VX_TYPE_SCALAR, VX_TYPE_IMAGE, VX_TYPE_SCALAR }
@@ -143,6 +149,7 @@ THE SOFTWARE.
 #define ATYPE_RR                               { VX_TYPE_REFERENCE, VX_TYPE_REFERENCE }
 #define ATYPE_SRRR                             { VX_TYPE_SCALAR, VX_TYPE_REFERENCE, VX_TYPE_REFERENCE, VX_TYPE_REFERENCE }
 #define ATYPE_RSRR                             { VX_TYPE_REFERENCE, VX_TYPE_SCALAR, VX_TYPE_REFERENCE, VX_TYPE_REFERENCE }
+#define ATYPE_IMIS                             { VX_TYPE_IMAGE, VX_TYPE_MATRIX, VX_TYPE_IMAGE, VX_TYPE_SCALAR }
 
 // for kernOpType & kernOpInfo
 #define KOP_UNKNOWN    AGO_KERNEL_OP_TYPE_UNKNOWN,         0,
@@ -173,49 +180,53 @@ static struct {
 		(validRectReset ? AGO_KERNEL_FLAG_VALID_RECT_RESET : 0), argCfg, argType, kernOp \
 	}
 	// OpenVX 1.x built-in kernels
-	OVX_KERNEL_ENTRY( VX_KERNEL_COLOR_CONVERT         , ColorConvert, "color_convert",             AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_CHANNEL_EXTRACT       , ChannelExtract, "channel_extract",         AINx2_AOUT,           ATYPE_ISI          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_CHANNEL_COMBINE       , ChannelCombine, "channel_combine",         AINx2_AOPTINx2_AOUT,  ATYPE_IIIII        , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_SOBEL_3x3             , Sobel3x3, "sobel_3x3",                     AIN_AOPTOUTx2,        ATYPE_III          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_MAGNITUDE             , Magnitude, "magnitude",                    AINx2_AOUT,           ATYPE_III          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_PHASE                 , Phase, "phase",                            AINx2_AOUT,           ATYPE_III          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_SCALE_IMAGE           , ScaleImage, "scale_image",                 AIN_AOUT_AIN,         ATYPE_IIS          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_TABLE_LOOKUP          , TableLookup, "table_lookup",               AINx2_AOUT,           ATYPE_ILI          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_HISTOGRAM             , Histogram, "histogram",                    AIN_AOUT,             ATYPE_ID           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_EQUALIZE_HISTOGRAM    , EqualizeHistogram, "equalize_histogram",   AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_ABSDIFF               , AbsDiff, "absdiff",                        AINx2_AOUT,           ATYPE_III          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_MEAN_STDDEV           , MeanStdDev, "mean_stddev",                 AIN_AOUTx2,           ATYPE_ISS          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_THRESHOLD             , Threshold, "threshold",                    AINx2_AOUT,           ATYPE_ITI          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_INTEGRAL_IMAGE        , IntegralImage, "integral_image",           AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_DILATE_3x3            , Dilate3x3, "dilate_3x3",                   AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_ERODE_3x3             , Erode3x3, "erode_3x3",                     AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_MEDIAN_3x3            , Median3x3, "median_3x3",                   AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_BOX_3x3               , Box3x3, "box_3x3",                         AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_GAUSSIAN_3x3          , Gaussian3x3, "gaussian_3x3",               AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_CUSTOM_CONVOLUTION    , CustomConvolution, "custom_convolution",   AINx2_AOUT,           ATYPE_ICI          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_GAUSSIAN_PYRAMID      , GaussianPyramid, "gaussian_pyramid",       AIN_AOUT,             ATYPE_IP           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_ACCUMULATE            , Accumulate, "accumulate",                  AIN_AINOUT,           ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_ACCUMULATE_WEIGHTED   , AccumulateWeighted, "accumulate_weighted", AINx2_AINOUT,         ATYPE_ISI          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_ACCUMULATE_SQUARE     , AccumulateSquare, "accumulate_square",     AINx2_AINOUT,         ATYPE_ISI          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_MINMAXLOC             , MinMaxLoc, "minmaxloc",                    AIN_AOUTx2_AOPTOUTx4, ATYPE_ISSAASS      , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_CONVERTDEPTH          , ConvertDepth, "convertdepth",              AIN_AOUT_AINx2,       ATYPE_IISS         , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_CANNY_EDGE_DETECTOR   , CannyEdgeDetector, "canny_edge_detector",  AINx4_AOUT,           ATYPE_ITSSI        , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_AND                   , And, "and",                                AINx2_AOUT,           ATYPE_III          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_OR                    , Or, "or",                                  AINx2_AOUT,           ATYPE_III          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_XOR                   , Xor, "xor",                                AINx2_AOUT,           ATYPE_III          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_NOT                   , Not, "not",                                AIN_AOUT,             ATYPE_II           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_MULTIPLY              , Multiply, "multiply",                      AINx5_AOUT,           ATYPE_IISSSI       , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_ADD                   , Add, "add",                                AINx3_AOUT,           ATYPE_IISI         , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_SUBTRACT              , Subtract, "subtract",                      AINx3_AOUT,           ATYPE_IISI         , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_WARP_AFFINE           , WarpAffine, "warp_affine",                 AINx3_AOUT,           ATYPE_IMSI         , true  ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_WARP_PERSPECTIVE      , WarpPerspective, "warp_perspective",       AINx3_AOUT,           ATYPE_IMSI         , true  ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_HARRIS_CORNERS        , HarrisCorners, "harris_corners",           AINx6_AOUT_AOPTOUT,   ATYPE_ISSSSSAS     , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_FAST_CORNERS          , FastCorners, "fast_corners",               AINx3_AOUT_AOPTOUT,   ATYPE_ISSAS        , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_OPTICAL_FLOW_PYR_LK   , OpticalFlowPyrLK, "optical_flow_pyr_lk",   AINx4_AOUT_AINx5,     ATYPE_PPAAASSSSS   , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_REMAP                 , Remap, "remap",                            AINx3_AOUT,           ATYPE_IRSI         , true  ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_HALFSCALE_GAUSSIAN    , HalfScaleGaussian, "halfscale_gaussian",   AIN_AOUT_AIN,         ATYPE_IIS          , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_COPY                  , Copy, "copy",                              AIN_AOUT,             ATYPE_RR           , false ),
-	OVX_KERNEL_ENTRY( VX_KERNEL_SELECT                , Select, "select",                          AINx3_AOUT,           ATYPE_SRRR         , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_COLOR_CONVERT         , ColorConvert, "color_convert",             		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_CHANNEL_EXTRACT       , ChannelExtract, "channel_extract",         		AINx2_AOUT,           ATYPE_ISI          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_CHANNEL_COMBINE       , ChannelCombine, "channel_combine",         		AINx2_AOPTINx2_AOUT,  ATYPE_IIIII        , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_SOBEL_3x3             , Sobel3x3, "sobel_3x3",                     		AIN_AOPTOUTx2,        ATYPE_III          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_MAGNITUDE             , Magnitude, "magnitude",                    		AINx2_AOUT,           ATYPE_III          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_PHASE                 , Phase, "phase",                            		AINx2_AOUT,           ATYPE_III          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_SCALE_IMAGE           , ScaleImage, "scale_image",                 		AIN_AOUT_AIN,         ATYPE_IIS          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_TABLE_LOOKUP          , TableLookup, "table_lookup",               		AINx2_AOUT,           ATYPE_ILI          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_HISTOGRAM             , Histogram, "histogram",                    		AIN_AOUT,             ATYPE_ID           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_EQUALIZE_HISTOGRAM    , EqualizeHistogram, "equalize_histogram",   		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_ABSDIFF               , AbsDiff, "absdiff",                        		AINx2_AOUT,           ATYPE_III          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_MEAN_STDDEV           , MeanStdDev, "mean_stddev",                 		AIN_AOUTx2,           ATYPE_ISS          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_THRESHOLD             , Threshold, "threshold",                    		AINx2_AOUT,           ATYPE_ITI          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_INTEGRAL_IMAGE        , IntegralImage, "integral_image",           		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_DILATE_3x3            , Dilate3x3, "dilate_3x3",                   		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_ERODE_3x3             , Erode3x3, "erode_3x3",                     		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_MEDIAN_3x3            , Median3x3, "median_3x3",                   		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_BOX_3x3               , Box3x3, "box_3x3",                         		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_GAUSSIAN_3x3          , Gaussian3x3, "gaussian_3x3",               		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_CUSTOM_CONVOLUTION    , CustomConvolution, "custom_convolution",   		AINx2_AOUT,           ATYPE_ICI          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_GAUSSIAN_PYRAMID      , GaussianPyramid, "gaussian_pyramid",       		AIN_AOUT,             ATYPE_IP           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_ACCUMULATE            , Accumulate, "accumulate",                  		AIN_AINOUT,           ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_ACCUMULATE_WEIGHTED   , AccumulateWeighted, "accumulate_weighted", 		AINx2_AINOUT,         ATYPE_ISI          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_ACCUMULATE_SQUARE     , AccumulateSquare, "accumulate_square",     		AINx2_AINOUT,         ATYPE_ISI          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_MINMAXLOC             , MinMaxLoc, "minmaxloc",                    		AIN_AOUTx2_AOPTOUTx4, ATYPE_ISSAASS      , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_CONVERTDEPTH          , ConvertDepth, "convertdepth",              		AIN_AOUT_AINx2,       ATYPE_IISS         , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_CANNY_EDGE_DETECTOR   , CannyEdgeDetector, "canny_edge_detector",  		AINx4_AOUT,           ATYPE_ITSSI        , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_AND                   , And, "and",                                		AINx2_AOUT,           ATYPE_III          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_OR                    , Or, "or",                                  		AINx2_AOUT,           ATYPE_III          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_XOR                   , Xor, "xor",                                		AINx2_AOUT,           ATYPE_III          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_NOT                   , Not, "not",                                		AIN_AOUT,             ATYPE_II           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_MULTIPLY              , Multiply, "multiply",                      		AINx5_AOUT,           ATYPE_IISSSI       , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_ADD                   , Add, "add",                                		AINx3_AOUT,           ATYPE_IISI         , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_SUBTRACT              , Subtract, "subtract",                      		AINx3_AOUT,           ATYPE_IISI         , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_WARP_AFFINE           , WarpAffine, "warp_affine",                 		AINx3_AOUT,           ATYPE_IMSI         , true  ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_WARP_PERSPECTIVE      , WarpPerspective, "warp_perspective",       		AINx3_AOUT,           ATYPE_IMSI         , true  ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_HARRIS_CORNERS        , HarrisCorners, "harris_corners",           		AINx6_AOUT_AOPTOUT,   ATYPE_ISSSSSAS     , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_FAST_CORNERS          , FastCorners, "fast_corners",               		AINx3_AOUT_AOPTOUT,   ATYPE_ISSAS        , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_OPTICAL_FLOW_PYR_LK   , OpticalFlowPyrLK, "optical_flow_pyr_lk",   		AINx4_AOUT_AINx5,     ATYPE_PPAAASSSSS   , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_REMAP                 , Remap, "remap",                            		AINx3_AOUT,           ATYPE_IRSI         , true  ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_HALFSCALE_GAUSSIAN    , HalfScaleGaussian, "halfscale_gaussian",   		AIN_AOUT_AIN,         ATYPE_IIS          , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_COPY                  , Copy, "copy",                              		AIN_AOUT,             ATYPE_RR           , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_SELECT                , Select, "select",                          		AINx3_AOUT,           ATYPE_SRRR         , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_WEIGHTED_AVERAGE      , WeightedAverage, "weighted_average",        		AINx3_AOUT,		      ATYPE_ISII         , false ),
+	OVX_KERNEL_ENTRY( VX_KERNEL_NON_LINEAR_FILTER     , NonLinearFilter, "non_linear_filter",      		AINx3_AOUT,	     	  ATYPE_SIMI         , false ),	
+	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_PYRAMID     , LaplacianPyramid, "laplacian_pyramid",     		AINx2_AOUT,	     	  ATYPE_IPI        	 , false ),	
+	OVX_KERNEL_ENTRY( VX_KERNEL_LAPLACIAN_RECONSTRUCT , LaplacianReconstruct, "laplacian_reconstruct",  AINx2_AOUT,	     	  ATYPE_PII        	 , false ),	
 	// AMD low-level kernel primitives
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SET_00_U8                                               , 1, 1, Set00_U8, { AOUT },                                           ATYPE_I                 , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SET_FF_U8                                               , 1, 1, SetFF_U8, { AOUT },                                           ATYPE_I                 , KOP_ELEMWISE  , false ),
@@ -224,14 +235,19 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NOT_U1_U8                                               , 1, 1, Not_U1_U8, AOUT_AIN,                                          ATYPE_II                , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NOT_U1_U1                                               , 1, 1, Not_U1_U1, AOUT_AIN,                                          ATYPE_II                , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LUT_U8_U8                                               , 1, 1, Lut_U8_U8, AOUT_AINx2,                                        ATYPE_IIL               , KOP_ELEMWISE  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LUT_S16_S16                                             , 1, 1, Lut_S16_S16, AOUT_AINx2,                                      ATYPE_IIL               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U8_U8_BINARY                                  , 1, 1, Threshold_U8_U8_Binary, AOUT_AINx2,                           ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U8_U8_RANGE                                   , 1, 1, Threshold_U8_U8_Range, AOUT_AINx2,                            ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U1_U8_BINARY                                  , 1, 1, Threshold_U1_U8_Binary, AOUT_AINx2,                           ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U1_U8_RANGE                                   , 1, 1, Threshold_U1_U8_Range, AOUT_AINx2,                            ATYPE_IIT               , KOP_ELEMWISE  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U8_S16_BINARY                                 , 1, 1, Threshold_U8_S16_Binary, AOUT_AINx2,                          ATYPE_IIT               , KOP_ELEMWISE  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_U8_S16_RANGE                                  , 1, 1, Threshold_U8_S16_Range, AOUT_AINx2,                           ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_NOT_U8_U8_BINARY                              , 1, 1, ThresholdNot_U8_U8_Binary, AOUT_AINx2,                        ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_NOT_U8_U8_RANGE                               , 1, 1, ThresholdNot_U8_U8_Range, AOUT_AINx2,                         ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_NOT_U1_U8_BINARY                              , 1, 1, ThresholdNot_U1_U8_Binary, AOUT_AINx2,                        ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_NOT_U1_U8_RANGE                               , 1, 1, ThresholdNot_U1_U8_Range, AOUT_AINx2,                         ATYPE_IIT               , KOP_ELEMWISE  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_NOT_U8_S16_BINARY                             , 1, 1, ThresholdNot_U8_S16_Binary, AOUT_AINx2,                       ATYPE_IIT               , KOP_ELEMWISE  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_THRESHOLD_NOT_U8_S16_RANGE                              , 1, 1, ThresholdNot_U8_S16_Range, AOUT_AINx2,                        ATYPE_IIT               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U8_S16_WRAP                                 , 1, 1, ColorDepth_U8_S16_Wrap, AOUT_AINx2,                           ATYPE_IIS               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_U8_S16_SAT                                  , 1, 1, ColorDepth_U8_S16_Sat, AOUT_AINx2,                            ATYPE_IIS               , KOP_ELEMWISE  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COLOR_DEPTH_S16_U8                                      , 1, 1, ColorDepth_S16_U8, AOUT_AINx2,                                ATYPE_IIS               , KOP_ELEMWISE  , false ),
@@ -437,6 +453,7 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM                           , 1, 1, CannySobel_U16_U8_7x7_L2NORM, AOUT_AIN,                       ATYPE_II                , KOP_FIXED(7)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8_U16_3x3                         , 0, 1, CannySuppThreshold_U8_U16_3x3, AOUT_AINx2_AOPTIN,             ATYPE_IITS              , KOP_FIXED(3)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3                       , 1, 1, CannySuppThreshold_U8XY_U16_3x3, AOUTx2_AINx2_AOPTIN,         ATYPE_IcITS             , KOP_FIXED(3)  , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7                       , 1, 1, CannySuppThreshold_U8XY_U16_7x7, AOUTx2_AINx2_AOPTIN,         ATYPE_IcITS             , KOP_FIXED(3)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3                                 , 0, 1, NonMaxSupp_XY_ANY_3x3, AOUT_AIN,                              ATYPE_AI                , KOP_FIXED(3)  , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U8_U8_NEAREST                                     , 1, 1, Remap_U8_U8_Nearest, AOUT_AINx2,                              ATYPE_IIR               , KOP_UNKNOWN   , true  ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_REMAP_U8_U8_NEAREST_CONSTANT                            , 1, 1, Remap_U8_U8_Nearest_Constant, AOUT_AINx3,                     ATYPE_IIRS              , KOP_UNKNOWN   , true  ),
@@ -470,6 +487,7 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_INTEGRAL_IMAGE_U32_U8                                   , 1, 0, IntegralImage_U32_U8, AOUT_AIN,                               ATYPE_II                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_HISTOGRAM_DATA_U8                                       , 1, 0, Histogram_DATA_U8, AOUT_AIN,                                  ATYPE_DI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MEAN_STD_DEV_DATA_U8                                    , 1, 0, MeanStdDev_DATA_U8, AOUT_AIN,                                 ATYPE_sI                , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MEAN_STD_DEV_DATA_U1                                    , 1, 0, MeanStdDev_DATA_U1, AOUT_AIN,                                 ATYPE_sI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MIN_MAX_DATA_U8                                         , 1, 0, MinMax_DATA_U8, AOUT_AIN,                                     ATYPE_mI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MIN_MAX_DATA_S16                                        , 1, 0, MinMax_DATA_S16, AOUT_AIN,                                    ATYPE_mI                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_EQUALIZE_DATA_DATA                                      , 1, 0, Equalize_DATA_DATA, AOUT_AIN_AOPTINx8,                        ATYPE_LDDDDDDDDD        , KOP_UNKNOWN   , false ),
@@ -495,6 +513,10 @@ static struct {
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_MIN_MAX_LOC_MERGE_DATA_DATA                             , 1, 0, MinMaxLocMerge_DATA_DATA, AOUTx2_AIN_AOPTINx7,                ATYPE_SAAAAAAAAA        , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_COPY_DATA_DATA                                          , 1, 1, Copy_DATA_DATA, AOUT_AIN,                                     ATYPE_RR                , KOP_UNKNOWN   , false ),
 	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_SELECT_DATA_DATA_DATA                                   , 1, 1, Select_DATA_DATA_DATA, AOUT_AIN,                              ATYPE_RSRR              , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_WEIGHTED_AVERAGE_U8_U8_U8                               , 1, 0, WeightedAverage_U8_U8_U8, AOUT_AINx3,                         ATYPE_IISI              , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_NON_LINEAR_FILTER_DATA_DATA_DATA                        , 1, 0, NonLinearFilter_DATA_DATA_DATA, AOUT_AINx3,                   ATYPE_IMIS              , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_PYRAMID_DATA_DATA_DATA                        , 1, 0, LaplacianPyramid_DATA_DATA_DATA, AOUT_AINx2,                  ATYPE_IPI               , KOP_UNKNOWN   , false ),
+	AGO_KERNEL_ENTRY( VX_KERNEL_AMD_LAPLACIAN_RECONSTRUCT_DATA_DATA_DATA                    , 1, 0, LaplacianReconstruct_DATA_DATA_DATA, AOUT_AINx2,              ATYPE_IIP               , KOP_UNKNOWN   , false ),
 #undef AGO_KERNEL_ENTRY
 #undef OVX_KERNEL_ENTRY
 };
@@ -530,7 +552,7 @@ int agoPublishKernels(AgoContext * acontext)
 			kernel->parameters[j].index = j;
 			kernel->parameters[j].direction = VX_INPUT;
 			if (kernel->argConfig[j] & AGO_KERNEL_ARG_OUTPUT_FLAG)
-				kernel->parameters[j].direction = (kernel->argConfig[j] & AGO_KERNEL_ARG_INPUT_FLAG) ? VX_BIDIRECTIONAL : VX_OUTPUT;
+				kernel->parameters[j].direction = (kernel->argConfig[j] & AGO_KERNEL_ARG_INPUT_FLAG) ? (vx_direction_e)VX_BIDIRECTIONAL : VX_OUTPUT;
 			kernel->parameters[j].type = ago_kernel_list[i].argType[j];
 			kernel->parameters[j].state = (kernel->argConfig[j] & AGO_KERNEL_ARG_OPTIONAL_FLAG) ? VX_PARAMETER_STATE_OPTIONAL : VX_PARAMETER_STATE_REQUIRED;
 			kernel->parameters[j].scope = &kernel->ref;

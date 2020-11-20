@@ -1,6 +1,5 @@
-/* 
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+/*
+ * Copyright (c) 2012-2019 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef _OPENVX_IMPORT_H_
 #define _OPENVX_IMPORT_H_
+#ifdef  __cplusplus
+extern "C" {
+#endif
 /*!
  * \file
  * \brief The OpenVX Import API
  * part of the OpenVX Export and Import extension API
  * and also part of the OpenVX SC deployment feature set.
  */
- 
+
  /*! \brief An enumeration of export uses. See <tt>\ref vxExportObjectsToMemory</tt> and
  * <tt>\ref vxImportObjectsFromMemory</tt>
  * \ingroup vx_enum_e
@@ -94,7 +97,7 @@ typedef struct _vx_import *vx_import;
  * all other entries will be supplied by the framework and may be initialised by the application to NULL. The *uses* array
  * must have the identical length and content as given at the time of export, and the value of *numrefs* must also match;
  * these measures increase confidence that the import contains the correct data.
-* \note Graph parameters may be changed after import by using the <tt>\ref vxSetGraphParameterByIndex</tt> API, and 
+* \note Graph parameters may be changed after import by using the <tt>\ref vxSetGraphParameterByIndex</tt> API, and
  * images may also be changed by using the <tt>\ref vxSwapImageHandle</tt> API.
  * When <tt>\ref vxSetGraphParameterByIndex</tt> is used, the framework will check that the new parameter is of the
  * correct type to run with the graph, which cannot be re-verified. If the reference supplied is not suitable, an error
@@ -124,12 +127,12 @@ typedef struct _vx_import *vx_import;
  * \ingroup group_import
  */
 VX_API_ENTRY vx_import VX_API_CALL vxImportObjectsFromMemory(
-    vx_context context,  
-    vx_size numrefs,     
-    vx_reference *refs,  
+    vx_context context,
+    vx_size numrefs,
+    vx_reference *refs,
     const vx_enum * uses,
     const vx_uint8 * ptr,
-    vx_size length);    
+    vx_size length);
 
 /*! \brief Releases an import object when no longer required.\n
  * \details This function releases the reference to the import object [*REQ*].\n
@@ -180,4 +183,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseImport(vx_import *import);
  */
 VX_API_ENTRY vx_reference VX_API_CALL vxGetImportReferenceByName(vx_import import, const vx_char *name);
 
+#ifdef  __cplusplus
+}
+#endif
 #endif

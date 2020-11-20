@@ -337,6 +337,45 @@ vx_status makeInputImageYUYV(vx_context context, vx_image img, vx_uint32 width, 
 
 
 
+
+template <typename T>
+vx_status makeInputImageRGBX(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, vx_enum mem_type, T pix_val)
+{
+	ERROR_CHECK_OBJECT((vx_reference)img);
+	vx_rectangle_t rect = {0, 0, width, height};
+	vx_map_id map_id;
+	vx_imagepatch_addressing_t addrId;
+	T *ptr;
+	printf("pix_val = %d",pix_val);
+	vx_uint32 stride_x_bytes, stride_x_pixels, stride_y_bytes, stride_y_pixels;
+	ERROR_CHECK_STATUS(vxMapImagePatch(img, &rect, 0, &map_id, &addrId, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+	// addrId.stride_x = 1;
+	// stride_x_bytes = 1;
+	stride_x_bytes = addrId.stride_x;
+	stride_x_pixels = stride_x_bytes / sizeof(T);
+	stride_y_bytes = addrId.stride_y;
+	stride_y_pixels = stride_y_bytes / sizeof(T);
+	for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++){
+				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
+				ptr[i * stride_y_pixels + j * stride_x_pixels+1] = 0;
+				ptr[i * stride_y_pixels + j * stride_x_pixels+2] = 0;
+				ptr[i * stride_y_pixels + j * stride_x_pixels+3] = 255;
+			}
+	ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
+#ifdef PRINT_INPUT
+	printf("\nInput Image: ");
+	printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
+	printImage(ptr, stride_x_pixels, stride_y_pixels, width, height);
+	printf("Input Buffer: ");
+	printBuffer(ptr, width, height);
+#endif
+	vxReleaseImage(&img);
+	return VX_SUCCESS;
+}
+
+
+
 template <typename T>
 vx_status makeInputImageRGB(vx_context context, vx_image img, vx_uint32 width, vx_uint32 height, vx_enum mem_type, T pix_val)
 {
@@ -354,7 +393,7 @@ vx_status makeInputImageRGB(vx_context context, vx_image img, vx_uint32 width, v
 	stride_y_pixels = stride_y_bytes / sizeof(T);
 	for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
-				ptr[i * stride_y_pixels + j * stride_x_pixels] = i * stride_y_pixels + j * stride_x_pixels;
+				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
 	ERROR_CHECK_STATUS(vxUnmapImagePatch(img, map_id));
 #ifdef PRINT_INPUT
 	printf("\nInput Image: ");
@@ -444,15 +483,14 @@ int main(int argc, const char ** argv)
 	// arguments for specific functionalities	
 	vx_float32 Mul_scale_float = (vx_float32) (1.0 / 16.0);
 	vx_scalar Mul_scale_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &Mul_scale_float);
-	// vx_lut LUT = vxCreateLUT(context, VX_TYPE_UINT8, 256);
-	vx_int32 Threshold_thresholdValue_int32 = (vx_int32) 100;
-	vx_int32 Threshold_thresholdLower_int32 = (vx_int32) 100;
-	vx_int32 Threshold_thresholdUpper_int32 = (vx_int32) 200;
-	vx_threshold Threshold_thresholdObjectBinary_threshold = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
-	vx_threshold Threshold_thresholdObjectRange_threshold = vxCreateThreshold(context, VX_THRESHOLD_TYPE_RANGE, VX_TYPE_UINT8);
-	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
-	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
-	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
+	// vx_int32 Threshold_thresholdValue_int32 = (vx_int32) 100;
+	// vx_int32 Threshold_thresholdLower_int32 = (vx_int32) 100;
+	// vx_int32 Threshold_thresholdUpper_int32 = (vx_int32) 200;
+	// vx_threshold Threshold_thresholdObjectBinary_threshold = vxCreateThreshold(context, VX_THRESHOLD_TYPE_BINARY, VX_TYPE_UINT8);
+	// vx_threshold Threshold_thresholdObjectRange_threshold = vxCreateThreshold(context, VX_THRESHOLD_TYPE_RANGE, VX_TYPE_UINT8);
+	// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
+	// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
+	// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
 	vx_float32 WeightedAverage_alpha_float = (vx_float32) (0.25);
 	vx_scalar WeightedAverage_alpha_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &WeightedAverage_alpha_float);
 	vx_uint8 Lut_lutPtr_uint8[256];
@@ -1281,12 +1319,12 @@ int main(int argc, const char ** argv)
 				case 71:
 				{
 					// test_case_name = "agoKernel_ChannelExtract_U8_U16_Pos0";
-					/* Doubtfull
-					if(width%2 != 0)
-						width = (width + 1)&~1;
-					if(height%2 != 0)
-						height = (height + 1)&~1;
-						*/
+					// Doubtfull
+					// if(width%2 != 0)
+					// 	width = (width + 1)&~1;
+					// if(height%2 != 0)
+					// 	height = (height + 1)&~1;
+					
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_YUYV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
 					img_out = vxCreateImage(context, width, height, (vx_df_image)VX_DF_IMAGE_U8);
@@ -1402,86 +1440,86 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
-				case 89:
-				{
-					// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 90:
-				{
-					// test_case_name = "agoKernel_Threshold_U8_U8_Range";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 91:
-				{
-					// test_case_name = "agoKernel_Threshold_U1_U8_Binary";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 1 : 0) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 92:
-				{
-					// test_case_name = "agoKernel_Threshold_U1_U8_Range";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1_AMD);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 1)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 93:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U8_U8_Binary";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 255) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 94:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U8_U8_Range";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 255 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 255 : 0)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 95:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U1_U8_Binary";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 1) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 96:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U1_U8_Range";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 1 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 1 : 0)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
+				// case 89:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 90:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U8_U8_Range";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 91:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U1_U8_Binary";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 1 : 0) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 92:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U1_U8_Range";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1_AMD);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 1)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 93:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Binary";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 255) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 94:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Range";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 255 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 255 : 0)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 95:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Binary";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 1) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 96:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Range";
+				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 1 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 1 : 0)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
 				case 104:
 				{
 					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
@@ -1489,9 +1527,33 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					// node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out); // vxWeightedAverageNode not implemented
-					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (vx_int32)(((vx_float32)pix_img2_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
 					out_buf_type = 0;
+					break;
+				}
+				case 105:
+				{
+				// case 105 - agoKernel_ColorConvert_RGB_RGBX
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 111:
+				{
+				// case 111 - agoKernel_ColorConvert_RGBX_RGB
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = (pix_img1_u8 * width * height) + (255 * width * height);
+					out_buf_type = 4;
 					break;
 				}
 				case 133:
@@ -1721,22 +1783,31 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u1));
 					ERROR_CHECK_STATUS(makeInputImage(context, img2, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img2_u8));
 				}
-				// U16  & U32 inputs
+				// U16  & U32 inputs 
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79)
+					(case_number == 78)  || (case_number == 79) 
+					
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
 				// U24 inputs
 				else if(
-					(case_number == 73) || (case_number == 74) || (case_number == 75)
+					(case_number == 73) || (case_number == 74) || (case_number == 75) || (case_number == 111) 
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageRGB(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
+				//RGBX input
+				else if(
+					(case_number == 105) 
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImageRGBX(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
+								}
+				
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);
 				vxReleaseNode(&node);
@@ -1806,6 +1877,16 @@ int main(int argc, const char ** argv)
 		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_in.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_in.stride_y);
 		hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_in.stride_y);
+
+		vx_imagepatch_addressing_t hip_addr_uint8_rgbx_in = {0};
+		hip_addr_uint8_rgbx_in.dim_x = width;
+		hip_addr_uint8_rgbx_in.dim_y = height;
+		hip_addr_uint8_rgbx_in.stride_x = 4;
+		hip_addr_uint8_rgbx_in.stride_y = ((width+3)&~3)*4;
+		hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgbx_in.stride_y);
+		hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgbx_in.stride_y);
+		hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgbx_in.stride_y);
+		hipMemset(ptr[2], 0, height * hip_addr_uint8_rgbx_in.stride_y);
 
 		vx_imagepatch_addressing_t hip_addr_uint8_rgb_out = {0};
 		hip_addr_uint8_rgb_out.dim_x = width;
@@ -2544,12 +2625,12 @@ int main(int argc, const char ** argv)
 				case 71:
 				{
 					// test_case_name = "agoKernel_ChannelExtract_U8_U16_Pos0";
-					/* Doubtfull
-					if(width%2 != 0)
-						width = (width + 1)&~1;
-					if(height%2 != 0)
-						height = (height + 1)&~1;
-						*/
+					// Doubtfull
+					// if(width%2 != 0)
+					// 	width = (width + 1)&~1;
+					// if(height%2 != 0)
+					// 	height = (height + 1)&~1;
+					
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
@@ -2647,94 +2728,114 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
-				case 89:
-				{
-					// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 90:
-				{
-					// test_case_name = "agoKernel_Threshold_U8_U8_Range";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 91:
-				{
-					// test_case_name = "agoKernel_Threshold_U1_U8_Binary";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U1_AMD, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 1 : 0) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 92:
-				{
-					// test_case_name = "agoKernel_Threshold_U1_U8_Range";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 1)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 93:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U8_U8_Binary";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 255) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 94:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U8_U8_Range";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 255 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 255 : 0)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 95:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U1_U8_Binary";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 1) * width * height;
-					out_buf_type = 0;
-					break;
-				}
-				case 96:
-				{
-					// test_case_name = "agoKernel_ThresholdNot_U1_U8_Range";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 1 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 1 : 0)) * width * height;
-					out_buf_type = 0;
-					break;
-				}
+				// case 89:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 90:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U8_U8_Range";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 91:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U1_U8_Binary";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U1_AMD, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 1 : 0) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 92:
+				// {
+				// 	// test_case_name = "agoKernel_Threshold_U1_U8_Range";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 1)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 93:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Binary";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 255) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 94:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Range";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 255 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 255 : 0)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 95:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Binary";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 1) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
+				// case 96:
+				// {
+				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Range";
+				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
+				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 1 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 1 : 0)) * width * height;
+				// 	out_buf_type = 0;
+				// 	break;
+				// }
 				case 104:
 				{
 					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					// node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out); // vxWeightedAverageNode not implemented
-					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (vx_int32)(((vx_float32)pix_img2_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 105:
+				{
+				// test_case_name  = " agoKernel_ChannelConvert_RGB_RGBX"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 0;
+					break;
+				}
+				case 111:
+				{
+				// test_case_name  = " agoKernel_ChannelConvert_RGBX_RGB"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = (pix_img1_u8 * width * height )+ (255 * width * height); 
 					out_buf_type = 0;
 					break;
 				}
@@ -2961,17 +3062,25 @@ int main(int argc, const char ** argv)
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79)
+					(case_number == 78)  || (case_number == 79) 
+					
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageYUYV(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
 				// U24 inputs
 				else if(
-					(case_number == 73) || (case_number == 74) || (case_number == 75)
+					(case_number == 73) || (case_number == 74) || (case_number == 75) || (case_number == 111) 
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImageRGB(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
+								}
+				//RGBX input
+				else if(
+					(case_number == 105) 
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImageRGBX(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 								}
 				if (status == VX_SUCCESS)
 					status = vxProcessGraph(graph);
@@ -3066,6 +3175,25 @@ int main(int argc, const char ** argv)
 			returned_image_sum = 0;
 		}
 	}
+	// for RGBX outputs
+// 	{
+// 		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_uint8, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+// 		stride_x_bytes = out_addr.stride_x;
+// 		stride_x_pixels = stride_x_bytes / sizeof(vx_uint8);
+// 		stride_y_bytes = out_addr.stride_y;
+// 		stride_y_pixels = stride_y_bytes / sizeof(vx_uint8);
+// #ifdef PRINT_OUTPUT
+// 		printf("\nOutput Image: ");
+// 		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
+// 		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, width, height);
+// 		printf("Output Buffer: ");
+// 		printBuffer(out_buf_uint8, width, height);
+// 		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
+// #endif
+// 		for (int i = 0; i < height; i++)
+// 			for (int j = 0; j < width; j++)
+// 				returned_image_sum = returned_image_sum + out_buf_uint8[i * stride_y_pixels + j * stride_x_pixels] + 255;
+// 	}
 	
 	if (returned_image_sum != expected_image_sum)
 	{
@@ -3084,8 +3212,8 @@ int main(int argc, const char ** argv)
 
 	vxReleaseScalar(&Mul_scale_scalar);
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
-	vxReleaseThreshold(&Threshold_thresholdObjectBinary_threshold);
-	vxReleaseThreshold(&Threshold_thresholdObjectRange_threshold);
+	// vxReleaseThreshold(&Threshold_thresholdObjectBinary_threshold);
+	// vxReleaseThreshold(&Threshold_thresholdObjectRange_threshold);
 	vxReleaseLUT(&Lut_lutObject_lut);
 	if (ptr[0]) hipFree(ptr[0]);
 	if (ptr[1]) hipFree(ptr[1]);

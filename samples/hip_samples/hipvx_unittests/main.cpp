@@ -135,7 +135,25 @@
 // case 159 - agoKernel_ScaleGaussianHalf_U8_U8_3x3
 // case 160 - agoKernel_ScaleGaussianHalf_U8_U8_5x5
 // case 161 - agoKernel_ScaleGaussianOrb_U8_U8_5x5
-
+// case 162 - agoKernel_WarpAffine_U8_U8_Nearest
+// case 163 - agoKernel_WarpAffine_U8_U8_Nearest_Constant
+// case 164 - agoKernel_WarpAffine_U8_U8_Bilinear
+// case 165 - agoKernel_WarpAffine_U8_U8_Bilinear_Constant
+// case 166 - agoKernel_WarpPerspective_U8_U8_Nearest
+// case 167 - agoKernel_WarpPerspective_U8_U8_Nearest_Constant
+// case 168 - agoKernel_WarpPerspective_U8_U8_Bilinear
+// case 169 - agoKernel_WarpPerspective_U8_U8_Bilinear_Constant
+// case 170 - agoKernel_ColorDepth_U8_S16_Wrap
+// case 171 - agoKernel_ColorDepth_U8_S16_Sat
+// case 172 - agoKernel_ColorDepth_S16_U8
+// case 173 - agoKernel_NonMaxSupp_XY_ANY_3x3
+// case 174 - agoKernel_Remap_U8_U8_Nearest
+// case 175 - agoKernel_Remap_U8_U8_Nearest_Constant
+// case 176 - agoKernel_Remap_U8_U8_Bilinear
+// case 177 - agoKernel_Remap_U8_U8_Bilinear_Constant
+// case 178 - agoKernel_Remap_U24_U24_Bilinear
+// case 179 - agoKernel_Remap_U24_U32_Bilinear
+// case 180 - agoKernel_Remap_U32_U32_Bilinear
 
 #define __HIP_PLATFORM_HCC__
 #include "hip/hip_runtime.h"

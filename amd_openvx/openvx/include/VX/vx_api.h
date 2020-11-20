@@ -1,6 +1,5 @@
 /*
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+ * Copyright (c) 2012-2019 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -155,6 +154,55 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetStatus(vx_reference reference);
  * \ingroup group_adv_array
  */
 VX_API_ENTRY vx_enum VX_API_CALL vxRegisterUserStruct(vx_context context, vx_size size);
+
+/*!
+ * \brief Registers user-defined structures to the context, and associates a name to it.
+ * \param [in] context     The reference to the implementation context.
+ * \param [in] size        The size of user struct in bytes.
+ * \param [in] *type_name  Pointer to the '\0' terminated string that identifies the
+ *                         user struct type. The string is copied by the function so
+ *                         that it stays the property of the caller. NULL means that
+ *                         the user struct is not named. The length of the string
+ *                         shall be lower than VX_MAX_REFERENCE_NAME bytes.
+ * \return A <tt>\ref vx_enum</tt> value that is a type given to the User
+ * to refer to their custom structure when declaring a <tt>\ref vx_array</tt>
+ * of that structure.
+ * \retval VX_TYPE_INVALID If the namespace of types has been exhausted.
+ * \note This call should only be used once within the lifetime of a context for
+ * a specific structure.
+ * \ingroup group_adv_array
+ */
+VX_API_ENTRY vx_enum VX_API_CALL vxRegisterUserStructWithName(vx_context context, vx_size size,  const vx_char* type_name);
+
+/*!
+ * \brief Returns the name of the user-defined structure associated with the enumeration given.
+ * \param [in] context     The reference to the implementation context.
+ * \param [in] type_name   The enumeration value of the user struct
+ * \param [out] name_size  Name of the user struct
+ * \param [in] name_size   The size of allocated buffer pointed to by type_name
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS user_struct_type was valid, and name was found and returned
+ * \retval VX_ERROR_INVALID_PARAMETERS user_struct_type was not a valid user struct enumeration.
+ * \retval VX_ERROR_NO_MEMORY name_size is too small to hold the name of the user struct type.
+ * \retval VX_FAILURE user_struct_type does not have an associated type name.
+ * \pre <tt>\ref vxRegisterUserStructWithName</tt> should be called for this user struct.
+ * \ingroup group_adv_array
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructNameByEnum(vx_context context, vx_enum user_struct_type, vx_char* type_name, vx_size name_size);
+
+/*!
+ * \brief Returns the enum of the user-defined structure associated with the name given
+ * \param [in] context           The reference to the implementation context.
+ * \param [in] type_name         Pointer to the '\0' terminated string that identifies the user
+ *                               struct type. The length of the string shall be lower than VX_MAX_REFERENCE_NAME bytes.
+ * \param [out] user_struct_type The enumeration value of the user struct
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS type_name was valid, and enumeration was found and returned
+ * \retval VX_FAILURE type_name does not match any user struct enumeration.
+* \pre <tt>\ref vxRegisterUserStructWithName</tt> should be called for this user struct.
+ * \ingroup group_adv_array
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructEnumByName(vx_context context, const vx_char* type_name, vx_enum *user_struct_type);
 
 /*!
  * \brief Allocates and registers user-defined kernel enumeration to a context.
@@ -323,6 +371,8 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateVirtualImage(vx_graph graph, vx_uint32
  * pixels, and \a stride_y >= \a stride_x * \a dim_x.
  *
  * In order to release the image back to the application we should use <tt>\ref vxSwapImageHandle</tt>.
+ * An exception is for <tt>\ref VX_DF_IMAGE_U1</tt> images where \a stride_x == 0 and instead
+ * \a stride_y >= &lceil;\a dim_x / 8&rceil;.
  *
  * Import type of the created image is available via the image attribute <tt>\ref vx_image_attribute_e</tt> parameter.
  *
@@ -449,6 +499,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseImage(vx_image *image);
  * \param [in] addr The pointer to the addressing mode information returned from <tt>\ref vxMapImagePatch</tt>.
  * \return void * Returns the pointer to the specified pixel.
  * \pre <tt>\ref vxMapImagePatch</tt>
+ * \note Some special restrictions apply to <tt>\ref VX_DF_IMAGE_U1</tt> images.
  * \ingroup group_image
  */
 VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress1d(void *ptr, vx_uint32 index, const vx_imagepatch_addressing_t *addr);
@@ -461,6 +512,7 @@ VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress1d(void *ptr, vx_uint32
  * \param [in] addr The pointer to the addressing mode information returned from <tt>\ref vxMapImagePatch</tt>.
  * \return void * Returns the pointer to the specified pixel.
  * \pre <tt>\ref vxMapImagePatch</tt>
+ * \note Some special restrictions apply to <tt>\ref VX_DF_IMAGE_U1</tt> images.
  * \ingroup group_image
  */
 VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress2d(void *ptr, vx_uint32 x, vx_uint32 y, const vx_imagepatch_addressing_t *addr);
@@ -474,6 +526,7 @@ VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress2d(void *ptr, vx_uint32
  * \retval VX_ERROR_INVALID_PARAMETERS Invalid rect.
  * \note This rectangle can be passed directly to <tt>\ref vxMapImagePatch</tt> to get
  * the full valid region of the image.
+ * \note Some special restrictions apply to <tt>\ref VX_DF_IMAGE_U1</tt> images.
  * \ingroup group_image
  */
 VX_API_ENTRY vx_status VX_API_CALL vxGetValidRegionImage(vx_image image, vx_rectangle_t *rect);
@@ -512,10 +565,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetValidRegionImage(vx_image image, vx_rect
  * \retval VX_ERROR_INVALID_PARAMETERS An other parameter is incorrect.
  * \note The application may ask for data outside the bounds of the valid region, but
  * such data has an undefined value.
+ * \note Some special restrictions apply to <tt>\ref VX_DF_IMAGE_U1</tt> images.
  * \ingroup group_image
  */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyImagePatch(vx_image image, const vx_rectangle_t *image_rect, vx_uint32 image_plane_index, const vx_imagepatch_addressing_t *user_addr, void * user_ptr, vx_enum usage, vx_enum user_mem_type);
-
 
 /*! \brief Allows the application to get direct access to a rectangular patch of an image object plane.
  * \param [in] image The reference to the image object that contains the patch to map.
@@ -528,11 +581,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyImagePatch(vx_image image, const vx_rec
  * returns a map identifier.
  * \arg (*map_id) must eventually be provided as the map_id parameter of a call to
  * <tt>\ref vxUnmapImagePatch</tt>.
- * \param [out] addr The address of a structure describing the memory layout of the
- * image patch to access. The function fills the structure pointed by addr with the
- * layout information that the application must consult to access the pixel data
- * at address (*ptr). The layout of the mapped memory follows a row-major order:
- * stride_x>0, stride_y>0 and stride_y >= stride_x * dim_x.
+ * \param [out] addr The address of a <tt>\ref vx_imagepatch_addressing_t</tt> structure
+ * describing the memory layout of the image patch to access. The function fills the
+ * structure pointed by addr with the layout information that the application must
+ * consult to access the pixel data at address (*ptr). The layout of the mapped memory
+ * follows a row-major order: stride_x>0, stride_y>0 and stride_y >= stride_x * dim_x.
+ * An exception is for <tt>\ref VX_DF_IMAGE_U1</tt> where \a stride_x == 0,
+ * _stride_x_bits_ > 0 and _stride_y_ {geq} (_stride_x_bits_ * _dim_x_ + 7) / 8
+ * (i.e., at least the number of bytes needed to hold _dim_x_ pixels).
  * If the image object being accessed was created via
  * <tt>\ref vxCreateImageFromHandle</tt>, then the returned memory layout will be
  * the identical to that of the addressing structure provided when
@@ -637,9 +693,30 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageValidRectangle(vx_image image, cons
  KERNEL
  =============================================================================*/
 
+/*! \brief Registers a module with kernels in a context.
+ * \details This function registers the appropriate publish and unpublish functions
+ * with the module name if the module is not a dynamic library, so <tt>\ref vxLoadKernels</tt> and
+ * <tt>\ref vxUnloadKernels</tt> can be called.
+ * \param [in] context The reference to the context the kernels must be added to.
+ * \param [in] module The short name of the module to load.
+ * \param [in] publish must add kernels to the context by calling <tt>\ref vxAddUserKernel</tt>
+ * for each new kernel. It is called by <tt>\ref vxLoadKernels</tt>.
+ * \param [in] unpublish must remove kernels from the context by calling <tt>\ref vxRemoveKernel</tt>
+ * for each kernel the <tt>vxPublishKernels</tt> has added. It is called by <tt>\ref vxUnloadKernels</tt>.
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS No errors; any other value indicates failure.
+ * \retval VX_ERROR_INVALID_REFERENCE context is not a valid <tt>\ref vx_context</tt> reference.
+ * \retval VX_ERROR_INVALID_PARAMETERS If any of the other parameters are incorrect.
+ * \ingroup group_user_kernels
+ * \see vxLoadKernels
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxRegisterKernelLibrary(vx_context context, const vx_char *module, vx_publish_kernels_f publish, vx_unpublish_kernels_f unpublish);
+
+
 /*! \brief Loads a library of kernels, called module, into a context.
  *
- * The module must be a dynamic library with by convention, two exported functions
+ * The module must be registered by <tt>vxRegisterKernelLibrary</tt> if it is not
+ * a dynamic library or the module must be a dynamic library with by convention, two exported functions
  * named <tt>vxPublishKernels</tt> and <tt>vxUnpublishKernels</tt>.
  *
  * <tt>vxPublishKernels</tt> must have type <tt>\ref vx_publish_kernels_f</tt>,
@@ -665,6 +742,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageValidRectangle(vx_image image, cons
  * \retval VX_ERROR_INVALID_REFERENCE context is not a valid <tt>\ref vx_context</tt> reference.
  * \retval VX_ERROR_INVALID_PARAMETERS If any of the other parameters are incorrect.
  * \ingroup group_user_kernels
+ * \pre <tt>\ref vxRegisterKernelLibrary</tt> if the module is not a dynamic library
  * \see vxGetKernelByName
  */
 VX_API_ENTRY vx_status VX_API_CALL vxLoadKernels(vx_context context, const vx_char *module);
@@ -740,12 +818,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnloadKernels(vx_context context, const vx_
 
  * org.khronos.openvx.gaussian_pyramid
 
- * org.khronos.openvx.accumulate
-
- * org.khronos.openvx.accumulate_weighted
-
- * org.khronos.openvx.accumulate_square
-
  * org.khronos.openvx.minmaxloc
 
  * org.khronos.openvx.convertdepth
@@ -793,29 +865,29 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnloadKernels(vx_context context, const vx_
  * org.khronos.openvx.hough_lines_p
 
  * org.khronos.openvx.tensor_multiply
- 
+
  * org.khronos.openvx.tensor_add
- 
+
  * org.khronos.openvx.tensor_subtract
- 
+
  * org.khronos.openvx.tensor_table_lookup
- 
+
  * org.khronos.openvx.tensor_transpose
- 
+
  * org.khronos.openvx.tensor_convert_depth
- 
+
  * org.khronos.openvx.tensor_matrix_multiply
- 
+
  * org.khronos.openvx.copy
- 
+
  * org.khronos.openvx.non_max_suppression
- 
+
  * org.khronos.openvx.scalar_operation
- 
+
  * org.khronos.openvx.hog_features
- 
+
  * org.khronos.openvx.hog_cells
- 
+
  * org.khronos.openvx.bilateral_filter
 
  * org.khronos.openvx.select
@@ -823,6 +895,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnloadKernels(vx_context context, const vx_
  * org.khronos.openvx.min
 
  * org.khronos.openvx.max
+
+ * org.khronos.openvx.weighted_average
 
  * \param [in] context The reference to the implementation context.
  * \param [in] name The string of the name of the kernel to get.
@@ -916,7 +990,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxFinalizeKernel(vx_kernel kernel);
  * \param [in] kernel The reference to the kernel added with <tt>\ref vxAddUserKernel</tt>.
  * \param [in] index The index of the parameter to add.
  * \param [in] dir The direction of the parameter. This must be either <tt>\ref VX_INPUT</tt> or
- * <tt>\ref VX_OUTPUT</tt>. <tt>\ref VX_BIDIRECTIONAL</tt> is not supported for this function.
+ * <tt>\ref VX_OUTPUT</tt>.
  * \param [in] data_type The type of parameter. This must be a value from <tt>\ref vx_type_e</tt>.
  * \param [in] state The state of the parameter (required or not). This must be a value from <tt>\ref vx_parameter_state_e</tt>.
  * \return A <tt>\ref vx_status_e</tt> enumerated value.
@@ -1261,7 +1335,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeTarget(vx_node node, vx_enum target_
  * \param [in] replicate an array of size equal to the number of node parameters, vx_true_e for the parameters
  * that should be iterated over (should be a reference to a vx_pyramid or a vx_object_array),
  * vx_false_e for the parameters that should be the same across replicated nodes and for optional
- * parameters that are not used. Should be vx_true_e for all output and bidirectional parameters.
+ * parameters that are not used. Should be vx_true_e for all output parameters.
  * \param [in] number_of_parameters number of elements in the replicate array
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS No errors; any other value indicates failure.
@@ -1346,7 +1420,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryParameter(vx_parameter parameter, vx_e
  * \param [in] data_type The type of data to hold. Must be greater than
  * <tt>\ref VX_TYPE_INVALID</tt> and less than or equal to <tt>\ref VX_TYPE_VENDOR_STRUCT_END</tt>.
  * Or must be a <tt>\ref vx_enum</tt> returned from <tt>\ref vxRegisterUserStruct</tt>.
- * \param [in] ptr The pointer to the initial value of the scalar.
+ * \param [in] ptr The pointer to the initial value of the scalar or NULL. If NULL,
+ *             the initial value of the scalar, if any, is implementation dependent.
  * \ingroup group_scalar
  * \returns A scalar reference <tt>\ref vx_scalar</tt>. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
@@ -1962,7 +2037,7 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
                                                                 vx_df_image output_format);
 
 /*! \brief Creates an opaque reference to a threshold object without direct user access.
- * 
+ *
  * \param [in] graph The reference to the parent graph.
  * \param [in] thresh_type The type of thresholding operation.
  * \param [in] input_format The format of images that will be used as input of
@@ -2131,7 +2206,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryThreshold(vx_threshold thresh, vx_enum
 
 /*! \brief Creates a reference to a matrix object.
  * \param [in] c The reference to the overall context.
- * \param [in] data_type The unit format of the matrix. <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_INT32</tt> or <tt>\ref VX_TYPE_FLOAT32</tt>.
+ * \param [in] data_type The vx_type_e that represents the data type of the matrix data elements.
  * \param [in] columns The first dimensionality.
  * \param [in] rows The second dimensionality.
  * \returns An matrix reference <tt>\ref vx_matrix</tt>. Any possible errors preventing a
@@ -2142,7 +2217,7 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrix(vx_context c, vx_enum data_typ
 
 /*! \brief Creates an opaque reference to a matrix object without direct user access.
  * \param [in] graph The reference to the parent graph.
- * \param [in] data_type The unit format of the matrix. <tt>\ref VX_TYPE_UINT8</tt> or <tt>\ref VX_TYPE_INT32</tt> or <tt>\ref VX_TYPE_FLOAT32</tt>.
+ * \param [in] data_type The vx_type_e that represents the data type of the matrix data elements.
  * \param [in] columns The first dimensionality.
  * \param [in] rows The second dimensionality.
  * \see <tt>\ref vxCreateMatrix</tt>
@@ -3026,9 +3101,45 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
  * or exemplar is not a valid <tt>\ref vx_reference</tt> reference.
  */
 VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatFromReference(vx_meta_format meta, vx_reference exemplar);
+
+/*! \brief This function allows a user to query the attributes of a <tt>\ref vx_meta_format</tt> object in a kernel parameter.
+ *
+ * The \ref vx_meta_format object contains two types of information: data object meta data and
+ * some specific information that defines how the valid region of an image changes
+ *
+ * The meta data attributes that can be queried are identified by this list:
+ * - \ref vx_image : \ref VX_IMAGE_FORMAT, \ref VX_IMAGE_HEIGHT, \ref VX_IMAGE_WIDTH
+ * - \ref vx_array : \ref VX_ARRAY_CAPACITY, \ref VX_ARRAY_ITEMTYPE
+ * - \ref vx_pyramid : \ref VX_PYRAMID_FORMAT, \ref VX_PYRAMID_HEIGHT, \ref VX_PYRAMID_WIDTH, \ref VX_PYRAMID_LEVELS, \ref VX_PYRAMID_SCALE
+ * - \ref vx_scalar : \ref VX_SCALAR_TYPE
+ * - \ref vx_matrix : \ref VX_MATRIX_TYPE, \ref VX_MATRIX_ROWS, \ref VX_MATRIX_COLUMNS
+ * - \ref vx_distribution : \ref VX_DISTRIBUTION_BINS, \ref VX_DISTRIBUTION_OFFSET, \ref VX_DISTRIBUTION_RANGE
+ * - \ref vx_remap : \ref VX_REMAP_SOURCE_WIDTH, \ref VX_REMAP_SOURCE_HEIGHT, \ref VX_REMAP_DESTINATION_WIDTH, \ref VX_REMAP_DESTINATION_HEIGHT
+ * - \ref vx_lut : \ref VX_LUT_TYPE, \ref VX_LUT_COUNT
+ * - \ref vx_threshold : \ref VX_THRESHOLD_TYPE, \ref VX_THRESHOLD_INPUT_FORMAT, \ref VX_THRESHOLD_INPUT_FORMAT
+ * - \ref vx_object_array : \ref VX_OBJECT_ARRAY_NUMITEMS, \ref VX_OBJECT_ARRAY_ITEMTYPE
+ * - \ref vx_tensor : \ref VX_TENSOR_NUMBER_OF_DIMS, \ref VX_TENSOR_DIMS, \ref VX_TENSOR_DATA_TYPE, \ref VX_TENSOR_FIXED_POINT_POSITION
+ * - \ref VX_VALID_RECT_CALLBACK
+ * \note For vx_image, a specific attribute can be used to query the valid region evolution. This information is not a meta data.
+ *
+ * \param [in] meta The reference to the \ref vx_meta_format struct to query
+ * \param [in] attribute Use the subset of data object attributes that define the meta data of this object or attributes from <tt>\ref vx_meta_format</tt>.
+ * \param [out] ptr The output pointer of the value to query on the meta format object.
+ * \param [in] size The size in bytes of the object to which \a ptr points.
+ * \ingroup group_import_kernel
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS The attribute was returned; any other value indicates failure.
+ * \retval VX_ERROR_INVALID_REFERENCE meta is not a valid <tt>\ref vx_meta_format</tt> reference.
+ * \retval VX_ERROR_INVALID_PARAMETERS size was not correct for the type needed.
+ * \retval VX_ERROR_NOT_SUPPORTED the object attribute was not supported on the meta format object.
+ * \retval VX_ERROR_INVALID_TYPE attribute type did not match known meta format type.
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxQueryMetaFormatAttribute(vx_meta_format meta, vx_enum attribute, void *ptr, vx_size size);
+
 /*==============================================================================
     TENSOR DATA FUNCTIONS
 =============================================================================*/
+
 /*! \brief Creates an opaque reference to a tensor data buffer.
  * \details Not guaranteed to exist until the <tt>\ref vx_graph</tt> containing it has been verified.
  * Since functions using tensors, need to understand the context of each dimension. We describe a layout of the dimensions in each function using tensors.
@@ -3037,7 +3148,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatFromReference(vx_meta_format m
  * \param [in] context The reference to the implementation context.
  * \param [in] number_of_dims The number of dimensions.
  * \param [in] dims Dimensions sizes in elements.
- * \param [in] data_type The <tt>\ref vx_type_e</tt> that represents the data type of the tensor data elements. 
+ * \param [in] data_type The <tt>\ref vx_type_e</tt> that represents the data type of the tensor data elements.
  * \param [in] fixed_point_position Specifies the fixed point position when the input element type is integer. if 0, calculations are performed in integer math.
  * \return A tensor data reference. Any possible errors preventing a
  * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
@@ -3100,6 +3211,69 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromView(vx_tensor tensor, vx_s
  */
 VX_API_ENTRY vx_tensor VX_API_CALL vxCreateVirtualTensor(vx_graph graph, vx_size number_of_dims, const vx_size *dims, vx_enum data_type, vx_int8 fixed_point_position);
 
+/*! \brief Creates a reference to an tensor object that was externally allocated.
+ * \param [in] context The reference to the implementation context.
+ * \param [in] number_of_dims The number of dimensions.
+ * \param [in] dims Dimensions sizes in elements.
+ * \param [in] data_type The <tt>\ref vx_type_e</tt> that represents the data type of the tensor data elements.
+ * \param [in] fixed_point_position Specifies the fixed point position when the input element type is integer. if 0, calculations are performed in integer math.
+ * \param [in] stride An array of stride in all dimensions in bytes. The stride value at index 0 must be size of the tensor data element type.
+ * \param [in] ptr The platform-defined reference to tensor. See note below.
+ * \param [in] memory_type <tt>\ref vx_memory_type_e</tt>. When giving <tt>\ref VX_MEMORY_TYPE_HOST</tt>
+ * the \a ptr is assumed to be HOST accessible pointer to memory.
+ * \return A tensor data reference. Any possible errors preventing a
+ * successful creation should be checked using <tt>\ref vxGetStatus</tt>.
+ * \note The user must call vxMapTensorPatch prior to accessing the elements of a tensor, even if the
+ * tensor was created via <tt>\ref vxCreateTensorFromHandle</tt>. Reads or writes to memory referenced
+ * by ptr after calling <tt>\ref vxCreateTensorFromHandle</tt> without first calling
+ * <tt>\ref vxMapTensorPatch</tt> will result in undefined behavior.
+ * The property of stride[] and ptr is kept by the caller (It means that the implementation will
+ * make an internal copy of the provided information. \a stride and \a ptr can then simply be application's
+ * local variables).
+ *
+ * In order to release the tensor back to the application we should use <tt>\ref vxSwapTensorHandle</tt>.
+ *
+ * \ingroup group_object_tensor
+ */
+VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, vx_size number_of_dims, const vx_size *dims, vx_enum data_type, vx_int8 fixed_point_position, const vx_size * stride, void * ptr, vx_enum memory_type);
+
+/*! \brief Swaps the tensor handle of an tensor previously created from handle.
+ *
+ * This function sets the new tensor handle
+ * and returns the previous one.
+ *
+ * Once this function call has completed, the application gets back the
+ * ownership of the memory referenced by the previous handle. This memory
+ * contains up-to-date tensor data, and the application can safely reuse or
+ * release it.
+ *
+ * The memory referenced by the new handle must have been allocated
+ * consistently with the tensor properties since the import type,
+ * memory layout and dimensions are unchanged (see stride and
+ * memory_type in <tt>\ref vxCreateTensorFromHandle</tt>).
+ *
+ * All tensors created from view with this tensor as parent or ancestor
+ * will automatically use the memory referenced by the new handle.
+ *
+ * The behavior of <tt>\ref vxSwapTensorHandle</tt> when called from a user node is undefined.
+ * \param [in] tensor The reference to an tensor created from handle.
+ * \param [in] new_ptr new tensor handle
+ *  If new_ptr is NULL,
+ *  If the new_ptr is NULL, the previous tensor storage memory is reclaimed by the
+ *  caller, while no new handle is provided.
+ * \param [out] prev_ptr pointer to return the previous tensor handle.
+ * If prev_ptr is NULL, the previous handle is not returned.
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_SUCCESS No errors.
+ * \retval VX_ERROR_INVALID_REFERENCE tensor is not a valid <tt>\ref vx_tensor</tt> reference.
+ * reference.
+ * \retval VX_ERROR_INVALID_PARAMETERS The tensor was not created from handle or
+ * the content of new_ptr is not valid.
+ * \retval VX_FAILURE The tensor was already being accessed.
+ * \ingroup group_tensor
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void* new_ptr, void** prev_ptr);
+
 
 /*! \brief Allows the application to copy a view patch from/into an tensor object .
  * \param [in] tensor The reference to the tensor object that is the source or the
@@ -3130,6 +3304,63 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateVirtualTensor(vx_graph graph, vx_size
  */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size number_of_dims, const vx_size * view_start, const vx_size * view_end,
         const vx_size * user_stride, void * user_ptr, vx_enum usage, vx_enum user_memory_type);
+
+/*! \brief Allows the application to get direct access to a patch of tensor object.
+ * \param [in] tensor The reference to the tensor object that is the source or the
+ * destination for direct access.
+ * \param [in] number_of_dims The number of dimensions. Must be same as tensor number_of_dims.
+ * \param [in] view_start Array of patch start points in each dimension. This is optional parameter and will be zero when NULL.
+ * \param [in] view_end Array of patch end points in each dimension. This is optional parameter and will be dims[] of tensor when NULL.
+ * \param [out] map_id The address of a vx_map_id variable where the function returns a map identifier.
+ * \arg (*map_id) must eventually be provided as the map_id parameter of a call to <tt>\ref vxUnmapTensorPatch</tt>.
+ * \param [out] stride An array of stride in all dimensions in bytes. The stride value at index 0 must be size of the tensor data element type.
+ * \param [out] ptr The address of a pointer that the function sets to the
+ * address where the requested data can be accessed. The returned (*ptr) address
+ * is only valid between the call to the function and the corresponding call to
+ * <tt>\ref vxUnmapTensorPatch</tt>.
+ * \param [in] usage This declares the access mode for the tensor patch, using
+ * the <tt>\ref vx_accessor_e</tt> enumeration.
+ * \arg VX_READ_ONLY: after the function call, the content of the memory location
+ * pointed by (*ptr) contains the tensor patch data. Writing into this memory location
+ * is forbidden and its behavior is undefined.
+ * \arg VX_READ_AND_WRITE : after the function call, the content of the memory
+ * location pointed by (*ptr) contains the tensor patch data; writing into this memory
+ * is allowed only for the location of items and will result in a modification of the
+ * affected items in the tensor object once the range is unmapped. Writing into
+ * a gap between items (when (*stride) > item size in bytes) is forbidden and its
+ * behavior is undefined.
+ * \arg VX_WRITE_ONLY: after the function call, the memory location pointed by (*ptr)
+ * contains undefined data; writing each item of the range is required prior to
+ * unmapping. Items not written by the application before unmap will become
+ * undefined after unmap, even if they were well defined before map. Like for
+ * VX_READ_AND_WRITE, writing into a gap between items is forbidden and its behavior
+ * is undefined.
+ * \param [in] mem_type A <tt>\ref vx_memory_type_e</tt> enumeration that
+ * specifies the type of the memory where the tensor patch is requested to be mapped.
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_ERROR_OPTIMIZED_AWAY This is a reference to a virtual tensor that cannot be accessed by the application.
+ * \retval VX_ERROR_INVALID_REFERENCE The tensor reference is not actually an tensor reference.
+ * \retval VX_ERROR_INVALID_PARAMETERS An other parameter is incorrect.
+ * \retval VX_ERROR_NO_MEMORY Internal memory allocation failed.
+ * \ingroup group_tensor
+ * \post <tt>\ref vxUnmapTensorPatch </tt> with same (*map_id) value.
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch_TBD(vx_tensor tensor, vx_size number_of_dims, const vx_size * view_start, const vx_size * view_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type);
+
+/*! \brief Unmap and commit potential changes to a tensor object patch that was previously mapped.
+ * Unmapping a tensor patch invalidates the memory location from which the patch could
+ * be accessed by the application. Accessing this memory location after the unmap function
+ * completes has an undefined behavior.
+ * \param [in] tensor The reference to the tensor object to unmap.
+ * \param [in] map_id The unique map identifier that was returned when calling
+ * <tt>\ref vxMapTensorPatch</tt> .
+ * \return A <tt>\ref vx_status_e</tt> enumeration.
+ * \retval VX_ERROR_INVALID_REFERENCE The tensor reference is not actually an tensor reference.
+ * \retval VX_ERROR_INVALID_PARAMETERS An other parameter is incorrect.
+ * \ingroup group_tensor
+ * \pre <tt>\ref vxMapTensorPatch</tt> returning the same map_id value
+ */
+VX_API_ENTRY vx_status VX_API_CALL vxUnmapTensorPatch(vx_tensor tensor, const vx_map_id map_id);
 
 /*! \brief Retrieves various attributes of a tensor data.
  * \param [in] tensor The reference to the tensor data to query.

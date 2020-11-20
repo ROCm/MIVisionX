@@ -26,6 +26,8 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
+typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
+
 // arithmetic_kernels
 
 int HipExec_AbsDiff_U8_U8U8(
@@ -489,6 +491,28 @@ int HipExec_ThresholdNot_U1_U8_Range(
 
 // color_kernels
 
+int HipExec_ColorConvert_RGBX_RGB(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGB_RGBX(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGB_YUYV(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGB_UYVY(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+
+
 int HipExec_Lut_U8_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -609,8 +633,48 @@ int HipExec_Gaussian_U8_U8_3x3(
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
+int HipExec_Convolve_U8_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight
+    );
+int HipExec_Convolve_S16_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight
+    );
+int HipExec_Sobel_S16S16_U8_3x3_GXY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage1, vx_uint32 dstImage1StrideInBytes,
+    vx_int16 *pHipDstImage2, vx_uint32 dstImage2StrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
 
 // geometric_kernels
+
+int HipExec_ScaleImage_U8_U8_Nearest(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix
+    );
+int HipExec_ScaleImage_U8_U8_Bilinear(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix
+    );
+int HipExec_ScaleImage_U8_U8_Area(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix
+    );
 
 // vision_kernels
 

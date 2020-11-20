@@ -657,6 +657,8 @@ static void agoResetSuperNodeList(AgoSuperNode * supernodeList)
 		// release current item
 #if ENABLE_OPENCL
 		agoGpuOclReleaseSuperNode(supernode);
+#elif ENABLE_HIP
+        agoGpuHipReleaseSuperNode(supernode);
 #endif
 		// TBD: agoResetSuperNode(supernode);
 		delete supernode;
@@ -2941,6 +2943,8 @@ AgoData::AgoData()
 #if defined(CL_VERSION_2_0)
 	  opencl_svm_buffer{ nullptr }, opencl_svm_buffer_allocated{ nullptr },
 #endif
+#elif ENABLE_HIP
+      hip_memory { nullptr}, hip_memory_allocated{nullptr},
 #endif
 	  opencl_buffer_offset{ 0 }, alias_data{ nullptr }, alias_offset{ 0 },
 	  isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, siblingIndex{ 0 },
@@ -2954,6 +2958,8 @@ AgoData::~AgoData()
 {
 #if ENABLE_OPENCL
 	agoGpuOclReleaseData(this);
+#elif ENABLE_HIP
+	agoGpuHipReleaseData(this);
 #endif
 	if (buffer_allocated) {
 		agoReleaseMemory(buffer_allocated);
@@ -2994,6 +3000,8 @@ AgoSuperNode::AgoSuperNode()
 	: next{ nullptr }, group{ 0 }, width{ 0 }, height{ 0 }, launched{ false }, isGpuOclSuperNode{ false },
 #if ENABLE_OPENCL
 	  opencl_cmdq{ nullptr }, opencl_program{ nullptr }, opencl_kernel{ nullptr }, opencl_event{ nullptr },
+#elif ENABLE_HIP
+      hip_stream0 {nullptr}, hip_event_start{nullptr}, hip_event_stop{nullptr},
 #endif
 	  hierarchical_level_start{ 0 }, hierarchical_level_end{ 0 },
 	  status{ VX_SUCCESS }
@@ -3001,6 +3009,9 @@ AgoSuperNode::AgoSuperNode()
 #if ENABLE_OPENCL
 	memset(&opencl_global_work, 0, sizeof(opencl_global_work));
 	memset(&opencl_local_work, 0, sizeof(opencl_local_work));
+#elif ENABLE_HIP
+    hipEventCreate(&hip_event_start);
+    hipEventCreate(&hip_event_stop);
 #endif
 	memset(&perf, 0, sizeof(perf));
 }
@@ -3030,6 +3041,9 @@ AgoNode::AgoNode()
 	memset(&opencl_scalar_array_output_sync, 0, sizeof(opencl_scalar_array_output_sync));
 	memset(&opencl_global_work, 0, sizeof(opencl_global_work));
 	memset(&opencl_local_work, 0, sizeof(opencl_local_work));
+#elif ENABLE_HIP
+    hipEventCreate(&hip_event_start);
+    hipEventCreate(&hip_event_stop);
 #endif
 }
 AgoNode::~AgoNode()
@@ -3056,6 +3070,17 @@ AgoNode::~AgoNode()
 		clReleaseProgram(opencl_program);
 		opencl_program = nullptr;
 	}
+#elif ENABLE_HIP
+	//if (hip_program)
+    //    hiprtcDestroyProgram(hip_program);
+	if (hip_event_start) {
+	    hipEventDestroy(hip_event_start);
+        hip_event_start = nullptr;
+	}
+    if (hip_event_stop) {
+        hipEventDestroy(hip_event_stop);
+        hip_event_stop = nullptr;
+    }
 #endif
 }
 AgoGraph::AgoGraph()
@@ -3066,6 +3091,8 @@ AgoGraph::AgoGraph()
 #if ENABLE_OPENCL
 	, supernodeList{ nullptr }, opencl_cmdq{ nullptr }, opencl_device{ nullptr }
 	, enable_node_level_opencl_flush{ true }
+#elif ENABLE_HIP
+    , supernodeList{ nullptr }, hip_stream0{ nullptr }
 #endif
 {
 	memset(&dataList, 0, sizeof(dataList));
@@ -3098,6 +3125,10 @@ AgoGraph::~AgoGraph()
 	agoResetSuperNodeList(supernodeList);
 	supernodeList = NULL;
 	agoGpuOclReleaseGraph(this);
+#elif ENABLE_HIP
+    agoResetSuperNodeList(supernodeList);
+    supernodeList = NULL;
+    agoGpuHipReleaseGraph(this);
 #endif
 
 	// critical section
@@ -3114,6 +3145,10 @@ AgoContext::AgoContext()
 	  , opencl_context_imported{ false }, opencl_context{ nullptr }, opencl_cmdq{ nullptr }, opencl_config_flags{ 0 }, opencl_num_devices{ 0 }, isAmdMediaOpsSupported{ true }
 	  , opencl_mem_alloc_size{ 0 }, opencl_mem_alloc_count{ 0 }, opencl_mem_release_count{ 0 }
       , opencl_cmdq_properties{ 0 }
+#elif ENABLE_HIP
+    , hip_context_imported{ false },  hip_stream{ nullptr }, hip_num_devices{ 0 }, hip_device_id { -1 }
+    , hip_mem_alloc_size{ 0 }, hip_mem_alloc_count{ 0 }, hip_mem_release_count{ 0 }
+
 #endif
 {
 	memset(&kernelList, 0, sizeof(kernelList));
@@ -3184,6 +3219,8 @@ AgoContext::~AgoContext()
 
 #if ENABLE_OPENCL
 	agoGpuOclReleaseContext(this);
+#elif ENABLE_HIP
+    agoGpuHipReleaseContext(this);
 #endif
 
 	// unload modules
@@ -3207,6 +3244,11 @@ AgoContext::~AgoContext()
 		agoAddLogEntry(&ref, VX_SUCCESS, "OK: OpenCL buffer usage: " VX_FMT_SIZE ", " VX_FMT_SIZE "/" VX_FMT_SIZE "\n",
 			opencl_mem_alloc_size, opencl_mem_release_count, opencl_mem_alloc_count);
 	}
+#elif ENABLE_HIP
+    if (hip_mem_alloc_count > 0) {
+        agoAddLogEntry(&ref, VX_SUCCESS, "OK: HIP buffer usage: " VX_FMT_SIZE ", " VX_FMT_SIZE "/" VX_FMT_SIZE "\n",
+                       hip_mem_alloc_size, hip_mem_release_count, hip_mem_alloc_count);
+    }
 #endif
 
 	// critical section

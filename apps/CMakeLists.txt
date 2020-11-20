@@ -21,7 +21,14 @@
 cmake_minimum_required (VERSION 2.8)
 project(applications)
 
+SET(BUILD_OPENCL True)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
+if("${BACKEND}" STREQUAL "OPENCL")
+    find_package(OpenCL QUIET)
+else()
+    SET(BUILD_OPENCL false)
+    message("-- ${BoldBlue}BACKEND set to HIP")
+endif()
 
 if(OPENCL_SUPPORT)
     find_package(OpenCL QUIET)
@@ -33,7 +40,7 @@ find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
 find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 
 if(NEURAL_NET)
-    if(OpenCL_FOUND AND miopengemm_FOUND AND miopen_FOUND)
+    if(OpenCL_FOUND AND BUILD_OPENCL AND miopengemm_FOUND AND miopen_FOUND)
         if(OpenCV_FOUND)
             add_subdirectory (cloud_inference/server_app)
             message("-- ${Green}Cloud Inference -- cloud_inference application added${ColourReset}")

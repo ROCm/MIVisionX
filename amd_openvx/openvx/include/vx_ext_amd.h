@@ -93,6 +93,8 @@ enum vx_context_attribute_amd_e {
 	VX_CONTEXT_MAX_TENSOR_DIMENSIONS = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_CONTEXT) + 0x05,
 	/*! \brief CL_QUEUE_PROPERTIES to be used for creating OpenCL command queue. Use a <tt>\ref cl_command_queue_properties</tt> parameter. */
 	VX_CONTEXT_CL_QUEUE_PROPERTIES = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_CONTEXT) + 0x06,
+    /*! \brief HIP context. Use a <tt>\ref cl_context</tt> parameter.*/
+    VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_CONTEXT) + 0x07,
 };
 
 /*! \brief The AMD kernel attributes list.
@@ -157,6 +159,8 @@ enum vx_image_attribute_amd_e {
 	VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x04,
     /*! \brief sync with user specified host buffer. Use a <tt>\ref cl_mem</tt> parameter.*/
 	VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER               = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x05,
+    /*! \brief sync with user specified hip memory. */
+    VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER               = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x06,
 };
 
 /*! \brief tensor Data attributes.
@@ -169,9 +173,11 @@ enum vx_tensor_attribute_amd_e {
 	VX_TENSOR_OFFSET_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x6,
 	/*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
 	VX_TENSOR_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x7,
+    /*! \brief HIP buffer. <tt>cl_mem</tt>. */
+    VX_TENSOR_BUFFER_HIP   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x8,
     /*! \brief Queries memory type if created using vxCreateTensorFromHandle. If vx_tensor was not created using
         vxCreateTensorFromHandle, VX_MEMORY_TYPE_NONE is returned. Use a <tt>\ref vx_memory_type_e</tt> parameter. */
-	VX_TENSOR_MEMORY_TYPE     = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x8,
+    VX_TENSOR_MEMORY_TYPE     = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_TENSOR) + 0x9,
 };
 
 //! \brief array Data attributes.
@@ -200,6 +206,8 @@ enum vx_directive_amd_e {
 	VX_DIRECTIVE_AMD_DISABLE_PROFILE_CAPTURE = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x04,
 	/*! \brief disable node level flush for a graph. */
 	VX_DIRECTIVE_AMD_DISABLE_OPENCL_FLUSH    = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x05,
+    /*! \brief data object copy to HIP memory. */
+    VX_DIRECTIVE_AMD_COPY_TO_HIPMEM = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x02,
 };
 
 /*! \brief An enumeration of additional memory type imports.
@@ -208,6 +216,7 @@ enum vx_directive_amd_e {
 enum vx_memory_type_amd_e {
 	/*! \brief The memory type to import from the OpenCL. Use */
 	VX_MEMORY_TYPE_OPENCL = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_MEMORY_TYPE) + 0x2,
+    VX_MEMORY_TYPE_HIP    = VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_MEMORY_TYPE) + 0x3,
 };
 
 /*! \brief The image color space list used by the <tt>\ref VX_IMAGE_SPACE</tt> attribute of a <tt>\ref vx_image</tt>.

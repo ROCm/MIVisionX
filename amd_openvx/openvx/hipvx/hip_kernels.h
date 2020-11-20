@@ -541,8 +541,46 @@ int HipExec_ChannelExtract_U8_U32_Pos3(
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
     );
-
-
+int HipExec_ChannelCombine_U16_U8U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+    );
+int HipExec_ChannelCombine_U24_U8U8U8_RGB(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+    const vx_uint8 *pHipSrcImage3, vx_uint32 srcImage3StrideInBytes
+    );
+int HipExec_ColorConvert_RGBX_RGB(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+int HipExec_ChannelCombine_U32_U8U8U8_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+    const vx_uint8 *pHipSrcImage3, vx_uint32 srcImage3StrideInBytes
+    );
+int HipExec_ChannelCombine_U32_U8U8U8_YUYV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+    const vx_uint8 *pHipSrcImage3, vx_uint32 srcImage3StrideInBytes
+    );
+int HipExec_ChannelCombine_U32_U8U8U8U8_RGBX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
+    const vx_uint8 *pHipSrcImage3, vx_uint32 srcImage3StrideInBytes,
+    const vx_uint8 *pHipSrcImage4, vx_uint32 srcImage4StrideInBytes
+    );
 
 // filter_kernels
 

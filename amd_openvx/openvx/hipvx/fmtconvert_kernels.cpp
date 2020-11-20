@@ -52,8 +52,8 @@ Hip_Copy_U8_U8
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*8 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + x;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
+    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + (x*2);
     pDstImage[dstIdx] = pSrcImage[srcIdx];
     pDstImage[dstIdx+1] = pSrcImage[srcIdx+1];
 }

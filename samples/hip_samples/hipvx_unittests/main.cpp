@@ -424,7 +424,17 @@ int main(int argc, const char ** argv)
 	vxRegisterLogCallback(context, log_callback, vx_false_e);
 	vx_graph graph = vxCreateGraph(context);
 	vx_node node;
-	vx_rectangle_t out_rect = {0, 0, width, height};
+	vx_uint32 widthOut = width;
+	vx_uint32 heightOut = height;
+	if ((case_number == 154) || (case_number == 155) || (case_number == 158))
+	{
+		// widthOut = (vx_uint32)((vx_float32)widthOut * 0.5);
+		// heightOut = (vx_uint32)((vx_float32)heightOut * 0.667);
+
+		widthOut = (vx_uint32)((vx_float32)widthOut * 1.75);
+		heightOut = (vx_uint32)((vx_float32)heightOut * 2.2);
+	}
+	vx_rectangle_t out_rect = {0, 0, widthOut, heightOut};
 	vx_rectangle_t out_rect_half = {0, 0, width/2, height};
 	vx_map_id  out_map_id;
 	vx_imagepatch_addressing_t out_addr = {0};
@@ -473,6 +483,9 @@ int main(int argc, const char ** argv)
 	vx_convolution Convolve_conv_convolution = vxCreateConvolution(context, 5, 5);
 	ERROR_CHECK_STATUS(vxCopyConvolutionCoefficients(Convolve_conv_convolution, (vx_int16*)filter5x5, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 	ERROR_CHECK_STATUS(vxSetConvolutionAttribute(Convolve_conv_convolution, VX_CONVOLUTION_SCALE, &scale, sizeof(scale)));
+	vx_enum ScaleImage_type1_enum = VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR;
+	vx_enum ScaleImage_type2_enum = VX_INTERPOLATION_TYPE_BILINEAR;
+	vx_enum ScaleImage_type3_enum = VX_INTERPOLATION_TYPE_AREA;
 	
 	if (!device_affinity)
 	{
@@ -1573,6 +1586,44 @@ int main(int argc, const char ** argv)
 					out_buf_type = 1;
 					break;
 				}
+// case 154 - agoKernel_ScaleImage_U8_U8_Nearest - DONE
+// case 155 - agoKernel_ScaleImage_U8_U8_Bilinear - DONE
+// case 156 - agoKernel_ScaleImage_U8_U8_Bilinear_Replicate
+// case 157 - agoKernel_ScaleImage_U8_U8_Bilinear_Constant
+// case 158 - agoKernel_ScaleImage_U8_U8_Area - DONE
+// case 159 - agoKernel_ScaleGaussianHalf_U8_U8_3x3
+// case 160 - agoKernel_ScaleGaussianHalf_U8_U8_5x5
+// case 161 - agoKernel_ScaleGaussianOrb_U8_U8_5x5
+				case 154:
+				{
+					// test_case_name = "agoKernel_ScaleImage_U8_U8_Nearest";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxScaleImageNode(graph, img1, img_out, ScaleImage_type1_enum);
+					expected_image_sum = pix_img1_u8 * (widthOut * heightOut);
+					out_buf_type = 0;
+					break;
+				}
+				case 155:
+				{
+					// test_case_name = "agoKernel_ScaleImage_U8_U8_Bilinear";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxScaleImageNode(graph, img1, img_out, ScaleImage_type2_enum);
+					expected_image_sum = 0;
+					out_buf_type = 0;
+					break;
+				}
+				case 158:
+				{
+					// test_case_name = "agoKernel_ScaleImage_U8_U8_Area";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxScaleImageNode(graph, img1, img_out, ScaleImage_type3_enum);
+					expected_image_sum = pix_img1_u8 * (widthOut * heightOut);
+					out_buf_type = 0;
+					break;
+				}
 
 				default:
 				{
@@ -1630,7 +1681,8 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151)
+					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
+					(case_number == 154) || (case_number == 155) || (case_number == 158)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -1703,6 +1755,16 @@ int main(int argc, const char ** argv)
 		hipMalloc((void**)&ptr[1], height * hip_addr_uint8.stride_y);
 		hipMalloc((void**)&ptr[2], height * hip_addr_uint8.stride_y);
 		hipMemset(ptr[2], 0, height * hip_addr_uint8.stride_y);
+
+		vx_imagepatch_addressing_t hip_addr_uint8_out = {0};
+		hip_addr_uint8_out.dim_x = widthOut;
+		hip_addr_uint8_out.dim_y = heightOut;
+		hip_addr_uint8_out.stride_x = 1;
+		hip_addr_uint8_out.stride_y = (widthOut+3)&~3;
+		hipMalloc((void**)&ptr[0], heightOut * hip_addr_uint8_out.stride_y);
+		hipMalloc((void**)&ptr[1], heightOut * hip_addr_uint8_out.stride_y);
+		hipMalloc((void**)&ptr[2], heightOut * hip_addr_uint8_out.stride_y);
+		hipMemset(ptr[2], 0, heightOut * hip_addr_uint8_out.stride_y);
 
 		vx_imagepatch_addressing_t hip_addr_int16 = {0};
 		hip_addr_int16.dim_x = width;
@@ -2768,6 +2830,36 @@ int main(int argc, const char ** argv)
 					out_buf_type = 1;
 					break;
 				}
+				case 154:
+				{
+					// test_case_name = "agoKernel_ScaleImage_U8_U8_Nearest";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxScaleImageNode(graph, img1, img_out, ScaleImage_type1_enum);
+					expected_image_sum = pix_img1_u8 * (widthOut * heightOut);
+					out_buf_type = 0;
+					break;
+				}
+				case 155:
+				{
+					// test_case_name = "agoKernel_ScaleImage_U8_U8_Bilinear";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxScaleImageNode(graph, img1, img_out, ScaleImage_type2_enum);
+					expected_image_sum = 0;
+					out_buf_type = 0;
+					break;
+				}
+				case 158:
+				{
+					// test_case_name = "agoKernel_ScaleImage_U8_U8_Area";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxScaleImageNode(graph, img1, img_out, ScaleImage_type3_enum);
+					expected_image_sum = pix_img1_u8 * (widthOut * heightOut);
+					out_buf_type = 0;
+					break;
+				}
 
 				default:
 				{
@@ -2825,7 +2917,8 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151)
+					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
+					(case_number == 154) || (case_number == 155) || (case_number == 158)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -2907,14 +3000,14 @@ int main(int argc, const char ** argv)
 		stride_y_pixels = stride_y_bytes / sizeof(vx_uint8);
 #ifdef PRINT_OUTPUT
 		printf("\nOutput Image: ");
-		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
-		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, width, height);
+		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", widthOut, heightOut, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
+		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, widthOut, heightOut);
 		printf("Output Buffer: ");
-		printBuffer(out_buf_uint8, width, height);
+		printBuffer(out_buf_uint8, widthOut, heightOut);
 		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
 #endif
-		for (int i = 0; i < height; i++)
-			for (int j = 0; j < width; j++)
+		for (int i = 0; i < heightOut; i++)
+			for (int j = 0; j < widthOut; j++)
 				returned_image_sum += out_buf_uint8[i * stride_y_pixels + j * stride_x_pixels];
 	}
 	// for uint8 outputs of half the dimensions of width of input image

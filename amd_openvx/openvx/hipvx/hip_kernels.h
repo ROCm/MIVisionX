@@ -26,6 +26,8 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
+typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
+
 // arithmetic_kernels
 
 int HipExec_AbsDiff_U8_U8U8(
@@ -591,6 +593,28 @@ int HipExec_Sobel_S16S16_U8_3x3_GXY(
     );
 
 // geometric_kernels
+
+int HipExec_ScaleImage_U8_U8_Nearest(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix
+    );
+int HipExec_ScaleImage_U8_U8_Bilinear(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix
+    );
+int HipExec_ScaleImage_U8_U8_Area(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix
+    );
 
 // vision_kernels
 

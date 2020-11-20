@@ -499,6 +499,17 @@ int HipExec_ColorConvert_RGB_RGBX(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
         );
+int HipExec_ColorConvert_RGB_YUYV(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGB_UYVY(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+
 
 int HipExec_Lut_U8_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 

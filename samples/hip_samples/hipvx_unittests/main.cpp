@@ -1497,6 +1497,30 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 106:
+				{
+				// case 106 - agoKernel_ColorConvert_RGB_UYVY
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_UYVY);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 107:
+				{
+				// case 107 - agoKernel_ColorConvert_RGB_YUYV
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_YUYV);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				case 111:
 				{
 				// case 111 - agoKernel_ColorConvert_RGBX_RGB
@@ -1664,7 +1688,8 @@ int main(int argc, const char ** argv)
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79) 
+					(case_number == 78)  || (case_number == 79) ||
+					(case_number == 106) || (case_number == 107) 
 					
 				)
 				{
@@ -2696,6 +2721,26 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 106:
+				{
+				// test_case_name  = " agoKernel_ChannelConvert_RGB_UYVY"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 0;
+					break;
+				}
+				case 107:
+				{
+				// test_case_name  = " agoKernel_ChannelConvert_RGB_YUYV"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 0;
+					break;
+				}
 				case 111:
 				{
 				// test_case_name  = " agoKernel_ChannelConvert_RGBX_RGB"
@@ -2860,7 +2905,8 @@ int main(int argc, const char ** argv)
 				else if(
 					(case_number == 71)  || (case_number == 72) ||
 					(case_number == 76)  || (case_number == 77) ||
-					(case_number == 78)  || (case_number == 79) 
+					(case_number == 78)  || (case_number == 79) || 
+					(case_number == 106) || (case_number == 107) 
 					
 				)
 				{
@@ -2958,6 +3004,7 @@ int main(int argc, const char ** argv)
 				returned_image_sum += out_buf_int16[i * stride_y_pixels + j * stride_x_pixels];
 	}
 	// for RGBX outputs
+	else if (out_buf_type == 4)
 	{
 		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_uint8, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		stride_x_bytes = out_addr.stride_x;

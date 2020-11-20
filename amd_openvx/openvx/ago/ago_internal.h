@@ -53,7 +53,7 @@ THE SOFTWARE.
 #define USE_AVX 0
 
 // AGO configuration
-#define USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD    0 // 0:seperate-sobel-and-nonmaxsupression 1:combine-sobel-and-nonmaxsupression
+#define USE_AGO_CANNY_SOBEL_SUPP_THRESHOLD    0// 0:seperate-sobel-and-nonmaxsupression 1:combine-sobel-and-nonmaxsupression
 #define AGO_MEMORY_ALLOC_EXTRA_PADDING       64 // extra bytes to the left and right of buffer allocations
 #define AGO_MAX_DEPTH_FROM_DELAY_OBJECT       4 // number of levels from delay object to low-level object
 
@@ -102,8 +102,10 @@ THE SOFTWARE.
 
 // AGO limites
 #define AGO_MAX_CONVOLUTION_DIM               9 // maximum size of convolution matrix
+#define AGO_MAX_NONLINEAR_FILTER_DIM          9 // maximum size of nonlinear filter matrix the specification requires support for is 9x9
 #define AGO_OPTICALFLOWPYRLK_MAX_DIM         15 // maximum size of opticalflow block size
 #define AGO_MAX_TENSOR_DIMENSIONS             4 // maximum dimensions supported by tensor
+#define AGO_MAX_OBJARR_REF 				   4096 // maximum number of references in a context for object array
 
 // AGO remap data precision
 #define AGO_REMAP_FRACTIONAL_BITS             3 // number of fractional bits in re-map locations
@@ -175,6 +177,21 @@ THE SOFTWARE.
 // module specific
 #define MAX_MODULE_NAME_SIZE 256
 #define MAX_MODULE_PATH_SIZE 1024
+
+// threshold default values
+#define AGO_DEFAULT_THRESHOLD_FALSE_VALUE 0
+#define AGO_DEFAULT_THRESHOLD_TRUE_VALUE  255
+
+#define AGO_U1_THRESHOLD_FALSE_VALUE vx_false_e
+#define AGO_U1_THRESHOLD_TRUE_VALUE vx_true_e
+#define AGO_S16_THRESHOLD_FALSE_VALUE 0
+#define AGO_S16_THRESHOLD_TRUE_VALUE  (-1)
+#define AGO_U16_THRESHOLD_FALSE_VALUE 0
+#define AGO_U16_THRESHOLD_TRUE_VALUE  0xFFFF
+#define AGO_S32_THRESHOLD_FALSE_VALUE 0
+#define AGO_S32_THRESHOLD_TRUE_VALUE  (-1)
+#define AGO_U32_THRESHOLD_FALSE_VALUE 0
+#define AGO_U32_THRESHOLD_TRUE_VALUE  0xFFFFFFFF
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // helpful macros
@@ -252,6 +269,7 @@ struct AgoReference {
 	bool         hint_serialize;  // serialize hint
 	bool         enable_logging;  // enable logging
 	bool         read_only;       // read only
+	bool 		 enable_perf; 	  // enable performance counter
 	vx_status    status;          // error status
 public:
 	AgoReference();
@@ -267,6 +285,11 @@ struct AgoConfigArray {
 	vx_size numitems;
 	vx_size capacity;
 	vx_size itemsize;
+};
+struct AgoConfigObjectArray {
+	vx_enum itemtype;
+	vx_size numitems;
+	//vx_reference *items;
 };
 struct AgoConfigConvolution {
 	vx_size rows;
@@ -304,6 +327,7 @@ struct AgoConfigImage {
 	vx_uint32 x_scale_factor_is_2; // will be 0 or 1
 	vx_uint32 y_scale_factor_is_2; // will be 0 or 1
 	vx_bool enableUserBufferOpenCL;
+	vx_bool mem_handle; 		// false by default ; true if image created from handle and the handle is NULL
 };
 struct AgoConfigLut {
 	vx_enum type;
@@ -352,8 +376,10 @@ struct AgoConfigScalar {
 struct AgoConfigThreshold {
 	vx_enum thresh_type;
 	vx_enum data_type;
-	vx_int32 threshold_lower, threshold_upper;
-	vx_int32 true_value, false_value;
+	vx_df_image input_format;
+	vx_df_image output_format;
+	vx_pixel_value_t threshold_lower, threshold_upper, threshold_value;
+	vx_pixel_value_t true_value, false_value;
 };
 struct AgoConfigTensor {
 	vx_size num_dims;
@@ -397,6 +423,7 @@ struct AgoData {
 	union {
 		AgoConfigDelay delay;
 		AgoConfigArray arr;
+		AgoConfigObjectArray objarr;
 		AgoConfigConvolution conv;
 		AgoConfigDistribution dist;
 		AgoConfigImage img;
@@ -495,6 +522,7 @@ struct AgoKernel {
 	vx_uint8 * localDataPtr;
 	bool external_kernel;
 	bool finalized;
+	vx_bool user_kernel;
 	vx_kernel_f kernel_f;
 	vx_kernel_validate_f validate_f;
 	vx_kernel_input_validate_f input_validate_f;
@@ -569,6 +597,7 @@ struct AgoNode {
 	vx_int32 funcExchange[AGO_MAX_PARAMS];
 	vx_nodecomplete_f callback;
 	AgoSuperNode * supernode;
+	AgoNode * newchildnode;
 	bool initialized;
 	bool drama_divide_invoked;
 	vx_uint32 valid_rect_num_inputs;
@@ -579,6 +608,8 @@ struct AgoNode {
 	vx_uint32 hierarchical_level;
 	vx_status status;
 	vx_perf_t perf;
+	vx_bool local_data_change_is_enabled;
+	vx_bool local_data_set_by_implementation;
 #if ENABLE_OPENCL
 	vx_uint32 opencl_type;
 	char opencl_name[VX_MAX_KERNEL_NAME];
@@ -630,16 +661,19 @@ struct AgoNodeList {
 };
 struct AgoGraph {
 	AgoReference ref;
+	std::string name;
 	AgoGraph * next;
 	CRITICAL_SECTION cs;
 	HANDLE hThread, hSemToThread, hSemFromThread;
-	vx_int32 threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState;
+	vx_int32 threadScheduleCount, threadExecuteCount, threadWaitCount, threadThreadTerminationState, threadThreadWaitState;
 	AgoDataList dataList;
 	AgoNodeList nodeList;
 	vx_bool isReadyToExecute;
 	bool detectedInvalidNode;
 	vx_int32 status;
 	vx_perf_t perf;
+	vx_enum state;
+	bool reverify;
 	struct AgoGraphPerfInternalInfo_ { // shall be identical to AgoGraphPerfInternalInfo in amd_ext_amd.h
 		vx_uint64 kernel_enqueue;
 		vx_uint64 kernel_wait;
@@ -708,6 +742,7 @@ struct AgoContext {
 	vx_uint32 num_active_modules;
 	vx_uint32 num_active_references;
 	vx_border_mode_t immediate_border_mode;
+	vx_border_mode_policy_e immediate_border_policy;
 	vx_log_callback_f callback_log;
 	vx_bool callback_reentrant;
 	vx_uint32 thread_config;
@@ -772,6 +807,7 @@ struct _vx_pyramid { AgoData d; };
 struct _vx_remap { AgoData d; };
 struct _vx_scalar { AgoData d; };
 struct _vx_threshold { AgoData d; };
+struct _vx_object_array { AgoData d; };
 
 // framework
 void * agoAllocMemory(vx_size size);

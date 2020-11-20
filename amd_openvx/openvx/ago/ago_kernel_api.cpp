@@ -20937,14 +20937,6 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
 		status = VX_SUCCESS;
 	}
-	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-		AgoData * out = node->paramList[0];
-		AgoData * inp = node->paramList[1];
-		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
-		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
-		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
-		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
-	}
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
 		// TBD: not implemented yet
@@ -20954,9 +20946,39 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_query_target_support) {
 		node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU              
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU 
+#endif
                     ;
         status = VX_SUCCESS;
 	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[1];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData *oImg = node->paramList[0];
+		AgoData *iImg1 = node->paramList[1];
+		AgoData *iImg2 = node->paramList[3];
+		vx_float32 alpha = node->paramList[2]->u.scalar.u.f;
+        if (HipExec_WeightedAverage_U8_U8U8(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg1->hip_memory, iImg1->u.img.stride_in_bytes, 
+			iImg2->hip_memory, iImg2->u.img.stride_in_bytes,
+			alpha)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 

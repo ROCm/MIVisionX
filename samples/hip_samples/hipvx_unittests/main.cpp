@@ -1479,8 +1479,8 @@ int main(int argc, const char ** argv)
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
-					// node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out); // vxWeightedAverageNode not implemented
-					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (vx_int32)(((vx_float32)pix_img2_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -2680,8 +2680,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[1], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					// node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out); // vxWeightedAverageNode not implemented
-					expected_image_sum = (((vx_float32)pix_img1_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
+					node = vxWeightedAverageNode(graph, img1, WeightedAverage_alpha_scalar, img2, img_out);
+					expected_image_sum = (vx_int32)(((vx_float32)pix_img2_u8 * ((vx_float32)1 - WeightedAverage_alpha_float)) + ((vx_float32)pix_img1_u8 * WeightedAverage_alpha_float)) * width * height;
 					out_buf_type = 0;
 					break;
 				}

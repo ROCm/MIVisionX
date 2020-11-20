@@ -398,20 +398,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
 				else {
 					status = VX_FAILURE;
 				}
-				break;
-#elif ENABLE_HIP
-            case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
-                if (size == sizeof(hipDevice_t)) {
-                    if (context->hip_device < 0 && agoGpuHipCreateContext(context, context->hip_device) != VX_SUCCESS) {
-                        status = VX_FAILURE;
-                    }
-
-                }
-                break;
-#endif
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
 			}
 			break;
 		case VX_CONTEXT_CL_QUEUE_PROPERTIES:
@@ -419,6 +405,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
 			if (size == sizeof(cl_command_queue_properties)) {
 				context->opencl_cmdq_properties = *(cl_command_queue_properties *)ptr;
 				status = VX_SUCCESS;
+			}
+			break;
+#elif ENABLE_HIP
+		case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
+			if (size == sizeof(hipDevice_t)) {
+				if (context->hip_device < 0 && agoGpuHipCreateContext(context, context->hip_device) != VX_SUCCESS) {
+					status = VX_FAILURE;
+				}
 			}
 			break;
 #endif

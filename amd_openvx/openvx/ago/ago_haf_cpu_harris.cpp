@@ -467,28 +467,28 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 
 	int tmpWidth = (dstWidth + 15) & ~15;
 	tmpWidth <<= 1;
-	vx_int16 * pRowMinus3 = (vx_int16*)pScratch;
-	vx_int16 * pRowMinus2 = ((vx_int16*)pScratch) + tmpWidth;
-	vx_int16 * pRowMinus1 = ((vx_int16*)pScratch) + (2 * tmpWidth);
-	vx_int16 * pRowCurr = ((vx_int16*)pScratch) + (3 * tmpWidth);
-	vx_int16 * pRowPlus1 = ((vx_int16*)pScratch) + (4 * tmpWidth);
-	vx_int16 * pRowPlus2 = ((vx_int16*)pScratch) + (5 * tmpWidth);
-	vx_int16 * pRowPlus3 = ((vx_int16*)pScratch) + (6 * tmpWidth);
+	vx_int32 * pRowMinus3 = (vx_int32*)pScratch;
+	vx_int32 * pRowMinus2 = ((vx_int32*)pScratch) + tmpWidth;
+	vx_int32 * pRowMinus1 = ((vx_int32*)pScratch) + (2 * tmpWidth);
+	vx_int32 * pRowCurr = ((vx_int32*)pScratch) + (3 * tmpWidth);
+	vx_int32 * pRowPlus1 = ((vx_int32*)pScratch) + (4 * tmpWidth);
+	vx_int32 * pRowPlus2 = ((vx_int32*)pScratch) + (5 * tmpWidth);
+	vx_int32 * pRowPlus3 = ((vx_int32*)pScratch) + (6 * tmpWidth);
 
-	vx_int16 * pLocalRowMinus3 = pRowMinus3;
-	vx_int16 * pLocalRowMinus2 = pRowMinus2;
-	vx_int16 * pLocalRowMinus1 = pRowMinus1;
-	vx_int16 * pLocalRowCurr = pRowCurr;
-	vx_int16 * pLocalRowPlus1 = pRowPlus1;
-	vx_int16 * pLocalRowPlus2 = pRowPlus2;
-	vx_int16 * pLocalRowPlus3 = pRowPlus3;
+	vx_int32 * pLocalRowMinus3 = pRowMinus3;
+	vx_int32 * pLocalRowMinus2 = pRowMinus2;
+	vx_int32 * pLocalRowMinus1 = pRowMinus1;
+	vx_int32 * pLocalRowCurr = pRowCurr;
+	vx_int32 * pLocalRowPlus1 = pRowPlus1;
+	vx_int32 * pLocalRowPlus2 = pRowPlus2;
+	vx_int32 * pLocalRowPlus3 = pRowPlus3;
 
 	// Horizontal filtering for the first row - row 0
 	vx_uint8 * pLocalSrc = pSrcImage;
 	for (int x = 0; x < (int)dstWidth; x++, pLocalSrc++)
 	{
-		*pLocalRowMinus3++ = (vx_int16)pLocalSrc[3] - (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] - (vx_int16)pLocalSrc[-2]) << 2) + (((vx_int16)pLocalSrc[1] - (vx_int16)pLocalSrc[-1]) * 5);
-		*pLocalRowMinus3++ = (vx_int16)pLocalSrc[3] + (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] + (vx_int16)pLocalSrc[-2]) * 6) + (((vx_int16)pLocalSrc[1] + (vx_int16)pLocalSrc[-1]) * 15) + ((vx_int16)pLocalSrc[0] * 20);
+		*pLocalRowMinus3++ = (vx_int32)pLocalSrc[3] - (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] - (vx_int32)pLocalSrc[-2]) << 2) + (((vx_int32)pLocalSrc[1] - (vx_int32)pLocalSrc[-1]) * 5);
+		*pLocalRowMinus3++ = (vx_int32)pLocalSrc[3] + (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] + (vx_int32)pLocalSrc[-2]) * 6) + (((vx_int32)pLocalSrc[1] + (vx_int32)pLocalSrc[-1]) * 15) + ((vx_int32)pLocalSrc[0] * 20);
 	}
 
 	// Horizontal filtering for the second row - row 1
@@ -496,8 +496,8 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 	pLocalSrc = pSrcImage;
 	for (int x = 0; x < (int)dstWidth; x++, pLocalSrc++)
 	{
-		*pLocalRowMinus2++ = (vx_int16)pLocalSrc[3] - (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] - (vx_int16)pLocalSrc[-2]) << 2) + (((vx_int16)pLocalSrc[1] - (vx_int16)pLocalSrc[-1]) * 5);
-		*pLocalRowMinus2++ = (vx_int16)pLocalSrc[3] + (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] + (vx_int16)pLocalSrc[-2]) * 6) + (((vx_int16)pLocalSrc[1] + (vx_int16)pLocalSrc[-1]) * 15) + ((vx_int16)pLocalSrc[0] * 20);
+		*pLocalRowMinus2++ = (vx_int32)pLocalSrc[3] - (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] - (vx_int32)pLocalSrc[-2]) << 2) + (((vx_int32)pLocalSrc[1] - (vx_int32)pLocalSrc[-1]) * 5);
+		*pLocalRowMinus2++ = (vx_int32)pLocalSrc[3] + (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] + (vx_int32)pLocalSrc[-2]) * 6) + (((vx_int32)pLocalSrc[1] + (vx_int32)pLocalSrc[-1]) * 15) + ((vx_int32)pLocalSrc[0] * 20);
 	}
 
 	// Horizontal filtering for the second row - row 2
@@ -505,8 +505,8 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 	pLocalSrc = pSrcImage;
 	for (int x = 0; x < (int)dstWidth; x++, pLocalSrc++)
 	{
-		*pLocalRowMinus1++ = (vx_int16)pLocalSrc[3] - (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] - (vx_int16)pLocalSrc[-2]) << 2) + (((vx_int16)pLocalSrc[1] - (vx_int16)pLocalSrc[-1]) * 5);
-		*pLocalRowMinus1++ = (vx_int16)pLocalSrc[3] + (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] + (vx_int16)pLocalSrc[-2]) * 6) + (((vx_int16)pLocalSrc[1] + (vx_int16)pLocalSrc[-1]) * 15) + ((vx_int16)pLocalSrc[0] * 20);
+		*pLocalRowMinus1++ = (vx_int32)pLocalSrc[3] - (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] - (vx_int32)pLocalSrc[-2]) << 2) + (((vx_int32)pLocalSrc[1] - (vx_int32)pLocalSrc[-1]) * 5);
+		*pLocalRowMinus1++ = (vx_int32)pLocalSrc[3] + (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] + (vx_int32)pLocalSrc[-2]) * 6) + (((vx_int32)pLocalSrc[1] + (vx_int32)pLocalSrc[-1]) * 15) + ((vx_int32)pLocalSrc[0] * 20);
 	}
 
 	// Horizontal filtering for the second row - row 3
@@ -514,8 +514,8 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 	pLocalSrc = pSrcImage;
 	for (int x = 0; x < (int)dstWidth; x++, pLocalSrc++)
 	{
-		*pLocalRowCurr++ = (vx_int16)pLocalSrc[3] - (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] - (vx_int16)pLocalSrc[-2]) << 2) + (((vx_int16)pLocalSrc[1] - (vx_int16)pLocalSrc[-1]) * 5);
-		*pLocalRowCurr++ = (vx_int16)pLocalSrc[3] + (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] + (vx_int16)pLocalSrc[-2]) * 6) + (((vx_int16)pLocalSrc[1] + (vx_int16)pLocalSrc[-1]) * 15) + ((vx_int16)pLocalSrc[0] * 20);
+		*pLocalRowCurr++ = (vx_int32)pLocalSrc[3] - (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] - (vx_int32)pLocalSrc[-2]) << 2) + (((vx_int32)pLocalSrc[1] - (vx_int32)pLocalSrc[-1]) * 5);
+		*pLocalRowCurr++ = (vx_int32)pLocalSrc[3] + (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] + (vx_int32)pLocalSrc[-2]) * 6) + (((vx_int32)pLocalSrc[1] + (vx_int32)pLocalSrc[-1]) * 15) + ((vx_int32)pLocalSrc[0] * 20);
 	}
 
 	// Horizontal filtering for the second row - row 4
@@ -523,8 +523,8 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 	pLocalSrc = pSrcImage;
 	for (int x = 0; x < (int)dstWidth; x++, pLocalSrc++)
 	{
-		*pLocalRowPlus1++ = (vx_int16)pLocalSrc[3] - (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] - (vx_int16)pLocalSrc[-2]) << 2) + (((vx_int16)pLocalSrc[1] - (vx_int16)pLocalSrc[-1]) * 5);
-		*pLocalRowPlus1++ = (vx_int16)pLocalSrc[3] + (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] + (vx_int16)pLocalSrc[-2]) * 6) + (((vx_int16)pLocalSrc[1] + (vx_int16)pLocalSrc[-1]) * 15) + ((vx_int16)pLocalSrc[0] * 20);
+		*pLocalRowPlus1++ = (vx_int32)pLocalSrc[3] - (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] - (vx_int32)pLocalSrc[-2]) << 2) + (((vx_int32)pLocalSrc[1] - (vx_int32)pLocalSrc[-1]) * 5);
+		*pLocalRowPlus1++ = (vx_int32)pLocalSrc[3] + (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] + (vx_int32)pLocalSrc[-2]) * 6) + (((vx_int32)pLocalSrc[1] + (vx_int32)pLocalSrc[-1]) * 15) + ((vx_int32)pLocalSrc[0] * 20);
 	}
 
 	// Horizontal filtering for the second row - row 5
@@ -532,8 +532,8 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 	pLocalSrc = pSrcImage;
 	for (int x = 0; x < (int)dstWidth; x++, pLocalSrc++)
 	{
-		*pLocalRowPlus2++ = (vx_int16)pLocalSrc[3] - (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] - (vx_int16)pLocalSrc[-2]) << 2) + (((vx_int16)pLocalSrc[1] - (vx_int16)pLocalSrc[-1]) * 5);
-		*pLocalRowPlus2++ = (vx_int16)pLocalSrc[3] + (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] + (vx_int16)pLocalSrc[-2]) * 6) + (((vx_int16)pLocalSrc[1] + (vx_int16)pLocalSrc[-1]) * 15) + ((vx_int16)pLocalSrc[0] * 20);
+		*pLocalRowPlus2++ = (vx_int32)pLocalSrc[3] - (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] - (vx_int32)pLocalSrc[-2]) << 2) + (((vx_int32)pLocalSrc[1] - (vx_int32)pLocalSrc[-1]) * 5);
+		*pLocalRowPlus2++ = (vx_int32)pLocalSrc[3] + (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] + (vx_int32)pLocalSrc[-2]) * 6) + (((vx_int32)pLocalSrc[1] + (vx_int32)pLocalSrc[-1]) * 15) + ((vx_int32)pLocalSrc[0] * 20);
 	}
 
 	pSrcImage += srcImageStrideInBytes;
@@ -551,10 +551,10 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 		pLocalSrc = pSrcImage;
 		for (int x = 0; x < (int)dstWidth; x++)
 		{
-			vx_int16 gx, gy;
+			vx_int32 gx, gy;
 
-			gx = (vx_int16)pLocalSrc[3] - (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] - (vx_int16)pLocalSrc[-2]) << 2) + (((vx_int16)pLocalSrc[1] - (vx_int16)pLocalSrc[-1]) * 5);
-			gy = (vx_int16)pLocalSrc[3] + (vx_int16)pLocalSrc[-3] + (((vx_int16)pLocalSrc[2] + (vx_int16)pLocalSrc[-2]) * 6) + (((vx_int16)pLocalSrc[1] + (vx_int16)pLocalSrc[-1]) * 15) + ((vx_int16)pLocalSrc[0] * 20);
+			gx = (vx_int32)pLocalSrc[3] - (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] - (vx_int32)pLocalSrc[-2]) << 2) + (((vx_int32)pLocalSrc[1] - (vx_int32)pLocalSrc[-1]) * 5);
+			gy = (vx_int32)pLocalSrc[3] + (vx_int32)pLocalSrc[-3] + (((vx_int32)pLocalSrc[2] + (vx_int32)pLocalSrc[-2]) * 6) + (((vx_int32)pLocalSrc[1] + (vx_int32)pLocalSrc[-1]) * 15) + ((vx_int32)pLocalSrc[0] * 20);
 
 			*pLocalRowPlus3++ = gx;
 			*pLocalRowPlus3++ = gy;
@@ -566,12 +566,11 @@ int HafCpu_HarrisSobel_HG3_U8_7x7
 			pDstGxy->GxGx = ((vx_float32)gx * (vx_float32)gx);	// / 64.0f;
 			pDstGxy->GxGy = ((vx_float32)gx * (vx_float32)gy);	// / 64.0f;
 			pDstGxy->GyGy = ((vx_float32)gy * (vx_float32)gy);	// / 64.0f;
-
 			pDstGxy++;
 			pLocalSrc++;
 		}
 
-		vx_int16 * pTemp = pRowMinus3;
+		vx_int32 * pTemp = pRowMinus3;
 		pRowMinus3 = pRowMinus2;
 		pRowMinus2 = pRowMinus1;
 		pRowMinus1 = pRowCurr;

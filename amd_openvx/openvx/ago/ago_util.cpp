@@ -101,6 +101,7 @@ static struct { const char * name; vx_enum value; vx_size size; } s_table_consta
 		{ "VX_TYPE_CONVOLUTION", VX_TYPE_CONVOLUTION },
 		{ "VX_TYPE_SCALAR", VX_TYPE_SCALAR },
 		{ "VX_TYPE_ARRAY", VX_TYPE_ARRAY },
+		{ "VX_TYPE_OBJECT_ARRAY", VX_TYPE_OBJECT_ARRAY },
 		{ "VX_TYPE_IMAGE", VX_TYPE_IMAGE },
 		{ "VX_TYPE_REMAP", VX_TYPE_REMAP },
 		{ "VX_TYPE_TENSOR", VX_TYPE_TENSOR },
@@ -590,11 +591,16 @@ int agoShutdownNode(AgoNode * node)
 				status = kernel->func(node, ago_kernel_cmd_shutdown);
 			}
 			else if (kernel->deinitialize_f) {
+				if ((kernel->user_kernel == vx_true_e) && (node->local_data_set_by_implementation == vx_false_e)) {
+					node->local_data_change_is_enabled = vx_true_e;
+				}
 				status = kernel->deinitialize_f(node, (vx_reference *)node->paramList, node->paramCount);
+				node->local_data_change_is_enabled = vx_false_e;
 			}
 			if (status) {
 				return status;
 			}
+			node->local_data_set_by_implementation = vx_false_e;
 			node->akernel = nullptr;
 		}
 		if (node->localDataPtr_allocated) {
@@ -790,6 +796,53 @@ AgoData * agoGetSiblingTraceToDelayForUpdate(AgoData * data, int trace[], int& t
 	return (data && data->ref.type == VX_TYPE_DELAY) ? data : nullptr;
 }
 
+//next 4 functions replicating for object array
+void agoMarkChildrenAsPartOfObjectArray(AgoData * adata)
+{
+	// recursively mark children as part of delay
+	for (vx_uint32 child = 0; child < adata->numChildren; child++) {
+		if (adata->children[child]) {
+			adata->children[child]->isDelayed = vx_true_e;
+			agoMarkChildrenAsPartOfObjectArray(adata->children[child]);
+		}
+	}
+}
+
+AgoData * agoGetSiblingTraceToObjectArrayForInit(AgoData * data, int trace[], int& traceCount)
+{
+	if (data && data->isDelayed) {
+		traceCount = 0;
+		while (data && data->ref.type != VX_TYPE_OBJECT_ARRAY && traceCount < AGO_MAX_OBJARR_REF) {
+			vx_int32 siblingIndex = data->siblingIndex;
+			AgoData * parent = data->parent;
+			if (parent && parent->ref.type == VX_TYPE_OBJECT_ARRAY) {
+				for (vx_uint32 child = 0; child < parent->numChildren; child++) {
+					if (data == parent->children[child]) {
+						siblingIndex = (/*parent->u.delay.age +*/ (vx_int32)child) % parent->u.objarr.numitems;
+						break;
+					}
+				}
+			}
+			trace[traceCount++] = siblingIndex;
+			data = parent;
+		}
+	}
+	return (data && data->ref.type == VX_TYPE_OBJECT_ARRAY) ? data : nullptr;
+}
+
+AgoData * agoGetSiblingTraceToObjectArrayForUpdate(AgoData * data, int trace[], int& traceCount)
+{
+	if (data && data->isDelayed) {
+		traceCount = 0;
+		while (data && data->ref.type != VX_TYPE_OBJECT_ARRAY && traceCount < AGO_MAX_OBJARR_REF) {
+			trace[traceCount++] = data->siblingIndex;
+			data = data->parent;
+		}
+	}
+	return (data && data->ref.type == VX_TYPE_OBJECT_ARRAY) ? data : nullptr;
+}
+//replication complete
+
 AgoData * agoGetDataFromTrace(AgoData * data, int trace[], int traceCount)
 {
 	for (int i = traceCount - 1; data && i >= 0; i--) {
@@ -839,6 +892,17 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
 		else
 			sprintf(desc + strlen(desc), "array%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.arr.itemtype), data->u.arr.capacity);
 	}
+	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
+		/*if(data->u.objarr.itemtype >= VX_TYPE_KHRONOS_OBJECT_START && data->u.objarr.itemtype <= VX_TYPE_KHRONOS_OBJECT_END) {
+			if(data->u.objarr.itemtype != VX_TYPE_DELAY && data->u.objarr.itemtype != VX_TYPE_OBJECT_ARRAY)
+				sprintf(desc + strlen(desc), "objectarray%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.objarr.itemtype), data->u.objarr.numitems);
+		}
+		else
+			sprintf(desc + strlen(desc), "objectarray%s:UNSUPPORTED,NULL", virt);*/
+		sprintf(desc + strlen(desc), "objectarray%s:%lu,[", virt, data->u.objarr.numitems);
+		agoGetDescriptionFromData(acontext, desc + strlen(desc), data->children[0]);
+		sprintf(desc + strlen(desc), "]");
+	}
 	else if (data->ref.type == VX_TYPE_SCALAR) {
 		if (data->u.scalar.type == VX_TYPE_ENUM) {
 			const char * name = agoEnum2Name(data->u.scalar.u.e);
@@ -872,11 +936,12 @@ void agoGetDescriptionFromData(AgoContext * acontext, char * desc, AgoData * dat
 		sprintf(desc + strlen(desc), "lut%s:%s," VX_FMT_SIZE "", virt, agoEnum2Name(data->u.lut.type), data->u.lut.count);
 	}
 	else if (data->ref.type == VX_TYPE_THRESHOLD) {
-		sprintf(desc + strlen(desc), "threshold%s:%s,%s", virt, agoEnum2Name(data->u.thr.thresh_type), agoEnum2Name(data->u.thr.data_type));
-		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY)
+		sprintf(desc + strlen(desc), "threshold%s:%s,%u,%u", virt, agoEnum2Name(data->u.thr.thresh_type), data->u.thr.input_format, data->u.thr.output_format);
+		/*if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY)
 			sprintf(desc + strlen(desc), ":I,%d", data->u.thr.threshold_lower);
 		else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE)
 			sprintf(desc + strlen(desc), ":I,%d,%d", data->u.thr.threshold_lower, data->u.thr.threshold_upper);
+		*/
 	}
 	else if (data->ref.type == VX_TYPE_CONVOLUTION) {
 		sprintf(desc + strlen(desc), "convolution%s:" VX_FMT_SIZE "," VX_FMT_SIZE "", virt, data->u.conv.columns, data->u.conv.rows);
@@ -974,6 +1039,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		desc++; epos--;
 		char desc_child[1024];
 		strncpy(desc_child, desc, epos);
+		desc_child[epos] = '\0';
 		if (data->children) 
 			delete [] data->children;
 		data->numChildren = (vx_uint32)data->u.delay.count;
@@ -1137,7 +1203,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		desc += 10;
 		// get configuration
 		data->ref.type = VX_TYPE_IMAGE;
-		data->u.img.isROI = vx_true_e;
+		//data->u.img.isROI = vx_true_e;
 		const char *s = strstr(desc, ","); if (!s) return -1;
 		char master_name[128];
 		memcpy(master_name, desc, s - desc); master_name[s - desc] = 0;
@@ -1315,6 +1381,81 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		}
 		return 0;
 	}
+	else if (!strncmp(desc, "objectarray:", 12) || !strncmp(desc, "objectarray-virtual:", 12 + 8)) {
+		if (!strncmp(desc, "objectarray-virtual:", 14)) {
+			data->isVirtual = vx_true_e;
+			desc += 8;
+		}
+		else desc += 12;
+		// get configuration
+		data->ref.type = VX_TYPE_OBJECT_ARRAY;
+		if (sscanf(desc, "%lu", &data->u.objarr.numitems) != 1) return -1;
+		if (data->u.objarr.numitems < 1) return -1;
+		while (*desc && *desc != '[') desc++;
+		vx_uint32 epos = (vx_uint32)strlen(desc) - 1;
+		if ((*desc != '[') || (desc[epos] != ']')) return -1;
+		desc++; epos--;
+		char desc_child[1024];
+		strncpy(desc_child, desc, epos);
+		desc_child[epos] = '\0';
+		if (data->children) 
+			delete [] data->children;
+		data->numChildren = (vx_uint32)data->u.objarr.numitems;
+		data->children = new AgoData * [data->numChildren];
+		for (vx_uint32 child = 0; child < data->numChildren; child++) {
+			if ((data->children[child] = agoCreateDataFromDescription(acontext, agraph, desc_child, false)) == NULL) return -1;
+			data->children[child]->parent = data;
+			data->children[child]->siblingIndex = (vx_int32)child;
+			if (data->children[child]->isVirtual != data->isVirtual) return -1;
+			if (child == 0) {
+				data->u.objarr.itemtype = data->children[child]->ref.type;
+				if (data->u.objarr.itemtype == VX_TYPE_DELAY || data->u.objarr.itemtype == VX_TYPE_OBJECT_ARRAY) {
+					agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: object-array of object-array/delay is not permitted\n");
+					return -1;
+				}
+			}
+		}
+		// mark the children of delay element as part of delay object
+		//agoMarkChildrenAsPartOfDelay(data);
+		// sanity check and update
+		if (agoDataSanityCheckAndUpdate(data)) {
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for object-array\n");
+			return -1;
+		}
+		return 0;
+
+		/*if (!strncmp(desc, "objectarray-virtual:", 12 + 8)) {
+			data->isVirtual = vx_true_e;
+			desc += 8;
+		}
+		desc += 12;
+		// get configuration
+		data->ref.type = VX_TYPE_OBJECT_ARRAY;
+		const char *s = strstr(desc, ","); if (!s) return -1;
+		char data_type[64];
+		memcpy(data_type, desc, s - desc); data_type[s - desc] = 0;
+		(void)sscanf(++s, "" VX_FMT_SIZE "", &data->u.objarr.numitems);
+		data->u.objarr.itemtype = agoName2Enum(data_type);
+		if (!data->u.objarr.itemtype) data->u.objarr.itemtype = atoi(data_type);
+		if (data->isVirtual && !data->isNotFullyConfigured && (!strcmp(data_type, "0") || !data->u.objarr.numitems)) {
+			// incomplete information needs to process this again later
+			data->isNotFullyConfigured = vx_true_e;
+			return 0;
+		}
+
+		data->u.objarr.items = (vx_reference *)calloc(data->u.objarr.numitems, sizeof(vx_reference));
+		for (vx_size i = 0; i < data->u.objarr.numitems; i++) {
+			data->u.objarr.items[i] = NULL;
+		}
+
+		// sanity check and update
+		data->ref.context = acontext; // array sanity check requires access to context
+		if (agoDataSanityCheckAndUpdate(data)) {
+			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for object-array\n");
+			return -1;
+		}
+		return 0;*/
+	}
 	else if (!strncmp(desc, "distribution:", 13) || !strncmp(desc, "distribution-virtual:", 13 + 8)) {
 		if (!strncmp(desc, "distribution-virtual:", 13 + 8)) {
 			data->isVirtual = vx_true_e;
@@ -1347,6 +1488,10 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		if (data->u.lut.type != VX_TYPE_UINT8 && data->u.lut.type != VX_TYPE_INT16) 
 			return -1;
 		if (sscanf(++s, "" VX_FMT_SIZE "", &data->u.lut.count) != 1) return -1;
+		if (data->u.lut.type == VX_TYPE_UINT8)
+			data->u.lut.offset = 0;
+		else if(data->u.lut.type == VX_TYPE_INT16)
+			data->u.lut.offset = (vx_uint32)(data->u.lut.count/2);
 		// sanity check and update
 		if (agoDataSanityCheckAndUpdate(data)) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for lut\n");
@@ -1364,17 +1509,23 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		data->ref.type = VX_TYPE_THRESHOLD;
 		const char *s = strstr(desc, ","); if (!s) return -1;
 		char thresh_type[64], data_type[64];
+		uint32_t input_format, output_format;
 		memcpy(thresh_type, desc, s - desc); thresh_type[s - desc] = 0;
-		strcpy(data_type, s + 1);
-		for (int i = 0; i < 64 && data_type[i]; i++) if (data_type[i] == ':' || data_type[i] == ',') { data_type[i] = 0; s += i + 2; break; }
+		s = strstr(s, ",");
+		input_format = stoi(s+1);
+		s = strstr(s+1, ",");
+		output_format = stoi(s+1);
 		data->u.thr.thresh_type = agoName2Enum(thresh_type);
-		data->u.thr.data_type = agoName2Enum(data_type);
-		if (!data->u.thr.thresh_type || !data->u.thr.data_type) return -1;
-		if (data->u.thr.data_type != VX_TYPE_UINT8 && data->u.thr.data_type != VX_TYPE_UINT16 && data->u.thr.data_type != VX_TYPE_INT16) {
+		//data->u.thr.data_type = agoName2Enum(data_type);
+		data->u.thr.input_format = (vx_df_image)input_format;
+		data->u.thr.output_format = (vx_df_image)output_format;
+
+		if (!data->u.thr.thresh_type || !data->u.thr.input_format || !data->u.thr.output_format) return -1;
+		/*if (data->u.thr.data_type != VX_TYPE_UINT8 && data->u.thr.data_type != VX_TYPE_UINT16 && data->u.thr.data_type != VX_TYPE_INT16) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid threshold data_type %s\n", data_type);
 			return -1;
-		}
-		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
+		}*/
+		/*if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
 			if (sscanf(s, "%d", &data->u.thr.threshold_lower) == 1)
 				data->isInitialized = vx_true_e;
 		}
@@ -1385,7 +1536,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 		else {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid threshold thresh_type %s\n", thresh_type);
 			return -1;
-		}
+		}*/
 		// sanity check and update
 		if (agoDataSanityCheckAndUpdate(data)) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: agoDataSanityCheckAndUpdate failed for threshold\n");
@@ -1575,6 +1726,16 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 			strncpy((char *)data->buffer, s, VX_MAX_STRING_BUFFER_SIZE_AMD);
 			data->buffer[VX_MAX_STRING_BUFFER_SIZE_AMD - 1] = 0; // NUL terminate string in case of overflow
 			data->isInitialized = vx_true_e;
+		}
+		else if (data->u.scalar.type == VX_TYPE_RECTANGLE || data->u.scalar.type == VX_TYPE_KEYPOINT || data->u.scalar.type == VX_TYPE_COORDINATES2D || data->u.scalar.type == VX_TYPE_COORDINATES3D)
+		{
+			vx_size data_size = agoType2Size(acontext, agoName2Enum(data_type));
+			data->u.scalar.itemsize = data->size = data_size;
+			data->buffer_allocated = data->buffer = (vx_uint8 *)agoAllocMemory(data->size);
+            if (data->buffer) {
+                memset(data->buffer, 0, data->size);
+            }
+            data->isInitialized = vx_true_e;
 		}
 		else {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGetDataFromDescription: invalid scalar type %s\n", data_type);
@@ -1792,6 +1953,7 @@ AgoData * agoCreateDataFromDescription(AgoContext * acontext, AgoGraph * agraph,
 	agoResetReference(&data->ref, data->ref.type, acontext, data->isVirtual ? &agraph->ref : NULL);
 	if (isForExternalUse) {
 		data->ref.external_count = 1;
+		acontext->num_active_references++;
 	}
 	else {
 		data->ref.internal_count = 1;
@@ -1942,7 +2104,7 @@ void agoGetDataName(vx_char * name, AgoData * data)
 	for (AgoData * pdata = data; pdata; pdata = pdata->parent) {
 		char tmp[1024]; strcpy(tmp, name);
 		if (pdata->parent) {
-			sprintf(name, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
+			sprintf(name, "[%d]%s", (pdata->parent->ref.type == VX_TYPE_DELAY || pdata->parent->ref.type == VX_TYPE_OBJECT_ARRAY) ? -pdata->siblingIndex : pdata->siblingIndex, tmp);
 		}
 		else if (pdata->name.length()) {
 			sprintf(name, "%s%s", pdata->name.c_str(), tmp);
@@ -2207,6 +2369,20 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 		if (!data->size) 
 			return -1;
 	}
+	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
+		//nothing to do 
+		// make sure number of children is +ve integer and consistent number of children exist
+		if (data->u.objarr.numitems < 1 || !data->children || data->numChildren != data->u.objarr.numitems)
+			return -1;
+		// do sanity check and update on each children
+		for (vx_uint32 child = 0; child < data->numChildren; child++) {
+			if (!data->children[child] || agoDataSanityCheckAndUpdate(data->children[child]))
+				return -1;
+			// make sure delay type matches with it's children
+			if (data->u.objarr.itemtype != data->children[child]->ref.type)
+				return -1;
+		}
+	}
 	else if (data->ref.type == VX_TYPE_TENSOR) {
 		// nothing to check yet
 	}
@@ -2227,7 +2403,7 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 			data->size = sizeof(vx_uint8) * 256;
 		}
 		else if (data->u.lut.type == VX_TYPE_INT16) {
-			if (data->u.lut.count == 0 || data->u.lut.count >= 65536)
+			if (data->u.lut.count == 0 || data->u.lut.count > 65536)
 				return -1;
 			data->u.lut.offset = (vx_uint32)(data->u.lut.count / 2);
 			data->size = sizeof(vx_int16) * data->u.lut.count;
@@ -2237,12 +2413,14 @@ int agoDataSanityCheckAndUpdate(AgoData * data)
 	}
 	else if (data->ref.type == VX_TYPE_THRESHOLD) {
 		// calculate other attributes and buffer size
-		data->u.thr.false_value = 0;
-		if (data->u.thr.data_type == VX_TYPE_UINT8) data->u.thr.true_value = 0xff;
-		else if (data->u.thr.data_type == VX_TYPE_UINT16) data->u.thr.true_value = 0xffff;
-		else if (data->u.thr.data_type == VX_TYPE_INT16) data->u.thr.true_value = 0x7fff;
+		//data->u.thr.false_value = 0;
+		/*if (data->u.thr.data_type == VX_TYPE_UINT8) data->u.thr.true_value.U8 = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+		else if (data->u.thr.data_type == VX_TYPE_UINT16) data->u.thr.true_value.U16 = AGO_U16_THRESHOLD_TRUE_VALUE;
+		else if (data->u.thr.data_type == VX_TYPE_INT16) data->u.thr.true_value.S16 = AGO_S16_THRESHOLD_TRUE_VALUE;
+		else if (data->u.thr.data_type == VX_TYPE_BOOL) data->u.thr.true_value.U1 = AGO_U1_THRESHOLD_TRUE_VALUE;
 		else
 			return -1;
+			*/
 	}
 	else if (data->ref.type == VX_TYPE_CONVOLUTION) {
 		// check validity of shift
@@ -2359,22 +2537,23 @@ int agoAllocData(AgoData * data)
 		}
 	}
 	else if (data->ref.type == VX_TYPE_IMAGE) {
+		data->u.img.mem_handle = vx_false_e;
 		if (data->children) {
 			for (vx_uint32 child = 0; child < data->numChildren; child++) {
 				if (data->children[child]) {
 					if (agoAllocData(data->children[child])) {
 						// TBD error handling
+						data->u.img.mem_handle = vx_true_e;
 						return -1;
 					}
 				}
 			}
 		}
 		else if (data->u.img.isROI) {
-            // make sure that the master image has been allocated
+            // make sure that the master image has been allocated. Shouldn't allocate new memory for image created from handle
 			if (!data->u.img.roiMasterImage->buffer) {
-				if (agoAllocData(data->u.img.roiMasterImage) < 0) {
+					data->u.img.mem_handle = vx_true_e;
 					return -1;
-				}
 			}
 			// get the region from master image
 			data->buffer = data->u.img.roiMasterImage->buffer +
@@ -2385,8 +2564,10 @@ int agoAllocData(AgoData * data)
 			if (data->u.img.isUniform) {
 				// allocate buffer
 				data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
-				if (!data->buffer_allocated)
+				if (!data->buffer_allocated){
+					data->u.img.mem_handle = vx_true_e;
 					return -1;
+				}
 				// initialize image with uniform values
 				if (data->u.img.format == VX_DF_IMAGE_RGBX) {
 					vx_uint32 value = (data->u.img.uniform[0] & 0xff) | ((data->u.img.uniform[1] & 0xff) << 8) | ((data->u.img.uniform[2] & 0xff) << 16) | ((data->u.img.uniform[3] & 0xff) << 24);
@@ -2433,8 +2614,10 @@ int agoAllocData(AgoData * data)
 			else {
 				// allocate buffer and get aligned buffer with 16-byte alignment
 				data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
-				if (!data->buffer_allocated)
+				if (!data->buffer_allocated){
+					data->u.img.mem_handle = vx_true_e;
 					return -1;
+				}
 			}
 		}
 	}
@@ -2443,6 +2626,19 @@ int agoAllocData(AgoData * data)
 		data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
 		if (!data->buffer_allocated)
 			return -1;
+	}
+	else if (data->ref.type == VX_TYPE_OBJECT_ARRAY) {
+		// allocate buffer and get aligned buffer with 16-byte alignment
+		/*data->buffer = data->buffer_allocated = (vx_uint8 *)agoAllocMemory(data->size);
+		if (!data->buffer_allocated)
+			return -1;*/
+		for (vx_uint32 child = 0; child < data->numChildren; child++) {
+			if (data->children[child]) {
+				if (agoAllocData(data->children[child])) {
+					return -1;
+				}
+			}
+		}
 	}
 	else if (data->ref.type == VX_TYPE_DISTRIBUTION) {
 		// allocate buffer and get aligned buffer with 16-byte alignment
@@ -2533,6 +2729,7 @@ void agoRetainData(AgoGraph * graph, AgoData * data, bool isForExternalUse)
 {
 	if (isForExternalUse) {
 		data->ref.external_count++;
+		//data->ref.context->num_active_references++;
 	}
 	else {
 		data->ref.internal_count++;
@@ -2578,6 +2775,8 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
 			if (data->ref.internal_count > 0)
 				data->ref.internal_count--;
 		}
+		if(data->ref.external_count >= 0 && isForExternalUse && data->ref.internal_count >= 0)
+			graph->ref.context->num_active_references--;
 		if (data->ref.external_count == 0 && data->ref.internal_count == 0) {
 			// clear child link in it's paren link
 			if (data->parent) {
@@ -2614,9 +2813,12 @@ int agoReleaseData(AgoData * data, bool isForExternalUse)
 				data->ref.external_count--;
 		}
 		else {
-			if (data->ref.internal_count > 0)
+			if (data->ref.internal_count > 0) {
 				data->ref.internal_count--;
+			}
 		}
+		if(data->ref.external_count >= 0 && isForExternalUse && data->ref.internal_count >= 0)
+			context->num_active_references--;
 		if (data->ref.external_count == 0 && data->ref.internal_count == 0) {
 			// clear child link in it's paren link
 			if (data->parent) {
@@ -2684,6 +2886,9 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
 	node->localDataPtr = NULL;
 	node->paramCount = kernel->argCount;
 	node->valid_rect_reset = (kernel->flags & AGO_KERNEL_FLAG_VALID_RECT_RESET) ? vx_true_e : vx_false_e;
+	node->newchildnode = NULL;
+	node->local_data_change_is_enabled = vx_false_e;
+	node->local_data_set_by_implementation = vx_false_e;
 	memcpy(node->parameters, kernel->parameters, sizeof(node->parameters));
 	for (vx_uint32 i = 0; i < node->paramCount; i++) {
 		agoResetReference(&node->parameters[i].ref, VX_TYPE_PARAMETER, graph->ref.context, &graph->ref);
@@ -2694,6 +2899,9 @@ AgoNode * agoCreateNode(AgoGraph * graph, AgoKernel * kernel)
 	}
 	agoAddNode(&graph->nodeList, node);
 	kernel->ref.internal_count++;
+	graph->reverify = graph->verified;
+    graph->verified = vx_false_e;
+    graph->state = VX_GRAPH_STATE_UNVERIFIED;
 	return node;
 }
 
@@ -3108,7 +3316,7 @@ AgoGraph::~AgoGraph()
 {
 	// decrement auto age delays
 	for (auto it = autoAgeDelayList.begin(); it != autoAgeDelayList.end(); it++) {
-		if (agoIsValidData(*it, VX_TYPE_DELAY) && (*it)->ref.internal_count > 0)
+		if ((agoIsValidData(*it, VX_TYPE_DELAY) || agoIsValidData(*it, VX_TYPE_OBJECT_ARRAY)) && (*it)->ref.internal_count > 0)
 			(*it)->ref.internal_count--;
 	}
 

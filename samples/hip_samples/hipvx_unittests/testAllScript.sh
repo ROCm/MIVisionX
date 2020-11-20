@@ -23,7 +23,7 @@ na_host=0
 passed_list_host=""
 failed_list_host=""
 na_list_host=""
-for ((case=1;case<100;case++))
+for ((case=1;case<181;case++))
 do
 printf "\n\n\n\n"
 echo "--------------------------------"
@@ -64,7 +64,7 @@ na_hip=0
 passed_list_hip=""
 failed_list_hip=""
 na_list_hip=""
-for ((case=1;case<100;case++))
+for ((case=1;case<181;case++))
 do
 printf "\n\n\n\n"
 echo "--------------------------------"

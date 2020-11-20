@@ -447,7 +447,6 @@ int HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
 	Gx = (vx_int16 *)pScratch;
 	Gy = (vx_int16 *)(pScratch + dstride*sizeof(vx_int16));
 	pTemp = pScratch + 2*dstride*sizeof(vx_int16);
-
 	// compute Sobel gradients
 	HafCpu_Sobel_S16S16_U8_3x3_GXY(dstWidth, dstHeight - 2, Gx + dstride, dstride * 2, Gy + dstride, dstride * 2, pSrcImage + srcImageStrideInBytes, srcImageStrideInBytes, pTemp);
 	

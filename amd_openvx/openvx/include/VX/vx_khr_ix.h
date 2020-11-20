@@ -1,6 +1,5 @@
-/* 
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+/*
+ * Copyright (c) 2012-2019 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #ifndef _OPENVX_IMPORT_EXPORT_H_
 #define _OPENVX_IMPORT_EXPORT_H_
 
@@ -21,9 +21,9 @@
  * \file
  * \brief The OpenVX Export and Import extension API.
  */
- 
+
 #define OPENVX_KHR_IX  "vx_khr_ix"
- 
+
 #include <VX/vx_import.h>
 
 #ifdef  __cplusplus
@@ -66,7 +66,7 @@ Export to host memory
  * - <tt>\ref VX_IX_USE_NO_EXPORT_VALUES</tt>\n
  * Export meta-data only; the importing application will set values
  * as applicable[*REQ*]
- * 
+ *
  * The values in *uses* are applicable only for data objects and are ignored for vx_graph objects[*REQ*].\n
  * If the list *refs* contains vx_graph objects, these graphs will be verified during the export operation and the export operation will fail if verification fails; when successfully exported graphs are subsequently imported they will appear as verified [*REQ*].\n
  * \note The implementation may also choose to re-verify any previously verified graphs and apply
@@ -95,7 +95,7 @@ Export to host memory
  * export operation will fail[*REQ*].
  * \note The order of the references supplied in the *refs* array will be the order in which the
  * framwork will supply references for the corresponding import operation with <tt>\ref vxImportObjectsFromMemory</tt>.\n
- * The same length of *uses* array, containing the same values, and the same value of *numrefs*, must be supplied 
+ * The same length of *uses* array, containing the same values, and the same value of *numrefs*, must be supplied
  * for the corresponding import operation.
  *
  * For objects not listed in *refs*, the following rules apply:
@@ -125,11 +125,11 @@ Export to host memory
  */
 
 VX_API_ENTRY vx_status VX_API_CALL vxExportObjectsToMemory(
-    vx_context context,         
-    vx_size numrefs,            
-    const vx_reference *refs,   
-    const vx_enum * uses,       
-    const vx_uint8 ** ptr,      
+    vx_context context,
+    vx_size numrefs,
+    const vx_reference *refs,
+    const vx_enum * uses,
+    const vx_uint8 ** ptr,
     vx_size * length);
 
 /*! \brief Releases memory allocated for a binary export when it is no longer required.

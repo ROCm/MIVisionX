@@ -114,6 +114,7 @@ int HipExec_Lut_U8_U8(
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
+    hipFree(&hipLut);
 
     printf("\nHipExec_Lut_U8_U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;

@@ -29,13 +29,34 @@ THE SOFTWARE.
 #include "rali_api.h"
 
 void
-RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height) {
+RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, bool no_crop, RaliFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, RaliFloatParam p_scaling, int total_num_attempts) 
+{
+    std::cerr<<"\n Enters raliRandomBBoxCrop API call";
     auto context = static_cast<Context*>(p_context);
     if (!context)
         THROW("Invalid rali context passed to raliCreateLabelReader")
-
-    context->master_graph->create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader, RandomBBoxCrop_MetaDataType::BoundingBox, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
-
+    FloatParam *aspect_ratio;
+    FloatParam *scaling;
+    if(p_aspect_ratio == NULL)
+    {
+        aspect_ratio = ParameterFactory::instance()->create_uniform_float_rand_param(1.0, 1.0);
+    }
+    else
+    {      
+    
+        aspect_ratio = static_cast<FloatParam*>(p_aspect_ratio);
+    }
+    if(p_scaling == NULL)
+    {
+        scaling = ParameterFactory::instance()->create_uniform_float_rand_param(1.0, 1.0);
+    }
+    else
+    {
+        scaling = static_cast<FloatParam*>(p_scaling);        
+    }
+    std::cerr<<"\n Gonna call context->master_graph->create_randombboxcrop_reader";
+    context->master_graph->create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader, RandomBBoxCrop_MetaDataType::BoundingBox, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts);
+    std::cerr<<"\n Returned from context->master_graph->create_randombboxcrop_reader";
 }
 
 RaliMetaData

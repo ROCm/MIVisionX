@@ -160,6 +160,7 @@ ImageReadAndDecode::load(unsigned char* buff,
     }
 
     _file_load_time.end();// Debug timing
+    // std::cerr<<"\n <<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>";
     for (uint i = 0; i < _batch_size; i++)
     {
         std::string temp = _image_names[i];
@@ -169,9 +170,12 @@ ImageReadAndDecode::load(unsigned char* buff,
         coords_buf[1] = _CropCord->crop_y;
         coords_buf[2] = _CropCord->crop_width;
         coords_buf[3] = _CropCord->crop_height;
+        // std::cerr<<"\n Image Names:: "<<_image_names[i];
+        // std::cerr<<"\n crop dim:: "<<coords_buf[0]<<"\t "<<coords_buf[1]<<"\t "<<coords_buf[2]<<"\t "<<coords_buf[3];
         _bbox_coords.push_back(coords_buf);
         coords_buf.clear();
     }
+    // std::cerr<<"\n <<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>";
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     for(size_t i = 0; i < _batch_size; i++)
@@ -200,12 +204,12 @@ ImageReadAndDecode::load(unsigned char* buff,
 
         // decode the image and get the actual decoded image width and height
         size_t scaledw, scaledh;
+        std::vector <float> temp;
         if(_decoder[i]->is_partial_decoder())
         {
-            std::vector <float> temp;
             temp = _bbox_coords[i];
-            if(temp[2] > original_width || temp[3] > original_height)
-            {
+            if((temp[0] + temp[2]) > original_width || (temp[1] +temp[3]) > original_height)
+            {   
                temp[2] /= 2;
                temp[3] /= 2;
             }
@@ -215,7 +219,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,
                                scaledw, scaledh,
-                               decoder_color_format,_decoder_config, keep_original) != Decoder::Status::OK)
+                               decoder_color_format,_decoder_config, temp, keep_original) != Decoder::Status::OK)
         {
             continue;
         }
@@ -232,6 +236,5 @@ ImageReadAndDecode::load(unsigned char* buff,
     }
 
     _decode_time.end();// Debug timing
-
     return LoaderModuleStatus::OK;
 }

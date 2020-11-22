@@ -881,12 +881,12 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
 }
 
 
-void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, int has_shape, int crop_width, int crop_height)
+void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts)
 {
     if( _randombboxcrop_meta_data_reader)
         THROW("A metadata reader has already been created")
     _is_random_bbox_crop = true;
-    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
+    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
     // _randombboxcrop_meta_data_reader->init(config);
     _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);

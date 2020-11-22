@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "reader.h"
 #include "meta_data_reader.h"
 #include "graph.h"
+#include "parameter_factory.h"
 
 enum class RandomBBoxCrop_MetaDataReaderType
 {
@@ -43,23 +44,31 @@ struct RandomBBoxCrop_MetaDataConfig
 private:
     RandomBBoxCrop_MetaDataType _type;
     RandomBBoxCrop_MetaDataReaderType _reader_type;
-    int _all_boxes_overlap;
-    int _no_crop;
-    int _has_shape;
+    bool _all_boxes_overlap;
+    bool _no_crop;
+    FloatParam* _aspect_ratio;
+    bool _has_shape;
     int _crop_width;
     int _crop_height;
+    int _num_attempts;
+    FloatParam* _scaling;
+    int _total_num_attempts;
 public:
-    RandomBBoxCrop_MetaDataConfig(const RandomBBoxCrop_MetaDataType& type, const RandomBBoxCrop_MetaDataReaderType& reader_type, const int& all_boxes_overlap,
-                        const int& no_crop, const int& has_shape, const int& crop_width, const int& crop_height):  _type(type), _reader_type(reader_type),
-                        _all_boxes_overlap(all_boxes_overlap), _no_crop(no_crop), _has_shape(has_shape), _crop_width(crop_width), _crop_height(crop_height){}
+    RandomBBoxCrop_MetaDataConfig(const RandomBBoxCrop_MetaDataType& type, const RandomBBoxCrop_MetaDataReaderType& reader_type, const bool& all_boxes_overlap,
+                        const bool& no_crop, FloatParam* aspect_ratio, const bool& has_shape, const int& crop_width, const int& crop_height, const int& num_attempts, FloatParam* scaling, const int& _total_num_attempts):  _type(type), _reader_type(reader_type),
+                        _all_boxes_overlap(all_boxes_overlap), _no_crop(no_crop), _aspect_ratio(aspect_ratio) ,_has_shape(has_shape), _crop_width(crop_width), _crop_height(crop_height), _num_attempts(num_attempts), _scaling(scaling), _total_num_attempts(_total_num_attempts){}
     RandomBBoxCrop_MetaDataConfig() = delete;
     RandomBBoxCrop_MetaDataType type() const { return _type; }
     RandomBBoxCrop_MetaDataReaderType reader_type() const { return _reader_type; }
-    int all_boxes_overlap() const { return _all_boxes_overlap; }
-    int no_crop() const { return _no_crop; }
-    int has_shape() const { return _has_shape; }
+    bool all_boxes_overlap() const { return _all_boxes_overlap; }
+    bool no_crop() const { return _no_crop; }
+    bool has_shape() const { return _has_shape; }
     int crop_width() const { return _crop_width; }
     int crop_height() const { return _crop_height;}
+    FloatParam* aspect_ratio() const { return _aspect_ratio; }
+    FloatParam* scaling() const { return _scaling; }
+    int num_attempts() const { return _num_attempts; }
+    int total_num_attempts() const { return _total_num_attempts; }
 };
 
 class RandomBBoxCrop_MetaDataReader

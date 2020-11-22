@@ -143,9 +143,9 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     char key8[25] = "image/filename";
 
 #if defined RANDOMBBOXCROP
-    int all_boxes_overlap = 1;
-    int no_crop = 1;
-    int has_shape = 0;
+    bool all_boxes_overlap = true;
+    bool no_crop = false;
+    int has_shape = false;
     int crop_width = 500;
     int crop_height = 500;
 #endif
@@ -175,7 +175,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #ifdef RANDOMBBOXCROP
-    raliRandomBBoxCrop(handle, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
+    raliRandomBBoxCrop(handle, all_boxes_overlap, no_crop);
 #endif
 
     RaliImage input1;
@@ -662,11 +662,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         raliGetBoundingBoxCords(handle, bb_coords);
         int img_sizes_batch[inputBatchSize * 2];
         raliGetImageSizes(handle, img_sizes_batch);
-        for (int i = 0; i < inputBatchSize; i++)
+        /*for (int i = 0; i < inputBatchSize; i++)
         {
             std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
             std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
-        }
+        }*/
 
 #else
         raliGetImageLabels(handle, label_id);

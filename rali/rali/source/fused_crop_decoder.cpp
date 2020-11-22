@@ -60,7 +60,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                                   size_t max_decoded_width, size_t max_decoded_height,
                                   size_t original_image_width, size_t original_image_height,
                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
-                                  Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original_size)
+                                  Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, std::vector <float> bbox_crop, bool keep_original_size)
 {
     // 
     int tjpf = TJPF_RGB;
@@ -85,12 +85,13 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
     unsigned int crop_width, crop_height, x1, y1;
-    if(_bbox_coord.size() != 0)
+    if(bbox_crop.size() != 0)
     {
-        x1 = _bbox_coord[0];
-        y1 = _bbox_coord[1];
-        crop_width = _bbox_coord[2];
-        crop_height = _bbox_coord[3];
+        x1 = bbox_crop[0];
+        y1 = bbox_crop[1];
+        crop_width = bbox_crop[2];
+        crop_height = bbox_crop[3];
+        // std::cerr<<"\n Crop:: x1 "<<x1<<"\t y1 "<<y1<<"\t cw "<<crop_width<<"\t ch "<<crop_height;
         // std::cerr<<"\n Original Image width :: "<<original_image_width<<"\t Crop width :: "<<crop_width;
         // std::cerr<<"\n Original Image Height :: "<<original_image_height<<"\t Crop height :: "<<crop_height;
     }

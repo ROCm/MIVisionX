@@ -33,8 +33,8 @@ void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
     _crop_param = std::make_shared<RaliRandomCropParam>(_batch_size);
     _crop_param->set_x_drift_factor(core(x_drift));
     _crop_param->set_y_drift_factor(core(y_drift));
-    _crop_param->set_area_factor(core(crop_area_factor));
-    _crop_param->set_aspect_ratio(core(crop_aspect_ratio));
+    _crop_param->set_area_factor(core(cfg.scaling()));
+    _crop_param->set_aspect_ratio(core(cfg.aspect_ratio()));
     _all_boxes_overlap = cfg.all_boxes_overlap();
     _no_crop = cfg.no_crop();
     _has_shape = cfg.has_shape();
@@ -49,7 +49,16 @@ void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
     _iou_range.resize(_batch_size);
     in_width.resize(_batch_size);
     in_height.resize(_batch_size);
-    _crop_param->array_init();    
+    _crop_param->array_init();
+    if(cfg.num_attempts() > 1)
+    {
+        _num_of_attempts = cfg.num_attempts();
+    }
+    if(cfg.total_num_attempts() > 0)
+    {
+        _total_num_of_attempts = cfg.total_num_attempts();
+    }
+    _output = new CropCordBatch(); 
 }
 
 void RandomBBoxCropReader::set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader)
@@ -85,20 +94,17 @@ inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const B
 
 void RandomBBoxCropReader::lookup(const std::vector<std::string>& image_names)
 {
-    std::cerr<<"\n RandomBBoxCropReader::lookup(const std::vector<std::string>& image_names)";
     if (image_names.empty())
     {
+        std::cerr<<"\n No images passed";
         WRN("No image names passed")
         return;
-    }
-    std::cerr<<"\n image_names.size() "<<image_names.size()<<"\t _output->size():: "<<_output->size();
-    if (image_names.size() != (unsigned)_output->size())
+    }if (image_names.size() != (unsigned)_output->size())
+    {
         _output->resize(image_names.size());
-
-    std::cerr<<"\n _output->size():: "<<_output->size();
+    }
     for (unsigned i = 0; i < image_names.size(); i++)
     {
-        std::cerr<<"\n i:::::::::"<<i;
         auto image_name = image_names[i];
         auto it = _map_content.find(image_name);
         if (_map_content.end() == it) 
@@ -193,17 +199,19 @@ void RandomBBoxCropReader::read_all()
         crop_box.w = _crop_width_val[i];
         crop_box.x = _x1_val[i];
         crop_box.y = _y1_val[i];
+        _total_num_of_attempts = 10;
         // Got BBOX Information of the image, try to get a crop
-        while (!crop_success && (_num_of_attempts < 0 || count < _num_of_attempts))
+        while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
         {
             sample_option = dis(gen);
             option = sample_options[sample_option];
             _iou_range[i] = option;
-            _no_crop = option.first;
+            // _no_crop = option.first;
             min_iou = option.second;
             //sample_option = 0;
             if (_no_crop)
             {
+                // std::cerr<<"\n Coming to no crop";
                 crop_box.x = 0;
                 crop_box.y = 0;
                 crop_box.h = in_height[i] - 1;
@@ -213,13 +221,16 @@ void RandomBBoxCropReader::read_all()
 
             if (_has_shape)
             {
+                // std::cerr<<"\n Coming to has_shape";
                 crop_box.w = _crop_width - 1;  // Given By user
                 crop_box.h = _crop_height - 1; // Given By user
             }
             else // If it has no shape, then area and aspect ratio thing should be provided
             {
+                // std::cerr<<"\n Comes to the else part of nocrop and has shape";
                 for (int j = 0; j < _num_of_attempts; j++)
                 {
+                    count++;
                     x_drift_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
                     auto w_factor = x_drift_factor->get();
                     crop_box.w = w_factor * in_width[i];
@@ -228,11 +239,19 @@ void RandomBBoxCropReader::read_all()
                     auto h_factor = y_drift_factor->get();
                     crop_box.h = h_factor * in_height[i];
                     if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
+                    {
+                        // std::cerr<<"\n count:: "<<count;
                         continue;
+                    }
+                    // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
                     break;
                 }
+                // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
                 if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
+                {
+                    // std::cerr<<"\n count:: "<<count;
                     continue;
+                }
             }
 
             x_drift_factor->renew();
@@ -241,8 +260,10 @@ void RandomBBoxCropReader::read_all()
             crop_box.x = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.w));
             crop_box.y = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.h));
             bool entire_iou = !_overlap_iou; //
+            _all_boxes_overlap = false; // for checking
             if (_all_boxes_overlap)
             {
+                // std::cerr<<"\n Coming to _all_boxes_overlap";
                 for (uint j = 0; j < bb_count; j++)
                 {
                     int m = j * 4;
@@ -251,14 +272,17 @@ void RandomBBoxCropReader::read_all()
                     jth_box.w = coords_buf[m + 2];
                     jth_box.h = coords_buf[m + 3];
                     float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
-                    if (bb_iou > min_iou)
+                    if (bb_iou < min_iou)
                     {
                         invalid_bboxes = true;
                         break;
                     }
                 }
                 if (invalid_bboxes)
+                {
+                    // std::cerr<<"\n Bbox decided invalid coz all of them didnt have any overlap";
                     continue;
+                }
             }
             else // at lease one box shoud overlap
             {
@@ -271,14 +295,17 @@ void RandomBBoxCropReader::read_all()
                     jth_box.w = coords_buf[m + 2];
                     jth_box.h = coords_buf[m + 3];
                     float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
-                    if (bb_iou > min_iou)
+                    if (bb_iou < min_iou)
                     {
                         invalid_bboxes = true;
                         break;
                     }
                 }
                 if (invalid_bboxes)
+                {
+                    // std::cerr<<"\n Bbox decided invalid coz not even one of them didnt have any overlap";
                     continue;
+                }
             }
 
             int valid_bbox_count = 0;
@@ -295,8 +322,11 @@ void RandomBBoxCropReader::read_all()
                 continue;
             crop_success = true;
         }                                    // while loop
-        // std::cerr<<"**************************\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
-        // std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
+        std::cerr<<"\n**************************";
+        std::cerr<<"\n Image Name:: "<<image_name;
+        std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
+        std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
+        std::cerr<<"\n**************************";
         add(image_name, crop_box);
     }
     // print_map_contents();

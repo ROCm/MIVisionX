@@ -768,11 +768,9 @@ void MasterGraph::output_routine()
                     {
                         if(_is_random_bbox_crop)
                         {
-                            std::cerr<<"\n Im master graph output routine comes to is_random_bbox_crop";
-                            // _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
-                            // std::cerr<<"\n Returs from look up";
-                            // _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
-                            // std::cerr<<"\n Returnds from update random bbox meta data";
+                            // std::cerr<<"\n Im master graph output routine comes to is_random_bbox_crop";
+                            _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
+                            _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
                         }
                         else
                         {
@@ -883,7 +881,7 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
 }
 
 
-void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height)
+void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, int has_shape, int crop_width, int crop_height)
 {
     if( _randombboxcrop_meta_data_reader)
         THROW("A metadata reader has already been created")

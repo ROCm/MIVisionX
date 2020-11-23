@@ -491,28 +491,6 @@ int HipExec_ThresholdNot_U1_U8_Range(
 
 // color_kernels
 
-int HipExec_ColorConvert_RGBX_RGB(
-        vx_uint32 dstWidth, vx_uint32 dstHeight, 
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
-        );
-int HipExec_ColorConvert_RGB_RGBX(
-        vx_uint32 dstWidth, vx_uint32 dstHeight, 
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
-        );
-int HipExec_ColorConvert_RGB_YUYV(
-        vx_uint32 dstWidth, vx_uint32 dstHeight, 
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
-        );
-int HipExec_ColorConvert_RGB_UYVY(
-        vx_uint32 dstWidth, vx_uint32 dstHeight, 
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
-        );
-
-
 int HipExec_Lut_U8_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -578,11 +556,6 @@ int HipExec_ChannelCombine_U24_U8U8U8_RGB(
     const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes,
     const vx_uint8 *pHipSrcImage3, vx_uint32 srcImage3StrideInBytes
     );
-int HipExec_ColorConvert_RGBX_RGB(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
-    );
 int HipExec_ChannelCombine_U32_U8U8U8_UYVY(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -606,6 +579,41 @@ int HipExec_ChannelCombine_U32_U8U8U8U8_RGBX(
     const vx_uint8 *pHipSrcImage4, vx_uint32 srcImage4StrideInBytes
     );
 
+int HipExec_ColorConvert_RGBX_RGB(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGB_RGBX(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGB_YUYV(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGB_UYVY(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGBX_RGB(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+    );
+int HipExec_ColorConvert_RGBX_YUYV(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
+int HipExec_ColorConvert_RGBX_UYVY(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
+        );
 // filter_kernels
 
 int HipExec_Box_U8_U8_3x3(

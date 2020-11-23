@@ -1077,6 +1077,141 @@ int HipExec_ColorConvert_RGB_UYVY(
     return VX_SUCCESS;
 }
 
+
+__global__ void __attribute__((visibility("default")))
+Hip_ColorConvert_RGBX_YUYV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned char *pSrcImage1, unsigned int srcImage1StrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 8);
+    unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
+
+    float Ypix1, Ypix2, Upix, Vpix, Rpix, Gpix, Bpix;
+    Ypix1 = (float )pSrcImage1[src1Idx];
+    Upix = (float )pSrcImage1[src1Idx + 1] - 128.0;
+    Ypix2 = (float )pSrcImage1[src1Idx + 2];
+    Vpix = (float )pSrcImage1[src1Idx + 3] - 128.0;
+
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748), 0.0f), 255.0);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556), 0.0), 255.0);
+
+    pDstImage[dstIdx] = Rpix;
+    pDstImage[dstIdx+1] = Gpix;
+    pDstImage[dstIdx+2] = Bpix;
+    pDstImage[dstIdx+3] = 255;
+
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748), 0.0f), 255.0);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556), 0.0), 255.0);
+
+    pDstImage[dstIdx+4] = Rpix;
+    pDstImage[dstIdx+5] = Gpix;
+    pDstImage[dstIdx+6] = Bpix;
+    pDstImage[dstIdx+7] = 255;
+}
+int HipExec_ColorConvert_RGBX_YUYV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes)
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+
+    printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorConvert_RGBX_YUYV,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImage, dstImageStrideInBytes,
+                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_ColorConvert_RGBX_YUYV: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+
+__global__ void __attribute__((visibility("default")))
+Hip_ColorConvert_RGBX_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned char *pSrcImage1, unsigned int srcImage1StrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 8);
+    unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
+
+    float Ypix1, Ypix2, Upix, Vpix, Rpix, Gpix, Bpix;
+    Upix  = (float )pSrcImage1[src1Idx] - 128.0;
+    Ypix1 = (float )pSrcImage1[src1Idx + 1] ;
+    Vpix  = (float )pSrcImage1[src1Idx + 2] - 128.0;
+    Ypix2 = (float )pSrcImage1[src1Idx + 3] ;
+
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748), 0.0f), 255.0);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556), 0.0), 255.0);
+
+    pDstImage[dstIdx] = Rpix;
+    pDstImage[dstIdx+1] = Gpix;
+    pDstImage[dstIdx+2] = Bpix;
+    pDstImage[dstIdx+3] = 255;
+
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748), 0.0f), 255.0);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556), 0.0), 255.0);
+    
+
+    pDstImage[dstIdx+4] = Rpix;
+    pDstImage[dstIdx+5] = Gpix;
+    pDstImage[dstIdx+6] = Bpix;
+    pDstImage[dstIdx+7] = 255;
+}
+int HipExec_ColorConvert_RGBX_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes)
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+
+    printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorConvert_RGBX_UYVY,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImage, dstImageStrideInBytes,
+                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_ColorConvert_RGBX_UYVY: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
 // ----------------------------------------------------------------------------
 // VxFormatConvert kernels for hip backend
 // ----------------------------------------------------------------------------

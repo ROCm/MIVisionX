@@ -128,19 +128,27 @@ static cl_command_queue GetCmdqCached(cl_mem mem)
 			cmdq = globalClCtx2CmdqMap[opencl_context];
 		}
 		else {
+			// First, get the size of device list data
+			size_t device_list_size_;
+			cl_int err; 
+  			err = clGetContextInfo(opencl_context, CL_CONTEXT_DEVICES, 0, NULL, &device_list_size_);
+			if (err) { Error("ERROR: clGetContextInfo(*,CL_CONTEXT_DEVICES) failed (%d)", err); return nullptr; }
 			// create OpenCL cmd_queue using first device in the context
-			cl_int err; cl_device_id device_id = nullptr;
-			err = clGetContextInfo(opencl_context, CL_CONTEXT_DEVICES, sizeof(device_id), &device_id, nullptr);
+			cl_device_id *devices_; devices_ = (cl_device_id *)malloc(device_list_size_);
+  			if(devices_==NULL){ Error("ERROR: cl_device_id is NULL"); return nullptr; }
+			err = clGetContextInfo(opencl_context, CL_CONTEXT_DEVICES, device_list_size_, devices_, nullptr);
 			if (err) { Error("ERROR: clGetContextInfo(*,CL_CONTEXT_DEVICES) failed (%d)", err); return nullptr; }
 #if defined(CL_VERSION_2_0)
-			cmdq = clCreateCommandQueueWithProperties(opencl_context, device_id, NULL, &err);
+			cmdq = clCreateCommandQueueWithProperties(opencl_context, devices_[0], NULL, &err);
 #else
-			cmdq = clCreateCommandQueue(opencl_context, device_id, 0, &err);
+			cmdq = clCreateCommandQueue(opencl_context, devices_[0], 0, &err);
 #endif
 			if (!cmdq) { Error("ERROR: clCreateCommandQueueWithProperties: failed (%d)", err); return nullptr; }
 			// save the command-queue
 			globalClCtx2CmdqMap[opencl_context] = cmdq;
 			globalClMem2CmdqMap[mem] = cmdq;
+			// free mem
+			free(devices_);
 		}
 	}
 	return cmdq;

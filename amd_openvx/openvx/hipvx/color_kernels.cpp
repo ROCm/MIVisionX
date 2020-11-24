@@ -1595,6 +1595,98 @@ int HipExec_ColorConvert_RGBX_NV21(
 }
 
 __global__ void __attribute__((visibility("default")))
+
+Hip_ColorConvert_NV12_RGB(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImageLuma, unsigned int dstImageLumaStrideInBytes,
+    unsigned char *pDstImageChroma, unsigned int dstImageChromaStrideInBytes,
+    const unsigned char *pSrcImage1, unsigned int srcImage1StrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*2 >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dstIdxLuma = y * (dstImageLumaStrideInBytes*2) + x * 2;
+    unsigned int dstIdxChroma = y * (dstImageChromaStrideInBytes ) + x *2;
+    unsigned int src1Idx = y * (srcImage1StrideInBytes*2) + x * 6;
+
+    float R, G, B, U , V;
+    // //first row
+    R = (float)pSrcImage1[src1Idx];
+	G = (float)pSrcImage1[src1Idx+1];
+	B = (float)pSrcImage1[src1Idx+2];
+
+    pDstImageLuma[dstIdxLuma] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+	U = (R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f;
+	V = (R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f;
+
+    R = (float)pSrcImage1[src1Idx+3];
+	G = (float)pSrcImage1[src1Idx+4];
+	B = (float)pSrcImage1[src1Idx+5];
+
+	pDstImageLuma[dstIdxLuma + 1] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+	U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
+	V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+
+
+    // //second row
+    R = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes ];
+	G = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +1];
+	B = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +2];
+
+	pDstImageLuma[dstIdxLuma + dstImageLumaStrideInBytes] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+	U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
+	V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+
+	R = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +3];
+	G = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +4];
+	B = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +5];
+
+	pDstImageLuma[dstIdxLuma + dstImageLumaStrideInBytes + 1] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+	U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
+	V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+
+    U /= 4.0;	V /= 4.0;
+
+    pDstImageChroma[dstIdxChroma] = (unsigned char) U;
+    pDstImageChroma[dstIdxChroma + 1] = (unsigned char) V;
+			
+
+
+}
+int HipExec_ColorConvert_NV12_RGB(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImageLuma, vx_uint32 dstImageLumaStrideInBytes,
+    vx_uint8 *pHipDstImageChroma, vx_uint32 dstImageChromaStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes)
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+
+    printf("\ndstWidth = %d, dstHeight = %d\ndstImageChromaStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageChromaStrideInBytes, srcImage1StrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorConvert_NV12_RGB,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImageLuma, dstImageLumaStrideInBytes,
+                       (unsigned char *)pHipDstImageChroma, dstImageChromaStrideInBytes,
+                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_ColorConvert_NV12_RGB: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+
+__global__ void __attribute__((visibility("default")))
 Hip_ColorConvert_IYUV_RGB(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned char *pDstYImage, unsigned int dstYImageStrideInBytes,

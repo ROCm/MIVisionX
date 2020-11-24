@@ -13542,6 +13542,8 @@ int agoKernel_ColorConvert_NV12_RGB(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -13559,6 +13561,20 @@ int agoKernel_ColorConvert_NV12_RGB(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = (inp->u.img.rect_valid.end_x + 1) >> 1;
 		out2->u.img.rect_valid.end_y = (inp->u.img.rect_valid.end_y + 1) >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImgY = node->paramList[0];
+		AgoData * oImgC = node->paramList[1];
+        AgoData * iImg = node->paramList[2];
+        if (HipExec_ColorConvert_NV12_RGB(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes,
+										 oImgC->hip_memory, oImgC->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
+			
+			{
+			status = VX_FAILURE;
+			}
+        }
+#endif
 	return status;
 }
 

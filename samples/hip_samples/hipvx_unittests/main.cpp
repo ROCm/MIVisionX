@@ -1793,6 +1793,18 @@ int main(int argc, const char ** argv)
 					out_buf_type = 4;
 					break;
 				}
+				case 121:
+				{
+				// test_case_name  = " agoKernel_ChannelConvert_NV12_RGB"
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 4;
+					break;
+				}
 				case 133:
 				{
 					// test_case_name = "agoKernel_Box_U8_U8_3x3";
@@ -2086,7 +2098,7 @@ int main(int argc, const char ** argv)
 					(case_number == 75)  || (case_number == 76) || (case_number == 77) || (case_number == 78)  ||
 					(case_number == 79)  || (case_number == 105)  || (case_number == 106) || (case_number == 107) ||
 					(case_number == 111) || (case_number == 112)  || (case_number == 113) || (case_number == 117) ||
-					(case_number == 118)
+					(case_number == 118) || (case_number == 121)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
@@ -2247,10 +2259,10 @@ int main(int argc, const char ** argv)
 		hip_addr_uint8_nv12_nv21_in[1].dim_y = height/2;
 		hip_addr_uint8_nv12_nv21_in[1].stride_x = 2;
 		hip_addr_uint8_nv12_nv21_in[1].stride_y = ((width+3)&~3)*2;
-		// hip_addr_uint8_nv12_nv21_in[1].step_x = 2;
-		// hip_addr_uint8_nv12_nv21_in[1].step_y = 2;
-		// hip_addr_uint8_nv12_nv21_in[1].scale_x = 512;
-		// hip_addr_uint8_nv12_nv21_in[1].scale_y = 512;
+		hip_addr_uint8_nv12_nv21_in[1].step_x = 2;
+		hip_addr_uint8_nv12_nv21_in[1].step_y = 2;
+		hip_addr_uint8_nv12_nv21_in[1].scale_x = 512;
+		hip_addr_uint8_nv12_nv21_in[1].scale_y = 512;
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_in[1], height * hip_addr_uint8_nv12_nv21_in[1].stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_out[1], height * hip_addr_uint8_nv12_nv21_in[1].stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMemset(nv_out[1], 0, height  * hip_addr_uint8_nv12_nv21_in[1].stride_y));
@@ -3372,6 +3384,16 @@ int main(int argc, const char ** argv)
 					out_buf_type = 4;
 					break;
 				}
+				case 121:
+				{
+				// test_case_name  = " agoKernel_ChannelConvert_NV12_RGB"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_out, VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = (pix_img1_u8 * width * height) + ((pix_img1_u8+2) * (width/2) * (height/2)) ;
+					out_buf_type = 4;
+					break;
+				}
 				case 133:
 				{
 					// test_case_name = "agoKernel_Box_U8_U8_3x3";
@@ -3664,7 +3686,7 @@ int main(int argc, const char ** argv)
 					(case_number == 75)  || (case_number == 76) || (case_number == 77) || (case_number == 78)  ||
 					(case_number == 79)  || (case_number == 105)  || (case_number == 106) || (case_number == 107) ||
 					(case_number == 111) || (case_number == 112)  || (case_number == 113) || (case_number == 117) ||
-					(case_number == 118)
+					(case_number == 118) || (case_number == 121)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	

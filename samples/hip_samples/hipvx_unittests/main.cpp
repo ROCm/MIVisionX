@@ -530,6 +530,8 @@ int main(int argc, const char ** argv)
 	vx_enum ScaleImage_type1_enum = VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR;
 	vx_enum ScaleImage_type2_enum = VX_INTERPOLATION_TYPE_BILINEAR;
 	vx_enum ScaleImage_type3_enum = VX_INTERPOLATION_TYPE_AREA;
+	vx_int32 ConvertDepth_shift_int32 = 1;
+	vx_scalar ConvertDepth_shift_scalar = vxCreateScalar(context, VX_TYPE_INT32, (void*) &ConvertDepth_shift_int32);
 	
 	if (!device_affinity)
 	{
@@ -1766,14 +1768,6 @@ int main(int argc, const char ** argv)
 					out_buf_type = 1;
 					break;
 				}
-// case 154 - agoKernel_ScaleImage_U8_U8_Nearest - DONE
-// case 155 - agoKernel_ScaleImage_U8_U8_Bilinear - DONE
-// case 156 - agoKernel_ScaleImage_U8_U8_Bilinear_Replicate
-// case 157 - agoKernel_ScaleImage_U8_U8_Bilinear_Constant
-// case 158 - agoKernel_ScaleImage_U8_U8_Area - DONE
-// case 159 - agoKernel_ScaleGaussianHalf_U8_U8_3x3
-// case 160 - agoKernel_ScaleGaussianHalf_U8_U8_5x5
-// case 161 - agoKernel_ScaleGaussianOrb_U8_U8_5x5
 				case 154:
 				{
 					// test_case_name = "agoKernel_ScaleImage_U8_U8_Nearest";
@@ -1832,6 +1826,36 @@ int main(int argc, const char ** argv)
 					else if (width % 2 != 0)
 						expected_image_sum = (pix_img1_u8 * (widthOut - 2) * (heightOut - 2)) + (firstColVal * (heightOut - 2)) + (firstColVal * (heightOut - 2));
 					out_buf_type = 0;
+					break;
+				}
+				case 170:
+				{
+					// test_case_name = "agoKernel_ColorDepth_U8_S16_Wrap";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_WRAP, ConvertDepth_shift_scalar);
+					expected_image_sum = (vx_int32)((vx_uint8)(pix_img1_s16 >> ConvertDepth_shift_int32)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 171:
+				{
+					// test_case_name = "agoKernel_ColorDepth_U8_S16_Sat";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_SATURATE, ConvertDepth_shift_scalar);
+					expected_image_sum = (vx_int32)PIXELCHECKU8(pix_img1_s16 >> ConvertDepth_shift_int32) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 172:
+				{
+					// test_case_name = "agoKernel_ColorDepth_S16_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_WRAP, ConvertDepth_shift_scalar);
+					expected_image_sum = (pix_img1_u8 << ConvertDepth_shift_int32) * width * height;
+					out_buf_type = 1;
 					break;
 				}
 
@@ -1893,10 +1917,17 @@ int main(int argc, const char ** argv)
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 158)  || (case_number == 159) ||
-					(case_number == 160)
+					(case_number == 160) || (case_number == 172)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
+				}
+				// S16 input
+				else if(
+					(case_number == 170) || (case_number == 171)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
 				}
 				// U1 input
 				else if(
@@ -3292,6 +3323,36 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 170:
+				{
+					// test_case_name = "agoKernel_ColorDepth_U8_S16_Wrap";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_WRAP, ConvertDepth_shift_scalar);
+					expected_image_sum = (vx_int32)((vx_uint8)(pix_img1_s16 >> ConvertDepth_shift_int32)) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 171:
+				{
+					// test_case_name = "agoKernel_ColorDepth_U8_S16_Sat";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_SATURATE, ConvertDepth_shift_scalar);
+					expected_image_sum = (vx_int32)PIXELCHECKU8(pix_img1_s16 >> ConvertDepth_shift_int32) * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 172:
+				{
+					// test_case_name = "agoKernel_ColorDepth_S16_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_WRAP, ConvertDepth_shift_scalar);
+					expected_image_sum = (pix_img1_u8 << ConvertDepth_shift_int32) * width * height;
+					out_buf_type = 1;
+					break;
+				}
 
 				default:
 				{
@@ -3351,10 +3412,17 @@ int main(int argc, const char ** argv)
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 158) || (case_number == 159) || 
-					(case_number == 160)
+					(case_number == 160) || (case_number == 172)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
+				}
+				// S16 input
+				else if(
+					(case_number == 170) || (case_number == 171)
+				)
+				{
+					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));
 				}
 				// U1 input
 				else if (
@@ -3625,6 +3693,7 @@ int main(int argc, const char ** argv)
 
 	vxReleaseScalar(&Mul_scale_scalar);
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
+	vxReleaseScalar(&ConvertDepth_shift_scalar);
 	// vxReleaseThreshold(&Threshold_thresholdObjectBinary_threshold);
 	// vxReleaseThreshold(&Threshold_thresholdObjectRange_threshold);
 	vxReleaseLUT(&Lut_lutObject_lut);

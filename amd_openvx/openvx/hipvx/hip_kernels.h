@@ -498,6 +498,25 @@ int HipExec_Lut_U8_U8(
     vx_uint8 *lut
     );
 
+int HipExec_ColorDepth_U8_S16_Wrap(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_int16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int32 shift
+    );
+int HipExec_ColorDepth_U8_S16_Sat(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_int16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int32 shift
+    );
+int HipExec_ColorDepth_S16_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int32 shift
+    );
+
 int HipExec_ChannelExtract_U8_U16_Pos0(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

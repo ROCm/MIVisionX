@@ -683,6 +683,18 @@ int HipExec_ScaleImage_U8_U8_Area(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     const ago_scale_matrix_t *matrix
     );
+int HipExec_ScaleGaussianHalf_U8_U8_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_ScaleGaussianHalf_U8_U8_5x5(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
 
 // vision_kernels
 

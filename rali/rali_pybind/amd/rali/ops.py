@@ -638,7 +638,7 @@ class BBFlip(Node):
     def __call__(self,bboxes, horizontal=1):
         
         self.data = "BBFlip"
-        self.prev = None
+        self.prev = bboxes
         self.next = self.output
         self.output.prev = self
         self.output.next = None
@@ -648,6 +648,165 @@ class BBFlip(Node):
 def rali_c_func_call(self,input, is_output):
         return 0
     
+
+class ImageDecoderSlice(Node):
+    """
+    affine (bool, optional, default = True) – Applies only to the mixed backend type.
+
+    If set to True, each thread in the internal thread pool will be tied to a specific CPU core. Otherwise, the threads can be reassigned to any CPU core by the operating system.
+
+    axes (int or list of int, optional, default = [1, 0]) – Order of dimensions used for the anchor and shape slice inputs as dimension indices.
+
+    axis_names (layout str, optional, default = ‘WH’) – Order of the dimensions used for the anchor and shape slice inputs, as described in layout.
+
+    If a value is provided, axis_names will have a higher priority than axes.
+
+    bytes_per_sample_hint (int, optional, default = 0) – Output size hint, in bytes per sample.
+
+    If specified, the operator’s outputs residing in GPU or page-locked host memory will be preallocated to accommodate a batch of samples of this size.
+
+    device_memory_padding (int, optional, default = 16777216) – Applies only to the mixed backend type.
+
+    The padding for nvJPEG’s device memory allocations, in bytes. This parameter helps to avoid reallocation in nvJPEG when a larger image is encountered, and the internal buffer needs to be reallocated to decode the image.
+
+    If a value greater than 0 is provided, the operator preallocates one device buffer of the requested size per thread. If the value is correctly selected, no additional allocations will occur during the pipeline execution. One way to find the ideal value is to do a complete run over the dataset with the memory_stats argument set to True and then copy the largest allocation value that was printed in the statistics.
+
+    device_memory_padding_jpeg2k (int, optional, default = 0) –
+
+    Applies only to the mixed backend type.
+
+    The padding for nvJPEG2k’s device memory allocations, in bytes. This parameter helps to avoid reallocation in nvJPEG2k when a larger image is encountered, and the internal buffer needs to be reallocated to decode the image.
+
+    If a value greater than 0 is provided, the operator preallocates the necessary number of buffers according to the hint provided. If the value is correctly selected, no additional allocations will occur during the pipeline execution. One way to find the ideal value is to do a complete run over the dataset with the memory_stats argument set to True and then copy the largest allocation value that was printed in the statistics.
+
+    host_memory_padding (int, optional, default = 8388608) –
+
+    Applies only to the mixed backend type.
+
+    The padding for nvJPEG’s host memory allocations, in bytes. This parameter helps to prevent the reallocation in nvJPEG when a larger image is encountered, and the internal buffer needs to be reallocated to decode the image.
+
+    If a value greater than 0 is provided, the operator preallocates two (because of double-buffering) host-pinned buffers of the requested size per thread. If selected correctly, no additional allocations will occur during the pipeline execution. One way to find the ideal value is to do a complete run over the dataset with the memory_stats argument set to True, and then copy the largest allocation value that is printed in the statistics.
+
+    host_memory_padding_jpeg2k (int, optional, default = 0) – Applies only to the mixed backend type.
+
+    The padding for nvJPEG2k’s host memory allocations, in bytes. This parameter helps to prevent the reallocation in nvJPEG2k when a larger image is encountered, and the internal buffer needs to be reallocated to decode the image.
+
+    If a value greater than 0 is provided, the operator preallocates the necessary number of buffers according to the hint provided. If the value is correctly selected, no additional allocations will occur during the pipeline execution. One way to find the ideal value is to do a complete run over the dataset with the memory_stats argument set to True, and then copy the largest allocation value that is printed in the statistics.
+
+    hybrid_huffman_threshold (int, optional, default = 1000000) – Applies only to the mixed backend type.
+
+    Images with a total number of pixels (height * width) that is higher than this threshold will use the nvJPEG hybrid Huffman decoder. Images that have fewer pixels will use the nvJPEG host-side Huffman decoder.
+
+    Note:  Hybrid Huffman decoder still largely uses the CPU.
+
+    memory_stats (bool, optional, default = False) – Applies only to the mixed backend type.
+
+    Prints debug information about nvJPEG allocations. The information about the largest allocation might be useful to determine suitable values for device_memory_padding and host_memory_padding for a dataset.
+
+    Note: The statistics are global for the entire process, not per operator instance, and include the allocations made during construction if the padding hints are non-zero.
+
+    normalized_anchor (bool, optional, default = True) – Determines whether the anchor input should be interpreted as normalized (range [0.0, 1.0]) or as absolute coordinates.
+
+    Note:
+
+    This argument is only relevant when anchor data type is float. For integer types, the coordinates are always absolute.
+
+    normalized_shape (bool, optional, default = True) –
+
+    Determines whether the shape input should be interpreted as normalized (range [0.0, 1.0]) or as absolute coordinates.
+
+    Note: This argument is only relevant when anchor data type is float. For integer types, the coordinates are always absolute.
+
+    output_type (nvidia.dali.types.DALIImageType, optional, default = DALIImageType.RGB) – The color space of the output image.
+
+    preserve (bool, optional, default = False) – Prevents the operator from being removed from the graph even if its outputs are not used.
+
+    seed (int, optional, default = -1) – Random seed.
+
+    If not provided, it will be populated based on the global seed of the pipeline.
+
+    split_stages (bool, optional, default = False) – Applies only to the mixed backend type.
+
+    If True, the operator will be split into two sub-stages: a CPU and GPU one.
+
+    use_chunk_allocator (bool, optional, default = False) – Experimental, applies only to the mixed backend type.
+
+    Uses the chunk pinned memory allocator and allocates a chunk of the batch_size * prefetch_queue_depth size during the construction and suballocates them at runtime. When split_stages is false, this argument is ignored.
+
+    use_fast_idct (bool, optional, default = False) – Enables fast IDCT in the libjpeg-turbo based CPU decoder, used when device is set to “cpu” or when the it is set to “mixed” but the particular image can not be handled by the GPU implementation.
+
+    According to the libjpeg-turbo documentation, decompression performance is improved by up to 14% with little reduction in quality.
+    """
+
+    def __init__(self, affine = True, axes = [1, 0], axis_names = 'WH',bytes_per_sample_hint = 0, device_memory_padding = 16777216,
+     device_memory_padding_jpeg2k = 0, host_memory_padding = 8388608,
+                host_memory_padding_jpeg2k = 0, hybrid_huffman_threshold = 1000000,
+                 memory_stats = False, normalized_anchor = True, normalized_shape = True, output_type = 'RGB', 
+                preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False,device = None):
+        Node().__init__()
+        self._affine = affine
+        self._axes = axes
+        self._axis_names = axis_names
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._device_memory_padding = device_memory_padding
+        self._device_memory_padding_jpeg2k = device_memory_padding_jpeg2k
+        self._host_memory_padding = host_memory_padding
+        self._host_memory_padding_jpeg2k = host_memory_padding_jpeg2k
+        self._hybrid_huffman_threshold = hybrid_huffman_threshold
+        self._memory_stats = memory_stats
+        self._normalized_anchor = normalized_anchor
+        self._normalized_shape = normalized_shape
+        self._output_type = output_type
+        self._preserve = preserve
+        self._seed = seed
+        self._split_stages = split_stages
+        self._use_chunk_allocator = use_chunk_allocator
+        self._use_fast_idct = use_fast_idct
+        self._device = device
+        
+        self.output = Node()
+
+
+    def __call__(self,input, crop_begin = [] , crop_size = []):
+        input.next = self
+        self.data = "ImageDecoderSlice"
+        self.prev = input
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, shuffle, shard_id, num_shards, is_output):
+        num_threads = 1
+        if decode_width != None and decode_height != None:
+            multiplier = 4
+            if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            elif(self.prev.prev.data == "COCOReader") :
+                print(handle)
+                obj = RandomBBoxCrop()
+                obj.rali_c_func_call(handle)
+                output_image = b.COCO_ImageDecoderSlice(handle, input_image[0], input_image[1], types.RGB, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
+                # output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+            else:
+                output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        else:
+            if(self.prev.prev.data == "TFRecordReaderClassification") or (self.prev.prev.data == "TFRecordReaderDetection"):
+                output_image = b.TF_ImageDecoder(handle, input_image, types.RGB, num_threads, is_output, self._user_feature_key_map["image/encoded"], self._user_feature_key_map["image/filename"], shuffle, False)
+            elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+                output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+            elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+                output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
+            elif(self.prev.prev.data == "COCOReader") :
+                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
+            else:
+                output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
+        return output_image
+
 
 class BoxEncoder(Node):
 
@@ -1034,6 +1193,165 @@ class SSDRandomCrop(Node):
         return output_image
 
 
+class RandomBBoxCrop( ):
+    """
+    all_boxes_above_threshold (bool, optional, default = True) –
+
+    If set to True, all bounding boxes in a sample should overlap with the cropping window as specified by thresholds.
+
+    If the bounding boxes do not overlap, the cropping window is considered to be invalid. If set to False, and at least one bounding box overlaps the window, the window is considered to be valid.
+
+    allow_no_crop (bool, optional, default = True) – If set to True, one of the possible outcomes of the random process will be to not crop, as if the outcome was one more thresholds value from which to choose.
+
+    aspect_ratio (float or list of float, optional, default = [1.0, 1.0]) –
+
+    Valid range of aspect ratio of the cropping windows.
+
+    This parameter can be specified as either two values (min, max) or six values (three pairs), depending on the dimensionality of the input.
+
+        For 2D bounding boxes, one range of valid aspect ratios (x/y) should be provided (e.g. [min_xy, max_xy]).
+        For 3D bounding boxes, three separate aspect ratio ranges may be specified, for x/y, x/z and y/z pairs of dimensions.
+        They are provided in the following order [min_xy, max_xy, min_xz, max_xz, min_yz, max_yz]. Alternatively, if only one aspect ratio range is provided, it will be used for all three pairs of dimensions.
+
+    The value for min should be greater than 0.0, and min should be less than or equal to the max value. By default, square windows are generated.
+        bbox_layout (layout str, optional, default = ‘’) –
+
+    Determines the meaning of the coordinates of the bounding boxes.
+
+    The value of this argument is a string containing the following characters:
+
+    x (horizontal start anchor), y (vertical start anchor), z (depthwise start anchor),
+    X (horizontal end anchor),   Y (vertical end anchor),   Z (depthwise end anchor),
+    W (width),                   H (height),                D (depth).
+
+    If this value is left empty, depending on the number of dimensions, “xyXY” or “xyzXYZ” is assumed.
+
+    bytes_per_sample_hint (int, optional, default = 0) –
+
+    Output size hint, in bytes per sample.
+
+    If specified, the operator’s outputs residing in GPU or page-locked host memory will be preallocated to accommodate a batch of samples of this size.
+
+    crop_shape (int or list of int, optional, default = []) –
+
+    If provided, the random crop window dimensions will be fixed to this shape.
+
+    The order of dimensions is determined by the layout provided in shape_layout.
+
+    input_shape (int or list of int, optional, default = []) –
+
+    Specifies the shape of the original input image.
+
+    The order of dimensions is determined by the layout that is provided in shape_layout.
+
+    ltrb (bool, optional, default = True) –
+
+    If set to True, bboxes are returned as [left, top, right, bottom]; otherwise they are provided as [left, top, width, height].
+    num_attempts (int, optional, default = 1) –
+
+    Number of attempts to get a crop window that matches the aspect_ratio and a selected value from thresholds.
+
+    After each num_attempts, a different threshold will be picked, until the threshold reaches a maximum of total_num_attempts (if provided) or otherwise indefinitely.
+
+    preserve (bool, optional, default = False) – Prevents the operator from being removed from the graph even if its outputs are not used.
+
+    scaling (float or list of float, optional, default = [1.0, 1.0]) –
+
+    Range [min, max] for the crop size with respect to the original image dimensions.
+
+    The value of min and max must satisfy the condition 0.0 <= min <= max.
+
+    seed (int, optional, default = -1) –
+
+    Random seed.
+
+    If not provided, it will be populated based on the global seed of the pipeline.
+
+    shape_layout (layout str, optional, default = ‘’) –
+
+    Determines the meaning of the dimensions provided in crop_shape and input_shape.
+
+    The values are:
+
+        W (width)
+
+        H (height)
+
+        D (depth)
+
+    threshold_type (str, optional, default = 'iou') –
+
+    Determines the meaning of thresholds.
+
+    By default, thresholds refers to the intersection-over-union (IoU) of the bounding boxes with respect to the cropping window. Alternatively, the threshold can be set to “overlap” to specify the fraction (by area) of the bounding box that will will fall inside the crop window. For example, a threshold value of 1.0 means the entire bounding box must be contained in the resulting cropping window.
+
+    thresholds (float or list of float, optional, default = [0.0]) –
+
+    Minimum IoU or a different metric, if specified by threshold_type, of the bounding boxes with respect to the cropping window.
+
+    Each sample randomly selects one of the thresholds, and the operator will complete up to the specified number of attempts to produce a random crop window that has the selected metric above that threshold. See num_attempts for more information about configuring the number of attempts.
+
+    total_num_attempts (int, optional, default = -1) –
+
+    If provided, it indicates the total maximum number of attempts to get a crop window that matches the aspect_ratio and any selected value from thresholds.
+
+    After total_num_attempts attempts, the best candidate will be selected.
+
+    If this value is not specified, the crop search will continue indefinitely until a valid crop is found.
+
+        """
+    def __init__(self, all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = [1.0, 1.0], bbox_layout = "", bytes_per_sample_hint = 0,
+                crop_shape =[], input_shape = [], ltrb = True, num_attempts = 1.0,scaling =  [1.0, 1.0],  preserve = False, seed = -1, shape_layout = "", 
+                threshold_type ="iou", thresholds = [0.0], total_num_attempts = -1, device = None):
+        Node().__init__()
+        self._all_boxes_above_threshold = all_boxes_above_threshold
+        self._allow_no_crop = allow_no_crop
+        self._aspect_ratio = aspect_ratio
+        self._bbox_layout = bbox_layout
+        self._bytes_per_sample_hint = bytes_per_sample_hint
+        self._crop_shape = crop_shape
+        self._input_shape = input_shape
+        self._ltrb = ltrb
+        self._num_attempts = num_attempts
+        self._scaling = scaling
+        self._preserve = preserve
+        self._seed = seed
+        self._shape_layout = shape_layout
+        self._threshold_type = threshold_type
+        self._thresholds = thresholds
+        self._total_num_attempts = total_num_attempts
+        # if(self._all_boxes_above_threshold == True):
+        #     self.all_boxes_overlap = 1
+        # else:
+        #     self.all_boxes_overlap = 0
+        if(self._allow_no_crop == True):
+            self.crop_begin = []
+       
+        if(len(self._crop_shape) == 0):
+            self.has_shape = False
+            self.crop_width = 500
+            self.crop_height = 500
+        else:
+            self.has_shape = True
+            self.crop_width = self._crop_shape[0]
+            self.crop_height = self._crop_shape[1]
+        self.output = Node()
+
+    def __call__(self, input_boxes, labels=None, crop_shape = [], input_shape = []):
+        # input_boxes.next = self
+        self.data = "RandomBBoxCrop"
+        self.prev = input_boxes
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        return self.crop_begin, self._crop_shape, self.output, self.output
+
+    def rali_c_func_call(self, handle):
+        self._scaling = b.CreateFloatParameter(1.0)
+        self._aspect_ratio = b.CreateFloatParameter(1.0)
+        b.RandomBBoxCrop(handle, self._all_boxes_above_threshold, self._allow_no_crop, self._aspect_ratio, self.has_shape, self.crop_width, self.crop_height, 10, self._scaling, 10)
+        # b.RandomBBoxCrop(handle, self.all_boxes_overlap, self.no_crop, self.has_shape, self.crop_width, self.crop_height)
+        
 class ColorTwist(Node):
     """
         brightness (float, optional, default = 1.0) –

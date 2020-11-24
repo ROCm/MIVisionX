@@ -38,6 +38,14 @@ class COCOPipeline(Pipeline):
         self.decode = ops.ImageDecoder(
             device=decoder_device, output_type=types.RGB)
         self.crop = ops.SSDRandomCrop(num_attempts=5)
+        self.decode_slice = ops.ImageDecoderSlice(device=decoder_device, output_type = types.RGB)
+        self.random_bbox_crop = ops.RandomBBoxCrop(device="cpu",
+                                       aspect_ratio=[0.5, 2.0],
+                                       thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                       scaling=[0.3, 1.0],
+                                       ltrb=True,
+                                       allow_no_crop=True,
+                                       num_attempts=1)
         self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
         self.twist = ops.ColorTwist(device=rali_device)
         self.bbflip = ops.BBFlip(device=rali_device, ltrb=True)
@@ -67,16 +75,20 @@ class COCOPipeline(Pipeline):
         brightness = self.rng2()
         hue = self.rng3()
         self.jpegs, self.bb, self.labels = self.input(name="Reader")
-        encoded_bboxes, encoded_labels = self.boxEncoder(self.bb, self.labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
-        images = self.decode(self.jpegs)
-        images = self.crop(images)
+        # images = self.decode(self.jpegs)
+        # images = self.crop(images)
+        crop_begin, crop_size, bboxes, labels= self.random_bbox_crop(self.bb, self.labels)
+        bboxes = self.bbflip(bboxes, horizontal=self.coin_flip)
+        images = self.decode_slice(self.jpegs, crop_begin, crop_size)
         images = self.res(images)
         images = self.twist(images, saturation=saturation,
                             contrast=contrast, brightness=brightness, hue=hue)
         output = self.cmnp(images)
+        encoded_bboxes, encoded_labels = self.boxEncoder(bboxes, labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
+        encoded_labels = self.cast(encoded_labels)
         return [output, encoded_bboxes, encoded_labels] #Encoded Bbox and labels output in "ltrb" format
         # return [output,  self.bb, self.labels]
-
+        
 
 class RALICOCOIterator(object):
     """

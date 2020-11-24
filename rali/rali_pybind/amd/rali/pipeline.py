@@ -90,7 +90,7 @@ class Pipeline(object):
             raise Exception("Failed creating the pipeline")
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
-        self._check_ops_decoder = ["ImageDecoder", "ImageDecoderRandomCrop"]
+        self._check_ops_decoder = ["ImageDecoder", "ImageDecoderSlice" , "ImageDecoderRandomCrop"]
         self._check_ops_reader = ["FileReader", "TFRecordReaderClassification", "TFRecordReaderDetection",
             "COCOReader", "Caffe2Reader", "Caffe2ReaderDetection", "CaffeReader", "CaffeReaderDetection"]
         self._batch_size = batch_size
@@ -178,14 +178,15 @@ class Pipeline(object):
 
         #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
         if(len(outputs)==3):
-            if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
-                if(outputs[2].prev.data == "Cast") :
-                    self._castLabels = True
-                    if(outputs[2].prev.prev.prev.data is not None):
-                        if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
-                            self._BoxEncoder = True
-                            self._anchors = outputs[2].prev.prev.data
-                            self._encode_tensor = outputs[2].prev.prev
+            if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
+                if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
+                    if(outputs[2].prev.data == "Cast") :
+                        self._castLabels = True
+                        if(outputs[2].prev.prev.prev.data is not None):
+                            if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
+                                self._BoxEncoder = True
+                                self._anchors = outputs[2].prev.prev.data
+                                self._encode_tensor = outputs[2].prev.prev
         #Checks for Box Encoding as the Last Node
         if(len(outputs)==3):
             if(isinstance(outputs[1],list)== False):

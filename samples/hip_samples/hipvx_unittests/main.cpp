@@ -1801,7 +1801,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -1813,7 +1813,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -3402,7 +3402,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((pix_img1_u8+2) * (width/2) * (height/2)) ;
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -3412,7 +3412,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((pix_img1_u8+2) * (width/2) * (height/2)) ;
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}

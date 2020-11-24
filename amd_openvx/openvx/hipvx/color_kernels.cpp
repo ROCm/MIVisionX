@@ -25,6 +25,8 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
+#define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
+
 __device__ __forceinline__ float4 uchars_to_float4(uint src)
 {
     return make_float4((float)(src & 0xFF), (float)((src & 0xFF00) >> 8), (float)((src & 0xFF0000) >> 16), (float)((src & 0xFF000000) >> 24));
@@ -123,6 +125,141 @@ int HipExec_Lut_U8_U8(
 // ----------------------------------------------------------------------------
 // VxColorDepth kernels for hip backend
 // ----------------------------------------------------------------------------
+
+__global__ void __attribute__((visibility("default")))
+Hip_ColorDepth_U8_S16_Wrap(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage, unsigned int srcImageStrideInBytes,
+    const int shift
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y * (dstImageStrideInBytes) + x;
+    unsigned int srcIdx =  y * (srcImageStrideInBytes>>1) + x;
+    pDstImage[dstIdx] = (unsigned char)(pSrcImage[srcIdx] >> shift);
+}
+int HipExec_ColorDepth_U8_S16_Wrap(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_int16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int32 shift
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Wrap,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (unsigned char *)pHipDstImage , dstImageStrideInBytes, 
+                    (const short int *)pHipSrcImage, srcImageStrideInBytes,
+                    shift);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("\nHipExec_ColorDepth_U8_S16_Wrap: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ColorDepth_U8_S16_Sat(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    const short int *pSrcImage, unsigned int srcImageStrideInBytes,
+    const int shift
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y * (dstImageStrideInBytes) + x;
+    unsigned int srcIdx =  y * (srcImageStrideInBytes>>1) + x;
+    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(pSrcImage[srcIdx] >> shift);
+}
+int HipExec_ColorDepth_U8_S16_Sat(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_int16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int32 shift
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Sat,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (unsigned char *)pHipDstImage , dstImageStrideInBytes, 
+                    (const short int *)pHipSrcImage, srcImageStrideInBytes,
+                    shift);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("\nHipExec_ColorDepth_U8_S16_Sat: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ColorDepth_S16_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const int shift
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y * (dstImageStrideInBytes>>1) + x;
+    unsigned int srcIdx =  y * (srcImageStrideInBytes) + x;
+    pDstImage[dstIdx] = ((short int)pSrcImage[srcIdx]) << shift;
+}
+int HipExec_ColorDepth_S16_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_int32 shift
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorDepth_S16_U8,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (short int *)pHipDstImage , dstImageStrideInBytes, 
+                    (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
+                    shift);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("\nHipExec_ColorDepth_S16_U8: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
 
 // ----------------------------------------------------------------------------
 // VxChannelExtract kernels for hip backend

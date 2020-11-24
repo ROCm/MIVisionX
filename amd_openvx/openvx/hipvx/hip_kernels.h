@@ -633,6 +633,25 @@ int HipExec_ColorConvert_RGBX_UYVY(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
         );
+int HipExec_ColorConvert_RGB_IYUV(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcYImage, vx_uint32 srcYImageStrideInBytes,
+        const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
+        const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes
+        );
+int HipExec_ColorConvert_RGB_NV12(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcLumaImage, vx_uint32 srcLumaImageStrideInBytes,
+    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes
+    );
+int HipExec_ColorConvert_RGB_NV21(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcLumaImage, vx_uint32 srcLumaImageStrideInBytes,
+    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes
+    );
 int HipExec_ColorConvert_RGBX_IYUV(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -660,6 +679,20 @@ int HipExec_ColorConvert_IYUV_RGB(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
 int HipExec_ColorConvert_IYUV_RGBX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
+    vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
+    vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_FormatConvert_IYUV_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
+    vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
+    vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_FormatConvert_IYUV_YUYV(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
     vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,

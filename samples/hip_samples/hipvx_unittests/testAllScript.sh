@@ -100,13 +100,17 @@ echo "##########################################################################
 echo "RESULT::"
 echo "##########################################################################################"
 total_tested_host=$((passed_host + failed_host + na_host))
+total_needed_to_pass_host="$(($total_tested_host-$na_host))"
 printf "\nHOST number of cases passed = $passed_host"
+printf "\nHOST number of cases needed to pass = $total_needed_to_pass_host"
 printf "\nHOST number of cases failed = $failed_host"
 printf "\nHOST number of cases not applicable = $na_host"
 printf "\nHOST total number of cases tested = $total_tested_host"
 printf "\n\n"
 total_tested_hip=$((passed_hip + failed_hip + na_hip))
+total_needed_to_pass_hip="$(($total_tested_hip-$na_hip))"
 printf "\nHIP number of cases passed = $passed_hip"
+printf "\nHIP number of cases needed to pass = $total_needed_to_pass_hip"
 printf "\nHIP number of cases failed = $failed_hip"
 printf "\nHIP number of cases not applicable = $na_hip"
 printf "\nHIP total number of cases tested = $total_tested_hip"

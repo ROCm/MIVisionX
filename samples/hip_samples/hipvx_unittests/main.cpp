@@ -323,6 +323,12 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 			for (int j = 0; j < width/2; j++)
 				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
 	}
+	else if ((global_case == 174) || (global_case == 176))
+	{
+		for (int i = 0; i < height; i++)
+			for (int j = 0; j < width; j++)
+				ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val++;
+	}
 	else
 	{
 		for (int i = 0; i < height; i++)
@@ -529,6 +535,15 @@ int main(int argc, const char ** argv)
 		widthOut = (width + 1) / 2;
 		heightOut = (height + 1) / 2;
 	}
+	else if (
+		(case_number == 162) || (case_number == 164) || 
+		(case_number == 166) || (case_number == 168) || 
+		(case_number == 174) || (case_number == 176)
+		)
+	{
+		widthOut = width * 2;
+		heightOut = height * 2;
+	}
 	vx_rectangle_t out_rect = {0, 0, widthOut, heightOut};
 	vx_rectangle_t out_rect_half = {0, 0, width/2, height};
 	vx_map_id  out_map_id;
@@ -589,6 +604,62 @@ int main(int argc, const char ** argv)
 	vx_enum ScaleImage_type3_enum = VX_INTERPOLATION_TYPE_AREA;
 	vx_int32 ConvertDepth_shift_int32 = 1;
 	vx_scalar ConvertDepth_shift_scalar = vxCreateScalar(context, VX_TYPE_INT32, (void*) &ConvertDepth_shift_int32);
+	// vx_float32 WarpAffine_affineMatrix_float[3][2] = {			// if needed - rotate 45deg
+	// 	{0.707, -0.707}, // 'x' coefficients
+	// 	{0.707, 0.707}, // 'y' coefficients
+	// 	{-5, 4}, // 'offsets'
+	// };
+	vx_float32 WarpAffine_affineMatrix_float[3][2] = {			// translate in x and y
+		{1, 0}, // 'x' coefficients
+		{0, 1}, // 'y' coefficients
+		{-3, -3}, // 'offsets'
+	};
+	vx_matrix WarpAffine_affineMatrix_matrix = vxCreateMatrix(context, VX_TYPE_FLOAT32, 2, 3);
+	ERROR_CHECK_STATUS(vxCopyMatrix(WarpAffine_affineMatrix_matrix, WarpAffine_affineMatrix_float, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+	vx_float32 WarpPerspective_perspectiveMatrix_float[3][3] = {			// translate in x and y
+		{1, 0, 0}, // 'x' coefficients
+		{0, 1, 0}, // 'y' coefficients
+		{-3, -3, 1}, // 'offsets'
+	};
+	vx_matrix WarpPerspective_perspectiveMatrix_matrix = vxCreateMatrix(context, VX_TYPE_FLOAT32, 3, 3);
+	ERROR_CHECK_STATUS(vxCopyMatrix(WarpPerspective_perspectiveMatrix_matrix, WarpPerspective_perspectiveMatrix_float, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+	
+	_vx_coordinates2df_t Remap_remapTable_coordinates2df[widthOut * heightOut];
+	vx_size Remap_remapTableStrideY_size = widthOut * 8;
+	// ago_coord2d_ushort_t Remap_remapTable_coord2d_ushort[widthOut * heightOut];
+	// vx_size Remap_remapTableStrideY_size = widthOut * 4;
+
+	for (int i = 0; i < heightOut; i ++)
+	{
+		for (int j = 0; j < widthOut; j++)
+		{
+			if ((j < width) && (i < height))
+			{
+				Remap_remapTable_coordinates2df[i*widthOut + j].x = j;
+				Remap_remapTable_coordinates2df[i*widthOut + j].y = i;
+			}
+			else
+			{
+				Remap_remapTable_coordinates2df[i*widthOut + j].x = 0;
+				Remap_remapTable_coordinates2df[i*widthOut + j].y = 0;
+			}
+		}
+	}
+	if((case_number == 174) || (case_number == 176))
+	{
+		printf("\nUser Remap Table:\n");
+		for (int i = 0; i < heightOut; i ++)
+		{
+			for (int j = 0; j < widthOut; j++)
+			{
+				printf("%0.1f,%0.1f\t", Remap_remapTable_coordinates2df[i*widthOut + j].y, Remap_remapTable_coordinates2df[i*widthOut + j].x);
+				// printf("%d,%d\t", Remap_remapTable_coord2d_ushort[i*widthOut + j].y, Remap_remapTable_coord2d_ushort[i*widthOut + j].x);
+			}
+			printf("\n");
+		}
+	}
+	vx_remap Remap_remapTable_remap = vxCreateRemap(context, width, height, widthOut, heightOut);
+	ERROR_CHECK_STATUS(vxCopyRemapPatch(Remap_remapTable_remap, &out_rect, Remap_remapTableStrideY_size, (void*) Remap_remapTable_coordinates2df, VX_TYPE_COORDINATES2DF, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 	
 	if (!device_affinity)
 	{
@@ -1692,6 +1763,42 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 108:
+				{
+					// test_case_name - agoKernel_ColorConvert_RGB_IYUV
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 3;
+					break;
+				}
+				case 109:
+				{
+					// test_case_name - agoKernel_ColorConvert_RGB_NV12
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1))
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 3;
+					break;
+				}
+				case 110:
+				{
+					// test_case_name - agoKernel_ColorConvert_RGB_NV21
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_NV21);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1))
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 3;
+					break;
+				}
 				case 111:
 				{
 					// test_case_name - agoKernel_ColorConvert_RGBX_RGB
@@ -1779,6 +1886,30 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name - agoKernel_ColorConvert_IYUV_RGBX
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 4;
+					break;
+				}
+				case 119:
+				{
+					// test_case_name - agoKernel_FormatConvert_IYUV_UYVY
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_UYVY);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 4;
+					break;
+				}
+				case 120:
+				{
+					// test_case_name - agoKernel_FormatConvert_IYUV_YUYV
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_YUYV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
@@ -1987,6 +2118,46 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 162:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Nearest";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 164:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Bilinear";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 166:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Nearest";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 168:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Bilinear";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				case 170:
 				{
 					// test_case_name = "agoKernel_ColorDepth_U8_S16_Wrap";
@@ -2015,6 +2186,26 @@ int main(int argc, const char ** argv)
 					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_WRAP, ConvertDepth_shift_scalar);
 					expected_image_sum = (pix_img1_u8 << ConvertDepth_shift_int32) * width * height;
 					out_buf_type = 1;
+					break;
+				}
+				case 174:
+				{
+					// test_case_name = "agoKernel_Remap_U8_U8_Nearest";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 176:
+				{
+					// test_case_name = "agoKernel_Remap_U8_U8_Bilinear";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
 					break;
 				}
 
@@ -2076,7 +2267,8 @@ int main(int argc, const char ** argv)
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 158)  || (case_number == 159) ||
-					(case_number == 160) || (case_number == 172)
+					(case_number == 160) || (case_number == 162) || (case_number == 164) || (case_number == 166) || 
+					(case_number == 168) || (case_number == 172) || (case_number == 174) || (case_number == 176)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -2128,15 +2320,16 @@ int main(int argc, const char ** argv)
 					(case_number == 75)  || (case_number == 76)  || (case_number == 77)  || (case_number == 78)  ||
 					(case_number == 79)  || (case_number == 105) || (case_number == 106) || (case_number == 107) ||
 					(case_number == 111) || (case_number == 112) || (case_number == 113) || (case_number == 117) ||
-					(case_number == 118) || (case_number == 121) || (case_number == 122) || (case_number == 123) ||
-					(case_number == 124)
+					(case_number == 118) || (case_number == 119) || (case_number == 120) || (case_number == 121) ||
+					(case_number == 122) || (case_number == 123) ||(case_number == 124)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 				}
 				// Planar Input Images - NV12, NV21, IYUV input
 				else if(
-					(case_number == 67) || (case_number == 114) || (case_number == 115) || (case_number == 116) 
+					(case_number == 67) || (case_number == 108) || (case_number == 109) || (case_number == 110) ||
+					(case_number == 114) || (case_number == 115) || (case_number == 116) 
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPlanarImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -3329,6 +3522,36 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 108:
+				{
+					// test_case_name  = " agoKernel_ChannelConvert_RGB_IYUV"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_in, VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 3;
+					break;
+				}
+				case 109:
+				{
+					// test_case_name  = " agoKernel_ChannelConvert_RGB_NV12"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 3;
+					break;
+				}
+				case 110:
+				{
+					// test_case_name  = " agoKernel_ChannelConvert_RGB_NV21"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV21, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 3;
+					break;
+				}
 				case 111:
 				{
 					// test_case_name  = " agoKernel_ChannelConvert_RGBX_RGB"
@@ -3403,6 +3626,26 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name  = " agoKernel_ChannelConvert_IYUV_RGBX"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 4;
+					break;
+				}
+				case 119:
+				{
+					// test_case_name  = " agoKernel_FormatConvert_IYUV_UYVY"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					out_buf_type = 4;
+					break;
+				}
+				case 120:
+				{
+					// test_case_name  = " agoKernel_FormatConvert_IYUV_YUYV"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
 					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
@@ -3600,6 +3843,46 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 162:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Nearest";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 164:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Bilinear";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 166:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Nearest";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 168:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Bilinear";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
 				case 170:
 				{
 					// test_case_name = "agoKernel_ColorDepth_U8_S16_Wrap";
@@ -3628,6 +3911,26 @@ int main(int argc, const char ** argv)
 					node = vxConvertDepthNode(graph, img1, img_out, VX_CONVERT_POLICY_WRAP, ConvertDepth_shift_scalar);
 					expected_image_sum = (pix_img1_u8 << ConvertDepth_shift_int32) * width * height;
 					out_buf_type = 1;
+					break;
+				}
+				case 174:
+				{
+					// test_case_name = "agoKernel_Remap_U8_U8_Nearest";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 176:
+				{
+					// test_case_name = "agoKernel_Remap_U8_U8_Bilinear";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
 					break;
 				}
 
@@ -3689,7 +3992,8 @@ int main(int argc, const char ** argv)
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 158) || (case_number == 159) || 
-					(case_number == 160) || (case_number == 172)
+					(case_number == 160) || (case_number == 162) || (case_number == 164) || (case_number == 166) || 
+					(case_number == 168) || (case_number == 172) || (case_number == 174) || (case_number == 176)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -3741,15 +4045,17 @@ int main(int argc, const char ** argv)
 					(case_number == 75)  || (case_number == 76)  || (case_number == 77)  || (case_number == 78)  ||
 					(case_number == 79)  || (case_number == 105) || (case_number == 106) || (case_number == 107) ||
 					(case_number == 111) || (case_number == 112) || (case_number == 113) || (case_number == 117) ||
-					(case_number == 118) || (case_number == 121) || (case_number == 122) || (case_number == 123) ||
-					(case_number == 124)
+					(case_number == 118) || (case_number == 119) || (case_number == 120) || (case_number == 121) ||
+					(case_number == 122) || (case_number == 123) || (case_number == 124)
+					
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
 				}
 				// Planar Image Input - NV12, NV21, IYUV inputs
 				else if(
-					(case_number == 114) || (case_number == 115) || (case_number == 116)
+					(case_number == 108) || (case_number == 109) || (case_number == 110) || (case_number == 114) || 
+					(case_number == 115) || (case_number == 116)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPlanarImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -3963,6 +4269,9 @@ int main(int argc, const char ** argv)
 	vxReleaseScalar(&Mul_scale_scalar);
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
 	vxReleaseScalar(&ConvertDepth_shift_scalar);
+	vxReleaseMatrix(&WarpAffine_affineMatrix_matrix);
+	vxReleaseMatrix(&WarpPerspective_perspectiveMatrix_matrix);
+	// vxReleaseRemap(&Remap_remapTable_remap);
 	// vxReleaseThreshold(&Threshold_thresholdObjectBinary_threshold);
 	// vxReleaseThreshold(&Threshold_thresholdObjectRange_threshold);
 	vxReleaseLUT(&Lut_lutObject_lut);

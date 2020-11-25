@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <VX/vx.h>
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
+#include "ago_haf_cpu.h"
 
 typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
 
@@ -633,6 +634,25 @@ int HipExec_ColorConvert_RGBX_UYVY(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
         );
+int HipExec_ColorConvert_RGB_IYUV(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcYImage, vx_uint32 srcYImageStrideInBytes,
+        const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
+        const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes
+        );
+int HipExec_ColorConvert_RGB_NV12(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcLumaImage, vx_uint32 srcLumaImageStrideInBytes,
+    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes
+    );
+int HipExec_ColorConvert_RGB_NV21(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcLumaImage, vx_uint32 srcLumaImageStrideInBytes,
+    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes
+    );
 int HipExec_ColorConvert_RGBX_IYUV(
         vx_uint32 dstWidth, vx_uint32 dstHeight, 
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -689,6 +709,20 @@ int HipExec_FormatConvert_NV12_YUYV(
     vx_uint8 *pDstLumaImage, vx_uint32 dstLumaImageStrideInBytes,
     vx_uint8 *pDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
     const vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_FormatConvert_IYUV_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
+    vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
+    vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_FormatConvert_IYUV_YUYV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
+    vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
+    vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
 // filter_kernels
 
@@ -771,6 +805,45 @@ int HipExec_ScaleGaussianHalf_U8_U8_5x5(
     vx_uint32 srcWidth, vx_uint32 srcHeight, 
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
+
+int HipExec_WarpAffine_U8_U8_Nearest(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    ago_affine_matrix_t *affineMatrix);
+int HipExec_WarpAffine_U8_U8_Bilinear(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    ago_affine_matrix_t *affineMatrix);
+
+int HipExec_WarpPerspective_U8_U8_Nearest(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    ago_perspective_matrix_t *perspectiveMatrix);
+int HipExec_WarpPerspective_U8_U8_Bilinear(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    ago_perspective_matrix_t *perspectiveMatrix);
+
+int HipExec_Remap_U8_U8_Nearest(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    int *map, vx_uint32 mapStrideInBytes);
+int HipExec_Remap_U8_U8_Bilinear(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    ago_coord2d_ushort_t *map, vx_uint32 mapStrideInBytes);
 
 // vision_kernels
 

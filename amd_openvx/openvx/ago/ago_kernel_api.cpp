@@ -17588,10 +17588,8 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			// (ago_coord2d_ushort_t *)iMap->buffer, 
-			(int *)iMap->buffer, 
-			// iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
-			iMap->u.remap.dst_width * sizeof(_vx_coordinates2df_t))) {
+			(ago_coord2d_ushort_t *)iMap->buffer, 
+			iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
         }
 	}

@@ -2194,7 +2194,8 @@ int main(int argc, const char ** argv)
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
 					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					vx_int32 finalVal = pix_img1_u8 + (width * height) - 1;
+					expected_image_sum = (finalVal * (finalVal + 1) / 2) - (pix_img1_u8 * (pix_img1_u8 - 1) / 2) + ((widthOut - width) * heightOut * pix_img1_u8) + (width * (heightOut - height) * pix_img1_u8);
 					out_buf_type = 0;
 					break;
 				}
@@ -2204,7 +2205,8 @@ int main(int argc, const char ** argv)
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
 					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					vx_int32 finalVal = pix_img1_u8 + (width * height) - 1;
+					expected_image_sum = (finalVal * (finalVal + 1) / 2) - (pix_img1_u8 * (pix_img1_u8 - 1) / 2) + ((widthOut - width) * heightOut * pix_img1_u8) + (width * (heightOut - height) * pix_img1_u8);
 					out_buf_type = 0;
 					break;
 				}
@@ -3919,7 +3921,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					vx_int32 finalVal = pix_img1_u8 + (width * height) - 1;
+					expected_image_sum = (finalVal * (finalVal + 1) / 2) - (pix_img1_u8 * (pix_img1_u8 - 1) / 2) + ((widthOut - width) * heightOut * pix_img1_u8) + (width * (heightOut - height) * pix_img1_u8);
 					out_buf_type = 0;
 					break;
 				}
@@ -3929,7 +3932,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxRemapNode(graph, img1, Remap_remapTable_remap, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					vx_int32 finalVal = pix_img1_u8 + (width * height) - 1;
+					expected_image_sum = (finalVal * (finalVal + 1) / 2) - (pix_img1_u8 * (pix_img1_u8 - 1) / 2) + ((widthOut - width) * heightOut * pix_img1_u8) + (width * (heightOut - height) * pix_img1_u8);
 					out_buf_type = 0;
 					break;
 				}

@@ -27,16 +27,6 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
-// __device__ __forceinline__ float4 ucharTofloat4(unsigned int src)
-// {
-//     return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
-// }
-
-// __device__ __forceinline__ uint float4ToUint(float4 src)
-// {
-//   return ((int)src.x&0xFF) | (((int)src.y&0xFF)<<8) | (((int)src.z&0xFF)<<16)| (((int)src.w&0xFF) << 24);
-// }
-
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELROUNDF32(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
@@ -44,50 +34,157 @@ THE SOFTWARE.
 // VxRemap kernels for hip backend
 // ----------------------------------------------------------------------------
 
+__global__ void __attribute__((visibility("default")))
+Hip_Remap_U8_U8_Nearest(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const float *map, unsigned int mapStrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes) + x;
+    int xSrc = (int)PIXELROUNDF32(map[y * (dstWidth * 2) + (x*2) + 0]);
+    int ySrc = (int)PIXELROUNDF32(map[y * (dstWidth * 2) + (x*2) + 1]);
+    if ((xSrc < 0) || (xSrc >= srcWidth) || (ySrc < 0) || (ySrc >= srcHeight))
+    {
+        pDstImage[dstIdx] = 0;
+    }
+    else
+    {
+        unsigned int srcIdx = ySrc * (srcImageStrideInBytes) + xSrc;
+        pDstImage[dstIdx] = pSrcImage[srcIdx];
+    }
+}
 int HipExec_Remap_U8_U8_Nearest(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     vx_uint32 srcWidth, vx_uint32 srcHeight,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    int *map, vx_uint32 mapStrideInBytes)
+    ago_coord2d_ushort_t *map, vx_uint32 mapStrideInBytes)
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    printf("\nmapStrideInBytes = %d", mapStrideInBytes);
+    // Printing Passed Remap Table
+
+    // printf("\n\n--------------------- Passed Remap Table ---------------------\n");
+    // printf("\nmapStrideInBytes = %d", mapStrideInBytes);
+    // printf("\n\n");
+    // for (int i = 0; i < (dstWidth * dstHeight); i++)
+    // {
+    //     printf("%d,%d  ", map[i].y, map[i].x);
+    // }
+    // printf("\n\n");
+
+    // Generating New Remap Table
+
+    _vx_coordinates2df_t Remap_remapTable_coordinates2df[dstWidth * dstHeight];
+	vx_size Remap_remapTableStrideY_size = dstWidth * 8;
+
+    for (int i = 0; i < dstHeight; i ++)
+	{
+		for (int j = 0; j < dstWidth; j++)
+		{
+			if ((j < srcWidth) && (i < srcHeight))
+			{
+				Remap_remapTable_coordinates2df[i*dstWidth + j].x = j;
+				Remap_remapTable_coordinates2df[i*dstWidth + j].y = i;
+			}
+			else
+			{
+				Remap_remapTable_coordinates2df[i*dstWidth + j].x = 0;
+				Remap_remapTable_coordinates2df[i*dstWidth + j].y = 0;
+			}
+		}
+	}
+
+    // Printing Generated Remap Table
+
+    // printf("\n\n--------------------- Generated Remap Table ---------------------\n");
+    // printf("\nmapStrideInBytes = %d", (vx_uint32)Remap_remapTableStrideY_size);
+    // printf("\n\n");
+    // for (int i = 0; i < (dstWidth * dstHeight); i++)
+    // {
+    //     printf("%0.1f,%0.1f  ", Remap_remapTable_coordinates2df[i].y, Remap_remapTable_coordinates2df[i].x);
+    // }
+    // printf("\n\n");
+
+    float *remapTable_float = (float*) Remap_remapTable_coordinates2df;
+
     printf("\n\n");
-    for (int i = 0; i < (dstWidth * dstHeight * 2); i++)
+    for (int i = 0; i < (dstWidth * dstHeight * 2); i+=2)
     {
-        // printf("%0.1f,%0.1f  ", map[i].y, map[i].x);
-        printf("%d ", map[i]);
+        printf("%0.1f,%0.1f  ", remapTable_float[i+1], remapTable_float[i]);
     }
     printf("\n\n");
 
-    // vx_uint8 *hipAffineMatrix_float;
-    // hipMalloc(&hipAffineMatrix_float, 192);
-    // hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    // hipEventCreate(&start);
-    // hipEventCreate(&stop);
+    vx_uint32 bufferSize = dstWidth * dstHeight * 64;
+    vx_uint8 *hipRemapTable_float;
+    hipMalloc(&hipRemapTable_float, bufferSize);
+    hipMemcpy(hipRemapTable_float, remapTable_float, bufferSize, hipMemcpyHostToDevice);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
     float eventMs = 1.0f;
-    // hipEventRecord(start, NULL);
-    // hipLaunchKernelGGL(Hip_Remap_U8_U8_Nearest,
-    //                    dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-    //                    dim3(localThreads_x, localThreads_y),
-    //                    0, 0, dstWidth, dstHeight,
-    //                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-    //                    srcWidth, srcHeight,
-    //                    (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
-    //                    (const float *)hipAffineMatrix_float);
-    // hipEventRecord(stop, NULL);
-    // hipEventSynchronize(stop);
-    // hipEventElapsedTime(&eventMs, start, stop);
-    // hipFree(&hipAffineMatrix_float);
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Remap_U8_U8_Nearest,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImage, dstImageStrideInBytes,
+                       srcWidth, srcHeight,
+                       (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
+                       (const float *)hipRemapTable_float, mapStrideInBytes);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    hipFree(&hipRemapTable_float);
 
     printf("\nHipExec_Remap_U8_U8_Nearest: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
+__global__ void __attribute__((visibility("default")))
+Hip_Remap_U8_U8_Bilinear(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const float *map, unsigned int mapStrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight))
+        return;
+    float xSrcFloat = map[y * (dstWidth * 2) + (x*2) + 0];
+    float ySrcFloat = map[y * (dstWidth * 2) + (x*2) + 1];
+    int xSrcLower = (int)xSrcFloat;
+    int ySrcLower = (int)ySrcFloat;
+    int dstIdx =  y*(dstImageStrideInBytes) + x;
+    if ((xSrcLower < 0) || (ySrcLower < 0) || (xSrcLower >= srcWidth) || (ySrcLower >= srcHeight))
+    {
+        pDstImage[dstIdx] = 0;
+    }
+    else
+    {
+        float s = xSrcFloat - xSrcLower;
+        float t = ySrcFloat - ySrcLower;
+        int srcIdxTopLeft =  ySrcLower * (srcImageStrideInBytes) + xSrcLower;
+        int srcIdxTopRight =  ySrcLower * (srcImageStrideInBytes) + (xSrcLower + 1);
+        int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
+        int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
+        pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(
+        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
+        (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
+        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+        (s) * (t) * pSrcImage[srcIdxBottomRight]
+        );
+    }
+}
 int HipExec_Remap_U8_U8_Bilinear(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -99,25 +196,79 @@ int HipExec_Remap_U8_U8_Bilinear(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    // vx_uint8 *hipAffineMatrix_float;
-    // hipMalloc(&hipAffineMatrix_float, 192);
-    // hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    // hipEventCreate(&start);
-    // hipEventCreate(&stop);
+    // Printing Passed Remap Table
+
+    // printf("\n\n--------------------- Passed Remap Table ---------------------\n");
+    // printf("\nmapStrideInBytes = %d", mapStrideInBytes);
+    // printf("\n\n");
+    // for (int i = 0; i < (dstWidth * dstHeight); i++)
+    // {
+    //     printf("%d,%d  ", map[i].y, map[i].x);
+    // }
+    // printf("\n\n");
+
+    // Generating New Remap Table
+
+    _vx_coordinates2df_t Remap_remapTable_coordinates2df[dstWidth * dstHeight];
+	vx_size Remap_remapTableStrideY_size = dstWidth * 8;
+
+    for (int i = 0; i < dstHeight; i ++)
+	{
+		for (int j = 0; j < dstWidth; j++)
+		{
+			if ((j < srcWidth) && (i < srcHeight))
+			{
+				Remap_remapTable_coordinates2df[i*dstWidth + j].x = j;
+				Remap_remapTable_coordinates2df[i*dstWidth + j].y = i;
+			}
+			else
+			{
+				Remap_remapTable_coordinates2df[i*dstWidth + j].x = 0;
+				Remap_remapTable_coordinates2df[i*dstWidth + j].y = 0;
+			}
+		}
+	}
+
+    // Printing Generated Remap Table
+
+    // printf("\n\n--------------------- Generated Remap Table ---------------------\n");
+    // printf("\nmapStrideInBytes = %d", (vx_uint32)Remap_remapTableStrideY_size);
+    // printf("\n\n");
+    // for (int i = 0; i < (dstWidth * dstHeight); i++)
+    // {
+    //     printf("%0.1f,%0.1f  ", Remap_remapTable_coordinates2df[i].y, Remap_remapTable_coordinates2df[i].x);
+    // }
+    // printf("\n\n");
+
+    float *remapTable_float = (float*) Remap_remapTable_coordinates2df;
+
+    printf("\n\n");
+    for (int i = 0; i < (dstWidth * dstHeight * 2); i+=2)
+    {
+        printf("%0.1f,%0.1f  ", remapTable_float[i+1], remapTable_float[i]);
+    }
+    printf("\n\n");
+
+    vx_uint32 bufferSize = dstWidth * dstHeight * 64;
+    vx_uint8 *hipRemapTable_float;
+    hipMalloc(&hipRemapTable_float, bufferSize);
+    hipMemcpy(hipRemapTable_float, remapTable_float, bufferSize, hipMemcpyHostToDevice);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
     float eventMs = 1.0f;
-    // hipEventRecord(start, NULL);
-    // hipLaunchKernelGGL(Hip_Remap_U8_U8_Bilinear,
-    //                    dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-    //                    dim3(localThreads_x, localThreads_y),
-    //                    0, 0, dstWidth, dstHeight,
-    //                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-    //                    srcWidth, srcHeight,
-    //                    (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
-    //                    (const float *)hipAffineMatrix_float);
-    // hipEventRecord(stop, NULL);
-    // hipEventSynchronize(stop);
-    // hipEventElapsedTime(&eventMs, start, stop);
-    // hipFree(&hipAffineMatrix_float);
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Remap_U8_U8_Bilinear,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImage, dstImageStrideInBytes,
+                       srcWidth, srcHeight,
+                       (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
+                       (const float *)hipRemapTable_float, mapStrideInBytes);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    hipFree(&hipRemapTable_float);
 
     printf("\nHipExec_Remap_U8_U8_Bilinear: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;

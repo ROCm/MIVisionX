@@ -210,8 +210,10 @@ ImageReadAndDecode::load(unsigned char* buff,
             temp = _bbox_coords[i];
             if((temp[0] + temp[2]) > original_width || (temp[1] +temp[3]) > original_height)
             {   
-               temp[2] /= 2;
-               temp[3] /= 2;
+            //    temp[2] /= 2;
+               temp[2] = original_width - temp[0] - 1;
+            //    temp[3] /= 2;
+               temp[3] = original_width - temp[1] - 1;
             }
             _decoder[i]->set_bbox_coords(temp);
         }

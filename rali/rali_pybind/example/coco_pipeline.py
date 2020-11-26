@@ -200,8 +200,9 @@ class RALICOCOIterator(object):
                 
                 # Converting from "xywh" to "ltrb" format , 
                 # where the values of l, t, r, b always lie between 0 & 1 
+                # Box Encoder input & output:
                 # input : N x 4 , "xywh" format
-                # output : 8732 x 4 , "ltrb" format and normalized
+                # output : 8732 x 4 , "xywh" format and normalized
                 htot, wtot = 300, 300
                 bbox_sizes = []
                 bbox_labels = []
@@ -278,7 +279,7 @@ def main():
     nt = 1
     di = 0
     crop_size = 300
-    def coco_anchors():
+    def coco_anchors(): # Should be Tensor of floats in ltrb format
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
         steps = [8, 16, 32, 64, 100, 300]
@@ -304,8 +305,16 @@ def main():
                 for i, j in itertools.product(range(sfeat), repeat=2):
                     cx, cy = (j+0.5)/fk[idx], (i+0.5)/fk[idx]
                     default_boxes.append((cx, cy, w, h))
-
-        return default_boxes
+        dboxes = torch.tensor(default_boxes, dtype=torch.float)
+        dboxes.clamp_(min=0, max=1)
+        # For IoU calculation
+        dboxes_ltrb = dboxes.clone()
+        dboxes_ltrb[:, 0] = dboxes[:, 0] - 0.5 * dboxes[:, 2]
+        dboxes_ltrb[:, 1] = dboxes[:, 1] - 0.5 * dboxes[:, 3]
+        dboxes_ltrb[:, 2] = dboxes[:, 0] + 0.5 * dboxes[:, 2]
+        dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
+        
+        return dboxes_ltrb
 
     dboxes = coco_anchors()
 

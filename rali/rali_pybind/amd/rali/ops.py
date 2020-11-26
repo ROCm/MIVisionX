@@ -889,16 +889,8 @@ class BoxEncoder(Node):
                     return iou
         #Pass the bbox and labels for Encoding
         def encode(bboxes_in , labels_in, criteria = self._criteria):
-                    self.default_boxes = self._anchors
-                    self.dboxes = torch.tensor(self.default_boxes, dtype=torch.float)	
-                    self.dboxes.clamp_(min=0, max=1)	
-                    # For IoU calculation	
-                    self.dboxes_ltrb = self.dboxes.clone()
-                    self.dboxes_ltrb[:, 0] = self.dboxes[:, 0] - 0.5 * self.dboxes[:, 2]	
-                    self.dboxes_ltrb[:, 1] = self.dboxes[:, 1] - 0.5 * self.dboxes[:, 3]	
-                    self.dboxes_ltrb[:, 2] = self.dboxes[:, 0] + 0.5 * self.dboxes[:, 2]	
-                    self.dboxes_ltrb[:, 3] = self.dboxes[:, 1] + 0.5 * self.dboxes[:, 3]
-                    
+
+                    self.dboxes = self._anchors
                     self.nboxes = self.dboxes.size(0)
                     
                     ious = calc_iou_tensor(bboxes_in, self.dboxes)

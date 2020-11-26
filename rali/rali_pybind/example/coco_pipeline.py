@@ -279,7 +279,7 @@ def main():
     nt = 1
     di = 0
     crop_size = 300
-    def coco_anchors(): # Should be Tensor of floats in ltrb format
+    def coco_anchors(): # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
         steps = [8, 16, 32, 64, 100, 300]

@@ -155,8 +155,8 @@ void RandomBBoxCropReader::read_all()
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 6);
 
-    const std::vector<std::pair<bool, float>> sample_options = {std::make_pair(true, 0.0f), std::make_pair(false, 0.1f), std::make_pair(false, 0.15f),
-                                                                std::make_pair(false, 0.5f), std::make_pair(false, 0.6f), std::make_pair(false, 0.75f), std::make_pair(false, 0.9f)};
+    const std::vector<std::pair<bool, float>> sample_options = {std::make_pair(true, 0.0f), std::make_pair(false, 0.1f), std::make_pair(false, 0.3f),
+                                                                std::make_pair(false, 0.5f), std::make_pair(false, 0.7f),std::make_pair(false, 0.9f)};
     int sample_option;
     std::pair<bool, float> option;
     float min_iou; // max_iou;

@@ -1339,8 +1339,8 @@ class RandomBBoxCrop( ):
         return self.crop_begin, self._crop_shape, self.output, self.output
 
     def rali_c_func_call(self, handle):
-        self._scaling = b.CreateFloatParameter(1.0)
-        self._aspect_ratio = b.CreateFloatParameter(1.0)
+        self._scaling = b.CreateFloatUniformRand(self._scaling[0], self._scaling[1])
+        self._aspect_ratio = b.CreateFloatUniformRand(self._aspect_ratio[0], self._aspect_ratio[1])
         b.RandomBBoxCrop(handle, self._all_boxes_above_threshold, self._allow_no_crop, self._aspect_ratio, self.has_shape, self.crop_width, self.crop_height, 10, self._scaling, 10)
         # b.RandomBBoxCrop(handle, self.all_boxes_overlap, self.no_crop, self.has_shape, self.crop_width, self.crop_height)
         

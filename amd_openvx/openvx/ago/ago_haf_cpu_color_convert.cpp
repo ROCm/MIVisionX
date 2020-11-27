@@ -2659,7 +2659,7 @@ int HafCpu_ColorConvert_IYUV_RGB
 			U /= 4.0f;	V /= 4.0f;
 
 			*pLocalDstU++ = (vx_uint8)U;
-			*pLocalDstY++ = (vx_uint8)V;
+			*pLocalDstV++ = (vx_uint8)V;
 
 			pLocalSrc += 6;
 			pLocalDstY += 2;
@@ -4030,7 +4030,7 @@ int HafCpu_ColorConvert_IYUV_RGBX
 			U /= 4.0f;	V /= 4.0f;
 
 			*pLocalDstU++ = (vx_uint8)U;
-			*pLocalDstY++ = (vx_uint8)V;
+			*pLocalDstV++ = (vx_uint8)V;
 
 			pLocalSrc += 8;
 			pLocalDstY += 2;

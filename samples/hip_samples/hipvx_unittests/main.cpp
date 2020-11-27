@@ -204,6 +204,8 @@ using namespace std;
 #define PIXELCHECKU32(pixel) (pixel < (vx_int32)0) ? ((vx_uint32)0) : ((pixel < (vx_uint32)UINT32_MAX) ? (vx_uint32)pixel : ((vx_uint32)UINT32_MAX))
 #define PIXELCHECKS16(pixel) (pixel < (vx_int32)INT16_MIN) ? ((vx_int16)INT16_MIN) : ((pixel < (vx_int32)INT16_MAX) ? (vx_int16)pixel : ((vx_int16)INT16_MAX))
 #define PIXELROUNDF32(value) ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
+#define FLOAT_MAX(a, b) (a > b ? a : b)
+#define FLOAT_MIN(a, b) (a < b ? a : b)
 
 #define DBL_EPSILON      __DBL_EPSILON__
 #define atan2_p0        (0.273*0.3183098862f)
@@ -256,6 +258,38 @@ vx_uint8 Norm_Atan2_deg(vx_int16 Gx, vx_int16 Gy)
 	// normalize and copy to dst
 	vx_uint8 norm_arct = (vx_uint8)((vx_uint32)(a*scale + 0.5) & 0xFF);
 	return norm_arct;
+}
+
+int RGBsum_YUV(vx_df_image itype, int Ypix, int Upix, int Vpix)
+{
+	int RGBsum;
+	float R, G, B, Y, U, V;
+	Y = (float)Ypix;
+	U = (float)Upix - 128.0f;
+	V = (float)Vpix - 128.0f; 
+	
+	if (itype == VX_DF_IMAGE_UYVY || itype == VX_DF_IMAGE_YUYV)
+	{
+		R = FLOAT_MIN(FLOAT_MAX(Y + (V * 1.5748f), 0.0f), 255.0f);
+		G = FLOAT_MIN(FLOAT_MAX(Y - (U * 0.1873f) - (V * 0.4681f), 0.0f), 255.0f);
+		B = FLOAT_MIN(FLOAT_MAX(Y + (U * 1.8556f), 0.0f), 255.0f);
+		RGBsum = (int)R+(int)G+(int)B;
+		// printf("*************R:%f G:%f B:%f sum = %d\n",R,G,B, RGBsum);
+	}
+	else if(itype == VX_DF_IMAGE_NV12 || itype == VX_DF_IMAGE_NV21 || itype == VX_DF_IMAGE_IYUV)
+	{
+		G = (U * 0.1873f) + (V * 0.4681f);
+		R = V * 1.5748f;
+		B = U * 1.8556f;
+
+		R = FLOAT_MIN(FLOAT_MAX(Y + R, 0.0f), 255.0);
+    	G = FLOAT_MIN(FLOAT_MAX(Y - G, 0.0f), 255.0f);
+    	B = FLOAT_MIN(FLOAT_MAX(Y + B, 0.0f), 255.0f);
+		RGBsum = (int)R+(int)G+(int)B;
+		// printf("*************R:%f G:%f B:%f sum = %d\n",R,G,B, RGBsum);
+	}
+
+	return RGBsum;
 }
 
 template <typename T>
@@ -431,6 +465,7 @@ vx_status makeInputPlanarImage(vx_context context, vx_image img, vx_uint32 width
 			for (int i = 0; i < height; i++)
 				for (int j = 0; j < width; j++)
 					ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
+					// ptr[i * stride_y_pixels + j * stride_x_pixels] = i * stride_y_pixels + j * stride_x_pixels;
 		}
 		else
 		{
@@ -440,6 +475,7 @@ vx_status makeInputPlanarImage(vx_context context, vx_image img, vx_uint32 width
 					for(int inner_stride=0; inner_stride<stride_x_bytes; inner_stride++)
 					{
 						ptr[(i * stride_y_pixels) + j + inner_stride] = pix_val+inner_stride+1;				
+						// ptr[(i * stride_y_pixels) + j + inner_stride] = (i * stride_y_pixels) + j + inner_stride + 1;			
 					}
 				}
 		}
@@ -1466,7 +1502,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, (vx_df_image)VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
-					expected_image_sum = pix_img1_u8 * width* height; //Needs Change
+					expected_image_sum = pix_img1_u8 * width* height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1478,7 +1514,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_Y, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8+1) * width * height; 
 					out_buf_type = 0;
 					break;
 				}
@@ -1502,7 +1538,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_G, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (pix_img1_u8+1) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1514,7 +1550,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_B, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (pix_img1_u8+2) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -1538,7 +1574,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width/2, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_U, img_out);
-					expected_image_sum = pix_img1_u8 * width/2 * height;
+					expected_image_sum = (pix_img1_u8+1) * width/2 * height;
 					out_buf_type = 2;
 					break;
 				}
@@ -1550,7 +1586,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width/2, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_V, img_out);
-					expected_image_sum = pix_img1_u8 * width/2 * height;
+					expected_image_sum = (pix_img1_u8) * width/2 * height;
 					out_buf_type = 2;
 					break;
 				}
@@ -1562,7 +1598,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width/2, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_V, img_out);
-					expected_image_sum = pix_img1_u8 * width/2 * height;
+					expected_image_sum = (pix_img1_u8+1) * width/2 * height;
 					out_buf_type = 2;
 					break;
 				}
@@ -1753,8 +1789,8 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
-					out_buf_type = 0;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_UYVY, pix_img1_u8+1, pix_img1_u8, pix_img1_u8)) * width * height;
+					out_buf_type = 3;
 					break;
 				}
 				case 107:
@@ -1766,7 +1802,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
 					expected_image_sum = pix_img1_u8 * width * height;
-					out_buf_type = 0;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_YUYV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1)) * width * height;
+					out_buf_type = 3;
 					break;
 				}
 				case 108:
@@ -1777,7 +1814,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_IYUV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1)) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1785,11 +1822,11 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name - agoKernel_ColorConvert_RGB_NV12
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1))
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV12, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+2)) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1797,11 +1834,11 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name - agoKernel_ColorConvert_RGB_NV21
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_NV21);
-					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1))
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV21, pix_img1_u8, pix_img1_u8+2, pix_img1_u8+1)) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1824,7 +1861,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_UYVY, pix_img1_u8+1, pix_img1_u8, pix_img1_u8) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1836,7 +1873,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_YUYV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1848,7 +1885,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_IYUV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1860,7 +1897,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV12, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+2) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1872,7 +1909,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV21, pix_img1_u8, pix_img1_u8+2, pix_img1_u8+1) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
@@ -1884,7 +1921,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -1896,7 +1933,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -1908,7 +1945,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = ((pix_img1_u8 + 1) * width * height) + (2 * (pix_img1_u8) * (width/2) * (height/2));
 					out_buf_type = 4;
 					break;
 				}
@@ -1920,13 +1957,13 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height;
+					expected_image_sum = (pix_img1_u8 * width * height) + (2 * (1+pix_img1_u8) * (width/2) * (height/2));
 					out_buf_type = 4;
 					break;
 				}
 				case 121:
 				{
-				// test_case_name  = " agoKernel_ChannelConvert_NV12_RGB"
+				// test_case_name  = " agoKernel_ColorConvert_NV12_RGB"
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGB);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
@@ -1938,7 +1975,7 @@ int main(int argc, const char ** argv)
 				}
 				case 122:
 				{
-				// test_case_name  = " agoKernel_ChannelConvert_NV12_RGBX"
+				// test_case_name  = " agoKernel_ColorConvert_NV12_RGBX"
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
@@ -2243,7 +2280,7 @@ int main(int argc, const char ** argv)
 				}
 				// U8 input
 				else if(
-					(case_number == 45) || (case_number == 47)  || (case_number == 88) ||  // over here || (case_number == 67)
+					(case_number == 45) || (case_number == 47)  || (case_number == 88) ||
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
@@ -2399,7 +2436,7 @@ int main(int argc, const char ** argv)
 		hip_addr_uint8_yuyv_uyuv_out.dim_x = width/2;
 		hip_addr_uint8_yuyv_uyuv_out.dim_y = height;
 		hip_addr_uint8_yuyv_uyuv_out.stride_x = 1;
-		hip_addr_uint8_yuyv_uyuv_out.stride_y = (((width/2)+3)&~3); // Changed
+		hip_addr_uint8_yuyv_uyuv_out.stride_y = ((width+3)&~3); // Changed
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
@@ -3216,9 +3253,9 @@ int main(int argc, const char ** argv)
 				case 67:
 				{
 					// test_case_name = "agoKernel_ChannelCopy_U8_U8";
-					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-					node = vxChannelExtractNode(graph, img1, 0, img_out);
+					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_Y, img_out);
 					expected_image_sum = pix_img1_u8 * width * height;
 					out_buf_type = 0;
 					break;
@@ -3235,7 +3272,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
-					expected_image_sum = pix_img1_u8 * width* height; //Needs Change
+					expected_image_sum = pix_img1_u8 * width* height;
 					out_buf_type = 0;
 					break;
 				}
@@ -3245,7 +3282,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_Y, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8+1) * width * height; 
 					out_buf_type = 0;
 					break;
 				}
@@ -3255,7 +3292,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_rgb_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_R, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = pix_img1_u8 * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -3265,7 +3302,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_rgb_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_G, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8+1) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -3275,7 +3312,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_rgb_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, (vx_enum)VX_CHANNEL_B, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8+2) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -3295,7 +3332,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_yuyv_uyuv_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_U, img_out);
-					expected_image_sum = pix_img1_u8 * width/2 * height;
+					expected_image_sum = (pix_img1_u8+1) * width/2 * height;
 					out_buf_type = 2;
 					break;
 				}
@@ -3305,7 +3342,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_yuyv_uyuv_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_V, img_out);
-					expected_image_sum = pix_img1_u8 * width/2 * height;
+					expected_image_sum = (pix_img1_u8) * width/2 * height;
 					out_buf_type = 2;
 					break;
 				}
@@ -3315,7 +3352,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_yuyv_uyuv_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxChannelExtractNode(graph, img1, VX_CHANNEL_V, img_out);
-					expected_image_sum = pix_img1_u8 * width/2 * height;
+					expected_image_sum = (pix_img1_u8+1) * width/2 * height;
 					out_buf_type = 2;
 					break;
 				}
@@ -3482,7 +3519,7 @@ int main(int argc, const char ** argv)
 				}
 				case 105:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGB_RGBX"
+					// test_case_name  = " agoKernel_ColorConvert_RGB_RGBX"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
@@ -3492,57 +3529,57 @@ int main(int argc, const char ** argv)
 				}
 				case 106:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGB_UYVY"
+					// test_case_name  = " agoKernel_ColorConvert_RGB_UYVY"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
-					out_buf_type = 0;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_UYVY, pix_img1_u8+1, pix_img1_u8, pix_img1_u8)) * width * height;
+					out_buf_type = 3;
 					break;
 				}
 				case 107:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGB_YUYV"
+					// test_case_name  = " agoKernel_ColorConvert_RGB_YUYV"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
-					out_buf_type = 0;
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_YUYV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1)) * width * height;
+					out_buf_type = 3;
 					break;
 				}
 				case 108:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGB_IYUV"
+					// test_case_name  = " agoKernel_ColorConvert_RGB_IYUV"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_IYUV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1)) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 109:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGB_NV12"
+					// test_case_name  = " agoKernel_ColorConvert_RGB_NV12"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV12, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+2)) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 110:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGB_NV21"
+					// test_case_name  = " agoKernel_ColorConvert_RGB_NV21"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV21, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV21, pix_img1_u8, pix_img1_u8+2, pix_img1_u8+1)) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 111:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGBX_RGB"
+					// test_case_name  = " agoKernel_ColorConvert_RGBX_RGB"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
@@ -3552,71 +3589,71 @@ int main(int argc, const char ** argv)
 				}
 				case 112:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGBX_UYVY"
+					// test_case_name  = " agoKernel_ColorConvert_RGBX_UYVY"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_UYVY, pix_img1_u8+1, pix_img1_u8, pix_img1_u8) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 113:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGBX_YUYV"
+					// test_case_name  = " agoKernel_ColorConvert_RGBX_YUYV"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_YUYV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 114:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGBX_IYUV"
+					// test_case_name  = " agoKernel_ColorConvert_RGBX_IYUV"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_IYUV, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+1) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 115:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGBX_NV12"
+					// test_case_name  = " agoKernel_ColorConvert_RGBX_NV12"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV12, pix_img1_u8, pix_img1_u8+1, pix_img1_u8+2) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 116:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_RGBX_NV21"
+					// test_case_name  = " agoKernel_ColorConvert_RGBX_NV21"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV21, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (RGBsum_YUV(VX_DF_IMAGE_NV21, pix_img1_u8, pix_img1_u8+2, pix_img1_u8+1) + 255) * width * height;
 					out_buf_type = 3;
 					break;
 				}
 				case 117:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_IYUV_RGB"
+					// test_case_name  = " agoKernel_ColorConvert_IYUV_RGB"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
 				case 118:
 				{
-					// test_case_name  = " agoKernel_ChannelConvert_IYUV_RGBX"
+					// test_case_name  = " agoKernel_ColorConvert_IYUV_RGBX"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -3626,7 +3663,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_UYVY, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = ((pix_img1_u8 + 1) * width * height) + (2 * (pix_img1_u8) * (width/2) * (height/2));
 					out_buf_type = 4;
 					break;
 				}
@@ -3636,13 +3673,13 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUYV, &hip_addr_uint8_yuyv_uyuv_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 * width * height; //Needs Change
+					expected_image_sum = (pix_img1_u8 * width * height) + (2 * (1+pix_img1_u8) * (width/2) * (height/2));
 					out_buf_type = 4;
 					break;
 				}
 				case 121:
 				{
-				// test_case_name  = " agoKernel_ChannelConvert_NV12_RGB"
+				// test_case_name  = " agoKernel_ColorConvert_NV12_RGB"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
@@ -3652,7 +3689,7 @@ int main(int argc, const char ** argv)
 				}
 				case 122:
 				{
-				// test_case_name  = " agoKernel_ChannelConvert_NV12_RGBX"
+				// test_case_name  = " agoKernel_ColorConvert_NV12_RGBX"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
@@ -3954,7 +3991,7 @@ int main(int argc, const char ** argv)
 				}
 				// U8 input
 				else if (
-					(case_number == 45) || (case_number == 47) || (case_number == 88) || (case_number == 67) ||
+					(case_number == 45) || (case_number == 47) || (case_number == 88) || 
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
@@ -4021,8 +4058,8 @@ int main(int argc, const char ** argv)
 				}
 				// Planar Image Input - NV12, NV21, IYUV inputs
 				else if(
-					(case_number == 108) || (case_number == 109) || (case_number == 110) || (case_number == 114) || 
-					(case_number == 115) || (case_number == 116)
+					(case_number == 67) || (case_number == 108) || (case_number == 109) || (case_number == 110) || 
+					(case_number == 114) || (case_number == 115) || (case_number == 116)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPlanarImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -4169,7 +4206,7 @@ int main(int argc, const char ** argv)
 		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
 #endif
 		for (int i = 0; i < heightOut; i++)
-			for (int j = 0; j < widthOut; j++)
+			for (int j = 0; j < widthOut*stride_x_bytes; j+=stride_x_bytes)
 			{
 				for (int pixel_stride=0; pixel_stride<stride_x_bytes; pixel_stride++)
 					returned_image_sum += out_buf_uint8[i * stride_y_pixels + j + pixel_stride];

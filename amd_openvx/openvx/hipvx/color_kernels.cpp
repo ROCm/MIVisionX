@@ -390,7 +390,7 @@ Hip_ChannelExtract_U8_U32_Pos0(
 
     // unsigned char
     unsigned int dstIdx = y * (dstImageStrideInBytes) + x;
-    unsigned int src1Idx = y * (srcImage1StrideInBytes) + x * 4;
+    unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
 
     pDstImage[dstIdx] = pSrcImage1[src1Idx];
 }
@@ -997,8 +997,7 @@ Hip_ColorConvert_RGBX_RGB(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight))
-        return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 4);
     unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 3);
 
@@ -1044,8 +1043,7 @@ Hip_ColorConvert_RGB_RGBX(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight))
-        return;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 3);
     unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
 
@@ -1090,28 +1088,27 @@ Hip_ColorConvert_RGB_YUYV(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight))
-        return;
-    unsigned int dstIdx = y * (dstImageStrideInBytes) + x * 6;
-    unsigned int src1Idx = y * (srcImage1StrideInBytes) + x * 4;
+    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 6);
+    unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
 
     float Ypix1, Ypix2, Upix, Vpix, Rpix, Gpix, Bpix;
     Ypix1 = (float )pSrcImage1[src1Idx];
-    Upix = (float )pSrcImage1[src1Idx + 1] - 128.0;
+    Upix = (float )pSrcImage1[src1Idx + 1] - 128.0f;
     Ypix2 = (float )pSrcImage1[src1Idx + 2];
-    Vpix = (float )pSrcImage1[src1Idx + 3] - 128.0;
+    Vpix = (float )pSrcImage1[src1Idx + 3] - 128.0f;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556f), 0.0f), 255.0f);
 
     pDstImage[dstIdx] = Rpix;
     pDstImage[dstIdx+1] = Gpix;
     pDstImage[dstIdx+2] = Bpix;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556f), 0.0f), 255.0f);
 
     pDstImage[dstIdx+3] = Rpix;
     pDstImage[dstIdx+4] = Gpix;
@@ -1124,7 +1121,7 @@ int HipExec_ColorConvert_RGB_YUYV(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = dstHeight;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
 
@@ -1156,28 +1153,27 @@ Hip_ColorConvert_RGB_UYVY(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight))
-        return;
-    unsigned int dstIdx = y * (dstImageStrideInBytes) + x * 6;
-    unsigned int src1Idx = y * (srcImage1StrideInBytes) + x * 4;
+    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 6);
+    unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
 
     float Ypix1, Ypix2, Upix, Vpix, Rpix, Gpix, Bpix;
-    Upix  = (float )pSrcImage1[src1Idx] - 128.0;
+    Upix  = (float )pSrcImage1[src1Idx] - 128.0f;
     Ypix1 = (float )pSrcImage1[src1Idx + 1] ;
-    Vpix  = (float )pSrcImage1[src1Idx + 2] - 128.0;
+    Vpix  = (float )pSrcImage1[src1Idx + 2] - 128.0f;
     Ypix2 = (float )pSrcImage1[src1Idx + 3] ;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556f), 0.0f), 255.0f);
 
     pDstImage[dstIdx] = Rpix;
     pDstImage[dstIdx+1] = Gpix;
     pDstImage[dstIdx+2] = Bpix;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556f), 0.0f), 255.0f);
     
 
     pDstImage[dstIdx+3] = Rpix;
@@ -1192,7 +1188,7 @@ int HipExec_ColorConvert_RGB_UYVY(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = dstHeight;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
 
@@ -1223,29 +1219,28 @@ Hip_ColorConvert_RGBX_YUYV(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight))
-        return;
+    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 8);
     unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
 
     float Ypix1, Ypix2, Upix, Vpix, Rpix, Gpix, Bpix;
     Ypix1 = (float )pSrcImage1[src1Idx];
-    Upix = (float )pSrcImage1[src1Idx + 1] - 128.0;
+    Upix = (float )pSrcImage1[src1Idx + 1] - 128.0f;
     Ypix2 = (float )pSrcImage1[src1Idx + 2];
-    Vpix = (float )pSrcImage1[src1Idx + 3] - 128.0;
+    Vpix = (float )pSrcImage1[src1Idx + 3] - 128.0f;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556f), 0.0f), 255.0f);
 
     pDstImage[dstIdx] = Rpix;
     pDstImage[dstIdx+1] = Gpix;
     pDstImage[dstIdx+2] = Bpix;
     pDstImage[dstIdx+3] = 255;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556f), 0.0f), 255.0f);
 
     pDstImage[dstIdx+4] = Rpix;
     pDstImage[dstIdx+5] = Gpix;
@@ -1259,7 +1254,7 @@ int HipExec_ColorConvert_RGBX_YUYV(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = dstHeight;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
 
@@ -1290,28 +1285,28 @@ Hip_ColorConvert_RGBX_UYVY(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 8);
     unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
 
     float Ypix1, Ypix2, Upix, Vpix, Rpix, Gpix, Bpix;
-    Upix  = (float )pSrcImage1[src1Idx] - 128.0;
+    Upix  = (float )pSrcImage1[src1Idx] - 128.0f;
     Ypix1 = (float )pSrcImage1[src1Idx + 1] ;
-    Vpix  = (float )pSrcImage1[src1Idx + 2] - 128.0;
+    Vpix  = (float )pSrcImage1[src1Idx + 2] - 128.0f;
     Ypix2 = (float )pSrcImage1[src1Idx + 3] ;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix1 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix1 + (Upix * 1.8556f), 0.0f), 255.0f);
 
     pDstImage[dstIdx] = Rpix;
     pDstImage[dstIdx+1] = Gpix;
     pDstImage[dstIdx+2] = Bpix;
     pDstImage[dstIdx+3] = 255;
 
-    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748), 0.0f), 255.0);
-    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873) - (Vpix * 0.4681), 0.0), 255.0);
-    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556), 0.0), 255.0);
+    Rpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Vpix * 1.5748f), 0.0f), 255.0f);
+    Gpix = FLOAT_MIN(FLOAT_MAX(Ypix2 - (Upix * 0.1873f) - (Vpix * 0.4681f), 0.0f), 255.0f);
+    Bpix = FLOAT_MIN(FLOAT_MAX(Ypix2 + (Upix * 1.8556f), 0.0f), 255.0f);
     
 
     pDstImage[dstIdx+4] = Rpix;
@@ -1326,7 +1321,7 @@ int HipExec_ColorConvert_RGBX_UYVY(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = dstHeight;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes);
 
@@ -1358,7 +1353,7 @@ Hip_ColorConvert_RGB_IYUV(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
     unsigned int dstIdx = y * (dstImageStrideInBytes<<1) + (x * 6);
     unsigned int srcYIdx = y * (srcYImageStrideInBytes<<1) + (x * 2);
     unsigned int srcUIdx = y * (srcUImageStrideInBytes) + x;
@@ -1403,7 +1398,7 @@ int HipExec_ColorConvert_RGB_IYUV(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcYImageStrideInBytes = %d srcUImageStrideInBytes = %d srcVImageStrideInBytes = %d\n", 
                     dstWidth, dstHeight, dstImageStrideInBytes, srcYImageStrideInBytes, srcUImageStrideInBytes, srcVImageStrideInBytes);
@@ -1438,9 +1433,9 @@ Hip_ColorConvert_RGB_NV12(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx = y * (2*dstImageStrideInBytes) + (x * 6);
-    unsigned int srcLumaIdx = y * (2*srcLumaImageStrideInBytes) + (x * 2);
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes<<1) + (x * 6);
+    unsigned int srcLumaIdx = y * (srcLumaImageStrideInBytes<<1) + (x * 2);
     unsigned int srcChromaIdx = y * (srcChromaImageStrideInBytes) + (x * 2);
 
     float Ypix, Rpix, Gpix, Bpix;
@@ -1482,7 +1477,7 @@ int HipExec_ColorConvert_RGB_NV12(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcLumaImageStrideInBytes = %d , srcChromaImageStrideInBytes = %d \n", dstWidth, dstHeight, dstImageStrideInBytes, srcLumaImageStrideInBytes, srcChromaImageStrideInBytes);
 
@@ -1515,9 +1510,9 @@ Hip_ColorConvert_RGB_NV21(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx = y * (2*dstImageStrideInBytes) + (x * 6);
-    unsigned int srcLumaIdx = y * (2*srcLumaImageStrideInBytes) + (x * 2);
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes<<1) + (x * 6);
+    unsigned int srcLumaIdx = y * (srcLumaImageStrideInBytes<<1) + (x * 2);
     unsigned int srcChromaIdx = y * (srcChromaImageStrideInBytes) + (x * 2);
 
     float Ypix, Rpix, Gpix, Bpix;
@@ -1559,7 +1554,7 @@ int HipExec_ColorConvert_RGB_NV21(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcLumaImageStrideInBytes = %d , srcChromaImageStrideInBytes = %d \n", dstWidth, dstHeight, dstImageStrideInBytes, srcLumaImageStrideInBytes, srcChromaImageStrideInBytes);
 
@@ -1592,7 +1587,7 @@ Hip_ColorConvert_RGBX_IYUV(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
     unsigned int dstIdx = y * (dstImageStrideInBytes<<1) + (x * 8);
     unsigned int srcYIdx = y * (srcYImageStrideInBytes<<1) + (x * 2);
     unsigned int srcUIdx = y * (srcUImageStrideInBytes) + x;
@@ -1641,7 +1636,7 @@ int HipExec_ColorConvert_RGBX_IYUV(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 3)>>1 , globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcYImageStrideInBytes = %d srcUImageStrideInBytes = %d srcVImageStrideInBytes = %d\n", 
                     dstWidth, dstHeight, dstImageStrideInBytes, srcYImageStrideInBytes, srcUImageStrideInBytes, srcVImageStrideInBytes);
@@ -1676,9 +1671,9 @@ Hip_ColorConvert_RGBX_NV12(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx = y * (2*dstImageStrideInBytes) + (x * 8);
-    unsigned int srcLumaIdx = y * (2*srcLumaImageStrideInBytes) + (x * 2);
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes<<1) + (x * 8);
+    unsigned int srcLumaIdx = y * (srcLumaImageStrideInBytes<<1) + (x * 2);
     unsigned int srcChromaIdx = y * (srcChromaImageStrideInBytes) + (x * 2);
 
     float Ypix, Rpix, Gpix, Bpix;
@@ -1724,7 +1719,7 @@ int HipExec_ColorConvert_RGBX_NV12(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcLumaImageStrideInBytes = %d , srcChromaImageStrideInBytes = %d \n", dstWidth, dstHeight, dstImageStrideInBytes, srcLumaImageStrideInBytes, srcChromaImageStrideInBytes);
 
@@ -1757,9 +1752,9 @@ Hip_ColorConvert_RGBX_NV21(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx = y * (2*dstImageStrideInBytes) + (x * 8);
-    unsigned int srcLumaIdx = y * (2*srcLumaImageStrideInBytes) + (x * 2);
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes<<1) + (x * 8);
+    unsigned int srcLumaIdx = y * (srcLumaImageStrideInBytes<<1) + (x * 2);
     unsigned int srcChromaIdx = y * (srcChromaImageStrideInBytes) + (x * 2);
 
     float Ypix, Rpix, Gpix, Bpix;
@@ -1805,7 +1800,7 @@ int HipExec_ColorConvert_RGBX_NV21(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageStrideInBytes = %d, srcLumaImageStrideInBytes = %d , srcChromaImageStrideInBytes = %d \n", dstWidth, dstHeight, dstImageStrideInBytes, srcLumaImageStrideInBytes, srcChromaImageStrideInBytes);
 
@@ -1829,7 +1824,6 @@ int HipExec_ColorConvert_RGBX_NV21(
 }
 
 __global__ void __attribute__((visibility("default")))
-
 Hip_ColorConvert_NV12_RGB(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned char *pDstImageLuma, unsigned int dstImageLumaStrideInBytes,
@@ -1838,11 +1832,11 @@ Hip_ColorConvert_NV12_RGB(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight))
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight))
         return;
-    unsigned int dstIdxLuma = y * (dstImageLumaStrideInBytes*2) + x * 2;
+    unsigned int dstIdxLuma = y * (dstImageLumaStrideInBytes<<1) + x * 2;
     unsigned int dstIdxChroma = y * (dstImageChromaStrideInBytes ) + x *2;
-    unsigned int src1Idx = y * (srcImage1StrideInBytes*2) + x * 6;
+    unsigned int src1Idx = y * (srcImage1StrideInBytes<<1) + x * 6;
 
     float R, G, B, U , V;
     // //first row
@@ -1896,7 +1890,7 @@ int HipExec_ColorConvert_NV12_RGB(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageChromaStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageChromaStrideInBytes, srcImage1StrideInBytes);
 
@@ -1930,11 +1924,11 @@ Hip_ColorConvert_NV12_RGBX(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight))
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight))
         return;
-    unsigned int dstIdxLuma = y * (dstImageLumaStrideInBytes*2) + x * 2;
+    unsigned int dstIdxLuma = y * (dstImageLumaStrideInBytes<<1) + x * 2;
     unsigned int dstIdxChroma = y * (dstImageChromaStrideInBytes ) + x *2;
-    unsigned int src1Idx = y * (srcImage1StrideInBytes*2) + x * 8;
+    unsigned int src1Idx = y * (srcImage1StrideInBytes<<1) + x * 8;
 
     float R, G, B, U , V;
     // //first row
@@ -1988,7 +1982,7 @@ int HipExec_ColorConvert_NV12_RGBX(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstImageChromaStrideInBytes = %d, srcImage1StrideInBytes = %d\n", dstWidth, dstHeight, dstImageChromaStrideInBytes, srcImage1StrideInBytes);
 
@@ -2022,11 +2016,11 @@ Hip_ColorConvert_IYUV_RGB(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstYIdx = y * (2 * dstYImageStrideInBytes) + (x * 2);
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
+    unsigned int dstYIdx = y * (dstYImageStrideInBytes<<1) + (x * 2);
     unsigned int dstUIdx = y * (dstUImageStrideInBytes) + x;
     unsigned int dstVIdx = y * (dstVImageStrideInBytes) + x;
-    unsigned int srcIdx = y * (2 * srcImageStrideInBytes) + (x * 6);
+    unsigned int srcIdx = y * (srcImageStrideInBytes<<1) + (x * 6);
 
     float Upix, Vpix, Rpix, Gpix, Bpix;
     
@@ -2078,7 +2072,7 @@ int HipExec_ColorConvert_IYUV_RGB(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstYImageStrideInBytes = %d, dstUImageStrideInBytes = %d, dstVImageStrideInBytes = %d srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstYImageStrideInBytes, dstUImageStrideInBytes, dstVImageStrideInBytes, srcImageStrideInBytes);
 
@@ -2113,11 +2107,11 @@ Hip_ColorConvert_IYUV_RGBX(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstYIdx = y * (dstYImageStrideInBytes + dstYImageStrideInBytes) + (x * 2);
+    if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
+    unsigned int dstYIdx = y * (dstYImageStrideInBytes<<1) + (x * 2);
     unsigned int dstUIdx = y * (dstUImageStrideInBytes) + x;
     unsigned int dstVIdx = y * (dstVImageStrideInBytes) + x;
-    unsigned int srcIdx = y * (srcImageStrideInBytes + srcImageStrideInBytes) + (x * 8);
+    unsigned int srcIdx = y * (srcImageStrideInBytes<<1) + (x * 8);
 
     float Upix, Vpix, Rpix, Gpix, Bpix;
     
@@ -2169,7 +2163,7 @@ int HipExec_ColorConvert_IYUV_RGBX(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstYImageStrideInBytes = %d, dstUImageStrideInBytes = %d, dstVImageStrideInBytes = %d srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstYImageStrideInBytes, dstUImageStrideInBytes, dstVImageStrideInBytes, srcImageStrideInBytes);
 
@@ -2208,10 +2202,10 @@ Hip_FormatConvert_IYUV_UYVY(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
-    unsigned int dstYIdx = y * (dstYImageStrideInBytes + dstYImageStrideInBytes) + (x * 2);
+    unsigned int dstYIdx = y * (dstYImageStrideInBytes<<1) + (x * 2);
     unsigned int dstUIdx = y * (dstUImageStrideInBytes) + x;
     unsigned int dstVIdx = y * (dstVImageStrideInBytes) + x;
-    unsigned int srcIdx = y * (srcImageStrideInBytes + srcImageStrideInBytes) + (x * 4);
+    unsigned int srcIdx = y * (srcImageStrideInBytes<<1) + (x * 4);
 
     pDstUImage[dstUIdx] = (pSrcImage[srcIdx] + pSrcImage[srcIdx + srcImageStrideInBytes]) >> 1;
     pDstYImage[dstYIdx] = pSrcImage[srcIdx + 1];
@@ -2230,7 +2224,7 @@ int HipExec_FormatConvert_IYUV_UYVY(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstYImageStrideInBytes = %d, dstUImageStrideInBytes = %d, dstVImageStrideInBytes = %d srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstYImageStrideInBytes, dstUImageStrideInBytes, dstVImageStrideInBytes, srcImageStrideInBytes);
 
@@ -2266,10 +2260,10 @@ Hip_FormatConvert_IYUV_YUYV(
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*2 >= dstWidth) || (y*2 >= dstHeight)) return;
-    unsigned int dstYIdx = y * (dstYImageStrideInBytes + dstYImageStrideInBytes) + (x * 2);
+    unsigned int dstYIdx = y * (dstYImageStrideInBytes<<1) + (x * 2);
     unsigned int dstUIdx = y * (dstUImageStrideInBytes) + x;
     unsigned int dstVIdx = y * (dstVImageStrideInBytes) + x;
-    unsigned int srcIdx = y * (srcImageStrideInBytes + srcImageStrideInBytes) + (x * 4);
+    unsigned int srcIdx = y * (srcImageStrideInBytes<<1) + (x * 4);
 
     pDstYImage[dstYIdx] = pSrcImage[srcIdx];
     pDstYImage[dstYIdx + dstYImageStrideInBytes] = pSrcImage[srcIdx + srcImageStrideInBytes];
@@ -2288,7 +2282,7 @@ int HipExec_FormatConvert_IYUV_YUYV(
 {
     hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
 
     printf("\ndstWidth = %d, dstHeight = %d\ndstYImageStrideInBytes = %d, dstUImageStrideInBytes = %d, dstVImageStrideInBytes = %d srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstYImageStrideInBytes, dstUImageStrideInBytes, dstVImageStrideInBytes, srcImageStrideInBytes);
 

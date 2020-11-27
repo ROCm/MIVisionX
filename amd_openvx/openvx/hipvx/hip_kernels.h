@@ -698,6 +698,18 @@ int HipExec_ColorConvert_IYUV_RGBX(
     vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
+int HipExec_FormatConvert_NV12_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pDstLumaImage, vx_uint32 dstLumaImageStrideInBytes,
+    vx_uint8 *pDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
+    const vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_FormatConvert_NV12_YUYV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pDstLumaImage, vx_uint32 dstLumaImageStrideInBytes,
+    vx_uint8 *pDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
+    const vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes
+    );
 int HipExec_FormatConvert_IYUV_UYVY(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
@@ -825,7 +837,7 @@ int HipExec_Remap_U8_U8_Nearest(
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     vx_uint32 srcWidth, vx_uint32 srcHeight,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    int *map, vx_uint32 mapStrideInBytes);
+    ago_coord2d_ushort_t *map, vx_uint32 mapStrideInBytes);
 int HipExec_Remap_U8_U8_Bilinear(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

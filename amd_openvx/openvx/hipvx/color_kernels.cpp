@@ -376,19 +376,7 @@ Hip_ChannelExtract_U8_U32_Pos0(
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight))
         return;
-    //unsigned int
-    // unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    // unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x * 4;
 
-    // float4 dst1 = uchars_to_float4(pSrcImage1[src1Idx]) ;
-    // float4 dst2 = uchars_to_float4(pSrcImage1[src1Idx+1]);
-    // float4 dst3 = uchars_to_float4(pSrcImage1[src1Idx+2] )  ;
-    // float4 dst4 = uchars_to_float4(pSrcImage1[src1Idx+3]);
-
-    // float4 dst = make_float4(dst1.x,dst2.x,dst3.x,dst4.x);
-    // pDstImage[dstIdx] = float4_to_uchars(dst);
-
-    // unsigned char
     unsigned int dstIdx = y * (dstImageStrideInBytes) + x;
     unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
 
@@ -2189,6 +2177,115 @@ int HipExec_ColorConvert_IYUV_RGBX(
 // ----------------------------------------------------------------------------
 // VxFormatConvert kernels for hip backend
 // ----------------------------------------------------------------------------
+
+__global__ void __attribute__((visibility("default")))
+Hip_FormatConvert_NV12_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstLumaImage, unsigned int dstLumaImageStrideInBytes,
+    unsigned char *pDstChromaImage, unsigned int dstChromaImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdxLuma = y * (2 * dstLumaImageStrideInBytes) + (x * 2);
+    unsigned int dstIdxChroma = y * (dstChromaImageStrideInBytes) + (x * 2);
+    unsigned int srcIdx = y * (2 * srcImageStrideInBytes) + (x * 4);
+
+    pDstChromaImage[dstIdxChroma] = (pSrcImage[srcIdx] + pSrcImage[srcIdx + srcImageStrideInBytes]) / 2;  //U
+    pDstLumaImage[dstIdxLuma] = pSrcImage[srcIdx + 1];                                                    //Y
+    pDstLumaImage[dstIdxLuma + dstLumaImageStrideInBytes] = pSrcImage[srcIdx + srcImageStrideInBytes + 1] ;// Y next Row
+    pDstChromaImage[dstIdxChroma + 1] = (pSrcImage[srcIdx + 2] + pSrcImage[srcIdx + srcImageStrideInBytes + 2]) / 2; //V
+    pDstLumaImage[dstIdxLuma + 1] = pSrcImage[srcIdx + 3];                                                 //Y
+    pDstLumaImage[dstIdxLuma + dstLumaImageStrideInBytes + 1] = pSrcImage[srcIdx + srcImageStrideInBytes + 3]  ;// Y next Row
+
+}
+int HipExec_FormatConvert_NV12_UYVY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pDstLumaImage, vx_uint32 dstLumaImageStrideInBytes,
+    vx_uint8 *pDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
+    const vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+
+    printf("\ndstWidth = %d, dstHeight = %d\ndstLumaImageStrideInBytes = %d, srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstLumaImageStrideInBytes , srcImageStrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_FormatConvert_NV12_UYVY,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pDstLumaImage, dstLumaImageStrideInBytes,
+                        (unsigned char *)pDstChromaImage, dstChromaImageStrideInBytes,
+                       (const unsigned char *)pSrcImage, srcImageStrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_FormatConvert_NV12_UYVY: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_FormatConvert_NV12_YUYV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstLumaImage, unsigned int dstLumaImageStrideInBytes,
+    unsigned char *pDstChromaImage, unsigned int dstChromaImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdxLuma = y * (2 * dstLumaImageStrideInBytes) + (x * 2);
+    unsigned int dstIdxChroma = y * (dstChromaImageStrideInBytes) + (x * 2);
+    unsigned int srcIdx = y * (2 * srcImageStrideInBytes) + (x * 4);
+
+    pDstLumaImage[dstIdxLuma] = pSrcImage[srcIdx ];   //Y
+    pDstLumaImage[dstIdxLuma + dstLumaImageStrideInBytes] =  pSrcImage[srcIdx + srcImageStrideInBytes]; //Y next Row
+    pDstChromaImage[dstIdxChroma] = (pSrcImage[srcIdx + 1] + pSrcImage[srcIdx + srcImageStrideInBytes + 1]) / 2;  //U
+    pDstLumaImage[dstIdxLuma + 1] = pSrcImage[srcIdx + 2];   //Y
+    pDstLumaImage[dstIdxLuma + dstLumaImageStrideInBytes + 1] =  pSrcImage[srcIdx + srcImageStrideInBytes + 2]; //Y next Row
+    pDstChromaImage[dstIdxChroma + 1] = (pSrcImage[srcIdx + 3] + pSrcImage[srcIdx + srcImageStrideInBytes + 3]) / 2;  //V
+
+
+}
+int HipExec_FormatConvert_NV12_YUYV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pDstLumaImage, vx_uint32 dstLumaImageStrideInBytes,
+    vx_uint8 *pDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
+    const vx_uint8 *pSrcImage, vx_uint32 srcImageStrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth), globalThreads_y = dstHeight;
+
+    printf("\ndstWidth = %d, dstHeight = %d\ndstLumaImageStrideInBytes = %d, srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstLumaImageStrideInBytes , srcImageStrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_FormatConvert_NV12_YUYV,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pDstLumaImage, dstLumaImageStrideInBytes,
+                        (unsigned char *)pDstChromaImage, dstChromaImageStrideInBytes,
+                       (const unsigned char *)pSrcImage, srcImageStrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_FormatConvert_NV12_YUYV: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
 
 __global__ void __attribute__((visibility("default")))
 Hip_FormatConvert_IYUV_UYVY(

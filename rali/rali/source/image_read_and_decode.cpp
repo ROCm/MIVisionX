@@ -154,28 +154,20 @@ ImageReadAndDecode::load(unsigned char* buff,
 
         _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
         _image_names[file_counter] = _reader->id();
+        _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
+        std::vector<float> coords_buf(4);
+        coords_buf[0] = _CropCord->crop_x;
+        coords_buf[1] = _CropCord->crop_y;
+        coords_buf[2] = _CropCord->crop_width;
+        coords_buf[3] = _CropCord->crop_height;
+        _bbox_coords.push_back(coords_buf);
+        coords_buf.clear();
         _reader->close();
         _compressed_image_size[file_counter] = fsize;
         file_counter++;
     }
 
     _file_load_time.end();// Debug timing
-    // std::cerr<<"\n <<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>";
-    for (uint i = 0; i < _batch_size; i++)
-    {
-        std::string temp = _image_names[i];
-        _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);
-        std::vector<float> coords_buf(4);
-        coords_buf[0] = _CropCord->crop_x;
-        coords_buf[1] = _CropCord->crop_y;
-        coords_buf[2] = _CropCord->crop_width;
-        coords_buf[3] = _CropCord->crop_height;
-        // std::cerr<<"\n Image Names:: "<<_image_names[i];
-        // std::cerr<<"\n crop dim:: "<<coords_buf[0]<<"\t "<<coords_buf[1]<<"\t "<<coords_buf[2]<<"\t "<<coords_buf[3];
-        _bbox_coords.push_back(coords_buf);
-        coords_buf.clear();
-    }
-    // std::cerr<<"\n <<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>>";
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     for(size_t i = 0; i < _batch_size; i++)
@@ -208,13 +200,6 @@ ImageReadAndDecode::load(unsigned char* buff,
         if(_decoder[i]->is_partial_decoder())
         {
             temp = _bbox_coords[i];
-            if((temp[0] + temp[2]) > original_width || (temp[1] +temp[3]) > original_height)
-            {   
-            //    temp[2] /= 2;
-               temp[2] = original_width - temp[0] - 1;
-            //    temp[3] /= 2;
-               temp[3] = original_height - temp[1] - 1;
-            }
             _decoder[i]->set_bbox_coords(temp);
         }
         if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
@@ -236,7 +221,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         actual_width[i] = _original_width[i];
         actual_height[i] = _original_height[i];
     }
-
+    _bbox_coords.clear();
     _decode_time.end();// Debug timing
     return LoaderModuleStatus::OK;
 }

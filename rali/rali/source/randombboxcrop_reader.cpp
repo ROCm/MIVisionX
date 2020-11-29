@@ -199,7 +199,7 @@ void RandomBBoxCropReader::read_all()
         crop_box.w = _crop_width_val[i];
         crop_box.x = _x1_val[i];
         crop_box.y = _y1_val[i];
-        _total_num_of_attempts = 10;
+        // _total_num_of_attempts = 10;
         // Got BBOX Information of the image, try to get a crop
         while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
         {
@@ -272,9 +272,9 @@ void RandomBBoxCropReader::read_all()
                     jth_box.w = coords_buf[m + 2];
                     jth_box.h = coords_buf[m + 3];
                     float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
-                    if (bb_iou < min_iou)
+                    if (bb_iou > min_iou)
                     {
-                        invalid_bboxes = true;
+                        invalid_bboxes = false;
                         break;
                     }
                 }
@@ -295,9 +295,9 @@ void RandomBBoxCropReader::read_all()
                     jth_box.w = coords_buf[m + 2];
                     jth_box.h = coords_buf[m + 3];
                     float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
-                    if (bb_iou < min_iou)
+                    if (bb_iou > min_iou)
                     {
-                        invalid_bboxes = true;
+                        invalid_bboxes = false;
                         break;
                     }
                 }
@@ -321,12 +321,19 @@ void RandomBBoxCropReader::read_all()
             if (valid_bbox_count == 0)
                 continue;
             crop_success = true;
-        }                                    // while loop
-        std::cerr<<"\n**************************";
-        std::cerr<<"\n Image Name:: "<<image_name;
-        std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
-        std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
-        std::cerr<<"\n**************************";
+        }                                   // while loop
+        if(!crop_success)
+        {
+            crop_box.x = 0;
+            crop_box.y = 0;
+            crop_box.w = in_width[i];
+            crop_box.h = in_height[i];
+        }
+        // std::cerr<<"\n**************************";
+        // std::cerr<<"\n Image Name:: "<<image_name;
+        // std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
+        // std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
+        // std::cerr<<"\n**************************";
         add(image_name, crop_box);
     }
     // print_map_contents();

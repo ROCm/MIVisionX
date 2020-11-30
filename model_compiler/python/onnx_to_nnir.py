@@ -102,7 +102,7 @@ onnx2ir_data_type = [
 ]
 
 def onnx_name_to_ir_name(name):
-    return '_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':'))
+    return '_'.join('_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':')).split('.'))
 
 def onnx_node_to_ir_attr(node):
     global onnx2ir_attr

@@ -81,6 +81,7 @@ To convert an ONNX model into AMD NNIR model:
 
 OPTIONS:
 	--input_dims n,c,h,w
+	--append_node_type 0/1 [default: 0; appends node type name to output names]
 ```
 
 #### NNEF

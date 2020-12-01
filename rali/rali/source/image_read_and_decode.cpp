@@ -154,14 +154,17 @@ ImageReadAndDecode::load(unsigned char* buff,
 
         _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
         _image_names[file_counter] = _reader->id();
-        _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
-        std::vector<float> coords_buf(4);
-        coords_buf[0] = _CropCord->crop_x;
-        coords_buf[1] = _CropCord->crop_y;
-        coords_buf[2] = _CropCord->crop_width;
-        coords_buf[3] = _CropCord->crop_height;
-        _bbox_coords.push_back(coords_buf);
-        coords_buf.clear();
+        if(_randombboxcrop_meta_data_reader)
+        {
+            _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
+            std::vector<float> coords_buf(4);
+            coords_buf[0] = _CropCord->crop_x;
+            coords_buf[1] = _CropCord->crop_y;
+            coords_buf[2] = _CropCord->crop_width;
+            coords_buf[3] = _CropCord->crop_height;
+            _bbox_coords.push_back(coords_buf);
+            coords_buf.clear();
+        }
         _reader->close();
         _compressed_image_size[file_counter] = fsize;
         file_counter++;
@@ -196,9 +199,9 @@ ImageReadAndDecode::load(unsigned char* buff,
 
         // decode the image and get the actual decoded image width and height
         size_t scaledw, scaledh;
-        std::vector <float> temp;
-        if(_decoder[i]->is_partial_decoder())
+        if(_decoder[i]->is_partial_decoder() && _randombboxcrop_meta_data_reader)
         {
+            std::vector <float> temp;
             temp = _bbox_coords[i];
             _decoder[i]->set_bbox_coords(temp);
         }
@@ -206,7 +209,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,
                                scaledw, scaledh,
-                               decoder_color_format,_decoder_config, temp, keep_original) != Decoder::Status::OK)
+                               decoder_color_format,_decoder_config, keep_original) != Decoder::Status::OK)
         {
             continue;
         }

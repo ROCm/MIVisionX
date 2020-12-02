@@ -70,7 +70,7 @@ MasterGraph::~MasterGraph()
     release();
 }
 
-MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads):
+MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads, RaliTensorDataType output_tensor_data_type):
         _ring_buffer(OUTPUT_RING_BUFFER_DEPTH),
         _output_tensor(nullptr),
         _graph(nullptr),
@@ -79,12 +79,17 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _convert_time("Conversion Time", DBG_TIMING),
         _user_batch_size(batch_size),
         _cpu_threads(cpu_threads),
+#if ENABLE_HIP        
+        _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::HIP : RaliMemType::HOST),
+#else
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
+#endif        
         _process_time("Process Time", DBG_TIMING),
         _first_run(true),
         _processing(false),
         _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
-        _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size)
+        _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size),
+        _out_data_type(output_tensor_data_type)
 {
     try {
         vx_status status;
@@ -95,15 +100,42 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 
         if(affinity == RaliAffinity::GPU)
         {
-            cl_context _cl_context = nullptr;
-            cl_device_id _cl_device_id = nullptr;
-            get_device_and_context(gpu_id, &_cl_context, &_cl_device_id, CL_DEVICE_TYPE_GPU);
-            if((status = vxSetContextAttribute(_context,
-                    VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,
-                    &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
-                THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
+            if (_mem_type == RaliMemType::OCL){
+                cl_context _cl_context = nullptr;
+                cl_device_id _cl_device_id = nullptr;
+                get_device_and_context(gpu_id, &_cl_context, &_cl_device_id, CL_DEVICE_TYPE_GPU);
+                if((status = vxSetContextAttribute(_context,
+                        VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT,
+                        &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
+                    THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
+            }
+#if ENABLE_HIP             
+            else {
+                hipError_t err = hipInit(0);
+                if (err != hipSuccess) {
+                    THROW("ERROR: hipInit(0) => %d (failed)" + TOSTR(err));
+                }
+                int hip_num_devices = -1;
+                hipGetDeviceCount(&hip_num_devices);            
+                if (gpu_id < hip_num_devices) {
+                    //set the device forcontext if specified.
+                    int hipDevice = gpu_id;
+                    if((status = vxSetContextAttribute(_context,
+                            VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE,
+                            &hipDevice, sizeof(hipDevice)) != VX_SUCCESS))
+                        THROW("vxSetContextAttribute for hipDevice failed " + TOSTR(status))
+                }
+            #if 0    // todo:: fall back to cpu if device not available
+                else {
+                    LOG("Found no available gpu device: falling back to cpu")
+                    _affinity = RaliAffinity::CPU;
+                    _mem_type = RaliMemType::HOST;
+                    auto vx_affinity = get_ago_affinity_info(_affinity, 0, -1);
+                }
+            #endif    
+            }
+#endif            
         }
-
 
         // Setting attribute to run on CPU or GPU should be called before load kernel module
         if ((status = vxSetContextAttribute(_context,
@@ -124,8 +156,13 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         else
             LOG("vx_amd_media module loaded")
 #endif
-        if(_affinity == RaliAffinity::GPU)
+        if(_affinity == RaliAffinity::GPU) {
+#if ENABLE_HIP
+            _device.init_hip(_context);
+#else            
             _device.init_ocl(_context);
+#endif            
+        }
     }
     catch(const std::exception& e)
     {
@@ -204,8 +241,11 @@ MasterGraph::build()
             THROW("Dimension of the output images do not match")
 
     allocate_output_tensor();
-
+#if ENABLE_HIP
+    _ring_buffer.initHip(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
+#else    
     _ring_buffer.init(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
+#endif    
     create_single_graph();
     start_processing();
     return Status::OK;
@@ -308,13 +348,13 @@ MasterGraph::Status
 MasterGraph::allocate_output_tensor()
 {
     // creating a float buffer that can accommodates all output images
-    size_t output_float_buffer_size = output_byte_size() * _output_images.size();
-
-    if(processing_on_device())
+    size_t output_buffer_size = output_byte_size() * _output_images.size();
+#if !ENABLE_HIP
+    if(processing_on_device_ocl())
     {
         cl_int ret = CL_SUCCESS;
         _output_tensor = nullptr;
-        size_t size = output_float_buffer_size*sizeof(cl_float);
+        size_t size = output_buffer_size*sizeof(cl_float);
         cl_mem clImgFloat  = clCreateBuffer(_device.resources().context,
                                             CL_MEM_READ_WRITE,
                                             size,
@@ -325,14 +365,32 @@ MasterGraph::allocate_output_tensor()
 
         _output_tensor = clImgFloat;
     }
+#else    
+    if (processing_on_device_hip())
+    {
+        void *hipMemory = nullptr;
+        size_t size = (_out_data_type==RaliTensorDataType::FP32)? output_buffer_size*sizeof(float): output_buffer_size*sizeof(half);
+        hipError_t status = hipMalloc( &hipMemory, size);
+        if (status != hipSuccess)
+            THROW("RALI::hipMalloc of size " + TOSTR(size) + " failed " + TOSTR(status))
+
+        _output_tensor = hipMemory;
+    }
+#endif    
     return Status::OK;
 }
 
 MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
-    if(processing_on_device() && _output_tensor != nullptr)
-        clReleaseMemObject(_output_tensor );
+    if(processing_on_device_ocl() && _output_tensor != nullptr)
+        clReleaseMemObject((cl_mem)_output_tensor );
+#if ENABLE_HIP
+    if(processing_on_device_hip() && _output_tensor != nullptr) {
+        hipFree(_output_tensor );
+        _output_tensor = nullptr;
+    }
+#endif    
 
     return Status::OK;
 }
@@ -413,6 +471,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
     const size_t w = output_width();
     const size_t single_output_image_size = output_byte_size();
 
+#if !ENABLE_HIP
     if(_output_image_info.mem_type() == RaliMemType::OCL)
     {
         if(output_data_type == RaliTensorDataType::FP16)
@@ -448,8 +507,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset1))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset2))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& reverse_chnl))
-
-
+           
             if((status = clEnqueueNDRangeKernel(queue,
                                                 kernel,
                                                 1,
@@ -458,13 +516,12 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                                 &local_work_size,
                                                 0 , nullptr, nullptr)) != CL_SUCCESS)
                 THROW("clEnqueueNDRangeKernel failed on kernel "+STR(kernel_name)+" error " + TOSTR(status))
-
             dest_buf_offset += single_output_image_size;
         }
 
         int read_size = single_output_image_size*_output_images.size()*sizeof(cl_float);
         if((status = clEnqueueReadBuffer(queue,
-                                         _output_tensor,
+                                         (cl_mem)_output_tensor,
                                          CL_TRUE,
                                          0,
                                          read_size,
@@ -472,6 +529,32 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                          0 , nullptr, nullptr)) != CL_SUCCESS)
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
     }
+#else
+    if(_output_image_info.mem_type() == RaliMemType::HIP)
+    {
+        unsigned int fp16 = (output_data_type == RaliTensorDataType::FP16);
+            
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        unsigned dest_buf_offset = 0;
+        for( auto&& out_image: output_buffers)
+        {
+            auto img_buffer = out_image;
+            if (format == RaliTensorFormat::NHWC)
+            {
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
+                                        multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
+
+            }else
+            {
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
+                                        multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
+            }
+            dest_buf_offset += single_output_image_size;
+        }
+        // copy hip buffer to output.
+        // todo:: add callback routing to exchange memory pointer to avoid extra copy  
+    }
+#endif    
     if(_output_image_info.mem_type() == RaliMemType::HOST)
     {
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };
@@ -644,8 +727,8 @@ MasterGraph::copy_output(unsigned char *out_ptr)
     size_t size = output_byte_size();
 
     size_t dest_buf_offset = 0;
-
-    if(processing_on_device())
+#if !ENABLE_HIP
+    if(processing_on_device_ocl())
     {
         //NOTE: the CL_TRUE flag is only used on the last buffer read call,
         // to avoid unnecessary sequence of synchronizations
@@ -668,6 +751,28 @@ MasterGraph::copy_output(unsigned char *out_ptr)
             dest_buf_offset += size;
         }
     }
+#else
+    if(processing_on_device_hip())
+    {
+        //NOTE: the CL_TRUE flag is only used on the last buffer read call,
+        // to avoid unnecessary sequence of synchronizations
+
+        // get_read_buffers() calls block_if_empty() internally and blocks if buffers are empty until a new batch is processed
+        auto output_buffers =_ring_buffer.get_read_buffers();
+        for( auto&& output_handle: output_buffers)
+        {
+            hipError_t err = hipMemcpyDtoHAsync((void *)(out_ptr+dest_buf_offset), output_handle, size, _device.resources().hip_stream);
+            if (err) {
+                THROW("hipMemcpyDtoHAsync failed: " + TOSTR(err))
+            }
+            dest_buf_offset += size;            
+        }
+        // sync to finish copy
+        if (hipStreamSynchronize(_device.resources().hip_stream) != hipSuccess)
+            THROW("hipStreamSynchronize failed for hipMemcpy ")
+
+    }
+#endif    
     else
     {
         // get_host_master_read_buffer is blocking if _ring_buffer is empty, and blocks this thread till internal processing thread process a new batch and store in the _ring_buffer
@@ -686,9 +791,13 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 void MasterGraph::output_routine()
 {
     INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
-    if(processing_on_device() && _user_to_internal_batch_ratio != 1)
+#if !ENABLE_HIP    
+    if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
-
+#else        
+    if(processing_on_device_hip() && _user_to_internal_batch_ratio != 1)
+        THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
+#endif
     try {
         while (_processing)
         {

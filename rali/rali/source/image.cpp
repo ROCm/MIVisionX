@@ -19,10 +19,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-
 #include <cstdio>
 #include <CL/cl.h>
-#include <stdexcept>
 #include <vx_ext_amd.h>
 #include <cstring>
 #include "commons.h"
@@ -40,6 +38,11 @@ vx_enum vx_mem_type(RaliMemType mem)
         case RaliMemType::HOST:
         {
             return VX_MEMORY_TYPE_HOST;
+        }
+        break;
+        case RaliMemType::HIP:
+        {
+            return VX_MEMORY_TYPE_HIP;
         }
         break;
         default:
@@ -304,7 +307,17 @@ unsigned Image::copy_data(cl_command_queue queue, unsigned char* user_buffer, bo
                                          0 , nullptr, nullptr)) != CL_SUCCESS)
             THROW("clEnqueueReadBuffer failed: " + TOSTR(status))
 
-    } else
+    }
+#if ENABLE_HIP     
+    else if (_info._mem_type == RaliMemType::HIP)
+    {
+        // copy from device to host
+        hipError_t status;
+        if (status = hipMemcpyDtoH((void *)user_buffer, _mem_handle, size))
+            THROW("copy_data::hipMemcpyDtoH failed: " + TOSTR(status))
+    }
+#endif
+    else
     {
         memcpy(user_buffer, _mem_handle, size);
     }

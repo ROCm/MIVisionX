@@ -36,12 +36,15 @@ THE SOFTWARE.
 #include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
+#if ENABLE_HIP
+#include "device_manager_hip.h"
+#endif
 
 class MasterGraph
 {
 public:
     enum class Status { OK = 0,  NOT_RUNNING = 1, NO_MORE_DATA = 2, NOT_IMPLEMENTED };
-    MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads);
+    MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads, RaliTensorDataType output_tensor_data_type);
     ~MasterGraph();
     Status reset();
     size_t remaining_images_count();
@@ -89,7 +92,8 @@ private:
     void stop_processing();
     void output_routine();
     void decrease_image_count();
-    bool processing_on_device() { return _output_image_info.mem_type() == RaliMemType::OCL; };
+    bool processing_on_device_ocl() { return _output_image_info.mem_type() == RaliMemType::OCL; };
+    bool processing_on_device_hip() { return _output_image_info.mem_type() == RaliMemType::HIP; };
     /// notify_user_thread() is called when the internal processing thread is done with processing all available images
     void notify_user_thread();
     /// no_more_processed_data() is logically linked to the notify_user_thread() and is used to tell the user they've already consumed all the processed images
@@ -97,7 +101,6 @@ private:
     RingBuffer _ring_buffer;//!< The queue that keeps the images that have benn processed by the internal thread (_output_thread) asynchronous to the user's thread
     MetaDataBatch* _augmented_meta_data = nullptr;//!< The output of the meta_data_graph,
     std::thread _output_thread;
-    DeviceManager   _device;//!< Keeps the device related constructs needed for running on GPU
     ImageInfo _output_image_info;//!< Keeps the information about RALI's output image , it includes all images of a batch stacked on top of each other
     std::vector<Image*> _output_images;//!< Keeps the ovx images that are used to store the augmented output (there is an image per augmentation branch)
     std::list<Image*> _internal_images;//!< Keeps all the ovx images (virtual/non-virtual) either intermediate images, or input images that feed the graph
@@ -105,9 +108,15 @@ private:
     std::list<std::shared_ptr<Node>> _root_nodes;//!< List of all root nodes (image/video loaders)
     std::list<std::shared_ptr<Node>> _meta_data_nodes;//!< List of nodes where meta data has to be updated after augmentation
     std::map<Image*, std::shared_ptr<Node>> _image_map;//!< key: image, value : Parent node
-    cl_mem _output_tensor;//!< In the GPU processing case , is used to convert the U8 samples to float32 before they are being transfered back to host
+#if ENABLE_HIP        
+    void * _output_tensor;//!< In the GPU processing case , is used to convert the U8 samples to float32 before they are being transfered back to host
+    DeviceManagerHip   _device;//!< Keeps the device related constructs needed for running on GPU
+#else
+    void* _output_tensor;//!< In the GPU processing case , is used to convert the U8 samples to float32 before they are being transfered back to host
+    DeviceManager   _device;//!< Keeps the device related constructs needed for running on GPU
+#endif
     std::shared_ptr<Graph> _graph = nullptr;
-    const RaliAffinity _affinity;
+    RaliAffinity _affinity;
     const int _gpu_id;//!< Defines the device id used for processing
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
     TimingDBG _convert_time;
@@ -128,6 +137,7 @@ private:
     const size_t _internal_batch_size;//!< In the host processing case , internal batch size can be different than _user_batch_size. This batch size used internally throughout.
     const size_t _user_to_internal_batch_ratio;
     bool _output_routine_finished_processing = false;
+    const RaliTensorDataType _out_data_type;
 };
 
 template <typename T>

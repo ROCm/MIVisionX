@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include <VX/vx_types.h>
 #include <memory>
 #include "device_data_transfer_code.h"
+
 struct DeviceResources {
     cl_context context;
     cl_device_id device_id;

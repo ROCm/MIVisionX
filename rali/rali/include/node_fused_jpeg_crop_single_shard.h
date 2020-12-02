@@ -7,7 +7,11 @@
 class FusedJpegCropSingleShardNode: public Node
 {
 public:
+#if ENABLE_HIP
+    FusedJpegCropSingleShardNode(Image *output, DeviceResourcesHip device_resources);
+#else    
     FusedJpegCropSingleShardNode(Image *output, DeviceResources device_resources);
+#endif    
     ~FusedJpegCropSingleShardNode() override;
 
     /// \param user_shard_count shard count from user

@@ -29,6 +29,10 @@ THE SOFTWARE.
 #include <array>
 #include <queue>
 #include <memory>
+#if ENABLE_HIP
+#include "hip/hip_runtime.h"
+#include "device_manager_hip.h"
+#endif
 #include "device_manager.h"
 #include "commons.h"
 
@@ -160,7 +164,7 @@ struct Image
 
 private:
     vx_image vx_handle = nullptr;//!< The OpenVX image
-    void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl or host)
+    void* _mem_handle = nullptr;//!< Pointer to the image's internal buffer (opencl, host or hip)
     ImageInfo _info;//!< The structure holding the info related to the stored OpenVX image
     vx_context _context = nullptr;
 };

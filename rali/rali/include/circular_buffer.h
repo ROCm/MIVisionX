@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include <CL/cl.h>
 #include <queue>
 #include "device_manager.h"
+#include "device_manager_hip.h"
 #include "commons.h"
 struct decoded_image_info
 {
@@ -39,7 +40,11 @@ struct decoded_image_info
 class CircularBuffer
 {
 public:
+#if ENABLE_HIP
+    CircularBuffer(DeviceResourcesHip hipres, size_t buffer_depth );
+#else    
     CircularBuffer(DeviceResources ocl, size_t buffer_depth );
+#endif    
     ~CircularBuffer();
     void init(RaliMemType output_mem_type, size_t output_mem_size);
     void sync();// Syncs device buffers with host
@@ -49,7 +54,7 @@ public:
     void pop();// The oldest write will be erased and overwritten in upcoming writes
     void set_image_info(const decoded_image_info& info) { _last_image_info = info; }
     decoded_image_info& get_image_info();
-    cl_mem get_read_buffer_dev();
+    void* get_read_buffer_dev();
     unsigned char* get_read_buffer_host();// blocks the caller if the buffer is empty
     unsigned char*  get_write_buffer(); // blocks the caller if the buffer is full
     size_t level();// Returns the number of elements stored
@@ -72,8 +77,8 @@ private:
      */
     cl_command_queue _cl_cmdq = nullptr;
     cl_context _cl_context = nullptr;
-    cl_device_id _device_id = nullptr;
-    std::vector<cl_mem> _dev_buffer;// Actual memory allocated on the device (in the case of GPU affinity)
+    cl_device_id _device_id = nullptr;    
+    std::vector<void *> _dev_buffer;// Actual memory allocated on the device (in the case of GPU affinity)
     std::vector<unsigned char*> _host_buffer_ptrs;
     std::vector<std::vector<unsigned char>> _actual_host_buffers;
     std::condition_variable _wait_for_load;
@@ -86,4 +91,8 @@ private:
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;
+#if ENABLE_HIP
+    hipStream_t _hip_stream;
+    int _hip_device_id;
+#endif
 };

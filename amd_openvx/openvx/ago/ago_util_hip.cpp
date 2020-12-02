@@ -28,8 +28,8 @@ THE SOFTWARE.
 // Create HIP Context
 int agoGpuHipCreateContext(AgoContext * context, int deviceID)
 {
+        hipError_t err;
         if (deviceID >= 0) {
-            hipError_t err;
             // use the given HIP device
             context->hip_context_imported = true;
             hipGetDeviceProperties(&context->hip_dev_prop, 0);
@@ -41,26 +41,28 @@ int agoGpuHipCreateContext(AgoContext * context, int deviceID)
             context->hip_device_id = deviceID;
         }
         else {            
-            hipError_t err = hipInit(0);
+            err = hipInit(0);
             if (err != hipSuccess) {
                 agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipInit(0) => %d (failed)\n", err);
                 return -1;
             }
-            hipGetDeviceCount(&context->hip_num_devices);
-            //set the device forcontext if specified.
-            if (deviceID < context->hip_num_devices) {
-                hipSetDevice(context->hip_device_id);
+            hipGetDeviceCount(&context->hip_num_devices);            
+            if (context->hip_num_devices > 0 ) {
+                // select a device
+                deviceID = 0;
+                hipSetDevice(deviceID);
                 if (err != hipSuccess) {
                     agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipSetDevice(%d) => %d (failed)\n", deviceID, err);
                     return -1;
                 }
                 context->hip_device_id = deviceID;
             }
-            err = hipStreamCreate(&context->hip_stream);
-            if (err != hipSuccess) {
-                agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamCreate(%p) => %d (failed)\n", context->hip_stream, err);
-                return -1;
-            }
+        }
+        // create a hipStream for the context 
+        err = hipStreamCreate(&context->hip_stream);
+        if (err != hipSuccess) {
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamCreate(%p) => %d (failed)\n", context->hip_stream, err);
+            return -1;
         }
         return 0;
 }

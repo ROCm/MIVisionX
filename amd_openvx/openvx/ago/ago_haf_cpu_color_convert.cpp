@@ -145,10 +145,15 @@ int HafCpu_FormatConvert_IYUV_UYVY
 				temp1 = _mm_or_si128(temp1, pixels1);									// U plane - next row, intermideate bytes 0..7
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);		// V plane - next row, intermideate bytes 0..7
 
-				temp0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
-				*((int64_t *)pLocalDstU) = M128I(temp0).m128i_i64[0];
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);						// V plane, bytes 0..7
-				*((int64_t *)pLocalDstV) = M128I(pixels0).m128i_i64[0];
+				__m128i avg0, avg1;
+				avg0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg0 = _mm_sub_epi8(avg0, _mm_and_si128(_mm_xor_si128(temp0, temp1), _mm_set1_epi8(1)));
+				*((int64_t *)pLocalDstU) = M128I(avg0).m128i_i64[0];
+				avg1 = _mm_avg_epu8(pixels0, pixels0_NextRow);							// V plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg1 = _mm_sub_epi8(avg1, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				*((int64_t *)pLocalDstV) = M128I(avg1).m128i_i64[0];
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -232,10 +237,15 @@ int HafCpu_FormatConvert_IYUV_UYVY
 				temp1 = _mm_or_si128(temp1, pixels1);									// U plane - next row, intermideate bytes 0..7
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);		// V plane - next row, intermideate bytes 0..7
 
-				temp0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
-				*((int64_t *)pLocalDstU) = M128I(temp0).m128i_i64[0];
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);						// V plane, bytes 0..7
-				*((int64_t *)pLocalDstV) = M128I(pixels0).m128i_i64[0];
+				__m128i avg0, avg1;
+				avg0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg0 = _mm_sub_epi8(avg0, _mm_and_si128(_mm_xor_si128(temp0, temp1), _mm_set1_epi8(1)));
+				*((int64_t *)pLocalDstU) = M128I(avg0).m128i_i64[0];
+				avg1 = _mm_avg_epu8(pixels0, pixels0_NextRow);							// V plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg1 = _mm_sub_epi8(avg1, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				*((int64_t *)pLocalDstV) = M128I(avg1).m128i_i64[0];
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -474,7 +484,7 @@ int HafCpu_ColorConvert_RGB_IYUV
 	)
 {
 	int alignedWidth = dstWidth & ~15;
-	alignedWidth -= 16;
+	alignedWidth = (alignedWidth > 15) ? alignedWidth-16: 0;
 	int postfixWidth = (int)dstWidth - alignedWidth;
 
 	__m128 Y00, Y01, Y10, Y11, U, V;
@@ -624,7 +634,7 @@ int HafCpu_ColorConvert_RGB_NV12
 	)
 {
 	int alignedWidth = dstWidth & ~15;
-	alignedWidth -= 16;
+	alignedWidth = (alignedWidth > 15) ? alignedWidth-16: 0;
 	int postfixWidth = (int)dstWidth - alignedWidth;
 
 	__m128 Y00, Y01, Y10, Y11, U, V;
@@ -769,7 +779,7 @@ int HafCpu_ColorConvert_RGB_NV21
 	)
 {
 	int alignedWidth = dstWidth & ~15;
-	alignedWidth -= 16;
+	alignedWidth = (alignedWidth > 15) ? alignedWidth-16: 0;
 	int postfixWidth = (int)dstWidth - alignedWidth;
 
 	__m128 Y00, Y01, Y10, Y11, U, V;
@@ -1372,7 +1382,7 @@ int HafCpu_ColorConvert_RGBX_IYUV
 			pLocalSrcV += 8;
 		}
 
-		for (int width = 0; width < (postfixWidth >> 1); width += 2)		// Processing two pixels at a time in a row
+		for (int width = 0; width < (postfixWidth >> 1); width ++)		// Processing two pixels at a time in a row
 		{
 			float Ypix, Rpix, Gpix, Bpix;
 
@@ -1524,7 +1534,7 @@ int HafCpu_ColorConvert_RGBX_NV12
 			pLocalSrcChroma += 16;
 		}
 
-		for (int width = 0; width < (postfixWidth >> 1); width += 2)		// Processing two pixels at a time in a row
+		for (int width = 0; width < (postfixWidth >> 1); width ++)		// Processing two pixels at a time in a row
 		{
 			float Ypix, Rpix, Gpix, Bpix;
 
@@ -1675,7 +1685,7 @@ int HafCpu_ColorConvert_RGBX_NV21
 			pLocalSrcChroma += 16;
 		}
 
-		for (int width = 0; width < (postfixWidth >> 1); width += 2)		// Processing two pixels at a time in a row
+		for (int width = 0; width < (postfixWidth >> 1); width ++)		// Processing two pixels at a time in a row
 		{
 			float Ypix, Rpix, Gpix, Bpix;
 
@@ -1813,10 +1823,15 @@ int HafCpu_FormatConvert_IYUV_YUYV
 				temp1 = _mm_or_si128(temp1, pixels1);									// U plane - next row, intermideate bytes 0..7
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);		// V plane - next row, intermideate bytes 0..7
 
-				temp0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
-				*((int64_t *)pLocalDstU) = M128I(temp0).m128i_i64[0];
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);						// V plane, bytes 0..7
-				*((int64_t *)pLocalDstV) = M128I(pixels0).m128i_i64[0];
+				__m128i avg0, avg1;
+				avg0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg0 = _mm_sub_epi8(avg0, _mm_and_si128(_mm_xor_si128(temp0, temp1), _mm_set1_epi8(1)));
+				*((int64_t *)pLocalDstU) = M128I(avg0).m128i_i64[0];
+				avg1 = _mm_avg_epu8(pixels0, pixels0_NextRow);							// V plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg1 = _mm_sub_epi8(avg1, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				*((int64_t *)pLocalDstV) = M128I(avg1).m128i_i64[0];
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -1900,11 +1915,15 @@ int HafCpu_FormatConvert_IYUV_YUYV
 				temp1 = _mm_or_si128(temp1, pixels1);									// U plane - next row, intermideate bytes 0..7
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);		// V plane - next row, intermideate bytes 0..7
 
-				temp0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
-				_mm_storeu_si128((__m128i *) pLocalDstU, temp0);						// Only lower 8 bytes valid
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);						// V plane, bytes 0..7
-				_mm_storeu_si128((__m128i *) pLocalDstV, pixels0);						// Only lower 8 bytes valid
-
+				__m128i avg0, avg1;
+				avg0 = _mm_avg_epu8(temp0, temp1);										// U plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg0 = _mm_sub_epi8(avg0, _mm_and_si128(_mm_xor_si128(temp0, temp1), _mm_set1_epi8(1)));
+				_mm_storeu_si128((__m128i *) pLocalDstU, avg0);						// Only lower 8 bytes valid
+				avg1 = _mm_avg_epu8(pixels0, pixels0_NextRow);							// V plane, bytes 0..7
+				// to fix it up by subtracting 1 if it got rounded up
+				avg1 = _mm_sub_epi8(avg1, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				_mm_storeu_si128((__m128i *) pLocalDstV, avg1);						// Only lower 8 bytes valid
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -2013,8 +2032,11 @@ int HafCpu_FormatConvert_NV12_UYVY
 				pixels1_NextRow = _mm_slli_si128(pixels1_NextRow, 8);
 				pixels0 = _mm_or_si128(pixels0, pixels1);
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);
-				_mm_store_si128((__m128i *) pLocalDstChroma, pixels0);
+				__m128i avg;
+				avg = _mm_avg_epu8(pixels0, pixels0_NextRow);
+				// to fix it up by subtracting 1 if it got rounded up
+				avg = _mm_sub_epi8(avg, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				_mm_store_si128((__m128i *) pLocalDstChroma, avg);
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -2085,8 +2107,11 @@ int HafCpu_FormatConvert_NV12_UYVY
 				pixels1_NextRow = _mm_slli_si128(pixels1_NextRow, 8);
 				pixels0 = _mm_or_si128(pixels0, pixels1);
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);
-				_mm_storeu_si128((__m128i *) pLocalDstChroma, pixels0);
+				__m128i avg;
+				avg = _mm_avg_epu8(pixels0, pixels0_NextRow);
+				// to fix it up by subtracting 1 if it got rounded up
+				avg = _mm_sub_epi8(avg, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				_mm_storeu_si128((__m128i *) pLocalDstChroma, avg);
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -2193,8 +2218,11 @@ int HafCpu_FormatConvert_NV12_YUYV
 				pixels1_NextRow = _mm_slli_si128(pixels1_NextRow, 8);
 				pixels0 = _mm_or_si128(pixels0, pixels1);
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);
-				_mm_store_si128((__m128i *) pLocalDstChroma, pixels0);
+				__m128i avg;
+				avg = _mm_avg_epu8(pixels0, pixels0_NextRow);
+				// to fix it up by subtracting 1 if it got rounded up
+				avg = _mm_sub_epi8(avg, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				_mm_store_si128((__m128i *) pLocalDstChroma, avg);
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -2265,8 +2293,11 @@ int HafCpu_FormatConvert_NV12_YUYV
 				pixels1_NextRow = _mm_slli_si128(pixels1_NextRow, 8);
 				pixels0 = _mm_or_si128(pixels0, pixels1);
 				pixels0_NextRow = _mm_or_si128(pixels0_NextRow, pixels1_NextRow);
-				pixels0 = _mm_avg_epu8(pixels0, pixels0_NextRow);
-				_mm_storeu_si128((__m128i *) pLocalDstChroma, pixels0);
+				__m128i avg;
+				avg = _mm_avg_epu8(pixels0, pixels0_NextRow);
+				// to fix it up by subtracting 1 if it got rounded up
+				avg = _mm_sub_epi8(avg, _mm_and_si128(_mm_xor_si128(pixels0, pixels0_NextRow), _mm_set1_epi8(1)));
+				_mm_store_si128((__m128i *) pLocalDstChroma, avg);
 
 				pLocalSrc += 32;
 				pLocalSrcNextRow += 32;
@@ -3957,7 +3988,7 @@ int HafCpu_ColorConvert_IYUV_RGBX
 			//tempI = _mm_haddd_epu16(tempI);					// TBD: XOP instruction - not supported on all platforms
 			tempI = _mm_hadd_epi16(tempI, tempI);				// Average horizontally
 			tempI = _mm_cvtepi16_epi32(tempI);
-			row0 = _mm_set1_epi32(1);
+			row0 = _mm_set1_epi32(0);
 			tempI = _mm_add_epi32(tempI, row0);
 			tempI = _mm_srli_epi32(tempI, 1);
 			tempI = _mm_packus_epi32(tempI, tempI);
@@ -4143,10 +4174,10 @@ int HafCpu_ColorConvert_NV12_RGBX
 			temp2 = _mm_mul_ps(temp, weights_toV);
 			V1 = _mm_add_ps(V1, temp2);
 
-			tempI = _mm_cvttps_epi32(Y0);
+			tempI = _mm_cvtps_epi32(Y0);
 			tempI = _mm_packus_epi32(tempI, tempI);
 			tempI = _mm_packus_epi16(tempI, tempI);
-			row1 = _mm_cvttps_epi32(Y1);
+			row1 = _mm_cvtps_epi32(Y1);
 			row1 = _mm_packus_epi32(row1, row1);
 			row1 = _mm_packus_epi16(row1, row1);
 			_mm_store_si128((__m128i *)Ybuf, tempI);
@@ -4154,17 +4185,17 @@ int HafCpu_ColorConvert_NV12_RGBX
 
 			// u00 u01 u02 u03
 			// u10 u11 u12 u13
-			tempI = _mm_cvttps_epi32(U0);
+			tempI = _mm_cvtps_epi32(U0);
 			tempI = _mm_add_epi32(tempI, addToChroma);
 			tempI = _mm_packus_epi32(tempI, tempI);
-			row1 = _mm_cvttps_epi32(U1);
+			row1 = _mm_cvtps_epi32(U1);
 			row1 = _mm_add_epi32(row1, addToChroma);
 			row1 = _mm_packus_epi32(row1, row1);
 			tempI = _mm_avg_epu16(tempI, row1);			// Average u00, u10; u01, u11 ...
 			//tempI = _mm_haddd_epu16(tempI);					// TBD: XOP instruction - not supported on all platforms
 			tempI = _mm_hadd_epi16(tempI, tempI);				// Average horizontally
 			tempI = _mm_cvtepi16_epi32(tempI);
-			row0 = _mm_set1_epi16(1);
+			row0 = _mm_set1_epi16(0);
 			tempI = _mm_add_epi16(tempI, row0);
 			tempI = _mm_srli_epi16(tempI, 1);
 			tempI = _mm_packus_epi32(tempI, tempI);
@@ -4173,10 +4204,10 @@ int HafCpu_ColorConvert_NV12_RGBX
 
 			// v00 v01 v02 v03
 			// v10 v11 v12 v13
-			tempI = _mm_cvttps_epi32(V0);
+			tempI = _mm_cvtps_epi32(V0);
 			tempI = _mm_add_epi32(tempI, addToChroma);
 			tempI = _mm_packus_epi32(tempI, tempI);
-			row1 = _mm_cvttps_epi32(V1);
+			row1 = _mm_cvtps_epi32(V1);
 			row1 = _mm_add_epi32(row1, addToChroma);
 			row1 = _mm_packus_epi32(row1, row1);
 			tempI = _mm_avg_epu16(tempI, row1);			// Average u00, u10; u01, u11 ...

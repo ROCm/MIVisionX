@@ -1,0 +1,19 @@
+
+data input_iyuv = image:1280,720,IYUV:READ,inputs/stm_1280x720.yuv
+data luma = image:1280,720,U008:WRITE,openvx_test_results/10_iyuv_channel_extract_1280x720.yuv
+node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_Y luma
+
+data chroma1 = image:640,360,U008
+node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_U chroma1
+
+data chroma2 = image:640,360,U008
+node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_V chroma2
+
+data input_nv12 = image:1280,720,NV12
+node org.khronos.openvx.channel_combine luma chroma1 chroma2 null input_nv12
+
+data channel_u = image:640,360,U008:WRITE,openvx_test_results/10_nv12_channel_u_extract_1280x720.yuv
+node org.khronos.openvx.channel_extract input_nv12 !CHANNEL_U channel_u
+
+data channel_v = image:640,360,U008:WRITE,openvx_test_results/10_nv12_channel_v_extract_1280x720.yuv
+node org.khronos.openvx.channel_extract input_nv12 !CHANNEL_V channel_v

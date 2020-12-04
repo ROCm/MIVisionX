@@ -2,6 +2,17 @@ data input_iyuv = image:1280,720,IYUV:READ,inputs/stm_1280x720.yuv
 data inter_luma = image:1280,720,U008
 node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_Y inter_luma
 
+data inter_sobel_3x3_x = image:1280,720,S016
+data inter_sobel_3x3_y = image:1280,720,S016
+node org.khronos.openvx.sobel_3x3 inter_luma inter_sobel_3x3_x inter_sobel_3x3_y
+
+data input_shift = scalar:INT32,1
+
 data output_convertdepth = image:1280,720,S016:WRITE,openvx_test_results/12_convert_depth_1280x720.yuv
-data input_shift = scalar:INT32,0
 node org.khronos.openvx.convertdepth inter_luma output_convertdepth !SATURATE input_shift
+
+data output_convertdepth_wrap = image:1280,720,U008:WRITE,openvx_test_results/12_wrap_convert_depth_1280x720.yuv
+node org.khronos.openvx.convertdepth inter_sobel_3x3_x output_convertdepth_wrap !WRAP input_shift
+
+data output_convertdepth_sat = image:1280,720,U008:WRITE,openvx_test_results/12_wrap_convert_depth_1280x720.yuv
+node org.khronos.openvx.convertdepth inter_sobel_3x3_x output_convertdepth_sat !SATURATE input_shift

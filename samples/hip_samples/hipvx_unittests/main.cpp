@@ -4091,7 +4091,7 @@ int main(int argc, const char ** argv)
 					
 				)
 				{
-					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
+					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8))	
 				}
 				// Planar Image Input - NV12, NV21, IYUV inputs
 				else if(
@@ -4099,7 +4099,7 @@ int main(int argc, const char ** argv)
 					(case_number == 114) || (case_number == 115) || (case_number == 116)
 				)
 				{
-					ERROR_CHECK_STATUS(makeInputPlanarImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
+					ERROR_CHECK_STATUS(makeInputPlanarImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
 				}
 				// NV12 Channel Combine inputs
 				else if(

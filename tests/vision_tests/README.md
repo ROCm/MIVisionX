@@ -1,5 +1,13 @@
 # OpenVX Vision Function Tests
 
+## Script to run vision tests
+
+```
+python runVisionTests.py --help
+```
+
+## Vision Functionality Test GDFs
+
 ```
 01_absDiff
 02_accumulate

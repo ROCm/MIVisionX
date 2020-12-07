@@ -1136,7 +1136,7 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name = "agoKernel_And_U8_U8U1";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAndNode(graph, img1, img2, img_out);
@@ -1147,7 +1147,7 @@ int main(int argc, const char ** argv)
 				case 39:
 				{
 					// test_case_name = "agoKernel_And_U8_U1U8";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
@@ -1159,8 +1159,8 @@ int main(int argc, const char ** argv)
 				case 40:
 				{
 					// test_case_name = "agoKernel_And_U8_U1U1";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAndNode(graph, img1, img2, img_out);
@@ -1173,7 +1173,7 @@ int main(int argc, const char ** argv)
 					// test_case_name = "agoKernel_And_U1_U8U8";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAndNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u8 & pix_img2_u8) * width * height;
@@ -1184,8 +1184,8 @@ int main(int argc, const char ** argv)
 				{
 					// test_case_name = "agoKernel_And_U1_U8U1";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAndNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u8 & pix_img2_u1) * width * height;
@@ -1195,9 +1195,9 @@ int main(int argc, const char ** argv)
 				case 43:
 				{
 					// test_case_name = "agoKernel_And_U1_U1U8";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAndNode(graph, img1, img2, img_out);
 					expected_image_sum = (pix_img1_u1 & pix_img2_u8) * width * height;
@@ -1207,9 +1207,9 @@ int main(int argc, const char ** argv)
 				case 44:
 				{
 					// test_case_name = "agoKernel_And_U1_U1U1";
-					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img2 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxAndNode(graph, img1, img2, img_out);
 					expected_image_sum = (vx_int32)(pix_img1_u1 & pix_img2_u1) * width * height;

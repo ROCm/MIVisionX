@@ -6,6 +6,6 @@ MIVisionX test suite to verify installation and functionality
 
 Quick MIVisionX test suite
 
-## Vision Testa
+## Vision Tests
 
 OpenVX [vision function tests](vision_tests) for verification and performance

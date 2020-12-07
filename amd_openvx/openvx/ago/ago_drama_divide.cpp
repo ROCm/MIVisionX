@@ -1214,7 +1214,6 @@ int agoDramaDivideOrNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[1] = paramList[0];
 	anode->paramList[2] = paramList[1];
 	anode->paramCount = 3;
-	///return agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_OR_U8_U8U8);
 	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
 	if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U8 && paramList[2]->u.img.format == VX_DF_IMAGE_U8) 
 		new_kernel_id = VX_KERNEL_AMD_OR_U8_U8U8;
@@ -1249,7 +1248,25 @@ int agoDramaDivideXorNode(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[1] = paramList[0];
 	anode->paramList[2] = paramList[1];
 	anode->paramCount = 3;
-	return agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_XOR_U8_U8U8);
+	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+	if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U8 && paramList[2]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U8_U8U8;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U8 && paramList[2]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U8_U1U8;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U1 && paramList[2]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U8_U8U1;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U1 && paramList[2]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U8_U1U1;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U8 && paramList[2]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U1_U8U8;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U8 && paramList[2]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U1_U1U8;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U1 && paramList[2]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U1_U8U1;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U1 && paramList[2]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_XOR_U1_U1U1;
+
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }
 
 int agoDramaDivideNotNode(AgoNodeList * nodeList, AgoNode * anode)

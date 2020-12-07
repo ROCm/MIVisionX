@@ -794,7 +794,17 @@ int agoDramaDivideDilate3x3Node(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[0] = paramList[1];
 	anode->paramList[1] = paramList[0];
 	anode->paramCount = 2;
-	return agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_DILATE_U8_U8_3x3);
+	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+	if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_DILATE_U8_U8_3x3;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_DILATE_U1_U8_3x3;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_DILATE_U8_U1_3x3;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_DILATE_U1_U1_3x3;
+	
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }
 
 int agoDramaDivideErode3x3Node(AgoNodeList * nodeList, AgoNode * anode)
@@ -808,7 +818,18 @@ int agoDramaDivideErode3x3Node(AgoNodeList * nodeList, AgoNode * anode)
 	anode->paramList[0] = paramList[1];
 	anode->paramList[1] = paramList[0];
 	anode->paramCount = 2;
-	return agoDramaDivideAppend(nodeList, anode, VX_KERNEL_AMD_ERODE_U8_U8_3x3);
+
+	vx_enum new_kernel_id = VX_KERNEL_AMD_INVALID;
+	if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_ERODE_U8_U8_3x3;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U8 && paramList[1]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_ERODE_U1_U8_3x3;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U8) 
+		new_kernel_id = VX_KERNEL_AMD_ERODE_U8_U1_3x3;
+	else if (paramList[0]->u.img.format == VX_DF_IMAGE_U1 && paramList[1]->u.img.format == VX_DF_IMAGE_U1) 
+		new_kernel_id = VX_KERNEL_AMD_ERODE_U1_U1_3x3;
+	
+	return agoDramaDivideAppend(nodeList, anode, new_kernel_id);
 }
 
 int agoDramaDivideMedian3x3Node(AgoNodeList * nodeList, AgoNode * anode)

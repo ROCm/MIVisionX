@@ -945,7 +945,7 @@ int ovxKernel_Dilate3x3(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -954,7 +954,10 @@ int ovxKernel_Dilate3x3(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[1];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -983,7 +986,7 @@ int ovxKernel_Erode3x3(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -992,7 +995,10 @@ int ovxKernel_Erode3x3(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[1];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {

@@ -99,7 +99,7 @@ def generateCMakeFiles(graph,outputFolder):
         generateLicenseForScript(f)
         f.write( \
 """
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 project (annmodule)
 set (CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)

@@ -5975,7 +5975,7 @@ int HafCpu_Mul_S16_S16U8_Wrap_Trunc
 		__m128i * src2 = (__m128i*)pSrcImage2;
 		__m128i * dst = (__m128i*)pchDst;
 		__m128i * dstlast = dst + (dstWidth >> 3);
-		while (dst < dstlast)
+		while (dst <= dstlast)
 		{
 			pixels1 = _mm_load_si128(src1++);		// src1 (0-7)
 			pixels3 = _mm_load_si128(src1++);		// src1 (8-15)
@@ -6063,7 +6063,7 @@ int HafCpu_Mul_S16_S16U8_Wrap_Round
 		__m128i * src2 = (__m128i*)pSrcImage2;
 		__m128i * dst = (__m128i*)pchDst;
 		__m128i * dstlast = dst + (dstWidth >> 3);
-		while (dst < dstlast)
+		while (dst <= dstlast)
 		{
 			pixels1 = _mm_load_si128(src1++);		// src1 (0-7)
 			pixels3 = _mm_load_si128(src1++);	// src1 (8-15)
@@ -6153,7 +6153,7 @@ int HafCpu_Mul_S16_S16U8_Sat_Trunc
 		__m128i * dst = (__m128i*)pchDst;
 		__m128i * dstlast = dst + (dstWidth >> 3);
 
-		while (dst < dstlast)
+		while (dst <= dstlast)
 		{
 			pixels1 = _mm_load_si128(src1++);		// src1 (0-7)
 			pixels3 = _mm_load_si128(src1++);	// src1 (8-15)
@@ -6234,7 +6234,7 @@ int HafCpu_Mul_S16_S16U8_Sat_Round
 		__m128i * dst = (__m128i*)pchDst;
 		__m128i * dstlast = dst + (dstWidth >> 3);
 
-		while (dst < dstlast)
+		while (dst <= dstlast)
 		{
 			pixels1 = _mm_load_si128(src1++);		// src1 (0-7)
 			pixels3 = _mm_load_si128(src1++);	// src1 (8-15)

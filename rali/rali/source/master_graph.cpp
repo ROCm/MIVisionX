@@ -616,8 +616,8 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             for (unsigned i = 0; i < channel_size; i++)
                                 output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
                                         offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (half) (in_buffer[c * i + c - channel_idx - 1])
-                                                                                : (half) (in_buffer[c * i + channel_idx]));
+                                                              (reverse_channels ? (half) (in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)])
+                                                                                : (half) (in_buffer[dest_buf_offset + (c * i + channel_idx)]));
                         }
                         dest_buf_offset += (w * c * h);
                     }

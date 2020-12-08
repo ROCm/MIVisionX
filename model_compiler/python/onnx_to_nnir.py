@@ -19,6 +19,9 @@
 # THE SOFTWARE.
 
 from __future__ import print_function
+from __future__ import division
+from builtins import range
+from past.utils import old_div
 import os, sys
 import onnx
 from onnx import onnx_pb
@@ -134,7 +137,7 @@ def onnx_node_to_ir_attr(node):
            ((output_padding[0] % (kernel_shape[0] - 1)) != 0) or \
            ((output_padding[1] % (kernel_shape[1] - 1)) != 0):
             raise ValueError("Unsupported ONNX value for output_padding attribute")
-        dilations = [output_padding[0] / (kernel_shape[0] - 1) + 1, output_padding[1] / (kernel_shape[1] - 1) + 1]
+        dilations = [old_div(output_padding[0], (kernel_shape[0] - 1)) + 1, old_div(output_padding[1], (kernel_shape[1] - 1)) + 1]
         attr.set('dilations', dilations)       
     if node.op_type == 'MatMul':
         attr.set('beta', 0.0)

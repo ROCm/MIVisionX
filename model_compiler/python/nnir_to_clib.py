@@ -19,6 +19,8 @@
 # THE SOFTWARE.
 
 from __future__ import print_function
+from builtins import str
+from builtins import range
 import os, sys, struct, subprocess
 import datetime, pytz
 from nnir import *

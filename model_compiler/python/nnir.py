@@ -19,11 +19,16 @@
 # THE SOFTWARE.
 
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import sys, os, os.path
 import numpy as np
 import re
 
-class IrTensor:
+class IrTensor(object):
     def __init__(self):
         self.name = 'Unknown'
         self.type = 'F032'
@@ -50,7 +55,7 @@ class IrTensor:
         self.shape = [int(v) for v in lT[2].split(',')]
         self.format = lT[3]
 
-class IrAttr:
+class IrAttr(object):
     def __init__(self):
         self.dict_values = {
               'axis' : 0                # axis to compute
@@ -154,7 +159,7 @@ class IrAttr:
             else:
                 self.set(name, int(value))
 
-class IrNode:
+class IrNode(object):
     def __init__(self):
         self.type = 'Unknown'
         self.inputs = []
@@ -234,7 +239,7 @@ class IrNode:
         if sL[4] != '':
             self.attr.fromString(sL[4])
 
-class IrGraph:
+class IrGraph(object):
     def __init__(self, updatedLocals):
         self.inputs = []
         self.outputs = []
@@ -1001,7 +1006,7 @@ class IrGraph:
                     #print "DEBUG: scale_name = " + scale_name + "\n"
 
                     epsilon = node.attr.get('epsilon')
-                    scale = scale / np.sqrt(variance + epsilon)
+                    scale = old_div(scale, np.sqrt(variance + epsilon))
                     offset = offset - mean * scale
                     node.type = 'muladd'
                     self.addBinary(node.inputs[1], np.getbuffer(scale))
@@ -1317,7 +1322,7 @@ class IrGraph:
                 self.removeTensor(weight.name)
                 if bias is not None:
                     self.removeTensor(bias.name)
-                for jgrp in reversed(range(groups)):
+                for jgrp in reversed(list(range(groups))):
                     jnode = IrNode()
                     jnode.set('conv', [jinputs[jgrp], jweights[jgrp]] if bias is None else \
                         [jinputs[jgrp], jweights[jgrp], jbiases[jgrp]], [joutputs[jgrp]], node.attr)

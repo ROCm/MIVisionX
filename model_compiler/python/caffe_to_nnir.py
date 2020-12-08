@@ -19,6 +19,10 @@
 # THE SOFTWARE.
 
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import os
 import caffe_pb2
 from nnir import *
@@ -70,7 +74,7 @@ def convert_caffe_bin_to_ir_bin(floatlist):
 # map caffe attr to ir attr.
 def caffe_attr_to_ir_attr(attribute_map):
     attr = IrAttr()
-    attr_names = attribute_map.keys()
+    attr_names = list(attribute_map.keys())
     for i in range(len(attr_names)):
         attributeInfo = attribute_map[attr_names[i]]
         if type(attributeInfo) is float:
@@ -84,8 +88,8 @@ def caffe_attr_to_ir_attr(attribute_map):
                 attr.set(attr_names[i], [int(v) for v in (attributeInfo)])
             elif (type(attributeInfo[0]) is float):
                 attr.set(attr_names[i], [float(v) for v in (attributeInfo)])
-            elif (type(attributeInfo[0]) is long):
-                attr.set(attr_names[i], [long(v) for v in (attributeInfo)])
+            elif (type(attributeInfo[0]) is int):
+                attr.set(attr_names[i], [int(v) for v in (attributeInfo)])
             else:
                 print ("ERROR: unsupported list attribute")
                 sys.exit(1)
@@ -115,20 +119,20 @@ def caffe_node_to_ir_node(layer_type, layer_info_map):
     attribute_map = layer_info_map["attributes"]
 
     inputs = []
-    for i in range(len(input_map.keys())):
-        inputs.append(input_map.keys()[i])
+    for i in range(len(list(input_map.keys()))):
+        inputs.append(list(input_map.keys())[i])
     for i in range(len(scale_map_w)):
-        inputs.append(scale_map_w.keys()[i])
+        inputs.append(list(scale_map_w.keys())[i])
     for i in range(len(scale_map_b)):
-        inputs.append(scale_map_b.keys()[i])
-    for i in range(len(weight_map.keys())):
-        inputs.append(weight_map.keys()[i])
-    for i in range(len(bias_map.keys())):
-        inputs.append(bias_map.keys()[i])
+        inputs.append(list(scale_map_b.keys())[i])
+    for i in range(len(list(weight_map.keys()))):
+        inputs.append(list(weight_map.keys())[i])
+    for i in range(len(list(bias_map.keys()))):
+        inputs.append(list(bias_map.keys())[i])
 
     outputs = []
-    for i in range(len(output_map.keys())):
-        outputs.append(output_map.keys()[i])
+    for i in range(len(list(output_map.keys()))):
+        outputs.append(list(output_map.keys())[i])
 
     node.set(layer_type, [caffe_name_to_ir_name(name) for name in inputs],\
                          [caffe_name_to_ir_name(name) for name in outputs],\
@@ -196,7 +200,7 @@ def extractOutput(graph, inputOutputLayers, output_list, verbose):
         last_layer_index = len(inputOutputLayers) - 1
         last_layer_info = inputOutputLayers[last_layer_index]
         output_map = last_layer_info["outputs"]
-        output_name = output_map.keys()[0]
+        output_name = list(output_map.keys())[0]
         if (verbose):
             print ("output name is : " + output_name)
         output_dims = output_map[output_name]
@@ -351,7 +355,7 @@ def extractCaffeAttrInfo(layer_param):
 def calculateTensorDims(layer_param, input_map, attribute_map):
     dimList = {}
     output_dims = [0, 0, 0, 0]
-    inputs = input_map.keys()
+    inputs = list(input_map.keys())
     if(type(layer_param) == caffe_pb2.V1LayerParameter):
         layer_type = convertV1LayerTypeToString(layer_param)
     else:
@@ -367,7 +371,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
         output_dims[2] = ((int(h) + 2 * pads[1] - kernel_shape[1] - (kernel_shape[1] - 1) * (dilations[1] - 1))// strides[1]) + 1
         output_dims[1] = layer_param.convolution_param.num_output
         output_dims[0] = n
-        weight_dims = [output_dims[1], int(c)/group, kernel_shape[1], kernel_shape[0]]
+        weight_dims = [output_dims[1], old_div(int(c),group), kernel_shape[1], kernel_shape[0]]
         dimList["weights"] = weight_dims
         if (layer_param.convolution_param.bias_term):
             bias_dims = [weight_dims[0]]
@@ -426,7 +430,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             dimList["bias"] = [weight_dims[0]]
 
     elif (layer_type == "Concat"):
-        inputs = input_map.keys()
+        inputs = list(input_map.keys())
         axis = attribute_map["axis"]
         if axis == 1:
             for i in range(len(inputs)):
@@ -446,7 +450,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             output_dims[3] = w
 
     elif (layer_type == "Interp"):
-        inputs = input_map.keys()
+        inputs = list(input_map.keys())
         zoom_factor = attribute_map["zoom_factor"]
         for i in range(len(inputs)):
             n,c,h,w = input_map[inputs[i]]
@@ -467,7 +471,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
             dimList["bias"] = bias_dims
     
     elif (layer_type == "Crop"):
-        inputs = input_map.keys()
+        inputs = list(input_map.keys())
         axis = attribute_map["axis"]
         new_axis = 3 - axis
 
@@ -576,7 +580,7 @@ def calculateTensorDims(layer_param, input_map, attribute_map):
 
 
 def convertV1LayerTypeToString(layer_param):
-    EnumDescriptor = caffe_pb2.V1LayerParameter.LayerType.items()
+    EnumDescriptor = list(caffe_pb2.V1LayerParameter.LayerType.items())
     for item in EnumDescriptor:
         if layer_param.type == item[1]:
             layer_type_V1 = item[0]

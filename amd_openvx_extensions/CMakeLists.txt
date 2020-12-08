@@ -35,6 +35,7 @@ find_package(miopengemm PATHS ${ROCM_PATH} QUIET)
 find_package(miopen     PATHS ${ROCM_PATH} QUIET)
 
 if(OpenCL_FOUND)
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
     if(AMDRPP_FOUND)
         add_subdirectory(amd_rpp)
     else()

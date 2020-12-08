@@ -37,6 +37,7 @@ install(TARGETS loom_shell DESTINATION bin)
 target_link_libraries(loom_shell vx_loomsl openvx pthread)
 
 if (OpenCL_FOUND)
+	add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(loom_shell ${OpenCL_LIBRARIES})
 endif(OpenCL_FOUND)

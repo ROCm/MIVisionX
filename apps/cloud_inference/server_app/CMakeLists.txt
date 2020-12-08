@@ -52,6 +52,7 @@ target_link_libraries(inference_server_app vx_nn openvx pthread)
 install(TARGETS inference_server_app DESTINATION bin)
 
 if(OpenCL_FOUND)
+	add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 	include_directories(${OpenCL_INCLUDE_DIRS}/CL ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(inference_server_app ${OpenCL_LIBRARIES})
 endif(OpenCL_FOUND)

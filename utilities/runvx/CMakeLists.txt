@@ -58,6 +58,7 @@ install(TARGETS runvx DESTINATION bin)
 install(DIRECTORY ../../samples DESTINATION .)
 
 if(OpenCL_FOUND)
+	add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(runvx ${OpenCL_LIBRARIES})

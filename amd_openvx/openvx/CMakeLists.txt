@@ -72,6 +72,7 @@ add_library(vxu SHARED api/vxu.cpp)
 target_link_libraries(vxu openvx)
 
 if (OpenCL_FOUND)
+	add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 	target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
 	target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)

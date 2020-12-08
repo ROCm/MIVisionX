@@ -34,6 +34,7 @@ add_subdirectory(runvx)
 message("-- ${Green}MIVisionX Utilities -- runvx module added${ColourReset}")
 
 if(OpenCL_FOUND)
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
     add_subdirectory(runcl)
     if(LOOM)
         add_subdirectory(loom_shell)

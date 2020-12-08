@@ -31,6 +31,7 @@ add_executable(runcl ${SOURCES})
 install (TARGETS runcl DESTINATION bin)
 
 if(OpenCL_FOUND)
+	add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 	target_compile_definitions(runcl PUBLIC ENABLE_OPENCL=1)
 	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
 	target_link_libraries(runcl ${OpenCL_LIBRARIES})

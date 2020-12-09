@@ -65,6 +65,7 @@ visionTestConfig = [
     '11_rgb_colorConvert.gdf',
     '11_rgbx_colorConvert.gdf',
     '11_uyvy_colorConvert.gdf',
+    '11_yuyv_colorConvert.gdf',
     '12_convertDepth.gdf',
     '13_convolve.gdf',
     '14_dilate.gdf',

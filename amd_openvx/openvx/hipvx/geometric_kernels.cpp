@@ -663,16 +663,25 @@ Hip_ScaleImage_U8_U8_Bilinear(
     float s = xSrcFloat - xSrcLower;
     float t = ySrcFloat - ySrcLower;
     int dstIdx =  y*(dstImageStrideInBytes) + x;
-    int srcIdxTopLeft =  ySrcLower * (srcImageStrideInBytes) + xSrcLower;
-    int srcIdxTopRight =  ySrcLower * (srcImageStrideInBytes) + (xSrcLower + 1);
-    int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
-    int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
-    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(
+    int srcIdxTopLeft, srcIdxTopRight, srcIdxBottomLeft, srcIdxBottomRight;
+    srcIdxTopLeft =  ySrcLower * (srcImageStrideInBytes) + xSrcLower;
+    srcIdxTopRight =  ySrcLower * (srcImageStrideInBytes) + (xSrcLower + 1);
+    if (ySrcLower + 1 < srcHeight)
+    {
+        srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
+        srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
+    }
+    else
+    {
+        srcIdxBottomLeft =  (ySrcLower) * (srcImageStrideInBytes) + xSrcLower;
+        srcIdxBottomRight =  (ySrcLower) * (srcImageStrideInBytes) + (xSrcLower + 1);
+    }
+    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32(
       (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
       (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
       (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
       (s) * (t) * pSrcImage[srcIdxBottomRight]
-    );
+    ));
 }
 int HipExec_ScaleImage_U8_U8_Bilinear(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -708,6 +717,187 @@ int HipExec_ScaleImage_U8_U8_Bilinear(
     hipEventElapsedTime(&eventMs, start, stop);
 
     printf("\nHipExec_ScaleImage_U8_U8_Bilinear: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ScaleImage_U8_U8_Bilinear_Replicate(
+    const float dstWidth, const float dstHeight, 
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    const float srcWidth, const float srcHeight, 
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
+    float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    int xSrcLower = (int)xSrcFloat;
+    int ySrcLower = (int)ySrcFloat;
+    float s = xSrcFloat - xSrcLower;
+    float t = ySrcFloat - ySrcLower;
+    int dstIdx =  y*(dstImageStrideInBytes) + x;
+    int srcIdxTopLeft =  ySrcLower * (srcImageStrideInBytes) + xSrcLower;
+    int srcIdxTopRight =  ySrcLower * (srcImageStrideInBytes) + (xSrcLower + 1);
+    int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
+    int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
+    if (ySrcLower < 0)
+    {
+        srcIdxTopLeft += srcImageStrideInBytes;
+        srcIdxTopRight += srcImageStrideInBytes;
+    }
+    if (ySrcLower + 1 >= srcHeight)
+    {
+        srcIdxBottomLeft -= srcImageStrideInBytes;
+        srcIdxBottomRight -= srcImageStrideInBytes;
+    }
+    if (xSrcLower < 0)
+    {
+        srcIdxTopLeft += 1;
+        srcIdxBottomLeft += 1;
+    }
+    if (xSrcLower + 1 >= srcWidth)
+    {
+        srcIdxTopRight -= 1;
+        srcIdxBottomRight -= 1;
+    }
+    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32(
+      (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
+      (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
+      (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+      (s) * (t) * pSrcImage[srcIdxBottomRight]
+    ));
+}
+int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
+    dstWidthFloat = (float)dstWidth;
+    dstHeightFloat = (float)dstHeight;
+    srcWidthFloat = (float)srcWidth;
+    srcHeightFloat = (float)srcHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Replicate,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, 
+                    dstWidthFloat, dstHeightFloat,
+                    (unsigned char *)pHipDstImage, dstImageStrideInBytes, 
+                    srcWidthFloat, srcHeightFloat,
+                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("\nHipExec_ScaleImage_U8_U8_Bilinear_Replicate: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ScaleImage_U8_U8_Bilinear_Constant(
+    const float dstWidth, const float dstHeight, 
+    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
+    const float srcWidth, const float srcHeight, 
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const unsigned char border
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
+    float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    int xSrcLower, ySrcLower;
+    if (xSrcFloat >= 0)
+        xSrcLower = (int)xSrcFloat;
+    else
+        xSrcLower = (int)xSrcFloat - 1;
+    if (ySrcFloat >= 0)
+        ySrcLower = (int)ySrcFloat;
+    else
+        ySrcLower = (int)ySrcFloat - 1;
+    float s = xSrcFloat - xSrcLower;
+    float t = ySrcFloat - ySrcLower;
+    int dstIdx =  y*(dstImageStrideInBytes) + x;
+    int srcIdxTopLeft =  ySrcLower * (srcImageStrideInBytes) + xSrcLower;
+    int srcIdxTopRight =  ySrcLower * (srcImageStrideInBytes) + (xSrcLower + 1);
+    int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
+    int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
+    if (ySrcFloat >= 0)
+        if (ySrcFloat + 1 < srcHeight)
+            if (xSrcFloat >= 0)
+                if (xSrcFloat + 1 < srcWidth)
+                    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + (s) * (1-t) * pSrcImage[srcIdxTopRight] + (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + (s) * (t) * pSrcImage[srcIdxBottomRight]));
+                else
+                    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + (s) * (1-t) * border + (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + (s) * (t) * border));
+            else
+                pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * border + (s) * (1-t) * pSrcImage[srcIdxTopRight] + (1-s) * (t) * border + (s) * (t) * pSrcImage[srcIdxBottomRight]));
+        else
+            if (xSrcFloat >= 0)
+                if (xSrcFloat + 1 < srcWidth)
+                    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + (s) * (1-t) * pSrcImage[srcIdxTopRight] + (1-s) * (t) * border + (s) * (t) * border));
+                else
+                    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + (s) * (1-t) * border + (1-s) * (t) * border + (s) * (t) * border));
+            else
+                pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * border + (s) * (1-t) * pSrcImage[srcIdxTopRight] + (1-s) * (t) * border + (s) * (t) * border));
+    else
+        if (xSrcFloat >= 0)
+            if (xSrcFloat + 1 < srcWidth)
+                pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * border + (s) * (1-t) * border + (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + (s) * (t) * pSrcImage[srcIdxBottomRight]));
+            else
+                pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * border + (s) * (1-t) * border + (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + (s) * (t) * border));
+        else
+            pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32((1-s) * (1-t) * border + (s) * (1-t) * border + (1-s) * (t) * border + (s) * (t) * pSrcImage[srcIdxBottomRight]));
+}
+int HipExec_ScaleImage_U8_U8_Bilinear_Constant(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, 
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const ago_scale_matrix_t *matrix,
+    const vx_uint8 border
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
+    dstWidthFloat = (float)dstWidth;
+    dstHeightFloat = (float)dstHeight;
+    srcWidthFloat = (float)srcWidth;
+    srcHeightFloat = (float)srcHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Constant,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, 
+                    dstWidthFloat, dstHeightFloat,
+                    (unsigned char *)pHipDstImage, dstImageStrideInBytes, 
+                    srcWidthFloat, srcHeightFloat,
+                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
+                    border);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+
+    printf("\nHipExec_ScaleImage_U8_U8_Bilinear_Constant: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

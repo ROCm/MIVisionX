@@ -634,6 +634,8 @@ int main(int argc, const char ** argv)
 	void * nv_out[2] = {nullptr, nullptr};
 	void * iyuv_in[3] = {nullptr, nullptr, nullptr};
 	void * iyuv_out[3] = {nullptr, nullptr, nullptr};
+	void * yuv4_in[3] = {nullptr, nullptr, nullptr};
+	void * yuv4_out[3] = {nullptr, nullptr, nullptr};
 
 	// input and output images
 	vx_image img1, img2, img3, img_out, img_out2;
@@ -2169,6 +2171,54 @@ int main(int argc, const char ** argv)
 					out_buf_type = 4;
 					break;
 				}
+				case 129:
+				{
+				// test_case_name  = " agoKernel_ColorConvert_YUV4_RGBX "
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = ((pix_img1_u8)*width * height) + (2 * (pix_img1_u8 + 1) * (width ) * (height / 2)); //Needs Change
+					out_buf_type = 4;
+					break;
+				}
+				case 130:
+				{
+				// test_case_name  = " agoKernel_ColorConvert_YUV4_NV12 "
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = ((pix_img1_u8)*width * height) + (2 * (pix_img1_u8 + 1) * (width ) * (height / 2)); //Needs Change
+					out_buf_type = 4;
+					break;
+				}
+				case 131:
+				{
+				// test_case_name  = " agoKernel_ColorConvert_YUV4_NV21 "
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_NV21);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = ((pix_img1_u8)*width * height) + (2 * (pix_img1_u8 + 1) * (width ) * (height / 2)); //Needs Change 
+					out_buf_type = 4;
+					break;
+				}
+				case 132:
+				{
+				// test_case_name  = " agoKernel_ColorConvert_YUV4_IYUV "
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img1));
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
+					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = ((pix_img1_u8)*width * height) + (2 * (pix_img1_u8 + 1) * (width ) * (height / 2)); //Needs Chnage
+					out_buf_type = 4;
+					break;
+				}
 				case 133:
 				{
 					// test_case_name = "agoKernel_Box_U8_U8_3x3";
@@ -2594,7 +2644,8 @@ int main(int argc, const char ** argv)
 					(case_number == 79)  || (case_number == 105) || (case_number == 106) || (case_number == 107) ||
 					(case_number == 111) || (case_number == 112) || (case_number == 113) || (case_number == 117) ||
 					(case_number == 118) || (case_number == 119) || (case_number == 120) || (case_number == 121) ||
-					(case_number == 122) || (case_number == 123) ||(case_number == 124)
+					(case_number == 122) || (case_number == 123) || (case_number == 124) || (case_number == 129) ||
+					(case_number == 130) || (case_number == 131) || (case_number == 132)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8))	
@@ -2809,6 +2860,32 @@ int main(int argc, const char ** argv)
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_in[2], height * hip_addr_uint8_iyuv_in[2].stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_out[2], height * hip_addr_uint8_iyuv_in[2].stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[2], 0, height  * hip_addr_uint8_iyuv_in[2].stride_y));
+
+
+		vx_imagepatch_addressing_t hip_addr_uint8_yuv4_in[3] = {0};
+		hip_addr_uint8_yuv4_in[0].dim_x = width;
+		hip_addr_uint8_yuv4_in[0].dim_y = height;
+		hip_addr_uint8_yuv4_in[0].stride_x = 1;
+		hip_addr_uint8_yuv4_in[0].stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&yuv4_in[0], height * hip_addr_uint8_yuv4_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&yuv4_out[0],height * hip_addr_uint8_yuv4_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[0], 0, height * hip_addr_uint8_yuv4_in[0].stride_y));
+
+		hip_addr_uint8_yuv4_in[1].dim_x = width;
+		hip_addr_uint8_yuv4_in[1].dim_y = height;
+		hip_addr_uint8_yuv4_in[1].stride_x = 1;
+		hip_addr_uint8_yuv4_in[1].stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&yuv4_in[1], height * hip_addr_uint8_yuv4_in[1].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&yuv4_out[1], height * hip_addr_uint8_yuv4_in[1].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[1], 0, height  * hip_addr_uint8_yuv4_in[1].stride_y));
+
+		hip_addr_uint8_yuv4_in[2].dim_x = width;
+		hip_addr_uint8_yuv4_in[2].dim_y = height;
+		hip_addr_uint8_yuv4_in[2].stride_x = 1;
+		hip_addr_uint8_yuv4_in[2].stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&yuv4_in[2], height * hip_addr_uint8_yuv4_in[2].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&yuv4_out[2], height * hip_addr_uint8_yuv4_in[2].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[2], 0, height  * hip_addr_uint8_yuv4_in[2].stride_y));
 
 
 		affinity.device_type = AGO_TARGET_AFFINITY_GPU;
@@ -3996,6 +4073,26 @@ int main(int argc, const char ** argv)
 					out_buf_type = 4;
 					break;
 				}
+				case 129:
+				{
+				// test_case_name  = " agoKernel_FormatConvert_YUV4_RGBX"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = (pix_img1_u8 * width * height) + (2 * (pix_img1_u8 + 1) * (width / 2) * (height / 2)); //Needs Change
+					out_buf_type = 4;
+					break;
+				}
+				case 130:
+				{
+				// test_case_name  = " agoKernel_FormatConvert_YUV4_NV12"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, &hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
+					node = vxColorConvertNode(graph, img1, img_out);
+					expected_image_sum = (pix_img1_u8 * width * height) + (2 * (pix_img1_u8 + 1) * (width / 2) * (height / 2)); //Needs Change
+					out_buf_type = 4;
+					break;
+				}
 				case 133:
 				{
 					// test_case_name = "agoKernel_Box_U8_U8_3x3";
@@ -4420,7 +4517,9 @@ int main(int argc, const char ** argv)
 					(case_number == 79)  || (case_number == 105) || (case_number == 106) || (case_number == 107) ||
 					(case_number == 111) || (case_number == 112) || (case_number == 113) || (case_number == 117) ||
 					(case_number == 118) || (case_number == 119) || (case_number == 120) || (case_number == 121) ||
-					(case_number == 122) || (case_number == 123) || (case_number == 124)
+					(case_number == 122) || (case_number == 123) || (case_number == 124) || (case_number == 129) ||
+					(case_number == 130) 
+					// || (case_number == 131) || (case_number == 132) 
 					
 				)
 				{
@@ -4686,8 +4785,16 @@ int main(int argc, const char ** argv)
 	if (nv_out[1]) hipFree(nv_out[1]);
 	if (iyuv_in[0]) hipFree(iyuv_in[0]);
 	if (iyuv_in[1]) hipFree(iyuv_in[1]);
+	if (iyuv_in[2]) hipFree(iyuv_in[2]);
 	if (iyuv_out[0]) hipFree(iyuv_out[0]);
 	if (iyuv_out[1]) hipFree(iyuv_out[1]);
+	if (iyuv_out[2]) hipFree(iyuv_out[2]);
+	if (yuv4_in[0]) hipFree(yuv4_in[0]);
+	if (yuv4_in[1]) hipFree(yuv4_in[1]);
+	if (yuv4_in[2]) hipFree(yuv4_in[2]);
+	if (yuv4_out[0]) hipFree(yuv4_out[0]);
+	if (yuv4_out[1]) hipFree(yuv4_out[1]);
+	if (yuv4_out[2]) hipFree(yuv4_out[2]);
 	vxReleaseContext(&context);
 
 	return return_value;

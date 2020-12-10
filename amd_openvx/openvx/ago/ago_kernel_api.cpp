@@ -13002,6 +13002,8 @@ int agoKernel_ColorConvert_YUV4_RGBX(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP   
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -13024,6 +13026,19 @@ int agoKernel_ColorConvert_YUV4_RGBX(AgoNode * node, AgoKernelCommand cmd)
 		out3->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out3->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgY = node->paramList[0];
+		AgoData * oImgU = node->paramList[1];
+		AgoData * oImgV = node->paramList[2];
+		AgoData * iImg = node->paramList[3];
+        if (HipExec_ColorConvert_YUV4_RGBX(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+																			oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 

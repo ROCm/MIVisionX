@@ -724,6 +724,18 @@ int HipExec_FormatConvert_IYUV_YUYV(
     vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
+int HipExec_FormatConvert_IUV_UV12(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
+    vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
+    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes
+    );
+int HipExec_FormatConvert_UV12_IUV(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstChromaImage, vx_uint32 DstChromaImageStrideInBytes,
+    const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
+    const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes
+    ); 
 // filter_kernels
 
 int HipExec_Box_U8_U8_3x3(

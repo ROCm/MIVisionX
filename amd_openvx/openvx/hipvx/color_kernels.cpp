@@ -2439,18 +2439,17 @@ int HipExec_FormatConvert_IUV_UV12(
     float eventMs = 1.0f;
     hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_FormatConvert_IUV_UV12,
-                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-                       dim3(localThreads_x, localThreads_y),
-                       0, 0, dstWidth, dstHeight,
-                       (unsigned char *)pHipDstUImage, dstUImageStrideInBytes,
-                       (unsigned char *)pHipDstVImage, dstVImageStrideInBytes,
-                       (const unsigned char *)pHipSrcChromaImage, srcChromaImageStrideInBytes);
-
+                    dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (unsigned char *)pHipDstUImage, dstUImageStrideInBytes,
+                    (unsigned char *)pHipDstVImage, dstVImageStrideInBytes,
+                    (const unsigned char *)pHipSrcChromaImage, srcChromaImageStrideInBytes);
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
     printf("\nHipExec_FormatConvert_IUV_UV12: Kernel time: %f\n", eventMs);
-    return VX_SUCCESS;   
+    return VX_SUCCESS;  
 }
 
 __global__ void __attribute__((visibility("default")))
@@ -2503,3 +2502,132 @@ int HipExec_FormatConvert_UV12_IUV(
     printf("\nHipExec_FormatConvert_UV12_IUV: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;   
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_ColorConvert_YUV4_RGBX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstYImage, unsigned int dstYImageStrideInBytes,
+    unsigned char *pDstUImage, unsigned int dstUImageStrideInBytes,
+    unsigned char *pDstVImage, unsigned int dstVImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes
+    )
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x *4 >= dstWidth) || (y  >= dstHeight))
+        return;
+    unsigned int dstYIdx = y * (dstYImageStrideInBytes) + (x*4);
+    unsigned int dstUIdx = y * (dstUImageStrideInBytes) + (x*4);
+    unsigned int dstVIdx = y * (dstVImageStrideInBytes) + (x*4);
+    unsigned int srcIdx = y * (srcImageStrideInBytes) + (x * 16);
+
+    float R, G, B;
+    int j=0;
+    for (int i=0;i<4;i++)
+    {
+        R = pSrcImage[srcIdx+ j];
+        G = pSrcImage[srcIdx+ 1+j];
+        B = pSrcImage[srcIdx + 2+j];
+        pDstYImage[dstYIdx+i] = ((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+        pDstUImage[dstUIdx+i] = ((R * -0.1146f) + (G * -0.3854) + (B * 0.5f) + 128.0f);
+        pDstVImage[dstVIdx+i] = ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+        j =j +4;
+    }
+}
+int HipExec_ColorConvert_YUV4_RGBX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
+    vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
+    vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
+
+    printf("\ndstWidth = %d, dstHeight = %d\ndstYImageStrideInBytes = %d, dstUImageStrideInBytes = %d, dstVImageStrideInBytes = %d srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstYImageStrideInBytes, dstUImageStrideInBytes, dstVImageStrideInBytes, srcImageStrideInBytes);
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ColorConvert_YUV4_RGBX,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstYImage, dstYImageStrideInBytes,
+                       (unsigned char *)pHipDstUImage, dstUImageStrideInBytes,
+                       (unsigned char *)pHipDstVImage, dstVImageStrideInBytes,
+                       (const unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_FormatConvert_YUV4_RGBX: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;   
+}
+
+// __global__ void __attribute__((visibility("default")))
+// Hip_ColorConvert_YUV4_NV12(
+//     vx_uint32 dstWidth, vx_uint32 dstHeight,
+//     unsigned char *pDstYImage, unsigned int dstYImageStrideInBytes,
+//     unsigned char *pDstUImage, unsigned int dstUImageStrideInBytes,
+//     unsigned char *pDstVImage, unsigned int dstVImageStrideInBytes,
+//     const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes)
+// {
+//     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+//     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+//     if ((x *4 >= dstWidth) || (y  >= dstHeight))
+//         return;
+//     unsigned int dstYIdx = y * (dstYImageStrideInBytes) + x*4;
+//     unsigned int dstUIdx = y * (dstUImageStrideInBytes) + x*4;
+//     unsigned int dstVIdx = y * (dstVImageStrideInBytes) + x*4;
+//     unsigned int srcIdx = y * (srcImageStrideInBytes) + (x * 16);
+
+//     float R, G, B;
+//     int j=0;
+//     for (int i=0;i<4;i++)
+//     {
+//         R = pSrcImage[srcIdx+ j];
+//         G = pSrcImage[srcIdx+ 1+j];
+//         B = pSrcImage[srcIdx + 2+j];
+//         pDstYImage[dstYIdx+i] = ((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+//         pDstUImage[dstUIdx+i] = ((R * -0.1146f) + (G * -0.3854) + (B * 0.5f) + 128.0f);
+//         pDstVImage[dstVIdx+i] = ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+//         j =j +4;
+//     }
+// }
+// int HipExec_ColorConvert_YUV4_NV12(
+//     vx_uint32 dstWidth, vx_uint32 dstHeight,
+//     vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
+//     vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
+//     vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
+//     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+//     )
+// {
+//     hipEvent_t start, stop;
+//     int localThreads_x = 16, localThreads_y = 16;
+//     int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
+
+//     printf("\ndstWidth = %d, dstHeight = %d\ndstYImageStrideInBytes = %d, dstUImageStrideInBytes = %d, dstVImageStrideInBytes = %d srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstYImageStrideInBytes, dstUImageStrideInBytes, dstVImageStrideInBytes, srcImageStrideInBytes);
+
+//     hipEventCreate(&start);
+//     hipEventCreate(&stop);
+//     float eventMs = 1.0f;
+//     hipEventRecord(start, NULL);
+//     hipLaunchKernelGGL(Hip_ColorConvert_YUV4_NV12,
+//                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+//                        dim3(localThreads_x, localThreads_y),
+//                        0, 0, dstWidth, dstHeight,
+//                        (unsigned char *)pHipDstYImage, dstYImageStrideInBytes,
+//                        (unsigned char *)pHipDstUImage, dstUImageStrideInBytes,
+//                        (unsigned char *)pHipDstVImage, dstVImageStrideInBytes,
+//                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+
+//     hipEventRecord(stop, NULL);
+//     hipEventSynchronize(stop);
+//     hipEventElapsedTime(&eventMs, start, stop);
+//     printf("\nHipExec_ColorConvert_YUV4_NV12: Kernel time: %f\n", eventMs);
+//     return VX_SUCCESS;
+// }

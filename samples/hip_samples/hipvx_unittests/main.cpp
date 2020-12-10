@@ -125,7 +125,15 @@
 // case 121 - agoKernel_ColorConvert_NV12_RGB
 // case 122 - agoKernel_ColorConvert_NV12_RGBX
 // case 123 - agoKernel_FormatConvert_NV12_UYVY
-// case 124 - agoKernel_FormatConvert_NV12_YUYV           
+// case 124 - agoKernel_FormatConvert_NV12_YUYV  
+// case 125 - agoKernel_ColorConvert_IYUV_NV12
+// case 126 - agoKernel_ColorConvert_IYUV_NV21
+// case 127 - agoKernel_FormatConvert_NV12_IYUV
+// case 128 - agoKernel_ColorConvert_YUV4_RGB
+// case 129 - agoKernel_ColorConvert_YUV4_RGBX
+// case 130 - agoKernel_ColorConvert_YUV4_NV12
+// case 131 - agoKernel_ColorConvert_YUV4_NV21
+// case 132 - agoKernel_ColorConvert_YUV4_IYUV
 // case 133 - agoKernel_Box_U8_U8_3x3
 // case 134 - agoKernel_Dilate_U8_U8_3x3
 // case 135 - agoKernel_Dilate_U1_U8_3x3
@@ -174,6 +182,69 @@
 // case 178 - agoKernel_Remap_U24_U24_Bilinear
 // case 179 - agoKernel_Remap_U24_U32_Bilinear
 // case 180 - agoKernel_Remap_U32_U32_Bilinear
+// case 181 - agoKernel_CannySobelSuppThreshold_U8_U8_3x3_L1NORM
+// case 182 - agoKernel_CannySobelSuppThreshold_U8_U8_3x3_L2NORM
+// case 183 - agoKernel_CannySobelSuppThreshold_U8_U8_5x5_L1NORM
+// case 184 - agoKernel_CannySobelSuppThreshold_U8_U8_5x5_L2NORM
+// case 185 - agoKernel_CannySobelSuppThreshold_U8_U8_7x7_L1NORM
+// case 186 - agoKernel_CannySobelSuppThreshold_U8_U8_7x7_L2NORM
+// case 187 - agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM
+// case 188 - agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM
+// case 189 - agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM
+// case 190 - agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM
+// case 191 - agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L1NORM
+// case 192 - agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM
+// case 193 - agoKernel_CannySobel_U16_U8_3x3_L1NORM
+// case 194 - agoKernel_CannySobel_U16_U8_3x3_L2NORM
+// case 195 - agoKernel_CannySobel_U16_U8_5x5_L1NORM
+// case 196 - agoKernel_CannySobel_U16_U8_5x5_L2NORM
+// case 197 - agoKernel_CannySobel_U16_U8_7x7_L1NORM
+// case 198 - agoKernel_CannySobel_U16_U8_7x7_L2NORM
+// case 199 - agoKernel_CannySuppThreshold_U8_U16_3x3
+// case 200 - agoKernel_CannySuppThreshold_U8XY_U16_3x3
+// case 201 - agoKernel_CannyEdgeTrace_U8_U8
+// case 202 - agoKernel_CannyEdgeTrace_U8_U8XY
+// case 203 - agoKernel_FastCorners_XY_U8_Supression
+// case 204 - agoKernel_FastCorners_XY_U8_NoSupression
+// case 205 - agoKernel_FastCornerMerge_XY_XY
+// case 206 - agoKernel_HarrisSobel_HG3_U8_3x3
+// case 207 - agoKernel_HarrisSobel_HG3_U8_5x5
+// case 208 - agoKernel_HarrisSobel_HG3_U8_7x7
+// case 209 - agoKernel_HarrisScore_HVC_HG3_3x3
+// case 210 - agoKernel_HarrisScore_HVC_HG3_5x5
+// case 211 - agoKernel_HarrisScore_HVC_HG3_7x7
+// case 212 - agoKernel_HarrisMergeSortAndPick_XY_HVC
+// case 213 - agoKernel_HarrisMergeSortAndPick_XY_XYS
+// case 214 - agoKernel_IntegralImage_U32_U8
+// case 215 - agoKernel_Histogram_DATA_U8
+// case 216 - agoKernel_Equalize_DATA_DATA
+// case 217 - agoKernel_MeanStdDev_DATA_U8
+// case 218 - agoKernel_MeanStdDev_DATA_U1
+// case 219 - agoKernel_OpticalFlowPyrLK_XY_XY
+// case 220 - agoKernel_OpticalFlowPrepareLK_XY_XY
+// case 221 - agoKernel_OpticalFlowImageLK_XY_XY
+// case 222 - agoKernel_OpticalFlowFinalLK_XY_XY
+// case 223 - agoKernel_MinMax_DATA_U8
+// case 224 - agoKernel_MinMax_DATA_S16
+// case 225 - agoKernel_MinMaxMerge_DATA_DATA
+// case 226 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_Min
+// case 227 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_Max
+// case 228 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_MinMax
+// case 229 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_Min
+// case 230 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_MinMax
+// case 231 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_Max
+// case 232 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_MinMax
+// case 233 - agoKernel_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax
+// case 234 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_None_Count_Min
+// case 235 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_None_Count_Max
+// case 236 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_None_Count_MinMax
+// case 237 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Min_Count_Min
+// case 238 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Min_Count_MinMax
+// case 239 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_Max
+// case 240 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_Max_Count_MinMax
+// case 241 - agoKernel_MinMaxLoc_DATA_S16DATA_Loc_MinMax_Count_MinMax
+// case 242 - agoKernel_MinMaxLocMerge_DATA_DATA
+// case 243 - agoKernel_Copy_DATA_DATA
 
 #define __HIP_PLATFORM_HCC__
 #include "hip/hip_runtime.h"
@@ -647,8 +718,11 @@ int main(int argc, const char ** argv)
 	affinity.device_info = 0;
 
 	// arguments for specific functionalities	
+	/*Multiplication Params*/
 	vx_float32 Mul_scale_float = (vx_float32) (1.0 / 16.0);
 	vx_scalar Mul_scale_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &Mul_scale_float);
+
+	/*Threshold Params*/
 	// vx_int32 Threshold_thresholdValue_int32 = (vx_int32) 100;
 	// vx_int32 Threshold_thresholdLower_int32 = (vx_int32) 100;
 	// vx_int32 Threshold_thresholdUpper_int32 = (vx_int32) 200;
@@ -657,13 +731,19 @@ int main(int argc, const char ** argv)
 	// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
 	// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
 	// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
+	
+	/* Weighted Average Params */
 	vx_float32 WeightedAverage_alpha_float = (vx_float32) (0.25);
 	vx_scalar WeightedAverage_alpha_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &WeightedAverage_alpha_float);
+
+	/* Lookup Table Params */
 	vx_uint8 Lut_lutPtr_uint8[256];
 	for (int i = 0; i < 256; i++)
 		Lut_lutPtr_uint8[i] = (vx_uint8)(255 - i);
 	vx_lut Lut_lutObject_lut = vxCreateLUT(context, VX_TYPE_UINT8, (vx_size)256);
 	ERROR_CHECK_STATUS(vxCopyLUT(Lut_lutObject_lut, (void*)Lut_lutPtr_uint8, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+
+	/* Filter Params */
 	vx_uint32 scale = 1;
 	vx_int16 filter3x3[3][3] = {
 		{ 1, 2, 1},
@@ -691,14 +771,22 @@ int main(int argc, const char ** argv)
 		{ 2, 4, 6, 8, 6, 4, 2},
 		{ 1, 2, 4, 6, 4, 2, 1},
 	};
+
+	/*Convolution Params*/
 	vx_convolution Convolve_conv_convolution = vxCreateConvolution(context, 5, 5);
 	ERROR_CHECK_STATUS(vxCopyConvolutionCoefficients(Convolve_conv_convolution, (vx_int16*)filter5x5, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 	ERROR_CHECK_STATUS(vxSetConvolutionAttribute(Convolve_conv_convolution, VX_CONVOLUTION_SCALE, &scale, sizeof(scale)));
+
+	/*Scale Image Params*/
 	vx_enum ScaleImage_type1_enum = VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR;
 	vx_enum ScaleImage_type2_enum = VX_INTERPOLATION_TYPE_BILINEAR;
 	vx_enum ScaleImage_type3_enum = VX_INTERPOLATION_TYPE_AREA;
+
+	/*Convert Depth Params*/
 	vx_int32 ConvertDepth_shift_int32 = 1;
 	vx_scalar ConvertDepth_shift_scalar = vxCreateScalar(context, VX_TYPE_INT32, (void*) &ConvertDepth_shift_int32);
+
+	/*Warp Affine Params*/
 	// vx_float32 WarpAffine_affineMatrix_float[3][2] = {			// if needed - rotate 45deg
 	// 	{0.707, -0.707}, // 'x' coefficients
 	// 	{0.707, 0.707}, // 'y' coefficients
@@ -711,6 +799,8 @@ int main(int argc, const char ** argv)
 	};
 	vx_matrix WarpAffine_affineMatrix_matrix = vxCreateMatrix(context, VX_TYPE_FLOAT32, 2, 3);
 	ERROR_CHECK_STATUS(vxCopyMatrix(WarpAffine_affineMatrix_matrix, WarpAffine_affineMatrix_float, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
+
+	/*Warp Perspective Params*/
 	vx_float32 WarpPerspective_perspectiveMatrix_float[3][3] = {			// translate in x and y
 		{1, 0, 0}, // 'x' coefficients
 		{0, 1, 0}, // 'y' coefficients
@@ -719,6 +809,7 @@ int main(int argc, const char ** argv)
 	vx_matrix WarpPerspective_perspectiveMatrix_matrix = vxCreateMatrix(context, VX_TYPE_FLOAT32, 3, 3);
 	ERROR_CHECK_STATUS(vxCopyMatrix(WarpPerspective_perspectiveMatrix_matrix, WarpPerspective_perspectiveMatrix_float, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
 	
+	/*Remap Params*/
 	_vx_coordinates2df_t Remap_remapTable_coordinates2df[widthOut * heightOut];
 	vx_size Remap_remapTableStrideY_size = widthOut * 8;
 	// ago_coord2d_ushort_t Remap_remapTable_coord2d_ushort[widthOut * heightOut];
@@ -2574,14 +2665,14 @@ int main(int argc, const char ** argv)
 		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, heightOut * hip_addr_uint8_out.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_int16 = {0};
-		// hip_addr_int16.dim_x = width;
-		// hip_addr_int16.dim_y = height;
-		// hip_addr_int16.stride_x = 2;
-		// hip_addr_int16.stride_y = ((width+3)&~3)*2;
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_int16.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_int16.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_int16.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_int16.stride_y));
+		hip_addr_int16.dim_x = width;
+		hip_addr_int16.dim_y = height;
+		hip_addr_int16.stride_x = 2;
+		hip_addr_int16.stride_y = ((width+3)&~3)*2;
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_int16.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_int16.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_int16.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_int16.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_u1 = {0};
 		hip_addr_uint8_u1.dim_x = width;
@@ -2605,119 +2696,119 @@ int main(int argc, const char ** argv)
 		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height  * hip_addr_u1.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_yuyv_uyuv_in = {0};
-		// hip_addr_uint8_yuyv_uyuv_in.dim_x = width;
-		// hip_addr_uint8_yuyv_uyuv_in.dim_y = height;
-		// hip_addr_uint8_yuyv_uyuv_in.stride_x = 2;
-		// hip_addr_uint8_yuyv_uyuv_in.stride_y = ((width+3)&~3)*2;
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
+		hip_addr_uint8_yuyv_uyuv_in.dim_x = width;
+		hip_addr_uint8_yuyv_uyuv_in.dim_y = height;
+		hip_addr_uint8_yuyv_uyuv_in.stride_x = 2;
+		hip_addr_uint8_yuyv_uyuv_in.stride_y = ((width+3)&~3)*2;
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_yuyv_uyuv_in.stride_y));
 
 
 		vx_imagepatch_addressing_t hip_addr_uint8_yuyv_uyuv_out = {0};
-		// hip_addr_uint8_yuyv_uyuv_out.dim_x = width/2;
-		// hip_addr_uint8_yuyv_uyuv_out.dim_y = height;
-		// hip_addr_uint8_yuyv_uyuv_out.stride_x = 1;
-		// hip_addr_uint8_yuyv_uyuv_out.stride_y = ((width+3)&~3);
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
+		hip_addr_uint8_yuyv_uyuv_out.dim_x = width/2;
+		hip_addr_uint8_yuyv_uyuv_out.dim_y = height;
+		hip_addr_uint8_yuyv_uyuv_out.stride_x = 1;
+		hip_addr_uint8_yuyv_uyuv_out.stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_yuyv_uyuv_out.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_rgb_in = {0};
-		// hip_addr_uint8_rgb_in.dim_x = width;
-		// hip_addr_uint8_rgb_in.dim_y = height;
-		// hip_addr_uint8_rgb_in.stride_x = 3;
-		// hip_addr_uint8_rgb_in.stride_y = ((width+3)&~3)*3;
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_rgb_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_in.stride_y));
+		hip_addr_uint8_rgb_in.dim_x = width;
+		hip_addr_uint8_rgb_in.dim_y = height;
+		hip_addr_uint8_rgb_in.stride_x = 3;
+		hip_addr_uint8_rgb_in.stride_y = ((width+3)&~3)*3;
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_rgb_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_in.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_rgbx_in = {0};
-		// hip_addr_uint8_rgbx_in.dim_x = width;
-		// hip_addr_uint8_rgbx_in.dim_y = height;
-		// hip_addr_uint8_rgbx_in.stride_x = 4;
-		// hip_addr_uint8_rgbx_in.stride_y = ((width+3)&~3)*4;
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgbx_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgbx_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgbx_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_rgbx_in.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_rgbx_in.stride_y));
+		hip_addr_uint8_rgbx_in.dim_x = width;
+		hip_addr_uint8_rgbx_in.dim_y = height;
+		hip_addr_uint8_rgbx_in.stride_x = 4;
+		hip_addr_uint8_rgbx_in.stride_y = ((width+3)&~3)*4;
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgbx_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgbx_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgbx_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_rgbx_in.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_rgbx_in.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_rgb_out = {0};
-		// hip_addr_uint8_rgb_out.dim_x = width;
-		// hip_addr_uint8_rgb_out.dim_y = height;
-		// hip_addr_uint8_rgb_out.stride_x = 1;
-		// hip_addr_uint8_rgb_out.stride_y = ((width+3)&~3);
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_rgb_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_out.stride_y));
+		hip_addr_uint8_rgb_out.dim_x = width;
+		hip_addr_uint8_rgb_out.dim_y = height;
+		hip_addr_uint8_rgb_out.stride_x = 1;
+		hip_addr_uint8_rgb_out.stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_rgb_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_rgb_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_rgb_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_rgb_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_rgb_out.stride_y));
 		
 		vx_imagepatch_addressing_t hip_addr_uint8_nv12_nv21_out = {0};
-		// hip_addr_uint8_nv12_nv21_out.dim_x = width/2;
-		// hip_addr_uint8_nv12_nv21_out.dim_y = height/2;
-		// hip_addr_uint8_nv12_nv21_out.stride_x = 1;
-		// hip_addr_uint8_nv12_nv21_out.stride_y = ((width+3)&~3);
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_nv12_nv21_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_nv12_nv21_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_nv12_nv21_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_nv12_nv21_out.stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_nv12_nv21_out.stride_y));
+		hip_addr_uint8_nv12_nv21_out.dim_x = width/2;
+		hip_addr_uint8_nv12_nv21_out.dim_y = height/2;
+		hip_addr_uint8_nv12_nv21_out.stride_x = 1;
+		hip_addr_uint8_nv12_nv21_out.stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_nv12_nv21_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_nv12_nv21_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint8_nv12_nv21_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[3], height * hip_addr_uint8_nv12_nv21_out.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint8_nv12_nv21_out.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_nv12_nv21_in[2] = {0};
-		// hip_addr_uint8_nv12_nv21_in[0].dim_x = width;
-		// hip_addr_uint8_nv12_nv21_in[0].dim_y = height;
-		// hip_addr_uint8_nv12_nv21_in[0].stride_x = 1;
-		// hip_addr_uint8_nv12_nv21_in[0].stride_y = ((width+3)&~3);
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_in[0], height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_out[0],height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(nv_out[0], 0, height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
+		hip_addr_uint8_nv12_nv21_in[0].dim_x = width;
+		hip_addr_uint8_nv12_nv21_in[0].dim_y = height;
+		hip_addr_uint8_nv12_nv21_in[0].stride_x = 1;
+		hip_addr_uint8_nv12_nv21_in[0].stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_in[0], height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_out[0],height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(nv_out[0], 0, height * hip_addr_uint8_nv12_nv21_in[0].stride_y));
 
 		hip_addr_uint8_nv12_nv21_in[1].dim_x = width/2;
-		// hip_addr_uint8_nv12_nv21_in[1].dim_y = height/2;
-		// hip_addr_uint8_nv12_nv21_in[1].stride_x = 2;
-		// hip_addr_uint8_nv12_nv21_in[1].stride_y = ((width+3)&~3)*2;
-		// hip_addr_uint8_nv12_nv21_in[1].step_x = 2;
-		// hip_addr_uint8_nv12_nv21_in[1].step_y = 2;
-		// hip_addr_uint8_nv12_nv21_in[1].scale_x = 512;
-		// hip_addr_uint8_nv12_nv21_in[1].scale_y = 512;
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_in[1], height * hip_addr_uint8_nv12_nv21_in[1].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_out[1], height * hip_addr_uint8_nv12_nv21_in[1].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(nv_out[1], 0, height  * hip_addr_uint8_nv12_nv21_in[1].stride_y));
+		hip_addr_uint8_nv12_nv21_in[1].dim_y = height/2;
+		hip_addr_uint8_nv12_nv21_in[1].stride_x = 2;
+		hip_addr_uint8_nv12_nv21_in[1].stride_y = ((width+3)&~3)*2;
+		hip_addr_uint8_nv12_nv21_in[1].step_x = 2;
+		hip_addr_uint8_nv12_nv21_in[1].step_y = 2;
+		hip_addr_uint8_nv12_nv21_in[1].scale_x = 512;
+		hip_addr_uint8_nv12_nv21_in[1].scale_y = 512;
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_in[1], height * hip_addr_uint8_nv12_nv21_in[1].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&nv_out[1], height * hip_addr_uint8_nv12_nv21_in[1].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(nv_out[1], 0, height  * hip_addr_uint8_nv12_nv21_in[1].stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_iyuv_in[3] = {0};
-		// hip_addr_uint8_iyuv_in[0].dim_x = width;
-		// hip_addr_uint8_iyuv_in[0].dim_y = height;
-		// hip_addr_uint8_iyuv_in[0].stride_x = 1;
-		// hip_addr_uint8_iyuv_in[0].stride_y = ((width+3)&~3);
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_in[0], height * hip_addr_uint8_iyuv_in[0].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_out[0],height * hip_addr_uint8_iyuv_in[0].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[0], 0, height * hip_addr_uint8_iyuv_in[0].stride_y));
+		hip_addr_uint8_iyuv_in[0].dim_x = width;
+		hip_addr_uint8_iyuv_in[0].dim_y = height;
+		hip_addr_uint8_iyuv_in[0].stride_x = 1;
+		hip_addr_uint8_iyuv_in[0].stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_in[0], height * hip_addr_uint8_iyuv_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_out[0],height * hip_addr_uint8_iyuv_in[0].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[0], 0, height * hip_addr_uint8_iyuv_in[0].stride_y));
 
-		// hip_addr_uint8_iyuv_in[1].dim_x = width/2;
-		// hip_addr_uint8_iyuv_in[1].dim_y = height/2;
-		// hip_addr_uint8_iyuv_in[1].stride_x = 1;
-		// hip_addr_uint8_iyuv_in[1].stride_y = ((width+3)&~3);
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_in[1], height * hip_addr_uint8_iyuv_in[1].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_out[1], height * hip_addr_uint8_iyuv_in[1].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[1], 0, height  * hip_addr_uint8_iyuv_in[1].stride_y));
+		hip_addr_uint8_iyuv_in[1].dim_x = width/2;
+		hip_addr_uint8_iyuv_in[1].dim_y = height/2;
+		hip_addr_uint8_iyuv_in[1].stride_x = 1;
+		hip_addr_uint8_iyuv_in[1].stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_in[1], height * hip_addr_uint8_iyuv_in[1].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_out[1], height * hip_addr_uint8_iyuv_in[1].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[1], 0, height  * hip_addr_uint8_iyuv_in[1].stride_y));
 
-		// hip_addr_uint8_iyuv_in[2].dim_x = width/2;
-		// hip_addr_uint8_iyuv_in[2].dim_y = height/2;
-		// hip_addr_uint8_iyuv_in[2].stride_x = 1;
-		// hip_addr_uint8_iyuv_in[2].stride_y = ((width+3)&~3);
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_in[2], height * hip_addr_uint8_iyuv_in[2].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_out[2], height * hip_addr_uint8_iyuv_in[2].stride_y));
-		// ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[2], 0, height  * hip_addr_uint8_iyuv_in[2].stride_y));
+		hip_addr_uint8_iyuv_in[2].dim_x = width/2;
+		hip_addr_uint8_iyuv_in[2].dim_y = height/2;
+		hip_addr_uint8_iyuv_in[2].stride_x = 1;
+		hip_addr_uint8_iyuv_in[2].stride_y = ((width+3)&~3);
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_in[2], height * hip_addr_uint8_iyuv_in[2].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&iyuv_out[2], height * hip_addr_uint8_iyuv_in[2].stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(iyuv_out[2], 0, height  * hip_addr_uint8_iyuv_in[2].stride_y));
 
 
 		affinity.device_type = AGO_TARGET_AFFINITY_GPU;

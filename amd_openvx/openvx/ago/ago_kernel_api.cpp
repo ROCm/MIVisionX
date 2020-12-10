@@ -16613,7 +16613,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
 		AgoData * iImg = node->paramList[1];
 		AgoData * iMat = node->paramList[2];
 		if (HafCpu_WarpAffine_U8_U8_Nearest_Constant(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-			iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (ago_affine_matrix_t *)iMat->buffer, node->paramList[3]->u.scalar.u.u, node->localDataPtr))
+			iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes, (ago_affine_matrix_t *)iMat->buffer, node->paramList[3]->u.scalar.u.u, iImg->u.img.rect_valid, node->localDataPtr))
 		{
 			status = VX_FAILURE;
 		}

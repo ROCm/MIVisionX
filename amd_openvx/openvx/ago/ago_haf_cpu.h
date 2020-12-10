@@ -2506,6 +2506,7 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 		vx_uint32             srcImageStrideInBytes,
 		ago_affine_matrix_t * matrix,
 		vx_uint8              border,
+		vx_rectangle_t        rect_valid,
 		vx_uint8			* pLocalData
 	);
 int HafCpu_WarpAffine_U8_U8_Bilinear

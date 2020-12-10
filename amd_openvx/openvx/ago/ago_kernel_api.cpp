@@ -18429,10 +18429,29 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpAffine_U8_U8_Nearest_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_affine_matrix_t *)iMat->buffer,
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18611,10 +18630,29 @@ int agoKernel_WarpAffine_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpAffine_U8_U8_Bilinear_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_affine_matrix_t *)iMat->buffer, 
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18802,10 +18840,29 @@ int agoKernel_WarpPerspective_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCo
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpPerspective_U8_U8_Nearest_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_perspective_matrix_t *)iMat->buffer, 
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18986,10 +19043,29 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelC
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_perspective_matrix_t *)iMat->buffer, 
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 

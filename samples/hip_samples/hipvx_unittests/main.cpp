@@ -575,8 +575,10 @@ int main(int argc, const char ** argv)
 		heightOut = (height + 1) / 2;
 	}
 	else if (
-		(case_number == 162) || (case_number == 164) || 
-		(case_number == 166) || (case_number == 168) || 
+		(case_number == 162) || (case_number == 163) || 
+		(case_number == 164) || (case_number == 165) || 
+		(case_number == 166) || (case_number == 167) || 
+		(case_number == 168) || (case_number == 169) || 
 		(case_number == 174) || (case_number == 176)
 		)
 	{
@@ -2194,6 +2196,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 163:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Nearest_Constant";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
+					out_buf_type = 0;
+					break;
+				}
 				case 164:
 				{
 					// test_case_name = "agoKernel_WarpAffine_U8_U8_Bilinear";
@@ -2201,6 +2214,17 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
 					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
 					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 165:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Bilinear_Constant";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
 					out_buf_type = 0;
 					break;
 				}
@@ -2214,6 +2238,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 167:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Nearest_Constant";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
+					out_buf_type = 0;
+					break;
+				}
 				case 168:
 				{
 					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Bilinear";
@@ -2221,6 +2256,17 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
 					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
 					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 169:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Bilinear_Constant";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U8);
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
 					out_buf_type = 0;
 					break;
 				}
@@ -2335,9 +2381,10 @@ int main(int argc, const char ** argv)
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 156)  || (case_number == 157) || 
-					(case_number == 158)  || (case_number == 159) ||
-					(case_number == 160) || (case_number == 162) || (case_number == 164) || (case_number == 166) || 
-					(case_number == 168) || (case_number == 172) || (case_number == 174) || (case_number == 176)
+					(case_number == 158)  || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
+					(case_number == 163) || (case_number == 164) || (case_number == 165) || (case_number == 166) || 
+					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
+					(case_number == 174) || (case_number == 176)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -3944,6 +3991,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 163:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Nearest_Constant";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
+					out_buf_type = 0;
+					break;
+				}
 				case 164:
 				{
 					// test_case_name = "agoKernel_WarpAffine_U8_U8_Bilinear";
@@ -3951,6 +4009,17 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
 					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 165:
+				{
+					// test_case_name = "agoKernel_WarpAffine_U8_U8_Bilinear_Constant";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpAffineNode(graph, img1, WarpAffine_affineMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
 					out_buf_type = 0;
 					break;
 				}
@@ -3964,6 +4033,17 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 167:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Nearest_Constant";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
+					out_buf_type = 0;
+					break;
+				}
 				case 168:
 				{
 					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Bilinear";
@@ -3971,6 +4051,17 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
 					expected_image_sum = pix_img1_u8 * width * height;
+					out_buf_type = 0;
+					break;
+				}
+				case 169:
+				{
+					// test_case_name = "agoKernel_WarpPerspective_U8_U8_Bilinear_Constant";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_out, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxWarpPerspectiveNode(graph, img1, WarpPerspective_perspectiveMatrix_matrix, VX_INTERPOLATION_TYPE_BILINEAR, img_out);
+					ERROR_CHECK_STATUS(vxSetNodeAttribute(node, VX_NODE_BORDER, &border2, sizeof(border2)));
+					expected_image_sum = (pix_img1_u8 * width * height) + (border2.constant_value.U8 * widthOut * heightOut) - (border2.constant_value.U8 * width * height);
 					out_buf_type = 0;
 					break;
 				}
@@ -4085,9 +4176,10 @@ int main(int argc, const char ** argv)
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 156)  || (case_number == 157) || 
-					(case_number == 158) || (case_number == 159) || 
-					(case_number == 160) || (case_number == 162) || (case_number == 164) || (case_number == 166) || 
-					(case_number == 168) || (case_number == 172) || (case_number == 174) || (case_number == 176)
+					(case_number == 158) || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
+					(case_number == 163) || (case_number == 164) || (case_number == 165) || (case_number == 166) || 
+					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
+					(case_number == 174) || (case_number == 176)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));

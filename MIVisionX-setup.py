@@ -294,7 +294,7 @@ else:
 			os.system('(cd '+deps_dir+'/x264; sudo '+linuxFlag+' make install )')
 			# libx265
 			os.system('(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
-			os.system('(cd '+deps_dir+'/x265/build/linux; ./make-Makefiles.bash; make -j8 )')
+			os.system('(cd '+deps_dir+'/x265/build/linux; cmake -G "Unix Makefiles" ../../source; make -j8 )')
 			os.system('sudo -v')
 			os.system('(cd '+deps_dir+'/x265/build/linux; sudo '+linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')
 			# libfdk_aac

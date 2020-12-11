@@ -21,6 +21,7 @@ branches:
 
 install:
   - sudo apt update
+  - sudo apt-get -yq install strace gcc g++
   - lscpu
 
 before_script:
@@ -40,7 +41,7 @@ before_script:
   - cd build-cts
   - cmake -DOPENVX_INCLUDES=$OPENVX_INC/include -DOPENVX_LIBRARIES=$OPENVX_DIR/lib/libopenvx.so\;$OPENVX_DIR/lib/libvxu.so\;pthread\;dl\;m\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
   - cmake --build .
-  - LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance
+  - strace -f LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance
   - cd ../../
   # Run OpenVX 1.3 Conformance - GPU
   # - TBD:

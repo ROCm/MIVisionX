@@ -769,7 +769,6 @@ class ImageDecoderSlice(Node):
 
     def __call__(self,input, crop_begin = [] , crop_size = []):
         self.crop_begin = crop_begin
-        print("CROP BEGIN:",self.crop_begin)
         input.next = self
         self.data = "ImageDecoderSlice"
         self.prev = input
@@ -789,9 +788,7 @@ class ImageDecoderSlice(Node):
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
             elif(self.prev.prev.data == "COCOReader") :
-                print(handle)
                 obj = self.crop_begin
-                # obj = RandomBBoxCrop()
                 obj.rali_c_func_call(handle)
                 output_image = b.COCO_ImageDecoderSlice(handle, input_image[0], input_image[1], types.RGB, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
             else:
@@ -1300,7 +1297,6 @@ class RandomBBoxCrop( ):
         Node().__init__()
         self._all_boxes_above_threshold = all_boxes_above_threshold
         self._allow_no_crop = allow_no_crop
-        print("ALOOW NO CROP IN INIT",self._allow_no_crop)
         self._aspect_ratio = aspect_ratio
         self._bbox_layout = bbox_layout
         self._bytes_per_sample_hint = bytes_per_sample_hint
@@ -1338,7 +1334,6 @@ class RandomBBoxCrop( ):
         return self, self, self, self
 
     def rali_c_func_call(self, handle):
-        print("ALOOW NO CROP IN rali_c_func_call",self._allow_no_crop)
         self._scaling = b.CreateFloatUniformRand(self._scaling[0], self._scaling[1])
         self._aspect_ratio = b.CreateFloatUniformRand(self._aspect_ratio[0], self._aspect_ratio[1])
         b.RandomBBoxCrop(handle, self._all_boxes_above_threshold, self._allow_no_crop, self._aspect_ratio, self.has_shape, self.crop_width, self.crop_height, self._num_attempts, self._scaling, self._total_num_attempts )

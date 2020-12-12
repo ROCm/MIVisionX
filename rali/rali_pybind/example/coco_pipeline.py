@@ -40,12 +40,12 @@ class COCOPipeline(Pipeline):
         self.crop = ops.SSDRandomCrop(num_attempts=5)
         self.decode_slice = ops.ImageDecoderSlice(device=decoder_device, output_type = types.RGB)
         self.random_bbox_crop = ops.RandomBBoxCrop(device="cpu",
-                                       aspect_ratio=[0.5, 2.0],
-                                       thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
-                                       scaling=[0.3, 1.0],
-                                       ltrb=True,
-                                       allow_no_crop=True,
-                                       num_attempts=1)
+                                    #    aspect_ratio=[0.5, 2.0],
+                                    #    thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                    #    scaling=[0.3, 1.0],
+                                    #    ltrb=True,
+                                        allow_no_crop=False)
+                                    #    num_attempts=5)
         self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
         self.twist = ops.ColorTwist(device=rali_device)
         self.bbflip = ops.BBFlip(device=rali_device, ltrb=True)

@@ -151,7 +151,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
-    char *json_path = "/home/shobana/sample_test/coco_10_samples/10_instances_train2017.json";
+    char *json_path = "";
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";

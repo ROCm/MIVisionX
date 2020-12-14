@@ -2783,7 +2783,7 @@ int HafCpu_ScaleGaussianHalf_U8_U8_3x3
 
 		// do vertical convolution
 		x = 0;
-		for (; x <= W - 8; x += 8)
+		for (; x < W; x += 8)
 		{
 			__m128i s0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(srow0 + x)), z);
 			__m128i s1 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(srow1 + x)), z);
@@ -2794,7 +2794,7 @@ int HafCpu_ScaleGaussianHalf_U8_U8_3x3
 
 		// do horizontal convolution, interleave the results and store them to dst
 		x = 0;
-		for (; x <= W - 16; x += 16, pDst+=8)
+		for (; x < W; x += 16, pDst+=8)
 		{
 			__m128i s0 = _mm_loadu_si128((const __m128i*)(r0 + x - 1));
 			__m128i s1 = _mm_loadu_si128((const __m128i*)(r0 + x));

@@ -1121,7 +1121,7 @@ vx_uint8			* pLocalData
 
 	const __m128i p0mask = _mm_set1_epi32((int)0xFF);
 	const __m128 oneFloat = _mm_set1_ps(1.0);
-	srcb = _mm_set1_epi32((srcHeight-1)*srcImageStrideInBytes - 1);
+	srcb = _mm_set1_epi32((srcHeight)*srcImageStrideInBytes - 1);
 	src_s = _mm_set1_epi32(srcImageStrideInBytes);
 
 	XMM128 xint = { 0 }, yint = { 0 }, mask;
@@ -1173,8 +1173,8 @@ vx_uint8			* pLocalData
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(xmap, srcbx));
 				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(ymap, zero));
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(ymap, srcby));
-				int m = _mm_movemask_ps(mask.f);
-				if (m){
+				//int m = _mm_movemask_ps(mask.f);
+				//if (m){
 					// convert to integer with rounding towards zero
 					xint.i = _mm_cvttps_epi32(xmap);
 					yint.i = _mm_cvttps_epi32(ymap);
@@ -1248,11 +1248,11 @@ vx_uint8			* pLocalData
 					p0 = _mm_packus_epi32(p0, zeromask);
 					p0 = _mm_packus_epi16(p0, zeromask);
 					*dst++ = M128I(p0).m128i_i32[0];
-				}
+				/*}
 				else
 				{
 					*dst++ = u32_border;
-				}
+				}*/
 				x += 4;
 			}
 			y++;

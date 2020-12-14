@@ -1598,10 +1598,10 @@ vx_uint8				 * pLocalData
 	const __m128i srcbx = _mm_set1_epi32((int)srcWidth);
 	const __m128i srcby = _mm_set1_epi32((int)srcHeight);
 	const __m128i p0mask = _mm_set1_epi32((int)0xFF);
-	const __m128i srcb = _mm_set1_epi32((srcHeight-1)*srcImageStrideInBytes - 1);
+	const __m128i srcb = _mm_set1_epi32((srcHeight)*srcImageStrideInBytes - 1);
 	const __m128i src_s = _mm_set1_epi32(srcImageStrideInBytes);
-	const __m128i srcbx1 = _mm_set1_epi32((int)(srcWidth-1));
-	const __m128i srcby1 = _mm_set1_epi32((int)(srcHeight - 1));
+	const __m128i srcbx1 = _mm_set1_epi32((int)(srcWidth));
+	const __m128i srcby1 = _mm_set1_epi32((int)(srcHeight));
 	const __m128i negone = _mm_set1_epi32((int)-1);
 
 	unsigned int x;

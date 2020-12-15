@@ -20,16 +20,16 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-find_program(MAKE_NSIS_EXE makensis)
-find_program(RPMBUILD_EXE rpmbuild)
-find_program(DPKG_EXE dpkg)
-
 project(MIVisionX)
-set(VERSION "1.9.4")
+set(VERSION "1.9.5")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+find_program(MAKE_NSIS_EXE makensis)
+find_program(RPMBUILD_EXE rpmbuild)
+find_program(DPKG_EXE dpkg)
 
 set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
 # need to do this to avoid setting the default path to /usr/local
@@ -90,7 +90,7 @@ set(CPACK_PACKAGE_VENDOR        "AMD Radeon")
 set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/images/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into one.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into one")
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
@@ -120,9 +120,9 @@ endif()
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
-set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl")
+#set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
-set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl")
+#set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl") # Remove Explict requirements
 set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
 
 if(APPLE)

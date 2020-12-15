@@ -945,7 +945,7 @@ int ovxKernel_Dilate3x3(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -954,7 +954,10 @@ int ovxKernel_Dilate3x3(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[1];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -983,7 +986,7 @@ int ovxKernel_Erode3x3(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -992,7 +995,10 @@ int ovxKernel_Erode3x3(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[1];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1480,7 +1486,7 @@ int ovxKernel_And(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
+		if ((node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1) || (node->paramList[1]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U1))
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height || width != node->paramList[1]->u.img.width || height != node->paramList[1]->u.img.height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -1489,7 +1495,10 @@ int ovxKernel_And(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[2];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1518,7 +1527,7 @@ int ovxKernel_Or(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
+		if ((node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1) || (node->paramList[1]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U1))
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height || width != node->paramList[1]->u.img.width || height != node->paramList[1]->u.img.height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -1527,7 +1536,10 @@ int ovxKernel_Or(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[2];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1556,7 +1568,7 @@ int ovxKernel_Xor(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
+		if ((node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1) || (node->paramList[1]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U1))
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height || width != node->paramList[1]->u.img.width || height != node->paramList[1]->u.img.height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -1565,7 +1577,10 @@ int ovxKernel_Xor(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[2];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1594,7 +1609,7 @@ int ovxKernel_Not(AgoNode * node, AgoKernelCommand cmd)
 		// validate parameters
 		vx_uint32 width = node->paramList[0]->u.img.width;
 		vx_uint32 height = node->paramList[0]->u.img.height;
-		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
+		if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
 			return VX_ERROR_INVALID_FORMAT;
 		else if (!width || !height)
 			return VX_ERROR_INVALID_DIMENSION;
@@ -1603,7 +1618,10 @@ int ovxKernel_Not(AgoNode * node, AgoKernelCommand cmd)
 		meta = &node->metaList[1];
 		meta->data.u.img.width = width;
 		meta->data.u.img.height = height;
-		meta->data.u.img.format = VX_DF_IMAGE_U8;
+		if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
+			meta->data.u.img.format = VX_DF_IMAGE_U8;
+		else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
+			meta->data.u.img.format = VX_DF_IMAGE_U1;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -4237,6 +4255,8 @@ int agoKernel_ColorDepth_U8_S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -4249,6 +4269,21 @@ int agoKernel_ColorDepth_U8_S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		vx_int32 shift = node->paramList[2]->u.scalar.u.i;
+        if (HipExec_ColorDepth_U8_S16_Wrap(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			(vx_int16 *) iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			shift)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -4302,6 +4337,8 @@ int agoKernel_ColorDepth_U8_S16_Sat(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -4314,6 +4351,21 @@ int agoKernel_ColorDepth_U8_S16_Sat(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		vx_int32 shift = node->paramList[2]->u.scalar.u.i;
+        if (HipExec_ColorDepth_U8_S16_Sat(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			(vx_int16 *) iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			shift)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -4363,6 +4415,8 @@ int agoKernel_ColorDepth_S16_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -4375,6 +4429,21 @@ int agoKernel_ColorDepth_S16_U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		vx_int32 shift = node->paramList[2]->u.scalar.u.i;
+        if (HipExec_ColorDepth_S16_U8(
+			oImg->u.img.width, oImg->u.img.height, 
+			(vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			shift)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -10959,6 +11028,8 @@ int agoKernel_ChannelExtract_U8_U32_Pos1(AgoNode * node, AgoKernelCommand cmd)
 				| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL				
 				| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP				
+				| AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif				
 				;
 		}
@@ -10967,6 +11038,8 @@ int agoKernel_ChannelExtract_U8_U32_Pos1(AgoNode * node, AgoKernelCommand cmd)
 				| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL	
 				| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+				| AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif				
 				;
 		}
@@ -11434,6 +11507,8 @@ int agoKernel_ChannelCombine_U16_U8U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -11447,6 +11522,18 @@ int agoKernel_ChannelCombine_U16_U8U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = min(inp1->u.img.rect_valid.end_x, inp2->u.img.rect_valid.end_x);
 		out->u.img.rect_valid.end_y = min(inp1->u.img.rect_valid.end_y, inp2->u.img.rect_valid.end_y);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+        if (HipExec_ChannelCombine_U16_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+													iImg1->hip_memory, iImg1->u.img.stride_in_bytes, iImg2->hip_memory, iImg2->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -11496,6 +11583,8 @@ int agoKernel_ChannelCombine_U24_U8U8U8_RGB(AgoNode * node, AgoKernelCommand cmd
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -11510,6 +11599,19 @@ int agoKernel_ChannelCombine_U24_U8U8U8_RGB(AgoNode * node, AgoKernelCommand cmd
 		out->u.img.rect_valid.end_x = min(min(inp1->u.img.rect_valid.end_x, inp2->u.img.rect_valid.end_x), inp3->u.img.rect_valid.end_x);
 		out->u.img.rect_valid.end_y = min(min(inp1->u.img.rect_valid.end_y, inp2->u.img.rect_valid.end_y), inp3->u.img.rect_valid.end_y);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+		AgoData * iImg3 = node->paramList[3];
+        if (HipExec_ChannelCombine_U24_U8U8U8_RGB(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+													iImg1->hip_memory, iImg1->u.img.stride_in_bytes, iImg2->hip_memory, iImg2->u.img.stride_in_bytes, iImg3->hip_memory, iImg3->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -11559,6 +11661,8 @@ int agoKernel_ChannelCombine_U32_U8U8U8_UYVY(AgoNode * node, AgoKernelCommand cm
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -11571,6 +11675,19 @@ int agoKernel_ChannelCombine_U32_U8U8U8_UYVY(AgoNode * node, AgoKernelCommand cm
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+		AgoData * iImg3 = node->paramList[3];
+        if (HipExec_ChannelCombine_U32_U8U8U8_UYVY(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+													iImg1->hip_memory, iImg1->u.img.stride_in_bytes, iImg2->hip_memory, iImg2->u.img.stride_in_bytes, iImg3->hip_memory, iImg3->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -11620,6 +11737,8 @@ int agoKernel_ChannelCombine_U32_U8U8U8_YUYV(AgoNode * node, AgoKernelCommand cm
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -11632,6 +11751,19 @@ int agoKernel_ChannelCombine_U32_U8U8U8_YUYV(AgoNode * node, AgoKernelCommand cm
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+		AgoData * iImg3 = node->paramList[3];
+        if (HipExec_ChannelCombine_U32_U8U8U8_YUYV(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+													iImg1->hip_memory, iImg1->u.img.stride_in_bytes, iImg2->hip_memory, iImg2->u.img.stride_in_bytes, iImg3->hip_memory, iImg3->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -11686,6 +11818,8 @@ int agoKernel_ChannelCombine_U32_U8U8U8U8_RGBX(AgoNode * node, AgoKernelCommand 
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -11701,6 +11835,21 @@ int agoKernel_ChannelCombine_U32_U8U8U8U8_RGBX(AgoNode * node, AgoKernelCommand 
 		out->u.img.rect_valid.end_x = min(min(min(inp1->u.img.rect_valid.end_x, inp2->u.img.rect_valid.end_x), inp3->u.img.rect_valid.end_x), inp4->u.img.rect_valid.end_x);
 		out->u.img.rect_valid.end_y = min(min(min(inp1->u.img.rect_valid.end_y, inp2->u.img.rect_valid.end_y), inp3->u.img.rect_valid.end_y), inp4->u.img.rect_valid.end_y);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+		AgoData * iImg3 = node->paramList[3];
+		AgoData * iImg4 = node->paramList[4];
+        if (HipExec_ChannelCombine_U32_U8U8U8U8_RGBX(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+													iImg1->hip_memory, iImg1->u.img.stride_in_bytes, iImg2->hip_memory, iImg2->u.img.stride_in_bytes, iImg3->hip_memory, iImg3->u.img.stride_in_bytes, 
+													iImg4->hip_memory, iImg4->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -11985,6 +12134,8 @@ int agoKernel_ColorConvert_RGB_UYVY(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
 					| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+					| AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif				
 					;
         status = VX_SUCCESS;
@@ -11997,6 +12148,16 @@ int agoKernel_ColorConvert_RGB_UYVY(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ColorConvert_RGB_UYVY(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12029,6 +12190,8 @@ int agoKernel_ColorConvert_RGB_YUYV(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12041,6 +12204,16 @@ int agoKernel_ColorConvert_RGB_YUYV(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ColorConvert_RGB_YUYV(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12090,6 +12263,8 @@ int agoKernel_ColorConvert_RGB_IYUV(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12102,6 +12277,19 @@ int agoKernel_ColorConvert_RGB_IYUV(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+		AgoData * iImg3 = node->paramList[3];
+        if (HipExec_ColorConvert_RGB_IYUV(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes,
+																			iImg2->hip_memory, iImg2->u.img.stride_in_bytes, iImg3->hip_memory, iImg3->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12148,6 +12336,8 @@ int agoKernel_ColorConvert_RGB_NV12(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12160,6 +12350,18 @@ int agoKernel_ColorConvert_RGB_NV12(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+        if (HipExec_ColorConvert_RGB_NV12(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes,
+																							iImg2->hip_memory, iImg2->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12206,6 +12408,8 @@ int agoKernel_ColorConvert_RGB_NV21(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
 			;
 		status = VX_SUCCESS;
@@ -12218,6 +12422,18 @@ int agoKernel_ColorConvert_RGB_NV21(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+        if (HipExec_ColorConvert_RGB_NV21(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes,
+																							iImg2->hip_memory, iImg2->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12324,6 +12540,8 @@ int agoKernel_ColorConvert_RGBX_UYVY(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12336,6 +12554,16 @@ int agoKernel_ColorConvert_RGBX_UYVY(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ColorConvert_RGBX_UYVY(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12368,6 +12596,8 @@ int agoKernel_ColorConvert_RGBX_YUYV(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12380,6 +12610,16 @@ int agoKernel_ColorConvert_RGBX_YUYV(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ColorConvert_RGBX_YUYV(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12429,6 +12669,8 @@ int agoKernel_ColorConvert_RGBX_IYUV(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12441,6 +12683,19 @@ int agoKernel_ColorConvert_RGBX_IYUV(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+		AgoData * iImg3 = node->paramList[3];
+        if (HipExec_ColorConvert_RGBX_IYUV(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes,
+																			iImg2->hip_memory, iImg2->u.img.stride_in_bytes, iImg3->hip_memory, iImg3->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12487,6 +12742,8 @@ int agoKernel_ColorConvert_RGBX_NV12(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP		
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12499,6 +12756,18 @@ int agoKernel_ColorConvert_RGBX_NV12(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+        if (HipExec_ColorConvert_RGBX_NV12(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes,
+																							iImg2->hip_memory, iImg2->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12545,6 +12814,8 @@ int agoKernel_ColorConvert_RGBX_NV21(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12557,6 +12828,18 @@ int agoKernel_ColorConvert_RGBX_NV21(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg1 = node->paramList[1];
+		AgoData * iImg2 = node->paramList[2];
+        if (HipExec_ColorConvert_RGBX_NV21(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes,
+																							iImg2->hip_memory, iImg2->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12627,6 +12910,8 @@ int agoKernel_ColorConvert_YUV4_RGB(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP                
+                    | AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -12649,6 +12934,19 @@ int agoKernel_ColorConvert_YUV4_RGB(AgoNode * node, AgoKernelCommand cmd)
 		out3->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out3->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgY = node->paramList[0];
+		AgoData * oImgU = node->paramList[1];
+		AgoData * oImgV = node->paramList[2];
+		AgoData * iImg = node->paramList[3];
+        if (HipExec_ColorConvert_YUV4_RGB(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+																			oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12719,6 +13017,8 @@ int agoKernel_ColorConvert_YUV4_RGBX(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP   
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -12741,6 +13041,19 @@ int agoKernel_ColorConvert_YUV4_RGBX(AgoNode * node, AgoKernelCommand cmd)
 		out3->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out3->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgY = node->paramList[0];
+		AgoData * oImgU = node->paramList[1];
+		AgoData * oImgV = node->paramList[2];
+		AgoData * iImg = node->paramList[3];
+        if (HipExec_ColorConvert_YUV4_RGBX(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+																			oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12786,6 +13099,8 @@ int agoKernel_ScaleUp2x2_U8_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -12798,6 +13113,17 @@ int agoKernel_ScaleUp2x2_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x << 1;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y << 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleUp2x2_U8_U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes,
+									iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12848,6 +13174,8 @@ int agoKernel_FormatConvert_UV_UV12(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                  
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -12865,6 +13193,19 @@ int agoKernel_FormatConvert_UV_UV12(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x << 1;
 		out2->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y << 1;
 	}
+
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgU = node->paramList[0];
+		AgoData * oImgV = node->paramList[1];
+		AgoData * iImgC = node->paramList[2];
+        if (HipExec_FormatConvert_UV_UV12(oImgU->u.img.width, oImgU->u.img.height, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+										 oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImgC->hip_memory, iImgC->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12921,6 +13262,8 @@ int agoKernel_ColorConvert_IYUV_RGB(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -12943,6 +13286,19 @@ int agoKernel_ColorConvert_IYUV_RGB(AgoNode * node, AgoKernelCommand cmd)
 		out3->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x >> 1;
 		out3->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgY = node->paramList[0];
+		AgoData * oImgU = node->paramList[1];
+		AgoData * oImgV = node->paramList[2];
+		AgoData * iImg = node->paramList[3];
+        if (HipExec_ColorConvert_IYUV_RGB(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+																			oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -12999,6 +13355,8 @@ int agoKernel_ColorConvert_IYUV_RGBX(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -13021,6 +13379,19 @@ int agoKernel_ColorConvert_IYUV_RGBX(AgoNode * node, AgoKernelCommand cmd)
 		out3->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x >> 1;
 		out3->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgY = node->paramList[0];
+		AgoData * oImgU = node->paramList[1];
+		AgoData * oImgV = node->paramList[2];
+		AgoData * iImg = node->paramList[3];
+        if (HipExec_ColorConvert_IYUV_RGBX(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+																			oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -13077,6 +13448,8 @@ int agoKernel_FormatConvert_IYUV_UYVY(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -13099,6 +13472,19 @@ int agoKernel_FormatConvert_IYUV_UYVY(AgoNode * node, AgoKernelCommand cmd)
 		out3->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x >> 1;
 		out3->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgY = node->paramList[0];
+		AgoData * oImgU = node->paramList[1];
+		AgoData * oImgV = node->paramList[2];
+		AgoData * iImg = node->paramList[3];
+        if (HipExec_FormatConvert_IYUV_UYVY(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+																			oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -13155,6 +13541,8 @@ int agoKernel_FormatConvert_IYUV_YUYV(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -13177,6 +13565,19 @@ int agoKernel_FormatConvert_IYUV_YUYV(AgoNode * node, AgoKernelCommand cmd)
 		out3->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x >> 1;
 		out3->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+		AgoData * oImgY = node->paramList[0];
+		AgoData * oImgU = node->paramList[1];
+		AgoData * oImgV = node->paramList[2];
+		AgoData * iImg = node->paramList[3];
+        if (HipExec_FormatConvert_IYUV_YUYV(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+																			oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -13227,6 +13628,8 @@ int agoKernel_FormatConvert_IUV_UV12(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -13244,6 +13647,20 @@ int agoKernel_FormatConvert_IUV_UV12(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out2->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImgU = node->paramList[0];
+		AgoData * oImgV = node->paramList[1];
+        AgoData * iImgC = node->paramList[2];
+        if (HipExec_FormatConvert_IUV_UV12(oImgU->u.img.width, oImgU->u.img.height, oImgU->hip_memory, oImgU->u.img.stride_in_bytes,
+										 oImgV->hip_memory, oImgV->u.img.stride_in_bytes, iImgC->hip_memory, iImgC->u.img.stride_in_bytes))
+
+			{
+			status = VX_FAILURE;
+			}
+        }
+#endif
 	return status;
 }
 
@@ -13294,6 +13711,8 @@ int agoKernel_ColorConvert_NV12_RGB(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -13311,6 +13730,20 @@ int agoKernel_ColorConvert_NV12_RGB(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = (inp->u.img.rect_valid.end_x + 1) >> 1;
 		out2->u.img.rect_valid.end_y = (inp->u.img.rect_valid.end_y + 1) >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImgY = node->paramList[0];
+		AgoData * oImgC = node->paramList[1];
+        AgoData * iImg = node->paramList[2];
+        if (HipExec_ColorConvert_NV12_RGB(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes,
+										 oImgC->hip_memory, oImgC->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
+			
+			{
+			status = VX_FAILURE;
+			}
+        }
+#endif
 	return status;
 }
 
@@ -13361,6 +13794,8 @@ int agoKernel_ColorConvert_NV12_RGBX(AgoNode * node, AgoKernelCommand cmd)
 			| AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL			
 			| AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP			
+			| AGO_KERNEL_FLAG_DEVICE_GPU
 #endif			
 			;
 		status = VX_SUCCESS;
@@ -13378,6 +13813,20 @@ int agoKernel_ColorConvert_NV12_RGBX(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = (inp->u.img.rect_valid.end_x + 1) >> 1;
 		out2->u.img.rect_valid.end_y = (inp->u.img.rect_valid.end_y + 1) >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImgY = node->paramList[0];
+		AgoData * oImgC = node->paramList[1];
+        AgoData * iImg = node->paramList[2];
+        if (HipExec_ColorConvert_NV12_RGBX(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes,
+										 oImgC->hip_memory, oImgC->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
+			
+			{
+			status = VX_FAILURE;
+			}
+        }
+#endif
 	return status;
 }
 
@@ -13428,6 +13877,8 @@ int agoKernel_FormatConvert_NV12_UYVY(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                 
+                    | AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -13445,6 +13896,20 @@ int agoKernel_FormatConvert_NV12_UYVY(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = (inp->u.img.rect_valid.end_x + 1) >> 1;
 		out2->u.img.rect_valid.end_y = (inp->u.img.rect_valid.end_y + 1) >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImgY = node->paramList[0];
+		AgoData * oImgC = node->paramList[1];
+        AgoData * iImg = node->paramList[2];
+        if (HipExec_FormatConvert_NV12_UYVY(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes,
+										 oImgC->hip_memory, oImgC->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
+
+			{
+			status = VX_FAILURE;
+			}
+        }
+#endif
 	return status;
 }
 
@@ -13495,6 +13960,8 @@ int agoKernel_FormatConvert_NV12_YUYV(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -13512,6 +13979,20 @@ int agoKernel_FormatConvert_NV12_YUYV(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = (inp->u.img.rect_valid.end_x + 1) >> 1;
 		out2->u.img.rect_valid.end_y = (inp->u.img.rect_valid.end_y + 1) >> 1;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImgY = node->paramList[0];
+		AgoData * oImgC = node->paramList[1];
+        AgoData * iImg = node->paramList[2];
+        if (HipExec_FormatConvert_NV12_YUYV(oImgY->u.img.width, oImgY->u.img.height, oImgY->hip_memory, oImgY->u.img.stride_in_bytes,
+										 oImgC->hip_memory, oImgC->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
+
+			{
+			status = VX_FAILURE;
+			}
+        }
+#endif
 	return status;
 }
 
@@ -13545,6 +14026,8 @@ int agoKernel_FormatConvert_UV12_IUV(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -13557,6 +14040,20 @@ int agoKernel_FormatConvert_UV12_IUV(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
 		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImgC = node->paramList[0];
+		AgoData * iImgU = node->paramList[1];
+        AgoData * iImgV = node->paramList[2];
+        if (HipExec_FormatConvert_UV12_IUV(oImgC->u.img.width, oImgC->u.img.height, oImgC->hip_memory, oImgC->u.img.stride_in_bytes,
+										 iImgU->hip_memory, iImgU->u.img.stride_in_bytes, iImgV->hip_memory, iImgV->u.img.stride_in_bytes))
+
+			{
+			status = VX_FAILURE;
+			}
+        }
+#endif
 	return status;
 }
 
@@ -14659,6 +15156,8 @@ int agoKernel_ScaleGaussianHalf_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -14673,6 +15172,20 @@ int agoKernel_ScaleGaussianHalf_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1) - 1, 0);
 		out->u.img.rect_valid.end_y = max((int)((inp->u.img.rect_valid.end_y + 1) >> 1) - 1, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		if (HipExec_ScaleGaussianHalf_U8_U8_3x3(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -14727,6 +15240,8 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -14745,6 +15260,20 @@ int agoKernel_ScaleGaussianHalf_U8_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
 		// out->u.img.rect_valid.end_x = max((int)((inp->u.img.rect_valid.end_x + 1) >> 1) - 1, 0);
 		// out->u.img.rect_valid.end_y = max((int)((inp->u.img.rect_valid.end_y + 1) >> 1) - 1, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		if (HipExec_ScaleGaussianHalf_U8_U8_5x5(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -14885,6 +15414,8 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -14901,6 +15432,25 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - M, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - N, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iConv = node->paramList[2];
+		vx_uint32 convolutionWidth = (vx_uint32)iConv->u.conv.columns;
+		vx_uint32 convolutionHeight = (vx_uint32)iConv->u.conv.rows;
+		if ((convolutionWidth != 3) && (convolutionWidth != 5) && (convolutionWidth != 7) && (convolutionWidth != 9))
+			status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+		else if (HipExec_Convolve_U8_U8(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -14973,6 +15523,8 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -14989,6 +15541,25 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - M, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - N, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iConv = node->paramList[2];
+		vx_uint32 convolutionWidth = (vx_uint32)iConv->u.conv.columns;
+		vx_uint32 convolutionHeight = (vx_uint32)iConv->u.conv.rows;
+		if ((convolutionWidth != 3) && (convolutionWidth != 5) && (convolutionWidth != 7) && (convolutionWidth != 9))
+			status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
+		else if (HipExec_Convolve_S16_U8(
+			oImg->u.img.width, oImg->u.img.height, 
+			(vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -15347,6 +15918,8 @@ int agoKernel_Sobel_S16S16_U8_3x3_GXY(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -15366,6 +15939,21 @@ int agoKernel_Sobel_S16S16_U8_3x3_GXY(AgoNode * node, AgoKernelCommand cmd)
 		out2->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 1, 0);
 		out2->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 1, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+        AgoData * oImg1 = node->paramList[0];
+		AgoData * oImg2 = node->paramList[1];
+		AgoData * iImg = node->paramList[2];
+		if (HipExec_Sobel_S16S16_U8_3x3_GXY(
+			oImg1->u.img.width, oImg1->u.img.height, 
+			(vx_int16 *) oImg1->hip_memory, oImg1->u.img.stride_in_bytes, 
+			(vx_int16 *) oImg2->hip_memory, oImg2->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -15402,6 +15990,8 @@ int agoKernel_Sobel_S16_U8_3x3_GX(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -15416,6 +16006,19 @@ int agoKernel_Sobel_S16_U8_3x3_GX(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 1, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 1, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		if (HipExec_Sobel_S16_U8_3x3_GX(
+			oImg->u.img.width, oImg->u.img.height, 
+			(vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -15452,6 +16055,8 @@ int agoKernel_Sobel_S16_U8_3x3_GY(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -15466,6 +16071,19 @@ int agoKernel_Sobel_S16_U8_3x3_GY(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 1, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 1, 0);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		if (HipExec_Sobel_S16_U8_3x3_GY(
+			oImg->u.img.width, oImg->u.img.height, 
+			(vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -17091,10 +17709,29 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_U8_U8_Nearest(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_coord2d_ushort_t *)iMap->buffer, 
+			iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -17238,10 +17875,29 @@ int agoKernel_Remap_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_U8_U8_Bilinear(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_coord2d_ushort_t *)iMap->buffer, 
+			iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -17780,10 +18436,28 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpAffine_U8_U8_Nearest(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_affine_matrix_t *)iMat->buffer)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -17875,10 +18549,29 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpAffine_U8_U8_Nearest_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_affine_matrix_t *)iMat->buffer,
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -17955,10 +18648,28 @@ int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpAffine_U8_U8_Bilinear(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_affine_matrix_t *)iMat->buffer)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18039,10 +18750,29 @@ int agoKernel_WarpAffine_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpAffine_U8_U8_Bilinear_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_affine_matrix_t *)iMat->buffer, 
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18116,10 +18846,28 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpPerspective_U8_U8_Nearest(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_perspective_matrix_t *)iMat->buffer)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18212,10 +18960,29 @@ int agoKernel_WarpPerspective_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCo
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpPerspective_U8_U8_Nearest_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_perspective_matrix_t *)iMat->buffer, 
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18293,10 +19060,28 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpPerspective_U8_U8_Bilinear(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_perspective_matrix_t *)iMat->buffer)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18378,10 +19163,29 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelC
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iMat = node->paramList[2];
+        if (HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(ago_perspective_matrix_t *)iMat->buffer, 
+			node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18469,6 +19273,8 @@ int agoKernel_ScaleImage_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -18485,6 +19291,21 @@ int agoKernel_ScaleImage_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = (vx_uint32)(((inp->u.img.rect_valid.end_x + 0.5f) * widthOut / widthIn) - 0.5f);
 		out->u.img.rect_valid.end_y = (vx_uint32)(((inp->u.img.rect_valid.end_y + 0.5f) * heightOut / heightIn) - 0.5f);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_U8_U8_Nearest(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(AgoConfigScaleMatrix *)node->localDataPtr)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18562,6 +19383,8 @@ int agoKernel_ScaleImage_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -18578,6 +19401,21 @@ int agoKernel_ScaleImage_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = (vx_uint32)(((inp->u.img.rect_valid.end_x + 0.5f) * widthOut / widthIn) - 0.5f);
 		out->u.img.rect_valid.end_y = (vx_uint32)(((inp->u.img.rect_valid.end_y + 0.5f) * heightOut / heightIn) - 0.5f);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_U8_U8_Bilinear(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(AgoConfigScaleMatrix *)node->localDataPtr)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18687,10 +19525,27 @@ int agoKernel_ScaleImage_U8_U8_Bilinear_Replicate(AgoNode * node, AgoKernelComma
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(AgoConfigScaleMatrix *)node->localDataPtr)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -18797,10 +19652,29 @@ int agoKernel_ScaleImage_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		AgoData * iBorder = node->paramList[2];
+        if (HipExec_ScaleImage_U8_U8_Bilinear_Constant(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(AgoConfigScaleMatrix *)node->localDataPtr,
+			iBorder->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -19114,6 +19988,8 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -19130,6 +20006,21 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = (vx_uint32)(((inp->u.img.rect_valid.end_x + 0.5f) * widthOut / widthIn) - 0.5f);
 		out->u.img.rect_valid.end_y = (vx_uint32)(((inp->u.img.rect_valid.end_y + 0.5f) * heightOut / heightIn) - 0.5f);
 	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+        if (HipExec_ScaleImage_U8_U8_Area(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg->u.img.width, iImg->u.img.height, 
+			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
+			(AgoConfigScaleMatrix *)node->localDataPtr)) {
+            status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 
@@ -20937,14 +21828,6 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
 		status = VX_SUCCESS;
 	}
-	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-		AgoData * out = node->paramList[0];
-		AgoData * inp = node->paramList[1];
-		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
-		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
-		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
-		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
-	}
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
 		// TBD: not implemented yet
@@ -20954,9 +21837,39 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_query_target_support) {
 		node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU              
+#if ENABLE_OPENCL                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU 
+#endif
                     ;
         status = VX_SUCCESS;
 	}
+	else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+		AgoData * out = node->paramList[0];
+		AgoData * inp = node->paramList[1];
+		out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+		out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+		out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+		out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+	}
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData *oImg = node->paramList[0];
+		AgoData *iImg1 = node->paramList[1];
+		AgoData *iImg2 = node->paramList[3];
+		vx_float32 alpha = node->paramList[2]->u.scalar.u.f;
+        if (HipExec_WeightedAverage_U8_U8U8(
+			oImg->u.img.width, oImg->u.img.height, 
+			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+			iImg1->hip_memory, iImg1->u.img.stride_in_bytes, 
+			iImg2->hip_memory, iImg2->u.img.stride_in_bytes,
+			alpha)) {
+			status = VX_FAILURE;
+        }
+	}
+#endif
 	return status;
 }
 

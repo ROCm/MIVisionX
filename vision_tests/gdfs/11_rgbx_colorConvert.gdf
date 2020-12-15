@@ -1,0 +1,13 @@
+data input_iyuv = image:1280,720,IYUV:READ,inputs/stm_1280x720.yuv
+
+data input_rgbx = image:1280,720,RGBA
+node org.khronos.openvx.color_convert input_iyuv input_rgbx
+
+data output_rgbx_rgb = image:1280,720,RGB2:WRITE,openvx_test_results/11_rgbx_color_convert_1280x720.rgb
+node org.khronos.openvx.color_convert input_rgbx output_rgbx_rgb
+
+data output_rgbx_iyuv = image:1280,720,IYUV:WRITE,openvx_test_results/11_rgbx_iyuv_color_convert_1280x720.yuv
+node org.khronos.openvx.color_convert input_rgbx output_rgbx_iyuv
+
+data output_rgbx_nv12 = image:1280,720,NV12:WRITE,openvx_test_results/11_rgbx_nv12_color_convert_1280x720.yuv
+node org.khronos.openvx.color_convert input_rgbx output_rgbx_nv12

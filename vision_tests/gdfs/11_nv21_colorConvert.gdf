@@ -1,0 +1,18 @@
+data input_iyuv = image:1280,720,IYUV:read,inputs/stm_1280x720.yuv
+data luma = image:1280,720,U008
+node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_Y luma
+
+data chroma1 = image:640,360,U008
+node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_U chroma1
+
+data chroma2 = image:640,360,U008
+node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_V chroma2
+
+data input_nv21 = image:1280,720,NV21
+node org.khronos.openvx.channel_combine luma chroma1 chroma2 null input_nv21
+
+data output_nv21_rgb = image:1280,720,RGB2:WRITE,openvx_test_results/11_nv21_color_convert_1280x720.rgb
+node org.khronos.openvx.color_convert input_nv21 output_nv21_rgb
+
+data output_nv21_rgbx = image:1280,720,RGBA:WRITE,openvx_test_results/11_nv21_color_convert_1280x720.rgbx
+node org.khronos.openvx.color_convert input_nv21 output_nv21_rgbx

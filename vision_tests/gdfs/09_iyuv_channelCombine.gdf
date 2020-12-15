@@ -12,5 +12,5 @@ node org.khronos.openvx.channel_extract input_iyuv_1 !CHANNEL_U inter_u
 data inter_v = image:640,360,U008
 node org.khronos.openvx.channel_extract input_iyuv_1 !CHANNEL_V inter_v
 
-data output_channel_combine = image:1280,720,IYUV:WRITE,openvx_test_results/09_channel_combine_1280x720.yuv
+data output_channel_combine = image:1280,720,IYUV:WRITE,openvx_test_results/09_iyuv_channel_combine_1280x720.yuv
 node org.khronos.openvx.channel_combine inter_luma_2 inter_u inter_v null output_channel_combine

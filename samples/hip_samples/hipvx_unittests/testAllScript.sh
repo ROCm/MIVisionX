@@ -23,7 +23,7 @@ na_host=0
 passed_list_host=""
 failed_list_host=""
 na_list_host=""
-for ((case=1;case<100;case++))
+for ((case=1;case<181;case++))
 do
 printf "\n\n\n\n"
 echo "--------------------------------"
@@ -64,7 +64,7 @@ na_hip=0
 passed_list_hip=""
 failed_list_hip=""
 na_list_hip=""
-for ((case=1;case<100;case++))
+for ((case=1;case<181;case++))
 do
 printf "\n\n\n\n"
 echo "--------------------------------"
@@ -100,13 +100,17 @@ echo "##########################################################################
 echo "RESULT::"
 echo "##########################################################################################"
 total_tested_host=$((passed_host + failed_host + na_host))
+total_needed_to_pass_host="$(($total_tested_host-$na_host))"
 printf "\nHOST number of cases passed = $passed_host"
+printf "\nHOST number of cases needed to pass = $total_needed_to_pass_host"
 printf "\nHOST number of cases failed = $failed_host"
 printf "\nHOST number of cases not applicable = $na_host"
 printf "\nHOST total number of cases tested = $total_tested_host"
 printf "\n\n"
 total_tested_hip=$((passed_hip + failed_hip + na_hip))
+total_needed_to_pass_hip="$(($total_tested_hip-$na_hip))"
 printf "\nHIP number of cases passed = $passed_hip"
+printf "\nHIP number of cases needed to pass = $total_needed_to_pass_hip"
 printf "\nHIP number of cases failed = $failed_hip"
 printf "\nHIP number of cases not applicable = $na_hip"
 printf "\nHIP total number of cases tested = $total_tested_hip"

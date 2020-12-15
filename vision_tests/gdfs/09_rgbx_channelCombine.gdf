@@ -1,0 +1,16 @@
+data input_rgbx = image:768,512,RGBA:READ,inputs/face.jpg
+
+data channel_r = image:768,512,U008
+node org.khronos.openvx.channel_extract input_rgbx !CHANNEL_R channel_r
+
+data channel_g = image:768,512,U008
+node org.khronos.openvx.channel_extract input_rgbx !CHANNEL_G channel_g
+
+data channel_b = image:768,512,U008
+node org.khronos.openvx.channel_extract input_rgbx !CHANNEL_B channel_b
+
+data channel_x = image:768,512,U008
+node org.khronos.openvx.channel_extract input_rgbx !CHANNEL_B channel_x
+
+data output_channel_combine = image:768,512,RGBA:WRITE,openvx_test_results/09_rgbx_channel_combine_768x512.rgbx
+node org.khronos.openvx.channel_combine channel_r channel_g channel_b channel_x output_channel_combine

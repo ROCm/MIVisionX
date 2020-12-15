@@ -1,0 +1,13 @@
+data input_iyuv = image:1280,720,IYUV:READ,inputs/stm_1280x720.yuv
+
+data input_rgbx = image:1280,720,RGBA
+node org.khronos.openvx.color_convert input_iyuv input_rgbx
+
+data channel_g = image:1280,720,U008:WRITE,openvx_test_results/10_rgbx_channel_g_extract_1280x720.rgbx
+node org.khronos.openvx.channel_extract input_rgbx !CHANNEL_G channel_g
+
+data channel_b = image:1280,720,U008:WRITE,openvx_test_results/10_rgbx_channel_b_extract_1280x720.rgbx
+node org.khronos.openvx.channel_extract input_rgbx !CHANNEL_B channel_b
+
+data channel_x = image:1280,720,U008:WRITE,openvx_test_results/10_rgbx_channel_x_extract_1280x720.rgbx
+node org.khronos.openvx.channel_extract input_rgbx !CHANNEL_A channel_x

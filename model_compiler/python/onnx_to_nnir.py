@@ -111,7 +111,7 @@ onnx2ir_data_type = [
 ]
 
 def onnx_name_to_ir_name(name):
-    return '_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':'))
+    return '_'.join('_'.join(('_'.join(('_'.join(name.split('/')).split('-')))).split(':')).split('.'))
 
 def onnx_node_to_ir_attr(node):
     global onnx2ir_attr
@@ -241,7 +241,7 @@ def main():
     outputFolder = sys.argv[2]
     #appends node type to output tensor name. 
     node_type_append = 0
-    pos = 4
+    pos = 3
     while pos < len(sys.argv)  and len(sys.argv) > 3 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--node_type_append':
             node_type_append = int(sys.argv[pos+1])

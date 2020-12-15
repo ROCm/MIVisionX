@@ -475,7 +475,7 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 	}
 	else
 	{
-		if (global_case == 147)
+		if ((global_case == 147) || (global_case == 148) || (global_case == 149))
 		{
 			for (int i = 0; i < height/2; i++)
 				for (int j = 0; j < width/2; j++)
@@ -1844,6 +1844,13 @@ int main(int argc, const char ** argv)
 				// 	// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
 				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				// 	vx_threshold_type_e thresholdType = VX_THRESHOLD_TYPE_BINARY;
+				// 	vx_df_image_e thresholdInputImageFormat = VX_DF_IMAGE_U8;
+				// 	vx_df_image_e thresholdOutputImageFormat = VX_DF_IMAGE_U8;
+				// 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
+				// 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_TYPE, (void*) &thresholdType, (vx_size)sizeof(vx_threshold_type_e)));
+				// 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_INPUT_FORMAT, (void*) &thresholdInputImageFormat, (vx_size)sizeof(vx_df_image_e)));
+				// 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_OUTPUT_FORMAT, (void*) &thresholdOutputImageFormat, (vx_size)sizeof(vx_df_image_e)));
 				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
 				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
 				// 	out_buf_type = 0;
@@ -2321,6 +2328,28 @@ int main(int argc, const char ** argv)
 					out_buf_type = 1;
 					break;
 				}
+				case 148:
+				{
+					// test_case_name = "agoKernel_Sobel_S16_U8_3x3_GX";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					node = vxSobel3x3Node(graph, img1, img_out, NULL);
+					expected_image_sum = 0;
+					out_buf_type = 1;
+					break;
+				}
+				case 149:
+				{
+					// test_case_name = "agoKernel_Sobel_S16_U8_3x3_GY";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					img_out2 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					node = vxSobel3x3Node(graph, img1, NULL, img_out2);
+					expected_image_sum = 0;
+					out_buf_type = 1;
+					break;
+				}
 				case 150:
 				{
 					// test_case_name = "agoKernel_Convolve_U8_U8";
@@ -2622,7 +2651,8 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
+					(case_number == 143) || (case_number == 147) || (case_number == 148) || (case_number == 149) || 
+					(case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 156)  || (case_number == 157) || 
 					(case_number == 158)  || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
 					(case_number == 163) || (case_number == 164) || (case_number == 165) || (case_number == 166) || 
@@ -4226,6 +4256,28 @@ int main(int argc, const char ** argv)
 					out_buf_type = 1;
 					break;
 				}
+				case 148:
+				{
+					// test_case_name = "agoKernel_Sobel_S16_U8_3x3_GX";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxSobel3x3Node(graph, img1, img_out, img_out2);
+					expected_image_sum = 0;
+					out_buf_type = 1;
+					break;
+				}
+				case 149:
+				{
+					// test_case_name = "agoKernel_Sobel_S16_U8_3x3_GY";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out2 = vxCreateImageFromHandle(context, VX_DF_IMAGE_S16, &hip_addr_int16, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxSobel3x3Node(graph, img1, img_out, img_out2);
+					expected_image_sum = 0;
+					out_buf_type = 1;
+					break;
+				}
 				case 150:
 				{
 					// test_case_name = "agoKernel_Convolve_U8_U8";
@@ -4526,7 +4578,8 @@ int main(int argc, const char ** argv)
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
 					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143) || (case_number == 147) || (case_number == 150) || (case_number == 151) || 
+					(case_number == 143) || (case_number == 147) || (case_number == 148) || (case_number == 149) || 
+					(case_number == 150) || (case_number == 151) || 
 					(case_number == 154) || (case_number == 155) || (case_number == 156)  || (case_number == 157) || 
 					(case_number == 158) || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
 					(case_number == 163) || (case_number == 164) || (case_number == 165) || (case_number == 166) || 
@@ -4707,7 +4760,7 @@ int main(int argc, const char ** argv)
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				returned_image_sum += out_buf_int16[i * stride_y_pixels + j * stride_x_pixels];
-		if (case_number == 147)
+		if ((case_number == 147) || (case_number == 148) || (case_number == 149))
 		{
 			ERROR_CHECK_STATUS(vxMapImagePatch(img_out2, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_int16, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 			stride_x_bytes = out_addr.stride_x;

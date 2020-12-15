@@ -21,7 +21,9 @@ branches:
 
 install:
   - sudo apt update
+  - sudo apt-get -yq install gcc g++
   - lscpu
+  - lspci | grep VGA
 
 before_script:
   # Run OpenVX 1.3 Conformance - CPU

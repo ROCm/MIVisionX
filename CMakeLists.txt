@@ -18,7 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
+
+find_program(MAKE_NSIS_EXE makensis)
+find_program(RPMBUILD_EXE rpmbuild)
+find_program(DPKG_EXE dpkg)
+
 project(MIVisionX)
 set(VERSION "1.9.4")
 
@@ -85,7 +90,6 @@ install(DIRECTORY docs DESTINATION .)
 # set package information
 set(CPACK_PACKAGE_VERSION       ${VERSION})
 set(CPACK_PACKAGE_NAME          "mivisionx")
-set(CPACK_PACKAGE_RELEASE       1)
 set(CPACK_PACKAGE_LICENSE       "MIT")
 set(CPACK_PACKAGE_CONTACT       "Kiriti Gowda <Kiriti.NageshGowda@amd.com>")
 set(CPACK_PACKAGE_VENDOR        "AMD Radeon")
@@ -94,31 +98,52 @@ set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into one.")
 
-# find linux distribution
-find_program(LSB_RELEASE_EXEC lsb_release)
-execute_process(COMMAND ${LSB_RELEASE_EXEC} -is
-                OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
-                OUTPUT_STRIP_TRAILING_WHITESPACE
-                )
+if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
+  set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
+endif()
 
-# generate .deb or .rpm package
-if(LSB_RELEASE_ID_SHORT STREQUAL "Ubuntu" AND NOT APPLE)
-    message("-- Ubuntu detected   -- .deb package will be created")
-    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
-    set(CPACK_GENERATOR                 "DEB")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl")
-elseif(APPLE)
-    message("-- Apple detected    -- OSX package will be created")
-    set(CPACK_BUNDLE_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
-    set(CPACK_GENERATOR                 "Bundle")
-else()
-    message("-- CentOS detected   -- .rpm package will be created")
-    set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
-    set(CPACK_GENERATOR                 "RPM")
-    set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl")
-    set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
+set(CPACK_DEBIAN_FILE_NAME       "DEB-DEFAULT")
+set(CPACK_RPM_FILE_NAME          "RPM-DEFAULT")
+set(CPACK_DEBIAN_PACKAGE_RELEASE "local")
+set(CPACK_RPM_PACKAGE_RELEASE    "local")
+
+if(DEFINED ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
+  set(CPACK_DEBIAN_PACKAGE_RELEASE $ENV{CPACK_DEBIAN_PACKAGE_RELEASE})
+endif()
+if(DEFINED ENV{CPACK_RPM_PACKAGE_RELEASE})
+  set(CPACK_RPM_PACKAGE_RELEASE $ENV{CPACK_RPM_PACKAGE_RELEASE})
+endif()
+
+# '%{?dist}' breaks manual builds on debian systems due to empty Provides
+execute_process(COMMAND rpm --eval %{?dist}
+                RESULT_VARIABLE PROC_RESULT
+                OUTPUT_VARIABLE EVAL_RESULT
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+if (PROC_RESULT EQUAL "0" AND NOT EVAL_RESULT STREQUAL "")
+  string (APPEND CPACK_RPM_PACKAGE_RELEASE "%{?dist}")
 endif()
 
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
+
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE   ${CPACK_PACKAGE_HOMEPAGE})
+set(CPACK_DEBIAN_PACKAGE_DEPENDS    "miopen-opencl")
+set(CPACK_RPM_PACKAGE_URL           ${CPACK_PACKAGE_HOMEPAGE})
+set(CPACK_RPM_PACKAGE_REQUIRES      "miopen-opencl")
+set(CPACK_RPM_PACKAGE_AUTOREQPROV   "no")
+
+if(APPLE)
+  set(CPACK_GENERATOR "Bundle")
+else()
+  set(CPACK_GENERATOR "TGZ;ZIP")
+  if(EXISTS ${MAKE_NSIS_EXE})
+    list(APPEND CPACK_GENERATOR "NSIS")
+  endif()
+  if(EXISTS ${RPMBUILD_EXE})
+    list(APPEND CPACK_GENERATOR "RPM")
+  endif()
+  if(EXISTS ${DPKG_EXE})
+    list(APPEND CPACK_GENERATOR "DEB")
+  endif()
+endif()
+
 include(CPack)

@@ -297,18 +297,18 @@ else:
     if linuxSystemInstall == 'apt-get':
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
+                  ' install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev')
+                  ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev')
     else:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' groupinstall \'Development Tools\'')
+                  ' groupinstall \'Development Tools\'')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' install libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
-    # OpenCV 3.4.0 
+                  ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394')
+    # OpenCV 3.4.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
               ' -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')

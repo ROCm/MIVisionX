@@ -409,6 +409,7 @@ int HafCpu_Not_U8_U1
 		if (postfixWidth)
 		{
 			vx_uint8 pix = *((vx_uint8 *)pLocalSrc);
+			pix = ~pix;
 			*pLocalDst++ = dataConvertU1ToU8_4bytes[pix & 0xF];
 			pix >>= 4;
 			*pLocalDst++ = dataConvertU1ToU8_4bytes[pix & 0xF];
@@ -463,6 +464,7 @@ int HafCpu_Not_U1_U8
 			{
 				temp |= (*pLocalSrc++ >> 7) & 1;
 				temp <<= 1;
+				temp = (temp > 127) ? 255 : temp;
 			}
 			*pLocalDst = ~temp;
 		}

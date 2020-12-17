@@ -70,6 +70,10 @@ void DeviceManagerHip::init_hip(vx_context context)
     if (err != hipSuccess) {
         THROW("init_hip::hipStreamCreate failed " + TOSTR(err))
     }
+    err = hipGetDeviceProperties(&_resources.dev_prop, dev_id);
+    if (err != hipSuccess) {
+        THROW("init_hip::hipGetDeviceProperties failed " + TOSTR(err))
+    }
     _resources.hip_stream = stream;
     _resources.device_id = dev_id;
     initialize();

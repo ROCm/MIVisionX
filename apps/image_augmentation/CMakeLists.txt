@@ -34,6 +34,13 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 find_package(OpenCV QUIET)
 find_package(AMDRPP QUIET)
 
+#if("${BACKEND}" STREQUAL "HIP")
+#    set(ROCM_PATH /opt/rocm CACHE PATH "mivisionx default ROCm installation path")
+#    set(HIP_PATH "${ROCM_PATH}/hip" CACHE PATH "Path to which HIP has been installed")
+#    list(APPEND CMAKE_MODULE_PATH ${HIP_PATH}/cmake)
+#    find_package(HIP QUIET REQUIRED)
+#endif()    
+
 include_directories ( ${OpenCV_INCLUDE_DIRS}  /opt/rocm/mivisionx/include/)
 
 link_directories    (/opt/rocm/mivisionx/lib/)

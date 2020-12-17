@@ -19,40 +19,45 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+// kernel definitions for HIP
 
-// device manager functions for HIP backend
-#if ENABLE_HIP
-#pragma once
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
-#include <vx_ext_amd.h>
-#include <VX/vx_types.h>
+#define ENABLE_EVENT_BASED_SYNC     0
+int HipExecCopyInt8ToNHWC
+(
+    hipStream_t stream,
+    const void*     inp_image_u8,
+    void*     output_tensor,
+    unsigned int     dst_buf_offset,
+    const unsigned int     n,
+    const unsigned int     c,
+    const unsigned int     h,
+    const unsigned int     w,
+    float     multiplier0,
+    float     multiplier1,
+    float     multiplier2,
+    float     offset0,
+    float     offset1,
+    float     offset2,
+    unsigned int reverse_channels,
+    unsigned int fp16
+);
 
-struct DeviceResourcesHip {
-    hipStream_t hip_stream;
-    int device_id;
-    hipDeviceProp_t dev_prop;
-    DeviceResourcesHip() { hip_stream = nullptr; device_id = -1;}
-};
-
-class DeviceManagerHip {
-public:
-    DeviceManagerHip(){};
-
-    hipError_t initialize();
-    
-    DeviceResourcesHip resources();
-
-    void init_hip(vx_context context);
-
-    ~DeviceManagerHip();
-
-private:
-
-    DeviceResourcesHip _resources;
-
-};
-
-using pRaliHip = std::shared_ptr<DeviceManagerHip>;
-
-#endif
+int HipExecCopyInt8ToNCHW
+(
+    hipStream_t stream,
+    void*     inp_image_u8,
+    void*     output_tensor,
+    unsigned int     dst_buf_offset,
+    const unsigned int     n,
+    const unsigned int     c,
+    const unsigned int     h,
+    const unsigned int     w,
+    float     multiplier0,
+    float     multiplier1,
+    float     multiplier2,
+    float     offset0,
+    float     offset1,
+    float     offset2,
+    unsigned int reverse_channels,
+    unsigned int fp16
+);

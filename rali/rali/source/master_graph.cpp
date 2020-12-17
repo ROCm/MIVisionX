@@ -44,6 +44,22 @@ using half_float::half;
 #endif
 #endif
 
+#if ENABLE_HIP
+#include <rali_hip_kernels.h>
+#endif
+
+static void VX_CALLBACK log_callback(vx_context context, vx_reference ref, vx_status status, const vx_char string[])
+{
+    size_t len = strlen(string);
+    if (len > 0) {
+        printf("%s", string);
+        if (string[len - 1] != '\n')
+            printf("\n");
+        fflush(stdout);
+    }
+}
+
+
 auto get_ago_affinity_info = []
     (RaliAffinity rali_affinity,
      int cpu_id,
@@ -93,7 +109,9 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 {
     try {
         vx_status status;
+        vxRegisterLogCallback(NULL, log_callback, vx_false_e);
         _context = vxCreateContext();
+        vxRegisterLogCallback(_context, log_callback, vx_false_e);
         auto vx_affinity = get_ago_affinity_info(_affinity, 0, gpu_id);
         if ((status = vxGetStatus((vx_reference) _context)) != VX_SUCCESS)
             THROW("vxCreateContext failed" + TOSTR(status))
@@ -116,14 +134,17 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
                     THROW("ERROR: hipInit(0) => %d (failed)" + TOSTR(err));
                 }
                 int hip_num_devices = -1;
-                hipGetDeviceCount(&hip_num_devices);            
+                err = hipGetDeviceCount(&hip_num_devices);
+                if (err != hipSuccess) {
+                    THROW("ERROR: hipGetDeviceCount() => %d (failed)" + TOSTR(err));
+                }
                 if (gpu_id < hip_num_devices) {
                     //set the device forcontext if specified.
                     int hipDevice = gpu_id;
                     if((status = vxSetContextAttribute(_context,
                             VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE,
                             &hipDevice, sizeof(hipDevice)) != VX_SUCCESS))
-                        THROW("vxSetContextAttribute for hipDevice failed " + TOSTR(status))
+                        THROW("vxSetContextAttribute for hipDevice(%d) failed " + TOSTR(hipDevice) + TOSTR(status))
                 }
             #if 0    // todo:: fall back to cpu if device not available
                 else {
@@ -541,12 +562,12 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             auto img_buffer = out_image;
             if (format == RaliTensorFormat::NHWC)
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
 
             }else
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
             }
             dest_buf_offset += single_output_image_size;
@@ -554,7 +575,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
         // copy hip buffer to output.
         // todo:: add callback routing to exchange memory pointer to avoid extra copy  
     }
-#endif    
+#endif
     if(_output_image_info.mem_type() == RaliMemType::HOST)
     {
         float multiplier[3] = {multiplier0, multiplier1, multiplier2 };

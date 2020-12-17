@@ -94,5 +94,6 @@ private:
 #if ENABLE_HIP
     hipStream_t _hip_stream;
     int _hip_device_id;
+    hipDeviceProp_t *_dev_prop;
 #endif
 };

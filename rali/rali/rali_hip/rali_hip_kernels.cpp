@@ -24,7 +24,7 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 #include "hip/hip_fp16.h"
-#include "../include/device_manager_hip.h"
+#include "rali_hip_kernels.h"
 
 __global__ void __attribute__((visibility("default")))
 Hip_CopyInt8ToNHWC_fp32
@@ -183,8 +183,62 @@ Hip_CopyInt8ToNCHW_fp16
     }
 }
 
-
 int HipExecCopyInt8ToNHWC
+(
+    hipStream_t stream,
+    const void*     inp_image_u8,
+    void*     output_tensor,
+    unsigned int     dst_buf_offset,
+    const unsigned int     n,
+    const unsigned int     c,
+    const unsigned int     h,
+    const unsigned int     w,
+    float     multiplier0,
+    float     multiplier1,
+    float     multiplier2,
+    float     offset0,
+    float     offset1,
+    float     offset2,
+    unsigned int reverse_channels,
+    unsigned int fp16
+)
+{
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = w, globalThreads_y = h;
+#if ENABLE_EVENT_BASED_SYNC   
+    hipEvent_t start, stop;
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+#endif    
+    if (!fp16){
+        hipLaunchKernelGGL(Hip_CopyInt8ToNHWC_fp32,
+                        dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
+                        dim3(localThreads_x, localThreads_y),
+                        0, stream, (const uchar*)inp_image_u8, output_tensor, dst_buf_offset,
+                        make_uint4(n, c, h, w),
+                        make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
+                        reverse_channels);
+    }else{
+        hipLaunchKernelGGL(Hip_CopyInt8ToNHWC_fp16,
+                        dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
+                        dim3(localThreads_x, localThreads_y),
+                        0, stream, (const uchar*)inp_image_u8, output_tensor, dst_buf_offset,
+                        make_uint4(n, c, h, w),
+                        make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
+                        reverse_channels);
+    }
+#if ENABLE_EVENT_BASED_SYNC   
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("HipExecCopyInt8ToNHWC: Kernel time: %f\n", eventMs);
+#endif    
+    return 0;
+}
+
+int HipExecCopyInt8ToNCHW
 (
     hipStream_t stream,
     void*     inp_image_u8,
@@ -204,15 +258,17 @@ int HipExecCopyInt8ToNHWC
     unsigned int fp16
 )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = w, globalThreads_y = h;
+#if ENABLE_EVENT_BASED_SYNC   
+    hipEvent_t start, stop;
     hipEventCreate(&start);
     hipEventCreate(&stop);
     float eventMs = 1.0f;
     hipEventRecord(start, NULL);
+#endif    
     if (!fp16){
-        hipLaunchKernelGGL(Hip_CopyInt8ToNHWC_fp32,
+        hipLaunchKernelGGL(Hip_CopyInt8ToNCHW_fp32,
                         dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y),
                         0, stream, (const uchar*)inp_image_u8, output_tensor, dst_buf_offset,
@@ -220,7 +276,7 @@ int HipExecCopyInt8ToNHWC
                         make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
                         reverse_channels);
     }else{
-        hipLaunchKernelGGL(Hip_CopyInt8ToNHWC_fp16,
+        hipLaunchKernelGGL(Hip_CopyInt8ToNCHW_fp16,
                         dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
                         dim3(localThreads_x, localThreads_y),
                         0, stream, (const uchar*)inp_image_u8, output_tensor, dst_buf_offset,
@@ -228,9 +284,12 @@ int HipExecCopyInt8ToNHWC
                         make_float3(multiplier0, multiplier1, multiplier2), make_float3(offset0, offset1, offset2),
                         reverse_channels);
     }
+#if ENABLE_EVENT_BASED_SYNC   
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
     printf("HipExecCopyInt8ToNHWC: Kernel time: %f\n", eventMs);
+#endif    
     return 0;
 }
+

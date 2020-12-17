@@ -687,7 +687,7 @@ static int agoOptimizeDramaAllocSetDefaultTargets(AgoGraph * agraph)
 			}
 			else {
 				// fall back to CPU
-				vxAddLogEntry((vx_reference)node, VX_SUCCESS, "WARNING: kernel %s not supported on GPU -- falling back to CPU\n", node->akernel->name);
+				vxAddLogEntry((vx_reference)node, VX_SUCCESS, "WARNING: kernel %s not supported on GPU Codegen callback-- falling back to generic processing mode\n", node->akernel->name);
 				// set default target as CPU
 				node->attr_affinity.device_type = AGO_KERNEL_FLAG_DEVICE_CPU;
 				node->attr_affinity.device_info = 0;

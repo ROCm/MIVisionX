@@ -41,13 +41,14 @@ CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
 #else
 CircularBuffer::CircularBuffer(DeviceResourcesHip hipres, size_t buffer_depth):
         BUFF_DEPTH(buffer_depth),
-        _hip_stream(hipres.hip_stream),
-        _hip_device_id(hipres.device_id),
         _dev_buffer(BUFF_DEPTH, nullptr),
         _host_buffer_ptrs(BUFF_DEPTH, nullptr),
         _write_ptr(0),
         _read_ptr(0),
-        _level(0)
+        _level(0),
+        _hip_stream(hipres.hip_stream),
+        _hip_device_id(hipres.device_id),
+        _dev_prop(&hipres.dev_prop)
 {
     for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
         _dev_buffer[bufIdx] = nullptr;
@@ -107,14 +108,15 @@ void CircularBuffer::sync()
 {
     if(!_initialized)
         return;
+#if !ENABLE_HIP
     cl_int err = CL_SUCCESS;
     if(_output_mem_type== RaliMemType::OCL) 
     {
-#if 0
+    #if 0
         if(clEnqueueWriteBuffer(_cl_cmdq, _dev_sub_buffer[_write_ptr], CL_TRUE, 0, _output_mem_size, _host_buffer_ptrs[_write_ptr], 0, NULL, NULL) != CL_SUCCESS)
             THROW("clEnqueueMapBuffer of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
 
-#else        
+    #else
         //NOTE: instead of calling clEnqueueWriteBuffer (shown above), 
         // an unmap/map cen be done to make sure data is copied from the host to device, it's fast
         //NOTE: Using clEnqueueUnmapMemObject/clEnqueuenmapMemObject when buffer is allocated with 
@@ -130,14 +132,18 @@ void CircularBuffer::sync()
         if(err)
             THROW("clEnqueueUnmapMemObject of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
 
-#endif        
+    #endif        
     }
-#if ENABLE_HIP
+#else
     else if (_output_mem_type== RaliMemType::HIP){
-        hipError_t err = hipMemcpyHtoD((void *)(_dev_buffer[_write_ptr]), _host_buffer_ptrs[_write_ptr], _output_mem_size);
-        if (err != hipSuccess) {
-            THROW("hipMemcpyHtoD of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
+        // copy memory to host only if needed
+        if (!_dev_prop->canMapHostMemory) {
+            hipError_t err = hipMemcpyAsync((void *)(_dev_buffer[_write_ptr]), _host_buffer_ptrs[_write_ptr], _output_mem_size, hipMemcpyHostToDevice, _hip_stream);
+            if (err != hipSuccess) {
+                THROW("hipMemcpyAsync of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));
+            }
         }
+        hipStreamSynchronize(_hip_stream);      // todo:: evaluate if this is needed?
     }     
 #endif    
     else 
@@ -218,15 +224,24 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
 
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
         {
-#if 0  // todo:: use pinned memory          
+#if 1  //  use pinned memory and zero copy if available          
             hipError_t err = hipHostMalloc((void **)&_host_buffer_ptrs[buffIdx], _output_mem_size, hipHostMallocMapped|hipHostMallocWriteCombined);
             if(err != hipSuccess)
             {
                 THROW("hipHostMalloc of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
             }
-            if (err = hipHostGetDevicePointer((void **)&_dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0 ))
-            {
-                THROW("hipHostGetDevicePointer of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
+            if (_dev_prop->canMapHostMemory) {
+                if (err = hipHostGetDevicePointer((void **)&_dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0 ))
+                {
+                    THROW("hipHostGetDevicePointer of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
+                }
+            }else{
+                // no zero_copy memory available: allocate device memory                
+                hipError_t err = hipMalloc((void **)&_dev_buffer[buffIdx], _output_mem_size);
+                if(err != hipSuccess)
+                {
+                    THROW("hipMalloc of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
+                }
             }
 #else
             hipError_t err = hipMalloc((void **)&_dev_buffer[buffIdx], _output_mem_size);
@@ -317,8 +332,8 @@ CircularBuffer::~CircularBuffer()
         }
 #if ENABLE_HIP
         else if (_output_mem_type == RaliMemType::HIP) {
-            if (_dev_buffer[buffIdx])
-                if ( hipFree((void *)_dev_buffer[buffIdx]) != hipSuccess )
+            if (_host_buffer_ptrs[buffIdx])
+                if ( hipHostFree((void *)_host_buffer_ptrs[buffIdx]) != hipSuccess )
                     ERR("Could not release hip memory in the circular buffer")
         }
 #endif        

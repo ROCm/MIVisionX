@@ -105,7 +105,7 @@ def generateCMakeFiles(graph,outputFolder):
         generateLicenseForScript(f)
         f.write( \
 """
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 project (mvdeploy)
 set (CMAKE_CXX_STANDARD 11)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -213,7 +213,7 @@ def generateCMakeExtras(graph,outputFolder):
         generateLicenseForScript(f)
         f.write( \
 """
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 project (mv_extras)
 set (CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ../cmake)

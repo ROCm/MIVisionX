@@ -806,6 +806,16 @@ int HipExec_Sobel_S16S16_U8_3x3_GXY(
     vx_int16 *pHipDstImage2, vx_uint32 dstImage2StrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     );
+int HipExec_Sobel_S16_U8_3x3_GX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_Sobel_S16_U8_3x3_GY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    );
 
 // geometric_kernels
 

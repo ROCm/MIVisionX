@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.4"
+__version__ = "1.8.5"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -113,7 +113,7 @@ else:
     os.system('sudo -v')
     os.system('sudo yum -y update')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel')
+              linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel libsqlite3x-devel.x86_64')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
               linuxSystemInstall_check+' install openssl-devel hg autoconf automake')
 
@@ -307,13 +307,13 @@ else:
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
     if raliInstall == 'yes':
-        # Install Packages for RALI
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')
         # Install RPP
         # Yasm/Nasm for TurboJPEG
         if linuxSystemInstall == 'apt-get':
+            # Install Packages for RALI
+            os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                      linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' -y '+linuxSystemInstall_check+' install nasm yasm')
@@ -333,7 +333,7 @@ else:
             # RPP
             os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; ' +
                       linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
-        # Turn off for CentOS - TBD: turn on when RPP is supported on CentOS
+        # Turn off for CentOS - TBD: TURN ON when RPP is supported on CentOS
         # else:
             # Nasm
             #os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')

@@ -308,12 +308,12 @@ else:
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
     if raliInstall == 'yes':
         # Install RPP
-        # Yasm/Nasm for TurboJPEG
         if linuxSystemInstall == 'apt-get':
             # Install Packages for RALI
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                       linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')
+            # Yasm/Nasm for TurboJPEG
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' -y '+linuxSystemInstall_check+' install nasm yasm')

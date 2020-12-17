@@ -78,7 +78,9 @@ find_package_handle_standard_args( OpenCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_IN
 set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
 set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
 set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
-if(${ROCM_PATH})
+
+if(EXISTS "${ROCM_PATH}/opt/rocm/opencl/lib/libOpenCL.so")
+    message("-- ${Magenta}ROCm OpenCL Found - Set CL_TARGET_OPENCL_VERSION=220${ColourReset}")
     add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 endif()
 if( NOT OPENCL_FOUND )

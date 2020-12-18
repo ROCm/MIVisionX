@@ -1499,6 +1499,8 @@ int ovxKernel_And(AgoNode * node, AgoKernelCommand cmd)
 			meta->data.u.img.format = VX_DF_IMAGE_U8;
 		else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
 			meta->data.u.img.format = VX_DF_IMAGE_U1;
+		else if((node->paramList[2]->u.img.format == VX_DF_IMAGE_VIRT) && (node->paramList[0]->u.img.format == node->paramList[1]->u.img.format))
+			meta->data.u.img.format = node->paramList[0]->u.img.format;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1540,6 +1542,8 @@ int ovxKernel_Or(AgoNode * node, AgoKernelCommand cmd)
 			meta->data.u.img.format = VX_DF_IMAGE_U8;
 		else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
 			meta->data.u.img.format = VX_DF_IMAGE_U1;
+		else if((node->paramList[2]->u.img.format == VX_DF_IMAGE_VIRT) && (node->paramList[0]->u.img.format == node->paramList[1]->u.img.format))
+			meta->data.u.img.format = node->paramList[0]->u.img.format;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1581,6 +1585,8 @@ int ovxKernel_Xor(AgoNode * node, AgoKernelCommand cmd)
 			meta->data.u.img.format = VX_DF_IMAGE_U8;
 		else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
 			meta->data.u.img.format = VX_DF_IMAGE_U1;
+		else if((node->paramList[2]->u.img.format == VX_DF_IMAGE_VIRT) && (node->paramList[0]->u.img.format == node->paramList[1]->u.img.format))
+			meta->data.u.img.format = node->paramList[0]->u.img.format;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1622,6 +1628,8 @@ int ovxKernel_Not(AgoNode * node, AgoKernelCommand cmd)
 			meta->data.u.img.format = VX_DF_IMAGE_U8;
 		else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
 			meta->data.u.img.format = VX_DF_IMAGE_U1;
+		else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_VIRT)
+			meta->data.u.img.format = node->paramList[0]->u.img.format;
 		status = VX_SUCCESS;
 	}
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {

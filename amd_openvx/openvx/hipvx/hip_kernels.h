@@ -926,6 +926,25 @@ int HipExec_Remap_U8_U8_Bilinear(
     ago_coord2d_ushort_t *map, vx_uint32 mapStrideInBytes);
 
 // vision_kernels
+int HipExec_FastCorners_XY_U8_NoSupression(
+	vx_uint32  capacityOfDstCorner, 
+	vx_keypoint_t   pHipDstCorner[],
+	vx_uint32  *pHipDstCornerCount,
+	vx_uint32  srcWidth, vx_uint32 srcHeight,
+	vx_uint8   *pHipSrcImage,
+	vx_uint32   srcImageStrideInBytes,
+	vx_float32  strength_threshold
+);
+int HipExec_FastCorners_XY_U8_Supression(
+        vx_uint32  capacityOfDstCorner, 
+    	vx_keypoint_t   pHipDstCorner[],
+        vx_uint32  *pHipDstCornerCount,
+        vx_uint32  srcWidth, vx_uint32 srcHeight,
+        vx_uint8   *pHipSrcImage,
+        vx_uint32   srcImageStrideInBytes,
+        vx_float32  strength_threshold,
+        vx_uint8   *pHipScratch
+);
 
 // miscellaneous_kernels
 

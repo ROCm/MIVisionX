@@ -16381,10 +16381,30 @@ int agoKernel_FastCorners_XY_U8_Supression(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+	else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+		AgoData * oXY = node->paramList[0];
+		AgoData * oNumCorners = node->paramList[1];
+		AgoData * iImg = node->paramList[2];
+		vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+		vx_uint32 numXY = 0;
+		if (HipExec_FastCorners_XY_U8_Supression((vx_uint32)oXY->u.arr.capacity, (vx_keypoint_t *)oXY->hip_memory, &numXY, 
+			iImg->u.img.width, iImg->u.img.height, iImg->hip_memory, iImg->u.img.stride_in_bytes, strength_threshold, node->localDataPtr)) {
+			status = VX_FAILURE;
+		}
+		else {
+			oXY->u.arr.numitems = min(numXY, (vx_uint32)oXY->u.arr.capacity);
+			if (oNumCorners) oNumCorners->u.scalar.u.s = numXY;
+		}
+	}
+#endif
 	return status;
 }
 
@@ -16438,10 +16458,30 @@ int agoKernel_FastCorners_XY_U8_NoSupression(AgoNode * node, AgoKernelCommand cm
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+	else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+		AgoData * oXY = node->paramList[0];
+		AgoData * oNumCorners = node->paramList[1];
+		AgoData * iImg = node->paramList[2];
+		vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+		vx_uint32 numXY = 0;
+		if (HipExec_FastCorners_XY_U8_NoSupression((vx_uint32)oXY->u.arr.capacity, (vx_keypoint_t *)oXY->hip_memory, &numXY,
+			iImg->u.img.width, iImg->u.img.height, iImg->hip_memory, iImg->u.img.stride_in_bytes, strength_threshold)) {
+			status = VX_FAILURE;
+		}
+		else {
+			oXY->u.arr.numitems = min(numXY, (vx_uint32)oXY->u.arr.capacity);
+			if (oNumCorners) oNumCorners->u.scalar.u.s = numXY;
+		}
+	}
+#endif
 	return status;
 }
 

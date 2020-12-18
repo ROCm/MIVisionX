@@ -254,10 +254,10 @@ openvxNodes = [
     'org.khronos.openvx.weighted_average image:1920,1080,U008 scalar:FLOAT32,0.25 image:1920,1080,U008 image:1920,1080,U008'),
     ('xor-1080p-u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008')
 ]
-    # ('remap-1080p-S16-nearest',
-    #  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
-    # ('remap-1080p-S16-bilinear',
-    #  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !BILINEAR image:1920,1080,U008'),
+# ('remap-1080p-S16-nearest',
+#  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
+# ('remap-1080p-S16-bilinear',
+#  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !BILINEAR image:1920,1080,U008'),
 
 
 # openvxNodes = [

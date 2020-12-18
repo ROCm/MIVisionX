@@ -475,11 +475,30 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 	}
 	else
 	{
-		if (global_case == 147)
+		if ((global_case == 147))
 		{
 			for (int i = 0; i < height/2; i++)
 				for (int j = 0; j < width/2; j++)
 					ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
+		}
+		else if((global_case == 203) || (global_case == 204))
+		{
+			for (int i = 0; i < height; i++)
+				for (int j = 0; j < width; j++)
+				{
+					if(i > 2 && i < height-3 && j > 2 && j < width-3)
+					{
+						if(i == 3 || i == height-4 || j == 3 || j == width-4) // Fill the rectangular border
+						// if((i == j)) 											//Fill Diagonal
+						{
+								ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val;
+						}
+						else
+							ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val - 85;
+					}
+					else
+							ptr[i * stride_y_pixels + j * stride_x_pixels] = 0;
+				}
 		}
 		else if ((global_case == 174) || (global_case == 176))
 		{
@@ -737,6 +756,16 @@ int main(int argc, const char ** argv)
 	/* Weighted Average Params */
 	vx_float32 WeightedAverage_alpha_float = (vx_float32) (0.25);
 	vx_scalar WeightedAverage_alpha_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &WeightedAverage_alpha_float);
+
+	/* Fast Corners Params */
+	vx_float32 fastCorner_strength_threshold = (vx_float32) 80.0;
+	vx_scalar fastCorner_threshold_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &fastCorner_strength_threshold);
+	vx_bool nms_true = 1;
+	vx_bool nms_false = 0;
+	vx_size key_array_size = 100;
+	vx_array output_keypoints_array = vxCreateArray(context, VX_TYPE_KEYPOINT, key_array_size);
+	vx_size no_of_corners = 0;
+	vx_scalar output_corner_count = vxCreateScalar(context, VX_TYPE_SIZE, (void*) &no_of_corners);
 
 	/* Lookup Table Params */
 	vx_uint8 Lut_lutPtr_uint8[256];
@@ -1394,7 +1423,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxNotNode(graph, img1, img_out);
-					expected_image_sum = (255 - pix_img1_u1) * width * height;
+					expected_image_sum = (255 - (pix_img1_u1 ? 255 : 0)) * width * height;
 					out_buf_type = 0;
 					break;
 				}
@@ -2577,6 +2606,22 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 203:
+				{
+					//test_case_name = "agoKernel_FastCorners_XY_U8_Supression";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_true, output_keypoints_array, output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
+				case 204:
+				{
+					//test_case_name = "agoKernel_FastCorners_XY_U8_NoSupression";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_false, output_keypoints_array, output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
 
 				default:
 				{
@@ -2639,7 +2684,7 @@ int main(int argc, const char ** argv)
 					(case_number == 158)  || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
 					(case_number == 163) || (case_number == 164) || (case_number == 165) || (case_number == 166) || 
 					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
-					(case_number == 174) || (case_number == 176)
+					(case_number == 174) || (case_number == 176) || (case_number == 203) || (case_number == 204)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -4512,7 +4557,22 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
-
+				case 203:
+				{
+					//test_case_name = "agoKernel_FastCorners_XY_U8_Supression";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_true, output_keypoints_array, output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
+				case 204:
+				{
+					//test_case_name = "agoKernel_FastCorners_XY_U8_NoSupression";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_false, output_keypoints_array, output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
 				default:
 				{
 					missing_function_flag = 1;
@@ -4574,7 +4634,7 @@ int main(int argc, const char ** argv)
 					(case_number == 158) || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
 					(case_number == 163) || (case_number == 164) || (case_number == 165) || (case_number == 166) || 
 					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
-					(case_number == 174) || (case_number == 176)
+					(case_number == 174) || (case_number == 176) || (case_number == 203) || (case_number == 204)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -4627,10 +4687,8 @@ int main(int argc, const char ** argv)
 					(case_number == 79)  || (case_number == 105) || (case_number == 106) || (case_number == 107) ||
 					(case_number == 111) || (case_number == 112) || (case_number == 113) || (case_number == 117) ||
 					(case_number == 118) || (case_number == 119) || (case_number == 120) || (case_number == 121) ||
-					(case_number == 122) || (case_number == 123) || (case_number == 124) || (case_number == 128)  || (case_number == 129) 
-					
-					
-					
+					(case_number == 122) || (case_number == 123) || (case_number == 124) || (case_number == 128)  || 
+					(case_number == 129)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputPackedImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8))	
@@ -4883,9 +4941,25 @@ int main(int argc, const char ** argv)
 			for (int j = 0; j < widthOut; j++)
 				returned_image_sum += out_buf_uint8[i * stride_y_pixels + j];
 	}
+	// else if(out_buf_type == 6)
+	// {
+	// 	vx_size i, stride = sizeof(vx_keypoint_t);
+	// 	void *base = NULL;
+	// 	vx_map_id map_id;
+	// 	vx_size num_items=5;
+	// 	vx_float32 strength_value;
+	// 	/* access entire array at once */
+	// 	ERROR_CHECK_STATUS(vxMapArrayRange(output_keypoints_array, 0, num_items, &map_id, &stride, (void **)&base, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
+	// 	for (i = 0; i < num_items; i++)
+	// 	{
+	// 		vxArrayItem(vx_keypoint_t, base, i, stride).strength;
+	// 		printf("%f ",strength_value);
+	// 	}
+	// 	vxUnmapArrayRange(output_keypoints_array, map_id);
+	// }
 
 	// Cases for Manual Override
-	if ((case_number == 155) || (case_number == 157))
+	if ((case_number == 155) || (case_number == 157) || (case_number == 203) || (case_number == 204))
 	{
 		printf("\nTEST PASSED: Sum verification overridden due to hard calculation. Manually verified. Not an exact pixel-to-pixel match.\n");
 		return_value = 1;
@@ -4894,19 +4968,24 @@ int main(int argc, const char ** argv)
 	{
 		printf("\nTEST FAILED: returned_image_sum = %d expected_image_sum = %d\n", returned_image_sum, expected_image_sum);
 		return_value = -1;
+		ERROR_CHECK_STATUS(vxUnmapImagePatch(img_out, out_map_id));
 	}
 	else
 	{
 		printf("\nTEST PASSED: returned_image_sum = %d expected_image_sum = %d\n", returned_image_sum, expected_image_sum);
 		return_value = 1;
+		ERROR_CHECK_STATUS(vxUnmapImagePatch(img_out, out_map_id));
 	}
 
-	ERROR_CHECK_STATUS(vxUnmapImagePatch(img_out, out_map_id));
+	
 
 	// free resources
 
 	vxReleaseScalar(&Mul_scale_scalar);
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
+	vxReleaseScalar(&fastCorner_threshold_scalar);
+	vxReleaseScalar(&output_corner_count);
+	vxReleaseArray(&output_keypoints_array);
 	vxReleaseScalar(&ConvertDepth_shift_scalar);
 	vxReleaseMatrix(&WarpAffine_affineMatrix_matrix);
 	vxReleaseMatrix(&WarpPerspective_perspectiveMatrix_matrix);

@@ -2468,6 +2468,7 @@ int HafCpu_Xor_U1_U8U8
 				{
 					temp |= ((*pLocalSrc1++ ^ *pLocalSrc2++) >> 7) & 1;		// the signed bit has the information
 					temp <<= 1;
+					temp = (temp > 127) ? 255 : temp;
 				}
 				*pLocalDst++ = temp;
 			}
@@ -2505,6 +2506,7 @@ int HafCpu_Xor_U1_U8U8
 				{
 					temp |= ((*pLocalSrc1++ ^ *pLocalSrc2++) >> 7) & 1;
 					temp <<= 1;
+					temp = (temp > 127) ? 255 : temp;
 				}
 				*pLocalDst++ = temp;
 			}

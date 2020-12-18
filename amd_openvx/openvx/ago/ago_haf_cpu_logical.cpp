@@ -2567,6 +2567,7 @@ int HafCpu_Xor_U1_U8U1
 			{
 				temp |= ((*pLocalSrc1++) >> 7) & 1;
 				temp <<= 1;
+				temp = (temp > 127) ? 255 : temp;
 			}
 			*pLocalDst++ = temp ^ pix;
 		}

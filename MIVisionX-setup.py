@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.4"
+__version__ = "1.8.5"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -113,9 +113,9 @@ else:
     os.system('sudo -v')
     os.system('sudo yum -y update')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel')
+              linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel libsqlite3x-devel.x86_64')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install openssl-devel hg autoconf automake')
+              linuxSystemInstall_check+' install openssl-devel hg autoconf automake pkg-config')
 
 # Delete previous install
 if(os.path.exists(deps_dir) and reinstall == 'yes'):
@@ -293,12 +293,22 @@ else:
         os.system('sudo '+linuxFlag+' yes | pip install numpy')
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
-    os.system('sudo -v')
-    os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' install build-essential cmake git libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
-    os.system('sudo -v')
-    os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-              ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev')
+    # Install pre-reqs
+    if linuxSystemInstall == 'apt-get':
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                  ' install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                  ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev')
+    else:
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                  ' groupinstall \'Development Tools\'')
+        os.system('sudo -v')
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                  ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394')
+    # OpenCV 3.4.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
               ' -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')
@@ -307,13 +317,13 @@ else:
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
     if raliInstall == 'yes':
-        # Install Packages for RALI
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')
         # Install RPP
-        # Yasm/Nasm for TurboJPEG
         if linuxSystemInstall == 'apt-get':
+            # Install Packages for RALI
+            os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                      linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')
+            # Yasm/Nasm for TurboJPEG
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
                       ' -y '+linuxSystemInstall_check+' install nasm yasm')
@@ -333,7 +343,7 @@ else:
             # RPP
             os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; ' +
                       linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
-        # Turn off for CentOS - TBD: turn on when RPP is supported on CentOS
+        # Turn off for CentOS - TBD: TURN ON when RPP is supported on CentOS
         # else:
             # Nasm
             #os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
@@ -417,7 +427,7 @@ else:
             # libx265
             os.system('(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
             os.system(
-                '(cd '+deps_dir+'/x265/build/linux; ./make-Makefiles.bash; make -j8 )')
+                '(cd '+deps_dir+'/x265/build/linux; cmake -G "Unix Makefiles" ../../source; make -j8 )')
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/x265/build/linux; sudo ' +
                       linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')

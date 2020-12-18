@@ -4030,7 +4030,7 @@ int HafCpu_ColorConvert_IYUV_RGBX
 			float G = (float)*(pLocalSrc + 1);
 			float B = (float)*(pLocalSrc + 2);
 
-			*pLocalDstY = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*pLocalDstY = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			float U = (R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f;
 			float V = (R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f;
 
@@ -4038,7 +4038,7 @@ int HafCpu_ColorConvert_IYUV_RGBX
 			G = (float)*(pLocalSrc + 5);
 			B = (float)*(pLocalSrc + 6);
 
-			*(pLocalDstY + 1) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*(pLocalDstY + 1) = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
@@ -4046,7 +4046,7 @@ int HafCpu_ColorConvert_IYUV_RGBX
 			G = (float)*(pLocalSrc + srcImageStrideInBytes + 1);
 			B = (float)*(pLocalSrc + srcImageStrideInBytes + 2);
 
-			*(pLocalDstY + dstYImageStrideInBytes) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*(pLocalDstY + dstYImageStrideInBytes) = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
@@ -4054,14 +4054,14 @@ int HafCpu_ColorConvert_IYUV_RGBX
 			G = (float)*(pLocalSrc + srcImageStrideInBytes + 5);
 			B = (float)*(pLocalSrc + srcImageStrideInBytes + 6);
 
-			*(pLocalDstY + dstYImageStrideInBytes + 1) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*(pLocalDstY + dstYImageStrideInBytes + 1) = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
 			U /= 4.0f;	V /= 4.0f;
 
-			*pLocalDstU++ = (vx_uint8)U;
-			*pLocalDstV++ = (vx_uint8)V;
+			*pLocalDstU++ = (vx_uint8)(round(U));
+			*pLocalDstV++ = (vx_uint8)(round(V));
 
 			pLocalSrc += 8;
 			pLocalDstY += 2;
@@ -4235,7 +4235,7 @@ int HafCpu_ColorConvert_NV12_RGBX
 			float G = (float)*(pLocalSrc + 1);
 			float B = (float)*(pLocalSrc + 2);
 
-			*pLocalDstLuma = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*pLocalDstLuma = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			float U = (R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f;
 			float V = (R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f;
 
@@ -4243,7 +4243,7 @@ int HafCpu_ColorConvert_NV12_RGBX
 			G = (float)*(pLocalSrc + 5);
 			B = (float)*(pLocalSrc + 6);
 
-			*(pLocalDstLuma + 1) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*(pLocalDstLuma + 1) = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
@@ -4251,7 +4251,7 @@ int HafCpu_ColorConvert_NV12_RGBX
 			G = (float)*(pLocalSrc + srcImageStrideInBytes + 1);
 			B = (float)*(pLocalSrc + srcImageStrideInBytes + 2);
 
-			*(pLocalDstLuma + dstLumaImageStrideInBytes) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*(pLocalDstLuma + dstLumaImageStrideInBytes) = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
@@ -4259,14 +4259,14 @@ int HafCpu_ColorConvert_NV12_RGBX
 			G = (float)*(pLocalSrc + srcImageStrideInBytes + 5);
 			B = (float)*(pLocalSrc + srcImageStrideInBytes + 6);
 
-			*(pLocalDstLuma + dstLumaImageStrideInBytes + 1) = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
+			*(pLocalDstLuma + dstLumaImageStrideInBytes + 1) = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
 			U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 			V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
 			U /= 4.0f;	V /= 4.0f;
 
-			*pLocalDstChroma++ = (vx_uint8)U;
-			*pLocalDstChroma++ = (vx_uint8)V;
+			*pLocalDstChroma++ = (vx_uint8)(round(U));
+			*pLocalDstChroma++ = (vx_uint8)(round(V));
 
 			pLocalSrc += 8;
 			pLocalDstLuma += 2;

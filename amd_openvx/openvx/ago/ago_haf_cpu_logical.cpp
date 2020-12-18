@@ -1064,7 +1064,8 @@ int HafCpu_And_U1_U8U8
 				for (int i = 0; i < 8; i++)
 				{
 					temp |= ((*pLocalSrc1++ & *pLocalSrc2++) >> 7) & 1;		// the signed bit has the information
-					temp <<= 1;					
+					temp <<= 1;
+					temp = (temp > 127) ? 255 : temp;				
 				}
 				*pLocalDst++ = temp;
 			}
@@ -1162,6 +1163,7 @@ int HafCpu_And_U1_U8U1
 			{
 				temp |= ((*pLocalSrc1++) >> 7) & 1;
 				temp <<= 1;
+				temp = (temp > 127) ? 255 : temp;
 			}
 			*pLocalDst++ = temp & pix;
 		}
@@ -1762,6 +1764,7 @@ int HafCpu_Or_U1_U8U8
 				{
 					temp |= ((*pLocalSrc1++ | *pLocalSrc2++) >> 7) & 1;		// the signed bit has the information
 					temp <<= 1;
+					temp = (temp > 127) ? 255 : temp;
 				}
 				*pLocalDst++ = temp;
 			}
@@ -1859,6 +1862,7 @@ int HafCpu_Or_U1_U8U1
 			{
 				temp |= ((*pLocalSrc1++) >> 7) & 1;
 				temp <<= 1;
+				temp = (temp > 127) ? 255 : temp;
 			}
 			*pLocalDst++ = temp | pix;
 		}

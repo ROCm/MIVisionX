@@ -69,22 +69,16 @@ int HipExec_ChannelCopy
         vx_uint32     srcImageStrideInBytes
 )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth + 7) >> 3, globalThreads_y = dstHeight;
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
+    hipEvent_t start, stop; float eventMs;
+    HIP_KERNEL_TIMING_START(start, stop, eventMs)
     hipLaunchKernelGGL(Hip_Copy_U8_U8,
                        dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
                        0, stream, dstWidth, dstHeight,
                        (unsigned int *) pHipDstImage, dstImageStrideInBytes, (const unsigned int *) pHipSrcImage,
                        srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-   // printf("HipExec_ChannelCopy: Kernel time: %f\n", eventMs);
+    HIP_KERNEL_TIMING_STOP(start, stop, eventMs)
     return VX_SUCCESS;
 }

@@ -211,7 +211,8 @@ int main(int argc, const char ** argv) {
                 ERROR_CHECK_STATUS(makeInputImage2(context, img2, width, height, VX_MEMORY_TYPE_HIP));
                 if (status == VX_SUCCESS)
                 {
-                    status = vxProcessGraph(graph);
+                    //for (int i=0; i<100; i++)
+                        status = vxProcessGraph(graph);
                 }
                 vxReleaseNode(&node);
             }
@@ -233,9 +234,9 @@ int main(int argc, const char ** argv) {
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             sum += out_buf[i * addr.stride_y + j];
-            printf("sum<%x,%d>: %d\t", i, j, out_buf[i * addr.stride_y + j]);
+    //        printf("sum<%x,%d>: %d\t", i, j, out_buf[i * addr.stride_y + j]);
         }
-        printf("\n");
+     //   printf("\n");
     }
     if (sum != expected) {
         printf("FAILED: sum = %d expected: %d \n", sum, expected);

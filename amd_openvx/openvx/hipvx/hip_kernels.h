@@ -22,9 +22,29 @@ THE SOFTWARE.
 
 #ifndef MIVISIONX_HIP_KERNELS_H
 #define MIVISIONX_HIP_KERNELS_H
+
 #include <VX/vx.h>
+
+#define ENABLE_KERNEL_EVENT_TIMING    0
+
+#if ENABLE_KERNEL_EVENT_TIMING
+#ifndef __FUNCTION_NAME__
+#ifdef WIN32   //WINDOWS
+        #define __FUNCTION_NAME__   __FUNCTION__
+#else          //*NIX
+        #define __FUNCTION_NAME__   __func__
+#endif
+#endif //#ifndef __FUNCTION_NAME__
+#define HIP_KERNEL_TIMING_START(start, stop, t)   { hipEventCreate(&start); hipEventCreate(&stop); t = 1.0f; hipEventRecord(start, NULL); }
+#define HIP_KERNEL_TIMING_STOP(start, stop, t)   { hipEventRecord(stop, NULL); hipEventSynchronize(stop);  hipEventElapsedTime(&eventMs, start, stop); printf("%s: Kernel time: %f ms\n", __FUNCTION_NAME__, t);}
+#else
+#define HIP_KERNEL_TIMING_START(start, stop, t);
+#define HIP_KERNEL_TIMING_STOP(start, stop, t);
+#endif
+
 int HipExec_AbsDiff_U8_U8U8
 (
+        hipStream_t  stream,
         vx_uint32     dstWidth,
         vx_uint32     dstHeight,
         vx_uint8     * pHipDstImage,

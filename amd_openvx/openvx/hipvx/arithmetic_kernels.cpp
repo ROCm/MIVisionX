@@ -64,6 +64,7 @@ Hip_AbsDiff_U8_U8U8
 
 int HipExec_AbsDiff_U8_U8U8
     (
+    hipStream_t  stream,
     vx_uint32     dstWidth,
     vx_uint32     dstHeight,
     vx_uint8     * pHipDstImage,
@@ -74,27 +75,18 @@ int HipExec_AbsDiff_U8_U8U8
     vx_uint32     srcImage2StrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3) >> 2,   globalThreads_y = dstHeight;
-    //printf("HipExec_AbsDiff_U8_U8U8: dst: %p src1: %p src2: %p <%dx%d> stride <%dx%dx%d>\n", pHipDstImage, pHipSrcImage1, pHipSrcImage2,
-     //       dstWidth, dstHeight, dstImageStrideInBytes, srcImage1StrideInBytes, srcImage2StrideInBytes);
-
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
+    hipEvent_t start, stop; float eventMs;
+    HIP_KERNEL_TIMING_START(start, stop, eventMs)
     hipLaunchKernelGGL(Hip_AbsDiff_U8_U8U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
-                    0, 0, dstWidth, dstHeight,
+                    0, stream, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
 
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
- //   printf("HipExec_AbsDiff_U8_U8U8: Kernel time: %f millisec\n", eventMs);
+    HIP_KERNEL_TIMING_STOP(start, stop, eventMs)
     return VX_SUCCESS;
 }
 

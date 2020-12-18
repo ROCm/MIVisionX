@@ -18,8 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required( VERSION 3.5 )
-project(openvx CXX)
+cmake_minimum_required(VERSION 3.0)
+project(openvx)
 
 set(CMAKE_CXX_STANDARD 14)
 

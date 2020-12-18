@@ -2187,7 +2187,7 @@ Hip_FormatConvert_NV12_UYVY(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x * 2>= dstWidth) || (y * 2>= dstHeight)) return;
     unsigned int dstIdxLuma = y * (2 * dstLumaImageStrideInBytes) + (x * 2);
     unsigned int dstIdxChroma = y * (dstChromaImageStrideInBytes) + (x * 2);
     unsigned int srcIdx = y * (2 * srcImageStrideInBytes) + (x * 4);
@@ -2241,7 +2241,7 @@ Hip_FormatConvert_NV12_YUYV(
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
+    if ((x * 2>= dstWidth) || (y * 2 >= dstHeight)) return;
     unsigned int dstIdxLuma = y * (2 * dstLumaImageStrideInBytes) + (x * 2);
     unsigned int dstIdxChroma = y * (dstChromaImageStrideInBytes) + (x * 2);
     unsigned int srcIdx = y * (2 * srcImageStrideInBytes) + (x * 4);

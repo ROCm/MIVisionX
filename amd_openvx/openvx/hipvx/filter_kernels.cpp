@@ -603,3 +603,131 @@ int HipExec_Sobel_S16S16_U8_3x3_GXY(
     printf("\nHipExec_Sobel_S16S16_U8_3x3_GXY: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_Sobel_S16_U8_3x3_GX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const short int *gx
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    int dstIdx =  y*(dstImageStrideInBytes>>1) + x;
+    int srcIdx =  y*(srcImageStrideInBytes) + x;
+    if (y >= dstHeight - 2)
+    {
+      pDstImage[dstIdx] = (short int)0;
+      return;
+    }
+    int srcIdxTopRow, srcIdxBottomRow;
+    srcIdxTopRow = srcIdx - srcImageStrideInBytes;
+    srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
+    
+    short int sum1 = 0;
+    sum1 += (gx[4] * (short int)*(pSrcImage + srcIdx) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow) + gx[7] * (short int)*(pSrcImage + srcIdxBottomRow));
+    if (x != 0)
+      sum1 += (gx[3] * (short int)*(pSrcImage + srcIdx - 1) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (short int)*(pSrcImage + srcIdxBottomRow - 1));
+    if (x != (dstWidth - 1))
+      sum1 += (gx[5] * (short int)*(pSrcImage + srcIdx + 1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (short int)*(pSrcImage + srcIdxBottomRow + 1));
+    pDstImage[dstIdx] = (short int)PIXELSATURATES16(sum1);
+}
+int HipExec_Sobel_S16_U8_3x3_GX(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+
+    short int gx[9] = {-1,0,1,-2,0,2,-1,0,1};
+    short int *hipGx;
+    hipMalloc(&hipGx, 144);
+    hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Sobel_S16_U8_3x3_GX,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (short int *)pHipDstImage + (dstImageStrideInBytes>>1) , dstImageStrideInBytes, 
+                    (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes,
+                    (const short int *)hipGx);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    hipFree(&hipGx);
+
+    printf("\nHipExec_Sobel_S16_U8_3x3_GX: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_Sobel_S16_U8_3x3_GY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    short int *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const short int *gy
+	)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight)) return;
+    int dstIdx =  y*(dstImageStrideInBytes>>1) + x;
+    int srcIdx =  y*(srcImageStrideInBytes) + x;
+    if (y >= dstHeight - 2)
+    {
+      pDstImage[dstIdx] = (short int)0;
+      return;
+    }
+    int srcIdxTopRow, srcIdxBottomRow;
+    srcIdxTopRow = srcIdx - srcImageStrideInBytes;
+    srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
+    
+    short int sum2 = 0;
+    sum2 += (gy[4] * (short int)*(pSrcImage + srcIdx) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow) + gy[7] * (short int)*(pSrcImage + srcIdxBottomRow));
+    if (x != 0)
+      sum2 += (gy[3] * (short int)*(pSrcImage + srcIdx - 1) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (short int)*(pSrcImage + srcIdxBottomRow - 1));
+    if (x != (dstWidth - 1))
+      sum2 += (gy[5] * (short int)*(pSrcImage + srcIdx + 1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (short int)*(pSrcImage + srcIdxBottomRow + 1));
+    pDstImage[dstIdx] = (short int)PIXELSATURATES16(sum2);
+}
+int HipExec_Sobel_S16_U8_3x3_GY(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+
+    short int gy[9] = {-1,-2,-1,0,0,0,1,2,1};
+    short int *hipGy;
+    hipMalloc(&hipGy, 144);
+    hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_Sobel_S16_U8_3x3_GY,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0, dstWidth, dstHeight,
+                    (short int *)pHipDstImage + (dstImageStrideInBytes>>1) , dstImageStrideInBytes, 
+                    (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes,
+                    (const short int *)hipGy);
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    hipFree(&hipGy);
+
+    printf("\nHipExec_Sobel_S16_U8_3x3_GY: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}

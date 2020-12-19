@@ -22,28 +22,26 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 import argparse
 import os
-import shutil, sys
+import shutil
+import sys
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018-2020, AMD MIVision Generate Full Report"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
-
 
 def shell(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0][0:-1]
     return output
 
-
 def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
-
 
 # Vision Accuracy Tests
 visionTestConfig = [
@@ -181,35 +179,56 @@ openvxNodeTestConfig = [
 # Import arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--runvx_directory',    type=str, default='',
-                    help='RunVX Executable directory - required')
+                    help='RunVX Executable Directory - required')
 parser.add_argument('--hardware_mode',      type=str, default='CPU',
-                    help='OpenVX Vision Function target - optional (default:CPU [options:CPU/GPU])')
+                    help='OpenVX Vision Function Target - optional (default:CPU [options:CPU/GPU])')
+parser.add_argument('--list_tests',         type=str, default='no',
+                    help='List Vision Functionality Tests - optional (default:no [options:no/yes])')
+parser.add_argument('--test_filter',        type=int, default=0,
+                    help='Vision Functionality Test Filter - optional (default:0 [range:1 - N])')
 args = parser.parse_args()
 
 runvxDir = args.runvx_directory
 hardwareMode = args.hardware_mode
+listTest = args.list_tests
+testFilter = args.test_filter
 
 # check arguments
-if runvxDir == '':
-    print(
-        "ERROR: RunVX Executable Directory Required")
-    exit()
 if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
+    exit()
+if listTest not in ('no', 'yes'):
+    print("ERROR: List Vision Functionality Tests options supported - no or yes]")
+    exit()
+if not 0 <= testFilter <= len(openvxNodes):
+    print(
+        "\nERROR: Vision Functionality Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
+    exit()
+# List Vision Functionality tests
+if listTest == 'yes':
+    print(" %-5s - %-30s\n" % ('Test ID', 'Test Name'))
+    for i in range(len(openvxNodes)):
+        nodeName, nodeFormat = openvxNodes[i]
+        print("   %-5d - %-30s\n" % ((i+1), nodeName))
+    exit()
+if runvxDir == '':
+    print("ERROR: RunVX Executable Directory Required")
     exit()
 
 # RunVX Application
 runVX_exe = runvxDir+'/runvx'
 runvx_exe_dir = os.path.expanduser(runVX_exe)
 
-print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
 os.system('(cd gdfs; mkdir openvx_test_results)')
-for i in range(len(visionTestConfig)):
-    testFileName = visionTestConfig[i]
-    print("Running Test Script: "+testFileName)
-    os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
-              hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
-    print("\n")
+
+if testFilter == 0:
+    print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
+    for i in range(len(visionTestConfig)):
+        testFileName = visionTestConfig[i]
+        print("Running Test Script: "+testFileName)
+        os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
+                  hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
+        print("\n")
 
 #print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
 #os.system('mkdir openvx_node_results')
@@ -226,8 +245,17 @@ if not os.path.exists(outputDirectory):
 else:
     shutil.rmtree(outputDirectory)
     os.makedirs(outputDirectory)
-for i in range(len(openvxNodes)):
-    nodeName, nodeFormat = openvxNodes[i]
+if testFilter == 0:
+    for i in range(len(openvxNodes)):
+        nodeName, nodeFormat = openvxNodes[i]
+        echo1 = 'Running OpenVX Node - '+nodeName
+        os.system('echo '+echo1 +
+                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:' +
+                  hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        print("\n")
+else:
+    nodeName, nodeFormat = openvxNodes[(testFilter - 1)]
     echo1 = 'Running OpenVX Node - '+nodeName
     os.system('echo '+echo1 +
               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
@@ -235,18 +263,21 @@ for i in range(len(openvxNodes)):
               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
     print("\n")
 
-
 orig_stdout = sys.stdout
-sys.stdout = open('openvx_node_results/nodePerformance.md','a')
-echo_1 = '| OpenVX Node | Frames Count | tmp (ms) | avg (ms) | min (ms) | max (ms) |'
+sys.stdout = open('openvx_node_results/nodePerformance.md', 'a')
+echo_1 = '|          OpenVX Node            | Frames Count | tmp (ms) | avg (ms) | min (ms) | max (ms) |'
 print(echo_1)
-echo_2 = '|-------------|--------------|----------|----------|----------|----------|'
+echo_2 = '|---------------------------------|--------------|----------|----------|----------|----------|'
 print(echo_2)
 sys.stdout = orig_stdout
 print(echo_1)
 print(echo_2)
-runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-30s | %3d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
-os.system(runAwk_csv)
+if hardwareMode == 'CPU':
+    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-31s | %-12d | %-8.3f | %-8.3f | %-8.3f | %-8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
+    os.system(runAwk_csv)
+if hardwareMode == 'GPU':
+    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /GPU,GRAPH/ { printf("| %-31s | %-12d | %-8.3f | %-8.3f | %-8.3f | %-8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
+    os.system(runAwk_csv)
 
 # get data
 platform_name = shell('hostname')
@@ -254,7 +285,8 @@ platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-report_filename = 'platform_report_%s_%s.md' % (platform_name, file_dtstr)
+report_filename = 'platform_report_%s_%s_%s.md' % (
+    platform_name, file_dtstr, hardwareMode)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 

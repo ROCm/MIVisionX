@@ -16576,7 +16576,7 @@ int agoKernel_HarrisSobel_HG3_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
 	status = VX_SUCCESS;
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
-		if (HipExec_HarrisSobel_HG3_U8_3x3(oImg->u.img.width, oImg->u.img.height, (vx_float32 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes, node->localDataPtr)) {
+		if (HipExec_HarrisSobel_HG3_U8_3x3(oImg->u.img.width, oImg->u.img.height, (vx_float32 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
 			status = VX_FAILURE;
 		}
 	}

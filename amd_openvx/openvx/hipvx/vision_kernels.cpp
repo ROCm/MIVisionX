@@ -485,7 +485,7 @@ Hip_HarrisSobel_HG3_U8_3x3(
     unsigned int  dstWidth, unsigned int  dstHeight, 
     float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
     const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
-    const unsigned char  * pScratch
+    float * gx, float *gy
 	)
 {
   int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
@@ -494,13 +494,10 @@ Hip_HarrisSobel_HG3_U8_3x3(
     return;
   unsigned int dstIdx = y * (dstGxyStrideInBytes /sizeof(ago_harris_Gxy_t)) + x;
   unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
-  // ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)((unsigned char *) pDstGxy_ );
   ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
-  // float gx, gy;
   float div_factor = 1; // 4.0f * 255;
 
-  float gx[9] = {-1,0,1,-2,0,2,-1,0,1};
-  float gy[9] = {-1,-2,-1,0,0,0,1,2,1};
+
   int srcIdxTopRow = srcIdx - srcImageStrideInBytes;
   int srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
   float sum_x = 0;
@@ -512,20 +509,17 @@ Hip_HarrisSobel_HG3_U8_3x3(
   sum_y += (gy[3] * (float)*(pSrcImage + srcIdx - 1) + gy[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
   sum_y += (gy[5] * (float)*(pSrcImage + srcIdx + 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
 
-  // pDstGxy->GxGx = gx*gx;
-  // pDstGxy->GxGy = gx*gy;
-  // pDstGxy->GyGy = gy*gy;
+
   pDstGxy[dstIdx].GxGx = sum_x*sum_x;
   pDstGxy[dstIdx].GxGy = sum_x*sum_y;
   pDstGxy[dstIdx].GyGy = sum_y*sum_y;
   pDstGxy++;
-  // pDstGxy_ = pDstGxy_ + dstGxyStrideInBytes;
 }
 int HipExec_HarrisSobel_HG3_U8_3x3(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
-    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes,
-    vx_uint8 * pScratch 
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
+  
     )
 {
     hipEvent_t start, stop;
@@ -536,6 +530,15 @@ int HipExec_HarrisSobel_HG3_U8_3x3(
     hipEventCreate(&stop);
     float eventMs = 1.0f;
     hipEventRecord(start, NULL);
+
+    float gx[9] = {-1,0,1,-2,0,2,-1,0,1};
+    float gy[9] = {-1,-2,-1,0,0,0,1,2,1};
+    float *hipGx, *hipGy;
+    hipMalloc(&hipGx, 144);
+    hipMalloc(&hipGy, 144);
+    hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
+    hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
+    
     hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -543,7 +546,8 @@ int HipExec_HarrisSobel_HG3_U8_3x3(
                     dstWidth, dstHeight,
                     (float *)pDstGxy_ , dstGxyStrideInBytes, 
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
-                    (const unsigned char *)pScratch);
+                    (float *)hipGx, (float *)hipGy);
+                    
 /* Printing Outputs for verification */ //inside hipexec kernel
     ago_harris_Gxy_t *DstGxy;
     DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));

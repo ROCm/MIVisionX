@@ -119,6 +119,12 @@ __device__ __forceinline__ int isCornerMinus(short candidate, short * boundary, 
 	return isCorner(mask);
 }
 
+typedef struct {
+	vx_float32 GxGx;
+	vx_float32 GxGy;
+	vx_float32 GyGy;
+} ago_harris_Gxy_t;
+
 // ----------------------------------------------------------------------------
 // VxFastCorners kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -474,6 +480,94 @@ int HipExec_FastCorners_XY_U8_Supression(
 // ----------------------------------------------------------------------------
 // VxHarrisCorners kernels for hip backend
 // ----------------------------------------------------------------------------
+__global__ void __attribute__((visibility("default")))
+Hip_HarrisSobel_HG3_U8_3x3(
+    unsigned int  dstWidth, unsigned int  dstHeight, 
+    float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
+    const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
+    const unsigned char  * pScratch
+	)
+{
+  int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+  int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+  if ((x >dstWidth) || (x<0)|| (y >= dstHeight) || y<=0)
+    return;
+  unsigned int dstIdx = y * (dstGxyStrideInBytes /sizeof(ago_harris_Gxy_t)) + x;
+  unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
+  // ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)((unsigned char *) pDstGxy_ );
+  ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
+  // float gx, gy;
+  float div_factor = 1; // 4.0f * 255;
+
+  float gx[9] = {-1,0,1,-2,0,2,-1,0,1};
+  float gy[9] = {-1,-2,-1,0,0,0,1,2,1};
+  int srcIdxTopRow = srcIdx - srcImageStrideInBytes;
+  int srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
+  float sum_x = 0;
+  sum_x += (gx[4] * (float)*(pSrcImage + srcIdx) + gx[1] * (float)*(pSrcImage + srcIdxTopRow) + gx[7] * (float)*(pSrcImage + srcIdxBottomRow));
+  sum_x += (gx[3] * (float)*(pSrcImage + srcIdx - 1) + gx[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+  sum_x += (gx[5] * (float)*(pSrcImage + srcIdx + 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+  float sum_y = 0;
+  sum_y += (gy[4] * (float)*(pSrcImage + srcIdx) + gy[1] * (float)*(pSrcImage + srcIdxTopRow) + gy[7] * (float)*(pSrcImage + srcIdxBottomRow));
+  sum_y += (gy[3] * (float)*(pSrcImage + srcIdx - 1) + gy[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+  sum_y += (gy[5] * (float)*(pSrcImage + srcIdx + 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+
+  // pDstGxy->GxGx = gx*gx;
+  // pDstGxy->GxGy = gx*gy;
+  // pDstGxy->GyGy = gy*gy;
+  pDstGxy[dstIdx].GxGx = sum_x*sum_x;
+  pDstGxy[dstIdx].GxGy = sum_x*sum_y;
+  pDstGxy[dstIdx].GyGy = sum_y*sum_y;
+  pDstGxy++;
+  // pDstGxy_ = pDstGxy_ + dstGxyStrideInBytes;
+}
+int HipExec_HarrisSobel_HG3_U8_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint8 * pScratch 
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+    printf("\ndstWidth = %d, dstHeight = %d\ndstGxyStrideInBytes = %d, srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstGxyStrideInBytes, srcImageStrideInBytes);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_3x3,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0,
+                    dstWidth, dstHeight,
+                    (float *)pDstGxy_ , dstGxyStrideInBytes, 
+                    (const unsigned char *)pSrcImage, srcImageStrideInBytes,
+                    (const unsigned char *)pScratch);
+/* Printing Outputs for verification */ //inside hipexec kernel
+    ago_harris_Gxy_t *DstGxy;
+    DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    if (status != hipSuccess)
+      printf("Copy mem dev to host failed\n");
+    for (int j = 1; j < dstHeight-1 ; j++)
+    {
+      for (int i = 0; i < dstWidth; i++)
+      {
+        int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
+        printf("<row, col>: <%d,%d>", j,i);
+        printf("The GXGX : %f \t and \tGYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
+      }
+      DstGxy++;
+    }
+    hipFree(DstGxy);
+    /*  Printing Outputs for verification */
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_HarrisSobel_HG3_U8_3x3: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
 
 // ----------------------------------------------------------------------------
 // VxCannyEdgeDetector kernels for hip backend

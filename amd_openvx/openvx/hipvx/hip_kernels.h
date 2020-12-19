@@ -946,6 +946,12 @@ int HipExec_Remap_U8_U8_Bilinear(
 	);
 
 // vision_kernels
+int HipExec_HarrisSobel_HG3_U8_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint8 * pScratch 
+    );
 int HipExec_FastCorners_XY_U8_NoSupression(
 	vx_uint32  capacityOfDstCorner, 
 	vx_keypoint_t   pHipDstCorner[],

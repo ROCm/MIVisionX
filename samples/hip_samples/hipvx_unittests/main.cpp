@@ -5203,9 +5203,13 @@ int main(int argc, const char ** argv)
 	vxReleaseScalar(&Mul_scale_scalar);
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
 	vxReleaseScalar(&fastCorner_threshold_scalar);
-	//Need to add for Harris Corners
 	vxReleaseScalar(&output_corner_count);
 	vxReleaseArray(&output_keypoints_array);
+	vxReleaseScalar(&HarrisCorner_strength_threshold_scalar);
+	vxReleaseScalar(&HarrisCorner_min_distance_scalar);
+	vxReleaseScalar(&HarrisCorner_sensitivity_scalar);
+	vxReleaseArray(&HarrisCorner_output_keypoints_array);
+	vxReleaseScalar(&HarrisCorner_output_corner_count);
 	vxReleaseScalar(&ConvertDepth_shift_scalar);
 	vxReleaseMatrix(&WarpAffine_affineMatrix_matrix);
 	vxReleaseMatrix(&WarpPerspective_perspectiveMatrix_matrix);

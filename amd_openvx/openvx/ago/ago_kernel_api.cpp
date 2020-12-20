@@ -16616,6 +16616,8 @@ int agoKernel_HarrisSobel_HG3_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -16630,6 +16632,16 @@ int agoKernel_HarrisSobel_HG3_U8_5x5(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 2, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 2, 0);
 	}
+#if ENABLE_HIP
+	else if (cmd == ago_kernel_cmd_hip_execute) {
+	status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		if (HipExec_HarrisSobel_HG3_U8_5x5(oImg->u.img.width, oImg->u.img.height, (vx_float32 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+			status = VX_FAILURE;
+		}
+	}
+#endif
 	return status;
 }
 

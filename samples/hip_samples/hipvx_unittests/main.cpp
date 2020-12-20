@@ -492,7 +492,7 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 						ptr[i * stride_y_pixels + j * stride_x_pixels] = 10;
 			}
 		}
-		else if(global_case == 206)
+		else if( (global_case == 206) || (global_case == 207) ) 
 		{
 			for(int i =0; i< height;i++)
 			{
@@ -795,8 +795,18 @@ int main(int argc, const char ** argv)
 	vx_scalar HarrisCorner_min_distance_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &HarrisCorner_min_distance);
 	vx_float32 HarrisCorner_sensitivity = (vx_float32) 0.10;
 	vx_scalar HarrisCorner_sensitivity_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &HarrisCorner_sensitivity);
-	vx_int32 HarrisCorner_grad_size = (vx_int32) 3;
-	vx_int32 HarrisCorner_block_size = (vx_int32) 5;
+	// Gradient Size 3x3
+	vx_int32 HarrisCorner_grad_size_3x3 = (vx_int32) 3;
+	// Gradient Size 5x5
+	vx_int32 HarrisCorner_grad_size_5x5 = (vx_int32) 5;
+	// Gradient Size 7x7
+	vx_int32 HarrisCorner_grad_size_7x7 = (vx_int32) 7;
+	// Block Size 3x3
+	vx_int32 HarrisCorner_block_size_3x3 = (vx_int32) 3;
+	// Block Size 5x5
+	vx_int32 HarrisCorner_block_size_5x5 = (vx_int32) 5;
+	// Block Size 7x7
+	vx_int32 HarrisCorner_block_size_7x7 = (vx_int32) 7;
 	vx_size HarrisCorner_key_array_size = 1000;
 	vx_array HarrisCorner_output_keypoints_array = vxCreateArray(context, VX_TYPE_KEYPOINT, HarrisCorner_key_array_size);
 	vx_size HarrisCorner_no_of_corners = 0;
@@ -2759,9 +2769,27 @@ int main(int argc, const char ** argv)
 					break;
 				}
 				case 206:
-				{
+				{	
+					//test_case_flow for Harris Corners
+					//"agoKernel_HarrisSobel_HG3_U8_3x3"
+					//"agoKernel_HarrisScore_HVC_HG3_5x5"
+					//"VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3" instead of "agoKernel_HarrisMergeSortAndPick_XY_HVC"
+					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
+
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size, HarrisCorner_block_size, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_3x3, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
+				case 207:
+				{
+					//test_case_flow for Harris Corners
+					//"agoKernel_HarrisSobel_HG3_U8_5x5"
+					//"agoKernel_HarrisScore_HVC_HG3_5x5"
+					//"VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3" instead of "agoKernel_HarrisMergeSortAndPick_XY_HVC"
+					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_5x5, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
 					out_buf_type = -1;
 					break;
 				}
@@ -2829,7 +2857,7 @@ int main(int argc, const char ** argv)
 					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
-					(case_number == 203) || (case_number == 204) || (case_number == 206)
+					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -4804,9 +4832,25 @@ int main(int argc, const char ** argv)
 				}
 				case 206:
 				{
-					//test_case_name = "agoKernel_HarrisSobel_HG3_U8_3x3";
+					//test_case_flow for Harris Corners
+					//"agoKernel_HarrisSobel_HG3_U8_3x3"
+					//"agoKernel_HarrisScore_HVC_HG3_5x5"
+					//"VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3" instead of "agoKernel_HarrisMergeSortAndPick_XY_HVC"
+					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
-					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size, HarrisCorner_block_size, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_3x3, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
+				case 207:
+				{
+					//test_case_flow for Harris Corners
+					//"agoKernel_HarrisSobel_HG3_U8_5x5"
+					//"agoKernel_HarrisScore_HVC_HG3_5x5"
+					//"VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3" instead of "agoKernel_HarrisMergeSortAndPick_XY_HVC"
+					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
+					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_5x5, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
 					out_buf_type = -1;
 					break;
 				}
@@ -4874,7 +4918,7 @@ int main(int argc, const char ** argv)
 					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
-					(case_number == 203) || (case_number == 204) || (case_number == 206)
+					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
@@ -5177,7 +5221,7 @@ int main(int argc, const char ** argv)
 	if (
 		(case_number == 155) || (case_number == 157) || (case_number == 187) || (case_number == 188) ||
 		(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
-		(case_number == 203) || (case_number == 204)  || (case_number == 206)
+		(case_number == 203) || (case_number == 204)  || (case_number == 206)  || (case_number == 207)
 		)
 	{
 		printf("\nTEST PASSED: Sum verification overridden due to hard calculation. Manually verified. Not an exact pixel-to-pixel match.\n");

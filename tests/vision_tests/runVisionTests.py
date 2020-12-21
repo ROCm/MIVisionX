@@ -28,20 +28,23 @@ import sys
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018-2020, AMD MIVision Generate Full Report"
 __license__ = "MIT"
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
+
 
 def shell(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0][0:-1]
     return output
 
+
 def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
+
 
 # Vision Accuracy Tests
 visionTestConfig = [
@@ -212,33 +215,45 @@ if listTest == 'yes':
         print("   %-5d - %-30s\n" % ((i+1), nodeName))
     exit()
 if runvxDir == '':
-    print("ERROR: RunVX Executable Directory Required")
+    print("\nERROR: RunVX Executable Directory Required\n")
+    print("USAGE: python runVisionTests.py --help\n")
     exit()
+
+print("\nMIVisionX runVisionTests V-"+__version__+"\n")
 
 # RunVX Application
 runVX_exe = runvxDir+'/runvx'
-runvx_exe_dir = os.path.expanduser(runVX_exe)
+RunVXapp = os.path.abspath(runVX_exe)
+scriptPath = os.path.dirname(os.path.realpath(__file__))
+if(os.path.isfile(RunVXapp)):
+    print("STATUS: RunVX path - "+RunVXapp)
+else:
+    print("\nERROR: RunVX Executable Not Found\n")
+    exit()
 
-os.system('(cd gdfs; mkdir -p openvx_test_results)')
+# create directory to store vision accurarcy test results
+os.system('(cd '+scriptPath+'/gdfs; mkdir -p openvx_test_results)')
 
 if testFilter == 0:
-    print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
+    print("\nrunVisionTests - OpenVX Vision Tests\n")
     for i in range(len(visionTestConfig)):
         testFileName = visionTestConfig[i]
         print("Running Test Script: "+testFileName)
-        os.system('(cd gdfs; '+runvx_exe_dir+' -frames:100 -affinity:' +
-                  hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
+        os.system(RunVXapp+' -frames:100 -affinity:' +
+                  hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName+' | tee -a '+scriptPath+'/gdfs/openvx_test_results/VisionOutput.log')
         print("\n")
+    print("\nSTATUS: Vision Accuracy Results - " +
+          scriptPath+"/gdfs/openvx_test_results\n")
 
 #print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
 #os.system('mkdir openvx_node_results')
 # for i in range(len(openvxNodeTestConfig)):
     #nodeTestName, nodeTest = openvxNodeTestConfig[i]
     #print("Running OpenVX Node: "+nodeTestName)
-    #os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
+    #os.system(RunVXapp+' -frames:1000 -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
     # print("\n")
 
-print("\nrunVisionTests - OpenVX Node Performance V-"+__version__+"\n")
+print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
 if not os.path.exists(outputDirectory):
     os.makedirs(outputDirectory)
@@ -251,7 +266,7 @@ if testFilter == 0:
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system(runvx_exe_dir+' -frames:1000 -affinity:' +
+        os.system(RunVXapp+' -frames:1000 -affinity:' +
                   hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print("\n")
 else:
@@ -259,7 +274,7 @@ else:
     echo1 = 'Running OpenVX Node - '+nodeName
     os.system('echo '+echo1 +
               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-    os.system(runvx_exe_dir+' -frames:1000 -affinity:' +
+    os.system(RunVXapp+' -frames:1000 -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
     print("\n")
 
@@ -285,22 +300,22 @@ platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-report_filename = 'platform_report_%s_%s_%s.md' % (
+reportFilename = 'platform_report_%s_%s_%s.md' % (
     platform_name, file_dtstr, hardwareMode)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
 cpu_info = shell('inxi -c0 -C')
-cpu_info = cpu_info.split('\n')[0]  # strip out clock speeds
+cpu_info = cpu_info.split('\n'.encode())[0]  # strip out clock speeds
 
 gpu_info = shell('inxi -c0 -G')
-gpu_info = gpu_info.split('\n')[0]  # strip out X info
+gpu_info = gpu_info.split('\n'.encode())[0]  # strip out X info
 
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
 
 # Write Report
-with open(report_filename, 'w') as f:
+with open(reportFilename, 'w') as f:
     f.write("MIVisionX - OpenVX Function Report\n")
     f.write("================================\n")
     f.write("\n")
@@ -328,5 +343,9 @@ with open(report_filename, 'w') as f:
     f.write("\n")
 
     f.write("\n\n---\nCopyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"\n")
+
+# report file
+reportFileDir = os.path.abspath(reportFilename)
+print("\nSTATUS: Output Report File - "+reportFileDir)
 
 print("\nrunVisionTests.py completed - V:"+__version__+"\n")

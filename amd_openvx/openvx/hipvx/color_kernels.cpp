@@ -26,6 +26,7 @@ THE SOFTWARE.
 #include "hip/hip_runtime.h"
 
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
+#define PIXELROUNDU8(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
 __device__ __forceinline__ float4 uchars_to_float4(uint src)
 {
@@ -1924,7 +1925,7 @@ Hip_ColorConvert_NV12_RGBX(
 	G = (float)pSrcImage1[src1Idx+1];
 	B = (float)pSrcImage1[src1Idx+2];
 
-    pDstImageLuma[dstIdxLuma] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+    pDstImageLuma[dstIdxLuma] = (unsigned char)PIXELROUNDU8((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
 	U = (R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f;
 	V = (R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f;
 
@@ -1932,7 +1933,7 @@ Hip_ColorConvert_NV12_RGBX(
 	G = (float)pSrcImage1[src1Idx+5];
 	B = (float)pSrcImage1[src1Idx+6];
 
-	pDstImageLuma[dstIdxLuma + 1] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+	pDstImageLuma[dstIdxLuma + 1] = (unsigned char)PIXELROUNDU8((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
 	U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 	V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
@@ -1942,7 +1943,7 @@ Hip_ColorConvert_NV12_RGBX(
 	G = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +1];
 	B = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +2];
 
-	pDstImageLuma[dstIdxLuma + dstImageLumaStrideInBytes] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+	pDstImageLuma[dstIdxLuma + dstImageLumaStrideInBytes] = (unsigned char)PIXELROUNDU8((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
 	U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 	V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
@@ -1950,17 +1951,14 @@ Hip_ColorConvert_NV12_RGBX(
 	G = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +5];
 	B = (float)pSrcImage1[src1Idx + srcImage1StrideInBytes +6];
 
-	pDstImageLuma[dstIdxLuma + dstImageLumaStrideInBytes + 1] = (unsigned char)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
+	pDstImageLuma[dstIdxLuma + dstImageLumaStrideInBytes + 1] = (unsigned char)PIXELROUNDU8((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f));
 	U += ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f);
 	V += ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
 
     U /= 4.0;	V /= 4.0;
 
-    pDstImageChroma[dstIdxChroma] = (unsigned char) U;
-    pDstImageChroma[dstIdxChroma + 1] = (unsigned char) V;
-			
-
-
+    pDstImageChroma[dstIdxChroma] = (unsigned char) PIXELROUNDU8(U);
+    pDstImageChroma[dstIdxChroma + 1] = (unsigned char) PIXELROUNDU8(V);			
 }
 int HipExec_ColorConvert_NV12_RGBX(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -2107,7 +2105,7 @@ Hip_ColorConvert_IYUV_RGBX(
     Gpix = (float)pSrcImage[srcIdx + 1];
     Bpix = (float)pSrcImage[srcIdx + 2];
 
-    pDstYImage[dstYIdx] = ((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
+    pDstYImage[dstYIdx] = (unsigned char)PIXELROUNDU8((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
     Upix = (Rpix * -0.1146f) + (Gpix * -0.3854f) + (Bpix * 0.5f) + 128.0f;
     Vpix = (Rpix * 0.5f) + (Gpix * -0.4542f) + (Bpix * -0.0458f) + 128.0f;
 
@@ -2115,7 +2113,7 @@ Hip_ColorConvert_IYUV_RGBX(
     Gpix = (float)pSrcImage[srcIdx + 5];
     Bpix = (float)pSrcImage[srcIdx + 6];
 
-    pDstYImage[dstYIdx + 1] = ((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
+    pDstYImage[dstYIdx + 1] = (unsigned char)PIXELROUNDU8((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
     Upix += ((Rpix * -0.1146f) + (Gpix * -0.3854f) + (Bpix * 0.5f) + 128.0f);
     Vpix += ((Rpix * 0.5f) + (Gpix * -0.4542f) + (Bpix * -0.0458f) + 128.0f);
     
@@ -2123,7 +2121,7 @@ Hip_ColorConvert_IYUV_RGBX(
     Gpix = (float)pSrcImage[srcIdx + srcImageStrideInBytes + 1];
     Bpix = (float)pSrcImage[srcIdx + srcImageStrideInBytes + 2];
 
-    pDstYImage[dstYIdx + dstYImageStrideInBytes] = ((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
+    pDstYImage[dstYIdx + dstYImageStrideInBytes] = (unsigned char)PIXELROUNDU8((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
     Upix += ((Rpix * -0.1146f) + (Gpix * -0.3854f) + (Bpix * 0.5f) + 128.0f);
     Vpix += ((Rpix * 0.5f) + (Gpix * -0.4542f) + (Bpix * -0.0458f) + 128.0f);
 
@@ -2131,15 +2129,15 @@ Hip_ColorConvert_IYUV_RGBX(
     Gpix = (float)pSrcImage[srcIdx + srcImageStrideInBytes + 5];
     Bpix = (float)pSrcImage[srcIdx + srcImageStrideInBytes + 6];
 
-    pDstYImage[dstYIdx + dstYImageStrideInBytes + 1] = ((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
+    pDstYImage[dstYIdx + dstYImageStrideInBytes + 1] = (unsigned char)PIXELROUNDU8((Rpix * 0.2126f) + (Gpix * 0.7152f) + (Bpix * 0.0722f));
     Upix += ((Rpix * -0.1146f) + (Gpix * -0.3854f) + (Bpix * 0.5f) + 128.0f);
     Vpix += ((Rpix * 0.5f) + (Gpix * -0.4542f) + (Bpix * -0.0458f) + 128.0f);
 
     Upix /= 4.0f;
     Vpix /= 4.0f;
 
-    pDstUImage[dstUIdx] = Upix;
-    pDstVImage[dstVIdx] = Vpix;
+    pDstUImage[dstUIdx] = (unsigned char)PIXELROUNDU8(Upix);
+    pDstVImage[dstVIdx] = (unsigned char)PIXELROUNDU8(Vpix);
 }
 int HipExec_ColorConvert_IYUV_RGBX(
     vx_uint32 dstWidth, vx_uint32 dstHeight,

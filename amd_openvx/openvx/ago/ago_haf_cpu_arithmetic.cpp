@@ -3791,7 +3791,7 @@ int HafCpu_Threshold_U8_U8_Range
 			for (int width = 0; width < postfixWidth; width++)
 			{
 				vx_uint8 pix = *pLocalSrc++;
-				*pLocalDst++ = ((pix > upper) && (pix < lower)) ? 0 : (vx_uint8)255;
+				*pLocalDst++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
 			}
 			pSrcImage += srcImageStrideInBytes;
 			pDstImage += dstImageStrideInBytes;
@@ -3820,7 +3820,7 @@ int HafCpu_Threshold_U8_U8_Range
 			for (int width = 0; width < postfixWidth; width++)
 			{
 				vx_uint8 pix = *pLocalSrc++;
-				*pLocalDst++ = ((pix > upper) && (pix < lower)) ? 0 : (vx_uint8)255;
+				*pLocalDst++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
 			}
 			pSrcImage += srcImageStrideInBytes;
 			pDstImage += dstImageStrideInBytes;

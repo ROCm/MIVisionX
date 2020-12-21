@@ -796,20 +796,23 @@ Hip_HarrisScore_HVC_HG3_3x3(
   float traceA =0, detA =0, Mc =0;
   ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
 //Prev Row + Current Row + Next Row sum of gx2, gxy2, gy2
+  int srcIdxTopRow1, srcIdxBottomRow1;
+  srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
+  srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
   gx2 =  
-  (float)pSrcGxy[srcIdx -srcGxyStrideInBytes - 1].GxGx + (float)pSrcGxy[srcIdx -srcGxyStrideInBytes].GxGx +(float)pSrcGxy[srcIdx -srcGxyStrideInBytes + 1].GxGx +
+  (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx +
   (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + 
-  (float)pSrcGxy[srcIdx + srcGxyStrideInBytes -1].GxGx + (float)pSrcGxy[srcIdx + srcGxyStrideInBytes].GxGx + (float)pSrcGxy[srcIdx + srcGxyStrideInBytes + 1].GxGx;
+  (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx;
 
   gxy2 = 
-  (float)pSrcGxy[srcIdx -srcGxyStrideInBytes - 1].GxGy + (float)pSrcGxy[srcIdx -srcGxyStrideInBytes].GxGy + (float)pSrcGxy[srcIdx -srcGxyStrideInBytes + 1].GxGy + 
+  (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + 
   (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy +
-  (float)pSrcGxy[srcIdx + srcGxyStrideInBytes -1].GxGy + (float)pSrcGxy[srcIdx + srcGxyStrideInBytes].GxGy + (float)pSrcGxy[srcIdx + srcGxyStrideInBytes + 1].GxGy ;
+  (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy ;
 
   gy2 = 
-  (float)pSrcGxy[srcIdx -srcGxyStrideInBytes - 1].GyGy + (float)pSrcGxy[srcIdx -srcGxyStrideInBytes].GyGy + (float)pSrcGxy[srcIdx -srcGxyStrideInBytes + 1].GyGy +
+  (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GyGy +
   (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy +
-  (float)pSrcGxy[srcIdx + srcGxyStrideInBytes -1].GyGy + (float)pSrcGxy[srcIdx + srcGxyStrideInBytes].GyGy + (float)pSrcGxy[srcIdx + srcGxyStrideInBytes + 1].GyGy;
+  (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy;
 
 
   traceA = gx2 + gy2;

@@ -2772,12 +2772,12 @@ int main(int argc, const char ** argv)
 				{	
 					//test_case_flow for Harris Corners
 					//"agoKernel_HarrisSobel_HG3_U8_3x3"
-					//"agoKernel_HarrisScore_HVC_HG3_5x5"
+					//"agoKernel_HarrisScore_HVC_HG3_3x3"
 					//"VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3" instead of "agoKernel_HarrisMergeSortAndPick_XY_HVC"
 					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
 
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_3x3, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_3x3, HarrisCorner_block_size_3x3, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
 					out_buf_type = -1;
 					break;
 				}
@@ -4851,7 +4851,7 @@ int main(int argc, const char ** argv)
 					//"VX_KERNEL_AMD_NON_MAX_SUPP_XY_ANY_3x3" instead of "agoKernel_HarrisMergeSortAndPick_XY_HVC"
 					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
-					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_3x3, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_3x3, HarrisCorner_block_size_3x3, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
 					out_buf_type = -1;
 					break;
 				}

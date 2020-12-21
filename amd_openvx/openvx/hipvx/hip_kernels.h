@@ -946,6 +946,30 @@ int HipExec_Remap_U8_U8_Bilinear(
 	);
 
 // vision_kernels
+int HipExec_HarrisSobel_HG3_U8_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_HarrisSobel_HG3_U8_5x5(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+int HipExec_HarrisSobel_HG3_U8_7x7(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
+    );
+
+int HipExec_HarrisScore_HVC_HG3_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
+    vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
+    vx_float32 sensitivity, vx_float32 strength_threshold,
+    vx_float32 normalization_factor
+    );
+
 int HipExec_FastCorners_XY_U8_NoSupression(
 	vx_uint32  capacityOfDstCorner, 
 	vx_keypoint_t   pHipDstCorner[],

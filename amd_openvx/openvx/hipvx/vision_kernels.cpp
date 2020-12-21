@@ -119,6 +119,12 @@ __device__ __forceinline__ int isCornerMinus(short candidate, short * boundary, 
 	return isCorner(mask);
 }
 
+typedef struct {
+	vx_float32 GxGx;
+	vx_float32 GxGy;
+	vx_float32 GyGy;
+} ago_harris_Gxy_t;
+
 // ----------------------------------------------------------------------------
 // VxFastCorners kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -474,6 +480,409 @@ int HipExec_FastCorners_XY_U8_Supression(
 // ----------------------------------------------------------------------------
 // VxHarrisCorners kernels for hip backend
 // ----------------------------------------------------------------------------
+__global__ void __attribute__((visibility("default")))
+Hip_HarrisSobel_HG3_U8_3x3(
+    unsigned int  dstWidth, unsigned int  dstHeight, 
+    float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
+    const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
+    float * gx, float *gy
+	)
+{
+  int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+  int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+  if ((x >dstWidth) || (x<0)|| (y >= dstHeight) || y<=0)
+    return;
+  unsigned int dstIdx = y * (dstGxyStrideInBytes /sizeof(ago_harris_Gxy_t)) + x;
+  unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
+  ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
+  float div_factor = 1; // 4.0f * 255;
+
+
+  int srcIdxTopRow = srcIdx - srcImageStrideInBytes;
+  int srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
+  float sum_x = 0;
+  sum_x += (gx[4] * (float)*(pSrcImage + srcIdx) + gx[1] * (float)*(pSrcImage + srcIdxTopRow) + gx[7] * (float)*(pSrcImage + srcIdxBottomRow));
+  sum_x += (gx[3] * (float)*(pSrcImage + srcIdx - 1) + gx[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+  sum_x += (gx[5] * (float)*(pSrcImage + srcIdx + 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+  float sum_y = 0;
+  sum_y += (gy[4] * (float)*(pSrcImage + srcIdx) + gy[1] * (float)*(pSrcImage + srcIdxTopRow) + gy[7] * (float)*(pSrcImage + srcIdxBottomRow));
+  sum_y += (gy[3] * (float)*(pSrcImage + srcIdx - 1) + gy[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+  sum_y += (gy[5] * (float)*(pSrcImage + srcIdx + 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+
+
+  pDstGxy[dstIdx].GxGx = sum_x*sum_x;
+  pDstGxy[dstIdx].GxGy = sum_x*sum_y;
+  pDstGxy[dstIdx].GyGy = sum_y*sum_y;
+}
+int HipExec_HarrisSobel_HG3_U8_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
+  
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+    printf("\ndstWidth = %d, dstHeight = %d\ndstGxyStrideInBytes = %d, srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstGxyStrideInBytes, srcImageStrideInBytes);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+
+    float gx[9] = {-1,0,1,-2,0,2,-1,0,1};
+    float gy[9] = {-1,-2,-1,0,0,0,1,2,1};
+    float *hipGx, *hipGy;
+    hipMalloc(&hipGx, 144);
+    hipMalloc(&hipGy, 144);
+    hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
+    hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
+    
+    hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_3x3,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0,
+                    dstWidth, dstHeight,
+                    (float *)pDstGxy_ , dstGxyStrideInBytes, 
+                    (const unsigned char *)pSrcImage, srcImageStrideInBytes,
+                    (float *)hipGx, (float *)hipGy);
+                    
+/* Printing Outputs for verification */ //inside hipexec kernel
+    ago_harris_Gxy_t *DstGxy;
+    DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    if (status != hipSuccess)
+      printf("Copy mem dev to host failed\n");
+    for (int j = 1; j < dstHeight-1 ; j++)
+    {
+      for (int i = 0; i < dstWidth; i++)
+      {
+        int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
+        printf("<row, col>: <%d,%d>", j,i);
+        printf("The GXGX : %f \t and \tGYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
+      }
+    }
+    hipFree(DstGxy);
+    /*  Printing Outputs for verification */
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_HarrisSobel_HG3_U8_3x3: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+
+__global__ void __attribute__((visibility("default")))
+Hip_HarrisSobel_HG3_U8_5x5(
+    unsigned int  dstWidth, unsigned int  dstHeight, 
+    float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
+    const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
+    float * gx, float *gy
+	)
+{
+  int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+  int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+  if ((x >dstWidth) || (x<0)|| (y > dstHeight-2) || y<2)
+    return;
+  unsigned int dstIdx = y * (dstGxyStrideInBytes ) + x;
+  unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
+  ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
+  float div_factor = 1; // 4.0f * 255;
+
+  int srcIdxTopRow1, srcIdxTopRow2, srcIdxBottomRow1, srcIdxBottomRow2;
+  srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
+  srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
+  srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
+  srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
+  float sum_x = 0;
+  sum_x = (gx[12] * (float)*(pSrcImage + srcIdx) + gx[7] * (float)*(pSrcImage + srcIdxTopRow1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow2) + gx[17] * (float)*(pSrcImage + srcIdxBottomRow1) + gx[22] * (float)*(pSrcImage + srcIdxBottomRow2) +
+          gx[11] * (float)*(pSrcImage + srcIdx - 1) + gx[6] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gx[1] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gx[16] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[21] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) +
+          gx[10] * (float)*(pSrcImage + srcIdx - 2) + gx[5] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gx[0] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gx[15] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[20] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) +
+          gx[13] * (float)*(pSrcImage + srcIdx + 1) + gx[8] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gx[3] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gx[18] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[23] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) +
+          gx[14] * (float)*(pSrcImage + srcIdx + 2) + gx[9] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gx[4] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gx[19] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[24] * (float)*(pSrcImage + srcIdxBottomRow2 + 2));
+  float sum_y = 0;
+  sum_y = (gy[12] * (float)*(pSrcImage + srcIdx) + gy[7] * (float)*(pSrcImage + srcIdxTopRow1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow2) + gy[17] * (float)*(pSrcImage + srcIdxBottomRow1) + gy[22] * (float)*(pSrcImage + srcIdxBottomRow2) +
+          gy[11] * (float)*(pSrcImage + srcIdx - 1) + gy[6] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gy[1] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gy[16] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[21] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) +
+          gy[10] * (float)*(pSrcImage + srcIdx - 2) + gy[5] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gy[0] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gy[15] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[20] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) +
+          gy[13] * (float)*(pSrcImage + srcIdx + 1) + gy[8] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gy[3] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gy[18] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[23] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) +
+          gy[14] * (float)*(pSrcImage + srcIdx + 2) + gy[9] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gy[4] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gy[19] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[24] * (float)*(pSrcImage + srcIdxBottomRow2 + 2));
+
+
+  pDstGxy[dstIdx].GxGx = sum_x * sum_x;
+  pDstGxy[dstIdx].GxGy = sum_x * sum_y;
+  pDstGxy[dstIdx].GyGy = sum_y * sum_y;
+}
+int HipExec_HarrisSobel_HG3_U8_5x5(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
+  
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+    printf("\ndstWidth = %d, dstHeight = %d\ndstGxyStrideInBytes = %d, srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstGxyStrideInBytes, srcImageStrideInBytes);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+
+    float gx[25] = {-1,-2,0,2,1,-4,-8,0,8,4,-6,-12,0,12,6,-4,-8,0,8,4,-1,-2,0,2,1};
+    float gy[25] = {-1,-4,-6,-4,-1,-2,-8,-12,-8,-2,0,0,0,0,0,2,8,12,8,2,1,4,6,4,1};
+    float *hipGx, *hipGy;
+    hipMalloc(&hipGx, 400);
+    hipMalloc(&hipGy, 400);
+    hipMemcpy(hipGx, gx, 400, hipMemcpyHostToDevice);
+    hipMemcpy(hipGy, gy, 400, hipMemcpyHostToDevice);
+    
+    hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_5x5,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0,
+                    dstWidth, dstHeight,
+                    (float *)pDstGxy_ , (dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)), 
+                    (const unsigned char *)pSrcImage, srcImageStrideInBytes,
+                    (float *)hipGx, (float *)hipGy);
+                    
+/* Printing Outputs for verification */ //inside hipexec kernel
+    ago_harris_Gxy_t *DstGxy;
+    DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    if (status != hipSuccess)
+      printf("Copy mem dev to host failed\n");
+    for (int j = 2; j < dstHeight-2 ; j++)
+    {
+      for (int i = 0; i < dstWidth; i++)
+      {
+        int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
+        printf("<row, col>: <%d,%d>", j,i);
+        printf("The GXGX : %f \t and \t GYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
+      }
+    }
+    hipFree(DstGxy);
+    /*  Printing Outputs for verification */
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_HarrisSobel_HG3_U8_5x5: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+
+__global__ void __attribute__((visibility("default")))
+Hip_HarrisSobel_HG3_U8_7x7(
+    unsigned int  dstWidth, unsigned int  dstHeight, 
+    float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
+    const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
+    float * gx, float *gy
+	)
+{
+  int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+  int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+  if ((x >dstWidth) || (x<0)|| (y > dstHeight-3) || y<3)
+    return;
+  unsigned int dstIdx = y * (dstGxyStrideInBytes ) + x;
+  unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
+  ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
+  float div_factor = 1; // 4.0f * 255;
+
+  int srcIdxTopRow1, srcIdxTopRow2, srcIdxTopRow3, srcIdxBottomRow1, srcIdxBottomRow2, srcIdxBottomRow3;
+  srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
+  srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
+  srcIdxTopRow3 = srcIdx - (3 * srcImageStrideInBytes);
+  srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
+  srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
+  srcIdxBottomRow3 = srcIdx + (3 * srcImageStrideInBytes);
+  float sum_x = 0;
+  sum_x = (gx[24] * (float)*(pSrcImage + srcIdx) + gx[17] * (float)*(pSrcImage + srcIdxTopRow1) + gx[10] * (float)*(pSrcImage + srcIdxTopRow2) + gx[3] * (float)*(pSrcImage + srcIdxTopRow3) + gx[31] * (float)*(pSrcImage + srcIdxBottomRow1) + gx[38] * (float)*(pSrcImage + srcIdxBottomRow2) + gx[45] * (float)*(pSrcImage + srcIdxBottomRow3) +
+          gx[23] * (float)*(pSrcImage + srcIdx - 1) + gx[16] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gx[9] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow3 - 1) + gx[30] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[37] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) + gx[44] * (float)*(pSrcImage + srcIdxBottomRow3 - 1) +
+          gx[22] * (float)*(pSrcImage + srcIdx - 2) + gx[15] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gx[8] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gx[1] * (float)*(pSrcImage + srcIdxTopRow3 - 2) + gx[29] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[36] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) + gx[43] * (float)*(pSrcImage + srcIdxBottomRow3 - 2) +
+          gx[21] * (float)*(pSrcImage + srcIdx - 3) + gx[14] * (float)*(pSrcImage + srcIdxTopRow1 - 3) + gx[7] * (float)*(pSrcImage + srcIdxTopRow2 - 3) + gx[0] * (float)*(pSrcImage + srcIdxTopRow3 - 3) + gx[28] * (float)*(pSrcImage + srcIdxBottomRow1 - 3) + gx[35] * (float)*(pSrcImage + srcIdxBottomRow2 - 3) + gx[42] * (float)*(pSrcImage + srcIdxBottomRow3 - 3) +
+          gx[25] * (float)*(pSrcImage + srcIdx + 1) + gx[18] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gx[11] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gx[4] * (float)*(pSrcImage + srcIdxTopRow3 + 1) + gx[32] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[39] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) + gx[46] * (float)*(pSrcImage + srcIdxBottomRow3 + 1) +
+          gx[26] * (float)*(pSrcImage + srcIdx + 2) + gx[19] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gx[12] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gx[5] * (float)*(pSrcImage + srcIdxTopRow3 + 2) + gx[33] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[40] * (float)*(pSrcImage + srcIdxBottomRow2 + 2) + gx[47] * (float)*(pSrcImage + srcIdxBottomRow3 + 2) +
+          gx[27] * (float)*(pSrcImage + srcIdx + 3) + gx[20] * (float)*(pSrcImage + srcIdxTopRow1 + 3) + gx[13] * (float)*(pSrcImage + srcIdxTopRow2 + 3) + gx[6] * (float)*(pSrcImage + srcIdxTopRow3 + 3) + gx[34] * (float)*(pSrcImage + srcIdxBottomRow1 + 3) + gx[41] * (float)*(pSrcImage + srcIdxBottomRow2 + 3) + gx[48] * (float)*(pSrcImage + srcIdxBottomRow3 + 3));
+  float sum_y = 0;
+  sum_y = (gy[24] * (float)*(pSrcImage + srcIdx) + gy[17] * (float)*(pSrcImage + srcIdxTopRow1) + gy[10] * (float)*(pSrcImage + srcIdxTopRow2) + gy[3] * (float)*(pSrcImage + srcIdxTopRow3) + gy[31] * (float)*(pSrcImage + srcIdxBottomRow1) + gy[38] * (float)*(pSrcImage + srcIdxBottomRow2) + gy[45] * (float)*(pSrcImage + srcIdxBottomRow3) +
+          gy[23] * (float)*(pSrcImage + srcIdx - 1) + gy[16] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gy[9] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow3 - 1) + gy[30] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[37] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) + gy[44] * (float)*(pSrcImage + srcIdxBottomRow3 - 1) +
+          gy[22] * (float)*(pSrcImage + srcIdx - 2) + gy[15] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gy[8] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gy[1] * (float)*(pSrcImage + srcIdxTopRow3 - 2) + gy[29] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[36] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) + gy[43] * (float)*(pSrcImage + srcIdxBottomRow3 - 2) +
+          gy[21] * (float)*(pSrcImage + srcIdx - 3) + gy[14] * (float)*(pSrcImage + srcIdxTopRow1 - 3) + gy[7] * (float)*(pSrcImage + srcIdxTopRow2 - 3) + gy[0] * (float)*(pSrcImage + srcIdxTopRow3 - 3) + gy[28] * (float)*(pSrcImage + srcIdxBottomRow1 - 3) + gy[35] * (float)*(pSrcImage + srcIdxBottomRow2 - 3) + gy[42] * (float)*(pSrcImage + srcIdxBottomRow3 - 3) +
+          gy[25] * (float)*(pSrcImage + srcIdx + 1) + gy[18] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gy[11] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gy[4] * (float)*(pSrcImage + srcIdxTopRow3 + 1) + gy[32] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[39] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) + gy[46] * (float)*(pSrcImage + srcIdxBottomRow3 + 1) +
+          gy[26] * (float)*(pSrcImage + srcIdx + 2) + gy[19] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gy[12] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gy[5] * (float)*(pSrcImage + srcIdxTopRow3 + 2) + gy[33] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[40] * (float)*(pSrcImage + srcIdxBottomRow2 + 2) + gy[47] * (float)*(pSrcImage + srcIdxBottomRow3 + 2) +
+          gy[27] * (float)*(pSrcImage + srcIdx + 3) + gy[20] * (float)*(pSrcImage + srcIdxTopRow1 + 3) + gy[13] * (float)*(pSrcImage + srcIdxTopRow2 + 3) + gy[6] * (float)*(pSrcImage + srcIdxTopRow3 + 3) + gy[34] * (float)*(pSrcImage + srcIdxBottomRow1 + 3) + gy[41] * (float)*(pSrcImage + srcIdxBottomRow2 + 3) + gy[48] * (float)*(pSrcImage + srcIdxBottomRow3 + 3));
+
+  pDstGxy[dstIdx].GxGx = sum_x * sum_x;
+  pDstGxy[dstIdx].GxGy = sum_x * sum_y;
+  pDstGxy[dstIdx].GyGy = sum_y * sum_y;
+}
+int HipExec_HarrisSobel_HG3_U8_7x7(
+    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
+  
+    )
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+    printf("\ndstWidth = %d, dstHeight = %d\ndstGxyStrideInBytes = %d, srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstGxyStrideInBytes, srcImageStrideInBytes);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+
+    float gx[49] = {-1,-4,-5,0,5,4,1,-6,-24,-30,0,30,24,6,-15,-60,-75,0,75,60,15,-20,-80,-100,0,100,80,20,-15,-60,-75,0,75,60,15,-6,-24,-30,0,30,24,6,-1,-4,-5,0,5,4,1};
+    float gy[49] = {-1,-6,-15,-20,-15,-6,-1,-4,-24,-60,-80,-60,-24,-4,-5,-30,-75,-100,-75,-30,-5,0,0,0,0,0,0,0,5,30,75,100,75,30,5,4,24,60,80,60,24,4,1,6,15,20,15,6,1};
+    float *hipGx, *hipGy;
+    hipMalloc(&hipGx, 784);
+    hipMalloc(&hipGy, 784);
+    hipMemcpy(hipGx, gx, 784, hipMemcpyHostToDevice);
+    hipMemcpy(hipGy, gy, 784, hipMemcpyHostToDevice);
+    
+    hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_7x7,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0,
+                    dstWidth, dstHeight,
+                    (float *)pDstGxy_ , (dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)), 
+                    (const unsigned char *)pSrcImage, srcImageStrideInBytes,
+                    (float *)hipGx, (float *)hipGy);
+                    
+/* Printing Outputs for verification */ //inside hipexec kernel
+    ago_harris_Gxy_t *DstGxy;
+    DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
+    if (status != hipSuccess)
+      printf("Copy mem dev to host failed\n");
+    for (int j = 3; j < dstHeight-3 ; j++)
+    {
+      for (int i = 0; i < dstWidth; i++)
+      {
+        int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
+        printf("<row, col>: <%d,%d>", j,i);
+        printf("The GXGX : %f \t and \t GYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
+      }
+    }
+    hipFree(DstGxy);
+    /*  Printing Outputs for verification */
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_HarrisSobel_HG3_U8_7x7: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_HarrisScore_HVC_HG3_3x3(
+    unsigned int dstWidth, unsigned int dstHeight,
+    float *pDstVc, unsigned int dstVcStrideInBytes,
+    float *pSrcGxy_, unsigned int srcGxyStrideInBytes,
+    float sensitivity, float strength_threshold,
+    float normalization_factor)
+{
+  int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+  int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    
+  unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
+  unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
+
+  if ((x >= dstWidth-1) || (x <= 0) || (y >= dstHeight-1 ) || y <= 0)
+  {
+    pDstVc[dstIdx] = (float)0;
+    return;
+  }
+
+  float gx2 = 0, gy2 = 0, gxy2 = 0;
+  float traceA =0, detA =0, Mc =0;
+  ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
+//Prev Row + Current Row + Next Row sum of gx2, gxy2, gy2
+  int srcIdxTopRow1, srcIdxBottomRow1;
+  srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
+  srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
+  gx2 =  
+  (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx +
+  (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + 
+  (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx;
+
+  gxy2 = 
+  (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + 
+  (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy +
+  (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy ;
+
+  gy2 = 
+  (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GyGy +
+  (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy +
+  (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy;
+
+
+  traceA = gx2 + gy2;
+  detA = (gx2 * gy2) - (gxy2 * gxy2);
+  Mc = detA - (sensitivity * traceA * traceA);
+  Mc /= normalization_factor;
+  if(Mc > strength_threshold)
+    {
+       pDstVc[dstIdx] = (float)Mc; 
+       
+    }
+  else
+  {
+   pDstVc[dstIdx] = (float)0;
+  }
+  
+
+  
+  
+}
+int HipExec_HarrisScore_HVC_HG3_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
+    vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
+    vx_float32 sensitivity, vx_float32 strength_threshold,
+    vx_float32 normalization_factor)
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+    printf("\ndstWidth = %d, dstHeight = %d\ndstVcStrideInBytes = %d, srcGxyStrideInBytes = %d\n", dstWidth, dstHeight, dstVcStrideInBytes, srcGxyStrideInBytes);
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+
+    
+    hipLaunchKernelGGL(Hip_HarrisScore_HVC_HG3_3x3,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, 0,
+                    dstWidth, dstHeight,
+                    (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)), 
+                    (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
+                    sensitivity, strength_threshold,normalization_factor );
+                    
+/* Printing Outputs for verification */ //inside hipexec kernel
+    float *pDstVc_;
+    pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
+    hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
+    if (status != hipSuccess)
+      printf("Copy mem dev to host failed\n");
+    for (int j = 1; j < dstHeight-1 ; j++)
+    {
+      for (int i = 1; i < dstWidth-1; i++)
+      {
+        int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
+        printf("\n <row, col>: <%d,%d>", j,i);
+        printf(" \t Mc: <%f>",pDstVc_[idx]);
+        // printf("The GXGX : %f \n", pDstVc_[idx]);
+      }
+    }
+    hipFree(pDstVc_);
+    /*  Printing Outputs for verification */
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_HarrisScore_HVC_HG3_3x3: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
 
 // ----------------------------------------------------------------------------
 // VxCannyEdgeDetector kernels for hip backend

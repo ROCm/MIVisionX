@@ -11,3 +11,6 @@ node org.khronos.openvx.color_convert input_rgb output_rgb_iyuv
 
 data output_rgb_nv12 = image:1280,720,NV12:WRITE,openvx_test_results/11_rgb_nv12_color_convert_1280x720.yuv
 node org.khronos.openvx.color_convert input_rgb output_rgb_nv12
+
+data output_rgb_yuv4 = image:1280,720,YUV4:WRITE,openvx_test_results/11_rgb_yuv4_color_convert_1280x720.yuv
+node org.khronos.openvx.color_convert input_rgb output_rgb_yuv4

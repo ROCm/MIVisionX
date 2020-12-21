@@ -219,14 +219,14 @@ if runvxDir == '':
 runVX_exe = runvxDir+'/runvx'
 runvx_exe_dir = os.path.expanduser(runVX_exe)
 
-os.system('(cd gdfs; mkdir openvx_test_results)')
+os.system('(cd gdfs; mkdir -p openvx_test_results)')
 
 if testFilter == 0:
     print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
     for i in range(len(visionTestConfig)):
         testFileName = visionTestConfig[i]
         print("Running Test Script: "+testFileName)
-        os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
+        os.system('(cd gdfs; '+runvx_exe_dir+' -frames:100 -affinity:' +
                   hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
         print("\n")
 
@@ -251,7 +251,7 @@ if testFilter == 0:
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:' +
+        os.system(runvx_exe_dir+' -frames:1000 -affinity:' +
                   hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print("\n")
 else:
@@ -259,7 +259,7 @@ else:
     echo1 = 'Running OpenVX Node - '+nodeName
     os.system('echo '+echo1 +
               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-    os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:' +
+    os.system(runvx_exe_dir+' -frames:1000 -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
     print("\n")
 

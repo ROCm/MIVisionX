@@ -33,18 +33,15 @@ __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
 
-
 def shell(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0][0:-1]
     return output
 
-
 def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
-
 
 # Vision Accuracy Tests
 visionTestConfig = [
@@ -316,10 +313,10 @@ report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
 cpu_info = shell('inxi -c0 -C')
-cpu_info = cpu_info.split('\n'.encode())[0]  # strip out clock speeds
+#cpu_info = cpu_info.split('\n')[0]  # strip out clock speeds
 
 gpu_info = shell('inxi -c0 -G')
-gpu_info = gpu_info.split('\n'.encode())[0]  # strip out X info
+#gpu_info = gpu_info.split('\n')[0]  # strip out X info
 
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')

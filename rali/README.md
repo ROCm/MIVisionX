@@ -87,7 +87,8 @@ sudo make install
 ```
 
 ### Jsoncpp installation
-```sudo apt-get install libjsoncpp-dev
+```
+sudo apt-get install libjsoncpp-dev
 ```
 
 ### LMDB installation

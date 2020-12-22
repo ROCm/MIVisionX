@@ -53,7 +53,7 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 
 ## Applications
 
-MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications which can be used to prototype or used as models to develop a product.
+MIVisionX has several [applications](apps#applications) built on top of OpenVX modules, it uses AMD optimized libraries to build applications that can be used to prototype or used as models to develop a product.
 
 <p align="center"><img width="90%" src="docs/images/MIVisionX-applications.png" /></p>
 
@@ -128,7 +128,12 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-**MIVisionX-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If the directory option is not given, the script will install the deps folder in the home directory(~/) by default, else in the user-specified location.
+##### MIVisionX-setup.py
+* Builds all the prerequisites required by MIVisionX. 
+* The setup script creates a deps folder and installs all the prerequisites. 
+* If the directory option is not given, the script will install the deps folder in the home directory `(~/)` by default, else in the user-specified location.
+
+**NOTE:** This script only needs to be executed once. 
 
 ##### Prerequisites for running the script
 
@@ -276,7 +281,7 @@ sudo make install
   + libraries into `/opt/rocm/mivisionx/lib`
   + OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include`
   + Apps, Samples, Documents, Model Compiler, and Toolkit are placed into `/opt/rocm/mivisionx`
-* Run below sample to verify the installation
+* Run the below sample to verify the installation
 
 **Canny Edge Detection**
 
@@ -387,14 +392,12 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 ### Known issues
 
 * Package install requires **OpenCV** `v3.4.0` to execute `AMD OpenCV extensions`
-* **ROCm** `3.0` and above has known to slow down OpenCL kernels.
-* **OpenCL** from ROCm `3.3` and beyond has - `cl_version.h: CL_TARGET_OPENCL_VERSION is not defined` warning
 
 ### Tested configurations
 
 * Windows 10
 * Linux: Ubuntu - `16.04` / `18.04` & CentOS - `7.5` / `7.6`
-* ROCm: rocm-dkms - `3.3.0-19`
+* ROCm: rocm-dkms - `3.10.0.31000-27`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.5.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.5.0)
@@ -402,7 +405,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.5](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.5)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.8.4`
+* MIVisionX Setup Script - `V1.8.5`
 
 ### Latest Release
 

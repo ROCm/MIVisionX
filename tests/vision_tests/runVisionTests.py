@@ -22,28 +22,26 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 import argparse
 import os
-import shutil, sys
+import shutil
+import sys
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018-2020, AMD MIVision Generate Full Report"
 __license__ = "MIT"
-__version__ = "1.1.0"
+__version__ = "1.2.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
-
 
 def shell(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0][0:-1]
     return output
 
-
 def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
-
 
 # Vision Accuracy Tests
 visionTestConfig = [
@@ -105,20 +103,30 @@ openvxNodes = [
      'org.khronos.openvx.box_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('canny_edge_detector-1080p-u8',
      'org.khronos.openvx.canny_edge_detector image:1920,1080,U008 threshold:RANGE,UINT8:INIT,80,100 scalar:INT32,3 !NORM_L1 image:1920,1080,U008'),
-    ('channel_combine-1080p-u8',
-     'org.khronos.openvx.channel_combine image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,RGB2'),
+    ('channel_combine-1080p-RGBA',
+     'org.khronos.openvx.channel_combine image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,RGBA'),
+    ('channel_extract-1080p-u8',
+     'org.khronos.openvx.channel_extract image:1920,1080,IYUV !CHANNEL_Y image:1920,1080,U008'),
+    ('color_convert-1080p-RGB',
+     'org.khronos.openvx.color_convert image:1920,1080,IYUV image:1920,1080,RGB2'),
+    ('convertdepth-1080p-S016',
+     'org.khronos.openvx.convertdepth image:1920,1080,U008 image:1920,1080,S016 !SATURATE scalar:INT32,0'),
+    ('custom_convolution-1080p-S016',
+     'org.khronos.openvx.custom_convolution image:1920,1080,U008 convolution:3,3: image:1920,1080,S016'),
     ('dilate_3x3-1080p-u8',
      'org.khronos.openvx.dilate_3x3 image:1920,1080,U008 image:1920,1080,U008'),
+    ('equalize_histogram-1080p-u8',
+     'org.khronos.openvx.equalize_histogram image:1920,1080,U008 image:1920,1080,U008'),
     ('erode_3x3-1080p-u8',
      'org.khronos.openvx.erode_3x3 image:1920,1080,U008 image:1920,1080,U008'),
-    ('fast_corners-1080p-u8', 'org.khronos.openvx.fast_corners image:1920,1080,U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:UINT32,0'),
+    ('fast_corners-1080p-u8', 'org.khronos.openvx.fast_corners image:1920,1080,U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000'),
     ('gaussian_3x3-1080p-u8',
      'org.khronos.openvx.gaussian_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('gaussian_pyramid-1080p-u8',
      'org.khronos.openvx.gaussian_pyramid image:1920,1080,U008 pyramid:4,HALF,1920,1080,U008'),
     ('halfscale_gaussian-1080p-u8',
      'org.khronos.openvx.halfscale_gaussian image:1920,1080,U008 image:960,540,U008 scalar:INT32,5'),
-    ('harris_corners-1080p-u8', 'org.khronos.openvx.harris_corners image:1920,1080,U008 scalar:FLOAT32,0.00001 scalar:FLOAT32,20.0 scalar:FLOAT32,0.10 scalar:INT32,3 scalar:INT32,5 array:KEYPOINT,1000 scalar:UINT32,0'),
+    ('harris_corners-1080p-u8', 'org.khronos.openvx.harris_corners image:1920,1080,U008 scalar:FLOAT32,0.00001 scalar:FLOAT32,20.0 scalar:FLOAT32,0.10 scalar:INT32,3 scalar:INT32,5 array:KEYPOINT,1000'),
     ('histogram-1080p-u8',
      'org.khronos.openvx.histogram image:1920,1080,U008 distribution:2,0,256'),
     ('integral_image-1080p-u8',
@@ -138,8 +146,8 @@ openvxNodes = [
     ('or-1080p-u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
     ('phase-1080p-S16',
      'org.khronos.openvx.phase image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,U008'),
-    ('remap-1080p-S16',
-     'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008 !BORDER_MODE_CONSTANT'),
+    ('remap-1080p-U008',
+     'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
     ('scale_image-1080p-u8',
      'org.khronos.openvx.scale_image image:1920,1080,U008 image:960,540,U008 !BILINEAR'),
     ('sobel_3x3-1080p-u8',
@@ -181,72 +189,117 @@ openvxNodeTestConfig = [
 # Import arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--runvx_directory',    type=str, default='',
-                    help='RunVX Executable directory - required')
+                    help='RunVX Executable Directory - required')
 parser.add_argument('--hardware_mode',      type=str, default='CPU',
-                    help='OpenVX Vision Function target - optional (default:CPU [options:CPU/GPU])')
+                    help='OpenVX Vision Function Target - optional (default:CPU [options:CPU/GPU])')
+parser.add_argument('--list_tests',         type=str, default='no',
+                    help='List Vision Functionality Tests - optional (default:no [options:no/yes])')
+parser.add_argument('--test_filter',        type=int, default=0,
+                    help='Vision Functionality Test Filter - optional (default:0 [range:1 - N])')
 args = parser.parse_args()
 
 runvxDir = args.runvx_directory
 hardwareMode = args.hardware_mode
+listTest = args.list_tests
+testFilter = args.test_filter
 
 # check arguments
-if runvxDir == '':
-    print(
-        "ERROR: RunVX Executable Directory Required")
-    exit()
 if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
     exit()
+if listTest not in ('no', 'yes'):
+    print("ERROR: List Vision Functionality Tests options supported - no or yes]")
+    exit()
+if not 0 <= testFilter <= len(openvxNodes):
+    print(
+        "\nERROR: Vision Functionality Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
+    exit()
+# List Vision Functionality tests
+if listTest == 'yes':
+    print(" %-5s - %-30s\n" % ('Test ID', 'Test Name'))
+    for i in range(len(openvxNodes)):
+        nodeName, nodeFormat = openvxNodes[i]
+        print("   %-5d - %-30s\n" % ((i+1), nodeName))
+    exit()
+if runvxDir == '':
+    print("\nERROR: RunVX Executable Directory Required\n")
+    print("USAGE: python runVisionTests.py --help\n")
+    exit()
+
+print("\nMIVisionX runVisionTests V-"+__version__+"\n")
 
 # RunVX Application
 runVX_exe = runvxDir+'/runvx'
-runvx_exe_dir = os.path.expanduser(runVX_exe)
+RunVXapp = os.path.abspath(runVX_exe)
+scriptPath = os.path.dirname(os.path.realpath(__file__))
+if(os.path.isfile(RunVXapp)):
+    print("STATUS: RunVX path - "+RunVXapp)
+else:
+    print("\nERROR: RunVX Executable Not Found\n")
+    exit()
 
-print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
-os.system('(cd gdfs; mkdir openvx_test_results)')
-for i in range(len(visionTestConfig)):
-    testFileName = visionTestConfig[i]
-    print("Running Test Script: "+testFileName)
-    os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
-              hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
-    print("\n")
+# create directory to store vision accurarcy test results
+os.system('(cd '+scriptPath+'/gdfs; mkdir -p openvx_test_results)')
+
+if testFilter == 0:
+    print("\nrunVisionTests - OpenVX Vision Tests\n")
+    for i in range(len(visionTestConfig)):
+        testFileName = visionTestConfig[i]
+        print("Running Test Script: "+testFileName)
+        os.system(RunVXapp+' -frames:100 -affinity:' +
+                  hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName+' | tee -a '+scriptPath+'/gdfs/openvx_test_results/VisionOutput.log')
+        print("\n")
+    print("\nSTATUS: Vision Accuracy Results - " +
+          scriptPath+"/gdfs/openvx_test_results\n")
 
 #print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
 #os.system('mkdir openvx_node_results')
 # for i in range(len(openvxNodeTestConfig)):
     #nodeTestName, nodeTest = openvxNodeTestConfig[i]
     #print("Running OpenVX Node: "+nodeTestName)
-    #os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
+    #os.system(RunVXapp+' -frames:1000 -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
     # print("\n")
 
-print("\nrunVisionTests - OpenVX Node Performance V-"+__version__+"\n")
+print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
 if not os.path.exists(outputDirectory):
     os.makedirs(outputDirectory)
 else:
     shutil.rmtree(outputDirectory)
     os.makedirs(outputDirectory)
-for i in range(len(openvxNodes)):
-    nodeName, nodeFormat = openvxNodes[i]
+if testFilter == 0:
+    for i in range(len(openvxNodes)):
+        nodeName, nodeFormat = openvxNodes[i]
+        echo1 = 'Running OpenVX Node - '+nodeName
+        os.system('echo '+echo1 +
+                  ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        os.system(RunVXapp+' -frames:1000 -affinity:' +
+                  hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        print("\n")
+else:
+    nodeName, nodeFormat = openvxNodes[(testFilter - 1)]
     echo1 = 'Running OpenVX Node - '+nodeName
     os.system('echo '+echo1 +
               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-    os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:' +
+    os.system(RunVXapp+' -frames:1000 -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
     print("\n")
 
-
 orig_stdout = sys.stdout
-sys.stdout = open('openvx_node_results/nodePerformance.md','a')
-echo_1 = '| OpenVX Node | Frames Count | tmp (ms) | avg (ms) | min (ms) | max (ms) |'
+sys.stdout = open('openvx_node_results/nodePerformance.md', 'a')
+echo_1 = '|          OpenVX Node            | Frames Count | tmp (ms) | avg (ms) | min (ms) | max (ms) |'
 print(echo_1)
-echo_2 = '|-------------|--------------|----------|----------|----------|----------|'
+echo_2 = '|---------------------------------|--------------|----------|----------|----------|----------|'
 print(echo_2)
 sys.stdout = orig_stdout
 print(echo_1)
 print(echo_2)
-runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-30s | %3d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
-os.system(runAwk_csv)
+if hardwareMode == 'CPU':
+    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-31s | %-12d | %-8.3f | %-8.3f | %-8.3f | %-8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
+    os.system(runAwk_csv)
+if hardwareMode == 'GPU':
+    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /GPU,GRAPH/ { printf("| %-31s | %-12d | %-8.3f | %-8.3f | %-8.3f | %-8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
+    os.system(runAwk_csv)
 
 # get data
 platform_name = shell('hostname')
@@ -254,21 +307,22 @@ platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-report_filename = 'platform_report_%s_%s.md' % (platform_name, file_dtstr)
+reportFilename = 'platform_report_%s_%s_%s.md' % (
+    platform_name, file_dtstr, hardwareMode)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
 cpu_info = shell('inxi -c0 -C')
-cpu_info = cpu_info.split('\n')[0]  # strip out clock speeds
+#cpu_info = cpu_info.split('\n')[0]  # strip out clock speeds
 
 gpu_info = shell('inxi -c0 -G')
-gpu_info = gpu_info.split('\n')[0]  # strip out X info
+#gpu_info = gpu_info.split('\n')[0]  # strip out X info
 
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
 
 # Write Report
-with open(report_filename, 'w') as f:
+with open(reportFilename, 'w') as f:
     f.write("MIVisionX - OpenVX Function Report\n")
     f.write("================================\n")
     f.write("\n")
@@ -296,5 +350,9 @@ with open(report_filename, 'w') as f:
     f.write("\n")
 
     f.write("\n\n---\nCopyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"\n")
+
+# report file
+reportFileDir = os.path.abspath(reportFilename)
+print("\nSTATUS: Output Report File - "+reportFileDir)
 
 print("\nrunVisionTests.py completed - V:"+__version__+"\n")

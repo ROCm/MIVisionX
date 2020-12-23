@@ -75,25 +75,15 @@ int HipExec_Threshold_U8_U8_Binary(
     vx_int32 thresholdValue
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U8_U8_Binary,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdValue);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U8_U8_Binary: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -122,25 +112,15 @@ int HipExec_Threshold_U8_U8_Range(
     vx_int32 thresholdLower, vx_int32 thresholdUpper
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U8_U8_Range,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdLower, thresholdUpper);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U8_U8_Range: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -171,25 +151,15 @@ int HipExec_Threshold_U1_U8_Binary(
     vx_int32 thresholdValue
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+7)>>3,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U1_U8_Binary,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdValue);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U1_U8_Binary: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -220,25 +190,15 @@ int HipExec_Threshold_U1_U8_Range(
     vx_int32 thresholdLower, vx_int32 thresholdUpper
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+7)>>3,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U1_U8_Range,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdLower, thresholdUpper);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U1_U8_Range: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -276,7 +236,6 @@ int HipExec_MinMax_DATA_U8(
     vx_uint8    * pHipSrcImage, vx_uint32     srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (srcWidth+3)>>2, globalThreads_y = srcHeight;
 
@@ -286,24 +245,15 @@ int HipExec_MinMax_DATA_U8(
     hipMalloc((void**)&dstMaxVal, sizeof(vx_int32));
     // hipMemset(dstMaxVal, 0, sizeof(vx_int32));
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_MinMax_DATA_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstMinVal, dstMaxVal, srcWidth, srcHeight,
                     (unsigned char*)pHipSrcImage , srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
 
     hipMemcpyDtoH(pHipDstMinValue, dstMinVal, sizeof(vx_int32));
     hipMemcpyDtoH(pHipDstMinValue, dstMaxVal, sizeof(vx_int32));
-    printf("The Min value: %d, Max Value : %d",*pHipDstMinValue, *pHipDstMinValue);
 
-    printf("\nHipExec_MinMax_DATA_U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 // ----------------------------------------------------------------------------
@@ -332,7 +282,6 @@ int HipExec_MeanStdDev_DATA_U8(
     vx_uint8    * pHipSrcImage, vx_uint32     srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (srcWidth+3)>>2, globalThreads_y = srcHeight;
 
@@ -340,24 +289,15 @@ int HipExec_MeanStdDev_DATA_U8(
     hipMalloc((void**)&Sum, sizeof(vx_float32));
     hipMalloc((void**)&SumOfSquared, sizeof(vx_float32));
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_MeanStdDev_DATA_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, Sum, SumOfSquared, srcWidth, srcHeight,
                     (unsigned char*)pHipSrcImage , srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
 
     hipMemcpyDtoH(pHipSum, Sum, sizeof(vx_int32));
     hipMemcpyDtoH(pHipSumOfSquared, SumOfSquared, sizeof(vx_int32));
-    printf("The Sum value: %f, SumofSquares Value : %f",*pHipSum, *pHipSumOfSquared);
 
-    printf("\nHipExec_MeanStdDev_DATA_U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 // ----------------------------------------------------------------------------

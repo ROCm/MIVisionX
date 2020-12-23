@@ -489,6 +489,16 @@ int HipExec_ThresholdNot_U1_U8_Range(
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         vx_int32 thresholdLower, vx_int32 thresholdUpper
         );
+int HipExec_MinMax_DATA_U8(
+        vx_int32    * pHipDstMinValue, vx_int32    * pHipDstMaxValue,
+        vx_uint32     srcWidth,  vx_uint32     srcHeight,
+        vx_uint8    * pHipSrcImage, vx_uint32     srcImageStrideInBytes
+        );
+int HipExec_MeanStdDev_DATA_U8(
+        vx_float32  * pHipSum, vx_float32  * pHipSumOfSquared,
+        vx_uint32  srcWidth, vx_uint32  srcHeight,
+        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+	);
 
 // color_kernels
 

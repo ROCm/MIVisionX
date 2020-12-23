@@ -8,5 +8,11 @@ node org.khronos.openvx.scale_image inter_luma output_lumascaled_near !NEAREST_N
 data output_lumascaled_bilinear = image:640,360,U008:WRITE,openvx_test_results/34_bilinear_scaleimage_640x360.yuv
 node org.khronos.openvx.scale_image inter_luma output_lumascaled_bilinear !BILINEAR
 
+data output_lumascaled_bilinear_replicate = image:640,360,U008:WRITE,openvx_test_results/34_bilinear_replicate_scaleimage_640x360.yuv
+node org.khronos.openvx.scale_image inter_luma output_lumascaled_bilinear_replicate !BILINEAR attr:BORDER_MODE:REPLICATE
+
+data output_lumascaled_bilinear_constant = image:640,360,U008:WRITE,openvx_test_results/34_bilinear_constant_scaleimage_640x360.yuv
+node org.khronos.openvx.scale_image inter_luma output_lumascaled_bilinear_constant !BILINEAR attr:BORDER_MODE:CONSTANT,0
+
 data output_lumascaled_area = image:640,360,U008:WRITE,openvx_test_results/34_area_scaleimage_640x360.yuv
 node org.khronos.openvx.scale_image inter_luma output_lumascaled_area !AREA

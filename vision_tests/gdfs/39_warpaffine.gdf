@@ -1,4 +1,3 @@
-
 data input_iyuv = image:1280,720,IYUV:READ,inputs/stm_1280x720.yuv
 data inter_luma = image:1280,720,U008
 node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_Y inter_luma
@@ -10,3 +9,9 @@ node org.khronos.openvx.warp_affine inter_luma input_affine_matrix !NEAREST_NEIG
 
 data output_warpaffine_bilinear = image:1280,720,U008:WRITE,openvx_test_results/39_warp_affine_bilinear_1280x720.yuv
 node org.khronos.openvx.warp_affine inter_luma input_affine_matrix !BILINEAR output_warpaffine_bilinear
+
+data output_warpaffine_nearest_constant = image:1280,720,U008:WRITE,openvx_test_results/39_warp_affine_nearest_constant_1280x720.yuv
+node org.khronos.openvx.warp_affine inter_luma input_affine_matrix !NEAREST_NEIGHBOR output_warpaffine_nearest_constant attr:BORDER_MODE:CONSTANT,0
+
+data output_warpaffine_bilinear_constant = image:1280,720,U008:WRITE,openvx_test_results/39_warp_affine_bilinear_constant_1280x720.yuv
+node org.khronos.openvx.warp_affine inter_luma input_affine_matrix !BILINEAR output_warpaffine_bilinear_constant attr:BORDER_MODE:CONSTANT,0

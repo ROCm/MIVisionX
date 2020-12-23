@@ -503,7 +503,7 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 				}
 			}
 		}
-		else if((global_case == 203) || (global_case == 204) )
+		else if((global_case == 203) || (global_case == 204))
 		{
 			for (int i = 0; i < height; i++)
 				for (int j = 0; j < width; j++)
@@ -522,11 +522,13 @@ vx_status makeInputImage(vx_context context, vx_image img, vx_uint32 width, vx_u
 							ptr[i * stride_y_pixels + j * stride_x_pixels] = 0;
 				}
 		}
-		else if ((global_case == 174) || (global_case == 176))
+		else if ((global_case == 174) || (global_case == 176) || (global_case >= 223 && global_case <= 233))
 		{
 			for (int i = 0; i < height; i++)
 				for (int j = 0; j < width; j++)
+				{
 					ptr[i * stride_y_pixels + j * stride_x_pixels] = pix_val++;
+				}		
 		}
 		else
 		{
@@ -653,7 +655,7 @@ vx_status makeInputPlanarImage(vx_context context, vx_image img, vx_uint32 width
 		if(p == 0 || format == VX_DF_IMAGE_YUV4)
 			printImage(ptr, stride_x_pixels, stride_y_pixels, width, height);
 		else
-			printImage(ptr, stride_x_pixels, stride_y_pixels, stride_y_pixels, height);
+			printImage(ptr, stride_x_pixels, stride_y_pixels, stride_y_pixels/stride_x_pixels, height);
 		printf("Input Buffer: ");
 		printBuffer(ptr, width, height);
 #endif
@@ -778,15 +780,37 @@ int main(int argc, const char ** argv)
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
 	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
 	// for U1 images
+	vx_int32 Threshold_thresholdValue_int32_u1 = (vx_int32) 100;
+	vx_int32 Threshold_thresholdLower_int32_u1 = (vx_int32) 100;
+	vx_int32 Threshold_thresholdUpper_int32_u1 = (vx_int32) 200;
 	vx_threshold Threshold_thresholdObjectBinary_threshold_U1 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_BINARY, VX_DF_IMAGE_U8, VX_DF_IMAGE_U1);
 	vx_threshold Threshold_thresholdObjectRange_threshold_U1 = vxCreateThresholdForImage(context, VX_THRESHOLD_TYPE_RANGE, VX_DF_IMAGE_U8, VX_DF_IMAGE_U1);
-	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold_U1, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
-	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold_U1, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32, (vx_size)sizeof(vx_int32)));
-	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold_U1, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32, (vx_size)sizeof(vx_int32)));
+	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold_U1, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32_u1, (vx_size)sizeof(vx_int32)));
+	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold_U1, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER, (void*) &Threshold_thresholdLower_int32_u1, (vx_size)sizeof(vx_int32)));
+	ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectRange_threshold_U1, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER, (void*) &Threshold_thresholdUpper_int32_u1, (vx_size)sizeof(vx_int32)));
 	
 	/* Weighted Average Params */
 	vx_float32 WeightedAverage_alpha_float = (vx_float32) (0.25);
 	vx_scalar WeightedAverage_alpha_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &WeightedAverage_alpha_float);
+
+	/*MinMax params*/
+	vx_uint8 u8_minVal = 0, u8_maxVal = 0;
+	vx_int16 s16_minVal = 0, s16_maxVal = 0;
+	vx_uint32 minCount = 0, maxCount = 0;
+	vx_scalar minValue_u8_scalar = vxCreateScalar(context, VX_TYPE_UINT8, (void *) &u8_minVal);
+	vx_scalar maxValue_u8_scalar = vxCreateScalar(context, VX_TYPE_UINT8, (void *) &u8_maxVal);
+	vx_scalar minValue_s16_scalar = vxCreateScalar(context, VX_TYPE_INT16, (void *) &s16_minVal);
+	vx_scalar maxValue_s16_scalar = vxCreateScalar(context, VX_TYPE_INT16, (void *) &s16_maxVal);
+	vx_scalar minCount_scalar = vxCreateScalar(context, VX_TYPE_UINT32, (void *) &minCount);
+	vx_scalar maxCount_scalar = vxCreateScalar(context, VX_TYPE_UINT32, (void *) &maxCount);
+	vx_array minimum_loc_array = vxCreateArray(context, VX_TYPE_COORDINATES2D, 5);
+	vx_array maximum_loc_array = vxCreateArray(context, VX_TYPE_COORDINATES2D, 5);
+
+	/* Mean Stddev Params*/
+	vx_float32 mean_float;
+	vx_scalar Mean_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &mean_float);
+	vx_float32 stdDev_float;
+	vx_scalar StdDev_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &stdDev_float);	
 
 	/* Lookup Table Params */
 	vx_uint8 Lut_lutPtr_uint8[256];
@@ -920,9 +944,9 @@ int main(int argc, const char ** argv)
 	vx_bool nms_true = 1;
 	vx_bool nms_false = 0;
 	vx_size key_array_size = 100;
-	vx_array output_keypoints_array = vxCreateArray(context, VX_TYPE_KEYPOINT, key_array_size);
+	vx_array fastCorner_output_keypoints_array = vxCreateArray(context, VX_TYPE_KEYPOINT, key_array_size);
 	vx_size no_of_corners = 0;
-	vx_scalar output_corner_count = vxCreateScalar(context, VX_TYPE_SIZE, (void*) &no_of_corners);
+	vx_scalar fastCorner_output_corner_count_scalar = vxCreateScalar(context, VX_TYPE_SIZE, (void*) &no_of_corners);
 
 	/* Harris Corners Params */
 	vx_float32 HarrisCorner_strength_threshold = (vx_float32) 0.00001;
@@ -1318,7 +1342,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxMultiplyNode(graph, img1, img2, Mul_scale_scalar, VX_CONVERT_POLICY_SATURATE, VX_ROUND_POLICY_TO_NEAREST_EVEN, img_out);
-					expected_image_sum = ((vx_int32)PIXELCHECKU8((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float))) * width * height;
+					expected_image_sum = ((vx_int16)(PIXELCHECKS16((vx_int32)PIXELROUNDF32(((vx_float32)(pix_img1_s16 * pix_img2_u8)) * Mul_scale_float)))) * width * height;
 					// expected_image_sum = generic_mod((vx_int32)(((vx_float32)(pix_img1_u8 * pix_img2_u8)) * Mul_scale_float), 256) * width * height;
 					out_buf_type = 1;
 					break;
@@ -1968,7 +1992,7 @@ int main(int argc, const char ** argv)
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 1 : 0) * width * height;
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * (width/8) * height;
 					out_buf_type = 5;
 					break;
 				}
@@ -1978,50 +2002,10 @@ int main(int argc, const char ** argv)
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 1)) * width * height;
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * (width/8) * height;
 					out_buf_type = 5;
 					break;
 				}
-				// case 93:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Binary";
-				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 255) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
-				// case 94:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Range";
-				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 255 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 255 : 0)) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
-				// case 95:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Binary";
-				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 1) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
-				// case 96:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Range";
-				// 	img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 1 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 1 : 0)) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
 				case 104:
 				{
 					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
@@ -2186,7 +2170,9 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139) * (width/2) * (height/2))
+										: ((pix_img1_u8) * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -2198,7 +2184,8 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_IYUV);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 == 255 ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139 + 1) * (width/2) * (height/2))
 										: ((pix_img1_u8 + 1) * width * height) + ((129+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
@@ -2235,7 +2222,9 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139) * (width/2) * (height/2))
+										: ((pix_img1_u8) * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -2247,7 +2236,8 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_NV12);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 == 255 ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139 + 1) * (width/2) * (height/2))
 										: ((pix_img1_u8 + 1) * width * height) + ((129+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
@@ -2320,7 +2310,9 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = ((pix_img1_u8)*width * height) + (2 * (pix_img1_u8 + 1) * (width / 2) * (height / 2));//Needs Change
+					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
+										: (pix_img1_u8 == 254) ? (236 + 139) * width * height
+										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -2332,7 +2324,9 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = ((pix_img1_u8)*width * height) + (2 * (pix_img1_u8 + 1) * (width ) * (height / 2)); //Needs Chnage
+					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
+										: (pix_img1_u8 == 254) ? (236 + 139 + 1) * width * height
+										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -2768,7 +2762,7 @@ int main(int argc, const char ** argv)
 				{
 					//test_case_name = "agoKernel_FastCorners_XY_U8_Supression";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_true, output_keypoints_array, output_corner_count);
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_true, fastCorner_output_keypoints_array, fastCorner_output_corner_count_scalar);
 					out_buf_type = -1;
 					break;
 				}
@@ -2776,7 +2770,7 @@ int main(int argc, const char ** argv)
 				{
 					//test_case_name = "agoKernel_FastCorners_XY_U8_NoSupression";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_false, output_keypoints_array, output_corner_count);
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_false, fastCorner_output_keypoints_array, fastCorner_output_corner_count_scalar);
 					out_buf_type = -1;
 					break;
 				}
@@ -2814,6 +2808,94 @@ int main(int argc, const char ** argv)
 					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_7x7, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
+				case 217:
+				{
+					// test_case_name = "agoKernel_MeanStdDev_DATA_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMeanStdDevNode(graph, img1, Mean_scalar, StdDev_scalar);
+					out_buf_type = -1;
+					break;
+				}
+				case 223:
+				{
+					// test_case_name = "agoKernel_MinMax_DATA_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, NULL, NULL, NULL, NULL);
+					out_buf_type = -1;
+					break;
+				}
+				case 224:
+				{
+					// test_case_name = "agoKernel_MinMax_DATA_S16";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_S16);
+					node = vxMinMaxLocNode(graph, img1, minValue_s16_scalar, maxValue_s16_scalar, NULL, NULL, NULL, NULL);
+					out_buf_type = -1;
+					break;
+				}
+				case 226:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_Min";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, NULL, NULL, minCount_scalar, NULL);
+					out_buf_type = -1;
+					break;
+				}
+				case 227:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_Max";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, NULL, NULL, NULL, maxCount_scalar);
+					out_buf_type = -1;
+					break;
+				}
+				case 228:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_None_Count_MinMax";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, NULL, NULL, minCount_scalar, maxCount_scalar);
+					out_buf_type = -1;
+					break;
+				}
+				case 229:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_Min";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, minimum_loc_array, NULL, minCount_scalar, NULL);
+					out_buf_type = -1;
+					break;
+				}
+				case 230:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Min_Count_MinMax";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, minimum_loc_array, NULL, minCount_scalar, maxCount_scalar);
+					out_buf_type = -1;
+					break;
+				}
+				case 231:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_Max";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, NULL, maximum_loc_array, NULL, maxCount_scalar);
+					out_buf_type = -1;
+					break;
+				}
+				case 232:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_Max_Count_MinMax";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, NULL, maximum_loc_array, minCount_scalar, maxCount_scalar);
+					out_buf_type = -1;
+					break;
+				}
+				case 233:
+				{
+					// test_case_name = "agoKernel_MinMaxLoc_DATA_U8DATA_Loc_MinMax_Count_MinMax";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, minimum_loc_array, maximum_loc_array, minCount_scalar, maxCount_scalar);
 					out_buf_type = -1;
 					break;
 				}
@@ -2870,8 +2952,7 @@ int main(int argc, const char ** argv)
 				// U8 input
 				else if(
 					(case_number == 45) || (case_number == 47)  || (case_number == 88) ||
-					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
-					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
+					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) ||  
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 148) || (case_number == 149) || 
 					(case_number == 150) || (case_number == 151) || 
@@ -2882,14 +2963,16 @@ int main(int argc, const char ** argv)
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
 					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) ||
-					(case_number == 208)
+					(case_number == 208) || (case_number == 217) || (case_number == 223) || (case_number == 225) || 
+					(case_number == 226) || (case_number == 227) || (case_number == 228) || (case_number == 229) || 
+					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) 
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
 				}
 				// S16 input
 				else if(
-					(case_number == 170) || (case_number == 171)
+					(case_number == 170) || (case_number == 171) || (case_number == 224)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_int16) pix_img1_s16));
@@ -4103,7 +4186,7 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_u1, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U1, &hip_addr_u1, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 1 : 0) * width * height;
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * (width/8) * height;
 					out_buf_type = 5;
 					break;
 				}
@@ -4113,50 +4196,10 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_u1, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U1, &hip_addr_u1, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 1)) * width * height;
+					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * (width/8) * height;
 					out_buf_type = 5;
 					break;
 				}
-				// case 93:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Binary";
-				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 255) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
-				// case 94:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U8_U8_Range";
-				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 255 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 255 : 0)) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
-				// case 95:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Binary";
-				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 0 : 1) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
-				// case 96:
-				// {
-				// 	// test_case_name = "agoKernel_ThresholdNot_U1_U8_Range";
-				// 	ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
-				// 	ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[2], VX_MEMORY_TYPE_HIP));
-				// 	node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold, img_out);
-				// 	expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 1 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 1 : 0)) * width * height;
-				// 	out_buf_type = 0;
-				// 	break;
-				// }
 				case 104:
 				{
 					// test_case_name = "agoKernel_WeightedAverage_U8_U8";
@@ -4294,7 +4337,9 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139) * (width/2) * (height/2))
+										: ((pix_img1_u8) * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4304,7 +4349,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 == 255 ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139 + 1) * (width/2) * (height/2))
 										: ((pix_img1_u8 + 1) * width * height) + ((129+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
@@ -4335,7 +4381,9 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((128+127) * (width/2) * (height/2)) ;
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139) * (width/2) * (height/2))
+										: ((pix_img1_u8) * width * height) + ((128+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4345,7 +4393,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_out, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = pix_img1_u8 == 255 ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+					expected_image_sum = (pix_img1_u8 == 255) ? ((54 * width * height) + (99 + 255) * (width/2) * (height/2))
+										: (pix_img1_u8 == 254) ? ((236 * width * height) + (139 + 1) * (width/2) * (height/2))
 										: ((pix_img1_u8 + 1) * width * height) + ((129+127) * (width/2) * (height/2)) ;
 					out_buf_type = 4;
 					break;
@@ -4406,7 +4455,9 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGB, &hip_addr_uint8_rgb_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + (2 * (pix_img1_u8 + 1) * (width / 2) * (height / 2)); //Needs Change
+					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
+										: (pix_img1_u8 == 254) ? (236 + 139) * width * height
+										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4416,7 +4467,9 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_RGBX, &hip_addr_uint8_rgbx_in, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + (2 * (pix_img1_u8 + 1) * (width / 2) * (height / 2)); //Needs Change
+					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
+										: (pix_img1_u8 == 254) ? (236 + 139 + 1) * width * height
+										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4845,7 +4898,7 @@ int main(int argc, const char ** argv)
 				{
 					//test_case_name = "agoKernel_FastCorners_XY_U8_Supression";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
-					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_true, output_keypoints_array, output_corner_count);
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_true, fastCorner_output_keypoints_array, fastCorner_output_corner_count_scalar);
 					out_buf_type = -1;
 					break;
 				}
@@ -4853,7 +4906,7 @@ int main(int argc, const char ** argv)
 				{
 					//test_case_name = "agoKernel_FastCorners_XY_U8_NoSupression";
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
-					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_false, output_keypoints_array, output_corner_count);
+					node = vxFastCornersNode(graph, img1, fastCorner_threshold_scalar, nms_false, fastCorner_output_keypoints_array, fastCorner_output_corner_count_scalar);
 					out_buf_type = -1;
 					break;
 				}
@@ -4889,6 +4942,22 @@ int main(int argc, const char ** argv)
 					//"agoKernel_HarrisMergeSortAndPick_XY_XYS"
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
 					node = vxHarrisCornersNode(graph, img1, HarrisCorner_strength_threshold_scalar, HarrisCorner_min_distance_scalar, HarrisCorner_sensitivity_scalar, HarrisCorner_grad_size_7x7, HarrisCorner_block_size_5x5, HarrisCorner_output_keypoints_array, HarrisCorner_output_corner_count);
+					out_buf_type = -1;
+					break;
+				}
+				case 217:
+				{
+					// test_case_name = "agoKernel_MeanStdDev_DATA_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
+					node = vxMeanStdDevNode(graph, img1, Mean_scalar, StdDev_scalar);
+					out_buf_type = -1;
+					break;
+				}
+				case 223:
+				{
+					//test_case_name = "agoKernel_MinMax_DATA_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));					
+					node = vxMinMaxLocNode(graph, img1, minValue_u8_scalar, maxValue_u8_scalar, NULL, NULL, NULL, NULL);					
 					out_buf_type = -1;
 					break;
 				}
@@ -4946,7 +5015,6 @@ int main(int argc, const char ** argv)
 				else if (
 					(case_number == 45) || (case_number == 47) || (case_number == 88) || 
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) || 
-					(case_number == 93) || (case_number == 94) || (case_number == 95) || (case_number == 96) || 
 					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
 					(case_number == 143) || (case_number == 147) || (case_number == 148) || (case_number == 149) || 
 					(case_number == 150) || (case_number == 151) || 
@@ -4956,15 +5024,17 @@ int main(int argc, const char ** argv)
 					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
-					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207)||
-					(case_number == 208)
+					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) ||
+					(case_number == 208) || (case_number == 217) || (case_number == 223) || (case_number == 225) || 
+					(case_number == 226) || (case_number == 227) || (case_number == 228) || (case_number == 229) || 
+					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) 
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_uint8) pix_img1_u8));
 				}
 				// S16 input
 				else if(
-					(case_number == 170) || (case_number == 171)
+					(case_number == 170) || (case_number == 171) || (case_number == 224)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HIP, (vx_int16) pix_img1_s16));
@@ -5102,13 +5172,13 @@ int main(int argc, const char ** argv)
 		printf("\nOutput Image: ");
 		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", width, height, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 		printf("dim_x: %d dim_y: %d\nscale_x: %d scale_y: %d\nstep_x: %d step_y: %d\n",out_addr.dim_x, out_addr.dim_y,out_addr.scale_x, out_addr.scale_y,out_addr.step_x, out_addr.step_y);
-		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, width, height);
+		printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, stride_y_pixels, heightOut);
 		printf("Output Buffer: ");
 		printBuffer(out_buf_uint8, widthOut, heightOut);
 		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
 #endif
 		for (int i = 0; i < heightOut; i++)
-			for (int j = 0; j < widthOut; j++)
+			for (int j = 0; j < stride_y_pixels; j++)
 				returned_image_sum += out_buf_uint8[i * stride_y_pixels + j * stride_x_pixels];
 	}
 
@@ -5190,14 +5260,14 @@ int main(int argc, const char ** argv)
 			stride_y_bytes = out_addr.stride_y;
 			stride_y_pixels = stride_y_bytes / sizeof(vx_uint8);
 #ifdef PRINT_INPUT
-			printf("\nInput Image Plane %d: ",p);
+			printf("\nOutput Image Plane %d: ",p);
 			printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", widthOut, heightOut, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
 			printf("dim_x: %d dim_y: %d\nscale_x: %d scale_y: %d\nstep_x: %d step_y: %d\n",out_addr.dim_x, out_addr.dim_y,out_addr.scale_x, out_addr.scale_y,out_addr.step_x, out_addr.step_y);
 			if(p == 0 || format == VX_DF_IMAGE_YUV4)
 				printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, widthOut, heightOut);
 			else
-				printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, stride_y_pixels, heightOut);
-			printf("Input Buffer: ");
+				printImage(out_buf_uint8, stride_x_pixels, stride_y_pixels, stride_y_pixels/stride_x_pixels, heightOut);
+			printf("Output Buffer: ");
 			printBuffer(out_buf_uint8, widthOut, heightOut);
 #endif
 			if(p == 0 || format == VX_DF_IMAGE_YUV4)
@@ -5250,13 +5320,13 @@ int main(int argc, const char ** argv)
 	// 	vx_size num_items=5;
 	// 	vx_float32 strength_value;
 	// 	/* access entire array at once */
-	// 	ERROR_CHECK_STATUS(vxMapArrayRange(output_keypoints_array, 0, num_items, &map_id, &stride, (void **)&base, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
+	// 	ERROR_CHECK_STATUS(vxMapArrayRange(fastCorner_output_keypoints_array, 0, num_items, &map_id, &stride, (void **)&base, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
 	// 	for (i = 0; i < num_items; i++)
 	// 	{
 	// 		vxArrayItem(vx_keypoint_t, base, i, stride).strength;
 	// 		printf("%f ",strength_value);
 	// 	}
-	// 	vxUnmapArrayRange(output_keypoints_array, map_id);
+	// 	vxUnmapArrayRange(fastCorner_output_keypoints_array, map_id);
 	// }
 
 	// Cases for Manual Override
@@ -5264,8 +5334,11 @@ int main(int argc, const char ** argv)
 		(case_number == 155) || (case_number == 157) || (case_number == 187) || (case_number == 188) ||
 		(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
 		(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) || 
-		(case_number == 208)
-		)
+		(case_number == 208) || (case_number == 217) || (case_number == 218) || (case_number == 223) || 
+		(case_number == 224) || (case_number == 225) || (case_number == 226) || (case_number == 227) || 
+		(case_number == 228) || (case_number == 229) || (case_number == 230) || (case_number == 231) || 
+		(case_number == 232) || (case_number == 233)
+	)
 	{
 		printf("\nTEST PASSED: Sum verification overridden due to hard calculation. Manually verified. Not an exact pixel-to-pixel match.\n");
 		return_value = 1;
@@ -5290,8 +5363,8 @@ int main(int argc, const char ** argv)
 	vxReleaseScalar(&Mul_scale_scalar);
 	vxReleaseScalar(&WeightedAverage_alpha_scalar);
 	vxReleaseScalar(&fastCorner_threshold_scalar);
-	vxReleaseScalar(&output_corner_count);
-	vxReleaseArray(&output_keypoints_array);
+	vxReleaseScalar(&fastCorner_output_corner_count_scalar);
+	vxReleaseArray(&fastCorner_output_keypoints_array);
 	vxReleaseScalar(&HarrisCorner_strength_threshold_scalar);
 	vxReleaseScalar(&HarrisCorner_min_distance_scalar);
 	vxReleaseScalar(&HarrisCorner_sensitivity_scalar);

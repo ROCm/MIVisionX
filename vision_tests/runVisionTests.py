@@ -99,7 +99,14 @@ openvxNodes = [
     ('add-1080p-s16-sat', 'org.khronos.openvx.add image:1920,1080,S016 image:1920,1080,U008 !SATURATE image:1920,1080,S016'),
     ('add-1080p-s16-wrap', 'org.khronos.openvx.add image:1920,1080,S016 image:1920,1080,S016 !WRAP image:1920,1080,S016'),
     ('add-1080p-s16-sat', 'org.khronos.openvx.add image:1920,1080,S016 image:1920,1080,S016 !SATURATE image:1920,1080,S016'),
-    ('and-1080p-u8', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('and-1080p-u8-u8u8', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('and-1080p-u8-u8u1', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
+    ('and-1080p-u8-u1u8', 'org.khronos.openvx.and image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
+    ('and-1080p-u8-u1u1', 'org.khronos.openvx.and image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U008'),
+    ('and-1080p-u1-u8u8', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U001'),
+    ('and-1080p-u1-u8u1', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
+    ('and-1080p-u1-u1u8', 'org.khronos.openvx.and image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
+    ('and-1080p-u1-u1u1', 'org.khronos.openvx.and image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001'),
     ('box_3x3-1080p-u8',
      'org.khronos.openvx.box_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('channel_combine-1080p-u8-nv12',
@@ -210,8 +217,18 @@ openvxNodes = [
     ('multiply-1080p-s16-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
     ('multiply-1080p-s16-sat-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
     ('multiply-1080p-s16-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
-    ('not-1080p-u8', 'org.khronos.openvx.not image:1920,1080,U008 image:1920,1080,U008'),
-    ('or-1080p-u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('not-1080p-u8-u8', 'org.khronos.openvx.not image:1920,1080,U008 image:1920,1080,U008'),
+    ('not-1080p-u8-u1', 'org.khronos.openvx.not image:1920,1080,U008 image:1920,1080,U001'),
+    ('not-1080p-u1-u8', 'org.khronos.openvx.not image:1920,1080,U001 image:1920,1080,U008'),
+    ('not-1080p-u1-u1', 'org.khronos.openvx.not image:1920,1080,U001 image:1920,1080,U001'),
+    ('or-1080p-u8-u8u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('or-1080p-u8-u8u1', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
+    ('or-1080p-u8-u1u8', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
+    ('or-1080p-u8-u1u1', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U008'),
+    ('or-1080p-u1-u8u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U001'),
+    ('or-1080p-u1-u8u1', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
+    ('or-1080p-u1-u1u8', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
+    ('or-1080p-u1-u1u1', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001'),
     ('phase-1080p-S16',
      'org.khronos.openvx.phase image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,U008'),
     ('scale_image-1080p-u8-nearest',
@@ -252,7 +269,14 @@ openvxNodes = [
      'org.khronos.openvx.warp_perspective image:1920,1080,U008 matrix:FLOAT32,3,3 !BILINEAR image:1920,1080,U008'),
     ('weightedAverage-1080p-u8',
     'org.khronos.openvx.weighted_average image:1920,1080,U008 scalar:FLOAT32,0.25 image:1920,1080,U008 image:1920,1080,U008'),
-    ('xor-1080p-u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008')
+    ('xor-1080p-u8-u8u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('xor-1080p-u8-u8u1', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
+    ('xor-1080p-u8-u1u8', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
+    ('xor-1080p-u8-u1u1', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U008'),
+    ('xor-1080p-u1-u8u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U001'),
+    ('xor-1080p-u1-u8u1', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
+    ('xor-1080p-u1-u1u8', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
+    ('xor-1080p-u1-u1u1', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001')
 ]
 # ('remap-1080p-S16-nearest',
 #  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
@@ -408,12 +432,12 @@ runVX_exe = runvxDir+'/runvx'
 runvx_exe_dir = os.path.expanduser(runVX_exe)
 print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
 os.system('(cd gdfs; mkdir openvx_test_results)')
-for i in range(len(visionTestConfig[:])):
-    testFileName = visionTestConfig[i]
-    print("Running Test Script: "+testFileName)
-    os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
-              hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
-    print("\n")
+# for i in range(len(visionTestConfig[:])):
+#     testFileName = visionTestConfig[i]
+#     print("Running Test Script: "+testFileName)
+#     os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
+#               hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
+#     print("\n")
 
 # print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
 # os.system('mkdir openvx_node_results')

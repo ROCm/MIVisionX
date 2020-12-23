@@ -430,7 +430,7 @@ int HipExec_FastCorners_XY_U8_Supression(
 		vx_uint8   *pHipScratch
 )
 {
-	hipEvent_t start, stop;
+  	hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = srcWidth,   globalThreads_y = srcHeight;
 

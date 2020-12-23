@@ -698,6 +698,147 @@ int HipExec_ChannelExtract_U8_U24_Pos2(
     return VX_SUCCESS;
 }
 
+
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelExtract_U8U8U8_U24(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImage0, unsigned char *pDstImage1, unsigned char *pDstImage2,
+    unsigned int dstImageStrideInBytes, const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dst0Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst1Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst2Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int srcIdx = y * (srcImageStrideInBytes) + (x * 3);
+
+    pDstImage0[dst0Idx] = pSrcImage[srcIdx];
+    pDstImage1[dst1Idx] = pSrcImage[srcIdx + 1];
+    pDstImage2[dst2Idx] = pSrcImage[srcIdx + 2];
+}
+int HipExec_ChannelExtract_U8U8U8_U24(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage0, vx_uint8 *pHipDstImage1, vx_uint8 *pHipDstImage2,
+    vx_uint32 dstImageStrideInBytes, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes)
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ChannelExtract_U8U8U8_U24,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImage0, (unsigned char *)pHipDstImage1, (unsigned char *)pHipDstImage2,
+                        dstImageStrideInBytes, (const unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_ChannelExtract_U8U8U8_U24: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelExtract_U8U8U8_U32(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImage0, unsigned char *pDstImage1, unsigned char *pDstImage2,
+    unsigned int dstImageStrideInBytes, const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dst0Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst1Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst2Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst3Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int srcIdx = y * (srcImageStrideInBytes) + (x * 4);
+
+    pDstImage0[dst0Idx] = pSrcImage[srcIdx];
+    pDstImage1[dst1Idx] = pSrcImage[srcIdx + 1];
+    pDstImage2[dst2Idx] = pSrcImage[srcIdx + 2];
+}
+int HipExec_ChannelExtract_U8U8U8_U32(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage0, vx_uint8 *pHipDstImage1, vx_uint8 *pHipDstImage2,
+    vx_uint32 dstImageStrideInBytes, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes)
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ChannelExtract_U8U8U8_U32,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImage0, (unsigned char *)pHipDstImage1, (unsigned char *)pHipDstImage2,
+                        dstImageStrideInBytes, (const unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_ChannelExtract_U8U8U8_U32: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelExtract_U8U8U8U8_U32(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned char *pDstImage0, unsigned char *pDstImage1, unsigned char *pDstImage2, unsigned char *pDstImage3,
+    unsigned int dstImageStrideInBytes, const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes)
+{
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dst0Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst1Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst2Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int dst3Idx = y * (dstImageStrideInBytes) + x;
+    unsigned int srcIdx = y * (srcImageStrideInBytes) + (x * 4);
+
+    pDstImage0[dst0Idx] = pSrcImage[srcIdx];
+    pDstImage1[dst1Idx] = pSrcImage[srcIdx + 1];
+    pDstImage2[dst2Idx] = pSrcImage[srcIdx + 2];
+    pDstImage3[dst3Idx] = pSrcImage[srcIdx + 3];
+}
+int HipExec_ChannelExtract_U8U8U8U8_U32(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage0, vx_uint8 *pHipDstImage1, vx_uint8 *pHipDstImage2, vx_uint8 *pHipDstImage3,
+    vx_uint32 dstImageStrideInBytes, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes)
+{
+    hipEvent_t start, stop;
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+
+    hipEventCreate(&start);
+    hipEventCreate(&stop);
+    float eventMs = 1.0f;
+    hipEventRecord(start, NULL);
+    hipLaunchKernelGGL(Hip_ChannelExtract_U8U8U8U8_U32,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, 0, dstWidth, dstHeight,
+                       (unsigned char *)pHipDstImage0, (unsigned char *)pHipDstImage1, (unsigned char *)pHipDstImage2, (unsigned char *)pHipDstImage3,
+                        dstImageStrideInBytes, (const unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+
+    hipEventRecord(stop, NULL);
+    hipEventSynchronize(stop);
+    hipEventElapsedTime(&eventMs, start, stop);
+    printf("\nHipExec_ChannelExtract_U8U8U8U8_U32: Kernel time: %f\n", eventMs);
+    return VX_SUCCESS;
+}
 // ----------------------------------------------------------------------------
 // VxChannelCombine kernels for hip backend
 // ----------------------------------------------------------------------------

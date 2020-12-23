@@ -88,7 +88,7 @@ int HipExec_ChannelCopy_U8_U8(
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
 
-    printf("HipExec_Xor_U8_U8U8: Kernel time: %f\n", eventMs);
+    printf("HipExec_ChannelCopy_U8_U8U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

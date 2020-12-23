@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 
+#define PIXELCHECKU1(value, pixel) (value ? 255 : pixel)
 
 __device__ __forceinline__ int4 uchars_to_int4(uint src)
 {
@@ -47,11 +48,6 @@ __device__ __forceinline__ unsigned char extractMSB(int4 src1, int4 src2)
 __device__ __forceinline__ int dataConvertU1ToU8_4bytes(uint nibble)
 {
     return ( ((nibble&1) * 0xFF) | ((((nibble>>1)&1) * 0xFF)<<8) |  ((((nibble>>2)&1) * 0xFF)<<16) | ((((nibble>>3)&1) * 0xFF)<<24) );
-}
-
-__device__ __forceinline__ int pixelcheckU1(uint bit, uint pixel)
-{
-    return (bit ? 255 : pixel);
 }
 
 // ----------------------------------------------------------------------------
@@ -289,7 +285,7 @@ Hip_And_U1_U8U8(
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx+1]);
     int4 dst1 = make_int4(src10.x&src20.x, src10.y&src20.y, src10.z&src20.z, src10.w&src20.w);
     int4 dst2 = make_int4(src11.x&src21.x, src11.y&src21.y, src11.z&src21.z, src11.w&src21.w);
-    pDstImage[dstIdx] = extractMSB(dst1, dst2);
+    pDstImage[dstIdx] = PIXELCHECKU1(extractMSB(dst1, dst2), 0);
 }
 int HipExec_And_U1_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -339,7 +335,7 @@ Hip_And_U1_U8U1(
     int4 src11 = uchars_to_int4(pSrcImage1[src1Idx + 1]);
     unsigned char src2 = pSrcImage2[src2Idx]; 
     unsigned char srcByte = extractMSB(src10, src11);
-    pDstImage[dstIdx] = srcByte & src2;
+    pDstImage[dstIdx] = PIXELCHECKU1(srcByte & src2, 0);
 }
 int HipExec_And_U1_U8U1(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -388,7 +384,7 @@ Hip_And_U1_U1U8(
     int4 src20 = uchars_to_int4(pSrcImage2[src2Idx]);
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx+1]);
     unsigned char srcByte = extractMSB(src20, src21);
-    pDstImage[dstIdx] = src1 & srcByte;
+    pDstImage[dstIdx] = PIXELCHECKU1(src1 & srcByte, 0);
 }
 int HipExec_And_U1_U1U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -534,10 +530,10 @@ Hip_Or_U8_U8U1(
     //                     ((src2 >> 2)&1) ? 255 : src10.z, ((src2 >> 3)&1) ? 255 : src10.w);
     // int4 dst2 = make_int4(((src2 >> 4) & 1) ? 255 : src11.x, ((src2 >> 5)&1) ? 255 : src11.y, 
     //                     ((src2 >> 6)&1) ? 255 : src11.z, ((src2 >> 7)&1) ? 255 : src11.w);
-    int4 dst1 = make_int4(pixelcheckU1((src2 & 1), src10.x), pixelcheckU1(((src2 >> 1)&1), src10.y),
-                         pixelcheckU1(((src2 >> 2)&1), src10.z), pixelcheckU1(((src2 >> 3)&1), src10.w));
-    int4 dst2 = make_int4(pixelcheckU1(((src2 >> 4)&1), src11.x), pixelcheckU1(((src2 >> 5)&1), src11.y),
-                         pixelcheckU1(((src2 >> 6)&1), src11.z), pixelcheckU1(((src2 >> 7)&1), src11.w));
+    int4 dst1 = make_int4(PIXELCHECKU1((src2 & 1), src10.x), PIXELCHECKU1(((src2 >> 1)&1), src10.y),
+                         PIXELCHECKU1(((src2 >> 2)&1), src10.z), PIXELCHECKU1(((src2 >> 3)&1), src10.w));
+    int4 dst2 = make_int4(PIXELCHECKU1(((src2 >> 4)&1), src11.x), PIXELCHECKU1(((src2 >> 5)&1), src11.y),
+                         PIXELCHECKU1(((src2 >> 6)&1), src11.z), PIXELCHECKU1(((src2 >> 7)&1), src11.w));
     pDstImage[dstIdx] = int4_to_uchars(dst1);
     pDstImage[dstIdx+1] = int4_to_uchars(dst2);
 
@@ -588,10 +584,10 @@ Hip_Or_U8_U1U8(
     int src1 = (int)pSrcImage1[src1Idx];
     int4 src20 = uchars_to_int4(pSrcImage2[src2Idx]);
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx + 1]);
-    int4 dst1 = make_int4(pixelcheckU1((src1 & 1), src20.x), pixelcheckU1(((src1 >> 1)&1), src20.y),
-                         pixelcheckU1(((src1 >> 2)&1), src20.z), pixelcheckU1(((src1 >> 3)&1), src20.w));
-    int4 dst2 = make_int4(pixelcheckU1(((src1 >> 4)&1), src21.x), pixelcheckU1(((src1 >> 5)&1), src21.y),
-                         pixelcheckU1(((src1 >> 6)&1), src21.z), pixelcheckU1(((src1 >> 7)&1), src21.w));
+    int4 dst1 = make_int4(PIXELCHECKU1((src1 & 1), src20.x), PIXELCHECKU1(((src1 >> 1)&1), src20.y),
+                         PIXELCHECKU1(((src1 >> 2)&1), src20.z), PIXELCHECKU1(((src1 >> 3)&1), src20.w));
+    int4 dst2 = make_int4(PIXELCHECKU1(((src1 >> 4)&1), src21.x), PIXELCHECKU1(((src1 >> 5)&1), src21.y),
+                         PIXELCHECKU1(((src1 >> 6)&1), src21.z), PIXELCHECKU1(((src1 >> 7)&1), src21.w));
     pDstImage[dstIdx] = int4_to_uchars(dst1);
     pDstImage[dstIdx+1] = int4_to_uchars(dst2);
 }
@@ -693,7 +689,7 @@ Hip_Or_U1_U8U8(
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx+1]);
     int4 dst1 = make_int4(src10.x|src20.x, src10.y|src20.y, src10.z|src20.z, src10.w|src20.w);
     int4 dst2 = make_int4(src11.x|src21.x, src11.y|src21.y, src11.z|src21.z, src11.w|src21.w);
-    pDstImage[dstIdx] = extractMSB(dst1, dst2);
+    pDstImage[dstIdx] = PIXELCHECKU1(extractMSB(dst1, dst2), 0);
 }
 int HipExec_Or_U1_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -743,7 +739,7 @@ Hip_Or_U1_U8U1(
     int4 src11 = uchars_to_int4(pSrcImage1[src1Idx + 1]);
     unsigned char src2 = pSrcImage2[src2Idx]; 
     unsigned char srcByte = extractMSB(src10, src11);
-    pDstImage[dstIdx] = srcByte | src2;
+    pDstImage[dstIdx] = PIXELCHECKU1(srcByte | src2, 0);
 }
 int HipExec_Or_U1_U8U1(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -792,7 +788,7 @@ Hip_Or_U1_U1U8(
     int4 src20 = uchars_to_int4(pSrcImage2[src2Idx]);
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx+1]);
     unsigned char srcByte = extractMSB(src20, src21);
-    pDstImage[dstIdx] = src1 | srcByte;
+    pDstImage[dstIdx] = PIXELCHECKU1(src1 | srcByte, 0);
 }
 int HipExec_Or_U1_U1U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -933,10 +929,10 @@ Hip_Xor_U8_U8U1(
     int4 src10 = uchars_to_int4(pSrcImage1[src1Idx]);
     int4 src11 = uchars_to_int4(pSrcImage1[src1Idx + 1]);
     int src2 = (int)pSrcImage2[src2Idx];
-    int4 dst1 = make_int4(pixelcheckU1((src2 & 1), 0)^ src10.x, pixelcheckU1(((src2 >> 1)&1), 0) ^ src10.y, 
-                        pixelcheckU1(((src2 >> 2)&1), 0) ^ src10.z, pixelcheckU1(((src2 >> 3)&1), 0) ^ src10.w);
-    int4 dst2 = make_int4(pixelcheckU1(((src2 >> 4) & 1), 0) ^ src11.x, pixelcheckU1(((src2 >> 5)&1), 0) ^ src11.y, 
-                        pixelcheckU1(((src2 >> 6)&1), 0) ^ src11.z, pixelcheckU1(((src2 >> 7)&1), 0) ^ src11.w);
+    int4 dst1 = make_int4(PIXELCHECKU1((src2 & 1), 0)^ src10.x, PIXELCHECKU1(((src2 >> 1)&1), 0) ^ src10.y, 
+                        PIXELCHECKU1(((src2 >> 2)&1), 0) ^ src10.z, PIXELCHECKU1(((src2 >> 3)&1), 0) ^ src10.w);
+    int4 dst2 = make_int4(PIXELCHECKU1(((src2 >> 4) & 1), 0) ^ src11.x, PIXELCHECKU1(((src2 >> 5)&1), 0) ^ src11.y, 
+                        PIXELCHECKU1(((src2 >> 6)&1), 0) ^ src11.z, PIXELCHECKU1(((src2 >> 7)&1), 0) ^ src11.w);
     pDstImage[dstIdx] = int4_to_uchars(dst1);
     pDstImage[dstIdx+1] = int4_to_uchars(dst2);
 
@@ -987,10 +983,10 @@ Hip_Xor_U8_U1U8(
     int src1 = (int)pSrcImage1[src1Idx];
     int4 src20 = uchars_to_int4(pSrcImage2[src2Idx]);
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx + 1]);
-    int4 dst1 = make_int4(pixelcheckU1((src1 & 1), 0 )^ src20.x, pixelcheckU1(((src1 >> 1)&1), 0) ^ src20.y, 
-                        pixelcheckU1(((src1 >> 2)&1), 0) ^ src20.z, pixelcheckU1(((src1 >> 3)&1), 0) ^ src20.w);
-    int4 dst2 = make_int4(pixelcheckU1(((src1 >> 4) & 1), 0) ^ src21.x, pixelcheckU1(((src1 >> 5)&1),0) ^ src21.y, 
-                        pixelcheckU1(((src1 >> 6)&1), 0) ^ src21.z, pixelcheckU1(((src1 >> 7)&1), 0) ^ src21.w);
+    int4 dst1 = make_int4(PIXELCHECKU1((src1 & 1), 0 )^ src20.x, PIXELCHECKU1(((src1 >> 1)&1), 0) ^ src20.y, 
+                        PIXELCHECKU1(((src1 >> 2)&1), 0) ^ src20.z, PIXELCHECKU1(((src1 >> 3)&1), 0) ^ src20.w);
+    int4 dst2 = make_int4(PIXELCHECKU1(((src1 >> 4) & 1), 0) ^ src21.x, PIXELCHECKU1(((src1 >> 5)&1),0) ^ src21.y, 
+                        PIXELCHECKU1(((src1 >> 6)&1), 0) ^ src21.z, PIXELCHECKU1(((src1 >> 7)&1), 0) ^ src21.w);
     pDstImage[dstIdx] = int4_to_uchars(dst1);
     pDstImage[dstIdx+1] = int4_to_uchars(dst2);
 }
@@ -1092,7 +1088,7 @@ Hip_Xor_U1_U8U8(
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx+1]);
     int4 dst1 = make_int4(src10.x^src20.x, src10.y^src20.y, src10.z^src20.z, src10.w^src20.w);
     int4 dst2 = make_int4(src11.x^src21.x, src11.y^src21.y, src11.z^src21.z, src11.w^src21.w);
-    pDstImage[dstIdx] = extractMSB(dst1, dst2);
+    pDstImage[dstIdx] = PIXELCHECKU1(extractMSB(dst1, dst2), 0);
 }
 int HipExec_Xor_U1_U8U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1142,7 +1138,7 @@ Hip_Xor_U1_U8U1(
     int4 src11 = uchars_to_int4(pSrcImage1[src1Idx + 1]);
     unsigned char src2 = pSrcImage2[src2Idx]; 
     unsigned char srcByte = extractMSB(src10, src11);
-    pDstImage[dstIdx] = srcByte ^ src2;
+    pDstImage[dstIdx] = PIXELCHECKU1(srcByte ^ src2, 0);
 }
 int HipExec_Xor_U1_U8U1(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1191,7 +1187,7 @@ Hip_Xor_U1_U1U8(
     int4 src20 = uchars_to_int4(pSrcImage2[src2Idx]);
     int4 src21 = uchars_to_int4(pSrcImage2[src2Idx+1]);
     unsigned char srcByte = extractMSB(src20, src21);
-    pDstImage[dstIdx] = src1 ^ srcByte;
+    pDstImage[dstIdx] = PIXELCHECKU1(src1 ^ srcByte, 0);
 }
 int HipExec_Xor_U1_U1U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -1351,10 +1347,10 @@ Hip_Not_U8_U1(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + (x*2);
     unsigned int srcIdx =  y*(srcImageStrideInBytes) + x;
     unsigned char src = ~ pSrcImage[srcIdx];
-    int4 dst1 = make_int4(pixelcheckU1((src & 1), 0 ), pixelcheckU1(((src >> 1)&1), 0),
-                        pixelcheckU1(((src >> 2)&1), 0), pixelcheckU1(((src >> 3)&1), 0));
-    int4 dst2 = make_int4(pixelcheckU1(((src >> 4)&1), 0), pixelcheckU1(((src >> 5)&1), 0), 
-                        pixelcheckU1(((src >> 6)&1), 0), pixelcheckU1(((src >> 7)&1), 0));
+    int4 dst1 = make_int4(PIXELCHECKU1((src & 1), 0 ), PIXELCHECKU1(((src >> 1)&1), 0),
+                        PIXELCHECKU1(((src >> 2)&1), 0), PIXELCHECKU1(((src >> 3)&1), 0));
+    int4 dst2 = make_int4(PIXELCHECKU1(((src >> 4)&1), 0), PIXELCHECKU1(((src >> 5)&1), 0), 
+                        PIXELCHECKU1(((src >> 6)&1), 0), PIXELCHECKU1(((src >> 7)&1), 0));
     pDstImage[dstIdx] = int4_to_uchars(dst1);
     pDstImage[dstIdx+1] = int4_to_uchars(dst2);
 }
@@ -1406,7 +1402,7 @@ Hip_Not_U1_U8(
     unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + (x*2);
     int4 src10 = uchars_to_int4(pSrcImage[srcIdx]);
     int4 src11 = uchars_to_int4(pSrcImage[srcIdx + 1]);
-    unsigned char src = extractMSB(src10, src11);
+    unsigned char src = PIXELCHECKU1(extractMSB(src10, src11), 0);
     pDstImage[dstIdx] = ~src;
 }
 

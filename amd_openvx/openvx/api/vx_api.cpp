@@ -3071,6 +3071,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
 					status = VX_SUCCESS;
 				}
 				break;
+#elif ENABLE_HIP
+			case VX_NODE_ATTRIBUTE_AMD_HIP_STREAM:
+			if (size == sizeof(hipStream_t)){
+				AgoGraph * graph = (AgoGraph *)node->ref.scope;
+				*(hipStream_t *)ptr = graph->hip_stream0;
+				status = VX_SUCCESS;
+
+			}
+				break;
 #endif
 			default:
 				status = VX_ERROR_NOT_SUPPORTED;

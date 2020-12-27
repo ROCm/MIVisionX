@@ -36,6 +36,9 @@ struct ContrastbatchPDLocalData {
 #if ENABLE_OPENCL
 	cl_mem cl_pSrc;
 	cl_mem cl_pDst;
+#elif ENABLE_HIP
+	void *hip_pSrc;
+	void *hip_pDst;
 #endif 
 };
 
@@ -67,6 +70,9 @@ static vx_status VX_CALLBACK refreshContrastbatchPD(vx_node node, const vx_refer
 #if ENABLE_OPENCL
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
+#elif ENABLE_HIP
+		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pSrc, sizeof(data->hip_pSrc)));
+		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER, &data->hip_pDst, sizeof(data->hip_pDst)));
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -133,6 +139,15 @@ static vx_status VX_CALLBACK processContrastbatchPD(vx_node node, const vx_refer
 			status = rppi_contrast_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
 		}
 		return status;
+#elif ENABLE_HIP
+		refreshContrastbatchPD(node, parameters, num, data);
+		if (df_image == VX_DF_IMAGE_U8 ){ 
+ 			status = rppi_contrast_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
+		}
+		else if(df_image == VX_DF_IMAGE_RGB) {
+			status = rppi_contrast_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->min,data->max,data->nbatchSize,data->rppHandle);
+		}
+		return status;
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -153,12 +168,17 @@ static vx_status VX_CALLBACK initializeContrastbatchPD(vx_node node, const vx_re
 	memset(data, 0, sizeof(*data));
 #if ENABLE_OPENCL
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE, &data->handle.cmdq, sizeof(data->handle.cmdq)));
+#elif ENABLE_HIP
+	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_ATTRIBUTE_AMD_HIP_STREAM, &data->handle.hipstream, sizeof(data->handle.hipstream)));
 #endif
 	STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[7], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 	refreshContrastbatchPD(node, parameters, num, data);
 #if ENABLE_OPENCL
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
 		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.cmdq, data->nbatchSize);
+#elif ENABLE_HIP
+	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
+		rppCreateWithStreamAndBatchSize(&data->rppHandle, data->handle.hipstream, data->nbatchSize);
 #endif
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppCreateWithBatchSize(&data->rppHandle, data->nbatchSize);
@@ -171,7 +191,7 @@ static vx_status VX_CALLBACK uninitializeContrastbatchPD(vx_node node, const vx_
 {
 	ContrastbatchPDLocalData * data; 
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
 		rppDestroyGPU(data->rppHandle);
 #endif
@@ -195,7 +215,7 @@ vx_status ContrastbatchPD_Register(vx_context context)
 	ERROR_CHECK_OBJECT(kernel);
 	AgoTargetAffinityInfo affinity;
 	vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY,&affinity, sizeof(affinity));
-#if ENABLE_OPENCL
+#if ENABLE_OPENCL || ENABLE_HIP
 	// enable OpenCL buffer access since the kernel_f callback uses OpenCL buffers instead of host accessible buffers
 	vx_bool enableBufferAccess = vx_true_e;
 	if(affinity.device_type == AGO_TARGET_AFFINITY_GPU)

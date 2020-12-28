@@ -499,6 +499,18 @@ int HipExec_MeanStdDev_DATA_U8(
         vx_uint32  srcWidth, vx_uint32  srcHeight,
         vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
 	);
+// int HipExec_HistogramFixedBins_DATA_U8(
+// 		vx_uint32     dstHist[],
+// 		vx_uint32     distBinCount,
+// 		vx_uint32     distOffset,
+// 		vx_uint32     distRange,
+// 		vx_uint32     distWindow,
+// 		vx_uint32     srcWidth,
+// 		vx_uint32     srcHeight,
+// 		vx_uint8    * pSrcImage,
+// 		vx_uint32     srcImageStrideInBytes
+// 	);
+
 
 // color_kernels
 
@@ -988,6 +1000,13 @@ int HipExec_HarrisSobel_HG3_U8_7x7(
     );
 
 int HipExec_HarrisScore_HVC_HG3_3x3(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
+    vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
+    vx_float32 sensitivity, vx_float32 strength_threshold,
+    vx_float32 normalization_factor
+    );
+int HipExec_HarrisScore_HVC_HG3_5x5(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
     vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,

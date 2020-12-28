@@ -16796,6 +16796,8 @@ int agoKernel_HarrisScore_HVC_HG3_5x5(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+        | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -16810,6 +16812,22 @@ int agoKernel_HarrisScore_HVC_HG3_5x5(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 2, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 2, 0);
 	}
+#if ENABLE_HIP
+	else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		vx_float32 sensitivity = node->paramList[2]->u.scalar.u.f;
+		vx_int32 gradient_size = node->paramList[4]->u.scalar.u.i;
+		vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+		vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * 3;
+		normFactor = normFactor * normFactor * normFactor * normFactor;
+		if (HipExec_HarrisScore_HVC_HG3_5x5(oImg->u.img.width, oImg->u.img.height, (vx_float32 *)oImg->hip_memory, oImg->u.img.stride_in_bytes,
+			(vx_float32 *)iImg->hip_memory, iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, normFactor)) {
+			status = VX_FAILURE;
+		}
+	}
+#endif
 	return status;
 }
 
@@ -20811,6 +20829,10 @@ int agoKernel_Histogram_DATA_U8(AgoNode * node, AgoKernelCommand cmd)
 		vx_uint32 range = (vx_uint32)oDist->u.dist.range;
 		vx_uint32 window = oDist->u.dist.window;
 		vx_uint32 * histOut = (vx_uint32 *)oDist->buffer;
+		// printf("\nnumbins:%d\n",numbins);
+		// printf("\noffset:%d\n",offset);
+		// printf("\nrange:%d\n",range);
+		// printf("\nwindow:%d\n",window);
 		if (HafCpu_HistogramFixedBins_DATA_U8(histOut, numbins, offset, range, window, iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes)) {
 			status = VX_FAILURE;
 		}
@@ -20824,9 +20846,31 @@ int agoKernel_Histogram_DATA_U8(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
+// #if ENABLE_HIP
+//         | AGO_KERNEL_FLAG_DEVICE_GPU
+// #endif
                     ;
         status = VX_SUCCESS;
     }
+// #if ENABLE_HIP
+// 	if (cmd == ago_kernel_cmd_hip_execute) {
+// 		status = VX_SUCCESS;
+// 		AgoData * oDist = node->paramList[0];
+// 		AgoData * iImg = node->paramList[1];
+// 		vx_uint32 numbins = (vx_uint32) oDist->u.dist.numbins;
+// 		vx_uint32 offset = (vx_uint32)oDist->u.dist.offset;
+// 		vx_uint32 range = (vx_uint32)oDist->u.dist.range;
+// 		vx_uint32 window = oDist->u.dist.window;
+// 		vx_uint32 * histOut = (vx_uint32 *)oDist->buffer;
+// 		printf("\nnumbins:%d\n",numbins);
+// 		printf("\noffset:%d\n",offset);
+// 		printf("\nrange:%d\n",range);
+// 		printf("\nwindow:%d\n",window);
+// 		if (HipExec_HistogramFixedBins_DATA_U8(histOut, numbins, offset, range, window, iImg->u.img.width, iImg->u.img.height, iImg->hip_memory, iImg->u.img.stride_in_bytes)) {
+// 			status = VX_FAILURE;
+// 		}
+// 	}
+// #endif
 	return status;
 }
 

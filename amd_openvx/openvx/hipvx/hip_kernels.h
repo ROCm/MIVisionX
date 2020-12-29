@@ -489,6 +489,11 @@ int HipExec_ThresholdNot_U1_U8_Range(
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         vx_int32 thresholdLower, vx_int32 thresholdUpper
         );
+int HipExec_IntegralImage_U32_U8(
+        vx_uint32 dstWidth, vx_uint32 dstHeight, 
+        vx_uint32 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
+        );
 
 // color_kernels
 

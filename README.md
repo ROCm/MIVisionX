@@ -314,11 +314,11 @@ MIVisionX provides developers with docker images for **Ubuntu** `16.04` / `18.04
 * [CentOS 7.5](https://hub.docker.com/r/mivisionx/centos-7.5)
 * [CentOS 7.6](https://hub.docker.com/r/mivisionx/centos-7.6)
 
-### Docker Workflow Sample on Ubuntu 16.04
+### Docker Workflow Sample on Ubuntu 18.04
 
 #### Prerequisites
 
-* Ubuntu `16.04`
+* Ubuntu `18.04`
 * [rocm supported hardware](https://rocm.github.io/hardware.html)
 
 #### Workflow
@@ -355,13 +355,13 @@ sudo systemctl status docker
 * Step 3 - *Get Docker Image*
 
 ``` 
-sudo docker pull mivisionx/ubuntu-16.04
+sudo docker pull mivisionx/ubuntu-18.04
 ```
 
 * Step 4 - *Run the docker image*
 
 ``` 
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04
 ```
   **Note:** 
   * Map host directory on the docker image
@@ -370,14 +370,14 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
     + use `-v` option with docker run command: `-v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH}`
     + usage:
     ``` 
-    sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
+    sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04
     ```
   
   * Display option with docker
     + Using host display
     ``` 
     xhost +local:root
-    sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --  privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:latest
+    sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --  privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-18.04:latest
     ```
 
     + Test display with MIVisionX sample
@@ -405,7 +405,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.6](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.6)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.8.5`
+* MIVisionX Setup Script - `V1.8.6`
 
 ### Latest Release
 

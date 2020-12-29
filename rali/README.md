@@ -38,11 +38,11 @@ RALI can be currently used to perform the following operations either with rando
 
 ## Prerequisites
 
-*  Ubunto 16.04 or later with
+*  Ubuntu `16.04`/`18.04`/`20.04`
 *  AMD [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp)
 *  OpenVX (including RPP and Media extension)
-*  Boost lib 1.66 or later 
-*  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or later
+*  Boost lib 1.66 or higher 
+*  [Turbo JPEG](https://libjpeg-turbo.org/) version 2.0 or higher
 *  Half float library
 *  jsoncpp library
 *  Google protobuf 3.11.1 or higher
@@ -87,12 +87,14 @@ sudo make install
 ```
 
 ### Jsoncpp installation
-```
+
+``` 
 sudo apt-get install libjsoncpp-dev
 ```
 
 ### LMDB installation
-```
+
+``` 
 sudo apt-get install libgflags-dev libgoogle-glog-dev liblmdb-dev
 
 ```

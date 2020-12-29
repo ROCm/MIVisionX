@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.5"
+__version__ = "1.8.6"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -49,8 +49,8 @@ parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
-parser.add_argument('--rpp',   		type=str, default='0.5',
-                    help='RPP Version - optional (default:0.5)')
+parser.add_argument('--rpp',   		type=str, default='0.6',
+                    help='RPP Version - optional (default:0.6)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
@@ -368,7 +368,7 @@ else:
             #os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
             #os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP
-            #os.system('(cd '+deps_dir+'; git clone -b 0.3 https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
+            #os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
     # Install ffmpeg
     if ffmpegInstall == 'yes':
         if linuxSystemInstall == 'apt-get':

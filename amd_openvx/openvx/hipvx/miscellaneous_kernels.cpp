@@ -69,14 +69,9 @@ int HipExec_ChannelCopy_U8_U8(
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ChannelCopy_U8_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -84,11 +79,6 @@ int HipExec_ChannelCopy_U8_U8(
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, 
                     (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes
                     );
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("HipExec_ChannelCopy_U8_U8U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

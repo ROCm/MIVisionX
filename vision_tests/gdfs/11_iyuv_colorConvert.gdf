@@ -5,3 +5,9 @@ node org.khronos.openvx.color_convert input_iyuv output_iyuv_rgb
 
 data output_iyuv_rgbx = image:1280,720,RGBA:WRITE,openvx_test_results/11_iyuv_color_convert_1280x720.rgbx
 node org.khronos.openvx.color_convert input_iyuv output_iyuv_rgbx
+
+data output_iyuv_nv12 = image:1280,720,NV12:WRITE,openvx_test_results/11_nv12_color_convert_1280x720.yuv
+node org.khronos.openvx.color_convert input_iyuv output_iyuv_nv12
+
+data output_iyuv_yuv4 = image:1280,720,YUV4:WRITE,openvx_test_results/11_yuv4_color_convert_1280x720.yuv
+node org.khronos.openvx.color_convert input_iyuv output_iyuv_yuv4

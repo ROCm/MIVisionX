@@ -8,3 +8,6 @@ node org.khronos.openvx.channel_extract input_rgb !CHANNEL_R channel_r
 
 data channel_g = image:1280,720,U008:WRITE,openvx_test_results/10_rgb_channel_g_extract_1280x720.rgb
 node org.khronos.openvx.channel_extract input_rgb !CHANNEL_G channel_g
+
+data channel_b = image:1280,720,U008:WRITE,openvx_test_results/10_rgb_channel_b_extract_1280x720.rgb
+node org.khronos.openvx.channel_extract input_rgb !CHANNEL_B channel_b

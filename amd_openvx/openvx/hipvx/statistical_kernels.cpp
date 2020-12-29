@@ -29,8 +29,6 @@ THE SOFTWARE.
 
 #define PIXELTHRESHOLDBINARY(pixel, thresholdValue)     ((pixel > thresholdValue) ? 255 : 0)
 #define PIXELTHRESHOLDRANGE(pixel, thresholdLower, thresholdUpper)     ((pixel > thresholdUpper) ? 0 : ((pixel < thresholdLower) ? 0 : 255))
-#define PIXELTHRESHOLDNOTBINARY(pixel, thresholdValue)     ((pixel > thresholdValue) ? 0 : 255)
-#define PIXELTHRESHOLDNOTRANGE(pixel, thresholdLower, thresholdUpper)     ((pixel > thresholdUpper) ? 255 : ((pixel < thresholdLower) ? 255 : 0))
 #define PIXELCHECKU1(pixel) (pixel == (vx_int32)0) ? ((vx_uint32)0) : ((vx_uint32)1)
 
 __device__ __forceinline__ int4 uchars_to_int4(uint src)
@@ -91,6 +89,11 @@ __device__ __forceinline__ void prefixSum(unsigned int* output, unsigned int* in
     if(tdx2p < w) output[w - 1] = last;
 }
 
+__device__ __forceinline__ int pixelcheckU1(uint bit, uint pixel)
+{
+    return (bit ? 255 : pixel);
+}
+
 // ----------------------------------------------------------------------------
 // VxThreshold kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -120,25 +123,15 @@ int HipExec_Threshold_U8_U8_Binary(
     vx_int32 thresholdValue
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U8_U8_Binary,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdValue);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U8_U8_Binary: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -167,25 +160,15 @@ int HipExec_Threshold_U8_U8_Range(
     vx_int32 thresholdLower, vx_int32 thresholdUpper
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U8_U8_Range,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdLower, thresholdUpper);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U8_U8_Range: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -193,19 +176,21 @@ __global__ void __attribute__((visibility("default")))
 Hip_Threshold_U1_U8_Binary(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const unsigned int *pSrcImage, unsigned int srcImageStrideInBytes,
     int thresholdValue
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    int4 src1 = uchars_to_int4(pSrcImage1[src1Idx]);
-    int4 dst = make_int4(PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.x,thresholdValue)),PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.y,thresholdValue)),
-                        PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.z,thresholdValue)),PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.w,thresholdValue)));
-    pDstImage[dstIdx] = int4_to_uchars(dst);
+    if ((x*8 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
+    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + (x*2);
+    int4 src1 = uchars_to_int4(pSrcImage[srcIdx]);
+    int4 src2 = uchars_to_int4(pSrcImage[srcIdx + 1]);
+    pDstImage[dstIdx] =  PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.x,thresholdValue)) | (PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.y,thresholdValue)) << 1) |
+                        (PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.z,thresholdValue)) << 2) | (PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src1.w,thresholdValue)) << 3) |
+                        (PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src2.x,thresholdValue)) << 4) | (PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src2.y,thresholdValue)) << 5) |
+                        (PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src2.z,thresholdValue)) << 6) | (PIXELCHECKU1((int)PIXELTHRESHOLDBINARY(src2.w,thresholdValue)) << 7) ;
 }
 int HipExec_Threshold_U1_U8_Binary(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -214,25 +199,15 @@ int HipExec_Threshold_U1_U8_Binary(
     vx_int32 thresholdValue
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+7)>>3,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U1_U8_Binary,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdValue);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U1_U8_Binary: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -240,19 +215,21 @@ __global__ void __attribute__((visibility("default")))
 Hip_Threshold_U1_U8_Range(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
     unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const unsigned int *pSrcImage, unsigned int srcImageStrideInBytes,
     int thresholdLower, int thresholdUpper
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    int4 src1 = uchars_to_int4(pSrcImage1[src1Idx]);
-    int4 dst = make_int4(PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.x,thresholdLower,thresholdUpper)),PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.y,thresholdLower,thresholdUpper)),
-                        PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.z,thresholdLower,thresholdUpper)),PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.w,thresholdLower,thresholdUpper)));
-    pDstImage[dstIdx] = int4_to_uchars(dst);
+    if ((x*8 >= dstWidth) || (y >= dstHeight)) return;
+    unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
+    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + (x*2);
+    int4 src1 = uchars_to_int4(pSrcImage[srcIdx]);
+    int4 src2 = uchars_to_int4(pSrcImage[srcIdx + 1]);
+    pDstImage[dstIdx] =  PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.x,thresholdLower,thresholdUpper)) | (PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.y,thresholdLower,thresholdUpper)) << 1) |
+                        (PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.z,thresholdLower,thresholdUpper)) << 2) | (PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src1.w,thresholdLower,thresholdUpper)) << 3) |
+                        (PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src2.x,thresholdLower,thresholdUpper)) << 4) | (PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src2.y,thresholdLower,thresholdUpper)) << 5) |
+                        (PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src2.z,thresholdLower,thresholdUpper)) << 6) | (PIXELCHECKU1((int)PIXELTHRESHOLDRANGE(src2.w,thresholdLower,thresholdUpper)) << 7) ;
 }
 int HipExec_Threshold_U1_U8_Range(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
@@ -261,213 +238,114 @@ int HipExec_Threshold_U1_U8_Range(
     vx_int32 thresholdLower, vx_int32 thresholdUpper
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth+7)>>3,   globalThreads_y = dstHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Threshold_U1_U8_Range,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight,
                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdLower, thresholdUpper);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Threshold_U1_U8_Range: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
+// ----------------------------------------------------------------------------
+// VxIntegralImage kernels for hip backend
+// ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// VxHistogram kernels for hip backend
+// ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// VxMeanStdDev kernels for hip backend
+// ----------------------------------------------------------------------------
 __global__ void __attribute__((visibility("default")))
-Hip_ThresholdNot_U8_U8_Binary(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int thresholdValue
+Hip_MinMax_DATA_U8(
+    vx_int32  * pDstMinValue, vx_int32  * pDstMaxValue,
+    vx_uint32  srcWidth, vx_uint32  srcHeight,
+    unsigned char *pSrcImage, vx_uint32 srcImageStrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    int4 src1 = uchars_to_int4(pSrcImage1[src1Idx]);
-    int4 dst = make_int4((int)PIXELTHRESHOLDNOTBINARY(src1.x,thresholdValue),(int)PIXELTHRESHOLDNOTBINARY(src1.y,thresholdValue),
-                        (int)PIXELTHRESHOLDNOTBINARY(src1.z,thresholdValue),(int)PIXELTHRESHOLDNOTBINARY(src1.w,thresholdValue));
-    pDstImage[dstIdx] = int4_to_uchars(dst);
+    if ((x*4 >= srcWidth) || (y >= srcHeight)) return;
+    unsigned int srcIdx =  y*(srcImageStrideInBytes) + (x*4);
+    for(int i=0; i<4; i++)
+    {
+        atomicMin(pDstMinValue, (int)pSrcImage[srcIdx + i]);
+        atomicMax(pDstMaxValue, (int)pSrcImage[srcIdx + i]);
+    }
 }
-int HipExec_ThresholdNot_U8_U8_Binary(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    vx_int32 thresholdValue
+int HipExec_MinMax_DATA_U8(
+    vx_int32    * pHipDstMinValue, vx_int32    * pHipDstMaxValue,
+    vx_uint32     srcWidth,  vx_uint32     srcHeight,
+    vx_uint8    * pHipSrcImage, vx_uint32     srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (srcWidth+3)>>2, globalThreads_y = srcHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_ThresholdNot_U8_U8_Binary,
+    vx_int32 *dstMinVal, *dstMaxVal;
+    hipMalloc((void**)&dstMinVal, sizeof(vx_int32));
+    // hipMemset(dstMinVal, 255, sizeof(vx_int32));
+    hipMalloc((void**)&dstMaxVal, sizeof(vx_int32));
+    // hipMemset(dstMaxVal, 0, sizeof(vx_int32));
+
+    hipLaunchKernelGGL(Hip_MinMax_DATA_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
-                    0, 0, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    thresholdValue);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
+                    0, 0, dstMinVal, dstMaxVal, srcWidth, srcHeight,
+                    (unsigned char*)pHipSrcImage , srcImageStrideInBytes);
 
-    printf("\nHipExec_ThresholdNot_U8_U8_Binary: Kernel time: %f\n", eventMs);
+    hipMemcpyDtoH(pHipDstMinValue, dstMinVal, sizeof(vx_int32));
+    hipMemcpyDtoH(pHipDstMinValue, dstMaxVal, sizeof(vx_int32));
+
     return VX_SUCCESS;
 }
-
+// ----------------------------------------------------------------------------
+// VxMinMax kernels for hip backend
+// ----------------------------------------------------------------------------
 __global__ void __attribute__((visibility("default")))
-Hip_ThresholdNot_U8_U8_Range(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int thresholdLower, int thresholdUpper
+Hip_MeanStdDev_DATA_U8(
+    vx_float32  * pSum, vx_float32  * pSumOfSquared,
+    vx_uint32  srcWidth, vx_uint32  srcHeight,
+    unsigned char *pSrcImage, vx_uint32 srcImageStrideInBytes
 	)
 {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    int4 src1 = uchars_to_int4(pSrcImage1[src1Idx]);
-    int4 dst = make_int4((int)PIXELTHRESHOLDNOTRANGE(src1.x,thresholdLower,thresholdUpper),(int)PIXELTHRESHOLDNOTRANGE(src1.y,thresholdLower,thresholdUpper),
-                        (int)PIXELTHRESHOLDNOTRANGE(src1.z,thresholdLower,thresholdUpper),(int)PIXELTHRESHOLDNOTRANGE(src1.w,thresholdLower,thresholdUpper));
-    pDstImage[dstIdx] = int4_to_uchars(dst);
+    if ((x*4 >= srcWidth) || (y >= srcHeight)) return;
+    unsigned int srcIdx =  y*(srcImageStrideInBytes) + (x*4);
+    for(int i=0; i<4; i++)
+    {
+        atomicAdd(pSum, (float)pSrcImage[srcIdx + i]);
+        atomicAdd(pSumOfSquared, (float)pSrcImage[srcIdx + i] * (float)pSrcImage[srcIdx + i]);
+    }
 }
-int HipExec_ThresholdNot_U8_U8_Range(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    vx_int32 thresholdLower, vx_int32 thresholdUpper
+int HipExec_MeanStdDev_DATA_U8(
+    vx_float32  * pHipSum,  vx_float32  * pHipSumOfSquared,
+    vx_uint32     srcWidth,  vx_uint32     srcHeight,
+    vx_uint8    * pHipSrcImage, vx_uint32     srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    int globalThreads_x = (srcWidth+3)>>2, globalThreads_y = srcHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_ThresholdNot_U8_U8_Range,
+    vx_float32 *Sum, *SumOfSquared;
+    hipMalloc((void**)&Sum, sizeof(vx_float32));
+    hipMalloc((void**)&SumOfSquared, sizeof(vx_float32));
+
+    hipLaunchKernelGGL(Hip_MeanStdDev_DATA_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
-                    0, 0, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    thresholdLower, thresholdUpper);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
+                    0, 0, Sum, SumOfSquared, srcWidth, srcHeight,
+                    (unsigned char*)pHipSrcImage , srcImageStrideInBytes);
 
-    printf("\nHipExec_ThresholdNot_U8_U8_Range: Kernel time: %f\n", eventMs);
-    return VX_SUCCESS;
-}
+    hipMemcpyDtoH(pHipSum, Sum, sizeof(vx_int32));
+    hipMemcpyDtoH(pHipSumOfSquared, SumOfSquared, sizeof(vx_int32));
 
-__global__ void __attribute__((visibility("default")))
-Hip_ThresholdNot_U1_U8_Binary(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int thresholdValue
-	)
-{
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    int4 src1 = uchars_to_int4(pSrcImage1[src1Idx]);
-    int4 dst = make_int4(PIXELCHECKU1((int)PIXELTHRESHOLDNOTBINARY(src1.x,thresholdValue)),PIXELCHECKU1((int)PIXELTHRESHOLDNOTBINARY(src1.y,thresholdValue)),
-                        PIXELCHECKU1((int)PIXELTHRESHOLDNOTBINARY(src1.z,thresholdValue)),PIXELCHECKU1((int)PIXELTHRESHOLDNOTBINARY(src1.w,thresholdValue)));
-    pDstImage[dstIdx] = int4_to_uchars(dst);
-}
-int HipExec_ThresholdNot_U1_U8_Binary(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    vx_int32 thresholdValue
-    )
-{
-    hipEvent_t start, stop;
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
-
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_ThresholdNot_U1_U8_Binary,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, 0, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    thresholdValue);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_ThresholdNot_U1_U8_Binary: Kernel time: %f\n", eventMs);
-    return VX_SUCCESS;
-}
-
-__global__ void __attribute__((visibility("default")))
-Hip_ThresholdNot_U1_U8_Range(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    int thresholdLower, int thresholdUpper
-	)
-{
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    int4 src1 = uchars_to_int4(pSrcImage1[src1Idx]);
-    int4 dst = make_int4(PIXELCHECKU1((int)PIXELTHRESHOLDNOTRANGE(src1.x,thresholdLower,thresholdUpper)),PIXELCHECKU1((int)PIXELTHRESHOLDNOTRANGE(src1.y,thresholdLower,thresholdUpper)),
-                        PIXELCHECKU1((int)PIXELTHRESHOLDNOTRANGE(src1.z,thresholdLower,thresholdUpper)),PIXELCHECKU1((int)PIXELTHRESHOLDNOTRANGE(src1.w,thresholdLower,thresholdUpper)));
-    pDstImage[dstIdx] = int4_to_uchars(dst);
-}
-int HipExec_ThresholdNot_U1_U8_Range(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    vx_int32 thresholdLower, vx_int32 thresholdUpper
-    )
-{
-    hipEvent_t start, stop;
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
-
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
-    hipLaunchKernelGGL(Hip_ThresholdNot_U1_U8_Range,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, 0, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    thresholdLower, thresholdUpper);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_ThresholdNot_U1_U8_Range: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

@@ -9,3 +9,9 @@ node org.khronos.openvx.warp_perspective inter_luma input_matrix !NEAREST_NEIGHB
 
 data output_warp_perspective_bilinear = image:1280,720,U008:WRITE,openvx_test_results/40_warp_perspective_bilinear_1280x720.yuv
 node org.khronos.openvx.warp_perspective inter_luma input_matrix !BILINEAR output_warp_perspective_bilinear
+
+data output_warp_perspective_nearest_constant = image:1280,720,U008:WRITE,openvx_test_results/40_warp_perspective_nearest_constant_1280x720.yuv
+node org.khronos.openvx.warp_perspective inter_luma input_matrix !NEAREST_NEIGHBOR output_warp_perspective_nearest_constant attr:BORDER_MODE:CONSTANT,0
+
+data output_warp_perspective_bilinear_constant = image:1280,720,U008:WRITE,openvx_test_results/40_warp_perspective_bilinear_constant_1280x720.yuv
+node org.khronos.openvx.warp_perspective inter_luma input_matrix !BILINEAR output_warp_perspective_bilinear_constant attr:BORDER_MODE:CONSTANT,0

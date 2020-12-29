@@ -2209,7 +2209,7 @@ int HipExec_ColorConvert_YUV4_RGB(
 )
 {
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight);
     hipLaunchKernelGGL(Hip_ColorConvert_YUV4_RGB,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -2345,7 +2345,7 @@ int HipExec_ColorConvert_YUV4_RGBX(
     )
 {
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight+3)>>1;
+    int globalThreads_x = (dstWidth+3)>>1, globalThreads_y = (dstHeight);
 
     //printf("\ndstWidth = %d, dstHeight = %d\ndstYImageStrideInBytes = %d, dstUImageStrideInBytes = %d, dstVImageStrideInBytes = %d srcImageStrideInBytes = %d\n", dstWidth, dstHeight, dstYImageStrideInBytes, dstUImageStrideInBytes, dstVImageStrideInBytes, srcImageStrideInBytes);
 

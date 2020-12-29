@@ -66,7 +66,6 @@ int HipExec_Remap_U8_U8_Nearest(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     ago_coord2d_ushort_t *map, vx_uint32 mapStrideInBytes)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -116,21 +115,17 @@ int HipExec_Remap_U8_U8_Nearest(
 
     float *remapTable_float = (float*) Remap_remapTable_coordinates2df;
 
-    printf("\n\n");
+    /*printf("\n\n");
     for (int i = 0; i < (dstWidth * dstHeight * 2); i+=2)
     {
         printf("%0.1f,%0.1f  ", remapTable_float[i+1], remapTable_float[i]);
     }
-    printf("\n\n");
+    printf("\n\n");*/
 
     vx_uint32 bufferSize = dstWidth * dstHeight * 64;
     vx_uint8 *hipRemapTable_float;
     hipMalloc(&hipRemapTable_float, bufferSize);
     hipMemcpy(hipRemapTable_float, remapTable_float, bufferSize, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Remap_U8_U8_Nearest,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -139,12 +134,8 @@ int HipExec_Remap_U8_U8_Nearest(
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipRemapTable_float, mapStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipRemapTable_float);
 
-    printf("\nHipExec_Remap_U8_U8_Nearest: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -192,7 +183,6 @@ int HipExec_Remap_U8_U8_Bilinear(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     ago_coord2d_ushort_t *map, vx_uint32 mapStrideInBytes)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -242,21 +232,17 @@ int HipExec_Remap_U8_U8_Bilinear(
 
     float *remapTable_float = (float*) Remap_remapTable_coordinates2df;
 
-    printf("\n\n");
+    /*printf("\n\n");
     for (int i = 0; i < (dstWidth * dstHeight * 2); i+=2)
     {
         printf("%0.1f,%0.1f  ", remapTable_float[i+1], remapTable_float[i]);
     }
-    printf("\n\n");
+    printf("\n\n");*/
 
     vx_uint32 bufferSize = dstWidth * dstHeight * 64;
     vx_uint8 *hipRemapTable_float;
     hipMalloc(&hipRemapTable_float, bufferSize);
     hipMemcpy(hipRemapTable_float, remapTable_float, bufferSize, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Remap_U8_U8_Bilinear,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -265,12 +251,7 @@ int HipExec_Remap_U8_U8_Bilinear(
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipRemapTable_float, mapStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipRemapTable_float);
-
-    printf("\nHipExec_Remap_U8_U8_Bilinear: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -310,7 +291,6 @@ int HipExec_WarpAffine_U8_U8_Nearest(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     ago_affine_matrix_t *affineMatrix)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -325,10 +305,6 @@ int HipExec_WarpAffine_U8_U8_Nearest(
     vx_uint8 *hipAffineMatrix_float;
     hipMalloc(&hipAffineMatrix_float, 192);
     hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Nearest,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -337,12 +313,8 @@ int HipExec_WarpAffine_U8_U8_Nearest(
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipAffineMatrix_float);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipAffineMatrix_float);
 
-    printf("\nHipExec_WarpAffine_U8_U8_Nearest: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -380,7 +352,6 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(
     ago_affine_matrix_t *affineMatrix, 
     vx_uint8 border)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -395,10 +366,6 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(
     vx_uint8 *hipAffineMatrix_float;
     hipMalloc(&hipAffineMatrix_float, 192);
     hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Nearest_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -408,12 +375,8 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipAffineMatrix_float,
                        border);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipAffineMatrix_float);
 
-    printf("\nHipExec_WarpAffine_U8_U8_Nearest_Constant: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -461,7 +424,6 @@ int HipExec_WarpAffine_U8_U8_Bilinear(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     ago_affine_matrix_t *affineMatrix)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -476,10 +438,6 @@ int HipExec_WarpAffine_U8_U8_Bilinear(
     vx_uint8 *hipAffineMatrix_float;
     hipMalloc(&hipAffineMatrix_float, 192);
     hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Bilinear,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -488,12 +446,7 @@ int HipExec_WarpAffine_U8_U8_Bilinear(
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipAffineMatrix_float);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipAffineMatrix_float);
-
-    printf("\nHipExec_WarpAffine_U8_U8_Bilinear: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -543,7 +496,6 @@ int HipExec_WarpAffine_U8_U8_Bilinear_Constant(
     ago_affine_matrix_t *affineMatrix, 
     vx_uint8 border)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -558,10 +510,6 @@ int HipExec_WarpAffine_U8_U8_Bilinear_Constant(
     vx_uint8 *hipAffineMatrix_float;
     hipMalloc(&hipAffineMatrix_float, 192);
     hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Bilinear_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -571,12 +519,8 @@ int HipExec_WarpAffine_U8_U8_Bilinear_Constant(
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipAffineMatrix_float, 
                        border);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipAffineMatrix_float);
 
-    printf("\nHipExec_WarpAffine_U8_U8_Bilinear_Constant: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -618,7 +562,6 @@ int HipExec_WarpPerspective_U8_U8_Nearest(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     ago_perspective_matrix_t *perspectiveMatrix)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -636,10 +579,6 @@ int HipExec_WarpPerspective_U8_U8_Nearest(
     vx_uint8 *hipPerspectiveMatrix_float;
     hipMalloc(&hipPerspectiveMatrix_float, 288);
     hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Nearest,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -648,12 +587,7 @@ int HipExec_WarpPerspective_U8_U8_Nearest(
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipPerspectiveMatrix_float);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipPerspectiveMatrix_float);
-
-    printf("\nHipExec_WarpPerspective_U8_U8_Nearest: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -693,7 +627,6 @@ int HipExec_WarpPerspective_U8_U8_Nearest_Constant(
     ago_perspective_matrix_t *perspectiveMatrix, 
     vx_uint8 border)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -711,10 +644,6 @@ int HipExec_WarpPerspective_U8_U8_Nearest_Constant(
     vx_uint8 *hipPerspectiveMatrix_float;
     hipMalloc(&hipPerspectiveMatrix_float, 288);
     hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Nearest_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -724,12 +653,8 @@ int HipExec_WarpPerspective_U8_U8_Nearest_Constant(
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipPerspectiveMatrix_float, 
                        border);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipPerspectiveMatrix_float);
 
-    printf("\nHipExec_WarpPerspective_U8_U8_Nearest_Constant: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -778,7 +703,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     ago_perspective_matrix_t *perspectiveMatrix)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -796,10 +720,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear(
     vx_uint8 *hipPerspectiveMatrix_float;
     hipMalloc(&hipPerspectiveMatrix_float, 288);
     hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Bilinear,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -808,12 +728,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear(
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipPerspectiveMatrix_float);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    hipFree(&hipPerspectiveMatrix_float);
-
-    printf("\nHipExec_WarpPerspective_U8_U8_Bilinear: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -864,7 +778,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
     ago_perspective_matrix_t *perspectiveMatrix, 
     vx_uint8 border)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
@@ -882,10 +795,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
     vx_uint8 *hipPerspectiveMatrix_float;
     hipMalloc(&hipPerspectiveMatrix_float, 288);
     hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Bilinear_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -895,12 +804,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes, 
                        (const float *)hipPerspectiveMatrix_float, 
                        border);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    hipFree(&hipPerspectiveMatrix_float);
-
-    printf("\nHipExec_WarpPerspective_U8_U8_Bilinear_Constant: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -933,7 +836,6 @@ int HipExec_ScaleImage_U8_U8_Nearest(
     const ago_scale_matrix_t *matrix
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
@@ -942,10 +844,6 @@ int HipExec_ScaleImage_U8_U8_Nearest(
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Nearest,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -954,11 +852,6 @@ int HipExec_ScaleImage_U8_U8_Nearest(
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes, 
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_ScaleImage_U8_U8_Nearest: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1008,7 +901,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear(
     const ago_scale_matrix_t *matrix
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
@@ -1017,10 +909,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear(
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1029,11 +917,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear(
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes, 
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_ScaleImage_U8_U8_Bilinear: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1094,7 +977,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
     const ago_scale_matrix_t *matrix
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
@@ -1103,10 +985,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Replicate,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1115,11 +993,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes, 
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_ScaleImage_U8_U8_Bilinear_Replicate: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1188,7 +1061,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Constant(
     const vx_uint8 border
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
@@ -1197,10 +1069,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Constant(
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Constant,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1210,11 +1078,6 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Constant(
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
                     border);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_ScaleImage_U8_U8_Bilinear_Constant: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1259,7 +1122,6 @@ int HipExec_ScaleImage_U8_U8_Area(
     const ago_scale_matrix_t *matrix
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
@@ -1268,10 +1130,6 @@ int HipExec_ScaleImage_U8_U8_Area(
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1280,11 +1138,6 @@ int HipExec_ScaleImage_U8_U8_Area(
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes, 
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_ScaleImage_U8_U8_Area: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1331,7 +1184,6 @@ int HipExec_ScaleGaussianHalf_U8_U8_3x3(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
@@ -1345,10 +1197,6 @@ int HipExec_ScaleGaussianHalf_U8_U8_3x3(
     hipMalloc(&hipGaussian, 288);
     hipMemcpy(hipGaussian, gaussian, 288, hipMemcpyHostToDevice);
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ScaleGaussianHalf_U8_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1358,13 +1206,9 @@ int HipExec_ScaleGaussianHalf_U8_U8_3x3(
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
                     (const float *)hipGaussian);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    
+
     hipFree(&hipGaussian);
 
-    printf("\nHipExec_ScaleGaussianHalf_U8_U8_3x3: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -1447,7 +1291,6 @@ int HipExec_ScaleGaussianHalf_U8_U8_5x5(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
     float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
@@ -1467,10 +1310,6 @@ int HipExec_ScaleGaussianHalf_U8_U8_5x5(
     hipMalloc(&hipGaussian, 800);
     hipMemcpy(hipGaussian, gaussian, 800, hipMemcpyHostToDevice);
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_ScaleGaussianHalf_U8_U8_5x5,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1480,12 +1319,5 @@ int HipExec_ScaleGaussianHalf_U8_U8_5x5(
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
                     (const float *)hipGaussian);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    
-    hipFree(&hipGaussian);
-
-    printf("\nHipExec_ScaleGaussianHalf_U8_U8_5x5: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }

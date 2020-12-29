@@ -76,25 +76,15 @@ int HipExec_Box_U8_U8_3x3(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - 2;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Box_U8_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight - 2,
                     (unsigned char *)pHipDstImage + dstImageStrideInBytes , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Box_U8_U8_3x3: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -131,25 +121,15 @@ int HipExec_Dilate_U8_U8_3x3(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - 2;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Dilate_U8_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight - 2,
                     (unsigned char *)pHipDstImage + dstImageStrideInBytes , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Dilate_U8_U8_3x3: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -186,25 +166,15 @@ int HipExec_Erode_U8_U8_3x3(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - 2;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Erode_U8_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight - 2,
                     (unsigned char *)pHipDstImage + dstImageStrideInBytes , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Erode_U8_U8_3x3: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -263,25 +233,15 @@ int HipExec_Median_U8_U8_3x3(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - 2;
 
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Median_U8_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, 0, dstWidth, dstHeight - 2,
                     (unsigned char *)pHipDstImage + dstImageStrideInBytes , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    printf("\nHipExec_Median_U8_U8_3x3: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -319,7 +279,6 @@ int HipExec_Gaussian_U8_U8_3x3(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - 2;
 
@@ -327,10 +286,6 @@ int HipExec_Gaussian_U8_U8_3x3(
     float *hipGaussian;
     hipMalloc(&hipGaussian, 288);
     hipMemcpy(hipGaussian, gaussian, 288, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Gaussian_U8_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -338,12 +293,8 @@ int HipExec_Gaussian_U8_U8_3x3(
                     (unsigned char *)pHipDstImage + dstImageStrideInBytes , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes,
                     (const float *)hipGaussian);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipGaussian);
 
-    printf("\nHipExec_Gaussian_U8_U8_3x3: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -405,7 +356,6 @@ int HipExec_Convolve_U8_U8(
     const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight
     )
 {
-    hipEvent_t start, stop;
     int bound = convolutionHeight / 2;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - (2 * bound);
@@ -413,10 +363,6 @@ int HipExec_Convolve_U8_U8(
     float *hipConv;
     hipMalloc(&hipConv, 16 * convolutionWidth * convolutionHeight);
     hipMemcpy(hipConv, conv, 16 * convolutionWidth * convolutionHeight, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Convolve_U8_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -424,12 +370,7 @@ int HipExec_Convolve_U8_U8(
                     (unsigned char *)pHipDstImage + (bound * dstImageStrideInBytes) , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
                     (const short int *)hipConv, convolutionWidth, convolutionHeight);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipConv);
-
-    printf("\nHipExec_Convolve_U8_U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -492,7 +433,7 @@ int HipExec_Convolve_S16_U8(
     const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight
     )
 {
-    hipEvent_t start, stop;
+
     int bound = convolutionHeight / 2;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
@@ -500,10 +441,6 @@ int HipExec_Convolve_S16_U8(
     float *hipConv;
     hipMalloc(&hipConv, 16 * convolutionWidth * convolutionHeight);
     hipMemcpy(hipConv, conv, 16 * convolutionWidth * convolutionHeight, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Convolve_S16_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -511,12 +448,6 @@ int HipExec_Convolve_S16_U8(
                     (short int *)pHipDstImage + (bound * dstImageStrideInBytes>>1) , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
                     (const short int *)hipConv, convolutionWidth, convolutionHeight);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    hipFree(&hipConv);
-
-    printf("\nHipExec_Convolve_S16_U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -571,7 +502,6 @@ int HipExec_Sobel_S16S16_U8_3x3_GXY(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
 
@@ -582,10 +512,6 @@ int HipExec_Sobel_S16S16_U8_3x3_GXY(
     hipMalloc(&hipGy, 144);
     hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Sobel_S16S16_U8_3x3_GXY,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -594,13 +520,9 @@ int HipExec_Sobel_S16S16_U8_3x3_GXY(
                     (short int *)pHipDstImage2 + (dstImage2StrideInBytes>>1) , dstImage2StrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes,
                     (const short int *)hipGx, (const short int *)hipGy);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipGx);
     hipFree(&hipGy);
 
-    printf("\nHipExec_Sobel_S16S16_U8_3x3_GXY: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -640,7 +562,6 @@ int HipExec_Sobel_S16_U8_3x3_GX(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
 
@@ -648,10 +569,6 @@ int HipExec_Sobel_S16_U8_3x3_GX(
     short int *hipGx;
     hipMalloc(&hipGx, 144);
     hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Sobel_S16_U8_3x3_GX,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -659,12 +576,7 @@ int HipExec_Sobel_S16_U8_3x3_GX(
                     (short int *)pHipDstImage + (dstImageStrideInBytes>>1) , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes,
                     (const short int *)hipGx);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipGx);
-
-    printf("\nHipExec_Sobel_S16_U8_3x3_GX: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 
@@ -704,7 +616,6 @@ int HipExec_Sobel_S16_U8_3x3_GY(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
 
@@ -712,10 +623,6 @@ int HipExec_Sobel_S16_U8_3x3_GY(
     short int *hipGy;
     hipMalloc(&hipGy, 144);
     hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_Sobel_S16_U8_3x3_GY,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -723,11 +630,7 @@ int HipExec_Sobel_S16_U8_3x3_GY(
                     (short int *)pHipDstImage + (dstImageStrideInBytes>>1) , dstImageStrideInBytes, 
                     (const unsigned char *)pHipSrcImage + srcImageStrideInBytes, srcImageStrideInBytes,
                     (const short int *)hipGy);
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
     hipFree(&hipGy);
 
-    printf("\nHipExec_Sobel_S16_U8_3x3_GY: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }

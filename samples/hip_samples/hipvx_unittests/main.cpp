@@ -770,6 +770,13 @@ int main(int argc, const char ** argv)
 	vx_float32 Mul_scale_float = (vx_float32) (1.0 / 16.0);
 	vx_scalar Mul_scale_scalar = vxCreateScalar(context, VX_TYPE_FLOAT32, (void*) &Mul_scale_float);
 
+	//Histogram Distribution parameters
+	vx_size Dist_Number_of_Bins = 2;
+	vx_int32 Dist_Offset = 0;
+	vx_uint32 Dist_Range = 255;
+	vx_distribution Histogram_Distribution = vxCreateDistribution(context, Dist_Number_of_Bins, Dist_Offset,Dist_Range ); //Same parameters as gdf
+
+
 	/*Threshold Params*/
 	vx_int32 Threshold_thresholdValue_int32 = (vx_int32) 100;
 	vx_int32 Threshold_thresholdLower_int32 = (vx_int32) 100;
@@ -2310,7 +2317,7 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
+					expected_image_sum = (pix_img1_u8 >= 255) ? (54 + 99 + 255) * width * height
 										: (pix_img1_u8 == 254) ? (236 + 139) * width * height
 										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
 					out_buf_type = 4;
@@ -2338,7 +2345,11 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((pix_img1_u8 + 1) * (width ) * (height)) + ((pix_img1_u8 + 2) * (width ) * (height)); 
+					
+					expected_image_sum = (pix_img1_u8 >= 255) ? (255 + 0 + 1) * width * height
+										: (pix_img1_u8 == 254) ? (254 + 255 + 0) * width * height
+										: (pix_img1_u8 + (pix_img1_u8+1) + (pix_img1_u8+2)) * width * height ;
+								
 					out_buf_type = 4;
 					break;
 				}
@@ -2350,7 +2361,9 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((pix_img1_u8 + 1) * (width ) * (height)) + ((pix_img1_u8 + 2) * (width ) * (height)); 
+					expected_image_sum = (pix_img1_u8 >= 255) ? (255 + 0 + 1) * width * height
+										: (pix_img1_u8 == 254) ? (254 + 255 + 0) * width * height
+										: (pix_img1_u8 + (pix_img1_u8+1) + (pix_img1_u8+2)) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -2362,7 +2375,9 @@ int main(int argc, const char ** argv)
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_YUV4);
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + (2 *(pix_img1_u8 + 1) * (width ) * (height)) ; 
+					expected_image_sum = (pix_img1_u8 >= 255) ? (255 + 0 + 0) * width * height
+										: (pix_img1_u8 == 254) ? (254 + 255 + 255) * width * height
+										: (pix_img1_u8 + (pix_img1_u8+1) + (pix_img1_u8+1)) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -2811,6 +2826,14 @@ int main(int argc, const char ** argv)
 					out_buf_type = -1;
 					break;
 				}
+					case 215:
+				{
+				// case 215 - agoKernel_Histogram_DATA_U8
+				img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+				node = vxHistogramNode(graph, img1, Histogram_Distribution);
+				out_buf_type = 10;
+				break;
+				}
 				case 217:
 				{
 					// test_case_name = "agoKernel_MeanStdDev_DATA_U8";
@@ -2965,7 +2988,7 @@ int main(int argc, const char ** argv)
 					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) ||
 					(case_number == 208) || (case_number == 217) || (case_number == 223) || (case_number == 225) || 
 					(case_number == 226) || (case_number == 227) || (case_number == 228) || (case_number == 229) || 
-					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) 
+					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) || (case_number == 215)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -4457,7 +4480,7 @@ int main(int argc, const char ** argv)
 					node = vxColorConvertNode(graph, img1, img_out);
 					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
 										: (pix_img1_u8 == 254) ? (236 + 139) * width * height
-										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
+										: (pix_img1_u8 + 128 + 127 ) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4479,7 +4502,9 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV12, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((pix_img1_u8 + 1) * (width ) * (height)) + ((pix_img1_u8 + 2) * (width ) * (height)); 
+					expected_image_sum = (pix_img1_u8 >= 255) ? (255 + 0 + 1) * width * height
+										: (pix_img1_u8 == 254) ? (254 + 255 + 0) * width * height
+										: (pix_img1_u8 + (pix_img1_u8+1) + (pix_img1_u8+2)) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4489,7 +4514,9 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_NV21, hip_addr_uint8_nv12_nv21_in, nv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + ((pix_img1_u8 + 1) * (width ) * (height)) + ((pix_img1_u8 + 2) * (width ) * (height)); 
+					expected_image_sum = (pix_img1_u8 >= 255) ? (255 + 0 + 1) * width * height
+										: (pix_img1_u8 == 254) ? (254 + 255 + 0) * width * height
+										: (pix_img1_u8 + (pix_img1_u8+1) + (pix_img1_u8+2)) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4499,7 +4526,9 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_IYUV, hip_addr_uint8_iyuv_in, iyuv_in, VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
-					expected_image_sum = (pix_img1_u8 * width * height) + (2 *(pix_img1_u8 + 1) * (width ) * (height)) ; 
+					expected_image_sum = (pix_img1_u8 >= 255) ? (255 + 0 + 0) * width * height
+										: (pix_img1_u8 == 254) ? (254 + 255 + 255) * width * height
+										: (pix_img1_u8 + (pix_img1_u8+1) + (pix_img1_u8+1)) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4945,6 +4974,14 @@ int main(int argc, const char ** argv)
 					out_buf_type = -1;
 					break;
 				}
+				case 215:
+				{
+					// test_case_name - agoKernel_Histogram_DATA_U8
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					node = vxHistogramNode(graph, img1, Histogram_Distribution);
+					out_buf_type = 10;
+					break;
+				}
 				case 217:
 				{
 					// test_case_name = "agoKernel_MeanStdDev_DATA_U8";
@@ -5025,7 +5062,7 @@ int main(int argc, const char ** argv)
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
 					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) ||
-					(case_number == 208) || (case_number == 217) || (case_number == 223) || (case_number == 225) || 
+					(case_number == 208) || (case_number == 215)|| (case_number == 217) || (case_number == 223) || (case_number == 225) || 
 					(case_number == 226) || (case_number == 227) || (case_number == 228) || (case_number == 229) || 
 					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) 
 				)
@@ -5160,8 +5197,29 @@ int main(int argc, const char ** argv)
 			for (int j = 0; j < widthOut; j++)
 				returned_image_sum += out_buf_uint8[i * stride_y_pixels + j * stride_x_pixels];
 	}
+		if (out_buf_type == 10)
+	{
+		printf("INTO OUT BUF TYPE )");
+		vx_map_id map1;
+        int32_t* hptr1 = NULL;
+		const vx_enum mem_type = VX_MEMORY_TYPE_HOST;
+		const vx_bitfield flags = 0;
+        int32_t hist1[2];
+		// int32_t nbins =2;
+        int equal = 0;
+		ERROR_CHECK_STATUS(vxMapDistribution(Histogram_Distribution, &map1, (void**)& hptr1, VX_WRITE_ONLY, mem_type, flags));
+		// memcpy(hist1, hptr1, nbins*sizeof(hist1[0]));
+		for (int i=0;i<Dist_Number_of_Bins;i++)
+		{
+			printf("Hist:%d",hptr1[i]);
+			// hptr1++;
+		}
+		ERROR_CHECK_STATUS(vxUnmapDistribution(Histogram_Distribution, map1));
+
+		
+	}
 	// for uint8 outputs of half the dimensions of width of input image
-	if (out_buf_type == 2)
+else if (out_buf_type == 2)
 	{
 		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect_half, 0, &out_map_id, &out_addr, (void **)&out_buf_uint8, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
 		stride_x_bytes = out_addr.stride_x;
@@ -5337,7 +5395,7 @@ int main(int argc, const char ** argv)
 		(case_number == 208) || (case_number == 217) || (case_number == 218) || (case_number == 223) || 
 		(case_number == 224) || (case_number == 225) || (case_number == 226) || (case_number == 227) || 
 		(case_number == 228) || (case_number == 229) || (case_number == 230) || (case_number == 231) || 
-		(case_number == 232) || (case_number == 233)
+		(case_number == 232) || (case_number == 233) || (case_number == 215)
 	)
 	{
 		printf("\nTEST PASSED: Sum verification overridden due to hard calculation. Manually verified. Not an exact pixel-to-pixel match.\n");

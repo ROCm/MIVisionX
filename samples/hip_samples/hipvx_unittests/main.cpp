@@ -2326,8 +2326,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_STATUS(vxGetStatus((vx_reference)img_out));
 					node = vxColorConvertNode(graph, img1, img_out);
 					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
-										: (pix_img1_u8 == 254) ? (236 + 139 + 1) * width * height
-										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
+										: (pix_img1_u8 == 254) ? (236 + 0 + 139) * width * height
+										: (pix_img1_u8 + 128 + 127 ) * width * height ;
 					out_buf_type = 4;
 					break;
 				}
@@ -4505,8 +4505,8 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_YUV4, hip_addr_uint8_yuv4_in, yuv4_in, VX_MEMORY_TYPE_HIP));
 					node = vxColorConvertNode(graph, img1, img_out);
 					expected_image_sum = (pix_img1_u8 == 255) ? (54 + 99 + 255) * width * height
-										: (pix_img1_u8 == 254) ? (236 + 139 + 1) * width * height
-										: (pix_img1_u8 + 1 + 129 + 127 ) * width * height ;
+										: (pix_img1_u8 == 254) ? (236 + 0 + 139) * width * height
+										: (pix_img1_u8 + 128 + 127 ) * width * height ;
 					out_buf_type = 4;
 					break;
 				}

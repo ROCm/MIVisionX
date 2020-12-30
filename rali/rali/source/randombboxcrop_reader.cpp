@@ -199,7 +199,8 @@ void RandomBBoxCropReader::read_all()
         crop_box.w = _crop_width_val[i];
         crop_box.x = _x1_val[i];
         crop_box.y = _y1_val[i];
-        // _total_num_of_attempts = 10;
+        if(_total_num_of_attempts == 0)
+            _total_num_of_attempts = 10;
         // Got BBOX Information of the image, try to get a crop
         while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
         {
@@ -209,15 +210,6 @@ void RandomBBoxCropReader::read_all()
             // _no_crop = option.first;
             min_iou = option.second;
             //sample_option = 0;
-            if (_no_crop)
-            {
-                // std::cerr<<"\n Coming to no crop";
-                crop_box.x = 0;
-                crop_box.y = 0;
-                crop_box.h = in_height[i] - 1;
-                crop_box.w = in_width[i] - 1;
-                break;
-            }
 
             if (_has_shape)
             {
@@ -260,7 +252,6 @@ void RandomBBoxCropReader::read_all()
             crop_box.x = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.w));
             crop_box.y = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.h));
             bool entire_iou = !_overlap_iou; //
-            _all_boxes_overlap = false; // for checking
             if (_all_boxes_overlap)
             {
                 // std::cerr<<"\n Coming to _all_boxes_overlap";
@@ -321,6 +312,15 @@ void RandomBBoxCropReader::read_all()
             if (valid_bbox_count == 0)
                 continue;
             crop_success = true;
+        if (_no_crop)
+            {
+                // std::cerr<<"\n Coming to no crop";
+                crop_box.x = 0;
+                crop_box.y = 0;
+                crop_box.h = in_height[i] - 1;
+                crop_box.w = in_width[i] - 1;
+                break;
+            }
         }                                   // while loop
         if(!crop_success)
         {

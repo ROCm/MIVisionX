@@ -384,7 +384,7 @@ Hip_IntegralImage_U32_U8_PrefixSumRowsTrans(
 __global__ void __attribute__((visibility("default")))
 Hip_IntegralImage_U32_U8_Transpose(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
+    unsigned int *pDstImage, unsigned int  dstImageHeightStrideInPixels,
     unsigned int *pSrcImage, unsigned int srcImageStrideInBytes
 	)
 {
@@ -401,7 +401,7 @@ Hip_IntegralImage_U32_U8_Transpose(
     y = hipBlockIdx_x * hipBlockDim_x + hipThreadIdx_y;
     if((x < dstHeight) && (y < dstWidth))
     {
-        int id_out = y * dstHeight + x;
+        int id_out = y * dstImageHeightStrideInPixels + x;
         pDstImage[id_out] = temp[hipThreadIdx_x][hipThreadIdx_y];
     }
 }
@@ -411,7 +411,6 @@ int HipExec_IntegralImage_U32_U8(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
     )
 {
-    hipEvent_t start, stop;
     int localThreads_x_ConvertDepth = 16, localThreads_y_ConvertDepth = 16;
     int globalThreads_x_ConvertDepth = dstWidth,   globalThreads_y_ConvertDepth = dstHeight;
     
@@ -434,11 +433,6 @@ int HipExec_IntegralImage_U32_U8(
     hipMemset(pHipDstImageBuffer, 0, (dstHeight + 1) * dstImageBufferStrideInBytes * sizeof(unsigned int));
     hipMemset(pHipDstImageBufferT, 0, (dstHeight + 1) * dstImageBufferStrideInBytes * sizeof(unsigned int));
     
-    printf("\n\ndstImageBufferStrideInBytes, dstImageStrideInBytes, srcImageStrideInBytes = %d, %d, %d", dstImageBufferStrideInBytes, dstImageStrideInBytes, srcImageStrideInBytes);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
     hipLaunchKernelGGL(Hip_IntegralImage_U32_U8_ConvertDepth,
                 dim3(ceil((float)globalThreads_x_ConvertDepth/localThreads_x_ConvertDepth), ceil((float)globalThreads_y_ConvertDepth/localThreads_y_ConvertDepth)),
                 dim3(localThreads_x_ConvertDepth, localThreads_y_ConvertDepth),
@@ -459,10 +453,10 @@ int HipExec_IntegralImage_U32_U8(
                     dim3(localThreads_x_Transpose1, localThreads_y_Transpose1),
                     0, 0, 
                     dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImageBufferT, dstImageStrideInBytes, 
+                    (unsigned int *)pHipDstImageBufferT, dstHeight, 
                     (unsigned int *)pHipDstImageBuffer, dstImageStrideInBytes);
     hipDeviceSynchronize();
-    hipMemset(pHipDstImageBuffer, 0, (dstHeight + 1) * sizeof(int));
+    hipMemset(pHipDstImageBuffer, 0, (dstHeight + 1) * dstImageBufferStrideInBytes * sizeof(int));
     hipLaunchKernelGGL(Hip_IntegralImage_U32_U8_PrefixSumRowsTrans,
                     dim3(ceil((float)globalThreads_x_PrefixSumRowsTrans/localThreads_x_PrefixSumRowsTrans), ceil((float)globalThreads_y_PrefixSumRowsTrans/localThreads_y_PrefixSumRowsTrans)),
                     dim3(localThreads_x_PrefixSumRowsTrans, localThreads_y_PrefixSumRowsTrans),
@@ -476,19 +470,13 @@ int HipExec_IntegralImage_U32_U8(
                     dim3(localThreads_x_Transpose2, localThreads_y_Transpose2),
                     0, 0, 
                     dstHeight+1, dstWidth+1, 
-                    (unsigned int *)pHipDstImageBufferT, dstImageBufferStrideInBytes, 
+                    (unsigned int *)pHipDstImage, dstImageStrideInBytes>>2, 
                     (unsigned int *)pHipDstImageBuffer, (vx_uint32)((dstHeight+1)*sizeof(unsigned int)));
     hipDeviceSynchronize();
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-
-    // hipMemcpy(pHipDstImage, pHipDstImageBuffer, dstHeight * dstImageStrideInBytes * sizeof(unsigned int), hipMemcpyDeviceToDevice);
-    hipMemcpy(pHipDstImage, pHipDstImageBufferT, dstHeight * dstImageStrideInBytes * sizeof(unsigned int), hipMemcpyDeviceToDevice);
+    // hipMemcpy(pHipDstImage, pHipDstImageBufferT, dstHeight * dstImageStrideInBytes * sizeof(unsigned int), hipMemcpyDeviceToDevice);
     hipFree(&pHipDstImageBuffer);
     hipFree(&pHipDstImageBufferT);
 
-    printf("\nHipExec_IntegralImage_U32_U8: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

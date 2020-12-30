@@ -251,16 +251,9 @@ int HipExec_Threshold_U1_U8_Range(
 }
 
 // ----------------------------------------------------------------------------
-// VxIntegralImage kernels for hip backend
+// VxMinMaxLoc kernels for hip backend
 // ----------------------------------------------------------------------------
 
-// ----------------------------------------------------------------------------
-// VxHistogram kernels for hip backend
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// VxMeanStdDev kernels for hip backend
-// ----------------------------------------------------------------------------
 __global__ void __attribute__((visibility("default")))
 Hip_MinMax_DATA_U8(
     vx_int32  * pDstMinValue, vx_int32  * pDstMaxValue,
@@ -305,8 +298,9 @@ int HipExec_MinMax_DATA_U8(
     return VX_SUCCESS;
 }
 // ----------------------------------------------------------------------------
-// VxMinMax kernels for hip backend
+// VxMeanStdDev kernels for hip backend
 // ----------------------------------------------------------------------------
+
 __global__ void __attribute__((visibility("default")))
 Hip_MeanStdDev_DATA_U8(
     vx_float32  * pSum, vx_float32  * pSumOfSquared,
@@ -349,54 +343,9 @@ int HipExec_MeanStdDev_DATA_U8(
     return VX_SUCCESS;
 }
 
-
 // ----------------------------------------------------------------------------
 // VxIntegralImage kernels for hip backend
 // ----------------------------------------------------------------------------
-
-// __global__ void __attribute__((visibility("default")))
-// Hip_IntegralImage_U32_U8(
-//     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-//     unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-//     const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes
-// 	)
-// {
-//     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-//     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-//     if ((x >= dstWidth) || (y >= dstHeight)) return;
-//     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-//     unsigned int srcIdx =  y*srcImageStrideInBytes + x;
-//     // pDstImage[dstIdx] = (unsigned int) pSrcImage[srcIdx];
-//     pDstImage[dstIdx] = (unsigned int) 5;
-// }
-// int HipExec_IntegralImage_U32_U8(
-//     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-//     vx_uint32 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-//     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-//     )
-// {
-//     hipEvent_t start, stop;
-//     int localThreads_x = 16, localThreads_y = 16;
-//     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-
-//     printf("\nsdstImageStrideInBytes, srcImageStrideInBytes = %d, %d", dstImageStrideInBytes, srcImageStrideInBytes);
-//     hipEventCreate(&start);
-//     hipEventCreate(&stop);
-//     float eventMs = 1.0f;
-//     hipEventRecord(start, NULL);
-//     hipLaunchKernelGGL(Hip_IntegralImage_U32_U8,
-//                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-//                     dim3(localThreads_x, localThreads_y),
-//                     0, 0, dstWidth, dstHeight,
-//                     (unsigned int *)pHipDstImage , dstImageStrideInBytes, 
-//                     (const unsigned char *)pHipSrcImage, srcImageStrideInBytes);
-//     hipEventRecord(stop, NULL);
-//     hipEventSynchronize(stop);
-//     hipEventElapsedTime(&eventMs, start, stop);
-
-//     printf("\nHipExec_IntegralImage_U32_U8: Kernel time: %f\n", eventMs);
-//     return VX_SUCCESS;
-// }
 
 __global__ void __attribute__((visibility("default")))
 Hip_IntegralImage_U32_U8_ConvertDepth(
@@ -411,37 +360,24 @@ Hip_IntegralImage_U32_U8_ConvertDepth(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
     unsigned int srcIdx =  y*srcImageStrideInBytes + x;
     pDstImage[dstIdx] = (unsigned int) pSrcImage[srcIdx];
-    // pDstImage[dstIdx] = (unsigned int) 5;
 }
 __global__ void __attribute__((visibility("default")))
 Hip_IntegralImage_U32_U8_PrefixSumRows(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
+    unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
     unsigned int *pSrcImage, unsigned int srcImageStrideInBytes
 	)
 {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + x;
-    // pDstImage[dstIdx] = (unsigned int) 5;
     int row = hipBlockIdx_y;
-    prefixSum(pDstImage+row*dstWidth, pSrcImage+row*dstWidth, dstWidth, 2*hipBlockDim_x );
+    prefixSum(pDstImage+row*(dstImageStrideInBytes>>2), pSrcImage+row*(srcImageStrideInBytes>>2), dstWidth, 2*hipBlockDim_x );
 }
 __global__ void __attribute__((visibility("default")))
 Hip_IntegralImage_U32_U8_PrefixSumRowsTrans(
     vx_uint32 dstWidth, vx_uint32 dstHeight, 
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
+    unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
     unsigned int *pSrcImage, unsigned int srcImageStrideInBytes
 	)
 {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + x;
-    // pDstImage[dstIdx] = (unsigned int) 5;
     int row = hipBlockIdx_y;
     prefixSum(pDstImage+row*(dstWidth+1), pSrcImage+row*dstWidth, dstWidth, 2*hipBlockDim_x );
 }
@@ -457,7 +393,7 @@ Hip_IntegralImage_U32_U8_Transpose(
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if((x < dstWidth) && (y < dstHeight))
     {
-        int id_in = y * dstWidth + x;
+        int id_in = y * (srcImageStrideInBytes>>2) + x;
         temp[hipThreadIdx_y][hipThreadIdx_x] = pSrcImage[id_in];
     }
     __syncthreads();
@@ -515,7 +451,7 @@ int HipExec_IntegralImage_U32_U8(
                     dim3(localThreads_x_PrefixSumRows, localThreads_y_PrefixSumRows),
                     2 * sizeof(int) * localThreads_x_PrefixSumRows, 0, 
                     dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImageBuffer, dstImageBufferStrideInBytes, 
+                    (unsigned int *)pHipDstImageBuffer, dstImageStrideInBytes, 
                     (unsigned int *)pHipDstImage, dstImageStrideInBytes);
     hipDeviceSynchronize();
     hipLaunchKernelGGL(Hip_IntegralImage_U32_U8_Transpose,
@@ -523,33 +459,31 @@ int HipExec_IntegralImage_U32_U8(
                     dim3(localThreads_x_Transpose1, localThreads_y_Transpose1),
                     0, 0, 
                     dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImageBufferT, dstImageBufferStrideInBytes, 
-                    (unsigned int *)pHipDstImageBuffer, dstImageBufferStrideInBytes);
+                    (unsigned int *)pHipDstImageBufferT, dstImageStrideInBytes, 
+                    (unsigned int *)pHipDstImageBuffer, dstImageStrideInBytes);
     hipDeviceSynchronize();
-    
     hipMemset(pHipDstImageBuffer, 0, (dstHeight + 1) * sizeof(int));
-
     hipLaunchKernelGGL(Hip_IntegralImage_U32_U8_PrefixSumRowsTrans,
                     dim3(ceil((float)globalThreads_x_PrefixSumRowsTrans/localThreads_x_PrefixSumRowsTrans), ceil((float)globalThreads_y_PrefixSumRowsTrans/localThreads_y_PrefixSumRowsTrans)),
                     dim3(localThreads_x_PrefixSumRowsTrans, localThreads_y_PrefixSumRowsTrans),
                     2 * sizeof(int) * localThreads_x_PrefixSumRowsTrans, 0, 
-                    dstWidth, dstHeight,
+                    dstHeight, dstWidth, 
                     (unsigned int *)pHipDstImageBuffer, dstImageBufferStrideInBytes, 
-                    (unsigned int *)pHipDstImageBufferT, dstImageBufferStrideInBytes);
+                    (unsigned int *)pHipDstImageBufferT, dstImageStrideInBytes);
     hipDeviceSynchronize();
     hipLaunchKernelGGL(Hip_IntegralImage_U32_U8_Transpose,
                     dim3(ceil((float)globalThreads_x_Transpose2/localThreads_x_Transpose2), ceil((float)globalThreads_y_Transpose2/localThreads_y_Transpose2)),
                     dim3(localThreads_x_Transpose2, localThreads_y_Transpose2),
                     0, 0, 
-                    dstWidth+1, dstHeight+1,
+                    dstHeight+1, dstWidth+1, 
                     (unsigned int *)pHipDstImageBufferT, dstImageBufferStrideInBytes, 
-                    (unsigned int *)pHipDstImageBuffer, dstImageBufferStrideInBytes);
+                    (unsigned int *)pHipDstImageBuffer, (vx_uint32)((dstHeight+1)*sizeof(unsigned int)));
     hipDeviceSynchronize();
-
     hipEventRecord(stop, NULL);
     hipEventSynchronize(stop);
     hipEventElapsedTime(&eventMs, start, stop);
 
+    // hipMemcpy(pHipDstImage, pHipDstImageBuffer, dstHeight * dstImageStrideInBytes * sizeof(unsigned int), hipMemcpyDeviceToDevice);
     hipMemcpy(pHipDstImage, pHipDstImageBufferT, dstHeight * dstImageStrideInBytes * sizeof(unsigned int), hipMemcpyDeviceToDevice);
     hipFree(&pHipDstImageBuffer);
     hipFree(&pHipDstImageBufferT);
@@ -558,17 +492,8 @@ int HipExec_IntegralImage_U32_U8(
     return VX_SUCCESS;
 }
 
-
 // ----------------------------------------------------------------------------
 // VxHistogram kernels for hip backend
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// VxMeanStdDev kernels for hip backend
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// VxMinMax kernels for hip backend
 // ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
@@ -579,12 +504,5 @@ int HipExec_IntegralImage_U32_U8(
 // VxHistogramMerge kernels for hip backend
 // ----------------------------------------------------------------------------
 
-// ----------------------------------------------------------------------------
-// VxMeanStdDevMerge kernels for hip backend
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// VxMinMaxLoc kernels for hip backend
-// ----------------------------------------------------------------------------
 
 

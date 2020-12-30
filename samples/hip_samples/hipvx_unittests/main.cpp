@@ -709,7 +709,8 @@ int main(int argc, const char ** argv)
 	vx_int32 pix_img2_s16 = (vx_int32) PIXELCHECKS16(pix_img2);
 	vx_uint8 *out_buf_uint8;
 	vx_int16 *out_buf_int16;
-	vx_uint32 out_buf_type;  // (0 - Output type U8 / 1 - Output type S16)
+	vx_uint32 *out_buf_uint32;
+	vx_uint32 out_buf_type;  // (0 - U8 / 1 - S16 / 2 - U8(half of input dim) / 3 - Packed(RGB,RGBX,YUYV,UYVY) / 4 - Planar(NV12,NV21,IYUV) / 5 - U1 / 6 - U32)
 	vx_int32 expected_image_sum, returned_image_sum;
 	vx_uint32 stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels;
 
@@ -1971,13 +1972,6 @@ int main(int argc, const char ** argv)
 					// test_case_name = "agoKernel_Threshold_U8_U8_Binary";
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-					// vx_threshold_type_e thresholdType = VX_THRESHOLD_TYPE_BINARY;
-					// vx_df_image_e thresholdInputImageFormat = VX_DF_IMAGE_U8;
-					// vx_df_image_e thresholdOutputImageFormat = VX_DF_IMAGE_U8;
-					// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE, (void*) &Threshold_thresholdValue_int32, (vx_size)sizeof(vx_int32)));
-					// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_TYPE, (void*) &thresholdType, (vx_size)sizeof(vx_threshold_type_e)));
-					// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_INPUT_FORMAT, (void*) &thresholdInputImageFormat, (vx_size)sizeof(vx_df_image_e)));
-					// ERROR_CHECK_STATUS(vxSetThresholdAttribute(Threshold_thresholdObjectBinary_threshold, VX_THRESHOLD_OUTPUT_FORMAT, (void*) &thresholdOutputImageFormat, (vx_size)sizeof(vx_df_image_e)));
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold, img_out);
 					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * width * height;
 					out_buf_type = 0;
@@ -2826,13 +2820,23 @@ int main(int argc, const char ** argv)
 					out_buf_type = -1;
 					break;
 				}
-					case 215:
+				case 214:
 				{
-				// case 215 - agoKernel_Histogram_DATA_U8
-				img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
-				node = vxHistogramNode(graph, img1, Histogram_Distribution);
-				out_buf_type = 10;
-				break;
+					// test_case_name = "agoKernel_IntegralImage_U32_U8";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, widthOut, heightOut, VX_DF_IMAGE_U32);
+					node = vxIntegralImageNode(graph, img1, img_out);
+					expected_image_sum = 0;
+					out_buf_type = 6;
+					break;
+				}
+				case 215:
+				{
+					// case 215 - agoKernel_Histogram_DATA_U8
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxHistogramNode(graph, img1, Histogram_Distribution);
+					out_buf_type = 10;
+					break;
 				}
 				case 217:
 				{
@@ -2986,7 +2990,7 @@ int main(int argc, const char ** argv)
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
 					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) ||
-					(case_number == 208) || (case_number == 217) || (case_number == 223) || (case_number == 225) || 
+					(case_number == 208) || (case_number == 214) || (case_number == 217) || (case_number == 223) || (case_number == 225) || 
 					(case_number == 226) || (case_number == 227) || (case_number == 228) || (case_number == 229) || 
 					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) || (case_number == 215)
 				)
@@ -3123,6 +3127,16 @@ int main(int argc, const char ** argv)
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_int16.stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_int16.stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_int16.stride_y));
+
+		vx_imagepatch_addressing_t hip_addr_uint32 = {0};
+		hip_addr_uint32.dim_x = width;
+		hip_addr_uint32.dim_y = height;
+		hip_addr_uint32.stride_x = 4;
+		hip_addr_uint32.stride_y = ((width+3)&~3)*4;
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_uint32.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_uint32.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_uint32.stride_y));
+		ERROR_CHECK_HIP_STATUS(hipMemset(ptr[2], 0, height * hip_addr_uint32.stride_y));
 
 		vx_imagepatch_addressing_t hip_addr_uint8_u1 = {0};
 		hip_addr_uint8_u1.dim_x = width;
@@ -4974,6 +4988,16 @@ int main(int argc, const char ** argv)
 					out_buf_type = -1;
 					break;
 				}
+				case 214:
+				{
+					// test_case_name = "agoKernel_IntegralImage_U32_U8";
+					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8, &ptr[0], VX_MEMORY_TYPE_HIP));
+					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U32, &hip_addr_uint32, &ptr[2], VX_MEMORY_TYPE_HIP));
+					node = vxIntegralImageNode(graph, img1, img_out);
+					expected_image_sum = 0;
+					out_buf_type = 6;
+					break;
+				}
 				case 215:
 				{
 					// test_case_name - agoKernel_Histogram_DATA_U8
@@ -5062,7 +5086,8 @@ int main(int argc, const char ** argv)
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
 					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) ||
-					(case_number == 208) || (case_number == 215)|| (case_number == 217) || (case_number == 223) || (case_number == 225) || 
+					(case_number == 208) || (case_number == 214) || (case_number == 215) || (case_number == 217) || 
+					(case_number == 223) || (case_number == 225) || 
 					(case_number == 226) || (case_number == 227) || (case_number == 228) || (case_number == 229) || 
 					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) 
 				)
@@ -5370,6 +5395,30 @@ else if (out_buf_type == 2)
 			for (int j = 0; j < widthOut; j++)
 				returned_image_sum += out_buf_uint8[i * stride_y_pixels + j];
 	}
+
+	// for uint32 outputs
+	else if (out_buf_type == 6)
+	{
+		ERROR_CHECK_STATUS(vxMapImagePatch(img_out, &out_rect, 0, &out_map_id, &out_addr, (void **)&out_buf_uint32, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, VX_NOGAP_X));
+		stride_x_bytes = out_addr.stride_x;
+		stride_x_pixels = stride_x_bytes / sizeof(vx_uint32);
+		stride_y_bytes = out_addr.stride_y;
+		stride_y_pixels = stride_y_bytes / sizeof(vx_uint32);
+#ifdef PRINT_OUTPUT
+		printf("\nOutput Image: ");
+		printf("width = %d, height = %d\nstride_x_bytes = %d, stride_y_bytes = %d | stride_x_pixels = %d, stride_y_pixels = %d\n", widthOut, heightOut, stride_x_bytes, stride_y_bytes, stride_x_pixels, stride_y_pixels);
+		printf("dim_x: %d dim_y: %d\nscale_x: %d scale_y: %d\nstep_x: %d step_y: %d\n",out_addr.dim_x, out_addr.dim_y,out_addr.scale_x, out_addr.scale_y,out_addr.step_x, out_addr.step_y);
+		printImage(out_buf_uint32, stride_x_pixels, stride_y_pixels, widthOut, heightOut);
+		printf("Output Buffer: ");
+		printBuffer(out_buf_uint32, widthOut, heightOut);
+		// printBufferBits(out_buf_uint8, width * height); // To print output interms of bits
+#endif
+		for (int i = 0; i < heightOut; i++)
+			for (int j = 0; j < widthOut; j++)
+				returned_image_sum += out_buf_uint32[i * stride_y_pixels + j * stride_x_pixels];
+	}
+
+
 	// else if(out_buf_type == 6)
 	// {
 	// 	vx_size i, stride = sizeof(vx_keypoint_t);

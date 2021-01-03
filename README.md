@@ -97,9 +97,9 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ### Hardware
 
-* CPU: [64-bit SSE4.2 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
-* GPU: [GFX7 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
-* APU: [Carrizo or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
+* **CPU**: [64-bit SSE4.2 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
+* **GPU**: [GFX7 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
+* **APU**: [Carrizo or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
 
   **Note:** Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
 
@@ -168,6 +168,10 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
   * ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
   * use `X Window` / `X11` for remote GUI app control 
 
+### macOS
+
+macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
+
 ## Build & Install MIVisionX
 
 ### Windows
@@ -191,13 +195,13 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
 * [ROCm supported hardware](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * On `Ubuntu`
-``` 
-sudo apt-get install mivisionx
-```
+  ``` 
+  sudo apt-get install mivisionx
+  ```
 * On `CentOS`
-``` 
-sudo yum install mivisionx
-```
+  ``` 
+  sudo yum install mivisionx
+  ```
 
   **Note:**
   * `vx_winml` is not supported on `linux`
@@ -214,43 +218,25 @@ sudo yum install mivisionx
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * Use the below commands to set up and build MIVisionX
 
-``` 
-git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-cd MIVisionX
-```
+  ``` 
+  git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+  cd MIVisionX
+  ```
 
-``` 
-python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --opencv    [OpenCV Version - optional (default:3.4.0)]
-                          --miopen    [MIOpen Version - optional (default:2.5.0)]
-                          --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
-                          --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                          --rpp       [RPP Version - optional (default:0.6)]
-                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
-                          --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
-                          --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
-                          --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
-```
+  ``` 
+  python MIVisionX-setup.py
+  ```
 
   **Note:** use `--installer yum` for **CentOS**
 
-``` 
-mkdir build
-cd build
-cmake ../
-make -j8
-sudo make install
-```
-
-**Note:**
-
-* vx_winml is not supported on Linux
-* the installer will copy
-  + executables into `/opt/rocm/mivisionx/bin` 
-  + libraries into `/opt/rocm/mivisionx/lib`
-  + OpenVX and module header files into `/opt/rocm/mivisionx/include`
-  + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+  ``` 
+  mkdir build
+  cd build
+  cmake ../
+  make -j8
+  sudo make install
+  ```
+  **Note:** vx_winml is not supported on Linux
 
 ## Verify the Installation
 
@@ -267,21 +253,21 @@ sudo make install
 
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
   
-``` 
+  ``` 
   export PATH=$PATH:/opt/rocm/mivisionx/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
   runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
-```
-**Note:** More samples are available [here](samples#samples)
+  ```
+  **Note:** More samples are available [here](samples#samples)
 
 ### Windows
 
 * MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
 
-``` 
-./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
-```
+  ``` 
+  ./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
+  ```
 
 ## Docker
 

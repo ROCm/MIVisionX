@@ -4,7 +4,9 @@
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 
-MIVisionX Lite toolkit is a set of comprehensive computer vision, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™ 1.0.1</a>. The toolkit allows for rapid prototyping and deployment of optimized computer vision workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+**MIVisionX Lite** toolkit is a set of comprehensive computer vision, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™ 1.0.1</a>. The toolkit allows for rapid prototyping and deployment of optimized computer vision workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
+
+## Table of Contents
 
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
@@ -45,54 +47,59 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 * [RunCL](utilities/runcl/README.md#amd-runcl): command-line utility to build, execute, and debug OpenCL programs
 
 ## Prerequisites
-* CPU: [SSE4.1 or above CPU, 64-bit](https://rocm.github.io/hardware.html)
-* GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
-* APU: Carrizo or above [optional]
 
-**Note:** Some modules in MIVisionX can be built for CPU only. To take advantage of advanced features and modules we recommend using AMD GPUs or AMD APUs.
+### Hardware
+
+* **CPU**: [64-bit SSE4.2 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
+* **GPU**: [GFX7 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
+* **APU**: [Carrizo or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
+
+  **Note:** Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
+
+### Operating System
 
 ### Windows
 * Windows 10
 * Windows SDK
 * Visual Studio 2017 and above
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
-* Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
-* Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* **Optional:** Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
+* **Optional:** Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   * Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
 ### MacOS
-* [Homebrew](https://brew.sh)
-* CMake - `brew install cmake`
-* **Optional:** Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* **Optional:** Install [OpenCL](https://support.apple.com/en-us/HT202823)
+* Install [Homebrew](https://brew.sh)
+* Install CMake - `brew install cmake`
+* **Optional:** Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0) - `brew install opencv@3`
+* **Optional:** Install [Apple OpenCL](https://developer.apple.com/opencl/) for your [device](https://support.apple.com/en-us/HT202823)
 
 ### Linux
-* Install [ROCm OpenCL](https://rocm.github.io/ROCmInstall.html) 
 * CMake 2.8 or newer [download](http://cmake.org/download/)
-* [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
+* **Optional:** Install [ROCm OpenCL](https://rocm.github.io/ROCmInstall.html) 
+* **Optional:** [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   
 #### Prerequisites setup script - `MIVisionX-Lite-setup.py`
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
-
-**MIVisionX-Lite-setup.py** builds all the prerequisites required by MIVisionX. The setup script creates a deps folder and installs all the prerequisites, this script only needs to be executed once. If the directory option is not given, the script will install the deps folder in the home directory(~/) by default, else in the user-specified location.
+  **NOTE:** This script only needs to be executed once. 
 
 ##### Prerequisites for running the script
-1. Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`
-2. X Window
-3. [ROCm supported hardware](https://rocm.github.io/hardware.html)
-4. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
+* Linux distribution
+  + Ubuntu - `16.04` / `18.04` / `20.04`
+  + CentOS - `7` / `8`
+* [ROCm supported hardware](https://rocm.github.io/hardware.html)
+* [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
 
-**usage:**
-````
-python MIVisionX-Lite-setup.py --directory [setup directory - optional]
-                               --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                               --reinstall [Remove previous setup and reinstall - optional (default:no)[options:yes/no]]
-````
+  **usage:**
+  ```
+  python MIVisionX-Lite-setup.py --directory [setup directory - optional]
+                                 --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                                 --reinstall [Remove previous setup and reinstall - optional (default:no)[options:yes/no]]
+  ```
 
-**Note:** use `--installer yum` for **CentOS**
-**Note:** Upgrade ROCm with `sudo apt upgrade`
+  **Note:** use `--installer yum` for **CentOS**
+  **Note:** **Upgrade ROCm** with `sudo apt upgrade`
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 
@@ -100,63 +107,49 @@ python MIVisionX-Lite-setup.py --directory [setup directory - optional]
 
 ### Windows
 
-#### Using `Visual Studio 2017` on 64-bit `Windows 10`
+#### Using `Visual Studio`
 * Install [Windows Prerequisites](#windows)
 * Use `MIVisionX-Lite.sln` to build for x64 platform
 
 ### MacOS
-#### Using `MIVisionX-Lite-setup.py` and `CMake` on MacOS
 
-* Install [Homebrew](https://brew.sh)
-* CMake - `brew install cmake`
-* Git - `brew install git`
+#### Using `CMake`
+* Install [macOS Prerequisites](#macos)
+* Use the below commands to set up and build MIVisionX
 
-````
-git clone -b openvx-1.0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-cd MIVisionX
-````
-
-```
-python MIVisionX-Lite-setup.py
-```
-
-````
-mkdir build
-cd build
-cmake ../
-make -j8
-sudo make install
-````
+  ```
+  git clone -b openvx-1.0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+  cd MIVisionX && mkdir build && cd build
+  cmake ../
+  make -j8
+  sudo make install
+  ```
 
 ### Linux
 
-#### Using `MIVisionX-Lite-setup.py` and `CMake` on Linux (Ubuntu `16.04`/`18.04` or CentOS `7.5`/`7.6`) with ROCm
+#### Using `MIVisionX-Lite-setup.py`
 
 * Install [ROCm OpenCL](https://rocm.github.io/ROCmInstall.html)
 * Use the below commands to set up and build MIVisionX
 
-````
-git clone -b openvx-1.0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-cd MIVisionX
-````
+  ```
+  git clone -b openvx-1.0.1 https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+  cd MIVisionX
+  python MIVisionX-Lite-setup.py 
+  ```
+  **Note:** Use `--installer yum` for **CentOS**
 
-```
-python MIVisionX-Lite-setup.py --directory [setup directory - optional]
-                               --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                               --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
-```
-**Note:** Use `--installer yum` for **CentOS**
-
-````
-mkdir build
-cd build
-cmake ../
-make -j8
-sudo make install
-````
+  ```
+  mkdir build && cd build
+  cmake ../
+  make -j8
+  sudo make install
+  ```
   **Note:**
-   * the installer will copy all executables into `/opt/rocm/mivisionx_lite/bin` and libraries into `/opt/rocm/mivisionx_lite/lib`
-   * the installer also copies all the OpenVX and module header files into `/opt/rocm/mivisionx_lite/include` folder
+   * the installer will copy 
+     + executables into `/opt/rocm/mivisionx_lite/bin` 
+     + libraries into `/opt/rocm/mivisionx_lite/lib`
+     + OpenVX and module header files into `/opt/rocm/mivisionx_lite/include`
 
 ## Verify the Installation
 
@@ -166,23 +159,23 @@ sudo make install
 * Apps, Samples, & Documents are placed into `/opt/rocm/mivisionx_lite`
 * Run samples to verify the installation
 
-  * **Canny Edge Detection**
+  **Canny Edge Detection**
   
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
   
-  ````
+  ```
   export PATH=$PATH:/opt/rocm/mivisionx_lite/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx_lite/lib
   runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
-  ````
-**Note:** More samples are available [here](samples#samples)
+  ```
+  **Note:** More samples are available [here](samples#samples)
 
 ### Windows
 * MIVisionX-Lite.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
-```
-./runvx.exe file PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
-```
+  ```
+  ./runvx.exe file PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
+  ```
 
 ## Docker
 
@@ -260,12 +253,16 @@ runvx file /opt/rocm/mivisionx_lite/samples/gdf/canny.gdf
 
 ### Known issues
 * Package (.deb & .rpm) install requires **OpenCV `v3.4.0`** to execute AMD OpenCV extensions
-* ROCm `3.0` and above has known to slow down OpenCL kernels.
-* OpenCL from ROCm 3.3 and beyond has - cl_version.h: CL_TARGET_OPENCL_VERSION is not defined warning
+* If OpenCL failure occurs on macOS, set environment variable to run on CPU by default
+  ```
+  export AGO_DEFAULT_TARGET=CPU
+  ```
 
 ### Tested configurations
 * Windows 10
-* Linux: Ubuntu - `16.04`/`18.04` & CentOS - `7.5`/`7.6`
+* Linux distribution
+  + **Ubuntu** - `16.04` / `18.04` / `20.04`
+  + **CentOS** - `7` / `8`
 * macOS 
 * ROCm: rocm-opencl-dev - `2.0.20191`
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)

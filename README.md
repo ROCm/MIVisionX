@@ -61,7 +61,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 ### Windows
 * Windows 10
 * Windows SDK
-* Visual Studio 2017 and above
+* Visual Studio 2017 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * **Optional:** Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
 * **Optional:** Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
@@ -75,7 +75,7 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
 * **Optional:** Install [Apple OpenCL](https://developer.apple.com/opencl/) for your [device](https://support.apple.com/en-us/HT202823)
 
 ### Linux
-* CMake 2.8 or newer [download](http://cmake.org/download/)
+* CMake 2.8 or later [download](http://cmake.org/download/)
 * **Optional:** Install [ROCm OpenCL](https://rocm.github.io/ROCmInstall.html) 
 * **Optional:** [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   * Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
@@ -147,18 +147,14 @@ For the convenience of the developer, we here provide the setup script which wil
   make -j8
   sudo make install
   ```
-  **Note:**
-   * the installer will copy 
-     + executables into `/opt/rocm/mivisionx_lite/bin` 
-     + libraries into `/opt/rocm/mivisionx_lite/lib`
-     + OpenVX and module header files into `/opt/rocm/mivisionx_lite/include`
 
 ## Verify the Installation
 
 ### Linux & MacOS
-* The installer will copy all executables into `/opt/rocm/mivisionx_lite/bin` and libraries into `/opt/rocm/mivisionx_lite/lib`
-* The installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx_lite/include` folder
-* Apps, Samples, & Documents are placed into `/opt/rocm/mivisionx_lite`
+* The installer will copy 
+  + Executables into `/opt/rocm/mivisionx_lite/bin` 
+  + Libraries into `/opt/rocm/mivisionx_lite/lib`
+  + OpenVX and module header files into `/opt/rocm/mivisionx_lite/include`
 * Run samples to verify the installation
 
   **Canny Edge Detection**
@@ -189,10 +185,10 @@ MIVisionX provides developers with docker images for Ubuntu 16.04, Ubuntu 18.04,
 * [CentOS 7.5](https://hub.docker.com/r/mivisionx/centos-7.5)
 * [CentOS 7.6](https://hub.docker.com/r/mivisionx/centos-7.6)
 
-### Docker Workflow Sample on Ubuntu 16.04
+### Docker Workflow Sample on Ubuntu 18.04
 
 #### Prerequisites
-* Ubuntu `16.04`
+* Ubuntu `18.04`
 * [rocm supported hardware](https://rocm.github.io/hardware.html)
 
 #### Workflow
@@ -224,25 +220,25 @@ sudo systemctl status docker
 
 * Step 3 - *Get Docker Image*
 ````
-sudo docker pull mivisionx/ubuntu-16.04
+sudo docker pull mivisionx/ubuntu-18.04
 ````
 
 * Step 4 - *Run the docker image*
 ````
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04
 ````
   * Optional: Map localhost directory on the docker image
     * option to map the localhost directory with trained caffe models to be accessed on the docker image.
     * usage: -v {LOCAL_HOST_DIRECTORY_PATH}:{DOCKER_DIRECTORY_PATH} 
 ````
-sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-16.04
+sudo docker run -it -v /home/:/root/hostDrive/ --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host mivisionx/ubuntu-18.04
 ````
 
 **Note:** **Display option with docker**
 * Using host display
 ````
 xhost +local:root
-sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-16.04:latest
+sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --device=/dev/mem --group-add video --network host --env DISPLAY=unix$DISPLAY --privileged --volume $XAUTH:/root/.Xauthority --volume /tmp/.X11-unix/:/tmp/.X11-unix mivisionx/ubuntu-18.04:latest
 ````
 * Test display with MIVisionX sample
 ````

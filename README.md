@@ -116,11 +116,15 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
+### macOS
+
+macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
+
 ### Linux
 
 * Linux distribution
-  + Ubuntu - `16.04` / `18.04` / `20.04`
-  + CentOS - `7` / `8`
+  + **Ubuntu** - `16.04` / `18.04` / `20.04`
+  + **CentOS** - `7` / `8`
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html) 
 * CMake 2.8 or newer [download](http://cmake.org/download/)
 * ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
@@ -137,7 +141,7 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-**NOTE:** This script only needs to be executed once. 
+  **NOTE:** This script only needs to be executed once. 
 
 ##### Prerequisites for running the script
 
@@ -147,30 +151,25 @@ For the convenience of the developer, we here provide the setup script which wil
 * [ROCm supported hardware](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
 * [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 
-**usage:**
+  **usage:**
 
-``` 
-python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --opencv    [OpenCV Version - optional (default:3.4.0)]
-                          --miopen    [MIOpen Version - optional (default:2.5.0)]
-                          --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
-                          --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                          --rpp       [RPP Version - optional (default:0.6)]
-                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
-                          --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
-                          --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
-                          --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
-```
-
-  **Note:**
-  * use `--installer yum` for **CentOS**
-  * ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
-  * use `X Window` / `X11` for remote GUI app control 
-
-### macOS
-
-macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
+  ``` 
+  python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
+                            --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                            --opencv    [OpenCV Version - optional (default:3.4.0)]
+                            --miopen    [MIOpen Version - optional (default:2.5.0)]
+                            --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
+                            --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
+                            --rpp       [RPP Version - optional (default:0.6)]
+                            --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
+                            --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
+                            --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
+                            --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
+  ```
+    **Note:**
+    * use `--installer yum` for **CentOS**
+    * **ROCm upgrade** with `sudo apt upgrade` requires the setup script **rerun**.
+    * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding) 
 
 ## Build & Install MIVisionX
 
@@ -249,7 +248,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   + Apps, Samples, Documents, Model Compiler, and Toolkit are placed into `/opt/rocm/mivisionx`
 * Run the below sample to verify the installation
 
-**Canny Edge Detection**
+  **Canny Edge Detection**
 
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
   

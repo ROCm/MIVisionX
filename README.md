@@ -6,6 +6,8 @@
 
 MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF™</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
+## Table of Contents
+
 * [AMD OpenVX](#amd-openvx)
 * [AMD OpenVX Extensions](#amd-openvx-extensions)
   + [360 Video Stitch Extension](amd_openvx_extensions/amd_loomsl)
@@ -93,26 +95,37 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ## Prerequisites
 
-* CPU: [SSE4.1 or above CPU, 64-bit](https://rocm.github.io/hardware.html)
-* GPU: [GFX7 or above](https://rocm.github.io/hardware.html) [optional]
-* APU: Carrizo or above [optional]
+### Hardware
+
+* **CPU**: [64-bit SSE4.2 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
+* **GPU**: [GFX7 or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
+* **APU**: [Carrizo or later](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support) [optional]
 
   **Note:** Some modules in MIVisionX can be built for `CPU ONLY`. To take advantage of `Advanced Features And Modules` we recommend using `AMD GPUs` or `AMD APUs`.
+
+### Operating System
 
 ### Windows
 
 * Windows 10
 * Windows SDK
-* Visual Studio 2017 and above
+* Visual Studio 2017 or later
 * Install the latest AMD [drivers](https://www.amd.com/en/support)
 * Install [OpenCL SDK](https://github.com/GPUOpen-LibrariesAndSDKs/OCL-SDK/releases/tag/1.0)
 * Install [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
   + Add `%OpenCV_DIR%\x64\vc14\bin` or `%OpenCV_DIR%\x64\vc15\bin` to your `PATH`
 
+### macOS
+
+macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
+
 ### Linux
 
-* Install [ROCm](https://rocm.github.io/ROCmInstall.html) 
+* Linux distribution
+  + **Ubuntu** - `16.04` / `18.04` / `20.04`
+  + **CentOS** - `7` / `8`
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html) 
 * CMake 2.8 or newer [download](http://cmake.org/download/)
 * ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
@@ -128,41 +141,35 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
 
-##### MIVisionX-setup.py
-* Builds all the prerequisites required by MIVisionX. 
-* The setup script creates a deps folder and installs all the prerequisites. 
-* If the directory option is not given, the script will install the deps folder in the home directory `(~/)` by default, else in the user-specified location.
-
-**NOTE:** This script only needs to be executed once. 
+  **NOTE:** This script only needs to be executed once. 
 
 ##### Prerequisites for running the script
 
-1. Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
-2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
-3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
+* Linux distribution
+  + Ubuntu - `16.04` / `18.04` / `20.04`
+  + CentOS - `7` / `8`
+* [ROCm supported hardware](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
+* [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 
-**usage:**
+  **usage:**
 
-``` 
-python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --opencv    [OpenCV Version - optional (default:3.4.0)]
-                          --miopen    [MIOpen Version - optional (default:2.5.0)]
-                          --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
-                          --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                          --rpp       [RPP Version - optional (default:0.6)]
-                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
-                          --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
-                          --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
-                          --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
-```
-
-  **Note:**
-  * use `--installer yum` for **CentOS**
-  * ROCm upgrade with `sudo apt upgrade` requires the setup script rerun.
-  * use `X Window` / `X11` for remote GUI app control 
-
-##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
+  ``` 
+  python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
+                            --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
+                            --opencv    [OpenCV Version - optional (default:3.4.0)]
+                            --miopen    [MIOpen Version - optional (default:2.5.0)]
+                            --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
+                            --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
+                            --rpp       [RPP Version - optional (default:0.6)]
+                            --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
+                            --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
+                            --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
+                            --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
+  ```
+    **Note:**
+    * use `--installer yum` for **CentOS**
+    * **ROCm upgrade** with `sudo apt upgrade` requires the setup script **rerun**.
+    * use `X Window` / `X11` for [remote GUI app control](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/X-Window-forwarding) 
 
 ## Build & Install MIVisionX
 
@@ -173,7 +180,7 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
 * [MIVisionX-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX
 * [MIVisionX_WinML-installer.msi](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases): MIVisionX for WinML
 
-#### Using `Visual Studio 2017` on 64-bit `Windows 10`
+#### Using `Visual Studio`
 
 * Install [Windows Prerequisites](#windows)
 * Use `MIVisionX.sln` to build for x64 platform
@@ -184,93 +191,51 @@ python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
 
 #### Using `apt-get` / `yum`
 
-##### Prerequisites
-
-1. Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
-2. [ROCm supported hardware](https://rocm.github.io/hardware.html)
-3. [ROCm](https://github.com/RadeonOpenCompute/ROCm#installing-from-amd-rocm-repositories)
-
-###### Ubuntu
-
-``` 
-sudo apt-get install mivisionx
-```
-
-###### CentOS
-
-``` 
-sudo yum install mivisionx
-```
+* [ROCm supported hardware](https://github.com/RadeonOpenCompute/ROCm#hardware-and-software-support)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
+* On `Ubuntu`
+  ``` 
+  sudo apt-get install mivisionx
+  ```
+* On `CentOS`
+  ``` 
+  sudo yum install mivisionx
+  ```
 
   **Note:**
-  
   * `vx_winml` is not supported on `linux`
   * source code will not available with `apt-get` / `yum` install
-  * executables placed in `/opt/rocm/mivisionx/bin` and libraries in `/opt/rocm/mivisionx/lib`
-  * OpenVX and module header files into `/opt/rocm/mivisionx/include`
-  * model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
+  * the installer will copy
+    + executables into `/opt/rocm/mivisionx/bin` 
+    + libraries into `/opt/rocm/mivisionx/lib`
+    + OpenVX and module header files into `/opt/rocm/mivisionx/include`
+    + model compiler, toolkit, & samples placed in `/opt/rocm/mivisionx`
   * Package (.deb & .rpm) install requires `OpenCV v3.4.0` to execute `AMD OpenCV extensions`
 
-#### Using `MIVisionX-setup.py` and `CMake` on Linux with ROCm
+#### Using `MIVisionX-setup.py`
 
-* Install [ROCm](https://rocm.github.io/ROCmInstall.html)
+* Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html)
 * Use the below commands to set up and build MIVisionX
 
-``` 
-git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
-cd MIVisionX
-```
+  ``` 
+  git clone https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.git
+  cd MIVisionX
+  ```
 
-``` 
-python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
-                          --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
-                          --opencv    [OpenCV Version - optional (default:3.4.0)]
-                          --miopen    [MIOpen Version - optional (default:2.5.0)]
-                          --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
-                          --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
-                          --rpp       [RPP Version - optional (default:0.6)]
-                          --ffmpeg    [FFMPEG Installation - optional (default:no) [options:yes/no]]
-                          --rali      [MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]]
-                          --neural_net[MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]]
-                          --reinstall [Remove previous setup and reinstall (default:no)[options:yes/no]]
-```
+  ``` 
+  python MIVisionX-setup.py
+  ```
 
   **Note:** use `--installer yum` for **CentOS**
 
-``` 
-mkdir build
-cd build
-cmake ../
-make -j8
-sudo make install
-```
-
-**Note:**
-
-* vx_winml is not supported on Linux
-* the installer will copy
-  + executables into `/opt/rocm/mivisionx/bin` 
-  + libraries into `/opt/rocm/mivisionx/lib`
-  + OpenVX and module header files into `/opt/rocm/mivisionx/include`
-
-#### Using `CMake` on Linux with ROCm
-
-* Install [ROCm](https://rocm.github.io/ROCmInstall.html)
-* git clone, build and install other ROCm projects (using `cmake` and `% make install` ) in the below order for vx_nn.
-  + [rocm-cmake](https://github.com/RadeonOpenCompute/rocm-cmake)
-  + [MIOpenGEMM](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM)
-  + [MIOpen](https://github.com/ROCmSoftwarePlatform/MIOpen) -- make sure to use `-DMIOPEN_BACKEND=OpenCL` option with cmake
-* install [protobuf](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
-* install [OpenCV](https://github.com/opencv/opencv/releases/tag/3.4.0)
-* install [RPP](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.6)
-* install [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
-* build and install (using `cmake` and `% make install` )
-  + executables will be placed in `bin` folder
-  + libraries will be placed in `lib` folder
-  + the installer will copy all executables into `/opt/rocm/mivisionx/bin` and libraries into `/opt/rocm/mivisionx/lib`
-  + the installer also copies all the OpenVX and OpenVX module header files into `/opt/rocm/mivisionx/include` folder
-* add the installed library path to LD_LIBRARY_PATH environment variable (default `/opt/rocm/mivisionx/lib` )
-* add the installed executable path to PATH environment variable (default `/opt/rocm/mivisionx/bin` )
+  ``` 
+  mkdir build
+  cd build
+  cmake ../
+  make -j8
+  sudo make install
+  ```
+  **Note:** vx_winml is not supported on Linux
 
 ## Verify the Installation
 
@@ -283,25 +248,25 @@ sudo make install
   + Apps, Samples, Documents, Model Compiler, and Toolkit are placed into `/opt/rocm/mivisionx`
 * Run the below sample to verify the installation
 
-**Canny Edge Detection**
+  **Canny Edge Detection**
 
   <p align="center"><img width="60%" src="samples/images/canny_image.PNG" /></p>
   
-``` 
+  ``` 
   export PATH=$PATH:/opt/rocm/mivisionx/bin
   export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/rocm/mivisionx/lib
   runvx /opt/rocm/mivisionx/samples/gdf/canny.gdf 
-```
-**Note:** More samples are available [here](samples#samples)
+  ```
+  **Note:** More samples are available [here](samples#samples)
 
 ### Windows
 
 * MIVisionX.sln builds the libraries & executables in the folder `MIVisionX/x64`
 * Use RunVX to test the build
 
-``` 
-./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
-```
+  ``` 
+  ./runvx.exe PATH_TO/MIVisionX/samples/gdf/skintonedetect.gdf
+  ```
 
 ## Docker
 
@@ -396,7 +361,9 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 ### Tested configurations
 
 * Windows 10
-* Linux: Ubuntu - `16.04` / `18.04` & CentOS - `7.5` / `7.6`
+* Linux distribution
+  + Ubuntu - `16.04` / `18.04` / `20.04`
+  + CentOS - `7` / `8`
 * ROCm: rocm-dkms - `3.10.0.31000-27`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)

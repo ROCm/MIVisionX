@@ -17,7 +17,7 @@
   * [RunCL](utilities/runcl#amd-runcl)
   * [RunVX](utilities/runvx#amd-runvx)
 * [Prerequisites](#prerequisites)
-* [Build & Install MIVisionX](#build--install-mivisionx)
+* [Build & Install MIVisionX](#build--install-mivisionx-lite)
 * [Verify the Installation](#verify-the-installation)
 * [Docker](#docker)
 * [Release Notes](#release-notes)
@@ -82,9 +82,10 @@ MIVisionX has several [applications](apps#applications) built on top of OpenVX m
   
 #### Prerequisites setup script - `MIVisionX-Lite-setup.py`
 For the convenience of the developer, we here provide the setup script which will install all the dependencies required by this project.
+
   **NOTE:** This script only needs to be executed once. 
 
-##### Prerequisites for running the script
+#### Prerequisites for running the script
 * Linux distribution
   + Ubuntu - `16.04` / `18.04` / `20.04`
   + CentOS - `7` / `8`
@@ -98,8 +99,9 @@ For the convenience of the developer, we here provide the setup script which wil
                                  --reinstall [Remove previous setup and reinstall - optional (default:no)[options:yes/no]]
   ```
 
-  **Note:** use `--installer yum` for **CentOS**
-  **Note:** **Upgrade ROCm** with `sudo apt upgrade`
+  **Note:** 
+  * use `--installer yum` for **CentOS**
+  * **Upgrade ROCm** with `sudo apt upgrade`
 
 ##### Refer to [Wiki](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/Suggested-development-workflow) page for developer instructions.
 

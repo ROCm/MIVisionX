@@ -882,7 +882,7 @@ raliJpegCOCOFileSourcePartialSingleShard(
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         //bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
 
-        if(internal_shard_count < 1 )
+        if(shard_count < 1 )
             THROW("Shard count should be bigger than 0")
 
         if(shard_id >= shard_count)

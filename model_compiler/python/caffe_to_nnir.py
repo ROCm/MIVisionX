@@ -89,11 +89,11 @@ def caffe_attr_to_ir_attr(attribute_map):
         elif type(attributeInfo) is str:
             attr.set(attr_names[i], str(attributeInfo)) 
         elif type(attributeInfo) == type([]):
-            if (type(attributeInfo[0]) is int):
+            if (isinstance(attributeInfo[0], int)):
                 attr.set(attr_names[i], [int(v) for v in (attributeInfo)])
-            elif (type(attributeInfo[0]) is float):
+            elif (isinstance(attributeInfo[0], float)):
                 attr.set(attr_names[i], [float(v) for v in (attributeInfo)])
-            elif (type(attributeInfo[0]) is int):
+            elif (isinstance(attributeInfo[0], int)):
                 attr.set(attr_names[i], [int(v) for v in (attributeInfo)])
             else:
                 print ("ERROR: unsupported list attribute")

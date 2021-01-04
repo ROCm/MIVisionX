@@ -914,7 +914,7 @@ class IrGraph(object):
             for idx, binary in enumerate(self.binaries):
                 if binary not in keepAsFP32:
                     weight = np.frombuffer(self.binaries[binary], dtype=np.float32)
-                    self.addBinary(binary, memoryview(weight,astype(np.float16)))
+                    self.addBinary(binary, weight.view(dtype=np.float16))
 
                 #print("Add binary %s of size %d at Idx: %d len: %d" %(binary, len(self.binaries[binary]), idx, len(self.binaries)))
             self.all_F032 = False

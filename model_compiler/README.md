@@ -22,7 +22,7 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 <p align="center"><img width="100%" src="../docs/images/runtime.png" /></p>
 
-## Pre-requisites
+### Pre-requisites
 
 * Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
 * [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX 

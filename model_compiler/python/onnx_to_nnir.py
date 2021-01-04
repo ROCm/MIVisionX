@@ -18,6 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import range
+from past.utils import old_div
 import os, sys
 import onnx
 from onnx import onnx_pb
@@ -133,7 +142,7 @@ def onnx_node_to_ir_attr(node):
            ((output_padding[0] % (kernel_shape[0] - 1)) != 0) or \
            ((output_padding[1] % (kernel_shape[1] - 1)) != 0):
             raise ValueError("Unsupported ONNX value for output_padding attribute")
-        dilations = [output_padding[0] / (kernel_shape[0] - 1) + 1, output_padding[1] / (kernel_shape[1] - 1) + 1]
+        dilations = [old_div(output_padding[0], (kernel_shape[0] - 1)) + 1, old_div(output_padding[1], (kernel_shape[1] - 1)) + 1]
         attr.set('dilations', dilations)       
     if node.op_type == 'MatMul':
         attr.set('beta', 0.0)
@@ -232,7 +241,7 @@ def main():
     outputFolder = sys.argv[2]
     #appends node type to output tensor name. 
     node_type_append = 0
-    pos = 3
+    pos = 4
     while pos < len(sys.argv)  and len(sys.argv) > 3 and sys.argv[pos][:2] == '--':
         if sys.argv[pos] == '--node_type_append':
             node_type_append = int(sys.argv[pos+1])

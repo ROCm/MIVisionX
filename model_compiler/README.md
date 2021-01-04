@@ -42,14 +42,16 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 #### NNEF
 
+* python3
 * numpy
 * [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools) - Build the nnef python module
 
 ``` 
-% pip install numpy
+% pip3 install numpy
 ```
 
 **Note:** NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
+**Note:** NNEF Parser is compatible with python3. Anyone using python2 might face an issue during the model conversion
 
 ## Model Compiler Samples - Run Efficient Inference
 
@@ -89,7 +91,7 @@ OPTIONS:
 To convert a NNEF model into AMD NNIR model:
 
 ``` 
-% python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
+% python3 nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
 ```
 
 **Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools) or try NNEF models at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)

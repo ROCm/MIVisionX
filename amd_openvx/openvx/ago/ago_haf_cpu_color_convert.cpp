@@ -95,7 +95,7 @@ int HafCpu_FormatConvert_IYUV_UYVY
 			pLocalDstU = (unsigned char *)pDstUImage;
 			pLocalDstV = (unsigned char *)pDstVImage;
 
-			for (int x = 0; x < prefixWidth; x++)
+			for (int x = 0; x < prefixWidth; x+=2)
 			{
 				*pLocalDstU++ = (*pLocalSrc++ + *pLocalSrcNextRow++) >> 1;				// U
 				*pLocalDstY++ = *pLocalSrc++;											// Y
@@ -164,7 +164,7 @@ int HafCpu_FormatConvert_IYUV_UYVY
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstU++ = (*pLocalSrc++ + *pLocalSrcNextRow++) >> 1;				// U
 				*pLocalDstY++ = *pLocalSrc++;											// Y
@@ -256,7 +256,7 @@ int HafCpu_FormatConvert_IYUV_UYVY
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstU++ = (*pLocalSrc++ + *pLocalSrcNextRow++) >> 1;				// U
 				*pLocalDstY++ = *pLocalSrc++;											// Y
@@ -1773,7 +1773,7 @@ int HafCpu_FormatConvert_IYUV_YUYV
 			pLocalDstU = (unsigned char *)pDstUImage;
 			pLocalDstV = (unsigned char *)pDstVImage;
 
-			for (int x = 0; x < prefixWidth; x++)
+			for (int x = 0; x < prefixWidth; x+=2)
 			{
 				*pLocalDstY++ = *pLocalSrc++;											// Y
 				*pLocalDstYNextRow++ = *pLocalSrcNextRow++;								// Y - next row
@@ -1842,7 +1842,7 @@ int HafCpu_FormatConvert_IYUV_YUYV
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstY++ = *pLocalSrc++;											// Y
 				*pLocalDstYNextRow++ = *pLocalSrcNextRow++;								// Y - next row
@@ -1934,7 +1934,7 @@ int HafCpu_FormatConvert_IYUV_YUYV
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstY++ = *pLocalSrc++;											// Y
 				*pLocalDstYNextRow++ = *pLocalSrcNextRow++;								// Y - next row

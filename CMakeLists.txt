@@ -103,11 +103,6 @@ if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")
 endif()
 
-# strip unstripped-binary-or-object
-set(CPACK_STRIP_FILES "bin/caffe2openvx")
-set(CPACK_STRIP_FILES "bin/inference_server_app")
-set(CPACK_STRIP_FILES "bin/loom_shell")
-
 set(CPACK_DEBIAN_FILE_NAME       "DEB-DEFAULT")
 set(CPACK_RPM_FILE_NAME          "RPM-DEFAULT")
 set(CPACK_DEBIAN_PACKAGE_RELEASE "local")

@@ -90,6 +90,7 @@ set(CPACK_PACKAGE_VENDOR        "AMD Radeon")
 set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/images/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/copyright.txt")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
                                           MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, 
                                           utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly 

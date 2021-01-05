@@ -1448,7 +1448,7 @@ Hip_Magnitude_S16_S16S16(
 
     float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
     float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
-    float4 dst = make_float4((hypotf(src1.x,src2.x)), (hypotf(src1.y,src2.y)), (hypotf(src1.z,src2.z)), (hypotf(src1.w,src2.w)));
+    float4 dst = make_float4(PIXELROUNDF32(hypotf(src1.x,src2.x)), PIXELROUNDF32(hypotf(src1.y,src2.y)), PIXELROUNDF32(hypotf(src1.z,src2.z)), PIXELROUNDF32(hypotf(src1.w,src2.w)));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Magnitude_S16_S16S16(

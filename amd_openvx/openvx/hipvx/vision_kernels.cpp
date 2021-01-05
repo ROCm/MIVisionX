@@ -902,16 +902,9 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
     vx_float32 sensitivity, vx_float32 strength_threshold,
     vx_float32 normalization_factor)
 {
-    hipEvent_t start, stop;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
-    printf("\ndstWidth = %d, dstHeight = %d\ndstVcStrideInBytes = %d, srcGxyStrideInBytes = %d\n", dstWidth, dstHeight, dstVcStrideInBytes, srcGxyStrideInBytes);
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
 
-    
     hipLaunchKernelGGL(Hip_HarrisScore_HVC_HG3_5x5,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -938,10 +931,6 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
     }
     hipFree(pDstVc_);
     /*  Printing Outputs for verification */
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    printf("\nHipExec_HarrisScore_HVC_HG3_5x5: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }
 

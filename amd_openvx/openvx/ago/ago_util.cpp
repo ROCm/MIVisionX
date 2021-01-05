@@ -3209,7 +3209,7 @@ AgoSuperNode::AgoSuperNode()
 #if ENABLE_OPENCL
 	  opencl_cmdq{ nullptr }, opencl_program{ nullptr }, opencl_kernel{ nullptr }, opencl_event{ nullptr },
 #elif ENABLE_HIP
-      hip_stream0 {nullptr}, hip_event_start{nullptr}, hip_event_stop{nullptr},
+      hip_stream0 {nullptr},
 #endif
 	  hierarchical_level_start{ 0 }, hierarchical_level_end{ 0 },
 	  status{ VX_SUCCESS }
@@ -3217,9 +3217,6 @@ AgoSuperNode::AgoSuperNode()
 #if ENABLE_OPENCL
 	memset(&opencl_global_work, 0, sizeof(opencl_global_work));
 	memset(&opencl_local_work, 0, sizeof(opencl_local_work));
-#elif ENABLE_HIP
-    hipEventCreate(&hip_event_start);
-    hipEventCreate(&hip_event_stop);
 #endif
 	memset(&perf, 0, sizeof(perf));
 }
@@ -3249,9 +3246,6 @@ AgoNode::AgoNode()
 	memset(&opencl_scalar_array_output_sync, 0, sizeof(opencl_scalar_array_output_sync));
 	memset(&opencl_global_work, 0, sizeof(opencl_global_work));
 	memset(&opencl_local_work, 0, sizeof(opencl_local_work));
-#elif ENABLE_HIP
-    hipEventCreate(&hip_event_start);
-    hipEventCreate(&hip_event_stop);
 #endif
 }
 AgoNode::~AgoNode()
@@ -3281,14 +3275,6 @@ AgoNode::~AgoNode()
 #elif ENABLE_HIP
 	//if (hip_program)
     //    hiprtcDestroyProgram(hip_program);
-	if (hip_event_start) {
-	    hipEventDestroy(hip_event_start);
-        hip_event_start = nullptr;
-	}
-    if (hip_event_stop) {
-        hipEventDestroy(hip_event_stop);
-        hip_event_stop = nullptr;
-    }
 #endif
 }
 AgoGraph::AgoGraph()

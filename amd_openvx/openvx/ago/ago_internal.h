@@ -568,7 +568,6 @@ struct AgoSuperNode {
 	size_t opencl_local_work[3];
 #elif ENABLE_HIP
     hipStream_t  hip_stream0;       // default stream for the graph
-    hipEvent_t   hip_event_start, hip_event_stop;
 #endif
 	vx_uint32 hierarchical_level_start;
 	vx_uint32 hierarchical_level_end;
@@ -636,7 +635,6 @@ struct AgoNode {
     std::string hip_kernel_name;
     std::string hip_code;
     hiprtcProgram hip_program;
-    hipEvent_t   hip_event_start, hip_event_stop;
 #endif
 public:
 	AgoNode();

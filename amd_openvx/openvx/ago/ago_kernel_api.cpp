@@ -4470,7 +4470,8 @@ int agoKernel_Add_U8_U8U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_U8_U8U8_Wrap(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_U8_U8U8_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -4539,7 +4540,8 @@ int agoKernel_Add_U8_U8U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_U8_U8U8_Sat(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_U8_U8U8_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -4614,7 +4616,8 @@ int agoKernel_Sub_U8_U8U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_U8_U8U8_Wrap(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_U8_U8U8_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -4683,7 +4686,8 @@ int agoKernel_Sub_U8_U8U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_U8_U8U8_Sat(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_U8_U8U8_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -4759,13 +4763,14 @@ int agoKernel_Mul_U8_U8U8_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_U8_U8U8_Wrap_Trunc(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        vx_float32 scale = node->paramList[3]->u.scalar.u.f;
+        if (HipExec_Mul_U8_U8U8_Wrap_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Mul_U8_U8U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
@@ -4836,13 +4841,14 @@ int agoKernel_Mul_U8_U8U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_U8_U8U8_Wrap_Round(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        vx_float32 scale = node->paramList[3]->u.scalar.u.f;
+        if (HipExec_Mul_U8_U8U8_Wrap_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Mul_U8_U8U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
@@ -4917,7 +4923,8 @@ int agoKernel_Mul_U8_U8U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_U8_U8U8_Sat_Trunc(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_U8_U8U8_Sat_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -4997,7 +5004,8 @@ int agoKernel_Mul_U8_U8U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_U8_U8U8_Sat_Round(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_U8_U8U8_Sat_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -8002,12 +8010,13 @@ int agoKernel_AbsDiff_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_AbsDiff_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_AbsDiff_U8_U8U8(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_AccumulateWeighted_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
@@ -8152,12 +8161,13 @@ int agoKernel_Add_S16_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_S16_U8U8(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_S16_U8U8(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Sub_S16_U8U8(AgoNode * node, AgoKernelCommand cmd)
@@ -8227,7 +8237,8 @@ int agoKernel_Sub_S16_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_S16_U8U8(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_S16_U8U8(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -8303,13 +8314,14 @@ int agoKernel_Mul_S16_U8U8_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_U8U8_Wrap_Trunc(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        vx_float32 scale = node->paramList[3]->u.scalar.u.f;
+        if (HipExec_Mul_S16_U8U8_Wrap_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Mul_S16_U8U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
@@ -8380,13 +8392,14 @@ int agoKernel_Mul_S16_U8U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_U8U8_Wrap_Round(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        vx_float32 scale = node->paramList[3]->u.scalar.u.f;
+        if (HipExec_Mul_S16_U8U8_Wrap_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Mul_S16_U8U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
@@ -8457,13 +8470,14 @@ int agoKernel_Mul_S16_U8U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_U8U8_Sat_Trunc(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        vx_float32 scale = node->paramList[3]->u.scalar.u.f;
+        if (HipExec_Mul_S16_U8U8_Sat_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Mul_S16_U8U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
@@ -8534,13 +8548,14 @@ int agoKernel_Mul_S16_U8U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_U8U8_Sat_Round(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        vx_float32 scale = node->paramList[3]->u.scalar.u.f;
+        if (HipExec_Mul_S16_U8U8_Sat_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Add_S16_S16U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
@@ -8611,12 +8626,13 @@ int agoKernel_Add_S16_S16U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_S16_S16U8_Wrap(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_S16_S16U8_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Add_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
@@ -8675,12 +8691,13 @@ int agoKernel_Add_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_S16_S16U8_Sat(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_S16_S16U8_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Accumulate_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
@@ -8790,7 +8807,7 @@ int agoKernel_Sub_S16_S16U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #elif ENABLE_HIP
-					| AGO_KERNEL_FLAG_DEVICE_GPU
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 
 #endif                 
                     ;
@@ -8811,12 +8828,13 @@ int agoKernel_Sub_S16_S16U8_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_S16_S16U8_Wrap(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_S16_S16U8_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_Sub_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
@@ -8866,7 +8884,7 @@ int agoKernel_Sub_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #elif ENABLE_HIP
-					| AGO_KERNEL_FLAG_DEVICE_GPU
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 
 #endif                 
                     ;
@@ -8887,7 +8905,8 @@ int agoKernel_Sub_S16_S16U8_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_S16_S16U8_Sat(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_S16_S16U8_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -8964,7 +8983,8 @@ int agoKernel_Mul_S16_S16U8_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16U8_Wrap_Trunc(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16U8_Wrap_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -9041,7 +9061,8 @@ int agoKernel_Mul_S16_S16U8_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16U8_Wrap_Round(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16U8_Wrap_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -9119,7 +9140,8 @@ int agoKernel_Mul_S16_S16U8_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16U8_Sat_Trunc(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16U8_Sat_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -9196,7 +9218,8 @@ int agoKernel_Mul_S16_S16U8_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16U8_Sat_Round(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16U8_Sat_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -9343,7 +9366,8 @@ int agoKernel_Sub_S16_U8S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_S16_U8S16_Wrap(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_S16_U8S16_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -9419,7 +9443,8 @@ int agoKernel_Sub_S16_U8S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_S16_U8S16_Sat(oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_S16_U8S16_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -9497,7 +9522,8 @@ int agoKernel_AbsDiff_S16_S16S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_AbsDiff_S16_S16S16_Sat(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_AbsDiff_S16_S16S16_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -9572,7 +9598,8 @@ int agoKernel_Add_S16_S16S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_S16_S16S16_Wrap(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_S16_S16S16_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -9647,7 +9674,8 @@ int agoKernel_Add_S16_S16S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Add_S16_S16S16_Sat(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Add_S16_S16S16_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -9722,7 +9750,8 @@ int agoKernel_Sub_S16_S16S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_S16_S16S16_Wrap(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_S16_S16S16_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -9797,7 +9826,8 @@ int agoKernel_Sub_S16_S16S16_Sat(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Sub_S16_S16S16_Sat(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Sub_S16_S16S16_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -9874,7 +9904,8 @@ int agoKernel_Mul_S16_S16S16_Wrap_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16S16_Wrap_Trunc(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16S16_Wrap_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -9951,7 +9982,8 @@ int agoKernel_Mul_S16_S16S16_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16S16_Wrap_Round(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16S16_Wrap_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -10028,7 +10060,8 @@ int agoKernel_Mul_S16_S16S16_Sat_Trunc(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16S16_Sat_Trunc(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16S16_Sat_Trunc(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -10105,7 +10138,8 @@ int agoKernel_Mul_S16_S16S16_Sat_Round(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
 		vx_float32 scale = node->paramList[3]->u.scalar.u.f;
-        if (HipExec_Mul_S16_S16S16_Sat_Round(oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
+        if (HipExec_Mul_S16_S16S16_Sat_Round(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16*) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16*) iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16*) iImg1->hip_memory, iImg1->u.img.stride_in_bytes, scale)) {
             status = VX_FAILURE;
         }
 	}
@@ -10181,7 +10215,8 @@ int agoKernel_Magnitude_S16_S16S16(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Magnitude_S16_S16S16(oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Magnitude_S16_S16S16(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *)oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -10261,7 +10296,8 @@ int agoKernel_Phase_U8_S16S16(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HipExec_Phase_U8_S16S16(oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+        if (HipExec_Phase_U8_S16S16(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, (vx_int16 *)iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *)iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
 	}
@@ -10285,7 +10321,8 @@ int agoKernel_ChannelCopy_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 		status = VX_SUCCESS;
 		AgoData * oImg = node->paramList[0];
 		AgoData * iImg = node->paramList[1];
-		if (HipExec_ChannelCopy(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
+		if (HipExec_ChannelCopy(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes))
             status = VX_FAILURE;
 	}
 #endif
@@ -22314,20 +22351,20 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_hip_execute) {
         status = VX_SUCCESS;
         AgoData *oImg = node->paramList[0];
-		AgoData *iImg1 = node->paramList[1];
-		AgoData *iImg2 = node->paramList[3];
-		vx_float32 alpha = node->paramList[2]->u.scalar.u.f;
+        AgoData *iImg1 = node->paramList[1];
+        AgoData *iImg2 = node->paramList[3];
+        vx_float32 alpha = node->paramList[2]->u.scalar.u.f;
         if (HipExec_WeightedAverage_U8_U8U8(
-			oImg->u.img.width, oImg->u.img.height, 
-			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
-			iImg1->hip_memory, iImg1->u.img.stride_in_bytes, 
-			iImg2->hip_memory, iImg2->u.img.stride_in_bytes,
-			alpha)) {
-			status = VX_FAILURE;
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height, 
+            oImg->hip_memory, oImg->u.img.stride_in_bytes, 
+            iImg1->hip_memory, iImg1->u.img.stride_in_bytes, 
+            iImg2->hip_memory, iImg2->u.img.stride_in_bytes,
+            alpha)) {
+            status = VX_FAILURE;
         }
-	}
+    }
 #endif
-	return status;
+    return status;
 }
 
 int agoKernel_NonLinearFilter_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd)

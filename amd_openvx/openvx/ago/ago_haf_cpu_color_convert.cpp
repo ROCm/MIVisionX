@@ -95,7 +95,7 @@ int HafCpu_FormatConvert_IYUV_UYVY
 			pLocalDstU = (unsigned char *)pDstUImage;
 			pLocalDstV = (unsigned char *)pDstVImage;
 
-			for (int x = 0; x < prefixWidth; x++)
+			for (int x = 0; x < prefixWidth; x+=2)
 			{
 				*pLocalDstU++ = (*pLocalSrc++ + *pLocalSrcNextRow++) >> 1;				// U
 				*pLocalDstY++ = *pLocalSrc++;											// Y
@@ -164,7 +164,7 @@ int HafCpu_FormatConvert_IYUV_UYVY
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstU++ = (*pLocalSrc++ + *pLocalSrcNextRow++) >> 1;				// U
 				*pLocalDstY++ = *pLocalSrc++;											// Y
@@ -256,7 +256,7 @@ int HafCpu_FormatConvert_IYUV_UYVY
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstU++ = (*pLocalSrc++ + *pLocalSrcNextRow++) >> 1;				// U
 				*pLocalDstY++ = *pLocalSrc++;											// Y
@@ -1773,7 +1773,7 @@ int HafCpu_FormatConvert_IYUV_YUYV
 			pLocalDstU = (unsigned char *)pDstUImage;
 			pLocalDstV = (unsigned char *)pDstVImage;
 
-			for (int x = 0; x < prefixWidth; x++)
+			for (int x = 0; x < prefixWidth; x+=2)
 			{
 				*pLocalDstY++ = *pLocalSrc++;											// Y
 				*pLocalDstYNextRow++ = *pLocalSrcNextRow++;								// Y - next row
@@ -1842,7 +1842,7 @@ int HafCpu_FormatConvert_IYUV_YUYV
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstY++ = *pLocalSrc++;											// Y
 				*pLocalDstYNextRow++ = *pLocalSrcNextRow++;								// Y - next row
@@ -1934,7 +1934,7 @@ int HafCpu_FormatConvert_IYUV_YUYV
 				width--;
 			}
 
-			for (int x = 0; x < postfixWidth; x++)
+			for (int x = 0; x < postfixWidth; x+=2)
 			{
 				*pLocalDstY++ = *pLocalSrc++;											// Y
 				*pLocalDstYNextRow++ = *pLocalSrcNextRow++;								// Y - next row
@@ -3852,9 +3852,9 @@ int HafCpu_ColorConvert_YUV4_RGBX
 			float B = (float)*pLocalSrc++;
 			pLocalSrc++;
 
-			*pLocalDstY++ = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
-			*pLocalDstU++ = (vx_uint8)((R * -0.1146f) + (G * -0.3854) + (B * 0.5f) + 128.0f);
-			*pLocalDstV++ = (vx_uint8)((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+			*pLocalDstY++ = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
+			*pLocalDstU++ = (vx_uint8)(round((R * -0.1146f) + (G * -0.3854) + (B * 0.5f) + 128.0f));
+			*pLocalDstV++ = (vx_uint8)(round((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f));
 		}
 
 		pSrcImage += srcImageStrideInBytes;
@@ -4513,9 +4513,9 @@ int HafCpu_ColorConvert_YUV4_RGB
 			float G = (float)*pLocalSrc++;
 			float B = (float)*pLocalSrc++;
 
-			*pLocalDstY++ = (vx_uint8)((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722));
-			*pLocalDstU++ = (vx_uint8)((R * -0.1146f) + (G * -0.3854) + (B * 0.5f) + 128.0f);
-			*pLocalDstV++ = (vx_uint8)((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f);
+			*pLocalDstY++ = (vx_uint8)(round((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722)));
+			*pLocalDstU++ = (vx_uint8)(round((R * -0.1146f) + (G * -0.3854) + (B * 0.5f) + 128.0f));
+			*pLocalDstV++ = (vx_uint8)(round((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f));
 		}
 
 		pSrcImage += srcImageStrideInBytes;

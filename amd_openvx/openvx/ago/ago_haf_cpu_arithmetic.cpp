@@ -5084,7 +5084,7 @@ int HafCpu_Magnitude_S16_S16S16
 		{
 			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
 			temp = sqrtf(temp);
-			*pLocalDst++ = (vx_int16)temp;
+			*pLocalDst++ = (vx_int16)(round(temp));
 		}
 
 		pGxImage += (gxImageStrideInBytes >> 1);

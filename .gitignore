@@ -4,3 +4,5 @@ opencv-3.4.0/*
 openvx_test_results*
 openvx_node_results*
 platform_report*
+rocprof_profiling_temp*
+rocprof_profiling_outputs*

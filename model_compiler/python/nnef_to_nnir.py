@@ -18,6 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import str
+from past.utils import old_div
 import nnef
 import math
 from nnir import *
@@ -147,8 +156,8 @@ def nnef_attr_to_ir_attr(nnef_tensor, nnef_operation):
                     d_W = dilations[1]
                     fd_H = (f_H - 1) * d_H + 1
                     fd_W = (f_W - 1) * d_W + 1
-                    tp_H = (float)((out_H - 1) * s_H + fd_H - in_H) / 2
-                    tp_W = (float)((out_W - 1) * s_W + fd_W - in_W) / 2
+                    tp_H = old_div((float)((out_H - 1) * s_H + fd_H - in_H), 2)
+                    tp_W = old_div((float)((out_W - 1) * s_W + fd_W - in_W), 2)
                     p_H = (int)(math.floor(tp_H))
                     q_H = (int)(math.ceil(tp_H))
                     p_W = (int)(math.floor(tp_W))

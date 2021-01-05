@@ -90,7 +90,15 @@ set(CPACK_PACKAGE_VENDOR        "AMD Radeon")
 set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/images/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX toolkit is a comprehensive computer vision and machine intelligence libraries, utilities and applications bundled into one")
+SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/copyright.txt")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
+  MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, \
+utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly \
+optimized open-source implementation of the Khronos OpenVX™ and OpenVX™ Extensions along with \
+Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos NNEF™ exchange formats. \
+The toolkit allows for rapid prototyping and deployment of optimized computer vision and \
+machine learning inference workloads on a wide range of computer hardware, including \
+small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")

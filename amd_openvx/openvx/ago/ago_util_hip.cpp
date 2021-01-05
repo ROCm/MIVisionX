@@ -778,10 +778,9 @@ int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node)
     }
 #endif
     // call execute kernel
-    float eventMs = 1.0f;
     AgoKernel * kernel = node->akernel;
     vx_status status = VX_SUCCESS;
-    hipEventRecord(node->hip_event_start, graph->hip_stream0);
+    int64_t stime = agoGetClockCounter();
     if (kernel->func) {
         status = kernel->func(node, ago_kernel_cmd_hip_execute);
         if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED)
@@ -801,9 +800,8 @@ int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node)
             return -1;
         }
     }
-    hipEventRecord(node->hip_event_stop, graph->hip_stream0);
-    hipEventElapsedTime(&eventMs, node->hip_event_start, node->hip_event_stop);
-    graph->opencl_perf.kernel_enqueue += eventMs;
+    int64_t etime = agoGetClockCounter();
+    graph->opencl_perf.kernel_enqueue += etime - stime;
 
     // mark that node outputs are dirty
     for (size_t index = 0; index < node->paramCount; index++) {
@@ -831,7 +829,7 @@ int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode)
 #if 0
     AgoKernel * kernel = supernode->akernel;
     status = VX_SUCCESS;
-    hipEventRecord(supernode->hip_event_start, graph->hip_stream0);
+    int64_t stime = agoGetClockCounter();
     if (kernel->func) {
         status = kernel->func(supernode, ago_kernel_cmd_execute);
         if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED)
@@ -844,7 +842,6 @@ int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode)
         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
         return status;
     }
-    hipEventRecord(supernode->hip_event_stop, graph->hip_stream0);
     if(graph->enable_node_level_opencl_flush) {
         hipError_t err = hipStreamSynchronize(graph->hip_stream0);
         if (err) {
@@ -852,6 +849,9 @@ int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode)
             return -1;
         }
     }
+    int64_t etime = agoGetClockCounter();
+    graph->opencl_perf.kernel_enqueue += etime - stime;
+
 #endif
     // mark that supernode outputs are dirty
     for (size_t index = 0; index < supernode->dataList.size(); index++) {
@@ -870,10 +870,16 @@ int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode)
 int agoGpuHipSingleNodeWait(AgoGraph * graph, AgoNode * node)
 {
     // wait for completion
-    float eventMs = 1.0f;
-    hipEventSynchronize(node->hip_event_stop);
-    hipEventElapsedTime(&eventMs, node->hip_event_start, node->hip_event_stop);
-    graph->opencl_perf.kernel_wait += eventMs;
+    int64_t stime = agoGetClockCounter();
+    hipError_t err;
+    err = hipStreamSynchronize(node->hip_stream0);
+    if (err != hipSuccess) {
+        agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: hipStreamSynchronize(1,%p) failed(%d)\n", node->hip_stream0, err);
+        return -1;
+    }
+    int64_t etime = agoGetClockCounter();
+    graph->opencl_perf.kernel_wait += etime - stime;
+
     // sync the outputs
     for (size_t index = 0; index < node->paramCount; index++) {
         if (node->paramList[index]) {

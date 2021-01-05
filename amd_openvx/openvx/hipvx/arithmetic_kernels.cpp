@@ -109,7 +109,7 @@ __device__ float Norm_Atan2_deg (float Gx, float Gy) {
 
 __global__ void __attribute__((visibility("default")))
 Hip_AbsDiff_U8_U8U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -127,8 +127,7 @@ Hip_AbsDiff_U8_U8U8(
     pDstImage[dstIdx] = float4_to_uchars(dst);
 }
 int HipExec_AbsDiff_U8_U8U8(
-    hipStream_t stream,
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
     const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
@@ -148,7 +147,7 @@ int HipExec_AbsDiff_U8_U8U8(
 
 __global__ void __attribute__((visibility("default")))
 Hip_AbsDiff_S16_S16S16_Sat(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     short int *pDstImage, unsigned int  dstImageStrideInBytes,
     const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -165,8 +164,7 @@ Hip_AbsDiff_S16_S16S16_Sat(
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_AbsDiff_S16_S16S16_Sat(
-    hipStream_t stream,
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
     const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
@@ -189,7 +187,7 @@ int HipExec_AbsDiff_S16_S16S16_Sat(
 
 __global__ void __attribute__((visibility("default")))
 Hip_Add_U8_U8U8_Wrap(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -206,8 +204,7 @@ Hip_Add_U8_U8U8_Wrap(
     pDstImage[dstIdx] = float4_to_uchars(dst);
 }
 int HipExec_Add_U8_U8U8_Wrap(
-    hipStream_t stream,
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
     const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
@@ -226,7 +223,7 @@ int HipExec_Add_U8_U8U8_Wrap(
 
 __global__ void __attribute__((visibility("default")))
 Hip_Add_U8_U8U8_Sat(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -243,8 +240,7 @@ Hip_Add_U8_U8U8_Sat(
     pDstImage[dstIdx] = float4_to_uchars(dst);
 }
 int HipExec_Add_U8_U8U8_Sat(
-    hipStream_t stream,
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
     const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
@@ -264,7 +260,7 @@ int HipExec_Add_U8_U8U8_Sat(
 
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_U8U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -300,7 +296,7 @@ int HipExec_Add_S16_U8U8(
 
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_S16U8_Wrap(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     short int *pDstImage, unsigned int dstImageStrideInBytes,
     const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -317,7 +313,7 @@ Hip_Add_S16_S16U8_Wrap(
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_Add_S16_S16U8_Wrap(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
     const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
@@ -372,7 +368,7 @@ int HipExec_Add_S16_S16U8_Sat(
 
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_S16S16_Wrap(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     short int *pDstImage, unsigned int  dstImageStrideInBytes,
     const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -408,7 +404,7 @@ int HipExec_Add_S16_S16S16_Wrap(
 
 __global__ void __attribute__((visibility("default")))
 Hip_Add_S16_S16S16_Sat(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     short int *pDstImage, unsigned int  dstImageStrideInBytes,
     const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
@@ -486,7 +482,7 @@ int HipExec_Sub_U8_U8U8_Wrap(
 
 __global__ void __attribute__((visibility("default")))
 Hip_Sub_U8_U8U8_Sat(
-    vx_uint32 dstWidth, vx_uint32 dstHeight, 
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes

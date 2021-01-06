@@ -280,6 +280,25 @@ namespace rali{
             py::arg("x_drift_factor") = NULL,	
             py::arg("y_drift_factor") = NULL
             );
+         m.def("COCO_ImageDecoderSliceShard",&raliJpegCOCOFileSourcePartialSingleShard,"Reads file from the source given and decodes it according to the policy",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("json_path"),
+            py::arg("color_format"),	
+            py::arg("shard_id"),
+            py::arg("shard_count"),	
+            py::arg("is_output"),	
+            py::arg("shuffle") = false,	
+            py::arg("loop") = false,	
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,	
+            py::arg("max_width") = 0,	
+            py::arg("max_height") = 0,
+            py::arg("area_factor") = NULL,	
+            py::arg("aspect_ratio") = NULL,
+            py::arg("x_drift_factor") = NULL,	
+            py::arg("y_drift_factor") = NULL
+            );
         m.def("ImageDecoder",&raliJpegFileSource,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),

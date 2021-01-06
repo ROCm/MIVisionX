@@ -790,7 +790,7 @@ class ImageDecoderSlice(Node):
             elif(self.prev.prev.data == "COCOReader") :
                 obj = self.crop_begin
                 obj.rali_c_func_call(handle)
-                output_image = b.COCO_ImageDecoderSlice(handle, input_image[0], input_image[1], types.RGB, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
+                output_image = b.COCO_ImageDecoderSliceShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height, None, None, None, None)
             else:
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         else:
@@ -801,7 +801,7 @@ class ImageDecoderSlice(Node):
             elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
                 output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False)
             elif(self.prev.prev.data == "COCOReader") :
-                output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
+                output_image = b.COCO_ImageDecoderSliceShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False)
             else:
                 output_image = b.ImageDecoderShard(handle, input_image, types.RGB,  shard_id, num_shards, is_output, shuffle, False)
         return output_image

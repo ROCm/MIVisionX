@@ -49,7 +49,7 @@ get_ago_affinity_info(
 }
 
 Graph::Graph(vx_context context, RaliAffinity affinity, int cpu_id, int gpu_id):
-_mem_type(((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST)),
+_mem_type(((affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST)),
 _context(context),
 _graph(nullptr),
 _affinity(affinity),

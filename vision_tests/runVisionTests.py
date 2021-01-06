@@ -97,6 +97,7 @@ visionTestConfig = [
 
 # OpenVX 1.0.1 Vision Functions 1080P
 openvxNodes = [
+#   Arithmetic kernels
     ('absdiff-1080p-u8', 'org.khronos.openvx.absdiff image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
     ('absdiff-1080p-s16', 'org.khronos.openvx.absdiff image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,S016'),
     ('add-1080p-u8-wrap', 'org.khronos.openvx.add image:1920,1080,U008 image:1920,1080,U008 !WRAP image:1920,1080,U008'),
@@ -106,6 +107,44 @@ openvxNodes = [
     ('add-1080p-s16-sat', 'org.khronos.openvx.add image:1920,1080,S016 image:1920,1080,U008 !SATURATE image:1920,1080,S016'),
     ('add-1080p-s16-wrap', 'org.khronos.openvx.add image:1920,1080,S016 image:1920,1080,S016 !WRAP image:1920,1080,S016'),
     ('add-1080p-s16-sat', 'org.khronos.openvx.add image:1920,1080,S016 image:1920,1080,S016 !SATURATE image:1920,1080,S016'),
+    ('subtract-1080p-u8-wrap',
+     'org.khronos.openvx.subtract image:1920,1080,U008 image:1920,1080,U008 !WRAP image:1920,1080,U008'),
+    ('subtract-1080p-u8-sat',
+     'org.khronos.openvx.subtract image:1920,1080,U008 image:1920,1080,U008 !SATURATE image:1920,1080,U008'),
+    ('subtract-1080p-s16-wrap',
+     'org.khronos.openvx.subtract image:1920,1080,U008 image:1920,1080,U008 !WRAP image:1920,1080,S016'),
+    ('subtract-1080p-s16-wrap',
+     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,U008 !WRAP image:1920,1080,S016'),
+    ('subtract-1080p-s16-sat',
+     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,U008 !SATURATE image:1920,1080,S016'),
+    ('subtract-1080p-s16-wrap',
+     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,S016 !WRAP image:1920,1080,S016'),
+    ('subtract-1080p-s16-sat',
+     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,S016 !SATURATE image:1920,1080,S016'),
+    ('multiply-1080p-u8-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,U008'),
+    ('multiply-1080p-u8-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,U008'),
+    ('multiply-1080p-u8-sat-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,U008'),
+    ('multiply-1080p-u8-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,U008'),
+    ('multiply-1080p-s16-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
+    ('multiply-1080p-s16-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
+    ('multiply-1080p-s16-sat-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
+    ('multiply-1080p-s16-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
+    ('multiply-1080p-s16-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
+    ('multiply-1080p-s16-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
+    ('multiply-1080p-s16-sat-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
+    ('multiply-1080p-s16-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
+    ('multiply-1080p-s16-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
+    ('multiply-1080p-s16-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
+    ('multiply-1080p-s16-sat-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
+    ('multiply-1080p-s16-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
+    ('magnitude-1080p-S16',
+     'org.khronos.openvx.magnitude image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,S016'),
+    ('phase-1080p-S16',
+     'org.khronos.openvx.phase image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,U008'),
+    ('weightedAverage-1080p-u8',
+    'org.khronos.openvx.weighted_average image:1920,1080,U008 scalar:FLOAT32,0.25 image:1920,1080,U008 image:1920,1080,U008'),
+#-----------------------------------------------------------------------------------------------------------------------
+#   logical kernels
     ('and-1080p-u8-u8u8', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
     ('and-1080p-u8-u8u1', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
     ('and-1080p-u8-u1u8', 'org.khronos.openvx.and image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
@@ -114,8 +153,58 @@ openvxNodes = [
     ('and-1080p-u1-u8u1', 'org.khronos.openvx.and image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
     ('and-1080p-u1-u1u8', 'org.khronos.openvx.and image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
     ('and-1080p-u1-u1u1', 'org.khronos.openvx.and image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001'),
-    ('box_3x3-1080p-u8',
-     'org.khronos.openvx.box_3x3 image:1920,1080,U008 image:1920,1080,U008'),
+    ('or-1080p-u8-u8u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('or-1080p-u8-u8u1', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
+    ('or-1080p-u8-u1u8', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
+    ('or-1080p-u8-u1u1', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U008'),
+    ('or-1080p-u1-u8u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U001'),
+    ('or-1080p-u1-u8u1', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
+    ('or-1080p-u1-u1u8', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
+    ('or-1080p-u1-u1u1', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001'),
+    ('xor-1080p-u8-u8u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
+    ('xor-1080p-u8-u8u1', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
+    ('xor-1080p-u8-u1u8', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
+    ('xor-1080p-u8-u1u1', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U008'),
+    ('xor-1080p-u1-u8u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U001'),
+    ('xor-1080p-u1-u8u1', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
+    ('xor-1080p-u1-u1u8', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
+    ('xor-1080p-u1-u1u1', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001'),
+    ('not-1080p-u8-u8', 'org.khronos.openvx.not image:1920,1080,U008 image:1920,1080,U008'),
+    ('not-1080p-u8-u1', 'org.khronos.openvx.not image:1920,1080,U008 image:1920,1080,U001'),
+    ('not-1080p-u1-u8', 'org.khronos.openvx.not image:1920,1080,U001 image:1920,1080,U008'),
+    ('not-1080p-u1-u1', 'org.khronos.openvx.not image:1920,1080,U001 image:1920,1080,U001'),
+#-----------------------------------------------------------------------------------------------------------------------
+# Statistical kernels
+    ('threshold-1080p-u8-binary',
+     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:BINARY,UINT8:INIT,127 image:1920,1080,U008'),
+    ('threshold-1080p-u8-range',
+     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:RANGE,UINT8:INIT,100,200 image:1920,1080,U008'),
+#-----------------------------------------------------------------------------------------------------------------------
+# color_kernels
+    ('convert_depth-1080p-s16-wrap',
+    'org.khronos.openvx.convertdepth image:1920,1080,S016 image:1920,1080,U008 !WRAP scalar:INT32,1'),
+    ('convert_depth-1080p-s16-sat',
+    'org.khronos.openvx.convertdepth image:1920,1080,S016 image:1920,1080,U008 !SATURATE scalar:INT32,1'),
+    ('convert_depth-1080p-u8',
+    'org.khronos.openvx.convertdepth image:1920,1080,U008 image:1920,1080,S016 !WRAP scalar:INT32,1'),
+    ('channel_extract-1080p-yuyv-pos0',
+     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_Y image:1920,1080,U008'),
+    ('channel_extract-1080p-uyvy-pos1',
+     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_Y image:1920,1080,U008'),
+    ('channel_extract-1080p-rgb-pos0',
+     'org.khronos.openvx.channel_extract image:1920,1080,RGB2 !CHANNEL_R image:1920,1080,U008'),
+    ('channel_extract-1080p-rgb-pos1',
+     'org.khronos.openvx.channel_extract image:1920,1080,RGB2 !CHANNEL_G image:1920,1080,U008'),
+    ('channel_extract-1080p-rgb-pos2',
+     'org.khronos.openvx.channel_extract image:1920,1080,RGB2 !CHANNEL_B image:1920,1080,U008'),
+    ('channel_extract-1080p-uyvy-pos0',
+     'org.khronos.openvx.channel_extract image:1920,1080,UYVY !CHANNEL_U image:960,1080,U008'),
+    ('channel_extract-1080p-yuyv-pos1',
+     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_U image:960,1080,U008'),
+    ('channel_extract-1080p-uyvy-pos2',
+     'org.khronos.openvx.channel_extract image:1920,1080,UYVY !CHANNEL_V image:960,1080,U008'),
+    ('channel_extract-1080p-uyvy-pos3',
+     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_V image:960,1080,U008'),
     ('channel_combine-1080p-u8-nv12',
      'org.khronos.openvx.channel_combine image:1920,1080,U008 image:960,540,U008 image:960,540,U008 null image:1920,1080,NV12'),
     ('channel_combine-1080p-u8-uyvy',
@@ -182,34 +271,10 @@ openvxNodes = [
     'org.khronos.openvx.color_convert image:1920,1080,NV21 image:1920,1080,YUV4'),  
     ('color_convert-1080p-iyuv-yuv4',
     'org.khronos.openvx.color_convert image:1920,1080,IYUV image:1920,1080,YUV4'),      
-    ('convert_depth-1080p-s16-wrap',
-    'org.khronos.openvx.convertdepth image:1920,1080,S016 image:1920,1080,U008 !WRAP scalar:INT32,1'),
-    ('convert_depth-1080p-s16-sat',
-    'org.khronos.openvx.convertdepth image:1920,1080,S016 image:1920,1080,U008 !SATURATE scalar:INT32,1'),
-    ('convert_depth-1080p-u8',
-    'org.khronos.openvx.convertdepth image:1920,1080,U008 image:1920,1080,S016 !WRAP scalar:INT32,1'),
-    ('convolve-i080p-u8',
-     'org.khronos.openvx.custom_convolution image:1920,1080,U008 convolution:3,3 image:1920,1080,U008'),
-    ('convolve-i080p-s16',
-     'org.khronos.openvx.custom_convolution image:1920,1080,U008 convolution:3,3 image:1920,1080,S016'),
-    ('channel_extract-1080p-yuyv-pos0',
-     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_Y image:1920,1080,U008'),
-    ('channel_extract-1080p-uyvy-pos1',
-     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_Y image:1920,1080,U008'),
-    ('channel_extract-1080p-rgb-pos0',
-     'org.khronos.openvx.channel_extract image:1920,1080,RGB2 !CHANNEL_R image:1920,1080,U008'),
-    ('channel_extract-1080p-rgb-pos1',
-     'org.khronos.openvx.channel_extract image:1920,1080,RGB2 !CHANNEL_G image:1920,1080,U008'),
-    ('channel_extract-1080p-rgb-pos2',
-     'org.khronos.openvx.channel_extract image:1920,1080,RGB2 !CHANNEL_B image:1920,1080,U008'),
-    ('channel_extract-1080p-uyvy-pos0',
-     'org.khronos.openvx.channel_extract image:1920,1080,UYVY !CHANNEL_U image:960,1080,U008'),
-    ('channel_extract-1080p-yuyv-pos1',
-     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_U image:960,1080,U008'),
-    ('channel_extract-1080p-uyvy-pos2',
-     'org.khronos.openvx.channel_extract image:1920,1080,UYVY !CHANNEL_V image:960,1080,U008'),
-    ('channel_extract-1080p-uyvy-pos3',
-     'org.khronos.openvx.channel_extract image:1920,1080,YUYV !CHANNEL_V image:960,1080,U008'),    
+#-----------------------------------------------------------------------------------------------------------------------
+# filter_kernels
+    ('box_3x3-1080p-u8',
+     'org.khronos.openvx.box_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('dilate_3x3-1080p-u8-u8',
      'org.khronos.openvx.dilate_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('dilate_3x3-1080p-u8-u1',
@@ -226,58 +291,26 @@ openvxNodes = [
      'org.khronos.openvx.erode_3x3 image:1920,1080,U001 image:1920,1080,U008'),
     ('erode_3x3-1080p-u1-u1',
      'org.khronos.openvx.erode_3x3 image:1920,1080,U001 image:1920,1080,U001'),
-    ('fast_corners-1080p-u8-nosuppression',
-     'org.khronos.openvx.fast_corners image:1920,1080,U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
-    ('fast_corners-1080p-u8-suppression',
-     'org.khronos.openvx.fast_corners image:1920,1080,U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
+    ('median_3x3-1080p-u8',
+     'org.khronos.openvx.median_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('gaussian_3x3-1080p-u8',
      'org.khronos.openvx.gaussian_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('halfscale_gaussian_3x3-1080p-u8',
      'org.khronos.openvx.halfscale_gaussian image:1920,1080,U008 image:1920,1080,U008 scalar:INT32,3'),
     ('halfscale_gaussian_5x5-1080p-u8',
      'org.khronos.openvx.halfscale_gaussian image:1920,1080,U008 image:1920,1080,U008 scalar:INT32,5'),
-    ('magnitude-1080p-S16',
-     'org.khronos.openvx.magnitude image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,S016'),
-    ('median_3x3-1080p-u8',
-     'org.khronos.openvx.median_3x3 image:1920,1080,U008 image:1920,1080,U008'),
-    ('multiply-1080p-u8-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,U008'),
-    ('multiply-1080p-u8-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,U008'),
-    ('multiply-1080p-u8-sat-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,U008'),
-    ('multiply-1080p-u8-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,U008'),
-    ('multiply-1080p-s16-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
-    ('multiply-1080p-s16-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
-    ('multiply-1080p-s16-sat-round', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
-    ('multiply-1080p-s16-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,U008 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
-    ('multiply-1080p-s16-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
-    ('multiply-1080p-s16-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
-    ('multiply-1080p-s16-sat-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
-    ('multiply-1080p-s16-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,U008 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
-    ('multiply-1080p-s16-wrap-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
-    ('multiply-1080p-s16-wrap-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !WRAP !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
-    ('multiply-1080p-s16-sat-round', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_ZERO image:1920,1080,S016'),
-    ('multiply-1080p-s16-sat-trunc', 'org.khronos.openvx.multiply image:1920,1080,S016 image:1920,1080,S016 scalar:FLOAT32,1.0 !SATURATE !ROUND_POLICY_TO_NEAREST_EVEN image:1920,1080,S016'),
-    ('not-1080p-u8-u8', 'org.khronos.openvx.not image:1920,1080,U008 image:1920,1080,U008'),
-    ('not-1080p-u8-u1', 'org.khronos.openvx.not image:1920,1080,U008 image:1920,1080,U001'),
-    ('not-1080p-u1-u8', 'org.khronos.openvx.not image:1920,1080,U001 image:1920,1080,U008'),
-    ('not-1080p-u1-u1', 'org.khronos.openvx.not image:1920,1080,U001 image:1920,1080,U001'),
-    ('or-1080p-u8-u8u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
-    ('or-1080p-u8-u8u1', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
-    ('or-1080p-u8-u1u8', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
-    ('or-1080p-u8-u1u1', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U008'),
-    ('or-1080p-u1-u8u8', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U001'),
-    ('or-1080p-u1-u8u1', 'org.khronos.openvx.or image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
-    ('or-1080p-u1-u1u8', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
-    ('or-1080p-u1-u1u1', 'org.khronos.openvx.or image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001'),
-    ('phase-1080p-S16',
-     'org.khronos.openvx.phase image:1920,1080,S016 image:1920,1080,S016 image:1920,1080,U008'),
-    ('remap-1080p-S16-nearest',
-    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
-    ('remap-1080p-S16-nearest-constant',
-    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008 attr:BORDER_MODE:CONSTANT,0'),
-    ('remap-1080p-S16-bilinear',
-    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !BILINEAR image:1920,1080,U008'),
-    ('remap-1080p-S16-bilinear-constant',
-    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !BILINEAR image:1920,1080,U008 attr:BORDER_MODE:CONSTANT,0'),
+    ('convolve-i080p-u8',
+     'org.khronos.openvx.custom_convolution image:1920,1080,U008 convolution:3,3 image:1920,1080,U008'),
+    ('convolve-i080p-s16',
+     'org.khronos.openvx.custom_convolution image:1920,1080,U008 convolution:3,3 image:1920,1080,S016'),
+    ('sobel_3x3-1080p-u8-gxgy',
+     'org.khronos.openvx.sobel_3x3 image:1920,1080,U008 image:1920,1080,S016 image:1920,1080,S016'),
+    ('sobel_3x3-1080p-u8-gx',
+     'org.khronos.openvx.sobel_3x3 image:1920,1080,U008 image:1920,1080,S016 null'),
+    ('sobel_3x3-1080p-u8-gy',
+     'org.khronos.openvx.sobel_3x3 image:1920,1080,U008 null image:1920,1080,S016'),
+#-----------------------------------------------------------------------------------------------------------------------
+# geometric_kernels
     ('scale_image-1080p-u8-nearest',
      'org.khronos.openvx.scale_image image:1920,1080,U008 image:960,540,U008 !NEAREST_NEIGHBOR'),
     ('scale_image-1080p-u8-bilinear',
@@ -288,32 +321,6 @@ openvxNodes = [
      'org.khronos.openvx.scale_image image:1920,1080,U008 image:960,540,U008 !BILINEAR attr:BORDER_MODE:CONSTANT,0'),
     ('scale_image-1080p-u8-area',
      'org.khronos.openvx.scale_image image:1920,1080,U008 image:960,540,U008 !AREA'),
-    ('sobel_3x3-1080p-u8-gxgy',
-     'org.khronos.openvx.sobel_3x3 image:1920,1080,U008 image:1920,1080,S016 image:1920,1080,S016'),
-    ('sobel_3x3-1080p-u8-gx',
-     'org.khronos.openvx.sobel_3x3 image:1920,1080,U008 image:1920,1080,S016 null'),
-    ('sobel_3x3-1080p-u8-gy',
-     'org.khronos.openvx.sobel_3x3 image:1920,1080,U008 null image:1920,1080,S016'),
-    ('subtract-1080p-u8-wrap',
-     'org.khronos.openvx.subtract image:1920,1080,U008 image:1920,1080,U008 !WRAP image:1920,1080,U008'),
-    ('subtract-1080p-u8-sat',
-     'org.khronos.openvx.subtract image:1920,1080,U008 image:1920,1080,U008 !SATURATE image:1920,1080,U008'),
-    ('subtract-1080p-s16-wrap',
-     'org.khronos.openvx.subtract image:1920,1080,U008 image:1920,1080,U008 !WRAP image:1920,1080,S016'),
-    ('subtract-1080p-s16-wrap',
-     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,U008 !WRAP image:1920,1080,S016'),
-    ('subtract-1080p-s16-sat',
-     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,U008 !SATURATE image:1920,1080,S016'),
-    ('subtract-1080p-s16-wrap',
-     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,S016 !WRAP image:1920,1080,S016'),
-    ('subtract-1080p-s16-sat',
-     'org.khronos.openvx.subtract image:1920,1080,S016 image:1920,1080,S016 !SATURATE image:1920,1080,S016'),
-    ('table_lookup-1080p-u8',
-     'org.khronos.openvx.table_lookup image:1920,1080,U008 lut:UINT8,256 image:1920,1080,U008'),
-    ('threshold-1080p-u8-binary',
-     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:BINARY,UINT8:INIT,127 image:1920,1080,U008'),
-    ('threshold-1080p-u8-range',
-     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:RANGE,UINT8:INIT,100,200 image:1920,1080,U008'),
     ('warp_affine-1080p-u8-nearest',
      'org.khronos.openvx.warp_affine image:1920,1080,U008 matrix:FLOAT32,2,3 !NEAREST_NEIGHBOR image:1920,1080,U008'),
     ('warp_affine-1080p-u8-nearest-constant',
@@ -330,16 +337,23 @@ openvxNodes = [
      'org.khronos.openvx.warp_perspective image:1920,1080,U008 matrix:FLOAT32,3,3 !BILINEAR image:1920,1080,U008'),
     ('warp_perspective-1080p-u8-bilinear-constant',
      'org.khronos.openvx.warp_perspective image:1920,1080,U008 matrix:FLOAT32,3,3 !BILINEAR image:1920,1080,U008 attr:BORDER_MODE:CONSTANT,0'),
-    ('weightedAverage-1080p-u8',
-    'org.khronos.openvx.weighted_average image:1920,1080,U008 scalar:FLOAT32,0.25 image:1920,1080,U008 image:1920,1080,U008'),
-    ('xor-1080p-u8-u8u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008'),
-    ('xor-1080p-u8-u8u1', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U008'),
-    ('xor-1080p-u8-u1u8', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U008'),
-    ('xor-1080p-u8-u1u1', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U008'),
-    ('xor-1080p-u1-u8u8', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U001'),
-    ('xor-1080p-u1-u8u1', 'org.khronos.openvx.xor image:1920,1080,U008 image:1920,1080,U001 image:1920,1080,U001'),
-    ('xor-1080p-u1-u1u8', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U008 image:1920,1080,U001'),
-    ('xor-1080p-u1-u1u1', 'org.khronos.openvx.xor image:1920,1080,U001 image:1920,1080,U001 image:1920,1080,U001')
+    ('remap-1080p-S16-nearest',
+    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
+    ('remap-1080p-S16-nearest-constant',
+    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008 attr:BORDER_MODE:CONSTANT,0'),
+    ('remap-1080p-S16-bilinear',
+    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !BILINEAR image:1920,1080,U008'),
+    ('remap-1080p-S16-bilinear-constant',
+    'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !BILINEAR image:1920,1080,U008 attr:BORDER_MODE:CONSTANT,0'),
+#-----------------------------------------------------------------------------------------------------------------------
+# vision_kernels
+    ('fast_corners-1080p-u8-nosuppression',
+     'org.khronos.openvx.fast_corners image:1920,1080,U008 scalar:FLOAT32,80.0 scalar:BOOL,1 array:KEYPOINT,1000 scalar:SIZE,0'),
+    ('fast_corners-1080p-u8-suppression',
+     'org.khronos.openvx.fast_corners image:1920,1080,U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
+    ('table_lookup-1080p-u8',
+     'org.khronos.openvx.table_lookup image:1920,1080,U008 lut:UINT8,256 image:1920,1080,U008')
+#-----------------------------------------------------------------------------------------------------------------------
 ]
 # ('remap-1080p-S16-nearest',
 #  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
@@ -492,22 +506,29 @@ if hardwareMode not in ('CPU', 'GPU'):
 
 # RunVX Application
 runVX_exe = runvxDir+'/runvx'
-runvx_exe_dir = os.path.expanduser(runVX_exe)
-print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
-os.system('(cd gdfs; mkdir openvx_test_results)')
-for i in range(len(visionTestConfig[:])):
-    testFileName = visionTestConfig[i]
-    print("Running Test Script: "+testFileName)
-    os.system('(cd gdfs; ./../'+runvx_exe_dir+' -frames:100 -affinity:' +
-              hardwareMode+' -dump-profile file '+testFileName+' | tee -a openvx_test_results/VisionOutput.log)')
-    print("\n")
+RunVXapp = os.path.abspath(runVX_exe)
+scriptPath = os.path.dirname(os.path.realpath(__file__))
+if(os.path.isfile(RunVXapp)):
+    print("STATUS: RunVX path - "+RunVXapp)
+else:
+    print("\nERROR: RunVX Executable Not Found\n")
+    exit()
+
+# print("\nrunVisionTests - OpenVX Vision Tests V-"+__version__+"\n")
+# os.system('(cd '+scriptPath+'/gdfs; mkdir -p openvx_test_results)')
+# for i in range(len(visionTestConfig[:])):
+#     testFileName = visionTestConfig[i]
+#     print("Running Test Script: "+testFileName)
+#     os.system(RunVXapp+' -frames:100 -affinity:' +
+#                   hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName+' | tee -a '+scriptPath+'/gdfs/openvx_test_results/VisionOutput.log')
+#     print("\n")
 
 # print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
 # os.system('mkdir openvx_node_results')
 # for i in range(len(openvxNodeTestConfig)):
 #     nodeTestName, nodeTest = openvxNodeTestConfig[i]
 #     print("Running OpenVX Node: "+nodeTestName)
-#     os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
+#     os.system(RunVXapp+' -frames:1000 -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
 #     print("\n")
 
 print("\nrunVisionTests - OpenVX Node Performance V-"+__version__+"\n")
@@ -522,24 +543,24 @@ for i in range(len(openvxNodes[:])):
     echo1 = 'Running OpenVX Node - '+nodeName
     os.system('echo '+echo1 +
               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-    os.system('./'+runvx_exe_dir+' -frames:1000 -affinity:' +
+    os.system(RunVXapp+' -frames:1000 -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
     print("\n")
 
 
 orig_stdout = sys.stdout
 sys.stdout = open('openvx_node_results/nodePerformance.md','a')
-echo_1 = '| OpenVX Node                      |Frames Count| tmp (ms) | avg (ms) | min (ms) | max (ms) |'
+echo_1 = '| OpenVX Node                          |Frames Count| tmp (ms) | avg (ms) | min (ms) | max (ms) |'
 print(echo_1)
-echo_2 = '|----------------------------------|------------|----------|----------|----------|----------|'
+echo_2 = '|--------------------------------------|------------|----------|----------|----------|----------|'
 print(echo_2)
 sys.stdout = orig_stdout
 print(echo_1)
 print(echo_2)
 if hardwareMode == 'CPU':
-    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-32s | %10d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
+    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /CPU,GRAPH/ { printf("| %-36s | %10d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
 elif hardwareMode == 'GPU':
-    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /GPU,GRAPH/ { printf("| %-32s | %10d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
+    runAwk_csv = r'''awk 'BEGIN { node = "xxx"; } /Running OpenVX Node - / { node = $5; } /GPU,GRAPH/ { printf("| %-36s | %10d | %8.3f | %8.3f | %8.3f | %8.3f |\n", node, $1, $2, $3, $4, $5) }' openvx_node_results/nodePerformanceOutput.log | tee -a openvx_node_results/nodePerformance.md'''
 os.system(runAwk_csv)
 
 # get data

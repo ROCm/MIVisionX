@@ -4060,9 +4060,12 @@ int HafCpu_Threshold_U1_U8_Range
 			vx_uint8 pix = *pLocalSrc++;
 			for (int i = 0; i < 8; i++, width++)
 			{
+				if (width == postfixWidth)
+					break;
+
+				pixelmask >>= 1;
 				if ((pix >= lower) && (pix <= upper))
-					pixelmask |= 1;
-				pixelmask <<= 1;
+					pixelmask |= 0x80;
 			}
 			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
 		}

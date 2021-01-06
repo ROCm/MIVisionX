@@ -152,21 +152,22 @@ int HipExec_Threshold_U8_U8_Range(
 __global__ void __attribute__((visibility("default")))
 Hip_Threshold_U1_U8_Binary(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage, unsigned int srcImageStrideInBytes,
+    unsigned char *pDstImage, unsigned int  dstImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
     int thresholdValue
 	) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*8 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + (x*2);
-    int4 src1 = uchars_to_int4(pSrcImage[srcIdx]);
-    int4 src2 = uchars_to_int4(pSrcImage[srcIdx + 1]);
-    pDstImage[dstIdx] =  PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src1.x,thresholdValue)) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src1.y,thresholdValue)) << 1) |
-                        (PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src1.z,thresholdValue)) << 2) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src1.w,thresholdValue)) << 3) |
-                        (PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src2.x,thresholdValue)) << 4) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src2.y,thresholdValue)) << 5) |
-                        (PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src2.z,thresholdValue)) << 6) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDBINARY(src2.w,thresholdValue)) << 7) ;
+    unsigned int srcIdx =  y*(srcImageStrideInBytes) + (x*8);
+    for(int bit=0; bit < 8; bit++)
+    {
+        if(((x*8) + bit) >= dstWidth)   return;
+        pDstImage[dstIdx] >>= 1;
+        if (PIXELTHRESHOLDBINARY((int)pSrcImage[srcIdx + bit],thresholdValue))
+            pDstImage[dstIdx] |= 0x80;
+    }
 }
 int HipExec_Threshold_U1_U8_Binary(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -181,7 +182,7 @@ int HipExec_Threshold_U1_U8_Binary(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, stream, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (unsigned char *)pHipDstImage , dstImageStrideInBytes, (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdValue);
     return VX_SUCCESS;
 }
@@ -189,21 +190,23 @@ int HipExec_Threshold_U1_U8_Binary(
 __global__ void __attribute__((visibility("default")))
 Hip_Threshold_U1_U8_Range(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage, unsigned int srcImageStrideInBytes,
+    unsigned char *pDstImage, unsigned int  dstImageStrideInBytes,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
     int thresholdLower, int thresholdUpper
 	) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*8 >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y*(dstImageStrideInBytes) + x;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + (x*2);
-    int4 src1 = uchars_to_int4(pSrcImage[srcIdx]);
-    int4 src2 = uchars_to_int4(pSrcImage[srcIdx + 1]);
-    pDstImage[dstIdx] =  PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src1.x,thresholdLower,thresholdUpper)) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src1.y,thresholdLower,thresholdUpper)) << 1) |
-                        (PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src1.z,thresholdLower,thresholdUpper)) << 2) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src1.w,thresholdLower,thresholdUpper)) << 3) |
-                        (PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src2.x,thresholdLower,thresholdUpper)) << 4) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src2.y,thresholdLower,thresholdUpper)) << 5) |
-                        (PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src2.z,thresholdLower,thresholdUpper)) << 6) | (PIXELBITCHECKU1((int)PIXELTHRESHOLDRANGE(src2.w,thresholdLower,thresholdUpper)) << 7) ;
+    unsigned int srcIdx =  y*(srcImageStrideInBytes) + (x*8);
+    for(int bit=0; bit < 8; bit++)
+    {
+        if(((x*8) + bit) >= dstWidth)   return;
+        pDstImage[dstIdx] >>= 1;
+        if (PIXELTHRESHOLDRANGE((int)pSrcImage[srcIdx + bit],thresholdLower, thresholdUpper))
+            pDstImage[dstIdx] |= 0x80;
+    }
+
 }
 int HipExec_Threshold_U1_U8_Range(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -218,7 +221,7 @@ int HipExec_Threshold_U1_U8_Range(
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
                     0, stream, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                    (unsigned char *)pHipDstImage , dstImageStrideInBytes, (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes,
                     thresholdLower, thresholdUpper);
     return VX_SUCCESS;
 }

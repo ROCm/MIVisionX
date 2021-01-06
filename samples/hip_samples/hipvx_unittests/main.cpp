@@ -1993,7 +1993,12 @@ int main(int argc, const char ** argv)
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * (width/8) * height;
+					if(pix_img1_u8 > Threshold_thresholdValue_int32_u1) {
+						for(int i=1; i<=(width%8); i++) {
+							expected_image_sum += (1 << (8-i));
+						}
+						(expected_image_sum *= height) += (255 * (width/8) * height);
+					}
 					out_buf_type = 5;
 					break;
 				}
@@ -2003,7 +2008,12 @@ int main(int argc, const char ** argv)
 					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
 					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * (width/8) * height;
+					if(pix_img1_u8 >= Threshold_thresholdLower_int32_u1 && pix_img1_u8 <= Threshold_thresholdUpper_int32_u1) {
+						for(int i=1; i<=(width%8); i++) {
+							expected_image_sum += (1 << (8-i));
+						}
+						(expected_image_sum *= height) += (255 * (width/8) * height);
+					}	
 					out_buf_type = 5;
 					break;
 				}
@@ -3151,7 +3161,7 @@ int main(int argc, const char ** argv)
 		hip_addr_u1.dim_y = height;
 		hip_addr_u1.stride_x = 0;
 		hip_addr_u1.stride_x_bits = 1;
-		hip_addr_u1.stride_y = (width % 8 == 0) ? ((width/8)+7) & ~7 : ((width/8)+8) & ~7;
+		hip_addr_u1.stride_y = ((int)(ceil(width/8.0))+7) &~7;
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[0], height * hip_addr_u1.stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[1], height * hip_addr_u1.stride_y));
 		ERROR_CHECK_HIP_STATUS(hipMalloc((void**)&ptr[2], height * hip_addr_u1.stride_y));
@@ -4221,7 +4231,12 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_u1, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U1, &hip_addr_u1, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectBinary_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdValue_int32) ? 255 : 0) * (width/8) * height;
+					if(pix_img1_u8 > Threshold_thresholdValue_int32_u1) {
+						for(int i=1; i<=(width%8); i++) {
+							expected_image_sum += (1 << (8-i));
+						}
+						(expected_image_sum *= height) += (255 * (width/8) * height);
+					}
 					out_buf_type = 5;
 					break;
 				}
@@ -4231,7 +4246,12 @@ int main(int argc, const char ** argv)
 					ERROR_CHECK_OBJECT(img1 = vxCreateImageFromHandle(context, VX_DF_IMAGE_U8, &hip_addr_uint8_u1, &ptr[0], VX_MEMORY_TYPE_HIP));
 					ERROR_CHECK_OBJECT(img_out = vxCreateImageFromHandle(context, VX_DF_IMAGE_U1, &hip_addr_u1, &ptr[2], VX_MEMORY_TYPE_HIP));
 					node = vxThresholdNode(graph, img1, Threshold_thresholdObjectRange_threshold_U1, img_out);
-					expected_image_sum = ((pix_img1_u8 > Threshold_thresholdUpper_int32) ? 0 : ((pix_img1_u8 < Threshold_thresholdLower_int32) ? 0 : 255)) * (width/8) * height;
+					if(pix_img1_u8 >= Threshold_thresholdLower_int32_u1 && pix_img1_u8 <= Threshold_thresholdUpper_int32_u1) {
+						for(int i=1; i<=(width%8); i++) {
+							expected_image_sum += (1 << (8-i));
+						}
+						(expected_image_sum *= height) += (255 * (width/8) * height);
+					}	
 					out_buf_type = 5;
 					break;
 				}

@@ -94,8 +94,8 @@ SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/copyright.txt")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
   MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, \
 utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly \
-optimized open-source implementation of the Khronos OpenVX™ and OpenVX™ Extensions along with \
-Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos NNEF™ exchange formats. \
+optimized open-source implementation of the Khronos OpenVX and OpenVX Extensions along with \
+Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos NNEF exchange formats. \
 The toolkit allows for rapid prototyping and deployment of optimized computer vision and \
 machine learning inference workloads on a wide range of computer hardware, including \
 small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")

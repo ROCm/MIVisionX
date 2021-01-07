@@ -486,10 +486,13 @@ parser.add_argument('--runvx_directory',    type=str, default='',
                     help='RunVX Executable directory - required')
 parser.add_argument('--hardware_mode',      type=str, default='CPU',
                     help='OpenVX Vision Function target - optional (default:CPU [options:CPU/GPU])')
+parser.add_argument('--backend_type',      type=str, default='HIP',
+                    help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
 args = parser.parse_args()
 
 runvxDir = args.runvx_directory
 hardwareMode = args.hardware_mode
+backendType = args.backend_type
 
 # check arguments
 if runvxDir == '':
@@ -534,14 +537,81 @@ if not os.path.exists(outputDirectory):
 else:
     shutil.rmtree(outputDirectory)
     os.makedirs(outputDirectory)
-for i in range(len(openvxNodes[:])):
-    nodeName, nodeFormat = openvxNodes[i]
-    echo1 = 'Running OpenVX Node - '+nodeName
-    os.system('echo '+echo1 +
-              ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-    os.system(RunVXapp+' -frames:1000 -affinity:' +
-              hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
-    print("\n")
+
+
+
+# All cases without profiling
+# for i in range(len(openvxNodes[:])):
+#     nodeName, nodeFormat = openvxNodes[i]
+#     echo1 = 'Running OpenVX Node - '+nodeName
+#     os.system('echo '+echo1 +
+#               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+#     print('rocprof --basenames on --timestamp on --stats --hip-trace '+RunVXapp+' -frames:1000 -affinity:' +
+#               hardwareMode+' -dump-profile node '+nodeFormat)
+#     os.system(RunVXapp+' -frames:1000 -affinity:' +
+#               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
+#     print("\n")
+
+
+
+# All cases with GPU profiling
+if hardwareMode == "GPU":
+    os.system('rm -rvf rocprof_vision_tests_outputs')
+    os.system('mkdir rocprof_vision_tests_outputs')
+    totalCount = 0
+    for i in range(len(openvxNodes[:])):
+        nodeName, nodeFormat = openvxNodes[i]
+        echo1 = 'Running OpenVX Node - '+nodeName
+        os.system('echo '+echo1 +
+                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        os.system('mkdir rocprof_vision_tests_outputs/case_'+str(i+1))
+        if backendType == "HIP":
+            print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats --hip-trace '+RunVXapp+' -frames:1000 -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats --hip-trace '+RunVXapp+' -frames:1000 -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+        elif backendType == "OCL":
+            print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:1000 -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+            os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:1000 -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+        print("\n")
+        totalCount = i+1
+        # if i==1:
+        #     break
+    RESULTS_DIR = "rocprof_vision_tests_outputs"
+    print("RESULTS_DIR = " + RESULTS_DIR)
+    CONSOLIDATED_FILE = RESULTS_DIR + "/consolidated_results.stats.csv"
+    new_file = open(CONSOLIDATED_FILE,'w')
+    if backendType == "HIP":
+        new_file.write('"Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
+    elif backendType == "OCL":
+        new_file.write('"Kernel","Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
+    for case_num in range(1,totalCount+1,1):
+        nodeName, nodeFormat = openvxNodes[case_num-1]
+        CASE_RESULTS_DIR = RESULTS_DIR + "/case_" + str(case_num)
+        print("CASE_RESULTS_DIR = " + CASE_RESULTS_DIR)
+        CASE_FILE_PATH = CASE_RESULTS_DIR + "/output_case_" + str(case_num) + ".stats.csv"
+        print("CASE_FILE_PATH = " + CASE_FILE_PATH)
+        try:
+            case_file = open(CASE_FILE_PATH,'r')
+            if backendType == "HIP":
+                for line in case_file:
+                    print(line)
+                    if line.startswith('Hip'):
+                        new_file.write(line)
+            elif backendType == "OCL":
+                for line in case_file:
+                    print(line)
+                    if line.startswith('"OpenVX_kernel'):
+                        new_file.write('Ocl_'+nodeName+","+line)
+            case_file.close()
+        except:
+            print("Unable to open case results")
+            continue
+    new_file.close()
+    os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
+
 
 
 orig_stdout = sys.stdout

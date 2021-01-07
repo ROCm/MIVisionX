@@ -2405,6 +2405,39 @@ int main(int argc, const char ** argv)
 					out_buf_type = 0;
 					break;
 				}
+				case 135:
+				{
+					// test_case_name = "agoKernel_Dilate_U1_U8_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					node = vxDilate3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 5;
+					break;
+				}
+				case 136:
+				{
+					// test_case_name = "agoKernel_Dilate_U8_U1_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxDilate3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 137:
+				{
+					// test_case_name = "agoKernel_Dilate_U1_U1_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					node = vxDilate3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = pix_img1_u8;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 5;
+					break;
+				}
 				case 138:
 				{
 					// test_case_name = "agoKernel_Erode_U8_U8_3x3";
@@ -2414,6 +2447,39 @@ int main(int argc, const char ** argv)
 					vx_int32 firstColVal = 0;
 					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
 					out_buf_type = 0;
+					break;
+				}
+				case 139:
+				{
+					// test_case_name = "agoKernel_Erode_U1_U8_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					node = vxErode3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = 0;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 5;
+					break;
+				}
+				case 140:
+				{
+					// test_case_name = "agoKernel_Erode_U8_U1_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U8);
+					node = vxErode3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = 0;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 0;
+					break;
+				}
+				case 141:
+				{
+					// test_case_name = "agoKernel_Erode_U1_U1_3x3";
+					img1 = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					img_out = vxCreateImage(context, width, height, VX_DF_IMAGE_U1);
+					node = vxErode3x3Node(graph, img1, img_out);
+					vx_int32 firstColVal = 0;
+					expected_image_sum = (pix_img1_u8 * (width - 2) * (height - 2)) + (2 * (height - 2) * firstColVal);
+					out_buf_type = 5;
 					break;
 				}
 				case 142:
@@ -2986,21 +3052,22 @@ int main(int argc, const char ** argv)
 				}
 				// U8 input
 				else if(
-					(case_number == 45) || (case_number == 47)  || (case_number == 88) ||
+					(case_number == 45) || (case_number == 47) || (case_number == 88) ||
 					(case_number == 89) || (case_number == 90) || (case_number == 91) || (case_number == 92) ||  
-					(case_number == 133) || (case_number == 134) || (case_number == 138) || (case_number == 142) || 
-					(case_number == 143) || (case_number == 147) || (case_number == 148) || (case_number == 149) || 
-					(case_number == 150) || (case_number == 151) || 
-					(case_number == 154) || (case_number == 155) || (case_number == 156)  || (case_number == 157) || 
-					(case_number == 158)  || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
+					(case_number == 133) || (case_number == 134) || (case_number == 135) || (case_number == 138) ||
+					(case_number == 139) || (case_number == 142) || (case_number == 143) || (case_number == 147) ||
+					(case_number == 148) || (case_number == 149) || (case_number == 150) || (case_number == 151) || 
+					(case_number == 154) || (case_number == 155) || (case_number == 156) || (case_number == 157) || 
+					(case_number == 158) || (case_number == 159) || (case_number == 160) || (case_number == 162) || 
 					(case_number == 163) || (case_number == 164) || (case_number == 165) || (case_number == 166) || 
 					(case_number == 167) || (case_number == 168) || (case_number == 169) || (case_number == 172) || 
 					(case_number == 174) || (case_number == 176) || (case_number == 187) || (case_number == 188) || 
 					(case_number == 189) || (case_number == 190) || (case_number == 191) || (case_number == 192) ||
 					(case_number == 203) || (case_number == 204) || (case_number == 206) || (case_number == 207) ||
-					(case_number == 208) || (case_number == 214) || (case_number == 217) || (case_number == 223) || (case_number == 225) || 
-					(case_number == 226) || (case_number == 227) || (case_number == 228) || (case_number == 229) || 
-					(case_number == 230) || (case_number == 231) || (case_number == 232) || (case_number == 233) || (case_number == 215)
+					(case_number == 208) || (case_number == 214) || (case_number == 217) || (case_number == 223) || 
+					(case_number == 225) || (case_number == 226) || (case_number == 227) || (case_number == 228) || 
+					(case_number == 229) || (case_number == 230) || (case_number == 231) || (case_number == 232) || 
+					(case_number == 233) || (case_number == 215)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u8));
@@ -3014,7 +3081,8 @@ int main(int argc, const char ** argv)
 				}
 				// U1 input
 				else if(
-					(case_number == 46) || (case_number == 48)
+					(case_number == 46) || (case_number == 48) || (case_number == 136) || (case_number == 137) ||
+					(case_number == 140) || (case_number == 141)
 				)
 				{
 					ERROR_CHECK_STATUS(makeInputImage(context, img1, width, height, VX_MEMORY_TYPE_HOST, (vx_uint8) pix_img1_u1));

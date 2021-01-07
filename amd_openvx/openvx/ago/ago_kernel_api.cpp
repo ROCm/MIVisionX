@@ -13190,7 +13190,7 @@ int agoKernel_ScaleUp2x2_U8_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
-#elif ENABLE_OPENCL                    
+#elif ENABLE_HIP                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU 
 #endif                 
                     ;

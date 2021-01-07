@@ -355,10 +355,6 @@ openvxNodes = [
      'org.khronos.openvx.table_lookup image:1920,1080,U008 lut:UINT8,256 image:1920,1080,U008')
 #-----------------------------------------------------------------------------------------------------------------------
 ]
-# ('remap-1080p-S16-nearest',
-#  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !NEAREST_NEIGHBOR image:1920,1080,U008'),
-# ('remap-1080p-S16-bilinear',
-#  'org.khronos.openvx.remap image:1920,1080,U008 remap:1920,1080,1920,1080 !BILINEAR image:1920,1080,U008'),
 
 
 # openvxNodes = [

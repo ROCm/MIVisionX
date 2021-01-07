@@ -148,10 +148,10 @@ static vx_uint32 readMaskedRectangle(const void *base,
 
             for (kx = -(int32_t)left; kx <= (int32_t)right; ++kx, ++mask_index)
             {
-                vx_int32 x = (int32_t)(center_x + kx);
-                int ccase = ccase_y || x < (int32_t)border_x_start || x >= width;
                 if (mask[mask_index])
                 {
+                    vx_int32 x = (int32_t)(center_x + kx);
+                    int ccase = ccase_y || x < (int32_t)border_x_start || x >= width;
                     if (type == VX_DF_IMAGE_U1)
                         ((vx_uint8*)destination)[dest_index++] = ccase ? ( (vx_uint8)cval.U1 ? 1 : 0 ) :
                             ( *(vx_uint8*)(ptr + y*stride_y + (x*stride_x_bits) / 8) & (1 << (x % 8)) ) >> (x % 8);

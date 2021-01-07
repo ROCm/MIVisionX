@@ -51,3 +51,91 @@ python runVisionTests.py --help
 40_warpPerspective
 41_xor
 ```
+
+## Vision Performance Tests
+
+```
+ Test ID - Test Name                     
+
+   1     - absdiff-1080p-U8              
+
+   2     - accumulate-1080p-U8           
+
+   3     - accumulate_square-1080p-U8    
+
+   4     - accumulate_weighted-1080p-U8  
+
+   5     - add-1080p-U8                  
+
+   6     - and-1080p-U8                  
+
+   7     - box_3x3-1080p-U8              
+
+   8     - canny_edge_detector-1080p-U8  
+
+   9     - channel_combine-1080p-RGBA      
+
+   10    - channel_extract-1080p-U8      
+
+   11    - color_convert-1080p-RGB       
+
+   12    - convertdepth-1080p-S016       
+
+   13    - custom_convolution-1080p-S016 
+
+   14    - dilate_3x3-1080p-U8           
+
+   15    - equalize_histogram-1080p-U8   
+
+   16    - erode_3x3-1080p-U8            
+
+   17    - fast_corners-1080p-U8         
+
+   18    - gaussian_3x3-1080p-U8         
+
+   19    - gaussian_pyramid-1080p-U8     
+
+   20    - halfscale_gaussian-1080p-U8   
+
+   21    - harris_corners-1080p-U8       
+
+   22    - histogram-1080p-U8            
+
+   23    - integral_image-1080p-U8       
+
+   24    - magnitude-1080p-S16           
+
+   25    - mean_stddev-1080p-U8          
+
+   26    - median_3x3-1080p-U8           
+
+   27    - minmaxloc-1080p-U8            
+
+   28    - multiply-1080p-U8             
+
+   29    - not-1080p-U8                  
+
+   30    - optical_flow_pyr_lk-1080p-U8  
+
+   31    - or-1080p-U8                   
+
+   32    - phase-1080p-S16               
+
+   33    - remap-1080p-U008              
+
+   34    - scale_image-1080p-U8          
+
+   35    - sobel_3x3-1080p-U8            
+
+   36    - subtract-1080p-U8             
+
+   37    - table_lookup-1080p-U8         
+
+   38    - threshold-1080p-U8            
+
+   39    - warp_affine-1080p-U8          
+
+   40    - warp_perspective-1080p-U8     
+
+   41    - xor-1080p-U8 
+```

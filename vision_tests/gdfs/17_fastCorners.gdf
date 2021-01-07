@@ -3,7 +3,7 @@ data inter_luma = image:1280,720,U008
 node org.khronos.openvx.channel_extract input_iyuv !CHANNEL_Y inter_luma
 
 data input_strength_thresh = scalar:FLOAT32,80.0
-data input_nonmax_suppression = scalar:BOOL,1
+data input_nonmax_suppression = scalar:BOOL,0
 data output_fast_arr = array:KEYPOINT,1000:WRITE,openvx_test_results/17_fast_corners_arr.txt
 data output_num_corners_fast = scalar:SIZE,0:WRITE,openvx_test_results/17_fast_corners_corners.txt
 node org.khronos.openvx.fast_corners inter_luma input_strength_thresh input_nonmax_suppression output_fast_arr output_num_corners_fast

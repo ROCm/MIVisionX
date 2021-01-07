@@ -25,3 +25,14 @@ To enable/disable input/output parameters printing, edit main.cpp
 #define PRINT_OUTPUT
 // ------------------------------------------------------------
 ```
+
+## For GPU profiling all HIP functionalities with individual CSV output dumps:
+```
+cd samples/hip_samples/hipvx_unittests
+./rocprof_profiling.sh
+```
+
+## For consolidating individual CSV output stats into one CSV:
+```
+python3 rocprof_profiling_append.py
+```

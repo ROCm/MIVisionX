@@ -27,28 +27,23 @@ THE SOFTWARE.
 #include "hip/hip_runtime.h"
 #include "hip_kernels.h"
 
-__device__ __forceinline__ float4 ucharTofloat4(unsigned int src)
-{
+__device__ __forceinline__ float4 ucharTofloat4(unsigned int src) {
     return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
 }
 
-__device__ __forceinline__ uint float4ToUint(float4 src)
-{
+__device__ __forceinline__ uint float4ToUint(float4 src) {
   return ((int)src.x&0xFF) | (((int)src.y&0xFF)<<8) | (((int)src.z&0xFF)<<16)| (((int)src.w&0xFF) << 24);
 }
 
-// VxAbsDiff kernel for hip backend
 __global__ void __attribute__((visibility("default")))
-Hip_Copy_U8_U8
-	(
+Hip_Copy_U8_U8 (
         vx_uint32     dstWidth,
         vx_uint32     dstHeight,
         unsigned int     * pDstImage,
         unsigned int     dstImageStrideInBytes,
         const unsigned int    * pSrcImage,
         vx_uint32     srcImageStrideInBytes
-	)
-{
+	) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x*8 >= dstWidth) || (y >= dstHeight)) return;
@@ -57,9 +52,7 @@ Hip_Copy_U8_U8
     pDstImage[dstIdx] = pSrcImage[srcIdx];
     pDstImage[dstIdx+1] = pSrcImage[srcIdx+1];
 }
-
-int HipExec_ChannelCopy
-(
+int HipExec_ChannelCopy (
         hipStream_t  stream,
         vx_uint32     dstWidth,
         vx_uint32     dstHeight,
@@ -67,15 +60,9 @@ int HipExec_ChannelCopy
         vx_uint32     dstImageStrideInBytes,
         const vx_uint8    * pHipSrcImage,
         vx_uint32     srcImageStrideInBytes
-)
-{
-    hipEvent_t start, stop;
+    ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth + 7) >> 3, globalThreads_y = dstHeight;
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, NULL);
 #if 1    
     hipLaunchKernelGGL(Hip_Copy_U8_U8,
                        dim3(ceil((float) globalThreads_x / localThreads_x), ceil((float) globalThreads_y / localThreads_y)),
@@ -84,9 +71,5 @@ int HipExec_ChannelCopy
                        (unsigned int *) pHipDstImage, dstImageStrideInBytes, (const unsigned int *) pHipSrcImage,
                        srcImageStrideInBytes);
 #endif
-    hipEventRecord(stop, NULL);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    printf("HipExec_ChannelCopy: Kernel time: %f\n", eventMs);
     return VX_SUCCESS;
 }

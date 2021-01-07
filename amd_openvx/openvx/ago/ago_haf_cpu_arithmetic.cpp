@@ -3791,7 +3791,7 @@ int HafCpu_Threshold_U8_U8_Range
 			for (int width = 0; width < postfixWidth; width++)
 			{
 				vx_uint8 pix = *pLocalSrc++;
-				*pLocalDst++ = ((pix > upper) && (pix < lower)) ? 0 : (vx_uint8)255;
+				*pLocalDst++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
 			}
 			pSrcImage += srcImageStrideInBytes;
 			pDstImage += dstImageStrideInBytes;
@@ -3820,7 +3820,7 @@ int HafCpu_Threshold_U8_U8_Range
 			for (int width = 0; width < postfixWidth; width++)
 			{
 				vx_uint8 pix = *pLocalSrc++;
-				*pLocalDst++ = ((pix > upper) && (pix < lower)) ? 0 : (vx_uint8)255;
+				*pLocalDst++ = ((pix > upper) || (pix < lower)) ? 0 : (vx_uint8)255;
 			}
 			pSrcImage += srcImageStrideInBytes;
 			pDstImage += dstImageStrideInBytes;
@@ -4060,9 +4060,12 @@ int HafCpu_Threshold_U1_U8_Range
 			vx_uint8 pix = *pLocalSrc++;
 			for (int i = 0; i < 8; i++, width++)
 			{
+				if (width == postfixWidth)
+					break;
+
+				pixelmask >>= 1;
 				if ((pix >= lower) && (pix <= upper))
-					pixelmask |= 1;
-				pixelmask <<= 1;
+					pixelmask |= 0x80;
 			}
 			*pLocalDst++ = (vx_uint8)(pixelmask & 0xFF);
 		}
@@ -5084,7 +5087,7 @@ int HafCpu_Magnitude_S16_S16S16
 		{
 			float temp = (float)(*pLocalGx * *pLocalGx) + (float)(*pLocalGy * *pLocalGy);
 			temp = sqrtf(temp);
-			*pLocalDst++ = (vx_int16)temp;
+			*pLocalDst++ = (vx_int16)(round(temp));
 		}
 
 		pGxImage += (gxImageStrideInBytes >> 1);

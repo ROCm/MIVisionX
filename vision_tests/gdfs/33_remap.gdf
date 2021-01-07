@@ -8,3 +8,9 @@ node org.khronos.openvx.remap inter_luma input_remap_table !NEAREST_NEIGHBOR out
 
 data output_remap_bilinear = image:1280,720,U008:WRITE,openvx_test_results/33_remap_bilinear_1280x720.yuv
 node org.khronos.openvx.remap inter_luma input_remap_table !BILINEAR output_remap_bilinear
+
+data output_remap_nearest_constant = image:1280,720,U008:WRITE,openvx_test_results/33_remap_nearest_constant_1280x720.yuv
+node org.khronos.openvx.remap inter_luma input_remap_table !NEAREST_NEIGHBOR output_remap_nearest_constant attr:BORDER_MODE:CONSTANT,0
+
+data output_remap_bilinear_constant = image:1280,720,U008:WRITE,openvx_test_results/33_remap_bilinear_constant_1280x720.yuv
+node org.khronos.openvx.remap inter_luma input_remap_table !BILINEAR output_remap_bilinear_constant attr:BORDER_MODE:CONSTANT,0

@@ -456,6 +456,7 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 	// finalize all GPU supernodes and single nodes
 	for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
 		if (agoGpuOclSuperNodeFinalize(graph, supernode) < 0) {
+			printf("finalize failed\n");
 			return -1;
 		}
 	}

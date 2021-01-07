@@ -2743,6 +2743,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 		if (status == VX_SUCCESS) {
 			// run graph optimizer
 			if (agoOptimizeGraph(graph)) {
+				printf("optimize failed\n");
 				status = VX_FAILURE;
 			}
 			// initialize graph

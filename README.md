@@ -126,7 +126,7 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   + **Ubuntu** - `18.04` / `20.04`
   + **CentOS** - `7` / `8`
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html) 
-* CMake 2.8 or newer [download](http://cmake.org/download/)
+* CMake 3.0 or newer [download](http://cmake.org/download/)
 * ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler

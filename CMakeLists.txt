@@ -52,6 +52,13 @@ endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
 message("-- ${BoldBlue}MIVisionX install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
 
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
+else()
+  message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
+ENDIF()
+
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
 option(RALI       "Build MIVisionX with RALI Support"         ON)
 option(LOOM       "Build MIVisionX with LOOM Support"         ON)

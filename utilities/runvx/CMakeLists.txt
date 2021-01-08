@@ -79,7 +79,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -s")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 	find_path(SSL_INCLUDE
 			  NAMES openssl/hmac.h openssl/md5.h
 			  HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include

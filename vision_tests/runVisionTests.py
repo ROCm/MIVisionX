@@ -486,13 +486,25 @@ parser.add_argument('--runvx_directory',    type=str, default='',
                     help='RunVX Executable directory - required')
 parser.add_argument('--hardware_mode',      type=str, default='CPU',
                     help='OpenVX Vision Function target - optional (default:CPU [options:CPU/GPU])')
-parser.add_argument('--backend_type',      type=str, default='HIP',
+parser.add_argument('--backend_type',      type=str, default='HOST',
                     help='Backend type - optional (default:HOST [options:HOST/HIP/OCL])')
+parser.add_argument('--profiling',      type=str, default='NO',
+                    help='GPU profiling with rocprof - optional (default:NO [options:YES/NO])')
 args = parser.parse_args()
 
 runvxDir = args.runvx_directory
 hardwareMode = args.hardware_mode
 backendType = args.backend_type
+profilingOption = args.profiling
+
+if hardwareMode == "CPU":
+    if backendType != "HOST" or profilingOption != "NO":
+        print("For hardware_mode=CPU, the backend_type must be HOST and profiling must be NO")
+        end()
+if hardwareMode == "GPU":
+    if backendType == "HOST":
+        print("For hardware_mode=GPU, the backend_type must be either HIP or OCL")
+        end()
 
 # check arguments
 if runvxDir == '':
@@ -538,28 +550,13 @@ else:
     shutil.rmtree(outputDirectory)
     os.makedirs(outputDirectory)
 
-
-
-# All cases without profiling
-# for i in range(len(openvxNodes[:])):
-#     nodeName, nodeFormat = openvxNodes[i]
-#     echo1 = 'Running OpenVX Node - '+nodeName
-#     os.system('echo '+echo1 +
-#               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-#     print('rocprof --basenames on --timestamp on --stats --hip-trace '+RunVXapp+' -frames:1000 -affinity:' +
-#               hardwareMode+' -dump-profile node '+nodeFormat)
-#     os.system(RunVXapp+' -frames:1000 -affinity:' +
-#               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
-#     print("\n")
-
-
-
 # All cases with GPU profiling
-if hardwareMode == "GPU":
+if hardwareMode == "GPU" and profilingOption == "YES":
     os.system('rm -rvf rocprof_vision_tests_outputs')
     os.system('mkdir rocprof_vision_tests_outputs')
     totalCount = 0
     for i in range(len(openvxNodes[:])):
+    # for i in range(len(openvxNodes[:]) - 20, len(openvxNodes[:]), 1):
         nodeName, nodeFormat = openvxNodes[i]
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
@@ -577,8 +574,6 @@ if hardwareMode == "GPU":
                 hardwareMode+' -dump-profile node '+nodeFormat)
         print("\n")
         totalCount = i+1
-        # if i==1:
-        #     break
     RESULTS_DIR = "rocprof_vision_tests_outputs"
     print("RESULTS_DIR = " + RESULTS_DIR)
     CONSOLIDATED_FILE = RESULTS_DIR + "/consolidated_results.stats.csv"
@@ -612,6 +607,19 @@ if hardwareMode == "GPU":
     new_file.close()
     os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
 
+# All cases without profiling
+else:
+    for i in range(len(openvxNodes[:])):
+    # for i in range(len(openvxNodes[:]) - 30, len(openvxNodes[:]) - 28, 1):
+        nodeName, nodeFormat = openvxNodes[i]
+        echo1 = 'Running OpenVX Node - '+nodeName
+        os.system('echo '+echo1 +
+                ' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        print('rocprof --basenames on --timestamp on --stats --hip-trace '+RunVXapp+' -frames:1000 -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat)
+        os.system(RunVXapp+' -frames:1000 -affinity:' +
+                hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
+        print("\n")
 
 
 orig_stdout = sys.stdout

@@ -50,7 +50,14 @@ if(NOT WIN32)
   set(White       "${Esc}[37m")
 endif()
 message("-- ${BoldBlue}MIVisionX Version -- ${VERSION}${ColourReset}")
-message("-- ${BoldBlue}MIVisionX install path set to -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
+message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${ColourReset}")
+
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
+else()
+  message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
+ENDIF()
 
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
 option(RALI       "Build MIVisionX with RALI Support"         ON)
@@ -90,7 +97,6 @@ set(CPACK_PACKAGE_VENDOR        "AMD Radeon")
 set(CPACK_PACKAGE_ICON          "${CMAKE_SOURCE_DIR}/docs/images/MIVisionX.bmp")
 set(CPACK_PACKAGE_GROUP         "Development/Tools")
 set(CPACK_PACKAGE_HOMEPAGE      "https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/copyright.txt")
 
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION   "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit
   MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, \
@@ -100,7 +106,7 @@ Convolution Neural Net Model Compiler & Optimizer supporting ONNX, and Khronos N
 The toolkit allows for rapid prototyping and deployment of optimized computer vision and \
 machine learning inference workloads on a wide range of computer hardware, including \
 small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.")
-set(CPACK_RPM_PACKAGE_SUMMARY           "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
+set(CPACK_RPM_PACKAGE_SUMMARY      "AMD MIVisionX is a comprehensive Computer Vision and ML Inference Toolkit")
 
 if(DEFINED ENV{ROCM_LIBPATCH_VERSION})
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.$ENV{ROCM_LIBPATCH_VERSION}")

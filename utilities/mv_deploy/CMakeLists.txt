@@ -32,6 +32,6 @@ add_executable(mv_compile mv_compile.cpp)
 
 install (TARGETS mv_compile DESTINATION bin)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -msse4.1 -mf16c -s")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -msse4.1 -mf16c")
 target_link_libraries(mv_compile ${CMAKE_DL_LIBS})
 

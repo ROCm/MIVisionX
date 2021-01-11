@@ -276,18 +276,6 @@ int HipExec_WarpAffine_U8_U8_Nearest(
     ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
-
-    vx_float32 affineMatrix_float[6];
-    affineMatrix_float[0] = affineMatrix->matrix[0][0];
-    affineMatrix_float[1] = affineMatrix->matrix[0][1];
-    affineMatrix_float[2] = affineMatrix->matrix[1][0];
-    affineMatrix_float[3] = affineMatrix->matrix[1][1];
-    affineMatrix_float[4] = affineMatrix->matrix[2][0];
-    affineMatrix_float[5] = affineMatrix->matrix[2][1];
-
-    vx_uint8 *hipAffineMatrix_float;
-    hipMalloc(&hipAffineMatrix_float, 192);
-    hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
     
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Nearest,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
@@ -296,8 +284,7 @@ int HipExec_WarpAffine_U8_U8_Nearest(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipAffineMatrix_float);
-    hipFree(&hipAffineMatrix_float);
+                       (const float *)affineMatrix);
     return VX_SUCCESS;
 }
 
@@ -335,18 +322,6 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    vx_float32 affineMatrix_float[6];
-    affineMatrix_float[0] = affineMatrix->matrix[0][0];
-    affineMatrix_float[1] = affineMatrix->matrix[0][1];
-    affineMatrix_float[2] = affineMatrix->matrix[1][0];
-    affineMatrix_float[3] = affineMatrix->matrix[1][1];
-    affineMatrix_float[4] = affineMatrix->matrix[2][0];
-    affineMatrix_float[5] = affineMatrix->matrix[2][1];
-
-    vx_uint8 *hipAffineMatrix_float;
-    hipMalloc(&hipAffineMatrix_float, 192);
-    hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Nearest_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -354,9 +329,8 @@ int HipExec_WarpAffine_U8_U8_Nearest_Constant(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipAffineMatrix_float,
+                       (const float *)affineMatrix,
                        border);
-    hipFree(&hipAffineMatrix_float);
     return VX_SUCCESS;
 }
 
@@ -403,18 +377,6 @@ int HipExec_WarpAffine_U8_U8_Bilinear(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    vx_float32 affineMatrix_float[6];
-    affineMatrix_float[0] = affineMatrix->matrix[0][0];
-    affineMatrix_float[1] = affineMatrix->matrix[0][1];
-    affineMatrix_float[2] = affineMatrix->matrix[1][0];
-    affineMatrix_float[3] = affineMatrix->matrix[1][1];
-    affineMatrix_float[4] = affineMatrix->matrix[2][0];
-    affineMatrix_float[5] = affineMatrix->matrix[2][1];
-
-    vx_uint8 *hipAffineMatrix_float;
-    hipMalloc(&hipAffineMatrix_float, 192);
-    hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Bilinear,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -422,8 +384,7 @@ int HipExec_WarpAffine_U8_U8_Bilinear(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipAffineMatrix_float);
-    hipFree(&hipAffineMatrix_float);
+                       (const float *)affineMatrix);
     return VX_SUCCESS;
 }
 
@@ -473,18 +434,6 @@ int HipExec_WarpAffine_U8_U8_Bilinear_Constant(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    vx_float32 affineMatrix_float[6];
-    affineMatrix_float[0] = affineMatrix->matrix[0][0];
-    affineMatrix_float[1] = affineMatrix->matrix[0][1];
-    affineMatrix_float[2] = affineMatrix->matrix[1][0];
-    affineMatrix_float[3] = affineMatrix->matrix[1][1];
-    affineMatrix_float[4] = affineMatrix->matrix[2][0];
-    affineMatrix_float[5] = affineMatrix->matrix[2][1];
-
-    vx_uint8 *hipAffineMatrix_float;
-    hipMalloc(&hipAffineMatrix_float, 192);
-    hipMemcpy(hipAffineMatrix_float, affineMatrix_float, 192, hipMemcpyHostToDevice);
-    
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Bilinear_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -492,9 +441,8 @@ int HipExec_WarpAffine_U8_U8_Bilinear_Constant(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipAffineMatrix_float,
+                       (const float *)affineMatrix,
                        border);
-    hipFree(&hipAffineMatrix_float);
     return VX_SUCCESS;
 }
 
@@ -536,21 +484,6 @@ int HipExec_WarpPerspective_U8_U8_Nearest(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    vx_float32 perspectiveMatrix_float[9];
-    perspectiveMatrix_float[0] = perspectiveMatrix->matrix[0][0];
-    perspectiveMatrix_float[1] = perspectiveMatrix->matrix[0][1];
-    perspectiveMatrix_float[2] = perspectiveMatrix->matrix[0][2];
-    perspectiveMatrix_float[3] = perspectiveMatrix->matrix[1][0];
-    perspectiveMatrix_float[4] = perspectiveMatrix->matrix[1][1];
-    perspectiveMatrix_float[5] = perspectiveMatrix->matrix[1][2];
-    perspectiveMatrix_float[6] = perspectiveMatrix->matrix[2][0];
-    perspectiveMatrix_float[7] = perspectiveMatrix->matrix[2][1];
-    perspectiveMatrix_float[8] = perspectiveMatrix->matrix[2][2];
-
-    vx_uint8 *hipPerspectiveMatrix_float;
-    hipMalloc(&hipPerspectiveMatrix_float, 288);
-    hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Nearest,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -558,8 +491,7 @@ int HipExec_WarpPerspective_U8_U8_Nearest(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipPerspectiveMatrix_float);
-    hipFree(&hipPerspectiveMatrix_float);
+                       (const float *)perspectiveMatrix);
     return VX_SUCCESS;
 }
 
@@ -599,21 +531,6 @@ int HipExec_WarpPerspective_U8_U8_Nearest_Constant(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    vx_float32 perspectiveMatrix_float[9];
-    perspectiveMatrix_float[0] = perspectiveMatrix->matrix[0][0];
-    perspectiveMatrix_float[1] = perspectiveMatrix->matrix[0][1];
-    perspectiveMatrix_float[2] = perspectiveMatrix->matrix[0][2];
-    perspectiveMatrix_float[3] = perspectiveMatrix->matrix[1][0];
-    perspectiveMatrix_float[4] = perspectiveMatrix->matrix[1][1];
-    perspectiveMatrix_float[5] = perspectiveMatrix->matrix[1][2];
-    perspectiveMatrix_float[6] = perspectiveMatrix->matrix[2][0];
-    perspectiveMatrix_float[7] = perspectiveMatrix->matrix[2][1];
-    perspectiveMatrix_float[8] = perspectiveMatrix->matrix[2][2];
-
-    vx_uint8 *hipPerspectiveMatrix_float;
-    hipMalloc(&hipPerspectiveMatrix_float, 288);
-    hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-    
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Nearest_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -621,9 +538,8 @@ int HipExec_WarpPerspective_U8_U8_Nearest_Constant(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipPerspectiveMatrix_float,
+                       (const float *)perspectiveMatrix,
                        border);
-    hipFree(&hipPerspectiveMatrix_float);
     return VX_SUCCESS;
 }
 
@@ -671,21 +587,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    vx_float32 perspectiveMatrix_float[9];
-    perspectiveMatrix_float[0] = perspectiveMatrix->matrix[0][0];
-    perspectiveMatrix_float[1] = perspectiveMatrix->matrix[0][1];
-    perspectiveMatrix_float[2] = perspectiveMatrix->matrix[0][2];
-    perspectiveMatrix_float[3] = perspectiveMatrix->matrix[1][0];
-    perspectiveMatrix_float[4] = perspectiveMatrix->matrix[1][1];
-    perspectiveMatrix_float[5] = perspectiveMatrix->matrix[1][2];
-    perspectiveMatrix_float[6] = perspectiveMatrix->matrix[2][0];
-    perspectiveMatrix_float[7] = perspectiveMatrix->matrix[2][1];
-    perspectiveMatrix_float[8] = perspectiveMatrix->matrix[2][2];
-
-    vx_uint8 *hipPerspectiveMatrix_float;
-    hipMalloc(&hipPerspectiveMatrix_float, 288);
-    hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-    
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Bilinear,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -693,7 +594,7 @@ int HipExec_WarpPerspective_U8_U8_Bilinear(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipPerspectiveMatrix_float);
+                       (const float *)perspectiveMatrix);
     return VX_SUCCESS;
 }
 
@@ -743,21 +644,6 @@ int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
 
-    vx_float32 perspectiveMatrix_float[9];
-    perspectiveMatrix_float[0] = perspectiveMatrix->matrix[0][0];
-    perspectiveMatrix_float[1] = perspectiveMatrix->matrix[0][1];
-    perspectiveMatrix_float[2] = perspectiveMatrix->matrix[0][2];
-    perspectiveMatrix_float[3] = perspectiveMatrix->matrix[1][0];
-    perspectiveMatrix_float[4] = perspectiveMatrix->matrix[1][1];
-    perspectiveMatrix_float[5] = perspectiveMatrix->matrix[1][2];
-    perspectiveMatrix_float[6] = perspectiveMatrix->matrix[2][0];
-    perspectiveMatrix_float[7] = perspectiveMatrix->matrix[2][1];
-    perspectiveMatrix_float[8] = perspectiveMatrix->matrix[2][2];
-
-    vx_uint8 *hipPerspectiveMatrix_float;
-    hipMalloc(&hipPerspectiveMatrix_float, 288);
-    hipMemcpy(hipPerspectiveMatrix_float, perspectiveMatrix_float, 288, hipMemcpyHostToDevice);
-    
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Bilinear_Constant,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -765,7 +651,7 @@ int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                        srcWidth, srcHeight,
                        (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                       (const float *)hipPerspectiveMatrix_float,
+                       (const float *)perspectiveMatrix,
                        border);
     return VX_SUCCESS;
 }
@@ -778,14 +664,17 @@ __global__ void __attribute__((visibility("default")))
 Hip_ScaleImage_U8_U8_Nearest(
     const float dstWidth, const float dstHeight,
     unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    const float srcWidth, const float srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes
+    const float widthRatio, const float heightRatio,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const float widthParam, const float heightParam
 	) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight)) return;
-    int xSrc = (int)PIXELROUNDF32(((x + 0.5) * (srcWidth/dstWidth)) - 0.5);
-    int ySrc = (int)PIXELROUNDF32(((y + 0.5) * (srcHeight/dstHeight)) - 0.5);
+    // int xSrc = (int)PIXELROUNDF32(((x + 0.5) * widthRatio) - 0.5);
+    // int ySrc = (int)PIXELROUNDF32(((y + 0.5) * heightRatio) - 0.5);
+    int xSrc = (int)PIXELROUNDF32(x * widthRatio + widthParam);
+    int ySrc = (int)PIXELROUNDF32(y * heightRatio + heightParam);
     int dstIdx =  y*(dstImageStrideInBytes) + x;
     int srcIdx =  ySrc*(srcImageStrideInBytes) + xSrc;
     pDstImage[dstIdx] = pSrcImage[srcIdx];
@@ -804,6 +693,10 @@ int HipExec_ScaleImage_U8_U8_Nearest(
     dstHeightFloat = (float)dstHeight;
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
+    float widthRatio = srcWidthFloat / dstWidthFloat;
+    float heightRatio = srcHeightFloat / dstHeightFloat;
+    float widthParam = 0.5 * widthRatio - 0.5;
+    float heightParam = 0.5 * heightRatio - 0.5;
 
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Nearest,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
@@ -811,8 +704,9 @@ int HipExec_ScaleImage_U8_U8_Nearest(
                     0, stream,
                     dstWidthFloat, dstHeightFloat,
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                    srcWidthFloat, srcHeightFloat,
-                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+                    widthRatio, heightRatio,
+                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
+                    widthParam, heightParam);
     return VX_SUCCESS;
 }
 
@@ -821,13 +715,17 @@ Hip_ScaleImage_U8_U8_Bilinear(
     const float dstWidth, const float dstHeight,
     unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
     const float srcWidth, const float srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes
+    const float widthRatio, const float heightRatio,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const float widthParam, const float heightParam
 	) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight)) return;
-    float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
-    float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    // float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
+    // float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    float xSrcFloat = x * widthRatio + widthParam;
+    float ySrcFloat = y * heightRatio + heightParam;
     int xSrcLower = (int)xSrcFloat;
     int ySrcLower = (int)ySrcFloat;
     float s = xSrcFloat - xSrcLower;
@@ -864,6 +762,10 @@ int HipExec_ScaleImage_U8_U8_Bilinear(
     dstHeightFloat = (float)dstHeight;
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
+    float widthRatio = srcWidthFloat / dstWidthFloat;
+    float heightRatio = srcHeightFloat / dstHeightFloat;
+    float widthParam = 0.5 * widthRatio - 0.5;
+    float heightParam = 0.5 * heightRatio - 0.5;
 
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
@@ -872,7 +774,9 @@ int HipExec_ScaleImage_U8_U8_Bilinear(
                     dstWidthFloat, dstHeightFloat,
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                     srcWidthFloat, srcHeightFloat,
-                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+                    widthRatio, heightRatio,
+                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
+                    widthParam, heightParam);
     return VX_SUCCESS;
 }
 
@@ -881,13 +785,17 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(
     const float dstWidth, const float dstHeight,
     unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
     const float srcWidth, const float srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes
+    const float widthRatio, const float heightRatio,
+    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const float widthParam, const float heightParam
 	) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight)) return;
-    float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
-    float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    // float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
+    // float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    float xSrcFloat = x * widthRatio + widthParam;
+    float ySrcFloat = y * heightRatio + heightParam;
     int xSrcLower = (int)xSrcFloat;
     int ySrcLower = (int)ySrcFloat;
     float s = xSrcFloat - xSrcLower;
@@ -933,6 +841,10 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
     dstHeightFloat = (float)dstHeight;
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
+    float widthRatio = srcWidthFloat / dstWidthFloat;
+    float heightRatio = srcHeightFloat / dstHeightFloat;
+    float widthParam = 0.5 * widthRatio - 0.5;
+    float heightParam = 0.5 * heightRatio - 0.5;
 
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Replicate,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
@@ -941,7 +853,9 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
                     dstWidthFloat, dstHeightFloat,
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                     srcWidthFloat, srcHeightFloat,
-                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
+                    widthRatio, heightRatio,
+                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
+                    widthParam, heightParam);
     return VX_SUCCESS;
 }
 
@@ -950,14 +864,18 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(
     const float dstWidth, const float dstHeight,
     unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
     const float srcWidth, const float srcHeight,
+    const float widthRatio, const float heightRatio,
     const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+    const float widthParam, const float heightParam,
     const unsigned char border
 	) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight)) return;
-    float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
-    float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    // float xSrcFloat = ((x + 0.5) * (srcWidth/dstWidth)) - 0.5;
+    // float ySrcFloat = ((y + 0.5) * (srcHeight/dstHeight)) - 0.5;
+    float xSrcFloat = x * widthRatio + widthParam;
+    float ySrcFloat = y * heightRatio + heightParam;
     int xSrcLower, ySrcLower;
     if (xSrcFloat >= 0)
         xSrcLower = (int)xSrcFloat;
@@ -1015,6 +933,10 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Constant(
     dstHeightFloat = (float)dstHeight;
     srcWidthFloat = (float)srcWidth;
     srcHeightFloat = (float)srcHeight;
+    float widthRatio = srcWidthFloat / dstWidthFloat;
+    float heightRatio = srcHeightFloat / dstHeightFloat;
+    float widthParam = 0.5 * widthRatio - 0.5;
+    float heightParam = 0.5 * heightRatio - 0.5;
 
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Constant,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
@@ -1023,7 +945,9 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Constant(
                     dstWidthFloat, dstHeightFloat,
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                     srcWidthFloat, srcHeightFloat,
+                    widthRatio, heightRatio,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
+                    widthParam, heightParam,
                     border);
     return VX_SUCCESS;
 }

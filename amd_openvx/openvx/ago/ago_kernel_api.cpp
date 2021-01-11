@@ -18911,7 +18911,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer)) {
+			(ago_affine_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19024,7 +19024,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer,
+			(ago_affine_matrix_t *)iMat->hip_memory,
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }
@@ -19123,7 +19123,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer)) {
+			(ago_affine_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19225,7 +19225,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer, 
+			(ago_affine_matrix_t *)iMat->hip_memory, 
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }
@@ -19321,7 +19321,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer)) {
+			(ago_perspective_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19435,7 +19435,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCo
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer, 
+			(ago_perspective_matrix_t *)iMat->hip_memory, 
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }
@@ -19535,7 +19535,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer)) {
+			(ago_perspective_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19638,7 +19638,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelC
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer, 
+			(ago_perspective_matrix_t *)iMat->hip_memory, 
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }

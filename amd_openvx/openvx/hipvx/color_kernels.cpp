@@ -93,17 +93,47 @@ int HipExec_Lut_U8_U8(
     ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth + 3) >> 2, globalThreads_y = dstHeight;
+
+
+
+    // Runs if *lut from ago_kernel_api is used as host buffer:
+    // printf("\nPrinting lut host buffer from ago_kernel_api:\n");
+    // for (int i = 0; i < 256; i++)
+    // {
+    //     printf("%d ", lut[i]);
+    // }
+    // printf("\nDone!");
+    // printf("\n");
     vx_uint8 *hipLut;
     hipMalloc(&hipLut, 2048);
     hipMemcpy(hipLut, lut, 2048, hipMemcpyHostToDevice);
-    
     hipLaunchKernelGGL(Hip_Lut_U8_U8,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
                        0, stream, dstWidth, dstHeight,
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes, (const unsigned char *)hipLut);
+                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes, 
+                       (const unsigned char *)hipLut);
     hipFree(&hipLut);
+
+
+
+    // Doesn't run if *lut from ago_kernel_api is used as hip buffer:
+    // vx_uint8 *hostConvertedLut = (vx_uint8*) calloc(256, sizeof(vx_uint8));
+    // hipMemcpy(hostConvertedLut, lut, 2048, hipMemcpyDeviceToHost);
+    // for (int i = 0; i < 256; i++)
+    // {
+    //     printf("%d ", hostConvertedLut[i]);
+    // }
+    // printf("\nDone!");
+    // printf("\n");
+    // hipLaunchKernelGGL(Hip_Lut_U8_U8,
+    //                    dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+    //                    dim3(localThreads_x, localThreads_y),
+    //                    0, stream, dstWidth, dstHeight,
+    //                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
+    //                    (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes, 
+    //                    (const unsigned char *)lut);
     return VX_SUCCESS;
 }
 

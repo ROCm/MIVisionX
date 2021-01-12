@@ -312,17 +312,18 @@ void RandomBBoxCropReader::read_all()
             if (valid_bbox_count == 0)
                 continue;
             crop_success = true;
-        if (_no_crop)
-            {
-                // std::cerr<<"\n Coming to no crop";
-                crop_box.x = 0;
-                crop_box.y = 0;
-                crop_box.h = in_height[i] - 1;
-                crop_box.w = in_width[i] - 1;
-                break;
-            }
+        // if (_no_crop)
+        //     {
+        //         // std::cerr<<"\n Coming to no crop";
+        //         crop_box.x = 0;
+        //         crop_box.y = 0;
+        //         crop_box.h = in_height[i] - 1;
+        //         crop_box.w = in_width[i] - 1;
+        //         break;
+        //     }
+            
         }                                   // while loop
-        if(!crop_success)
+        if(!crop_success && _no_crop)
         {
             crop_box.x = 0;
             crop_box.y = 0;

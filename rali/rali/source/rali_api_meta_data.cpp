@@ -31,7 +31,6 @@ THE SOFTWARE.
 void
 RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, bool no_crop, RaliFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, RaliFloatParam p_scaling, int total_num_attempts) 
 {
-    std::cerr<<"\n Enters raliRandomBBoxCrop API call";
     auto context = static_cast<Context*>(p_context);
     if (!context)
         THROW("Invalid rali context passed to raliCreateLabelReader")
@@ -54,9 +53,7 @@ RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, 
     {
         scaling = static_cast<FloatParam*>(p_scaling);        
     }
-    std::cerr<<"\n Gonna call context->master_graph->create_randombboxcrop_reader";
     context->master_graph->create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType::RandomBBoxCropReader, RandomBBoxCrop_MetaDataType::BoundingBox, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts);
-    std::cerr<<"\n Returned from context->master_graph->create_randombboxcrop_reader";
 }
 
 RaliMetaData

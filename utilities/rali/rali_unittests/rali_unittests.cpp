@@ -645,7 +645,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
-        int numOfClasses = 2;
+        int numOfClasses = 2; //Ask Swetha
         int image_name_length[inputBatchSize];
 #if defined COCO_READER || defined COCO_READER_PARTIAL || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         int img_size = raliGetImageNameLen(handle, image_name_length);
@@ -662,11 +662,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         raliGetBoundingBoxCords(handle, bb_coords);
         int img_sizes_batch[inputBatchSize * 2];
         raliGetImageSizes(handle, img_sizes_batch);
-        /*for (int i = 0; i < inputBatchSize; i++)
+        for (int i = 0; i < inputBatchSize; i++)
         {
             std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
             std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
-        }*/
+        }
 
 #else
         raliGetImageLabels(handle, label_id);

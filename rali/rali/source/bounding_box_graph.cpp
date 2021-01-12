@@ -149,6 +149,4 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch* _random_bbox_
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;
     }
-
 }
-

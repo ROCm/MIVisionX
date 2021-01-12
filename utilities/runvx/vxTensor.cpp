@@ -497,7 +497,7 @@ int CVxParamTensor::CompareFrame(int frameNumber)
 						vx_int32 d = v1 - v2;
 						d = (d < 0) ? -d : d;
 						maxError = (d > maxError) ? d : maxError;
-						sumError += d * d;
+						sumError += (long) d * d;
 					}
 				}
 			}
@@ -528,7 +528,7 @@ int CVxParamTensor::CompareFrame(int frameNumber)
 						vx_float32 d = v1 - v2;
 						d = (d < 0) ? -d : d;
 						maxError = (d > maxError) ? d : maxError;
-						sumError += d * d;
+						sumError += (double) d * d;
 					}
 				}
 			}
@@ -563,7 +563,7 @@ int CVxParamTensor::CompareFrame(int frameNumber)
 						vx_float32 d = v1 - v2;
 						d = (d < 0) ? -d : d;
 						maxError = (d > maxError) ? d : maxError;
-						sumError += d * d;
+						sumError += (double) d * d;
 					}
 				}
 			}

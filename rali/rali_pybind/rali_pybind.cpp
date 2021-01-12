@@ -448,6 +448,19 @@ namespace rali{
             py::arg("aspect_ratio") = NULL,
             py::arg("y_drift_factor") = NULL,
             py::arg("x_drift_factor") = NULL);
+        m.def("TF_ImageDecoderRaw",&raliRawTFRecordSource,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+              py::return_value_policy::reference,
+              py::arg("p_context"),
+              py::arg("source_path"),
+              py::arg("user_key_for_encoded"),
+              py::arg("user_key_for_filename"),
+              py::arg("rali_color_format"),
+              py::arg("is_output"),
+              py::arg("shuffle") = false,
+              py::arg("loop") = false,
+              py::arg("out_width") = 0,
+              py::arg("out_height") = 0,
+              py::arg("record_name_prefix") = "");
 
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h

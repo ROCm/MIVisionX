@@ -374,6 +374,50 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSourceSingleShard(RaliConte
                                                                         bool loop = false,
                                                                         RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                                         unsigned max_width = 0, unsigned max_height = 0);
+/// Creates Raw image loader. It allocates the resources and objects required to load images stored on the file systems.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle: to shuffle dataset
+/// \param loop: repeat data loading
+/// \param out_width The output_width of raw image
+/// \param out_height The output height of raw image
+/// \return
+
+extern "C"  RaliImage  RALI_API_CALL raliRawTFRecordSource(RaliContext p_context,
+                                                           const char* source_path,
+                                                           const char* user_key_for_raw,
+                                                           const char* user_key_for_filename,
+                                                           RaliImageColor rali_color_format,
+                                                           bool is_output,
+                                                           bool shuffle = false,
+                                                           bool loop = false,
+                                                           unsigned out_width=0, unsigned out_height=0,
+                                                           const char* record_name_prefix = "");
+
+/// Creates Raw image loader. It allocates the resources and objects required to load images stored on the file systems.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param shard_id Shard id for this loader
+/// \param shard_count Total shard count
+/// \param shuffle: to shuffle dataset
+/// \param loop: repeat data loading
+/// \param out_width The output_width of raw image
+/// \param out_height The output height of raw image
+/// \param record_name_prefix : if nonempty reader will only read records with certain prefix
+/// \return
+extern "C"  RaliImage  RALI_API_CALL raliRawTFRecordSourceSingleShard(RaliContext p_context,
+                                                                      const char* source_path,
+                                                                      RaliImageColor rali_color_format,
+                                                                      unsigned shard_id,
+                                                                      unsigned shard_count,
+                                                                      bool is_output,
+                                                                      bool shuffle = false,
+                                                                      bool loop = false,
+                                                                      unsigned out_width=0, unsigned out_height=0,
+                                                                      const char* record_name_prefix = "");
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter

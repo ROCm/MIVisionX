@@ -30,6 +30,7 @@ enum class DecoderType
 {
     TURBO_JPEG = 0,//!< Can only decode
     FUSED_TURBO_JPEG = 1, //!< FOR PARTIAL DECODING
+    SKIP_DECODE  = 2, //!< For skipping decoding in case of uncompressed data from reader
     OVX_FFMPEG,//!< Uses FFMPEG to decode video streams, can decode up to 4 video streams simultaneously
 };
 

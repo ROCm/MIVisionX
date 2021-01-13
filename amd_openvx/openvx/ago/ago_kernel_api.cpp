@@ -3354,7 +3354,7 @@ int agoKernel_Lut_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg = node->paramList[1];
 		AgoData * iLut = node->paramList[2];
         if (HipExec_Lut_U8_U8(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, 
-			oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes, iLut->buffer)) {
+			oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes, iLut->hip_memory)) {
 			status = VX_FAILURE;
         }
 	}
@@ -15530,7 +15530,7 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 			node->hip_stream0, oImg->u.img.width, oImg->u.img.height, 
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+			(vx_int16 *)iConv->hip_memory, convolutionWidth, convolutionHeight)) {
             status = VX_FAILURE;
         }
 	}
@@ -15639,7 +15639,7 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
 			node->hip_stream0, oImg->u.img.width, oImg->u.img.height, 
 			(vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+			(vx_int16 *)iConv->hip_memory, convolutionWidth, convolutionHeight)) {
             status = VX_FAILURE;
         }
 	}

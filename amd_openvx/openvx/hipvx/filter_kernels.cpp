@@ -317,15 +317,16 @@ Hip_Convolve_U8_U8_3x3(
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     int dstIdx =  y*dstImageStrideInBytes + x;
     int srcIdx =  y*srcImageStrideInBytes + x;
-    int srcIdxTopRow, srcIdxBottomRow;
-    srcIdxTopRow = srcIdx - srcImageStrideInBytes;
-    srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
-    float sum = 0;
-    sum += (conv[4] * (float)*(pSrcImage + srcIdx) + conv[1] * (float)*(pSrcImage + srcIdxTopRow) + conv[7] * (float)*(pSrcImage + srcIdxBottomRow));
+    const unsigned char *pSrcImageCurrentRow, *pSrcImageTopRow, *pSrcImageBottomRow;
+    pSrcImageCurrentRow = pSrcImage + srcIdx;
+    pSrcImageTopRow = pSrcImageCurrentRow - srcImageStrideInBytes;
+    pSrcImageBottomRow = pSrcImageCurrentRow + srcImageStrideInBytes;
+    short int sum = 0;
+    sum += (conv[4] * *(pSrcImageCurrentRow) + conv[1] * *(pSrcImageTopRow) + conv[7] * *(pSrcImageBottomRow));
     if (x != 0)
-      sum += (conv[3] * (float)*(pSrcImage + srcIdx - 1) + conv[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + conv[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+      sum += (conv[3] * *(pSrcImageCurrentRow - 1) + conv[0] * *(pSrcImageTopRow - 1) + conv[6] * *(pSrcImageBottomRow - 1));
     if (x != (dstWidth - 1))
-      sum += (conv[5] * (float)*(pSrcImage + srcIdx + 1) + conv[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + conv[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+      sum += (conv[5] * *(pSrcImageCurrentRow + 1) + conv[2] * *(pSrcImageTopRow + 1) + conv[8] * *(pSrcImageBottomRow + 1));
     pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(sum);
 }
 __global__ void __attribute__((visibility("default")))
@@ -340,19 +341,22 @@ Hip_Convolve_U8_U8_5x5(
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     int dstIdx =  y*dstImageStrideInBytes + x;
     int srcIdx =  y*srcImageStrideInBytes + x;
-    int srcIdxTopRow1, srcIdxTopRow2, srcIdxBottomRow1, srcIdxBottomRow2;
-    srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
-    srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
-    srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
-    srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
+    const unsigned char *pSrcImageCurrentRow, *pSrcImageTopRow1, *pSrcImageTopRow2, *pSrcImageBottomRow1, *pSrcImageBottomRow2;
+    pSrcImageCurrentRow = pSrcImage + srcIdx;
+    pSrcImageTopRow1 = pSrcImageCurrentRow - srcImageStrideInBytes;
+    pSrcImageTopRow2 = pSrcImageTopRow1 - srcImageStrideInBytes;
+    pSrcImageBottomRow1 = pSrcImageCurrentRow + srcImageStrideInBytes;
+    pSrcImageBottomRow2 = pSrcImageBottomRow1 + srcImageStrideInBytes;
     short int sum = 0;
-    sum = (
-      conv[12] * (short int)*(pSrcImage + srcIdx) + conv[7] * (short int)*(pSrcImage + srcIdxTopRow1) + conv[2] * (short int)*(pSrcImage + srcIdxTopRow2) + conv[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + conv[22] * (short int)*(pSrcImage + srcIdxBottomRow2) + 
-      conv[11] * (short int)*(pSrcImage + srcIdx - 1) + conv[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + conv[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + conv[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + conv[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + 
-      conv[10] * (short int)*(pSrcImage + srcIdx - 2) + conv[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + conv[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + conv[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + conv[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + 
-      conv[13] * (short int)*(pSrcImage + srcIdx + 1) + conv[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + conv[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + conv[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + conv[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + 
-      conv[14] * (short int)*(pSrcImage + srcIdx + 2) + conv[9] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + conv[4] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + conv[19] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + conv[24] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2)
-    );
+    sum += (conv[12] * (short int)*(pSrcImageCurrentRow) + conv[7] * (short int)*(pSrcImageTopRow1) + conv[2] * (short int)*(pSrcImageTopRow2) + conv[17] * (short int)*(pSrcImageBottomRow1) + conv[22] * (short int)*(pSrcImageBottomRow2));
+    if (x > 0)
+      sum += (conv[11] * (short int)*(pSrcImageCurrentRow - 1) + conv[6] * (short int)*(pSrcImageTopRow1 - 1) + conv[1] * (short int)*(pSrcImageTopRow2 - 1) + conv[16] * (short int)*(pSrcImageBottomRow1 - 1) + conv[21] * (short int)*(pSrcImageBottomRow2 - 1));
+    if (x > 1)
+      sum += (conv[10] * (short int)*(pSrcImageCurrentRow - 2) + conv[5] * (short int)*(pSrcImageTopRow1 - 2) + conv[0] * (short int)*(pSrcImageTopRow2 - 2) + conv[15] * (short int)*(pSrcImageBottomRow1 - 2) + conv[20] * (short int)*(pSrcImageBottomRow2 - 2));
+    if (x < dstWidth - 1)
+      sum += (conv[13] * (short int)*(pSrcImageCurrentRow + 1) + conv[8] * (short int)*(pSrcImageTopRow1 + 1) + conv[3] * (short int)*(pSrcImageTopRow2 + 1) + conv[18] * (short int)*(pSrcImageBottomRow1 + 1) + conv[23] * (short int)*(pSrcImageBottomRow2 + 1));
+    if (x < dstWidth - 2)
+      sum += (conv[14] * (short int)*(pSrcImageCurrentRow + 2) + conv[9] * (short int)*(pSrcImageTopRow1 + 2) + conv[4] * (short int)*(pSrcImageTopRow2 + 2) + conv[19] * (short int)*(pSrcImageBottomRow1 + 2) + conv[24] * (short int)*(pSrcImageBottomRow2 + 2));
     pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(sum);
 }
 __global__ void __attribute__((visibility("default")))
@@ -367,23 +371,28 @@ Hip_Convolve_U8_U8_7x7(
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     int dstIdx =  y*dstImageStrideInBytes + x;
     int srcIdx =  y*srcImageStrideInBytes + x;
-    int srcIdxTopRow1, srcIdxTopRow2, srcIdxTopRow3, srcIdxBottomRow1, srcIdxBottomRow2, srcIdxBottomRow3;
-    srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
-    srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
-    srcIdxTopRow3 = srcIdx - (3 * srcImageStrideInBytes);
-    srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
-    srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
-    srcIdxBottomRow3 = srcIdx + (3 * srcImageStrideInBytes);
-    short int sum = 0;
-    sum = (
-      conv[24] * (int)*(pSrcImage + srcIdx) + conv[17] * (int)*(pSrcImage + srcIdxTopRow1) + conv[10] * (int)*(pSrcImage + srcIdxTopRow2) + conv[3] * (int)*(pSrcImage + srcIdxTopRow3) + conv[31] * (int)*(pSrcImage + srcIdxBottomRow1) + conv[38] * (int)*(pSrcImage + srcIdxBottomRow2) + conv[45] * (int)*(pSrcImage + srcIdxBottomRow3) + 
-      conv[23] * (int)*(pSrcImage + srcIdx - 1) + conv[16] * (int)*(pSrcImage + srcIdxTopRow1 - 1) + conv[9] * (int)*(pSrcImage + srcIdxTopRow2 - 1) + conv[2] * (int)*(pSrcImage + srcIdxTopRow3 - 1) + conv[30] * (int)*(pSrcImage + srcIdxBottomRow1 - 1) + conv[37] * (int)*(pSrcImage + srcIdxBottomRow2 - 1) + conv[44] * (int)*(pSrcImage + srcIdxBottomRow3 - 1) + 
-      conv[22] * (int)*(pSrcImage + srcIdx - 2) + conv[15] * (int)*(pSrcImage + srcIdxTopRow1 - 2) + conv[8] * (int)*(pSrcImage + srcIdxTopRow2 - 2) + conv[1] * (int)*(pSrcImage + srcIdxTopRow3 - 2) + conv[29] * (int)*(pSrcImage + srcIdxBottomRow1 - 2) + conv[36] * (int)*(pSrcImage + srcIdxBottomRow2 - 2) + conv[43] * (int)*(pSrcImage + srcIdxBottomRow3 - 2) + 
-      conv[21] * (int)*(pSrcImage + srcIdx - 3) + conv[14] * (int)*(pSrcImage + srcIdxTopRow1 - 3) + conv[7] * (int)*(pSrcImage + srcIdxTopRow2 - 3) + conv[0] * (int)*(pSrcImage + srcIdxTopRow3 - 3) + conv[28] * (int)*(pSrcImage + srcIdxBottomRow1 - 3) + conv[35] * (int)*(pSrcImage + srcIdxBottomRow2 - 3) + conv[42] * (int)*(pSrcImage + srcIdxBottomRow3 - 3) + 
-      conv[25] * (int)*(pSrcImage + srcIdx + 1) + conv[18] * (int)*(pSrcImage + srcIdxTopRow1 + 1) + conv[11] * (int)*(pSrcImage + srcIdxTopRow2 + 1) + conv[4] * (int)*(pSrcImage + srcIdxTopRow3 + 1) + conv[32] * (int)*(pSrcImage + srcIdxBottomRow1 + 1) + conv[39] * (int)*(pSrcImage + srcIdxBottomRow2 + 1) + conv[46] * (int)*(pSrcImage + srcIdxBottomRow3 + 1) + 
-      conv[26] * (int)*(pSrcImage + srcIdx + 2) + conv[19] * (int)*(pSrcImage + srcIdxTopRow1 + 2) + conv[12] * (int)*(pSrcImage + srcIdxTopRow2 + 2) + conv[5] * (int)*(pSrcImage + srcIdxTopRow3 + 2) + conv[33] * (int)*(pSrcImage + srcIdxBottomRow1 + 2) + conv[40] * (int)*(pSrcImage + srcIdxBottomRow2 + 2) + conv[47] * (int)*(pSrcImage + srcIdxBottomRow3 + 2) + 
-      conv[27] * (int)*(pSrcImage + srcIdx + 3) + conv[20] * (int)*(pSrcImage + srcIdxTopRow1 + 3) + conv[13] * (int)*(pSrcImage + srcIdxTopRow2 + 3) + conv[6] * (int)*(pSrcImage + srcIdxTopRow3 + 3) + conv[34] * (int)*(pSrcImage + srcIdxBottomRow1 + 3) + conv[41] * (int)*(pSrcImage + srcIdxBottomRow2 + 3) + conv[48] * (int)*(pSrcImage + srcIdxBottomRow3 + 3)
-    );
+    const unsigned char *pSrcImageCurrentRow, *pSrcImageTopRow1, *pSrcImageTopRow2, *pSrcImageTopRow3, *pSrcImageBottomRow1, *pSrcImageBottomRow2, *pSrcImageBottomRow3;
+    pSrcImageCurrentRow = pSrcImage + srcIdx;
+    pSrcImageTopRow1 = pSrcImageCurrentRow - srcImageStrideInBytes;
+    pSrcImageTopRow2 = pSrcImageTopRow1 - srcImageStrideInBytes;
+    pSrcImageTopRow3 = pSrcImageTopRow2 - srcImageStrideInBytes;
+    pSrcImageBottomRow1 = pSrcImageCurrentRow + srcImageStrideInBytes;
+    pSrcImageBottomRow2 = pSrcImageBottomRow1 + srcImageStrideInBytes;
+    pSrcImageBottomRow3 = pSrcImageBottomRow2 + srcImageStrideInBytes;
+    int sum = 0;
+    sum += (conv[24] * (int)*(pSrcImageCurrentRow) + conv[17] * (int)*(pSrcImageTopRow1) + conv[10] * (int)*(pSrcImageTopRow2) + conv[3] * (int)*(pSrcImageTopRow3) + conv[31] * (int)*(pSrcImageBottomRow1) + conv[38] * (int)*(pSrcImageBottomRow2) + conv[45] * (int)*(pSrcImageBottomRow3));
+    if (x > 0)
+      sum += (conv[23] * (int)*(pSrcImageCurrentRow - 1) + conv[16] * (int)*(pSrcImageTopRow1 - 1) + conv[9] * (int)*(pSrcImageTopRow2 - 1) + conv[2] * (int)*(pSrcImageTopRow3 - 1) + conv[30] * (int)*(pSrcImageBottomRow1 - 1) + conv[37] * (int)*(pSrcImageBottomRow2 - 1) + conv[44] * (int)*(pSrcImageBottomRow3 - 1));
+    if (x > 1)
+      sum += (conv[22] * (int)*(pSrcImageCurrentRow - 2) + conv[15] * (int)*(pSrcImageTopRow1 - 2) + conv[8] * (int)*(pSrcImageTopRow2 - 2) + conv[1] * (int)*(pSrcImageTopRow3 - 2) + conv[29] * (int)*(pSrcImageBottomRow1 - 2) + conv[36] * (int)*(pSrcImageBottomRow2 - 2) + conv[43] * (int)*(pSrcImageBottomRow3 - 2));
+    if (x > 2)
+      sum += (conv[21] * (int)*(pSrcImageCurrentRow - 3) + conv[14] * (int)*(pSrcImageTopRow1 - 3) + conv[7] * (int)*(pSrcImageTopRow2 - 3) + conv[0] * (int)*(pSrcImageTopRow3 - 3) + conv[28] * (int)*(pSrcImageBottomRow1 - 3) + conv[35] * (int)*(pSrcImageBottomRow2 - 3) + conv[42] * (int)*(pSrcImageBottomRow3 - 3));
+    if (x < dstWidth - 1)
+      sum += (conv[25] * (int)*(pSrcImageCurrentRow + 1) + conv[18] * (int)*(pSrcImageTopRow1 + 1) + conv[11] * (int)*(pSrcImageTopRow2 + 1) + conv[4] * (int)*(pSrcImageTopRow3 + 1) + conv[32] * (int)*(pSrcImageBottomRow1 + 1) + conv[39] * (int)*(pSrcImageBottomRow2 + 1) + conv[46] * (int)*(pSrcImageBottomRow3 + 1));
+    if (x < dstWidth - 2)
+      sum += (conv[26] * (int)*(pSrcImageCurrentRow + 2) + conv[19] * (int)*(pSrcImageTopRow1 + 2) + conv[12] * (int)*(pSrcImageTopRow2 + 2) + conv[5] * (int)*(pSrcImageTopRow3 + 2) + conv[33] * (int)*(pSrcImageBottomRow1 + 2) + conv[40] * (int)*(pSrcImageBottomRow2 + 2) + conv[47] * (int)*(pSrcImageBottomRow3 + 2));
+    if (x < dstWidth - 3)
+      sum += (conv[27] * (int)*(pSrcImageCurrentRow + 3) + conv[20] * (int)*(pSrcImageTopRow1 + 3) + conv[13] * (int)*(pSrcImageTopRow2 + 3) + conv[6] * (int)*(pSrcImageTopRow3 + 3) + conv[34] * (int)*(pSrcImageBottomRow1 + 3) + conv[41] * (int)*(pSrcImageBottomRow2 + 3) + conv[48] * (int)*(pSrcImageBottomRow3 + 3));
     pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(sum);
 }
 __global__ void __attribute__((visibility("default")))
@@ -434,11 +443,6 @@ int HipExec_Convolve_U8_U8(
     int bound = convolutionHeight / 2;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - (2 * bound);
-
-    float *hipConv;
-    hipMalloc(&hipConv, 16 * convolutionWidth * convolutionHeight);
-    hipMemcpy(hipConv, conv, 16 * convolutionWidth * convolutionHeight, hipMemcpyHostToDevice);
-    
 	  if ((convolutionWidth == 3) && (convolutionHeight == 3)) {
       hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
@@ -446,7 +450,7 @@ int HipExec_Convolve_U8_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (unsigned char *)pHipDstImage + (bound * dstImageStrideInBytes) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv);
+                    (const short int *)conv);
     }
     else if ((convolutionWidth == 5) && (convolutionHeight == 5)) {
       hipLaunchKernelGGL(Hip_Convolve_U8_U8_5x5,
@@ -455,7 +459,7 @@ int HipExec_Convolve_U8_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (unsigned char *)pHipDstImage + (bound * dstImageStrideInBytes) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv);
+                    (const short int *)conv);
     }
     else if ((convolutionWidth == 7) && (convolutionHeight == 7)) {
       hipLaunchKernelGGL(Hip_Convolve_U8_U8_7x7,
@@ -464,7 +468,7 @@ int HipExec_Convolve_U8_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (unsigned char *)pHipDstImage + (bound * dstImageStrideInBytes) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv);
+                    (const short int *)conv);
     }
     else {
       hipLaunchKernelGGL(Hip_Convolve_U8_U8,
@@ -473,9 +477,9 @@ int HipExec_Convolve_U8_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (unsigned char *)pHipDstImage + (bound * dstImageStrideInBytes) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv, convolutionWidth, convolutionHeight);
+                    (const short int *)conv, 
+                    convolutionWidth, convolutionHeight);
     }
-    hipFree(&hipConv);
     return VX_SUCCESS;
 }
 
@@ -491,15 +495,16 @@ Hip_Convolve_S16_U8_3x3(
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     int dstIdx =  y*(dstImageStrideInBytes>>1) + x;
     int srcIdx =  y*srcImageStrideInBytes + x;
-    int srcIdxTopRow, srcIdxBottomRow;
-    srcIdxTopRow = srcIdx - srcImageStrideInBytes;
-    srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
-    float sum = 0;
-    sum += (conv[4] * (float)*(pSrcImage + srcIdx) + conv[1] * (float)*(pSrcImage + srcIdxTopRow) + conv[7] * (float)*(pSrcImage + srcIdxBottomRow));
+    const unsigned char *pSrcImageCurrentRow, *pSrcImageTopRow, *pSrcImageBottomRow;
+    pSrcImageCurrentRow = pSrcImage + srcIdx;
+    pSrcImageTopRow = pSrcImageCurrentRow - srcImageStrideInBytes;
+    pSrcImageBottomRow = pSrcImageCurrentRow + srcImageStrideInBytes;
+    short int sum = 0;
+    sum += (conv[4] * *(pSrcImageCurrentRow) + conv[1] * *(pSrcImageTopRow) + conv[7] * *(pSrcImageBottomRow));
     if (x != 0)
-      sum += (conv[3] * (float)*(pSrcImage + srcIdx - 1) + conv[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + conv[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+      sum += (conv[3] * *(pSrcImageCurrentRow - 1) + conv[0] * *(pSrcImageTopRow - 1) + conv[6] * *(pSrcImageBottomRow - 1));
     if (x != (dstWidth - 1))
-      sum += (conv[5] * (float)*(pSrcImage + srcIdx + 1) + conv[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + conv[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+      sum += (conv[5] * *(pSrcImageCurrentRow + 1) + conv[2] * *(pSrcImageTopRow + 1) + conv[8] * *(pSrcImageBottomRow + 1));
     pDstImage[dstIdx] = (short int)PIXELSATURATES16(sum);
 }
 __global__ void __attribute__((visibility("default")))
@@ -514,19 +519,22 @@ Hip_Convolve_S16_U8_5x5(
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     int dstIdx =  y*(dstImageStrideInBytes>>1) + x;
     int srcIdx =  y*srcImageStrideInBytes + x;
-    int srcIdxTopRow1, srcIdxTopRow2, srcIdxBottomRow1, srcIdxBottomRow2;
-    srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
-    srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
-    srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
-    srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
+    const unsigned char *pSrcImageCurrentRow, *pSrcImageTopRow1, *pSrcImageTopRow2, *pSrcImageBottomRow1, *pSrcImageBottomRow2;
+    pSrcImageCurrentRow = pSrcImage + srcIdx;
+    pSrcImageTopRow1 = pSrcImageCurrentRow - srcImageStrideInBytes;
+    pSrcImageTopRow2 = pSrcImageTopRow1 - srcImageStrideInBytes;
+    pSrcImageBottomRow1 = pSrcImageCurrentRow + srcImageStrideInBytes;
+    pSrcImageBottomRow2 = pSrcImageBottomRow1 + srcImageStrideInBytes;
     short int sum = 0;
-    sum = (
-      conv[12] * (short int)*(pSrcImage + srcIdx) + conv[7] * (short int)*(pSrcImage + srcIdxTopRow1) + conv[2] * (short int)*(pSrcImage + srcIdxTopRow2) + conv[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + conv[22] * (short int)*(pSrcImage + srcIdxBottomRow2) + 
-      conv[11] * (short int)*(pSrcImage + srcIdx - 1) + conv[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + conv[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + conv[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + conv[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + 
-      conv[10] * (short int)*(pSrcImage + srcIdx - 2) + conv[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + conv[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + conv[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + conv[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + 
-      conv[13] * (short int)*(pSrcImage + srcIdx + 1) + conv[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + conv[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + conv[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + conv[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + 
-      conv[14] * (short int)*(pSrcImage + srcIdx + 2) + conv[9] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + conv[4] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + conv[19] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + conv[24] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2)
-    );
+    sum += (conv[12] * (short int)*(pSrcImageCurrentRow) + conv[7] * (short int)*(pSrcImageTopRow1) + conv[2] * (short int)*(pSrcImageTopRow2) + conv[17] * (short int)*(pSrcImageBottomRow1) + conv[22] * (short int)*(pSrcImageBottomRow2));
+    if (x > 0)
+      sum += (conv[11] * (short int)*(pSrcImageCurrentRow - 1) + conv[6] * (short int)*(pSrcImageTopRow1 - 1) + conv[1] * (short int)*(pSrcImageTopRow2 - 1) + conv[16] * (short int)*(pSrcImageBottomRow1 - 1) + conv[21] * (short int)*(pSrcImageBottomRow2 - 1));
+    if (x > 1)
+      sum += (conv[10] * (short int)*(pSrcImageCurrentRow - 2) + conv[5] * (short int)*(pSrcImageTopRow1 - 2) + conv[0] * (short int)*(pSrcImageTopRow2 - 2) + conv[15] * (short int)*(pSrcImageBottomRow1 - 2) + conv[20] * (short int)*(pSrcImageBottomRow2 - 2));
+    if (x < dstWidth - 1)
+      sum += (conv[13] * (short int)*(pSrcImageCurrentRow + 1) + conv[8] * (short int)*(pSrcImageTopRow1 + 1) + conv[3] * (short int)*(pSrcImageTopRow2 + 1) + conv[18] * (short int)*(pSrcImageBottomRow1 + 1) + conv[23] * (short int)*(pSrcImageBottomRow2 + 1));
+    if (x < dstWidth - 2)
+      sum += (conv[14] * (short int)*(pSrcImageCurrentRow + 2) + conv[9] * (short int)*(pSrcImageTopRow1 + 2) + conv[4] * (short int)*(pSrcImageTopRow2 + 2) + conv[19] * (short int)*(pSrcImageBottomRow1 + 2) + conv[24] * (short int)*(pSrcImageBottomRow2 + 2));
     pDstImage[dstIdx] = (short int)PIXELSATURATES16(sum);
 }
 __global__ void __attribute__((visibility("default")))
@@ -541,23 +549,28 @@ Hip_Convolve_S16_U8_7x7(
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     int dstIdx =  y*(dstImageStrideInBytes>>1) + x;
     int srcIdx =  y*srcImageStrideInBytes + x;
-    int srcIdxTopRow1, srcIdxTopRow2, srcIdxTopRow3, srcIdxBottomRow1, srcIdxBottomRow2, srcIdxBottomRow3;
-    srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
-    srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
-    srcIdxTopRow3 = srcIdx - (3 * srcImageStrideInBytes);
-    srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
-    srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
-    srcIdxBottomRow3 = srcIdx + (3 * srcImageStrideInBytes);
-    short int sum = 0;
-    sum = (
-      conv[24] * (int)*(pSrcImage + srcIdx) + conv[17] * (int)*(pSrcImage + srcIdxTopRow1) + conv[10] * (int)*(pSrcImage + srcIdxTopRow2) + conv[3] * (int)*(pSrcImage + srcIdxTopRow3) + conv[31] * (int)*(pSrcImage + srcIdxBottomRow1) + conv[38] * (int)*(pSrcImage + srcIdxBottomRow2) + conv[45] * (int)*(pSrcImage + srcIdxBottomRow3) + 
-      conv[23] * (int)*(pSrcImage + srcIdx - 1) + conv[16] * (int)*(pSrcImage + srcIdxTopRow1 - 1) + conv[9] * (int)*(pSrcImage + srcIdxTopRow2 - 1) + conv[2] * (int)*(pSrcImage + srcIdxTopRow3 - 1) + conv[30] * (int)*(pSrcImage + srcIdxBottomRow1 - 1) + conv[37] * (int)*(pSrcImage + srcIdxBottomRow2 - 1) + conv[44] * (int)*(pSrcImage + srcIdxBottomRow3 - 1) + 
-      conv[22] * (int)*(pSrcImage + srcIdx - 2) + conv[15] * (int)*(pSrcImage + srcIdxTopRow1 - 2) + conv[8] * (int)*(pSrcImage + srcIdxTopRow2 - 2) + conv[1] * (int)*(pSrcImage + srcIdxTopRow3 - 2) + conv[29] * (int)*(pSrcImage + srcIdxBottomRow1 - 2) + conv[36] * (int)*(pSrcImage + srcIdxBottomRow2 - 2) + conv[43] * (int)*(pSrcImage + srcIdxBottomRow3 - 2) + 
-      conv[21] * (int)*(pSrcImage + srcIdx - 3) + conv[14] * (int)*(pSrcImage + srcIdxTopRow1 - 3) + conv[7] * (int)*(pSrcImage + srcIdxTopRow2 - 3) + conv[0] * (int)*(pSrcImage + srcIdxTopRow3 - 3) + conv[28] * (int)*(pSrcImage + srcIdxBottomRow1 - 3) + conv[35] * (int)*(pSrcImage + srcIdxBottomRow2 - 3) + conv[42] * (int)*(pSrcImage + srcIdxBottomRow3 - 3) + 
-      conv[25] * (int)*(pSrcImage + srcIdx + 1) + conv[18] * (int)*(pSrcImage + srcIdxTopRow1 + 1) + conv[11] * (int)*(pSrcImage + srcIdxTopRow2 + 1) + conv[4] * (int)*(pSrcImage + srcIdxTopRow3 + 1) + conv[32] * (int)*(pSrcImage + srcIdxBottomRow1 + 1) + conv[39] * (int)*(pSrcImage + srcIdxBottomRow2 + 1) + conv[46] * (int)*(pSrcImage + srcIdxBottomRow3 + 1) + 
-      conv[26] * (int)*(pSrcImage + srcIdx + 2) + conv[19] * (int)*(pSrcImage + srcIdxTopRow1 + 2) + conv[12] * (int)*(pSrcImage + srcIdxTopRow2 + 2) + conv[5] * (int)*(pSrcImage + srcIdxTopRow3 + 2) + conv[33] * (int)*(pSrcImage + srcIdxBottomRow1 + 2) + conv[40] * (int)*(pSrcImage + srcIdxBottomRow2 + 2) + conv[47] * (int)*(pSrcImage + srcIdxBottomRow3 + 2) + 
-      conv[27] * (int)*(pSrcImage + srcIdx + 3) + conv[20] * (int)*(pSrcImage + srcIdxTopRow1 + 3) + conv[13] * (int)*(pSrcImage + srcIdxTopRow2 + 3) + conv[6] * (int)*(pSrcImage + srcIdxTopRow3 + 3) + conv[34] * (int)*(pSrcImage + srcIdxBottomRow1 + 3) + conv[41] * (int)*(pSrcImage + srcIdxBottomRow2 + 3) + conv[48] * (int)*(pSrcImage + srcIdxBottomRow3 + 3)
-    );
+    const unsigned char *pSrcImageCurrentRow, *pSrcImageTopRow1, *pSrcImageTopRow2, *pSrcImageTopRow3, *pSrcImageBottomRow1, *pSrcImageBottomRow2, *pSrcImageBottomRow3;
+    pSrcImageCurrentRow = pSrcImage + srcIdx;
+    pSrcImageTopRow1 = pSrcImageCurrentRow - srcImageStrideInBytes;
+    pSrcImageTopRow2 = pSrcImageTopRow1 - srcImageStrideInBytes;
+    pSrcImageTopRow3 = pSrcImageTopRow2 - srcImageStrideInBytes;
+    pSrcImageBottomRow1 = pSrcImageCurrentRow + srcImageStrideInBytes;
+    pSrcImageBottomRow2 = pSrcImageBottomRow1 + srcImageStrideInBytes;
+    pSrcImageBottomRow3 = pSrcImageBottomRow2 + srcImageStrideInBytes;
+    int sum = 0;
+    sum += (conv[24] * (int)*(pSrcImageCurrentRow) + conv[17] * (int)*(pSrcImageTopRow1) + conv[10] * (int)*(pSrcImageTopRow2) + conv[3] * (int)*(pSrcImageTopRow3) + conv[31] * (int)*(pSrcImageBottomRow1) + conv[38] * (int)*(pSrcImageBottomRow2) + conv[45] * (int)*(pSrcImageBottomRow3));
+    if (x > 0)
+      sum += (conv[23] * (int)*(pSrcImageCurrentRow - 1) + conv[16] * (int)*(pSrcImageTopRow1 - 1) + conv[9] * (int)*(pSrcImageTopRow2 - 1) + conv[2] * (int)*(pSrcImageTopRow3 - 1) + conv[30] * (int)*(pSrcImageBottomRow1 - 1) + conv[37] * (int)*(pSrcImageBottomRow2 - 1) + conv[44] * (int)*(pSrcImageBottomRow3 - 1));
+    if (x > 1)
+      sum += (conv[22] * (int)*(pSrcImageCurrentRow - 2) + conv[15] * (int)*(pSrcImageTopRow1 - 2) + conv[8] * (int)*(pSrcImageTopRow2 - 2) + conv[1] * (int)*(pSrcImageTopRow3 - 2) + conv[29] * (int)*(pSrcImageBottomRow1 - 2) + conv[36] * (int)*(pSrcImageBottomRow2 - 2) + conv[43] * (int)*(pSrcImageBottomRow3 - 2));
+    if (x > 2)
+      sum += (conv[21] * (int)*(pSrcImageCurrentRow - 3) + conv[14] * (int)*(pSrcImageTopRow1 - 3) + conv[7] * (int)*(pSrcImageTopRow2 - 3) + conv[0] * (int)*(pSrcImageTopRow3 - 3) + conv[28] * (int)*(pSrcImageBottomRow1 - 3) + conv[35] * (int)*(pSrcImageBottomRow2 - 3) + conv[42] * (int)*(pSrcImageBottomRow3 - 3));
+    if (x < dstWidth - 1)
+      sum += (conv[25] * (int)*(pSrcImageCurrentRow + 1) + conv[18] * (int)*(pSrcImageTopRow1 + 1) + conv[11] * (int)*(pSrcImageTopRow2 + 1) + conv[4] * (int)*(pSrcImageTopRow3 + 1) + conv[32] * (int)*(pSrcImageBottomRow1 + 1) + conv[39] * (int)*(pSrcImageBottomRow2 + 1) + conv[46] * (int)*(pSrcImageBottomRow3 + 1));
+    if (x < dstWidth - 2)
+      sum += (conv[26] * (int)*(pSrcImageCurrentRow + 2) + conv[19] * (int)*(pSrcImageTopRow1 + 2) + conv[12] * (int)*(pSrcImageTopRow2 + 2) + conv[5] * (int)*(pSrcImageTopRow3 + 2) + conv[33] * (int)*(pSrcImageBottomRow1 + 2) + conv[40] * (int)*(pSrcImageBottomRow2 + 2) + conv[47] * (int)*(pSrcImageBottomRow3 + 2));
+    if (x < dstWidth - 3)
+      sum += (conv[27] * (int)*(pSrcImageCurrentRow + 3) + conv[20] * (int)*(pSrcImageTopRow1 + 3) + conv[13] * (int)*(pSrcImageTopRow2 + 3) + conv[6] * (int)*(pSrcImageTopRow3 + 3) + conv[34] * (int)*(pSrcImageBottomRow1 + 3) + conv[41] * (int)*(pSrcImageBottomRow2 + 3) + conv[48] * (int)*(pSrcImageBottomRow3 + 3));
     pDstImage[dstIdx] = (short int)PIXELSATURATES16(sum);
 }
 __global__ void __attribute__((visibility("default")))
@@ -613,11 +626,6 @@ int HipExec_Convolve_S16_U8(
     int bound = convolutionHeight / 2;
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight - (2 * bound);
-
-    float *hipConv;
-    hipMalloc(&hipConv, 16 * convolutionWidth * convolutionHeight);
-    hipMemcpy(hipConv, conv, 16 * convolutionWidth * convolutionHeight, hipMemcpyHostToDevice);
-    
     if ((convolutionWidth == 3) && (convolutionHeight == 3)) {
       hipLaunchKernelGGL(Hip_Convolve_S16_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
@@ -625,7 +633,7 @@ int HipExec_Convolve_S16_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (short int *)pHipDstImage + (bound * dstImageStrideInBytes>>1) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv);
+                    (const short int *)conv);
     }
     else if ((convolutionWidth == 5) && (convolutionHeight == 5)) {
       hipLaunchKernelGGL(Hip_Convolve_S16_U8_5x5,
@@ -634,7 +642,7 @@ int HipExec_Convolve_S16_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (short int *)pHipDstImage + (bound * dstImageStrideInBytes>>1) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv);
+                    (const short int *)conv);
     }
     else if ((convolutionWidth == 7) && (convolutionHeight == 7)) {
       hipLaunchKernelGGL(Hip_Convolve_S16_U8_7x7,
@@ -643,7 +651,7 @@ int HipExec_Convolve_S16_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (short int *)pHipDstImage + (bound * dstImageStrideInBytes>>1) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv);
+                    (const short int *)conv);
     }
     else {
       hipLaunchKernelGGL(Hip_Convolve_S16_U8,
@@ -652,9 +660,8 @@ int HipExec_Convolve_S16_U8(
                     0, stream, dstWidth, dstHeight - (2 * bound),
                     (short int *)pHipDstImage + (bound * dstImageStrideInBytes>>1) , dstImageStrideInBytes,
                     (const unsigned char *)pHipSrcImage + (bound * srcImageStrideInBytes), srcImageStrideInBytes,
-                    (const short int *)hipConv, convolutionWidth, convolutionHeight);
+                    (const short int *)conv, convolutionWidth, convolutionHeight);
     }
-    hipFree(&hipConv);
     return VX_SUCCESS;
 }
 

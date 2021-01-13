@@ -204,15 +204,15 @@ void RandomBBoxCropReader::read_all()
         bool TrueFalse = (rand() % 100) < 50; //50 is the probability
         // Got BBOX Information of the image, try to get a crop
         //Crop the Image if TrueFalse is 1, else , Keep Image as it is
-        std::cerr<<"True False::"<<TrueFalse;
+        // std::cerr<<"True False::"<<TrueFalse;
         if (TrueFalse)
         {
             while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
             {
                 sample_option = dis(gen);
-                std::cerr<<"\n ********************************************";
-                std::cerr<<"\n Sample option: "<<sample_option;
-                std::cerr<<"\n ********************************************";
+                // std::cerr<<"\n ********************************************";
+                // std::cerr<<"\n Sample option: "<<sample_option;
+                // std::cerr<<"\n ********************************************";
                 option = sample_options[sample_option];
                 _iou_range[i] = option;
                 // _no_crop = option.first;
@@ -339,11 +339,11 @@ void RandomBBoxCropReader::read_all()
             crop_box.w = in_width[i];
             crop_box.h = in_height[i];
         }
-        std::cerr<<"\n**************************";
-        std::cerr<<"\n Image Name:: "<<image_name;
-        std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
-        std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
-        std::cerr<<"\n**************************";
+        // std::cerr<<"\n**************************";
+        // std::cerr<<"\n Image Name:: "<<image_name;
+        // std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
+        // std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
+        // std::cerr<<"\n**************************";
         add(image_name, crop_box);
     }
     // print_map_contents();

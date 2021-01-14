@@ -54,9 +54,13 @@ message("-- ${BoldBlue}MIVisionX Install Path -- ${CMAKE_INSTALL_PREFIX}${Colour
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   message("-- ${BoldBlue}MIVisionX Build Type -- Debug${ColourReset}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -ffunction-sections")
 else()
   message("-- ${BoldBlue}MIVisionX Build Type -- Release${ColourReset}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+  if(NOT APPLE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
+  endif()
 ENDIF()
 
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)

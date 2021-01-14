@@ -840,6 +840,127 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
     return VX_SUCCESS;
 }
 
+
+__global__ void __attribute__((visibility("default")))
+Hip_HarrisScore_HVC_HG3_7x7(
+    unsigned int dstWidth, unsigned int dstHeight,
+    float *pDstVc, unsigned int dstVcStrideInBytes,
+    float *pSrcGxy_, unsigned int srcGxyStrideInBytes,
+    float sensitivity, float strength_threshold,
+    float normalization_factor
+	) {
+	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+		
+	unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
+	unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
+
+	if ((x >= dstWidth-3) || (x <= 3) || (y >= dstHeight-3 ) || y <= 3)	{
+		pDstVc[dstIdx] = (float)0;
+		return;
+	}
+
+	float gx2 = 0, gy2 = 0, gxy2 = 0;
+	float traceA =0, detA =0, Mc =0;
+	ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
+	//Prev Row3 +Prev Row2 +Prev Row1 + Current Row + Next Row1+ Next Row2++ Next Row3 sum of gx2, gxy2, gy2
+	int srcIdxTopRow1, srcIdxBottomRow1,srcIdxBottomRow2,srcIdxTopRow2,srcIdxTopRow3, srcIdxBottomRow3;
+  srcIdxTopRow3 = srcIdx - (3*srcGxyStrideInBytes);
+	srcIdxTopRow2 = srcIdx - (2*srcGxyStrideInBytes);
+	srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
+	srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
+	srcIdxBottomRow2 = srcIdx + (2*srcGxyStrideInBytes);
+  srcIdxBottomRow3 = srcIdx + (3*srcGxyStrideInBytes);
+	gx2 =  
+  (float)pSrcGxy[srcIdxTopRow3 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow3].GxGx +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGx +
+	(float)pSrcGxy[srcIdxTopRow2 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow2].GxGx +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGx +
+	(float)pSrcGxy[srcIdxTopRow1 - 3].GxGx +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGx +
+	(float)pSrcGxy[srcIdx-3].GxGx +(float)pSrcGxy[srcIdx-2].GxGx + (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + (float)pSrcGxy[srcIdx+2].GxGx +(float)pSrcGxy[srcIdx+3].GxGx +
+	(float)pSrcGxy[srcIdxBottomRow1 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGx +
+	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGx + 
+  (float)pSrcGxy[srcIdxBottomRow3 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGx;
+
+	gxy2 = 
+  (float)pSrcGxy[srcIdxTopRow3 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow3].GxGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGy +
+	(float)pSrcGxy[srcIdxTopRow2 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow2].GxGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGy +
+	(float)pSrcGxy[srcIdxTopRow1 - 3].GxGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGy +
+	(float)pSrcGxy[srcIdx-3].GxGy +(float)pSrcGxy[srcIdx-2].GxGy + (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy + (float)pSrcGxy[srcIdx+2].GxGy +(float)pSrcGxy[srcIdx+3].GxGy +
+	(float)pSrcGxy[srcIdxBottomRow1 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGy +
+	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGy + 
+  (float)pSrcGxy[srcIdxBottomRow3 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGy;
+
+	gy2 = 
+  (float)pSrcGxy[srcIdxTopRow3 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow3].GyGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GyGy +
+	(float)pSrcGxy[srcIdxTopRow2 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow2].GyGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GyGy +
+	(float)pSrcGxy[srcIdxTopRow1 - 3].GyGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GyGy +
+	(float)pSrcGxy[srcIdx-3].GyGy +(float)pSrcGxy[srcIdx-2].GyGy + (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy + (float)pSrcGxy[srcIdx+2].GyGy +(float)pSrcGxy[srcIdx+3].GyGy +
+	(float)pSrcGxy[srcIdxBottomRow1 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GyGy +
+	(float)pSrcGxy[srcIdxBottomRow2 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GyGy + 
+  (float)pSrcGxy[srcIdxBottomRow3 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GyGy;
+
+	traceA = gx2 + gy2;
+	detA = (gx2 * gy2) - (gxy2 * gxy2);
+	Mc = detA - (sensitivity * traceA * traceA);
+	Mc /= normalization_factor;
+	if(Mc > strength_threshold) {
+		pDstVc[dstIdx] = (float)Mc; 	
+	}
+	else {
+		pDstVc[dstIdx] = (float)0;
+	}
+}
+int HipExec_HarrisScore_HVC_HG3_7x7(
+    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
+    vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
+    vx_float32 sensitivity, vx_float32 strength_threshold,
+    vx_float32 normalization_factor
+	) {
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_HarrisScore_HVC_HG3_5x5,
+                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y),
+                    0, stream,
+                    dstWidth, dstHeight,
+                    (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
+                    (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
+                    sensitivity, strength_threshold,normalization_factor );
+                    
+/* Printing Outputs for verification */
+    /*
+	float *pDstVc_;
+    pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
+    hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
+    if (status != hipSuccess)
+      printf("Copy mem dev to host failed\n");
+    for (int j = 3; j < dstHeight-3 ; j++)
+    {
+      for (int i = 3; i < dstWidth-3; i++)
+      {
+        int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
+        printf("\n <row, col>: <%d,%d>", j,i);
+        printf(" \t Mc: <%f>",pDstVc_[idx]);
+      }
+    }
+    hipFree(pDstVc_);
+	*/
+    return VX_SUCCESS;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 // ----------------------------------------------------------------------------
 // VxCannyEdgeDetector kernels for hip backend
 // ----------------------------------------------------------------------------

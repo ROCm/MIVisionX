@@ -1018,6 +1018,13 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
         vx_float32 sensitivity, vx_float32 strength_threshold,
         vx_float32 normalization_factor
         );
+int HipExec_HarrisScore_HVC_HG3_7x7(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
+        vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
+        vx_float32 sensitivity, vx_float32 strength_threshold,
+        vx_float32 normalization_factor
+        );
 
 int HipExec_FastCorners_XY_U8_NoSupression(
         hipStream_t stream,

@@ -26,15 +26,15 @@ THE SOFTWARE.
 #include "hip/hip_runtime.h"
 #include "hip_kernels.h"
 
-#define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
+#define PIXELSATURATEU8(pixel)  (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
-#define PIXELROUNDF32(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
+#define PIXELROUNDF32(value)    ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
-#define atan2_p0        (0.273*0.3183098862f)
-#define atan2_p1		(0.9997878412794807f*57.29577951308232f)
-#define atan2_p3		(-0.3258083974640975f*57.29577951308232f)
-#define atan2_p5		(0.1555786518463281f*57.29577951308232f)
-#define atan2_p7		(-0.04432655554792128f*57.29577951308232f)
+#define atan2_p0    (0.273*0.3183098862f)
+#define atan2_p1    (0.9997878412794807f*57.29577951308232f)
+#define atan2_p3    (-0.3258083974640975f*57.29577951308232f)
+#define atan2_p5    (0.1555786518463281f*57.29577951308232f)
+#define atan2_p7    (-0.04432655554792128f*57.29577951308232f)
 #define DBL_EPSILON __DBL_EPSILON__
 
 __device__ __forceinline__ float4 uchars_to_float4(uint src) {
@@ -53,21 +53,8 @@ __device__ __forceinline__ uint float4_to_uchars(float4 src) {
     return ((uint)src.x&0xFF) | (((uint)src.y&0xFF)<<8) | (((uint)src.z&0xFF)<<16)| (((uint)src.w&0xFF) << 24);
 }
 
-// __device__ __forceinline__ int float4_to_s16s_lower(float4 src)
-// {
-//     return ((int)src.x&0xFFFF) | (((int)src.y&0xFFFF)<<16);
-// }
-
-// __device__ __forceinline__ int float4_to_s16s_upper(float4 src)
-// {
-//     return ((int)src.z&0xFFFF) | (((int)src.w&0xFFFF)<<16);
-// }
-
 __device__ __forceinline__ vx_status float4_to_s16s(short int *dst_s16s, unsigned int dstIdx, float4 dst_float4) {
-    dst_s16s[dstIdx] = (short int) dst_float4.x;
-    dst_s16s[dstIdx + 1] = (short int) dst_float4.y;
-    dst_s16s[dstIdx + 2] = (short int) dst_float4.z;
-    dst_s16s[dstIdx + 3] = (short int) dst_float4.w;
+    *((short4 *)(&dst_s16s[dstIdx])) = short4(dst_float4.w, dst_float4.z, dst_float4.y, dst_float4.x);
     return VX_SUCCESS;
 }
 

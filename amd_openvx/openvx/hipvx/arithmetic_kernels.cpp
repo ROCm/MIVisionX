@@ -45,8 +45,9 @@ __device__ __forceinline__ float4 s16s_to_float4_grouped(int src1, int src2) {
     return make_float4((float)(src1&0xFFFF), (float)((src1&0xFFFF0000)>>16), (float)(src2&0xFFFF), (float)((src2&0xFFFF0000)>>16));
 }
 
-__device__ __forceinline__ float4 s16s_to_float4_ungrouped(short int src1, short int src2, short int src3,  short int src4) {
-    return make_float4((float)src1, (float)src2, (float)src3, (float)src4);
+__device__ __forceinline__ float4 s16s_to_float4_ungrouped(const short int *src, unsigned int srcIdx) {
+    short4 srcs4 = *((short4 *)(&src[srcIdx]));
+    return make_float4((float)srcs4.x, (float)srcs4.y, (float)srcs4.z, (float)srcs4.w);
 }
 
 __device__ __forceinline__ uint float4_to_uchars(float4 src) {
@@ -144,9 +145,10 @@ Hip_AbsDiff_S16_S16S16_Sat(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELSATURATES16(fabsf(src1.x-src2.x)), PIXELSATURATES16(fabsf(src1.y-src2.y)), PIXELSATURATES16(fabsf(src1.z-src2.z)), PIXELSATURATES16(fabsf(src1.w-src2.w)));
+
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
 int HipExec_AbsDiff_S16_S16S16_Sat(
@@ -293,7 +295,7 @@ Hip_Add_S16_S16U8_Wrap(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(src1.x+src2.x, src1.y+src2.y, src1.z+src2.z, src1.w+src2.w);
     float4_to_s16s(pDstImage, dstIdx, dst);
@@ -329,7 +331,7 @@ Hip_Add_S16_S16U8_Sat(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x+src2.x), PIXELSATURATES16(src1.y+src2.y), PIXELSATURATES16(src1.z+src2.z), PIXELSATURATES16(src1.w+src2.w));
     float4_to_s16s(pDstImage, dstIdx, dst);
@@ -365,8 +367,8 @@ Hip_Add_S16_S16S16_Wrap(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4((src1.x+src2.x), (src1.y+src2.y), (src1.z+src2.z), (src1.w+src2.w));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -401,8 +403,8 @@ Hip_Add_S16_S16S16_Sat(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELSATURATES16(src1.x+src2.x), PIXELSATURATES16(src1.y+src2.y), PIXELSATURATES16(src1.z+src2.z), PIXELSATURATES16(src1.w+src2.w));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -551,7 +553,7 @@ Hip_Sub_S16_S16U8_Wrap(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(src1.x-src2.x, src1.y-src2.y, src1.z-src2.z, src1.w-src2.w);
     float4_to_s16s(pDstImage, dstIdx, dst);
@@ -587,7 +589,7 @@ Hip_Sub_S16_S16U8_Sat(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x-src2.x), PIXELSATURATES16(src1.y-src2.y), PIXELSATURATES16(src1.z-src2.z), PIXELSATURATES16(src1.w-src2.w));
     float4_to_s16s(pDstImage, dstIdx, dst);
@@ -624,7 +626,7 @@ Hip_Sub_S16_U8S16_Wrap(
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(src1.x-src2.x, src1.y-src2.y, src1.z-src2.z, src1.w-src2.w);
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -661,7 +663,7 @@ Hip_Sub_S16_U8S16_Sat(
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
     float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELSATURATES16(src1.x-src2.x), PIXELSATURATES16(src1.y-src2.y), PIXELSATURATES16(src1.z-src2.z), PIXELSATURATES16(src1.w-src2.w)); //doesnt work for neg numbers
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -697,8 +699,8 @@ Hip_Sub_S16_S16S16_Wrap(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(src1.x-src2.x, src1.y-src2.y, src1.z-src2.z, src1.w-src2.w);
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -734,8 +736,8 @@ Hip_Sub_S16_S16S16_Sat(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELSATURATES16(src1.x-src2.x), PIXELSATURATES16(src1.y-src2.y), PIXELSATURATES16(src1.z-src2.z), PIXELSATURATES16(src1.w-src2.w)); //doesnt work for neg numbers
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -1082,8 +1084,8 @@ Hip_Mul_S16_S16S16_Wrap_Trunc(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(src1.x*src2.x*scale, src1.y*src2.y*scale, src1.z*src2.z*scale, src1.w*src2.w*scale);
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -1120,8 +1122,8 @@ Hip_Mul_S16_S16S16_Wrap_Round(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELROUNDF32(src1.x*src2.x*scale), PIXELROUNDF32(src1.y*src2.y*scale), PIXELROUNDF32(src1.z*src2.z*scale), PIXELROUNDF32(src1.w*src2.w*scale));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -1158,8 +1160,8 @@ Hip_Mul_S16_S16S16_Sat_Trunc(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELSATURATES16(src1.x*src2.x*scale), PIXELSATURATES16(src1.y*src2.y*scale), PIXELSATURATES16(src1.z*src2.z*scale), PIXELSATURATES16(src1.w*src2.w*scale));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -1196,8 +1198,8 @@ Hip_Mul_S16_S16S16_Sat_Round(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x * 4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELSATURATES16(PIXELROUNDF32(src1.x*src2.x*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.y*src2.y*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.z*src2.z*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.w*src2.w*scale)));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -1234,7 +1236,7 @@ Hip_Mul_S16_S16U8_Wrap_Trunc(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 =  s16s_to_float4_ungrouped(pSrcImage1[src1Idx],pSrcImage1[src1Idx+1],pSrcImage1[src1Idx+2],pSrcImage1[src1Idx+3]);
+    float4 src1 =  s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4((src1.x*src2.x*scale), (src1.y*src2.y*scale), (src1.z*src2.z*scale),(src1.w*src2.w*scale));
     float4_to_s16s(pDstImage, dstIdx, dst);
@@ -1272,7 +1274,7 @@ Hip_Mul_S16_S16U8_Wrap_Round(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
 
     float4 dst = make_float4(PIXELROUNDF32(src1.x*src2.x*scale), PIXELROUNDF32(src1.y*src2.y*scale), PIXELROUNDF32(src1.z*src2.z*scale), PIXELROUNDF32(src1.w*src2.w*scale));
@@ -1311,7 +1313,7 @@ Hip_Mul_S16_S16U8_Sat_Trunc(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(src1.x*src2.x*scale), PIXELSATURATES16(src1.y*src2.y*scale), PIXELSATURATES16(src1.z*src2.z*scale), PIXELSATURATES16(src1.w*src2.w*scale));
     float4_to_s16s(pDstImage, dstIdx, dst);
@@ -1349,7 +1351,7 @@ Hip_Mul_S16_S16U8_Sat_Round(
     unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x * 4);
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x * 4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
     float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
     float4 dst = make_float4(PIXELSATURATES16(PIXELROUNDF32(src1.x*src2.x*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.y*src2.y*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.z*src2.z*scale)), PIXELSATURATES16(PIXELROUNDF32(src1.w*src2.w*scale)));
     float4_to_s16s(pDstImage, dstIdx, dst);
@@ -1432,8 +1434,8 @@ Hip_Magnitude_S16_S16S16(
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
 
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(PIXELROUNDF32(hypotf(src1.x,src2.x)), PIXELROUNDF32(hypotf(src1.y,src2.y)), PIXELROUNDF32(hypotf(src1.z,src2.z)), PIXELROUNDF32(hypotf(src1.w,src2.w)));
     float4_to_s16s(pDstImage, dstIdx, dst);
 }
@@ -1473,8 +1475,8 @@ Hip_Phase_U8_S16S16(
     unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
     unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
 
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1[src1Idx], pSrcImage1[src1Idx + 1], pSrcImage1[src1Idx + 2], pSrcImage1[src1Idx + 3]);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2[src2Idx], pSrcImage2[src2Idx + 1], pSrcImage2[src2Idx + 2], pSrcImage2[src2Idx + 3]);
+    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
+    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
     float4 dst = make_float4(Norm_Atan2_deg(src1.x,src2.x), Norm_Atan2_deg(src1.y,src2.y), Norm_Atan2_deg(src1.z,src2.z), Norm_Atan2_deg(src1.w,src2.w));
     pDstImage[dstIdx] = float4_to_uchars(dst);
 

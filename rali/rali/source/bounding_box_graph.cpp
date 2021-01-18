@@ -123,8 +123,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch* _random_bbox_
             box.y = coords_buf[m++];
             box.w = coords_buf[m++];
             box.h = coords_buf[m++];
-            if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
-            {
                 float xA = std::max(crop_box.x, box.x);
                 float yA = std::max(crop_box.y, box.y);
                 float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
@@ -135,7 +133,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch* _random_bbox_
                 box.h = yB - yA;
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
-            }
+
         }
         if(bb_coords.size() == 0)
         {

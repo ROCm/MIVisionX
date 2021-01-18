@@ -53,9 +53,8 @@ __device__ __forceinline__ uint float4_to_uchars(float4 src) {
     return ((uint)src.x&0xFF) | (((uint)src.y&0xFF)<<8) | (((uint)src.z&0xFF)<<16)| (((uint)src.w&0xFF) << 24);
 }
 
-__device__ __forceinline__ vx_status float4_to_s16s(short int *dst_s16s, unsigned int dstIdx, float4 dst_float4) {
-    *((short4 *)(&dst_s16s[dstIdx])) = short4(dst_float4.w, dst_float4.z, dst_float4.y, dst_float4.x);
-    return VX_SUCCESS;
+__device__ __forceinline__ void float4_to_s16s(short int *dst_s16s, unsigned int dstIdx, float4 dst_float4) {
+    *((short4 *)(&dst_s16s[dstIdx])) = make_short4(dst_float4.x, dst_float4.y, dst_float4.z, dst_float4.w);
 }
 
 __device__ __forceinline__ float4 generic_mod_float4(float4 src, int b) {

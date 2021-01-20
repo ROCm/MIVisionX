@@ -155,13 +155,10 @@ void RandomBBoxCropReader::read_all()
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0, 6);
 
-    const std::vector<std::pair<bool, float>> sample_options = {std::make_pair(true, 0.0f), std::make_pair(false, 0.1f), std::make_pair(false, 0.3f),
-                                                                std::make_pair(false, 0.5f), std::make_pair(false, 0.7f),std::make_pair(false, 0.9f)};
+    const std::vector<float> sample_options = {0.0f, 0.1f, 0.3f, 0.5f, 0.7f, 0.9f};
     int sample_option;
     std::pair<bool, float> option;
     float min_iou; // max_iou;
-    // in_width = _crop_param->in_width;
-    // in_height = _crop_param->in_height;
     bool invalid_bboxes = true;
     _entire_iou = true;
     bool _overlap_iou = false;
@@ -204,21 +201,12 @@ void RandomBBoxCropReader::read_all()
         bool TrueFalse = (rand() % 100) < 50; //50 is the probability
         // Got BBOX Information of the image, try to get a crop
         //Crop the Image if TrueFalse is 1, else , Keep Image as it is
-        // std::cerr<<"True False::"<<TrueFalse;
         if (TrueFalse)
         {
             while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
             {
                 sample_option = dis(gen);
-                // std::cerr<<"\n ********************************************";
-                // std::cerr<<"\n Sample option: "<<sample_option;
-                // std::cerr<<"\n ********************************************";
-                option = sample_options[sample_option];
-                _iou_range[i] = option;
-                // _no_crop = option.first;
-                min_iou = option.second;
-                //sample_option = 0;
-
+                min_iou =sample_options[sample_option];
                 if (_has_shape)
                 {
                     // std::cerr<<"\n Coming to has_shape";
@@ -227,7 +215,6 @@ void RandomBBoxCropReader::read_all()
                 }
                 else // If it has no shape, then area and aspect ratio thing should be provided
                 {
-                    // std::cerr<<"\n Comes to the else part of nocrop and has shape";
                     for (int j = 0; j < _num_of_attempts; j++)
                     {
                         count++;
@@ -240,16 +227,12 @@ void RandomBBoxCropReader::read_all()
                         crop_box.h = h_factor * in_height[i];
                         if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
                         {
-                            // std::cerr<<"\n count:: "<<count;
                             continue;
                         }
-                        // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
                         break;
                     }
-                    // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
                     if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
                     {
-                        // std::cerr<<"\n count:: "<<count;
                         continue;
                     }
                 }
@@ -262,7 +245,6 @@ void RandomBBoxCropReader::read_all()
                 bool entire_iou = !_overlap_iou; //
                 if (_all_boxes_overlap)
                 {
-                    // std::cerr<<"\n Coming to _all_boxes_overlap";
                     for (uint j = 0; j < bb_count; j++)
                     {
                         int m = j * 4;
@@ -279,7 +261,6 @@ void RandomBBoxCropReader::read_all()
                     }
                     if (invalid_bboxes)
                     {
-                        // std::cerr<<"\n Bbox decided invalid coz all of them didnt have any overlap";
                         continue;
                     }
                 }
@@ -302,7 +283,6 @@ void RandomBBoxCropReader::read_all()
                     }
                     if (invalid_bboxes)
                     {
-                        // std::cerr<<"\n Bbox decided invalid coz not even one of them didnt have any overlap";
                         continue;
                     }
                 }
@@ -320,16 +300,6 @@ void RandomBBoxCropReader::read_all()
                 if (valid_bbox_count == 0)
                     continue;
                 crop_success = true;
-                // if (_no_crop)
-                //     {
-                //         // std::cerr<<"\n Coming to no crop";
-                //         crop_box.x = 0;
-                //         crop_box.y = 0;
-                //         crop_box.h = in_height[i] - 1;
-                //         crop_box.w = in_width[i] - 1;
-                //         break;
-                //     }
-
             } // while loop
         }
         if(!crop_success && _no_crop)
@@ -339,14 +309,13 @@ void RandomBBoxCropReader::read_all()
             crop_box.w = in_width[i];
             crop_box.h = in_height[i];
         }
-        // std::cerr<<"\n**************************";
-        // std::cerr<<"\n Image Name:: "<<image_name;
-        // std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
-        // std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
-        // std::cerr<<"\n**************************";
+        std::cerr<<"\n**************************";
+        std::cerr<<"\n Image Name:: "<<image_name;
+        std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
+        std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
+        std::cerr<<"\n**************************";
         add(image_name, crop_box);
     }
-    // print_map_contents();
 }
 
 void RandomBBoxCropReader::release()

@@ -100,7 +100,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch* _random_bbox_
     std::vector<uint32_t> roi_width = decode_image_info._roi_width;
     std::vector<uint32_t> roi_height = decode_image_info._roi_height;
     auto crop_cords = _random_bbox_crop_cords_data->get_bb_cords_batch();
-    float _iou_threshold = 0.25;
     for (int i = 0; i < input_meta_data->size(); i++)
     {
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
@@ -123,17 +122,16 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch* _random_bbox_
             box.y = coords_buf[m++];
             box.w = coords_buf[m++];
             box.h = coords_buf[m++];
-                float xA = std::max(crop_box.x, box.x);
-                float yA = std::max(crop_box.y, box.y);
-                float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
-                float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-                box.x = xA - crop_box.x;
-                box.y = yA - crop_box.y;
-                box.w = xB - xA;
-                box.h = yB - yA;
-                bb_coords.push_back(box);
-                bb_labels.push_back(labels_buf[j]);
-
+            float xA = std::max(crop_box.x, box.x);
+            float yA = std::max(crop_box.y, box.y);
+            float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
+            float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
+            box.x = xA - crop_box.x;
+            box.y = yA - crop_box.y;
+            box.w = xB - xA;
+            box.h = yB - yA;
+            bb_coords.push_back(box);
+            bb_labels.push_back(labels_buf[j]);
         }
         if(bb_coords.size() == 0)
         {

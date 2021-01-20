@@ -891,7 +891,6 @@ void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType
     _is_random_bbox_crop = true;
     RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
-    // _randombboxcrop_meta_data_reader->init(config);
     _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
     _randombboxcrop_meta_data_reader->read_all();
     if (_random_bbox_crop_cords_data)

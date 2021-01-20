@@ -201,128 +201,138 @@ void RandomBBoxCropReader::read_all()
         crop_box.y = _y1_val[i];
         if(_total_num_of_attempts == 0)
             _total_num_of_attempts = 10;
+        bool TrueFalse = (rand() % 100) < 50; //50 is the probability
         // Got BBOX Information of the image, try to get a crop
-        while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
+        //Crop the Image if TrueFalse is 1, else , Keep Image as it is
+        // std::cerr<<"True False::"<<TrueFalse;
+        if (TrueFalse)
         {
-            sample_option = dis(gen);
-            option = sample_options[sample_option];
-            _iou_range[i] = option;
-            // _no_crop = option.first;
-            min_iou = option.second;
-            //sample_option = 0;
+            while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
+            {
+                sample_option = dis(gen);
+                // std::cerr<<"\n ********************************************";
+                // std::cerr<<"\n Sample option: "<<sample_option;
+                // std::cerr<<"\n ********************************************";
+                option = sample_options[sample_option];
+                _iou_range[i] = option;
+                // _no_crop = option.first;
+                min_iou = option.second;
+                //sample_option = 0;
 
-            if (_has_shape)
-            {
-                // std::cerr<<"\n Coming to has_shape";
-                crop_box.w = _crop_width - 1;  // Given By user
-                crop_box.h = _crop_height - 1; // Given By user
-            }
-            else // If it has no shape, then area and aspect ratio thing should be provided
-            {
-                // std::cerr<<"\n Comes to the else part of nocrop and has shape";
-                for (int j = 0; j < _num_of_attempts; j++)
+                if (_has_shape)
                 {
-                    count++;
-                    x_drift_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
-                    auto w_factor = x_drift_factor->get();
-                    crop_box.w = w_factor * in_width[i];
-                    y_drift_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
-                    y_drift_factor->renew();
-                    auto h_factor = y_drift_factor->get();
-                    crop_box.h = h_factor * in_height[i];
+                    // std::cerr<<"\n Coming to has_shape";
+                    crop_box.w = _crop_width - 1;  // Given By user
+                    crop_box.h = _crop_height - 1; // Given By user
+                }
+                else // If it has no shape, then area and aspect ratio thing should be provided
+                {
+                    // std::cerr<<"\n Comes to the else part of nocrop and has shape";
+                    for (int j = 0; j < _num_of_attempts; j++)
+                    {
+                        count++;
+                        x_drift_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
+                        auto w_factor = x_drift_factor->get();
+                        crop_box.w = w_factor * in_width[i];
+                        y_drift_factor->renew(); //_scale_factor is a random_number picked from [min-max] range
+                        y_drift_factor->renew();
+                        auto h_factor = y_drift_factor->get();
+                        crop_box.h = h_factor * in_height[i];
+                        if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
+                        {
+                            // std::cerr<<"\n count:: "<<count;
+                            continue;
+                        }
+                        // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
+                        break;
+                    }
+                    // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
                     if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
                     {
                         // std::cerr<<"\n count:: "<<count;
                         continue;
                     }
-                    // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
-                    break;
                 }
-                // std::cerr<<"\n crop_box.w:: "<<crop_box.w<<"\t crop_box.h:: "<<crop_box.h;
-                if ((crop_box.w / crop_box.h < 0.5) || (crop_box.w / crop_box.h > 2.))
-                {
-                    // std::cerr<<"\n count:: "<<count;
-                    continue;
-                }
-            }
 
-            x_drift_factor->renew();
-            x_drift_factor->renew();
-            y_drift_factor->renew(); // Get the random parameters between 0 - 1 (Uniform random)
-            crop_box.x = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.w));
-            crop_box.y = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.h));
-            bool entire_iou = !_overlap_iou; //
-            if (_all_boxes_overlap)
-            {
-                // std::cerr<<"\n Coming to _all_boxes_overlap";
+                x_drift_factor->renew();
+                x_drift_factor->renew();
+                y_drift_factor->renew(); // Get the random parameters between 0 - 1 (Uniform random)
+                crop_box.x = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.w));
+                crop_box.y = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.h));
+                bool entire_iou = !_overlap_iou; //
+                if (_all_boxes_overlap)
+                {
+                    // std::cerr<<"\n Coming to _all_boxes_overlap";
+                    for (uint j = 0; j < bb_count; j++)
+                    {
+                        int m = j * 4;
+                        jth_box.x = coords_buf[m];
+                        jth_box.y = coords_buf[m + 1];
+                        jth_box.w = coords_buf[m + 2];
+                        jth_box.h = coords_buf[m + 3];
+                        float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
+                        if (bb_iou > min_iou)
+                        {
+                            invalid_bboxes = false;
+                            break;
+                        }
+                    }
+                    if (invalid_bboxes)
+                    {
+                        // std::cerr<<"\n Bbox decided invalid coz all of them didnt have any overlap";
+                        continue;
+                    }
+                }
+                else // at lease one box shoud overlap
+                {
+
+                    for (uint j = 0; j < bb_count; j++)
+                    {
+                        int m = j * 4;
+                        jth_box.x = coords_buf[m];
+                        jth_box.y = coords_buf[m + 1];
+                        jth_box.w = coords_buf[m + 2];
+                        jth_box.h = coords_buf[m + 3];
+                        float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
+                        if (bb_iou > min_iou)
+                        {
+                            invalid_bboxes = false;
+                            break;
+                        }
+                    }
+                    if (invalid_bboxes)
+                    {
+                        // std::cerr<<"\n Bbox decided invalid coz not even one of them didnt have any overlap";
+                        continue;
+                    }
+                }
+
+                int valid_bbox_count = 0;
+                auto left = crop_box.x, top = crop_box.y, right = crop_box.x + crop_box.w, bottom = crop_box.y + crop_box.h;
                 for (uint j = 0; j < bb_count; j++)
                 {
                     int m = j * 4;
-                    jth_box.x = coords_buf[m];
-                    jth_box.y = coords_buf[m + 1];
-                    jth_box.w = coords_buf[m + 2];
-                    jth_box.h = coords_buf[m + 3];
-                    float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
-                    if (bb_iou > min_iou)
-                    {
-                        invalid_bboxes = false;
-                        break;
-                    }
+                    auto x_c = 0.5f * (2 * coords_buf[m] + coords_buf[m + 2]);
+                    auto y_c = 0.5f * (2 * coords_buf[m + 1] + coords_buf[m + 3]);
+                    if ((x_c >= left) && (x_c <= right) && (y_c >= top) && (y_c <= bottom))
+                        valid_bbox_count++;
                 }
-                if (invalid_bboxes)
-                {
-                    // std::cerr<<"\n Bbox decided invalid coz all of them didnt have any overlap";
+                if (valid_bbox_count == 0)
                     continue;
-                }
-            }
-            else // at lease one box shoud overlap
-            {
+                crop_success = true;
+                // if (_no_crop)
+                //     {
+                //         // std::cerr<<"\n Coming to no crop";
+                //         crop_box.x = 0;
+                //         crop_box.y = 0;
+                //         crop_box.h = in_height[i] - 1;
+                //         crop_box.w = in_width[i] - 1;
+                //         break;
+                //     }
 
-                for (uint j = 0; j < bb_count; j++)
-                {
-                    int m = j * 4;
-                    jth_box.x = coords_buf[m];
-                    jth_box.y = coords_buf[m + 1];
-                    jth_box.w = coords_buf[m + 2];
-                    jth_box.h = coords_buf[m + 3];
-                    float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
-                    if (bb_iou > min_iou)
-                    {
-                        invalid_bboxes = false;
-                        break;
-                    }
-                }
-                if (invalid_bboxes)
-                {
-                    // std::cerr<<"\n Bbox decided invalid coz not even one of them didnt have any overlap";
-                    continue;
-                }
-            }
-
-            int valid_bbox_count = 0;
-            auto left = crop_box.x, top = crop_box.y, right = crop_box.x + crop_box.w, bottom = crop_box.y + crop_box.h;
-            for (uint j = 0; j < bb_count; j++)
-            {
-                int m = j * 4;
-                auto x_c = 0.5f * (2 * coords_buf[m] + coords_buf[m + 2]);
-                auto y_c = 0.5f * (2 * coords_buf[m + 1] + coords_buf[m + 3]);
-                if ((x_c >= left) && (x_c <= right) && (y_c >= top) && (y_c <= bottom))
-                    valid_bbox_count++;
-            }
-            if (valid_bbox_count == 0)
-                continue;
-            crop_success = true;
-        if (_no_crop)
-            {
-                // std::cerr<<"\n Coming to no crop";
-                crop_box.x = 0;
-                crop_box.y = 0;
-                crop_box.h = in_height[i] - 1;
-                crop_box.w = in_width[i] - 1;
-                break;
-            }
-        }                                   // while loop
-        if(!crop_success)
+            } // while loop
+        }
+        if(!crop_success && _no_crop)
         {
             crop_box.x = 0;
             crop_box.y = 0;

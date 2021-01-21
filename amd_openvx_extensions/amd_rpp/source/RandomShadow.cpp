@@ -121,6 +121,7 @@ static vx_status VX_CALLBACK validateRandomShadow(vx_node node, const vx_referen
 static vx_status VX_CALLBACK processRandomShadow(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
 	RppStatus status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	RandomShadowLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -135,7 +136,8 @@ static vx_status VX_CALLBACK processRandomShadow(vx_node node, const vx_referenc
 		else if(df_image == VX_DF_IMAGE_RGB) {
 			status = rppi_random_shadow_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->x1,data->y1,data->x2,data->y2,data->numberOfShadows,data->maxSizeX,data->maxSizeY,data->rppHandle);
 		}
-		return status;
+		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -146,8 +148,10 @@ static vx_status VX_CALLBACK processRandomShadow(vx_node node, const vx_referenc
 		else if(df_image == VX_DF_IMAGE_RGB) {
 			status = rppi_random_shadow_u8_pkd3_host(data->pSrc,data->srcDimensions,data->pDst,data->x1,data->y1,data->x2,data->y2,data->numberOfShadows,data->maxSizeX,data->maxSizeY,data->rppHandle);
 		}
-		return status;
+		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeRandomShadow(vx_node node, const vx_reference *parameters, vx_uint32 num) 

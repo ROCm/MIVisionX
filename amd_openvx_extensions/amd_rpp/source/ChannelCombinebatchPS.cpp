@@ -134,6 +134,7 @@ static vx_status VX_CALLBACK validateChannelCombinebatchPS(vx_node node, const v
 static vx_status VX_CALLBACK processChannelCombinebatchPS(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
 	RppStatus status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	ChannelCombinebatchPSLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -148,7 +149,8 @@ static vx_status VX_CALLBACK processChannelCombinebatchPS(vx_node node, const vx
 		else if(df_image == VX_DF_IMAGE_RGB) {
 			status = rppi_channel_combine_u8_pkd3_batchPS_gpu((void *)data->cl_pSrc1,(void *)data->cl_pSrc2,(void *)data->cl_pSrc3,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -159,8 +161,10 @@ static vx_status VX_CALLBACK processChannelCombinebatchPS(vx_node node, const vx
 		else if(df_image == VX_DF_IMAGE_RGB) {
 			status = rppi_channel_combine_u8_pkd3_batchPS_host(data->pSrc1,data->pSrc2,data->pSrc3,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeChannelCombinebatchPS(vx_node node, const vx_reference *parameters, vx_uint32 num) 

@@ -92,6 +92,7 @@ static vx_status VX_CALLBACK validateTensorLookup(vx_node node, const vx_referen
 static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 {
 	RppStatus status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	TensorLookupLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     size_t arr_size;

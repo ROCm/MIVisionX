@@ -94,6 +94,7 @@ static vx_status VX_CALLBACK validateTensorMatrixMultiply(vx_node node, const vx
 static vx_status VX_CALLBACK processTensorMatrixMultiply(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 {
 	RppStatus status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	TensorMatrixMultiplyLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     size_t arr_size;

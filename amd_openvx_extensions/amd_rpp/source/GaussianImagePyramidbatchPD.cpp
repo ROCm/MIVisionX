@@ -118,6 +118,7 @@ static vx_status VX_CALLBACK validateGaussianImagePyramidbatchPD(vx_node node, c
 static vx_status VX_CALLBACK processGaussianImagePyramidbatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
 	RppStatus status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	GaussianImagePyramidbatchPDLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -132,7 +133,8 @@ static vx_status VX_CALLBACK processGaussianImagePyramidbatchPD(vx_node node, co
 		else if(df_image == VX_DF_IMAGE_RGB) {
 			status = rppi_gaussian_image_pyramid_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->stdDev,data->kernelSize,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -143,8 +145,10 @@ static vx_status VX_CALLBACK processGaussianImagePyramidbatchPD(vx_node node, co
 		else if(df_image == VX_DF_IMAGE_RGB) {
 			status = rppi_gaussian_image_pyramid_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->stdDev,data->kernelSize,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeGaussianImagePyramidbatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num) 

@@ -309,11 +309,6 @@ void RandomBBoxCropReader::read_all()
             crop_box.w = in_width[i];
             crop_box.h = in_height[i];
         }
-        std::cerr<<"\n**************************";
-        std::cerr<<"\n Image Name:: "<<image_name;
-        std::cerr<<"\n crop_box.x:: "<<crop_box.x<<"\t crop_box.y:: "<<crop_box.y<<"\t crop_box.w"<<crop_box.w<<"\t crop_box.h"<<crop_box.h;
-        std::cerr<<"\n Original image size:: "<<in_width[i]<<"\t "<<in_height[i];
-        std::cerr<<"\n**************************";
         add(image_name, crop_box);
     }
 }

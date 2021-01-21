@@ -46,17 +46,37 @@ def write_formatted(output, f):
     f.write("````\n")
 
 
-# caffe models to benchmark
+def script_info():
+    print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
+    print(
+        "--profiler_mode - NN Profile Mode: optional (default:0 [range:0 - 9])")
+    print("  --profiler_mode 0 -- Run All Tests with All models")
+    print("  --profiler_mode 1 -- Run caffe2nnir2openvx No Fuse flow")
+    print("  --profiler_mode 2 -- Run caffe2nnir2openvx Fuse flow")
+    print("  --profiler_mode 3 -- Run caffe2nnir2openvx FP16 flow")
+    print("  --profiler_mode 4 -- Run onnx2nnir2openvx No Fuse flow")
+    print("  --profiler_mode 5 -- Run onnx2nnir2openvx Fuse flow")
+    print("  --profiler_mode 6 -- Run onnx2nnir2openvx FP16 flow")
+    print("  --profiler_mode 7 -- Run nnef2nnir2openvx No Fuse flow")
+    print("  --profiler_mode 8 -- Run nnef2nnir2openvx Fuse flow")
+    print("  --profiler_mode 9 -- Run nnef2nnir2openvx FP16 flow")
+    print(
+        "--profiler_level - NN Profile Batch Size in powers of 2: optional (default:7 [range:1 - N])")
+    print(
+        "--miopen_find - MIOPEN_FIND_ENFORCE mode: optional (default:1 [range:1 - 5])")
+
+
+# models to run - `modelname` , c, h, w
 caffeModelConfig = [
-    ('mnist-caffe', 1, 28, 28)
+    ('caffe-mnist', 1, 28, 28)
 ]
 
 onnxModelConfig = [
-    ('mnist-onnx', 1, 28, 28)
+    ('onnx-mnist', 1, 28, 28)
 ]
 
 nnefModelConfig = [
-    ('mnist-nnef', 1, 28, 28)
+    ('nnef-mnist', 1, 28, 28)
 ]
 
 # Import arguments
@@ -67,11 +87,14 @@ parser.add_argument('--profiler_level',     type=int, default=7,
                     help='NN Profile Batch Size in powers of 2 - optional (default:7 [range:1 - N])')
 parser.add_argument('--miopen_find',        type=int, default=1,
                     help='MIOPEN_FIND_ENFORCE mode - optional (default:1 [range:1 - 5])')
+parser.add_argument('--test_info',          type=str, default='no',
+                    help='Show test info - optional (default:no [options:no/yes])')
 args = parser.parse_args()
 
 profileMode = args.profiler_mode
 profileLevel = args.profiler_level
 miopenFind = args.miopen_find
+testInfo = args.test_info
 
 # check arguments
 if not 0 <= profileMode <= 9:
@@ -85,6 +108,14 @@ if not 1 <= profileLevel <= 10:
 if not 1 <= miopenFind <= 5:
     print(
         "\nERROR: MIOPEN_FIND_ENFORCE not in range - [1 - 5]\n")
+    exit()
+if testInfo not in ('no', 'yes'):
+    print("ERROR: Show test info options supported - [no or yes]")
+    script_info()
+    exit()
+
+if testInfo == 'yes':
+    script_info()
     exit()
 
 print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
@@ -145,7 +176,7 @@ if profileMode == 0 or profileMode == 1:
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/'+modelName+'.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                      modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
@@ -195,7 +226,7 @@ if profileMode == 0 or profileMode == 2:
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/'+modelName+'.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                      modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
@@ -245,7 +276,7 @@ if profileMode == 0 or profileMode == 3:
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/'+modelName+'.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                      modelName+'/model.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
@@ -295,7 +326,7 @@ if profileMode == 0 or profileMode == 4:
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/'+modelName+'.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                      modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
@@ -345,7 +376,7 @@ if profileMode == 0 or profileMode == 5:
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/'+modelName+'.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                      modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
@@ -395,7 +426,7 @@ if profileMode == 0 or profileMode == 6:
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+'/'+modelName+'.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+                      modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
@@ -537,7 +568,7 @@ platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
 reportFilename = 'platform_report_%s_%s.md' % (
-    platform_name.strip(), file_dtstr)
+    platform_name.replace(" ", ""), file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
@@ -583,4 +614,4 @@ with open(reportFilename, 'w') as f:
 reportFileDir = os.path.abspath(reportFilename)
 print("\nSTATUS: Output Report File - "+reportFileDir)
 
-print("\runNeuralNetworkTests.py completed - V:"+__version__+"\n")
+print("\nrunNeuralNetworkTests.py completed - V:"+__version__+"\n")

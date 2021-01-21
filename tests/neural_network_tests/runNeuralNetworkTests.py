@@ -74,7 +74,7 @@ profileLevel = args.profiler_level
 miopenFind = args.miopen_find
 
 # check arguments
-if not 0 <= profiler_mode <= 9:
+if not 0 <= profileMode <= 9:
     print(
         "\nERROR: NN Profile Mode not in range - [0 - 9]\n")
     exit()
@@ -113,7 +113,7 @@ os.system('pip3 install google protobuf')
 os.system('mkdir -p ~/nnef-deps')
 os.system('(cd ~/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
 os.system('(cd ~/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; cmake ..; make)')
-os.system('(cd ~/nnef-deps/NNEF-Tools/parser/python; python setup.py install)')
+os.system('(cd ~/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 
 # Install ONNX Deps
 os.system('pip3 install onnx')
@@ -123,12 +123,12 @@ if profileMode == 0 or profileMode == 1:
 	for i in range(len(caffeModelConfig)):
 		modelName, channel, height, width = caffeModelConfig[i]
 		print "\n caffe2nnir2openvx with NO FUSED Operations --", modelName, "\n"
-        modelBuildDir = scriptPath+'/models/'+modelName+'caffe_no_fuse_nnir_build_'
+                modelBuildDir = scriptPath+'/models/'+modelName+'/caffe_no_fuse_nnir_build_'
 		for x in range(profileLevel):
 			x = 2**x
 			print "\n", modelName, " - Batch size ", x
 			x = str(x)
-			os.system('(cd '+scriptPath+'/models/'+modelName'; mkdir -p caffe_no_fuse_nnir_build_'+x+')')
+			os.system('(cd '+scriptPath+'/models/'+modelName+'; mkdir -p caffe_no_fuse_nnir_build_'+x+')')
 			os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
 			          modelName+'/'+modelName+'.caffemodel . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
 			os.system('(cd '+modelBuildDir+x+'; python3 ' +
@@ -155,8 +155,8 @@ if profileMode == 0 or profileMode == 1:
 	echo_2 = '|------------|------------|-----------------|-----------------|'
 	print(echo_2)
 	sys.stdout = orig_stdout
-    os.system(echo_1)
-    os.system(echo_2)
+        os.system(echo_1)
+        os.system(echo_2)
 	runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' '''+scriptPath+'''/models/caffe_no_fuse_output.log | tee -a '''+scriptPath+'''/caffe2nnir2openvx_noFuse_profile.md'''
 	os.system(runAwk_md)
 
@@ -429,8 +429,8 @@ platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'platform_report_%s_%s_%s.md' % (
-    platform_name, file_dtstr, hardwareMode)
+reportFilename = 'platform_report_%s_%s.md' % (
+    platform_name, file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
@@ -464,7 +464,6 @@ with open(reportFilename, 'w') as f:
 
     f.write("\n\nBenchmark Report\n")
     f.write("--------\n")
-    f.write("Hardware: %s\n" % hardwareMode)
     f.write("\n")
     with open(scriptPath+'/caffe2nnir2openvx_noFuse_profile.md') as benchmarkFile:
         for line in benchmarkFile:

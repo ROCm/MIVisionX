@@ -173,8 +173,8 @@ if profileMode == 0 or profileMode == 1:
     echo_2 = '|------------|------------|-----------------|-----------------|'
     print(echo_2)
     sys.stdout = orig_stdout
-    os.system(echo_1)
-    os.system(echo_2)
+    print(echo_1)
+    print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_no_fuse_output.log | tee -a ''' + \
         scriptPath+'''/models/develop/caffe2nnir2openvx_noFuse_profile.md'''
@@ -204,7 +204,7 @@ if profileMode == 0 or profileMode == 2:
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
                       scriptPath+'/models/develop/caffe_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/caffe_fuse_output.log')
+                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/caffe_fuse_output.log)')
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_fuse_output.log > ''' + \
@@ -223,8 +223,8 @@ if profileMode == 0 or profileMode == 2:
     echo_2 = '|------------|------------|-----------------|-----------------|'
     print(echo_2)
     sys.stdout = orig_stdout
-    os.system(echo_1)
-    os.system(echo_2)
+    print(echo_1)
+    print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_fuse_output.log | tee -a ''' + \
         scriptPath+'''/models/develop/caffe2nnir2openvx_Fuse_profile.md'''
@@ -254,7 +254,7 @@ if profileMode == 0 or profileMode == 3:
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
                       scriptPath+'/models/develop/caffe_fp16_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/caffe_fp16_output.log')
+                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/caffe_fp16_output.log)')
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_fp16_output.log > ''' + \
@@ -273,8 +273,8 @@ if profileMode == 0 or profileMode == 3:
     echo_2 = '|------------|------------|-----------------|-----------------|'
     print(echo_2)
     sys.stdout = orig_stdout
-    os.system(echo_1)
-    os.system(echo_2)
+    print(echo_1)
+    print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_fp16_output.log | tee -a ''' + \
         scriptPath+'''/models/develop/caffe2nnir2openvx_FP16_profile.md'''
@@ -602,7 +602,7 @@ with open(reportFilename, 'w') as f:
     f.write("\n\nBenchmark Report\n")
     f.write("--------\n")
     f.write("\n")
-    with open(scriptPath+'/caffe2nnir2openvx_noFuse_profile.md') as benchmarkFile:
+    with open(scriptPath+'/models/develop/caffe2nnir2openvx_noFuse_profile.md') as benchmarkFile:
         for line in benchmarkFile:
             f.write("%s" % line)
     f.write("\n")

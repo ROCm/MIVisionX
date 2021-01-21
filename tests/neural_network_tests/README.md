@@ -20,4 +20,21 @@ Arguments:
   --miopen_find         MIOPEN_FIND_ENFORCE mode - optional (default:1 [range:1 - 5])
 ```
 
+Test Info:
+```
+--profiler_mode - NN Profile Mode: optional (default:0 [range:0 - 9])
+  --profiler_mode 0 -- Run All Tests with All models
+  --profiler_mode 1 -- Run caffe2nnir2openvx No Fuse flow
+  --profiler_mode 2 -- Run caffe2nnir2openvx Fuse flow
+  --profiler_mode 3 -- Run caffe2nnir2openvx FP16 flow
+  --profiler_mode 4 -- Run onnx2nnir2openvx No Fuse flow
+  --profiler_mode 5 -- Run onnx2nnir2openvx Fuse flow
+  --profiler_mode 6 -- Run onnx2nnir2openvx FP16 flow
+  --profiler_mode 7 -- Run nnef2nnir2openvx No Fuse flow
+  --profiler_mode 8 -- Run nnef2nnir2openvx Fuse flow
+  --profiler_mode 9 -- Run nnef2nnir2openvx FP16 flow
+--profiler_level - NN Profile Batch Size in powers of 2: optional (default:7 [range:1 - N])
+--miopen_find - MIOPEN_FIND_ENFORCE mode: optional (default:1 [range:1 - 5])
+```
+
 **Note:** Use `Python3` to run the script

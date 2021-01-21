@@ -168,14 +168,14 @@ if profileMode == 0 or profileMode == 1:
     orig_stdout = sys.stdout
     sys.stdout = open(
         scriptPath+'/models/develop/caffe2nnir2openvx_noFuse_profile.md', 'a')
-    echo_1 = '| Model Name | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
+    echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
-    echo_2 = '|------------|------------|-----------------|-----------------|'
+    echo_2 = '|----------------------|------------|-----------------|-----------------|'
     print(echo_2)
     sys.stdout = orig_stdout
     print(echo_1)
     print(echo_2)
-    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
+    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-15.3f|%-15.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_no_fuse_output.log | tee -a ''' + \
         scriptPath+'''/models/develop/caffe2nnir2openvx_noFuse_profile.md'''
     os.system(runAwk_md)
@@ -218,14 +218,14 @@ if profileMode == 0 or profileMode == 2:
     orig_stdout = sys.stdout
     sys.stdout = open(
         scriptPath+'/models/develop/caffe2nnir2openvx_Fuse_profile.md', 'a')
-    echo_1 = '| Model Name | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
+    echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
-    echo_2 = '|------------|------------|-----------------|-----------------|'
+    echo_2 = '|----------------------|------------|-----------------|-----------------|'
     print(echo_2)
     sys.stdout = orig_stdout
     print(echo_1)
     print(echo_2)
-    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
+    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-15.3f|%-15.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_fuse_output.log | tee -a ''' + \
         scriptPath+'''/models/develop/caffe2nnir2openvx_Fuse_profile.md'''
     os.system(runAwk_md)
@@ -268,14 +268,14 @@ if profileMode == 0 or profileMode == 3:
     orig_stdout = sys.stdout
     sys.stdout = open(
         scriptPath+'/models/develop/caffe2nnir2openvx_FP16_profile.md', 'a')
-    echo_1 = '| Model Name | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
+    echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
-    echo_2 = '|------------|------------|-----------------|-----------------|'
+    echo_2 = '|----------------------|------------|-----------------|-----------------|'
     print(echo_2)
     sys.stdout = orig_stdout
     print(echo_1)
     print(echo_2)
-    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
+    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-15.3f|%-15.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/caffe_fp16_output.log | tee -a ''' + \
         scriptPath+'''/models/develop/caffe2nnir2openvx_FP16_profile.md'''
     os.system(runAwk_md)

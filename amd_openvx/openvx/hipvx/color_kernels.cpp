@@ -74,6 +74,13 @@ __device__ __forceinline__ unsigned int uint2_to_uchars (uint2 src) {
     return (((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8));
 }
 
+__device__ __forceinline__ uchar4 uchars_to_uchar4(unsigned int src) {
+    return make_uchar4((unsigned char)(src & 0xFF), (unsigned char)((src & 0xFF00) >> 8), (unsigned char)((src & 0xFF0000) >> 16), (unsigned char)((src & 0xFF000000) >> 24));
+}
+
+__device__ __forceinline__ unsigned int uchar4_to_uchars(uchar4 src) {
+    return ((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8) | (((unsigned char)src.z & 0xFF) << 16) | (((unsigned char)src.w & 0xFF) << 24);
+}
 // ----------------------------------------------------------------------------
 // VxLut kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -81,18 +88,18 @@ __device__ __forceinline__ unsigned int uint2_to_uchars (uint2 src) {
 __global__ void __attribute__((visibility("default")))
 Hip_Lut_U8_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    const unsigned char *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
     const unsigned char *lut
     ) {
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x * 4 >= dstWidth) || (y >= dstHeight))
         return;
-    unsigned int dstIdx = y * (dstImageStrideInBytes) + (x * 4);
-    unsigned int src1Idx = y * (srcImage1StrideInBytes) + (x * 4);
-    for (int i = 0; i < 4; i++)
-        pDstImage[dstIdx + i] = lut[pSrcImage1[src1Idx + i]];
+    unsigned int dstIdx = y * (dstImageStrideInBytes >> 2) + x;
+    unsigned int src1Idx = y * (srcImage1StrideInBytes >> 2) + x;
+    uchar4 src = uchars_to_uchar4(pSrcImage1[src1Idx]);
+    pDstImage[dstIdx] = uchar4_to_uchars(make_uchar4(lut[src.x], lut[src.y], lut[src.z], lut[src.w]));
 }
 int HipExec_Lut_U8_U8(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -107,8 +114,8 @@ int HipExec_Lut_U8_U8(
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
                        0, stream, dstWidth, dstHeight,
-                       (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes, 
+                       (unsigned int *)pHipDstImage, dstImageStrideInBytes,
+                       (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes, 
                        (const unsigned char *)lut);
     return VX_SUCCESS;
 }

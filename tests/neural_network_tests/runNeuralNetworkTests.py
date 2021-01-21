@@ -62,7 +62,7 @@ nnefModelConfig = [
 # Import arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('--profiler_mode',      type=int, default=0,
-                    help='NN Profile Mode - optional')
+                    help='NN Profile Mode - optional (default:0 [range:0 - 9])')
 parser.add_argument('--profiler_level',     type=int, default=7,
                     help='NN Profile Batch Size in powers of 2 - optional (default:7 [range:1 - N])')
 parser.add_argument('--miopen_find',        type=int, default=1,
@@ -281,153 +281,12 @@ if profileMode == 0 or profileMode == 3:
     os.system(runAwk_md)
 
 # run onnx2nnir2openvx no fuse flow
-buildDir_MIVisionX = '~/'
-develop_dir = '~/'
-if profileMode == 4:
-    modelCompilerDir = os.path.expanduser(
-        buildDir_MIVisionX+'/MIVisionX/model_compiler/python')
-    for i in range(len(onnxModelConfig)):
-        modelName, channel, height, width = onnxModelConfig[i]
-        print("\n onnx2nnir2openvx --"+modelName+"\n")
-        for x in range(profileLevel):
-            x = 2**x
-            x = str(x)
-            print("\n"+modelName+" - Batch size "+x)
-            os.system('(cd '+develop_dir+'/onnx-folder/' +
-                      modelName+'; mkdir nnir_build_'+x+')')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_build_'+x+'; python '+modelCompilerDir +
-                      '/onnx_to_nnir.py ../'+modelName+'/model.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_build_' +
-                      x+'; python '+modelCompilerDir+'/nnir_to_openvx.py . .)')
-            os.system('(cd '+develop_dir+'/onnx-folder/' +
-                      modelName+'/nnir_build_'+x+'; cmake .; make)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_build_'+x +
-                      '; echo '+modelName+' - Batch size '+x+'  | tee -a ../../nnir_output.log)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_build_'+x+'; MIOPEN_FIND_ENFORCE=' +
-                      str(miopenFind)+' ./anntest weights.bin | tee -a ../../nnir_output.log)')
-
-    runAwk_csv = r'''awk 'BEGIN  { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_output.log > ''' + \
-        develop_dir+'''/onnx2nnir2openvx_noFuse_profile.csv'''
-    os.system(runAwk_csv)
-    runAwk_txt = r'''awk 'BEGIN  { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_output.log > ''' + \
-        develop_dir+'''/onnx2nnir2openvx_noFuse_profile.txt'''
-    os.system(runAwk_txt)
-
-    orig_stdout = sys.stdout
-    sys.stdout = open(develop_dir+'/onnx2nnir2openvx_noFuse_profile.md', 'a')
-    echo_1 = '| Model Name | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
-    print(echo_1)
-    echo_2 = '|------------|------------|-----------------|-----------------|'
-    print(echo_2)
-    sys.stdout = orig_stdout
-    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; }  / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net , bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_output.log | tee -a ''' + \
-        develop_dir+'''/onnx2nnir2openvx_noFuse_profile.md'''
-    os.system(runAwk_md)
-
-# run onnx2nnir2openvx with fuse flow
-if profileMode == 5:
-    modelCompilerDir = os.path.expanduser(
-        buildDir_MIVisionX+'/MIVisionX/model_compiler/python')
-    for i in range(len(onnxModelConfig)):
-        modelName, channel, height, width = onnxModelConfig[i]
-        print("\n onnx2nnir2openvx --"+modelName+"\n")
-        for x in range(profileLevel):
-            x = 2**x
-            x = str(x)
-            print("\n"+modelName+" - Batch size "+x)
-            os.system('(cd '+develop_dir+'/onnx-folder/' +
-                      modelName+'; mkdir nnir_fuse_build_'+x+')')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fuse_build_'+x +
-                      '; python '+modelCompilerDir+'/onnx_to_nnir.py ../'+modelName+'/model.onnx .'+')')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fuse_build_' +
-                      x+'; python '+modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fuse_build_' +
-                      x+'; python '+modelCompilerDir+'/nnir_to_openvx.py . .)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName +
-                      '/nnir_fuse_build_'+x+'; cmake .; make)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fuse_build_'+x +
-                      '; echo '+modelName+' - Batch size '+x+'  | tee -a ../../nnir_fuse_output.log)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fuse_build_'+x+'; MIOPEN_FIND_ENFORCE=' +
-                      str(miopenFind)+' ./anntest weights.bin | tee -a ../../nnir_fuse_output.log)')
-
-    runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_fuse_output.log > ''' + \
-        develop_dir+'''/onnx2nnir2openvx_fuse_profile.csv'''
-    os.system(runAwk_csv)
-    runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_fuse_output.log > ''' + \
-        develop_dir+'''/onnx2nnir2openvx_fuse_profile.txt'''
-    os.system(runAwk_txt)
-
-    orig_stdout = sys.stdout
-    sys.stdout = open(develop_dir+'/onnx2nnir2openvx_fuse_profile.md', 'a')
-    echo_1 = '| Model Name | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
-    print(echo_1)
-    echo_2 = '|------------|------------|-----------------|-----------------|'
-    print(echo_2)
-    sys.stdout = orig_stdout
-    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_fuse_output.log | tee -a ''' + \
-        develop_dir+'''/onnx2nnir2openvx_fuse_profile.md'''
-    os.system(runAwk_md)
-
-# run onnx2nnir2openvx with fp16 flow
-if profileMode == 6:
-    modelCompilerDir = os.path.expanduser(
-        buildDir_MIVisionX+'/MIVisionX/model_compiler/python')
-    for i in range(len(onnxModelConfig)):
-        modelName, channel, height, width = onnxModelConfig[i]
-        print("\n onnx2nnir2openvx --"+modelName+"\n")
-        for x in range(profileLevel):
-            x = 2**x
-            x = str(x)
-            print("\n"+modelName+" - Batch size "+x)
-            os.system('(cd '+develop_dir+'/onnx-folder/' +
-                      modelName+'; mkdir nnir_fp16_build_'+x+')')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fp16_build_'+x +
-                      '; python '+modelCompilerDir+'/onnx_to_nnir.py ../'+modelName+'/model.onnx .'+')')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fp16_build_' +
-                      x+'; python '+modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fp16_build_' +
-                      x+'; python '+modelCompilerDir+'/nnir_to_openvx.py . .)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName +
-                      '/nnir_fp16_build_'+x+'; cmake .; make)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fp16_build_'+x +
-                      '; echo '+modelName+' - Batch size '+x+'  | tee -a ../../nnir_fp16_output.log)')
-            os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fp16_build_'+x+'; MIOPEN_FIND_ENFORCE=' +
-                      str(miopenFind)+' ./anntest weights.bin | tee -a ../../nnir_fp16_output.log)')
-
-    runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_fp16_output.log > ''' + \
-        develop_dir+'''/onnx2nnir2openvx_fp16_profile.csv'''
-    os.system(runAwk_csv)
-    runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_fp16_output.log > ''' + \
-        develop_dir+'''/onnx2nnir2openvx_fp16_profile.txt'''
-    os.system(runAwk_txt)
-
-    orig_stdout = sys.stdout
-    sys.stdout = open(develop_dir+'/onnx2nnir2openvx_fp16_profile.md', 'a')
-    echo_1 = '| Model Name | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
-    print(echo_1)
-    echo_2 = '|------------|------------|-----------------|-----------------|'
-    print(echo_2)
-    sys.stdout = orig_stdout
-    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-16s|%3d|%8.3f|%8.3f\n", net, bsize, $4, $4/bsize) }' ''' + \
-        develop_dir+'''/onnx-folder/nnir_fp16_output.log | tee -a ''' + \
-        develop_dir+'''/onnx2nnir2openvx_fp16_profile.md'''
-    os.system(runAwk_md)
-
-# run nnef2nnir2openvx no fuse flow
-if profileMode == 0 or profileMode == 7:
-    outputDirectory = scriptPath+'/models/develop/nnefNoFuse'
+if profileMode == 0 or profileMode == 4:
+    outputDirectory = scriptPath+'/models/develop/onnxNoFuse'
     os.makedirs(outputDirectory)
-    for i in range(len(nnefModelConfig)):
-        modelName, channel, height, width = nnefModelConfig[i]
-        print("\n nnef2nnir2openvx with NO FUSED Operations -- "+modelName+"\n")
+    for i in range(len(onnxModelConfig)):
+        modelName, channel, height, width = onnxModelConfig[i]
+        print("\n onnx2nnir2openvx with NO FUSED Operations -- "+modelName+"\n")
         modelBuildDir = outputDirectory+'/nnir_build_'
         for x in range(profileLevel):
             x = 2**x
@@ -435,30 +294,30 @@ if profileMode == 0 or profileMode == 7:
             print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
-            os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/nnef_to_nnir.py '+scriptPath+'/models/' +
-                      modelName+' . )')
+            os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
+                      modelName+'/'+modelName+'.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
             os.system('(cd '+modelBuildDir+x+'; python3 ' +
                       modelCompilerDir+'/nnir_to_openvx.py . .)')
             os.system('(cd '+modelBuildDir+x+'; cmake .; make)')
             os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
-                      scriptPath+'/models/develop/nnef_no_fuse_output.log')
+                      scriptPath+'/models/develop/onnx_no_fuse_output.log')
             os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
-                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/nnef_no_fuse_output.log)')
+                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/onnx_no_fuse_output.log)')
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.csv'''
+        scriptPath+'''/models/develop/onnx_no_fuse_output.log > ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_noFuse_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_no_fuse_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.txt'''
+        scriptPath+'''/models/develop/onnx_no_fuse_output.log > ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_noFuse_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/nnef2nnir2openvx_noFuse_profile.md', 'a')
+        scriptPath+'/models/develop/onnx2nnir2openvx_noFuse_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -467,8 +326,108 @@ if profileMode == 0 or profileMode == 7:
     print(echo_1)
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
-        scriptPath+'''/models/develop/nnef_no_fuse_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.md'''
+        scriptPath+'''/models/develop/onnx_no_fuse_output.log | tee -a ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_noFuse_profile.md'''
+    os.system(runAwk_md)
+
+# run onnx2nnir2openvx with fuse flow
+if profileMode == 0 or profileMode == 5:
+    outputDirectory = scriptPath+'/models/develop/onnxFuse'
+    os.makedirs(outputDirectory)
+    for i in range(len(onnxModelConfig)):
+        modelName, channel, height, width = onnxModelConfig[i]
+        print("\n onnx2nnir2openvx with FUSED Operations -- "+modelName+"\n")
+        modelBuildDir = outputDirectory+'/nnir_build_'
+        for x in range(profileLevel):
+            x = 2**x
+            x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
+            os.system('(cd '+outputDirectory +
+                      '; mkdir -p nnir_build_'+x+')')
+            os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
+                      modelName+'/'+modelName+'.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+            os.system('(cd '+modelBuildDir+x+'; python3 ' +
+                      modelCompilerDir+'/nnir_update.py --fuse-ops 1 . .)')
+            os.system('(cd '+modelBuildDir+x+'; python3 ' +
+                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+            os.system('(cd '+modelBuildDir+x+'; cmake .; make)')
+            os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
+                      scriptPath+'/models/develop/onnx_fuse_output.log')
+            os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
+                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/onnx_fuse_output.log)')
+
+    runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/onnx_fuse_output.log > ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_Fuse_profile.csv'''
+    os.system(runAwk_csv)
+    runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/onnx_fuse_output.log > ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_Fuse_profile.txt'''
+    os.system(runAwk_txt)
+
+    orig_stdout = sys.stdout
+    sys.stdout = open(
+        scriptPath+'/models/develop/onnx2nnir2openvx_Fuse_profile.md', 'a')
+    echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
+    print(echo_1)
+    echo_2 = '|----------------------|------------|-----------------|-----------------|'
+    print(echo_2)
+    sys.stdout = orig_stdout
+    print(echo_1)
+    print(echo_2)
+    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/onnx_fuse_output.log | tee -a ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_Fuse_profile.md'''
+    os.system(runAwk_md)
+
+# run onnx2nnir2openvx with fp16 flow
+if profileMode == 0 or profileMode == 6:
+    outputDirectory = scriptPath+'/models/develop/onnxFP16'
+    os.makedirs(outputDirectory)
+    for i in range(len(onnxModelConfig)):
+        modelName, channel, height, width = onnxModelConfig[i]
+        print("\n onnx2nnir2openvx FP16 -- "+modelName+"\n")
+        modelBuildDir = outputDirectory+'/nnir_build_'
+        for x in range(profileLevel):
+            x = 2**x
+            x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
+            os.system('(cd '+outputDirectory +
+                      '; mkdir -p nnir_build_'+x+')')
+            os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/onnx_to_nnir.py '+scriptPath+'/models/' +
+                      modelName+'/'+modelName+'.onnx . --input-dims '+x+','+str(channel)+','+str(height)+','+str(width)+')')
+            os.system('(cd '+modelBuildDir+x+'; python3 ' +
+                      modelCompilerDir+'/nnir_update.py --convert-fp16 1 . .)')
+            os.system('(cd '+modelBuildDir+x+'; python3 ' +
+                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+            os.system('(cd '+modelBuildDir+x+'; cmake .; make)')
+            os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
+                      scriptPath+'/models/develop/onnx_fp16_output.log')
+            os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
+                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/onnx_fp16_output.log)')
+
+    runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/onnx_fp16_output.log > ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_FP16_profile.csv'''
+    os.system(runAwk_csv)
+    runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/onnx_fp16_output.log > ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_FP16_profile.txt'''
+    os.system(runAwk_txt)
+
+    orig_stdout = sys.stdout
+    sys.stdout = open(
+        scriptPath+'/models/develop/onnx2nnir2openvx_FP16_profile.md', 'a')
+    echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
+    print(echo_1)
+    echo_2 = '|----------------------|------------|-----------------|-----------------|'
+    print(echo_2)
+    sys.stdout = orig_stdout
+    print(echo_1)
+    print(echo_2)
+    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/onnx_fp16_output.log | tee -a ''' + \
+        scriptPath+'''/models/develop/onnx2nnir2openvx_FP16_profile.md'''
     os.system(runAwk_md)
 
 # run nnef2nnir2openvx fuse flow

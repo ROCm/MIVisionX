@@ -3354,7 +3354,7 @@ int agoKernel_Lut_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg = node->paramList[1];
 		AgoData * iLut = node->paramList[2];
         if (HipExec_Lut_U8_U8(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory, 
-			oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes, iLut->buffer)) {
+			oImg->u.img.stride_in_bytes, iImg->hip_memory, iImg->u.img.stride_in_bytes, iLut->hip_memory)) {
 			status = VX_FAILURE;
         }
 	}
@@ -15530,7 +15530,7 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 			node->hip_stream0, oImg->u.img.width, oImg->u.img.height, 
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+			(vx_int16 *)iConv->hip_memory, convolutionWidth, convolutionHeight)) {
             status = VX_FAILURE;
         }
 	}
@@ -15639,7 +15639,7 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
 			node->hip_stream0, oImg->u.img.width, oImg->u.img.height, 
 			(vx_int16 *) oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(vx_int16 *)iConv->buffer, convolutionWidth, convolutionHeight)) {
+			(vx_int16 *)iConv->hip_memory, convolutionWidth, convolutionHeight)) {
             status = VX_FAILURE;
         }
 	}
@@ -16954,6 +16954,8 @@ int agoKernel_HarrisScore_HVC_HG3_7x7(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL                    
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP                    
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif                 
                     ;
         status = VX_SUCCESS;
@@ -16968,6 +16970,22 @@ int agoKernel_HarrisScore_HVC_HG3_7x7(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 3, 0);
 		out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 3, 0);
 	}
+#if ENABLE_HIP
+	else if (cmd == ago_kernel_cmd_hip_execute) {
+		status = VX_SUCCESS;
+		AgoData * oImg = node->paramList[0];
+		AgoData * iImg = node->paramList[1];
+		vx_float32 sensitivity = node->paramList[2]->u.scalar.u.f;
+		vx_int32 gradient_size = node->paramList[4]->u.scalar.u.i;
+		vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+		vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * 3;
+		normFactor = normFactor * normFactor * normFactor * normFactor;
+		if (HipExec_HarrisScore_HVC_HG3_7x7(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_float32 *)oImg->hip_memory, oImg->u.img.stride_in_bytes,
+			(vx_float32 *)iImg->hip_memory, iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, normFactor)) {
+			status = VX_FAILURE;
+		}
+	}
+#endif
 	return status;
 }
 
@@ -18911,7 +18929,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer)) {
+			(ago_affine_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19024,7 +19042,7 @@ int agoKernel_WarpAffine_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer,
+			(ago_affine_matrix_t *)iMat->hip_memory,
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }
@@ -19123,7 +19141,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer)) {
+			(ago_affine_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19225,7 +19243,7 @@ int agoKernel_WarpAffine_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_affine_matrix_t *)iMat->buffer, 
+			(ago_affine_matrix_t *)iMat->hip_memory, 
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }
@@ -19321,7 +19339,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer)) {
+			(ago_perspective_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19435,7 +19453,7 @@ int agoKernel_WarpPerspective_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCo
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer, 
+			(ago_perspective_matrix_t *)iMat->hip_memory, 
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }
@@ -19535,7 +19553,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cm
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer)) {
+			(ago_perspective_matrix_t *)iMat->hip_memory)) {
             status = VX_FAILURE;
         }
 	}
@@ -19638,7 +19656,7 @@ int agoKernel_WarpPerspective_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelC
 			oImg->hip_memory, oImg->u.img.stride_in_bytes, 
 			iImg->u.img.width, iImg->u.img.height, 
 			iImg->hip_memory, iImg->u.img.stride_in_bytes, 
-			(ago_perspective_matrix_t *)iMat->buffer, 
+			(ago_perspective_matrix_t *)iMat->hip_memory, 
 			node->paramList[3]->u.scalar.u.u)) {
             status = VX_FAILURE;
         }

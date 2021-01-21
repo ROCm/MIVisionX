@@ -4932,6 +4932,23 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessLUT(vx_lut lut, void **ptr, vx_enum u
 							data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
 						}
 					}
+#elif ENABLE_HIP
+					if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+						// make sure dirty OpenCL buffers are synched before giving access for read
+						if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            // transfer only valid data
+                            vx_size size = data->size;
+                            if (size > 0 && data->hip_memory) {
+                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                                if (err) {
+                                    status = VX_FAILURE;
+                                    agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: hipMemcpyDtoH() => %d\n", err);
+                                    return status;
+                                }
+                            }
+                            data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+						}
+					}
 #endif
 					if (item.used_external_ptr) {
 						// copy if read is requested with explicit external buffer
@@ -5116,6 +5133,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapLUT(vx_lut lut, vx_map_id *map_id, void 
 								return status;
 							}
 							data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+						}
+					}
+				}
+#elif ENABLE_HIP
+				if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
+					if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+						// make sure dirty OpenCL buffers are synched before giving access for read
+						if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                            vx_size size = data->size;
+                            if (size > 0 && data->hip_memory) {
+                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                                if (err) {
+                                    status = VX_FAILURE;
+                                    agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: hipMemcpyDtoH() => %d\n", err);
+                                    return status;
+                                }
+                            }
+                            data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
 						}
 					}
 				}
@@ -6421,7 +6457,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxReadMatrix(vx_matrix mat, void *array)
 					}
 				}
 #elif ENABLE_HIP
-
                 if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     // make sure dirty OpenCL buffers are synched before giving access for read
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {

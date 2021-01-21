@@ -102,17 +102,14 @@ int HipExec_Lut_U8_U8(
     ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth + 3) >> 2, globalThreads_y = dstHeight;
-    vx_uint8 *hipLut;
-    hipMalloc(&hipLut, 2048);
-    hipMemcpy(hipLut, lut, 2048, hipMemcpyHostToDevice);
-    
+
     hipLaunchKernelGGL(Hip_Lut_U8_U8,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
                        0, stream, dstWidth, dstHeight,
                        (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes, (const unsigned char *)hipLut);
-    hipFree(&hipLut);
+                       (const unsigned char *)pHipSrcImage1, srcImage1StrideInBytes, 
+                       (const unsigned char *)lut);
     return VX_SUCCESS;
 }
 

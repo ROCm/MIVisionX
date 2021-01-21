@@ -216,18 +216,24 @@ int agoGpuHipAllocBuffer(AgoData * data)
             }
         }
     }
-    else if (data->ref.type == VX_TYPE_SCALAR || data->ref.type == VX_TYPE_THRESHOLD || data->ref.type == VX_TYPE_CONVOLUTION) {
+    else if (data->ref.type == VX_TYPE_SCALAR || data->ref.type == VX_TYPE_THRESHOLD) {
             // nothing to do
     }
     else if (data->ref.type == VX_TYPE_LUT) {
         hipError_t err = hipSuccess;
         if (!data->hip_memory) {
             if (data->u.lut.type == VX_TYPE_UINT8) {
-                // todo:: allocate HIP 2D array
+                // todo:: allocating normal hip memory. OpenCL allocates 1D image. Check if this is needed.
                 data->opencl_buffer_offset = 0;
+                agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
+                data->hip_memory_allocated = data->hip_memory;
+                if (err) {
+                    agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)data->size + data->opencl_buffer_offset);
+                    return -1;
+                }
             }
             else {
-                // normal opencl_buffer allocation
+                // normal Hip memory allocation
                 data->hip_memory = 0;
                 agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
                 data->hip_memory_allocated = data->hip_memory;
@@ -235,6 +241,18 @@ int agoGpuHipAllocBuffer(AgoData * data)
                     agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)data->size + data->opencl_buffer_offset);
                     return -1;
                 }
+            }
+        }
+    }
+    else if (data->ref.type == VX_TYPE_CONVOLUTION) {
+        hipError_t err = hipSuccess;
+        if (!data->hip_memory) {
+            data->opencl_buffer_offset = 0;
+            agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
+            data->hip_memory_allocated = data->hip_memory;
+            if (err) {
+                agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)data->size + data->opencl_buffer_offset);
+                return -1;
             }
         }
     }
@@ -388,7 +406,7 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         }
 #endif
     }
-    else if ((data->ref.type == VX_TYPE_SCALAR) || (data->ref.type == VX_TYPE_CONVOLUTION)) {
+    else if ((data->ref.type == VX_TYPE_SCALAR)) {
         // nothing to do.. the node will
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
@@ -423,14 +441,38 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                 if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
                         int64_t stime = agoGetClockCounter();
-                        if (data->u.lut.type == VX_TYPE_UINT8 && data->hip_memory) {
-                            hipError_t err = hipMemcpy2D(data->hip_memory, 1, data->buffer, 256, 256, 1, hipMemcpyHostToDevice);
+                        if (data->u.lut.type == VX_TYPE_UINT8 && data->hip_memory && data->size >0) {
+                            hipError_t err = hipMemcpyHtoD(data->hip_memory + data->opencl_buffer_offset, data->buffer, data->size);
                             if (err) {
-                                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpy2D(lut) => %d\n", err);
+                                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: hipMemcpyHtoD() => %d (for LUT)\n", err);
                                 return -1;
                             }
                         }
                         else if (data->u.lut.type == VX_TYPE_INT16 && data->hip_memory && data->size >0) {
+                            hipError_t err = hipMemcpyHtoD(data->hip_memory + data->opencl_buffer_offset, data->buffer, data->size);
+                            if (err) {
+                                agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: hipMemcpyHtoD() => %d (for LUT)\n", err);
+                                return -1;
+                            }
+                        }
+                        data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        int64_t etime = agoGetClockCounter();
+                        graph->opencl_perf.buffer_write += etime - stime;
+                    }
+                }
+            }
+        }
+    }
+    else if (data->ref.type == VX_TYPE_CONVOLUTION) {
+        if (need_access) { // only use conv objects that need read access
+            if (data->isDelayed) {
+                data->hip_need_as_argument = 1;
+            }
+            if (need_read_access) {
+                if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
+                        int64_t stime = agoGetClockCounter();
+                        if (data->hip_memory && data->size >0) {
                             hipError_t err = hipMemcpyHtoD(data->hip_memory + data->opencl_buffer_offset, data->buffer, data->size);
                             if (err) {
                                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: hipMemcpyHtoD() => %d (for LUT)\n", err);

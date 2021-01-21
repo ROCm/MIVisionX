@@ -2056,21 +2056,15 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
         if (node->flags & AGO_KERNEL_FLAG_DEVICE_GPU) {
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
                 int64_t stime = agoGetClockCounter();
+                vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
-                    //size_t origin[3] = { 0, 0, 0 };
-                    //size_t region[3] = { 256, 1, 1 };
-                    hipError_t err = hipMemcpy2D(dataToSync->hip_memory, 256, dataToSync->buffer, 256, 256, 1, hipMemcpyHostToDevice);
+                    hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->opencl_buffer_offset, dataToSync->buffer, size);
                     if (err) {
-                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpy2D(lut) => %d\n", err);
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyHtoD(lut) => %d\n", err);
                         return -1;
                     }
                 }
                 else {
-                    vx_size size = dataToSync->size;
-                    if (dataToSync->ref.type == VX_TYPE_ARRAY) {
-                        // transfer only valid data
-                        size = dataToSync->u.arr.itemsize * dataToSync->u.arr.numitems;
-                    }
                     if (size > 0) {
                         hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->opencl_buffer_offset, dataToSync->buffer, size);
                         if (err) {
@@ -2088,11 +2082,13 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
             if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
                     int64_t stime = agoGetClockCounter();
-                    size_t origin[3] = { 0, 0, 0 };
-                    size_t region[3] = { 256, 1, 1 };
-                    hipError_t err = hipMemcpy2D(dataToSync->buffer, 256, dataToSync->hip_memory, 256, 256, 1, hipMemcpyDeviceToHost);
+                    vx_size size = dataToSync->size;
+//                    size_t origin[3] = { 0, 0, 0 };
+//                    size_t region[3] = { 256, 1, 1 };
+                    hipError_t err = hipMemcpyDtoH(dataToSync->buffer, dataToSync->hip_memory+dataToSync->opencl_buffer_offset, size);
+//                    hipError_t err = hipMemcpy2D(dataToSync->buffer, 256, dataToSync->hip_memory, 256, 256, 1, hipMemcpyDeviceToHost);
                     if (err) {
-                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpy2D(DtoH_lut) => %d\n", err);
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyDtoH(DtoH_lut) => %d\n", err);
                         return -1;
                     }
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;

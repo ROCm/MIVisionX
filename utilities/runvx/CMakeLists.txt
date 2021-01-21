@@ -26,111 +26,106 @@ set(CMAKE_CXX_STANDARD 14)
 if(OPENCL_SUPPORT)
     find_package(OpenCL QUIET)
 else()
-	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+    message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
 endif()
 find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include)
 
 list(APPEND SOURCES
-	runvx.cpp
-	vxArray.cpp
-	vxConvolution.cpp
-	vxDistribution.cpp
-	vxEngine.cpp
-	vxEngineUtil.cpp
-	vxImage.cpp
-	vxLUT.cpp
-	vxMatrix.cpp
-	vxParameter.cpp
-	vxParamHelper.cpp
-	vxPyramid.cpp
-	vxRemap.cpp
-	vxScalar.cpp
-	vxThreshold.cpp
-	vxTensor.cpp
-	vxUtils.cpp
-	)
+    runvx.cpp
+    vxArray.cpp
+    vxConvolution.cpp
+    vxDistribution.cpp
+    vxEngine.cpp
+    vxEngineUtil.cpp
+    vxImage.cpp
+    vxLUT.cpp
+    vxMatrix.cpp
+    vxParameter.cpp
+    vxParamHelper.cpp
+    vxPyramid.cpp
+    vxRemap.cpp
+    vxScalar.cpp
+    vxThreshold.cpp
+    vxTensor.cpp
+    vxUtils.cpp
+    )
 
 #install(TARGETS runvx DESTINATION bin)
 #install(DIRECTORY ../../samples DESTINATION .)
 
 if("${BACKEND}" STREQUAL "OPENCL" AND OpenCL_FOUND)
-	add_executable(runvx ${SOURCES})
-	target_link_libraries(runvx openvx pthread)
-	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=1)
-	target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
-	include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
-	target_link_libraries(runvx ${OpenCL_LIBRARIES})
+    add_executable(runvx ${SOURCES})
+    target_link_libraries(runvx openvx pthread)
+    target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=1)
+    target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
+    include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
+    target_link_libraries(runvx ${OpenCL_LIBRARIES})
 elseif ("${BACKEND}" STREQUAL "HIP")
-	if(NOT DEFINED ENV{HCC_PATH})
-		set(HCC_PATH "${ROCM_PATH}/hcc")
-	else()
-		set(HCC_PATH $ENV{HCC_PATH})
-	endif()
-	# HSA_PATH
-	IF(NOT DEFINED ENV{HSA_PATH})
-		SET(HSA_PATH ${ROCM_PATH}/hsa)
-	ELSE()
-		SET(HSA_PATH $ENV{HSA_PATH})
-	ENDIF()
+    # HSA_PATH
+    IF(NOT DEFINED ENV{HSA_PATH})
+        SET(HSA_PATH ${ROCM_PATH}/hsa)
+    ELSE()
+        SET(HSA_PATH $ENV{HSA_PATH})
+    ENDIF()
 
-	find_package(HIP QUIET REQUIRED)
-	if(HIP_FOUND)
-		message(STATUS "Found HIP: " ${HIP_VERSION} ${HIP_PATH})
-	else()
-		message(FATAL_ERROR "Could'nt find HIP. Ensure that HIP is either installed in /opt/rocm/hip or the variable HIP_PATH is set.")
-	endif()
-	if(HIP_COMPILER STREQUAL clang)
-		set(hip_library_name amdhip64)
-	else()
-		set(hip_library_name hip_hcc)
-	endif()
-	message("HIP library name: ${hip_library_name} HIP_PATH: ${HIP_PATH}")
+    find_package(HIP QUIET REQUIRED)
+    if(HIP_FOUND)
+        message(STATUS "Found HIP: " ${HIP_VERSION} ${HIP_PATH})
+    else()
+        message(FATAL_ERROR "Could'nt find HIP. Ensure that HIP is either installed in /opt/rocm/hip or the variable HIP_PATH is set.")
+    endif()
+    if(HIP_COMPILER STREQUAL clang)
+        set(hip_library_name amdhip64)
+    else()
+        message(FATAL_ERROR "unsupported hip compiler")
+    endif()
+    message("HIP library name: ${hip_library_name} HIP_PATH: ${HIP_PATH}")
 
-	list(APPEND HIP_CXX_FLAGS -std=c++14)
-	include_directories (${ROCM_PATH}/include ${ROCM_PATH}/mivisionx/include ${HIP_PATH}/include ${HCC_PATH}/include ${HSA_PATH}/include)
-	link_directories(${ROCM_PATH}/mivisionx/lib ${HIP_PATH}/lib)
-	hip_add_executable(runvx ${SOURCES})
-	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
-	target_compile_definitions(runvx PUBLIC ENABLE_HIP=1)
-	target_compile_options(runvx PUBLIC ${HIP_CXX_FLAGS})
-	target_link_libraries (runvx openvx openvx_hip pthread)
-	message("-- ${Green}runvx built with HIP Support${ColourReset}")
+    list(APPEND HIP_CXX_FLAGS -std=c++14)
+    include_directories (${ROCM_PATH}/include ${ROCM_PATH}/mivisionx/include ${HIP_PATH}/include ${HSA_PATH}/include)
+    link_directories(${ROCM_PATH}/mivisionx/lib ${HIP_PATH}/lib)
+    hip_add_executable(runvx ${SOURCES})
+    target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
+    target_compile_definitions(runvx PUBLIC ENABLE_HIP=1)
+    target_compile_options(runvx PUBLIC ${HIP_CXX_FLAGS})
+    target_link_libraries (runvx openvx openvx_hip pthread)
+    message("-- ${Green}runvx built with HIP Support${ColourReset}")
 else()
-	add_executable(runvx ${SOURCES})
-	target_link_libraries(runvx openvx pthread)
-	target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
-	target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
-	message("-- ${Yellow}NOTE:OpenCL Not Found -- runVX built for CPU only${ColourReset}")
+    add_executable(runvx ${SOURCES})
+    target_link_libraries(runvx openvx pthread)
+    target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
+    target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
+    message("-- ${Yellow}NOTE:OpenCL Not Found -- runVX built for CPU only${ColourReset}")
 endif()
 
 if(OpenCV_FOUND)
-	target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=1)
-	include_directories(${OpenCV_INCLUDE_DIRS})
-	target_link_libraries(runvx ${OpenCV_LIBRARIES})
+    target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=1)
+    include_directories(${OpenCV_INCLUDE_DIRS})
+    target_link_libraries(runvx ${OpenCV_LIBRARIES})
 else(OpenCV_FOUND)
-	target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=0)
-	message("-- ${Yellow}NOTE:OpenCV Not Found -- runVX built without display support${ColourReset}")
+    target_compile_definitions(runvx PUBLIC ENABLE_OPENCV=0)
+    message("-- ${Yellow}NOTE:OpenCV Not Found -- runVX built without display support${ColourReset}")
 endif(OpenCV_FOUND)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -s")
-	find_path(SSL_INCLUDE
-			  NAMES openssl/hmac.h openssl/md5.h
-			  HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
-			 )
-	if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
-		include_directories(${SSL_INCLUDE})
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
-		target_link_libraries(runvx crypto)
-	endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    find_path(SSL_INCLUDE
+              NAMES openssl/hmac.h openssl/md5.h
+              HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
+             )
+    if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
+        include_directories(${SSL_INCLUDE})
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
+        target_link_libraries(runvx crypto)
+    endif()
 endif()
 if ("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
-	target_link_libraries(runvx ${hip_library_name})
+    target_link_libraries(runvx ${hip_library_name})
 endif()
 install(TARGETS runvx DESTINATION bin)
 install(DIRECTORY ../../samples DESTINATION .)

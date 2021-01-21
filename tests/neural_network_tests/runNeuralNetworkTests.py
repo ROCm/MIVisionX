@@ -140,8 +140,8 @@ if profileMode == 0 or profileMode == 1:
         modelBuildDir = outputDirectory+'/nnir_build_'
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
@@ -190,8 +190,8 @@ if profileMode == 0 or profileMode == 2:
         modelBuildDir = outputDirectory+'/nnir_build_'
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
@@ -240,8 +240,8 @@ if profileMode == 0 or profileMode == 3:
         modelBuildDir = outputDirectory+'/nnir_build_'
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+outputDirectory +
                       '; mkdir -p nnir_build_'+x+')')
             os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/caffe_to_nnir.py '+scriptPath+'/models/' +
@@ -291,8 +291,8 @@ if profileMode == 4:
         print("\n onnx2nnir2openvx --"+modelName+"\n")
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+develop_dir+'/onnx-folder/' +
                       modelName+'; mkdir nnir_build_'+x+')')
             os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_build_'+x+'; python '+modelCompilerDir +
@@ -336,8 +336,8 @@ if profileMode == 5:
         print("\n onnx2nnir2openvx --"+modelName+"\n")
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+develop_dir+'/onnx-folder/' +
                       modelName+'; mkdir nnir_fuse_build_'+x+')')
             os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fuse_build_'+x +
@@ -383,8 +383,8 @@ if profileMode == 6:
         print("\n onnx2nnir2openvx --"+modelName+"\n")
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+develop_dir+'/onnx-folder/' +
                       modelName+'; mkdir nnir_fp16_build_'+x+')')
             os.system('(cd '+develop_dir+'/onnx-folder/'+modelName+'/nnir_fp16_build_'+x +
@@ -430,8 +430,8 @@ if profileMode == 7:
         print("\n nnef2nnir2openvx --"+modelName+"\n")
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+develop_dir+'/nnef-folder/' +
                       modelName+'; mkdir nnir_build_'+x+')')
             os.system('(cd '+develop_dir+'/nnef-folder/'+modelName+'/nnir_build_' +
@@ -475,8 +475,8 @@ if profileMode == 8:
         print("\n nnef2nnir2openvx --"+modelName+"\n")
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+develop_dir+'/nnef-folder/' +
                       modelName+'; mkdir nnir_fuse_build_'+x+')')
             os.system('(cd '+develop_dir+'/nnef-folder/'+modelName+'/nnir_build_' +
@@ -522,8 +522,8 @@ if profileMode == 9:
         print("\n nnef2nnir2openvx --"+modelName+"\n")
         for x in range(profileLevel):
             x = 2**x
-            print("\n"+modelName+" - Batch size "+x)
             x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
             os.system('(cd '+develop_dir+'/nnef-folder/' +
                       modelName+'; mkdir nnir_fp16_build_'+x+')')
             os.system('(cd '+develop_dir+'/nnef-folder/'+modelName+'/nnir_build_' +

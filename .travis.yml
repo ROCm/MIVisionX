@@ -5,7 +5,14 @@ os:
   - linux
 compiler:
   - g++
-  
+
+addons:
+    apt:
+        sources:
+            - ubuntu-toolchain-r-test
+        packages:
+            - lcov
+ 
 services:
   - docker
 
@@ -14,14 +21,19 @@ branches:
 
 install:
   - sudo apt update
+  - sudo apt-get -yq install gcc g++ cmake
   - lscpu
-  #- sudo apt --yes install cmake git wget unzip libnuma-dev
-  #- wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
-  #- sudo sh -c 'echo deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main > /etc/apt/sources.list.d/rocm.list'
-  #- sudo apt update
-  #- sudo apt install rocm-dkms
+  - lspci | grep VGA
 
 before_script:
+  # Run Vision Tests - CPU
+  - mkdir build-openvx
+  - cd build-openvx
+  - cmake -D CMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" -D OPENCL_SUPPORT=OFF ../
+  - make -j4
+  - python ../tests/vision_tests/runVisionTests.py --runvx_directory bin --num_frames 10 --functionality no
+  - cd ../
+  # Dockers for level testing
   - docker pull kiritigowda/ubuntu-18.04:mivisionx-level-1
   - docker run -it -d --name mivisionx-1 --network host kiritigowda/ubuntu-18.04:mivisionx-level-1 bash
   - docker cp ../MIVisionX mivisionx-1:/MIVisionX

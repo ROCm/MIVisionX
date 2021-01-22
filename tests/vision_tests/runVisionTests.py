@@ -26,9 +26,9 @@ import shutil
 import sys
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018-2020, AMD MIVision Generate Full Report"
+__copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -193,26 +193,39 @@ parser.add_argument('--runvx_directory',    type=str, default='',
 parser.add_argument('--hardware_mode',      type=str, default='CPU',
                     help='OpenVX Vision Function Target - optional (default:CPU [options:CPU/GPU])')
 parser.add_argument('--list_tests',         type=str, default='no',
-                    help='List Vision Functionality Tests - optional (default:no [options:no/yes])')
+                    help='List Vision Performance Tests - optional (default:no [options:no/yes])')
 parser.add_argument('--test_filter',        type=int, default=0,
-                    help='Vision Functionality Test Filter - optional (default:0 [range:1 - N])')
+                    help='Vision Performance Test Filter - optional (default:0 [range:1 - N])')
+parser.add_argument('--num_frames',         type=int, default=1000,
+                    help='Run Test for X number of frames - optional (default:1000 [range:1 - N])')
+parser.add_argument('--functionality',      type=str, default='yes',
+                    help='Vision Functionality Tests Enabled - optional (default:yes [options:no/yes])')
 args = parser.parse_args()
 
 runvxDir = args.runvx_directory
 hardwareMode = args.hardware_mode
 listTest = args.list_tests
 testFilter = args.test_filter
+numFrames = args.num_frames
+functionalityTests = args.functionality
 
 # check arguments
 if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
     exit()
 if listTest not in ('no', 'yes'):
-    print("ERROR: List Vision Functionality Tests options supported - no or yes]")
+    print("ERROR: List Vision Performance Tests options supported - [no or yes]")
+    exit()
+if functionalityTests not in ('no', 'yes'):
+    print("ERROR: Vision functionality Tests option supported - [no or yes]")
     exit()
 if not 0 <= testFilter <= len(openvxNodes):
     print(
-        "\nERROR: Vision Functionality Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
+        "\nERROR: Vision Performance Filter not in range - [1 - %d]\n" % (len(openvxNodes)))
+    exit()
+if not 1 <= numFrames <= 10000:
+    print(
+        "\nERROR: Vision Test Number of Frames not in range - [1 - 10000]\n")
     exit()
 # List Vision Functionality tests
 if listTest == 'yes':
@@ -238,15 +251,14 @@ else:
     print("\nERROR: RunVX Executable Not Found\n")
     exit()
 
-# create directory to store vision accurarcy test results
-os.system('(cd '+scriptPath+'/gdfs; mkdir -p openvx_test_results)')
-
-if testFilter == 0:
-    print("\nrunVisionTests - OpenVX Vision Tests\n")
+if testFilter == 0 and functionalityTests == 'yes':
+    # create directory to store vision accurarcy test results
+    os.system('(cd '+scriptPath+'/gdfs; mkdir -p openvx_test_results)')
+    print("\nrunVisionTests - OpenVX Vision Functionality Tests\n")
     for i in range(len(visionTestConfig)):
         testFileName = visionTestConfig[i]
         print("Running Test Script: "+testFileName)
-        os.system(RunVXapp+' -frames:100 -affinity:' +
+        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                   hardwareMode+' -dump-profile file '+scriptPath+'/gdfs/'+testFileName+' | tee -a '+scriptPath+'/gdfs/openvx_test_results/VisionOutput.log')
         print("\n")
     print("\nSTATUS: Vision Accuracy Results - " +
@@ -257,7 +269,7 @@ if testFilter == 0:
 # for i in range(len(openvxNodeTestConfig)):
     #nodeTestName, nodeTest = openvxNodeTestConfig[i]
     #print("Running OpenVX Node: "+nodeTestName)
-    #os.system(RunVXapp+' -frames:1000 -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
+    #os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
     # print("\n")
 
 print("\nrunVisionTests - OpenVX Node Performance\n")
@@ -273,7 +285,7 @@ if testFilter == 0:
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
                   ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system(RunVXapp+' -frames:1000 -affinity:' +
+        os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                   hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
         print("\n")
 else:
@@ -281,7 +293,7 @@ else:
     echo1 = 'Running OpenVX Node - '+nodeName
     os.system('echo '+echo1 +
               ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-    os.system(RunVXapp+' -frames:1000 -affinity:' +
+    os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
               hardwareMode+' -dump-profile node '+nodeFormat+' | tee -a openvx_node_results/nodePerformanceOutput.log')
     print("\n")
 
@@ -313,10 +325,10 @@ report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
 cpu_info = shell('inxi -c0 -C')
-#cpu_info = cpu_info.split('\n')[0]  # strip out clock speeds
+# cpu_info = cpu_info.split('\n')[0]  # strip out clock speeds
 
 gpu_info = shell('inxi -c0 -G')
-#gpu_info = gpu_info.split('\n')[0]  # strip out X info
+# gpu_info = gpu_info.split('\n')[0]  # strip out X info
 
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
@@ -349,7 +361,7 @@ with open(reportFilename, 'w') as f:
             f.write("%s" % line)
     f.write("\n")
 
-    f.write("\n\n---\nCopyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"**\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

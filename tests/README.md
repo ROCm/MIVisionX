@@ -9,3 +9,7 @@ Quick MIVisionX test suite
 ## Vision Tests
 
 OpenVX [vision function tests](vision_tests) for verification and performance
+
+## Neural Network Tests
+
+MIVisionX [neural network tests](neural_network_test) for verification and performance

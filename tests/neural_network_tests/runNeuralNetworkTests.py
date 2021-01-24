@@ -602,16 +602,16 @@ if profileMode == 0 or profileMode == 9:
 
     runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/nnef_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_fp16_profile.csv'''
+        scriptPath+'''/models/develop/nnef2nnir2openvx_FP16_profile.csv'''
     os.system(runAwk_csv)
     runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/nnef_fp16_output.log > ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_fp16_profile.txt'''
+        scriptPath+'''/models/develop/nnef2nnir2openvx_FP16_profile.txt'''
     os.system(runAwk_txt)
 
     orig_stdout = sys.stdout
     sys.stdout = open(
-        scriptPath+'/models/develop/nnef2nnir2openvx_fp16_profile.md', 'a')
+        scriptPath+'/models/develop/nnef2nnir2openvx_FP16_profile.md', 'a')
     echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
     print(echo_1)
     echo_2 = '|----------------------|------------|-----------------|-----------------|'
@@ -621,7 +621,7 @@ if profileMode == 0 or profileMode == 9:
     print(echo_2)
     runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
         scriptPath+'''/models/develop/nnef_fp16_output.log | tee -a ''' + \
-        scriptPath+'''/models/develop/nnef2nnir2openvx_fp16_profile.md'''
+        scriptPath+'''/models/develop/nnef2nnir2openvx_FP16_profile.md'''
     os.system(runAwk_md)
 
 # get system data

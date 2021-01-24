@@ -49,21 +49,21 @@ def write_formatted(output, f):
 def script_info():
     print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
     print(
-        "--profiler_mode - NN Profile Mode: optional (default:0 [range:0 - 9])")
-    print("  --profiler_mode 0 -- Run All Tests")
-    print("  --profiler_mode 1 -- Run caffe2nnir2openvx No Fuse flow")
-    print("  --profiler_mode 2 -- Run caffe2nnir2openvx Fuse flow")
-    print("  --profiler_mode 3 -- Run caffe2nnir2openvx FP16 flow")
-    print("  --profiler_mode 4 -- Run onnx2nnir2openvx No Fuse flow")
-    print("  --profiler_mode 5 -- Run onnx2nnir2openvx Fuse flow")
-    print("  --profiler_mode 6 -- Run onnx2nnir2openvx FP16 flow")
-    print("  --profiler_mode 7 -- Run nnef2nnir2openvx No Fuse flow")
-    print("  --profiler_mode 8 -- Run nnef2nnir2openvx Fuse flow")
-    print("  --profiler_mode 9 -- Run nnef2nnir2openvx FP16 flow")
+        "--profiler_mode       - NN Profile Mode: optional (default:0 [range:0 - 9])")
+    print("    --profiler_mode 0 -- Run All Tests")
+    print("    --profiler_mode 1 -- Run caffe2nnir2openvx No Fuse flow")
+    print("    --profiler_mode 2 -- Run caffe2nnir2openvx Fuse flow")
+    print("    --profiler_mode 3 -- Run caffe2nnir2openvx FP16 flow")
+    print("    --profiler_mode 4 -- Run onnx2nnir2openvx No Fuse flow")
+    print("    --profiler_mode 5 -- Run onnx2nnir2openvx Fuse flow")
+    print("    --profiler_mode 6 -- Run onnx2nnir2openvx FP16 flow")
+    print("    --profiler_mode 7 -- Run nnef2nnir2openvx No Fuse flow")
+    print("    --profiler_mode 8 -- Run nnef2nnir2openvx Fuse flow")
+    print("    --profiler_mode 9 -- Run nnef2nnir2openvx FP16 flow")
     print(
-        "--profiler_level - NN Profile Batch Size in powers of 2: optional (default:7 [range:1 - N])")
+        "--profiler_level      - NN Profile Batch Size in powers of 2: optional (default:7 [range:1 - N])")
     print(
-        "--miopen_find - MIOPEN_FIND_ENFORCE mode: optional (default:1 [range:1 - 5])")
+        "--miopen_find         - MIOPEN_FIND_ENFORCE mode: optional (default:1 [range:1 - 5])")
 
 
 # models to run - `modelname` , c, h, w

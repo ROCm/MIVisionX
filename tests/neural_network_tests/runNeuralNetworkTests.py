@@ -147,7 +147,7 @@ else:
 
 # Install Script Deps
 os.system('sudo -v')
-os.system('sudo apt -y install python3 protobuf-compiler libprotoc-dev')
+os.system('sudo apt -y install python3 python3-pip protobuf-compiler libprotoc-dev')
 os.system('pip3 install future pytz numpy')
 
 # Install CAFFE Deps

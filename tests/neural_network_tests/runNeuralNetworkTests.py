@@ -50,7 +50,7 @@ def script_info():
     print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
     print(
         "--profiler_mode - NN Profile Mode: optional (default:0 [range:0 - 9])")
-    print("  --profiler_mode 0 -- Run All Tests with All models")
+    print("  --profiler_mode 0 -- Run All Tests")
     print("  --profiler_mode 1 -- Run caffe2nnir2openvx No Fuse flow")
     print("  --profiler_mode 2 -- Run caffe2nnir2openvx Fuse flow")
     print("  --profiler_mode 3 -- Run caffe2nnir2openvx FP16 flow")
@@ -77,6 +77,18 @@ onnxModelConfig = [
 
 nnefModelConfig = [
     ('nnef-mnist', 1, 28, 28)
+]
+
+reportConfig = [
+    ('CAFFE no fused OPs', 'caffe2nnir2openvx_noFuse_profile.md'),
+    ('CAFFE fused OPs', 'caffe2nnir2openvx_Fuse_profile.md'),
+    ('CAFFE fp16', 'caffe2nnir2openvx_FP16_profile.md'),
+    ('ONNX no fused OPs', 'onnx2nnir2openvx_noFuse_profile.md'),
+    ('ONNX fused Ops', 'onnx2nnir2openvx_Fuse_profile.md'),
+    ('ONNX fp16', 'onnx2nnir2openvx_FP16_profile.md'),
+    ('NNEF no fused OPs', 'nnef2nnir2openvx_noFuse_profile.md'),
+    ('NNEF fused OPs', 'nnef2nnir2openvx_Fuse_profile.md'),
+    ('NNEF fp16', 'nnef2nnir2openvx_FP16_profile.md')
 ]
 
 # Import arguments
@@ -461,6 +473,56 @@ if profileMode == 0 or profileMode == 6:
         scriptPath+'''/models/develop/onnx2nnir2openvx_FP16_profile.md'''
     os.system(runAwk_md)
 
+# run nnef2nnir2openvx no fuse flow
+if profileMode == 0 or profileMode == 7:
+    outputDirectory = scriptPath+'/models/develop/nnefNoFuse'
+    os.makedirs(outputDirectory)
+    for i in range(len(nnefModelConfig)):
+        modelName, channel, height, width = nnefModelConfig[i]
+        print("\n nnef2nnir2openvx with No FUSED Operations -- "+modelName+"\n")
+        modelBuildDir = outputDirectory+'/nnir_build_'
+        for x in range(profileLevel):
+            x = 2**x
+            x = str(x)
+            print("\n"+modelName+" - Batch size "+x)
+            os.system('(cd '+outputDirectory +
+                      '; mkdir -p nnir_build_'+x+')')
+            os.system('(cd '+modelBuildDir+x+'; python3 '+modelCompilerDir+'/nnef_to_nnir.py '+scriptPath+'/models/' +
+                      modelName+' . )')
+            os.system('(cd '+modelBuildDir+x+'; python3 ' +
+                      modelCompilerDir+'/nnir_update.py --fuse-ops 0 . .)')
+            os.system('(cd '+modelBuildDir+x+'; python3 ' +
+                      modelCompilerDir+'/nnir_to_openvx.py . .)')
+            os.system('(cd '+modelBuildDir+x+'; cmake .; make)')
+            os.system('echo '+modelName+' - Batch size '+x+'  | tee -a ' +
+                      scriptPath+'/models/develop/nnef_no_fuse_output.log')
+            os.system('(cd '+modelBuildDir+x+'; MIOPEN_FIND_ENFORCE='+str(miopenFind) +
+                      ' ./anntest weights.bin | tee -a '+scriptPath+'/models/develop/nnef_no_fuse_output.log)')
+
+    runAwk_csv = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s,%3d,%8.3f ms,%8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/nnef_no_fuse_output.log > ''' + \
+        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.csv'''
+    os.system(runAwk_csv)
+    runAwk_txt = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("%-16s %3d %8.3f ms %8.3f ms\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/nnef_no_fuse_output.log > ''' + \
+        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.txt'''
+    os.system(runAwk_txt)
+
+    orig_stdout = sys.stdout
+    sys.stdout = open(
+        scriptPath+'/models/develop/nnef2nnir2openvx_noFuse_profile.md', 'a')
+    echo_1 = '|      Model Name      | Batch Size | Time/Batch (ms) | Time/Image (ms) |'
+    print(echo_1)
+    echo_2 = '|----------------------|------------|-----------------|-----------------|'
+    print(echo_2)
+    sys.stdout = orig_stdout
+    print(echo_1)
+    print(echo_2)
+    runAwk_md = r'''awk 'BEGIN { net = "xxx"; bsize = 1; } / - Batch size/ { net = $1; bsize = $5; } /average over 100 iterations/ { printf("|%-22s|%-12d|%-17.3f|%-17.3f|\n", net, bsize, $4, $4/bsize) }' ''' + \
+        scriptPath+'''/models/develop/nnef_no_fuse_output.log | tee -a ''' + \
+        scriptPath+'''/models/develop/nnef2nnir2openvx_noFuse_profile.md'''
+    os.system(runAwk_md)
+
 # run nnef2nnir2openvx fuse flow
 if profileMode == 0 or profileMode == 8:
     outputDirectory = scriptPath+'/models/develop/nnefFuse'
@@ -567,7 +629,7 @@ platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'platform_report_%s_%s.md' % (
+reportFilename = 'mivisionx_nn_inference_report_%s_%s.md' % (
     platform_name, file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
@@ -583,7 +645,7 @@ board_info = shell('inxi -c0 -M')
 
 # Write Report
 with open(reportFilename, 'w') as f:
-    f.write("MIVisionX - OpenVX Function Report\n")
+    f.write("MIVisionX - ML Inference Report\n")
     f.write("================================\n")
     f.write("\n")
 
@@ -603,9 +665,21 @@ with open(reportFilename, 'w') as f:
     f.write("\n\nBenchmark Report\n")
     f.write("--------\n")
     f.write("\n")
-    with open(scriptPath+'/models/develop/caffe2nnir2openvx_noFuse_profile.md') as benchmarkFile:
-        for line in benchmarkFile:
-            f.write("%s" % line)
+
+    if profileMode == 0:
+        for i in range(len(reportConfig)):
+            modelType, reportFile = reportConfig[i]
+            f.write("\nMODEL FORMAT: %s\n" % modelType)
+            with open(scriptPath+'/models/develop/'+reportFile) as benchmarkFile:
+                for line in benchmarkFile:
+                    f.write("%s" % line)
+    else:
+        modelType, reportFile = reportConfig[profileMode]
+        f.write("\nMODEL FORMAT: %s\n" % modelType)
+        with open(scriptPath+'/models/develop/'+reportFile) as benchmarkFile:
+            for line in benchmarkFile:
+                f.write("%s" % line)
+
     f.write("\n")
 
     f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runNeuralNetworkTests.py V-"+__version__+"**\n")

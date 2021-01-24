@@ -142,6 +142,7 @@ if(os.path.isfile(modelCompilerScript)):
     print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir)
 else:
     print("\nERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
+    print("ERROR: MIVisionX Not Installed")
     exit()
 
 # Install Script Deps

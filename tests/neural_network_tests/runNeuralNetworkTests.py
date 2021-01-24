@@ -674,7 +674,7 @@ with open(reportFilename, 'w') as f:
                 for line in benchmarkFile:
                     f.write("%s" % line)
     else:
-        modelType, reportFile = reportConfig[profileMode]
+        modelType, reportFile = reportConfig[profileMode - 1]
         f.write("\nMODEL FORMAT: %s\n" % modelType)
         with open(scriptPath+'/models/develop/'+reportFile) as benchmarkFile:
             for line in benchmarkFile:

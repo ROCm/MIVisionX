@@ -12,4 +12,4 @@ OpenVX [vision function tests](vision_tests) for verification and performance
 
 ## Neural Network Tests
 
-MIVisionX [neural network tests](neural_network_test) for verification and performance
+MIVisionX [neural network tests](neural_network_tests) for verification and performance

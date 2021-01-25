@@ -173,20 +173,27 @@ Reader::Status FileSourceReader::subfolder_reading()
         if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
         entry_name_list.push_back(entry_name);
     }
+    closedir(_sub_dir);
     std::sort(entry_name_list.begin(), entry_name_list.end());
 
-    std::string subfolder_path = _full_path + "/" + entry_name_list[0];
-
-    filesys::path pathObj(subfolder_path);
     auto ret = Reader::Status::OK;
-    if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
-    {
-        ret = open_folder();
-    }
-    else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
-    {
-        for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
-            std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
+    for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
+        std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
+        filesys::path pathObj(subfolder_path);
+        if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
+        {
+            // ignore files with extensions .tar, .zip, .7z
+            auto file_extension_idx = subfolder_path.find_last_of(".");
+            if (file_extension_idx  != std::string::npos) {
+                std::string file_extension = subfolder_path.substr(file_extension_idx+1);
+                if ((file_extension == "tar") || (file_extension == "zip") || (file_extension == "7z") || (file_extension == "rar"))
+                    continue;
+            }
+            ret = open_folder();
+            break;  // assume directory has only files.
+        }
+        else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
+        {
             _folder_path = subfolder_path;
             if(open_folder() != Reader::Status::OK)
                 WRN("FileReader ShardID ["+ TOSTR(_shard_id)+ "] File reader cannot access the storage at " + _folder_path);
@@ -199,7 +206,6 @@ Reader::Status FileSourceReader::subfolder_reading()
     }
     if(!_file_names.empty())
         LOG("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Total of " + TOSTR(_file_names.size()) + " images loaded from " + _full_path )
-    closedir(_sub_dir);
     return ret;
 }
 void FileSourceReader::replicate_last_image_to_fill_last_shard()

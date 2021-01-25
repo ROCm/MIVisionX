@@ -215,8 +215,8 @@ int main(int argc, const char ** argv)
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
     int col_counter = 0;
-    cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
-    printf("Going to process images\n");
+    if (display)
+        cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;

@@ -190,7 +190,6 @@ void RandomBBoxCropReader::read_all()
         _crop_width_val = _crop_param->get_cropw_arr_val();
         _crop_height_val = _crop_param->get_croph_arr_val();
         bool crop_success = false;
-        int count = 0;
         
         crop_box.h = _crop_height_val[i];
         crop_box.w = _crop_width_val[i];
@@ -203,6 +202,7 @@ void RandomBBoxCropReader::read_all()
         //Crop the Image if TrueFalse is 1, else , Keep Image as it is
         if (TrueFalse)
         {
+             int count = 0;
             while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
             {
                 sample_option = dis(gen);

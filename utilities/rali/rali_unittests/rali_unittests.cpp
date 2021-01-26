@@ -49,14 +49,14 @@ using namespace cv;
 
 using namespace std::chrono;
 
-int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height);
+int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes);
 int main(int argc, const char **argv)
 {
     // check command-line usage
     const size_t MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
-        printf("Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0  \n");
+        printf("Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0 \n");
         return -1;
     }
 
@@ -69,6 +69,7 @@ int main(int argc, const char **argv)
     int rgb = 1; // process color images
     bool gpu = 1;
     int test_case = 3; // For Rotate
+    int num_of_classes = 0;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         test_case = atoi(argv[++argIdx]);
@@ -79,12 +80,15 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
 
-    test(test_case, path, outName, rgb, gpu, width, height);
+    if (argc >= argIdx + MIN_ARG_COUNT)
+         num_of_classes = atoi(argv[++argIdx]);
+
+    test(test_case, path, outName, rgb, gpu, width, height, num_of_classes);
 
     return 0;
 }
 
-int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height)
+int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes)
 {
     size_t num_threads = 1;
     int inputBatchSize = 2;
@@ -672,14 +676,20 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         raliGetImageLabels(handle, label_id);
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
-        raliGetImageName(handle, img_name);
+        numOfClasses = num_of_classes;
         int label_one_hot_encoded[inputBatchSize * numOfClasses];
+        raliGetImageName(handle, img_name);
+        if(num_of_classes != 0)
+        {
         raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+        }
         std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
         for (int i = 0; i < inputBatchSize; i++)
 
         {   
             std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
+            if(num_of_classes != 0)
+            {
             std::cout << "One Hot Encoded labels:"<<"\t";
             for (int j = 0; j < numOfClasses; j++)
             {
@@ -691,6 +701,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                     std::cout << idx_value;
                 }
 
+            }
             }
             std::cout << "\n";
         }

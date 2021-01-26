@@ -527,7 +527,7 @@ namespace rali{
             py::arg("std_dev"),
             py::arg("is_output"),
             py::arg("mirror") = NULL);
-        m.def("Crop",&raliCrop,
+        m.def("Slice",&raliCrop,
             py::return_value_policy::reference,
             py::arg("context"),
             py::arg("input"),

@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from math import ceil, sqrt
+from math import sqrt
 import torch
 import ctypes
 import logging
@@ -66,7 +66,7 @@ class COCOPipeline(Pipeline):
         self.rng1 = ops.Uniform(range=[0.5, 1.5])
         self.rng2 = ops.Uniform(range=[0.875, 1.125])
         self.rng3 = ops.Uniform(range=[-0.5, 0.5])
-        self.coin_flip = ops.CoinFlip(probability=0.5) 
+        self.coin_flip = ops.CoinFlip(probability=0.5)
         print('rali "{0}" variant'.format(rali_device))
 
     def define_graph(self):
@@ -198,14 +198,13 @@ class RALICOCOIterator(object):
             
             if(self.loader._BoxEncoder == True):
                 
-                # Converting from "xywh" to "ltrb" format , 
-                # where the values of l, t, r, b always lie between 0 & 1 
+                # Converting from "xywh" to "ltrb" format ,
+                # where the values of l, t, r, b always lie between 0 & 1
                 # Box Encoder input & output:
                 # input : N x 4 , "xywh" format
                 # output : 8732 x 4 , "xywh" format and normalized
                 htot, wtot = 300, 300
                 bbox_sizes = []
-                bbox_labels = []
                 i=0
                 for (l,t,w,h) in self.bb_2d_numpy:
                     

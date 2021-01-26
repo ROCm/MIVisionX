@@ -645,7 +645,7 @@ class BBFlip(Node):
         self.output.data = horizontal
         return self.output
 
-def rali_c_func_call(self,input, is_output):
+def rali_c_func_call(self,input_image, is_output):
         return 0
     
 
@@ -739,9 +739,9 @@ class ImageDecoderSlice(Node):
     """
 
     def __init__(self, affine = True, axes = [1, 0], axis_names = 'WH',bytes_per_sample_hint = 0, device_memory_padding = 16777216,
-     device_memory_padding_jpeg2k = 0, host_memory_padding = 8388608,
+                device_memory_padding_jpeg2k = 0, host_memory_padding = 8388608,
                 host_memory_padding_jpeg2k = 0, hybrid_huffman_threshold = 1000000,
-                 memory_stats = False, normalized_anchor = True, normalized_shape = True, output_type = 'RGB', 
+                 memory_stats = False, normalized_anchor = True, normalized_shape = True, output_type = 'RGB',
                 preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False,device = None):
         Node().__init__()
         self._affine = affine
@@ -830,8 +830,7 @@ class BoxEncoder(Node):
         stds (float or list of float, optional, default = [1.0, 1.0, 1.0, 1.0]) – [x y w h] standard deviations for offset normalization.
     """
 
-    def __init__(self, anchors, bytes_per_sample_hint=0, criteria=0.5, means=[0.0, 0.0, 0.0, 0.0], offset=False, preserve=False,
-                 scale=1.0, seed=-1, stds=[1.0, 1.0, 1.0, 1.0],device = None):
+    def __init__(self, anchors, bytes_per_sample_hint=0, criteria=0.5, means=[0.0, 0.0, 0.0, 0.0], offset=False, preserve=False, scale=1.0, seed=-1, stds=[1.0, 1.0, 1.0, 1.0],device = None):
         Node().__init__()
         self._anchors = anchors
         self._bytes_per_sample_hint = bytes_per_sample_hint
@@ -851,7 +850,7 @@ class BoxEncoder(Node):
         self.output.prev = self
         self.output.next = None
         self.output.data = self._anchors
-        return self.output, self.output 
+        return self.output, self.output
 
     def rali_c_func_call(self, handle, bboxes_tensor, labels_tensor, criteria=0.5):
         
@@ -894,7 +893,7 @@ class BoxEncoder(Node):
                     
                     ious = calc_iou_tensor(bboxes_in, self.dboxes)
                     best_dbox_ious, best_dbox_idx = ious.max(dim=0)
-                    best_bbox_ious, best_bbox_idx = ious.max(dim=1)
+                    _ , best_bbox_idx = ious.max(dim=1)
 
                     # set best ious 2.0
                     best_dbox_ious.index_fill_(0, best_bbox_idx, 2.0)
@@ -1372,7 +1371,7 @@ class RandomBBoxCrop( ):
 
         """
     def __init__(self, all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = [1.0, 1.0], bbox_layout = "", bytes_per_sample_hint = 0,
-                crop_shape =[], input_shape = [], ltrb = True, num_attempts = 1 ,scaling =  [1.0, 1.0],  preserve = False, seed = -1, shape_layout = "", 
+                crop_shape =[], input_shape = [], ltrb = True, num_attempts = 1 ,scaling =  [1.0, 1.0],  preserve = False, seed = -1, shape_layout = "",
                 threshold_type ="iou", thresholds = [0.0], total_num_attempts = 0, device = None):
         Node().__init__()
         self._all_boxes_above_threshold = all_boxes_above_threshold
@@ -1685,7 +1684,7 @@ class CropMirrorNormalize(Node):
         return output_image
 
 
-class Crop(Node):
+class Slice(Node):
 
     """
 bytes_per_sample_hint (int, optional, default = 0) – Output size hint (bytes), per sample. The memory will be preallocated if it uses GPU or page-locked memory

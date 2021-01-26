@@ -1494,7 +1494,7 @@ RALI_API_CALL raliCropMirrorNormalize(RaliContext p_context, RaliImage p_input, 
         output->reset_image_roi();
 
         std::shared_ptr<CropMirrorNormalizeNode> cmn_node =  context->master_graph->add_node<CropMirrorNormalizeNode>({input}, {output});
-        cmn_node->init(crop_height, crop_width, start_x, start_y, mean_acutal, std_actual , mirror );
+        cmn_node->init(crop_height, crop_width, start_x, start_y, 0, 1 , mirror );
         if (context->master_graph->meta_data_graph())
             context->master_graph->meta_add_node<CropMirrorNormalizeMetaNode,CropMirrorNormalizeNode>(cmn_node);
     }

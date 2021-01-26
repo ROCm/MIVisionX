@@ -35,7 +35,7 @@ public:
     virtual ~MetaDataGraph()= default;
     virtual void process(MetaDataBatch* meta_data) = 0;
     virtual void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decoded_image_info) = 0;
-    virtual void update_random_bbox_meta_data(CropCordBatch* _random_bbox_crop_cords_data, MetaDataBatch* meta_data, decoded_image_info decoded_image_info) = 0;
+    virtual void update_random_bbox_meta_data(CropCordBatch* random_bbox_crop_cords_data, MetaDataBatch* meta_data, decoded_image_info decoded_image_info) = 0;
     std::list<std::shared_ptr<MetaNode>> _meta_nodes;
 };
 

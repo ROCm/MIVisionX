@@ -65,10 +65,11 @@ void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             float dest_cx, dest_cy, src_cx, src_cy;
             float x1, y1, x2, y2, x3, y3, x4, y4, min_x, min_y, max_x, max_y;
             float rotate[4];
-            rotate[0] = cos(RAD(_angle_val[i]));
-            rotate[1] = sin(RAD(_angle_val[i]));
-            rotate[2] = -1 * sin(RAD(_angle_val[i]));
-            rotate[3] = cos(RAD(_angle_val[i]));
+            float radian = RAD(_angle_val[i]);
+            rotate[0] = cos(radian);
+            rotate[1] = sin(radian);
+            rotate[2] = -1 * sin(radian);
+            rotate[3] = cos(radian);
             dest_cx = _dst_width / 2;
             dest_cy = _dst_height / 2;
             src_cx = _src_width_val[i]/2;

@@ -129,23 +129,39 @@ Hip_ColorDepth_U8_S16_Wrap(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
     const short int *pSrcImage, unsigned int srcImageStrideInBytes,
-    const int shift
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    const int shift) {
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y * (dstImageStrideInBytes) + x;
-    unsigned int srcIdx =  y * (srcImageStrideInBytes>>1) + x;
-    pDstImage[dstIdx] = (unsigned char)(pSrcImage[srcIdx] >> shift);
+    unsigned int dstIdx =  y * dstImageStrideInBytes + x;
+    unsigned int srcIdx =  y * (srcImageStrideInBytes >> 1) + x;
+
+    int4 src = *((int4 *)(&pSrcImage[srcIdx]));
+
+    uint2 dst;
+    int sr = shift;
+    sr += 16;
+    dst.x  = ((src.x   << 16) >> sr) & 0xff;
+    dst.x |= ((src.x          >> sr) & 0xff) <<  8;
+    dst.x |= (((src.y  << 16) >> sr) & 0xff) << 16;
+    dst.x |= ((src.y          >> sr) & 0xff) << 24;
+    dst.y  = ((src.z   << 16) >> sr) & 0xff;
+    dst.y |= ((src.z          >> sr) & 0xff) <<  8;
+    dst.y |= (((src.w  << 16) >> sr) & 0xff) << 16;
+    dst.y |= ((src.w          >> sr) & 0xff) << 24;
+
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
+
 int HipExec_ColorDepth_U8_S16_Wrap(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_int16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    const vx_int32 shift
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    const vx_int32 shift) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Wrap,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
@@ -162,24 +178,42 @@ Hip_ColorDepth_U8_S16_Sat(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
     const short int *pSrcImage, unsigned int srcImageStrideInBytes,
-    const int shift
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    const int shift) {
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y * (dstImageStrideInBytes) + x;
     unsigned int srcIdx =  y * (srcImageStrideInBytes>>1) + x;
-    pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(pSrcImage[srcIdx] >> shift);
+    int4 src = *((int4 *)(&pSrcImage[srcIdx]));
+
+    uint2 dst;
+    int sr = shift;
+    sr += 16;
+    float4 f;
+    f.x = (float)((src.x << 16) >> sr);
+    f.y = (float)( src.x        >> sr);
+    f.z = (float)((src.y << 16) >> sr);
+    f.w = (float)( src.y        >> sr);
+    dst.x = float4_to_uchars_u32(f);
+    f.x = (float)((src.z << 16) >> sr);
+    f.y = (float)( src.z        >> sr);
+    f.z = (float)((src.w << 16) >> sr);
+    f.w = (float)( src.w        >> sr);
+    dst.y = float4_to_uchars_u32(f);
+
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+
 }
 int HipExec_ColorDepth_U8_S16_Sat(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_int16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    const vx_int32 shift
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-    
+    const vx_int32 shift) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
     hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Sat,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -195,14 +229,27 @@ Hip_ColorDepth_S16_U8(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     short int *pDstImage, unsigned int dstImageStrideInBytes,
     const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
-    const int shift
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    const int shift) {
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     if ((x >= dstWidth) || (y >= dstHeight)) return;
     unsigned int dstIdx =  y * (dstImageStrideInBytes>>1) + x;
     unsigned int srcIdx =  y * (srcImageStrideInBytes) + x;
-    pDstImage[dstIdx] = ((short int)pSrcImage[srcIdx]) << shift;
+
+    uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
+
+    int4 dst;
+    dst.x  =  (src.x & 0x000000ff) <<       shift ;
+    dst.x |=  (src.x & 0x0000ff00) << ( 8 + shift);
+    dst.y  =  (src.x & 0x00ff0000) >> (16 - shift);
+    dst.y |=  (src.x & 0xff000000) >> ( 8 - shift);
+    dst.z  =  (src.y & 0x000000ff) <<       shift ;
+    dst.z |=  (src.y & 0x0000ff00) << ( 8 + shift);
+    dst.w  =  (src.y & 0x00ff0000) >> (16 - shift);
+    dst.w |=  (src.y & 0xff000000) >> ( 8 - shift);
+
+    *((int4 *)(&pDstImage[dstIdx])) = dst;
+
 }
 int HipExec_ColorDepth_S16_U8(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -210,8 +257,10 @@ int HipExec_ColorDepth_S16_U8(
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     const vx_int32 shift
     ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;;
+    int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_ColorDepth_S16_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),

@@ -78,8 +78,8 @@ fp_result.write(out_to_print)
 fp_result.write('\n')
 
 cmd = argmaxExe + ' ' + resultsDir + '/' + tensorBatch1
-out = subprocess.check_output(cmd, shell=True)
-out_to_print = "0," + out
+out = subprocess.check_output(cmd, shell=True, universal_newlines=True)
+out_to_print = "0," + str(out)
 fp_result.write(out_to_print)
 
 #Batch sizes 2 - 128 need further directory traversing and loops for each separate tensor
@@ -107,8 +107,8 @@ for batchSize in batchSizeList:
 				currentTensor = network + '-' + str(batchSize) + '-python-' + str(i) + '.fp'
 		
 		cmd = argmaxExe + ' ' + currentDir + '/' + currentTensor
-		out = subprocess.check_output(cmd, shell=True)
-		out_to_print = str(i) + ',' + out
+		out = subprocess.check_output(cmd, shell=True, universal_newlines=True)
+		out_to_print = str(i) + ',' + str(out)
 		fp_result.write(out_to_print)
 		i = i + 1
 
@@ -116,4 +116,4 @@ fp_result.close()
 
 cmd = 'mv ' + outFileName + ' ' + resultsDir
 if os.system(cmd) != 0:
-	print 'ERROR: Could not move ' + outFileName + ' into ' + resultsDir + '\n'
+	print('ERROR: Could not move ' + outFileName + ' into ' + resultsDir + '\n')

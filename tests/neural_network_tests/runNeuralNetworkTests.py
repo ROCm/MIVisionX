@@ -167,7 +167,7 @@ else:
     exit()
 
 # Install Model Compiler Deps
-modelCompilerDeps = os.path.abspath('~/.mivisionx-model-compiler-deps')
+modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
 if not os.path.exists(modelCompilerDeps):
     print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
     os.makedirs(modelCompilerDeps)

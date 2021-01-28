@@ -187,7 +187,7 @@ if not os.path.exists('~/.mivisionx-model-compiler-deps'):
     os.system(
         '(cd ~/.mivisionx-model-compiler-deps/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
-    print("\nSTATUS: Model Compiler Deps Pre-Installed\n")
+    print("STATUS: Model Compiler Deps Pre-Installed\n")
 
 # Create working directory
 outputDirectory = scriptPath+'/models/develop'

@@ -169,7 +169,7 @@ else:
 # Install Model Compiler Deps
 modelCompilerDeps = os.path.abspath('~/.mivisionx-model-compiler-deps')
 if not os.path.exists(modelCompilerDeps):
-    print("STATUS: Model Compiler Deps Install\n")
+    print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
     os.makedirs(modelCompilerDeps)
     os.system('sudo -v')
     os.system(

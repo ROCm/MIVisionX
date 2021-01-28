@@ -167,9 +167,10 @@ else:
     exit()
 
 # Install Model Compiler Deps
-if not os.path.exists('~/.mivisionx-model-compiler-deps'):
+modelCompilerDeps = os.path.abspath('~/.mivisionx-model-compiler-deps')
+if not os.path.exists(modelCompilerDeps):
     print("STATUS: Model Compiler Deps Install\n")
-    os.system('mkdir -p ~/.mivisionx-model-compiler-deps')
+    os.makedirs(modelCompilerDeps)
     os.system('sudo -v')
     os.system(
         'sudo apt -y install python3 python3-pip protobuf-compiler libprotoc-dev')
@@ -179,15 +180,15 @@ if not os.path.exists('~/.mivisionx-model-compiler-deps'):
     # Install ONNX Deps
     os.system('pip3 install onnx')
     # Install NNEF Deps
-    os.system('mkdir -p ~/.mivisionx-model-compiler-deps/nnef-deps')
+    os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
     os.system(
-        '(cd ~/.mivisionx-model-compiler-deps/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
+        '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
     os.system(
-        '(cd ~/.mivisionx-model-compiler-deps/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; cmake ..; make)')
+        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; cmake ..; make)')
     os.system(
-        '(cd ~/.mivisionx-model-compiler-deps/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
+        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
-    print("STATUS: Model Compiler Deps Pre-Installed\n")
+    print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
 
 # Create working directory
 outputDirectory = scriptPath+'/models/develop'

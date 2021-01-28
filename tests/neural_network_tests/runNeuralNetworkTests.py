@@ -160,9 +160,9 @@ modelCompilerDir = os.path.expanduser(
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
 if(os.path.isfile(modelCompilerScript)):
-    print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir)
+    print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir+"\n")
 else:
-    print("\nERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
+    print("ERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
     print("ERROR: MIVisionX Not Installed, install MIVisionX and rerun")
     exit()
 
@@ -187,7 +187,7 @@ if not os.path.exists('~/.mivisionx-model-compiler-deps'):
     os.system(
         '(cd ~/.mivisionx-model-compiler-deps/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
-    print("STATUS: Model Compiler Deps Pre-Installed\n")
+    print("\nSTATUS: Model Compiler Deps Pre-Installed\n")
 
 # Create working directory
 outputDirectory = scriptPath+'/models/develop'
@@ -674,7 +674,8 @@ vbios = shell('(cd /opt/rocm/bin/; ./rocm-smi -v)')
 
 rocmInfo = shell('(cd /opt/rocm/bin/; ./rocm-smi -a)')
 
-rocm_packages = shell('dpkg-query -W | grep rocm').split('\n')
+rocm_packages = shell('dpkg-query -W | grep rocm')
+rocm_packages = rocm_packages.splitlines()
 
 # Write Report
 with open(reportFilename, 'w') as f:

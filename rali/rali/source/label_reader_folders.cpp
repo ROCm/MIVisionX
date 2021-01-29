@@ -120,31 +120,36 @@ void LabelReaderFolders::read_all(const std::string& _path)
         entry_name_list.push_back(entry_name);
     }
     std::sort(entry_name_list.begin(), entry_name_list.end());
+    closedir(_sub_dir);
 
-    std::string subfolder_path = _full_path + "/" + entry_name_list[0];
-    filesys::path pathObj(subfolder_path);
-    if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) 
-    {
-        read_files(_folder_path);
-        for(unsigned i = 0; i < _subfolder_file_names.size(); i++) {
-            add(_subfolder_file_names[i], 0);
+    for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
+        std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
+        filesys::path pathObj(subfolder_path);
+        if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
+        {
+            // ignore files with extensions .tar, .zip, .7z
+            auto file_extension_idx = subfolder_path.find_last_of(".");
+            if (file_extension_idx  != std::string::npos) {
+                std::string file_extension = subfolder_path.substr(file_extension_idx+1);
+                if ((file_extension == "tar") || (file_extension == "zip") || (file_extension == "7z") || (file_extension == "rar"))
+                    continue;
+            }
+            read_files(_folder_path);
+            for(unsigned i = 0; i < _subfolder_file_names.size(); i++) {
+                add(_subfolder_file_names[i], 0);
+            }
+            break;  // assume directory has only files.
         }
-        // print_map_contents();
-    }
-    else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
-    {
-        for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
-            std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
+        else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
+        {
             _folder_path = subfolder_path;
             _subfolder_file_names.clear();
             read_files(_folder_path);
             for(unsigned i = 0; i < _subfolder_file_names.size(); i++) {
                 add(_subfolder_file_names[i], dir_count);
             }
-            // print_map_contents();
-        }  
+        }
     }  
-    closedir(_sub_dir);
 }
 
 void LabelReaderFolders::read_files(const std::string& _path)

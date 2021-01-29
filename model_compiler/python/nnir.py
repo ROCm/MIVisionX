@@ -914,9 +914,10 @@ class IrGraph(object):
             for idx, binary in enumerate(self.binaries):
                 if binary not in keepAsFP32:
                     weight = np.frombuffer(self.binaries[binary], dtype=np.float32)
-                    self.addBinary(binary, weight.view(dtype=np.float16))
+                    newBinary = weight.astype(dtype=np.float16)
+                    self.addBinary(binary, newBinary)
 
-                #print("Add binary %s of size %d at Idx: %d len: %d" %(binary, len(self.binaries[binary]), idx, len(self.binaries)))
+                    #print("Add binary %s of size %d at Idx: %d len: %d" %(binary, newBinary.nbytes, idx, len(newBinary)))
             self.all_F032 = False
             self.all_F016 = True    
         else:
@@ -1367,7 +1368,10 @@ class IrGraph(object):
         for binary in self.binaries:
             binaryFile = binaryFolder + '/' + binary + '.raw'
             with open(binaryFile, 'wb') as f:
-                f.write(self.binaries[binary])
+                if isinstance(self.binaries[binary], np.ndarray):
+                    (self.binaries[binary]).tofile(binaryFile)
+                else:
+                    f.write(self.binaries[binary])
         name_dict = {}
         with open(irDescFile, 'r') as f_read: 
             for line in f_read:

@@ -341,7 +341,7 @@ gpu_info = shell('inxi -c0 -G')
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
 
-lib_tree = shell(RunVXapp)
+lib_tree = shell('ldd '+RunVXapp)
 lib_tree = strip_libtree_addresses(lib_tree)
 
 # Write Report

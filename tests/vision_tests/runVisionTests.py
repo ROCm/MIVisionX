@@ -365,13 +365,14 @@ with open(reportFilename, 'w') as f:
 
     f.write("\n\nBenchmark Report\n")
     f.write("--------\n")
+    f.write("\n")
     f.write("### Hardware: %s\n" % hardwareMode)
     f.write("\n")
     with open('openvx_node_results/nodePerformance.md') as benchmarkFile:
         for line in benchmarkFile:
             f.write("%s" % line)
     f.write("\n")
-
+    f.write("\n")
     f.write("Dynamic Libraries Report\n")
     f.write("-----------------\n")
     f.write("\n")
@@ -379,6 +380,7 @@ with open(reportFilename, 'w') as f:
     f.write("\n")
 
     f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"**\n")
+    f.write("\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

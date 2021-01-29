@@ -3,7 +3,7 @@
 ## Script to run neural network tests
 
 ```
-python3 runNeuralNetworkTests.py --help
+python runNeuralNetworkTests.py --help
 ```
 
 usage: 
@@ -38,5 +38,3 @@ Test Info:
 --profiler_level    - NN Profile Batch Size in powers of 2: optional (default:7 [range:1 - N])
 --miopen_find       - MIOPEN_FIND_ENFORCE mode: optional (default:1 [range:1 - 5])
 ```
-
-**Note:** Use `Python3` to run the script

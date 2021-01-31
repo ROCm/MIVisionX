@@ -12,13 +12,13 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     String installPackage = ''
     String cmake = ''
 
-    if (platform.jenkinsLabel.contains('centos')){
+    if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y update'
         installPackage = 'python MIVisionX-setup.py --installer yum --ffmpeg yes'
         cmake = 'cmake3'
     }
-    else if (platform.jenkinsLabel.contains('sles')){
+    else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/lsb-release && uname -r'
         update = 'sudo zypper -y update'
         installPackage = 'sudo zypper install -y cmake gcc g++ opencv ffmpeg-4'

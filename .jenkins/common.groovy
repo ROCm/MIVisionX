@@ -20,8 +20,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/lsb-release && uname -r'
-        update = 'sudo zypper -y update'
-        installPackage = 'sudo zypper install -y cmake gcc g++ opencv ffmpeg-4'
+        update = 'sudo zypper ref && sudo zypper update'
+        installPackage = 'sudo zypper install cmake opencv ffmpeg-4'
         cmake = 'cmake'
     }
     else {
@@ -54,9 +54,9 @@ def runTestCommand (platform, project) {
                 set -x
                 ldd -v /opt/rocm/mivisionx/lib/libopenvx.so
                 cd ${project.paths.project_build_prefix}/build/release
-                python ${project.paths.project_build_prefix}/tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
-                python ${project.paths.project_build_prefix}/tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100
-                python ${project.paths.project_build_prefix}/tests/neural_network_tests/runNeuralNetworkTests.py
+                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
+                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100
+                python ../../tests/neural_network_tests/runNeuralNetworkTests.py
                 """
 
     platform.runCommand(this, command)
@@ -84,7 +84,6 @@ def runPackageCommand(platform, project) {
                 cd ${project.paths.project_build_prefix}/build/release
                 sudo make package
                 mkdir -p package
-                mv *.md package/
                 mv *.${packageType} package/
                 ${packageInfo} package/*.${packageType}
                 """

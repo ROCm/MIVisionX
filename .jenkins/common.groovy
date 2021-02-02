@@ -19,7 +19,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         cmake = 'cmake3'
     }
     else if (platform.jenkinsLabel.contains('sles')) {
-        osInfo = 'cat /etc/lsb-release && uname -r'
+        osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo zypper ref && sudo zypper update'
         installPackage = 'sudo zypper install cmake opencv ffmpeg-4'
         cmake = 'cmake'

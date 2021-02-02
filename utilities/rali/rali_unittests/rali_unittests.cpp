@@ -649,7 +649,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
-        int numOfClasses = 2; //Ask Swetha
+        int numOfClasses = 0;
         int image_name_length[inputBatchSize];
 #if defined COCO_READER || defined COCO_READER_PARTIAL || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         int img_size = raliGetImageNameLen(handle, image_name_length);

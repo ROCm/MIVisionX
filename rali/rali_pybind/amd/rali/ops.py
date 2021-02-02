@@ -738,7 +738,7 @@ class ImageDecoderSlice(Node):
     According to the libjpeg-turbo documentation, decompression performance is improved by up to 14% with little reduction in quality.
     """
 
-    def __init__(self, affine = True, axes = [1, 0], axis_names = 'WH',bytes_per_sample_hint = 0, device_memory_padding = 16777216,
+    def __init__(self, affine = True, axes = [1, 0], axis_names = "WH",bytes_per_sample_hint = 0, device_memory_padding = 16777216,
                 device_memory_padding_jpeg2k = 0, host_memory_padding = 8388608,
                 host_memory_padding_jpeg2k = 0, hybrid_huffman_threshold = 1000000,
                  memory_stats = False, normalized_anchor = True, normalized_shape = True, output_type = 'RGB',
@@ -767,11 +767,14 @@ class ImageDecoderSlice(Node):
         self.output = Node()
 
 
-    def __call__(self,input, crop_begin = [] , crop_size = []):
-        self.crop_begin = crop_begin
-        input.next = self
+    def __call__(self,input_image_call, crop_begin = None , crop_size = None):
+        if crop_begin is None:
+            self.crop_begin = []
+        else :
+            self.crop_begin = crop_begin
+        input_image_call.next = self
         self.data = "ImageDecoderSlice"
-        self.prev = input
+        self.prev = input_image_call
         self.next = self.output
         self.output.prev = self
         self.output.next = None
@@ -956,11 +959,14 @@ class ImageDecoder(Node):
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
 
-    def __init__(self, user_feature_key_map={}, affine=True, bytes_per_sample_hint=0, cache_batch_copy= True, cache_debug = False, cache_size = 0, cache_threshold = 0,
+    def __init__(self, user_feature_key_map = None, affine=True, bytes_per_sample_hint=0, cache_batch_copy= True, cache_debug = False, cache_size = 0, cache_threshold = 0,
                  cache_type='', device_memory_padding=16777216, host_memory_padding=8388608, hybrid_huffman_threshold= 1000000, output_type = 0,
                  preserve=False, seed=-1, split_stages=False, use_chunk_allocator= False, use_fast_idct = False, device = None):
         Node().__init__()
-        self._user_feature_key_map = user_feature_key_map
+        if user_feature_key_map is None:
+            self._user_feature_key_map = {}
+        else:
+            self._user_feature_key_map = user_feature_key_map
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._cache_batch_copy = cache_batch_copy
@@ -1057,11 +1063,14 @@ class ImageDecoderRandomCrop(Node):
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
 
-    def __init__(self, user_feature_key_map={}, affine=True, bytes_per_sample_hint=0, device_memory_padding= 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000,
+    def __init__(self, user_feature_key_map = None, affine=True, bytes_per_sample_hint=0, device_memory_padding= 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000,
                  num_attempts=10, output_type=0, preserve=False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
                  seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct= False, device = None):
         Node().__init__()
-        self._user_feature_key_map = user_feature_key_map
+        if user_feature_key_map is None:
+            self._user_feature_key_map = {}
+        else:
+            self._user_feature_key_map = user_feature_key_map
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._device_memory_padding = device_memory_padding
@@ -1180,11 +1189,14 @@ class ImageDecoderRaw(Node):
 
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
-    def __init__(self, user_feature_key_map = {}, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
+    def __init__(self, user_feature_key_map = None, affine = True, bytes_per_sample_hint = 0, cache_batch_copy = True, cache_debug = False, cache_size = 0, cache_threshold = 0,
                  cache_type = '', device_memory_padding = 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000, output_type = 0,
                  preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False, device = None):
         Node().__init__()
-        self._user_feature_key_map = user_feature_key_map
+        if user_feature_key_map is None:
+            self._user_feature_key_map = {}
+        else:
+            self._user_feature_key_map = user_feature_key_map
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._cache_batch_copy = cache_batch_copy
@@ -1371,7 +1383,7 @@ class RandomBBoxCrop( ):
 
         """
     def __init__(self, all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = [1.0, 1.0], bbox_layout = "", bytes_per_sample_hint = 0,
-                crop_shape =[], input_shape = [], ltrb = True, num_attempts = 1 ,scaling =  [1.0, 1.0],  preserve = False, seed = -1, shape_layout = "",
+                crop_shape = None, input_shape = None, ltrb = True, num_attempts = 1 ,scaling =  [1.0, 1.0],  preserve = False, seed = -1, shape_layout = "",
                 threshold_type ="iou", thresholds = [0.0], total_num_attempts = 0, device = None):
         Node().__init__()
         self._all_boxes_above_threshold = all_boxes_above_threshold
@@ -1379,8 +1391,14 @@ class RandomBBoxCrop( ):
         self._aspect_ratio = aspect_ratio
         self._bbox_layout = bbox_layout
         self._bytes_per_sample_hint = bytes_per_sample_hint
-        self._crop_shape = crop_shape
-        self._input_shape = input_shape
+        if crop_shape is None:
+           self._crop_shape = [] 
+        else:
+            self._crop_shape = crop_shape
+        if input_shape is None:
+            self._input_shape = []
+        else:
+            self._input_shape = input_shape
         self._ltrb = ltrb
         self._num_attempts = num_attempts
         self._scaling = scaling
@@ -1403,7 +1421,7 @@ class RandomBBoxCrop( ):
             self.crop_height = self._crop_shape[1]
         self.output = Node()
 
-    def __call__(self, input_boxes, labels=None, crop_shape = [], input_shape = []):
+    def __call__(self, input_boxes, labels=None, crop_shape = None, input_shape = None):
         # input_boxes.next = self
         self.data = "RandomBBoxCrop"
         self.prev = input_boxes
@@ -2098,7 +2116,7 @@ size (float or list of float, optional, default = []) – Output size, in pixels
 
     """
 
-    def __init__(self, angle=0, axis=[], bytes_per_sample_hint= 0, fill_value = 0.0, interp_type = 1, keep_size = False, output_dtype = -1, preserve = False, seed = -1, size = [], device = None):
+    def __init__(self, angle=0, axis=None, bytes_per_sample_hint= 0, fill_value = 0.0, interp_type = 1, keep_size = False, output_dtype = -1, preserve = False, seed = -1, size = None, device = None):
         Node().__init__()
         self._angle = angle
         self._axis = axis
@@ -2232,7 +2250,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
 size (float or list of float, optional, default = []) – Output size, in pixels/points. Non-integer sizes are rounded to nearest integer. Channel dimension should be excluded (e.g. for RGB images specify (480,640), not (480,640,3).
     """
 
-    def __init__(self, bytes_per_sample_hint=0, fill_value=0.0, interp_type = 1, matrix = [], output_dtype = -1, preserve = False, seed = -1, size = [], device = None):
+    def __init__(self, bytes_per_sample_hint=0, fill_value=0.0, interp_type = 1, matrix = None, output_dtype = -1, preserve = False, seed = -1, size = None, device = None):
         Node().__init__()
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._fill_value = fill_value

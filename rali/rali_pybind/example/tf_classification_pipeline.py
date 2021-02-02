@@ -15,7 +15,7 @@ class HybridPipe(Pipeline):
 				'image/filename':tf.FixedLenFeature((), tf.string, "")
 			}
 		)
-		self._oneHotLabels = oneHotLabels 
+		self._oneHotLabels = oneHotLabels
 		rali_device = 'cpu' if rali_cpu else 'gpu'
 		decoder_device = 'cpu' if rali_cpu else 'mixed'
 		device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -70,11 +70,12 @@ def main():
 		'image/filename':'image/filename'
 	}
 
-	pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU) 
+	pipe = HybridPipe(feature_key_map=featureKeyMap, tfrecordreader_type=TFRecordReaderType, batch_size=bs, num_threads=nt, device_id=di, data_dir=imagePath, crop=cropSize, oneHotLabels=oneHotLabel, rali_cpu=raliCPU)
 	pipe.build()
 	
 	imageIterator = RALIIterator(pipe)
 	for i, (images_array, labels_array) in enumerate(imageIterator, 0):
+		print("\n\n",i)
 		print("\nIMAGES ARRAY:\n",images_array)
 		print("\nLABELS ARRAY:\n",labels_array)
 			

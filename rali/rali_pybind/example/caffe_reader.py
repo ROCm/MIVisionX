@@ -86,7 +86,8 @@ def main():
 				print("Images",image_batch)
 				print("Bboxes",bboxes)
 				print("Labels",labels)
-	print('Finished Training')
+	# print('Finished Training')
+	# print('Finished !!')
 
 if __name__ == '__main__':
 	main()

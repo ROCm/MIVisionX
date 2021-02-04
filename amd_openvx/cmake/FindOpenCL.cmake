@@ -30,11 +30,11 @@ find_path(OPENCL_INCLUDE_DIRS
     $ENV{AMDAPPSDKROOT}/include
     $ENV{CUDA_PATH}/include
     PATHS
+    ${ROCM_PATH}/opencl/include
     /usr/include
     /usr/local/include
     /usr/local/cuda/include
     /opt/cuda/include
-    ${ROCM_PATH}/opencl/include
     DOC "OpenCL header file path"
     )
 mark_as_advanced( OPENCL_INCLUDE_DIRS )
@@ -49,10 +49,10 @@ if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
         DOC "OpenCL dynamic library path"
         PATH_SUFFIXES x86_64 x64 x86_64/sdk
         PATHS
+        ${ROCM_PATH}/opencl/lib/
         /usr/lib
         /usr/local/cuda/lib
         /opt/cuda/lib
-        ${ROCM_PATH}/opencl/lib
         )
 else( )
     find_library( OPENCL_LIBRARIES
@@ -63,8 +63,8 @@ else( )
         $ENV{CUDA_PATH}/lib
         DOC "OpenCL dynamic library path"
         PATH_SUFFIXES x86 Win32
-
         PATHS
+        ${ROCM_PATH}/opencl/lib/
         /usr/lib
         /usr/local/cuda/lib
         /opt/cuda/lib

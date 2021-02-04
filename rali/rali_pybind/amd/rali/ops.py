@@ -833,7 +833,7 @@ class BoxEncoder(Node):
         stds (float or list of float, optional, default = [1.0, 1.0, 1.0, 1.0]) – [x y w h] standard deviations for offset normalization.
     """
 
-    def __init__(self, anchors, bytes_per_sample_hint=0, criteria=0.5, means=None, offset=False, preserve=False, scale=1.0, seed=-1, stds=[1.0, 1.0, 1.0, 1.0],device = None):
+    def __init__(self, anchors, bytes_per_sample_hint=0, criteria=0.5, means=None, offset=False, preserve=False, scale=1.0, seed=-1, stds=None ,device = None):
         Node().__init__()
         self._anchors = anchors
         self._bytes_per_sample_hint = bytes_per_sample_hint

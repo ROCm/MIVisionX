@@ -27,7 +27,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     else {
         osInfo = 'cat /etc/lsb-release && uname -r'
         update = 'sudo apt -y update && sudo apt -y install python'
-        installPackage = 'python MIVisionX-setup.py --ffmpeg yes'
+        installPackage = 'DEBIAN_FRONTEND=noninteractive python MIVisionX-setup.py --ffmpeg yes'
         cmake = 'cmake'
     }
 
@@ -68,7 +68,7 @@ def runPackageCommand(platform, project) {
     String packageType = ''
     String packageInfo = ''
 
-    if (platform.jenkinsLabel.contains('centos')) {
+    if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('sles')) {
         packageType = 'rpm'
         packageInfo = 'rpm -qlp'
     }

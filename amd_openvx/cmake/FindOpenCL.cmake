@@ -88,6 +88,7 @@ if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
     message("-- ${Magenta}ROCm OpenCL Found - Set CL_TARGET_OPENCL_VERSION=220${ColourReset}")
     add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
 endif()
+
 if( NOT OPENCL_FOUND )
-    message( STATUS "FindOpenCL looked for libraries named: OpenCL" )
+    message( STATUS "FindOpenCL failed to find libraries named: OpenCL" )
 endif()

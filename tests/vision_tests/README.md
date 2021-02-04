@@ -6,6 +6,27 @@
 python runVisionTests.py --help
 ```
 
+
+usage: 
+
+```
+runVisionTests.py [--runvx_directory RUNVX_DIRECTORY] -- required
+                  [--hardware_mode HARDWARE_MODE]
+                  [--list_tests LIST_TESTS]
+                  [--test_filter TEST_FILTER]
+                  [--num_frames NUM_FRAMES]
+                  [--functionality FUNCTIONALITY]
+
+Arguments:
+  -h, --help        show this help message and exit
+  --runvx_directory RunVX Executable Directory - required
+  --hardware_mode   OpenVX Vision Function Target - optional (default:CPU [options:CPU/GPU])
+  --list_tests      List Vision Performance Tests - optional (default:no [options:no/yes])
+  --test_filter     Vision Performance Test Filter - optional (default:0 [range:1 - N])
+  --num_frames      Run Test for X number of frames - optional (default:1000 [range:1 - N])
+  --functionality   Vision Functionality Tests Enabled - optional (default:yes [options:no/yes])
+```
+
 ## Vision Functionality Test GDFs
 
 ```

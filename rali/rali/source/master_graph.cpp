@@ -249,18 +249,18 @@ void MasterGraph::release()
     _nodes.clear();
     _root_nodes.clear();
     _image_map.clear();
+
+    // release all openvx resources.
     vx_status status;
+    for(auto& image: _internal_images)
+        delete image;// It will call the vxReleaseImage internally in the destructor
+    for(auto& image: _output_images)
+        delete image;// It will call the vxReleaseImage internally in the destructor
     if(_graph != nullptr)
         _graph->release();
-
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseContext " + TOSTR(status))
 
-    for(auto& image: _internal_images)
-        delete image;// It will call the vxReleaseImage internally in the destructor
-
-    for(auto& image: _output_images)
-        delete image;// It will call the vxReleaseImage internally in the destructor
     _augmented_meta_data = nullptr;
     _meta_data_graph = nullptr;
     _meta_data_reader = nullptr;

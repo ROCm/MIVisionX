@@ -34,17 +34,17 @@ The OpenVX framework provides a mechanism to add new vision functions to OpenVX 
 Build this project to generate AMD OpenVX library 
 
 * Refer to [openvx/include/VX](openvx/include/VX) for Khronos OpenVX standard header files.
-* Refer to [openvx/include/vx_ext_amd.h](openvx/include/vx_ext_amd.h) for vendor extensions in AMD OpenVX library.
+* Refer to [openvx/include/vx_ext_amd.h](openvx/include/vx_ext_amd.h) for vendor extensions in AMD OpenVX library
 
 ### Build using `Visual Studio`
 
 * Install OpenCV with/without contrib [download](https://github.com/opencv/opencv/releases) for RunVX tool to support camera capture and image display (optional)
   + OpenCV_DIR environment variable should point to OpenCV/build folder
 * Use amd_openvx/amd_openvx.sln to build for x64 platform
-* If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in openvx/openvx.vcxproj and runvx/runvx.vcxproj.
+* If AMD GPU (or OpenCL) is not available, set build flag ENABLE_OPENCL=0 in openvx/openvx.vcxproj and runvx/runvx.vcxproj
 
 ### Build using CMake
 
-* Install CMake 3.0 or newer [download](http://cmake.org/download/).
+* Install CMake 3.0 or later
 * Use CMake to configure and generate Makefile
-* If AMD GPU (or OpenCL) is not available, use build flag -DCMAKE_DISABLE_FIND_PACKAGE_OpenCL=TRUE.
+* If AMD GPU (or OpenCL) is not available, use build flag -DCMAKE_DISABLE_FIND_PACKAGE_OpenCL=TRUE

@@ -6,6 +6,10 @@
 
 MIVisionX toolkit is a set of comprehensive computer vision and machine intelligence libraries, utilities, and applications bundled into a single toolkit. AMD MIVisionX delivers highly optimized open-source implementation of the <a href="https://www.khronos.org/openvx/" target="_blank">Khronos OpenVX™</a> and OpenVX™ Extensions along with Convolution Neural Net Model Compiler & Optimizer supporting <a href="https://onnx.ai/" target="_blank">ONNX</a>, and <a href="https://www.khronos.org/nnef" target="_blank">Khronos NNEF™</a> exchange formats. The toolkit allows for rapid prototyping and deployment of optimized computer vision and machine learning inference workloads on a wide range of computer hardware, including small embedded x86 CPUs, APUs, discrete GPUs, and heterogeneous servers.
 
+#### Latest Release
+
+[![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
+
 ## Table of Contents
 
 * [AMD OpenVX](#amd-openvx)
@@ -118,7 +122,11 @@ MIVisionX provides you with tools for accomplishing your tasks throughout the wh
 
 ### macOS
 
-macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
+* Install [Homebrew](https://brew.sh)
+* Install [CMake](https://cmake.org)
+* Install OpenCV 3.4
+
+  **Note:** macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
 
 ### Linux
 
@@ -126,14 +134,14 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
   + **Ubuntu** - `18.04` / `20.04`
   + **CentOS** - `7` / `8`
 * Install [ROCm](https://rocmdocs.amd.com/en/latest/Installation_Guide/Installation-Guide.html) 
-* CMake 3.0 or newer [download](http://cmake.org/download/)
+* CMake 3.0 or later
 * ROCm CMake, MIOpenGEMM & MIOpen for `Neural Net Extensions` ([vx_nn](amd_openvx_extensions/amd_nn#openvx-neural-network-extension-library-vx_nn))
 * Qt Creator for [Cloud Inference Client](apps/cloud_inference/client_app/README.md)
 * [Protobuf](https://github.com/google/protobuf) for inference generator & model compiler
   + install `libprotobuf-dev` and `protobuf-compiler` needed for vx_nn
 * [OpenCV 3.4](https://github.com/opencv/opencv/releases/tag/3.4.0)
   + Set `OpenCV_DIR` environment variable to `OpenCV/build` folder
-* [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4) - Optional
+* [FFMPEG n4.0.4](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.0.4)
   + FFMPEG is required for amd_media & mv_deploy modules
 * [RALI](rali#prerequisites) Prerequisites
 
@@ -187,6 +195,10 @@ For the convenience of the developer, we here provide the setup script which wil
 
   **NOTE:** `vx_nn` is not supported on `Windows` in this release
 
+### macOS
+
+macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/wiki/macOS#macos-build-instructions)
+
 ### Linux
 
 #### Using `apt-get` / `yum`
@@ -239,7 +251,7 @@ For the convenience of the developer, we here provide the setup script which wil
 
 ## Verify the Installation
 
-### Linux
+### Linux / macOS
 
 * The installer will copy 
   + executables into `/opt/rocm/mivisionx/bin` 
@@ -377,10 +389,6 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 ### Latest Release
 
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/GPUOpen-ProfessionalCompute-Libraries/MIVisionX?style=for-the-badge)](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX/releases)
-
-### Docker Image
-
-[![Docker Automated build](https://img.shields.io/docker/automated/kiritigowda/ubuntu-18.04?style=for-the-badge)](https://hub.docker.com/repository/docker/kiritigowda/ubuntu-18.04)
 
 **Docker Image:** `docker pull kiritigowda/ubuntu-18.04:{TAGNAME}`
 

@@ -24,8 +24,6 @@ THE SOFTWARE.
 
 //#include "../ago/ago_internal.h"
 #include "hip_kernels.h"
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
 
 #define PIXELCHECKU1(value, pixel) (value ? 255 : pixel)
 
@@ -51,38 +49,41 @@ __device__ __forceinline__ int dataConvertU1ToU8_4bytes(uint nibble) {
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_And_U8_U8U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+Hip_And_U8_U8U8(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint  dstImageStrideInBytes,
+    const uchar *pSrcImage1, uint srcImage1StrideInBytes,
+    const uchar *pSrcImage2, uint srcImage2StrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
-    int4 src1 = uchars_to_int4(pSrcImage1[src1Idx]);
-    int4 src2 = uchars_to_int4(pSrcImage2[src2Idx]);
-    int4 dst = make_int4(src1.x&src2.x, src1.y&src2.y, src1.z&src2.z, src1.w&src2.w);
-    pDstImage[dstIdx] = int4_to_uchars(dst);
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint src1Idx = y * srcImage1StrideInBytes + x;
+    uint src2Idx = y * srcImage2StrideInBytes + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
+    uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
+
+    *((uint2 *)(&pDstImage[dstIdx])) = src1 & src2;
 }
 int HipExec_And_U8_U8U8(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
 
-    hipLaunchKernelGGL(Hip_And_U8_U8U8,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
+    hipLaunchKernelGGL(Hip_And_U8_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                       dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
+
     return VX_SUCCESS;
 }
 
@@ -993,33 +994,36 @@ int HipExec_Xor_U1_U1U1(
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_Not_U8_U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int* pDstImage, unsigned int dstImageStrideInBytes,
-    const unsigned int * pSrcImage, unsigned int srcImageStrideInBytes
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes>>2) + x;
-    int4 src = uchars_to_int4(pSrcImage[srcIdx]);
-    int4 dst = make_int4(~src.x, ~src.y, ~src.z, ~src.w);
-    pDstImage[dstIdx] = int4_to_uchars(dst);
-}
-int HipExec_Not_U8_U8(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 * pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 * pHipSrcImage, vx_uint32 srcImage1StrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+Hip_Not_U8_U8(uint dstWidth, uint dstHeight,
+    uchar* pDstImage, uint dstImageStrideInBytes,
+    const uchar * pSrcImage, uint srcImageStrideInBytes ) {
 
-    hipLaunchKernelGGL(Hip_Not_U8_U8,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage, srcImage1StrideInBytes);
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx =  y * srcImageStrideInBytes + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
+    *((uint2 *)(&pDstImage[dstIdx])) = ~src;
+}
+
+int HipExec_Not_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 * pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 * pHipSrcImage, vx_uint32 srcImage1StrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_Not_U8_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage,
+                    dstImageStrideInBytes, (const uchar *)pHipSrcImage, srcImage1StrideInBytes);
+
     return VX_SUCCESS;
 }
 

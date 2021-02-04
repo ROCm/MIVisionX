@@ -20,10 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
 #include "hip_kernels.h"
 
 #define PIXELSATURATEU8(pixel)  (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
@@ -95,77 +91,93 @@ __device__ float Norm_Atan2_deg (float Gx, float Gy) {
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_AbsDiff_U8_U8U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const unsigned int *pSrcImage2, unsigned int srcImage2StrideInBytes
-    ) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>2) + x;
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>2) + x;
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>2) + x;
+Hip_AbsDiff_U8_U8U8(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage1, uint srcImage1StrideInBytes,
+    const uchar *pSrcImage2, uint srcImage2StrideInBytes) {
 
-    float4 src1 = uchars_to_float4(pSrcImage1[src1Idx]);
-    float4 src2 = uchars_to_float4(pSrcImage2[src2Idx]);
-    float4 dst = make_float4(fabsf(src1.x-src2.x), fabsf(src1.y-src2.y), fabsf(src1.z-src2.z), fabsf(src1.w-src2.w));
-    pDstImage[dstIdx] = float4_to_uchars(dst);
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint src1Idx = y * srcImage1StrideInBytes + x;
+    uint src2Idx = y * srcImage2StrideInBytes + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
+    uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
+
+    uint2 dst;
+    dst.x = pack_((fabs4(unpack_(src1.x) - unpack_(src2.x))));
+    dst.y = pack_((fabs4(unpack_(src1.y) - unpack_(src2.y))));
+
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
-int HipExec_AbsDiff_U8_U8U8(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+int HipExec_AbsDiff_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
 
-    hipLaunchKernelGGL(Hip_AbsDiff_U8_U8U8,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned int *)pHipDstImage , dstImageStrideInBytes, (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const unsigned int *)pHipSrcImage2, srcImage2StrideInBytes);
+    hipLaunchKernelGGL(Hip_AbsDiff_U8_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                       dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_AbsDiff_S16_S16S16_Sat(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    short int *pDstImage, unsigned int  dstImageStrideInBytes,
-    const short int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const short int *pSrcImage2, unsigned int srcImage2StrideInBytes
-    ) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*4 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y*(dstImageStrideInBytes>>1) + (x*4);
-    unsigned int src1Idx =  y*(srcImage1StrideInBytes>>1) + (x*4);
-    unsigned int src2Idx =  y*(srcImage2StrideInBytes>>1) + (x*4);
-    float4 src1 = s16s_to_float4_ungrouped(pSrcImage1, src1Idx);
-    float4 src2 = s16s_to_float4_ungrouped(pSrcImage2, src2Idx);
-    float4 dst = make_float4(PIXELSATURATES16(fabsf(src1.x-src2.x)), PIXELSATURATES16(fabsf(src1.y-src2.y)), PIXELSATURATES16(fabsf(src1.z-src2.z)), PIXELSATURATES16(fabsf(src1.w-src2.w)));
+Hip_AbsDiff_S16_S16S16_Sat(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint  dstImageStrideInBytes,
+    const uchar *pSrcImage1, uint srcImage1StrideInBytes,
+    const uchar *pSrcImage2, uint srcImage2StrideInBytes) {
 
-    float4_to_s16s(pDstImage, dstIdx, dst);
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint src1Idx = y * srcImage1StrideInBytes + x + x;
+    uint src2Idx = y * srcImage2StrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
+
+    int4 src1 = *((int4 *)(&pSrcImage1[src1Idx]));
+    int4 src2 = *((int4 *)(&pSrcImage2[src2Idx]));
+    int4 dst;
+
+    dst.x  = min(abs(((src1.x << 16) >> 16) - ((src2.x << 16) >> 16)), 32767u);
+    dst.x |= (int)min(abs((src1.x    >> 16) - ( src2.x        >> 16)), 32767u) << 16;
+    dst.y  = min(abs(((src1.y << 16) >> 16) - ((src2.y << 16) >> 16)), 32767u);
+    dst.y |= (int) min(abs((src1.y   >> 16) - ( src2.y        >> 16)), 32767u) << 16;
+    dst.z  = min(abs(((src1.z << 16) >> 16) - ((src2.z << 16) >> 16)), 32767u);
+    dst.z |= (int)min(abs(( src1.z   >> 16) - ( src2.z        >> 16)), 32767u) << 16;
+    dst.w  = min(abs(((src1.w << 16) >> 16) - ((src2.w << 16) >> 16)), 32767u);
+    dst.w |= (int)min(abs(( src1.w   >> 16) - ( src2.w        >> 16)), 32767u) << 16;
+
+    *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
 int HipExec_AbsDiff_S16_S16S16_Sat(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth+3)>>2,   globalThreads_y = dstHeight;
+    const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
 
-    hipLaunchKernelGGL(Hip_AbsDiff_S16_S16S16_Sat,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (short int *)pHipDstImage , dstImageStrideInBytes, (const short int *)pHipSrcImage1, srcImage1StrideInBytes,
-                    (const short int *)pHipSrcImage2, srcImage2StrideInBytes);
+    hipLaunchKernelGGL(Hip_AbsDiff_S16_S16S16_Sat, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                    (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar*)pHipSrcImage2, srcImage2StrideInBytes);
+
     return VX_SUCCESS;
 }
 

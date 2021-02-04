@@ -23,11 +23,30 @@ THE SOFTWARE.
 #ifndef MIVISIONX_HIP_KERNELS_H
 #define MIVISIONX_HIP_KERNELS_H
 #include <VX/vx.h>
-#include "hip/hip_runtime_api.h"
 #include "hip/hip_runtime.h"
 #include "ago_haf_cpu.h"
 
 typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
+
+// common device kernels
+__device__ __forceinline__ uint pack_(float4 src) {
+    return ((uint)src.x  & 0xFF) |
+           (((uint)src.y & 0xFF) << 8) |
+           (((uint)src.z & 0xFF) << 16) |
+           (((uint)src.w & 0xFF) << 24);
+}
+
+__device__ __forceinline__ float4 unpack_(uint src) {
+    return make_float4((float)(src  & 0xFF),
+                       (float)((src & 0xFF00)     >> 8),
+                       (float)((src & 0xFF0000)   >> 16),
+                       (float)((src & 0xFF000000) >> 24));
+}
+
+__device__ __forceinline__ float4 fabs4(float4 src) {
+    return make_float4(fabs(src.x), fabs(src.y), fabs(src.z), fabs(src.w));
+}
+
 
 // arithmetic_kernels
 

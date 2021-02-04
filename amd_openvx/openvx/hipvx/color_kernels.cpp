@@ -22,8 +22,6 @@ THE SOFTWARE.
 
 //#include "../ago/ago_internal.h"
 #include "hip_kernels.h"
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
 
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELROUNDU8(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
@@ -125,16 +123,19 @@ int HipExec_Lut_U8_U8(
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_ColorDepth_U8_S16_Wrap(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    const short int *pSrcImage, unsigned int srcImageStrideInBytes,
-    const int shift) {
+Hip_ColorDepth_U8_S16_Wrap(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes, const uchar *pSrcImage,
+    uint srcImageStrideInBytes, const int shift) {
+
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y * dstImageStrideInBytes + x;
-    unsigned int srcIdx =  y * (srcImageStrideInBytes >> 1) + x;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx =  y * srcImageStrideInBytes + x + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x;
 
     int4 src = *((int4 *)(&pSrcImage[srcIdx]));
 
@@ -165,25 +166,27 @@ int HipExec_ColorDepth_U8_S16_Wrap(
 
     hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Wrap,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned char *)pHipDstImage , dstImageStrideInBytes,
-                    (const short int *)pHipSrcImage, srcImageStrideInBytes,
-                    shift);
+                    dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage ,
+                    dstImageStrideInBytes, (const uchar *)pHipSrcImage, srcImageStrideInBytes, shift);
+
     return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_ColorDepth_U8_S16_Sat(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    const short int *pSrcImage, unsigned int srcImageStrideInBytes,
-    const int shift) {
+Hip_ColorDepth_U8_S16_Sat(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes, const uchar *pSrcImage,
+    uint srcImageStrideInBytes, const int shift) {
+
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y * (dstImageStrideInBytes) + x;
-    unsigned int srcIdx =  y * (srcImageStrideInBytes>>1) + x;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx =  y * srcImageStrideInBytes + x + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
     int4 src = *((int4 *)(&pSrcImage[srcIdx]));
 
     uint2 dst;
@@ -194,15 +197,14 @@ Hip_ColorDepth_U8_S16_Sat(
     f.y = (float)( src.x        >> sr);
     f.z = (float)((src.y << 16) >> sr);
     f.w = (float)( src.y        >> sr);
-    dst.x = float4_to_uchars_u32(f);
+    dst.x = pack_(f);
     f.x = (float)((src.z << 16) >> sr);
     f.y = (float)( src.z        >> sr);
     f.z = (float)((src.w << 16) >> sr);
     f.w = (float)( src.w        >> sr);
-    dst.y = float4_to_uchars_u32(f);
+    dst.y = pack_(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
-
 }
 int HipExec_ColorDepth_U8_S16_Sat(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -214,27 +216,28 @@ int HipExec_ColorDepth_U8_S16_Sat(
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
-    hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Sat,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned char *)pHipDstImage , dstImageStrideInBytes,
-                    (const short int *)pHipSrcImage, srcImageStrideInBytes,
-                    shift);
+    hipLaunchKernelGGL(Hip_ColorDepth_U8_S16_Sat, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                    dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                    (const uchar *)pHipSrcImage, srcImageStrideInBytes, shift);
+
     return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_ColorDepth_S16_U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    short int *pDstImage, unsigned int dstImageStrideInBytes,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
+Hip_ColorDepth_S16_U8(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
     const int shift) {
+
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstIdx =  y * (dstImageStrideInBytes>>1) + x;
-    unsigned int srcIdx =  y * (srcImageStrideInBytes) + x;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx =  y * srcImageStrideInBytes + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x + x;
 
     uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
 
@@ -249,14 +252,12 @@ Hip_ColorDepth_S16_U8(
     dst.w |=  (src.y & 0xff000000) >> ( 8 - shift);
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
-
 }
 int HipExec_ColorDepth_S16_U8(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    const vx_int32 shift
-    ) {
+    const vx_int32 shift) {
     int localThreads_x = 16;
     int localThreads_y = 16;
     int globalThreads_x = (dstWidth + 7) >> 3;;
@@ -264,11 +265,8 @@ int HipExec_ColorDepth_S16_U8(
 
     hipLaunchKernelGGL(Hip_ColorDepth_S16_U8,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (short int *)pHipDstImage , dstImageStrideInBytes,
-                    (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                    shift);
+                    dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                    (const uchar *)pHipSrcImage, srcImageStrideInBytes, shift);
 
     return VX_SUCCESS;
 }
@@ -280,7 +278,7 @@ int HipExec_ColorDepth_S16_U8(
 //**********************************
 //ChannelExtract_U8_U16_Pos0
 //**********************************
-__global__ void __attribute__((visibility("default")))
+/*__global__ void __attribute__((visibility("default")))
 Hip_ChannelExtract_U8_U16_Pos0(
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
@@ -295,21 +293,44 @@ Hip_ChannelExtract_U8_U16_Pos0(
     float4 src0 = uchars_to_float4(pSrcImage[srcIdx]);
     float4 src1 = uchars_to_float4(pSrcImage[srcIdx + 1]);
     pDstImage[dstIdx] = float4_to_uchars(make_float4(src0.x, src0.z, src1.x, src0.z));
+}*/
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelExtract_U8_U16_Pos0(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    unsigned int srcIdx = y * srcImageStrideInBytes + x + x;
+    unsigned int dstIdx = y * dstImageStrideInBytes + x;
+
+    uint4 src = *((uint4 *)(&pSrcImage[srcIdx]));
+    uint2 dst;
+    dst.x = pack_(make_float4(src.x & 0xff, (src.x >> 16) & 0xff, src.y & 0xff, (src.y >> 16) & 0xff));
+    dst.y = pack_(make_float4(src.z & 0xff, (src.z >> 16) & 0xff, src.w & 0xff, (src.w >> 16) & 0xff));
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
+
 int HipExec_ChannelExtract_U8_U16_Pos0(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes
     ) {
     int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 3) >> 2, globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_ChannelExtract_U8_U16_Pos0,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
                        0, stream, dstWidth, dstHeight,
-                       (unsigned int *)pHipDstImage, dstImageStrideInBytes,
-                       (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes);
+                       (uchar *)pHipDstImage, dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
 
     return VX_SUCCESS;
 }

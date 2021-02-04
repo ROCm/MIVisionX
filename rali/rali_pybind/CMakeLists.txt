@@ -57,7 +57,7 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_CXX_VER_REQUIRED})
 endif()
 
 if(${BUILD_RALI_PYBIND})
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -s")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
     link_directories(${ROCM_PATH}/mivisionx/lib/
                  ${ROCM_PATH}/rpp/lib

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,22 +26,29 @@ import shutil
 import sys
 
 __author__ = "Kiriti Nagesh Gowda"
-__copyright__ = "Copyright 2018-2020, AMD MIVision Generate Full Report"
+__copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Vision Test Full Report"
 __license__ = "MIT"
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
+
 
 def shell(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0][0:-1]
     return output
 
+
 def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
+
+
+def strip_libtree_addresses(lib_tree):
+    return lib_tree
+
 
 # Vision Accuracy Tests
 visionTestConfig = [
@@ -214,7 +221,8 @@ if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
     exit()
 if listTest not in ('no', 'yes'):
-    print("ERROR: List Vision Performance Tests options supported - [no or yes]")
+    print(
+        "ERROR: List Vision Performance Tests options supported - [no or yes]")
     exit()
 if functionalityTests not in ('no', 'yes'):
     print("ERROR: Vision functionality Tests option supported - [no or yes]")
@@ -319,7 +327,7 @@ platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'platform_report_%s_%s_%s.md' % (
+reportFilename = 'mivisionx_vision_report_%s_%s_%s.md' % (
     platform_name, file_dtstr, hardwareMode)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
@@ -332,6 +340,9 @@ gpu_info = shell('inxi -c0 -G')
 
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
+
+lib_tree = shell('ldd '+RunVXapp)
+lib_tree = strip_libtree_addresses(lib_tree)
 
 # Write Report
 with open(reportFilename, 'w') as f:
@@ -354,14 +365,22 @@ with open(reportFilename, 'w') as f:
 
     f.write("\n\nBenchmark Report\n")
     f.write("--------\n")
-    f.write("Hardware: %s\n" % hardwareMode)
+    f.write("\n")
+    f.write("### Hardware: %s\n" % hardwareMode)
     f.write("\n")
     with open('openvx_node_results/nodePerformance.md') as benchmarkFile:
         for line in benchmarkFile:
             f.write("%s" % line)
     f.write("\n")
+    f.write("\n")
+    f.write("Dynamic Libraries Report\n")
+    f.write("-----------------\n")
+    f.write("\n")
+    write_formatted(lib_tree, f)
+    f.write("\n")
 
-    f.write("\n\n---\nCopyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"\n")
+    f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"**\n")
+    f.write("\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

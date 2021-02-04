@@ -6,13 +6,13 @@ from subprocess import call
 import re
 
 if(len(sys.argv) < 2):
-	print "Usage: inference-parse-perf-dump.py [dump file]\n"
+	print("Usage: inference-parse-perf-dump.py [dump file]\n")
 	exit()
 
 dumpFile = sys.argv[1]
 dumpFileNameList = dumpFile.split("-")
 precision = dumpFileNameList[1]
-print dumpFile
+print(dumpFile)
 fp = open(dumpFile, 'r')
 line = fp.readline()
 
@@ -28,7 +28,7 @@ while line:
 	if (re.search(r"reading IR model from ", line)) and (foundNetworkName == 0):
 		lineList = line.split(" ")
 		if lineList[4] != prevNetworkName:
-			print lineList[4] + "," + precision + "," + today
+			print(lineList[4] + "," + precision + "," + today)
 		prevNetworkName = lineList[4]
 		foundNetworkName = 1
 
@@ -42,7 +42,7 @@ while line:
 		lineList = line.split(" ")
 		totalTime = lineList[3]
 		timePerImage = float(totalTime) / float(tensorSize)
-		print str(tensorSize) + "," + str(timePerImage)
+		print(str(tensorSize) + "," + str(timePerImage))
 		foundNetworkName = 0
 		foundTensorSize = 0
 	line = fp.readline()

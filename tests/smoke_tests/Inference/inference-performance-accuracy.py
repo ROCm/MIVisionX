@@ -85,86 +85,83 @@ elif fp_16 == 1 and normalized == 1:
 input_tensor += '/tensor-' + str(batchsize) + '-' + str(model_width) + 'x' + str(model_height) + '.fp'
 
 
-print 'Network path = ' + modelDir + '\n'
-print 'buildDir = ' + buildDir + '\n'
-print 'Input_tensor = ' + input_tensor + '\n'
+print('Network path = ' + modelDir + '\n')
+print('buildDir = ' + buildDir + '\n')
+print('Input_tensor = ' + input_tensor + '\n')
 
-cmd = 'python ' + buildDir + 'caffe_to_nnir.py ' + modelDir + ' ' + network_folder + ' --input-dims 1,3,' + str(model_width) + ',' + str(model_height)
+cmd = 'python3 ' + buildDir + 'caffe_to_nnir.py ' + modelDir + ' ' + network_folder + ' --input-dims 1,3,' + str(model_width) + ',' + str(model_height)
 if os.system(cmd) != 0:
-	print 'ERROR: caffe2nnir.py failed to run. Exiting.\n'
+	print('ERROR: caffe2nnir.py failed to run. Exiting.\n')
 	exit()
 
-cmd = 'python ' + buildDir + 'nnir_update.py --batch-size ' + str(batchsize) + ' ' + network_folder + ' ' + nnir_output_folder
+cmd = 'python3 ' + buildDir + 'nnir_update.py --batch-size ' + str(batchsize) + ' ' + network_folder + ' ' + nnir_output_folder
 if os.system(cmd) != 0:
-	print 'ERROR: nnir_update.py failed to run. Exiting.\n'
+	print('ERROR: nnir_update.py failed to run. Exiting.\n')
 	exit()
 
 if runMode == 1:
 	old_nnir_output_folder = nnir_output_folder
 	nnir_output_folder = nnir_output_folder + '-fuseOn'
-	cmd = 'python ' + buildDir + 'nnir_update.py --fuse-ops 1 '+ old_nnir_output_folder + ' ' + nnir_output_folder
+	cmd = 'python3 ' + buildDir + 'nnir_update.py --fuse-ops 1 '+ old_nnir_output_folder + ' ' + nnir_output_folder
 	if os.system(cmd) != 0:
-		print 'ERROR: nnir_update.py failed to run. Exiting.\n'
+		print('ERROR: nnir_update.py failed to run. Exiting.\n')
 		exit()
 
 if fp_16 == 1:
 	old_nnir_output_folder = nnir_output_folder
 	nnir_output_folder = nnir_output_folder + '-FP16'
-	cmd = 'python ' + buildDir + 'nnir_update.py --convert-fp16 1 '+ old_nnir_output_folder + ' ' + nnir_output_folder
+	cmd = 'python3 ' + buildDir + 'nnir_update.py --convert-fp16 1 '+ old_nnir_output_folder + ' ' + nnir_output_folder
 	if os.system(cmd) != 0:
-		print 'ERROR: nnir_update.py failed to run. Exiting.\n'
+		print('ERROR: nnir_update.py failed to run. Exiting.\n')
 		exit()
 
 if argmaxOn == 0:
-	cmd = 'python ' + buildDir + 'nnir_to_openvx.py ' + nnir_output_folder + '/ ' + network_build_folder
+	cmd = 'python3 ' + buildDir + 'nnir_to_openvx.py ' + nnir_output_folder + '/ ' + network_build_folder
 	if os.system(cmd) != 0:
-		print 'ERROR: nnir2openvx.py failed to run. Exiting\n'
+		print('ERROR: nnir2openvx.py failed to run. Exiting\n')
 		exit()
 elif argmaxOn > 0:
-	cmd = 'python ' + buildDir + 'nnir_to_openvx.py --argmax UINT16 ' + nnir_output_folder + '/ ' + network_build_folder
+	cmd = 'python3 ' + buildDir + 'nnir_to_openvx.py --argmax UINT16 ' + nnir_output_folder + '/ ' + network_build_folder
 	if os.system(cmd) != 0:
-		print 'ERROR: nnir2openvx.py (WITH argmax) failed to run. Exiting\n'
+		print('ERROR: nnir2openvx.py (WITH argmax) failed to run. Exiting\n')
 		exit()
 
 os.chdir(network_build_folder)
 
 cmd = 'cmake .'
 if os.system(cmd) != 0:
-	print 'ERROR: Cmake failed to run. Exiting.\n'
+	print('ERROR: Cmake failed to run. Exiting.\n')
 	exit()
 
 cmd = 'make'
 if os.system(cmd) != 0:
-	print 'ERROR: Failed to make anntest. Exiting.\n'
+	print('ERROR: Failed to make anntest. Exiting.\n')
 	exit()
 
 if pythonMode == 0:
 	cmd = './anntest weights.bin ../' + input_tensor + ' ../' + output_tensor
 	if os.system(cmd) != 0:
-		print 'ERROR: Failed to run anntest. Exiting.\n'
+		print('ERROR: Failed to run anntest. Exiting.\n')
 		exit()
 elif pythonMode == 1:
 	cmd = 'pwd'
 	pathToLib = subprocess.check_output(cmd, shell=True)
-	print "DEBUG: pathToLib = " + pathToLib
 	sys.path.append(pathToLib)
 
-	print("DEBUG: Running anntest.py\n")
 	cmd = 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:' + pathToLib + ' python anntest.py libannpython.so weights.bin ../' + input_tensor + ' ../' + output_tensor
 	if os.system(cmd) != 0:
-		print 'ERROR: Failed to run anntest.py. Exiting.\n'
+		print('ERROR: Failed to run anntest.py. Exiting.\n')
 		exit()
-	print("DEBUG: Ran anntest.py, look for tensor = %s\n" % output_tensor)
 
 if argmaxOn > 0:
 	cmd = 'od -t u2 -v ../' + output_tensor + ' > ../' + output_tensor_accuracy
 	if os.system(cmd) != 0:
-		print 'ERROR: Failed to run od on output tensor. Exiting.\n'
+		print('ERROR: Failed to run od on output tensor. Exiting.\n')
 		exit()
 
 	os.chdir('../')
 
-	cmd = 'python mivisionx-labels.py ' + output_tensor_accuracy + ' > ' + output_accuracy_summary
+	cmd = 'python3 mivisionx-labels.py ' + output_tensor_accuracy + ' > ' + output_accuracy_summary
 	if os.system(cmd) != 0:
-		print 'ERROR: Failed to run mivisionx-labels.py. Exiting.\n'
+		print('ERROR: Failed to run mivisionx-labels.py. Exiting.\n')
 		exit()

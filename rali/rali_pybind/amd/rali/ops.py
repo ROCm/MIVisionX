@@ -738,14 +738,14 @@ class ImageDecoderSlice(Node):
     According to the libjpeg-turbo documentation, decompression performance is improved by up to 14% with little reduction in quality.
     """
 
-    def __init__(self, affine = True, axes = [1, 0], axis_names = "WH",bytes_per_sample_hint = 0, device_memory_padding = 16777216,
+    def __init__(self, affine = True, axes = None, axis_names = "WH",bytes_per_sample_hint = 0, device_memory_padding = 16777216,
                 device_memory_padding_jpeg2k = 0, host_memory_padding = 8388608,
                 host_memory_padding_jpeg2k = 0, hybrid_huffman_threshold = 1000000,
                  memory_stats = False, normalized_anchor = True, normalized_shape = True, output_type = 'RGB',
                 preserve = False, seed = -1, split_stages = False, use_chunk_allocator = False, use_fast_idct = False,device = None):
         Node().__init__()
         self._affine = affine
-        self._axes = axes
+        self._axes = axes if axes else [1, 0]
         self._axis_names = axis_names
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._device_memory_padding = device_memory_padding
@@ -833,17 +833,17 @@ class BoxEncoder(Node):
         stds (float or list of float, optional, default = [1.0, 1.0, 1.0, 1.0]) – [x y w h] standard deviations for offset normalization.
     """
 
-    def __init__(self, anchors, bytes_per_sample_hint=0, criteria=0.5, means=[0.0, 0.0, 0.0, 0.0], offset=False, preserve=False, scale=1.0, seed=-1, stds=[1.0, 1.0, 1.0, 1.0],device = None):
+    def __init__(self, anchors, bytes_per_sample_hint=0, criteria=0.5, means=None, offset=False, preserve=False, scale=1.0, seed=-1, stds=[1.0, 1.0, 1.0, 1.0],device = None):
         Node().__init__()
         self._anchors = anchors
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._criteria = criteria
-        self._means = means
+        self._means = means if means else [0.0, 0.0, 0.0, 0.0]
         self._offset = offset
         self._preserve = preserve
         self._scale = scale
         self._seed = seed
-        self._stds = stds
+        self._stds = stds if stds else [1.0, 1.0, 1.0, 1.0]
         self.output = Node()
 
     def __call__(self, bboxes, labels):
@@ -1063,14 +1063,12 @@ class ImageDecoderRandomCrop(Node):
         use_fast_idct (bool, optional, default = False) – Enables fast IDCT in CPU based decompressor when GPU implementation cannot handle given image. According to libjpeg-turbo documentation, decompression performance is improved by 4-14% with very little loss in quality.
     """
 
-    def __init__(self, user_feature_key_map = None, affine=True, bytes_per_sample_hint=0, device_memory_padding= 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000,
-                 num_attempts=10, output_type=0, preserve=False, random_area = [0.04, 0.8], random_aspect_ratio = [0.75, 1.333333],
+    def __init__(self, user_feature_key_map=None , affine=True, bytes_per_sample_hint=0, device_memory_padding= 16777216, host_memory_padding = 8388608, hybrid_huffman_threshold = 1000000,
+                 num_attempts=10, output_type=0, preserve=False, random_area = None, random_aspect_ratio = None,
                  seed=1, split_stages=False, use_chunk_allocator=False, use_fast_idct= False, device = None):
         Node().__init__()
-        if user_feature_key_map is None:
-            self._user_feature_key_map = {}
-        else:
-            self._user_feature_key_map = user_feature_key_map
+        
+        self._user_feature_key_map = user_feature_key_map if user_feature_key_map else {}
         self._affine = affine
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._device_memory_padding = device_memory_padding
@@ -1079,18 +1077,18 @@ class ImageDecoderRandomCrop(Node):
         self._num_attempts = num_attempts
         self._output_type = output_type
         self._preserve = preserve
-        self._random_area = random_area
-        self._random_aspect_ratio = random_aspect_ratio
+        self._random_area = random_area if random_area else [0.04, 0.8]
+        self._random_aspect_ratio = random_aspect_ratio if random_aspect_ratio else [0.75, 1.333333]
         self._seed = seed
         self._split_stages = split_stages
         self._use_chunk_allocator = use_chunk_allocator
         self._use_fast_idct = use_fast_idct
         self.output = Node()
 
-    def __call__(self, input):
-        input.next = self
+    def __call__(self, input_image):
+        input_image.next = self
         self.data = "ImageDecoderRandomCrop"
-        self.prev = input
+        self.prev = input_image
         self.next = self.output
         self.output.prev = self
         self.output.next = None
@@ -1382,17 +1380,17 @@ class RandomBBoxCrop( ):
     If this value is not specified, the crop search will continue indefinitely until a valid crop is found.
 
         """
-    def __init__(self, all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = [1.0, 1.0], bbox_layout = "", bytes_per_sample_hint = 0,
-                crop_shape = None, input_shape = None, ltrb = True, num_attempts = 1 ,scaling =  [1.0, 1.0],  preserve = False, seed = -1, shape_layout = "",
-                threshold_type ="iou", thresholds = [0.0], total_num_attempts = 0, device = None):
+    def __init__(self, all_boxes_above_threshold = True, allow_no_crop =True, aspect_ratio = None, bbox_layout = "", bytes_per_sample_hint = 0,
+                crop_shape = None, input_shape = None, ltrb = True, num_attempts = 1 ,scaling =  None,  preserve = False, seed = -1, shape_layout = "",
+                threshold_type ="iou", thresholds = None, total_num_attempts = 0, device = None):
         Node().__init__()
         self._all_boxes_above_threshold = all_boxes_above_threshold
         self._allow_no_crop = allow_no_crop
-        self._aspect_ratio = aspect_ratio
+        self._aspect_ratio = aspect_ratio if aspect_ratio else [1.0, 1.0]
         self._bbox_layout = bbox_layout
         self._bytes_per_sample_hint = bytes_per_sample_hint
         if crop_shape is None:
-           self._crop_shape = [] 
+           self._crop_shape = []
         else:
             self._crop_shape = crop_shape
         if input_shape is None:
@@ -1401,12 +1399,12 @@ class RandomBBoxCrop( ):
             self._input_shape = input_shape
         self._ltrb = ltrb
         self._num_attempts = num_attempts
-        self._scaling = scaling
+        self._scaling = scaling if scaling else [1.0, 1.0]
         self._preserve = preserve
         self._seed = seed
         self._shape_layout = shape_layout
         self._threshold_type = threshold_type
-        self._thresholds = thresholds
+        self._thresholds = thresholds if thresholds else [0.0]
         self._total_num_attempts = total_num_attempts
        
         self.crop_begin = []

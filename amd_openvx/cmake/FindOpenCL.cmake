@@ -80,7 +80,7 @@ set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
 set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
 
 if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
-    if(NOT "${OPENCL_LIBRARIES}" EQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+    if(NOT "${OPENCL_LIBRARIES}" STREQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
         message("-- ${Magenta}ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL${ColourReset}")
         set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
         set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")

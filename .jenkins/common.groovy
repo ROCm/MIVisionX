@@ -26,8 +26,8 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     }
     else {
         osInfo = 'cat /etc/lsb-release && uname -r'
-        update = 'sudo apt -y update && sudo apt -y install python'
-        installPackage = 'echo export DEBIAN_FRONTEND=noninteractive >> ~/.bashrc && . ~/.bashrc && python MIVisionX-setup.py --ffmpeg yes'
+        update = 'echo export DEBIAN_FRONTEND=noninteractive >> ~/.bashrc && . ~/.bashrc sudo apt -y update && sudo apt -y install python'
+        installPackage = 'python MIVisionX-setup.py --ffmpeg yes'
         cmake = 'cmake'
     }
 

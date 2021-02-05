@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "ago_haf_cpu.h"
 
 typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
+#define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 
 // common device kernels
 __device__ __forceinline__ uint pack_(float4 src) {
@@ -45,6 +46,20 @@ __device__ __forceinline__ float4 unpack_(uint src) {
 
 __device__ __forceinline__ float4 fabs4(float4 src) {
     return make_float4(fabs(src.x), fabs(src.y), fabs(src.z), fabs(src.w));
+}
+
+template<class T>
+__device__ __forceinline__  constexpr const T& hip_clamp( const T& v, const T& lo, const T& hi ) {
+    assert( !(hi < lo) );
+    return (v < lo) ? lo : (hi < v) ? hi : v;
+}
+
+__device__ __forceinline__ short hip_convert_short_rte(float a) {
+    return (short) a;
+}
+
+__device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
+    return (short) PIXELSATURATES16(a);
 }
 
 
@@ -134,18 +149,18 @@ int HipExec_Sub_S16_S16U8_Sat(
         const vx_int16 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
         );
-int HipExec_Sub_S16_U8S16_Wrap(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
-        );
-int HipExec_Sub_S16_U8S16_Sat(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
-        );
+// int HipExec_Sub_S16_U8S16_Wrap(
+//         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+//         vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+//         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+//         const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+//         );
+// int HipExec_Sub_S16_U8S16_Sat(
+//         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+//         vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+//         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+//         const vx_int16 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
+//         );
 int HipExec_Sub_S16_S16S16_Wrap(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

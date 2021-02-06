@@ -914,9 +914,10 @@ class IrGraph(object):
             for idx, binary in enumerate(self.binaries):
                 if binary not in keepAsFP32:
                     weight = np.frombuffer(self.binaries[binary], dtype=np.float32)
-                    self.addBinary(binary, weight.view(dtype=np.float16))
+                    newBinary = weight.astype(dtype=np.float16)
+                    self.addBinary(binary, newBinary)
 
-                #print("Add binary %s of size %d at Idx: %d len: %d" %(binary, len(self.binaries[binary]), idx, len(self.binaries)))
+                    #print("Add binary %s of size %d at Idx: %d len: %d" %(binary, newBinary.nbytes, idx, len(newBinary)))
             self.all_F032 = False
             self.all_F016 = True    
         else:
@@ -973,10 +974,12 @@ class IrGraph(object):
         for idx, binary in enumerate(self.binaries):
             if binary in convertFromFP64:
                 weight = np.frombuffer(self.binaries[binary], dtype=np.float64)
-                self.addBinary(binary, np.getbuffer(weight.astype(np.float32)))
+                newBinary = weight.astype(dtype=np.float32)
+                self.addBinary(binary, newBinary)
             elif binary in convertFromINT32:
                 weight = np.frombuffer(self.binaries[binary], dtype=np.int32)
-                self.addBinary(binary, np.getbuffer(weight.astype(np.float32)))
+                newBinary = weight.astype(dtype=np.float32)
+                self.addBinary(binary, newBinary)
         self.all_F032 = True
         self.all_F016 = False
 
@@ -1014,8 +1017,8 @@ class IrGraph(object):
                     scale = old_div(scale, np.sqrt(variance + epsilon))
                     offset = offset - mean * scale
                     node.type = 'muladd'
-                    self.addBinary(node.inputs[1], np.getbuffer(scale))
-                    self.addBinary(node.inputs[2], np.getbuffer(offset))
+                    self.addBinary(node.inputs[1], scale.view())
+                    self.addBinary(node.inputs[2], offset.view())
                     node.inputs = node.inputs[:3]
                     node.attr = IrAttr()
                 # run through fuse rules
@@ -1064,14 +1067,14 @@ class IrGraph(object):
                         else:
                             tensor.setInfo('F016', [1, K])
                         self.addVariable(tensor)
-                        self.addBinary(tensor.name, np.getbuffer(bias))
+                        self.addBinary(tensor.name, bias.view())
                         node.inputs.append(tensor.name)
                     else:
                         bias = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
                     bias = bias + offset * np.sum(np.split(weight, K),axis=1)
                     weight = weight * np.repeat(scale, N)
-                    self.addBinary(node.inputs[1], np.getbuffer(weight))
-                    self.addBinary(node.inputs[2], np.getbuffer(bias))
+                    self.addBinary(node.inputs[1], weight.view())
+                    self.addBinary(node.inputs[2], bias.view())
                     node.inputs[0] = prevNode.inputs[0]
                     nodesToRemove.append(prevNode)
                     prevNode = node
@@ -1103,14 +1106,14 @@ class IrGraph(object):
                         else:
                             tensor.setInfo('F016', [1, K])
                         self.addVariable(tensor)
-                        self.addBinary(tensor.name, np.getbuffer(bias))
+                        self.addBinary(tensor.name, bias.view())
                         prevNode.inputs.append(tensor.name)
                     else:
                         bias = np.frombuffer(self.binaries[prevNode.inputs[2]], dtype=npType)
                     bias = bias * scale + offset
                     weight = weight * np.repeat(scale, N)
-                    self.addBinary(prevNode.inputs[1], np.getbuffer(weight))
-                    self.addBinary(prevNode.inputs[2], np.getbuffer(bias))
+                    self.addBinary(prevNode.inputs[1], weight.view())
+                    self.addBinary(prevNode.inputs[2], bias.view())
                     if prevSkipNode != None:
                         prevSkipNode.outputs[0] = node.outputs[0]
                     else:
@@ -1144,7 +1147,7 @@ class IrGraph(object):
                     ck = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = offset + ck
-                    self.addBinary(node.inputs[1], np.getbuffer(offset))
+                    self.addBinary(node.inputs[1], offset.view())
                     node.inputs[0] = prevNode.inputs[0]
                     nodesToRemove.append(prevNode)
                     prevNode = node
@@ -1156,7 +1159,7 @@ class IrGraph(object):
                     offset = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = scale * offset
-                    self.addBinary(prevNode.inputs[1], np.getbuffer(offset))
+                    self.addBinary(prevNode.inputs[1], offset.view())
                     node.type = 'muladd'
                     node.inputs.append(prevNode.inputs[1])
                     node.inputs[0] = prevNode.inputs[0]
@@ -1180,7 +1183,7 @@ class IrGraph(object):
                     mk = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     scale = scale * mk
-                    self.addBinary(node.inputs[1], np.getbuffer(scale))
+                    self.addBinary(node.inputs[1], scale.view())
                     node.inputs[0] = prevNode.inputs[0]
                     nodesToRemove.append(prevNode)
                     prevNode = node
@@ -1193,7 +1196,7 @@ class IrGraph(object):
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
                     offset = offset + scale * ck
-                    self.addBinary(node.inputs[2], np.getbuffer(offset))
+                    self.addBinary(node.inputs[2], offset.view())
                     node.inputs[0] = prevNode.inputs[0]
                     nodesToRemove.append(prevNode)
                     prevNode = node
@@ -1205,7 +1208,7 @@ class IrGraph(object):
                     mk = np.frombuffer(self.binaries[prevNode.inputs[1]], dtype=npType)
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     scale = scale * mk
-                    self.addBinary(node.inputs[1], np.getbuffer(scale))
+                    self.addBinary(node.inputs[1], scale.view())
                     node.inputs[0] = prevNode.inputs[0]
                     nodesToRemove.append(prevNode)
                     prevNode = node
@@ -1217,7 +1220,7 @@ class IrGraph(object):
                     ck = np.frombuffer(self.binaries[prevNode.inputs[2]], dtype=npType)
                     offset = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = offset + ck
-                    self.addBinary(prevNode.inputs[2], np.getbuffer(offset))
+                    self.addBinary(prevNode.inputs[2], offset.view())
                     prevNode.outputs[0] = node.outputs[0]
                     prevOutput = node.outputs[0]
                     nodesToRemove.append(node)
@@ -1229,8 +1232,8 @@ class IrGraph(object):
                     scale = np.frombuffer(self.binaries[node.inputs[1]], dtype=npType)
                     offset = scale * ck
                     scale = scale * mk
-                    self.addBinary(prevNode.inputs[1], np.getbuffer(scale))
-                    self.addBinary(prevNode.inputs[2], np.getbuffer(offset))
+                    self.addBinary(prevNode.inputs[1], scale.view())
+                    self.addBinary(prevNode.inputs[2], offset.view())
                     prevNode.outputs[0] = node.outputs[0]
                     prevOutput = node.outputs[0]
                     nodesToRemove.append(node)
@@ -1243,8 +1246,8 @@ class IrGraph(object):
                     offset = np.frombuffer(self.binaries[node.inputs[2]], dtype=npType)
                     offset = offset + scale * ck
                     scale = scale * mk
-                    self.addBinary(node.inputs[1], np.getbuffer(scale))
-                    self.addBinary(node.inputs[2], np.getbuffer(offset))
+                    self.addBinary(node.inputs[1], scale.view())
+                    self.addBinary(node.inputs[2], offset.view())
                     node.inputs[0] = prevNode.inputs[0]
                     nodesToRemove.append(prevNode)
                     prevNode = node
@@ -1313,7 +1316,7 @@ class IrGraph(object):
                     jweights.append(weightName)
                     # slice weights binary and add them to dict
                     jweightBinary = weightBinary[jgrp*K:jgrp*K+K,:,:,:].copy()
-                    self.addBinary(weightName, np.getbuffer(jweightBinary))
+                    self.addBinary(weightName, jweightBinary.view())
                     if bias is not None:
                         biasName = '%s__grp_%d' % (bias.name, jgrp)
                         local = IrTensor()
@@ -1323,7 +1326,7 @@ class IrGraph(object):
                         jbiases.append(biasName)
                         # slice bias binary and add them to dict
                         jbiasBinary = biasBinary[:,jgrp*K:jgrp*K+K].copy()
-                        self.addBinary(biasName, np.getbuffer(jbiasBinary))
+                        self.addBinary(biasName, jbiasBinary.view())
                 self.removeTensor(weight.name)
                 if bias is not None:
                     self.removeTensor(bias.name)
@@ -1367,7 +1370,10 @@ class IrGraph(object):
         for binary in self.binaries:
             binaryFile = binaryFolder + '/' + binary + '.raw'
             with open(binaryFile, 'wb') as f:
-                f.write(self.binaries[binary])
+                if isinstance(self.binaries[binary], np.ndarray):
+                    (self.binaries[binary]).tofile(binaryFile)
+                else:
+                    f.write(self.binaries[binary])
         name_dict = {}
         with open(irDescFile, 'r') as f_read: 
             for line in f_read:

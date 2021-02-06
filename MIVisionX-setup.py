@@ -250,16 +250,13 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
                   linuxFlag+' '+linuxSystemInstall+' autoremove )')
-        # Install Packages for NN Apps
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install inxi aha build-essential')
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                  ' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install qt5-default qtcreator')
+        # Install Packages for NN Apps - Apps Requirement to be installed by Developer
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
+        #os.system('sudo -v') - App Requirement - Cloud Inference Client
+        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # Install ProtoBuf
         os.system('sudo -v')
@@ -281,16 +278,15 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                   '; sudo '+linuxFlag+' ldconfig )')
-        # Install Packages for Apps
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install python-pip')
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' yes | pip install protobuf')
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' yes | pip install pytz')
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' yes | pip install numpy')
+        # Install Packages for Apps - App Dependencies to be installed by developer
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install python-pip')
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' yes | pip install protobuf')
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' yes | pip install pytz')
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' yes | pip install numpy')
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
     # Install pre-reqs

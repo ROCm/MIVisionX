@@ -69,7 +69,8 @@ __device__ __forceinline__ float4 fabs4(float4 src) {
 
 template<class T>
 __device__ __forceinline__  constexpr const T& hip_clamp( const T& v, const T& lo, const T& hi ) {
-    return std::min(std::max(v, lo), hi);
+    assert( !(hi < lo) );
+    return (v < lo) ? lo : (hi < v) ? hi : v;
 }
 
 __device__ __forceinline__ short hip_convert_short_rte(float a) {

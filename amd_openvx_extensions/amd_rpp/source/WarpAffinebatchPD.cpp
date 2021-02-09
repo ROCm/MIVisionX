@@ -130,16 +130,17 @@ static vx_status VX_CALLBACK processWarpAffinebatchPD(vx_node node, const vx_ref
 	WarpAffinebatchPDLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
+	vx_int32 output_format_toggle = 0;
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
 		refreshWarpAffinebatchPD(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			rpp_status = rppi_warp_affine_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+ 			rpp_status = rppi_warp_affine_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			rpp_status = rppi_warp_affine_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_warp_affine_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
 		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 
@@ -148,10 +149,10 @@ static vx_status VX_CALLBACK processWarpAffinebatchPD(vx_node node, const vx_ref
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshWarpAffinebatchPD(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			rpp_status = rppi_warp_affine_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_warp_affine_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			rpp_status = rppi_warp_affine_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_warp_affine_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
 		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 

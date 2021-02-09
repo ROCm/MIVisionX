@@ -9397,16 +9397,16 @@ int agoKernel_Sub_S16_U8S16_Wrap(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_y = min(inp1->u.img.rect_valid.end_y, inp2->u.img.rect_valid.end_y);
 	}
 #if ENABLE_HIP
-    // else if (cmd == ago_kernel_cmd_hip_execute) {
-    //     status = VX_SUCCESS;
-    //     AgoData * oImg = node->paramList[0];
-    //     AgoData * iImg0 = node->paramList[1];
-    //     AgoData * iImg1 = node->paramList[2];
-    //     if (HipExec_Sub_S16_U8S16_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
-    //         oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
-    //         status = VX_FAILURE;
-    //     }
-	// }
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg0 = node->paramList[1];
+        AgoData * iImg1 = node->paramList[2];
+        if (HipExec_Sub_S16_U8S16_Wrap(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
 #endif
 	return status;
 }
@@ -9474,16 +9474,16 @@ int agoKernel_Sub_S16_U8S16_Sat(AgoNode * node, AgoKernelCommand cmd)
 		out->u.img.rect_valid.end_y = min(inp1->u.img.rect_valid.end_y, inp2->u.img.rect_valid.end_y);
 	}
 #if ENABLE_HIP
-    // else if (cmd == ago_kernel_cmd_hip_execute) {
-    //     status = VX_SUCCESS;
-    //     AgoData * oImg = node->paramList[0];
-    //     AgoData * iImg0 = node->paramList[1];
-    //     AgoData * iImg1 = node->paramList[2];
-    //     if (HipExec_Sub_S16_U8S16_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
-    //         oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
-    //         status = VX_FAILURE;
-    //     }
-	// }
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg0 = node->paramList[1];
+        AgoData * iImg1 = node->paramList[2];
+        if (HipExec_Sub_S16_U8S16_Sat(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_int16 *) oImg->hip_memory,
+            oImg->u.img.stride_in_bytes, iImg0->hip_memory, iImg0->u.img.stride_in_bytes, (vx_int16 *) iImg1->hip_memory, iImg1->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+	}
 #endif
 	return status;
 }

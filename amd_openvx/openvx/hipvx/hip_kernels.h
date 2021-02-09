@@ -82,6 +82,32 @@ __device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
     return (short) hip_clamp(a, (float) INT16_MIN, (float) INT16_MAX);
 }
 
+__device__ __forceinline__ void hip_convert_U8_U1 (uint2 * p0, __u_char p1) {
+    uint2 r;
+    r.x  = (-(p1 &   1)) & 0x000000ff;
+    r.x |= (-(p1 &   2)) & 0x0000ff00;
+    r.x |= (-(p1 &   4)) & 0x00ff0000;
+    r.x |= (-(p1 &   8)) & 0xff000000;
+    r.y  = (-((p1 >> 4) & 1)) & 0x000000ff;
+    r.y |= (-(p1 &  32)) & 0x0000ff00;
+    r.y |= (-(p1 &  64)) & 0x00ff0000;
+    r.y |= (-(p1 & 128)) & 0xff000000;
+    *p0 = r;
+}
+
+__device__ __forceinline__ void hip_convert_U1_U8 (__u_char * p0, uint2 p1) {
+    __u_char r;
+    r  =  p1.x        &   1;
+    r |= (p1.x >>  7) &   2;
+    r |= (p1.x >> 14) &   4;
+    r |= (p1.x >> 21) &   8;
+    r |= (p1.y <<  4) &  16;
+    r |= (p1.y >>  3) &  32;
+    r |= (p1.y >> 10) &  64;
+    r |= (p1.y >> 17) & 128;
+    *p0 = r;
+}
+
 // common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere
 
 __device__ __forceinline__ float4 uchars_to_float4(uint src) {

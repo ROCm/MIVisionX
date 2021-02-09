@@ -86,6 +86,8 @@ def runPackageCommand(platform, project) {
                 mkdir -p package
                 mv *.${packageType} package/
                 ${packageInfo} package/*.${packageType}
+                python ../../tests/library_tests/runLibraryTests.py
+                mv *.md package/
                 """
 
     platform.runCommand(this, command)

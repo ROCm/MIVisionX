@@ -6,4 +6,6 @@
 python runLibraryTests.py
 ```
 
-**NOTE:** Supports only Linux Distributions
+**NOTE:** 
+* Supports only Linux Distributions
+* Needs `inxi` package

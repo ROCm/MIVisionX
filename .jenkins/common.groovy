@@ -20,13 +20,13 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
-        update = 'sudo zypper ref && sudo zypper update'
-        installPackage = 'sudo zypper install cmake opencv ffmpeg-4'
+        update = 'sudo zypper ref && sudo zypper update && sudo zypper addrepo https://download.opensuse.org/repositories/openSUSE:Leap:15.2/standard/openSUSE:Leap:15.2.repo '
+        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4'
         cmake = 'cmake'
     }
     else {
         osInfo = 'cat /etc/lsb-release && uname -r'
-        update = 'sudo apt -y update'
+        update = 'sudo apt -y update && sudo apt -y install python'
         installPackage = 'python MIVisionX-setup.py --ffmpeg yes'
         cmake = 'cmake'
     }
@@ -65,10 +65,10 @@ def runTestCommand (platform, project) {
 def runPackageCommand(platform, project) {
     def packageHelper = platform.makePackage(platform.jenkinsLabel, "${project.paths.project_build_prefix}/build/release")
 
-    String packageType = ""
-    String packageInfo = ""
+    String packageType = ''
+    String packageInfo = ''
 
-    if (platform.jenkinsLabel.contains('centos')) {
+    if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('sles')) {
         packageType = 'rpm'
         packageInfo = 'rpm -qlp'
     }

@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.6"
+__version__ = "1.8.7"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -115,7 +115,7 @@ else:
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
               linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel libsqlite3x-devel.x86_64')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install openssl-devel hg autoconf automake pkg-config')
+              linuxSystemInstall_check+' install openssl-devel hg autoconf automake')
 
 # Delete previous install
 if(os.path.exists(deps_dir) and reinstall == 'yes'):
@@ -169,7 +169,7 @@ else:
     os.system('(cd '+deps_dir+'; mkdir build )')
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install cmake git wget unzip pkg-config')
+              linuxSystemInstall_check+' install cmake git wget unzip pkg-config inxi')
     # Get Installation Source
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')

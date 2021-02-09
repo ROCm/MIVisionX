@@ -21,7 +21,6 @@
 from datetime import datetime
 from subprocess import Popen, PIPE
 import os
-import sys
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Library Tests Report"
@@ -210,6 +209,6 @@ with open(reportFilename, 'w') as f:
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)
-print("\nSTATUS: Output Report File - "+reportFileDir)
+print("STATUS: Output Report File - "+reportFileDir+"\n")
 
-print("\nrunVisionTests.py completed - V:"+__version__+"\n")
+print("runLibraryTests.py completed - V:"+__version__+"\n")

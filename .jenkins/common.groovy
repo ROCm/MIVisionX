@@ -52,7 +52,6 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 def runTestCommand (platform, project) {
     def command = """#!/usr/bin/env bash
                 set -x
-                ldd -v /opt/rocm/mivisionx/lib/libopenvx.so
                 cd ${project.paths.project_build_prefix}/build/release
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100

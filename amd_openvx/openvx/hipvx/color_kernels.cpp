@@ -36,14 +36,6 @@ THE SOFTWARE.
 #define YUV2G(Y,U,V) (Y - ((U - 128.0f) * 0.1873f) - ((V - 128.0f) * 0.4681f))
 #define YUV2B(Y,U,V) (Y + ((U - 128.0f) * 1.8556f))
 
-__device__ __forceinline__ float4 uchars_to_float4 (uint src) {
-    return make_float4((float)(src & 0xFF), (float)((src & 0xFF00) >> 8), (float)((src & 0xFF0000) >> 16), (float)((src & 0xFF000000) >> 24));
-}
-
-__device__ __forceinline__ uint float4_to_uchars (float4 src) {
-    return ((uint)src.x & 0xFF) | (((uint)src.y & 0xFF) << 8) | (((uint)src.z & 0xFF) << 16) | (((uint)src.w & 0xFF) << 24);
-}
-
 __device__ __forceinline__ float2 uchars_to_float2 (uint src) {
     return make_float2((float)(src & 0xFF), (float)((src & 0xFF00) >> 8));
 }

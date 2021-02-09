@@ -1,0 +1,4 @@
+# agoKernel_ColorConvert_NV12_RGBX
+data input_1 = uniform-image:1920,1080,RGBA 
+data output = image:1920,1080,NV12
+node org.khronos.openvx.color_convert input_1 output

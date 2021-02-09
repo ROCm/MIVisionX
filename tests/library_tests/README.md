@@ -5,3 +5,5 @@
 ```
 python runLibraryTests.py
 ```
+
+**NOTE:** Supports only Linux Distributions

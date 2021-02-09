@@ -22,7 +22,6 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 import os
 import sys
-import re
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Library Tests Report"
@@ -65,7 +64,7 @@ board_info = shell('inxi -c0 -M')
 
 # level 1 - Libraries
 openvx_lib = shell('ldd /opt/rocm/mivisionx/lib/libopenvx.so')
-vxu_lib = shell('ldd /opt/rocm/mivisionx/lib/libovxu.so')
+vxu_lib = shell('ldd /opt/rocm/mivisionx/lib/libvxu.so')
 # level 2 - Libraries
 loom_lib = shell('ldd /opt/rocm/mivisionx/lib/libvx_loomsl.so')
 # level 3 - libraries
@@ -82,8 +81,6 @@ runvx_exe = shell('ldd /opt/rocm/mivisionx/bin/runvx')
 runcl_exe = shell('ldd /opt/rocm/mivisionx/bin/runcl')
 loom_exe = shell('ldd /opt/rocm/mivisionx/bin/loom_shell')
 mv_compile_exe = shell('ldd /opt/rocm/mivisionx/bin/mv_compile')
-
-missing = 'No such file or directory'
 
 # Write Report
 with open(reportFilename, 'w') as f:
@@ -108,8 +105,7 @@ with open(reportFilename, 'w') as f:
     f.write("--------\n")
     f.write("\n")
     # OpenVX Libraries
-    match = re.search(missing, openvx_lib)
-    if match:
+    if not openvx_lib:
         f.write("WARNING: OpenVX Library Not Built\n")
         print("WARNING: OpenVX Library Not Built\n")
     else:
@@ -117,8 +113,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(openvx_lib, f)
     f.write("\n")
     # OpenVX VXU Libraries
-    match = re.search(missing, vxu_lib)
-    if match:
+    if not vxu_lib:
         f.write("WARNING: OpenVX VXU Library Not Built\n")
         print("WARNING: OpenVX VXU Library Not Built\n")
     else:
@@ -126,8 +121,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(vxu_lib, f)
     f.write("\n")
     # Loom Libraries
-    match = re.search(missing, loom_lib)
-    if match:
+    if not loom_lib:
         f.write("WARNING: Loom Library Not Built\n")
         print("WARNING: Loom Library Not Built\n")
     else:
@@ -135,8 +129,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(loom_lib, f)
     f.write("\n")
     # AMD Media Libraries
-    match = re.search(missing, media_lib)
-    if match:
+    if not media_lib:
         f.write("WARNING: AMD Media Library Not Built\n")
         print("WARNING: AMD Media Library Not Built\n")
     else:
@@ -144,8 +137,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(media_lib, f)
     f.write("\n")
     # OpenCV Ext Libraries
-    match = re.search(missing, opencv_lib)
-    if match:
+    if not opencv_lib:
         f.write("WARNING: VX OpenCV Ext Library Not Built\n")
         print("WARNING: VX OpenCV Ext Library Not Built\n")
     else:
@@ -153,8 +145,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(opencv_lib, f)
     f.write("\n")
     # VX NN Libraries
-    match = re.search(missing, nn_lib)
-    if match:
+    if not nn_lib:
         f.write("WARNING: VX Neural Net Library Not Built\n")
         print("WARNING: VX Neural Net Library Not Built\n")
     else:
@@ -162,8 +153,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(nn_lib, f)
     f.write("\n")
     # VX RPP Libraries
-    match = re.search(missing, rpp_lib)
-    if match:
+    if not rpp_lib:
         f.write("WARNING: VX RPP Library Not Built\n")
         print("WARNING: VX RPP Library Not Built\n")
     else:
@@ -171,8 +161,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(rpp_lib, f)
     f.write("\n")
     # RALI Libraries
-    match = re.search(missing, rali_lib)
-    if match:
+    if not rali_lib:
         f.write("WARNING: RALI Library Not Built\n")
         print("WARNING: RALI Library Not Built\n")
     else:
@@ -184,8 +173,7 @@ with open(reportFilename, 'w') as f:
     f.write("--------\n")
     f.write("\n")
     # RunVX
-    match = re.search(missing, runvx_exe)
-    if match:
+    if not runvx_exe:
         f.write("WARNING: RunVX Not Built\n")
         print("WARNING: RunVX Not Built\n")
     else:
@@ -193,8 +181,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(runvx_exe, f)
     f.write("\n")
     # RunCL
-    match = re.search(missing, runcl_exe)
-    if match:
+    if not runcl_exe:
         f.write("WARNING: RunCL Not Built\n")
         print("WARNING: RunCL Not Built\n")
     else:
@@ -202,8 +189,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(runcl_exe, f)
     f.write("\n")
     # Loom Shell
-    match = re.search(missing, loom_exe)
-    if match:
+    if not loom_exe:
         f.write("WARNING: Loom Shell Not Built\n")
         print("WARNING: Loom Shell Not Built\n")
     else:
@@ -211,8 +197,7 @@ with open(reportFilename, 'w') as f:
         write_formatted(loom_exe, f)
     f.write("\n")
     # MV Compile
-    match = re.search(missing, mv_compile_exe)
-    if match:
+    if not mv_compile_exe:
         f.write("WARNING: MV Compile Not Built\n")
         print("WARNING: MV Compile Not Built\n")
     else:

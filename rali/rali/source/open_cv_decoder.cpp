@@ -38,13 +38,15 @@ CVDecoder::CVDecoder() {
 
 Decoder::Status CVDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) {
     //TODO: OpenCV seems not able to decode header separately, remove the imdecode from this call if possible and replace it with a proper function for decoding the header only
-#if 1
     m_mat_orig = cv::imdecode(cv::Mat(1, input_size, CV_8UC1, input_buffer), cv::IMREAD_UNCHANGED);
+    if(m_mat_orig.rows == 0 || m_mat_orig.cols == 0) {
+        WRN("CVDecoder::Jpeg header decode failed ");
+        return Status::HEADER_DECODE_FAILED;
+    }
     *width = m_mat_orig.cols;
     *height = m_mat_orig.rows;
     *color_comps = 0;       // not known
     return Status::OK;
-#endif
 }
 
 Decoder::Status CVDecoder::decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
@@ -53,13 +55,8 @@ Decoder::Status CVDecoder::decode(unsigned char *input_buffer, size_t input_size
                            size_t &actual_decoded_width, size_t &actual_decoded_height,
                            Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size) {
 
-//Decoder::Status CVDecoder::decode(unsigned char* input_buffer, size_t input_size,  unsigned char* output_buffer,int desired_width, int desired_height, ColorFormat desired_color) {
-    //TODO: Find a way to give create an OpenCV image out of the user's provided input pointer and use that to decode the image to
-#if 1
     m_mat_orig = cv::imdecode(cv::Mat(1, input_size, CV_8UC1, input_buffer), CV_LOAD_IMAGE_COLOR);
-    
     if(m_mat_orig.rows == 0 || m_mat_orig.cols == 0) {
-        printf("Could not decode the image\n");
         return Status::CONTENT_DECODE_FAILED;
     }
     cv::resize(m_mat_orig, m_mat_scaled, cv::Size(max_decoded_width, max_decoded_height), cv::INTER_LINEAR);
@@ -71,16 +68,11 @@ Decoder::Status CVDecoder::decode(unsigned char *input_buffer, size_t input_size
         actual_decoded_width = m_mat_scaled.cols;
         actual_decoded_height = m_mat_scaled.rows;
     }
-    
-#endif
     return Decoder::Status::OK;
 }
 
 CVDecoder::~CVDecoder() {
-#if  1
     m_mat_scaled.release();
     m_mat_orig.release();
-//    m_mat_compressed.release();
-#endif
 }
 #endif

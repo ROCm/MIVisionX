@@ -31,6 +31,14 @@ typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)    ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 
+typedef struct d_uint6 {
+  uint data[6];
+} d_uint6;
+
+typedef struct d_uint8 {
+  uint data[8];
+} d_uint8;
+
 // common device kernels
 
 __device__ __forceinline__ uint pack_(float4 src) {

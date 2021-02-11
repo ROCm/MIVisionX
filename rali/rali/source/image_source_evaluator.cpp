@@ -79,7 +79,7 @@ ImageSourceEvaluator::find_max_dimension()
         int width, height, jpeg_sub_samp;
         if(_decoder->decode_info(_header_buff.data(), actual_read_size, &width, &height, &jpeg_sub_samp ) != Decoder::Status::OK)
         {
-#if ENABLE_OPENCV
+#if 0   // Not using OpenCV decoder for source evaluation since there is no api to read only the header
             // try with cv decoder
             WRN("Couldn't decode using turbojpeg: using opencv decoder");
             if (_decoder_cv && _decoder_cv->decode_info(_header_buff.data(), actual_read_size, &width, &height, &jpeg_sub_samp ) != Decoder::Status::OK){

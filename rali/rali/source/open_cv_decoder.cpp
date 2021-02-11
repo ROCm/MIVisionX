@@ -55,8 +55,12 @@ Decoder::Status CVDecoder::decode(unsigned char *input_buffer, size_t input_size
                            size_t &actual_decoded_width, size_t &actual_decoded_height,
                            Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size) {
 
-    m_mat_orig = cv::imdecode(cv::Mat(1, input_size, CV_8UC1, input_buffer), CV_LOAD_IMAGE_COLOR);
+    if ( desired_decoded_color_format == Decoder::ColorFormat::RGB || desired_decoded_color_format == Decoder::ColorFormat::BGR)  // don't decode twice)
+        m_mat_orig = cv::imdecode(cv::Mat(1, input_size, CV_8UC1, input_buffer), CV_LOAD_IMAGE_COLOR);
+    else
+        m_mat_orig = cv::imdecode(cv::Mat(1, input_size, CV_8UC1, input_buffer), CV_LOAD_IMAGE_GRAYSCALE);
     if(m_mat_orig.rows == 0 || m_mat_orig.cols == 0) {
+        WRN("CVDecoder::Jpeg decode failed ");
         return Status::CONTENT_DECODE_FAILED;
     }
     cv::resize(m_mat_orig, m_mat_scaled, cv::Size(max_decoded_width, max_decoded_height), cv::INTER_LINEAR);

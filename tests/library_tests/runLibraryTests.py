@@ -81,6 +81,8 @@ runcl_exe = shell('ldd /opt/rocm/mivisionx/bin/runcl')
 loom_exe = shell('ldd /opt/rocm/mivisionx/bin/loom_shell')
 mv_compile_exe = shell('ldd /opt/rocm/mivisionx/bin/mv_compile')
 
+warning = 0
+
 # Write Report
 with open(reportFilename, 'w') as f:
     f.write("MIVisionX - Libraries Report\n")
@@ -107,6 +109,7 @@ with open(reportFilename, 'w') as f:
     if not openvx_lib:
         f.write("WARNING: OpenVX Library Not Built\n")
         print("WARNING: OpenVX Library Not Built\n")
+        warning = 1
     else:
         f.write("* OpenVX Library\n")
         write_formatted(openvx_lib, f)
@@ -115,6 +118,7 @@ with open(reportFilename, 'w') as f:
     if not vxu_lib:
         f.write("WARNING: OpenVX VXU Library Not Built\n")
         print("WARNING: OpenVX VXU Library Not Built\n")
+        warning = 1
     else:
         f.write("* OpenVX VXU Library\n")
         write_formatted(vxu_lib, f)
@@ -123,6 +127,7 @@ with open(reportFilename, 'w') as f:
     if not loom_lib:
         f.write("WARNING: Loom Library Not Built\n")
         print("WARNING: Loom Library Not Built\n")
+        warning = 1
     else:
         f.write("* Loom Library\n")
         write_formatted(loom_lib, f)
@@ -131,6 +136,7 @@ with open(reportFilename, 'w') as f:
     if not media_lib:
         f.write("WARNING: AMD Media Library Not Built\n")
         print("WARNING: AMD Media Library Not Built\n")
+        warning = 1
     else:
         f.write("* AMD Media Library\n")
         write_formatted(media_lib, f)
@@ -139,6 +145,7 @@ with open(reportFilename, 'w') as f:
     if not opencv_lib:
         f.write("WARNING: VX OpenCV Ext Library Not Built\n")
         print("WARNING: VX OpenCV Ext Library Not Built\n")
+        warning = 1
     else:
         f.write("* VX OpenCV Ext Library\n")
         write_formatted(opencv_lib, f)
@@ -147,6 +154,7 @@ with open(reportFilename, 'w') as f:
     if not nn_lib:
         f.write("WARNING: VX Neural Net Library Not Built\n")
         print("WARNING: VX Neural Net Library Not Built\n")
+        warning = 1
     else:
         f.write("* VX Neural Net Library\n")
         write_formatted(nn_lib, f)
@@ -155,6 +163,7 @@ with open(reportFilename, 'w') as f:
     if not rpp_lib:
         f.write("WARNING: VX RPP Library Not Built\n")
         print("WARNING: VX RPP Library Not Built\n")
+        warning = 1
     else:
         f.write("* VX RPP Library\n")
         write_formatted(rpp_lib, f)
@@ -163,6 +172,7 @@ with open(reportFilename, 'w') as f:
     if not rali_lib:
         f.write("WARNING: RALI Library Not Built\n")
         print("WARNING: RALI Library Not Built\n")
+        warning = 1
     else:
         f.write("* RALI Library\n")
         write_formatted(rali_lib, f)
@@ -175,6 +185,7 @@ with open(reportFilename, 'w') as f:
     if not runvx_exe:
         f.write("WARNING: RunVX Not Built\n")
         print("WARNING: RunVX Not Built\n")
+        warning = 1
     else:
         f.write("* RunVX\n")
         write_formatted(runvx_exe, f)
@@ -183,6 +194,7 @@ with open(reportFilename, 'w') as f:
     if not runcl_exe:
         f.write("WARNING: RunCL Not Built\n")
         print("WARNING: RunCL Not Built\n")
+        warning = 1
     else:
         f.write("* RunCL\n")
         write_formatted(runcl_exe, f)
@@ -191,6 +203,7 @@ with open(reportFilename, 'w') as f:
     if not loom_exe:
         f.write("WARNING: Loom Shell Not Built\n")
         print("WARNING: Loom Shell Not Built\n")
+        warning = 1
     else:
         f.write("* Loom Shell\n")
         write_formatted(loom_exe, f)
@@ -199,6 +212,7 @@ with open(reportFilename, 'w') as f:
     if not mv_compile_exe:
         f.write("WARNING: MV Compile Not Built\n")
         print("WARNING: MV Compile Not Built\n")
+        warning = 1
     else:
         f.write("* MV Compile\n")
         write_formatted(mv_compile_exe, f)
@@ -209,6 +223,9 @@ with open(reportFilename, 'w') as f:
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)
-print("STATUS: Output Report File - "+reportFileDir+"\n")
-
+print("STATUS: Output Report File - "+reportFileDir)
+if warning == 1:
+    print("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
+else:
+    print("SUCCESS: All modules of MIVisionX built")
 print("runLibraryTests.py completed - V:"+__version__+"\n")

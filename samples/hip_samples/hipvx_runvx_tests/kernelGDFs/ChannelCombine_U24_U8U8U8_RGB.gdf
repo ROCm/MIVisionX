@@ -2,6 +2,5 @@
 data input_1 = uniform-image:1920,1080,U008 
 data input_2 = uniform-image:1920,1080,U008 
 data input_3 = uniform-image:1920,1080,U008 
-data val = null
 data output = image:1920,1080,RGB2
-node org.khronos.openvx.channel_combine input_1 input_2 input_3 val output
+node org.khronos.openvx.channel_combine input_1 input_2 input_3 null output

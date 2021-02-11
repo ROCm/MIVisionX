@@ -20,6 +20,8 @@ Sub_U8_U8U8_Sat
 Sub_S16_U8U8_Wrap
 Sub_S16_S16U8_Wrap
 Sub_S16_S16U8_Sat
+Sub_S16_U8S16_Wrap
+Sub_S16_U8S16_Sat
 Sub_S16_S16S16_Wrap
 Sub_S16_S16S16_Sat
 Mul_U8_U8U8_Wrap_Trunc
@@ -75,6 +77,7 @@ GDF_COLOR_LIST="ColorDepth_U8_S16_Wrap
 ColorDepth_U8_S16_Sat
 ColorDepth_S16_U8
 ChannelExtract_U8_U16_Pos0
+ChannelExtract_U8_U16_Pos1
 ChannelExtract_U8_U24_Pos0
 ChannelExtract_U8_U24_Pos1
 ChannelExtract_U8_U24_Pos2
@@ -82,6 +85,9 @@ ChannelExtract_U8_U32_Pos0
 ChannelExtract_U8_U32_Pos1
 ChannelExtract_U8_U32_Pos2
 ChannelExtract_U8_U32_Pos3
+ChannelExtract_U8U8U8_U24
+ChannelExtract_U8U8U8_U32
+ChannelExtract_U8U8U8U8_U32
 ChannelCombine_U32_U8U8U8_UYVY
 ChannelCombine_U32_U8U8U8_YUYV
 ChannelCombine_U24_U8U8U8_RGB

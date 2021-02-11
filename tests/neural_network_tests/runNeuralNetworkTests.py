@@ -24,6 +24,7 @@ import argparse
 import os
 import shutil
 import sys
+import platform
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Neural Net Test Full Report"
@@ -649,7 +650,7 @@ if profileMode == 0 or profileMode == 9:
     os.system(runAwk_md)
 
 # get system data
-platform_name = shell('hostname')
+platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 

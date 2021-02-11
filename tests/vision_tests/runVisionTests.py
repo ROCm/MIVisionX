@@ -24,6 +24,7 @@ import argparse
 import os
 import shutil
 import sys
+import platform
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Vision Test Full Report"
@@ -272,14 +273,6 @@ if testFilter == 0 and functionalityTests == 'yes':
     print("\nSTATUS: Vision Accuracy Results - " +
           scriptPath+"/gdfs/openvx_test_results\n")
 
-#print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
-#os.system('mkdir openvx_node_results')
-# for i in range(len(openvxNodeTestConfig)):
-    #nodeTestName, nodeTest = openvxNodeTestConfig[i]
-    #print("Running OpenVX Node: "+nodeTestName)
-    #os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
-    # print("\n")
-
 print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
 if not os.path.exists(outputDirectory):
@@ -322,7 +315,7 @@ if hardwareMode == 'GPU':
     os.system(runAwk_csv)
 
 # get data
-platform_name = shell('hostname')
+platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 

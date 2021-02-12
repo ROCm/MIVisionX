@@ -52,9 +52,9 @@ ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
     _reader = create_reader(std::move(reader_cfg));
     // create backup decoder
     _decoder_cv = nullptr;
+#if 0//ENABLE_OPENCV
     _decoder_cfg_cv = decoder_cfg;
     _decoder_cfg_cv._type = DecoderType::OPENCV_DEC;
-#if ENABLE_OPENCV
     if (decoder_cfg._type != DecoderType::OPENCV_DEC)
         _decoder_cv = create_decoder(std::move(_decoder_cfg_cv));
 #endif

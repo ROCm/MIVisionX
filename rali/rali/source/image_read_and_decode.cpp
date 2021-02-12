@@ -206,13 +206,13 @@ ImageReadAndDecode::load(unsigned char* buff,
             if (_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height,
                                          &jpeg_sub_samp) != Decoder::Status::OK) {
                 // try open_cv decoder
-#if ENABLE_OPENCV
+#if 0//ENABLE_OPENCV
                 WRN("Using OpenCV for decode_info");
                 if (_decoder_cv[i] && _decoder_cv[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height,
                                          &jpeg_sub_samp) != Decoder::Status::OK) {
 #endif
                     continue;
-#if ENABLE_OPENCV
+#if 0//ENABLE_OPENCV
                 }
 #endif
             }
@@ -231,8 +231,8 @@ ImageReadAndDecode::load(unsigned char* buff,
                                     original_width, original_height,
                                     scaledw, scaledh,
                                     decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
-#if ENABLE_OPENCV
-                // try decoding with OpenCV decoder
+                // try decoding with OpenCV decoder:: seems like opencv also failing in those images
+#if 0//ENABLE_OPENCV
                 WRN("Using OpenCV for decode");                
                 if (_decoder_cv[i] && _decoder_cv[i]->decode(_compressed_buff[i].data(), _compressed_image_size[i], _decompressed_buff_ptrs[i],
                                         max_decoded_width, max_decoded_height,
@@ -241,7 +241,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                                         decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
 #endif
                     continue;
-#if ENABLE_OPENCV
+#if 0//ENABLE_OPENCV
                 }
 #endif
             }

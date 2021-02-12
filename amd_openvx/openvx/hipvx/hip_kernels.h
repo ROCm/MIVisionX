@@ -39,6 +39,10 @@ typedef struct d_uint8 {
   uint data[8];
 } d_uint8;
 
+typedef struct d_float8 {
+  float data[8];
+} d_float8;
+
 // common device kernels
 
 __device__ __forceinline__ uint pack_(float4 src) {

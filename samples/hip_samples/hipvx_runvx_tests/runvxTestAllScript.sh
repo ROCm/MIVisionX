@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# The runvxTestAllScript.sh bash script runs runvx for all AMD OpenVX functionalities in OCL/HIP backends.
+# It can optionally generate dumps:
+#     - .bin dumps for input/output images for different sizes.
+#     - OpenCL kernel code dumps for all kernels.
+# It can compare diff between OpenCL and HIP bin dumps and flag any inconsistencies in outputs.
+
 ############# Edit GDF path and kernel names here #############
 
 GDF_PATH="kernelGDFs/"
@@ -173,6 +179,8 @@ AFFINITY_LIST="GPU" # Or it can be AFFINITY_LIST="CPU GPU"
 
 ############# Need not edit #############
 
+# Input parameters
+
 if [ "$#" -ne 3 ]; then
     echo
     echo "The runvxTestAllScript.sh bash script runs runvx for all AMD OpenVX functionalities in OCL/HIP backends."
@@ -207,11 +215,9 @@ STRING_O1="data output_1"
 STRING_O2="data output_2"
 STRING_O3="data output_3"
 STRING_O4="data output_4"
+cwd=$(pwd)
 
-rm -rvf dumps
-rm -rvf generatedGDFs
-mkdir generatedGDFs
-GENERATED_GDF_PATH="generatedGDFs/"
+# generator function to auto-generate gdfs for different image sizes, with/without binary dump
 
 generator() {
     if [ "$DUMP" -eq 0 ]; then
@@ -246,94 +252,304 @@ generator() {
     sed -i "s/960,1080/$HALF_WIDTH,$HEIGHT/" "$GENERATED_GDF_PATH/$GDF.gdf"
 }
 
-for AFFINITY in "$AFFINITY_LIST";
-do
-    printf "\n\n---------------------------------------------"
-    printf "\nRunning ARITHMETIC GDF cases on runvx for $AFFINITY..."
-    printf "\n---------------------------------------------\n"
-    for GDF in $GDF_ARITHMETIC_LIST;
+# case_tester function to test each case in each functionality group
+
+case_tester() {
+    # local -n _ARRAY_TESTER=$1
+    for AFFINITY in "$AFFINITY_LIST";
     do
-        printf "\nRunning $GDF...\n"
-        unset AMD_OCL_BUILD_OPTIONS_APPEND
-        export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        generator
-        runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GDF.gdf
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning ARITHMETIC GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_ARITHMETIC_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            generator
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GDF.gdf
+        done
+
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning LOGICAL GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_LOGICAL_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            generator
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GDF.gdf
+        done
+
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning COLOR GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_COLOR_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            generator
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GDF.gdf
+        done
+
+        # printf "\n\n---------------------------------------------"
+        # printf "\nRunning STATISTICAL GDF cases on runvx for $AFFINITY..."
+        # printf "\n---------------------------------------------\n"
+        # for GDF in $GDF_STATISTICAL_LIST;
+        # do
+        #     printf "\nRunning $GDF...\n"
+        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
+        #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+        #     # touch $GDF_PATH/$GDF.gdf
+        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
+        # done
+
+        # printf "\n\n---------------------------------------------"
+        # printf "\nRunning FILTER GDF cases on runvx for $AFFINITY..."
+        # printf "\n---------------------------------------------\n"
+        # for GDF in $GDF_FILTER_LIST;
+        # do
+        #     printf "\nRunning $GDF...\n"
+        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
+        #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+        #     # touch $GDF_PATH/$GDF.gdf
+        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
+        # done
+
+        # printf "\n\n---------------------------------------------"
+        # printf "\nRunning GEOMETRIC GDF cases on runvx for $AFFINITY..."
+        # printf "\n---------------------------------------------\n"
+        # for GDF in $GDF_GEOMETRIC_LIST;
+        # do
+        #     printf "\nRunning $GDF...\n"
+        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
+        #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+        #     # touch $GDF_PATH/$GDF.gdf
+        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
+        # done
+
+        # printf "\n\n---------------------------------------------"
+        # printf "\nRunning VISION GDF cases on runvx for $AFFINITY..."
+        # printf "\n---------------------------------------------\n"
+        # for GDF in $GDF_VISION_LIST;
+        # do
+        #     printf "\nRunning $GDF...\n"
+        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
+        #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+        #     # touch $GDF_PATH/$GDF.gdf
+        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
+        # done
     done
+}
 
-    printf "\n\n---------------------------------------------"
-    printf "\nRunning LOGICAL GDF cases on runvx for $AFFINITY..."
-    printf "\n---------------------------------------------\n"
-    for GDF in $GDF_LOGICAL_LIST;
-    do
-        printf "\nRunning $GDF...\n"
-        unset AMD_OCL_BUILD_OPTIONS_APPEND
-        export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        generator
-        runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GDF.gdf
-    done
+# Running all kernels for OCL backend
 
-    printf "\n\n---------------------------------------------"
-    printf "\nRunning COLOR GDF cases on runvx for $AFFINITY..."
-    printf "\n---------------------------------------------\n"
-    for GDF in $GDF_COLOR_LIST;
-    do
-        printf "\nRunning $GDF...\n"
-        unset AMD_OCL_BUILD_OPTIONS_APPEND
-        export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        generator
-        runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GDF.gdf
-    done
+rm -rvf dumpsOCL
+rm -rvf generatedGDFsOCL
+mkdir generatedGDFsOCL
+GENERATED_GDF_PATH="generatedGDFsOCL/"
 
-    # printf "\n\n---------------------------------------------"
-    # printf "\nRunning STATISTICAL GDF cases on runvx for $AFFINITY..."
-    # printf "\n---------------------------------------------\n"
-    # for GDF in $GDF_STATISTICAL_LIST;
-    # do
-    #     printf "\nRunning $GDF...\n"
-    #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-    #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-    #     # touch $GDF_PATH/$GDF.gdf
-    #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
-    # done
+# Running OCL hip-porting - temporary - not working currently
+# cd ../../../
+# rm -rvf build_ocl
+# mkdir build_ocl
+# cd build_ocl
+# cmake ..
+# sudo make -j20 install
+# cd ../samples/hip_samples/hipvx_runvx_tests
 
-    # printf "\n\n---------------------------------------------"
-    # printf "\nRunning FILTER GDF cases on runvx for $AFFINITY..."
-    # printf "\n---------------------------------------------\n"
-    # for GDF in $GDF_FILTER_LIST;
-    # do
-    #     printf "\nRunning $GDF...\n"
-    #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-    #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-    #     # touch $GDF_PATH/$GDF.gdf
-    #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
-    # done
+# Running OCL open source - temporary - working - to be removed after hip-porting OCL works
+cd ../../../../../MIVisionX/    # change path to open source MIVisionX - temporary
+rm -rvf build_ocl
+mkdir build_ocl
+cd build_ocl
+cmake ..
+sudo make -j20 install
+cd $cwd
 
-    # printf "\n\n---------------------------------------------"
-    # printf "\nRunning GEOMETRIC GDF cases on runvx for $AFFINITY..."
-    # printf "\n---------------------------------------------\n"
-    # for GDF in $GDF_GEOMETRIC_LIST;
-    # do
-    #     printf "\nRunning $GDF...\n"
-    #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-    #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-    #     # touch $GDF_PATH/$GDF.gdf
-    #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
-    # done
+case_tester
 
-    # printf "\n\n---------------------------------------------"
-    # printf "\nRunning VISION GDF cases on runvx for $AFFINITY..."
-    # printf "\n---------------------------------------------\n"
-    # for GDF in $GDF_VISION_LIST;
-    # do
-    #     printf "\nRunning $GDF...\n"
-    #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-    #     export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-    #     # touch $GDF_PATH/$GDF.gdf
-    #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GDF_PATH/$GDF.gdf
-    # done
-done
+mkdir dumpsOCL
+mv "$GENERATED_GDF_PATH"/agoKernel_* dumpsOCL
 
-mkdir dumps
-mv "$GENERATED_GDF_PATH"/agoKernel_* dumps
+# Running all kernels for HIP backend
+
+rm -rvf dumpsHIP
+rm -rvf generatedGDFsHIP
+mkdir generatedGDFsHIP
+GENERATED_GDF_PATH="generatedGDFsHIP/"
+
+cd ../../../
+rm -rvf build_hip
+mkdir build_hip
+cd build_hip
+cmake -DBACKEND=HIP ..
+sudo make -j20 install
+cd ../samples/hip_samples/hipvx_runvx_tests
+
+case_tester
+
+mkdir dumpsHIP
+mv "$GENERATED_GDF_PATH"/agoKernel_* dumpsHIP
+
+# Checking OCLvsHIP output match
+
+OUTPUT_BIN_LIST="agoKernel_AbsDiff_U8_U8U8_output_1.bin
+agoKernel_AbsDiff_S16_S16S16_Sat_output_1.bin
+agoKernel_Add_U8_U8U8_Wrap_output_1.bin
+agoKernel_Add_U8_U8U8_Sat_output_1.bin
+agoKernel_Add_S16_U8U8_Wrap_output_1.bin
+agoKernel_Add_S16_S16U8_Wrap_output_1.bin
+agoKernel_Add_S16_S16U8_Sat_output_1.bin
+agoKernel_Add_S16_S16S16_Wrap_output_1.bin
+agoKernel_Add_S16_S16S16_Sat_output_1.bin
+agoKernel_Sub_U8_U8U8_Wrap_output_1.bin
+agoKernel_Sub_U8_U8U8_Sat_output_1.bin
+agoKernel_Sub_S16_U8U8_Wrap_output_1.bin
+agoKernel_Sub_S16_S16U8_Wrap_output_1.bin
+agoKernel_Sub_S16_S16U8_Sat_output_1.bin
+agoKernel_Sub_S16_U8S16_Wrap_output_1.bin
+agoKernel_Sub_S16_U8S16_Sat_output_1.bin
+agoKernel_Sub_S16_S16S16_Wrap_output_1.bin
+agoKernel_Sub_S16_S16S16_Sat_output_1.bin
+agoKernel_Mul_U8_U8U8_Wrap_Trunc_output_1.bin
+agoKernel_Mul_U8_U8U8_Wrap_Round_output_1.bin
+agoKernel_Mul_U8_U8U8_Sat_Trunc_output_1.bin
+agoKernel_Mul_U8_U8U8_Sat_Round_output_1.bin
+agoKernel_Mul_S16_U8U8_Wrap_Trunc_output_1.bin
+agoKernel_Mul_S16_U8U8_Wrap_Round_output_1.bin
+agoKernel_Mul_S16_U8U8_Sat_Trunc_output_1.bin
+agoKernel_Mul_S16_U8U8_Sat_Round_output_1.bin
+agoKernel_Mul_S16_S16U8_Wrap_Trunc_output_1.bin
+agoKernel_Mul_S16_S16U8_Wrap_Round_output_1.bin
+agoKernel_Mul_S16_S16U8_Sat_Trunc_output_1.bin
+agoKernel_Mul_S16_S16U8_Sat_Round_output_1.bin
+agoKernel_Mul_S16_S16S16_Wrap_Trunc_output_1.bin
+agoKernel_Mul_S16_S16S16_Wrap_Round_output_1.bin
+agoKernel_Mul_S16_S16S16_Sat_Trunc_output_1.bin
+agoKernel_Mul_S16_S16S16_Sat_Round_output_1.bin
+agoKernel_Magnitude_S16_S16S16_output_1.bin
+agoKernel_Phase_U8_S16S16_output_1.bin
+agoKernel_WeightedAverage_U8_U8U8_output_1.bin
+agoKernel_And_U8_U8U8_output_1.bin
+agoKernel_And_U8_U8U1_output_1.bin
+agoKernel_And_U8_U1U8_output_1.bin
+agoKernel_And_U8_U1U1_output_1.bin
+agoKernel_And_U1_U8U8_output_1.bin
+agoKernel_And_U1_U8U1_output_1.bin
+agoKernel_And_U1_U1U8_output_1.bin
+agoKernel_And_U1_U1U1_output_1.bin
+agoKernel_Or_U8_U8U8_output_1.bin
+agoKernel_Or_U8_U8U1_output_1.bin
+agoKernel_Or_U8_U1U8_output_1.bin
+agoKernel_Or_U8_U1U1_output_1.bin
+agoKernel_Or_U1_U8U8_output_1.bin
+agoKernel_Or_U1_U8U1_output_1.bin
+agoKernel_Or_U1_U1U8_output_1.bin
+agoKernel_Or_U1_U1U1_output_1.bin
+agoKernel_Xor_U8_U8U8_output_1.bin
+agoKernel_Xor_U8_U8U1_output_1.bin
+agoKernel_Xor_U8_U1U8_output_1.bin
+agoKernel_Xor_U8_U1U1_output_1.bin
+agoKernel_Xor_U1_U8U8_output_1.bin
+agoKernel_Xor_U1_U8U1_output_1.bin
+agoKernel_Xor_U1_U1U8_output_1.bin
+agoKernel_Xor_U1_U1U1_output_1.bin
+agoKernel_Not_U8_U8_output_1.bin
+agoKernel_Not_U1_U8_output_1.bin
+agoKernel_Not_U8_U1_output_1.bin
+agoKernel_Not_U1_U1_output_1.bin
+agoKernel_ColorDepth_U8_S16_Wrap_output_1.bin
+agoKernel_ColorDepth_U8_S16_Sat_output_1.bin
+agoKernel_ColorDepth_S16_U8_output_1.bin
+agoKernel_ChannelExtract_U8_U16_Pos0_output_1.bin
+agoKernel_ChannelExtract_U8_U16_Pos1_output_1.bin
+agoKernel_ChannelExtract_U8_U24_Pos0_output_1.bin
+agoKernel_ChannelExtract_U8_U24_Pos1_output_1.bin
+agoKernel_ChannelExtract_U8_U24_Pos2_output_1.bin
+agoKernel_ChannelExtract_U8_U32_Pos0_output_1.bin
+agoKernel_ChannelExtract_U8_U32_Pos1_output_1.bin
+agoKernel_ChannelExtract_U8_U32_Pos2_output_1.bin
+agoKernel_ChannelExtract_U8_U32_Pos3_output_1.bin
+agoKernel_ChannelExtract_U8U8U8_U24_output_1.bin
+agoKernel_ChannelExtract_U8U8U8_U32_output_1.bin
+agoKernel_ChannelExtract_U8U8U8U8_U32_output_1.bin
+agoKernel_ChannelCombine_U32_U8U8U8_UYVY_output_1.bin
+agoKernel_ChannelCombine_U32_U8U8U8_YUYV_output_1.bin
+agoKernel_ChannelCombine_U24_U8U8U8_RGB_output_1.bin
+agoKernel_ChannelCombine_U32_U8U8U8U8_RGBX_output_1.bin
+agoKernel_ColorConvert_RGB_RGBX_output_1.bin
+agoKernel_ColorConvert_RGB_UYVY_output_1.bin
+agoKernel_ColorConvert_RGB_YUYV_output_1.bin
+agoKernel_ColorConvert_RGB_IYUV_output_1.bin
+agoKernel_ColorConvert_RGB_NV12_output_1.bin
+agoKernel_ColorConvert_RGB_NV21_output_1.bin
+agoKernel_ColorConvert_RGBX_RGB_output_1.bin
+agoKernel_ColorConvert_RGBX_UYVY_output_1.bin
+agoKernel_ColorConvert_RGBX_YUYV_output_1.bin
+agoKernel_ColorConvert_RGBX_IYUV_output_1.bin
+agoKernel_ColorConvert_RGB_NV12_output_1.bin
+agoKernel_ColorConvert_RGB_NV21_output_1.bin
+agoKernel_ColorConvert_IYUV_RGB_output_1.bin
+agoKernel_ColorConvert_IYUV_RGBX_output_1.bin
+agoKernel_FormatConvert_IYUV_UYVY_output_1.bin
+agoKernel_FormatConvert_IYUV_YUYV_output_1.bin
+agoKernel_ColorConvert_NV12_RGB_output_1.bin
+agoKernel_ColorConvert_NV12_RGBX_output_1.bin
+agoKernel_FormatConvert_NV12_UYVY_output_1.bin
+agoKernel_FormatConvert_NV12_YUYV_output_1.bin
+agoKernel_ColorConvert_YUV4_RGB_output_1.bin
+agoKernel_ColorConvert_YUV4_RGBX_output_1.bin
+agoKernel_Threshold_U8_U8_Binary_output_1.bin
+agoKernel_Threshold_U8_U8_Range_output_1.bin
+agoKernel_Box_U8_U8_3x3_output_1.bin
+agoKernel_Dilate_U8_U8_3x3_output_1.bin
+agoKernel_Dilate_U1_U8_3x3_output_1.bin
+agoKernel_Dilate_U8_U1_3x3_output_1.bin
+agoKernel_Dilate_U1_U1_3x3_output_1.bin
+agoKernel_Erode_U8_U8_3x3_output_1.bin
+agoKernel_Erode_U1_U8_3x3_output_1.bin
+agoKernel_Erode_U8_U1_3x3_output_1.bin
+agoKernel_Erode_U1_U1_3x3_output_1.bin
+agoKernel_Median_U8_U8_3x3_output_1.bin
+agoKernel_Gaussian_U8_U8_3x3_output_1.bin
+agoKernel_HalfGaussian_U8_U8_3x3_output_1.bin
+agoKernel_HalfGaussian_U8_U8_5x5_output_1.bin
+agoKernel_Convolve_U8_U8_3x3_output_1.bin
+agoKernel_Convolve_S16_U8_3x3_output_1.bin
+agoKernel_Sobel_S16S16_U8_3x3_GXY_output_1.bin
+agoKernel_Sobel_S16_U8_3x3_GX_output_1.bin
+agoKernel_Sobel_S16_U8_3x3_GY_output_1.bin
+agoKernel_ScaleImage_U8_U8_Nearest_output_1.bin
+agoKernel_ScaleImage_U8_U8_bilinear_output_1.bin
+agoKernel_ScaleImage_U8_U8_bilinear_replicate_output_1.bin
+agoKernel_ScaleImage_U8_U8_bilinear_constant_output_1.bin
+agoKernel_ScaleImage_U8_U8_u8_area_output_1.bin
+agoKernel_WarpAffine_U8_U8_Nearest_output_1.bin
+agoKernel_WarpAffine_U8_U8_Nearest_constant_output_1.bin
+agoKernel_WarpAffine_U8_U8_Nearestbilinear_output_1.bin
+agoKernel_WarpAffine_U8_U8_Nearest_bilinear_constant_output_1.bin
+agoKernel_WarpPerspective_U8_U8_Nearest_output_1.bin
+agoKernel_WarpPerspective_U8_U8_Nearest_output_1.bin
+agoKernel_WarpPerspective_U8_U8_Nearest_bilinear_output_1.bin
+agoKernel_WarpPerspective_U8_U8_Nearest_constant_output_1.bin
+"
+
+# Modify - Change script to do a diff on all OCLvsHIP bin dumps and flag any inconsistencies
+
+# UNMATCHED_OUTPUT=""
+
+# for OUTPUT_BIN in $OUTPUT_BIN_LIST;
+# do
+#     printf "\nChecking $OUTPUT_BIN..."
+#     DIFF=$("dumpsHIP/$OUTPUT_BIN" "dumpsOCL/$OUTPUT_BIN")
+#     if [ "$DIFF" != "" ]
+#     then
+#         echo "Outputs don't match!"
+#         UNMATCHED_OUTPUT="$UNMATCHED_OUTPUT $OUTPUT_BIN"
+#     fi
+# done
 
 ############# Need not edit #############

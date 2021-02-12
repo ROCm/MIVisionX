@@ -121,6 +121,10 @@ __device__ __forceinline__ void hip_convert_U1_U8 (__u_char * p0, uint2 p1) {
     *p0 = r;
 }
 
+__device__ __forceinline__ float4 hip_select (float4 a, float4 b, int c) {
+    return (c ? b : a);
+}
+
 // common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere
 
 __device__ __forceinline__ float4 uchars_to_float4(uint src) {
@@ -942,7 +946,7 @@ int HipExec_FormatConvert_UV12_IUV(
         vx_uint8 *pHipDstChromaImage, vx_uint32 DstChromaImageStrideInBytes,
         const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
         const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes
-        ); 
+        );
 int HipExec_ColorConvert_YUV4_RGBX(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,

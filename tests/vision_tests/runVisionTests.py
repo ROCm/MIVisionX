@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2020 - 2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ import argparse
 import os
 import shutil
 import sys
+import platform
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Vision Test Full Report"
@@ -33,15 +34,22 @@ __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
 
+
 def shell(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     output = p.communicate()[0][0:-1]
     return output
 
+
 def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
+
+
+def strip_libtree_addresses(lib_tree):
+    return lib_tree
+
 
 # Vision Accuracy Tests
 visionTestConfig = [
@@ -102,7 +110,7 @@ openvxNodes = [
     ('box_3x3-1080p-u8',
      'org.khronos.openvx.box_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('canny_edge_detector-1080p-u8',
-     'org.khronos.openvx.canny_edge_detector image:1920,1080,U008 threshold:RANGE,UINT8:INIT,80,100 scalar:INT32,3 !NORM_L1 image:1920,1080,U008'),
+     'org.khronos.openvx.canny_edge_detector image:1920,1080,U008 threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L1 image:1920,1080,U008'),
     ('channel_combine-1080p-RGBA',
      'org.khronos.openvx.channel_combine image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,RGBA'),
     ('channel_extract-1080p-u8',
@@ -157,7 +165,7 @@ openvxNodes = [
     ('table_lookup-1080p-u8',
      'org.khronos.openvx.table_lookup image:1920,1080,U008 lut:UINT8,256 image:1920,1080,U008'),
     ('threshold-1080p-u8',
-     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:BINARY,UINT8:INIT,127 image:1920,1080,U008'),
+     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:BINARY,U008,U008:INIT,127 image:1920,1080,U008'),
     ('warp_affine-1080p-u8',
      'org.khronos.openvx.warp_affine image:1920,1080,U008 matrix:FLOAT32,2,3 !BILINEAR image:1920,1080,U008'),
     ('warp_perspective-1080p-u8',
@@ -214,7 +222,8 @@ if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
     exit()
 if listTest not in ('no', 'yes'):
-    print("ERROR: List Vision Performance Tests options supported - [no or yes]")
+    print(
+        "ERROR: List Vision Performance Tests options supported - [no or yes]")
     exit()
 if functionalityTests not in ('no', 'yes'):
     print("ERROR: Vision functionality Tests option supported - [no or yes]")
@@ -264,14 +273,6 @@ if testFilter == 0 and functionalityTests == 'yes':
     print("\nSTATUS: Vision Accuracy Results - " +
           scriptPath+"/gdfs/openvx_test_results\n")
 
-#print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
-#os.system('mkdir openvx_node_results')
-# for i in range(len(openvxNodeTestConfig)):
-    #nodeTestName, nodeTest = openvxNodeTestConfig[i]
-    #print("Running OpenVX Node: "+nodeTestName)
-    #os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
-    # print("\n")
-
 print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
 if not os.path.exists(outputDirectory):
@@ -314,7 +315,7 @@ if hardwareMode == 'GPU':
     os.system(runAwk_csv)
 
 # get data
-platform_name = shell('hostname')
+platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
@@ -332,6 +333,9 @@ gpu_info = shell('inxi -c0 -G')
 
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
+
+lib_tree = shell('ldd '+RunVXapp)
+lib_tree = strip_libtree_addresses(lib_tree)
 
 # Write Report
 with open(reportFilename, 'w') as f:
@@ -354,14 +358,22 @@ with open(reportFilename, 'w') as f:
 
     f.write("\n\nBenchmark Report\n")
     f.write("--------\n")
-    f.write("Hardware: %s\n" % hardwareMode)
+    f.write("\n")
+    f.write("### Hardware: %s\n" % hardwareMode)
     f.write("\n")
     with open('openvx_node_results/nodePerformance.md') as benchmarkFile:
         for line in benchmarkFile:
             f.write("%s" % line)
     f.write("\n")
+    f.write("\n")
+    f.write("Dynamic Libraries Report\n")
+    f.write("-----------------\n")
+    f.write("\n")
+    write_formatted(lib_tree, f)
+    f.write("\n")
 
     f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2020 -- runVisionTests.py V-"+__version__+"**\n")
+    f.write("\n")
 
 # report file
 reportFileDir = os.path.abspath(reportFilename)

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2021 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,12 @@ import argparse
 import os
 import shutil
 import sys
+import platform
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Neural Net Test Full Report"
 __license__ = "MIT"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -44,6 +45,26 @@ def write_formatted(output, f):
     f.write("````\n")
     f.write("%s\n\n" % output)
     f.write("````\n")
+
+
+def write_lines_as_table(header, lines, f):
+    for h in header:
+        f.write("|%s" % h)
+    f.write("|\n")
+
+    for h in header:
+        f.write("|:---")
+    f.write("|\n")
+
+    for l in lines:
+        fields = l.split()
+        for field in fields:
+            f.write("|%s" % field)
+        f.write("|\n")
+
+
+def strip_libtree_addresses(lib_tree):
+    return lib_tree
 
 
 def script_info():
@@ -66,7 +87,7 @@ def script_info():
         "--miopen_find         - MIOPEN_FIND_ENFORCE mode: optional (default:1 [range:1 - 5])")
 
 
-# models to run - `modelname` , c, h, w
+# models to run - add new models `modelname` , c, h, w
 caffeModelConfig = [
     ('caffe-mnist', 1, 28, 28)
 ]
@@ -79,6 +100,7 @@ nnefModelConfig = [
     ('nnef-mnist', 1, 28, 28)
 ]
 
+# REPORT
 reportConfig = [
     ('CAFFE no fused OPs', 'caffe2nnir2openvx_noFuse_profile.md'),
     ('CAFFE fused OPs', 'caffe2nnir2openvx_Fuse_profile.md'),
@@ -132,39 +154,42 @@ if testInfo == 'yes':
 
 print("\nMIVisionX runNeuralNetworkTests V-"+__version__+"\n")
 
-# Test Scripts
+# check for Scripts
 scriptPath = os.path.dirname(os.path.realpath(__file__))
 modelCompilerDir = os.path.expanduser(
     '/opt/rocm/mivisionx/model_compiler/python')
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
 if(os.path.isfile(modelCompilerScript)):
-    print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir)
+    print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir+"\n")
 else:
-    print("\nERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
-    print("ERROR: MIVisionX Not Installed")
+    print("ERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
+    print("ERROR: MIVisionX Not Installed, install MIVisionX and rerun")
     exit()
 
-# Install Script Deps
-os.system('sudo -v')
-os.system('sudo apt -y install python3 python3-pip protobuf-compiler libprotoc-dev')
-os.system('pip3 install future pytz numpy')
-
-# Install CAFFE Deps
-os.system('pip3 install google protobuf')
-
-# Install NNEF Deps
-if not os.path.exists('~/nnef-deps'):
-    os.system('mkdir -p ~/nnef-deps')
+# Install Model Compiler Deps
+modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
+if not os.path.exists(modelCompilerDeps):
+    print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
+    os.makedirs(modelCompilerDeps)
+    os.system('sudo -v')
     os.system(
-        '(cd ~/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
+        'sudo apt -y install python3 python3-pip protobuf-compiler libprotoc-dev')
+    os.system('pip3 install future pytz numpy')
+    # Install CAFFE Deps
+    os.system('pip3 install google protobuf')
+    # Install ONNX Deps
+    os.system('pip3 install onnx')
+    # Install NNEF Deps
+    os.system('mkdir -p '+modelCompilerDeps+'/nnef-deps')
     os.system(
-        '(cd ~/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; cmake ..; make)')
+        '(cd '+modelCompilerDeps+'/nnef-deps; git clone https://github.com/KhronosGroup/NNEF-Tools.git)')
     os.system(
-        '(cd ~/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
-
-# Install ONNX Deps
-os.system('pip3 install onnx')
+        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/cpp; mkdir -p build && cd build; cmake ..; make)')
+    os.system(
+        '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
+else:
+    print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
 
 # Create working directory
 outputDirectory = scriptPath+'/models/develop'
@@ -625,7 +650,7 @@ if profileMode == 0 or profileMode == 9:
     os.system(runAwk_md)
 
 # get system data
-platform_name = shell('hostname')
+platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
@@ -636,13 +661,23 @@ report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
 
 cpu_info = shell('inxi -c0 -C')
-# cpu_info = cpu_info.split('\n')[0]  # strip out clock speeds
+cpu_info = cpu_info.rstrip()  # strip out clock speeds
 
 gpu_info = shell('inxi -c0 -G')
-# gpu_info = gpu_info.split('\n')[0]  # strip out X info
+gpu_info = gpu_info.rstrip()  # strip out X info
 
 memory_info = shell('inxi -c 0 -m')
 board_info = shell('inxi -c0 -M')
+
+lib_tree = shell('ldd -v /opt/rocm/mivisionx/lib/libvx_nn.so')
+lib_tree = strip_libtree_addresses(lib_tree)
+
+vbios = shell('(cd /opt/rocm/bin/; ./rocm-smi -v)')
+
+rocmInfo = shell('(cd /opt/rocm/bin/; ./rocm-smi -a)')
+
+rocm_packages = shell('dpkg-query -W | grep rocm')
+rocm_packages = rocm_packages.splitlines()
 
 # Write Report
 with open(reportFilename, 'w') as f:
@@ -670,17 +705,40 @@ with open(reportFilename, 'w') as f:
     if profileMode == 0:
         for i in range(len(reportConfig)):
             modelType, reportFile = reportConfig[i]
-            f.write("\nMODEL FORMAT: %s\n" % modelType)
+            f.write("\n### MODEL FORMAT: %s\n" % modelType)
             with open(scriptPath+'/models/develop/'+reportFile) as benchmarkFile:
                 for line in benchmarkFile:
                     f.write("%s" % line)
     else:
         modelType, reportFile = reportConfig[profileMode - 1]
-        f.write("\nMODEL FORMAT: %s\n" % modelType)
+        f.write("\n### MODEL FORMAT: %s\n" % modelType)
         with open(scriptPath+'/models/develop/'+reportFile) as benchmarkFile:
             for line in benchmarkFile:
                 f.write("%s" % line)
 
+    f.write("\n")
+
+    f.write("ROCm Package and Version Report\n")
+    f.write("-------------\n")
+    f.write("\n")
+    write_lines_as_table(['Package', 'Version'], rocm_packages, f)
+    f.write("\n\n\n")
+
+    f.write("Vbios Report\n")
+    f.write("-------------\n")
+    f.write("\n")
+    write_formatted(vbios, f)
+    f.write("\n")
+    f.write("ROCm Device Info Report\n")
+    f.write("-------------\n")
+    f.write("\n")
+    write_formatted(rocmInfo, f)
+    f.write("\n")
+
+    f.write("Dynamic Libraries Report\n")
+    f.write("-----------------\n")
+    f.write("\n")
+    write_formatted(lib_tree, f)
     f.write("\n")
 
     f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2021 -- runNeuralNetworkTests.py V-"+__version__+"**\n")

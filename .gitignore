@@ -7,4 +7,5 @@ platform_report*
 rocprof_profiling_temp*
 rocprof_profiling_outputs*
 rocprof_vision_tests_outputs*
-oclDumps*
+dumps*
+generatedGDFs*

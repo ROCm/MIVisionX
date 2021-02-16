@@ -21,7 +21,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo zypper ref && sudo zypper update && sudo zypper addrepo https://download.opensuse.org/repositories/openSUSE:Leap:15.2/standard/openSUSE:Leap:15.2.repo '
-        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4'
+        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4 inxi'
         cmake = 'cmake'
     }
     else {
@@ -59,6 +59,7 @@ def runTestCommand (platform, project) {
                 """
 
     platform.runCommand(this, command)
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/*.md""")
 }
 
 def runPackageCommand(platform, project) {
@@ -91,6 +92,7 @@ def runPackageCommand(platform, project) {
 
     platform.runCommand(this, command)
     platform.archiveArtifacts(this, packageHelper[1])
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.md""")
 }
 
 return this

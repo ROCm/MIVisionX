@@ -22,15 +22,15 @@ THE SOFTWARE.
 
 #ifndef MIVISIONX_HIP_KERNELS_H
 #define MIVISIONX_HIP_KERNELS_H
-#include <VX/vx.h>
 #include "hip/hip_runtime.h"
+#include <VX/vx.h>
 #include "ago_haf_cpu.h"
 
 typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
 #define PIXELSATURATEU8(pixel)  (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)    ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
-#define HIPSELECT(a,b,c)        (c ? b : a)
+#define HIPSELECT(a, b, c)        (c ? b : a)
 
 typedef struct d_uint6 {
   uint data[6];
@@ -46,11 +46,13 @@ typedef struct d_float8 {
 
 // common device kernels
 
+extern uint32_t __builtin_amdgcn_cvt_pk_u8_f32(float, uint32_t, uint32_t);
+
 __device__ __forceinline__ uint pack_(float4 src) {
-    return ((uint)src.x  & 0xFF) |
-           (((uint)src.y & 0xFF) << 8) |
-           (((uint)src.z & 0xFF) << 16) |
-           (((uint)src.w & 0xFF) << 24);
+    return __builtin_amdgcn_cvt_pk_u8_f32(src.w, 3,
+               __builtin_amdgcn_cvt_pk_u8_f32(src.z, 2,
+                   __builtin_amdgcn_cvt_pk_u8_f32(src.y, 1,
+                       __builtin_amdgcn_cvt_pk_u8_f32(src.x, 0, 0))));
 }
 
 __device__ __forceinline__ float4 unpack_(uint src) {
@@ -77,7 +79,7 @@ __device__ __forceinline__ float unpack3_(uint src) {
 }
 
 __device__ __forceinline__ float4 fabs4(float4 src) {
-    return make_float4(fabs(src.x), fabs(src.y), fabs(src.z), fabs(src.w));
+    return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
 }
 
 template<class T>
@@ -96,7 +98,7 @@ __device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
     return (short) hip_clamp(a, (float) INT16_MIN, (float) INT16_MAX);
 }
 
-__device__ __forceinline__ void hip_convert_U8_U1 (uint2 * p0, __u_char p1) {
+__device__ __forceinline__ void hip_convert_U8_U1 (uint2 * p0, unsigned char p1) {
     uint2 r;
     r.x  = (-(p1 &   1)) & 0x000000ff;
     r.x |= (-(p1 &   2)) & 0x0000ff00;
@@ -109,8 +111,8 @@ __device__ __forceinline__ void hip_convert_U8_U1 (uint2 * p0, __u_char p1) {
     *p0 = r;
 }
 
-__device__ __forceinline__ void hip_convert_U1_U8 (__u_char * p0, uint2 p1) {
-    __u_char r;
+__device__ __forceinline__ void hip_convert_U1_U8 (unsigned char * p0, uint2 p1) {
+    unsigned char r;
     r  =  p1.x        &   1;
     r |= (p1.x >>  7) &   2;
     r |= (p1.x >> 14) &   4;

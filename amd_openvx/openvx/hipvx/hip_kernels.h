@@ -30,7 +30,6 @@ typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
 #define PIXELSATURATEU8(pixel)  (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)    ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
-#define HIPSELECT(a,b,c)        (c ? b : a)
 
 typedef struct d_uint6 {
   uint data[6];
@@ -116,10 +115,6 @@ __device__ __forceinline__ void hip_convert_U1_U8 (__u_char * p0, uint2 p1) {
     r |= (p1.y >> 10) &  64;
     r |= (p1.y >> 17) & 128;
     *p0 = r;
-}
-
-__device__ __forceinline__ float4 hip_select (float4 a, float4 b, int c) {
-    return (c ? b : a);
 }
 
 // common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere
@@ -766,7 +761,7 @@ int HipExec_ChannelExtract_U8U8U8U8_U32(
         );
 int HipExec_ChannelCombine_U16_U8U8(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
         const vx_uint8 *pHipSrcImage2, vx_uint32 srcImage2StrideInBytes
         );
@@ -943,7 +938,7 @@ int HipExec_FormatConvert_UV12_IUV(
         vx_uint8 *pHipDstChromaImage, vx_uint32 DstChromaImageStrideInBytes,
         const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
         const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes
-        );
+        ); 
 int HipExec_ColorConvert_YUV4_RGBX(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,

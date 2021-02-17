@@ -22,10 +22,8 @@ THE SOFTWARE.
 
 
 
-//#include "../ago/ago_internal.h"
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
-#include "hip_kernels.h"
+#include "hip_common.h"
+#include "hip_host_decls.h"
 
 __global__ void __attribute__((visibility("default")))
 Hip_Copy_U8_U8 (

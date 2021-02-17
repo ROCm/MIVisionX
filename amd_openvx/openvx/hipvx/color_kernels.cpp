@@ -20,8 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-//#include "../ago/ago_internal.h"
-#include "hip_kernels.h"
+#include "hip_common.h"
+#include "hip_host_decls.h"
 
 #define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELROUNDU8(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))

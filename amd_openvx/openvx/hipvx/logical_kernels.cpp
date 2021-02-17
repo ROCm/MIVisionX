@@ -20,7 +20,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "hip_kernels.h"
+#include "hip_common.h"
+#include "hip_host_decls.h"
 
 // ----------------------------------------------------------------------------
 // VxAnd kernels for hip backend

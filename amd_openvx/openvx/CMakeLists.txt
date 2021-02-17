@@ -1,15 +1,15 @@
 # Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#  
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#  
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -84,6 +84,7 @@ if ("${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     target_link_libraries(openvx ${OpenCL_LIBRARIES})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
     message("-- ${Green}AMD OpenVX -- OpenVX built with OpenCL Support${ColourReset}")
+    message("-- ${Blue}Using OpenCL Library -- ${OpenCL_LIBRARIES}${ColourReset}")
 
 elseif ("${BACKEND}" STREQUAL "HIP")
 
@@ -103,7 +104,7 @@ elseif ("${BACKEND}" STREQUAL "HIP")
         set(hip_library_name amdhip64)
     else()
         message(FATAL_ERROR "unsupported hip compiler")
-    endif()    
+    endif()
 # add directory for hipvx
     add_subdirectory(hipvx)
     add_library(vxu SHARED api/vxu.cpp)
@@ -129,7 +130,7 @@ else()
     target_compile_definitions(vxu PUBLIC ENABLE_OPENCL=0)
     target_compile_definitions(vxu PUBLIC ENABLE_HIP=0)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++14")
-    message("-- ${Red}WARNING:OpenCL/HIP Not Found -- OpenVX built for CPU only${ColourReset}")
+    message("-- ${Yellow}WARNING:OpenCL/HIP Not Found -- OpenVX built for CPU only${ColourReset}")
 endif()
 
 install(TARGETS openvx DESTINATION lib)

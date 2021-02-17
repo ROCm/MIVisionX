@@ -138,7 +138,7 @@ If available, this project uses OpenCV for camera capture and image display.
               pyramid:<numLevels>,half|orb|<scale-factor>,<width>,<height>,<image-format>
               remap:<srcWidth>,<srcHeight>,<dstWidth>,<dstHeight>
               scalar:<data-type>,<value>
-              threshold:<thresh-type>,<data-type>
+              threshold:<thresh-type>,<input-data-type><output-data-type>
               tensor:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>
               tensor-from-roi:<master-tensor>,<num-of-dims>,{<start0>,<start1>,...},{<end0>,<end1>,...}
               tensor-from-handle:<num-of-dims>,{<dim0>,<dim1>,...},<data-type>,<fixed-point-pos>,{<stride0>,<stride1>,...},<num-alloc-handles>,<memory-type>
@@ -362,7 +362,7 @@ File **canny.gdf**:
     node org.khronos.openvx.channel_extract yuv !CHANNEL_Y luma
     
     # compute edges in luma image using Canny edge detector
-    data hyst = threshold:RANGE,UINT8:INIT,80,100
+    data hyst = threshold:RANGE,U008,U008:INIT,80,100
     data gradient_size = scalar:INT32,3
     node org.khronos.openvx.canny_edge_detector luma hyst gradient_size !NORM_L1 output
 
@@ -383,11 +383,11 @@ File **skintonedetect.gdf**:
     view output skintoneWindow
 
     # threshold objects
-    data thr95  = threshold:BINARY,UINT8:INIT,95 # threshold for computing R > 95
-    data thr40  = threshold:BINARY,UINT8:INIT,40 # threshold for computing G > 40
-    data thr20  = threshold:BINARY,UINT8:INIT,20 # threshold for computing B > 20
-    data thr15  = threshold:BINARY,UINT8:INIT,15 # threshold for computing R-G > 15
-    data thr0   = threshold:BINARY,UINT8:INIT,0  # threshold for computing R-B > 0
+    data thr95  = threshold:BINARY,U008,U008:INIT,95 # threshold for computing R > 95
+    data thr40  = threshold:BINARY,U008,U008:INIT,40 # threshold for computing G > 40
+    data thr20  = threshold:BINARY,U008,U008:INIT,20 # threshold for computing B > 20
+    data thr15  = threshold:BINARY,U008,U008:INIT,15 # threshold for computing R-G > 15
+    data thr0   = threshold:BINARY,U008,U008:INIT,0  # threshold for computing R-B > 0
 
     # virtual image objects for intermediate results
     data R      = image-virtual:0,0,U008

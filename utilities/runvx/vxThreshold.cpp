@@ -31,7 +31,8 @@ CVxParamThreshold::CVxParamThreshold()
 	// vx configuration
 	m_vxObjType = VX_TYPE_THRESHOLD;
 	m_thresh_type = VX_THRESHOLD_TYPE_BINARY;
-	m_data_type = VX_TYPE_UINT8;
+	m_input_format = VX_DF_IMAGE_U8;
+	m_output_format = VX_DF_IMAGE_U8;
 	// vx object
 	m_threshold = nullptr;
 }
@@ -53,12 +54,11 @@ int CVxParamThreshold::Shutdown(void)
 int CVxParamThreshold::Initialize(vx_context context, vx_graph graph, const char * desc)
 {
 	// get object parameters and create object
-	char objType[64], thresh_type[64], data_type[64];
-	const char * ioParams = ScanParameters(desc, "threshold:<thresh-type>,<data-type>", "s:s,s", objType, thresh_type, data_type);
+	char objType[64], thresh_type[64];
+	const char * ioParams = ScanParameters(desc, "threshold:<thresh-type>,<input-image-format>,<output-image-format>", "s:s,c,c", objType, thresh_type, &m_input_format, &m_output_format);
 	if (!_stricmp(objType, "threshold")) {
 		m_thresh_type = ovxName2Enum(thresh_type);
-		m_data_type = ovxName2Enum(data_type);
-		m_threshold = vxCreateThreshold(context, m_thresh_type, m_data_type);
+		m_threshold = vxCreateThresholdForImage(context, m_thresh_type, m_input_format, m_output_format);
 	}
 	else ReportError("ERROR: unsupported threshold type: %s\n", desc);
 	vx_status ovxStatus = vxGetStatus((vx_reference)m_threshold);
@@ -79,7 +79,6 @@ int CVxParamThreshold::InitializeIO(vx_context context, vx_graph graph, vx_refer
 	m_vxObjRef = ref;
 	m_threshold = (vx_threshold)m_vxObjRef;
 	ERROR_CHECK(vxQueryThreshold(m_threshold, VX_THRESHOLD_ATTRIBUTE_TYPE, &m_thresh_type, sizeof(m_thresh_type)));
-	ERROR_CHECK(vxQueryThreshold(m_threshold, VX_THRESHOLD_ATTRIBUTE_DATA_TYPE, &m_data_type, sizeof(m_data_type)));
 
 	// process I/O parameters
 	if (*io_params == ':') io_params++;

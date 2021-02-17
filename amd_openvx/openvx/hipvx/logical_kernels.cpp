@@ -20,29 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-
-//#include "../ago/ago_internal.h"
 #include "hip_kernels.h"
-
-#define PIXELCHECKU1(value, pixel) (value ? 255 : pixel)
-
-__device__ __forceinline__ int4 uchars_to_int4(uint src) {
-    return make_int4((int)(src&0xFF), (int)((src&0xFF00)>>8), (int)((src&0xFF0000)>>16), (int)((src&0xFF000000)>>24));
-}
-
-__device__ __forceinline__ uint int4_to_uchars(int4 src) {
-    return ((uint)src.x&0xFF) | (((uint)src.y&0xFF)<<8) | (((uint)src.z&0xFF)<<16)| (((uint)src.w&0xFF) << 24);
-}
-
-__device__ __forceinline__ unsigned char extractMSB(int4 src1, int4 src2) {
-    return ((((src1.x>>7)&1)<<7) | (((src1.y>>7)&1)<<6) | (((src1.z>>7)&1)<<5) | (((src1.w>>7)&1)<<4)
-            | (((src2.x>>7)&1)<<3) | (((src2.y>>7)&1)<<2) | (((src2.z>>7)&1)<<1) | ((src2.w>>7)&1));
-}
-
-__device__ __forceinline__ int dataConvertU1ToU8_4bytes(uint nibble) {
-    return (((nibble&1) * 0xFF) | ((((nibble>>1)&1) * 0xFF)<<8) |  ((((nibble>>2)&1) * 0xFF)<<16) | ((((nibble>>3)&1) * 0xFF)<<24));
-}
 
 // ----------------------------------------------------------------------------
 // VxAnd kernels for hip backend

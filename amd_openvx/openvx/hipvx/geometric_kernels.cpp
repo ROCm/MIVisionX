@@ -22,13 +22,8 @@ THE SOFTWARE.
 
 
 
-//#include "../ago/ago_internal.h"
-#include "hip_kernels.h"
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
-
-#define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
-#define PIXELROUNDF32(value)        ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
+#include "hip_common.h"
+#include "hip_host_decls.h"
 
 // ----------------------------------------------------------------------------
 // VxRemap kernels for hip backend

@@ -20,175 +20,13 @@ THE SOFTWARE.
 */
 
 
-#ifndef MIVISIONX_HIP_KERNELS_H
-#define MIVISIONX_HIP_KERNELS_H
+#ifndef MIVISIONX_HIP_HOST_DECLS_H
+#define MIVISIONX_HIP_HOST_DECLS_H
 #include "hip/hip_runtime.h"
 #include <VX/vx.h>
 #include "ago_haf_cpu.h"
 
 typedef struct AgoConfigScaleMatrix ago_scale_matrix_t;
-#define PIXELSATURATEU8(pixel)  (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
-#define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
-#define PIXELROUNDF32(value)    ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
-#define HIPSELECT(a, b, c)        (c ? b : a)
-
-typedef struct d_uint6 {
-  uint data[6];
-} d_uint6;
-
-typedef struct d_uint8 {
-  uint data[8];
-} d_uint8;
-
-typedef struct d_float8 {
-  float data[8];
-} d_float8;
-
-// common device kernels
-
-extern uint32_t __builtin_amdgcn_cvt_pk_u8_f32(float, uint32_t, uint32_t);
-
-__device__ __forceinline__ uint pack_(float4 src) {
-    return __builtin_amdgcn_cvt_pk_u8_f32(src.w, 3,
-               __builtin_amdgcn_cvt_pk_u8_f32(src.z, 2,
-                   __builtin_amdgcn_cvt_pk_u8_f32(src.y, 1,
-                       __builtin_amdgcn_cvt_pk_u8_f32(src.x, 0, 0))));
-}
-
-__device__ __forceinline__ float4 unpack_(uint src) {
-    return make_float4((float)(src  & 0xFF),
-                       (float)((src & 0xFF00)     >> 8),
-                       (float)((src & 0xFF0000)   >> 16),
-                       (float)((src & 0xFF000000) >> 24));
-}
-
-__device__ __forceinline__ float unpack0_(uint src) {
-    return (float)(src & 0xFF);
-}
-
-__device__ __forceinline__ float unpack1_(uint src) {
-    return (float)((src >> 8) & 0xFF);
-}
-
-__device__ __forceinline__ float unpack2_(uint src) {
-    return (float)((src >> 16) & 0xFF);
-}
-
-__device__ __forceinline__ float unpack3_(uint src) {
-    return (float)((src >> 24) & 0xFF);
-}
-
-__device__ __forceinline__ float4 fabs4(float4 src) {
-    return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
-}
-
-template<class T>
-__device__ __forceinline__  constexpr const T& hip_clamp( const T& v, const T& lo, const T& hi ) {
-    assert( !(hi < lo) );
-    return (v < lo) ? lo : (hi < v) ? hi : v;
-}
-
-__device__ __forceinline__ short hip_convert_short_rte(float a) {
-    a = rint(a);
-    return (short) a;
-}
-
-__device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
-    a = rint(a);
-    return (short) hip_clamp(a, (float) INT16_MIN, (float) INT16_MAX);
-}
-
-__device__ __forceinline__ void hip_convert_U8_U1 (uint2 * p0, unsigned char p1) {
-    uint2 r;
-    r.x  = (-(p1 &   1)) & 0x000000ff;
-    r.x |= (-(p1 &   2)) & 0x0000ff00;
-    r.x |= (-(p1 &   4)) & 0x00ff0000;
-    r.x |= (-(p1 &   8)) & 0xff000000;
-    r.y  = (-((p1 >> 4) & 1)) & 0x000000ff;
-    r.y |= (-(p1 &  32)) & 0x0000ff00;
-    r.y |= (-(p1 &  64)) & 0x00ff0000;
-    r.y |= (-(p1 & 128)) & 0xff000000;
-    *p0 = r;
-}
-
-__device__ __forceinline__ void hip_convert_U1_U8 (unsigned char * p0, uint2 p1) {
-    unsigned char r;
-    r  =  p1.x        &   1;
-    r |= (p1.x >>  7) &   2;
-    r |= (p1.x >> 14) &   4;
-    r |= (p1.x >> 21) &   8;
-    r |= (p1.y <<  4) &  16;
-    r |= (p1.y >>  3) &  32;
-    r |= (p1.y >> 10) &  64;
-    r |= (p1.y >> 17) & 128;
-    *p0 = r;
-}
-
-// common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere
-
-__device__ __forceinline__ float4 uchars_to_float4(uint src) {
-    return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
-}
-
-__device__ __forceinline__ uint float4_to_uchars(float4 src) {
-    return ((uint)src.x&0xFF) | (((uint)src.y&0xFF)<<8) | (((uint)src.z&0xFF)<<16)| (((uint)src.w&0xFF) << 24);
-}
-
-// common device kernels - to check usage later and delete accordingly
-
-// #define atan2_p0    (0.273*0.3183098862f)
-// #define atan2_p1    (0.9997878412794807f*57.29577951308232f)
-// #define atan2_p3    (-0.3258083974640975f*57.29577951308232f)
-// #define atan2_p5    (0.1555786518463281f*57.29577951308232f)
-// #define atan2_p7    (-0.04432655554792128f*57.29577951308232f)
-// #define DBL_EPSILON __DBL_EPSILON__
-
-// __device__ __forceinline__ float4 s16s_to_float4_grouped(int src1, int src2) {
-//     return make_float4((float)(src1&0xFFFF), (float)((src1&0xFFFF0000)>>16), (float)(src2&0xFFFF), (float)((src2&0xFFFF0000)>>16));
-// }
-
-// __device__ __forceinline__ float4 s16s_to_float4_ungrouped(const short int *src, unsigned int srcIdx) {
-//     short4 srcs4 = *((short4 *)(&src[srcIdx]));
-//     return make_float4((float)srcs4.x, (float)srcs4.y, (float)srcs4.z, (float)srcs4.w);
-// }
-
-// __device__ __forceinline__ void float4_to_s16s(short int *dst_s16s, unsigned int dstIdx, float4 dst_float4) {
-//     *((short4 *)(&dst_s16s[dstIdx])) = make_short4(dst_float4.x, dst_float4.y, dst_float4.z, dst_float4.w);
-// }
-
-// __device__ __forceinline__ float4 generic_mod_float4(float4 src, int b) {
-//     src.x = (float) ((int)src.x % b < 0 ? (int)src.x % b + b : (int)src.x % b);
-//     src.y = (float) ((int)src.y % b < 0 ? (int)src.y % b + b : (int)src.y % b);
-//     src.z = (float) ((int)src.z % b < 0 ? (int)src.z % b + b : (int)src.z % b);
-//     src.w = (float) ((int)src.w % b < 0 ? (int)src.w % b + b : (int)src.w % b);
-//     return src;
-// }
-
-// __device__ float Norm_Atan2_deg (float Gx, float Gy) {
-//     float scale = (float)128 / 180.f;
-//     vx_uint16 ax, ay;
-//     ax = fabsf(Gx), ay = fabsf(Gy);
-//     float a, c, c2;
-//     if (ax >= ay) {
-//         c = (float)ay / ((float)ax + (float)DBL_EPSILON);
-//         c2 = c*c;
-//         a = (((atan2_p7*c2 + atan2_p5)*c2 + atan2_p3)*c2 + atan2_p1)*c;
-//     }
-//     else {
-//         c = (float)ax / ((float)ay + (float)DBL_EPSILON);
-//         c2 = c*c;
-//         a = 90.f - (((atan2_p7*c2 + atan2_p5)*c2 + atan2_p3)*c2 + atan2_p1)*c;
-//     }
-//     if (Gx < 0)
-//     a = 180.f - a;
-//     if (Gy < 0)
-//     a = 360.f - a;
-
-//     // normalize and copy to dst
-//     float arct_norm = (a*scale + 0.5);
-//     return arct_norm;
-// }
-
 
 // arithmetic_kernels
 
@@ -1132,4 +970,4 @@ int HipExec_ChannelCopy(
         const vx_uint8    * pHipSrcImage,
         vx_uint32     srcImageStrideInBytes);
 
-#endif //MIVISIONX_HIP_KERNELS_H
+#endif //MIVISIONX_HIP_HOST_DECLS_H

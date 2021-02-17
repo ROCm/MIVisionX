@@ -22,18 +22,9 @@ THE SOFTWARE.
 
 
 
-//#include "../ago/ago_internal.h"
-#include "hip_kernels.h"
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
+#include "hip_common.h"
+#include "hip_host_decls.h"
 
-#define CHECKMAX(a, b) (a > b ? 1 : 0)
-#define CHECKMIN(a, b) (a < b ? 1 : 0)
-
-#define PIXELSATURATEU8(pixel)      (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
-#define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
-#define HIPVXMAX3(a,b,c)  ((a > b) && (a > c) ?  a : ((b > c) ? b : c))
-#define HIPVXMIN3(a,b,c)  ((a < b) && (a < c) ?  a : ((b < c) ? b : c))
 
 __device__ int FastAtan2_Canny(short int Gx, short int Gy) {
 	unsigned int ret;

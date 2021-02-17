@@ -22,14 +22,8 @@ THE SOFTWARE.
 
 
 
-//#include "../ago/ago_internal.h"
-#include "hip_kernels.h"
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
-
-__device__ __forceinline__ uint float4ToUint(float4 src) {
-    return ((int)src.x&0xFF) | (((int)src.y&0xFF)<<8) | (((int)src.z&0xFF)<<16)| (((int)src.w&0xFF) << 24);
-}
+#include "hip_common.h"
+#include "hip_host_decls.h"
 
 // ----------------------------------------------------------------------------
 // VxSet kernels for hip backend

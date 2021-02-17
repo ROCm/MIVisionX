@@ -22,58 +22,8 @@ THE SOFTWARE.
 
 
 
-//#include "../ago/ago_internal.h"
-#include "hip_kernels.h"
-#include "hip/hip_runtime_api.h"
-#include "hip/hip_runtime.h"
-
-#define PIXELTHRESHOLDBINARY(pixel, thresholdValue) ((pixel > thresholdValue) ? 255 : 0)
-#define PIXELTHRESHOLDRANGE(pixel, thresholdLower, thresholdUpper)  ((pixel > thresholdUpper) ? 0 : ((pixel < thresholdLower) ? 0 : 255))
-#define PIXELBITCHECKU1(pixel) ((pixel == (vx_int32)0) ? ((vx_uint32)0) : ((vx_uint32)1))
-
-__device__ __forceinline__ int4 uchars_to_int4(uint src) {
-    return make_int4((int)(src&0xFF), (int)((src&0xFF00)>>8), (int)((src&0xFF0000)>>16), (int)((src&0xFF000000)>>24));
-}
-
-__device__ __forceinline__ uint int4_to_uchars(int4 src) {
-    return ((uint)src.x&0xFF) | (((uint)src.y&0xFF)<<8) | (((uint)src.z&0xFF)<<16)| (((uint)src.w&0xFF) << 24);
-}
-
-__device__ __forceinline__ void prefixSum(unsigned int* output, unsigned int* input, int w, int nextpow2) {
-    extern __shared__ int temp[];
-    const int tdx = threadIdx.x;
-    int offset = 1;
-    const int tdx2 = 2*tdx;
-    const int tdx2p = tdx2 + 1;
-    temp[tdx2] =  tdx2 < w ? input[tdx2] : 0;
-    temp[tdx2p] = tdx2p < w ? input[tdx2p] : 0;
-    for(int d = nextpow2>>1; d > 0; d >>= 1) {
-        __syncthreads();
-        if(tdx < d) {
-            int ai = offset*(tdx2p)-1;
-            int bi = offset*(tdx2+2)-1;
-            temp[bi] += temp[ai];
-        }
-        offset *= 2;
-    }
-    int last = temp[nextpow2 - 1];
-    if(tdx == 0) temp[nextpow2 - 1] = 0;
-    for(int d = 1; d < nextpow2; d *= 2) {
-        offset >>= 1;
-        __syncthreads();
-        if(tdx < d ) {
-            int ai = offset*(tdx2p)-1;
-            int bi = offset*(tdx2+2)-1;
-            int t  = temp[ai];
-            temp[ai] = temp[bi];
-            temp[bi] += t;
-        }
-    }
-    __syncthreads();
-    if(tdx2 < w)  output[tdx2 - 1] = temp[tdx2];
-    if(tdx2p < w) output[tdx2p - 1] = temp[tdx2p];
-    if(tdx2p < w) output[w - 1] = last;
-}
+#include "hip_common.h"
+#include "hip_host_decls.h"
 
 // ----------------------------------------------------------------------------
 // VxThreshold kernels for hip backend

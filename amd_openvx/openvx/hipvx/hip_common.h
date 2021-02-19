@@ -38,13 +38,6 @@ __device__ __forceinline__ uint pack_(float4 src) {
                        __builtin_amdgcn_cvt_pk_u8_f32(src.x, 0, 0))));
 }
 
-__device__ __forceinline__ float4 unpack_(uint src) {
-    return make_float4((float)(src  & 0xFF),
-                       (float)((src & 0xFF00)     >> 8),
-                       (float)((src & 0xFF0000)   >> 16),
-                       (float)((src & 0xFF000000) >> 24));
-}
-
 __device__ __forceinline__ float unpack0_(uint src) {
     return (float)(src & 0xFF);
 }
@@ -59,6 +52,10 @@ __device__ __forceinline__ float unpack2_(uint src) {
 
 __device__ __forceinline__ float unpack3_(uint src) {
     return (float)((src >> 24) & 0xFF);
+}
+
+__device__ __forceinline__ float4 unpack_(uint src) {
+    return make_float4(unpack0_(src), unpack1_(src), unpack2_(src), unpack3_(src));
 }
 
 __device__ __forceinline__ float dot2_(float2 src0, float2 src1) {
@@ -79,16 +76,14 @@ __device__ __forceinline__ uint lerp_(uint src0, uint src1, uint src2) {
                 (((((src0 >> 16) & 0xff) + ((src1 >> 16) & 0xff) + ((src2 >> 16) & 1)) >> 1) << 16) +
                 (((((src0 >> 24) & 0xff) + ((src1 >> 24) & 0xff) + ((src2 >> 24) & 1)) >> 1) << 24);
     return dst;
-}
 
 __device__ __forceinline__ float4 fabs4(float4 src) {
     return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
 }
 
 template<class T>
-__device__ __forceinline__  constexpr const T& hip_clamp( const T& v, const T& lo, const T& hi ) {
-    assert( !(hi < lo) );
-    return (v < lo) ? lo : (hi < v) ? hi : v;
+__device__ __forceinline__ T hip_clamp(T v, T lo, T hi) {
+    return min(max(v, lo), hi);
 }
 
 __device__ __forceinline__ short hip_convert_short_rte(float a) {

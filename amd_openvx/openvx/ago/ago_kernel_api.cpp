@@ -11099,7 +11099,8 @@ int agoKernel_ChannelExtract_U8_U32_Pos0(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg = node->paramList[1];
         if (HipExec_ChannelExtract_U8_U32_Pos0(node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->opencl_buffer_offset, oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->u.img.format)) {
             status = VX_FAILURE;
         }
     }
@@ -11193,7 +11194,8 @@ int agoKernel_ChannelExtract_U8_U32_Pos1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
         if (HipExec_ChannelExtract_U8_U32_Pos1(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
-            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->u.img.format)) {
             status = VX_FAILURE;
         }
     }
@@ -11286,7 +11288,8 @@ int agoKernel_ChannelExtract_U8_U32_Pos2(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
         if (HipExec_ChannelExtract_U8_U32_Pos2(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
-            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->u.img.format)) {
             status = VX_FAILURE;
         }
     }
@@ -11380,7 +11383,8 @@ int agoKernel_ChannelExtract_U8_U32_Pos3(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
         if (HipExec_ChannelExtract_U8_U32_Pos3(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
-            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->u.img.format)) {
             status = VX_FAILURE;
         }
     }

@@ -412,19 +412,23 @@ int HipExec_ChannelExtract_U8_U24_Pos2(
 int HipExec_ChannelExtract_U8_U32_Pos0(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes);
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_df_image srcType);
 int HipExec_ChannelExtract_U8_U32_Pos1(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes);
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_df_image srcType);
 int HipExec_ChannelExtract_U8_U32_Pos2(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes);
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_df_image srcType);
 int HipExec_ChannelExtract_U8_U32_Pos3(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes);
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_df_image srcType);
 int HipExec_ChannelExtract_U8U8U8_U24(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage0, vx_uint8 *pHipDstImage1, vx_uint8 *pHipDstImage2,

@@ -372,78 +372,8 @@ int HipExec_Not_U1_U1(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes);
 
-// statistical_kernels
-
-int HipExec_Threshold_U8_U8_Binary(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdValue);
-int HipExec_Threshold_U8_U8_Range(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdLower, vx_int32 thresholdUpper);
-int HipExec_Threshold_U1_U8_Binary(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdValue);
-int HipExec_Threshold_U1_U8_Range(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdLower, vx_int32 thresholdUpper);
-int HipExec_ThresholdNot_U8_U8_Binary(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdValue);
-int HipExec_ThresholdNot_U8_U8_Range(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdLower, vx_int32 thresholdUpper);
-int HipExec_ThresholdNot_U1_U8_Binary(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdValue);
-int HipExec_ThresholdNot_U1_U8_Range(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_int32 thresholdLower, vx_int32 thresholdUpper);
-int HipExec_IntegralImage_U32_U8(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint32 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_MinMax_DATA_U8(
-        hipStream_t stream, vx_int32 *pHipDstMinValue, vx_int32 *pHipDstMaxValue,
-        vx_uint32 srcWidth, vx_uint32 srcHeight,
-        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_MeanStdDev_DATA_U8(
-        hipStream_t stream, vx_float32 *pHipSum, vx_float32 *pHipSumOfSquared,
-        vx_uint32  srcWidth, vx_uint32  srcHeight,
-        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-// int HipExec_HistogramFixedBins_DATA_U8(
-// 		vx_uint32     dstHist[],
-// 		vx_uint32     distBinCount,
-// 		vx_uint32     distOffset,
-// 		vx_uint32     distRange,
-// 		vx_uint32     distWindow,
-// 		vx_uint32     srcWidth,
-// 		vx_uint32     srcHeight,
-// 		vx_uint8    * pSrcImage,
-// 		vx_uint32     srcImageStrideInBytes);
-
 // color_kernels
 
-int HipExec_Lut_U8_U8(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_uint8 *lut);
 int HipExec_ColorDepth_U8_S16_Wrap(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -673,6 +603,71 @@ int HipExec_ScaleUp2x2_U8_U8(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
 
+// statistical_kernels
+
+int HipExec_Threshold_U8_U8_Binary(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdValue);
+int HipExec_Threshold_U8_U8_Range(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdLower, vx_int32 thresholdUpper);
+int HipExec_Threshold_U1_U8_Binary(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdValue);
+int HipExec_Threshold_U1_U8_Range(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdLower, vx_int32 thresholdUpper);
+int HipExec_ThresholdNot_U8_U8_Binary(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdValue);
+int HipExec_ThresholdNot_U8_U8_Range(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdLower, vx_int32 thresholdUpper);
+int HipExec_ThresholdNot_U1_U8_Binary(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdValue);
+int HipExec_ThresholdNot_U1_U8_Range(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_int32 thresholdLower, vx_int32 thresholdUpper);
+int HipExec_IntegralImage_U32_U8(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint32 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_MinMax_DATA_U8(
+        hipStream_t stream, vx_int32 *pHipDstMinValue, vx_int32 *pHipDstMaxValue,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_MeanStdDev_DATA_U8(
+        hipStream_t stream, vx_float32 *pHipSum, vx_float32 *pHipSumOfSquared,
+        vx_uint32  srcWidth, vx_uint32  srcHeight,
+        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+// int HipExec_HistogramFixedBins_DATA_U8(
+// 		vx_uint32     dstHist[],
+// 		vx_uint32     distBinCount,
+// 		vx_uint32     distOffset,
+// 		vx_uint32     distRange,
+// 		vx_uint32     distWindow,
+// 		vx_uint32     srcWidth,
+// 		vx_uint32     srcHeight,
+// 		vx_uint8    * pSrcImage,
+// 		vx_uint32     srcImageStrideInBytes);
+
 // filter_kernels
 
 int HipExec_Box_U8_U8_3x3(
@@ -829,6 +824,11 @@ int HipExec_Remap_U8_U8_Bilinear(
 
 // vision_kernels
 
+int HipExec_Lut_U8_U8(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_uint8 *lut);
 int HipExec_HarrisSobel_HG3_U8_3x3(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,

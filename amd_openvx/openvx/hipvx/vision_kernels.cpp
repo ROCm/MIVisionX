@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -94,6 +94,45 @@ typedef struct {
 } ago_harris_Gxy_t;
 
 // ----------------------------------------------------------------------------
+// VxLut kernels for hip backend
+// ----------------------------------------------------------------------------
+
+__global__ void __attribute__((visibility("default")))
+Hip_Lut_U8_U8(
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
+    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
+    const unsigned char *lut
+    ) {
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x * 4 >= dstWidth) || (y >= dstHeight))
+        return;
+    unsigned int dstIdx = y * (dstImageStrideInBytes >> 2) + x;
+    unsigned int src1Idx = y * (srcImage1StrideInBytes >> 2) + x;
+    uchar4 src = uchars_to_uchar4(pSrcImage1[src1Idx]);
+    pDstImage[dstIdx] = uchar4_to_uchars(make_uchar4(lut[src.x], lut[src.y], lut[src.z], lut[src.w]));
+}
+int HipExec_Lut_U8_U8(
+    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+    vx_uint8 *lut
+    ) {
+    int localThreads_x = 16, localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 3) >> 2, globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_Lut_U8_U8,
+                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                       dim3(localThreads_x, localThreads_y),
+                       0, stream, dstWidth, dstHeight,
+                       (unsigned int *)pHipDstImage, dstImageStrideInBytes,
+                       (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
+                       (const unsigned char *)lut);
+    return VX_SUCCESS;
+}
+
+// ----------------------------------------------------------------------------
 // VxFastCorners kernels for hip backend
 // ----------------------------------------------------------------------------
 __global__ void __attribute__((visibility("default")))
@@ -147,7 +186,7 @@ Hip_FastCorners_XY_U8_NoSupression(
 				(CHECKMIN(pSrcImage[offsets[4]], cand) << 4) | (CHECKMIN(pSrcImage[offsets[5]], cand) << 5) | (CHECKMIN(pSrcImage[offsets[6]], cand) << 6) | (CHECKMIN(pSrcImage[offsets[7]], cand) << 7) |
 				(CHECKMIN(pSrcImage[offsets[8]], cand) << 8) | (CHECKMIN(pSrcImage[offsets[9]], cand) << 9) | (CHECKMIN(pSrcImage[offsets[10]], cand) << 10) | (CHECKMIN(pSrcImage[offsets[11]], cand) << 11) |
 				(CHECKMIN(pSrcImage[offsets[12]], cand) << 12) | (CHECKMIN(pSrcImage[offsets[13]], cand) << 13) | (CHECKMIN(pSrcImage[offsets[14]], cand) << 14) | (CHECKMIN(pSrcImage[offsets[15]], cand) << 15);
-	
+
 	int cornerMask = 511, isCorner = 0;
 	if (mask_max || mask_min) {
 		mask_max = mask_max | (mask_max << 16);
@@ -161,7 +200,7 @@ Hip_FastCorners_XY_U8_NoSupression(
 			mask_min >>= 1;
 		}
 	}
-	
+
 	if(isCorner) {
 		unsigned int old_idx = atomicAdd(cornercount, 1);
 		if (old_idx < capacityOfDstCorner) {
@@ -187,7 +226,7 @@ int HipExec_FastCorners_XY_U8_NoSupression(
 	) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = srcWidth-6,   globalThreads_y = srcHeight-6;
-    
+
 	vx_uint32 *cornerCount;
 	hipMalloc(&cornerCount, sizeof(vx_uint32));
 	hipMemcpy(cornerCount, pHipDstCornerCount, sizeof(vx_uint32), hipMemcpyHostToDevice);
@@ -277,10 +316,10 @@ Hip_FastCorners_XY_U8_Supression(
 	if (isCorner(maskP)) {
 		short thresh_upper = 255;
 		short thresh_lower = threshold;
-		
-		while (thresh_upper - thresh_lower > 1)	{					// Binary search 
+
+		while (thresh_upper - thresh_lower > 1)	{					// Binary search
 			strength_pos = (thresh_upper + thresh_lower) >> 1;
-			if (isCornerPlus(cand, boundary, strength_pos))  
+			if (isCornerPlus(cand, boundary, strength_pos))
 				thresh_lower = strength_pos;
 			else
 				thresh_upper = strength_pos;
@@ -305,7 +344,7 @@ Hip_FastCorners_XY_U8_Supression(
 	if (isCorner(maskN)) {
 		short thresh_upper = 255;
 		short thresh_lower = threshold;
-		
+
 		while (thresh_upper - thresh_lower > 1) {						// Binary search
 			strength_neg = (thresh_upper + thresh_lower) >> 1;
 			if (isCornerMinus(cand, boundary, strength_neg))
@@ -332,14 +371,14 @@ Hip_NonMaximumSupression_3x3(
 	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x + 3;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y + 3;
     if ((x >= (srcWidth - 3)) || (y >= (srcHeight - 3))) return;
-    unsigned int srcIdx =  y*(srcWidth) + x;	
+    unsigned int srcIdx =  y*(srcWidth) + x;
 	unsigned int srcIdxTopRow = srcIdx - srcWidth;
     unsigned int srcIdxBottomRow = srcIdx + srcWidth;
 
 	if(pScratch[srcIdx] == 0 || pScratch[srcIdx] < pScratch [srcIdxTopRow - 1] || pScratch[srcIdx] <= pScratch[srcIdxBottomRow - 1]
 		|| pScratch[srcIdx] < pScratch [srcIdxTopRow] || pScratch[srcIdx] <= pScratch[srcIdxBottomRow]
 		|| pScratch[srcIdx] < pScratch [srcIdxTopRow + 1] || pScratch[srcIdx] <= pScratch[srcIdxBottomRow + 1]
-		|| pScratch[srcIdx] < pScratch[srcIdx - 1] || pScratch[srcIdx] <= pScratch[srcIdx + 1])	    
+		|| pScratch[srcIdx] < pScratch[srcIdx - 1] || pScratch[srcIdx] <= pScratch[srcIdx + 1])
 			return;
 
 	unsigned int old_idx = atomicAdd(cornercount, 1);
@@ -387,7 +426,7 @@ int HipExec_FastCorners_XY_U8_Supression(
 					dim3(localThreads_x, localThreads_y),
 					0, stream, capacityOfDstCorner,(vx_keypoint_t *) pHipDstCorner, (vx_uint32 *)cornerCount,
 					srcWidth, srcHeight, (const unsigned char*) pHipSrcImage, srcImageStrideInBytes, strength_threshold, (unsigned char *)Scratch);
-	
+
 	hipMemcpyDtoH(pHipScratch, Scratch, sizeof(vx_uint8) * srcWidth * srcHeight);
 	hipMemcpyDtoH(pHipDstCornerCount, cornerCount, sizeof(vx_uint32));
 	hipFree(cornerCount);
@@ -443,7 +482,7 @@ int HipExec_HarrisSobel_HG3_U8_3x3(
     hipMalloc(&hipGy, 144);
     hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
-    
+
     hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_3x3,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -452,7 +491,7 @@ int HipExec_HarrisSobel_HG3_U8_3x3(
                     (float *)pDstGxy_ , dstGxyStrideInBytes,
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
-                    
+
 /* Printing Outputs for verification */
     /*ago_harris_Gxy_t *DstGxy;
     DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
@@ -523,7 +562,7 @@ int HipExec_HarrisSobel_HG3_U8_5x5(
     hipMalloc(&hipGy, 400);
     hipMemcpy(hipGx, gx, 400, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 400, hipMemcpyHostToDevice);
-    
+
     hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_5x5,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -532,7 +571,7 @@ int HipExec_HarrisSobel_HG3_U8_5x5(
                     (float *)pDstGxy_ , (dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
-                    
+
 /* Printing Outputs for verification */
     /*ago_harris_Gxy_t *DstGxy;
     DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
@@ -611,7 +650,7 @@ int HipExec_HarrisSobel_HG3_U8_7x7(
     hipMalloc(&hipGy, 784);
     hipMemcpy(hipGx, gx, 784, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 784, hipMemcpyHostToDevice);
-    
+
     hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_7x7,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -620,7 +659,7 @@ int HipExec_HarrisSobel_HG3_U8_7x7(
                     (float *)pDstGxy_ , (dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
-                    
+
 /* Printing Outputs for verification */
     /*ago_harris_Gxy_t *DstGxy;
     DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
@@ -650,7 +689,7 @@ Hip_HarrisScore_HVC_HG3_3x3(
 	) {
 	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
 	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-		
+
 	unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
 	unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
 
@@ -666,17 +705,17 @@ Hip_HarrisScore_HVC_HG3_3x3(
 	int srcIdxTopRow1, srcIdxBottomRow1;
 	srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
 	srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
-	gx2 =  
+	gx2 =
 	(float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx +
-	(float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + 
+	(float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx +
 	(float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx;
 
-	gxy2 = 
-	(float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + 
+	gxy2 =
+	(float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GxGy +
 	(float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy +
 	(float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy ;
 
-	gy2 = 
+	gy2 =
 	(float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GyGy +
 	(float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy +
 	(float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy;
@@ -686,7 +725,7 @@ Hip_HarrisScore_HVC_HG3_3x3(
 	Mc = detA - (sensitivity * traceA * traceA);
 	Mc /= normalization_factor;
 	if(Mc > strength_threshold){
-		pDstVc[dstIdx] = (float)Mc; 
+		pDstVc[dstIdx] = (float)Mc;
 	}
 	else{
 		pDstVc[dstIdx] = (float)0;
@@ -710,7 +749,7 @@ int HipExec_HarrisScore_HVC_HG3_3x3(
                     (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
-                    
+
 /* Printing Outputs for verification */
     /*float *pDstVc_;
     pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
@@ -741,7 +780,7 @@ Hip_HarrisScore_HVC_HG3_5x5(
 	) {
 	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
 	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-		
+
 	unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
 	unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
 
@@ -759,21 +798,21 @@ Hip_HarrisScore_HVC_HG3_5x5(
 	srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
 	srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
 	srcIdxBottomRow2 = srcIdx + (2*srcGxyStrideInBytes);
-	gx2 =  
+	gx2 =
 	(float)pSrcGxy[srcIdxTopRow2 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow2].GxGx +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGx +
 	(float)pSrcGxy[srcIdxTopRow1 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGx +
 	(float)pSrcGxy[srcIdx-2].GxGx + (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + (float)pSrcGxy[srcIdx+2].GxGx +
 	(float)pSrcGxy[srcIdxBottomRow1 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGx +
 	(float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx ;
 
-	gxy2 = 
+	gxy2 =
 	(float)pSrcGxy[srcIdxTopRow2 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow2].GxGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGy +
 	(float)pSrcGxy[srcIdxTopRow1 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGy +
 	(float)pSrcGxy[srcIdx-2].GxGy + (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy + (float)pSrcGxy[srcIdx+2].GxGy +
 	(float)pSrcGxy[srcIdxBottomRow1 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGy +
 	(float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy ;
 
-	gy2 = 
+	gy2 =
 	(float)pSrcGxy[srcIdxTopRow2 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow2].GyGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GyGy +
 	(float)pSrcGxy[srcIdxTopRow1 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GyGy +
 	(float)pSrcGxy[srcIdx-2].GyGy + (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy + (float)pSrcGxy[srcIdx+2].GyGy +
@@ -785,7 +824,7 @@ Hip_HarrisScore_HVC_HG3_5x5(
 	Mc = detA - (sensitivity * traceA * traceA);
 	Mc /= normalization_factor;
 	if(Mc > strength_threshold) {
-		pDstVc[dstIdx] = (float)Mc; 	
+		pDstVc[dstIdx] = (float)Mc;
 	}
 	else {
 		pDstVc[dstIdx] = (float)0;
@@ -809,7 +848,7 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
                     (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
-                    
+
 /* Printing Outputs for verification */
     /*
 	float *pDstVc_;
@@ -842,7 +881,7 @@ Hip_HarrisScore_HVC_HG3_7x7(
 	) {
 	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
 	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-		
+
 	unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
 	unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
 
@@ -862,31 +901,31 @@ Hip_HarrisScore_HVC_HG3_7x7(
 	srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
 	srcIdxBottomRow2 = srcIdx + (2*srcGxyStrideInBytes);
   srcIdxBottomRow3 = srcIdx + (3*srcGxyStrideInBytes);
-	gx2 =  
+	gx2 =
   (float)pSrcGxy[srcIdxTopRow3 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow3].GxGx +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGx +
 	(float)pSrcGxy[srcIdxTopRow2 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow2].GxGx +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGx +
 	(float)pSrcGxy[srcIdxTopRow1 - 3].GxGx +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGx +
 	(float)pSrcGxy[srcIdx-3].GxGx +(float)pSrcGxy[srcIdx-2].GxGx + (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + (float)pSrcGxy[srcIdx+2].GxGx +(float)pSrcGxy[srcIdx+3].GxGx +
 	(float)pSrcGxy[srcIdxBottomRow1 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGx +
-	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGx + 
+	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGx +
   (float)pSrcGxy[srcIdxBottomRow3 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGx;
 
-	gxy2 = 
+	gxy2 =
   (float)pSrcGxy[srcIdxTopRow3 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow3].GxGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGy +
 	(float)pSrcGxy[srcIdxTopRow2 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow2].GxGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGy +
 	(float)pSrcGxy[srcIdxTopRow1 - 3].GxGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGy +
 	(float)pSrcGxy[srcIdx-3].GxGy +(float)pSrcGxy[srcIdx-2].GxGy + (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy + (float)pSrcGxy[srcIdx+2].GxGy +(float)pSrcGxy[srcIdx+3].GxGy +
 	(float)pSrcGxy[srcIdxBottomRow1 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGy +
-	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGy + 
+	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGy +
   (float)pSrcGxy[srcIdxBottomRow3 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGy;
 
-	gy2 = 
+	gy2 =
   (float)pSrcGxy[srcIdxTopRow3 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow3].GyGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GyGy +
 	(float)pSrcGxy[srcIdxTopRow2 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow2].GyGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GyGy +
 	(float)pSrcGxy[srcIdxTopRow1 - 3].GyGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GyGy +
 	(float)pSrcGxy[srcIdx-3].GyGy +(float)pSrcGxy[srcIdx-2].GyGy + (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy + (float)pSrcGxy[srcIdx+2].GyGy +(float)pSrcGxy[srcIdx+3].GyGy +
 	(float)pSrcGxy[srcIdxBottomRow1 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GyGy +
-	(float)pSrcGxy[srcIdxBottomRow2 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GyGy + 
+	(float)pSrcGxy[srcIdxBottomRow2 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GyGy +
   (float)pSrcGxy[srcIdxBottomRow3 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GyGy;
 
 	traceA = gx2 + gy2;
@@ -894,7 +933,7 @@ Hip_HarrisScore_HVC_HG3_7x7(
 	Mc = detA - (sensitivity * traceA * traceA);
 	Mc /= normalization_factor;
 	if(Mc > strength_threshold) {
-		pDstVc[dstIdx] = (float)Mc; 	
+		pDstVc[dstIdx] = (float)Mc;
 	}
 	else {
 		pDstVc[dstIdx] = (float)0;
@@ -918,7 +957,7 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
                     (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
-                    
+
 /* Printing Outputs for verification */
     /*
 	float *pDstVc_;
@@ -1004,7 +1043,7 @@ int HipExec_CannySobel_U16_U8_3x3_L1NORM(
     // printf("\nPrinting source before first Canny:");
     // unsigned char *pHostSrcImage = (unsigned char *) calloc(dstWidth * dstHeight, sizeof(unsigned char));
     // hipMemcpy(pHostSrcImage, pHipSrcImage, dstWidth * dstHeight * sizeof(unsigned char), hipMemcpyDeviceToHost);
-    
+
     // for (int i = 0; i < dstHeight; i++)
     // {
     //   printf("\n");
@@ -1022,7 +1061,7 @@ int HipExec_CannySobel_U16_U8_3x3_L1NORM(
     hipMalloc(&hipGy, 144);
     hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
-    
+
 	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_3x3_L1NORM,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1032,14 +1071,14 @@ int HipExec_CannySobel_U16_U8_3x3_L1NORM(
                     (const short int *)hipGx, (const short int *)hipGy);
     hipFree(&hipGx);
     hipFree(&hipGy);
-	
+
 	// printf("\nPrinting after first Canny:");
     // vx_uint32 dstride = dstImageStrideInBytes>>1;
     // int *pHostDstImage = (int *) calloc(dstWidth * dstHeight, sizeof(int));
     // short int *pHostDstImageShort;
     // pHostDstImageShort = (short int *)pHostDstImage;
     // hipMemcpy(pHostDstImageShort, pHipDstImage, dstWidth * dstHeight * sizeof(int), hipMemcpyDeviceToHost);
-    
+
     // for (int i = 0; i < dstHeight; i++)
     // {
     //   printf("\n");
@@ -1105,7 +1144,7 @@ int HipExec_CannySobel_U16_U8_3x3_L2NORM(
     hipMalloc(&hipGy, 144);
     hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
-    
+
 	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_3x3_L2NORM,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1142,18 +1181,18 @@ Hip_CannySobel_U16_U8_5x5_L1NORM(
     srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
     short int sum1 = 0;
     sum1 = (
-      gx[12] * (short int)*(pSrcImage + srcIdx) + gx[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gx[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gx[22] * (short int)*(pSrcImage + srcIdxBottomRow2) + 
-      gx[11] * (short int)*(pSrcImage + srcIdx - 1) + gx[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + 
-      gx[10] * (short int)*(pSrcImage + srcIdx - 2) + gx[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + 
-      gx[13] * (short int)*(pSrcImage + srcIdx + 1) + gx[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + 
+      gx[12] * (short int)*(pSrcImage + srcIdx) + gx[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gx[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gx[22] * (short int)*(pSrcImage + srcIdxBottomRow2) +
+      gx[11] * (short int)*(pSrcImage + srcIdx - 1) + gx[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) +
+      gx[10] * (short int)*(pSrcImage + srcIdx - 2) + gx[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) +
+      gx[13] * (short int)*(pSrcImage + srcIdx + 1) + gx[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) +
       gx[14] * (short int)*(pSrcImage + srcIdx + 2) + gx[9] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gx[4] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gx[19] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[24] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2)
     );
     short int sum2 = 0;
     sum2 = (
-      gy[12] * (short int)*(pSrcImage + srcIdx) + gy[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gy[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gy[22] * (short int)*(pSrcImage + srcIdxBottomRow2) + 
-      gy[11] * (short int)*(pSrcImage + srcIdx - 1) + gy[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + 
-      gy[10] * (short int)*(pSrcImage + srcIdx - 2) + gy[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + 
-      gy[13] * (short int)*(pSrcImage + srcIdx + 1) + gy[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + 
+      gy[12] * (short int)*(pSrcImage + srcIdx) + gy[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gy[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gy[22] * (short int)*(pSrcImage + srcIdxBottomRow2) +
+      gy[11] * (short int)*(pSrcImage + srcIdx - 1) + gy[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) +
+      gy[10] * (short int)*(pSrcImage + srcIdx - 2) + gy[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) +
+      gy[13] * (short int)*(pSrcImage + srcIdx + 1) + gy[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) +
       gy[14] * (short int)*(pSrcImage + srcIdx + 2) + gy[9] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gy[4] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gy[19] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[24] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2)
     );
     sum2 = ~sum2 + 1;
@@ -1177,7 +1216,7 @@ int HipExec_CannySobel_U16_U8_5x5_L1NORM(
     hipMalloc(&hipGy, 400);
     hipMemcpy(hipGx, gx, 400, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 400, hipMemcpyHostToDevice);
-    
+
 	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_5x5_L1NORM,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1214,18 +1253,18 @@ Hip_CannySobel_U16_U8_5x5_L2NORM(
     srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
     short int sum1 = 0;
     sum1 = (
-      gx[12] * (short int)*(pSrcImage + srcIdx) + gx[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gx[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gx[22] * (short int)*(pSrcImage + srcIdxBottomRow2) + 
-      gx[11] * (short int)*(pSrcImage + srcIdx - 1) + gx[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + 
-      gx[10] * (short int)*(pSrcImage + srcIdx - 2) + gx[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + 
-      gx[13] * (short int)*(pSrcImage + srcIdx + 1) + gx[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + 
+      gx[12] * (short int)*(pSrcImage + srcIdx) + gx[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gx[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gx[22] * (short int)*(pSrcImage + srcIdxBottomRow2) +
+      gx[11] * (short int)*(pSrcImage + srcIdx - 1) + gx[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) +
+      gx[10] * (short int)*(pSrcImage + srcIdx - 2) + gx[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) +
+      gx[13] * (short int)*(pSrcImage + srcIdx + 1) + gx[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) +
       gx[14] * (short int)*(pSrcImage + srcIdx + 2) + gx[9] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gx[4] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gx[19] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[24] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2)
     );
     short int sum2 = 0;
     sum2 = (
-      gy[12] * (short int)*(pSrcImage + srcIdx) + gy[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gy[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gy[22] * (short int)*(pSrcImage + srcIdxBottomRow2) + 
-      gy[11] * (short int)*(pSrcImage + srcIdx - 1) + gy[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + 
-      gy[10] * (short int)*(pSrcImage + srcIdx - 2) + gy[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + 
-      gy[13] * (short int)*(pSrcImage + srcIdx + 1) + gy[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + 
+      gy[12] * (short int)*(pSrcImage + srcIdx) + gy[7] * (short int)*(pSrcImage + srcIdxTopRow1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow2) + gy[17] * (short int)*(pSrcImage + srcIdxBottomRow1) + gy[22] * (short int)*(pSrcImage + srcIdxBottomRow2) +
+      gy[11] * (short int)*(pSrcImage + srcIdx - 1) + gy[6] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[16] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[21] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) +
+      gy[10] * (short int)*(pSrcImage + srcIdx - 2) + gy[5] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[15] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[20] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) +
+      gy[13] * (short int)*(pSrcImage + srcIdx + 1) + gy[8] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[3] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[18] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[23] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) +
       gy[14] * (short int)*(pSrcImage + srcIdx + 2) + gy[9] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gy[4] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gy[19] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[24] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2)
     );
     sum2 = ~sum2 + 1;
@@ -1249,7 +1288,7 @@ int HipExec_CannySobel_U16_U8_5x5_L2NORM(
     hipMalloc(&hipGy, 400);
     hipMemcpy(hipGx, gx, 400, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 400, hipMemcpyHostToDevice);
-    
+
 	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_5x5_L2NORM,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1287,22 +1326,22 @@ Hip_CannySobel_U16_U8_7x7_L1NORM(
     srcIdxBottomRow3 = srcIdx + (3 * srcImageStrideInBytes);
     int sum1 = 0;
     sum1 = (
-      gx[24] * (int)*(pSrcImage + srcIdx) + gx[17] * (int)*(pSrcImage + srcIdxTopRow1) + gx[10] * (int)*(pSrcImage + srcIdxTopRow2) + gx[3] * (int)*(pSrcImage + srcIdxTopRow3) + gx[31] * (int)*(pSrcImage + srcIdxBottomRow1) + gx[38] * (int)*(pSrcImage + srcIdxBottomRow2) + gx[45] * (int)*(pSrcImage + srcIdxBottomRow3) + 
-      gx[23] * (int)*(pSrcImage + srcIdx - 1) + gx[16] * (int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[9] * (int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[2] * (int)*(pSrcImage + srcIdxTopRow3 - 1) + gx[30] * (int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[37] * (int)*(pSrcImage + srcIdxBottomRow2 - 1) + gx[44] * (int)*(pSrcImage + srcIdxBottomRow3 - 1) + 
-      gx[22] * (int)*(pSrcImage + srcIdx - 2) + gx[15] * (int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[8] * (int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[1] * (int)*(pSrcImage + srcIdxTopRow3 - 2) + gx[29] * (int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[36] * (int)*(pSrcImage + srcIdxBottomRow2 - 2) + gx[43] * (int)*(pSrcImage + srcIdxBottomRow3 - 2) + 
-      gx[21] * (int)*(pSrcImage + srcIdx - 3) + gx[14] * (int)*(pSrcImage + srcIdxTopRow1 - 3) + gx[7] * (int)*(pSrcImage + srcIdxTopRow2 - 3) + gx[0] * (int)*(pSrcImage + srcIdxTopRow3 - 3) + gx[28] * (int)*(pSrcImage + srcIdxBottomRow1 - 3) + gx[35] * (int)*(pSrcImage + srcIdxBottomRow2 - 3) + gx[42] * (int)*(pSrcImage + srcIdxBottomRow3 - 3) + 
-      gx[25] * (int)*(pSrcImage + srcIdx + 1) + gx[18] * (int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[11] * (int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[4] * (int)*(pSrcImage + srcIdxTopRow3 + 1) + gx[32] * (int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[39] * (int)*(pSrcImage + srcIdxBottomRow2 + 1) + gx[46] * (int)*(pSrcImage + srcIdxBottomRow3 + 1) + 
-      gx[26] * (int)*(pSrcImage + srcIdx + 2) + gx[19] * (int)*(pSrcImage + srcIdxTopRow1 + 2) + gx[12] * (int)*(pSrcImage + srcIdxTopRow2 + 2) + gx[5] * (int)*(pSrcImage + srcIdxTopRow3 + 2) + gx[33] * (int)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[40] * (int)*(pSrcImage + srcIdxBottomRow2 + 2) + gx[47] * (int)*(pSrcImage + srcIdxBottomRow3 + 2) + 
+      gx[24] * (int)*(pSrcImage + srcIdx) + gx[17] * (int)*(pSrcImage + srcIdxTopRow1) + gx[10] * (int)*(pSrcImage + srcIdxTopRow2) + gx[3] * (int)*(pSrcImage + srcIdxTopRow3) + gx[31] * (int)*(pSrcImage + srcIdxBottomRow1) + gx[38] * (int)*(pSrcImage + srcIdxBottomRow2) + gx[45] * (int)*(pSrcImage + srcIdxBottomRow3) +
+      gx[23] * (int)*(pSrcImage + srcIdx - 1) + gx[16] * (int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[9] * (int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[2] * (int)*(pSrcImage + srcIdxTopRow3 - 1) + gx[30] * (int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[37] * (int)*(pSrcImage + srcIdxBottomRow2 - 1) + gx[44] * (int)*(pSrcImage + srcIdxBottomRow3 - 1) +
+      gx[22] * (int)*(pSrcImage + srcIdx - 2) + gx[15] * (int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[8] * (int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[1] * (int)*(pSrcImage + srcIdxTopRow3 - 2) + gx[29] * (int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[36] * (int)*(pSrcImage + srcIdxBottomRow2 - 2) + gx[43] * (int)*(pSrcImage + srcIdxBottomRow3 - 2) +
+      gx[21] * (int)*(pSrcImage + srcIdx - 3) + gx[14] * (int)*(pSrcImage + srcIdxTopRow1 - 3) + gx[7] * (int)*(pSrcImage + srcIdxTopRow2 - 3) + gx[0] * (int)*(pSrcImage + srcIdxTopRow3 - 3) + gx[28] * (int)*(pSrcImage + srcIdxBottomRow1 - 3) + gx[35] * (int)*(pSrcImage + srcIdxBottomRow2 - 3) + gx[42] * (int)*(pSrcImage + srcIdxBottomRow3 - 3) +
+      gx[25] * (int)*(pSrcImage + srcIdx + 1) + gx[18] * (int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[11] * (int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[4] * (int)*(pSrcImage + srcIdxTopRow3 + 1) + gx[32] * (int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[39] * (int)*(pSrcImage + srcIdxBottomRow2 + 1) + gx[46] * (int)*(pSrcImage + srcIdxBottomRow3 + 1) +
+      gx[26] * (int)*(pSrcImage + srcIdx + 2) + gx[19] * (int)*(pSrcImage + srcIdxTopRow1 + 2) + gx[12] * (int)*(pSrcImage + srcIdxTopRow2 + 2) + gx[5] * (int)*(pSrcImage + srcIdxTopRow3 + 2) + gx[33] * (int)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[40] * (int)*(pSrcImage + srcIdxBottomRow2 + 2) + gx[47] * (int)*(pSrcImage + srcIdxBottomRow3 + 2) +
       gx[27] * (int)*(pSrcImage + srcIdx + 3) + gx[20] * (int)*(pSrcImage + srcIdxTopRow1 + 3) + gx[13] * (int)*(pSrcImage + srcIdxTopRow2 + 3) + gx[6] * (int)*(pSrcImage + srcIdxTopRow3 + 3) + gx[34] * (int)*(pSrcImage + srcIdxBottomRow1 + 3) + gx[41] * (int)*(pSrcImage + srcIdxBottomRow2 + 3) + gx[48] * (int)*(pSrcImage + srcIdxBottomRow3 + 3)
     );
     int sum2 = 0;
     sum2 = (
-      gy[24] * (int)*(pSrcImage + srcIdx) + gy[17] * (int)*(pSrcImage + srcIdxTopRow1) + gy[10] * (int)*(pSrcImage + srcIdxTopRow2) + gy[3] * (int)*(pSrcImage + srcIdxTopRow3) + gy[31] * (int)*(pSrcImage + srcIdxBottomRow1) + gy[38] * (int)*(pSrcImage + srcIdxBottomRow2) + gy[45] * (int)*(pSrcImage + srcIdxBottomRow3) + 
-      gy[23] * (int)*(pSrcImage + srcIdx - 1) + gy[16] * (int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[9] * (int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[2] * (int)*(pSrcImage + srcIdxTopRow3 - 1) + gy[30] * (int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[37] * (int)*(pSrcImage + srcIdxBottomRow2 - 1) + gy[44] * (int)*(pSrcImage + srcIdxBottomRow3 - 1) + 
-      gy[22] * (int)*(pSrcImage + srcIdx - 2) + gy[15] * (int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[8] * (int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[1] * (int)*(pSrcImage + srcIdxTopRow3 - 2) + gy[29] * (int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[36] * (int)*(pSrcImage + srcIdxBottomRow2 - 2) + gy[43] * (int)*(pSrcImage + srcIdxBottomRow3 - 2) + 
-      gy[21] * (int)*(pSrcImage + srcIdx - 3) + gy[14] * (int)*(pSrcImage + srcIdxTopRow1 - 3) + gy[7] * (int)*(pSrcImage + srcIdxTopRow2 - 3) + gy[0] * (int)*(pSrcImage + srcIdxTopRow3 - 3) + gy[28] * (int)*(pSrcImage + srcIdxBottomRow1 - 3) + gy[35] * (int)*(pSrcImage + srcIdxBottomRow2 - 3) + gy[42] * (int)*(pSrcImage + srcIdxBottomRow3 - 3) + 
-      gy[25] * (int)*(pSrcImage + srcIdx + 1) + gy[18] * (int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[11] * (int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[4] * (int)*(pSrcImage + srcIdxTopRow3 + 1) + gy[32] * (int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[39] * (int)*(pSrcImage + srcIdxBottomRow2 + 1) + gy[46] * (int)*(pSrcImage + srcIdxBottomRow3 + 1) + 
-      gy[26] * (int)*(pSrcImage + srcIdx + 2) + gy[19] * (int)*(pSrcImage + srcIdxTopRow1 + 2) + gy[12] * (int)*(pSrcImage + srcIdxTopRow2 + 2) + gy[5] * (int)*(pSrcImage + srcIdxTopRow3 + 2) + gy[33] * (int)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[40] * (int)*(pSrcImage + srcIdxBottomRow2 + 2) + gy[47] * (int)*(pSrcImage + srcIdxBottomRow3 + 2) + 
+      gy[24] * (int)*(pSrcImage + srcIdx) + gy[17] * (int)*(pSrcImage + srcIdxTopRow1) + gy[10] * (int)*(pSrcImage + srcIdxTopRow2) + gy[3] * (int)*(pSrcImage + srcIdxTopRow3) + gy[31] * (int)*(pSrcImage + srcIdxBottomRow1) + gy[38] * (int)*(pSrcImage + srcIdxBottomRow2) + gy[45] * (int)*(pSrcImage + srcIdxBottomRow3) +
+      gy[23] * (int)*(pSrcImage + srcIdx - 1) + gy[16] * (int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[9] * (int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[2] * (int)*(pSrcImage + srcIdxTopRow3 - 1) + gy[30] * (int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[37] * (int)*(pSrcImage + srcIdxBottomRow2 - 1) + gy[44] * (int)*(pSrcImage + srcIdxBottomRow3 - 1) +
+      gy[22] * (int)*(pSrcImage + srcIdx - 2) + gy[15] * (int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[8] * (int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[1] * (int)*(pSrcImage + srcIdxTopRow3 - 2) + gy[29] * (int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[36] * (int)*(pSrcImage + srcIdxBottomRow2 - 2) + gy[43] * (int)*(pSrcImage + srcIdxBottomRow3 - 2) +
+      gy[21] * (int)*(pSrcImage + srcIdx - 3) + gy[14] * (int)*(pSrcImage + srcIdxTopRow1 - 3) + gy[7] * (int)*(pSrcImage + srcIdxTopRow2 - 3) + gy[0] * (int)*(pSrcImage + srcIdxTopRow3 - 3) + gy[28] * (int)*(pSrcImage + srcIdxBottomRow1 - 3) + gy[35] * (int)*(pSrcImage + srcIdxBottomRow2 - 3) + gy[42] * (int)*(pSrcImage + srcIdxBottomRow3 - 3) +
+      gy[25] * (int)*(pSrcImage + srcIdx + 1) + gy[18] * (int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[11] * (int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[4] * (int)*(pSrcImage + srcIdxTopRow3 + 1) + gy[32] * (int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[39] * (int)*(pSrcImage + srcIdxBottomRow2 + 1) + gy[46] * (int)*(pSrcImage + srcIdxBottomRow3 + 1) +
+      gy[26] * (int)*(pSrcImage + srcIdx + 2) + gy[19] * (int)*(pSrcImage + srcIdxTopRow1 + 2) + gy[12] * (int)*(pSrcImage + srcIdxTopRow2 + 2) + gy[5] * (int)*(pSrcImage + srcIdxTopRow3 + 2) + gy[33] * (int)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[40] * (int)*(pSrcImage + srcIdxBottomRow2 + 2) + gy[47] * (int)*(pSrcImage + srcIdxBottomRow3 + 2) +
       gy[27] * (int)*(pSrcImage + srcIdx + 3) + gy[20] * (int)*(pSrcImage + srcIdxTopRow1 + 3) + gy[13] * (int)*(pSrcImage + srcIdxTopRow2 + 3) + gy[6] * (int)*(pSrcImage + srcIdxTopRow3 + 3) + gy[34] * (int)*(pSrcImage + srcIdxBottomRow1 + 3) + gy[41] * (int)*(pSrcImage + srcIdxBottomRow2 + 3) + gy[48] * (int)*(pSrcImage + srcIdxBottomRow3 + 3)
     );
     sum2 = ~sum2 + 1;
@@ -1326,7 +1365,7 @@ int HipExec_CannySobel_U16_U8_7x7_L1NORM(
     hipMalloc(&hipGy, 784);
     hipMemcpy(hipGx, gx, 784, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 784, hipMemcpyHostToDevice);
-    
+
 	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_7x7_L1NORM,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),
@@ -1365,22 +1404,22 @@ Hip_CannySobel_U16_U8_7x7_L2NORM(
     srcIdxBottomRow3 = srcIdx + (3 * srcImageStrideInBytes);
     short int sum1 = 0;
     sum1 = (
-      gx[24] * (short int)*(pSrcImage + srcIdx) + gx[17] * (short int)*(pSrcImage + srcIdxTopRow1) + gx[10] * (short int)*(pSrcImage + srcIdxTopRow2) + gx[3] * (short int)*(pSrcImage + srcIdxTopRow3) + gx[31] * (short int)*(pSrcImage + srcIdxBottomRow1) + gx[38] * (short int)*(pSrcImage + srcIdxBottomRow2) + gx[45] * (short int)*(pSrcImage + srcIdxBottomRow3) + 
-      gx[23] * (short int)*(pSrcImage + srcIdx - 1) + gx[16] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[9] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow3 - 1) + gx[30] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[37] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + gx[44] * (short int)*(pSrcImage + srcIdxBottomRow3 - 1) + 
-      gx[22] * (short int)*(pSrcImage + srcIdx - 2) + gx[15] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[8] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow3 - 2) + gx[29] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[36] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + gx[43] * (short int)*(pSrcImage + srcIdxBottomRow3 - 2) + 
-      gx[21] * (short int)*(pSrcImage + srcIdx - 3) + gx[14] * (short int)*(pSrcImage + srcIdxTopRow1 - 3) + gx[7] * (short int)*(pSrcImage + srcIdxTopRow2 - 3) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow3 - 3) + gx[28] * (short int)*(pSrcImage + srcIdxBottomRow1 - 3) + gx[35] * (short int)*(pSrcImage + srcIdxBottomRow2 - 3) + gx[42] * (short int)*(pSrcImage + srcIdxBottomRow3 - 3) + 
-      gx[25] * (short int)*(pSrcImage + srcIdx + 1) + gx[18] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[11] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[4] * (short int)*(pSrcImage + srcIdxTopRow3 + 1) + gx[32] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[39] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + gx[46] * (short int)*(pSrcImage + srcIdxBottomRow3 + 1) + 
-      gx[26] * (short int)*(pSrcImage + srcIdx + 2) + gx[19] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gx[12] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gx[5] * (short int)*(pSrcImage + srcIdxTopRow3 + 2) + gx[33] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[40] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2) + gx[47] * (short int)*(pSrcImage + srcIdxBottomRow3 + 2) + 
+      gx[24] * (short int)*(pSrcImage + srcIdx) + gx[17] * (short int)*(pSrcImage + srcIdxTopRow1) + gx[10] * (short int)*(pSrcImage + srcIdxTopRow2) + gx[3] * (short int)*(pSrcImage + srcIdxTopRow3) + gx[31] * (short int)*(pSrcImage + srcIdxBottomRow1) + gx[38] * (short int)*(pSrcImage + srcIdxBottomRow2) + gx[45] * (short int)*(pSrcImage + srcIdxBottomRow3) +
+      gx[23] * (short int)*(pSrcImage + srcIdx - 1) + gx[16] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gx[9] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow3 - 1) + gx[30] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[37] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + gx[44] * (short int)*(pSrcImage + srcIdxBottomRow3 - 1) +
+      gx[22] * (short int)*(pSrcImage + srcIdx - 2) + gx[15] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gx[8] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow3 - 2) + gx[29] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[36] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + gx[43] * (short int)*(pSrcImage + srcIdxBottomRow3 - 2) +
+      gx[21] * (short int)*(pSrcImage + srcIdx - 3) + gx[14] * (short int)*(pSrcImage + srcIdxTopRow1 - 3) + gx[7] * (short int)*(pSrcImage + srcIdxTopRow2 - 3) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow3 - 3) + gx[28] * (short int)*(pSrcImage + srcIdxBottomRow1 - 3) + gx[35] * (short int)*(pSrcImage + srcIdxBottomRow2 - 3) + gx[42] * (short int)*(pSrcImage + srcIdxBottomRow3 - 3) +
+      gx[25] * (short int)*(pSrcImage + srcIdx + 1) + gx[18] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gx[11] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gx[4] * (short int)*(pSrcImage + srcIdxTopRow3 + 1) + gx[32] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[39] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + gx[46] * (short int)*(pSrcImage + srcIdxBottomRow3 + 1) +
+      gx[26] * (short int)*(pSrcImage + srcIdx + 2) + gx[19] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gx[12] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gx[5] * (short int)*(pSrcImage + srcIdxTopRow3 + 2) + gx[33] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[40] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2) + gx[47] * (short int)*(pSrcImage + srcIdxBottomRow3 + 2) +
       gx[27] * (short int)*(pSrcImage + srcIdx + 3) + gx[20] * (short int)*(pSrcImage + srcIdxTopRow1 + 3) + gx[13] * (short int)*(pSrcImage + srcIdxTopRow2 + 3) + gx[6] * (short int)*(pSrcImage + srcIdxTopRow3 + 3) + gx[34] * (short int)*(pSrcImage + srcIdxBottomRow1 + 3) + gx[41] * (short int)*(pSrcImage + srcIdxBottomRow2 + 3) + gx[48] * (short int)*(pSrcImage + srcIdxBottomRow3 + 3)
     );
     short int sum2 = 0;
     sum2 = (
-      gy[24] * (short int)*(pSrcImage + srcIdx) + gy[17] * (short int)*(pSrcImage + srcIdxTopRow1) + gy[10] * (short int)*(pSrcImage + srcIdxTopRow2) + gy[3] * (short int)*(pSrcImage + srcIdxTopRow3) + gy[31] * (short int)*(pSrcImage + srcIdxBottomRow1) + gy[38] * (short int)*(pSrcImage + srcIdxBottomRow2) + gy[45] * (short int)*(pSrcImage + srcIdxBottomRow3) + 
-      gy[23] * (short int)*(pSrcImage + srcIdx - 1) + gy[16] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[9] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow3 - 1) + gy[30] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[37] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + gy[44] * (short int)*(pSrcImage + srcIdxBottomRow3 - 1) + 
-      gy[22] * (short int)*(pSrcImage + srcIdx - 2) + gy[15] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[8] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow3 - 2) + gy[29] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[36] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + gy[43] * (short int)*(pSrcImage + srcIdxBottomRow3 - 2) + 
-      gy[21] * (short int)*(pSrcImage + srcIdx - 3) + gy[14] * (short int)*(pSrcImage + srcIdxTopRow1 - 3) + gy[7] * (short int)*(pSrcImage + srcIdxTopRow2 - 3) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow3 - 3) + gy[28] * (short int)*(pSrcImage + srcIdxBottomRow1 - 3) + gy[35] * (short int)*(pSrcImage + srcIdxBottomRow2 - 3) + gy[42] * (short int)*(pSrcImage + srcIdxBottomRow3 - 3) + 
-      gy[25] * (short int)*(pSrcImage + srcIdx + 1) + gy[18] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[11] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[4] * (short int)*(pSrcImage + srcIdxTopRow3 + 1) + gy[32] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[39] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + gy[46] * (short int)*(pSrcImage + srcIdxBottomRow3 + 1) + 
-      gy[26] * (short int)*(pSrcImage + srcIdx + 2) + gy[19] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gy[12] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gy[5] * (short int)*(pSrcImage + srcIdxTopRow3 + 2) + gy[33] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[40] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2) + gy[47] * (short int)*(pSrcImage + srcIdxBottomRow3 + 2) + 
+      gy[24] * (short int)*(pSrcImage + srcIdx) + gy[17] * (short int)*(pSrcImage + srcIdxTopRow1) + gy[10] * (short int)*(pSrcImage + srcIdxTopRow2) + gy[3] * (short int)*(pSrcImage + srcIdxTopRow3) + gy[31] * (short int)*(pSrcImage + srcIdxBottomRow1) + gy[38] * (short int)*(pSrcImage + srcIdxBottomRow2) + gy[45] * (short int)*(pSrcImage + srcIdxBottomRow3) +
+      gy[23] * (short int)*(pSrcImage + srcIdx - 1) + gy[16] * (short int)*(pSrcImage + srcIdxTopRow1 - 1) + gy[9] * (short int)*(pSrcImage + srcIdxTopRow2 - 1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow3 - 1) + gy[30] * (short int)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[37] * (short int)*(pSrcImage + srcIdxBottomRow2 - 1) + gy[44] * (short int)*(pSrcImage + srcIdxBottomRow3 - 1) +
+      gy[22] * (short int)*(pSrcImage + srcIdx - 2) + gy[15] * (short int)*(pSrcImage + srcIdxTopRow1 - 2) + gy[8] * (short int)*(pSrcImage + srcIdxTopRow2 - 2) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow3 - 2) + gy[29] * (short int)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[36] * (short int)*(pSrcImage + srcIdxBottomRow2 - 2) + gy[43] * (short int)*(pSrcImage + srcIdxBottomRow3 - 2) +
+      gy[21] * (short int)*(pSrcImage + srcIdx - 3) + gy[14] * (short int)*(pSrcImage + srcIdxTopRow1 - 3) + gy[7] * (short int)*(pSrcImage + srcIdxTopRow2 - 3) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow3 - 3) + gy[28] * (short int)*(pSrcImage + srcIdxBottomRow1 - 3) + gy[35] * (short int)*(pSrcImage + srcIdxBottomRow2 - 3) + gy[42] * (short int)*(pSrcImage + srcIdxBottomRow3 - 3) +
+      gy[25] * (short int)*(pSrcImage + srcIdx + 1) + gy[18] * (short int)*(pSrcImage + srcIdxTopRow1 + 1) + gy[11] * (short int)*(pSrcImage + srcIdxTopRow2 + 1) + gy[4] * (short int)*(pSrcImage + srcIdxTopRow3 + 1) + gy[32] * (short int)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[39] * (short int)*(pSrcImage + srcIdxBottomRow2 + 1) + gy[46] * (short int)*(pSrcImage + srcIdxBottomRow3 + 1) +
+      gy[26] * (short int)*(pSrcImage + srcIdx + 2) + gy[19] * (short int)*(pSrcImage + srcIdxTopRow1 + 2) + gy[12] * (short int)*(pSrcImage + srcIdxTopRow2 + 2) + gy[5] * (short int)*(pSrcImage + srcIdxTopRow3 + 2) + gy[33] * (short int)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[40] * (short int)*(pSrcImage + srcIdxBottomRow2 + 2) + gy[47] * (short int)*(pSrcImage + srcIdxBottomRow3 + 2) +
       gy[27] * (short int)*(pSrcImage + srcIdx + 3) + gy[20] * (short int)*(pSrcImage + srcIdxTopRow1 + 3) + gy[13] * (short int)*(pSrcImage + srcIdxTopRow2 + 3) + gy[6] * (short int)*(pSrcImage + srcIdxTopRow3 + 3) + gy[34] * (short int)*(pSrcImage + srcIdxBottomRow1 + 3) + gy[41] * (short int)*(pSrcImage + srcIdxBottomRow2 + 3) + gy[48] * (short int)*(pSrcImage + srcIdxBottomRow3 + 3)
     );
     sum2 = ~sum2 + 1;
@@ -1404,7 +1443,7 @@ int HipExec_CannySobel_U16_U8_7x7_L2NORM(
     hipMalloc(&hipGy, 784);
     hipMemcpy(hipGx, gx, 784, hipMemcpyHostToDevice);
     hipMemcpy(hipGy, gy, 784, hipMemcpyHostToDevice);
-    
+
 	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_7x7_L2NORM,
                     dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                     dim3(localThreads_x, localThreads_y),

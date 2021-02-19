@@ -268,8 +268,8 @@ Hip_ChannelExtract_U8_U24_Pos0(uint dstWidth, uint dstHeight,
     d_uint6 src1 = *((d_uint6 *)(&pSrcImage1[src1Idx]));
     uint2 dst;
 
-    dst.x = pack_((float4)(unpack0_(src1.data[0]), unpack3_(src1.data[0]), unpack2_(src1.data[1]), unpack1_(src1.data[2])));
-    dst.y = pack_((float4)(unpack0_(src1.data[3]), unpack3_(src1.data[3]), unpack2_(src1.data[4]), unpack1_(src1.data[5])));
+    dst.x = pack_(make_float4(unpack0_(src1.data[0]), unpack3_(src1.data[0]), unpack2_(src1.data[1]), unpack1_(src1.data[2])));
+    dst.y = pack_(make_float4(unpack0_(src1.data[3]), unpack3_(src1.data[3]), unpack2_(src1.data[4]), unpack1_(src1.data[5])));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -306,8 +306,8 @@ Hip_ChannelExtract_U8_U24_Pos1(uint dstWidth, uint dstHeight,
     d_uint6 src1 = *((d_uint6 *)(&pSrcImage1[src1Idx]));
     uint2 dst;
 
-    dst.x = pack_((float4)(unpack1_(src1.data[0]), unpack0_(src1.data[1]), unpack3_(src1.data[1]), unpack2_(src1.data[2])));
-    dst.y = pack_((float4)(unpack1_(src1.data[3]), unpack0_(src1.data[4]), unpack3_(src1.data[4]), unpack2_(src1.data[5])));
+    dst.x = pack_(make_float4(unpack1_(src1.data[0]), unpack0_(src1.data[1]), unpack3_(src1.data[1]), unpack2_(src1.data[2])));
+    dst.y = pack_(make_float4(unpack1_(src1.data[3]), unpack0_(src1.data[4]), unpack3_(src1.data[4]), unpack2_(src1.data[5])));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -344,8 +344,8 @@ Hip_ChannelExtract_U8_U24_Pos2(uint dstWidth, uint dstHeight,
     d_uint6 src1 = *((d_uint6 *)(&pSrcImage1[src1Idx]));
     uint2 dst;
 
-    dst.x = pack_((float4)(unpack2_(src1.data[0]), unpack1_(src1.data[1]), unpack0_(src1.data[2]), unpack3_(src1.data[2])));
-    dst.y = pack_((float4)(unpack2_(src1.data[3]), unpack1_(src1.data[4]), unpack0_(src1.data[5]), unpack3_(src1.data[5])));
+    dst.x = pack_(make_float4(unpack2_(src1.data[0]), unpack1_(src1.data[1]), unpack0_(src1.data[2]), unpack3_(src1.data[2])));
+    dst.y = pack_(make_float4(unpack2_(src1.data[3]), unpack1_(src1.data[4]), unpack0_(src1.data[5]), unpack3_(src1.data[5])));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -382,8 +382,8 @@ Hip_ChannelExtract_U8_U32_Pos0(uint dstWidth, uint dstHeight,
     d_uint8 src1 = *((d_uint8 *)(&pSrcImage1[src1Idx]));
     uint2 dst;
 
-    dst.x = pack_((float4)(unpack0_(src1.data[0]), unpack0_(src1.data[1]), unpack0_(src1.data[2]), unpack0_(src1.data[3])));
-    dst.y = pack_((float4)(unpack0_(src1.data[4]), unpack0_(src1.data[5]), unpack0_(src1.data[6]), unpack0_(src1.data[7])));
+    dst.x = pack_(make_float4(unpack0_(src1.data[0]), unpack0_(src1.data[1]), unpack0_(src1.data[2]), unpack0_(src1.data[3])));
+    dst.y = pack_(make_float4(unpack0_(src1.data[4]), unpack0_(src1.data[5]), unpack0_(src1.data[6]), unpack0_(src1.data[7])));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -420,8 +420,8 @@ Hip_ChannelExtract_U8_U32_Pos1(uint dstWidth, uint dstHeight,
     d_uint8 src1 = *((d_uint8 *)(&pSrcImage1[src1Idx]));
     uint2 dst;
 
-    dst.x = pack_((float4)(unpack1_(src1.data[0]), unpack1_(src1.data[1]), unpack1_(src1.data[2]), unpack1_(src1.data[3])));
-    dst.y = pack_((float4)(unpack1_(src1.data[4]), unpack1_(src1.data[5]), unpack1_(src1.data[6]), unpack1_(src1.data[7])));
+    dst.x = pack_(make_float4(unpack1_(src1.data[0]), unpack1_(src1.data[1]), unpack1_(src1.data[2]), unpack1_(src1.data[3])));
+    dst.y = pack_(make_float4(unpack1_(src1.data[4]), unpack1_(src1.data[5]), unpack1_(src1.data[6]), unpack1_(src1.data[7])));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -458,8 +458,8 @@ Hip_ChannelExtract_U8_U32_Pos2(uint dstWidth, uint dstHeight,
     d_uint8 src1 = *((d_uint8 *)(&pSrcImage1[src1Idx]));
     uint2 dst;
 
-    dst.x = pack_((float4)(unpack2_(src1.data[0]), unpack2_(src1.data[1]), unpack2_(src1.data[2]), unpack2_(src1.data[3])));
-    dst.y = pack_((float4)(unpack2_(src1.data[4]), unpack2_(src1.data[5]), unpack2_(src1.data[6]), unpack2_(src1.data[7])));
+    dst.x = pack_(make_float4(unpack2_(src1.data[0]), unpack2_(src1.data[1]), unpack2_(src1.data[2]), unpack2_(src1.data[3])));
+    dst.y = pack_(make_float4(unpack2_(src1.data[4]), unpack2_(src1.data[5]), unpack2_(src1.data[6]), unpack2_(src1.data[7])));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -496,8 +496,8 @@ Hip_ChannelExtract_U8_U32_Pos3(uint dstWidth, uint dstHeight,
     d_uint8 src1 = *((d_uint8 *)(&pSrcImage1[src1Idx]));
     uint2 dst;
 
-    dst.x = pack_((float4)(unpack3_(src1.data[0]), unpack3_(src1.data[1]), unpack3_(src1.data[2]), unpack3_(src1.data[3])));
-    dst.y = pack_((float4)(unpack3_(src1.data[4]), unpack3_(src1.data[5]), unpack3_(src1.data[6]), unpack3_(src1.data[7])));
+    dst.x = pack_(make_float4(unpack3_(src1.data[0]), unpack3_(src1.data[1]), unpack3_(src1.data[2]), unpack3_(src1.data[3])));
+    dst.y = pack_(make_float4(unpack3_(src1.data[4]), unpack3_(src1.data[5]), unpack3_(src1.data[6]), unpack3_(src1.data[7])));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -534,12 +534,12 @@ Hip_ChannelExtract_U8U8U8_U24(uint dstWidth, uint dstHeight,
     d_uint6 src1 = *((d_uint6 *)(&pSrcImage1[src1Idx]));
     uint2 dst1, dst2, dst3;
 
-    dst1.x = pack_((float4)(unpack0_(src1.data[0]), unpack3_(src1.data[0]), unpack2_(src1.data[1]), unpack1_(src1.data[2])));
-    dst1.y = pack_((float4)(unpack0_(src1.data[3]), unpack3_(src1.data[3]), unpack2_(src1.data[4]), unpack1_(src1.data[5])));
-    dst2.x = pack_((float4)(unpack1_(src1.data[0]), unpack0_(src1.data[1]), unpack3_(src1.data[1]), unpack2_(src1.data[2])));
-    dst2.y = pack_((float4)(unpack1_(src1.data[3]), unpack0_(src1.data[4]), unpack3_(src1.data[4]), unpack2_(src1.data[5])));
-    dst3.x = pack_((float4)(unpack2_(src1.data[0]), unpack1_(src1.data[1]), unpack0_(src1.data[2]), unpack3_(src1.data[2])));
-    dst3.y = pack_((float4)(unpack2_(src1.data[3]), unpack1_(src1.data[4]), unpack0_(src1.data[5]), unpack3_(src1.data[5])));
+    dst1.x = pack_(make_float4(unpack0_(src1.data[0]), unpack3_(src1.data[0]), unpack2_(src1.data[1]), unpack1_(src1.data[2])));
+    dst1.y = pack_(make_float4(unpack0_(src1.data[3]), unpack3_(src1.data[3]), unpack2_(src1.data[4]), unpack1_(src1.data[5])));
+    dst2.x = pack_(make_float4(unpack1_(src1.data[0]), unpack0_(src1.data[1]), unpack3_(src1.data[1]), unpack2_(src1.data[2])));
+    dst2.y = pack_(make_float4(unpack1_(src1.data[3]), unpack0_(src1.data[4]), unpack3_(src1.data[4]), unpack2_(src1.data[5])));
+    dst3.x = pack_(make_float4(unpack2_(src1.data[0]), unpack1_(src1.data[1]), unpack0_(src1.data[2]), unpack3_(src1.data[2])));
+    dst3.y = pack_(make_float4(unpack2_(src1.data[3]), unpack1_(src1.data[4]), unpack0_(src1.data[5]), unpack3_(src1.data[5])));
 
     *((uint2 *)(&pDstImage1[dstIdx])) = dst1;
     *((uint2 *)(&pDstImage2[dstIdx])) = dst2;
@@ -578,12 +578,12 @@ Hip_ChannelExtract_U8U8U8_U32(uint dstWidth, uint dstHeight,
     d_uint8 src1 = *((d_uint8 *)(&pSrcImage1[src1Idx]));
     uint2 dst1, dst2, dst3;
 
-    dst1.x = pack_((float4)(unpack0_(src1.data[0]), unpack0_(src1.data[1]), unpack0_(src1.data[2]), unpack0_(src1.data[3])));
-    dst1.y = pack_((float4)(unpack0_(src1.data[4]), unpack0_(src1.data[5]), unpack0_(src1.data[6]), unpack0_(src1.data[7])));
-    dst2.x = pack_((float4)(unpack1_(src1.data[0]), unpack1_(src1.data[1]), unpack1_(src1.data[2]), unpack1_(src1.data[3])));
-    dst2.y = pack_((float4)(unpack1_(src1.data[4]), unpack1_(src1.data[5]), unpack1_(src1.data[6]), unpack1_(src1.data[7])));
-    dst3.x = pack_((float4)(unpack2_(src1.data[0]), unpack2_(src1.data[1]), unpack2_(src1.data[2]), unpack2_(src1.data[3])));
-    dst3.y = pack_((float4)(unpack2_(src1.data[4]), unpack2_(src1.data[5]), unpack2_(src1.data[6]), unpack2_(src1.data[7])));
+    dst1.x = pack_(make_float4(unpack0_(src1.data[0]), unpack0_(src1.data[1]), unpack0_(src1.data[2]), unpack0_(src1.data[3])));
+    dst1.y = pack_(make_float4(unpack0_(src1.data[4]), unpack0_(src1.data[5]), unpack0_(src1.data[6]), unpack0_(src1.data[7])));
+    dst2.x = pack_(make_float4(unpack1_(src1.data[0]), unpack1_(src1.data[1]), unpack1_(src1.data[2]), unpack1_(src1.data[3])));
+    dst2.y = pack_(make_float4(unpack1_(src1.data[4]), unpack1_(src1.data[5]), unpack1_(src1.data[6]), unpack1_(src1.data[7])));
+    dst3.x = pack_(make_float4(unpack2_(src1.data[0]), unpack2_(src1.data[1]), unpack2_(src1.data[2]), unpack2_(src1.data[3])));
+    dst3.y = pack_(make_float4(unpack2_(src1.data[4]), unpack2_(src1.data[5]), unpack2_(src1.data[6]), unpack2_(src1.data[7])));
 
     *((uint2 *)(&pDstImage1[dstIdx])) = dst1;
     *((uint2 *)(&pDstImage2[dstIdx])) = dst2;
@@ -622,14 +622,14 @@ Hip_ChannelExtract_U8U8U8U8_U32(uint dstWidth, uint dstHeight,
     d_uint8 src1 = *((d_uint8 *)(&pSrcImage1[src1Idx]));
     uint2 dst1, dst2, dst3, dst4;
 
-    dst1.x = pack_((float4)(unpack0_(src1.data[0]), unpack0_(src1.data[1]), unpack0_(src1.data[2]), unpack0_(src1.data[3])));
-    dst1.y = pack_((float4)(unpack0_(src1.data[4]), unpack0_(src1.data[5]), unpack0_(src1.data[6]), unpack0_(src1.data[7])));
-    dst2.x = pack_((float4)(unpack1_(src1.data[0]), unpack1_(src1.data[1]), unpack1_(src1.data[2]), unpack1_(src1.data[3])));
-    dst2.y = pack_((float4)(unpack1_(src1.data[4]), unpack1_(src1.data[5]), unpack1_(src1.data[6]), unpack1_(src1.data[7])));
-    dst3.x = pack_((float4)(unpack2_(src1.data[0]), unpack2_(src1.data[1]), unpack2_(src1.data[2]), unpack2_(src1.data[3])));
-    dst3.y = pack_((float4)(unpack2_(src1.data[4]), unpack2_(src1.data[5]), unpack2_(src1.data[6]), unpack2_(src1.data[7])));
-    dst4.x = pack_((float4)(unpack3_(src1.data[0]), unpack3_(src1.data[1]), unpack3_(src1.data[2]), unpack3_(src1.data[3])));
-    dst4.y = pack_((float4)(unpack3_(src1.data[4]), unpack3_(src1.data[5]), unpack3_(src1.data[6]), unpack3_(src1.data[7])));
+    dst1.x = pack_(make_float4(unpack0_(src1.data[0]), unpack0_(src1.data[1]), unpack0_(src1.data[2]), unpack0_(src1.data[3])));
+    dst1.y = pack_(make_float4(unpack0_(src1.data[4]), unpack0_(src1.data[5]), unpack0_(src1.data[6]), unpack0_(src1.data[7])));
+    dst2.x = pack_(make_float4(unpack1_(src1.data[0]), unpack1_(src1.data[1]), unpack1_(src1.data[2]), unpack1_(src1.data[3])));
+    dst2.y = pack_(make_float4(unpack1_(src1.data[4]), unpack1_(src1.data[5]), unpack1_(src1.data[6]), unpack1_(src1.data[7])));
+    dst3.x = pack_(make_float4(unpack2_(src1.data[0]), unpack2_(src1.data[1]), unpack2_(src1.data[2]), unpack2_(src1.data[3])));
+    dst3.y = pack_(make_float4(unpack2_(src1.data[4]), unpack2_(src1.data[5]), unpack2_(src1.data[6]), unpack2_(src1.data[7])));
+    dst4.x = pack_(make_float4(unpack3_(src1.data[0]), unpack3_(src1.data[1]), unpack3_(src1.data[2]), unpack3_(src1.data[3])));
+    dst4.y = pack_(make_float4(unpack3_(src1.data[4]), unpack3_(src1.data[5]), unpack3_(src1.data[6]), unpack3_(src1.data[7])));
 
     *((uint2 *)(&pDstImage1[dstIdx])) = dst1;
     *((uint2 *)(&pDstImage2[dstIdx])) = dst2;
@@ -676,10 +676,10 @@ Hip_ChannelCombine_U16_U8U8(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint4 dst;
 
-    dst.x = pack_((float4)(unpack0_(src1.x), unpack0_(src2.x), unpack1_(src1.x), unpack1_(src2.x)));
-    dst.y = pack_((float4)(unpack2_(src1.x), unpack2_(src2.x), unpack3_(src1.x), unpack3_(src2.x)));
-    dst.z = pack_((float4)(unpack0_(src1.y), unpack0_(src2.y), unpack1_(src1.y), unpack1_(src2.y)));
-    dst.w = pack_((float4)(unpack2_(src1.y), unpack2_(src2.y), unpack3_(src1.y), unpack3_(src2.y)));
+    dst.x = pack_(make_float4(unpack0_(src1.x), unpack0_(src2.x), unpack1_(src1.x), unpack1_(src2.x)));
+    dst.y = pack_(make_float4(unpack2_(src1.x), unpack2_(src2.x), unpack3_(src1.x), unpack3_(src2.x)));
+    dst.z = pack_(make_float4(unpack0_(src1.y), unpack0_(src2.y), unpack1_(src1.y), unpack1_(src2.y)));
+    dst.w = pack_(make_float4(unpack2_(src1.y), unpack2_(src2.y), unpack3_(src1.y), unpack3_(src2.y)));
 
     *((uint4 *)(&pDstImage[dstIdx])) = dst;
 }

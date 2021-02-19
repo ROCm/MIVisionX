@@ -23,38 +23,6 @@ THE SOFTWARE.
 #include "hip_common.h"
 #include "hip_host_decls.h"
 
-#define RGB2Y(R,G,B) ((R * 0.2126f) + (G * 0.7152f) + (B * 0.0722f))
-#define RGB2U(R,G,B) ((R * -0.1146f) + (G * -0.3854f) + (B * 0.5f) + 128.0f)
-#define RGB2V(R,G,B) ((R * 0.5f) + (G * -0.4542f) + (B * -0.0458f) + 128.0f)
-
-#define YUV2R(Y,U,V) (Y + ((V - 128.0f) * 1.5748f))
-#define YUV2G(Y,U,V) (Y - ((U - 128.0f) * 0.1873f) - ((V - 128.0f) * 0.4681f))
-#define YUV2B(Y,U,V) (Y + ((U - 128.0f) * 1.8556f))
-
-__device__ __forceinline__ float2 uchars_to_float2 (uint src) {
-    return make_float2((float)(src & 0xFF), (float)((src & 0xFF00) >> 8));
-}
-
-__device__ __forceinline__ uint float2_to_uchars (float2 src) {
-    return (((uint)src.x & 0xFF) | (((uint)src.y & 0xFF) << 8) );
-}
-
-__device__ __forceinline__ uint4 uchars_to_uint4 (unsigned int src) {
-    return make_uint4((unsigned int)(src & 0xFF), (unsigned int)((src & 0xFF00) >> 8), (unsigned int)((src & 0xFF0000) >> 16), (unsigned int)((src & 0xFF000000) >> 24));
-}
-
-__device__ __forceinline__ unsigned int uint4_to_uchars (uint4 src) {
-    return ((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8) | (((unsigned char)src.z & 0xFF) << 16) | (((unsigned char)src.w & 0xFF) << 24);
-}
-
-__device__ __forceinline__ uint2 uchars_to_uint2 (unsigned int src) {
-    return make_uint2((unsigned int)(src & 0xFF), (unsigned int)((src & 0xFF00) >> 8));
-}
-
-__device__ __forceinline__ unsigned int uint2_to_uchars (uint2 src) {
-    return (((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8));
-}
-
 // ----------------------------------------------------------------------------
 // VxColorDepth kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -1168,7 +1136,6 @@ Hip_ColorConvert_RGB_YUYV(uint dstWidth, uint dstHeight,
 
         *((d_uint6 *)(&pDstImage[RGB0Idx])) = pRGB0;
         *((d_uint6 *)(&pDstImage[RGB1Idx])) = pRGB1;
-
     }
 }
 int HipExec_ColorConvert_RGB_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1423,7 +1390,6 @@ Hip_ColorConvert_RGBX_YUYV(uint dstWidth, uint dstHeight,
 
         *((d_uint8 *)(&pDstImage[RGB0Idx])) = pRGB0;
         *((d_uint8 *)(&pDstImage[RGB1Idx])) = pRGB1;
-
     }
 }
 int HipExec_ColorConvert_RGBX_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1538,7 +1504,6 @@ Hip_ColorConvert_RGB_IYUV(uint dstWidth, uint dstHeight,
 
         *((d_uint6 *)(&pDstImage[RGB0Idx])) = pRGB0;
         *((d_uint6 *)(&pDstImage[RGB1Idx])) = pRGB1;
-
     }
 }
 int HipExec_ColorConvert_RGB_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1868,7 +1833,6 @@ Hip_ColorConvert_RGBX_IYUV(uint dstWidth, uint dstHeight,
 
         *((d_uint8 *)(&pDstImage[RGB0Idx])) = pRGB0;
         *((d_uint8 *)(&pDstImage[RGB1Idx])) = pRGB1;
-
     }
 }
 int HipExec_ColorConvert_RGBX_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -3041,108 +3005,6 @@ int HipExec_ColorConvert_YUV4_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_ui
 
     return VX_SUCCESS;
 }
-
-// __global__ void __attribute__((visibility("default")))
-// Hip_ColorConvert_YUV4_RGB(
-//     vx_uint32 dstWidth, vx_uint32 dstHeight,
-//     unsigned short *pDstYImage, unsigned int dstYImageStrideInBytes,
-//     unsigned short *pDstUImage, unsigned int dstUImageStrideInBytes,
-//     unsigned short *pDstVImage, unsigned int dstVImageStrideInBytes,
-//     const unsigned short *pSrcImage, unsigned int srcImageStrideInBytes
-//     ) {
-//     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-//     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-//     if ((x * 2 >= dstWidth) || (y  >= dstHeight))    return;
-//     unsigned int dstYIdx = y * (dstYImageStrideInBytes >> 1) + x;
-//     unsigned int dstUIdx = y * (dstUImageStrideInBytes >> 1) + x;
-//     unsigned int dstVIdx = y * (dstVImageStrideInBytes >> 1) + x;
-//     unsigned int srcIdx = y * (srcImageStrideInBytes >> 1) + (x * 3);
-
-//     float2 src0 = uchars_to_float2(pSrcImage[srcIdx]);
-//     float2 src1 = uchars_to_float2(pSrcImage[srcIdx + 1]);
-//     float2 src2 = uchars_to_float2(pSrcImage[srcIdx + 2]);
-//     float2 dstY = make_float2(nearbyintf(RGB2Y(src0.x, src0.y, src1.x)),nearbyintf(RGB2Y(src1.y, src2.x, src2.y)));
-//     float2 dstU = make_float2(nearbyintf(RGB2U(src0.x, src0.y, src1.x)),nearbyintf(RGB2U(src1.y, src2.x, src2.y)));
-//     float2 dstV = make_float2(nearbyintf(RGB2V(src0.x, src0.y, src1.x)),nearbyintf(RGB2V(src1.y, src2.x, src2.y)));
-//     pDstYImage[dstYIdx] = float2_to_uchars(dstY);
-//     pDstUImage[dstUIdx] = float2_to_uchars(dstU);
-//     pDstVImage[dstVIdx] = float2_to_uchars(dstV);
-// }
-// int HipExec_ColorConvert_YUV4_RGB(
-//     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-//     vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
-//     vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
-//     vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
-//     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-//     ) {
-//     int localThreads_x = 16, localThreads_y = 16;
-//     int globalThreads_x = (dstWidth + 3) >> 1, globalThreads_y = dstHeight;
-
-//     hipLaunchKernelGGL(Hip_ColorConvert_YUV4_RGB,
-//                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-//                        dim3(localThreads_x, localThreads_y),
-//                        0, stream, dstWidth, dstHeight,
-//                        (unsigned short *)pHipDstYImage, dstYImageStrideInBytes,
-//                        (unsigned short *)pHipDstUImage, dstUImageStrideInBytes,
-//                        (unsigned short *)pHipDstVImage, dstVImageStrideInBytes,
-//                        (const unsigned short *)pHipSrcImage, srcImageStrideInBytes);
-//     return VX_SUCCESS;
-// }
-
-// __global__ void __attribute__((visibility("default")))
-// Hip_ColorConvert_YUV4_RGBX(
-//     vx_uint32 dstWidth, vx_uint32 dstHeight,
-//     unsigned short *pDstYImage, unsigned int dstYImageStrideInBytes,
-//     unsigned short *pDstUImage, unsigned int dstUImageStrideInBytes,
-//     unsigned short *pDstVImage, unsigned int dstVImageStrideInBytes,
-//     const unsigned int *pSrcImage, unsigned int srcImageStrideInBytes
-//     ) {
-//     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-//     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-//     if ((x * 2 >= dstWidth) || (y  >= dstHeight))    return;
-//     unsigned int dstYIdx = y * (dstYImageStrideInBytes >> 1) + x;
-//     unsigned int dstUIdx = y * (dstUImageStrideInBytes >> 1) + x;
-//     unsigned int dstVIdx = y * (dstVImageStrideInBytes >> 1) + x;
-//     unsigned int srcIdx = y * (srcImageStrideInBytes >> 2) + (x * 2);
-
-//     float4 rgb0 = uchars_to_float4(pSrcImage[srcIdx]);
-//     float4 rgb1 = uchars_to_float4(pSrcImage[srcIdx+1]);
-//     float2 dstY = make_float2(nearbyintf(RGB2Y(rgb0.x, rgb0.y, rgb0.z)),nearbyintf(RGB2Y(rgb1.x, rgb1.y, rgb1.z)));
-//     float2 dstU = make_float2(nearbyintf(RGB2U(rgb0.x, rgb0.y, rgb0.z)),nearbyintf(RGB2U(rgb1.x, rgb1.y, rgb1.z)));
-//     float2 dstV = make_float2(nearbyintf(RGB2V(rgb0.x, rgb0.y, rgb0.z)),nearbyintf(RGB2V(rgb1.x, rgb1.y, rgb1.z)));
-//     pDstYImage[dstYIdx] = float2_to_uchars(dstY);
-//     pDstUImage[dstUIdx] = float2_to_uchars(dstU);
-//     pDstVImage[dstVIdx] = float2_to_uchars(dstV);
-// }
-// int HipExec_ColorConvert_YUV4_RGBX(
-//     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-//     vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
-//     vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
-//     vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
-//     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-//     ) {
-//     int localThreads_x = 16, localThreads_y = 16;
-//     int globalThreads_x = (dstWidth + 3) >> 1, globalThreads_y = dstHeight;
-
-//     hipLaunchKernelGGL(Hip_ColorConvert_YUV4_RGBX,
-//                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-//                        dim3(localThreads_x, localThreads_y),
-//                        0, stream, dstWidth, dstHeight,
-//                        (unsigned short *)pHipDstYImage, dstYImageStrideInBytes,
-//                        (unsigned short *)pHipDstUImage, dstUImageStrideInBytes,
-//                        (unsigned short *)pHipDstVImage, dstVImageStrideInBytes,
-//                        (const unsigned int *)pHipSrcImage, srcImageStrideInBytes);
-
-//     return VX_SUCCESS;
-// }
-
-
-
-
-
-
-
-
 
 
 

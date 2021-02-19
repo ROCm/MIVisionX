@@ -76,6 +76,7 @@ __device__ __forceinline__ uint lerp_(uint src0, uint src1, uint src2) {
                 (((((src0 >> 16) & 0xff) + ((src1 >> 16) & 0xff) + ((src2 >> 16) & 1)) >> 1) << 16) +
                 (((((src0 >> 24) & 0xff) + ((src1 >> 24) & 0xff) + ((src2 >> 24) & 1)) >> 1) << 24);
     return dst;
+}
 
 __device__ __forceinline__ float4 fabs4(float4 src) {
     return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
@@ -150,6 +151,22 @@ __device__ __forceinline__ uchar4 uchars_to_uchar4(unsigned int src) {
 
 __device__ __forceinline__ unsigned int uchar4_to_uchars(uchar4 src) {
     return ((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8) | (((unsigned char)src.z & 0xFF) << 16) | (((unsigned char)src.w & 0xFF) << 24);
+}
+
+__device__ __forceinline__ uint4 uchars_to_uint4 (unsigned int src) {
+    return make_uint4((unsigned int)(src & 0xFF), (unsigned int)((src & 0xFF00) >> 8), (unsigned int)((src & 0xFF0000) >> 16), (unsigned int)((src & 0xFF000000) >> 24));
+}
+
+__device__ __forceinline__ unsigned int uint4_to_uchars (uint4 src) {
+    return ((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8) | (((unsigned char)src.z & 0xFF) << 16) | (((unsigned char)src.w & 0xFF) << 24);
+}
+
+__device__ __forceinline__ uint2 uchars_to_uint2 (unsigned int src) {
+    return make_uint2((unsigned int)(src & 0xFF), (unsigned int)((src & 0xFF00) >> 8));
+}
+
+__device__ __forceinline__ unsigned int uint2_to_uchars (uint2 src) {
+    return (((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8));
 }
 
 __device__ __forceinline__ void prefixSum(unsigned int* output, unsigned int* input, int w, int nextpow2) {

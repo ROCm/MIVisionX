@@ -2,10 +2,10 @@
 
 ############# Help #############
 # The runvxTestAllScript.sh bash script runs runvx for all AMD OpenVX functionalities in OCL/HIP backends.
-# It can optionally generate dumps:
-#     - .bin dumps for input/output images for different sizes.
-#     - OpenCL kernel code dumps for all kernels.
-# It can compare diff between OpenCL and HIP bin dumps and flag any inconsistencies in outputs.
+# - It can optionally run the test for all kernels / single kernel.
+# - It takes a user given width, height to run tests.
+# - It can optionally generate OpenCL kernel code dumps for all kernels / single kernel.
+# - It can optionally generate .bin dumps for input/output pixel values, compare OCLvsHIP outputs and report inconsistencies.
 ############# Help #############
 
 
@@ -85,6 +85,11 @@ Not_U1_U8
 Not_U8_U1
 Not_U1_U1"
 
+# GDF_COLOR_LIST="ChannelExtract_U8_U32_Pos0
+# ChannelExtract_U8_U32_Pos1
+# ChannelExtract_U8_U32_Pos2
+# ChannelExtract_U8_U32_Pos3"
+
 GDF_COLOR_LIST="ColorDepth_U8_S16_Wrap
 ColorDepth_U8_S16_Sat
 ColorDepth_S16_U8
@@ -100,6 +105,7 @@ ChannelExtract_U8_U32_Pos3
 ChannelExtract_U8U8U8_U24
 ChannelExtract_U8U8U8_U32
 ChannelExtract_U8U8U8U8_U32
+ChannelCombine_U16_U8U8
 ChannelCombine_U32_U8U8U8_UYVY
 ChannelCombine_U32_U8U8U8_YUYV
 ChannelCombine_U24_U8U8U8_RGB
@@ -114,8 +120,8 @@ ColorConvert_RGBX_RGB
 ColorConvert_RGBX_UYVY
 ColorConvert_RGBX_YUYV
 ColorConvert_RGBX_IYUV
-ColorConvert_RGB_NV12
-ColorConvert_RGB_NV21
+ColorConvert_RGBX_NV12
+ColorConvert_RGBX_NV21
 ColorConvert_IYUV_RGB
 ColorConvert_IYUV_RGBX
 FormatConvert_IYUV_UYVY
@@ -179,58 +185,11 @@ AFFINITY_LIST="GPU" # Or it can be AFFINITY_LIST="CPU GPU"
 
 
 
-############# Need not edit #############
-
-# Input parameters
-
-if [ "$#" -ne 4 ]; then
-    echo
-    echo "The runvxTestAllScript.sh bash script runs runvx for all AMD OpenVX functionalities in OCL/HIP backends."
-    echo "It can optionally generate dumps:"
-    echo "    - .bin dumps for input/output images for different sizes."
-    echo "    - OpenCL kernel code dumps for all kernels."
-    echo
-    echo "Syntax: ./runvxTestAllScript.sh <W> <H> <D> <K>"
-    echo "W     Width of image in pixels"
-    echo "H     Height of image pixels"
-    echo "D     Bin dump toggle (1=True, 0=False)"
-    echo "K     OpenCL kernel dump toggle (1=True, 0=False)"
-    exit 1
-fi
-
-if [ "$3" -ne 0 ]; then
-    if [ "$3" -ne 1 ]; then
-        echo "The bin dump toggle should be 0 or 1!"
-        exit 1
-    fi
-fi
-
-if [ "$4" -ne 0 ]; then
-    if [ "$4" -ne 1 ]; then
-        echo "The OpenCL kernel dump toggle should be 0 or 1!"
-        exit 1
-    fi
-fi
-
-WIDTH="$1"
-HEIGHT="$2"
-DUMP="$3"
-KERNEL_DUMP="$4"
-
-HALF_WIDTH=$(expr $WIDTH / 2)
-STRING_I1="data input_1"
-STRING_I2="data input_2"
-STRING_I3="data input_3"
-STRING_I4="data input_4"
-STRING_O1="data output_1"
-STRING_O2="data output_2"
-STRING_O3="data output_3"
-STRING_O4="data output_4"
-cwd=$(pwd)
 
 
 
 
+############# Need not edit - Utility functions #############
 
 # generator function to auto-generate gdfs for different image sizes, with/without binary dump
 
@@ -266,6 +225,8 @@ generator() {
     fi
     sed -i "s/1920,1080/$WIDTH,$HEIGHT/" "$GENERATED_GDF_PATH/$CATEGORY/$GDF.gdf"
     sed -i "s/960,1080/$HALF_WIDTH,$HEIGHT/" "$GENERATED_GDF_PATH/$CATEGORY/$GDF.gdf"
+    sed -i "s/960,540/$HALF_WIDTH,$HALF_HEIGHT/" "$GENERATED_GDF_PATH/$CATEGORY/$GDF.gdf"
+    sed -i "s/3840,1080/$DOUBLE_WIDTH,$HEIGHT/" "$GENERATED_GDF_PATH/$CATEGORY/$GDF.gdf"
 }
 
 
@@ -291,33 +252,33 @@ case_tester() {
             runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/arithmetic/$GDF.gdf
         done
 
-        # printf "\n\n---------------------------------------------"
-        # printf "\nRunning LOGICAL GDF cases on runvx for $AFFINITY..."
-        # printf "\n---------------------------------------------\n"
-        # for GDF in $GDF_LOGICAL_LIST;
-        # do
-        #     printf "\nRunning $GDF...\n"
-        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-        #     if [ "$KERNEL_DUMP" -eq 1 ]; then
-        #         export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        #     fi
-        #     generator "logical"
-        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/logical/$GDF.gdf
-        # done
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning LOGICAL GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_LOGICAL_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            if [ "$KERNEL_DUMP" -eq 1 ]; then
+                export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            fi
+            generator "logical"
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/logical/$GDF.gdf
+        done
 
-        # printf "\n\n---------------------------------------------"
-        # printf "\nRunning COLOR GDF cases on runvx for $AFFINITY..."
-        # printf "\n---------------------------------------------\n"
-        # for GDF in $GDF_COLOR_LIST;
-        # do
-        #     printf "\nRunning $GDF...\n"
-        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-        #     if [ "$KERNEL_DUMP" -eq 1 ]; then
-        #         export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        #     fi
-        #     generator "color"
-        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/color/$GDF.gdf
-        # done
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning COLOR GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_COLOR_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            if [ "$KERNEL_DUMP" -eq 1 ]; then
+                export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            fi
+            generator "color"
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/color/$GDF.gdf
+        done
 
         # printf "\n\n---------------------------------------------"
         # printf "\nRunning STATISTICAL GDF cases on runvx for $AFFINITY..."
@@ -381,75 +342,240 @@ case_tester() {
 
 
 
-# Running all kernels for OCL backend
+# case_tester_single function to test a single case
+
+case_tester_single() {
+    for AFFINITY in "$AFFINITY_LIST";
+    do
+        GDF=$KERNEL_NAME
+        printf "\nRunning $GDF...\n"
+        unset AMD_OCL_BUILD_OPTIONS_APPEND
+        if [ "$KERNEL_DUMP" -eq 1 ]; then
+            export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+        fi
+        generator $GROUP
+        runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GROUP/$GDF.gdf
+    done
+}
+
+############# Need not edit - Utility functions #############
+
+
+
+
+
+
+
+
+
+
+############# Need not edit - Main script #############
+
+# Input parameters
+
+if (( "$#" < 5 )); then
+    echo
+    echo "The runvxTestAllScript.sh bash script runs runvx for all AMD OpenVX functionalities in OCL/HIP backends."
+    echo "    - It can optionally run the test for all kernels / single kernel."
+    echo "    - It takes a user given width, height to run tests."
+    echo "    - It can optionally generate OpenCL kernel code dumps for all kernels / single kernel."
+    echo "    - It can optionally generate .bin dumps for input/output pixel values,  compare OCLvsHIP outputs and report inconsistencies."
+    echo
+    echo "Syntax: ./runvxTestAllScript.sh <W> <H> <D> <K> <B> <N>"
+    echo "W     Width of image in pixels"
+    echo "H     Height of image pixels"
+    echo "D     Bin dump toggle (1 = True, 0 = False)"
+    echo "K     OpenCL kernel dump toggle (1 = True, 0 = False)"
+    echo "B     Clean build toggle (1 = Clean build-make-install OCL/HIP backends and then run test, 0 = Make-install OCL/HIP backends and then run test)"
+    echo "N     Name of a single kernel to run (from the list of kernels in this script)"
+    exit 1
+fi
+
+if [ "$3" -ne 0 ]; then
+    if [ "$3" -ne 1 ]; then
+        echo "The bin dump toggle should be 0 or 1!"
+        exit 1
+    fi
+fi
+
+if [ "$4" -ne 0 ]; then
+    if [ "$4" -ne 1 ]; then
+        echo "The OpenCL kernel dump toggle should be 0 or 1!"
+        exit 1
+    fi
+fi
+
+if [ "$5" -ne 0 ]; then
+    if [ "$5" -ne 1 ]; then
+        echo "The clean build toggle should be 0 or 1!"
+        exit 1
+    fi
+fi
+
+WIDTH="$1"
+HEIGHT="$2"
+DUMP="$3"
+KERNEL_DUMP="$4"
+CLEAN_BUILD="$5"
+KERNEL_NAME="$6"
+
+FLAG=""
+GROUP=""
+if [ -n "$KERNEL_NAME" ]; then
+    [[ $GDF_ARITHMETIC_LIST =~ (^|[[:space:]])$KERNEL_NAME($|[[:space:]]) ]] && FLAG="1" || FLAG="0"
+    if [ "$FLAG" -eq 1 ]; then
+        GROUP="arithmetic"
+    else
+        [[ $GDF_LOGICAL_LIST =~ (^|[[:space:]])$KERNEL_NAME($|[[:space:]]) ]] && FLAG="1" || FLAG="0"
+        if [ "$FLAG" -eq 1 ]; then
+            GROUP="logical"
+        else
+            [[ $GDF_COLOR_LIST =~ (^|[[:space:]])$KERNEL_NAME($|[[:space:]]) ]] && FLAG="1" || FLAG="0"
+            if [ "$FLAG" -eq 1 ]; then
+                GROUP="color"
+            else
+                [[ $GDF_FILTER_LIST =~ (^|[[:space:]])$KERNEL_NAME($|[[:space:]]) ]] && FLAG="1" || FLAG="0"
+                if [ "$FLAG" -eq 1 ]; then
+                    GROUP="filter"
+                else
+                    [[ $GDF_GEOMETRIC_LIST =~ (^|[[:space:]])$KERNEL_NAME($|[[:space:]]) ]] && FLAG="1" || FLAG="0"
+                    if [ "$FLAG" -eq 1 ]; then
+                        GROUP="geometric"
+                    else
+                        [[ $GDF_STATISTICAL_LIST =~ (^|[[:space:]])$KERNEL_NAME($|[[:space:]]) ]] && FLAG="1" || FLAG="0"
+                        if [ "$FLAG" -eq 1 ]; then
+                            GROUP="statistical"
+                        else
+                            [[ $GDF_VISION_LIST =~ (^|[[:space:]])$KERNEL_NAME($|[[:space:]]) ]] && FLAG="1" || FLAG="0"
+                            if [ "$FLAG" -eq 1 ]; then
+                                GROUP="vision"
+                            else
+                                echo "The kernel name $KERNEL_NAME is not a valid name from the list in the script!"
+                                exit 1
+                            fi
+                        fi
+                    fi
+                fi
+            fi
+        fi
+    fi
+fi
+
+HALF_WIDTH=$(expr $WIDTH / 2)
+HALF_HEIGHT=$(expr $HEIGHT / 2)
+DOUBLE_WIDTH=$(expr $WIDTH * 2)
+STRING_I1="data input_1"
+STRING_I2="data input_2"
+STRING_I3="data input_3"
+STRING_I4="data input_4"
+STRING_O1="data output_1"
+STRING_O2="data output_2"
+STRING_O3="data output_3"
+STRING_O4="data output_4"
+cwd=$(pwd)
+
+
+
+
+
+# Running kernels for OCL backend
 
 rm -rvf dumpsOCL
 rm -rvf generatedGDFsOCL
 mkdir generatedGDFsOCL
-mkdir generatedGDFsOCL/arithmetic generatedGDFsOCL/logical generatedGDFsOCL/color generatedGDFsOCL/filter generatedGDFsOCL/geometric generatedGDFsOCL/statistical generatedGDFsOCL/vision
-GENERATED_GDF_PATH="generatedGDFsOCL/"
+GENERATED_GDF_PATH="generatedGDFsOCL"
 
 # Running OCL - MCW-Dev/MIVISION:hip-porting - not working currently
 # cd ../../../
-# rm -rvf build_ocl
-# mkdir build_ocl
-# cd build_ocl
-# cmake ..
-# sudo make -j20 install
+# if [ "$CLEAN_BUILD" -eq 1 ]; then
+#     rm -rvf build_ocl
+#     mkdir build_ocl
+#     cd build_ocl
+#     cmake ..
+#     sudo make -j20 install
+# else
+#     cd build_ocl
+#     sudo make -j20 install
+# fi
 # cd ../samples/hip_samples/hipvx_runvx_tests
 
 # Running OCL - GPUOpen-ProfessionalCompute-Libraries/MIVisionX:master - working - to be removed after MCW-Dev/MIVISION:hip-porting OCL is fixed
 cd ../../../../../MIVisionX/    # change path manually to your clone of GPUOpen-ProfessionalCompute-Libraries/MIVisionX
-rm -rvf build_ocl
-mkdir build_ocl
-cd build_ocl
-cmake ..
-sudo make -j20 install
+if [ "$CLEAN_BUILD" -eq 1 ]; then
+    rm -rvf build_ocl
+    mkdir build_ocl
+    cd build_ocl
+    cmake ..
+    sudo make -j20 install
+else
+    cd build_ocl
+    sudo make -j20 install
+fi
 cd $cwd
 
-case_tester
+if [ "$KERNEL_NAME" = "" ]; then
+    mkdir generatedGDFsOCL/arithmetic generatedGDFsOCL/logical generatedGDFsOCL/color generatedGDFsOCL/filter generatedGDFsOCL/geometric generatedGDFsOCL/statistical generatedGDFsOCL/vision
+    case_tester
+    mkdir dumpsOCL
+    mkdir dumpsOCL/arithmetic dumpsOCL/logical dumpsOCL/color dumpsOCL/filter dumpsOCL/geometric dumpsOCL/statistical dumpsOCL/vision
+    mv "$GENERATED_GDF_PATH"/arithmetic/agoKernel_* dumpsOCL/arithmetic
+    mv "$GENERATED_GDF_PATH"/logical/agoKernel_* dumpsOCL/logical
+    mv "$GENERATED_GDF_PATH"/color/agoKernel_* dumpsOCL/color
+    mv "$GENERATED_GDF_PATH"/filter/agoKernel_* dumpsOCL/filter
+    mv "$GENERATED_GDF_PATH"/geometric/agoKernel_* dumpsOCL/geometric
+    mv "$GENERATED_GDF_PATH"/statistical/agoKernel_* dumpsOCL/statistical
+    mv "$GENERATED_GDF_PATH"/vision/agoKernel_* dumpsOCL/vision
+else
+    mkdir generatedGDFsOCL/$GROUP
+    case_tester_single
+    mkdir dumpsOCL
+    mkdir dumpsOCL/$GROUP
+    mv "$GENERATED_GDF_PATH"/"$GROUP"/agoKernel_* dumpsOCL/"$GROUP"
+fi
 
-mkdir dumpsOCL
-mkdir dumpsOCL/arithmetic dumpsOCL/logical dumpsOCL/color dumpsOCL/filter dumpsOCL/geometric dumpsOCL/statistical dumpsOCL/vision
-mv "$GENERATED_GDF_PATH"/arithmetic/agoKernel_* dumpsOCL/arithmetic
-mv "$GENERATED_GDF_PATH"/logical/agoKernel_* dumpsOCL/logical
-mv "$GENERATED_GDF_PATH"/color/agoKernel_* dumpsOCL/color
-mv "$GENERATED_GDF_PATH"/filter/agoKernel_* dumpsOCL/filter
-mv "$GENERATED_GDF_PATH"/geometric/agoKernel_* dumpsOCL/geometric
-mv "$GENERATED_GDF_PATH"/statistical/agoKernel_* dumpsOCL/statistical
-mv "$GENERATED_GDF_PATH"/vision/agoKernel_* dumpsOCL/vision
 
 
 
 
-
-# Running all kernels for HIP backend
+# Running kernels for HIP backend
 
 rm -rvf dumpsHIP
 rm -rvf generatedGDFsHIP
 mkdir generatedGDFsHIP
-mkdir generatedGDFsHIP/arithmetic generatedGDFsHIP/logical generatedGDFsHIP/color generatedGDFsHIP/filter generatedGDFsHIP/geometric generatedGDFsHIP/statistical generatedGDFsHIP/vision
-GENERATED_GDF_PATH="generatedGDFsHIP/"
+GENERATED_GDF_PATH="generatedGDFsHIP"
 
 cd ../../../
-rm -rvf build_hip
-mkdir build_hip
-cd build_hip
-cmake -DBACKEND=HIP ..
-sudo make -j20 install
+if [ "$CLEAN_BUILD" -eq 1 ]; then
+    rm -rvf build_hip
+    mkdir build_hip
+    cd build_hip
+    cmake -DBACKEND=HIP ..
+    sudo make -j20 install
+else
+    cd build_hip
+    sudo make -j20 install
+fi
 cd ../samples/hip_samples/hipvx_runvx_tests
 
-case_tester
-
-mkdir dumpsHIP
-mkdir dumpsHIP/arithmetic dumpsHIP/logical dumpsHIP/color dumpsHIP/filter dumpsHIP/geometric dumpsHIP/statistical dumpsHIP/vision
-mv "$GENERATED_GDF_PATH"/arithmetic/agoKernel_* dumpsHIP/arithmetic
-mv "$GENERATED_GDF_PATH"/logical/agoKernel_* dumpsHIP/logical
-mv "$GENERATED_GDF_PATH"/color/agoKernel_* dumpsHIP/color
-mv "$GENERATED_GDF_PATH"/filter/agoKernel_* dumpsHIP/filter
-mv "$GENERATED_GDF_PATH"/geometric/agoKernel_* dumpsHIP/geometric
-mv "$GENERATED_GDF_PATH"/statistical/agoKernel_* dumpsHIP/statistical
-mv "$GENERATED_GDF_PATH"/vision/agoKernel_* dumpsHIP/vision
+if [ "$KERNEL_NAME" = "" ]; then
+    mkdir generatedGDFsHIP/arithmetic generatedGDFsHIP/logical generatedGDFsHIP/color generatedGDFsHIP/filter generatedGDFsHIP/geometric generatedGDFsHIP/statistical generatedGDFsHIP/vision
+    case_tester
+    mkdir dumpsHIP
+    mkdir dumpsHIP/arithmetic dumpsHIP/logical dumpsHIP/color dumpsHIP/filter dumpsHIP/geometric dumpsHIP/statistical dumpsHIP/vision
+    mv "$GENERATED_GDF_PATH"/arithmetic/agoKernel_* dumpsHIP/arithmetic
+    mv "$GENERATED_GDF_PATH"/logical/agoKernel_* dumpsHIP/logical
+    mv "$GENERATED_GDF_PATH"/color/agoKernel_* dumpsHIP/color
+    mv "$GENERATED_GDF_PATH"/filter/agoKernel_* dumpsHIP/filter
+    mv "$GENERATED_GDF_PATH"/geometric/agoKernel_* dumpsHIP/geometric
+    mv "$GENERATED_GDF_PATH"/statistical/agoKernel_* dumpsHIP/statistical
+    mv "$GENERATED_GDF_PATH"/vision/agoKernel_* dumpsHIP/vision
+else
+    mkdir generatedGDFsHIP/$GROUP
+    case_tester_single
+    mkdir dumpsHIP
+    mkdir dumpsHIP/$GROUP
+    mv "$GENERATED_GDF_PATH"/"$GROUP"/agoKernel_* dumpsHIP/"$GROUP"
+fi
 
 
 
@@ -458,6 +584,7 @@ mv "$GENERATED_GDF_PATH"/vision/agoKernel_* dumpsHIP/vision
 # OCLvsHIP output match check - by running a diff check on all OCLvsHIP bin dumps and flag any inconsistencies in outputs
 
 if [ "$DUMP" -eq 1 ]; then
+
     OUTPUT_BIN_LIST="arithmetic/agoKernel_AbsDiff_U8_U8U8_output_1.bin
     arithmetic/agoKernel_AbsDiff_S16_S16S16_Sat_output_1.bin
     arithmetic/agoKernel_Add_U8_U8U8_Wrap_output_1.bin
@@ -494,76 +621,94 @@ if [ "$DUMP" -eq 1 ]; then
     arithmetic/agoKernel_Mul_S16_S16S16_Sat_Round_output_1.bin
     arithmetic/agoKernel_Magnitude_S16_S16S16_output_1.bin
     arithmetic/agoKernel_Phase_U8_S16S16_output_1.bin
-    arithmetic/agoKernel_WeightedAverage_U8_U8U8_output_1.bin"
-    # logical/agoKernel_And_U8_U8U8_output_1.bin
-    # logical/agoKernel_And_U8_U8U1_output_1.bin
-    # logical/agoKernel_And_U8_U1U8_output_1.bin
-    # logical/agoKernel_And_U8_U1U1_output_1.bin
-    # logical/agoKernel_And_U1_U8U8_output_1.bin
-    # logical/agoKernel_And_U1_U8U1_output_1.bin
-    # logical/agoKernel_And_U1_U1U8_output_1.bin
-    # logical/agoKernel_And_U1_U1U1_output_1.bin
-    # logical/agoKernel_Or_U8_U8U8_output_1.bin
-    # logical/agoKernel_Or_U8_U8U1_output_1.bin
-    # logical/agoKernel_Or_U8_U1U8_output_1.bin
-    # logical/agoKernel_Or_U8_U1U1_output_1.bin
-    # logical/agoKernel_Or_U1_U8U8_output_1.bin
-    # logical/agoKernel_Or_U1_U8U1_output_1.bin
-    # logical/agoKernel_Or_U1_U1U8_output_1.bin
-    # logical/agoKernel_Or_U1_U1U1_output_1.bin
-    # logical/agoKernel_Xor_U8_U8U8_output_1.bin
-    # logical/agoKernel_Xor_U8_U8U1_output_1.bin
-    # logical/agoKernel_Xor_U8_U1U8_output_1.bin
-    # logical/agoKernel_Xor_U8_U1U1_output_1.bin
-    # logical/agoKernel_Xor_U1_U8U8_output_1.bin
-    # logical/agoKernel_Xor_U1_U8U1_output_1.bin
-    # logical/agoKernel_Xor_U1_U1U8_output_1.bin
-    # logical/agoKernel_Xor_U1_U1U1_output_1.bin
-    # logical/agoKernel_Not_U8_U8_output_1.bin
-    # logical/agoKernel_Not_U1_U8_output_1.bin
-    # logical/agoKernel_Not_U8_U1_output_1.bin
-    # logical/agoKernel_Not_U1_U1_output_1.bin
-    # color/agoKernel_ColorDepth_U8_S16_Wrap_output_1.bin
-    # color/agoKernel_ColorDepth_U8_S16_Sat_output_1.bin
-    # color/agoKernel_ColorDepth_S16_U8_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U16_Pos0_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U16_Pos1_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U24_Pos0_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U24_Pos1_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U24_Pos2_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U32_Pos0_output_1.bin
+    arithmetic/agoKernel_WeightedAverage_U8_U8U8_output_1.bin
+    logical/agoKernel_And_U8_U8U8_output_1.bin
+    logical/agoKernel_And_U8_U8U1_output_1.bin
+    logical/agoKernel_And_U8_U1U8_output_1.bin
+    logical/agoKernel_And_U8_U1U1_output_1.bin
+    logical/agoKernel_And_U1_U8U8_output_1.bin
+    logical/agoKernel_And_U1_U8U1_output_1.bin
+    logical/agoKernel_And_U1_U1U8_output_1.bin
+    logical/agoKernel_And_U1_U1U1_output_1.bin
+    logical/agoKernel_Or_U8_U8U8_output_1.bin
+    logical/agoKernel_Or_U8_U8U1_output_1.bin
+    logical/agoKernel_Or_U8_U1U8_output_1.bin
+    logical/agoKernel_Or_U8_U1U1_output_1.bin
+    logical/agoKernel_Or_U1_U8U8_output_1.bin
+    logical/agoKernel_Or_U1_U8U1_output_1.bin
+    logical/agoKernel_Or_U1_U1U8_output_1.bin
+    logical/agoKernel_Or_U1_U1U1_output_1.bin
+    logical/agoKernel_Xor_U8_U8U8_output_1.bin
+    logical/agoKernel_Xor_U8_U8U1_output_1.bin
+    logical/agoKernel_Xor_U8_U1U8_output_1.bin
+    logical/agoKernel_Xor_U8_U1U1_output_1.bin
+    logical/agoKernel_Xor_U1_U8U8_output_1.bin
+    logical/agoKernel_Xor_U1_U8U1_output_1.bin
+    logical/agoKernel_Xor_U1_U1U8_output_1.bin
+    logical/agoKernel_Xor_U1_U1U1_output_1.bin
+    logical/agoKernel_Not_U8_U8_output_1.bin
+    logical/agoKernel_Not_U1_U8_output_1.bin
+    logical/agoKernel_Not_U8_U1_output_1.bin
+    logical/agoKernel_Not_U1_U1_output_1.bin
+    color/agoKernel_ColorDepth_U8_S16_Wrap_output_1.bin
+    color/agoKernel_ColorDepth_U8_S16_Sat_output_1.bin
+    color/agoKernel_ColorDepth_S16_U8_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U16_Pos0_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U16_Pos1_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U24_Pos0_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U24_Pos1_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U24_Pos2_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos0_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos0_output_2.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos1_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos1_output_2.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos2_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos2_output_2.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos3_output_1.bin
+    color/agoKernel_ChannelExtract_U8_U32_Pos3_output_2.bin
+    color/agoKernel_ChannelExtract_U8U8U8_U24_output_1.bin
+    color/agoKernel_ChannelExtract_U8U8U8_U24_output_2.bin
+    color/agoKernel_ChannelExtract_U8U8U8_U24_output_3.bin
+    color/agoKernel_ChannelExtract_U8U8U8_U32_output_1.bin
+    color/agoKernel_ChannelExtract_U8U8U8_U32_output_2.bin
+    color/agoKernel_ChannelExtract_U8U8U8_U32_output_3.bin
+    color/agoKernel_ChannelExtract_U8U8U8U8_U32_output_1.bin
+    color/agoKernel_ChannelExtract_U8U8U8U8_U32_output_2.bin
+    color/agoKernel_ChannelExtract_U8U8U8U8_U32_output_3.bin
+    color/agoKernel_ChannelExtract_U8U8U8U8_U32_output_4.bin
+    color/agoKernel_ChannelCombine_U16_U8U8_output_1.bin
+    color/agoKernel_ChannelCombine_U32_U8U8U8_UYVY_output_1.bin
+    color/agoKernel_ChannelCombine_U32_U8U8U8_YUYV_output_1.bin
+    color/agoKernel_ChannelCombine_U24_U8U8U8_RGB_output_1.bin
+    color/agoKernel_ChannelCombine_U32_U8U8U8U8_RGBX_output_1.bin
+    color/agoKernel_ColorConvert_RGB_RGBX_output_1.bin
+    color/agoKernel_ColorConvert_RGB_UYVY_output_1.bin
+    color/agoKernel_ColorConvert_RGB_YUYV_output_1.bin
+    color/agoKernel_ColorConvert_RGB_IYUV_output_1.bin
+    color/agoKernel_ColorConvert_RGB_NV12_output_1.bin
+    color/agoKernel_ColorConvert_RGB_NV21_output_1.bin
+    color/agoKernel_ColorConvert_RGBX_RGB_output_1.bin
+    color/agoKernel_ColorConvert_RGBX_UYVY_output_1.bin
+    color/agoKernel_ColorConvert_RGBX_YUYV_output_1.bin
+    color/agoKernel_ColorConvert_RGBX_IYUV_output_1.bin
+    color/agoKernel_ColorConvert_RGBX_NV12_output_1.bin
+    color/agoKernel_ColorConvert_RGBX_NV21_output_1.bin
+    color/agoKernel_ColorConvert_IYUV_RGB_output_1.bin
+    color/agoKernel_ColorConvert_IYUV_RGBX_output_1.bin
+    color/agoKernel_FormatConvert_IYUV_UYVY_output_1.bin
+    color/agoKernel_FormatConvert_IYUV_YUYV_output_1.bin
+    color/agoKernel_ColorConvert_NV12_RGB_output_1.bin
+    color/agoKernel_ColorConvert_NV12_RGBX_output_1.bin
+    color/agoKernel_FormatConvert_NV12_UYVY_output_1.bin
+    color/agoKernel_FormatConvert_NV12_YUYV_output_1.bin
+    color/agoKernel_ColorConvert_YUV4_RGB_output_1.bin
+    color/agoKernel_ColorConvert_YUV4_RGBX_output_1.bin"
+
+    # OUTPUT_BIN_LIST="color/agoKernel_ChannelExtract_U8_U32_Pos0_output_1.bin
     # color/agoKernel_ChannelExtract_U8_U32_Pos1_output_1.bin
     # color/agoKernel_ChannelExtract_U8_U32_Pos2_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U32_Pos3_output_1.bin
-    # color/agoKernel_ChannelExtract_U8U8U8_U24_output_1.bin
-    # color/agoKernel_ChannelExtract_U8U8U8_U32_output_1.bin
-    # color/agoKernel_ChannelExtract_U8U8U8U8_U32_output_1.bin
-    # color/agoKernel_ChannelCombine_U32_U8U8U8_UYVY_output_1.bin
-    # color/agoKernel_ChannelCombine_U32_U8U8U8_YUYV_output_1.bin
-    # color/agoKernel_ChannelCombine_U24_U8U8U8_RGB_output_1.bin
-    # color/agoKernel_ChannelCombine_U32_U8U8U8U8_RGBX_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_RGBX_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_UYVY_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_YUYV_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_IYUV_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_NV12_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_NV21_output_1.bin
-    # color/agoKernel_ColorConvert_RGBX_RGB_output_1.bin
-    # color/agoKernel_ColorConvert_RGBX_UYVY_output_1.bin
-    # color/agoKernel_ColorConvert_RGBX_YUYV_output_1.bin
-    # color/agoKernel_ColorConvert_RGBX_IYUV_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_NV12_output_1.bin
-    # color/agoKernel_ColorConvert_RGB_NV21_output_1.bin
-    # color/agoKernel_ColorConvert_IYUV_RGB_output_1.bin
-    # color/agoKernel_ColorConvert_IYUV_RGBX_output_1.bin
-    # color/agoKernel_FormatConvert_IYUV_UYVY_output_1.bin
-    # color/agoKernel_FormatConvert_IYUV_YUYV_output_1.bin
-    # color/agoKernel_ColorConvert_NV12_RGB_output_1.bin
-    # color/agoKernel_ColorConvert_NV12_RGBX_output_1.bin
-    # color/agoKernel_FormatConvert_NV12_UYVY_output_1.bin
-    # color/agoKernel_FormatConvert_NV12_YUYV_output_1.bin
-    # color/agoKernel_ColorConvert_YUV4_RGB_output_1.bin
-    # color/agoKernel_ColorConvert_YUV4_RGBX_output_1.bin
+    # color/agoKernel_ChannelExtract_U8_U32_Pos3_output_1.bin"
+
     # statistical/agoKernel_Threshold_U8_U8_Binary_output_1.bin
     # statistical/agoKernel_Threshold_U8_U8_Range_output_1.bin
     # filter/agoKernel_Box_U8_U8_3x3_output_1.bin
@@ -599,6 +744,21 @@ if [ "$DUMP" -eq 1 ]; then
     # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_constant_output_1.bin
     # "
 
+    if [ -n "$KERNEL_NAME" ]; then
+        printf "\nPicking output binary dumps...\n"
+        OUTPUT_BIN_LIST_SINGLE=""
+        STARTSWITHSTRING="$GROUP/agoKernel_$KERNEL_NAME"
+        for OUTPUT_BIN in $OUTPUT_BIN_LIST;
+        do
+            if [[ $OUTPUT_BIN == $STARTSWITHSTRING* ]]; then
+                OUTPUT_BIN_LIST_SINGLE="$OUTPUT_BIN_LIST_SINGLE $OUTPUT_BIN"
+            fi
+        done
+        OUTPUT_BIN_LIST="$OUTPUT_BIN_LIST_SINGLE"
+    fi
+
+    echo $OUTPUT_BIN_LIST
+
     UNMATCHED_OUTPUT_LIST=""
 
     for OUTPUT_BIN in $OUTPUT_BIN_LIST;
@@ -610,19 +770,25 @@ if [ "$DUMP" -eq 1 ]; then
         then
             echo "Outputs don't match!"
             UNMATCHED_OUTPUT_LIST="$UNMATCHED_OUTPUT_LIST $OUTPUT_BIN"
+        else
+            echo "MATCH!"
         fi
     done
 
     printf "\n\n"
     echo "Kernels for which OCL and HIP don't match:"
-    for UNMATCHED_OUTPUT in $UNMATCHED_OUTPUT_LIST;
-    do
-        echo "$UNMATCHED_OUTPUT"
-    done
+    if [ "$UNMATCHED_OUTPUT_LIST" = "" ]; then
+        echo "NONE!"
+    else
+        for UNMATCHED_OUTPUT in $UNMATCHED_OUTPUT_LIST;
+        do
+            echo "$UNMATCHED_OUTPUT"
+        done
+    fi
 
-    printf "\nFinished running funcitonalities. Finished the OCLvsHIP output matching test."
+    printf "\nFinished running funcitonalities. Finished the OCLvsHIP output matching test.\n"
 else
-    printf "\nFinished running funcitonalities. Bin dump generation is required for the OCLvsHIP output matching test."
+    printf "\nFinished running funcitonalities. Bin dump generation is required for the OCLvsHIP output matching test.\n"
 fi
 
 ############# Need not edit #############

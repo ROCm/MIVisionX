@@ -427,7 +427,7 @@ int HipExec_ChannelExtract_U8_U32_Pos0(hipStream_t stream, vx_uint32 dstWidth, v
     else if (srcType == VX_DF_IMAGE_UYVY) {
         int localThreads_x = 16;
         int localThreads_y = 4;
-        int globalThreads_x = dstWidth;
+        int globalThreads_x = (dstWidth + 3) >> 2;
         int globalThreads_y = dstHeight;
 
         vx_uint32 dstWidthComp = (dstWidth + 3) / 4;
@@ -504,7 +504,7 @@ int HipExec_ChannelExtract_U8_U32_Pos1(hipStream_t stream, vx_uint32 dstWidth, v
     else if (srcType == VX_DF_IMAGE_YUYV) {
         int localThreads_x = 16;
         int localThreads_y = 4;
-        int globalThreads_x = dstWidth;
+        int globalThreads_x = (dstWidth + 3) >> 2;
         int globalThreads_y = dstHeight;
 
         vx_uint32 dstWidthComp = (dstWidth + 3) / 4;
@@ -581,7 +581,7 @@ int HipExec_ChannelExtract_U8_U32_Pos2(hipStream_t stream, vx_uint32 dstWidth, v
     else if (srcType == VX_DF_IMAGE_UYVY) {
         int localThreads_x = 16;
         int localThreads_y = 4;
-        int globalThreads_x = dstWidth;
+        int globalThreads_x = (dstWidth + 3) >> 2;
         int globalThreads_y = dstHeight;
 
         vx_uint32 dstWidthComp = (dstWidth + 3) / 4;
@@ -658,7 +658,7 @@ int HipExec_ChannelExtract_U8_U32_Pos3(hipStream_t stream, vx_uint32 dstWidth, v
     else if (srcType == VX_DF_IMAGE_YUYV) {
         int localThreads_x = 16;
         int localThreads_y = 4;
-        int globalThreads_x = dstWidth;
+        int globalThreads_x = (dstWidth + 3) >> 2;
         int globalThreads_y = dstHeight;
 
         vx_uint32 dstWidthComp = (dstWidth + 3) / 4;
@@ -942,7 +942,7 @@ int HipExec_ChannelCombine_U32_U8U8U8_UYVY(hipStream_t stream, vx_uint32 dstWidt
     const vx_uint8 *pHipSrcImage3, vx_uint32 srcImage3StrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
+    int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
@@ -992,7 +992,7 @@ int HipExec_ChannelCombine_U32_U8U8U8_YUYV(hipStream_t stream, vx_uint32 dstWidt
     const vx_uint8 *pHipSrcImage3, vx_uint32 srcImage3StrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
+    int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
@@ -1112,7 +1112,6 @@ int HipExec_ColorConvert_RGB_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_uin
 
     return VX_SUCCESS;
 }
-
 __global__ void __attribute__((visibility("default")))
 Hip_ColorConvert_RGB_UYVY(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes, uint dstImageStrideInBytesComp,
@@ -1198,9 +1197,8 @@ int HipExec_ColorConvert_RGB_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
-
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
     vx_uint32 dstImageStrideInBytesComp = dstImageStrideInBytes * 2;
@@ -1299,8 +1297,8 @@ int HipExec_ColorConvert_RGB_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -1451,8 +1449,8 @@ int HipExec_ColorConvert_RGBX_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -1553,8 +1551,8 @@ int HipExec_ColorConvert_RGBX_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -1669,8 +1667,8 @@ int HipExec_ColorConvert_RGB_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -1775,8 +1773,8 @@ int HipExec_ColorConvert_RGB_NV12(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -1881,8 +1879,8 @@ int HipExec_ColorConvert_RGB_NV21(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -1998,8 +1996,8 @@ int HipExec_ColorConvert_RGBX_IYUV(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2105,8 +2103,8 @@ int HipExec_ColorConvert_RGBX_NV12(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2212,8 +2210,8 @@ int HipExec_ColorConvert_RGBX_NV21(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2345,8 +2343,8 @@ int HipExec_ColorConvert_IYUV_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2472,8 +2470,8 @@ int HipExec_ColorConvert_IYUV_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2534,8 +2532,8 @@ int HipExec_FormatConvert_IYUV_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_u
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2596,8 +2594,8 @@ int HipExec_FormatConvert_IYUV_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_u
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2738,8 +2736,8 @@ int HipExec_ColorConvert_NV12_RGB(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2874,8 +2872,8 @@ int HipExec_ColorConvert_NV12_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_ui
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2932,8 +2930,8 @@ int HipExec_FormatConvert_NV12_UYVY(hipStream_t stream, vx_uint32 dstWidth, vx_u
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
@@ -2990,8 +2988,8 @@ int HipExec_FormatConvert_NV12_YUYV(hipStream_t stream, vx_uint32 dstWidth, vx_u
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
     int localThreads_x = 16;
     int localThreads_y = 4;
-    int globalThreads_x = dstWidth;
-    int globalThreads_y = dstHeight;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
     vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
     vx_uint32 dstHeightComp = (dstHeight + 1) / 2;

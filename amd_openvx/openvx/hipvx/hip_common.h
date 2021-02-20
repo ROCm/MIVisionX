@@ -7,6 +7,7 @@
 #define PIXELSATURATEU8(pixel)  (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)    ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
+#define PIXELROUNDU8(value)     ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
 #define HIPSELECT(a, b, c)  (c ? b : a)
 #define HIPVXMAX3(a, b, c)  ((a > b) && (a > c) ?  a : ((b > c) ? b : c))
 #define HIPVXMIN3(a, b, c)  ((a < b) && (a < c) ?  a : ((b < c) ? b : c))
@@ -55,6 +56,26 @@ __device__ __forceinline__ float unpack3_(uint src) {
 
 __device__ __forceinline__ float4 unpack_(uint src) {
     return make_float4(unpack0_(src), unpack1_(src), unpack2_(src), unpack3_(src));
+}
+
+__device__ __forceinline__ float dot2_(float2 src0, float2 src1) {
+    return fmaf(src0.y, src1.y, src0.x * src1.x);
+}
+
+__device__ __forceinline__ float dot3_(float3 src0, float3 src1) {
+    return fmaf(src0.z, src1.z, fmaf(src0.y, src1.y, src0.x * src1.x));
+}
+
+__device__ __forceinline__ float dot4_(float4 src0, float4 src1) {
+    return fmaf(src0.w, src1.w, fmaf(src0.z, src1.z, fmaf(src0.y, src1.y, src0.x * src1.x)));
+}
+
+__device__ __forceinline__ uint lerp_(uint src0, uint src1, uint src2) {
+    uint dst = (((((src0 >>  0) & 0xff) + ((src1 >>  0) & 0xff) + ((src2 >>  0) & 1)) >> 1) <<  0) +
+                (((((src0 >>  8) & 0xff) + ((src1 >>  8) & 0xff) + ((src2 >>  8) & 1)) >> 1) <<  8) +
+                (((((src0 >> 16) & 0xff) + ((src1 >> 16) & 0xff) + ((src2 >> 16) & 1)) >> 1) << 16) +
+                (((((src0 >> 24) & 0xff) + ((src1 >> 24) & 0xff) + ((src2 >> 24) & 1)) >> 1) << 24);
+    return dst;
 }
 
 __device__ __forceinline__ float4 fabs4(float4 src) {
@@ -122,6 +143,30 @@ __device__ __forceinline__ int4 uchars_to_int4(uint src) {
 
 __device__ __forceinline__ uint int4_to_uchars(int4 src) {
     return ((uint)src.x&0xFF) | (((uint)src.y&0xFF)<<8) | (((uint)src.z&0xFF)<<16)| (((uint)src.w&0xFF) << 24);
+}
+
+__device__ __forceinline__ uchar4 uchars_to_uchar4(unsigned int src) {
+    return make_uchar4((unsigned char)(src & 0xFF), (unsigned char)((src & 0xFF00) >> 8), (unsigned char)((src & 0xFF0000) >> 16), (unsigned char)((src & 0xFF000000) >> 24));
+}
+
+__device__ __forceinline__ unsigned int uchar4_to_uchars(uchar4 src) {
+    return ((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8) | (((unsigned char)src.z & 0xFF) << 16) | (((unsigned char)src.w & 0xFF) << 24);
+}
+
+__device__ __forceinline__ uint4 uchars_to_uint4 (unsigned int src) {
+    return make_uint4((unsigned int)(src & 0xFF), (unsigned int)((src & 0xFF00) >> 8), (unsigned int)((src & 0xFF0000) >> 16), (unsigned int)((src & 0xFF000000) >> 24));
+}
+
+__device__ __forceinline__ unsigned int uint4_to_uchars (uint4 src) {
+    return ((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8) | (((unsigned char)src.z & 0xFF) << 16) | (((unsigned char)src.w & 0xFF) << 24);
+}
+
+__device__ __forceinline__ uint2 uchars_to_uint2 (unsigned int src) {
+    return make_uint2((unsigned int)(src & 0xFF), (unsigned int)((src & 0xFF00) >> 8));
+}
+
+__device__ __forceinline__ unsigned int uint2_to_uchars (uint2 src) {
+    return (((unsigned char)src.x & 0xFF) | (((unsigned char)src.y & 0xFF) << 8));
 }
 
 __device__ __forceinline__ void prefixSum(unsigned int* output, unsigned int* input, int w, int nextpow2) {

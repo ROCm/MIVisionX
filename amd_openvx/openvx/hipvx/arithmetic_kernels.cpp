@@ -5,11 +5,11 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
+coinv_pies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+all coinv_pies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -1900,25 +1900,25 @@ Hip_Phase_U8_S16S16(uint dstWidth, uint dstHeight,
     float2 f; float4 p4;
     f.x = (float)((((int)(src1.x)) << 16) >> 16);
     f.y = (float)((((int)(src2.x)) << 16) >> 16);
-    p4.x = atan2f(f.y, f.x) * 0.3183;
+    p4.x = atan2f(f.y, f.x) * inv_pi;
     p4.x += (p4.x < 0.0) ? 2.0f : 0.0;
     p4.x *= 128.0f;
 
     f.x = (float)(( (int)(src1.x))        >> 16);
     f.y = (float)(( (int)(src2.x))        >> 16);
-    p4.y = atan2f(f.y, f.x) * 0.3183;
+    p4.y = atan2f(f.y, f.x) * inv_pi;
     p4.y += (p4.y < 0.0) ? 2.0f : 0.0;
     p4.y *= 128.0f;
 
     f.x = (float)((((int)(src1.y)) << 16) >> 16);
     f.y = (float)((((int)(src2.y)) << 16) >> 16);
-    p4.z = atan2f(f.y, f.x) * 0.3183;
+    p4.z = atan2f(f.y, f.x) * inv_pi;
     p4.z += (p4.z < 0.0) ? 2.0f : 0.0;
     p4.z *= 128.0f;
 
     f.x = (float)(( (int)(src1.y))        >> 16);
     f.y = (float)(( (int)(src2.y))        >> 16);
-    p4.w = atan2f(f.y, f.x) * 0.3183;
+    p4.w = atan2f(f.y, f.x) * inv_pi;
     p4.w += (p4.w < 0.0) ? 2.0f : 0.0;
     p4.w *= 128.0f;
 
@@ -1926,25 +1926,25 @@ Hip_Phase_U8_S16S16(uint dstWidth, uint dstHeight,
     dst.x = pack_(p4);
     f.x = (float)((((int)(src1.z)) << 16) >> 16);
     f.y = (float)((((int)(src2.z)) << 16) >> 16);
-    p4.x = atan2f(f.y, f.x) * 0.3183;
+    p4.x = atan2f(f.y, f.x) * inv_pi;
     p4.x += (p4.x < 0.0) ? 2.0f : 0.0;
     p4.x *= 128.0f;
 
     f.x = (float)(( (int)(src1.z))        >> 16);
     f.y = (float)(( (int)(src2.z))        >> 16);
-    p4.y = atan2f(f.y, f.x) * 0.3183;
+    p4.y = atan2f(f.y, f.x) * inv_pi;
     p4.y += (p4.y < 0.0) ? 2.0f : 0.0;
     p4.y *= 128.0f;
 
     f.x = (float)((((int)(src1.w)) << 16) >> 16);
     f.y = (float)((((int)(src2.w)) << 16) >> 16);
-    p4.z = atan2f(f.y, f.x) * 0.3183;
+    p4.z = atan2f(f.y, f.x) * inv_pi;
     p4.z += (p4.z < 0.0) ? 2.0f : 0.0;
     p4.z *= 128.0f;
 
     f.x = (float)(( (int)(src1.w))        >> 16);
     f.y = (float)(( (int)(src2.w))        >> 16);
-    p4.w = atan2f(f.y, f.x) * 0.3183;
+    p4.w = atan2f(f.y, f.x) * inv_pi;
     p4.w += (p4.w < 0.0) ? 2.0f : 0.0;
     p4.w *= 128.0f;
 

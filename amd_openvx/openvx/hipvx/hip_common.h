@@ -17,6 +17,9 @@
 #define CHECKMAX(a, b)  (a > b ? 1 : 0)
 #define CHECKMIN(a, b)  (a < b ? 1 : 0)
 
+const float pi = 0x1.921fb6p+1f;
+const float inv_pi = 1 / pi;
+
 typedef struct d_uint6 {
   uint data[6];
 } d_uint6;

@@ -1098,12 +1098,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 				data->children[child]->u.img.x_scale_factor_is_2 = (data->children[child]->u.img.width  != data->u.img.width ) ? 1 : 0;
 				data->children[child]->u.img.y_scale_factor_is_2 = (data->children[child]->u.img.height != data->u.img.height) ? 1 : 0;
 				data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes;
+				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
 			}
 		}
 		else if (data->u.img.planes == 1) {
 			data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width , data));
-			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes;
+			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
 		}
 		// sanity check and update
 		if (agoDataSanityCheckAndUpdate(data)) {
@@ -1166,12 +1166,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 					data->children[child]->u.img.maxValue = (vx_int32)data->children[child]->u.img.uniform[0];
 				}
 				data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes;
+				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
 			}
 		}
 		else if (data->u.img.planes == 1) {
 			data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes;
+			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
 		}
 		// set min/max values as uniform value
 		if (data->u.img.format == VX_DF_IMAGE_U8 ||
@@ -1315,7 +1315,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 			data->children[level]->siblingIndex = (vx_int32)level;
 			data->children[level]->parent = data;
 			data->children[level]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[level]->u.img.width, data->children[level]));
-			data->children[level]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes;
+			data->children[level]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*3;
 			if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) {
 				float orb_scale_factor[4] = {
 					VX_SCALE_PYRAMID_ORB,

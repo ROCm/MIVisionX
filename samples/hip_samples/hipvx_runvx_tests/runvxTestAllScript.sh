@@ -85,11 +85,6 @@ Not_U1_U8
 Not_U8_U1
 Not_U1_U1"
 
-# GDF_COLOR_LIST="ChannelExtract_U8_U32_Pos0
-# ChannelExtract_U8_U32_Pos1
-# ChannelExtract_U8_U32_Pos2
-# ChannelExtract_U8_U32_Pos3"
-
 GDF_COLOR_LIST="ColorDepth_U8_S16_Wrap
 ColorDepth_U8_S16_Sat
 ColorDepth_S16_U8
@@ -134,10 +129,6 @@ ColorConvert_YUV4_RGB
 ColorConvert_YUV4_RGBX
 "
 
-GDF_STATISTICAL_LIST="Threshold_U8_U8_Binary
-Threshold_U8_U8_Range
-"
-
 GDF_FILTER_LIST="Box_U8_U8_3x3
 Dilate_U8_U8_3x3
 Dilate_U1_U8_3x3
@@ -149,13 +140,17 @@ Erode_U8_U1_3x3
 Erode_U1_U1_3x3
 Median_U8_U8_3x3
 Gaussian_U8_U8_3x3
-HalfGaussian_U8_U8_3x3
-HalfGaussian_U8_U8_5x5
+ScaleGaussianHalf_U8_U8_3x3
+ScaleGaussianHalf_U8_U8_5x5
 Convolve_U8_U8_3x3
 Convolve_S16_U8_3x3
 Sobel_S16S16_U8_3x3_GXY
 Sobel_S16_U8_3x3_GX
 Sobel_S16_U8_3x3_GY
+"
+
+GDF_STATISTICAL_LIST="Threshold_U8_U8_Binary
+Threshold_U8_U8_Range
 "
 
 GDF_GEOMETRIC_LIST="ScaleImage_U8_U8_Nearest
@@ -280,6 +275,20 @@ case_tester() {
             runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/color/$GDF.gdf
         done
 
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning FILTER GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_FILTER_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            if [ "$KERNEL_DUMP" -eq 1 ]; then
+                export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            fi
+            generator "filter"
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/filter/$GDF.gdf
+        done
+
         # printf "\n\n---------------------------------------------"
         # printf "\nRunning STATISTICAL GDF cases on runvx for $AFFINITY..."
         # printf "\n---------------------------------------------\n"
@@ -292,20 +301,6 @@ case_tester() {
         #     fi
         #     generator "statistical"
         #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/statistical/$GDF.gdf
-        # done
-
-        # printf "\n\n---------------------------------------------"
-        # printf "\nRunning FILTER GDF cases on runvx for $AFFINITY..."
-        # printf "\n---------------------------------------------\n"
-        # for GDF in $GDF_FILTER_LIST;
-        # do
-        #     printf "\nRunning $GDF...\n"
-        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-        #     if [ "$KERNEL_DUMP" -eq 1 ]; then
-        #         export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        #     fi
-        #     generator "filter"
-        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/filter/$GDF.gdf
         # done
 
         # printf "\n\n---------------------------------------------"
@@ -702,33 +697,27 @@ if [ "$DUMP" -eq 1 ]; then
     color/agoKernel_FormatConvert_NV12_UYVY_output_1.bin
     color/agoKernel_FormatConvert_NV12_YUYV_output_1.bin
     color/agoKernel_ColorConvert_YUV4_RGB_output_1.bin
-    color/agoKernel_ColorConvert_YUV4_RGBX_output_1.bin"
+    color/agoKernel_ColorConvert_YUV4_RGBX_output_1.bin
+    filter/agoKernel_Box_U8_U8_3x3_output_1.bin
+    filter/agoKernel_Dilate_U8_U8_3x3_output_1.bin
+    filter/agoKernel_Dilate_U1_U8_3x3_output_1.bin
+    filter/agoKernel_Dilate_U8_U1_3x3_output_1.bin
+    filter/agoKernel_Dilate_U1_U1_3x3_output_1.bin
+    filter/agoKernel_Erode_U8_U8_3x3_output_1.bin
+    filter/agoKernel_Erode_U1_U8_3x3_output_1.bin
+    filter/agoKernel_Erode_U8_U1_3x3_output_1.bin
+    filter/agoKernel_Erode_U1_U1_3x3_output_1.bin
+    filter/agoKernel_Median_U8_U8_3x3_output_1.bin
+    filter/agoKernel_Gaussian_U8_U8_3x3_output_1.bin
+    filter/agoKernel_ScaleGaussianHalf_U8_U8_3x3_output_1.bin
+    filter/agoKernel_ScaleGaussianHalf_U8_U8_5x5_output_1.bin
+    filter/agoKernel_Convolve_U8_U8_3x3_output_1.bin
+    filter/agoKernel_Convolve_S16_U8_3x3_output_1.bin
+    filter/agoKernel_Sobel_S16S16_U8_3x3_GXY_output_1.bin
+    filter/agoKernel_Sobel_S16S16_U8_3x3_GXY_output_2.bin
+    filter/agoKernel_Sobel_S16_U8_3x3_GX_output_1.bin
+    filter/agoKernel_Sobel_S16_U8_3x3_GY_output_1.bin"
 
-    # OUTPUT_BIN_LIST="color/agoKernel_ChannelExtract_U8_U32_Pos0_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U32_Pos1_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U32_Pos2_output_1.bin
-    # color/agoKernel_ChannelExtract_U8_U32_Pos3_output_1.bin"
-
-    # statistical/agoKernel_Threshold_U8_U8_Binary_output_1.bin
-    # statistical/agoKernel_Threshold_U8_U8_Range_output_1.bin
-    # filter/agoKernel_Box_U8_U8_3x3_output_1.bin
-    # filter/agoKernel_Dilate_U8_U8_3x3_output_1.bin
-    # filter/agoKernel_Dilate_U1_U8_3x3_output_1.bin
-    # filter/agoKernel_Dilate_U8_U1_3x3_output_1.bin
-    # filter/agoKernel_Dilate_U1_U1_3x3_output_1.bin
-    # filter/agoKernel_Erode_U8_U8_3x3_output_1.bin
-    # filter/agoKernel_Erode_U1_U8_3x3_output_1.bin
-    # filter/agoKernel_Erode_U8_U1_3x3_output_1.bin
-    # filter/agoKernel_Erode_U1_U1_3x3_output_1.bin
-    # filter/agoKernel_Median_U8_U8_3x3_output_1.bin
-    # filter/agoKernel_Gaussian_U8_U8_3x3_output_1.bin
-    # filter/agoKernel_HalfGaussian_U8_U8_3x3_output_1.bin
-    # filter/agoKernel_HalfGaussian_U8_U8_5x5_output_1.bin
-    # filter/agoKernel_Convolve_U8_U8_3x3_output_1.bin
-    # filter/agoKernel_Convolve_S16_U8_3x3_output_1.bin
-    # filter/agoKernel_Sobel_S16S16_U8_3x3_GXY_output_1.bin
-    # filter/agoKernel_Sobel_S16_U8_3x3_GX_output_1.bin
-    # filter/agoKernel_Sobel_S16_U8_3x3_GY_output_1.bin
     # geometric/agoKernel_ScaleImage_U8_U8_Nearest_output_1.bin
     # geometric/agoKernel_ScaleImage_U8_U8_bilinear_output_1.bin
     # geometric/agoKernel_ScaleImage_U8_U8_bilinear_replicate_output_1.bin
@@ -742,6 +731,8 @@ if [ "$DUMP" -eq 1 ]; then
     # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_output_1.bin
     # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_bilinear_output_1.bin
     # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_constant_output_1.bin
+    # statistical/agoKernel_Threshold_U8_U8_Binary_output_1.bin
+    # statistical/agoKernel_Threshold_U8_U8_Range_output_1.bin
     # "
 
     if [ -n "$KERNEL_NAME" ]; then
@@ -765,7 +756,23 @@ if [ "$DUMP" -eq 1 ]; then
     do
         printf "\n"
         echo "Checking $OUTPUT_BIN..."
-        DIFF=$(diff "dumpsHIP/$OUTPUT_BIN" "dumpsOCL/$OUTPUT_BIN")
+        DIFF=""
+
+        if [[ $OUTPUT_BIN == filter* ]]; then
+            if [[ $OUTPUT_BIN == filter/agoKernel_ScaleGaussianHalf* ]]; then
+                WIDTH=$HALF_WIDTH
+                HEIGHT=$HALF_HEIGHT
+            fi
+            NUM_OF_OCTETS=$(($WIDTH * ($HEIGHT - 2)))
+            START=13
+            END=$((10 + $WIDTH * 2 + $WIDTH - 4))
+            xxd -g 1 -c $WIDTH -s $WIDTH -l $NUM_OF_OCTETS dumpsOCL/$OUTPUT_BIN | cut -c $START-$END > "dumpsOCL/$OUTPUT_BIN.roi.txt"
+            xxd -g 1 -c $WIDTH -s $WIDTH -l $NUM_OF_OCTETS dumpsHIP/$OUTPUT_BIN | cut -c $START-$END > "dumpsHIP/$OUTPUT_BIN.roi.txt"
+            DIFF=$(diff "dumpsHIP/$OUTPUT_BIN.roi.txt" "dumpsOCL/$OUTPUT_BIN.roi.txt")
+        else
+            DIFF=$(diff "dumpsHIP/$OUTPUT_BIN" "dumpsOCL/$OUTPUT_BIN")
+        fi
+
         if [ "$DIFF" != "" ]
         then
             echo "Outputs don't match!"

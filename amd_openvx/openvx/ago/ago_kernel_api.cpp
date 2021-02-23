@@ -10353,6 +10353,7 @@ int agoKernel_ChannelCombine_U16_U8U8(AgoNode * node, AgoKernelCommand cmd)
 
 int agoKernel_ChannelCombine_U24_U8U8U8_RGB(AgoNode * node, AgoKernelCommand cmd)
 {
+    printf("hi\n");
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;
@@ -10381,12 +10382,14 @@ int agoKernel_ChannelCombine_U24_U8U8U8_RGB(AgoNode * node, AgoKernelCommand cmd
 		sprintf(textBuffer, OPENCL_FORMAT(
 			"void %s (U24x8 * p0, U8x8 p1, U8x8 p2, U8x8 p3)\n"
 			"{\n"
-			"  (*p0).s0 = amd_pack((float4)(amd_unpack0(p1.s0), amd_unpack0(p2.s0), amd_unpack0(p3.s0), amd_unpack1(p1.s0)));\n"
-			"  (*p0).s1 = amd_pack((float4)(amd_unpack1(p2.s0), amd_unpack1(p3.s0), amd_unpack2(p1.s0), amd_unpack2(p2.s0)));\n"
-			"  (*p0).s2 = amd_pack((float4)(amd_unpack2(p3.s0), amd_unpack3(p1.s0), amd_unpack3(p2.s0), amd_unpack3(p3.s0)));\n"
-			"  (*p0).s3 = amd_pack((float4)(amd_unpack0(p1.s1), amd_unpack0(p2.s1), amd_unpack0(p3.s1), amd_unpack1(p1.s1)));\n"
-			"  (*p0).s4 = amd_pack((float4)(amd_unpack1(p2.s1), amd_unpack1(p3.s1), amd_unpack2(p1.s1), amd_unpack2(p2.s1)));\n"
-			"  (*p0).s5 = amd_pack((float4)(amd_unpack2(p3.s1), amd_unpack3(p1.s1), amd_unpack3(p2.s1), amd_unpack3(p3.s1)));\n"
+            "  U24x8 r;\n"
+			"  r.s0 = amd_pack((float4)(amd_unpack0(p1.s0), amd_unpack0(p2.s0), amd_unpack0(p3.s0), amd_unpack1(p1.s0)));\n"
+			"  r.s1 = amd_pack((float4)(amd_unpack1(p2.s0), amd_unpack1(p3.s0), amd_unpack2(p1.s0), amd_unpack2(p2.s0)));\n"
+			"  r.s2 = amd_pack((float4)(amd_unpack2(p3.s0), amd_unpack3(p1.s0), amd_unpack3(p2.s0), amd_unpack3(p3.s0)));\n"
+			"  r.s3 = amd_pack((float4)(amd_unpack0(p1.s1), amd_unpack0(p2.s1), amd_unpack0(p3.s1), amd_unpack1(p1.s1)));\n"
+			"  r.s4 = amd_pack((float4)(amd_unpack1(p2.s1), amd_unpack1(p3.s1), amd_unpack2(p1.s1), amd_unpack2(p2.s1)));\n"
+			"  r.s5 = amd_pack((float4)(amd_unpack2(p3.s1), amd_unpack3(p1.s1), amd_unpack3(p2.s1), amd_unpack3(p3.s1)));\n"
+            "  *p0 = r;\n"
 			"}\n"
 			), node->opencl_name);
 		node->opencl_code += textBuffer;

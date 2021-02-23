@@ -50,14 +50,6 @@ ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
     // _header_buff.resize(COMPRESSED_SIZE);
     _decoder = create_decoder(std::move(decoder_cfg));
     _reader = create_reader(std::move(reader_cfg));
-    // create backup decoder
-    _decoder_cv = nullptr;
-#if 0//ENABLE_OPENCV
-    _decoder_cfg_cv = decoder_cfg;
-    _decoder_cfg_cv._type = DecoderType::OPENCV_DEC;
-    if (decoder_cfg._type != DecoderType::OPENCV_DEC)
-        _decoder_cv = create_decoder(std::move(_decoder_cfg_cv));
-#endif
     find_max_dimension();
     return status;
 }
@@ -79,17 +71,8 @@ ImageSourceEvaluator::find_max_dimension()
         int width, height, jpeg_sub_samp;
         if(_decoder->decode_info(_header_buff.data(), actual_read_size, &width, &height, &jpeg_sub_samp ) != Decoder::Status::OK)
         {
-#if 0   // Not using OpenCV decoder for source evaluation since there is no api to read only the header
-            // try with cv decoder
-            WRN("Couldn't decode using turbojpeg: using opencv decoder");
-            if (_decoder_cv && _decoder_cv->decode_info(_header_buff.data(), actual_read_size, &width, &height, &jpeg_sub_samp ) != Decoder::Status::OK){
-                WRN("Could not decode the header of the: "+ _reader->id())
-                continue;
-            }
-#else
             WRN("Could not decode the header of the: "+ _reader->id())
             continue;
-#endif
         }
         
         if(width <= 0 || height <=0)

@@ -15046,10 +15046,6 @@ int agoKernel_Box_U8_U8_3x3(AgoNode * node, AgoKernelCommand cmd)
         status = VX_SUCCESS;
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
-        oImg->u.img.rect_valid.start_x = min(iImg->u.img.rect_valid.start_x + 1, oImg->u.img.width);
-        oImg->u.img.rect_valid.start_y = min(iImg->u.img.rect_valid.start_y + 1, oImg->u.img.height);
-        oImg->u.img.rect_valid.end_x = max((int)iImg->u.img.rect_valid.end_x - 1, 0);
-        oImg->u.img.rect_valid.end_y = max((int)iImg->u.img.rect_valid.end_y - 1, 0);
         if (HipExec_Box_U8_U8_3x3(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
             oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
@@ -15636,7 +15632,7 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (vx_int16 *)(iConv->hip_memory + iConv->opencl_buffer_offset), convolutionWidth, convolutionHeight)) {
+            (float *)(iConv->hip_memory + iConv->opencl_buffer_offset), convolutionWidth, convolutionHeight)) {
             status = VX_FAILURE;
         }
     }
@@ -15745,7 +15741,7 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             (vx_int16 *) (oImg->hip_memory + oImg->opencl_buffer_offset), oImg->u.img.stride_in_bytes,
             iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (vx_int16 *)(iConv->hip_memory + iConv->opencl_buffer_offset), convolutionWidth, convolutionHeight)) {
+            (float *)(iConv->hip_memory + iConv->opencl_buffer_offset), convolutionWidth, convolutionHeight)) {
             status = VX_FAILURE;
         }
     }

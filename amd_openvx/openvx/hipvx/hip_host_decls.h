@@ -633,12 +633,12 @@ int HipExec_Convolve_U8_U8(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
+        float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
 int HipExec_Convolve_S16_U8(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        const vx_int16 *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
+        float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
 int HipExec_Sobel_S16S16_U8_3x3_GXY(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_int16 *pHipDstImage1, vx_uint32 dstImage1StrideInBytes,

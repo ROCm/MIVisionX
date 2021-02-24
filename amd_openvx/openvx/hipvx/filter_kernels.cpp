@@ -1852,89 +1852,91 @@ Hip_ScaleGaussianHalf_U8_U8_3x3(uint dstWidth, uint dstHeight,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
     uint dstWidthComp) {
 
-    __shared__ uchar lbuf[4488]; // 136x33 bytes
-    int lx = hipThreadIdx_x;
-    int ly = hipThreadIdx_y;
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+//     Modify
 
-    uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
-    uint srcIdx =  (((y - ly) << 1) + 1) * srcImageStrideInBytes + ((x - lx) << 3);
-    bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
+//     __shared__ uchar lbuf[4488]; // 136x33 bytes
+//     int lx = hipThreadIdx_x;
+//     int ly = hipThreadIdx_y;
+//     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+//     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
-    { // load 136x33 bytes into local memory using 16x16 workgroup
-        int loffset = ly * 136 + (lx << 3);
-        int goffset = (ly - 1) * srcImageStrideInBytes + (lx << 3) - 4;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
-        loffset += 16 * 136;
-        goffset += 16 * srcImageStrideInBytes;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
-        if (ly < 1) {
-            loffset += 16 * 136;
-            goffset += 16 * srcImageStrideInBytes;
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
-        }
-        __shared__ uchar *lbufptr;
-        lbufptr = lbuf + 128;
-        goffset = -srcImageStrideInBytes + 124;
-        int id = ly * 16 + lx;
-        if (id < 33) {
-            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcImageStrideInBytes]));
-        }
-        __syncthreads();
-    }
+//     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
+//     uint srcIdx =  (((y - ly) << 1) + 1) * srcImageStrideInBytes + ((x - lx) << 3);
+//     bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
 
-    __shared__ uchar *lbuf_ptr;
-    lbuf_ptr = lbuf + ly * 272 + (lx << 3);
-    uint3 L0 = *((uint3 *)(&lbuf_ptr[4]));
-    uint3 L1 = *((uint3 *)(&lbuf_ptr[140]));
-    uint3 L2 = *((uint3 *)(&lbuf_ptr[276]));
-    float4 sum;
-    float v;
-    v = unpack0_(L0.x);
-    v = fmaf(unpack0_(L1.x), 2.0f, v);
-    v += unpack0_(L2.x);
-    sum.x = v;
-    v = unpack1_(L0.x);
-    v = fmaf(unpack1_(L1.x), 2.0f, v);
-    v += unpack1_(L2.x);
-    sum.x = fmaf(v, 2.0f, sum.x);
-    v = unpack2_(L0.x);
-    v = fmaf(unpack2_(L1.x), 2.0f, v);
-    v += unpack2_(L2.x);
-    sum.y = v;
-    sum.x += v;
-    v = unpack3_(L0.x);
-    v = fmaf(unpack3_(L1.x), 2.0f, v);
-    v += unpack3_(L2.x);
-    sum.y = fmaf(v, 2.0f, sum.y);
-    v = unpack0_(L0.y);
-    v = fmaf(unpack0_(L1.y), 2.0f, v);
-    v += unpack0_(L2.y);
-    sum.z = v;
-    sum.y += v;
-    v = unpack1_(L0.y);
-    v = fmaf(unpack1_(L1.y), 2.0f, v);
-    v += unpack1_(L2.y);
-    sum.z = fmaf(v, 2.0f, sum.z);
-    v = unpack2_(L0.y);
-    v = fmaf(unpack2_(L1.y), 2.0f, v);
-    v += unpack2_(L2.y);
-    sum.w = v;
-    sum.z += v;
-    v = unpack3_(L0.y);
-    v = fmaf(unpack3_(L1.y), 2.0f, v);
-    v += unpack3_(L2.y);
-    sum.w = fmaf(v, 2.0f, sum.w);
-    v = unpack0_(L0.z);
-    v = fmaf(unpack0_(L1.z), 2.0f, v);
-    v += unpack0_(L2.z);
-    sum.w += v;
-    sum = sum * (float4)0.0625f;
+//     { // load 136x33 bytes into local memory using 16x16 workgroup
+//         int loffset = ly * 136 + (lx << 3);
+//         int goffset = (ly - 1) * srcImageStrideInBytes + (lx << 3) - 4;
+//         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+//         loffset += 16 * 136;
+//         goffset += 16 * srcImageStrideInBytes;
+//         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+//         if (ly < 1) {
+//             loffset += 16 * 136;
+//             goffset += 16 * srcImageStrideInBytes;
+//             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+//         }
+//         __shared__ uchar *lbufptr;
+//         lbufptr = lbuf + 128;
+//         goffset = -srcImageStrideInBytes + 124;
+//         int id = ly * 16 + lx;
+//         if (id < 33) {
+//             *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcImageStrideInBytes]));
+//         }
+//         __syncthreads();
+//     }
 
-    if (valid) {
-        *((uint *)(&pDstImage[dstIdx])) = pack_(sum);
-    }
+//     __shared__ uchar *lbuf_ptr;
+//     lbuf_ptr = lbuf + ly * 272 + (lx << 3);
+//     uint3 L0 = *((uint3 *)(&lbuf_ptr[4]));
+//     uint3 L1 = *((uint3 *)(&lbuf_ptr[140]));
+//     uint3 L2 = *((uint3 *)(&lbuf_ptr[276]));
+//     float4 sum;
+//     float v;
+//     v = unpack0_(L0.x);
+//     v = fmaf(unpack0_(L1.x), 2.0f, v);
+//     v += unpack0_(L2.x);
+//     sum.x = v;
+//     v = unpack1_(L0.x);
+//     v = fmaf(unpack1_(L1.x), 2.0f, v);
+//     v += unpack1_(L2.x);
+//     sum.x = fmaf(v, 2.0f, sum.x);
+//     v = unpack2_(L0.x);
+//     v = fmaf(unpack2_(L1.x), 2.0f, v);
+//     v += unpack2_(L2.x);
+//     sum.y = v;
+//     sum.x += v;
+//     v = unpack3_(L0.x);
+//     v = fmaf(unpack3_(L1.x), 2.0f, v);
+//     v += unpack3_(L2.x);
+//     sum.y = fmaf(v, 2.0f, sum.y);
+//     v = unpack0_(L0.y);
+//     v = fmaf(unpack0_(L1.y), 2.0f, v);
+//     v += unpack0_(L2.y);
+//     sum.z = v;
+//     sum.y += v;
+//     v = unpack1_(L0.y);
+//     v = fmaf(unpack1_(L1.y), 2.0f, v);
+//     v += unpack1_(L2.y);
+//     sum.z = fmaf(v, 2.0f, sum.z);
+//     v = unpack2_(L0.y);
+//     v = fmaf(unpack2_(L1.y), 2.0f, v);
+//     v += unpack2_(L2.y);
+//     sum.w = v;
+//     sum.z += v;
+//     v = unpack3_(L0.y);
+//     v = fmaf(unpack3_(L1.y), 2.0f, v);
+//     v += unpack3_(L2.y);
+//     sum.w = fmaf(v, 2.0f, sum.w);
+//     v = unpack0_(L0.z);
+//     v = fmaf(unpack0_(L1.z), 2.0f, v);
+//     v += unpack0_(L2.z);
+//     sum.w += v;
+//     sum = sum * (float4)0.0625f;
+
+//     if (valid) {
+//         *((uint *)(&pDstImage[dstIdx])) = pack_(sum);
+//     }
 }
 int HipExec_ScaleGaussianHalf_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1962,110 +1964,112 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
     uint dstWidthComp) {
 
-    __shared__ uchar lbuf[4760]; // 136x35 bytes
-    int lx = hipThreadIdx_x;
-    int ly = hipThreadIdx_y;
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+//     Modify
+    
+//     __shared__ uchar lbuf[4760]; // 136x35 bytes
+//     int lx = hipThreadIdx_x;
+//     int ly = hipThreadIdx_y;
+//     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+//     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
-    uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
-    uint srcIdx =  (((y - ly) << 1) + 1) * srcImageStrideInBytes + ((x - lx) << 3);
-    bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
+//     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
+//     uint srcIdx =  (((y - ly) << 1) + 1) * srcImageStrideInBytes + ((x - lx) << 3);
+//     bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
 
-    { // load 136x35 bytes into local memory using 16x16 workgroup
-        int loffset = ly * 136 + (lx << 3);
-        int goffset = (ly - 2) * srcImageStrideInBytes + (lx << 3) - 4;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
-        loffset += 16 * 136;
-        goffset += 16 * srcImageStrideInBytes;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
-        if (ly < 3) {
-            loffset += 16 * 136;
-            goffset += 16 * srcImageStrideInBytes;
-            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
-        }
-        __shared__ uchar *lbufptr;
-        lbufptr = lbuf + 128;
-        goffset = -2 * srcImageStrideInBytes + 124;
-        int id = ly * 16 + lx;
-        if (id < 35) {
-            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcImageStrideInBytes]));
-        }
-        __syncthreads();
-    }
+//     { // load 136x35 bytes into local memory using 16x16 workgroup
+//         int loffset = ly * 136 + (lx << 3);
+//         int goffset = (ly - 2) * srcImageStrideInBytes + (lx << 3) - 4;
+//         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+//         loffset += 16 * 136;
+//         goffset += 16 * srcImageStrideInBytes;
+//         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+//         if (ly < 3) {
+//             loffset += 16 * 136;
+//             goffset += 16 * srcImageStrideInBytes;
+//             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
+//         }
+//         __shared__ uchar *lbufptr;
+//         lbufptr = lbuf + 128;
+//         goffset = -2 * srcImageStrideInBytes + 124;
+//         int id = ly * 16 + lx;
+//         if (id < 35) {
+//             *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcImageStrideInBytes]));
+//         }
+//         __syncthreads();
+//     }
 
-    __shared__ uchar *lbuf_ptr;
-    lbuf_ptr = lbuf + ly * 136 + (lx << 3);
-    float4 sum;
-    float v;
+//     __shared__ uchar *lbuf_ptr;
+//     lbuf_ptr = lbuf + ly * 136 + (lx << 3);
+//     float4 sum;
+//     float v;
 
-    uint4 L0 = *((uint4 *)(&lbuf_ptr[0]));
-    v = unpack3_(L0.x);                                           sum.x = v;
-    v = unpack0_(L0.y);                                           sum.x = fmaf(v, 4.0f, sum.x);
-    v = unpack1_(L0.y);             sum.x = fmaf(v, 6.0f, sum.x); sum.y = v;
-    v = unpack2_(L0.y);             sum.x = fmaf(v, 4.0f, sum.x); sum.y = fmaf(v, 4.0f, sum.y);
-    v = unpack3_(L0.y); sum.x += v; sum.y = fmaf(v, 6.0f, sum.y); sum.z = v;
-    v = unpack0_(L0.z);             sum.y = fmaf(v, 4.0f, sum.y); sum.z = fmaf(v, 4.0f, sum.z);
-    v = unpack1_(L0.z); sum.y += v; sum.z = fmaf(v, 6.0f, sum.z); sum.w = v;
-    v = unpack2_(L0.z);             sum.z = fmaf(v, 4.0f, sum.z); sum.w = fmaf(v, 4.0f, sum.w);
-    v = unpack3_(L0.z); sum.z += v; sum.w = fmaf(v, 6.0f, sum.w);
-    v = unpack0_(L0.w);             sum.w = fmaf(v, 4.0f, sum.w);
-    v = unpack1_(L0.w); sum.w += v;
-    L0.x = (uint)sum.x + (((uint)sum.y) << 16);
-    L0.y = (uint)sum.z + (((uint)sum.w) << 16);
-    *(uint2 *)lbuf_ptr = make_uint2(L0.x, L0.y);
+//     uint4 L0 = *((uint4 *)(&lbuf_ptr[0]));
+//     v = unpack3_(L0.x);                                           sum.x = v;
+//     v = unpack0_(L0.y);                                           sum.x = fmaf(v, 4.0f, sum.x);
+//     v = unpack1_(L0.y);             sum.x = fmaf(v, 6.0f, sum.x); sum.y = v;
+//     v = unpack2_(L0.y);             sum.x = fmaf(v, 4.0f, sum.x); sum.y = fmaf(v, 4.0f, sum.y);
+//     v = unpack3_(L0.y); sum.x += v; sum.y = fmaf(v, 6.0f, sum.y); sum.z = v;
+//     v = unpack0_(L0.z);             sum.y = fmaf(v, 4.0f, sum.y); sum.z = fmaf(v, 4.0f, sum.z);
+//     v = unpack1_(L0.z); sum.y += v; sum.z = fmaf(v, 6.0f, sum.z); sum.w = v;
+//     v = unpack2_(L0.z);             sum.z = fmaf(v, 4.0f, sum.z); sum.w = fmaf(v, 4.0f, sum.w);
+//     v = unpack3_(L0.z); sum.z += v; sum.w = fmaf(v, 6.0f, sum.w);
+//     v = unpack0_(L0.w);             sum.w = fmaf(v, 4.0f, sum.w);
+//     v = unpack1_(L0.w); sum.w += v;
+//     L0.x = (uint)sum.x + (((uint)sum.y) << 16);
+//     L0.y = (uint)sum.z + (((uint)sum.w) << 16);
+//     *(uint2 *)lbuf_ptr = make_uint2(L0.x, L0.y);
 
-    L0 = *((uint4 *)(&lbuf_ptr[2176]));
-    v = unpack3_(L0.x);                                           sum.x = v;
-    v = unpack0_(L0.y);                                           sum.x = fmaf(v, 4.0f, sum.x);
-    v = unpack1_(L0.y);             sum.x = fmaf(v, 6.0f, sum.x); sum.y = v;
-    v = unpack2_(L0.y);             sum.x = fmaf(v, 4.0f, sum.x); sum.y = fmaf(v, 4.0f, sum.y);
-    v = unpack3_(L0.y); sum.x += v; sum.y = fmaf(v, 6.0f, sum.y); sum.z = v;
-    v = unpack0_(L0.z);             sum.y = fmaf(v, 4.0f, sum.y); sum.z = fmaf(v, 4.0f, sum.z);
-    v = unpack1_(L0.z); sum.y += v; sum.z = fmaf(v, 6.0f, sum.z); sum.w = v;
-    v = unpack2_(L0.z);             sum.z = fmaf(v, 4.0f, sum.z); sum.w = fmaf(v, 4.0f, sum.w);
-    v = unpack3_(L0.z); sum.z += v; sum.w = fmaf(v, 6.0f, sum.w);
-    v = unpack0_(L0.w);             sum.w = fmaf(v, 4.0f, sum.w);
-    v = unpack1_(L0.w); sum.w += v;
-    L0.x = (uint)sum.x + (((uint)sum.y) << 16);
-    L0.y = (uint)sum.z + (((uint)sum.w) << 16);
-    *(uint2 *)&lbuf_ptr[2176] = make_uint2(L0.x, L0.y);
+//     L0 = *((uint4 *)(&lbuf_ptr[2176]));
+//     v = unpack3_(L0.x);                                           sum.x = v;
+//     v = unpack0_(L0.y);                                           sum.x = fmaf(v, 4.0f, sum.x);
+//     v = unpack1_(L0.y);             sum.x = fmaf(v, 6.0f, sum.x); sum.y = v;
+//     v = unpack2_(L0.y);             sum.x = fmaf(v, 4.0f, sum.x); sum.y = fmaf(v, 4.0f, sum.y);
+//     v = unpack3_(L0.y); sum.x += v; sum.y = fmaf(v, 6.0f, sum.y); sum.z = v;
+//     v = unpack0_(L0.z);             sum.y = fmaf(v, 4.0f, sum.y); sum.z = fmaf(v, 4.0f, sum.z);
+//     v = unpack1_(L0.z); sum.y += v; sum.z = fmaf(v, 6.0f, sum.z); sum.w = v;
+//     v = unpack2_(L0.z);             sum.z = fmaf(v, 4.0f, sum.z); sum.w = fmaf(v, 4.0f, sum.w);
+//     v = unpack3_(L0.z); sum.z += v; sum.w = fmaf(v, 6.0f, sum.w);
+//     v = unpack0_(L0.w);             sum.w = fmaf(v, 4.0f, sum.w);
+//     v = unpack1_(L0.w); sum.w += v;
+//     L0.x = (uint)sum.x + (((uint)sum.y) << 16);
+//     L0.y = (uint)sum.z + (((uint)sum.w) << 16);
+//     *(uint2 *)&lbuf_ptr[2176] = make_uint2(L0.x, L0.y);
 
-    if (ly < 3) {
-        L0 = *((uint4 *)(&lbuf_ptr[4352]));
-        v = unpack3_(L0.x);                                           sum.x = v;
-        v = unpack0_(L0.y);                                           sum.x = fmaf(v, 4.0f, sum.x);
-        v = unpack1_(L0.y);             sum.x = fmaf(v, 6.0f, sum.x); sum.y = v;
-        v = unpack2_(L0.y);             sum.x = fmaf(v, 4.0f, sum.x); sum.y = fmaf(v, 4.0f, sum.y);
-        v = unpack3_(L0.y); sum.x += v; sum.y = fmaf(v, 6.0f, sum.y); sum.z = v;
-        v = unpack0_(L0.z);             sum.y = fmaf(v, 4.0f, sum.y); sum.z = fmaf(v, 4.0f, sum.z);
-        v = unpack1_(L0.z); sum.y += v; sum.z = fmaf(v, 6.0f, sum.z); sum.w = v;
-        v = unpack2_(L0.z);             sum.z = fmaf(v, 4.0f, sum.z); sum.w = fmaf(v, 4.0f, sum.w);
-        v = unpack3_(L0.z); sum.z += v; sum.w = fmaf(v, 6.0f, sum.w);
-        v = unpack0_(L0.w);             sum.w = fmaf(v, 4.0f, sum.w);
-        v = unpack1_(L0.w); sum.w += v;
-        L0.x = (uint)sum.x + (((uint)sum.y) << 16);
-        L0.y = (uint)sum.z + (((uint)sum.w) << 16);
-        *(uint2 *)&lbuf_ptr[4352] = make_uint2(L0.x, L0.y);
-    }
-    __syncthreads();
+//     if (ly < 3) {
+//         L0 = *((uint4 *)(&lbuf_ptr[4352]));
+//         v = unpack3_(L0.x);                                           sum.x = v;
+//         v = unpack0_(L0.y);                                           sum.x = fmaf(v, 4.0f, sum.x);
+//         v = unpack1_(L0.y);             sum.x = fmaf(v, 6.0f, sum.x); sum.y = v;
+//         v = unpack2_(L0.y);             sum.x = fmaf(v, 4.0f, sum.x); sum.y = fmaf(v, 4.0f, sum.y);
+//         v = unpack3_(L0.y); sum.x += v; sum.y = fmaf(v, 6.0f, sum.y); sum.z = v;
+//         v = unpack0_(L0.z);             sum.y = fmaf(v, 4.0f, sum.y); sum.z = fmaf(v, 4.0f, sum.z);
+//         v = unpack1_(L0.z); sum.y += v; sum.z = fmaf(v, 6.0f, sum.z); sum.w = v;
+//         v = unpack2_(L0.z);             sum.z = fmaf(v, 4.0f, sum.z); sum.w = fmaf(v, 4.0f, sum.w);
+//         v = unpack3_(L0.z); sum.z += v; sum.w = fmaf(v, 6.0f, sum.w);
+//         v = unpack0_(L0.w);             sum.w = fmaf(v, 4.0f, sum.w);
+//         v = unpack1_(L0.w); sum.w += v;
+//         L0.x = (uint)sum.x + (((uint)sum.y) << 16);
+//         L0.y = (uint)sum.z + (((uint)sum.w) << 16);
+//         *(uint2 *)&lbuf_ptr[4352] = make_uint2(L0.x, L0.y);
+//     }
+//     __syncthreads();
 
-    lbuf_ptr += ly * 136;
-    uint2 *L0_01 = (uint2 *)(&L0);
-    *L0_01 = *((uint2 *)(&lbuf_ptr));
-    sum.x = (float)(L0.x & 0xffff); sum.y = (float)(L0.x >> 16); sum.z = (float)(L0.y & 0xffff); sum.w = (float)(L0.y >> 16);
-    *L0_01 = *((uint2 *)(&lbuf_ptr[136]));
-    sum.x = fmaf((float)(L0.x & 0xffff), 4.0f, sum.x); sum.y = fmaf((float)(L0.x >> 16), 4.0f, sum.y); sum.z = fmaf((float)(L0.y & 0xffff), 4.0f, sum.z); sum.w = fmaf((float)(L0.y >> 16), 4.0f, sum.w);
-    *L0_01 = *((uint2 *)(&lbuf_ptr[272]));
-    sum.x = fmaf((float)(L0.x & 0xffff), 6.0f, sum.x); sum.y = fmaf((float)(L0.x >> 16), 6.0f, sum.y); sum.z = fmaf((float)(L0.y & 0xffff), 6.0f, sum.z); sum.w = fmaf((float)(L0.y >> 16), 6.0f, sum.w);
-    *L0_01 = *((uint2 *)(&lbuf_ptr[408]));
-    sum.x = fmaf((float)(L0.x & 0xffff), 4.0f, sum.x); sum.y = fmaf((float)(L0.x >> 16), 4.0f, sum.y); sum.z = fmaf((float)(L0.y & 0xffff), 4.0f, sum.z); sum.w = fmaf((float)(L0.y >> 16), 4.0f, sum.w);
-    *L0_01 = *((uint2 *)(&lbuf_ptr[544]));
-    sum.x += (float)(L0.x & 0xffff); sum.y += (float)(L0.x >> 16); sum.z += (float)(L0.y & 0xffff); sum.w += (float)(L0.y >> 16);
-    sum = sum * (float4)0.00390625f;
-    if (valid) {
-        *((uint *)(&pDstImage[dstIdx])) = pack_(sum);
-    }
+//     lbuf_ptr += ly * 136;
+//     uint2 *L0_01 = (uint2 *)(&L0);
+//     *L0_01 = *((uint2 *)(&lbuf_ptr));
+//     sum.x = (float)(L0.x & 0xffff); sum.y = (float)(L0.x >> 16); sum.z = (float)(L0.y & 0xffff); sum.w = (float)(L0.y >> 16);
+//     *L0_01 = *((uint2 *)(&lbuf_ptr[136]));
+//     sum.x = fmaf((float)(L0.x & 0xffff), 4.0f, sum.x); sum.y = fmaf((float)(L0.x >> 16), 4.0f, sum.y); sum.z = fmaf((float)(L0.y & 0xffff), 4.0f, sum.z); sum.w = fmaf((float)(L0.y >> 16), 4.0f, sum.w);
+//     *L0_01 = *((uint2 *)(&lbuf_ptr[272]));
+//     sum.x = fmaf((float)(L0.x & 0xffff), 6.0f, sum.x); sum.y = fmaf((float)(L0.x >> 16), 6.0f, sum.y); sum.z = fmaf((float)(L0.y & 0xffff), 6.0f, sum.z); sum.w = fmaf((float)(L0.y >> 16), 6.0f, sum.w);
+//     *L0_01 = *((uint2 *)(&lbuf_ptr[408]));
+//     sum.x = fmaf((float)(L0.x & 0xffff), 4.0f, sum.x); sum.y = fmaf((float)(L0.x >> 16), 4.0f, sum.y); sum.z = fmaf((float)(L0.y & 0xffff), 4.0f, sum.z); sum.w = fmaf((float)(L0.y >> 16), 4.0f, sum.w);
+//     *L0_01 = *((uint2 *)(&lbuf_ptr[544]));
+//     sum.x += (float)(L0.x & 0xffff); sum.y += (float)(L0.x >> 16); sum.z += (float)(L0.y & 0xffff); sum.w += (float)(L0.y >> 16);
+//     sum = sum * (float4)0.00390625f;
+//     if (valid) {
+//         *((uint *)(&pDstImage[dstIdx])) = pack_(sum);
+//     }
 }
 int HipExec_ScaleGaussianHalf_U8_U8_5x5(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

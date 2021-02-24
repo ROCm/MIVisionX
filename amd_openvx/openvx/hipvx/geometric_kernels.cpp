@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -153,9 +153,9 @@ Hip_Remap_U8_U8_Bilinear(
         int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
         int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
         pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(
-        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
-        (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
-        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] +
+        (s) * (1-t) * pSrcImage[srcIdxTopRight] +
+        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] +
         (s) * (t) * pSrcImage[srcIdxBottomRight]
         );
     }
@@ -223,7 +223,7 @@ int HipExec_Remap_U8_U8_Bilinear(
     vx_uint8 *hipRemapTable_float;
     hipMalloc(&hipRemapTable_float, bufferSize);
     hipMemcpy(hipRemapTable_float, remapTable_float, bufferSize, hipMemcpyHostToDevice);
-    
+
     hipLaunchKernelGGL(Hip_Remap_U8_U8_Bilinear,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -271,7 +271,7 @@ int HipExec_WarpAffine_U8_U8_Nearest(
     ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth, globalThreads_y = dstHeight;
-    
+
     hipLaunchKernelGGL(Hip_WarpAffine_U8_U8_Nearest,
                        dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
                        dim3(localThreads_x, localThreads_y),
@@ -356,9 +356,9 @@ Hip_WarpAffine_U8_U8_Bilinear(
         int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
         int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
         pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(
-        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
-        (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
-        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] +
+        (s) * (1-t) * pSrcImage[srcIdxTopRight] +
+        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] +
         (s) * (t) * pSrcImage[srcIdxBottomRight]);
     }
 }
@@ -412,9 +412,9 @@ Hip_WarpAffine_U8_U8_Bilinear_Constant(
         int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
         int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
         pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32(
-        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
-        (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
-        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] +
+        (s) * (1-t) * pSrcImage[srcIdxTopRight] +
+        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] +
         (s) * (t) * pSrcImage[srcIdxBottomRight]));
     }
 }
@@ -566,9 +566,9 @@ Hip_WarpPerspective_U8_U8_Bilinear(
         int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
         int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
         pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(
-        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
-        (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
-        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] +
+        (s) * (1-t) * pSrcImage[srcIdxTopRight] +
+        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] +
         (s) * (t) * pSrcImage[srcIdxBottomRight]);
     }
 }
@@ -622,9 +622,9 @@ Hip_WarpPerspective_U8_U8_Bilinear_Constant(
         int srcIdxBottomLeft =  (ySrcLower + 1) * (srcImageStrideInBytes) + xSrcLower;
         int srcIdxBottomRight =  (ySrcLower + 1) * (srcImageStrideInBytes) + (xSrcLower + 1);
         pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(
-        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
-        (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
-        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] +
+        (s) * (1-t) * pSrcImage[srcIdxTopRight] +
+        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] +
         (s) * (t) * pSrcImage[srcIdxBottomRight]);
     }
 }
@@ -738,9 +738,9 @@ Hip_ScaleImage_U8_U8_Bilinear(
         srcIdxBottomRight =  (ySrcLower) * (srcImageStrideInBytes) + (xSrcLower + 1);
     }
     pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32(
-        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
-        (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
-        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+        (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] +
+        (s) * (1-t) * pSrcImage[srcIdxTopRight] +
+        (1-s) * (t) * pSrcImage[srcIdxBottomLeft] +
         (s) * (t) * pSrcImage[srcIdxBottomRight]));
 }
 int HipExec_ScaleImage_U8_U8_Bilinear(
@@ -817,9 +817,9 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(
         srcIdxBottomRight -= 1;
     }
     pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(PIXELROUNDF32(
-      (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] + 
-      (s) * (1-t) * pSrcImage[srcIdxTopRight] + 
-      (1-s) * (t) * pSrcImage[srcIdxBottomLeft] + 
+      (1-s) * (1-t) * pSrcImage[srcIdxTopLeft] +
+      (s) * (1-t) * pSrcImage[srcIdxTopRight] +
+      (1-s) * (t) * pSrcImage[srcIdxBottomLeft] +
       (s) * (t) * pSrcImage[srcIdxBottomRight]));
 }
 int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(
@@ -1000,174 +1000,5 @@ int HipExec_ScaleImage_U8_U8_Area(
                     (unsigned char *)pHipDstImage, dstImageStrideInBytes,
                     srcWidthFloat, srcHeightFloat,
                     (unsigned char *)pHipSrcImage, srcImageStrideInBytes);
-    return VX_SUCCESS;
-}
-
-__global__ void __attribute__((visibility("default")))
-Hip_ScaleGaussianHalf_U8_U8_3x3(
-    const float dstWidth, const float dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    const float srcWidth, const float srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
-    const float *gaussian
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    int xSrc = (int)PIXELROUNDF32(((x + 0.5) * (srcWidth/dstWidth)) - 0.5);
-    int ySrc = (int)PIXELROUNDF32(((y + 0.5) * (srcHeight/dstHeight)) - 0.5);
-    int dstIdx =  y*(dstImageStrideInBytes) + x;
-    int srcIdx =  ySrc*(srcImageStrideInBytes) + xSrc;
-    if ((ySrc > 1) && (ySrc < srcHeight - 2)) {
-        int srcIdxTopRow, srcIdxBottomRow;
-        srcIdxTopRow = srcIdx - srcImageStrideInBytes;
-        srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
-        float sum = 0;
-        sum += (gaussian[4] * (float)*(pSrcImage + srcIdx) + gaussian[1] * (float)*(pSrcImage + srcIdxTopRow) + gaussian[7] * (float)*(pSrcImage + srcIdxBottomRow));
-        if (xSrc != 0)
-            sum += (gaussian[3] * (float)*(pSrcImage + srcIdx - 1) + gaussian[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gaussian[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
-        if (xSrc != (srcWidth - 1))
-            sum += (gaussian[5] * (float)*(pSrcImage + srcIdx + 1) + gaussian[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gaussian[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
-        pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(sum);
-    }
-    else {
-        pDstImage[dstIdx] = 0;
-    }
-}
-int HipExec_ScaleGaussianHalf_U8_U8_3x3(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-    float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
-    dstWidthFloat = (float)dstWidth;
-    dstHeightFloat = (float)dstHeight;
-    srcWidthFloat = (float)srcWidth;
-    srcHeightFloat = (float)srcHeight;
-
-    float gaussian[9] = {0.0625,0.125,0.0625,0.125,0.25,0.125,0.0625,0.125,0.0625};
-    float *hipGaussian;
-    hipMalloc(&hipGaussian, 288);
-    hipMemcpy(hipGaussian, gaussian, 288, hipMemcpyHostToDevice);
-
-    hipLaunchKernelGGL(Hip_ScaleGaussianHalf_U8_U8_3x3,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream,
-                    dstWidthFloat, dstHeightFloat,
-                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                    srcWidthFloat, srcHeightFloat,
-                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                    (const float *)hipGaussian);
-    hipFree(&hipGaussian);
-    return VX_SUCCESS;
-}
-
-__global__ void __attribute__((visibility("default")))
-Hip_ScaleGaussianHalf_U8_U8_5x5(
-    const float dstWidth, const float dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    const float srcWidth, const float srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
-    const float *gaussian
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    int xSrc = (int)PIXELROUNDF32(((x + 0.5) * (srcWidth/dstWidth)) - 0.5);
-    int ySrc = (int)PIXELROUNDF32(((y + 0.5) * (srcHeight/dstHeight)) - 0.5);
-    
-    int dstIdx =  y*(dstImageStrideInBytes) + x;
-    int srcIdx =  ySrc*(srcImageStrideInBytes) + xSrc;
-    
-    if ((ySrc > 1) && (ySrc < srcHeight - 2)) {
-        int srcIdxTopRowOuter, srcIdxTopRowInner, srcIdxBottomRowInner, srcIdxBottomRowOuter;
-        srcIdxTopRowInner = srcIdx - srcImageStrideInBytes;
-        srcIdxTopRowOuter = srcIdx - (2 * srcImageStrideInBytes);
-        srcIdxBottomRowInner = srcIdx + srcImageStrideInBytes;
-        srcIdxBottomRowOuter = srcIdx + (2 * srcImageStrideInBytes);
-        float sum = 0;
-        sum += (
-            gaussian[12] * (float)*(pSrcImage + srcIdx) + 
-            gaussian[7] * (float)*(pSrcImage + srcIdxTopRowInner) + 
-            gaussian[2] * (float)*(pSrcImage + srcIdxTopRowOuter) + 
-            gaussian[17] * (float)*(pSrcImage + srcIdxBottomRowInner) + 
-            gaussian[22] * (float)*(pSrcImage + srcIdxBottomRowOuter)
-            );
-        if (xSrc >= 1)
-            sum += (
-                gaussian[11] * (float)*(pSrcImage + srcIdx - 1) + 
-                gaussian[6] * (float)*(pSrcImage + srcIdxTopRowInner - 1) + 
-                gaussian[1] * (float)*(pSrcImage + srcIdxTopRowOuter - 1) + 
-                gaussian[16] * (float)*(pSrcImage + srcIdxBottomRowInner - 1) + 
-                gaussian[21] * (float)*(pSrcImage + srcIdxBottomRowOuter - 1)
-                );
-        if (xSrc >= 2)
-            sum += (
-                gaussian[10] * (float)*(pSrcImage + srcIdx - 2) + 
-                gaussian[5] * (float)*(pSrcImage + srcIdxTopRowInner - 2) + 
-                gaussian[0] * (float)*(pSrcImage + srcIdxTopRowOuter - 2) + 
-                gaussian[15] * (float)*(pSrcImage + srcIdxBottomRowInner - 2) + 
-                gaussian[20] * (float)*(pSrcImage + srcIdxBottomRowOuter - 2)
-                );
-        if (xSrc < (srcWidth - 1))
-            sum += (
-                gaussian[13] * (float)*(pSrcImage + srcIdx + 1) + 
-                gaussian[8] * (float)*(pSrcImage + srcIdxTopRowInner + 1) + 
-                gaussian[3] * (float)*(pSrcImage + srcIdxTopRowOuter + 1) + 
-                gaussian[18] * (float)*(pSrcImage + srcIdxBottomRowInner + 1) + 
-                gaussian[23] * (float)*(pSrcImage + srcIdxBottomRowOuter + 1)
-                );
-        if (xSrc < (srcWidth - 2))
-            sum += (
-                gaussian[14] * (float)*(pSrcImage + srcIdx + 2) + 
-                gaussian[9] * (float)*(pSrcImage + srcIdxTopRowInner + 2) + 
-                gaussian[4] * (float)*(pSrcImage + srcIdxTopRowOuter + 2) + 
-                gaussian[19] * (float)*(pSrcImage + srcIdxBottomRowInner + 2) + 
-                gaussian[24] * (float)*(pSrcImage + srcIdxBottomRowOuter + 2)
-                );
-        pDstImage[dstIdx] = (unsigned char)PIXELSATURATEU8(sum);
-    }
-    else {
-        pDstImage[dstIdx] = 0;
-    }
-}
-int HipExec_ScaleGaussianHalf_U8_U8_5x5(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-    float dstWidthFloat, dstHeightFloat, srcWidthFloat, srcHeightFloat;
-    dstWidthFloat = (float)dstWidth;
-    dstHeightFloat = (float)dstHeight;
-    srcWidthFloat = (float)srcWidth;
-    srcHeightFloat = (float)srcHeight;
-
-    float gaussian[25] = {
-        0.00390625, 0.015625, 0.0234375, 0.015625, 0.00390625,
-        0.015625, 0.0625, 0.09375, 0.0625, 0.015625,
-        0.0234375, 0.09375, 0.140625, 0.09375, 0.0234375,
-        0.015625, 0.0625, 0.09375, 0.0625, 0.015625,
-        0.00390625, 0.015625, 0.0234375, 0.015625, 0.00390625};
-
-    float *hipGaussian;
-    hipMalloc(&hipGaussian, 800);
-    hipMemcpy(hipGaussian, gaussian, 800, hipMemcpyHostToDevice);
-
-    hipLaunchKernelGGL(Hip_ScaleGaussianHalf_U8_U8_5x5,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream,
-                    dstWidthFloat, dstHeightFloat,
-                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                    srcWidthFloat, srcHeightFloat,
-                    (unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                    (const float *)hipGaussian);
     return VX_SUCCESS;
 }

@@ -73,16 +73,16 @@ __device__ __forceinline__ float dot4_(float4 src0, float4 src1) {
     return fmaf(src0.w, src1.w, fmaf(src0.z, src1.z, fmaf(src0.y, src1.y, src0.x * src1.x)));
 }
 
-__device__ __forceinline__ uint max3_(uint src0, uint src1, uint src2) {
-    return max(src0, max(src1, src2));
+__device__ __forceinline__ float max3_(float src0, float src1, float src2) {
+    return fmaxf(src0, fmaxf(src1, src2));
 }
 
-__device__ __forceinline__ uint min3_(uint src0, uint src1, uint src2) {
-    return min(src0, min(src1, src2));
+__device__ __forceinline__ float min3_(float src0, float src1, float src2) {
+    return fminf(src0, fminf(src1, src2));
 }
 
-__device__ __forceinline__ uint median3_(uint src0, uint src1, uint src2) {
-    return max(min(src0, src1), min(max(src0, src1), src2));
+__device__ __forceinline__ float median3_(float src0, float src1, float src2) {
+    return __builtin_amdgcn_fmed3f(src0, src1, src2);
 }
 
 __device__ __forceinline__ uint lerp_(uint src0, uint src1, uint src2) {

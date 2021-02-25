@@ -248,7 +248,7 @@ int agoGpuHipAllocBuffer(AgoData * data)
         hipError_t err = hipSuccess;
         if (!data->hip_memory) {
             data->opencl_buffer_offset = 0;
-            agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->opencl_buffer_offset, err);
+            agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, (data->size << 1) + data->opencl_buffer_offset, err);
             data->hip_memory_allocated = data->hip_memory;
             if (err) {
                 agoAddLogEntry(&context->ref, VX_FAILURE, "ERROR: agoGpuHipAllocBuffer(MEM_READ_WRITE,%d,0,*) FAILED\n", (int)data->size + data->opencl_buffer_offset);
@@ -473,7 +473,7 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
                         int64_t stime = agoGetClockCounter();
                         if (data->hip_memory && data->size >0) {
-                            hipError_t err = hipMemcpyHtoD(data->hip_memory + data->opencl_buffer_offset, data->buffer, data->size);
+                            hipError_t err = hipMemcpyHtoD(data->hip_memory + data->opencl_buffer_offset, data->reserved, data->size << 1);
                             if (err) {
                                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: agoGpuOclDataInputSync: hipMemcpyHtoD() => %d (for LUT)\n", err);
                                 return -1;

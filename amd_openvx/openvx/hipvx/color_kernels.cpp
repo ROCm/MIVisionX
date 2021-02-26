@@ -96,9 +96,7 @@ Hip_ChannelCopy_U8_U8(uint dstWidth, uint dstHeight,
     uint srcIdx = y * srcImageStrideInBytes + x;
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
-    uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
-
-    *((uint2 *)(&pDstImage[dstIdx])) = src;
+    *((uint2 *)(&pDstImage[dstIdx])) = *((uint2 *)(&pSrcImage[srcIdx]));
 }
 int HipExec_ChannelCopy_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -204,9 +202,7 @@ Hip_ChannelCopy_U1_U1(uint dstWidth, uint dstHeight,
     uint srcIdx = y * srcImageStrideInBytes + (x >> 3);
     uint dstIdx =  y * dstImageStrideInBytes + (x >> 3);
 
-    uchar src = *((uchar *)(&pSrcImage[srcIdx]));
-
-    *((uchar *)(&pDstImage[dstIdx])) = src;
+    *((uchar *)(&pDstImage[dstIdx])) = *((uchar *)(&pSrcImage[srcIdx]));
 }
 int HipExec_ChannelCopy_U1_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

@@ -94,45 +94,6 @@ typedef struct {
 } ago_harris_Gxy_t;
 
 // ----------------------------------------------------------------------------
-// VxLut kernels for hip backend
-// ----------------------------------------------------------------------------
-
-__global__ void __attribute__((visibility("default")))
-Hip_Lut_U8_U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
-    const unsigned int *pSrcImage1, unsigned int srcImage1StrideInBytes,
-    const unsigned char *lut
-    ) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x * 4 >= dstWidth) || (y >= dstHeight))
-        return;
-    unsigned int dstIdx = y * (dstImageStrideInBytes >> 2) + x;
-    unsigned int src1Idx = y * (srcImage1StrideInBytes >> 2) + x;
-    uchar4 src = uchars_to_uchar4(pSrcImage1[src1Idx]);
-    pDstImage[dstIdx] = uchar4_to_uchars(make_uchar4(lut[src.x], lut[src.y], lut[src.z], lut[src.w]));
-}
-int HipExec_Lut_U8_U8(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-    vx_uint8 *lut
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 3) >> 2, globalThreads_y = dstHeight;
-
-    hipLaunchKernelGGL(Hip_Lut_U8_U8,
-                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-                       dim3(localThreads_x, localThreads_y),
-                       0, stream, dstWidth, dstHeight,
-                       (unsigned int *)pHipDstImage, dstImageStrideInBytes,
-                       (const unsigned int *)pHipSrcImage1, srcImage1StrideInBytes,
-                       (const unsigned char *)lut);
-    return VX_SUCCESS;
-}
-
-// ----------------------------------------------------------------------------
 // VxFastCorners kernels for hip backend
 // ----------------------------------------------------------------------------
 __global__ void __attribute__((visibility("default")))

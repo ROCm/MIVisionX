@@ -24,6 +24,206 @@ THE SOFTWARE.
 #include "hip_host_decls.h"
 
 // ----------------------------------------------------------------------------
+// VxLut kernels for hip backend
+// ----------------------------------------------------------------------------
+
+__global__ void __attribute__((visibility("default")))
+Hip_Lut_U8_U8(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uchar *lut) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx = y * srcImageStrideInBytes + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
+    uint2 dst;
+
+    float4 f;
+    f.x = (float) lut[(int)( src.x        & 255)];
+    f.y = (float) lut[(int)((src.x >>  8) & 255)];
+    f.z = (float) lut[(int)((src.x >> 16) & 255)];
+    f.w = (float) lut[(int)( src.x >> 24       )];
+    dst.x = pack_(f);
+    f.x = (float) lut[(int)( src.y        & 255)];
+    f.y = (float) lut[(int)((src.y >>  8) & 255)];
+    f.z = (float) lut[(int)((src.y >> 16) & 255)];
+    f.w = (float) lut[(int)( src.y >> 24       )];
+    dst.y = pack_(f);
+
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+}
+int HipExec_Lut_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint8 *lut) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_Lut_U8_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                       dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                       lut);
+
+    return VX_SUCCESS;
+}
+
+// ----------------------------------------------------------------------------
+// VxChannelCopy kernels for hip backend
+// ----------------------------------------------------------------------------
+
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelCopy_U8_U8(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx = y * srcImageStrideInBytes + x;
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
+
+    *((uint2 *)(&pDstImage[dstIdx])) = src;
+}
+int HipExec_ChannelCopy_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_ChannelCopy_U8_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                       dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelCopy_U8_U1(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx = y * srcImageStrideInBytes + (x >> 3);
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    uchar src = *((uchar *)(&pSrcImage[srcIdx]));
+    uint2 dst;
+
+    hip_convert_U8_U1(&dst, src);
+
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+}
+int HipExec_ChannelCopy_U8_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_ChannelCopy_U8_U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                       dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelCopy_U1_U8(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx = y * srcImageStrideInBytes + x;
+    uint dstIdx =  y * dstImageStrideInBytes + (x >> 3);
+
+    uint2 src = *((uint2 *)(&pSrcImage[srcIdx]));
+    uchar dst;
+
+    hip_convert_U1_U8(&dst, src);
+
+    *((uchar *)(&pDstImage[dstIdx])) = dst;
+}
+int HipExec_ChannelCopy_U1_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_ChannelCopy_U1_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                       dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ChannelCopy_U1_U1(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint srcIdx = y * srcImageStrideInBytes + (x >> 3);
+    uint dstIdx =  y * dstImageStrideInBytes + (x >> 3);
+
+    uchar src = *((uchar *)(&pSrcImage[srcIdx]));
+
+    *((uchar *)(&pDstImage[dstIdx])) = src;
+}
+int HipExec_ChannelCopy_U1_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_ChannelCopy_U1_U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                       dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                       (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
+}
+
+// ----------------------------------------------------------------------------
 // VxColorDepth kernels for hip backend
 // ----------------------------------------------------------------------------
 

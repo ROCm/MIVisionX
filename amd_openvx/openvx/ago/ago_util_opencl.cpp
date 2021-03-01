@@ -1678,7 +1678,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"{\n"
 		"  p += y*stride + x;\n"
 		"  *((__global U8x8 *)p) = r;\n"
-		"}\n"
+		"}\n" 
 		"\n"
 		"void store_S16x8(S16x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
 		"{\n"
@@ -1695,8 +1695,8 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"void store_U24x8(U24x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
 		"{\n"
 		"  p += y*stride + x * 3;\n"
-		"  *((__global uint3 *)(p + 0)) = r.s012;\n"
-		"  *((__global uint3 *)(p + 12)) = r.s345;\n"
+        "  *((__global uint4 *)(p + 0)) = r.s0123;\n"
+        "  *((__global uint2 *)(p + 16)) = r.s45;\n"
 		"}\n"
 		"\n"
 		"void store_U32x8(U32x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
@@ -2026,7 +2026,6 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 	}
 	supernode->opencl_code = code;
 	const char * opencl_code = supernode->opencl_code.c_str();
-
 	// dump OpenCL kernel if environment variable AGO_DUMP_GPU is specified with dump file path prefix
 	// the output file name will be "$(AGO_DUMP_GPU)-<group>.cl"
 	char textBuffer[1024];
@@ -2177,7 +2176,6 @@ int agoGpuOclSingleNodeFinalize(AgoGraph * graph, AgoNode * node)
 		agoEmulateAmdMediaOpsInOpenCL(node->opencl_code);
 	}
 	const char * opencl_code = node->opencl_code.c_str();
-
 	// dump OpenCL kernel if environment variable AGO_DUMP_GPU is specified with dump file path prefix
 	// the output file name will be "$(AGO_DUMP_GPU)-0.<counter>.cl"
 	char textBuffer[1024];

@@ -8987,14 +8987,14 @@ int agoKernel_Mul_S16_S16S16_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
 			"void %s (S16x8 * p0, S16x8 p1, S16x8 p2, float p3)\n"
 			"{\n"
 			"  S16x8 r;\n"
-			"  r.s0  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s0)) << 16) >> 16) * (float)((((int)(p2.s0)) << 16) >> 16)) & 0x0000ffff)      ;\n"
-			"  r.s0 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s0))  >> 16)        * (float)(((int)(p2.s0))  >> 16))                    ) << 16;\n"
-			"  r.s1  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s1)) << 16) >> 16) * (float)((((int)(p2.s1)) << 16) >> 16)) & 0x0000ffff);\n"
-			"  r.s1 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s1))  >> 16)        * (float)(((int)(p2.s1))  >> 16))                    ) << 16;\n"
-			"  r.s2  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s2)) << 16) >> 16) * (float)((((int)(p2.s2)) << 16) >> 16)) & 0x0000ffff)      ;\n"
-			"  r.s2 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s2))  >> 16)        * (float)(((int)(p2.s2))  >> 16))                    ) << 16;\n"
-			"  r.s3  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s3)) << 16) >> 16) * (float)((((int)(p2.s3)) << 16) >> 16)) & 0x0000ffff)      ;\n"
-			"  r.s3 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s3))  >> 16)        * (float)(((int)(p2.s3))  >> 16))                    ) << 16;\n"
+			"  r.s0  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s0)) << 16) >> 16) * (float)((((int)(p2.s0)) << 16) >> 16)) & 0x0000ffff)      ;\n"
+			"  r.s0 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s0))  >> 16)        * (float)(((int)(p2.s0))  >> 16))                    ) << 16;\n"
+			"  r.s1  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s1)) << 16) >> 16) * (float)((((int)(p2.s1)) << 16) >> 16)) & 0x0000ffff);\n"
+			"  r.s1 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s1))  >> 16)        * (float)(((int)(p2.s1))  >> 16))                    ) << 16;\n"
+			"  r.s2  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s2)) << 16) >> 16) * (float)((((int)(p2.s2)) << 16) >> 16)) & 0x0000ffff)      ;\n"
+			"  r.s2 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s2))  >> 16)        * (float)(((int)(p2.s2))  >> 16))                    ) << 16;\n"
+			"  r.s3  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s3)) << 16) >> 16) * (float)((((int)(p2.s3)) << 16) >> 16)) & 0x0000ffff)      ;\n"
+			"  r.s3 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s3))  >> 16)        * (float)(((int)(p2.s3))  >> 16))                    ) << 16;\n"
 			"  *p0 = r;\n"
 			"}\n"
 			), node->opencl_name);
@@ -10353,7 +10353,6 @@ int agoKernel_ChannelCombine_U16_U8U8(AgoNode * node, AgoKernelCommand cmd)
 
 int agoKernel_ChannelCombine_U24_U8U8U8_RGB(AgoNode * node, AgoKernelCommand cmd)
 {
-    printf("hi\n");
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;
@@ -15152,7 +15151,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(AgoNode * node, AgoKern
 		AgoData * iImg = node->paramList[2];
 		AgoData * iThr = node->paramList[3];
 		oStack->u.cannystack.stackTop = 0;
-		printf("cannysobel supp thresh 3x3 l1\n");
 		if (HafCpu_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(oStack->u.cannystack.count, (ago_coord2d_ushort_t *)oStack->buffer, &oStack->u.cannystack.stackTop,
 															  oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, 
 															  iImg->buffer, iImg->u.img.stride_in_bytes,
@@ -15188,7 +15186,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(AgoNode * node, AgoKern
 int agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM(AgoNode * node, AgoKernelCommand cmd)
 {
 	vx_status status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
-	printf("cannysobel supp thresh 5x5 l1\n");
 	if (cmd == ago_kernel_cmd_execute) {
 		status = VX_SUCCESS;
 		AgoData * oImg = node->paramList[0];
@@ -15774,7 +15771,6 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
 	}
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
-		printf("cannyu supp gpu threshold\n");
 		status = HafGpu_CannySuppThreshold(node);
 	}
 #endif

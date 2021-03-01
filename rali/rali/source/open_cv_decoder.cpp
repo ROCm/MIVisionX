@@ -38,6 +38,7 @@ CVDecoder::CVDecoder() {
 
 Decoder::Status CVDecoder::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) {
     //TODO: OpenCV seems not able to decode header separately, remove the imdecode from this call if possible and replace it with a proper function for decoding the header only
+#if 0
     m_mat_orig = cv::imdecode(cv::Mat(1, input_size, CV_8UC1, input_buffer), cv::IMREAD_UNCHANGED);
     if(m_mat_orig.rows == 0 || m_mat_orig.cols == 0) {
         WRN("CVDecoder::Jpeg header decode failed ");
@@ -45,6 +46,10 @@ Decoder::Status CVDecoder::decode_info(unsigned char* input_buffer, size_t input
     }
     *width = m_mat_orig.cols;
     *height = m_mat_orig.rows;
+#else
+    *width = 0;
+    *height = 0;
+#endif
     *color_comps = 0;       // not known
     return Status::OK;
 }
@@ -63,15 +68,20 @@ Decoder::Status CVDecoder::decode(unsigned char *input_buffer, size_t input_size
         WRN("CVDecoder::Jpeg decode failed ");
         return Status::CONTENT_DECODE_FAILED;
     }
-    cv::resize(m_mat_orig, m_mat_scaled, cv::Size(max_decoded_width, max_decoded_height), cv::INTER_LINEAR);
-    if(m_mat_scaled.rows == 0 || m_mat_scaled.cols == 0) {
+    cv::Mat mat_rgb;
+    cv::cvtColor(m_mat_orig, mat_rgb, cv::COLOR_BGR2RGB, 0);
+    cv::Mat mat_scaled = cv::Mat(max_decoded_width, max_decoded_height, CV_8UC3, output_buffer); 
+    cv::resize(mat_rgb, mat_scaled, cv::Size(max_decoded_width, max_decoded_height), cv::INTER_LINEAR);
+    if(mat_scaled.rows == 0 || mat_scaled.cols == 0) {
         actual_decoded_width = m_mat_orig.cols;
         actual_decoded_height = m_mat_orig.rows;
     }else
     {
-        actual_decoded_width = m_mat_scaled.cols;
-        actual_decoded_height = m_mat_scaled.rows;
+        actual_decoded_width = mat_scaled.cols;
+        actual_decoded_height = mat_scaled.rows;
     }
+    //printf("OpenCV image decoded: size %dx%d\n", mat_scaled.cols, mat_scaled.rows);
+    mat_rgb.release();
     return Decoder::Status::OK;
 }
 

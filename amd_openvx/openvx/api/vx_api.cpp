@@ -1930,7 +1930,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
 			}
 			if (!img->buffer) {
 				CAgoLock lock(img->ref.context->cs);
-				if (img->u.img.mem_handle || agoAllocData(img)) {
+				if (agoAllocData(img) || img->u.img.mem_handle) {
 					return VX_ERROR_NO_MEMORY;
 				}
 			}

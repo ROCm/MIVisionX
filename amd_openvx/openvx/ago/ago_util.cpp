@@ -2535,7 +2535,7 @@ int agoAllocData(AgoData * data)
 		}
 	}
 	else if (data->ref.type == VX_TYPE_IMAGE) {
-		data->u.img.mem_handle = vx_false_e;
+		//data->u.img.mem_handle = vx_false_e;
 		if (data->children) {
 			for (vx_uint32 child = 0; child < data->numChildren; child++) {
 				if (data->children[child]) {
@@ -2550,8 +2550,12 @@ int agoAllocData(AgoData * data)
 		else if (data->u.img.isROI) {
             // make sure that the master image has been allocated. Shouldn't allocate new memory for image created from handle
 			if (!data->u.img.roiMasterImage->buffer) {
-					data->u.img.mem_handle = vx_true_e;
-					return -1;
+                if(!data->u.img.mem_handle){
+                    data->u.img.mem_handle = vx_true_e;
+                    if (agoAllocData(data->u.img.roiMasterImage) < 0) {
+                        return -1;
+                    }
+                }
 			}
 			// get the region from master image
 			data->buffer = data->u.img.roiMasterImage->buffer +

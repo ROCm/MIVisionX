@@ -10449,16 +10449,6 @@ int agoKernel_ChannelCopy_U8_U8(AgoNode * node, AgoKernelCommand cmd)
             status = VX_FAILURE;
         }
     }
-#if ENABLE_HIP
-    if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * iImg = node->paramList[1];
-        if (HipExec_ChannelCopy(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
-            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes))
-            status = VX_FAILURE;
-    }
-#endif
     else if (cmd == ago_kernel_cmd_validate) {
         status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U8, VX_DF_IMAGE_U8);
     }
@@ -10548,6 +10538,8 @@ int agoKernel_ChannelCopy_U8_U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -10560,6 +10552,17 @@ int agoKernel_ChannelCopy_U8_U1(AgoNode * node, AgoKernelCommand cmd)
         out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
         out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ChannelCopy_U8_U1(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
+            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 
@@ -10599,6 +10602,8 @@ int agoKernel_ChannelCopy_U1_U8(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -10611,6 +10616,17 @@ int agoKernel_ChannelCopy_U1_U8(AgoNode * node, AgoKernelCommand cmd)
         out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
         out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ChannelCopy_U1_U8(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
+            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 
@@ -10650,6 +10666,8 @@ int agoKernel_ChannelCopy_U1_U1(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
@@ -10662,6 +10680,17 @@ int agoKernel_ChannelCopy_U1_U1(AgoNode * node, AgoKernelCommand cmd)
         out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
         out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_ChannelCopy_U1_U1(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,
+            oImg->u.img.stride_in_bytes, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 

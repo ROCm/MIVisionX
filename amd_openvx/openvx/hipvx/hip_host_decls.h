@@ -374,6 +374,27 @@ int HipExec_Not_U1_U1(
 
 // color_kernels
 
+int HipExec_Lut_U8_U8(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
+        vx_uint8 *lut);
+int HipExec_ChannelCopy_U8_U8(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_ChannelCopy_U8_U1(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_ChannelCopy_U1_U8(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_ChannelCopy_U1_U1(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
 int HipExec_ColorDepth_U8_S16_Wrap(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -587,10 +608,10 @@ int HipExec_FormatConvert_IUV_UV12(
         vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
         const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes);
 int HipExec_FormatConvert_UV12_IUV(
-       hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstChromaImage, vx_uint32 DstChromaImageStrideInBytes,
-        const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
-        const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes);
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
+        vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
+        vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes);
 int HipExec_ColorConvert_YUV4_RGBX(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,
@@ -828,11 +849,6 @@ int HipExec_MeanStdDev_DATA_U8(
 
 // vision_kernels
 
-int HipExec_Lut_U8_U8(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes,
-        vx_uint8 *lut);
 int HipExec_HarrisSobel_HG3_U8_3x3(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
@@ -958,20 +974,5 @@ int HipExec_CannyEdgeTrace_U8_U8XY(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 xyStackTop);
-
-// miscellaneous_kernels
-
-int HipExec_ChannelCopy_U8_U8(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage1, vx_uint32 srcImage1StrideInBytes);
-int HipExec_ChannelCopy(
-        hipStream_t  stream,
-        vx_uint32     dstWidth,
-        vx_uint32     dstHeight,
-        vx_uint8     * pHipDstImage,
-        vx_uint32     dstImageStrideInBytes,
-        const vx_uint8    * pHipSrcImage,
-        vx_uint32     srcImageStrideInBytes);
 
 #endif //MIVISIONX_HIP_HOST_DECLS_H

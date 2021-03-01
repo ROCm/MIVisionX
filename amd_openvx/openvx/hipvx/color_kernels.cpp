@@ -1287,7 +1287,7 @@ Hip_ColorConvert_RGB_RGBX(uint dstWidth, uint dstHeight,
     uint dstIdx  = y * dstImageStrideInBytes + (x * 3);
 
     d_uint8 src = *((d_uint8 *)(&pSrcImage[srcIdx]));
-    d_uint6 dst = *((d_uint6 *)(&pDstImage[dstIdx]));
+    d_uint6 dst;
 
     dst.data[0] = pack_(make_float4(unpack0_(src.data[0]), unpack1_(src.data[0]), unpack2_(src.data[0]), unpack0_(src.data[1])));
     dst.data[1] = pack_(make_float4(unpack1_(src.data[1]), unpack2_(src.data[1]), unpack0_(src.data[2]), unpack1_(src.data[2])));
@@ -1535,7 +1535,7 @@ Hip_ColorConvert_RGBX_RGB(uint dstWidth, uint dstHeight,
     uint dstIdx  = y * dstImageStrideInBytes + (x << 2);
 
     d_uint6 src = *((d_uint6 *)(&pSrcImage[srcIdx]));
-    d_uint8 dst = *((d_uint8 *)(&pDstImage[dstIdx]));
+    d_uint8 dst;
 
     dst.data[0] = pack_(make_float4(unpack0_(src.data[0]), unpack1_(src.data[0]), unpack2_(src.data[0]), 255.0f));
     dst.data[1] = pack_(make_float4(unpack3_(src.data[0]), unpack0_(src.data[1]), unpack1_(src.data[1]), 255.0f));
@@ -3367,154 +3367,215 @@ int HipExec_ColorConvert_YUV4_RGBX(hipStream_t stream, vx_uint32 dstWidth, vx_ui
 // Group 8 - Helper kernels with vision functions
 
 __global__ void __attribute__((visibility("default")))
-Hip_FormatConvert_IUV_UV12(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned short *pDstUImage, unsigned int dstUImageStrideInBytes,
-    unsigned short *pDstVImage, unsigned int dstVImageStrideInBytes,
-    const unsigned int *pSrcChromaImage, unsigned int srcChromaImageStrideInBytes
-    ) {
+Hip_FormatConvert_IUV_UV12(uint dstWidth, uint dstHeight,
+    uchar *pDstUImage, uint dstUImageStrideInBytes, uchar *pDstVImage, uint dstVImageStrideInBytes,
+    const uchar *pSrcChromaImage, uint srcChromaImageStrideInBytes,
+    uint dstWidthComp, uint dstHeightComp, uint srcChromaImageStrideInBytesComp, uint dstUImageStrideInBytesComp, uint dstVImageStrideInBytesComp) {
+
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x*2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstUIdx = y * (dstUImageStrideInBytes>>1) + x;
-    unsigned int dstVIdx = y * (dstVImageStrideInBytes>>1) + x;
-    unsigned int srcChromaIdx = y * (srcChromaImageStrideInBytes>>2) + x;
 
-    uint4 src = uchars_to_uint4(pSrcChromaImage[srcChromaIdx]);
-    uint2 dstU = make_uint2(src.x, src.z);
-    uint2 dstV = make_uint2(src.y, src.w);
-    pDstUImage[dstUIdx] = uint2_to_uchars(dstU);
-    pDstVImage[dstVIdx] = uint2_to_uchars(dstV);
+    if ((x < dstWidthComp) && (y < dstHeightComp)) {
+        uint L0Idx = y * srcChromaImageStrideInBytesComp + (x << 4);
+        uint L1Idx = L0Idx + srcChromaImageStrideInBytes;
+        uint4 L0 = *((uint4 *)(&pSrcChromaImage[L0Idx]));
+        uint4 L1 = *((uint4 *)(&pSrcChromaImage[L1Idx]));
+
+        uint dstU0Idx = y * dstUImageStrideInBytesComp + (x << 3);
+        uint dstU1Idx = dstU0Idx + dstUImageStrideInBytes;
+        uint dstV0Idx = y * dstVImageStrideInBytesComp + (x << 3);
+        uint dstV1Idx = dstV0Idx + dstVImageStrideInBytes;
+
+        uint2 pU0, pV0, pU1, pV1;
+        pU0.x = pack_(make_float4(unpack0_(L0.x), unpack2_(L0.x), unpack0_(L0.y), unpack2_(L0.y)));
+        pU0.y = pack_(make_float4(unpack0_(L0.z), unpack2_(L0.z), unpack0_(L0.w), unpack2_(L0.w)));
+        pV0.x = pack_(make_float4(unpack1_(L0.x), unpack3_(L0.x), unpack1_(L0.y), unpack3_(L0.y)));
+        pV0.y = pack_(make_float4(unpack1_(L0.z), unpack3_(L0.z), unpack1_(L0.w), unpack3_(L0.w)));
+        pU1.x = pack_(make_float4(unpack0_(L1.x), unpack2_(L1.x), unpack0_(L1.y), unpack2_(L1.y)));
+        pU1.y = pack_(make_float4(unpack0_(L1.z), unpack2_(L1.z), unpack0_(L1.w), unpack2_(L1.w)));
+        pV1.x = pack_(make_float4(unpack1_(L1.x), unpack3_(L1.x), unpack1_(L1.y), unpack3_(L1.y)));
+        pV1.y = pack_(make_float4(unpack1_(L1.z), unpack3_(L1.z), unpack1_(L1.w), unpack3_(L1.w)));
+
+        *((uint2 *)(&pDstUImage[dstU0Idx])) = pU0;
+        *((uint2 *)(&pDstUImage[dstU1Idx])) = pU1;
+        *((uint2 *)(&pDstVImage[dstV0Idx])) = pV0;
+        *((uint2 *)(&pDstVImage[dstV1Idx])) = pV1;
+    }
 }
-int HipExec_FormatConvert_IUV_UV12(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+int HipExec_FormatConvert_IUV_UV12(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
     vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
-    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 3) >> 1, globalThreads_y = dstHeight;
+    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 4;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
-    hipLaunchKernelGGL(Hip_FormatConvert_IUV_UV12,
-                    dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned short *)pHipDstUImage, dstUImageStrideInBytes,
-                    (unsigned short *)pHipDstVImage, dstVImageStrideInBytes,
-                    (const unsigned int *)pHipSrcChromaImage, srcChromaImageStrideInBytes);
+    vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
+    vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
+    vx_uint32 srcChromaImageStrideInBytesComp = srcChromaImageStrideInBytes * 2;
+    vx_uint32 dstUImageStrideInBytesComp = dstUImageStrideInBytes * 2;
+    vx_uint32 dstVImageStrideInBytesComp = dstVImageStrideInBytes * 2;
+
+    hipLaunchKernelGGL(Hip_FormatConvert_IUV_UV12, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
+                        (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
+                        dstWidthComp, dstHeightComp, srcChromaImageStrideInBytesComp, dstUImageStrideInBytesComp, dstVImageStrideInBytesComp);
 
     return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_FormatConvert_UV12_IUV(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int *pDstChromaImage, unsigned int dstChromaImageStrideInBytes,
-    const unsigned short *pSrcUImage, unsigned int srcUImageStrideInBytes,
-    const unsigned short *pSrcVImage, unsigned int srcVImageStrideInBytes
-    ) {
+Hip_FormatConvert_UV12_IUV(uint dstWidth, uint dstHeight,
+    uchar *pDstChromaImage, uint dstChromaImageStrideInBytes,
+    const uchar *pSrcUImage, uint srcUImageStrideInBytes, const uchar *pSrcVImage, uint srcVImageStrideInBytes,
+    uint dstWidthComp, uint dstHeightComp, uint srcUImageStrideInBytesComp, uint srcVImageStrideInBytesComp, uint dstChromaImageStrideInBytesComp) {
+
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x * 2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstChromaIdx = y * (dstChromaImageStrideInBytes >> 2) + x;
-    unsigned int srcUIdx = y * (srcUImageStrideInBytes >> 1) + x;
-    unsigned int srcVIdx = y * (srcVImageStrideInBytes >> 1) + x;
 
-    uint2 srcU = uchars_to_uint2(pSrcUImage[srcUIdx]);
-    uint2 srcV = uchars_to_uint2(pSrcVImage[srcVIdx]);
-    uint4 dst = make_uint4(srcU.x, srcV.x, srcU.y, srcV.y);
-    pDstChromaImage[dstChromaIdx] = uint4_to_uchars(dst);
+    if ((x < dstWidthComp) && (y < dstHeightComp)) {
+        uint srcU0Idx = y * srcUImageStrideInBytesComp + (x << 3);
+        uint srcU1Idx = srcU0Idx + srcUImageStrideInBytes;
+        uint srcV0Idx = y * srcVImageStrideInBytesComp + (x << 3);
+        uint srcV1Idx = srcV0Idx + srcVImageStrideInBytes;
+        uint2 pU0 = *((uint2 *)(&pSrcUImage[srcU0Idx]));
+        uint2 pU1 = *((uint2 *)(&pSrcUImage[srcU1Idx]));
+        uint2 pV0 = *((uint2 *)(&pSrcVImage[srcV0Idx]));
+        uint2 pV1 = *((uint2 *)(&pSrcVImage[srcV1Idx]));
+
+        uint L0Idx = y * dstChromaImageStrideInBytesComp + (x << 4);
+        uint L1Idx = L0Idx + dstChromaImageStrideInBytes;
+
+        uint4 L0, L1;
+        L0.x = pack_(make_float4(unpack0_(pU0.x), unpack0_(pV0.x), unpack1_(pU0.x), unpack1_(pV0.x)));
+        L0.y = pack_(make_float4(unpack2_(pU0.x), unpack2_(pV0.x), unpack3_(pU0.x), unpack3_(pV0.x)));
+        L0.z = pack_(make_float4(unpack0_(pU0.y), unpack0_(pV0.y), unpack1_(pU0.y), unpack1_(pV0.y)));
+        L0.w = pack_(make_float4(unpack2_(pU0.y), unpack2_(pV0.y), unpack3_(pU0.y), unpack3_(pV0.y)));
+        L1.x = pack_(make_float4(unpack0_(pU1.x), unpack0_(pV1.x), unpack1_(pU1.x), unpack1_(pV1.x)));
+        L1.y = pack_(make_float4(unpack2_(pU1.x), unpack2_(pV1.x), unpack3_(pU1.x), unpack3_(pV1.x)));
+        L1.z = pack_(make_float4(unpack0_(pU1.y), unpack0_(pV1.y), unpack1_(pU1.y), unpack1_(pV1.y)));
+        L1.w = pack_(make_float4(unpack2_(pU1.y), unpack2_(pV1.y), unpack3_(pU1.y), unpack3_(pV1.y)));
+
+        *((uint4 *)(&pDstChromaImage[L0Idx])) = L0;
+        *((uint4 *)(&pDstChromaImage[L1Idx])) = L1;
+    }
 }
-int HipExec_FormatConvert_UV12_IUV(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+int HipExec_FormatConvert_UV12_IUV(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
-    const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
-    const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 3) >> 1, globalThreads_y = dstHeight;
+    vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
+    vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 4;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
-    hipLaunchKernelGGL(Hip_FormatConvert_UV12_IUV,
-                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-                       dim3(localThreads_x, localThreads_y),
-                       0, stream, dstWidth, dstHeight,
-                       (unsigned int *)pHipDstChromaImage, dstChromaImageStrideInBytes,
-                       (const unsigned short *)pHipSrcUImage, srcUImageStrideInBytes,
-                       (const unsigned short *)pHipSrcVImage, srcVImageStrideInBytes);
+    vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
+    vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
+    vx_uint32 srcUImageStrideInBytesComp = srcUImageStrideInBytes * 2;
+    vx_uint32 srcVImageStrideInBytesComp = srcVImageStrideInBytes * 2;
+    vx_uint32 dstChromaImageStrideInBytesComp = dstChromaImageStrideInBytes * 2;
+
+    hipLaunchKernelGGL(Hip_FormatConvert_UV12_IUV, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstChromaImage, dstChromaImageStrideInBytes,
+                        (const uchar *)pHipSrcUImage, srcUImageStrideInBytes, (const uchar *)pHipSrcVImage, srcVImageStrideInBytes,
+                        dstWidthComp, dstHeightComp, srcUImageStrideInBytesComp, srcVImageStrideInBytesComp, dstChromaImageStrideInBytesComp);
 
     return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_FormatConvert_UV_UV12(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned short *pDstUImage, unsigned int dstUImageStrideInBytes,
-    unsigned short *pDstVImage, unsigned int dstVImageStrideInBytes,
-    const unsigned short *pSrcCImage, unsigned int srcCImageStrideInBytes
-    ) {
+Hip_FormatConvert_UV_UV12(uint dstWidth, uint dstHeight,
+    uchar *pDstUImage, uint dstUImageStrideInBytes, uchar *pDstVImage, uint dstVImageStrideInBytes,
+    const uchar *pSrcChromaImage, uint srcChromaImageStrideInBytes,
+    uint dstWidthComp, uint dstHeightComp, uint dstUImageStrideInBytesComp, uint dstVImageStrideInBytesComp) {
+
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x * 2 >= dstWidth) || (y >= dstHeight)) return;
-    unsigned int dstUIdx = y * (dstUImageStrideInBytes >> 1) + x;
-    unsigned int dstVIdx = y * (dstVImageStrideInBytes >> 1) + x;
-    unsigned int srcIdx = (y >> 1) * (srcCImageStrideInBytes >> 1) + x;
 
-    uint2 src = uchars_to_uint2(pSrcCImage[srcIdx]);
-    uint2 dstU = make_uint2(src.x, src.x);
-    uint2 dstV = make_uint2(src.y, src.y);
-    pDstUImage[dstUIdx] = uint2_to_uchars(dstU);
-    pDstVImage[dstVIdx] = uint2_to_uchars(dstV);
+    if ((x < dstWidthComp) && (y < dstHeightComp)) {
+        uint L0Idx = y * srcChromaImageStrideInBytes + (x << 3);
+        uint2 L0 = *((uint2 *)(&pSrcChromaImage[L0Idx]));
+
+        uint dstU0Idx = y * dstUImageStrideInBytesComp + (x << 3);
+        uint dstU1Idx = dstU0Idx + dstUImageStrideInBytes;
+        uint dstV0Idx = y * dstVImageStrideInBytesComp + (x << 3);
+        uint dstV1Idx = dstV0Idx + dstVImageStrideInBytes;
+
+        uint2 pU, pV;
+        pU.x = pack_(make_float4(unpack0_(L0.x), unpack0_(L0.x), unpack2_(L0.x), unpack2_(L0.x)));
+        pU.y = pack_(make_float4(unpack0_(L0.y), unpack0_(L0.y), unpack2_(L0.y), unpack2_(L0.y)));
+        pV.x = pack_(make_float4(unpack1_(L0.x), unpack1_(L0.x), unpack3_(L0.x), unpack3_(L0.x)));
+        pV.y = pack_(make_float4(unpack1_(L0.y), unpack1_(L0.y), unpack3_(L0.y), unpack3_(L0.y)));
+
+        *((uint2 *)(&pDstUImage[dstU0Idx])) = pU;
+        *((uint2 *)(&pDstUImage[dstU1Idx])) = pU;
+        *((uint2 *)(&pDstVImage[dstV0Idx])) = pV;
+        *((uint2 *)(&pDstVImage[dstV1Idx])) = pV;
+    }
 }
-int HipExec_FormatConvert_UV_UV12(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+int HipExec_FormatConvert_UV_UV12(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstUImage, vx_uint32 dstUImageStrideInBytes,
     vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
-    const vx_uint8 *pHipSrcCImage, vx_uint32 srcImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 3) >> 1, globalThreads_y = dstHeight;
+    const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 4;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
-    hipLaunchKernelGGL(Hip_FormatConvert_UV_UV12,
-                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-                       dim3(localThreads_x, localThreads_y),
-                       0, stream, dstWidth, dstHeight,
-                       (unsigned short *)pHipDstUImage, dstUImageStrideInBytes,
-                       (unsigned short *)pHipDstVImage, dstVImageStrideInBytes,
-                       (const unsigned short *)pHipSrcCImage, srcImageStrideInBytes);
+    vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
+    vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
+    vx_uint32 dstUImageStrideInBytesComp = dstUImageStrideInBytes * 2;
+    vx_uint32 dstVImageStrideInBytesComp = dstVImageStrideInBytes * 2;
+
+    hipLaunchKernelGGL(Hip_FormatConvert_UV_UV12, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstUImage, dstUImageStrideInBytes, (uchar *)pHipDstVImage, dstVImageStrideInBytes,
+                        (const uchar *)pHipSrcChromaImage, srcChromaImageStrideInBytes,
+                        dstWidthComp, dstHeightComp, dstUImageStrideInBytesComp, dstVImageStrideInBytesComp);
 
     return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_ScaleUp2x2_U8_U8(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned int *pDstImage, unsigned int dstImageStrideInBytes,
-    const unsigned short *pSrcImage, unsigned int srcCImageStrideInBytes
-    ) {
+Hip_ScaleUp2x2_U8_U8(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint dstWidthComp, uint dstHeightComp, uint dstImageStrideInBytesComp) {
+
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x * 4 >= dstWidth) || (y >= dstHeight))    return;
-    unsigned int dstIdx = y * (dstImageStrideInBytes >> 2) + x;
-    unsigned int srcIdx = (y >> 1) * (srcCImageStrideInBytes >> 1) + x;
 
-    uint2 src = uchars_to_uint2(pSrcImage[srcIdx]);
-    uint4 dst = make_uint4(src.x, src.x, src.y, src.y);
-    pDstImage[dstIdx] = uint4_to_uchars(dst);
+    if ((x < dstWidthComp) && (y < dstHeightComp)) {
+        uint srcIdx = y * srcImageStrideInBytes + (x << 2);
+        uint src = *((uint *)(&pSrcImage[srcIdx]));
+
+        uint dstIdx0 = y * dstImageStrideInBytesComp + (x << 3);
+        uint dstIdx1 = dstIdx0 + dstImageStrideInBytes;
+        uint2 dst;
+
+        dst.x = pack_(make_float4(unpack0_(src), unpack0_(src), unpack1_(src), unpack1_(src)));
+        dst.y = pack_(make_float4(unpack2_(src), unpack2_(src), unpack3_(src), unpack3_(src)));
+
+        *((uint2 *)(&pDstImage[dstIdx0])) = dst;
+        *((uint2 *)(&pDstImage[dstIdx1])) = dst;
+    }
 }
-int HipExec_ScaleUp2x2_U8_U8(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstUImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 3) >> 2, globalThreads_y = dstHeight;
+int HipExec_ScaleUp2x2_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 4;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = (dstHeight + 1) >> 1;
 
-    hipLaunchKernelGGL(Hip_ScaleUp2x2_U8_U8,
-                       dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
-                       dim3(localThreads_x, localThreads_y),
-                       0, stream, dstWidth, dstHeight,
-                       (unsigned int *)pHipDstImage, dstUImageStrideInBytes,
-                       (const unsigned short *)pHipSrcImage, srcImageStrideInBytes);
+    vx_uint32 dstWidthComp = (dstWidth + 7) / 8;
+    vx_uint32 dstHeightComp = (dstHeight + 1) / 2;
+    vx_uint32 dstImageStrideInBytesComp = dstImageStrideInBytes * 2;
+
+    hipLaunchKernelGGL(Hip_ScaleUp2x2_U8_U8, dim3(ceil((float)globalThreads_x / localThreads_x), ceil((float)globalThreads_y / localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        dstWidthComp, dstHeightComp, dstImageStrideInBytesComp);
 
     return VX_SUCCESS;
 }

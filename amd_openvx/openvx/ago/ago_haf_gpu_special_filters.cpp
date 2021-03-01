@@ -796,7 +796,7 @@ int HafGpu_SobelSpecialCases(AgoNode * node)
 int HafGpu_CannySobelFilters(AgoNode * node)
 {
 	int status = VX_SUCCESS;
-	printf("canny sobel filters\n");
+
 	// re-use LinearFilter_ANYx2_U8 for computing GX & GY
 	char opencl_name[VX_MAX_KERNEL_NAME];
 	strcpy(opencl_name, node->opencl_name);
@@ -838,11 +838,9 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 		node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_5x5_L1NORM ||
 		node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM)
 	{ // L1NORM
-		printf("canny sobel l1\n");
 		sprintf(item,
 			OPENCL_FORMAT(
 			"uint CannyMagPhase(float gx, float gy) {\n"
-            //"  printf(\"hi i'm here\n\");\n"
 			"  float dx = fabs(gx), dy = fabs(gy);\n"
 			"  float dr = amd_min3((dx + dy)%s, 16383.0f, 16383.0f);\n" // magnitude /= 4 for gradient_size = 7
 			"  float d1 = dx * 0.4142135623730950488016887242097f;\n"
@@ -876,7 +874,6 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 	}
 	int width = node->paramList[0]->u.img.width;
 	int height = node->paramList[0]->u.img.height;
-	printf("canny sobel l1 done\n");
 	sprintf(item,
 		OPENCL_FORMAT(
 		"void %s(U16x8 * magphase, uint x, uint y, __local uchar * lbuf, __global uchar * p, uint stride) {\n"
@@ -908,7 +905,6 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 //
 int HafGpu_CannySuppThreshold(AgoNode * node)
 {
-	printf("canny gpu threshold\n");
 	int status = VX_SUCCESS;
 	// configuration
 	int work_group_width = 16;
@@ -940,7 +936,6 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		"__kernel __attribute__((reqd_work_group_size(%d, %d, 1)))\n"
 		"void %s(uint p0_width, uint p0_height, __global uchar * p0_buf, uint p0_stride, uint p0_offset, %suint p2_width, uint p2_height, __global uchar * p2_buf, uint p2_stride, uint p2_offset, uint2 p3)\n" // xyarg
 		"{\n"
-        //"  printf(\"hi i'm here2\n\");\n"
 		"  __local uchar lbuf[%d];\n" // LMemSize
 		"  int lx = get_local_id(0);\n"
 		"  int ly = get_local_id(1);\n"

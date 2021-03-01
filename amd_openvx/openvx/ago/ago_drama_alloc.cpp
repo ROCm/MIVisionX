@@ -452,6 +452,7 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
 	if (agoGpuOclAllocBuffers(graph) < 0) {
 		return -1;
 	}
+    
 	// finalize all GPU supernodes and single nodes
 	for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
 		if (agoGpuOclSuperNodeFinalize(graph, supernode) < 0) {
@@ -602,7 +603,6 @@ static int agoOptimizeDramaAllocSetDefaultTargets(AgoGraph * agraph)
 					if (node->target_support_flags & (AGO_KERNEL_FLAG_GPU_INTEG_R2R | AGO_KERNEL_FLAG_GPU_INTEG_M2R)) {
 						// use an unsed group Id
 						node->attr_affinity.group = nextAvailGroupId++;
-                        printf("available group id : %d\n", nextAvailGroupId);
 					}
 				}
 				else {

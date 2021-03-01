@@ -608,10 +608,10 @@ int HipExec_FormatConvert_IUV_UV12(
         vx_uint8 *pHipDstVImage, vx_uint32 dstVImageStrideInBytes,
         const vx_uint8 *pHipSrcChromaImage, vx_uint32 srcChromaImageStrideInBytes);
 int HipExec_FormatConvert_UV12_IUV(
-       hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstChromaImage, vx_uint32 DstChromaImageStrideInBytes,
-        const vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
-        const vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes);
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint8 *pHipDstChromaImage, vx_uint32 dstChromaImageStrideInBytes,
+        vx_uint8 *pHipSrcUImage, vx_uint32 srcUImageStrideInBytes,
+        vx_uint8 *pHipSrcVImage, vx_uint32 srcVImageStrideInBytes);
 int HipExec_ColorConvert_YUV4_RGBX(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstYImage, vx_uint32 dstYImageStrideInBytes,

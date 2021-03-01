@@ -112,7 +112,7 @@ __device__ __forceinline__ short hip_convert_short_sat_rte(float a) {
     return (short)hip_clamp(a, (float)INT16_MIN, (float)INT16_MAX);
 }
 
-__device__ __forceinline__ void hip_convert_U8_U1 (uint2 * p0, unsigned char p1) {
+__device__ __forceinline__ void hip_convert_U8_U1(uint2 *p0, unsigned char p1) {
     uint2 r;
     r.x  = (-(p1 &   1)) & 0x000000ff;
     r.x |= (-(p1 &   2)) & 0x0000ff00;
@@ -125,7 +125,7 @@ __device__ __forceinline__ void hip_convert_U8_U1 (uint2 * p0, unsigned char p1)
     *p0 = r;
 }
 
-__device__ __forceinline__ void hip_convert_U1_U8 (unsigned char * p0, uint2 p1) {
+__device__ __forceinline__ void hip_convert_U1_U8(unsigned char *p0, uint2 p1) {
     unsigned char r;
     r  =  p1.x        &   1;
     r |= (p1.x >>  7) &   2;
@@ -135,6 +135,21 @@ __device__ __forceinline__ void hip_convert_U1_U8 (unsigned char * p0, uint2 p1)
     r |= (p1.y >>  3) &  32;
     r |= (p1.y >> 10) &  64;
     r |= (p1.y >> 17) & 128;
+    *p0 = r;
+}
+
+__device__ __forceinline__ void hip_convert_U8_S16(uint2 *p0, int4 p1)
+{
+    uint2 r;
+    uint p2 = 16;
+    r.x  = ((((int)p1.x)  << 16) >> p2) & 0xff;
+    r.x |= ((((int)p1.x)         >> p2) & 0xff) <<  8;
+    r.x |= (((((int)p1.y) << 16) >> p2) & 0xff) << 16;
+    r.x |= ((((int)p1.y)         >> p2) & 0xff) << 24;
+    r.y  = ((((int)p1.z)  << 16) >> p2) & 0xff;
+    r.y |= ((((int)p1.z)         >> p2) & 0xff) <<  8;
+    r.y |= (((((int)p1.w) << 16) >> p2) & 0xff) << 16;
+    r.y |= ((((int)p1.w)         >> p2) & 0xff) << 24;
     *p0 = r;
 }
 

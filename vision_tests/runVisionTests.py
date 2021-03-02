@@ -44,7 +44,7 @@ def write_formatted(output, f):
     f.write("%s\n\n" % output)
     f.write("````\n")
 
-# Pandas and Ipython
+# Pandas
 os.system("sudo apt-get install python3-pip")
 os.system("python3 -m pip install pandas")
 import pandas as pd

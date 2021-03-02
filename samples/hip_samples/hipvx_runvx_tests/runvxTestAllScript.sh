@@ -85,7 +85,8 @@ Not_U1_U8
 Not_U8_U1
 Not_U1_U1"
 
-GDF_COLOR_LIST="ColorDepth_U8_S16_Wrap
+GDF_COLOR_LIST="Lut_U8_U8
+ColorDepth_U8_S16_Wrap
 ColorDepth_U8_S16_Sat
 ColorDepth_S16_U8
 ChannelExtract_U8_U16_Pos0
@@ -127,6 +128,10 @@ FormatConvert_NV12_UYVY
 FormatConvert_NV12_YUYV
 ColorConvert_YUV4_RGB
 ColorConvert_YUV4_RGBX
+FormatConvert_IUV_UV12
+FormatConvert_UV12_IUV
+FormatConvert_UV_UV12
+ScaleUp2x2_U8_U8
 "
 
 GDF_FILTER_LIST="Box_U8_U8_3x3
@@ -151,6 +156,10 @@ Sobel_S16_U8_3x3_GY
 
 GDF_STATISTICAL_LIST="Threshold_U8_U8_Binary
 Threshold_U8_U8_Range
+Threshold_U1_U8_Binary
+Threshold_U1_U8_Range
+Threshold_U8_S16_Binary
+Threshold_U8_S16_Range
 "
 
 GDF_GEOMETRIC_LIST="ScaleImage_U8_U8_Nearest
@@ -168,7 +177,7 @@ WarpPerspective_U8_U8_Nearest_bilinear
 WarpPerspective_U8_U8_Nearest_constant
 "
 
-GDF_VISION_LIST="Lut_U8_U8
+GDF_VISION_LIST="
 "
 
 AFFINITY_LIST="GPU" # Or it can be AFFINITY_LIST="CPU GPU"
@@ -289,19 +298,19 @@ case_tester() {
             runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/filter/$GDF.gdf
         done
 
-        # printf "\n\n---------------------------------------------"
-        # printf "\nRunning STATISTICAL GDF cases on runvx for $AFFINITY..."
-        # printf "\n---------------------------------------------\n"
-        # for GDF in $GDF_STATISTICAL_LIST;
-        # do
-        #     printf "\nRunning $GDF...\n"
-        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-        #     if [ "$KERNEL_DUMP" -eq 1 ]; then
-        #         export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        #     fi
-        #     generator "statistical"
-        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/statistical/$GDF.gdf
-        # done
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning STATISTICAL GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_STATISTICAL_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            if [ "$KERNEL_DUMP" -eq 1 ]; then
+                export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            fi
+            generator "statistical"
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/statistical/$GDF.gdf
+        done
 
         # printf "\n\n---------------------------------------------"
         # printf "\nRunning GEOMETRIC GDF cases on runvx for $AFFINITY..."
@@ -495,7 +504,8 @@ GENERATED_GDF_PATH="generatedGDFsOCL"
 # cd ../samples/hip_samples/hipvx_runvx_tests
 
 # Running OCL - GPUOpen-ProfessionalCompute-Libraries/MIVisionX:master - working - to be removed after MCW-Dev/MIVISION:hip-porting OCL is fixed
-cd ../../../../../MIVisionX/    # change path manually to your clone of GPUOpen-ProfessionalCompute-Libraries/MIVisionX
+# cd ../../../../../MIVisionX/    # change path manually to your clone of GPUOpen-ProfessionalCompute-Libraries/MIVisionX
+cd ../../../../../kiritiForks/MIVisionX/
 if [ "$CLEAN_BUILD" -eq 1 ]; then
     rm -rvf build_ocl
     mkdir build_ocl
@@ -645,6 +655,7 @@ if [ "$DUMP" -eq 1 ]; then
     logical/agoKernel_Not_U1_U8_output_1.bin
     logical/agoKernel_Not_U8_U1_output_1.bin
     logical/agoKernel_Not_U1_U1_output_1.bin
+    color/agoKernel_Lut_U8_U8_output_1.bin
     color/agoKernel_ColorDepth_U8_S16_Wrap_output_1.bin
     color/agoKernel_ColorDepth_U8_S16_Sat_output_1.bin
     color/agoKernel_ColorDepth_S16_U8_output_1.bin
@@ -698,6 +709,10 @@ if [ "$DUMP" -eq 1 ]; then
     color/agoKernel_FormatConvert_NV12_YUYV_output_1.bin
     color/agoKernel_ColorConvert_YUV4_RGB_output_1.bin
     color/agoKernel_ColorConvert_YUV4_RGBX_output_1.bin
+    color/agoKernel_FormatConvert_IUV_UV12_output_1.bin
+    color/agoKernel_FormatConvert_UV12_IUV_output_1.bin
+    color/agoKernel_FormatConvert_UV_UV12_output_1.bin
+    color/agoKernel_ScaleUp2x2_U8_U8_output_1.bin
     filter/agoKernel_Box_U8_U8_3x3_output_1.bin
     filter/agoKernel_Dilate_U8_U8_3x3_output_1.bin
     filter/agoKernel_Dilate_U1_U8_3x3_output_1.bin
@@ -716,8 +731,13 @@ if [ "$DUMP" -eq 1 ]; then
     filter/agoKernel_Sobel_S16S16_U8_3x3_GXY_output_1.bin
     filter/agoKernel_Sobel_S16S16_U8_3x3_GXY_output_2.bin
     filter/agoKernel_Sobel_S16_U8_3x3_GX_output_1.bin
-    filter/agoKernel_Sobel_S16_U8_3x3_GY_output_1.bin"
-
+    filter/agoKernel_Sobel_S16_U8_3x3_GY_output_1.bin
+    statistical/agoKernel_Threshold_U8_U8_Binary_output_1.bin
+    statistical/agoKernel_Threshold_U8_U8_Range_output_1.bin
+    statistical/agoKernel_Threshold_U1_U8_Binary_output_1.bin
+    statistical/agoKernel_Threshold_U1_U8_Range_output_1.bin
+    statistical/agoKernel_Threshold_U8_S16_Binary_output_1.bin
+    statistical/agoKernel_Threshold_U8_S16_Range_output_1.bin"
     # geometric/agoKernel_ScaleImage_U8_U8_Nearest_output_1.bin
     # geometric/agoKernel_ScaleImage_U8_U8_bilinear_output_1.bin
     # geometric/agoKernel_ScaleImage_U8_U8_bilinear_replicate_output_1.bin
@@ -731,8 +751,6 @@ if [ "$DUMP" -eq 1 ]; then
     # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_output_1.bin
     # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_bilinear_output_1.bin
     # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_constant_output_1.bin
-    # statistical/agoKernel_Threshold_U8_U8_Binary_output_1.bin
-    # statistical/agoKernel_Threshold_U8_U8_Range_output_1.bin
     # "
 
     if [ -n "$KERNEL_NAME" ]; then
@@ -747,8 +765,6 @@ if [ "$DUMP" -eq 1 ]; then
         done
         OUTPUT_BIN_LIST="$OUTPUT_BIN_LIST_SINGLE"
     fi
-
-    echo $OUTPUT_BIN_LIST
 
     UNMATCHED_OUTPUT_LIST=""
 

@@ -165,10 +165,10 @@ openvxNodes = [
     ('ChannelExtract_U8U8U8_U24',                 'org.khronos.openvx.channel_extract uniform-image:1920,1080,RGB2,0xaabbcc !CHANNEL_R image:1920,1080,U008'),
     ('ChannelExtract_U8U8U8_U32',                 'org.khronos.openvx.channel_extract uniform-image:1920,1080,RGBA,0xaabbccdd !CHANNEL_R image:1920,1080,U008'),
     ('ChannelExtract_U8U8U8U8_U32',               'org.khronos.openvx.channel_extract uniform-image:1920,1080,RGBA,0xaabbccdd !CHANNEL_R image:1920,1080,U008'),
-    # ('ChannelCombine_U16_U8U8',                  'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008 uniform-image:960,540,U008 uniform-image:960,540,U008 null image:1920,1080,NV12'),
-    ('ChannelCombine_U32_U8U8U8_UYVY',            'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008,0xaa uniform-image:960,1080,U008,0xbb uniform-image:960,1080,U008,0xcc null image:1920,1080,UYVY'),
-    ('ChannelCombine_U32_U8U8U8_YUYV',            'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008,0xaa uniform-image:960,1080,U008,0xbb uniform-image:960,1080,U008,0xcc null image:1920,1080,YUYV'),
-    ('ChannelCombine_U24_U8U8U8_RGB',             'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008,0xaa uniform-image:1920,1080,U008,0xbb uniform-image:1920,1080,U008,0xcc null image:1920,1080,RGB2'),
+    # ('ChannelCombine_U16_U8U8',                   'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008 uniform-image:960,540,U008 uniform-image:960,540,U008 image:1920,1080,NV12'),
+    ('ChannelCombine_U32_U8U8U8_UYVY',            'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008,0xaa uniform-image:960,1080,U008,0xbb uniform-image:960,1080,U008,0xcc image:1920,1080,UYVY'),
+    ('ChannelCombine_U32_U8U8U8_YUYV',            'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008,0xaa uniform-image:960,1080,U008,0xbb uniform-image:960,1080,U008,0xcc image:1920,1080,YUYV'),
+    ('ChannelCombine_U24_U8U8U8_RGB',             'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008,0xaa uniform-image:1920,1080,U008,0xbb uniform-image:1920,1080,U008,0xcc image:1920,1080,RGB2'),
     ('ChannelCombine_U32_U8U8U8U8_RGBX',          'org.khronos.openvx.channel_combine uniform-image:1920,1080,U008,0xaa uniform-image:1920,1080,U008,0xbb uniform-image:1920,1080,U008,0xcc uniform-image:1920,1080,U008,0xdd image:1920,1080,RGBA'),
     ('ColorConvert_RGB_RGBX',                     'org.khronos.openvx.color_convert uniform-image:1920,1080,RGBA,0xaabbccdd image:1920,1080,RGB2'),
     ('ColorConvert_RGB_UYVY',                     'org.khronos.openvx.color_convert uniform-image:1920,1080,UYVY,0xaabbcc image:1920,1080,RGB2'),
@@ -204,8 +204,8 @@ openvxNodes = [
     ('Gaussian_U8_U8_3x3',                        'org.khronos.openvx.gaussian_3x3 uniform-image:1920,1080,U008,0xaa image:1920,1080,U008'),
     ('ScaleGaussianHalf_U8_U8_3x3',               'org.khronos.openvx.halfscale_gaussian uniform-image:1920,1080,U008,0xaa image:960,540,U008 scalar:INT32,3'),
     ('ScaleGaussianHalf_U8_U8_5x5',               'org.khronos.openvx.halfscale_gaussian uniform-image:1920,1080,U008,0xaa image:960,540,U008 scalar:INT32,5'),
-    ('Convolve_U8_U8_3x3',                        'org.khronos.openvx.custom_convolution uniform-image:1920,1080,U008,0xaa convolution:3,3 image:1920,1080,U008'),
-    ('Convolve_S16_U8_3x3',                       'org.khronos.openvx.custom_convolution uniform-image:1920,1080,U008,0xaa convolution:3,3 image:1920,1080,S016'),
+    ('Convolve_U8_U8_3x3',                        'org.khronos.openvx.custom_convolution uniform-image:1920,1080,U008,0xaa "convolution:3,3:INIT,{-1;-1;-1;-1;16;-1;-1;-1;-1}" image:1920,1080,U008'),
+    ('Convolve_S16_U8_3x3',                       'org.khronos.openvx.custom_convolution uniform-image:1920,1080,U008,0xaa "convolution:3,3:INIT,{-1;-1;-1;-1;16;-1;-1;-1;-1}" image:1920,1080,S016'),
     ('Sobel_S16S16_U8_3x3_GXY',                   'org.khronos.openvx.sobel_3x3 uniform-image:1920,1080,U008,0xaa image:1920,1080,S016 image:1920,1080,S016'),
     ('Sobel_S16_U8_3x3_GX',                       'org.khronos.openvx.sobel_3x3 uniform-image:1920,1080,U008,0xaa image:1920,1080,S016 null'),
     ('Sobel_S16_U8_3x3_GY',                       'org.khronos.openvx.sobel_3x3 uniform-image:1920,1080,U008,0xaa null image:1920,1080,S016'),
@@ -338,9 +338,9 @@ if hardwareMode == "GPU" and profilingOption == "YES":
     CONSOLIDATED_FILE = RESULTS_DIR + "/consolidated_results.stats.csv"
     new_file = open(CONSOLIDATED_FILE,'w')
     if backendType == "HIP":
-        new_file.write('"Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
+        new_file.write('"HIP Kernel Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
     elif backendType == "OCL":
-        new_file.write('"Kernel","Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
+        new_file.write('"OCL Kernel Name","Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
     for case_num in range(1,totalCount+1,1):
         nodeName, nodeFormat = openvxNodes[case_num-1]
         CASE_RESULTS_DIR = RESULTS_DIR + "/case_" + str(case_num)
@@ -365,10 +365,16 @@ if hardwareMode == "GPU" and profilingOption == "YES":
             continue
     new_file.close()
     os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
+
+    pd.options.display.max_rows = None
     df = pd.read_csv(CONSOLIDATED_FILE)
     df["AverageMs"] = df["AverageNs"] / 1000000
-    dfPrint = df.drop(['Percentage'], axis=1)
-    pd.options.display.max_rows = None
+    if backendType == "HIP":
+        dfPrint = df.drop(['Percentage'], axis=1)
+        dfPrint["HIP Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Hip_")
+    elif backendType == "OCL":
+        dfPrint = df.drop(['Name', 'Percentage'], axis=1)
+        dfPrint["OCL Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Ocl_")
     print(dfPrint)
 
 # All cases without profiling

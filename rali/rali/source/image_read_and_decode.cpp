@@ -244,6 +244,11 @@ ImageReadAndDecode::load(unsigned char* buff,
         }
         for (size_t i = 0; i < _batch_size; i++) {
             names[i] = _image_names[i];
+            if(_randombboxcrop_meta_data_reader)
+            {
+                _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);
+                _CropCord->crop_x = _decoder[i]->get_bbox_coords()[0];
+            }
             roi_width[i] = _actual_decoded_width[i];
             roi_height[i] = _actual_decoded_height[i];
             actual_width[i] = _original_width[i];

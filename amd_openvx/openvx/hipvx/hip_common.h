@@ -32,6 +32,10 @@ typedef struct d_float8 {
   float data[8];
 } d_float8;
 
+typedef struct d_2_float4 {
+  float4 data[2];
+} d_2_float4;
+
 typedef struct d_affine_matrix_t {
 	float matrix[3][2];
 } d_affine_matrix_t;
@@ -105,6 +109,14 @@ __device__ __forceinline__ float4 fabs4(float4 src) {
     return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
 }
 
+__device__ __forceinline__ uint hip_mul24(uint a, uint b) {
+    return __ockl_mul24_u32(a, b);
+}
+
+__device__ __forceinline__ uint hip_mad24(uint a, uint b, uint c) {
+    return ((a << 8) >> 8) * ((b << 8) >> 8) + c;
+}
+
 template<class T>
 __device__ __forceinline__ T hip_clamp(T v, T lo, T hi) {
     return min(max(v, lo), hi);
@@ -161,8 +173,8 @@ __device__ __forceinline__ void hip_convert_U8_S16(uint2 *p0, int4 p1) {
 }
 
 __device__ __forceinline__ float hip_fract(float x, float *itpr) {
-    *itpr = floor(x);
-    return fminf(x - floor(x), 0x1.fffffep-1f);
+    *itpr = floorf(x);
+    return fminf(x - floorf(x), 0x1.fffffep-1f);
 }
 
 __device__ __forceinline__ float hip_bilinear_sample(const uchar *p, uint ystride, uint xstride, float fy0, float fy1, int x, float fx0, float fx1) {
@@ -188,7 +200,7 @@ __device__ __forceinline__ float hip_bilinear_sample_FXY(const uchar *p, uint st
     fy1 = hip_fract(sy, &ii);
     fy0 = 1.0f - fy1;
     y = (uint)ii;
-    p += (int)fmaf(stride, y, x);
+    p += hip_mad24(stride, y, x);
     return hip_bilinear_sample(p, stride, 1, fy0, fy1, 0, fx0, fx1);
 }
 

@@ -113,43 +113,43 @@ Hip_ScaleImage_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     float fx, fy, fint, frac, fy0, fy1;
     float4 f;
     fy = fmaf((float)y, scaleInfo.y, scaleInfo.w);
-    fy0 = floor(fy);
+    fy0 = floorf(fy);
     fy1 = fy - fy0;
     fy0 = 1.0f - fy1;
-    pSrcImage += ((uint)fy * srcImageStrideInBytes);
+    pSrcImage += hip_mul24((uint)fy, srcImageStrideInBytes);
 
     fx = fmaf((float)x, scaleInfo.x, scaleInfo.z);
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.x = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     fx += scaleInfo.x;
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.y = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     fx += scaleInfo.x;
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.z = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     fx += scaleInfo.x;
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     dst.x = pack_(f);
 
     fx += scaleInfo.x;
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.x = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     fx += scaleInfo.x;
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.y = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     fx += scaleInfo.x;
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.z = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     fx += scaleInfo.x;
-    fint = floor(fx);
+    fint = floorf(fx);
     frac = fx - fint;
     f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
     dst.y = pack_(f);
@@ -200,46 +200,46 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
 
     if (fx >= 0.0f && fy >= 0.0f && fmaf(8.0f, scaleInfo.x, fx) < (dstWidth - 1) && fmaf(1.0f, scaleInfo.y, fy) < (dstHeight - 1)) {
         uint2 dst;
-        float fx, fy, fint, frac, fy0, fy1;
+        float fint, frac, fy0, fy1;
         float4 f;
         fy = fmaf((float)y, scaleInfo.y, scaleInfo.w);
-        fy0 = floor(fy);
+        fy0 = floorf(fy);
         fy1 = fy - fy0;
         fy0 = 1.0f - fy1;
-        pSrcImage += ((uint)fy * srcImageStrideInBytes);
+        pSrcImage += hip_mul24((uint)fy, srcImageStrideInBytes);
 
         fx = fmaf((float)x, scaleInfo.x, scaleInfo.z);
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.x = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.y = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.z = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         dst.x = pack_(f);
 
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.x = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.y = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.z = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         dst.y = pack_(f);
@@ -250,11 +250,11 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
         float fxlimit = (float)(dstWidth - 1);
         float fylimit = (float)(dstHeight - 1);
         float fy0, fy1;
-        fy0 = floor(fy);
+        fy0 = floorf(fy);
         fy1 = fy - fy0;
         fy0 = 1.0f - fy1;
         uint2 ycoord = hip_clamp_pixel_coordinates_to_border(fy, dstHeight - 1, srcImageStrideInBytes);
-        pSrcImage += (ycoord.x * srcImageStrideInBytes);
+        pSrcImage += hip_mul24(ycoord.x, srcImageStrideInBytes);
         float frac;
         uint2 xcoord;
         uint xlimit = dstWidth - 1;
@@ -263,37 +263,37 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
         float4 f;
 
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.x = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         fx += scaleInfo.x;
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.y = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         fx += scaleInfo.x;
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.z = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         fx += scaleInfo.x;
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.w = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         dst.x = pack_(f);
 
         fx += scaleInfo.x;
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.x = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         fx += scaleInfo.x;
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.y = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         fx += scaleInfo.x;
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.z = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         fx += scaleInfo.x;
         xcoord = hip_clamp_pixel_coordinates_to_border(fx, xlimit, 1);
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
         f.w = hip_bilinear_sample(pSrcImage, ycoord.y, xcoord.y, fy0, fy1, xcoord.x, 1.0f - frac, frac);
         dst.y = pack_(f);
 
@@ -344,46 +344,46 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
 
     if (fx >= 0.0f && fy >= 0.0f && fmaf(8.0f, scaleInfo.x, fx) < (dstWidth - 1) && fmaf(1.0f, scaleInfo.y, fy) < (dstHeight - 1)) {
         uint2 dst;
-        float fx, fy, fint, frac, fy0, fy1;
+        float fint, frac, fy0, fy1;
         float4 f;
         fy = fmaf((float)y, scaleInfo.y, scaleInfo.w);
-        fy0 = floor(fy);
+        fy0 = floorf(fy);
         fy1 = fy - fy0;
         fy0 = 1.0f - fy1;
-        pSrcImage += ((uint)fy * srcImageStrideInBytes);
+        pSrcImage += hip_mul24((uint)fy, srcImageStrideInBytes);
 
         fx = fmaf((float)x, scaleInfo.x, scaleInfo.z);
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.x = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.y = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.z = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         dst.x = pack_(f);
 
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.x = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.y = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.z = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         fx += scaleInfo.x;
-        fint = floor(fx);
+        fint = floorf(fx);
         frac = fx - fint;
         f.w = hip_bilinear_sample(pSrcImage, srcImageStrideInBytes, 1, fy0, fy1, (int)fint, 1.0f - frac, frac);
         dst.y = pack_(f);
@@ -391,38 +391,38 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
     }
     else {
-        float fy1 = fy - floor(fy);
+        float fy1 = fy - floorf(fy);
         float fy0 = 1.0f - fy1;
-        int sy = (int) floor(fy);
+        int sy = (int) floorf(fy);
         float frac;
         uint2 dst;
         float4 f;
-        frac = fx - floor(fx);
+        frac = fx - floorf(fx);
 
-        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
-        frac = fx - floor(fx);
-        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        frac = fx - floorf(fx);
+        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
-        frac = fx - floor(fx);
-        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        frac = fx - floorf(fx);
+        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
-        frac = fx - floor(fx);
-        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        frac = fx - floorf(fx);
+        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         dst.x = pack_(f);
 
         fx += scaleInfo.x;
-        frac = fx - floor(fx);
-        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        frac = fx - floorf(fx);
+        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
-        frac = fx - floor(fx);
-        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        frac = fx - floorf(fx);
+        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
-        frac = fx - floor(fx);
-        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        frac = fx - floorf(fx);
+        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
-        frac = fx - floor(fx);
-        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floor(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        frac = fx - floorf(fx);
+        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         dst.y = pack_(f);
 
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -455,7 +455,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float xscale, float yscale, float xoffset, float yoffset) {
+    int Nx, int Ny) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -466,29 +466,67 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
-    float4 scaleInfo = make_float4(xscale, yscale, xoffset, yoffset);
+    uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
+    pSrcImage += offset;
 
+    // Method 1 - Using d_float8 -> "f *= 0.250000000000f;" doesn't work
+
+    // d_float8 f = {0.0f};
+    // for (uint iy = 0; iy < 2; iy++) {
+    //     uint4 dw;
+    //     dw = *((uint4 *)&pSrcImage[0]);
+    //     f.data[0] += unpack0_(dw.x);
+    //     f.data[0] += unpack1_(dw.x);
+    //     f.data[1] += unpack2_(dw.x);
+    //     f.data[1] += unpack3_(dw.x);
+    //     f.data[2] += unpack0_(dw.y);
+    //     f.data[2] += unpack1_(dw.y);
+    //     f.data[3] += unpack2_(dw.y);
+    //     f.data[3] += unpack3_(dw.y);
+    //     f.data[4] += unpack0_(dw.z);
+    //     f.data[4] += unpack1_(dw.z);
+    //     f.data[5] += unpack2_(dw.z);
+    //     f.data[5] += unpack3_(dw.z);
+    //     f.data[6] += unpack0_(dw.w);
+    //     f.data[6] += unpack1_(dw.w);
+    //     f.data[7] += unpack2_(dw.w);
+    //     f.data[7] += unpack3_(dw.w);
+    //     pSrcImage += srcImageStrideInBytes;
+    // }
+    // f *= 0.250000000000f;
+    // uint2 dst;
+    // dst.x = pack_(*(float4*)&f.data[0]);
+    // dst.y = pack_(*(float4*)&f.data[4]);
+
+    // Method 2 - Using d_2_float4 - Works correctly
+
+    d_2_float4 f = {(float4)0.0f, (float4)0.0f};
+    for (uint iy = 0; iy < 2; iy++) {
+        uint4 dw;
+        dw = *((uint4 *)&pSrcImage[0]);
+        f.data[0].x += unpack0_(dw.x);
+        f.data[0].x += unpack1_(dw.x);
+        f.data[0].y += unpack2_(dw.x);
+        f.data[0].y += unpack3_(dw.x);
+        f.data[0].z += unpack0_(dw.y);
+        f.data[0].z += unpack1_(dw.y);
+        f.data[0].w += unpack2_(dw.y);
+        f.data[0].w += unpack3_(dw.y);
+        f.data[1].x += unpack0_(dw.z);
+        f.data[1].x += unpack1_(dw.z);
+        f.data[1].y += unpack2_(dw.z);
+        f.data[1].y += unpack3_(dw.z);
+        f.data[1].z += unpack0_(dw.w);
+        f.data[1].z += unpack1_(dw.w);
+        f.data[1].w += unpack2_(dw.w);
+        f.data[1].w += unpack3_(dw.w);
+        pSrcImage += srcImageStrideInBytes;
+    }
+    f.data[0] *= 0.250000000000f;
+    f.data[1] *= 0.250000000000f;
     uint2 dst;
-    pSrcImage += srcImageStrideInBytes * (uint)fmaf((float)y, scaleInfo.y, scaleInfo.w);
-    float fx = fmaf((float)x, scaleInfo.x, scaleInfo.z);
-
-    dst.x  = pSrcImage[(int)fx];
-    fx += scaleInfo.x;
-    dst.x |= pSrcImage[(int)fx] << 8;
-    fx += scaleInfo.x;
-    dst.x |= pSrcImage[(int)fx] << 16;
-    fx += scaleInfo.x;
-    dst.x |= pSrcImage[(int)fx] << 24;
-
-    fx += scaleInfo.x;
-
-    dst.y  = pSrcImage[(int)fx];
-    fx += scaleInfo.x;
-    dst.y |= pSrcImage[(int)fx] << 8;
-    fx += scaleInfo.x;
-    dst.y |= pSrcImage[(int)fx] << 16;
-    fx += scaleInfo.x;
-    dst.y |= pSrcImage[(int)fx] << 24;
+    dst.x = pack_(f.data[0]);
+    dst.y = pack_(f.data[1]);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -501,15 +539,15 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     int globalThreads_x = (dstWidth + 7) >> 3;
     int globalThreads_y = dstHeight;
 
-    vx_float32 xscale = (vx_float32)((vx_float64)srcWidth / (vx_float64)dstWidth);
-    vx_float32 yscale = (vx_float32)((vx_float64)srcHeight / (vx_float64)dstHeight);
-    vx_float32 xoffset = (vx_float32)((vx_float64)srcWidth / (vx_float64)dstWidth * 0.5);
-    vx_float32 yoffset = (vx_float32)((vx_float64)srcHeight / (vx_float64)dstHeight * 0.5);
+    float Sx = (float)srcWidth / (float)dstWidth;
+    float Sy = (float)srcHeight / (float)dstHeight;
+    int Nx = (int)ceilf(Sx);
+    int Ny = (int)ceilf(Sy);
 
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        xscale, yscale, xoffset, yoffset);
+                        Nx, Ny);
 
     return VX_SUCCESS;
 }
@@ -544,30 +582,30 @@ Hip_WarpAffine_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     sy = fmaf(dy, affineMatrix.matrix[1][1], affineMatrix.matrix[2][1]);
     sy = fmaf(dx, affineMatrix.matrix[0][1], sy);
 
-    dst.x = pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)];
+    dst.x = pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)];
     sx += affineMatrix.matrix[0][0];
     sy += affineMatrix.matrix[0][1];
-    dst.x |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 8;
+    dst.x |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 8;
     sx += affineMatrix.matrix[0][0];
     sy += affineMatrix.matrix[0][1];
-    dst.x |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 16;
+    dst.x |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 16;
     sx += affineMatrix.matrix[0][0];
     sy += affineMatrix.matrix[0][1];
-    dst.x |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 24;
+    dst.x |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 24;
 
     sx += affineMatrix.matrix[0][0];
     sy += affineMatrix.matrix[0][1];
 
-    dst.y  = pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)];
+    dst.y  = pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)];
     sx += affineMatrix.matrix[0][0];
     sy += affineMatrix.matrix[0][1];
-    dst.y |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 8;
+    dst.y |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 8;
     sx += affineMatrix.matrix[0][0];
     sy += affineMatrix.matrix[0][1];
-    dst.y |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 16;
+    dst.y |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 16;
     sx += affineMatrix.matrix[0][0];
     sy += affineMatrix.matrix[0][1];
-    dst.y |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 24;
+    dst.y |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)sy, (uint)sx)] << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -622,30 +660,30 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     dstHeight -= 2;
 
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x = v;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x = v;
     sx += affineMatrix.matrix[0][0]; sy += affineMatrix.matrix[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 8;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 8;
     sx += affineMatrix.matrix[0][0]; sy += affineMatrix.matrix[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 16;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 16;
     sx += affineMatrix.matrix[0][0]; sy += affineMatrix.matrix[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 24;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 24;
 
     sx += affineMatrix.matrix[0][0]; sy += affineMatrix.matrix[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
 
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y = v;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y = v;
     sx += affineMatrix.matrix[0][0]; sy += affineMatrix.matrix[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 8;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 8;
     sx += affineMatrix.matrix[0][0]; sy += affineMatrix.matrix[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 16;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 16;
     sx += affineMatrix.matrix[0][0]; sy += affineMatrix.matrix[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 24;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -837,42 +875,42 @@ Hip_WarpPerspective_U8_U8_Nearest(uint dstWidth, uint dstHeight,
 
     isz = 1.0f / sz;
 
-    dst.x = pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))];
+    dst.x = pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))];
     sx += perspectiveMatrix.matrix[0][0];
     sy += perspectiveMatrix.matrix[0][1];
     sz += perspectiveMatrix.matrix[0][2];
     isz = 1.0f / sz;
-    dst.x |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 8;
+    dst.x |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 8;
     sx += perspectiveMatrix.matrix[0][0];
     sy += perspectiveMatrix.matrix[0][1];
     sz += perspectiveMatrix.matrix[0][2];
     isz = 1.0f / sz;
-    dst.x |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 16;
+    dst.x |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 16;
     sx += perspectiveMatrix.matrix[0][0];
     sy += perspectiveMatrix.matrix[0][1];
     sz += perspectiveMatrix.matrix[0][2];
     isz = 1.0f / sz;
-    dst.x |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 24;
+    dst.x |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 24;
     sx += perspectiveMatrix.matrix[0][0];
     sy += perspectiveMatrix.matrix[0][1];
     sz += perspectiveMatrix.matrix[0][2];
     isz = 1.0f / sz;
-    dst.y  = pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))];
+    dst.y  = pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))];
     sx += perspectiveMatrix.matrix[0][0];
     sy += perspectiveMatrix.matrix[0][1];
     sz += perspectiveMatrix.matrix[0][2];
     isz = 1.0f / sz;
-    dst.y |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 8;
+    dst.y |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 8;
     sx += perspectiveMatrix.matrix[0][0];
     sy += perspectiveMatrix.matrix[0][1];
     sz += perspectiveMatrix.matrix[0][2];
     isz = 1.0f / sz;
-    dst.y |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 16;
+    dst.y |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 16;
     sx += perspectiveMatrix.matrix[0][0];
     sy += perspectiveMatrix.matrix[0][1];
     sz += perspectiveMatrix.matrix[0][2];
     isz = 1.0f / sz;
-    dst.y |= pSrcImage[(int)fmaf(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 24;
+    dst.y |= pSrcImage[hip_mad24(srcImageStrideInBytes, (uint)(sy * isz), (uint)(sx * isz))] << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -929,30 +967,30 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     y = (uint)(int)(sy * isz);
 
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x = v;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x = v;
     sx += perspectiveMatrix.matrix[0][0]; sy += perspectiveMatrix.matrix[0][1]; sz += perspectiveMatrix.matrix[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 8);
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 8);
     sx += perspectiveMatrix.matrix[0][0]; sy += perspectiveMatrix.matrix[0][1]; sz += perspectiveMatrix.matrix[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 16);
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 16);
     sx += perspectiveMatrix.matrix[0][0]; sy += perspectiveMatrix.matrix[0][1]; sz += perspectiveMatrix.matrix[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 24);
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 24);
 
     sx += perspectiveMatrix.matrix[0][0]; sy += perspectiveMatrix.matrix[0][1]; sz += perspectiveMatrix.matrix[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
 
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y = v;
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y = v;
     sx += perspectiveMatrix.matrix[0][0]; sy += perspectiveMatrix.matrix[0][1]; sz += perspectiveMatrix.matrix[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 8);
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 8);
     sx += perspectiveMatrix.matrix[0][0]; sy += perspectiveMatrix.matrix[0][1]; sz += perspectiveMatrix.matrix[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 16);
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 16);
     sx += perspectiveMatrix.matrix[0][0]; sy += perspectiveMatrix.matrix[0][1]; sz += perspectiveMatrix.matrix[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
     mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[(int)fmaf(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 24);
+    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 24);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }

@@ -32,10 +32,6 @@ typedef struct d_float8 {
   float data[8];
 } d_float8;
 
-typedef struct d_2_float4 {
-  float4 data[2];
-} d_2_float4;
-
 typedef struct d_affine_matrix_t {
 	float matrix[3][2];
 } d_affine_matrix_t;
@@ -202,6 +198,24 @@ __device__ __forceinline__ float hip_bilinear_sample_FXY(const uchar *p, uint st
     y = (uint)ii;
     p += hip_mad24(stride, y, x);
     return hip_bilinear_sample(p, stride, 1, fy0, fy1, 0, fx0, fx1);
+}
+
+__device__ __forceinline__ float hip_bilinear_sample_FXY_constant_for_remap(const uchar *p, uint stride, uint width, uint height, float sx, float sy, uint borderValue) {
+    float fx0, fx1, fy0, fy1, ii;
+    int x, y;
+    fx1 = hip_fract(sx, &ii);
+    fx0 = 1.0f - fx1;
+    x = (int)floorf(sx);
+    fy1 = hip_fract(sy, &ii);
+    fy0 = 1.0f - fy1;
+    y = (int)floorf(sy);
+    if (((uint)x) < width - 1 && ((uint)y) < height - 1) {
+        p += y * stride;
+        return hip_bilinear_sample(p, stride, 1, fy0, fy1, x, fx0, fx1);
+    }
+    else {
+        return unpack0_(borderValue);
+    }
 }
 
 __device__ __forceinline__ uint2 hip_clamp_pixel_coordinates_to_border(float f, uint limit, uint stride)

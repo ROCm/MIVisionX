@@ -430,8 +430,10 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         const char* source_path,
                                                         RaliImageColor color_format,
                                                         RaliDecodeDevice rali_decode_device,
-                                                        bool is_output ,
-                                                        unsigned width , unsigned height, bool loop = false );
+                                                        unsigned shard_count,
+                                                        bool shuffle = false,
+                                                        bool is_output = false,
+                                                        unsigned width = 0 , unsigned height = 0, bool loop = false );
 /// Creates CIFAR10 raw data reader and loader. It allocates the resources and objects required to read raw data stored on the file systems.
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk

@@ -163,18 +163,22 @@ Threshold_U8_S16_Range
 "
 
 GDF_GEOMETRIC_LIST="ScaleImage_U8_U8_Nearest
-ScaleImage_U8_U8_bilinear
-ScaleImage_U8_U8_bilinear_replicate
-ScaleImage_U8_U8_bilinear_constant
-ScaleImage_U8_U8_u8_area
+ScaleImage_U8_U8_Bilinear
+ScaleImage_U8_U8_Bilinear_Replicate
+ScaleImage_U8_U8_Bilinear_Constant
+ScaleImage_U8_U8_Area
 WarpAffine_U8_U8_Nearest
-WarpAffine_U8_U8_Nearest_constant
-WarpAffine_U8_U8_Nearestbilinear
-WarpAffine_U8_U8_Nearest_bilinear_constant
+WarpAffine_U8_U8_Nearest_Constant
+WarpAffine_U8_U8_Bilinear
+WarpAffine_U8_U8_Bilinear_Constant
 WarpPerspective_U8_U8_Nearest
-WarpPerspective_U8_U8_Nearest
-WarpPerspective_U8_U8_Nearest_bilinear
-WarpPerspective_U8_U8_Nearest_constant
+WarpPerspective_U8_U8_Nearest_Constant
+WarpPerspective_U8_U8_Bilinear
+WarpPerspective_U8_U8_Bilinear_Constant
+Remap_U8_U8_Nearest
+Remap_U8_U8_Nearest_Constant
+Remap_U8_U8_Bilinear
+Remap_U8_U8_Bilinear_Constant
 "
 
 GDF_VISION_LIST="
@@ -312,19 +316,19 @@ case_tester() {
             runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/statistical/$GDF.gdf
         done
 
-        # printf "\n\n---------------------------------------------"
-        # printf "\nRunning GEOMETRIC GDF cases on runvx for $AFFINITY..."
-        # printf "\n---------------------------------------------\n"
-        # for GDF in $GDF_GEOMETRIC_LIST;
-        # do
-        #     printf "\nRunning $GDF...\n"
-        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-        #     if [ "$KERNEL_DUMP" -eq 1 ]; then
-        #         export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        #     fi
-        #     generator "geometric"
-        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/geometric/$GDF.gdf
-        # done
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning GEOMETRIC GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_GEOMETRIC_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            if [ "$KERNEL_DUMP" -eq 1 ]; then
+                export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            fi
+            generator "geometric"
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/geometric/$GDF.gdf
+        done
 
         # printf "\n\n---------------------------------------------"
         # printf "\nRunning VISION GDF cases on runvx for $AFFINITY..."
@@ -737,21 +741,25 @@ if [ "$DUMP" -eq 1 ]; then
     statistical/agoKernel_Threshold_U1_U8_Binary_output_1.bin
     statistical/agoKernel_Threshold_U1_U8_Range_output_1.bin
     statistical/agoKernel_Threshold_U8_S16_Binary_output_1.bin
-    statistical/agoKernel_Threshold_U8_S16_Range_output_1.bin"
-    # geometric/agoKernel_ScaleImage_U8_U8_Nearest_output_1.bin
-    # geometric/agoKernel_ScaleImage_U8_U8_bilinear_output_1.bin
-    # geometric/agoKernel_ScaleImage_U8_U8_bilinear_replicate_output_1.bin
-    # geometric/agoKernel_ScaleImage_U8_U8_bilinear_constant_output_1.bin
-    # geometric/agoKernel_ScaleImage_U8_U8_u8_area_output_1.bin
-    # geometric/agoKernel_WarpAffine_U8_U8_Nearest_output_1.bin
-    # geometric/agoKernel_WarpAffine_U8_U8_Nearest_constant_output_1.bin
-    # geometric/agoKernel_WarpAffine_U8_U8_Nearestbilinear_output_1.bin
-    # geometric/agoKernel_WarpAffine_U8_U8_Nearest_bilinear_constant_output_1.bin
-    # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_output_1.bin
-    # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_output_1.bin
-    # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_bilinear_output_1.bin
-    # geometric/agoKernel_WarpPerspective_U8_U8_Nearest_constant_output_1.bin
-    # "
+    statistical/agoKernel_Threshold_U8_S16_Range_output_1.bin
+    geometric/agoKernel_ScaleImage_U8_U8_Nearest_output_1.bin
+    geometric/agoKernel_ScaleImage_U8_U8_Bilinear_output_1.bin
+    geometric/agoKernel_ScaleImage_U8_U8_Bilinear_Replicate_output_1.bin
+    geometric/agoKernel_ScaleImage_U8_U8_Bilinear_Constant_output_1.bin
+    geometric/agoKernel_ScaleImage_U8_U8_Area_output_1.bin
+    geometric/agoKernel_WarpAffine_U8_U8_Nearest_output_1.bin
+    geometric/agoKernel_WarpAffine_U8_U8_Nearest_Constant_output_1.bin
+    geometric/agoKernel_WarpAffine_U8_U8_Bilinear_output_1.bin
+    geometric/agoKernel_WarpAffine_U8_U8_Bilinear_Constant_output_1.bin
+    geometric/agoKernel_WarpPerspective_U8_U8_Nearest_output_1.bin
+    geometric/agoKernel_WarpPerspective_U8_U8_Nearest_Constant_output_1.bin
+    geometric/agoKernel_WarpPerspective_U8_U8_Bilinear_output_1.bin
+    geometric/agoKernel_WarpPerspective_U8_U8_Bilinear_Constant_output_1.bin
+    geometric/agoKernel_Remap_U8_U8_Nearest_output_1.bin
+    geometric/agoKernel_Remap_U8_U8_Nearest_Constant_output_1.bin
+    geometric/agoKernel_Remap_U8_U8_Bilinear_output_1.bin
+    geometric/agoKernel_Remap_U8_U8_Bilinear_Constant_output_1.bin
+    "
 
     if [ -n "$KERNEL_NAME" ]; then
         printf "\nPicking output binary dumps...\n"

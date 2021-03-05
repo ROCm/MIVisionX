@@ -1190,52 +1190,49 @@ Hip_Remap_U8_U8_Nearest(uint dstWidth, uint dstHeight,
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
     v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.x = v;
+    dst.x = v;
 
-    // map = remap[1];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.x |= v << 8;
+    map = remap[1];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    dst.x |= v << 8;
 
-    // map = remap[2];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.x |= v << 16;
+    map = remap[2];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    dst.x |= v << 16;
 
-    // map = remap[3];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.x |= v << 24;
+    map = remap[3];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    dst.x |= v << 24;
 
-    // map = remap[4];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.y  = v;
+    map = remap[4];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    dst.y  = v;
 
-    // map = remap[5];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.y |= v << 8;
+    map = remap[5];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    dst.y |= v << 8;
 
-    // map = remap[6];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.y |= v << 16;
+    map = remap[6];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    dst.y |= v << 16;
 
-    // map = remap[7];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // dst.y |= v << 24;
-
-
-    // Uncommenting gives seg-fault
+    map = remap[7];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    dst.y |= v << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1288,86 +1285,84 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     y &= mask;
     v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
     v = HIPSELECT(borderValue, v, mask);
-    // dst.x  = v;
+    dst.x  = v;
 
-    // map = remap[1];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
-    // mask = ~mask;
-    // x &= mask;
-    // y &= mask;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // v = HIPSELECT(borderValue, v, mask);
-    // dst.x |= v << 8;
+    map = remap[1];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= v << 8;
 
-    // map = remap[2];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
-    // mask = ~mask;
-    // x &= mask;
-    // y &= mask;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // v = HIPSELECT(borderValue, v, mask);
-    // dst.x |= v << 16;
+    map = remap[2];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= v << 16;
 
-    // map = remap[3];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
-    // mask = ~mask;
-    // x &= mask;
-    // y &= mask;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // v = HIPSELECT(borderValue, v, mask);
-    // dst.x |= v << 24;
+    map = remap[3];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= v << 24;
 
-    // map = remap[4];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
-    // mask = ~mask;
-    // x &= mask;
-    // y &= mask;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // v = HIPSELECT(borderValue, v, mask);
-    // dst.y  = v;
+    map = remap[4];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y  = v;
 
-    // map = remap[5];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
-    // mask = ~mask;
-    // x &= mask;
-    // y &= mask;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // v = HIPSELECT(borderValue, v, mask);
-    // dst.y |= v << 8;
+    map = remap[5];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= v << 8;
 
-    // map = remap[6];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
-    // mask = ~mask;
-    // x &= mask;
-    // y &= mask;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // v = HIPSELECT(borderValue, v, mask);
-    // dst.y |= v << 16;
+    map = remap[6];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= v << 16;
 
-    // map = remap[7];
-    // x = ((map & 0xffff) + 4) >> 3;
-    // y = (map + 0x00040000) >> 19;
-    // mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
-    // mask = ~mask;
-    // x &= mask;
-    // y &= mask;
-    // v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
-    // v = HIPSELECT(borderValue, v, mask);
-    // dst.y |= v << 24;
-
-    // Uncommenting gives seg-fault
+    map = remap[7];
+    x = ((map & 0xffff) + 4) >> 3;
+    y = (map + 0x00040000) >> 19;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= v << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1429,9 +1424,7 @@ Hip_Remap_U8_U8_Bilinear(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY(pSrcImage, srcImageStrideInBytes, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f);
     dst.y = pack_(f);
 
-    // Uncommenting gives seg-fault
-
-    // *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
 int HipExec_Remap_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1491,9 +1484,7 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.y = pack_(f);
 
-    // Uncommenting gives seg-fault
-
-    // *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
 int HipExec_Remap_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

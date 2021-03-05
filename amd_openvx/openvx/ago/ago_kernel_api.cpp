@@ -18365,7 +18365,7 @@ int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->buffer,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
         }
@@ -18441,10 +18441,30 @@ int agoKernel_Remap_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd)
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_U8_U8_Nearest_Constant(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t),
+            node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 
@@ -18531,7 +18551,7 @@ int agoKernel_Remap_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (ago_coord2d_ushort_t *)iMap->buffer,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
             iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t))) {
             status = VX_FAILURE;
         }
@@ -18608,10 +18628,30 @@ int agoKernel_Remap_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelCommand cmd
                     | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_M2R
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
                     ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oImg = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        AgoData * iMap = node->paramList[2];
+        if (HipExec_Remap_U8_U8_Bilinear_Constant(
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
+            iImg->u.img.width, iImg->u.img.height,
+            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
+            (ago_coord2d_ushort_t *)iMap->hip_memory,
+            iMap->u.remap.dst_width * sizeof(ago_coord2d_ushort_t),
+            node->paramList[3]->u.scalar.u.u)) {
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 
@@ -19939,8 +19979,7 @@ int agoKernel_ScaleImage_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (AgoConfigScaleMatrix *)node->localDataPtr)) {
+            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -20049,8 +20088,7 @@ int agoKernel_ScaleImage_U8_U8_Bilinear(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (AgoConfigScaleMatrix *)node->localDataPtr)) {
+            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -20179,8 +20217,7 @@ int agoKernel_ScaleImage_U8_U8_Bilinear_Replicate(AgoNode * node, AgoKernelComma
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (AgoConfigScaleMatrix *)node->localDataPtr)) {
+            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -20308,7 +20345,6 @@ int agoKernel_ScaleImage_U8_U8_Bilinear_Constant(AgoNode * node, AgoKernelComman
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
             iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (AgoConfigScaleMatrix *)node->localDataPtr,
             iBorder->u.scalar.u.u)) {
             status = VX_FAILURE;
         }
@@ -20654,8 +20690,7 @@ int agoKernel_ScaleImage_U8_U8_Area(AgoNode * node, AgoKernelCommand cmd)
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             iImg->u.img.width, iImg->u.img.height,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            (AgoConfigScaleMatrix *)node->localDataPtr)) {
+            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }

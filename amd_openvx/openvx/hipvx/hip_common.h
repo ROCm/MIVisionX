@@ -32,6 +32,14 @@ typedef struct d_float8 {
   float data[8];
 } d_float8;
 
+typedef struct d_affine_matrix_t {
+	float matrix[3][2];
+} d_affine_matrix_t;
+
+typedef struct d_perspective_matrix_t {
+    float matrix[3][3];
+} d_perspective_matrix_t;
+
 // common device kernels
 
 __device__ __forceinline__ uint pack_(float4 src) {
@@ -97,6 +105,14 @@ __device__ __forceinline__ float4 fabs4(float4 src) {
     return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
 }
 
+__device__ __forceinline__ uint hip_mul24(uint a, uint b) {
+    return __ockl_mul24_u32(a, b);
+}
+
+__device__ __forceinline__ uint hip_mad24(uint a, uint b, uint c) {
+    return ((a << 8) >> 8) * ((b << 8) >> 8) + c;
+}
+
 template<class T>
 __device__ __forceinline__ T hip_clamp(T v, T lo, T hi) {
     return min(max(v, lo), hi);
@@ -138,8 +154,7 @@ __device__ __forceinline__ void hip_convert_U1_U8(unsigned char *p0, uint2 p1) {
     *p0 = r;
 }
 
-__device__ __forceinline__ void hip_convert_U8_S16(uint2 *p0, int4 p1)
-{
+__device__ __forceinline__ void hip_convert_U8_S16(uint2 *p0, int4 p1) {
     uint2 r;
     uint p2 = 16;
     r.x  = ((((int)p1.x)  << 16) >> p2) & 0xff;
@@ -153,6 +168,103 @@ __device__ __forceinline__ void hip_convert_U8_S16(uint2 *p0, int4 p1)
     *p0 = r;
 }
 
+__device__ __forceinline__ float hip_fract(float x, float *itpr) {
+    *itpr = floorf(x);
+    return fminf(x - floorf(x), 0x1.fffffep-1f);
+}
+
+__device__ __forceinline__ float hip_bilinear_sample(const uchar *p, uint ystride, uint xstride, float fy0, float fy1, int x, float fx0, float fx1) {
+    float4 f;
+    p += x;
+    f.x = unpack0_((uint)p[0]);
+    f.y = unpack0_((uint)p[xstride]);
+    p += ystride;
+    f.z = unpack0_((uint)p[0]);
+    f.w = unpack0_((uint)p[xstride]);
+    f.x = fmaf(f.x, fx0, f.y * fx1);
+    f.z = fmaf(f.z, fx0, f.w * fx1);
+    f.x = fmaf(f.x, fy0, f.z * fy1);
+    return f.x;
+}
+
+__device__ __forceinline__ float hip_bilinear_sample_FXY(const uchar *p, uint stride, float sx, float sy) {
+    float fx0, fx1, fy0, fy1, ii;
+    uint x, y;
+    fx1 = hip_fract(sx, &ii);
+    fx0 = 1.0f - fx1;
+    x = (uint)ii;
+    fy1 = hip_fract(sy, &ii);
+    fy0 = 1.0f - fy1;
+    y = (uint)ii;
+    p += hip_mad24(stride, y, x);
+    return hip_bilinear_sample(p, stride, 1, fy0, fy1, 0, fx0, fx1);
+}
+
+__device__ __forceinline__ float hip_bilinear_sample_FXY_constant_for_remap(const uchar *p, uint stride, uint width, uint height, float sx, float sy, uint borderValue) {
+    float fx0, fx1, fy0, fy1, ii;
+    int x, y;
+    fx1 = hip_fract(sx, &ii);
+    fx0 = 1.0f - fx1;
+    x = (int)floorf(sx);
+    fy1 = hip_fract(sy, &ii);
+    fy0 = 1.0f - fy1;
+    y = (int)floorf(sy);
+    if (((uint)x) < width - 1 && ((uint)y) < height - 1) {
+        p += y * stride;
+        return hip_bilinear_sample(p, stride, 1, fy0, fy1, x, fx0, fx1);
+    }
+    else {
+        return unpack0_(borderValue);
+    }
+}
+
+__device__ __forceinline__ uint2 hip_clamp_pixel_coordinates_to_border(float f, uint limit, uint stride)
+{
+    uint2 vstride;
+    vstride.x = HIPSELECT((uint)f, 0u, f < 0);
+    vstride.y = HIPSELECT(stride, 0u, f < 0);
+    vstride.x = HIPSELECT(vstride.x, limit, f >= limit);
+    vstride.y = HIPSELECT(vstride.y, 0u, f >= limit);
+    return vstride;
+}
+
+__device__ __forceinline__ uint hip_sample_with_constant_border(const uchar *p, int x, int y, uint width, uint height, uint stride, uint borderValue) {
+    uint pixelValue = borderValue;
+    if (x >= 0 && y >= 0 && x < width && y < height) {
+        pixelValue = p[y * stride + x];
+    }
+    return pixelValue;
+}
+
+__device__ __forceinline__ float hip_bilinear_sample_with_constant_border(const uchar *p, int x, int y, uint width, uint height, uint stride, float fx0, float fx1, float fy0, float fy1, uint borderValue) {
+    float4 f;
+    f.x = unpack0_(hip_sample_with_constant_border(p, x, y, width, height, stride, borderValue));
+    f.y = unpack0_(hip_sample_with_constant_border(p, x + 1, y, width, height, stride, borderValue));
+    f.z = unpack0_(hip_sample_with_constant_border(p, x, y + 1, width, height, stride, borderValue));
+    f.w = unpack0_(hip_sample_with_constant_border(p, x + 1, y + 1, width, height, stride, borderValue));
+    f.x = fmaf(f.x, fx0, f.y * fx1);
+    f.z = fmaf(f.z, fx0, f.w * fx1);
+    f.x = fmaf(f.x, fy0, f.z * fy1);
+    return f.x;
+}
+
+__device__ __forceinline__ float hip_bilinear_sample_FXY_constant(const uchar *p, uint stride, uint width, uint height, float sx, float sy, uint borderValue) {
+    float fx0, fx1, fy0, fy1, ii;
+    int x, y;
+    fx1 = hip_fract(sx, &ii);
+    fx0 = 1.0f - fx1;
+    x = (int)ii;
+    fy1 = hip_fract(sy, &ii);
+    fy0 = 1.0f - fy1;
+    y = (int)ii;
+    if (((uint)x) < width && ((uint)y) < height) {
+        p += y * stride;
+        return hip_bilinear_sample(p, stride, 1, fy0, fy1, x, fx0, fx1);
+    }
+    else {
+        return hip_bilinear_sample_with_constant_border(p, x, y, width, height, stride, fx0, fx1, fy0, fy1, borderValue);
+    }
+}
 
 // common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere
 __device__ __forceinline__ float4 uchars_to_float4(uint src) {

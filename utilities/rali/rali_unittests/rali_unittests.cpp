@@ -44,6 +44,7 @@ using namespace cv;
 // #define CAFFE2_READER_DETECTION
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
+#define VIDEO_READER
 
 //#define RANDOMBBOXCROP
 
@@ -99,6 +100,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24
                                              : RaliImageColor::RALI_COLOR_U8;
+    
+    RaliDecodeDevice decode_device = RALI_SW_DECODE;
 
     auto handle = raliCreate(inputBatchSize,
                              gpu ? RaliProcessMode::RALI_PROCESS_GPU : RaliProcessMode::RALI_PROCESS_CPU, 0,
@@ -213,6 +216,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                                         RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #elif defined COCO_READER_PARTIAL
         input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
+#elif defined VIDEO_READER
+    input1 = raliVideoFileSource(handle, path, color_format, decode_device, 1, decode_max_width, decode_max_height,0);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);

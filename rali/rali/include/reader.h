@@ -30,7 +30,8 @@ enum class StorageType
     UNCOMPRESSED_BINARY_DATA = 2,        // experimental: added for supporting cifar10 data set
     CAFFE_LMDB_RECORD = 3,
     CAFFE2_LMDB_RECORD = 4,
-    COCO_FILE_SYSTEM = 5
+    COCO_FILE_SYSTEM = 5,
+    VIDEO_FILE_SYSTEM = 6
 };
 
 struct ReaderConfig

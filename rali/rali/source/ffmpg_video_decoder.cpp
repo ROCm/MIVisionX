@@ -20,40 +20,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#include <stdio.h>
+#include <commons.h>
+#include "ffmpeg_video_decoder.h"
 
-#include "video_loader_module.h"
-#ifdef RALI_VIDEO
-VideoLoaderModule::VideoLoaderModule(std::shared_ptr<VideoFileNode> video_node):_video_node(std::move(video_node))
+FFMPEG_VIDEO_DECODER::FFMPEG_VIDEO_DECODER(){
+};
+
+Decoder::Status FFMPEG_VIDEO_DECODER::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) 
 {
+   
+    return Status::OK;
 }
 
-LoaderModuleStatus 
-VideoLoaderModule::load_next()
+Decoder::Status FFMPEG_VIDEO_DECODER::decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
+                                  size_t max_decoded_width, size_t max_decoded_height,
+                                  size_t original_image_width, size_t original_image_height,
+                                  size_t &actual_decoded_width, size_t &actual_decoded_height,
+                                  Decoder::ColorFormat desired_decoded_color_format,DecoderConfig config, bool keep_original_size)
 {
-    // Do nothing since call to process graph suffices (done externally)
-    return LoaderModuleStatus::OK;
+
+    return Status::OK;
 }
 
-void
-VideoLoaderModule::set_output_image (Image* output_image)
-{
+FFMPEG_VIDEO_DECODER::~FFMPEG_VIDEO_DECODER() {
 }
-
-void
-VideoLoaderModule::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size)
-{
-}
-
-size_t VideoLoaderModule::count()
-{
-    // TODO: use FFMPEG to find the total number of frames and keep counting 
-    // how many times laod_next() is called successfully, subtract them and 
-    // that would be the count of frames remained to be decoded
-    return 9999999;
-}
-
-void VideoLoaderModule::reset()
-{
-    // Functionality not there yet in the OpenVX API
-}
-#endif

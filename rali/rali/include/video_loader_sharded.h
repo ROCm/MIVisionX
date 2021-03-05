@@ -21,27 +21,37 @@ THE SOFTWARE.
 */
 
 #pragma once
-#include <string>
-#include <utility>
-#include "commons.h"
-#include "loader_module.h"
-#include "node_video_file_source.h"
-
+#include <vector>
+#include "video_loader.h"
+//
+// VideoLoaderSharded Can be used to run load and decode in multiple shards, each shard by a single loader instance,
+// It improves load and decode performance since each loader loads the images in parallel using an internal thread
+//
 #ifdef RALI_VIDEO
-class VideoLoaderModule : public LoaderModule
+class VideoLoaderSharded : public LoaderModule
 {
 public:
-    explicit VideoLoaderModule(std::shared_ptr<VideoFileNode> sharedPtr);
-
+    explicit VideoLoaderSharded(DeviceResources dev_resources);
+    ~VideoLoaderSharded() override;
     LoaderModuleStatus load_next() override;
-    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size) override;
+    void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
     void set_output_image (Image* output_image) override;
-    size_t count() override; // returns number of remaining items to be loaded
-    void reset() override; // Resets the loader to load from the beginning of the media
-    std::vector<long long unsigned> timing() override {return {0}; }
-    void stop() override  {}
-    void get_id() { return 0; }
+    size_t remaining_count() override;
+    void reset() override;
+    void start_loading() override;
+    std::vector<std::string> get_id() override;
+    decoded_image_info get_decode_image_info() override;
+    Timing timing() override;
 private:
-    std::shared_ptr<VideoFileNode> _video_node;
+    void increment_loader_idx();
+    const DeviceResources _dev_resources;
+    bool _initialized = false;
+    std::vector<std::shared_ptr<VideoLoader>> _loaders;
+    size_t _loader_idx;
+    size_t _shard_count = 1;
+    void fast_forward_through_empty_loaders();
+
+    Image *_output_image;
 };
+
 #endif

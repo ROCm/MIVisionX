@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <decoder.h>
 #include <turbo_jpeg_decoder.h>
 #include <fused_crop_decoder.h>
+#include <ffmpeg_video_decoder.h>
 #include "decoder_factory.h"
 #include "commons.h"
 
@@ -35,6 +36,9 @@ std::shared_ptr<Decoder> create_decoder(DecoderConfig config) {
             break;
         case DecoderType::FUSED_TURBO_JPEG:
             return std::make_shared<FusedCropTJDecoder>();
+            break;
+        case DecoderType::FFMPEG_VIDEO:
+            return std::make_shared<FFMPEG_VIDEO_DECODER>();
             break;
         default:
             THROW("Unsupported decoder type "+ TOSTR(config.type()));

@@ -26,7 +26,8 @@ THE SOFTWARE.
 #include "context.h"
 #include "node_image_loader.h"
 #include "node_image_loader_single_shard.h"
-#include "node_video_file_source.h"
+#include "node_video_loader.h"
+#include "node_video_loader_single_shard.h"
 #include "node_cifar10_loader.h"
 #include "image_source_evaluator.h"
 #include "node_fisheye.h"
@@ -1321,12 +1322,13 @@ raliVideoFileSource(
         const char* source_path,
         RaliImageColor rali_color_format,
         RaliDecodeDevice rali_decode_device,
+        unsigned internal_shard_count,
+        bool shuffle,
         bool is_output,
         unsigned width,
         unsigned height,
         bool loop)
 {
-
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
@@ -1349,10 +1351,24 @@ raliVideoFileSource(
                               context->master_graph->mem_type(),
                               color_format );
 
-        output = context->master_graph->create_image(info, is_output);
+        output = context->master_graph->create_loader_output_image(info);
 
-        context->master_graph->add_node<VideoFileNode>({}, {output}, context->batch_size)->init( source_path,decoder_mode, loop);
+        context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
+                                                                          source_path,
+                                                                          decoder_mode,
+                                                                          StorageType::VIDEO_FILE_SYSTEM,
+                                                                          DecoderType::FFMPEG_VIDEO,
+                                                                          shuffle,
+                                                                          loop,
+                                                                          context->user_batch_size(),
+                                                                          context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(info, is_output);
+            context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
 #else
         THROW("Video decoder is not enabled since amd media decoder is not present")
 #endif

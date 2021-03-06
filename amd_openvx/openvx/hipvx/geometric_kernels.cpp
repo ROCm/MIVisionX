@@ -181,7 +181,7 @@ int HipExec_ScaleImage_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx
 __global__ void __attribute__((visibility("default")))
 Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes, uint srcWidth, uint srcHeight,
     float xscale, float yscale, float xoffset, float yoffset) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
@@ -198,7 +198,7 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
     float fx = fmaf((float)x, scaleInfo.x, scaleInfo.z);
     float fy = fmaf((float)y, scaleInfo.y, scaleInfo.w);
 
-    if (fx >= 0.0f && fy >= 0.0f && fmaf(8.0f, scaleInfo.x, fx) < (dstWidth - 1) && fmaf(1.0f, scaleInfo.y, fy) < (dstHeight - 1)) {
+    if (fx >= 0.0f && fy >= 0.0f && fmaf(8.0f, scaleInfo.x, fx) < (srcWidth - 1) && fmaf(1.0f, scaleInfo.y, fy) < (srcHeight - 1)) {
         uint2 dst;
         float fint, frac, fy0, fy1;
         float4 f;
@@ -245,19 +245,18 @@ Hip_ScaleImage_U8_U8_Bilinear_Replicate(uint dstWidth, uint dstHeight,
         dst.y = pack_(f);
 
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
-    }
-    else {
-        float fxlimit = (float)(dstWidth - 1);
-        float fylimit = (float)(dstHeight - 1);
+    } else {
+        float fxlimit = (float)(srcWidth - 1);
+        float fylimit = (float)(srcHeight - 1);
         float fy0, fy1;
         fy0 = floorf(fy);
         fy1 = fy - fy0;
         fy0 = 1.0f - fy1;
-        uint2 ycoord = hip_clamp_pixel_coordinates_to_border(fy, dstHeight - 1, srcImageStrideInBytes);
+        uint2 ycoord = hip_clamp_pixel_coordinates_to_border(fy, srcHeight - 1, srcImageStrideInBytes);
         pSrcImage += hip_mul24(ycoord.x, srcImageStrideInBytes);
         float frac;
         uint2 xcoord;
-        uint xlimit = dstWidth - 1;
+        uint xlimit = srcWidth - 1;
 
         uint2 dst;
         float4 f;
@@ -316,7 +315,7 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(hipStream_t stream, vx_uint32 ds
 
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Replicate, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcWidth, srcHeight,
                         xscale, yscale, xoffset, yoffset);
 
     return VX_SUCCESS;
@@ -325,7 +324,7 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Replicate(hipStream_t stream, vx_uint32 ds
 __global__ void __attribute__((visibility("default")))
 Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes, uint srcWidth, uint srcHeight,
     float xscale, float yscale, float xoffset, float yoffset, uint borderValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
@@ -342,7 +341,7 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     float fx = fmaf((float)x, scaleInfo.x, scaleInfo.z);
     float fy = fmaf((float)y, scaleInfo.y, scaleInfo.w);
 
-    if (fx >= 0.0f && fy >= 0.0f && fmaf(8.0f, scaleInfo.x, fx) < (dstWidth - 1) && fmaf(1.0f, scaleInfo.y, fy) < (dstHeight - 1)) {
+    if (fx >= 0.0f && fy >= 0.0f && fmaf(8.0f, scaleInfo.x, fx) < (srcWidth - 1) && fmaf(1.0f, scaleInfo.y, fy) < (srcHeight - 1)) {
         uint2 dst;
         float fint, frac, fy0, fy1;
         float4 f;
@@ -389,8 +388,7 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
         dst.y = pack_(f);
 
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
-    }
-    else {
+    } else {
         float fy1 = fy - floorf(fy);
         float fy0 = 1.0f - fy1;
         int sy = (int) floorf(fy);
@@ -399,34 +397,35 @@ Hip_ScaleImage_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
         float4 f;
         frac = fx - floorf(fx);
 
-        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
         frac = fx - floorf(fx);
-        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
         frac = fx - floorf(fx);
-        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
         frac = fx - floorf(fx);
-        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         dst.x = pack_(f);
 
         fx += scaleInfo.x;
         frac = fx - floorf(fx);
-        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.x = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
         frac = fx - floorf(fx);
-        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.y = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
         frac = fx - floorf(fx);
-        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.z = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         fx += scaleInfo.x;
         frac = fx - floorf(fx);
-        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, dstWidth, dstHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
+        f.w = hip_bilinear_sample_with_constant_border(pSrcImage, (int)floorf(fx), sy, srcWidth, srcHeight, srcImageStrideInBytes, 1.0f - frac, frac, fy0, fy1, borderValue);
         dst.y = pack_(f);
 
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
     }
+
 }
 int HipExec_ScaleImage_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -445,8 +444,8 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dst
 
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        xscale, yscale, xoffset, yoffset, (uint) borderValue);
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcWidth, srcHeight,
+                        xscale, yscale, xoffset, yoffset, (uint) 0xaabbccdd);
 
     return VX_SUCCESS;
 }

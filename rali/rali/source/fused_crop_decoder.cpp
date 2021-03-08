@@ -84,7 +84,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     // You need get the output of random bbox crop 
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
-    unsigned int crop_width, crop_height, x1, y1, x1_diff;
+    unsigned int crop_width, crop_height, x1, y1, x1_diff, crop_width_diff;
     if(_bbox_coord.size() != 0)
     {
         x1 = _bbox_coord[0];
@@ -150,7 +150,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                       max_decoded_width * planes,
                       max_decoded_height,
                       tjpf,
-                      TJFLAG_FASTDCT, &x1_diff,
+                      TJFLAG_FASTDCT, &x1_diff, &crop_width_diff,
 		              x1, y1, crop_width, crop_height) != 0)
 
     {
@@ -158,14 +158,18 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         return Status::CONTENT_DECODE_FAILED;
     }
 
-    if(_bbox_coord.size() != 0)
-        _bbox_coord[0] = x1_diff;
-
     unsigned char *src_ptr_temp, *dst_ptr_temp;
 
     unsigned int elements_in_row = max_decoded_width * planes;
     unsigned int elements_in_crop_row = crop_width * planes;
     unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
+
+    if(_bbox_coord.size() != 0)
+    {
+        elements_in_crop_row = crop_width_diff * planes;
+        _bbox_coord[0] = x1_diff;
+        _bbox_coord[2] = crop_width_diff;
+    }
 
     src_ptr_temp = output_buffer + (y1 *  elements_in_row);
     dst_ptr_temp = output_buffer;
@@ -184,7 +188,10 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         dst_ptr_temp +=  elements_in_row;
     }
 
-    actual_decoded_width = crop_width;
+    if(_bbox_coord.size() != 0)
+        actual_decoded_width = crop_width_diff;
+    else
+        actual_decoded_width = crop_width;
     actual_decoded_height = crop_height;
 
     return Status::OK;

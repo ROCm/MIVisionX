@@ -185,7 +185,8 @@ raliJpegFileSource(
         bool loop,
         RaliImageSizeEvaluationPolicy decode_size_policy,
         unsigned max_width,
-        unsigned max_height)
+        unsigned max_height,
+        RaliDecoderType dec_type)
 {
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
@@ -193,6 +194,8 @@ raliJpegFileSource(
     {
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
+        DecoderType decType = DecoderType::TURBO_JPEG; // default
+        if (dec_type == RALI_DECODER_OPENCV) decType = DecoderType::OPENCV_DEC;
 
         if(internal_shard_count < 1 )
             THROW("Shard count should be bigger than 0")
@@ -224,7 +227,7 @@ raliJpegFileSource(
                                                                           source_path, "",
                                                                           std::map<std::string, std::string>(),
                                                                           StorageType::FILE_SYSTEM,
-                                                                          DecoderType::TURBO_JPEG,
+                                                                          decType,
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),

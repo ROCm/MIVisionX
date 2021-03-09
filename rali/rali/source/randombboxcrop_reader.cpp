@@ -159,7 +159,7 @@ void RandomBBoxCropReader::read_all()
     int sample_option;
     std::pair<bool, float> option;
     float min_iou; // max_iou;
-    bool invalid_bboxes = true;
+    bool invalid_bboxes = false;
     _entire_iou = true;
     bool _overlap_iou = false;
     BoundingBoxCord crop_box, jth_box;
@@ -197,7 +197,7 @@ void RandomBBoxCropReader::read_all()
         crop_box.y = _y1_val[i];
         if(_total_num_of_attempts == 0)
             _total_num_of_attempts = 10;
-        bool TrueFalse = (rand() % 100) < 50; //50 is the probability
+        bool TrueFalse = (rand() % 100) < 25; //50 is the probability
         // Got BBOX Information of the image, try to get a crop
         //Crop the Image if TrueFalse is 1, else , Keep Image as it is
         if (TrueFalse)
@@ -253,9 +253,9 @@ void RandomBBoxCropReader::read_all()
                         jth_box.w = coords_buf[m + 2];
                         jth_box.h = coords_buf[m + 3];
                         float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
-                        if (bb_iou > min_iou)
+                        if (bb_iou < min_iou)
                         {
-                            invalid_bboxes = false;
+                            invalid_bboxes = true;
                             break;
                         }
                     }
@@ -266,7 +266,7 @@ void RandomBBoxCropReader::read_all()
                 }
                 else // at lease one box shoud overlap
                 {
-
+                    invalid_bboxes = true;
                     for (uint j = 0; j < bb_count; j++)
                     {
                         int m = j * 4;

@@ -1100,12 +1100,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 				data->children[child]->u.img.x_scale_factor_is_2 = (data->children[child]->u.img.width  != data->u.img.width ) ? 1 : 0;
 				data->children[child]->u.img.y_scale_factor_is_2 = (data->children[child]->u.img.height != data->u.img.height) ? 1 : 0;
 				data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes;
+				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
 			}
 		}
 		else if (data->u.img.planes == 1) {
 			data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width , data));
-			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes;
+			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
 		}
 		// sanity check and update
 		if (agoDataSanityCheckAndUpdate(data)) {
@@ -1168,12 +1168,12 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 					data->children[child]->u.img.maxValue = (vx_int32)data->children[child]->u.img.uniform[0];
 				}
 				data->children[child]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[child]->u.img.width, data->children[child]));
-				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes;
+				data->children[child]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[child]->u.img.stride_in_bytes*3;
 			}
 		}
 		else if (data->u.img.planes == 1) {
 			data->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->u.img.width, data));
-			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes;
+			data->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->u.img.stride_in_bytes*3;
 		}
 		// set min/max values as uniform value
 		if (data->u.img.format == VX_DF_IMAGE_U8 ||
@@ -1317,7 +1317,7 @@ int agoGetDataFromDescription(AgoContext * acontext, AgoGraph * agraph, AgoData 
 			data->children[level]->siblingIndex = (vx_int32)level;
 			data->children[level]->parent = data;
 			data->children[level]->u.img.stride_in_bytes = ALIGN16(ImageWidthInBytesCeil(data->children[level]->u.img.width, data->children[level]));
-			data->children[level]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes;
+			data->children[level]->opencl_buffer_offset = OPENCL_IMAGE_FIXED_OFFSET + data->children[level]->u.img.stride_in_bytes*3;
 			if (data->u.pyr.scale == VX_SCALE_PYRAMID_ORB) {
 				float orb_scale_factor[4] = {
 					VX_SCALE_PYRAMID_ORB,
@@ -2537,7 +2537,7 @@ int agoAllocData(AgoData * data)
 		}
 	}
 	else if (data->ref.type == VX_TYPE_IMAGE) {
-		data->u.img.mem_handle = vx_false_e;
+		//data->u.img.mem_handle = vx_false_e;
 		if (data->children) {
 			for (vx_uint32 child = 0; child < data->numChildren; child++) {
 				if (data->children[child]) {
@@ -2552,8 +2552,12 @@ int agoAllocData(AgoData * data)
 		else if (data->u.img.isROI) {
             // make sure that the master image has been allocated. Shouldn't allocate new memory for image created from handle
 			if (!data->u.img.roiMasterImage->buffer) {
-					data->u.img.mem_handle = vx_true_e;
-					return -1;
+                if(!data->u.img.mem_handle){
+                    data->u.img.mem_handle = vx_true_e;
+                    if (agoAllocData(data->u.img.roiMasterImage) < 0) {
+                        return -1;
+                    }
+                }
 			}
 			// get the region from master image
 			data->buffer = data->u.img.roiMasterImage->buffer +

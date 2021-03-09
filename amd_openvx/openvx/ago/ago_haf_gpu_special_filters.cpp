@@ -842,7 +842,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 			OPENCL_FORMAT(
 			"uint CannyMagPhase(float gx, float gy) {\n"
 			"  float dx = fabs(gx), dy = fabs(gy);\n"
-			"  float dr = amd_min3((dx + dy)%s, 16383.0f, 16383.0f);\n" // magnitude /= 2 for gradient_size = 7
+			"  float dr = amd_min3((dx + dy)%s, 16383.0f, 16383.0f);\n" // magnitude /= 4 for gradient_size = 7
 			"  float d1 = dx * 0.4142135623730950488016887242097f;\n"
 			"  float d2 = dx * 2.4142135623730950488016887242097f;\n"
 			"  uint mp = select(1u, 3u, (gx * gy) < 0.0f);\n"
@@ -851,7 +851,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 			"  mp += (((uint)dr) << 2);\n"
 			"  return mp;\n"
 			"}\n")
-			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM ? "*0.5f" : "");
+			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L1NORM ? "*0.25f" : "");
 		node->opencl_code += item;
 	}
 	else
@@ -860,7 +860,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 			OPENCL_FORMAT(
 			"uint CannyMagPhase(float gx, float gy) {\n"
 			"  float dx = fabs(gx), dy = fabs(gy);\n"
-			"  float dr = amd_min3(native_sqrt(mad(gy, gy, gx * gx)%s), 16383.0f, 16383.0f);\n" // magnitude /= 2 for gradient_size = 7
+			"  float dr = amd_min3(native_sqrt(mad(gy, gy, gx * gx)%s), 16383.0f, 16383.0f);\n" // magnitude /= (4^2) for gradient_size = 7
 			"  float d1 = dx * 0.4142135623730950488016887242097f;\n"
 			"  float d2 = dx * 2.4142135623730950488016887242097f;\n"
 			"  uint mp = select(1u, 3u, (gx * gy) < 0.0f);\n"
@@ -869,7 +869,7 @@ int HafGpu_CannySobelFilters(AgoNode * node)
 			"  mp += (((uint)dr) << 2);\n"
 			"  return mp;\n"
 			"}\n")
-			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM ? "*0.5f" : "");
+			, node->akernel->id == VX_KERNEL_AMD_CANNY_SOBEL_U16_U8_7x7_L2NORM ? "*0.0625f" : ""); 
 		node->opencl_code += item;
 	}
 	int width = node->paramList[0]->u.img.width;
@@ -921,7 +921,7 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 	char item[8192];
 	const char * xyarg = "";
 	int ioffset = 1;
-	if (node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3) {
+	if (node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3 || node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7) {
 		xyarg = "__global char * p1_buf, uint p1_offset, uint p1_count, ";
 		ioffset = 2;
 	}
@@ -993,9 +993,9 @@ int HafGpu_CannySuppThreshold(AgoNode * node)
 		"  p0 += P.s3 << 24;\n"
 		"  if (valid)  *(__global uint *)p0_buf = p0;\n"
 		)
-		, LMemStride, LMemStride, LMemStride * 2, (width + 3) / 4, height, (gradient_size == 7) ? "  p3.s0 = p3.s0 >> 1; p3.s1 = p3.s1 >> 1;\n" : "");
+		, LMemStride, LMemStride, LMemStride * 2, (width + 3) / 4, height, (gradient_size == 7) ? "  p3.s0 = p3.s0 >> 2; p3.s1 = p3.s1 >> 2;\n" : "");
 	node->opencl_code += item;
-	if (node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3) {
+	if (node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_3x3 || node->akernel->id == VX_KERNEL_AMD_CANNY_SUPP_THRESHOLD_U8XY_U16_7x7) {
 		node->opencl_code +=
 			OPENCL_FORMAT(
 			"  if (valid) {\n"

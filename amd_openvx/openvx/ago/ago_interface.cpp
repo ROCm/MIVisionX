@@ -1893,6 +1893,7 @@ static int agoWaitForNodesCompletion(AgoGraph * graph)
 					if (anode->callback) {
 						vx_action action = anode->callback(anode);
 						if (action == VX_ACTION_ABANDON) {
+                            graph->state = VX_GRAPH_STATE_ABANDONED;
 							status = VX_ERROR_GRAPH_ABANDONED;
 							break;
 						}
@@ -1909,6 +1910,7 @@ static int agoWaitForNodesCompletion(AgoGraph * graph)
 				if (node->callback) {
 					vx_action action = node->callback(node);
 					if (action == VX_ACTION_ABANDON) {
+                        graph->state = VX_GRAPH_STATE_ABANDONED;
 						status = VX_ERROR_GRAPH_ABANDONED;
 						break;
 					}

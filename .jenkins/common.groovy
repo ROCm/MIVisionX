@@ -59,6 +59,7 @@ def runTestCommand (platform, project) {
                 """
 
     platform.runCommand(this, command)
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/*.md""")
 }
 
 def runPackageCommand(platform, project) {
@@ -91,6 +92,7 @@ def runPackageCommand(platform, project) {
 
     platform.runCommand(this, command)
     platform.archiveArtifacts(this, packageHelper[1])
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.md""")
 }
 
 return this

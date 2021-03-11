@@ -182,6 +182,11 @@ Remap_U8_U8_Bilinear_Constant
 "
 
 GDF_VISION_LIST="
+Canny_3x3_L1NORM
+Canny_3x3_L2NORM
+FastCorners_XY_U8_Supression
+FastCorners_XY_U8_NoSupression
+Harris_3x3
 "
 
 AFFINITY_LIST="GPU" # Or it can be AFFINITY_LIST="CPU GPU"
@@ -330,19 +335,19 @@ case_tester() {
             runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/geometric/$GDF.gdf
         done
 
-        # printf "\n\n---------------------------------------------"
-        # printf "\nRunning VISION GDF cases on runvx for $AFFINITY..."
-        # printf "\n---------------------------------------------\n"
-        # for GDF in $GDF_VISION_LIST;
-        # do
-        #     printf "\nRunning $GDF...\n"
-        #     unset AMD_OCL_BUILD_OPTIONS_APPEND
-        #     if [ "$KERNEL_DUMP" -eq 1 ]; then
-        #         export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
-        #     fi
-        #     generator "vision"
-        #     runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/vision/$GDF.gdf
-        # done
+        printf "\n\n---------------------------------------------"
+        printf "\nRunning VISION GDF cases on runvx for $AFFINITY..."
+        printf "\n---------------------------------------------\n"
+        for GDF in $GDF_VISION_LIST;
+        do
+            printf "\nRunning $GDF...\n"
+            unset AMD_OCL_BUILD_OPTIONS_APPEND
+            if [ "$KERNEL_DUMP" -eq 1 ]; then
+                export AMD_OCL_BUILD_OPTIONS_APPEND=-save-temps-all=./agoKernel_$GDF
+            fi
+            generator "vision"
+            runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/vision/$GDF.gdf
+        done
     done
 }
 
@@ -759,6 +764,13 @@ if [ "$DUMP" -eq 1 ]; then
     geometric/agoKernel_Remap_U8_U8_Nearest_Constant_output_1.bin
     geometric/agoKernel_Remap_U8_U8_Bilinear_output_1.bin
     geometric/agoKernel_Remap_U8_U8_Bilinear_Constant_output_1.bin
+    vision/agoKernel_Canny_3x3_L1NORM_output_1.bin
+    vision/agoKernel_Canny_3x3_L2NORM_output_1.bin
+    vision/agoKernel_FastCorners_XY_U8_Supression_output_1.bin
+    vision/agoKernel_FastCorners_XY_U8_Supression_output_2.bin
+    vision/agoKernel_FastCorners_XY_U8_NoSupression_output_1.bin
+    vision/agoKernel_FastCorners_XY_U8_NoSupression_output_2.bin
+    vision/agoKernel_Harris_3x3_output_1.bin
     "
 
     if [ -n "$KERNEL_NAME" ]; then

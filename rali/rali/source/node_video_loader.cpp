@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include "node_video_loader.h"
 #include "video_loader.h"
 #ifdef RALI_VIDEO
-#include "video_loader_module.h"
+//#include "video_loader_module.h"
 
 VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources):
         Node({}, {output})

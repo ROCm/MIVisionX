@@ -73,6 +73,7 @@ public:
 
 private:
     std::vector<std::shared_ptr<Decoder>> _decoder;
+    std::vector<std::shared_ptr<Decoder>> _decoder_cv;
     std::shared_ptr<Reader> _reader;
     std::vector<std::vector<unsigned char>> _compressed_buff;
     std::vector<size_t> _actual_read_size;
@@ -86,7 +87,7 @@ private:
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
-    DecoderConfig _decoder_config;
+    DecoderConfig _decoder_config, _decoder_config_cv;
     bool decoder_keep_original;
 };
 

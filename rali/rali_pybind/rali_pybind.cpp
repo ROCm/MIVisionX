@@ -254,7 +254,8 @@ namespace rali{
             py::arg("loop") = false,	
             py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,	
             py::arg("max_width") = 0,	
-            py::arg("max_height") = 0);	
+            py::arg("max_height") = 0,
+            py::arg("dec_type") = 0);	
         m.def("ImageDecoderShard",&raliJpegFileSourceSingleShard,"Reads file from the source given and decodes it according to the shard id and number of shards",
             py::return_value_policy::reference,
             py::arg("context"),

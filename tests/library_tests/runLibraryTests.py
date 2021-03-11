@@ -21,6 +21,7 @@
 from datetime import datetime
 from subprocess import Popen, PIPE
 import os
+import platform
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Library Tests Report"
@@ -42,9 +43,8 @@ def write_formatted(output, f):
     f.write("%s\n\n" % output)
     f.write("````\n")
 
-
 # get data
-platform_name = shell('hostname')
+platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 

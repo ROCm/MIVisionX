@@ -4,6 +4,7 @@
 
 #include "hip/hip_runtime.h"
 
+#define MASK_EARLY_EXIT 4369
 #define PIXELSATURATEU8(pixel)  (pixel < 0) ? 0 : ((pixel < UINT8_MAX) ? pixel : UINT8_MAX)
 #define PIXELSATURATES16(pixel) (pixel < INT16_MIN) ? INT16_MIN : ((pixel < INT16_MAX) ? pixel : INT16_MAX)
 #define PIXELROUNDF32(value)    ((value - (int)(value)) >= 0.5 ? (value + 1) : (value))
@@ -39,6 +40,16 @@ typedef struct d_affine_matrix_t {
 typedef struct d_perspective_matrix_t {
     float matrix[3][3];
 } d_perspective_matrix_t;
+
+typedef struct d_KeyPt {
+    int x;
+    int y;
+    float strength;
+    float scale;
+    float orientation;
+    int tracking_status;
+    float error;
+} d_KeyPt;
 
 // common device kernels
 
@@ -266,6 +277,45 @@ __device__ __forceinline__ float hip_bilinear_sample_FXY_constant(const uchar *p
     }
 }
 
+__device__ __forceinline__ uint hip_canny_mag_phase_L1(float gx, float gy) {
+    float dx = fabs(gx);
+    float dy = fabs(gy);
+    float dr = min3_((dx + dy), 16383.0f, 16383.0f);
+    float d1 = dx * 0.4142135623730950488016887242097f;
+    float d2 = dx * 2.4142135623730950488016887242097f;
+    uint mp = HIPSELECT(1u, 3u, (gx * gy) < 0.0f);
+    mp = HIPSELECT(mp, 0u, dy <= d1);
+    mp = HIPSELECT(mp, 2u, dy >= d2);
+    mp += (((uint)dr) << 2);
+    return mp;
+}
+
+__device__ __forceinline__ uint hip_canny_mag_phase_L2(float gx, float gy) {
+    float dx = fabs(gx);
+    float dy = fabs(gy);
+    float dr = min3_(__fsqrt_rn(fmaf(gy, gy, gx * gx)), 16383.0f, 16383.0f);
+    float d1 = dx * 0.4142135623730950488016887242097f;
+    float d2 = dx * 2.4142135623730950488016887242097f;
+    uint mp = HIPSELECT(1u, 3u, (gx * gy) < 0.0f);
+    mp = HIPSELECT(mp, 0u, dy <= d1);
+    mp = HIPSELECT(mp, 2u, dy >= d2);
+    mp += (((uint)dr) << 2);
+    return mp;
+}
+
+__device__ __forceinline__ uint hip_bfe(uint src0, uint src1, uint src2) {
+    uint dst;
+    uint offset = src1 & 31;
+    uint width  = src2 & 31;
+    if (width == 0)
+        dst = 0;
+    else if((offset + width) < 32)
+        dst = (src0 << (32 - offset - width)) >> (32 - width);
+    else
+        dst = src0 >> offset;
+    return dst;
+}
+
 // common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere
 __device__ __forceinline__ float4 uchars_to_float4(uint src) {
     return make_float4((float)(src&0xFF), (float)((src&0xFF00)>>8), (float)((src&0xFF0000)>>16), (float)((src&0xFF000000)>>24));
@@ -346,5 +396,72 @@ __device__ __forceinline__ void prefixSum(unsigned int* output, unsigned int* in
     if(tdx2p < w) output[tdx2p - 1] = temp[tdx2p];
     if(tdx2p < w) output[w - 1] = last;
 }
+
+__device__ int FastAtan2_Canny(short int Gx, short int Gy) {
+	unsigned int ret;
+	unsigned short int ax, ay;
+	ax = std::abs(Gx), ay = std::abs(Gy);	// todo:: check if math.h function is faster
+	float d1 = (float)ax*0.4142135623730950488016887242097f;
+	float d2 = (float)ax*2.4142135623730950488016887242097f;
+	ret = (Gx*Gy) < 0 ? 3 : 1;
+	if (ay <= d1)
+		ret = 0;
+	if (ay >= d2)
+		ret = 2;
+	return ret;
+}
+
+__device__ __forceinline__ int isCorner(int mask) {
+	int cornerMask = 0x1FF;									// Nine 1's in the LSB
+	if (mask) {
+		mask = mask | (mask << 16);
+		for (int i = 0; i < 16; i++) {
+			if ((mask & cornerMask) == cornerMask)
+				return 1;
+			mask >>= 1;
+		}
+	}
+	return 0;
+}
+
+__device__ __forceinline__ int isCornerPlus(short candidate, short * boundary, short t) {
+	// Early exit conditions
+	if ((abs(candidate - boundary[0]) < t) && (abs(candidate - boundary[8]) < t))					// Pixels 1 and 9 within t of the candidate
+		return false;
+	if ((abs(candidate - boundary[4]) < t) && (abs(candidate - boundary[12]) < t))					// Pixels 5 and 13 within t of the candidate
+		return false;
+	candidate += t;
+	int mask = 0;
+	int iterMask = 1;
+	for (int i = 0; i < 16; i++) {
+		if (boundary[i] > candidate)
+			mask |= iterMask;
+		iterMask <<= 1;
+	}
+	return isCorner(mask);
+}
+
+__device__ __forceinline__ int isCornerMinus(short candidate, short * boundary, short t) {
+	// Early exit conditions
+	if ((abs(candidate - boundary[0]) < t) && (abs(candidate - boundary[8]) < t))					// Pixels 1 and 9 within t of the candidate
+		return false;
+	if ((abs(candidate - boundary[4]) < t) && (abs(candidate - boundary[12]) < t))					// Pixels 5 and 13 within t of the candidate
+		return false;
+	candidate -= t;
+	int mask = 0;
+	int iterMask = 1;
+	for (int i = 0; i < 16; i++) {
+		if (boundary[i] < candidate)
+			mask |= iterMask;
+		iterMask <<= 1;
+	}
+	return isCorner(mask);
+}
+
+typedef struct {
+	float GxGx;
+	float GxGy;
+	float GyGy;
+} ago_harris_Gxy_t;
 
 #endif //MIVISIONX_HIP_COMMON_H

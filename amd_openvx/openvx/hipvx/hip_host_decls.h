@@ -855,25 +855,16 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
         vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
         vx_float32 sensitivity, vx_float32 strength_threshold,
         vx_float32 normalization_factor);
-int HipExec_FastCorners_XY_U8_NoSupression(
-        hipStream_t stream,
-        vx_uint32  capacityOfDstCorner,
-        vx_keypoint_t   pHipDstCorner[],
-        vx_uint32  *pHipDstCornerCount,
-        vx_uint32  srcWidth, vx_uint32 srcHeight,
-        vx_uint8   *pHipSrcImage,
-        vx_uint32   srcImageStrideInBytes,
-        vx_float32  strength_threshold);
 int HipExec_FastCorners_XY_U8_Supression(
-        hipStream_t stream,
-        vx_uint32  capacityOfDstCorner,
-        vx_keypoint_t   pHipDstCorner[],
-        vx_uint32  *pHipDstCornerCount,
-        vx_uint32  srcWidth, vx_uint32 srcHeight,
-        vx_uint8   *pHipSrcImage,
-        vx_uint32   srcImageStrideInBytes,
-        vx_float32  strength_threshold,
-        vx_uint8   *pHipScratch);
+        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+        vx_float32 strength_threshold, vx_uint8 *pHipScratch);
+int HipExec_FastCorners_XY_U8_NoSupression(
+        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+        vx_float32 strength_threshold);
 int HipExec_CannySobel_U16_U8_3x3_L1NORM(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -946,9 +937,5 @@ int HipExec_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
         vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannyEdgeTrace_U8_U8XY(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 xyStackTop);
 
 #endif //MIVISIONX_HIP_HOST_DECLS_H

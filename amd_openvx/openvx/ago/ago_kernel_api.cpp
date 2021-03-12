@@ -21082,27 +21082,12 @@ int agoKernel_CannyEdgeTrace_U8_U8XY(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_HIP
-        | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_valid_rect_callback) {
         status = VX_SUCCESS;
     }
-#if ENABLE_HIP
-    else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * iStack = node->paramList[1];
-        if (HipExec_CannyEdgeTrace_U8_U8XY(
-            node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
-            iStack->u.cannystack.count, (ago_coord2d_ushort_t *)(iStack->hip_memory + iStack->opencl_buffer_offset), iStack->u.cannystack.stackTop)) {
-            status = VX_FAILURE;
-        }
-    }
-#endif
     return status;
 }
 

@@ -41,6 +41,8 @@ void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     _dst_height = _node->get_dst_height();
     for(int i = 0; i < _batch_size; i++)
     {
+        // std::cerr<<"\n _dst_to_src_width_ratio:: "<<_dst_width<<" "<<_src_width_val[i];
+        // std::cerr<<"\n _dst_to_src_height_ratio:: "<<_dst_height<<" "<<_src_height_val[i];
         _dst_to_src_width_ratio = _dst_width / float(_src_width_val[i]);
         _dst_to_src_height_ratio = _dst_height / float(_src_height_val[i]);
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();

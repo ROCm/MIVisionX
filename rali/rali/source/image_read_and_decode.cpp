@@ -183,6 +183,8 @@ ImageReadAndDecode::load(unsigned char* buff,
             _image_names[file_counter] = _reader->id();
             if(_randombboxcrop_meta_data_reader)
             {
+                // std::cerr<<"\n *******************Image Read and decode*****************";
+                // std::cerr<<"\n Image name:: "<<_image_names[file_counter];
                 _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
                 std::vector<float> coords_buf(4);
                 coords_buf[0] = _CropCord->crop_x;
@@ -190,6 +192,7 @@ ImageReadAndDecode::load(unsigned char* buff,
                 coords_buf[2] = _CropCord->crop_width;
                 coords_buf[3] = _CropCord->crop_height;
                 _bbox_coords.push_back(coords_buf);
+                // std::cerr<<"\n before partial call ::"<<coords_buf[0]<<" "<<coords_buf[1]<<" "<<coords_buf[2]<<" "<<coords_buf[3];
                 coords_buf.clear();
             }
             _reader->close();
@@ -206,7 +209,8 @@ ImageReadAndDecode::load(unsigned char* buff,
             _decompressed_buff_ptrs[i] = buff + image_size * i;
 
 #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
-        for (size_t i = 0; i < _batch_size; i++) {
+        for (size_t i = 0; i < _batch_size; i++)
+        {
             // initialize the actual decoded height and width with the maximum
             _actual_decoded_width[i] = max_decoded_width;
             _actual_decoded_height[i] = max_decoded_height;
@@ -248,7 +252,10 @@ ImageReadAndDecode::load(unsigned char* buff,
             {
                 _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);
                 _CropCord->crop_x = _decoder[i]->get_bbox_coords()[0];
-		_CropCord->crop_width = _decoder[i]->get_bbox_coords()[2];
+		        _CropCord->crop_width = _decoder[i]->get_bbox_coords()[2];
+                // std::cerr<<"\n  after decoding _CropCord ::"<<_decoder[i]->get_bbox_coords()[0]<<" "<<_decoder[i]->get_bbox_coords()[1];
+                // std::cerr<<" "<<_decoder[i]->get_bbox_coords()[2]<<" "<<_decoder[i]->get_bbox_coords()[3];
+                // std::cerr<<"\n ******************************************************************";
             }
             roi_width[i] = _actual_decoded_width[i];
             roi_height[i] = _actual_decoded_height[i];

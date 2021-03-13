@@ -108,6 +108,7 @@ void RandomBBoxCropReader::lookup(const std::vector<std::string> &image_names)
     for (unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
+        // std::cerr<<"\n Master Graph lookup:: "<<image_name;
         auto it = _map_content.find(image_name);
         if (_map_content.end() == it)
             THROW("ERROR: Given name not present in the map" + image_name)
@@ -178,6 +179,7 @@ void RandomBBoxCropReader::read_all()
     for (auto &elem : _meta_bbox_map_content)
     {
         std::string image_name = elem.first;
+        // std::cerr<<"\n *****************************image_name:: "<<image_name<<"***************************************";
         BoundingBoxCords bb_coords = elem.second->get_bb_cords();
         ImgSizes img_sizes = elem.second->get_img_sizes();
         in_width[i] = img_sizes[i].w;
@@ -292,17 +294,20 @@ void RandomBBoxCropReader::read_all()
 
                     // Mask Condition
                     int valid_bbox_count = 0;
-                    auto left = crop_box.x;
+                    auto left = int(crop_box.x);
                     auto top = crop_box.y;
-                    auto right = crop_box.x + crop_box.w;
+                    auto right = int(crop_box.x) + int(crop_box.w);
                     auto bottom = crop_box.y + crop_box.h;
+                    valid_bbox_count = 0;
                     for (uint j = 0; j < bb_count; j++)
                     {
                         int m = j * 4;
                         auto x_c = 0.5f * (2 * coords_buf[m] + coords_buf[m + 2]);
                         auto y_c = 0.5f * (2 * coords_buf[m + 1] + coords_buf[m + 3]);
                         if ((x_c > left) && (x_c < right) && (y_c > top) && (y_c < bottom))
+                        {
                             valid_bbox_count++;
+                        }
                     }
                     if (valid_bbox_count == 0)
                         break;
@@ -318,7 +323,6 @@ void RandomBBoxCropReader::read_all()
         } // while loop
 
         add(image_name, crop_box);
-        // std::cerr<<"\n Image Name:: "<<image_name<<" crop_box:: "<<crop_box.x<<" "<<crop_box.y<<" "<<crop_box.w<<" "<<crop_box.h;
     }
 }
 

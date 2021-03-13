@@ -170,6 +170,11 @@ void RandomBBoxCropReader::read_all()
     uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
     int i = 0;
+    Parameter<float> *width_factor_param, *height_factor_param;
+    // srand here
+    width_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0.3, 1.0)->core;
+    height_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0.3, 1.0)->core;
+
     for (auto &elem : _meta_bbox_map_content)
     {
         std::string image_name = elem.first;
@@ -186,7 +191,7 @@ void RandomBBoxCropReader::read_all()
             coords_buf[m + 2] = bb_coords[j].w;
             coords_buf[m + 3] = bb_coords[j].h;
         }
-       
+
         crop_success = false;
 
         int count = 0;
@@ -195,7 +200,6 @@ void RandomBBoxCropReader::read_all()
         {
             sample_option = dis(gen);
             min_iou = sample_options[sample_option];
-            Parameter<float> *width_factor_param, *height_factor_param;
             Parameter<float> *x_factor_param, *y_factor_param; // write in different lines
             invalid_bboxes = false;
 
@@ -225,15 +229,17 @@ void RandomBBoxCropReader::read_all()
                 {
 
                     // width_factor = raliCreateFloatUniformRand(0.3, 1.0);
-                    width_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0.3, 1.0)->core;
+                    // std::cerr<<"\n Setting width factor btw 0.3 and 1.0";
                     width_factor_param->renew();
                     float width_factor = width_factor_param->get();
+                    // std::cerr << "\n Width_factor:: " << width_factor << " addrd:: " << width_factor_param;
 
                     // height_factor = raliCreateFloatUniformRand(0.3, 1.0);
-                    height_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0.3, 1.0)->core;
+                    // std::cerr<<"\n Setting height factor btw 0.3 and 1.0";
                     height_factor_param->renew();
-                    height_factor_param->renew();
+                    // height_factor_param->renew();
                     float height_factor = height_factor_param->get();
+                    // std::cerr << "\n height_factor:: " << height_factor << " addr:: " << height_factor_param;
 
                     if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
                     {
@@ -241,13 +247,12 @@ void RandomBBoxCropReader::read_all()
                     }
 
                     // x_factor = raliCreateFloatUniformRand(0, 1 - width_factor);
-                    x_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1-width_factor)->core;
+                    x_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - width_factor)->core;
                     x_factor_param->renew();
                     float x_factor = x_factor_param->get();
 
                     // y_factor = raliCreateFloatUniformRand(0, 1 - height_factor);
-                    y_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1-height_factor)->core;
-                    y_factor_param->renew();
+                    y_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - height_factor)->core;
                     y_factor_param->renew();
                     float y_factor = y_factor_param->get();
 
@@ -313,6 +318,7 @@ void RandomBBoxCropReader::read_all()
         } // while loop
 
         add(image_name, crop_box);
+        // std::cerr<<"\n Image Name:: "<<image_name<<" crop_box:: "<<crop_box.x<<" "<<crop_box.y<<" "<<crop_box.w<<" "<<crop_box.h;
     }
 }
 

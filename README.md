@@ -284,6 +284,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 MIVisionX provides developers with docker images for **Ubuntu** `18.04` / `20.04` and **CentOS** `7` / `8`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
+Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
+
 ### MIVisionX Docker
 
 * [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04)

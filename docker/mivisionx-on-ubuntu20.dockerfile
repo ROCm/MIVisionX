@@ -1,6 +1,6 @@
 FROM ubuntu:20.04
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get dist-upgrade -y
+RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install gcc g++ cmake pkg-config git
 RUN DEBIAN_FRONTEND=noninteractive apt-get -y install libnuma-dev wget sudo gnupg2 kmod &&  \
         wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add - && \

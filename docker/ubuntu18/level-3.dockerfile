@@ -1,12 +1,15 @@
 FROM ubuntu:18.04
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get dist-upgrade -y
-RUN apt-get -y install gcc g++ cmake pkg-config git
+RUN apt-get update -y
+# install mivisionx base dependencies - Level 1
+RUN apt-get -y install gcc g++ cmake git
+# install ROCm for mivisionx OpenCL dependency - Level 2
 RUN apt-get -y install libnuma-dev wget sudo gnupg2 kmod &&  \
         wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add - && \
         echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
         sudo apt-get update -y && \
         sudo apt-get -y install rocm-dev
+# install OpenCV & FFMPEG - Level 3
 RUN apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
         mkdir OpenCV && cd OpenCV && wget https://github.com/opencv/opencv/archive/3.4.0.zip && unzip 3.4.0.zip && \

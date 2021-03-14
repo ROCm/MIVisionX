@@ -1,12 +1,15 @@
 FROM ubuntu:18.04
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get dist-upgrade -y
-RUN apt-get -y install gcc g++ cmake pkg-config git
+RUN apt-get update -y
+# install mivisionx base dependencies - Level 1
+RUN apt-get -y install gcc g++ cmake git
+# install ROCm for mivisionx OpenCL dependency - Level 2
 RUN apt-get -y install libnuma-dev wget sudo gnupg2 kmod &&  \
         wget -q -O - https://repo.radeon.com/rocm/rocm.gpg.key | sudo apt-key add - && \
         echo 'deb [arch=amd64] https://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list && \
         sudo apt-get update -y && \
         sudo apt-get -y install rocm-dev
+# install OpenCV & FFMPEG - Level 3
 RUN apt-get -y install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy \
         libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip && \
         mkdir OpenCV && cd OpenCV && wget https://github.com/opencv/opencv/archive/3.4.0.zip && unzip 3.4.0.zip && \
@@ -18,6 +21,7 @@ RUN apt-get -y install autoconf automake build-essential cmake git-core libass-d
         export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/" && \
         ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree && \
         make -j8 && sudo make install && cd
+# install MIVisionX neural net dependency - Level 4
 RUN apt-get -y install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev python3-dev autoconf automake libtool curl make g++ unzip && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && sudo cp half-files/include/half.hpp /usr/local/include/ && \

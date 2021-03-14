@@ -429,7 +429,6 @@ extern "C"  RaliImage  RALI_API_CALL raliRawTFRecordSourceSingleShard(RaliContex
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         const char* source_path,
                                                         RaliImageColor color_format,
-                                                        RaliDecodeDevice rali_decode_device,
                                                         unsigned shard_count,
                                                         bool shuffle = false,
                                                         bool is_output = false,

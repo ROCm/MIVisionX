@@ -33,8 +33,10 @@ THE SOFTWARE.
 #include "node_image_loader_single_shard.h"
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"
+#ifdef RALI_VIDEO
 #include "node_video_loader.h"
 #include "node_video_loader_single_shard.h"
+#endif
 #include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"

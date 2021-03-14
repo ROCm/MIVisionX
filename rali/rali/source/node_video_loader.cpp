@@ -26,7 +26,7 @@ THE SOFTWARE.
 #include <vx_ext_amd.h>
 #include <vx_ext_rpp.h>
 #include "node_video_loader.h"
-#include "video_loader.h"
+//#include "video_loader.h"
 #ifdef RALI_VIDEO
 //#include "video_loader_module.h"
 
@@ -74,10 +74,10 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
         THROW("Failed to add video copy decoder node")
 }*/
 
-void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, DecodeMode decoder_mode, StorageType storage_type,
-                           DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
+void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
+DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
 {
-    _decode_mode = decoder_mode;
+    //_decode_mode = decoder_mode;
     _source_path = source_path;
     _loop = loop;
     if(!_loader_module)
@@ -85,8 +85,8 @@ void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &sou
     if(internal_shard_count < 1)
         THROW("Shard count should be greater than or equal to one")
     _loader_module->set_output_image(_outputs[0]);
-    // Set reader and decoder config accordingly for the ImageLoaderNode
-    auto reader_cfg = ReaderConfig(storage_type, source_path, shuffle, loop);
+    // Set reader and decoder config accordingly for the VideoLoaderNode
+    auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, feature_key_map, shuffle, loop);
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
     _loader_module->initialize(reader_cfg, DecoderConfig(decoder_type),
@@ -95,18 +95,18 @@ void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &sou
     _loader_module->start_loading();
 }
 
-VideoLoaderNode::VideoLoaderNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs, const size_t batch_size):
-        Node(inputs, outputs, batch_size)
+/*VideoLoaderNode::VideoLoaderNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):
+        Node(inputs, outputs)
 {
     _batch_size = outputs[0]->info().batch_size();
     if(_batch_size > MAXIMUM_VIDEO_CONCURRENT_DECODE)
         THROW("Video batch size " + TOSTR(_batch_size)+" is bigger than " + TOSTR(MAXIMUM_VIDEO_CONCURRENT_DECODE))
-}
+}*/
 
 std::shared_ptr<LoaderModule> VideoLoaderNode::get_loader_module()
 {
     if(!_loader_module)
-        WRN("ImageLoaderNode's loader module is null, not initialized")
+        WRN("VideoLoaderNode's loader module is null, not initialized")
     return _loader_module;
 }
 

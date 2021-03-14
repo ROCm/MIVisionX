@@ -122,7 +122,7 @@ VideoLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, Rali
     _batch_size = batch_size;
     _loop = reader_cfg.loop();
     _decoder_keep_original = decoder_keep_original;
-    _image_loader = std::make_shared<ImageReadAndDecode>();
+    _image_loader = std::make_shared<VideoReadAndDecode>();
     try
     {
         _image_loader->create(reader_cfg, decoder_cfg, _batch_size);
@@ -307,12 +307,12 @@ decoded_image_info VideoLoader::get_decode_image_info()
 }
 
 
-size_t VideoLoader::count()
+/*size_t VideoLoader::count()
 {
     // TODO: use FFMPEG to find the total number of frames and keep counting 
     // how many times laod_next() is called successfully, subtract them and 
     // that would be the count of frames remained to be decoded
     return 9999999;
-}
+}*/
 
 #endif

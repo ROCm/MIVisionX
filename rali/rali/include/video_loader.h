@@ -42,7 +42,6 @@ public:
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
     void set_output_image (Image* output_image) override;
-    size_t count() override; // returns number of remaining items to be loaded
     size_t remaining_count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
     Timing timing() override;
@@ -55,7 +54,7 @@ private:
     bool is_out_of_data();
     void de_init();
     void stop_internal_thread();
-    std::shared_ptr<ImageReadAndDecode> _image_loader;
+    std::shared_ptr<VideoReadAndDecode> _image_loader;
     LoaderModuleStatus update_output_image();
     LoaderModuleStatus load_routine();
     Image* _output_image;

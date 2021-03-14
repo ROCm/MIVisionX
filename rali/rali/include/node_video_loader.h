@@ -34,10 +34,9 @@ enum class DecodeMode {
 class VideoLoaderNode: public Node
 {
 public:
-    VideoLoaderNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs, const size_t batch_size);
-    ~VideoLoaderNode() override
-    {
-    }
+    //VideoLoaderNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs);
+    VideoLoaderNode(Image *output, DeviceResources device_resources);
+    ~VideoLoaderNode() override;
     VideoLoaderNode() = delete;
     ///
     /// \param internal_shard_count Defines the amount of parallelism user wants for the load and decode process to be handled internally.
@@ -45,13 +44,13 @@ public:
     /// \param load_batch_count Defines the quantum count of the images to be loaded. It's usually equal to the user's batch size.
     /// The loader will repeat images if necessary to be able to have images in multiples of the load_batch_count,
     /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
-    void init(unsigned internal_shard_count, const std::string &source_path, DecodeMode decoder_mode, StorageType storage_type,
-              DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type);
+    void init(unsigned internal_shard_count, const std::string &source_path,const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
+              DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig = false);
 
     std::shared_ptr<LoaderModule> get_loader_module();
 
 protected:
-    void create_node() override;
+    void create_node() override {};
     void update_node() override {};
 private:
     const static unsigned MAXIMUM_VIDEO_CONCURRENT_DECODE = 4;
@@ -64,6 +63,5 @@ private:
     vx_node _copy_node;
     bool _loop;
     std::shared_ptr<VideoLoaderSharded> _loader_module = nullptr;
-    void start_loading() override {};
 };
 #endif

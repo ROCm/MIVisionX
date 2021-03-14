@@ -1321,7 +1321,6 @@ raliVideoFileSource(
         RaliContext p_context,
         const char* source_path,
         RaliImageColor rali_color_format,
-        RaliDecodeDevice rali_decode_device,
         unsigned internal_shard_count,
         bool shuffle,
         bool is_output,
@@ -1334,6 +1333,7 @@ raliVideoFileSource(
     try
     {
 #ifdef RALI_VIDEO
+        bool decoder_keep_original = false;
         if(width == 0 || height == 0)
         {
             THROW("Invalid video input width and height");
@@ -1344,7 +1344,7 @@ raliVideoFileSource(
         }
 
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
-        auto decoder_mode = convert_decoder_mode(rali_decode_device);
+        //auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
                               context->internal_batch_size(),
                               num_of_planes,
@@ -1354,14 +1354,14 @@ raliVideoFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path,
-                                                                          decoder_mode,
+                                                                          source_path, "",
+									  std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           DecoderType::FFMPEG_VIDEO,
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type());
+                                                                          context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
         if(is_output)

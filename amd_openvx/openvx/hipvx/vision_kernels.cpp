@@ -1040,21 +1040,6 @@ int HipExec_HarrisSobel_HG3_U8_3x3(
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
 
-    // Printing Outputs for verification
-    // ago_harris_Gxy_t *DstGxy;
-    // DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    // hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    // if (status != hipSuccess)
-    //   //printf("Copy mem dev to host failed\n");
-    // for (int j = 1; j < dstHeight-1 ; j++) {
-    //   for (int i = 0; i < dstWidth; i++) {
-    //     int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
-    //     //printf("<row, col>: <%d,%d>", j,i);
-    //     //printf("The GXGX : %f \t and \tGYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
-    //   }
-    // }
-    // hipFree(DstGxy);
-
     return VX_SUCCESS;
 }
 
@@ -1120,23 +1105,6 @@ int HipExec_HarrisSobel_HG3_U8_5x5(
                     (float *)pDstGxy_ , (dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
-
-    // Printing Outputs for verification
-    // ago_harris_Gxy_t *DstGxy;
-    // DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    // hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    // if (status != hipSuccess)
-    //   printf("Copy mem dev to host failed\n");
-    // for (int j = 2; j < dstHeight-2 ; j++)
-    // {
-    //   for (int i = 0; i < dstWidth; i++)
-    //   {
-    //     int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
-    //     printf("<row, col>: <%d,%d>", j,i);
-    //     printf("The GXGX : %f \t and \t GYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
-    //   }
-    // }
-    // hipFree(DstGxy);
 
     return VX_SUCCESS;
 }
@@ -1209,23 +1177,6 @@ int HipExec_HarrisSobel_HG3_U8_7x7(
                     (float *)pDstGxy_ , (dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
-
-    // Printing Outputs for verification
-    // ago_harris_Gxy_t *DstGxy;
-    // DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    // hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    // if (status != hipSuccess)
-    //   printf("Copy mem dev to host failed\n");
-    // for (int j = 3; j < dstHeight-3 ; j++)
-    // {
-    //   for (int i = 0; i < dstWidth; i++)
-    //   {
-    //     int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
-    //     printf("<row, col>: <%d,%d>", j,i);
-    //     printf("The GXGX : %f \t and \t GYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
-    //   }
-    // }
-    // hipFree(DstGxy);
 
     return VX_SUCCESS;
 }
@@ -1300,24 +1251,6 @@ int HipExec_HarrisScore_HVC_HG3_3x3(
                     (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
-
-    // Printing Outputs for verification
-    // float *pDstVc_;
-    // pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
-    // hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
-    // if (status != hipSuccess)
-    //   printf("Copy mem dev to host failed\n");
-    // for (int j = 1; j < dstHeight-1 ; j++)
-    // {
-    //   for (int i = 1; i < dstWidth-1; i++)
-    //   {
-    //     int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
-    //     printf("\n <row, col>: <%d,%d>", j,i);
-    //     printf(" \t Mc: <%f>",pDstVc_[idx]);
-    //     // printf("The GXGX : %f \n", pDstVc_[idx]);
-    //   }
-    // }
-    // hipFree(pDstVc_);
 
     return VX_SUCCESS;
 }
@@ -1400,23 +1333,6 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
                     (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
-
-    // Printing Outputs for verification
-    // float *pDstVc_;
-    // pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
-    // hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
-    // if (status != hipSuccess)
-    //   printf("Copy mem dev to host failed\n");
-    // for (int j = 2; j < dstHeight-2 ; j++)
-    // {
-    //   for (int i = 2; i < dstWidth-2; i++)
-    //   {
-    //     int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
-    //     printf("\n <row, col>: <%d,%d>", j,i);
-    //     printf(" \t Mc: <%f>",pDstVc_[idx]);
-    //   }
-    // }
-    // hipFree(pDstVc_);
 
     return VX_SUCCESS;
 }
@@ -1509,23 +1425,6 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
                     (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
-
-    // Printing Outputs for verification
-    // float *pDstVc_;
-    // pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
-    // hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
-    // if (status != hipSuccess)
-    //   printf("Copy mem dev to host failed\n");
-    // for (int j = 3; j < dstHeight-3 ; j++)
-    // {
-    //   for (int i = 3; i < dstWidth-3; i++)
-    //   {
-    //     int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
-    //     printf("\n <row, col>: <%d,%d>", j,i);
-    //     printf(" \t Mc: <%f>",pDstVc_[idx]);
-    //   }
-    // }
-    // hipFree(pDstVc_);
 
     return VX_SUCCESS;
 }

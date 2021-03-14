@@ -278,8 +278,8 @@ __device__ __forceinline__ float hip_bilinear_sample_FXY_constant(const uchar *p
 }
 
 __device__ __forceinline__ uint hip_canny_mag_phase_L1(float gx, float gy) {
-    float dx = fabs(gx);
-    float dy = fabs(gy);
+    float dx = fabsf(gx);
+    float dy = fabsf(gy);
     float dr = min3_((dx + dy), 16383.0f, 16383.0f);
     float d1 = dx * 0.4142135623730950488016887242097f;
     float d2 = dx * 2.4142135623730950488016887242097f;
@@ -291,8 +291,8 @@ __device__ __forceinline__ uint hip_canny_mag_phase_L1(float gx, float gy) {
 }
 
 __device__ __forceinline__ uint hip_canny_mag_phase_L2(float gx, float gy) {
-    float dx = fabs(gx);
-    float dy = fabs(gy);
+    float dx = fabsf(gx);
+    float dy = fabsf(gy);
     float dr = min3_(__fsqrt_rn(fmaf(gy, gy, gx * gx)), 16383.0f, 16383.0f);
     float d1 = dx * 0.4142135623730950488016887242097f;
     float d2 = dx * 2.4142135623730950488016887242097f;
@@ -304,16 +304,7 @@ __device__ __forceinline__ uint hip_canny_mag_phase_L2(float gx, float gy) {
 }
 
 __device__ __forceinline__ uint hip_bfe(uint src0, uint src1, uint src2) {
-    uint dst;
-    uint offset = src1 & 31;
-    uint width  = src2 & 31;
-    if (width == 0)
-        dst = 0;
-    else if((offset + width) < 32)
-        dst = (src0 << (32 - offset - width)) >> (32 - width);
-    else
-        dst = src0 >> offset;
-    return dst;
+    return __builtin_amdgcn_ubfe(src0, src1, src2);
 }
 
 // common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere

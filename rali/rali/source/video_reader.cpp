@@ -64,6 +64,7 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _shuffle = desc.shuffle();
     _loop = desc.loop();
     ret = subfolder_reading();
+    std::cerr << "\n\n Reading video files ...";
     // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) {
         int _num_batches = _video_file_names.size()/_batch_count;
@@ -125,7 +126,7 @@ void VideoReader::reset()
 Reader::Status VideoReader::subfolder_reading()
 {
     if ((_sub_dir = opendir (_folder_path.c_str())) == nullptr)
-        THROW("FileReader ShardID ["+ TOSTR(_shard_id)+ "] ERROR: Failed opening the directory at " + _folder_path);
+        THROW("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] ERROR: Failed opening the directory at " + _folder_path);
 
     std::vector<std::string> entry_name_list;
     std::string _full_path = _folder_path;
@@ -160,16 +161,16 @@ Reader::Status VideoReader::subfolder_reading()
         {
             _folder_path = subfolder_path;
             if(open_folder() != Reader::Status::OK)
-                WRN("FileReader ShardID ["+ TOSTR(_shard_id)+ "] File reader cannot access the storage at " + _folder_path);
+                WRN("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] VideoReader cannot access the storage at " + _folder_path);
         }
     }
     if(_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
     {
         replicate_last_image_to_fill_last_shard();
-        LOG("FileReader ShardID [" + TOSTR(_shard_id) + "] Replicated " + _folder_path+_last_file_name + " " + TOSTR((_batch_count - _in_batch_read_count) ) + " times to fill the last batch")
+        LOG("VideoReader ShardID [" + TOSTR(_shard_id) + "] Replicated " + _folder_path+_last_file_name + " " + TOSTR((_batch_count - _in_batch_read_count) ) + " times to fill the last batch")
     }
     if(!_video_file_names.empty())
-        LOG("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Total of " + TOSTR(_video_file_names.size()) + " images loaded from " + _full_path )
+        LOG("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] Total of " + TOSTR(_video_file_names.size()) + " images loaded from " + _full_path )
     return ret;
 }
 void VideoReader::replicate_last_image_to_fill_last_shard()
@@ -189,7 +190,7 @@ void VideoReader::replicate_last_batch_to_pad_partial_shard()
 Reader::Status VideoReader::open_folder()
 {
     if ((_src_dir = opendir (_folder_path.c_str())) == nullptr)
-        THROW("FileReader ShardID ["+ TOSTR(_shard_id)+ "] ERROR: Failed opening the directory at " + _folder_path);
+        THROW("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] ERROR: Failed opening the directory at " + _folder_path);
 
 
     while((_entity = readdir (_src_dir)) != nullptr)
@@ -214,7 +215,7 @@ Reader::Status VideoReader::open_folder()
         incremenet_file_id();
     }
     if(_video_file_names.empty())
-        WRN("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Did not load any file from " + _folder_path)
+        WRN("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] Did not load any file from " + _folder_path)
 
     closedir(_src_dir);
     return Reader::Status::OK;

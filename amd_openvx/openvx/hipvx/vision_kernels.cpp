@@ -490,7 +490,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
     __shared__ uchar lbuf[2448];
     int lx = hipThreadIdx_x;
     int ly = hipThreadIdx_y;
-    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     bool valid = (x < dstWidthComp) && (y < dstHeight);
 

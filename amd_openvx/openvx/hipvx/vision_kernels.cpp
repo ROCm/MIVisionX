@@ -26,407 +26,994 @@ THE SOFTWARE.
 #include "hip_host_decls.h"
 
 
-__device__ int FastAtan2_Canny(short int Gx, short int Gy) {
-	unsigned int ret;
-	unsigned short int ax, ay;
-	ax = std::abs(Gx), ay = std::abs(Gy);	// todo:: check if math.h function is faster
-	float d1 = (float)ax*0.4142135623730950488016887242097f;
-	float d2 = (float)ax*2.4142135623730950488016887242097f;
-	ret = (Gx*Gy) < 0 ? 3 : 1;
-	if (ay <= d1)
-		ret = 0;
-	if (ay >= d2)
-		ret = 2;
-	return ret;
+// ----------------------------------------------------------------------------
+// VxCannyEdgeDetector kernels for hip backend
+// ----------------------------------------------------------------------------
+
+__global__ void __attribute__((visibility("default")))
+Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    bool valid = (x < dstWidth) && (y < dstHeight);
+
+    __shared__ uchar lbuf[2448]; // 136x18 bytes
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    { // load 136x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    d_float8 sum1 = {0.0f};
+    d_float8 sum2 = {0.0f};
+    uint2 pix;
+    float fval;
+    __shared__ uint2 * lbufptr;
+    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    // filterRow = 0
+    pix = lbufptr[0];
+    fval = unpack3_(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] -= fval;
+    fval = unpack0_(pix.y);
+    sum2.data[0] = fmaf(fval, -2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] -= fval;
+    fval = unpack1_(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] -= fval;
+    sum2.data[1] = fmaf(fval, -2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] -= fval;
+    fval = unpack2_(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] -= fval;
+    sum2.data[2] = fmaf(fval, -2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] -= fval;
+    fval = unpack3_(pix.y);
+    sum1.data[2] += fval;
+    sum2.data[2] -= fval;
+    sum2.data[3] = fmaf(fval, -2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] -= fval;
+    pix = lbufptr[1];
+    fval = unpack0_(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] -= fval;
+    sum2.data[4] = fmaf(fval, -2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] -= fval;
+    fval = unpack1_(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] -= fval;
+    sum2.data[5] = fmaf(fval, -2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] -= fval;
+    fval = unpack2_(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] -= fval;
+    sum2.data[6] = fmaf(fval, -2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] -= fval;
+    fval = unpack3_(pix.x);
+    sum1.data[6] += fval;
+    sum2.data[6] -= fval;
+    sum2.data[7] = fmaf(fval, -2.000000000000e+00f, sum2.data[7]);
+    fval = unpack0_(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] -= fval;
+    // filterRow = 1
+    pix = lbufptr[17];
+    fval = unpack3_(pix.x);
+    sum1.data[0] = fmaf(fval, -2.000000000000e+00f, sum1.data[0]);
+    fval = unpack0_(pix.y);
+    sum1.data[1] = fmaf(fval, -2.000000000000e+00f, sum1.data[1]);
+    fval = unpack1_(pix.y);
+    sum1.data[0] = fmaf(fval, 2.000000000000e+00f, sum1.data[0]);
+    sum1.data[2] = fmaf(fval, -2.000000000000e+00f, sum1.data[2]);
+    fval = unpack2_(pix.y);
+    sum1.data[1] = fmaf(fval, 2.000000000000e+00f, sum1.data[1]);
+    sum1.data[3] = fmaf(fval, -2.000000000000e+00f, sum1.data[3]);
+    fval = unpack3_(pix.y);
+    sum1.data[2] = fmaf(fval, 2.000000000000e+00f, sum1.data[2]);
+    sum1.data[4] = fmaf(fval, -2.000000000000e+00f, sum1.data[4]);
+    pix = lbufptr[18];
+    fval = unpack0_(pix.x);
+    sum1.data[3] = fmaf(fval, 2.000000000000e+00f, sum1.data[3]);
+    sum1.data[5] = fmaf(fval, -2.000000000000e+00f, sum1.data[5]);
+    fval = unpack1_(pix.x);
+    sum1.data[4] = fmaf(fval, 2.000000000000e+00f, sum1.data[4]);
+    sum1.data[6] = fmaf(fval, -2.000000000000e+00f, sum1.data[6]);
+    fval = unpack2_(pix.x);
+    sum1.data[5] = fmaf(fval, 2.000000000000e+00f, sum1.data[5]);
+    sum1.data[7] = fmaf(fval, -2.000000000000e+00f, sum1.data[7]);
+    fval = unpack3_(pix.x);
+    sum1.data[6] = fmaf(fval, 2.000000000000e+00f, sum1.data[6]);
+    fval = unpack0_(pix.y);
+    sum1.data[7] = fmaf(fval, 2.000000000000e+00f, sum1.data[7]);
+    // filterRow = 2
+    pix = lbufptr[34];
+    fval = unpack3_(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] += fval;
+    fval = unpack0_(pix.y);
+    sum2.data[0] = fmaf(fval, 2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] += fval;
+    fval = unpack1_(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] += fval;
+    sum2.data[1] = fmaf(fval, 2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] += fval;
+    fval = unpack2_(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] += fval;
+    sum2.data[2] = fmaf(fval, 2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] += fval;
+    fval = unpack3_(pix.y);
+    sum1.data[2] += fval;
+    sum2.data[2] += fval;
+    sum2.data[3] = fmaf(fval, 2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] += fval;
+    pix = lbufptr[35];
+    fval = unpack0_(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] += fval;
+    sum2.data[4] = fmaf(fval, 2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] += fval;
+    fval = unpack1_(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] += fval;
+    sum2.data[5] = fmaf(fval, 2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] += fval;
+    fval = unpack2_(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] += fval;
+    sum2.data[6] = fmaf(fval, 2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] += fval;
+    fval = unpack3_(pix.x);
+    sum1.data[6] += fval;
+    sum2.data[6] += fval;
+    sum2.data[7] = fmaf(fval, 2.000000000000e+00f, sum2.data[7]);
+    fval = unpack0_(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] += fval;
+
+    uint mask = HIPSELECT(0xffffu, 0u, y < 1);
+    mask = HIPSELECT(0u, mask, y < 719);
+    uint4 dst;
+    uint mp;
+
+    mp = hip_canny_mag_phase_L1(sum1.data[0], sum2.data[0]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 1);
+    dst.x = mp;
+    mp = hip_canny_mag_phase_L1(sum1.data[1], sum2.data[1]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 0);
+    dst.x |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1(sum1.data[2], sum2.data[2]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 0);
+    dst.y = mp;
+    mp = hip_canny_mag_phase_L1(sum1.data[3], sum2.data[3]) & mask;
+    dst.y |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1(sum1.data[4], sum2.data[4]) & mask;
+    dst.z = mp;
+    mp = hip_canny_mag_phase_L1(sum1.data[5], sum2.data[5]) & mask;
+    mp = HIPSELECT(0u, mp, x < 1274u);
+    dst.z |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L1(sum1.data[6], sum2.data[6]) & mask;
+    mp = HIPSELECT(0u, mp, x < 1273u);
+    dst.w  =  mp;
+    mp = hip_canny_mag_phase_L1(sum1.data[7], sum2.data[7]) & mask;
+    mp = HIPSELECT(0u, mp, x < 1272u);
+    dst.w |= (mp << 16);
+
+    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    if (valid) {
+        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+    }
+}
+int HipExec_CannySobel_U16_U8_3x3_L1NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_CannySobel_U16_U8_3x3_L1NORM, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
 }
 
-__device__ __forceinline__ int isCorner(int mask) {
-	int cornerMask = 0x1FF;									// Nine 1's in the LSB
-	if (mask) {
-		mask = mask | (mask << 16);
-		for (int i = 0; i < 16; i++) {
-			if ((mask & cornerMask) == cornerMask)
-				return 1;
-			mask >>= 1;
-		}
-	}
-	return 0;
+__global__ void __attribute__((visibility("default")))
+Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    bool valid = (x < dstWidth) && (y < dstHeight);
+
+    __shared__ uchar lbuf[2448]; // 136x18 bytes
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    { // load 136x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    d_float8 sum1 = {0.0f};
+    d_float8 sum2 = {0.0f};
+    uint2 pix;
+    float fval;
+    __shared__ uint2 * lbufptr;
+    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    // filterRow = 0
+    pix = lbufptr[0];
+    fval = unpack3_(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] -= fval;
+    fval = unpack0_(pix.y);
+    sum2.data[0] = fmaf(fval, -2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] -= fval;
+    fval = unpack1_(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] -= fval;
+    sum2.data[1] = fmaf(fval, -2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] -= fval;
+    fval = unpack2_(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] -= fval;
+    sum2.data[2] = fmaf(fval, -2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] -= fval;
+    fval = unpack3_(pix.y);
+    sum1.data[2] += fval;
+    sum2.data[2] -= fval;
+    sum2.data[3] = fmaf(fval, -2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] -= fval;
+    pix = lbufptr[1];
+    fval = unpack0_(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] -= fval;
+    sum2.data[4] = fmaf(fval, -2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] -= fval;
+    fval = unpack1_(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] -= fval;
+    sum2.data[5] = fmaf(fval, -2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] -= fval;
+    fval = unpack2_(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] -= fval;
+    sum2.data[6] = fmaf(fval, -2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] -= fval;
+    fval = unpack3_(pix.x);
+    sum1.data[6] += fval;
+    sum2.data[6] -= fval;
+    sum2.data[7] = fmaf(fval, -2.000000000000e+00f, sum2.data[7]);
+    fval = unpack0_(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] -= fval;
+    // filterRow = 1
+    pix = lbufptr[17];
+    fval = unpack3_(pix.x);
+    sum1.data[0] = fmaf(fval, -2.000000000000e+00f, sum1.data[0]);
+    fval = unpack0_(pix.y);
+    sum1.data[1] = fmaf(fval, -2.000000000000e+00f, sum1.data[1]);
+    fval = unpack1_(pix.y);
+    sum1.data[0] = fmaf(fval, 2.000000000000e+00f, sum1.data[0]);
+    sum1.data[2] = fmaf(fval, -2.000000000000e+00f, sum1.data[2]);
+    fval = unpack2_(pix.y);
+    sum1.data[1] = fmaf(fval, 2.000000000000e+00f, sum1.data[1]);
+    sum1.data[3] = fmaf(fval, -2.000000000000e+00f, sum1.data[3]);
+    fval = unpack3_(pix.y);
+    sum1.data[2] = fmaf(fval, 2.000000000000e+00f, sum1.data[2]);
+    sum1.data[4] = fmaf(fval, -2.000000000000e+00f, sum1.data[4]);
+    pix = lbufptr[18];
+    fval = unpack0_(pix.x);
+    sum1.data[3] = fmaf(fval, 2.000000000000e+00f, sum1.data[3]);
+    sum1.data[5] = fmaf(fval, -2.000000000000e+00f, sum1.data[5]);
+    fval = unpack1_(pix.x);
+    sum1.data[4] = fmaf(fval, 2.000000000000e+00f, sum1.data[4]);
+    sum1.data[6] = fmaf(fval, -2.000000000000e+00f, sum1.data[6]);
+    fval = unpack2_(pix.x);
+    sum1.data[5] = fmaf(fval, 2.000000000000e+00f, sum1.data[5]);
+    sum1.data[7] = fmaf(fval, -2.000000000000e+00f, sum1.data[7]);
+    fval = unpack3_(pix.x);
+    sum1.data[6] = fmaf(fval, 2.000000000000e+00f, sum1.data[6]);
+    fval = unpack0_(pix.y);
+    sum1.data[7] = fmaf(fval, 2.000000000000e+00f, sum1.data[7]);
+    // filterRow = 2
+    pix = lbufptr[34];
+    fval = unpack3_(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] += fval;
+    fval = unpack0_(pix.y);
+    sum2.data[0] = fmaf(fval, 2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] += fval;
+    fval = unpack1_(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] += fval;
+    sum2.data[1] = fmaf(fval, 2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] += fval;
+    fval = unpack2_(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] += fval;
+    sum2.data[2] = fmaf(fval, 2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] += fval;
+    fval = unpack3_(pix.y);
+    sum1.data[2] += fval;
+    sum2.data[2] += fval;
+    sum2.data[3] = fmaf(fval, 2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] += fval;
+    pix = lbufptr[35];
+    fval = unpack0_(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] += fval;
+    sum2.data[4] = fmaf(fval, 2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] += fval;
+    fval = unpack1_(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] += fval;
+    sum2.data[5] = fmaf(fval, 2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] += fval;
+    fval = unpack2_(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] += fval;
+    sum2.data[6] = fmaf(fval, 2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] += fval;
+    fval = unpack3_(pix.x);
+    sum1.data[6] += fval;
+    sum2.data[6] += fval;
+    sum2.data[7] = fmaf(fval, 2.000000000000e+00f, sum2.data[7]);
+    fval = unpack0_(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] += fval;
+
+    uint mask = HIPSELECT(0xffffu, 0u, y < 1);
+    mask = HIPSELECT(0u, mask, y < 719);
+    uint4 dst;
+    uint mp;
+
+    mp = hip_canny_mag_phase_L2(sum1.data[0], sum2.data[0]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 1);
+    dst.x = mp;
+    mp = hip_canny_mag_phase_L2(sum1.data[1], sum2.data[1]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 0);
+    dst.x |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2(sum1.data[2], sum2.data[2]) & mask;
+    mp = HIPSELECT(mp, 0u, (int)x < 0);
+    dst.y = mp;
+    mp = hip_canny_mag_phase_L2(sum1.data[3], sum2.data[3]) & mask;
+    dst.y |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2(sum1.data[4], sum2.data[4]) & mask;
+    dst.z = mp;
+    mp = hip_canny_mag_phase_L2(sum1.data[5], sum2.data[5]) & mask;
+    mp = HIPSELECT(0u, mp, x < 1274u);
+    dst.z |= (mp << 16);
+
+    mp = hip_canny_mag_phase_L2(sum1.data[6], sum2.data[6]) & mask;
+    mp = HIPSELECT(0u, mp, x < 1273u);
+    dst.w  =  mp;
+    mp = hip_canny_mag_phase_L2(sum1.data[7], sum2.data[7]) & mask;
+    mp = HIPSELECT(0u, mp, x < 1272u);
+    dst.w |= (mp << 16);
+
+    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    if (valid) {
+        *((uint4 *)(&pDstImage[dstIdx])) = dst;
+    }
+}
+int HipExec_CannySobel_U16_U8_3x3_L2NORM(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    hipLaunchKernelGGL(Hip_CannySobel_U16_U8_3x3_L2NORM, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes);
+
+    return VX_SUCCESS;
 }
 
-__device__ __forceinline__ int isCornerPlus(short candidate, short * boundary, short t) {
-	// Early exit conditions
-	if ((abs(candidate - boundary[0]) < t) && (abs(candidate - boundary[8]) < t))					// Pixels 1 and 9 within t of the candidate
-		return false;
-	if ((abs(candidate - boundary[4]) < t) && (abs(candidate - boundary[12]) < t))					// Pixels 5 and 13 within t of the candidate
-		return false;
-	candidate += t;
-	int mask = 0;
-	int iterMask = 1;
-	for (int i = 0; i < 16; i++) {
-		if (boundary[i] > candidate)
-			mask |= iterMask;
-		iterMask <<= 1;
-	}
-	return isCorner(mask);
-}
+__global__ void __attribute__((visibility("default")))
+Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    const uchar *xyStack, uint capacityOfXY, uint2 hyst,
+    uint dstWidthComp) {
 
-__device__ __forceinline__ int isCornerMinus(short candidate, short * boundary, short t) {
-	// Early exit conditions
-	if ((abs(candidate - boundary[0]) < t) && (abs(candidate - boundary[8]) < t))					// Pixels 1 and 9 within t of the candidate
-		return false;
-	if ((abs(candidate - boundary[4]) < t) && (abs(candidate - boundary[12]) < t))					// Pixels 5 and 13 within t of the candidate
-		return false;
-	candidate -= t;
-	int mask = 0;
-	int iterMask = 1;
-	for (int i = 0; i < 16; i++) {
-		if (boundary[i] < candidate)
-			mask |= iterMask;
-		iterMask <<= 1;
-	}
-	return isCorner(mask);
-}
+    __shared__ uchar lbuf[2448];
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    bool valid = (x < dstWidthComp) && (y < dstHeight);
 
-typedef struct {
-	vx_float32 GxGx;
-	vx_float32 GxGy;
-	vx_float32 GyGy;
-} ago_harris_Gxy_t;
+    uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
+
+    { // load 136x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+
+    uchar *lbuf_ptr = lbuf + ly * 136 + (lx << 3);
+    uint4 L0 = *((uint4 *)(&lbuf_ptr[0]));
+    uint4 L1 = *((uint4 *)(&lbuf_ptr[136]));
+    uint4 L2 = *((uint4 *)(&lbuf_ptr[272]));
+    uint3 NA, NB, NC;
+    uint T, M1, M2;
+    uint4 M;
+
+    NA.x = L0.x >> 18;
+    NA.y = L1.x >> 18;
+    NA.z = L2.x >> 18;
+    NB.x = hip_bfe(L0.y, 2, 14);
+    NB.y = hip_bfe(L1.y, 2, 14);
+    NB.z = hip_bfe(L2.y, 2, 14);
+    NC.x = L0.y >> 18;
+    NC.y = L1.y >> 18;
+    NC.z = L2.y >> 18;
+    T = hip_bfe(L1.y,  0, 2);
+    M1 = HIPSELECT(NA.y, NA.x, T > 0);
+    M1 = HIPSELECT(M1, NB.x, T > 1);
+    M1 = HIPSELECT(M1, NA.z, T > 2);
+    M2 = HIPSELECT(NC.y, NC.z+1, T > 0);
+    M2 = HIPSELECT(M2, NB.z, T > 1);
+    M2 = HIPSELECT(M2, NC.x+1, T > 2);
+    M.x = HIPSELECT(0u, NB.y, NB.y > M1);
+    M.x = HIPSELECT(0u, M.x, NB.y >= M2);
+
+    NA.x = hip_bfe(L0.z, 2, 14);
+    NA.y = hip_bfe(L1.z, 2, 14);
+    NA.z = hip_bfe(L2.z, 2, 14);
+    T = hip_bfe(L1.y, 16, 2);
+    M1 = HIPSELECT(NB.y, NB.x, T > 0);
+    M1 = HIPSELECT(M1, NC.x, T > 1);
+    M1 = HIPSELECT(M1, NB.z, T > 2);
+    M2 = HIPSELECT(NA.y, NA.z+1, T > 0);
+    M2 = HIPSELECT(M2, NC.z, T > 1);
+    M2 = HIPSELECT(M2, NA.x+1, T > 2);
+    M.y = HIPSELECT(0u, NC.y, NC.y > M1);
+    M.y = HIPSELECT(0u, M.y, NC.y >= M2);
+    NB.x = L0.z >> 18;
+    NB.y = L1.z >> 18;
+    NB.z = L2.z >> 18;
+    T = hip_bfe(L1.z, 0, 2);
+    M1 = HIPSELECT(NC.y, NC.x, T > 0);
+    M1 = HIPSELECT(M1, NA.x, T > 1);
+    M1 = HIPSELECT(M1, NC.z, T > 2);
+    M2 = HIPSELECT(NB.y, NB.z+1, T > 0);
+    M2 = HIPSELECT(M2, NA.z, T > 1);
+    M2 = HIPSELECT(M2, NB.x+1, T > 2);
+    M.z = HIPSELECT(0u, NA.y, NA.y > M1);
+    M.z = HIPSELECT(0u, M.z, NA.y >= M2);
+    NC.x = hip_bfe(L0.w, 2, 14);
+    NC.y = hip_bfe(L1.w, 2, 14);
+    NC.z = hip_bfe(L2.w, 2, 14);
+    T = hip_bfe(L1.z, 16, 2);
+    M1 = HIPSELECT(NA.y, NA.x, T > 0);
+    M1 = HIPSELECT(M1, NB.x, T > 1);
+    M1 = HIPSELECT(M1, NA.z, T > 2);
+    M2 = HIPSELECT(NC.y, NC.z+1, T > 0);
+    M2 = HIPSELECT(M2, NB.z, T > 1);
+    M2 = HIPSELECT(M2, NC.x+1, T > 2);
+    M.w = HIPSELECT(0u, NB.y, NB.y > M1);
+    M.w = HIPSELECT(0u, M.w, NB.y >= M2);
+
+    uint mask = HIPSELECT(0u, 0xffffffffu, x < 320u);
+    mask = HIPSELECT(0u, mask, y < 720u);
+    M.x &= mask;
+    M.y &= mask;
+    M.z &= mask;
+    M.w &= mask;
+    uint4 P;
+    P.x = HIPSELECT(0u, 127u, M.x > hyst.x);
+    P.y = HIPSELECT(0u, 127u, M.y > hyst.x);
+    P.z = HIPSELECT(0u, 127u, M.z > hyst.x);
+    P.w = HIPSELECT(0u, 127u, M.w > hyst.x);
+    P.x = HIPSELECT(P.x, 255u, M.x > hyst.y);
+    P.y = HIPSELECT(P.y, 255u, M.y > hyst.y);
+    P.z = HIPSELECT(P.z, 255u, M.z > hyst.y);
+    P.w = HIPSELECT(P.w, 255u, M.w > hyst.y);
+    uint p0 = P.x;
+    p0 += P.y << 8;
+    p0 += P.z << 16;
+    p0 += P.w << 24;
+
+    if (valid) {
+        *((uint *)(&pDstImage[dstIdx])) = p0;
+        uint stack_icount;
+        stack_icount  = HIPSELECT(0u, 1u, P.x == 255u);
+        stack_icount += HIPSELECT(0u, 1u, P.y == 255u);
+        stack_icount += HIPSELECT(0u, 1u, P.z == 255u);
+        stack_icount += HIPSELECT(0u, 1u, P.w == 255u);
+        if (stack_icount > 0) {
+            uint pos = atomicAdd((uint *)xyStack, stack_icount);
+            uint *xyStackPtr = (uint *)&xyStack[0];
+            uint xyloc = (y << 16) + (x << 2);
+            if(pos < capacityOfXY && P.x == 255u)
+                xyStackPtr[pos++] = xyloc;
+            if(pos < capacityOfXY && P.y == 255u)
+                xyStackPtr[pos++] = xyloc + 1;
+            if(pos < capacityOfXY && P.z == 255u)
+                xyStackPtr[pos++] = xyloc + 2;
+            if(pos < capacityOfXY && P.w == 255u)
+                xyStackPtr[pos++] = xyloc + 3;
+        }
+    }
+}
+int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint16 hyst_lower, vx_uint16 hyst_upper) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
+
+    uint2 hyst;
+    hyst.x = (uint) hyst_lower;
+    hyst.y = (uint) hyst_upper;
+
+    uint dstWidthComp = (dstWidth + 3) / 4;
+
+    hipLaunchKernelGGL(Hip_CannySuppThreshold_U8XY_U16_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        (const uchar *)xyStack, capacityOfXY, hyst,
+                        dstWidthComp);
+
+    return VX_SUCCESS;
+}
 
 // ----------------------------------------------------------------------------
 // VxFastCorners kernels for hip backend
 // ----------------------------------------------------------------------------
+
 __global__ void __attribute__((visibility("default")))
-Hip_FastCorners_XY_U8_NoSupression(
-    vx_uint32 capacityOfDstCorner, vx_keypoint_t *pDstCorner, vx_uint32 *cornercount,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes, vx_float32 threshold
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x + 3;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y + 3;
-    if ((x >= (srcWidth - 3)) || (y >= (srcHeight - 3))) return;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes) + x;
+Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners,
+    uint srcWidth, uint srcHeight,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    float strength_threshold) {
 
-    int offsets[16] = { 0 };
-    offsets[0] = srcIdx + (-3 * srcImageStrideInBytes);
-    offsets[15] = offsets[0] - 1;
-    offsets[1] = offsets[0] + 1;
-    offsets[2] = srcIdx - (srcImageStrideInBytes << 1) + 2;
-    offsets[14] = offsets[2] - 4;
-    offsets[3] = srcIdx - srcImageStrideInBytes + 3;
-    offsets[13] = offsets[3] - 6;
-    offsets[4] = srcIdx + 3;
-    offsets[12] = srcIdx - 3;
-    offsets[5] = srcIdx + srcImageStrideInBytes + 3;
-    offsets[11] = offsets[5] - 6;
-    offsets[6] = srcIdx + (srcImageStrideInBytes << 1) + 2;
-    offsets[10] = offsets[6] - 4;
-    offsets[7] = srcIdx + (3 * srcImageStrideInBytes) + 1;
-    offsets[8] = offsets[7] - 1;
-    offsets[9] = offsets[8] - 1;
+    int idx = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) + 3;
+    int idy = (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y) + 3;
+    int stride = (int) srcImageStrideInBytes;
+    if((idx > (int)srcWidth - 3) || (idy > (int)srcHeight - 3))
+        return;
+    const uchar *pTempImg = pSrcImage + hip_mad24(idy, stride, idx);
+    int centerPixel_neg = pTempImg[0];
+    int centerPixel_pos = centerPixel_neg + (int)strength_threshold;
+    centerPixel_neg -= (int)strength_threshold;
+    int candp, candn, pos_mask, neg_mask;
+    candp = pTempImg[3];
+    candn = pTempImg[-3];
+    neg_mask = (candp < centerPixel_neg) | ((candn < centerPixel_neg) << 8);
+    pos_mask = (candp > centerPixel_pos) | ((candn > centerPixel_pos) << 8);
+    int offs = -stride*3;
+    candp = pTempImg[offs];
+    candn = pTempImg[-offs];
+    neg_mask |= (((candp < centerPixel_neg) << 4) | ((candn < centerPixel_neg) << 12));
+    pos_mask |= (((candp > centerPixel_pos) << 4) | ((candn > centerPixel_pos) << 12));
+    if(((pos_mask | neg_mask) & MASK_EARLY_EXIT) == 0)
+        return;
 
-    int mask_max=0, mask_min=0;
-	// Early exit conditions
-	if ((abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[0]]) < (short)threshold) && (abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[8]]) < (short)threshold))					// Pixels 1 and 9 within (short) threshold of the candidate
-		return;
-	if ((abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[4]]) < (short)threshold) && (abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[12]]) < (short)threshold))				// Pixels 5 and 13 within (short) threshold of the candidate
-		return;
+    offs = -stride*3 + 1;
+    candp = pTempImg[offs];
+    candn = pTempImg[-offs];
+    neg_mask |= (((candp < centerPixel_neg) << 3) | ((candn < centerPixel_neg) << 11));
+    pos_mask |= (((candp > centerPixel_pos) << 3) | ((candn > centerPixel_pos) << 11));
 
-	// Check for I_p + t
-	short cand = (short)pSrcImage[srcIdx] + (short)threshold;
+    offs = -stride*3 - 1;
+    candp = pTempImg[offs];
+    candn = pTempImg[-offs];
+    neg_mask |= (((candp < centerPixel_neg) << 5) | ((candn < centerPixel_neg) << 13));
+    pos_mask |= (((candp > centerPixel_pos) << 5) | ((candn > centerPixel_pos) << 13));
 
-	mask_max = (CHECKMAX(pSrcImage[offsets[0]], cand)) | (CHECKMAX(pSrcImage[offsets[1]], cand) << 1) | (CHECKMAX(pSrcImage[offsets[2]], cand) << 2) | (CHECKMAX(pSrcImage[offsets[3]], cand) << 3) |
-				(CHECKMAX(pSrcImage[offsets[4]], cand) << 4) | (CHECKMAX(pSrcImage[offsets[5]], cand) << 5) | (CHECKMAX(pSrcImage[offsets[6]], cand) << 6) | (CHECKMAX(pSrcImage[offsets[7]], cand) << 7) |
-				(CHECKMAX(pSrcImage[offsets[8]], cand) << 8) | (CHECKMAX(pSrcImage[offsets[9]], cand) << 9) | (CHECKMAX(pSrcImage[offsets[10]], cand) << 10) | (CHECKMAX(pSrcImage[offsets[11]], cand) << 11) |
-				(CHECKMAX(pSrcImage[offsets[12]], cand) << 12) | (CHECKMAX(pSrcImage[offsets[13]], cand) << 13) | (CHECKMAX(pSrcImage[offsets[14]], cand) << 14) | (CHECKMAX(pSrcImage[offsets[15]], cand) << 15);
+    offs = -(stride << 1) + 2;
+    candp = pTempImg[offs];
+    candn = pTempImg[-offs];
+    neg_mask |= (((candp < centerPixel_neg) << 2) | ((candn < centerPixel_neg) << 10));
+    pos_mask |= (((candp > centerPixel_pos) << 2) | ((candn > centerPixel_pos) << 10));
 
-	// Check for I_p - t
-	cand = (short)pSrcImage[srcIdx] - (short)threshold;
+    offs = -(stride << 1) - 2;
+    candp = pTempImg[offs];
+    candn = pTempImg[-offs];
+    neg_mask |= (((candp < centerPixel_neg) << 6) | ((candn < centerPixel_neg) << 14));
+    pos_mask |= (((candp > centerPixel_pos) << 6) | ((candn > centerPixel_pos) << 14));
 
-	mask_min = (CHECKMIN(pSrcImage[offsets[0]], cand)) | (CHECKMIN(pSrcImage[offsets[1]], cand) << 1) | (CHECKMIN(pSrcImage[offsets[2]], cand) << 2) | (CHECKMIN(pSrcImage[offsets[3]], cand) << 3) |
-				(CHECKMIN(pSrcImage[offsets[4]], cand) << 4) | (CHECKMIN(pSrcImage[offsets[5]], cand) << 5) | (CHECKMIN(pSrcImage[offsets[6]], cand) << 6) | (CHECKMIN(pSrcImage[offsets[7]], cand) << 7) |
-				(CHECKMIN(pSrcImage[offsets[8]], cand) << 8) | (CHECKMIN(pSrcImage[offsets[9]], cand) << 9) | (CHECKMIN(pSrcImage[offsets[10]], cand) << 10) | (CHECKMIN(pSrcImage[offsets[11]], cand) << 11) |
-				(CHECKMIN(pSrcImage[offsets[12]], cand) << 12) | (CHECKMIN(pSrcImage[offsets[13]], cand) << 13) | (CHECKMIN(pSrcImage[offsets[14]], cand) << 14) | (CHECKMIN(pSrcImage[offsets[15]], cand) << 15);
+    offs = -stride + 3;
+    candp = pTempImg[offs];
+    candn = pTempImg[-offs];
+    neg_mask |= (((candp < centerPixel_neg) << 1) | ((candn < centerPixel_neg) << 9));
+    pos_mask |= (((candp > centerPixel_pos) << 1) | ((candn > centerPixel_pos) << 9));
 
-	int cornerMask = 511, isCorner = 0;
-	if (mask_max || mask_min) {
-		mask_max = mask_max | (mask_max << 16);
-		mask_min = mask_min | (mask_min << 16);
-		for (int i = 0; i < 16; i++) {
-			if (((mask_max & cornerMask) == cornerMask) || ((mask_min & cornerMask) == cornerMask)) {
-				isCorner = 1;
-				break;
-			}
-			mask_max >>= 1;
-			mask_min >>= 1;
-		}
-	}
+    offs = -stride - 3;
+    candp = pTempImg[offs];
+    candn = pTempImg[-offs];
+    neg_mask |= (((candp < centerPixel_neg) << 7) | ((candn < centerPixel_neg) << 15));
+    pos_mask |= (((candp > centerPixel_pos) << 7) | ((candn > centerPixel_pos) << 15));
 
-	if(isCorner) {
-		unsigned int old_idx = atomicAdd(cornercount, 1);
-		if (old_idx < capacityOfDstCorner) {
-			pDstCorner[old_idx].y = y;
-			pDstCorner[old_idx].x = x;
-			pDstCorner[old_idx].strength = threshold;			// Undefined as per the 1.0.1 spec
-			pDstCorner[old_idx].scale = 0;
-			pDstCorner[old_idx].orientation = 0;
-			pDstCorner[old_idx].error = 0;
-			pDstCorner[old_idx].tracking_status = 1;
-		}
-	}
+    pos_mask |= (pos_mask << 16);
+    neg_mask |= (neg_mask << 16);
+
+    int cornerMask = 511, isCorner = 0;
+
+    for(int i = 0; i < 16; i++)	{
+        isCorner += ((pos_mask & cornerMask) == cornerMask);
+        isCorner += ((neg_mask & cornerMask) == cornerMask);
+        pos_mask >>= 1;
+        neg_mask >>= 1;
+    }
+
+    uint *numKeypoints = (uint *) pDstCorners;
+    d_KeyPt *keypt_list = (d_KeyPt *) pDstCorners;
+    if(isCorner) {
+        uint old_idx = atomicInc(numKeypoints, 1);
+        if(old_idx < capacityOfDstCorner) {
+            keypt_list[old_idx].x = idx;
+            keypt_list[old_idx].y = idy;
+            keypt_list[old_idx].strength = strength_threshold;
+            keypt_list[old_idx].scale = 0;
+            keypt_list[old_idx].orientation = 0;
+            keypt_list[old_idx].tracking_status = 1;
+            keypt_list[old_idx].error = 0;
+        }
+    }
 }
-int HipExec_FastCorners_XY_U8_NoSupression(
-		hipStream_t stream,
-		vx_uint32  capacityOfDstCorner,
-    	vx_keypoint_t   pHipDstCorner[],
-		vx_uint32  *pHipDstCornerCount,
-		vx_uint32  srcWidth, vx_uint32 srcHeight,
-		vx_uint8   *pHipSrcImage,
-		vx_uint32   srcImageStrideInBytes,
-		vx_float32  strength_threshold
-	) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = srcWidth-6,   globalThreads_y = srcHeight-6;
+int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+    vx_uint32 srcWidth, vx_uint32 srcHeight,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_float32 strength_threshold) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = ceil((srcWidth - 4) / 14) * 16;
+    int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
 
-	vx_uint32 *cornerCount;
-	hipMalloc(&cornerCount, sizeof(vx_uint32));
-	hipMemcpy(cornerCount, pHipDstCornerCount, sizeof(vx_uint32), hipMemcpyHostToDevice);
+    hipLaunchKernelGGL(Hip_FastCorners_XY_U8_NoSupression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        strength_threshold);
 
-    hipLaunchKernelGGL(Hip_FastCorners_XY_U8_NoSupression,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, capacityOfDstCorner,(vx_keypoint_t *) pHipDstCorner, (vx_uint32 *)cornerCount,
-                    srcWidth, srcHeight, (const unsigned char*) pHipSrcImage, srcImageStrideInBytes, strength_threshold
-					);
-
-	hipMemcpyDtoH(pHipDstCornerCount, cornerCount, sizeof(vx_uint32));
-	hipFree(cornerCount);
     return VX_SUCCESS;
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_FastCorners_XY_U8_Supression(
-    vx_uint32 capacityOfDstCorner, vx_keypoint_t *pDstCorner, vx_uint32 *cornercount,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
-	vx_float32 threshold, unsigned char *pScratch
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x + 3;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y + 3;
-    if ((x >= (srcWidth - 3)) || (y >= (srcHeight - 3))) return;
-    unsigned int srcIdx =  y*(srcImageStrideInBytes) + x;
+Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
+    uint srcWidth, uint srcHeight,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    float strength_threshold) {
 
-	int offsets[16] = { 0 };
-    offsets[0] = srcIdx + (-3 * srcImageStrideInBytes);
-    offsets[15] = offsets[0] - 1;
-    offsets[1] = offsets[0] + 1;
-    offsets[2] = srcIdx - (srcImageStrideInBytes << 1) + 2;
-    offsets[14] = offsets[2] - 4;
-    offsets[3] = srcIdx - srcImageStrideInBytes + 3;
-    offsets[13] = offsets[3] - 6;
-    offsets[4] = srcIdx + 3;
-    offsets[12] = srcIdx - 3;
-    offsets[5] = srcIdx + srcImageStrideInBytes + 3;
-    offsets[11] = offsets[5] - 6;
-    offsets[6] = srcIdx + (srcImageStrideInBytes << 1) + 2;
-    offsets[10] = offsets[6] - 4;
-    offsets[7] = srcIdx + (3 * srcImageStrideInBytes) + 1;
-    offsets[8] = offsets[7] - 1;
-    offsets[9] = offsets[8] - 1;
+    int lidx = hipThreadIdx_x;
+    int lidy = hipThreadIdx_y;
+    int gidx = hipBlockIdx_x;
+    int gidy = hipBlockIdx_y;
+    int xoffset = gidx * 14 + lidx + 2;
+    int yoffset = gidy * 14 + lidy + 2;
+    const uchar *pTempImg = pSrcImage + hip_mad24(yoffset, (int)srcImageStrideInBytes, xoffset);
+    int pLocalStrengthShare[16][16];
+    bool doCompute = true;
+    if((xoffset > (int)srcWidth - 3) || (yoffset > (int)srcHeight - 3) || (xoffset < 3) || (yoffset < 3)) {
+        doCompute = false;
+        pLocalStrengthShare[lidy][lidx] = 0;
+    }
 
-	short strength = 0;
+    int local_strength;
+    if(doCompute) {
+        int boundary[16];
+        int pos_mask, neg_mask, offs;
+        int centerPixel_neg = pTempImg[0];
+        for(int i = 0; i < 16; i++)
+            boundary[i] = centerPixel_neg;
+        int centerPixel_pos = centerPixel_neg + (int)strength_threshold;
+        centerPixel_neg -= (int) strength_threshold;
+        int candp = pTempImg[3];
+        int candn = pTempImg[-3];
+        neg_mask = (candp < centerPixel_neg) | ((candn < centerPixel_neg) << 8);
+        pos_mask = (candp > centerPixel_pos) | ((candn > centerPixel_pos) << 8);
+        boundary[0] -= candp;
+        boundary[8] -= candn;
+        offs = -srcImageStrideInBytes * 3;
+        candp = pTempImg[offs];
+        candn = pTempImg[-offs];
+        neg_mask |= (((candp < centerPixel_neg) << 4) | ((candn < centerPixel_neg) << 12));
+        pos_mask |= (((candp > centerPixel_pos) << 4) | ((candn > centerPixel_pos) << 12));
+        boundary[4] -= candp;
+        boundary[12] -= candn;
+        if(((pos_mask | neg_mask) & MASK_EARLY_EXIT) == 0) {
+            pLocalStrengthShare[lidy][lidx] = 0;
+            doCompute = false;
+        }
+        else {
+            offs = -srcImageStrideInBytes*3 + 1;
+            candp = pTempImg[offs];
+            candn = pTempImg[-offs];
+            neg_mask |= (((candp < centerPixel_neg) << 3) | ((candn < centerPixel_neg) << 11));
+            pos_mask |= (((candp > centerPixel_pos) << 3) | ((candn > centerPixel_pos) << 11));
+            boundary[3] -= candp;
+            boundary[11] -= candn;
 
-	// Early exit conditions
-	if ((abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[0]]) < threshold) && (abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[8]]) < threshold))					// Pixels 1 and 9 within t of the candidate
-		return;
-	if ((abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[4]]) < threshold) && (abs((short)pSrcImage[srcIdx] - (short)pSrcImage[offsets[12]]) < threshold))				// Pixels 5 and 13 within t of the candidate
-		return;
+            offs = -srcImageStrideInBytes*3 - 1;
+            candp = pTempImg[offs];
+            candn = pTempImg[-offs];
+            neg_mask |= (((candp < centerPixel_neg) << 5) | ((candn < centerPixel_neg) << 13));
+            pos_mask |= (((candp > centerPixel_pos) << 5) | ((candn > centerPixel_pos) << 13));
+            boundary[5] -= candp;
+            boundary[13] -= candn;
 
-	// Get boundary
-	short boundary[16];
-	boundary[0] = (short)pSrcImage[offsets[0]];
-	boundary[1] = (short)pSrcImage[offsets[1]];
-	boundary[2] = (short)pSrcImage[offsets[2]];
-	boundary[3] = (short)pSrcImage[offsets[3]];
-	boundary[4] = (short)pSrcImage[offsets[4]];
-	boundary[5] = (short)pSrcImage[offsets[5]];
-	boundary[6] = (short)pSrcImage[offsets[6]];
-	boundary[7] = (short)pSrcImage[offsets[7]];
-	boundary[8] = (short)pSrcImage[offsets[8]];
-	boundary[9] = (short)pSrcImage[offsets[9]];
-	boundary[10] = (short)pSrcImage[offsets[10]];
-	boundary[11] = (short)pSrcImage[offsets[11]];
-	boundary[12] = (short)pSrcImage[offsets[12]];
-	boundary[13] = (short)pSrcImage[offsets[13]];
-	boundary[14] = (short)pSrcImage[offsets[14]];
-	boundary[15] = (short)pSrcImage[offsets[15]];
+            offs = -(srcImageStrideInBytes<<1) + 2;
+            candp = pTempImg[offs];
+            candn = pTempImg[-offs];
+            neg_mask |= (((candp < centerPixel_neg) << 2) | ((candn < centerPixel_neg) << 10));
+            pos_mask |= (((candp > centerPixel_pos) << 2) | ((candn > centerPixel_pos) << 10));
+            boundary[2] -= candp;
+            boundary[10] -= candn;
 
-	// Check for I_p + t
-	short cand = (short)pSrcImage[srcIdx] + threshold;
-	int maskP = 0;
-	int iterMask = 1;
-	for (int i = 0; i < 16; i++) {
-		if (boundary[i] > cand)
-			maskP |= iterMask;
-		iterMask <<= 1;
-	}
+            offs = -(srcImageStrideInBytes<<1) - 2;
+            candp = pTempImg[offs];
+            candn = pTempImg[-offs];
+            neg_mask |= (((candp < centerPixel_neg) << 6) | ((candn < centerPixel_neg) << 14));
+            pos_mask |= (((candp > centerPixel_pos) << 6) | ((candn > centerPixel_pos) << 14));
+            boundary[6] -= candp;
+            boundary[14] -= candn;
 
-	// If it is a corner, then compute the threshold
-	short strength_pos = 0;
-	cand = pSrcImage[srcIdx];
-	if (isCorner(maskP)) {
-		short thresh_upper = 255;
-		short thresh_lower = threshold;
+            offs = -srcImageStrideInBytes + 3;
+            candp = pTempImg[offs];
+            candn = pTempImg[-offs];
+            neg_mask |= (((candp < centerPixel_neg) << 1) | ((candn < centerPixel_neg) << 9));
+            pos_mask |= (((candp > centerPixel_pos) << 1) | ((candn > centerPixel_pos) << 9));
+            boundary[1] -= candp;
+            boundary[9] -= candn;
 
-		while (thresh_upper - thresh_lower > 1)	{					// Binary search
-			strength_pos = (thresh_upper + thresh_lower) >> 1;
-			if (isCornerPlus(cand, boundary, strength_pos))
-				thresh_lower = strength_pos;
-			else
-				thresh_upper = strength_pos;
-		}
-		strength_pos = thresh_lower;
-	}
+            offs = -srcImageStrideInBytes - 3;
+            candp = pTempImg[offs];
+            candn = pTempImg[-offs];
+            neg_mask |= (((candp < centerPixel_neg) << 7) | ((candn < centerPixel_neg) << 15));
+            pos_mask |= (((candp > centerPixel_pos) << 7) | ((candn > centerPixel_pos) << 15));
+            boundary[7] -= candp;
+            boundary[15] -= candn;
 
+            pos_mask |= (pos_mask << 16);
+            neg_mask |= (neg_mask << 16);
 
-	// Check for I_p - t
-	cand = (short)pSrcImage[srcIdx] - threshold;;
-	int maskN = 0;
-	iterMask = 1;
-	for (int i = 0; i < 16; i++) {
-		if (boundary[i] < cand)
-			maskN |= iterMask;
-		iterMask <<= 1;
-	}
+            int cornerMask = 511;
+            int isCorner = 0;
 
-	// If it is a corner, then compute the threshold
-	short strength_neg = 0;
-	cand = pSrcImage[srcIdx];
-	if (isCorner(maskN)) {
-		short thresh_upper = 255;
-		short thresh_lower = threshold;
+            for (int i = 0; i < 16; i++) {
+                isCorner += ((pos_mask & cornerMask) == cornerMask);
+                isCorner += ((neg_mask & cornerMask) == cornerMask);
+                pos_mask >>= 1;
+                neg_mask >>= 1;
+            }
 
-		while (thresh_upper - thresh_lower > 1) {						// Binary search
-			strength_neg = (thresh_upper + thresh_lower) >> 1;
-			if (isCornerMinus(cand, boundary, strength_neg))
-				thresh_lower = strength_neg;
-			else
-				thresh_upper = strength_neg;
-		}
-		strength_neg = thresh_lower;
-	}
+            if(isCorner == 0) {
+                pLocalStrengthShare[lidy][lidx] = 0;
+                doCompute = false;
+            }
+            else {
+                int strength;
+                int tmp = 0;
+                for (int i = 0; i < 16; i += 2)	{
+                    int s = min(boundary[(i + 1) & 15], boundary[(i + 2) & 15]);
+                    s = min(s, boundary[(i + 3) & 15]);
+                    s = min(s, boundary[(i + 4) & 15]);
+                    s = min(s, boundary[(i + 5) & 15]);
+                    s = min(s, boundary[(i + 6) & 15]);
+                    s = min(s, boundary[(i + 7) & 15]);
+                    s = min(s, boundary[(i + 8) & 15]);
+                    tmp = max(tmp, min(s, boundary[i & 15]));
+                    tmp = max(tmp, min(s, boundary[(i + 9) & 15]));
+                }
+                strength = -tmp;
+                for (int i = 0; i < 16; i += 2)	{
+                    int s = max(boundary[(i + 1) & 15], boundary[(i + 2) & 15]);
+                    s = max(s, boundary[(i + 3) & 15]);
+                    s = max(s, boundary[(i + 4) & 15]);
+                    s = max(s, boundary[(i + 5) & 15]);
+                    s = max(s, boundary[(i + 6) & 15]);
+                    s = max(s, boundary[(i + 7) & 15]);
+                    s = max(s, boundary[(i + 8) & 15]);
+                    strength = min(strength, max(s, boundary[i & 15]));
+                    strength = min(strength, max(s, boundary[(i + 9) & 15]));
+                }
 
-	if (maskP || maskN) {
-		strength = strength_pos > strength_neg ? strength_pos : strength_neg;
-		pScratch[y * srcWidth + x] = (vx_uint8)strength;
-	}
+                local_strength = -strength - 1;
+                pLocalStrengthShare[lidy][lidx] = local_strength;
+            }
+        }
+    }
+    __syncthreads();
+
+    bool writeCorner = doCompute &&
+                        (local_strength >= pLocalStrengthShare[lidy-1][lidx-1]) &&
+                        (local_strength >= pLocalStrengthShare[lidy-1][lidx]) &&
+                        (local_strength >= pLocalStrengthShare[lidy-1][lidx+1]) &&
+                        (local_strength >= pLocalStrengthShare[lidy][lidx-1]) &&
+                        (local_strength > pLocalStrengthShare[lidy][lidx+1]) &&
+                        (local_strength > pLocalStrengthShare[lidy+1][lidx-1]) &&
+                        (local_strength > pLocalStrengthShare[lidy+1][lidx]) &&
+                        (local_strength >= pLocalStrengthShare[lidy+1][lidx+1]) &&
+                        (lidx > 0) &&
+                        (lidy > 0) &&
+                        (lidx < 15) &&
+                        (lidy < 15);
+
+    uint *numKeypoints = (uint *) pDstCorners;
+    d_KeyPt *keypt_list = (d_KeyPt *) pDstCorners;
+    if(writeCorner)	{
+        uint old_idx = atomicInc(numKeypoints, 1);
+        if(old_idx < capacityOfDstCorner) {
+            keypt_list[old_idx].x = xoffset;
+            keypt_list[old_idx].y = yoffset;
+            keypt_list[old_idx].strength = (float) local_strength;
+            keypt_list[old_idx].scale = 0;
+            keypt_list[old_idx].orientation = 0;
+            keypt_list[old_idx].tracking_status = 1;
+            keypt_list[old_idx].error = 0;
+        }
+    }
 }
-
-__global__ void __attribute__((visibility("default")))
-Hip_NonMaximumSupression_3x3(
-    vx_uint32 capacityOfDstCorner, vx_keypoint_t *pDstCorner, vx_uint32 *cornercount,
+int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
     vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
-	vx_float32 threshold, unsigned char *pScratch
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x + 3;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y + 3;
-    if ((x >= (srcWidth - 3)) || (y >= (srcHeight - 3))) return;
-    unsigned int srcIdx =  y*(srcWidth) + x;
-	unsigned int srcIdxTopRow = srcIdx - srcWidth;
-    unsigned int srcIdxBottomRow = srcIdx + srcWidth;
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_float32 strength_threshold, vx_uint8 *pHipScratch) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = ceil((srcWidth - 4) / 14) * 16;
+    int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
 
-	if(pScratch[srcIdx] == 0 || pScratch[srcIdx] < pScratch [srcIdxTopRow - 1] || pScratch[srcIdx] <= pScratch[srcIdxBottomRow - 1]
-		|| pScratch[srcIdx] < pScratch [srcIdxTopRow] || pScratch[srcIdx] <= pScratch[srcIdxBottomRow]
-		|| pScratch[srcIdx] < pScratch [srcIdxTopRow + 1] || pScratch[srcIdx] <= pScratch[srcIdxBottomRow + 1]
-		|| pScratch[srcIdx] < pScratch[srcIdx - 1] || pScratch[srcIdx] <= pScratch[srcIdx + 1])
-			return;
+    hipLaunchKernelGGL(Hip_FastCorners_XY_U8_Supression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        strength_threshold);
 
-	unsigned int old_idx = atomicAdd(cornercount, 1);
-	if (old_idx < capacityOfDstCorner) {
-		pDstCorner[old_idx].y = y;
-		pDstCorner[old_idx].x = x;
-		pDstCorner[old_idx].strength = threshold;			// Undefined as per the 1.0.1 spec
-		pDstCorner[old_idx].scale = 0;
-		pDstCorner[old_idx].orientation = 0;
-		pDstCorner[old_idx].error = 0;
-		pDstCorner[old_idx].tracking_status = 1;
-	}
-}
-
-int HipExec_FastCorners_XY_U8_Supression(
-	hipStream_t stream,
-	vx_uint32  capacityOfDstCorner,
-	vx_keypoint_t   pHipDstCorner[],
-	vx_uint32  *pHipDstCornerCount,
-	vx_uint32  srcWidth, vx_uint32 srcHeight,
-	vx_uint8   *pHipSrcImage,
-	vx_uint32   srcImageStrideInBytes,
-	vx_float32  strength_threshold,
-	vx_uint8   *pHipScratch
-	) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = srcWidth,   globalThreads_y = srcHeight;
-
-	vx_uint32 *cornerCount;
-	hipMalloc(&cornerCount, sizeof(vx_uint32));
-	hipMemcpy(cornerCount, pHipDstCornerCount, sizeof(vx_uint32), hipMemcpyHostToDevice);
-
-	vx_uint8 * Scratch;
-	hipMalloc(&Scratch, sizeof(vx_uint8) * srcWidth * srcHeight);
-	hipMemset(Scratch, 0, sizeof(vx_uint8) * srcWidth * srcHeight);
-
-    hipLaunchKernelGGL(Hip_FastCorners_XY_U8_Supression,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, capacityOfDstCorner,(vx_keypoint_t *) pHipDstCorner, (vx_uint32 *)cornerCount,
-                    srcWidth, srcHeight, (const unsigned char*) pHipSrcImage, srcImageStrideInBytes, strength_threshold, (unsigned char *)Scratch);
-
-	hipLaunchKernelGGL(Hip_NonMaximumSupression_3x3,
-					dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-					dim3(localThreads_x, localThreads_y),
-					0, stream, capacityOfDstCorner,(vx_keypoint_t *) pHipDstCorner, (vx_uint32 *)cornerCount,
-					srcWidth, srcHeight, (const unsigned char*) pHipSrcImage, srcImageStrideInBytes, strength_threshold, (unsigned char *)Scratch);
-
-	hipMemcpyDtoH(pHipScratch, Scratch, sizeof(vx_uint8) * srcWidth * srcHeight);
-	hipMemcpyDtoH(pHipDstCornerCount, cornerCount, sizeof(vx_uint32));
-	hipFree(cornerCount);
-	hipFree(Scratch);
     return VX_SUCCESS;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// OLD working VxHarrisCorners
 
 // ----------------------------------------------------------------------------
 // VxHarrisCorners kernels for hip backend
 // ----------------------------------------------------------------------------
+
 __global__ void __attribute__((visibility("default")))
 Hip_HarrisSobel_HG3_U8_3x3(
     unsigned int  dstWidth, unsigned int  dstHeight,
     float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
     const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
     float * gx, float *gy
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-	if ((x >dstWidth) || (x<0)|| (y >= dstHeight) || y<=0)	return;
-	unsigned int dstIdx = y * (dstGxyStrideInBytes /sizeof(ago_harris_Gxy_t)) + x;
-	unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
-	ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
-	float div_factor = 1; // 4.0f * 255;
+    ) {
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >dstWidth) || (x<0)|| (y >= dstHeight) || y<=0)	return;
+    unsigned int dstIdx = y * (dstGxyStrideInBytes /sizeof(ago_harris_Gxy_t)) + x;
+    unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
+    ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
+    float div_factor = 1; // 4.0f * 255;
 
-	int srcIdxTopRow = srcIdx - srcImageStrideInBytes;
-	int srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
-	float sum_x = 0;
-	sum_x += (gx[4] * (float)*(pSrcImage + srcIdx) + gx[1] * (float)*(pSrcImage + srcIdxTopRow) + gx[7] * (float)*(pSrcImage + srcIdxBottomRow));
-	sum_x += (gx[3] * (float)*(pSrcImage + srcIdx - 1) + gx[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
-	sum_x += (gx[5] * (float)*(pSrcImage + srcIdx + 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
-	float sum_y = 0;
-	sum_y += (gy[4] * (float)*(pSrcImage + srcIdx) + gy[1] * (float)*(pSrcImage + srcIdxTopRow) + gy[7] * (float)*(pSrcImage + srcIdxBottomRow));
-	sum_y += (gy[3] * (float)*(pSrcImage + srcIdx - 1) + gy[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
-	sum_y += (gy[5] * (float)*(pSrcImage + srcIdx + 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+    int srcIdxTopRow = srcIdx - srcImageStrideInBytes;
+    int srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
+    float sum_x = 0;
+    sum_x += (gx[4] * (float)*(pSrcImage + srcIdx) + gx[1] * (float)*(pSrcImage + srcIdxTopRow) + gx[7] * (float)*(pSrcImage + srcIdxBottomRow));
+    sum_x += (gx[3] * (float)*(pSrcImage + srcIdx - 1) + gx[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+    sum_x += (gx[5] * (float)*(pSrcImage + srcIdx + 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+    float sum_y = 0;
+    sum_y += (gy[4] * (float)*(pSrcImage + srcIdx) + gy[1] * (float)*(pSrcImage + srcIdxTopRow) + gy[7] * (float)*(pSrcImage + srcIdxBottomRow));
+    sum_y += (gy[3] * (float)*(pSrcImage + srcIdx - 1) + gy[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
+    sum_y += (gy[5] * (float)*(pSrcImage + srcIdx + 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
 
-	pDstGxy[dstIdx].GxGx = sum_x*sum_x;
-	pDstGxy[dstIdx].GxGy = sum_x*sum_y;
-	pDstGxy[dstIdx].GyGy = sum_y*sum_y;
+    pDstGxy[dstIdx].GxGx = sum_x*sum_x;
+    pDstGxy[dstIdx].GxGy = sum_x*sum_y;
+    pDstGxy[dstIdx].GyGy = sum_y*sum_y;
 }
 int HipExec_HarrisSobel_HG3_U8_3x3(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -453,20 +1040,6 @@ int HipExec_HarrisSobel_HG3_U8_3x3(
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
 
-/* Printing Outputs for verification */
-    /*ago_harris_Gxy_t *DstGxy;
-    DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    if (status != hipSuccess)
-      //printf("Copy mem dev to host failed\n");
-    for (int j = 1; j < dstHeight-1 ; j++) {
-      for (int i = 0; i < dstWidth; i++) {
-        int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
-        //printf("<row, col>: <%d,%d>", j,i);
-        //printf("The GXGX : %f \t and \tGYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
-      }
-    }
-    hipFree(DstGxy);*/
     return VX_SUCCESS;
 }
 
@@ -476,37 +1049,37 @@ Hip_HarrisSobel_HG3_U8_5x5(
     float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
     const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
     float * gx, float *gy
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-	if ((x >dstWidth) || (x<0)|| (y > dstHeight-2) || y<2)	return;
-	unsigned int dstIdx = y * (dstGxyStrideInBytes ) + x;
-	unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
-	ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
-	float div_factor = 1; // 4.0f * 255;
+    ) {
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >dstWidth) || (x<0)|| (y > dstHeight-2) || y<2)	return;
+    unsigned int dstIdx = y * (dstGxyStrideInBytes ) + x;
+    unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
+    ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
+    float div_factor = 1; // 4.0f * 255;
 
-	int srcIdxTopRow1, srcIdxTopRow2, srcIdxBottomRow1, srcIdxBottomRow2;
-	srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
-	srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
-	srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
-	srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
-	float sum_x = 0;
-	sum_x = (gx[12] * (float)*(pSrcImage + srcIdx) + gx[7] * (float)*(pSrcImage + srcIdxTopRow1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow2) + gx[17] * (float)*(pSrcImage + srcIdxBottomRow1) + gx[22] * (float)*(pSrcImage + srcIdxBottomRow2) +
-			gx[11] * (float)*(pSrcImage + srcIdx - 1) + gx[6] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gx[1] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gx[16] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[21] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) +
-			gx[10] * (float)*(pSrcImage + srcIdx - 2) + gx[5] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gx[0] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gx[15] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[20] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) +
-			gx[13] * (float)*(pSrcImage + srcIdx + 1) + gx[8] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gx[3] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gx[18] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[23] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) +
-			gx[14] * (float)*(pSrcImage + srcIdx + 2) + gx[9] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gx[4] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gx[19] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[24] * (float)*(pSrcImage + srcIdxBottomRow2 + 2));
-	float sum_y = 0;
-	sum_y = (gy[12] * (float)*(pSrcImage + srcIdx) + gy[7] * (float)*(pSrcImage + srcIdxTopRow1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow2) + gy[17] * (float)*(pSrcImage + srcIdxBottomRow1) + gy[22] * (float)*(pSrcImage + srcIdxBottomRow2) +
-			gy[11] * (float)*(pSrcImage + srcIdx - 1) + gy[6] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gy[1] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gy[16] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[21] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) +
-			gy[10] * (float)*(pSrcImage + srcIdx - 2) + gy[5] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gy[0] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gy[15] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[20] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) +
-			gy[13] * (float)*(pSrcImage + srcIdx + 1) + gy[8] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gy[3] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gy[18] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[23] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) +
-			gy[14] * (float)*(pSrcImage + srcIdx + 2) + gy[9] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gy[4] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gy[19] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[24] * (float)*(pSrcImage + srcIdxBottomRow2 + 2));
+    int srcIdxTopRow1, srcIdxTopRow2, srcIdxBottomRow1, srcIdxBottomRow2;
+    srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
+    srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
+    srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
+    srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
+    float sum_x = 0;
+    sum_x = (gx[12] * (float)*(pSrcImage + srcIdx) + gx[7] * (float)*(pSrcImage + srcIdxTopRow1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow2) + gx[17] * (float)*(pSrcImage + srcIdxBottomRow1) + gx[22] * (float)*(pSrcImage + srcIdxBottomRow2) +
+            gx[11] * (float)*(pSrcImage + srcIdx - 1) + gx[6] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gx[1] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gx[16] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[21] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) +
+            gx[10] * (float)*(pSrcImage + srcIdx - 2) + gx[5] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gx[0] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gx[15] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[20] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) +
+            gx[13] * (float)*(pSrcImage + srcIdx + 1) + gx[8] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gx[3] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gx[18] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[23] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) +
+            gx[14] * (float)*(pSrcImage + srcIdx + 2) + gx[9] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gx[4] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gx[19] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[24] * (float)*(pSrcImage + srcIdxBottomRow2 + 2));
+    float sum_y = 0;
+    sum_y = (gy[12] * (float)*(pSrcImage + srcIdx) + gy[7] * (float)*(pSrcImage + srcIdxTopRow1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow2) + gy[17] * (float)*(pSrcImage + srcIdxBottomRow1) + gy[22] * (float)*(pSrcImage + srcIdxBottomRow2) +
+            gy[11] * (float)*(pSrcImage + srcIdx - 1) + gy[6] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gy[1] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gy[16] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[21] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) +
+            gy[10] * (float)*(pSrcImage + srcIdx - 2) + gy[5] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gy[0] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gy[15] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[20] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) +
+            gy[13] * (float)*(pSrcImage + srcIdx + 1) + gy[8] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gy[3] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gy[18] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[23] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) +
+            gy[14] * (float)*(pSrcImage + srcIdx + 2) + gy[9] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gy[4] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gy[19] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[24] * (float)*(pSrcImage + srcIdxBottomRow2 + 2));
 
 
-	pDstGxy[dstIdx].GxGx = sum_x * sum_x;
-	pDstGxy[dstIdx].GxGy = sum_x * sum_y;
-	pDstGxy[dstIdx].GyGy = sum_y * sum_y;
+    pDstGxy[dstIdx].GxGx = sum_x * sum_x;
+    pDstGxy[dstIdx].GxGy = sum_x * sum_y;
+    pDstGxy[dstIdx].GyGy = sum_y * sum_y;
 }
 int HipExec_HarrisSobel_HG3_U8_5x5(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -533,22 +1106,6 @@ int HipExec_HarrisSobel_HG3_U8_5x5(
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
 
-/* Printing Outputs for verification */
-    /*ago_harris_Gxy_t *DstGxy;
-    DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    if (status != hipSuccess)
-      printf("Copy mem dev to host failed\n");
-    for (int j = 2; j < dstHeight-2 ; j++)
-    {
-      for (int i = 0; i < dstWidth; i++)
-      {
-        int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
-        printf("<row, col>: <%d,%d>", j,i);
-        printf("The GXGX : %f \t and \t GYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
-      }
-    }
-    hipFree(DstGxy);*/
     return VX_SUCCESS;
 }
 
@@ -559,42 +1116,42 @@ Hip_HarrisSobel_HG3_U8_7x7(
     float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
     const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
     float * gx, float *gy
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-	if ((x >dstWidth) || (x<0)|| (y > dstHeight-3) || y<3)	return;
-	unsigned int dstIdx = y * (dstGxyStrideInBytes ) + x;
-	unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
-	ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
-	float div_factor = 1; // 4.0f * 255;
+    ) {
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    if ((x >dstWidth) || (x<0)|| (y > dstHeight-3) || y<3)	return;
+    unsigned int dstIdx = y * (dstGxyStrideInBytes ) + x;
+    unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
+    ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
+    float div_factor = 1; // 4.0f * 255;
 
-	int srcIdxTopRow1, srcIdxTopRow2, srcIdxTopRow3, srcIdxBottomRow1, srcIdxBottomRow2, srcIdxBottomRow3;
-	srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
-	srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
-	srcIdxTopRow3 = srcIdx - (3 * srcImageStrideInBytes);
-	srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
-	srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
-	srcIdxBottomRow3 = srcIdx + (3 * srcImageStrideInBytes);
-	float sum_x = 0;
-	sum_x = (gx[24] * (float)*(pSrcImage + srcIdx) + gx[17] * (float)*(pSrcImage + srcIdxTopRow1) + gx[10] * (float)*(pSrcImage + srcIdxTopRow2) + gx[3] * (float)*(pSrcImage + srcIdxTopRow3) + gx[31] * (float)*(pSrcImage + srcIdxBottomRow1) + gx[38] * (float)*(pSrcImage + srcIdxBottomRow2) + gx[45] * (float)*(pSrcImage + srcIdxBottomRow3) +
-			gx[23] * (float)*(pSrcImage + srcIdx - 1) + gx[16] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gx[9] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow3 - 1) + gx[30] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[37] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) + gx[44] * (float)*(pSrcImage + srcIdxBottomRow3 - 1) +
-			gx[22] * (float)*(pSrcImage + srcIdx - 2) + gx[15] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gx[8] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gx[1] * (float)*(pSrcImage + srcIdxTopRow3 - 2) + gx[29] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[36] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) + gx[43] * (float)*(pSrcImage + srcIdxBottomRow3 - 2) +
-			gx[21] * (float)*(pSrcImage + srcIdx - 3) + gx[14] * (float)*(pSrcImage + srcIdxTopRow1 - 3) + gx[7] * (float)*(pSrcImage + srcIdxTopRow2 - 3) + gx[0] * (float)*(pSrcImage + srcIdxTopRow3 - 3) + gx[28] * (float)*(pSrcImage + srcIdxBottomRow1 - 3) + gx[35] * (float)*(pSrcImage + srcIdxBottomRow2 - 3) + gx[42] * (float)*(pSrcImage + srcIdxBottomRow3 - 3) +
-			gx[25] * (float)*(pSrcImage + srcIdx + 1) + gx[18] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gx[11] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gx[4] * (float)*(pSrcImage + srcIdxTopRow3 + 1) + gx[32] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[39] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) + gx[46] * (float)*(pSrcImage + srcIdxBottomRow3 + 1) +
-			gx[26] * (float)*(pSrcImage + srcIdx + 2) + gx[19] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gx[12] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gx[5] * (float)*(pSrcImage + srcIdxTopRow3 + 2) + gx[33] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[40] * (float)*(pSrcImage + srcIdxBottomRow2 + 2) + gx[47] * (float)*(pSrcImage + srcIdxBottomRow3 + 2) +
-			gx[27] * (float)*(pSrcImage + srcIdx + 3) + gx[20] * (float)*(pSrcImage + srcIdxTopRow1 + 3) + gx[13] * (float)*(pSrcImage + srcIdxTopRow2 + 3) + gx[6] * (float)*(pSrcImage + srcIdxTopRow3 + 3) + gx[34] * (float)*(pSrcImage + srcIdxBottomRow1 + 3) + gx[41] * (float)*(pSrcImage + srcIdxBottomRow2 + 3) + gx[48] * (float)*(pSrcImage + srcIdxBottomRow3 + 3));
-	float sum_y = 0;
-	sum_y = (gy[24] * (float)*(pSrcImage + srcIdx) + gy[17] * (float)*(pSrcImage + srcIdxTopRow1) + gy[10] * (float)*(pSrcImage + srcIdxTopRow2) + gy[3] * (float)*(pSrcImage + srcIdxTopRow3) + gy[31] * (float)*(pSrcImage + srcIdxBottomRow1) + gy[38] * (float)*(pSrcImage + srcIdxBottomRow2) + gy[45] * (float)*(pSrcImage + srcIdxBottomRow3) +
-			gy[23] * (float)*(pSrcImage + srcIdx - 1) + gy[16] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gy[9] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow3 - 1) + gy[30] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[37] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) + gy[44] * (float)*(pSrcImage + srcIdxBottomRow3 - 1) +
-			gy[22] * (float)*(pSrcImage + srcIdx - 2) + gy[15] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gy[8] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gy[1] * (float)*(pSrcImage + srcIdxTopRow3 - 2) + gy[29] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[36] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) + gy[43] * (float)*(pSrcImage + srcIdxBottomRow3 - 2) +
-			gy[21] * (float)*(pSrcImage + srcIdx - 3) + gy[14] * (float)*(pSrcImage + srcIdxTopRow1 - 3) + gy[7] * (float)*(pSrcImage + srcIdxTopRow2 - 3) + gy[0] * (float)*(pSrcImage + srcIdxTopRow3 - 3) + gy[28] * (float)*(pSrcImage + srcIdxBottomRow1 - 3) + gy[35] * (float)*(pSrcImage + srcIdxBottomRow2 - 3) + gy[42] * (float)*(pSrcImage + srcIdxBottomRow3 - 3) +
-			gy[25] * (float)*(pSrcImage + srcIdx + 1) + gy[18] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gy[11] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gy[4] * (float)*(pSrcImage + srcIdxTopRow3 + 1) + gy[32] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[39] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) + gy[46] * (float)*(pSrcImage + srcIdxBottomRow3 + 1) +
-			gy[26] * (float)*(pSrcImage + srcIdx + 2) + gy[19] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gy[12] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gy[5] * (float)*(pSrcImage + srcIdxTopRow3 + 2) + gy[33] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[40] * (float)*(pSrcImage + srcIdxBottomRow2 + 2) + gy[47] * (float)*(pSrcImage + srcIdxBottomRow3 + 2) +
-			gy[27] * (float)*(pSrcImage + srcIdx + 3) + gy[20] * (float)*(pSrcImage + srcIdxTopRow1 + 3) + gy[13] * (float)*(pSrcImage + srcIdxTopRow2 + 3) + gy[6] * (float)*(pSrcImage + srcIdxTopRow3 + 3) + gy[34] * (float)*(pSrcImage + srcIdxBottomRow1 + 3) + gy[41] * (float)*(pSrcImage + srcIdxBottomRow2 + 3) + gy[48] * (float)*(pSrcImage + srcIdxBottomRow3 + 3));
+    int srcIdxTopRow1, srcIdxTopRow2, srcIdxTopRow3, srcIdxBottomRow1, srcIdxBottomRow2, srcIdxBottomRow3;
+    srcIdxTopRow1 = srcIdx - srcImageStrideInBytes;
+    srcIdxTopRow2 = srcIdx - (2 * srcImageStrideInBytes);
+    srcIdxTopRow3 = srcIdx - (3 * srcImageStrideInBytes);
+    srcIdxBottomRow1 = srcIdx + srcImageStrideInBytes;
+    srcIdxBottomRow2 = srcIdx + (2 * srcImageStrideInBytes);
+    srcIdxBottomRow3 = srcIdx + (3 * srcImageStrideInBytes);
+    float sum_x = 0;
+    sum_x = (gx[24] * (float)*(pSrcImage + srcIdx) + gx[17] * (float)*(pSrcImage + srcIdxTopRow1) + gx[10] * (float)*(pSrcImage + srcIdxTopRow2) + gx[3] * (float)*(pSrcImage + srcIdxTopRow3) + gx[31] * (float)*(pSrcImage + srcIdxBottomRow1) + gx[38] * (float)*(pSrcImage + srcIdxBottomRow2) + gx[45] * (float)*(pSrcImage + srcIdxBottomRow3) +
+            gx[23] * (float)*(pSrcImage + srcIdx - 1) + gx[16] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gx[9] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow3 - 1) + gx[30] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gx[37] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) + gx[44] * (float)*(pSrcImage + srcIdxBottomRow3 - 1) +
+            gx[22] * (float)*(pSrcImage + srcIdx - 2) + gx[15] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gx[8] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gx[1] * (float)*(pSrcImage + srcIdxTopRow3 - 2) + gx[29] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gx[36] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) + gx[43] * (float)*(pSrcImage + srcIdxBottomRow3 - 2) +
+            gx[21] * (float)*(pSrcImage + srcIdx - 3) + gx[14] * (float)*(pSrcImage + srcIdxTopRow1 - 3) + gx[7] * (float)*(pSrcImage + srcIdxTopRow2 - 3) + gx[0] * (float)*(pSrcImage + srcIdxTopRow3 - 3) + gx[28] * (float)*(pSrcImage + srcIdxBottomRow1 - 3) + gx[35] * (float)*(pSrcImage + srcIdxBottomRow2 - 3) + gx[42] * (float)*(pSrcImage + srcIdxBottomRow3 - 3) +
+            gx[25] * (float)*(pSrcImage + srcIdx + 1) + gx[18] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gx[11] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gx[4] * (float)*(pSrcImage + srcIdxTopRow3 + 1) + gx[32] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gx[39] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) + gx[46] * (float)*(pSrcImage + srcIdxBottomRow3 + 1) +
+            gx[26] * (float)*(pSrcImage + srcIdx + 2) + gx[19] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gx[12] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gx[5] * (float)*(pSrcImage + srcIdxTopRow3 + 2) + gx[33] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gx[40] * (float)*(pSrcImage + srcIdxBottomRow2 + 2) + gx[47] * (float)*(pSrcImage + srcIdxBottomRow3 + 2) +
+            gx[27] * (float)*(pSrcImage + srcIdx + 3) + gx[20] * (float)*(pSrcImage + srcIdxTopRow1 + 3) + gx[13] * (float)*(pSrcImage + srcIdxTopRow2 + 3) + gx[6] * (float)*(pSrcImage + srcIdxTopRow3 + 3) + gx[34] * (float)*(pSrcImage + srcIdxBottomRow1 + 3) + gx[41] * (float)*(pSrcImage + srcIdxBottomRow2 + 3) + gx[48] * (float)*(pSrcImage + srcIdxBottomRow3 + 3));
+    float sum_y = 0;
+    sum_y = (gy[24] * (float)*(pSrcImage + srcIdx) + gy[17] * (float)*(pSrcImage + srcIdxTopRow1) + gy[10] * (float)*(pSrcImage + srcIdxTopRow2) + gy[3] * (float)*(pSrcImage + srcIdxTopRow3) + gy[31] * (float)*(pSrcImage + srcIdxBottomRow1) + gy[38] * (float)*(pSrcImage + srcIdxBottomRow2) + gy[45] * (float)*(pSrcImage + srcIdxBottomRow3) +
+            gy[23] * (float)*(pSrcImage + srcIdx - 1) + gy[16] * (float)*(pSrcImage + srcIdxTopRow1 - 1) + gy[9] * (float)*(pSrcImage + srcIdxTopRow2 - 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow3 - 1) + gy[30] * (float)*(pSrcImage + srcIdxBottomRow1 - 1) + gy[37] * (float)*(pSrcImage + srcIdxBottomRow2 - 1) + gy[44] * (float)*(pSrcImage + srcIdxBottomRow3 - 1) +
+            gy[22] * (float)*(pSrcImage + srcIdx - 2) + gy[15] * (float)*(pSrcImage + srcIdxTopRow1 - 2) + gy[8] * (float)*(pSrcImage + srcIdxTopRow2 - 2) + gy[1] * (float)*(pSrcImage + srcIdxTopRow3 - 2) + gy[29] * (float)*(pSrcImage + srcIdxBottomRow1 - 2) + gy[36] * (float)*(pSrcImage + srcIdxBottomRow2 - 2) + gy[43] * (float)*(pSrcImage + srcIdxBottomRow3 - 2) +
+            gy[21] * (float)*(pSrcImage + srcIdx - 3) + gy[14] * (float)*(pSrcImage + srcIdxTopRow1 - 3) + gy[7] * (float)*(pSrcImage + srcIdxTopRow2 - 3) + gy[0] * (float)*(pSrcImage + srcIdxTopRow3 - 3) + gy[28] * (float)*(pSrcImage + srcIdxBottomRow1 - 3) + gy[35] * (float)*(pSrcImage + srcIdxBottomRow2 - 3) + gy[42] * (float)*(pSrcImage + srcIdxBottomRow3 - 3) +
+            gy[25] * (float)*(pSrcImage + srcIdx + 1) + gy[18] * (float)*(pSrcImage + srcIdxTopRow1 + 1) + gy[11] * (float)*(pSrcImage + srcIdxTopRow2 + 1) + gy[4] * (float)*(pSrcImage + srcIdxTopRow3 + 1) + gy[32] * (float)*(pSrcImage + srcIdxBottomRow1 + 1) + gy[39] * (float)*(pSrcImage + srcIdxBottomRow2 + 1) + gy[46] * (float)*(pSrcImage + srcIdxBottomRow3 + 1) +
+            gy[26] * (float)*(pSrcImage + srcIdx + 2) + gy[19] * (float)*(pSrcImage + srcIdxTopRow1 + 2) + gy[12] * (float)*(pSrcImage + srcIdxTopRow2 + 2) + gy[5] * (float)*(pSrcImage + srcIdxTopRow3 + 2) + gy[33] * (float)*(pSrcImage + srcIdxBottomRow1 + 2) + gy[40] * (float)*(pSrcImage + srcIdxBottomRow2 + 2) + gy[47] * (float)*(pSrcImage + srcIdxBottomRow3 + 2) +
+            gy[27] * (float)*(pSrcImage + srcIdx + 3) + gy[20] * (float)*(pSrcImage + srcIdxTopRow1 + 3) + gy[13] * (float)*(pSrcImage + srcIdxTopRow2 + 3) + gy[6] * (float)*(pSrcImage + srcIdxTopRow3 + 3) + gy[34] * (float)*(pSrcImage + srcIdxBottomRow1 + 3) + gy[41] * (float)*(pSrcImage + srcIdxBottomRow2 + 3) + gy[48] * (float)*(pSrcImage + srcIdxBottomRow3 + 3));
 
-	pDstGxy[dstIdx].GxGx = sum_x * sum_x;
-	pDstGxy[dstIdx].GxGy = sum_x * sum_y;
-	pDstGxy[dstIdx].GyGy = sum_y * sum_y;
+    pDstGxy[dstIdx].GxGx = sum_x * sum_x;
+    pDstGxy[dstIdx].GxGy = sum_x * sum_y;
+    pDstGxy[dstIdx].GyGy = sum_y * sum_y;
 }
 int HipExec_HarrisSobel_HG3_U8_7x7(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -621,22 +1178,6 @@ int HipExec_HarrisSobel_HG3_U8_7x7(
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
 
-/* Printing Outputs for verification */
-    /*ago_harris_Gxy_t *DstGxy;
-    DstGxy = (ago_harris_Gxy_t *)malloc(dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    hipError_t status = hipMemcpyDtoH(DstGxy, pDstGxy_, dstWidth * dstHeight * sizeof(ago_harris_Gxy_t));
-    if (status != hipSuccess)
-      printf("Copy mem dev to host failed\n");
-    for (int j = 3; j < dstHeight-3 ; j++)
-    {
-      for (int i = 0; i < dstWidth; i++)
-      {
-        int idx = j*(dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)) + i;
-        printf("<row, col>: <%d,%d>", j,i);
-        printf("The GXGX : %f \t and \t GYGY : %f \t and \t GXGY : %f\n", DstGxy[idx].GxGx, DstGxy[idx].GyGy, DstGxy[idx].GxGy);
-      }
-    }
-    hipFree(DstGxy);*/
     return VX_SUCCESS;
 }
 
@@ -647,50 +1188,50 @@ Hip_HarrisScore_HVC_HG3_3x3(
     float *pSrcGxy_, unsigned int srcGxyStrideInBytes,
     float sensitivity, float strength_threshold,
     float normalization_factor
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    ) {
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
-	unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
-	unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
+    unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
+    unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
 
-	if ((x >= dstWidth-1) || (x <= 0) || (y >= dstHeight-1 ) || y <= 0) {
-		pDstVc[dstIdx] = (float)0;
-		return;
-	}
+    if ((x >= dstWidth-1) || (x <= 0) || (y >= dstHeight-1 ) || y <= 0) {
+        pDstVc[dstIdx] = (float)0;
+        return;
+    }
 
-	float gx2 = 0, gy2 = 0, gxy2 = 0;
-	float traceA =0, detA =0, Mc =0;
-	ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
-	//Prev Row + Current Row + Next Row sum of gx2, gxy2, gy2
-	int srcIdxTopRow1, srcIdxBottomRow1;
-	srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
-	srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
-	gx2 =
-	(float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx +
-	(float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx +
-	(float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx;
+    float gx2 = 0, gy2 = 0, gxy2 = 0;
+    float traceA =0, detA =0, Mc =0;
+    ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
+    //Prev Row + Current Row + Next Row sum of gx2, gxy2, gy2
+    int srcIdxTopRow1, srcIdxBottomRow1;
+    srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
+    srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
+    gx2 =
+    (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx +
+    (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx +
+    (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx;
 
-	gxy2 =
-	(float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GxGy +
-	(float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy +
-	(float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy ;
+    gxy2 =
+    (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GxGy +
+    (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy +
+    (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy ;
 
-	gy2 =
-	(float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GyGy +
-	(float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy +
-	(float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy;
+    gy2 =
+    (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GyGy +
+    (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy +
+    (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy;
 
-	traceA = gx2 + gy2;
-	detA = (gx2 * gy2) - (gxy2 * gxy2);
-	Mc = detA - (sensitivity * traceA * traceA);
-	Mc /= normalization_factor;
-	if(Mc > strength_threshold){
-		pDstVc[dstIdx] = (float)Mc;
-	}
-	else{
-		pDstVc[dstIdx] = (float)0;
-	}
+    traceA = gx2 + gy2;
+    detA = (gx2 * gy2) - (gxy2 * gxy2);
+    Mc = detA - (sensitivity * traceA * traceA);
+    Mc /= normalization_factor;
+    if(Mc > strength_threshold){
+        pDstVc[dstIdx] = (float)Mc;
+    }
+    else{
+        pDstVc[dstIdx] = (float)0;
+    }
 }
 int HipExec_HarrisScore_HVC_HG3_3x3(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -698,7 +1239,7 @@ int HipExec_HarrisScore_HVC_HG3_3x3(
     vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
     vx_float32 sensitivity, vx_float32 strength_threshold,
     vx_float32 normalization_factor
-	) {
+    ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
 
@@ -711,23 +1252,6 @@ int HipExec_HarrisScore_HVC_HG3_3x3(
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
 
-/* Printing Outputs for verification */
-    /*float *pDstVc_;
-    pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
-    hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
-    if (status != hipSuccess)
-      printf("Copy mem dev to host failed\n");
-    for (int j = 1; j < dstHeight-1 ; j++)
-    {
-      for (int i = 1; i < dstWidth-1; i++)
-      {
-        int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
-        printf("\n <row, col>: <%d,%d>", j,i);
-        printf(" \t Mc: <%f>",pDstVc_[idx]);
-        // printf("The GXGX : %f \n", pDstVc_[idx]);
-      }
-    }
-    hipFree(pDstVc_);*/
     return VX_SUCCESS;
 }
 
@@ -738,58 +1262,58 @@ Hip_HarrisScore_HVC_HG3_5x5(
     float *pSrcGxy_, unsigned int srcGxyStrideInBytes,
     float sensitivity, float strength_threshold,
     float normalization_factor
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    ) {
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
-	unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
-	unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
+    unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
+    unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
 
-	if ((x >= dstWidth-2) || (x <= 2) || (y >= dstHeight-2 ) || y <= 2)	{
-		pDstVc[dstIdx] = (float)0;
-		return;
-	}
+    if ((x >= dstWidth-2) || (x <= 2) || (y >= dstHeight-2 ) || y <= 2)	{
+        pDstVc[dstIdx] = (float)0;
+        return;
+    }
 
-	float gx2 = 0, gy2 = 0, gxy2 = 0;
-	float traceA =0, detA =0, Mc =0;
-	ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
-	//Prev Row + Current Row + Next Row sum of gx2, gxy2, gy2
-	int srcIdxTopRow1, srcIdxBottomRow1,srcIdxBottomRow2,srcIdxTopRow2;
-	srcIdxTopRow2 = srcIdx - (2*srcGxyStrideInBytes);
-	srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
-	srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
-	srcIdxBottomRow2 = srcIdx + (2*srcGxyStrideInBytes);
-	gx2 =
-	(float)pSrcGxy[srcIdxTopRow2 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow2].GxGx +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGx +
-	(float)pSrcGxy[srcIdxTopRow1 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGx +
-	(float)pSrcGxy[srcIdx-2].GxGx + (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + (float)pSrcGxy[srcIdx+2].GxGx +
-	(float)pSrcGxy[srcIdxBottomRow1 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGx +
-	(float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx ;
+    float gx2 = 0, gy2 = 0, gxy2 = 0;
+    float traceA =0, detA =0, Mc =0;
+    ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
+    //Prev Row + Current Row + Next Row sum of gx2, gxy2, gy2
+    int srcIdxTopRow1, srcIdxBottomRow1,srcIdxBottomRow2,srcIdxTopRow2;
+    srcIdxTopRow2 = srcIdx - (2*srcGxyStrideInBytes);
+    srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
+    srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
+    srcIdxBottomRow2 = srcIdx + (2*srcGxyStrideInBytes);
+    gx2 =
+    (float)pSrcGxy[srcIdxTopRow2 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow2].GxGx +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGx +
+    (float)pSrcGxy[srcIdxTopRow1 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGx +
+    (float)pSrcGxy[srcIdx-2].GxGx + (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + (float)pSrcGxy[srcIdx+2].GxGx +
+    (float)pSrcGxy[srcIdxBottomRow1 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGx +
+    (float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx ;
 
-	gxy2 =
-	(float)pSrcGxy[srcIdxTopRow2 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow2].GxGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGy +
-	(float)pSrcGxy[srcIdxTopRow1 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGy +
-	(float)pSrcGxy[srcIdx-2].GxGy + (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy + (float)pSrcGxy[srcIdx+2].GxGy +
-	(float)pSrcGxy[srcIdxBottomRow1 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGy +
-	(float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy ;
+    gxy2 =
+    (float)pSrcGxy[srcIdxTopRow2 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow2].GxGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGy +
+    (float)pSrcGxy[srcIdxTopRow1 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGy +
+    (float)pSrcGxy[srcIdx-2].GxGy + (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy + (float)pSrcGxy[srcIdx+2].GxGy +
+    (float)pSrcGxy[srcIdxBottomRow1 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGy +
+    (float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy ;
 
-	gy2 =
-	(float)pSrcGxy[srcIdxTopRow2 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow2].GyGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GyGy +
-	(float)pSrcGxy[srcIdxTopRow1 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GyGy +
-	(float)pSrcGxy[srcIdx-2].GyGy + (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy + (float)pSrcGxy[srcIdx+2].GyGy +
-	(float)pSrcGxy[srcIdxBottomRow1 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GyGy +
-	(float)pSrcGxy[srcIdxBottomRow2 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GyGy ;
+    gy2 =
+    (float)pSrcGxy[srcIdxTopRow2 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow2].GyGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GyGy +
+    (float)pSrcGxy[srcIdxTopRow1 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GyGy +
+    (float)pSrcGxy[srcIdx-2].GyGy + (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy + (float)pSrcGxy[srcIdx+2].GyGy +
+    (float)pSrcGxy[srcIdxBottomRow1 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GyGy +
+    (float)pSrcGxy[srcIdxBottomRow2 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GyGy ;
 
-	traceA = gx2 + gy2;
-	detA = (gx2 * gy2) - (gxy2 * gxy2);
-	Mc = detA - (sensitivity * traceA * traceA);
-	Mc /= normalization_factor;
-	if(Mc > strength_threshold) {
-		pDstVc[dstIdx] = (float)Mc;
-	}
-	else {
-		pDstVc[dstIdx] = (float)0;
-	}
+    traceA = gx2 + gy2;
+    detA = (gx2 * gy2) - (gxy2 * gxy2);
+    Mc = detA - (sensitivity * traceA * traceA);
+    Mc /= normalization_factor;
+    if(Mc > strength_threshold) {
+        pDstVc[dstIdx] = (float)Mc;
+    }
+    else {
+        pDstVc[dstIdx] = (float)0;
+    }
 }
 int HipExec_HarrisScore_HVC_HG3_5x5(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -797,7 +1321,7 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
     vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
     vx_float32 sensitivity, vx_float32 strength_threshold,
     vx_float32 normalization_factor
-	) {
+    ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
 
@@ -810,24 +1334,6 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
 
-/* Printing Outputs for verification */
-    /*
-	float *pDstVc_;
-    pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
-    hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
-    if (status != hipSuccess)
-      printf("Copy mem dev to host failed\n");
-    for (int j = 2; j < dstHeight-2 ; j++)
-    {
-      for (int i = 2; i < dstWidth-2; i++)
-      {
-        int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
-        printf("\n <row, col>: <%d,%d>", j,i);
-        printf(" \t Mc: <%f>",pDstVc_[idx]);
-      }
-    }
-    hipFree(pDstVc_);
-	*/
     return VX_SUCCESS;
 }
 
@@ -839,66 +1345,67 @@ Hip_HarrisScore_HVC_HG3_7x7(
     float *pSrcGxy_, unsigned int srcGxyStrideInBytes,
     float sensitivity, float strength_threshold,
     float normalization_factor
-	) {
-	int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-	int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    ) {
+    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
-	unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
-	unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
+    unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
+    unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
 
-	if ((x >= dstWidth-3) || (x <= 3) || (y >= dstHeight-3 ) || y <= 3)	{
-		pDstVc[dstIdx] = (float)0;
-		return;
-	}
+    if ((x >= dstWidth-3) || (x <= 3) || (y >= dstHeight-3 ) || y <= 3)	{
+        pDstVc[dstIdx] = (float)0;
+        return;
+    }
 
-	float gx2 = 0, gy2 = 0, gxy2 = 0;
-	float traceA =0, detA =0, Mc =0;
-	ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
-	//Prev Row3 +Prev Row2 +Prev Row1 + Current Row + Next Row1+ Next Row2++ Next Row3 sum of gx2, gxy2, gy2
-	int srcIdxTopRow1, srcIdxBottomRow1,srcIdxBottomRow2,srcIdxTopRow2,srcIdxTopRow3, srcIdxBottomRow3;
-  srcIdxTopRow3 = srcIdx - (3*srcGxyStrideInBytes);
-	srcIdxTopRow2 = srcIdx - (2*srcGxyStrideInBytes);
-	srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
-	srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
-	srcIdxBottomRow2 = srcIdx + (2*srcGxyStrideInBytes);
-  srcIdxBottomRow3 = srcIdx + (3*srcGxyStrideInBytes);
-	gx2 =
-  (float)pSrcGxy[srcIdxTopRow3 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow3].GxGx +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGx +
-	(float)pSrcGxy[srcIdxTopRow2 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow2].GxGx +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGx +
-	(float)pSrcGxy[srcIdxTopRow1 - 3].GxGx +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGx +
-	(float)pSrcGxy[srcIdx-3].GxGx +(float)pSrcGxy[srcIdx-2].GxGx + (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + (float)pSrcGxy[srcIdx+2].GxGx +(float)pSrcGxy[srcIdx+3].GxGx +
-	(float)pSrcGxy[srcIdxBottomRow1 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGx +
-	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGx +
-  (float)pSrcGxy[srcIdxBottomRow3 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGx;
+    float gx2 = 0, gy2 = 0, gxy2 = 0;
+    float traceA =0, detA =0, Mc =0;
+    ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
+    //Prev Row3 +Prev Row2 +Prev Row1 + Current Row + Next Row1+ Next Row2++ Next Row3 sum of gx2, gxy2, gy2
+    int srcIdxTopRow1, srcIdxBottomRow1,srcIdxBottomRow2,srcIdxTopRow2,srcIdxTopRow3, srcIdxBottomRow3;
+    srcIdxTopRow3 = srcIdx - (3*srcGxyStrideInBytes);
+    srcIdxTopRow2 = srcIdx - (2*srcGxyStrideInBytes);
+    srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
+    srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
+    srcIdxBottomRow2 = srcIdx + (2*srcGxyStrideInBytes);
+    srcIdxBottomRow3 = srcIdx + (3*srcGxyStrideInBytes);
 
-	gxy2 =
-  (float)pSrcGxy[srcIdxTopRow3 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow3].GxGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGy +
-	(float)pSrcGxy[srcIdxTopRow2 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow2].GxGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGy +
-	(float)pSrcGxy[srcIdxTopRow1 - 3].GxGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGy +
-	(float)pSrcGxy[srcIdx-3].GxGy +(float)pSrcGxy[srcIdx-2].GxGy + (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy + (float)pSrcGxy[srcIdx+2].GxGy +(float)pSrcGxy[srcIdx+3].GxGy +
-	(float)pSrcGxy[srcIdxBottomRow1 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGy +
-	(float)pSrcGxy[srcIdxBottomRow2 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGy +
-  (float)pSrcGxy[srcIdxBottomRow3 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGy;
+    gx2 =
+        (float)pSrcGxy[srcIdxTopRow3 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow3].GxGx +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGx +
+        (float)pSrcGxy[srcIdxTopRow2 - 3].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow2].GxGx +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGx + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGx +
+        (float)pSrcGxy[srcIdxTopRow1 - 3].GxGx +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGx + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGx +
+        (float)pSrcGxy[srcIdx-3].GxGx +(float)pSrcGxy[srcIdx-2].GxGx + (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx + (float)pSrcGxy[srcIdx+2].GxGx +(float)pSrcGxy[srcIdx+3].GxGx +
+        (float)pSrcGxy[srcIdxBottomRow1 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGx +
+        (float)pSrcGxy[srcIdxBottomRow2 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGx +
+        (float)pSrcGxy[srcIdxBottomRow3 -3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow3].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGx + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGx;
 
-	gy2 =
-  (float)pSrcGxy[srcIdxTopRow3 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow3].GyGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GyGy +
-	(float)pSrcGxy[srcIdxTopRow2 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow2].GyGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GyGy +
-	(float)pSrcGxy[srcIdxTopRow1 - 3].GyGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GyGy +
-	(float)pSrcGxy[srcIdx-3].GyGy +(float)pSrcGxy[srcIdx-2].GyGy + (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy + (float)pSrcGxy[srcIdx+2].GyGy +(float)pSrcGxy[srcIdx+3].GyGy +
-	(float)pSrcGxy[srcIdxBottomRow1 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GyGy +
-	(float)pSrcGxy[srcIdxBottomRow2 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GyGy +
-  (float)pSrcGxy[srcIdxBottomRow3 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GyGy;
+    gxy2 =
+        (float)pSrcGxy[srcIdxTopRow3 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow3].GxGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GxGy +
+        (float)pSrcGxy[srcIdxTopRow2 - 3].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow2].GxGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GxGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GxGy +
+        (float)pSrcGxy[srcIdxTopRow1 - 3].GxGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GxGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GxGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GxGy +
+        (float)pSrcGxy[srcIdx-3].GxGy +(float)pSrcGxy[srcIdx-2].GxGy + (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy + (float)pSrcGxy[srcIdx+2].GxGy +(float)pSrcGxy[srcIdx+3].GxGy +
+        (float)pSrcGxy[srcIdxBottomRow1 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GxGy +
+        (float)pSrcGxy[srcIdxBottomRow2 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GxGy +
+        (float)pSrcGxy[srcIdxBottomRow3 -3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow3].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GxGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GxGy;
 
-	traceA = gx2 + gy2;
-	detA = (gx2 * gy2) - (gxy2 * gxy2);
-	Mc = detA - (sensitivity * traceA * traceA);
-	Mc /= normalization_factor;
-	if(Mc > strength_threshold) {
-		pDstVc[dstIdx] = (float)Mc;
-	}
-	else {
-		pDstVc[dstIdx] = (float)0;
-	}
+    gy2 =
+        (float)pSrcGxy[srcIdxTopRow3 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow3].GyGy +(float)pSrcGxy[srcIdxTopRow3 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow3 + 3].GyGy +
+        (float)pSrcGxy[srcIdxTopRow2 - 3].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow2].GyGy +(float)pSrcGxy[srcIdxTopRow2 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 2].GyGy + (float)pSrcGxy[srcIdxTopRow2 + 3].GyGy +
+        (float)pSrcGxy[srcIdxTopRow1 - 3].GyGy +(float)pSrcGxy[srcIdxTopRow1 - 2].GyGy + (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 2].GyGy +(float)pSrcGxy[srcIdxTopRow1 + 3].GyGy +
+        (float)pSrcGxy[srcIdx-3].GyGy +(float)pSrcGxy[srcIdx-2].GyGy + (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy + (float)pSrcGxy[srcIdx+2].GyGy +(float)pSrcGxy[srcIdx+3].GyGy +
+        (float)pSrcGxy[srcIdxBottomRow1 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 3].GyGy +
+        (float)pSrcGxy[srcIdxBottomRow2 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow2 + 3].GyGy +
+        (float)pSrcGxy[srcIdxBottomRow3 -3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow3].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 1].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 2].GyGy + (float)pSrcGxy[srcIdxBottomRow3 + 3].GyGy;
+
+    traceA = gx2 + gy2;
+    detA = (gx2 * gy2) - (gxy2 * gxy2);
+    Mc = detA - (sensitivity * traceA * traceA);
+    Mc /= normalization_factor;
+    if(Mc > strength_threshold) {
+        pDstVc[dstIdx] = (float)Mc;
+    }
+    else {
+        pDstVc[dstIdx] = (float)0;
+    }
 }
 int HipExec_HarrisScore_HVC_HG3_7x7(
     hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -906,7 +1413,7 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
     vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
     vx_float32 sensitivity, vx_float32 strength_threshold,
     vx_float32 normalization_factor
-	) {
+    ) {
     int localThreads_x = 16, localThreads_y = 16;
     int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
 
@@ -919,24 +1426,6 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
                     (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     sensitivity, strength_threshold,normalization_factor );
 
-/* Printing Outputs for verification */
-    /*
-	float *pDstVc_;
-    pDstVc_ = (float *)malloc(dstWidth * dstHeight * sizeof(float));
-    hipError_t status = hipMemcpyDtoH(pDstVc_, pDstVc, dstWidth * dstHeight * sizeof(float));
-    if (status != hipSuccess)
-      printf("Copy mem dev to host failed\n");
-    for (int j = 3; j < dstHeight-3 ; j++)
-    {
-      for (int i = 3; i < dstWidth-3; i++)
-      {
-        int idx = j*(dstVcStrideInBytes/sizeof(float)) + i;
-        printf("\n <row, col>: <%d,%d>", j,i);
-        printf(" \t Mc: <%f>",pDstVc_[idx]);
-      }
-    }
-    hipFree(pDstVc_);
-	*/
     return VX_SUCCESS;
 }
 
@@ -952,172 +1441,14 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
 
 
 
-// ----------------------------------------------------------------------------
-// VxCannyEdgeDetector kernels for hip backend
-// ----------------------------------------------------------------------------
 
-__global__ void __attribute__((visibility("default")))
-Hip_CannySobel_U16_U8_3x3_L1NORM(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned short int *pDstImage, unsigned int dstImageStrideInBytes,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
-    const short int *gx, const short int *gy
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    int dstIdx =  y*(dstImageStrideInBytes>>1) + x;
-    int srcIdx =  y*(srcImageStrideInBytes) + x;
-    if ((y >= dstHeight - 1) || (y <= 0)) {
-      pDstImage[dstIdx] = (unsigned short int)0;
-      return;
-    }
-    int srcIdxTopRow, srcIdxBottomRow;
-    srcIdxTopRow = srcIdx - srcImageStrideInBytes;
-    srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
-    short int sum1 = 0;
-    sum1 += (gx[4] * (short int)*(pSrcImage + srcIdx) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow) + gx[7] * (short int)*(pSrcImage + srcIdxBottomRow));
-    if (x != 0)
-      sum1 += (gx[3] * (short int)*(pSrcImage + srcIdx - 1) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (short int)*(pSrcImage + srcIdxBottomRow - 1));
-    if (x != (dstWidth - 1))
-      sum1 += (gx[5] * (short int)*(pSrcImage + srcIdx + 1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (short int)*(pSrcImage + srcIdxBottomRow + 1));
-    short int sum2 = 0;
-    sum2 += (gy[4] * (short int)*(pSrcImage + srcIdx) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow) + gy[7] * (short int)*(pSrcImage + srcIdxBottomRow));
-    if (x != 0)
-      sum2 += (gy[3] * (short int)*(pSrcImage + srcIdx - 1) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (short int)*(pSrcImage + srcIdxBottomRow - 1));
-    if (x != (dstWidth - 1))
-      sum2 += (gy[5] * (short int)*(pSrcImage + srcIdx + 1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (short int)*(pSrcImage + srcIdxBottomRow + 1));
-    sum2 = ~sum2 + 1;
-    unsigned short int tmp = abs(sum1) + abs(sum2);
-    tmp <<= 2;
-    tmp |= (FastAtan2_Canny(sum1, sum2) & 3);
-    pDstImage[dstIdx] = tmp;
-}
-int HipExec_CannySobel_U16_U8_3x3_L1NORM(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
 
-    // printf("\nPrinting source before first Canny:");
-    // unsigned char *pHostSrcImage = (unsigned char *) calloc(dstWidth * dstHeight, sizeof(unsigned char));
-    // hipMemcpy(pHostSrcImage, pHipSrcImage, dstWidth * dstHeight * sizeof(unsigned char), hipMemcpyDeviceToHost);
 
-    // for (int i = 0; i < dstHeight; i++)
-    // {
-    //   printf("\n");
-    //   for (int j = 0; j < dstWidth; j++)
-    //   {
-    //     printf("%d\t", pHostSrcImage[i * srcImageStrideInBytes + j]);
-    //   }
-    // }
-    // free(pHostSrcImage);
 
-    short int gx[9] = {-1,0,1,-2,0,2,-1,0,1};
-    short int gy[9] = {-1,-2,-1,0,0,0,1,2,1};
-    short int *hipGx, *hipGy;
-    hipMalloc(&hipGx, 144);
-    hipMalloc(&hipGy, 144);
-    hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
-    hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
 
-	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_3x3_L1NORM,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned short int *)pHipDstImage, dstImageStrideInBytes,
-                    (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                    (const short int *)hipGx, (const short int *)hipGy);
-    hipFree(&hipGx);
-    hipFree(&hipGy);
 
-	// printf("\nPrinting after first Canny:");
-    // vx_uint32 dstride = dstImageStrideInBytes>>1;
-    // int *pHostDstImage = (int *) calloc(dstWidth * dstHeight, sizeof(int));
-    // short int *pHostDstImageShort;
-    // pHostDstImageShort = (short int *)pHostDstImage;
-    // hipMemcpy(pHostDstImageShort, pHipDstImage, dstWidth * dstHeight * sizeof(int), hipMemcpyDeviceToHost);
 
-    // for (int i = 0; i < dstHeight; i++)
-    // {
-    //   printf("\n");
-    //   for (int j = 0; j < dstWidth; j++)
-    //   {
-    //     printf("%d\t", pHostDstImageShort[i * dstride + j]);
-    //   }
-    // }
-    // free(pHostDstImage);
-
-    return VX_SUCCESS;
-}
-
-__global__ void __attribute__((visibility("default")))
-Hip_CannySobel_U16_U8_3x3_L2NORM(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned short int *pDstImage, unsigned int dstImageStrideInBytes,
-    const unsigned char *pSrcImage, unsigned int srcImageStrideInBytes,
-    const short int *gx, const short int *gy
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    int dstIdx =  y*(dstImageStrideInBytes>>1) + x;
-    int srcIdx =  y*(srcImageStrideInBytes) + x;
-    if ((y >= dstHeight - 1) || (y <= 0)) {
-      pDstImage[dstIdx] = (unsigned short int)0;
-      return;
-    }
-    int srcIdxTopRow, srcIdxBottomRow;
-    srcIdxTopRow = srcIdx - srcImageStrideInBytes;
-    srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
-    short int sum1 = 0;
-    sum1 += (gx[4] * (short int)*(pSrcImage + srcIdx) + gx[1] * (short int)*(pSrcImage + srcIdxTopRow) + gx[7] * (short int)*(pSrcImage + srcIdxBottomRow));
-    if (x != 0)
-      sum1 += (gx[3] * (short int)*(pSrcImage + srcIdx - 1) + gx[0] * (short int)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (short int)*(pSrcImage + srcIdxBottomRow - 1));
-    if (x != (dstWidth - 1))
-      sum1 += (gx[5] * (short int)*(pSrcImage + srcIdx + 1) + gx[2] * (short int)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (short int)*(pSrcImage + srcIdxBottomRow + 1));
-    short int sum2 = 0;
-    sum2 += (gy[4] * (short int)*(pSrcImage + srcIdx) + gy[1] * (short int)*(pSrcImage + srcIdxTopRow) + gy[7] * (short int)*(pSrcImage + srcIdxBottomRow));
-    if (x != 0)
-      sum2 += (gy[3] * (short int)*(pSrcImage + srcIdx - 1) + gy[0] * (short int)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (short int)*(pSrcImage + srcIdxBottomRow - 1));
-    if (x != (dstWidth - 1))
-      sum2 += (gy[5] * (short int)*(pSrcImage + srcIdx + 1) + gy[2] * (short int)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (short int)*(pSrcImage + srcIdxBottomRow + 1));
-    sum2 = ~sum2 + 1;
-    unsigned short int tmp = (vx_int16)sqrt((sum1*sum1) + (sum2*sum2));
-    tmp <<= 2;
-    tmp |= (FastAtan2_Canny(sum1, sum2) & 3);
-    pDstImage[dstIdx] = tmp;
-}
-int HipExec_CannySobel_U16_U8_3x3_L2NORM(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-
-    short int gx[9] = {-1,0,1,-2,0,2,-1,0,1};
-    short int gy[9] = {-1,-2,-1,0,0,0,1,2,1};
-    short int *hipGx, *hipGy;
-    hipMalloc(&hipGx, 144);
-    hipMalloc(&hipGy, 144);
-    hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
-    hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
-
-	hipLaunchKernelGGL(Hip_CannySobel_U16_U8_3x3_L2NORM,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned short int *)pHipDstImage, dstImageStrideInBytes,
-                    (const unsigned char *)pHipSrcImage, srcImageStrideInBytes,
-                    (const short int *)hipGx, (const short int *)hipGy);
-    hipFree(&hipGx);
-    hipFree(&hipGy);
-
-    return VX_SUCCESS;
-}
+// VxCannyEdgeDetector OLD kernels
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySobel_U16_U8_5x5_L1NORM(
@@ -1417,149 +1748,27 @@ int HipExec_CannySobel_U16_U8_7x7_L2NORM(
     return VX_SUCCESS;
 }
 
-__global__ void __attribute__((visibility("default")))
-Hip_CannySuppThreshold_U8XY_U16_3x3(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    unsigned short int *xyStack,
-    const unsigned short int *pSrcImage, unsigned int srcImageStrideInBytes,
-    const unsigned short int hyst_lower, const unsigned short int hyst_upper
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    int dstIdx =  y*(dstImageStrideInBytes) + x;
-    if ((y <= 0) || (y >= dstHeight - 1) || (x <= 0) || (x >= dstWidth - 1)) {
-      pDstImage[dstIdx] = (unsigned char)0;
-      return;
-    }
-    int srcIdx =  y*(srcImageStrideInBytes>>1) + x;
-    int xyStackStride = dstWidth * 2;
-    int xyStackIdx = (y * xyStackStride) + (x * 2);
-    static const int n_offset[4][2][2] = {
-      {{-1, 0}, {1, 0}},
-      {{1, -1}, {-1, 1}},
-      {{0, -1}, {0, 1}},
-      {{-1, -1}, {1, 1}}
-    };
-    const unsigned short int *pLocSrc = pSrcImage + srcIdx;
-    unsigned short int mag = (pLocSrc[0] >> 2);
-    unsigned short int ang = pLocSrc[0] & 3;
-    int offset0 = n_offset[ang][0][1] * (srcImageStrideInBytes>>1) + n_offset[ang][0][0];
-		int offset1 = n_offset[ang][1][1] * (srcImageStrideInBytes>>1) + n_offset[ang][1][0];
-    unsigned short int edge = ((mag >(pLocSrc[offset0] >> 2)) && (mag >(pLocSrc[offset1] >> 2))) ? mag : 0;
-    if (edge > hyst_upper) {
-		pDstImage[dstIdx] = (unsigned char)255;
-		xyStack[xyStackIdx] = x;
-		xyStack[xyStackIdx + 1] = y;
-	}
-	else if (edge <= hyst_lower) {
-		pDstImage[dstIdx] = (unsigned char)0;
-		xyStack[xyStackIdx] = 0;
-		xyStack[xyStackIdx + 1] = 0;
-		}
-	else {
-      pDstImage[dstIdx] = (unsigned char)127;
-      xyStack[xyStackIdx] = 0;
-      xyStack[xyStackIdx + 1] = 0;
-    }
-}
-int HipExec_CannySuppThreshold_U8XY_U16_3x3(
-    hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    vx_uint16 hyst_lower, vx_uint16 hyst_upper
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
 
-    hipLaunchKernelGGL(Hip_CannySuppThreshold_U8XY_U16_3x3,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                    (unsigned short int *) xyStack,
-                    (const unsigned short int *)pHipSrcImage, srcImageStrideInBytes,
-                    (const unsigned short int)hyst_lower, (const unsigned short int)hyst_upper);
-    *pxyStackTop = (vx_uint32)(dstWidth * dstHeight - 1);
 
-    // printf("\nPrinting after second Canny:");
-    // vx_uint32 dstride = dstImageStrideInBytes;
-    // unsigned char *pHostDstImage = (unsigned char *) calloc(dstWidth * dstHeight, sizeof(unsigned char));
-    // hipMemcpy(pHostDstImage, pHipDstImage, dstWidth * dstHeight * sizeof(unsigned char), hipMemcpyDeviceToHost);
-    // for (int i = 0; i < dstHeight; i++)
-    // {
-    //   printf("\n");
-    //   for (int j = 0; j < dstWidth; j++)
-    //   {
-    //     printf("%d\t", pHostDstImage[i * dstride + j]);
-    //   }
-    // }
-    // free(pHostDstImage);
 
-    // printf("\nPrinting stack after second Canny:");
-    // unsigned short int *xyStackHost = (unsigned short int *) calloc(dstWidth * dstHeight * 2, sizeof(unsigned short int));
-    // hipMemcpy(xyStackHost, xyStack, dstWidth * dstHeight * 2 * sizeof(unsigned short int), hipMemcpyDeviceToHost);
-    // for (int i = 0; i < dstHeight; i++)
-    // {
-    //   printf("\n");
-    //   for (int j = 0; j < dstWidth; j++)
-    //   {
-    //     printf("%d,%d\t", xyStackHost[i*dstWidth*2 + j*2], xyStackHost[i*dstWidth*2 + j*2 + 1]);
-    //   }
-    // }
-    // free(xyStackHost);
-    return VX_SUCCESS;
-}
 
-__global__ void __attribute__((visibility("default")))
-Hip_CannySuppThreshold_U8XY_U16_7x7(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    unsigned short int *xyStack,
-    const unsigned short int *pSrcImage, unsigned int srcImageStrideInBytes,
-    const unsigned short int hyst_lower, const unsigned short int hyst_upper
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >= dstWidth) || (y >= dstHeight)) return;
-    int dstIdx =  y*(dstImageStrideInBytes) + x;
-    if ((y <= 0) || (y >= dstHeight - 1) || (x <= 0) || (x >= dstWidth - 1)) {
-      pDstImage[dstIdx] = (unsigned char)0;
-      return;
-    }
-    int srcIdx =  y*(srcImageStrideInBytes>>1) + x;
-    int xyStackStride = dstWidth * 2;
-    int xyStackIdx = (y * xyStackStride) + (x * 2);
-    static const int n_offset[4][2][2] = {
-      {{-1, 0}, {1, 0}},
-      {{1, -1}, {-1, 1}},
-      {{0, -1}, {0, 1}},
-      {{-1, -1}, {1, 1}}
-    };
-    const unsigned short int *pLocSrc = pSrcImage + srcIdx;
-    unsigned short int mag = (pLocSrc[0] >> 2);
-    unsigned short int ang = pLocSrc[0] & 3;
-    int offset0 = n_offset[ang][0][1] * (srcImageStrideInBytes>>1) + n_offset[ang][0][0];
-	int offset1 = n_offset[ang][1][1] * (srcImageStrideInBytes>>1) + n_offset[ang][1][0];
-    unsigned short int edge = ((mag >(pLocSrc[offset0] >> 2)) && (mag >(pLocSrc[offset1] >> 2))) ? mag : 0;
-    if (edge > hyst_upper){
-      pDstImage[dstIdx] = (unsigned char)255;
-      xyStack[xyStackIdx] = x;
-      xyStack[xyStackIdx + 1] = y;
-	}
-	else if (edge <= hyst_lower) {
-		pDstImage[dstIdx] = (unsigned char)0;
-		xyStack[xyStackIdx] = 0;
-      	xyStack[xyStackIdx + 1] = 0;
-	}
-	else {
-      pDstImage[dstIdx] = (unsigned char)127;
-      xyStack[xyStackIdx] = 0;
-      xyStack[xyStackIdx + 1] = 0;
-    }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// VxCannyEdgeDetector OLD + UNUSED kernels
+
 int HipExec_CannySuppThreshold_U8XY_U16_7x7(
     hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
     vx_uint32 dstWidth, vx_uint32 dstHeight,
@@ -1567,20 +1776,7 @@ int HipExec_CannySuppThreshold_U8XY_U16_7x7(
     const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     vx_uint16 hyst_lower, vx_uint16 hyst_upper
     ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-
-    hipLaunchKernelGGL(Hip_CannySuppThreshold_U8XY_U16_7x7,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                    (unsigned short int *) xyStack,
-                    (const unsigned short int *)pHipSrcImage, srcImageStrideInBytes,
-                    (const unsigned short int)hyst_lower, (const unsigned short int)hyst_upper);
-    *pxyStackTop = (vx_uint32)(dstWidth * dstHeight - 1);
-
-    return VX_SUCCESS;
+    return VX_ERROR_NOT_IMPLEMENTED;
 }
 
 int HipExec_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM(
@@ -1642,71 +1838,3 @@ int HipExec_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(
     ) {
   return VX_ERROR_NOT_IMPLEMENTED;
 }
-
-__global__ void __attribute__((visibility("default")))
-Hip_CannyEdgeTrace_U8_U8XY(
-    vx_uint32 dstWidth, vx_uint32 dstHeight,
-    unsigned char *pDstImage, unsigned int dstImageStrideInBytes,
-    unsigned short int *xyStack
-	) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((y <= 0) || (y >= dstHeight - 1) || (x <= 0) || (x >= dstWidth - 1)) return;
-    int dstIdx =  y*(dstImageStrideInBytes) + x;
-    int xyStackStride = dstWidth * 2;
-    int xyStackIdx = (y * xyStackStride) + (x * 2);
-    if ((xyStack[xyStackIdx] == 0) && (xyStack[xyStackIdx + 1] == 0))  return;
-    else {
-      unsigned short int xLoc = xyStack[xyStackIdx];
-      unsigned short int yLoc = xyStack[xyStackIdx + 1];
-      static const ago_coord2d_short_t dir_offsets[8] = {
-        {(vx_int16)(-1), (vx_int16)(-1)},
-        {(vx_int16)0, (vx_int16)(-1)},
-        {(vx_int16)1, (vx_int16)(-1)},
-        {(vx_int16)(-1), (vx_int16)0},
-        {(vx_int16)1, (vx_int16)0},
-        {(vx_int16)(-1), (vx_int16)1},
-        {(vx_int16)0, (vx_int16)1},
-        {(vx_int16)1, (vx_int16)1}
-      };
-      for (int i = 0; i < 8; i++) {
-        const ago_coord2d_short_t offs = dir_offsets[i];
-        unsigned short int x1 = x + offs.x;
-		unsigned short int y1 = y + offs.y;
-        int dstIdxNeighbor =  y1*(dstImageStrideInBytes) + x1;
-        if (pDstImage[dstIdxNeighbor] == 127) {
-          pDstImage[dstIdxNeighbor] = (unsigned char)255;
-          int xyStackIdxNeighbor = (y1 * xyStackStride) + (x1 * 2);
-          xyStack[xyStackIdxNeighbor] = x1;
-          xyStack[xyStackIdxNeighbor + 1] = y1;
-        }
-      }
-    }
-    if (pDstImage[dstIdx] == 127)
-      pDstImage[dstIdx] = (unsigned char)0;
-}
-int HipExec_CannyEdgeTrace_U8_U8XY(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 xyStackTop
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-
-    hipLaunchKernelGGL(Hip_CannyEdgeTrace_U8_U8XY,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream, dstWidth, dstHeight,
-                    (unsigned char *)pHipDstImage, dstImageStrideInBytes,
-                    (unsigned short int *) xyStack);
-    return VX_SUCCESS;
-}
-
-// ----------------------------------------------------------------------------
-// VxNonMaxSupp kernels for hip backend
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// VxOpticalFlow kernels for hip backend
-// ----------------------------------------------------------------------------
-

@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -62,7 +62,7 @@ int HipExec_And_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U8_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -104,7 +104,7 @@ int HipExec_And_U8_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U8_U8U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -146,7 +146,7 @@ int HipExec_And_U8_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U8_U1U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -189,7 +189,7 @@ int HipExec_And_U8_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U8_U1U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -231,7 +231,7 @@ int HipExec_And_U1_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U1_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -273,7 +273,7 @@ int HipExec_And_U1_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U1_U8U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -315,7 +315,7 @@ int HipExec_And_U1_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U1_U1U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -356,7 +356,7 @@ int HipExec_And_U1_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_And_U1_U1U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -401,7 +401,7 @@ int HipExec_Or_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U8_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -443,7 +443,7 @@ int HipExec_Or_U8_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U8_U8U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -485,7 +485,7 @@ int HipExec_Or_U8_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U8_U1U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -528,7 +528,7 @@ int HipExec_Or_U8_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U8_U1U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -570,7 +570,7 @@ int HipExec_Or_U1_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U1_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -612,7 +612,7 @@ int HipExec_Or_U1_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U1_U8U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -654,7 +654,7 @@ int HipExec_Or_U1_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U1_U1U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -695,7 +695,7 @@ int HipExec_Or_U1_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeig
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Or_U1_U1U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -740,7 +740,7 @@ int HipExec_Xor_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U8_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -782,7 +782,7 @@ int HipExec_Xor_U8_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U8_U8U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -824,7 +824,7 @@ int HipExec_Xor_U8_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U8_U1U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -867,7 +867,7 @@ int HipExec_Xor_U8_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U8_U1U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -909,7 +909,7 @@ int HipExec_Xor_U1_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U1_U8U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -951,7 +951,7 @@ int HipExec_Xor_U1_U8U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U1_U8U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -993,7 +993,7 @@ int HipExec_Xor_U1_U1U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U1_U1U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
@@ -1034,23 +1034,11 @@ int HipExec_Xor_U1_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHei
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Xor_U1_U1U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes, (const uchar *)pHipSrcImage2, srcImage2StrideInBytes);
 
     return VX_SUCCESS;
 }
-
-// ----------------------------------------------------------------------------
-// VxNand kernels for hip backend
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// VxNor kernels for hip backend
-// ----------------------------------------------------------------------------
-
-// ----------------------------------------------------------------------------
-// VxXnor kernels for hip backend
-// ----------------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 // VxNot kernels for hip backend
@@ -1087,7 +1075,7 @@ int HipExec_Not_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeigh
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Not_U8_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
 
     return VX_SUCCESS;
@@ -1125,7 +1113,7 @@ int HipExec_Not_U8_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeigh
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Not_U8_U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
 
     return VX_SUCCESS;
@@ -1163,7 +1151,7 @@ int HipExec_Not_U1_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeigh
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Not_U1_U8, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
 
     return VX_SUCCESS;
@@ -1200,7 +1188,7 @@ int HipExec_Not_U1_U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeigh
     int globalThreads_y = dstHeight;
 
     hipLaunchKernelGGL(Hip_Not_U1_U1, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes, 
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage1, srcImage1StrideInBytes);
 
     return VX_SUCCESS;

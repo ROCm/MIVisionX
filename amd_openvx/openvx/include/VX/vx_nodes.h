@@ -1,6 +1,5 @@
 /*
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+ * Copyright (c) 2012-2019 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,8 +111,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxMagnitudeNode(vx_graph graph, vx_image grad_x
 
 /*! \brief [Graph] Creates a Scale Image Node.
  * \param [in] graph The reference to the graph.
- * \param [in] src The source image of type <tt>\ref VX_DF_IMAGE_U8</tt>.
- * \param [out] dst The destination image of type <tt>\ref VX_DF_IMAGE_U8</tt>.
+ * \param [in] src The source image of type <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt>.
+ * \param [out] dst The destination image of type <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt>. The output type must be the same as that of the input image.
  * \param [in] type The interpolation type to use. \see vx_interpolation_type_e.
  * \ingroup group_vision_function_scale_image
  * \note The destination image must have a defined size and format. The border modes
@@ -167,7 +166,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxAbsDiffNode(vx_graph graph, vx_image in1, vx_
 
 /*! \brief [Graph] Creates a mean value and optionally, a standard deviation node.
  * \param [in] graph The reference to the graph.
- * \param [in] input The input image. <tt>\ref VX_DF_IMAGE_U8</tt> is supported.
+ * \param [in] input The input image. <tt>\ref VX_DF_IMAGE_U8</tt> and <tt>\ref VX_DF_IMAGE_U1</tt> are supported.
  * \param [out] mean The <tt>\ref VX_TYPE_FLOAT32</tt> average pixel value.
  * \param [out] stddev [optional] The <tt>\ref VX_TYPE_FLOAT32</tt> standard deviation of the pixel values.
  * \ingroup group_vision_function_meanstddev
@@ -184,8 +183,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxMeanStdDevNode(vx_graph graph, vx_image input
  * the operation. The <tt>\ref VX_THRESHOLD_INPUT_FORMAT</tt> must be the same as the input image format and
  * the <tt>\ref VX_THRESHOLD_OUTPUT_FORMAT</tt> must be the same as the output image format.
  * \param [out] output The output image, that will contain as pixel value
- * true and false values defined by \p thresh. Only images with format
- * <tt>\ref VX_DF_IMAGE_U8</tt> are supported. The dimensions are the same as the input image.
+ * true and false values defined by \p thresh. Images with format
+ * <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> are supported. The dimensions are the same as the input image.
  * \ingroup group_vision_function_threshold
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation
@@ -196,9 +195,9 @@ VX_API_ENTRY vx_node VX_API_CALL vxThresholdNode(vx_graph graph, vx_image input,
 /*! \brief [Graph] Creates a Non-Maxima Suppression node.
  * \param [in] graph The reference to the graph.
  * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt> format.
- * \param [in] mask [optional] Constrict suppression to a ROI. The mask image is of type <tt>\ref VX_DF_IMAGE_U8</tt> and must be the same dimensions as the input image.
+ * \param [in] mask [optional] Constrict suppression to a ROI. The mask image is of type <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> and must have the same dimensions as the input image.
  * \param [in] win_size The size of window over which to perform the localized non-maxima suppression. Must be odd, and less than or equal to the smallest dimension of the input image.
- * \param [out] output The output image, of the same type and size as the input, that has been non-maxima suppressed. 
+ * \param [out] output The output image, of the same type and size as the input, that has been non-maxima suppressed.
  * \ingroup group_vision_function_nms
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -217,8 +216,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxIntegralImageNode(vx_graph graph, vx_image in
 
 /*! \brief [Graph] Creates an Erosion Image Node.
  * \param [in] graph The reference to the graph.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format, which must have the same dimensions as the input image.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which must have the same dimensions and type as the input image.
  * \ingroup group_vision_function_erode_image
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -227,8 +226,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxErode3x3Node(vx_graph graph, vx_image input, 
 
 /*! \brief [Graph] Creates a Dilation Image Node.
  * \param [in] graph The reference to the graph.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format, which must have the same dimensions as the input image.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which must have the same dimensions and type as the input image.
  * \ingroup group_vision_function_dilate_image
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -237,8 +236,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxDilate3x3Node(vx_graph graph, vx_image input,
 
 /*! \brief [Graph] Creates a Median Image Node.
  * \param [in] graph The reference to the graph.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format, which must have the same dimensions as the input image.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which must have the same dimensions and type as the input image.
  * \ingroup group_vision_function_median_image
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -268,10 +267,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxGaussian3x3Node(vx_graph graph, vx_image inpu
 /*! \brief [Graph] Creates a Non-linear Filter Node.
  * \param [in] graph The reference to the graph.
  * \param [in] function The non-linear filter function. See <tt>\ref vx_non_linear_filter_e</tt>.
- * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> format.
+ * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format.
  * \param [in] mask The mask to be applied to the Non-linear function. <tt>\ref VX_MATRIX_ORIGIN</tt> attribute is used
  *  to place the mask appropriately when computing the resulting image. See <tt>\ref vxCreateMatrixFromPattern</tt>.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format, which must have the same dimensions as the input image.
+ * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> format, which must have the same dimensions and type as the input image.
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
  * \ingroup group_vision_function_nonlinear_filter
@@ -327,37 +326,17 @@ VX_API_ENTRY vx_node VX_API_CALL vxLaplacianPyramidNode(vx_graph graph, vx_image
 VX_API_ENTRY vx_node VX_API_CALL vxLaplacianReconstructNode(vx_graph graph, vx_pyramid laplacian, vx_image input,
                                        vx_image output);
 
-/*! \brief [Graph] Creates an accumulate node.
+/*! \brief [Graph] Creates a image weighted average node.
  * \param [in] graph The reference to the graph.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
- * \param [in,out] accum The accumulation image in <tt>\ref VX_DF_IMAGE_S16</tt>, which must have the same dimensions as the input image.
- * \ingroup group_vision_function_accumulate
- * \return <tt>\ref vx_node</tt>.
- * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
- */
-VX_API_ENTRY vx_node VX_API_CALL vxAccumulateImageNode(vx_graph graph, vx_image input, vx_image accum);
-
-/*! \brief [Graph] Creates a weighted accumulate node.
- * \param [in] graph The reference to the graph.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
+ * \param [in] img1 The first input <tt>\ref VX_DF_IMAGE_U8</tt> image.
  * \param [in] alpha The input <tt>\ref VX_TYPE_FLOAT32</tt> scalar value with a value in the range of \f$ 0.0 \le \alpha \le 1.0 \f$.
- * \param [in,out] accum The <tt>\ref VX_DF_IMAGE_U8</tt> accumulation image, which must have the same dimensions as the input image.
- * \ingroup group_vision_function_accumulate_weighted
+ * \param [in] img2 The second <tt>\ref VX_DF_IMAGE_U8</tt> image, which must have the same dimensions as the img1.
+ * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> image, which must have the same dimensions as the img1.
+ * \ingroup group_vision_function_weighted_average
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
  */
-VX_API_ENTRY vx_node VX_API_CALL vxAccumulateWeightedImageNode(vx_graph graph, vx_image input, vx_scalar alpha, vx_image accum);
-
-/*! \brief [Graph] Creates an accumulate square node.
- * \param [in] graph The reference to the graph.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
- * \param [in] shift The input <tt>\ref VX_TYPE_UINT32</tt> with a value in the range of \f$ 0 \le shift \le 15 \f$.
- * \param [in,out] accum The accumulation image in <tt>\ref VX_DF_IMAGE_S16</tt>, which must have the same dimensions as the input image.
- * \ingroup group_vision_function_accumulate_square
- * \return <tt>\ref vx_node</tt>.
- * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
- */
-VX_API_ENTRY vx_node VX_API_CALL vxAccumulateSquareImageNode(vx_graph graph, vx_image input, vx_scalar shift, vx_image accum);
+VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
 
 /*! \brief [Graph] Creates a min,max,loc node.
  * \param [in] graph The reference to create the graph.
@@ -402,9 +381,9 @@ VX_API_ENTRY vx_node VX_API_CALL vxMaxNode(vx_graph graph, vx_image in1, vx_imag
 
 /*! \brief [Graph] Creates a bitwise AND node.
  * \param [in] graph The reference to the graph.
- * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> input image.
- * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> input image.
- * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> output image, which must have the same dimensions as the input images.
+ * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have the same dimensions and type as the input images.
  * \ingroup group_vision_function_and
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -413,9 +392,9 @@ VX_API_ENTRY vx_node VX_API_CALL vxAndNode(vx_graph graph, vx_image in1, vx_imag
 
 /*! \brief [Graph] Creates a bitwise INCLUSIVE OR node.
  * \param [in] graph The reference to the graph.
- * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> input image.
- * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> input image.
- * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> output image, which must have the same dimensions as the input images.
+ * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have the same dimensions and type as the input images.
  * \ingroup group_vision_function_or
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -424,9 +403,9 @@ VX_API_ENTRY vx_node VX_API_CALL vxOrNode(vx_graph graph, vx_image in1, vx_image
 
 /*! \brief [Graph] Creates a bitwise EXCLUSIVE OR node.
  * \param [in] graph The reference to the graph.
- * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> input image.
- * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> input image.
- * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> output image, which must have the same dimensions as the input images.
+ * \param [in] in1 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [in] in2 A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] out The <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have the same dimensions and type as the input images.
  * \ingroup group_vision_function_xor
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -435,8 +414,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxXorNode(vx_graph graph, vx_image in1, vx_imag
 
 /*! \brief [Graph] Creates a bitwise NOT node.
  * \param [in] graph The reference to the graph.
- * \param [in] input A <tt>\ref VX_DF_IMAGE_U8</tt> input image.
- * \param [out] output The <tt>\ref VX_DF_IMAGE_U8</tt> output image, which must have the same dimensions as the input image.
+ * \param [in] input A <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> input image.
+ * \param [out] output The <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> output image, which must have the same dimensions and type as the input image.
  * \ingroup group_vision_function_not
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -538,11 +517,12 @@ VX_API_ENTRY vx_node VX_API_CALL vxConvertDepthNode(vx_graph graph, vx_image inp
 /*! \brief [Graph] Creates a Canny Edge Detection Node.
  * \param [in] graph The reference to the graph.
  * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
- * \param [in] hyst The double threshold for hysteresis. The <tt>\ref VX_THRESHOLD_INPUT_FORMAT</tt> shall be either 
+ * \param [in] hyst The double threshold for hysteresis. The <tt>\ref VX_THRESHOLD_INPUT_FORMAT</tt> shall be either
  * <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt>. The <tt>\ref VX_THRESHOLD_OUTPUT_FORMAT</tt> is ignored.
  * \param [in] gradient_size The size of the Sobel filter window, must support at least 3, 5, and 7.
  * \param [in] norm_type A flag indicating the norm used to compute the gradient, <tt>\ref VX_NORM_L1</tt> or <tt>\ref VX_NORM_L2</tt>.
- * \param [out] output The output image in <tt>\ref VX_DF_IMAGE_U8</tt> format with values either 0 or 255.
+ * \param [out] output The binary output image in <tt>\ref VX_DF_IMAGE_U1</tt> or <tt>\ref VX_DF_IMAGE_U8</tt> format
+ * with values either 0 and 1 (<tt>VX_DF_IMAGE_U1</tt>), or 0 and 255 (<tt>VX_DF_IMAGE_U8</tt>).
  * \ingroup group_vision_function_canny
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>
@@ -553,11 +533,11 @@ VX_API_ENTRY vx_node VX_API_CALL vxCannyEdgeDetectorNode(vx_graph graph, vx_imag
 
 /*! \brief [Graph] Creates an Affine Warp Node.
  * \param [in] graph The reference to the graph.
- * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> image.
+ * \param [in] input The input <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> image.
  * \param [in] matrix The affine matrix. Must be 2x3 of type \ref VX_TYPE_FLOAT32.
  * \param [in] type The interpolation type from <tt>\ref vx_interpolation_type_e</tt>.
  * <tt>\ref VX_INTERPOLATION_AREA</tt> is not supported.
- * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> image and the same dimensions as the input image.
+ * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> image with the same dimensions and type as the input image.
  * \ingroup group_vision_function_warp_affine
  * \note The border modes <tt>\ref VX_NODE_BORDER</tt> value <tt>\ref VX_BORDER_UNDEFINED</tt> and
  * <tt>\ref VX_BORDER_CONSTANT</tt> are supported.
@@ -749,7 +729,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxLBPNode(vx_graph graph, vx_image in, vx_enum 
  * Each pixel votes for a specific cell histogram bin based on its gradient orientation.  The vote itself is the pixel's gradient magnitude.
  * \f[bins(c, n) = \sum\limits_{w=0}^{cell\_width} \sum\limits_{h=0}^{cell\_height} G_c(w,h) * 1[B_c(w, h, num\_bins) == n]\f]
  * where \f$B_c\f$ produces the histogram bin number based on the gradient orientation of the pixel at location (\f$w\f$, \f$h\f$) in cell \f$c\f$ based on
- * the \f$num\_bins\f$ and \f[1[B_c(w, h, num\_bins) == n]\f] is a delta-function with value 1 when \f$B_c(w, h, num\_bins) == n\f$ or 0 otherwise. 
+ * the \f$num\_bins\f$ and \f[1[B_c(w, h, num\_bins) == n]\f] is a delta-function with value 1 when \f$B_c(w, h, num\_bins) == n\f$ or 0 otherwise.
  * \param [in] graph The reference to the graph.
  * \param [in] input The input image of type <tt>\ref VX_DF_IMAGE_U8</tt>.
  * \param [in] cell_width The histogram cell width of type <tt>\ref VX_TYPE_INT32</tt>.
@@ -805,10 +785,10 @@ VX_API_ENTRY vx_node VX_API_CALL vxHOGCellsNode(vx_graph graph, vx_image input, 
 VX_API_ENTRY vx_node VX_API_CALL vxHOGFeaturesNode(vx_graph graph, vx_image input, vx_tensor magnitudes, vx_tensor bins, const vx_hog_t *params, vx_size hog_param_size, vx_tensor features);
 
 /*! \brief [Graph] Finds the Probabilistic Hough Lines detected in the input binary image, each line is stored in the output array as a set of points (x1, y1, x2, y2) .
- * \details Some implementations of the algorithm may have a random or non-deterministic element. If the target application is in a safety-critical environment this 
+ * \details Some implementations of the algorithm may have a random or non-deterministic element. If the target application is in a safety-critical environment this
  * should be borne in mind and steps taken in the implementation, the application or both to achieve the level of determinism required by the system design.
  * \param [in] graph graph handle
- * \param [in] input 8 bit, single channel binary source image
+ * \param [in] input A single channel binary source image of type <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt>.
  * \param [in] params parameters of the struct <tt>\ref vx_hough_lines_p_t</tt>
  * \param [out] lines_array lines_array contains array of lines, see <tt>\ref vx_line2d_t</tt> The order of lines in implementation dependent
  * \param [out] num_lines [optional] The total number of detected lines in image. Use a VX_TYPE_SIZE scalar
@@ -838,7 +818,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxBilateralFilterNode(vx_graph graph, vx_tensor
 /*! \brief [Graph] Performs element wise multiplications on element values in the input tensor data with a scale.
  * \param [in] graph The handle to the graph.
  * \param [in] input1 Input tensor data.  Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.  
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [in] input2 Input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1.
  * In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1,
  * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal.
@@ -858,11 +838,11 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMultiplyNode(vx_graph graph, vx_tensor 
 /*! \brief [Graph] Performs arithmetic addition on element values in the input tensor data.
  * \param [in] graph The handle to the graph.
  * \param [in] input1 Input tensor data.  Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.  
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [in] input2 Input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1.
  * In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1,
- * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal. 
- * The data type must match the data type of Input1. 
+ * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal.
+ * The data type must match the data type of Input1.
  * \param [in] policy A <tt>\ref vx_convert_policy_e</tt> enumeration.
  * \param [out] output The output tensor data with the same dimensions as the input tensor data.
  * \ingroup group_vision_function_tensor_add
@@ -875,11 +855,11 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorAddNode(vx_graph graph, vx_tensor input
 /*! \brief [Graph] Performs arithmetic subtraction on element values in the input tensor data.
  * \param [in] graph The handle to the graph.
  * \param [in] input1 Input tensor data.  Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.  
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [in] input2 Input tensor data. The dimensions and sizes of input2 match those of input1, unless the vx_tensor of one or more dimensions in input2 is 1.
  * In this case, those dimensions are treated as if this tensor was expanded to match the size of the corresponding dimension of input1,
- * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal. 
- * The data type must match the data type of Input1. 
+ * and data was duplicated on all terms in that dimension. After this expansion, the dimensions will be equal.
+ * The data type must match the data type of Input1.
  * \param [in] policy A <tt>\ref vx_convert_policy_e</tt> enumeration.
  * \param [out] output The output tensor data with the same dimensions as the input tensor data.
  * \ingroup group_vision_function_tensor_subtract
@@ -891,8 +871,8 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorSubtractNode(vx_graph graph, vx_tensor 
 
 /*! \brief [Graph] Performs LUT on element values in the input tensor data.
  * \param [in] graph The handle to the graph.
- * \param [in] input1 Input tensor data. Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8, 
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt>, with fixed_point_position 0. 
+ * \param [in] input1 Input tensor data. Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt>, with fixed_point_position 0.
  * \param [in] lut The look-up table to use, of type <tt>\ref vx_lut</tt>.
  * The elements of input1 are treated as unsigned integers to determine an index into the look-up table.
  * The data type of the items in the look-up table must match that of the output tensor.
@@ -908,7 +888,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorTableLookupNode(vx_graph graph, vx_tens
  * The node transpose the tensor according to a specified 2 indexes in the tensor (0-based indexing)
  * \param [in] graph The handle to the graph.
  * \param [in] input Input tensor data, Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt> with fixed_point_position 8,
- * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0. 
+ * and tensor data types <tt>\ref VX_TYPE_UINT8</tt> and <tt>\ref VX_TYPE_INT8</tt>, with fixed_point_position 0.
  * \param [out] output output tensor data,
  * \param [in] dimension1 Dimension index that is transposed with dim 2.
  * \param [in] dimension2 Dimension index that is transposed with dim 1.
@@ -925,7 +905,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorTransposeNode(vx_graph graph, vx_tensor
  * \param [in] policy A <tt>\ref VX_TYPE_ENUM</tt> of the <tt>\ref vx_convert_policy_e</tt> enumeration.
  * \param [in] norm A scalar containing a <tt>\ref VX_TYPE_FLOAT32</tt> of the normalization value.
  * \param [in] offset A scalar containing a <tt>\ref VX_TYPE_FLOAT32</tt> of the offset value subtracted before normalization.
- * \param [out] output The output tensor. Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt>. with fixed_point_position 8. 
+ * \param [out] output The output tensor. Implementations must support input tensor data type <tt>\ref VX_TYPE_INT16</tt>. with fixed_point_position 8.
  * And <tt>\ref VX_TYPE_UINT8</tt> with fixed_point_position 0.
  * \ingroup group_vision_function_tensor_convert_depth
  * \return <tt>\ref vx_node</tt>.
@@ -959,6 +939,32 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMatrixMultiplyNode(vx_graph graph, vx_t
  * \ingroup group_vision_function_copy
  */
 VX_API_ENTRY vx_node VX_API_CALL vxCopyNode(vx_graph graph, vx_reference input, vx_reference output);
+
+/*! \brief [Graph] Creates a weighted average node.
+ * \param [in] graph The reference to the graph.
+ * \param [in] img1 The first VX_DF_IMAGE_U8 image.
+ * \param [in] alpha The input VX_TYPE_FLOAT32 scalar value with a value in the range of 0.0 ≤ α ≤ 1.0 
+ * \param [in] img2 The second VX_DF_IMAGE_U8 image.
+ * \param [out] output The output VX_DF_IMAGE_U8 image, which must have the same dimensions as the input images.
+ * \ingroup group_vision_function_weighted_average
+ * \return <tt>\ref vx_node</tt>.
+ * \retval vx_node A node reference. Any possible errors preventing a successful creation
+ * should be checked using <tt>\ref vxGetStatus</tt>
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
+
+/*! \brief [Graph] Creates a non-linear filter node.
+ * \param [in] graph The reference to the graph.
+ * \param [in] function The non-linear filter function.
+ * \param [in] input The input image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format.
+ * \param [in] mask The mask to be applied to the Non-linear function. VX_MATRIX_ORIGIN attribute is used to place the mask appropriately when computing the resulting image. See vxCreateMatrixFromPattern.
+ * \param [out] output The output image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format, which must have the same dimensions and format as the input image.
+ * \ingroup group_vision_function_non_linear_filter
+ * \return <tt>\ref vx_node</tt>.
+ * \retval vx_node A node reference. Any possible errors preventing a successful creation
+ * should be checked using <tt>\ref vxGetStatus</tt>
+ */
+VX_API_ENTRY vx_node VX_API_CALL vxNonLinearFilterNode(vx_graph graph, vx_enum function, vx_image input, vx_matrix mask, vx_image output);
 
 #ifdef __cplusplus
 }

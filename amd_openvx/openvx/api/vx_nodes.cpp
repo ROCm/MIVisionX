@@ -729,3 +729,63 @@ VX_API_ENTRY vx_node VX_API_CALL vxCopyNode(vx_graph graph, vx_reference input, 
                                            dimof(params));
     return node;
 }
+
+VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output)
+{
+    vx_reference params[] = {
+            (vx_reference)img1,
+            (vx_reference)alpha,
+            (vx_reference)img2,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_WEIGHTED_AVERAGE,
+                                           params,
+                                           dimof(params));
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxNonLinearFilterNode(vx_graph graph, vx_enum function, vx_image input, vx_matrix mask, vx_image output)
+{
+    vx_scalar func = vxCreateScalar(vxGetContext((vx_reference)graph), VX_TYPE_ENUM, &function);
+    vx_reference params[] = {
+            (vx_reference)func,
+            (vx_reference)input,
+            (vx_reference)mask,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_NON_LINEAR_FILTER,
+                                           params,
+                                           dimof(params));
+    vxReleaseScalar(&func);
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxLaplacianPyramidNode(vx_graph graph, vx_image input, vx_pyramid laplacian, vx_image output)
+{
+    vx_reference params[] = {
+            (vx_reference)input,
+            (vx_reference)laplacian,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_LAPLACIAN_PYRAMID,
+                                           params,
+                                           dimof(params));
+    return node;
+}
+
+VX_API_ENTRY vx_node VX_API_CALL vxLaplacianReconstructNode(vx_graph graph, vx_pyramid laplacian, vx_image input, vx_image output)
+{
+    vx_reference params[] = {
+            (vx_reference)laplacian,
+            (vx_reference)input,
+            (vx_reference)output,
+    };
+    vx_node node = vxCreateNodeByStructure(graph,
+                                           VX_KERNEL_LAPLACIAN_RECONSTRUCT,
+                                           params,
+                                           dimof(params));
+    return node;
+}

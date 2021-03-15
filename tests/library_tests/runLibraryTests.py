@@ -106,75 +106,75 @@ with open(reportFilename, 'w') as f:
     f.write("--------\n")
     f.write("\n")
     # OpenVX Libraries
+    f.write("* OpenVX Library\n")
     if not openvx_lib:
         f.write("WARNING: OpenVX Library Not Built\n")
         print("WARNING: OpenVX Library Not Built\n")
         warning = 1
     else:
-        f.write("* OpenVX Library\n")
         write_formatted(openvx_lib, f)
     f.write("\n")
     # OpenVX VXU Libraries
+    f.write("* OpenVX VXU Library\n")
     if not vxu_lib:
         f.write("WARNING: OpenVX VXU Library Not Built\n")
         print("WARNING: OpenVX VXU Library Not Built\n")
         warning = 1
     else:
-        f.write("* OpenVX VXU Library\n")
         write_formatted(vxu_lib, f)
     f.write("\n")
     # Loom Libraries
+    f.write("* Loom Library\n")
     if not loom_lib:
         f.write("WARNING: Loom Library Not Built\n")
         print("WARNING: Loom Library Not Built\n")
         warning = 1
     else:
-        f.write("* Loom Library\n")
         write_formatted(loom_lib, f)
     f.write("\n")
     # AMD Media Libraries
+    f.write("* AMD Media Library\n")
     if not media_lib:
         f.write("WARNING: AMD Media Library Not Built\n")
         print("WARNING: AMD Media Library Not Built\n")
         warning = 1
     else:
-        f.write("* AMD Media Library\n")
         write_formatted(media_lib, f)
     f.write("\n")
     # OpenCV Ext Libraries
+    f.write("* VX OpenCV Ext Library\n")
     if not opencv_lib:
         f.write("WARNING: VX OpenCV Ext Library Not Built\n")
         print("WARNING: VX OpenCV Ext Library Not Built\n")
         warning = 1
     else:
-        f.write("* VX OpenCV Ext Library\n")
         write_formatted(opencv_lib, f)
     f.write("\n")
     # VX NN Libraries
+    f.write("* VX Neural Net Library\n")
     if not nn_lib:
         f.write("WARNING: VX Neural Net Library Not Built\n")
         print("WARNING: VX Neural Net Library Not Built\n")
         warning = 1
     else:
-        f.write("* VX Neural Net Library\n")
         write_formatted(nn_lib, f)
     f.write("\n")
     # VX RPP Libraries
+    f.write("* VX RPP Library\n")
     if not rpp_lib:
         f.write("WARNING: VX RPP Library Not Built\n")
         print("WARNING: VX RPP Library Not Built\n")
         warning = 1
     else:
-        f.write("* VX RPP Library\n")
         write_formatted(rpp_lib, f)
     f.write("\n")
     # RALI Libraries
+    f.write("* RALI Library\n")
     if not rali_lib:
         f.write("WARNING: RALI Library Not Built\n")
         print("WARNING: RALI Library Not Built\n")
         warning = 1
     else:
-        f.write("* RALI Library\n")
         write_formatted(rali_lib, f)
     f.write("\n")
 
@@ -182,40 +182,48 @@ with open(reportFilename, 'w') as f:
     f.write("--------\n")
     f.write("\n")
     # RunVX
+    f.write("* RunVX\n")
     if not runvx_exe:
         f.write("WARNING: RunVX Not Built\n")
         print("WARNING: RunVX Not Built\n")
         warning = 1
     else:
-        f.write("* RunVX\n")
         write_formatted(runvx_exe, f)
     f.write("\n")
     # RunCL
+    f.write("* RunCL\n")
     if not runcl_exe:
         f.write("WARNING: RunCL Not Built\n")
         print("WARNING: RunCL Not Built\n")
         warning = 1
     else:
-        f.write("* RunCL\n")
         write_formatted(runcl_exe, f)
     f.write("\n")
     # Loom Shell
+    f.write("* Loom Shell\n")
     if not loom_exe:
         f.write("WARNING: Loom Shell Not Built\n")
         print("WARNING: Loom Shell Not Built\n")
         warning = 1
     else:
-        f.write("* Loom Shell\n")
         write_formatted(loom_exe, f)
     f.write("\n")
     # MV Compile
+    f.write("* MV Compile\n")
     if not mv_compile_exe:
         f.write("WARNING: MV Compile Not Built\n")
         print("WARNING: MV Compile Not Built\n")
         warning = 1
     else:
-        f.write("* MV Compile\n")
         write_formatted(mv_compile_exe, f)
+    f.write("\n")
+    f.write("\n")
+    if warning == 1:
+        f.write("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
+        print("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
+    else:
+        f.write("SUCCESS: All modules of MIVisionX built")
+        print("SUCCESS: All modules of MIVisionX built")
     f.write("\n")
 
     f.write("\n\n---\n**Copyright AMD ROCm MIVisionX 2018 - 2020 -- runLibraryTests.py V-"+__version__+"**\n")

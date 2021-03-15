@@ -8,11 +8,11 @@ view input  inputWindow
 view output skintoneWindow
 
 # threshold objects
-data thr95  = threshold:BINARY,UINT8:INIT,95 # threshold for computing R > 95
-data thr40  = threshold:BINARY,UINT8:INIT,40 # threshold for computing G > 40
-data thr20  = threshold:BINARY,UINT8:INIT,20 # threshold for computing B > 20
-data thr15  = threshold:BINARY,UINT8:INIT,15 # threshold for computing R-G > 15
-data thr0   = threshold:BINARY,UINT8:INIT,0  # threshold for computing R-B > 0
+data thr95  = threshold:BINARY,U008,U008:INIT,95 # threshold for computing R > 95
+data thr40  = threshold:BINARY,U008,U008:INIT,40 # threshold for computing G > 40
+data thr20  = threshold:BINARY,U008,U008:INIT,20 # threshold for computing B > 20
+data thr15  = threshold:BINARY,U008,U008:INIT,15 # threshold for computing R-G > 15
+data thr0   = threshold:BINARY,U008,U008:INIT,0  # threshold for computing R-B > 0
 
 # virtual image objects for intermediate results
 data R      = image-virtual:0,0,U008

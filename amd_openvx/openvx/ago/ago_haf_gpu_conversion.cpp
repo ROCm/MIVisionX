@@ -704,9 +704,9 @@ int HafGpu_ColorConvert(AgoNode * node)
 			"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
 			"    U24x8 pRGB0, pRGB1;\n"
 			"    pRGB0.s0123 = *(__global uint4 *) pRGB_buf;\n"
-			"    pRGB0.s45 = *(__global uint2 *)&pRGB_buf[15];\n"
+			"    pRGB0.s45 = *(__global uint2 *)&pRGB_buf[16];\n"
 			"    pRGB1.s0123 = *(__global uint4 *)&pRGB_buf[%d];\n" // pRGB_stride
-			"    pRGB1.s45 = *(__global uint2 *)&pRGB_buf[%d+15];\n" // pRGB_stride
+			"    pRGB1.s45 = *(__global uint2 *)&pRGB_buf[%d+16];\n" // pRGB_stride
 			), (width + 7) / 8, (height + 1) / 2, pRGB_stride * 2, pRGB_stride, pRGB_stride);
 		node->opencl_code += item;
 	}
@@ -1372,9 +1372,9 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(trunc(f));\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
 					"    *(__global uint4 *) pRGB_buf = pRGB0.s0123;\n"
-					"    *(__global uint2 *)&pRGB_buf[15] = pRGB0.s45;\n"
+					"    *(__global uint2 *)&pRGB_buf[16] = pRGB0.s45;\n"
 					"    *(__global uint4 *)&pRGB_buf[%d] = pRGB1.s0123;\n" // pRGB_stride
-					"    *(__global uint2 *)&pRGB_buf[%d+15] = pRGB1.s45;\n" // pRGB_stride
+					"    *(__global uint2 *)&pRGB_buf[%d+16] = pRGB1.s45;\n" // pRGB_stride
 					), pRGB_stride * 2, pRGB_stride, pRGB_stride);
 			}
 			else { // VX_CHANNEL_RANGE_FULL
@@ -1415,9 +1415,9 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(trunc(f));\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
 					"    *(__global uint4 *) pRGB_buf = pRGB0.s0123;\n"
-					"    *(__global uint2 *)&pRGB_buf[15] = pRGB0.s45;\n"
+					"    *(__global uint2 *)&pRGB_buf[16] = pRGB0.s45;\n"
 					"    *(__global uint4 *)&pRGB_buf[%d] = pRGB1.s0123;\n" // pRGB_stride
-					"    *(__global uint2 *)&pRGB_buf[%d+15] = pRGB1.s45;\n" // pRGB_stride
+					"    *(__global uint2 *)&pRGB_buf[%d+16] = pRGB1.s45;\n" // pRGB_stride
 					), pRGB_stride * 2, pRGB_stride, pRGB_stride);
 			}
 			node->opencl_code += item;

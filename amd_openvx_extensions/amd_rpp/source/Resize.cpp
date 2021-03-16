@@ -95,7 +95,8 @@ static vx_status VX_CALLBACK validateResize(vx_node node, const vx_reference par
 
 static vx_status VX_CALLBACK processResize(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	ResizeLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -105,24 +106,27 @@ static vx_status VX_CALLBACK processResize(vx_node node, const vx_reference * pa
 		cl_command_queue handle = data->handle.cmdq;
 		refreshResize(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			status = rppi_resize_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->rppHandle);
+ 			rpp_status = rppi_resize_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_resize_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->rppHandle);
+			rpp_status = rppi_resize_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshResize(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			status = rppi_resize_u8_pln1_host(data->pSrc,data->srcDimensions,data->pDst,data->dstDimensions,data->rppHandle);
+			rpp_status = rppi_resize_u8_pln1_host(data->pSrc,data->srcDimensions,data->pDst,data->dstDimensions,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_resize_u8_pkd3_host(data->pSrc,data->srcDimensions,data->pDst,data->dstDimensions,data->rppHandle);
+			rpp_status = rppi_resize_u8_pkd3_host(data->pSrc,data->srcDimensions,data->pDst,data->dstDimensions,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeResize(vx_node node, const vx_reference *parameters, vx_uint32 num) 

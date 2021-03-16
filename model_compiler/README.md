@@ -22,34 +22,59 @@ MIVisionX allows hundreds of different [OpenVX](https://www.khronos.org/registry
 
 <p align="center"><img width="100%" src="../docs/images/runtime.png" /></p>
 
-## Pre-requisites
+### Pre-requisites
 
 * Ubuntu `16.04` / `18.04` or CentOS `7.5` / `7.6`
-* [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX  
+* [MIVisionX](https://github.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX#build--install-mivisionx) - Install MIVisionX 
+* python3
+```
+% apt-get install protobuf-compiler libprotoc-dev
+% pip3 install pytz numpy future
+```
 
 **Note:** MIVisionX installs model compiler scripts at `/opt/rocm/mivisionx/model_compiler/python/`
+**Note:** Model compiler supports Python3. Anyone using python2 might face an issue during the model conversion
+
+#### Caffe
+
+* python3
+* numpy
+* protobuf
+* google
+
+```
+% pip3 install google
+% pip3 install protobuf
+% pip3 install numpy
+```
+
 
 #### ONNX
 
+* python3
 * numpy
 * onnx
 
 ``` 
-% pip install onnx numpy
+% pip3 install onnx 
+% pip3 install numpy
 ```
 
 **Note:** ONNX Models are available at [ONNX Model Zoo](https://github.com/onnx/models)
 
 #### NNEF
 
+* python3
 * numpy
 * [nnef-parser](https://github.com/KhronosGroup/NNEF-Tools) - Build the nnef python module
 
 ``` 
-% pip install numpy
+% pip3 install numpy
 ```
 
 **Note:** NNEF Models are available at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
+**Note:** NNEF Parser is compatible with python3. Anyone using python2 might face an issue during the model conversion
+
 
 ## Model Compiler Samples - Run Efficient Inference
 
@@ -69,7 +94,11 @@ In this [sample](../samples/model_compiler_samples#mivisionx-model-compiler-samp
 To convert a pre-trained caffemodel into AMD NNIR model:
 
 ``` 
-% python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [--verbose <0|1>]
+% python3 caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims <n,c,h,w> [OPTIONS]
+
+OPTIONS:
+	--verbose <0|1> [defualt: 0]
+	--node_type_append <0|1> [default: 0; appends node type name to output names
 ```
 
 #### ONNX
@@ -77,10 +106,11 @@ To convert a pre-trained caffemodel into AMD NNIR model:
 To convert an ONNX model into AMD NNIR model:
 
 ``` 
-% python onnx_to_nnir.py <model.onnx> <nnirModelFolder> [OPTIONS]
+% python3 onnx_to_nnir.py <model.onnx> <nnirModelFolder> [OPTIONS]
 
 OPTIONS:
 	--input_dims n,c,h,w
+	--node_type_append <0|1> [default: 0; appends node type name to output names]
 ```
 
 #### NNEF
@@ -88,7 +118,10 @@ OPTIONS:
 To convert a NNEF model into AMD NNIR model:
 
 ``` 
-% python nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder>
+% python3 nnef_to_nnir.py <nnefInputFolder> <nnirOutputFolder> [OPTIONS]
+
+OPTIONS:
+	--node_type_append <0|1> [default: 0; appends node type name to output names]
 ```
 
 **Note:** If you want to create NNEF models from pre-trained caffe or tensorflow models, use [NNEF Converter](https://github.com/KhronosGroup/NNEF-Tools) or try NNEF models at [NNEF Model Zoo](https://github.com/KhronosGroup/NNEF-Tools/tree/master/models#nnef-model-zoo)
@@ -98,25 +131,25 @@ To convert a NNEF model into AMD NNIR model:
 To update batch size in AMD NNIR model:
 
 ``` 
-% python nnir_update.py --batch-size <N> <nnirModelFolder> <nnirModelFolderN>
+% python3 nnir_update.py --batch-size <N> <nnirModelFolder> <nnirModelFolderN>
 ```
 
 To fuse operations in AMD NNIR model (like batch normalization into convolution):
 
 ``` 
-% python nnir_update.py --fuse-ops <1> <nnirModelFolderN> <nnirModelFolderFused>
+% python3 nnir_update.py --fuse-ops <1> <nnirModelFolderN> <nnirModelFolderFused>
 ```
 
 To quantize the model to float 16
 
 ``` 
-% python nnir_update.py --convert-fp16 <1> <nnirModelFolderN> <nnirModelFolderFused>
+% python3 nnir_update.py --convert-fp16 <1> <nnirModelFolderN> <nnirModelFolderFused>
 ```
 
 To workaround groups using slice and concat operations in AMD NNIR model:
 
 ``` 
-% python nnir_update.py --slice-groups <1> <nnirModelFolderFused> <nnirModelFolderSliced>
+% python3 nnir_update.py --slice-groups <1> <nnirModelFolderFused> <nnirModelFolderSliced>
 ```
 
 ### Step 3 - Convert AMD NNIR to OpenVX C code
@@ -124,7 +157,7 @@ To workaround groups using slice and concat operations in AMD NNIR model:
 To convert an AMD NNIR model into OpenVX C code:
 
 ``` 
-% python nnir_to_openvx.py --help
+% python3 nnir_to_openvx.py --help
 
 Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 
@@ -153,27 +186,27 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 * Step 1: Convert net.caffemodel into NNIR model using the following command
 
 ``` 
-	    % python caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
+% python3 caffe_to_nnir.py <net.caffeModel> <nnirOutputFolder> --input-dims n,c,h,w [--verbose 0|1]
 ```
 
 * Step 2: Compile NNIR model into OpenVX C code with CMakelists.txt for compiling and building inference library
 
 ``` 
-	    % python nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
+% python3 nnir_to_openvx.py <nnirModelFolder> <nnirModelOutputFolder>
 ```
 
 * Step 3: cmake and make the project inside the nnirModelOutputFolder
 
 ``` 
-	    % cd nnirModelOutputFolder
-	    % cmake .
-	    % make
+% cd nnirModelOutputFolder
+% cmake .
+% make
 ```
 
 * Step 4: Run anntest application for testing the inference with input and output tensor
 
 ``` 
-	    % ./anntest weights.bin
+% ./anntest weights.bin
 ```
 
 * Step 5: The shared C library (libannmodule.so) can be used in any customer application
@@ -183,7 +216,7 @@ Usage: python nnir_to_openvx.py [OPTIONS] <nnirInputFolder> <outputFolder>
 Generate OpenVX and test code that can be used dump and compare raw tensor data:
 
 ``` 
-% python nnir_to_openvx.py nnirInputFolderFused openvxCodeFolder
+% python3 nnir_to_openvx.py nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
 % cmake ..
@@ -216,7 +249,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]<--ad
 Generate OpenVX and test code with argmax that can be used dump and compare 16-bit argmax output tensor:
 
 ``` 
-% python nnir_to_openvx.py --argmax UINT16 nnirInputFolderFused openvxCodeFolder
+% python3 nnir_to_openvx.py --argmax UINT16 nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
 % cmake ..
@@ -244,7 +277,7 @@ Usage: anntest <weights.bin> [<input-data-file(s)> [<output-data-file(s)>]]]
 Generate OpenVX and test code with argmax and LUT that is designed for semantic segmentation use cases. You can dump output in raw format or PNGs and additionally compare with reference data in raw format.
 
 ``` 
-% python nnir_to_openvx.py --argmax lut-rgb.txt nnirInputFolderFused openvxCodeFolder
+% python3 nnir_to_openvx.py --argmax lut-rgb.txt nnirInputFolderFused openvxCodeFolder
 % mkdir openvxCodeFolder/build
 % cd openvxCodeFolder/build
 % cmake ..

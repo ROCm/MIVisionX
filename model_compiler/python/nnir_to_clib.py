@@ -18,6 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import str
+from builtins import range
 import os, sys, struct, subprocess
 import datetime, pytz
 from nnir import *
@@ -105,7 +114,7 @@ def generateCMakeFiles(graph,outputFolder):
         generateLicenseForScript(f)
         f.write( \
 """
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 project (mvdeploy)
 set (CMAKE_CXX_STANDARD 11)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -213,7 +222,7 @@ def generateCMakeExtras(graph,outputFolder):
         generateLicenseForScript(f)
         f.write( \
 """
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.0)
 project (mv_extras)
 set (CMAKE_CXX_STANDARD 11)
 list(APPEND CMAKE_MODULE_PATH ../cmake)
@@ -1893,7 +1902,7 @@ def generateExtrasCPP(graph,extraFolder):
     cmd = "cp " + file_dir + "/../mv_extras_postproc.cpp " + "./" + extraFolder
     ret = subprocess.call(cmd, shell=True)
     if ret:
-        print('ERROR: generateExtrasCPP', ret)
+        print(('ERROR: generateExtrasCPP', ret))
     else:  
         print('OK: generateExtrasCPP')
 
@@ -1903,7 +1912,7 @@ def generateExtrasH(graph,extraFolder):
     cmd = "cp " + file_dir + "/../mv_extras_postproc.h " + "./" + extraFolder
     ret = subprocess.call(cmd, shell=True)
     if ret:
-        print('ERROR: generateExtrasCPP', ret)
+        print(('ERROR: generateExtrasCPP', ret))
     else:
         print('OK: generateExtrasCPP')
 

@@ -250,18 +250,18 @@ void MasterGraph::release()
     _nodes.clear();
     _root_nodes.clear();
     _image_map.clear();
+
+    // release all openvx resources.
     vx_status status;
+    for(auto& image: _internal_images)
+        delete image;// It will call the vxReleaseImage internally in the destructor
+    for(auto& image: _output_images)
+        delete image;// It will call the vxReleaseImage internally in the destructor
     if(_graph != nullptr)
         _graph->release();
-
     if(_context && (status = vxReleaseContext(&_context)) != VX_SUCCESS)
         LOG ("Failed to call vxReleaseContext " + TOSTR(status))
 
-    for(auto& image: _internal_images)
-        delete image;// It will call the vxReleaseImage internally in the destructor
-
-    for(auto& image: _output_images)
-        delete image;// It will call the vxReleaseImage internally in the destructor
     _augmented_meta_data = nullptr;
     _meta_data_graph = nullptr;
     _meta_data_reader = nullptr;
@@ -497,6 +497,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                                               (reverse_channels ? (float) (in_buffer[i * c + c - channel_idx - 1])
                                                                                 : (float) (in_buffer[i * c + channel_idx]));
                         }
+                        in_buffer += (w * c * h);
                         dest_buf_offset += (w * c * h);
                     }
                 }
@@ -513,6 +514,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                                                                                 : (half) (in_buffer[i * c + channel_idx]));
                         }
                         dest_buf_offset += (w * c * h);
+                        in_buffer += (w * c * h);
                     }
                 }
             }
@@ -524,15 +526,15 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                     auto channel_size  = w * h;
                     if(c != 3)
                     {
-                        for (unsigned int nCount = 0; nCount < n; nCount++) {
-                            for (unsigned channel_idx = 0; channel_idx < c; channel_idx++)
-                                for (unsigned i = 0; i < channel_size; i++)
-                                    output_tensor_32[dest_buf_offset + channel_idx * channel_size + i] =
-                                            offset[channel_idx] + multiplier[channel_idx] *
-                                                                  (reverse_channels ? (float) (in_buffer[c * i + c - channel_idx - 1])
-                                                                                    : (float) (in_buffer[c * i + channel_idx]));
+                        for (unsigned int nCount = 0; nCount < n; nCount++)
+                        {
+                            for(unsigned channel_idx = 0; channel_idx < c; channel_idx++)
+                                for(unsigned i = 0; i < channel_size; i++)
+                                    output_tensor_32[dest_buf_offset+channel_idx*channel_size + i] =
+                                            offset[channel_idx] + multiplier[channel_idx]*(reverse_channels ? (float)(in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)]) : (float)(in_buffer[dest_buf_offset + (c*i+channel_idx)]));
+
+                            dest_buf_offset += (w * c * h);
                         }
-                        dest_buf_offset += (w * c * h);
                     }
                     else {
 #if (ENABLE_SIMD && __AVX2__)
@@ -616,10 +618,11 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             for (unsigned i = 0; i < channel_size; i++)
                                 output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
                                         offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (half) (in_buffer[c * i + c - channel_idx - 1])
-                                                                                : (half) (in_buffer[c * i + channel_idx]));
+                                                              (reverse_channels ? (half) (in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)])
+                                                                                : (half) (in_buffer[dest_buf_offset + (c * i + channel_idx)]));
                         }
                         dest_buf_offset += (w * c * h);
+                        in_buffer += (w * c * h);
                     }
                 }
 
@@ -768,11 +771,9 @@ void MasterGraph::output_routine()
                     {
                         if(_is_random_bbox_crop)
                         {
-                            std::cerr<<"\n Im master graph output routine comes to is_random_bbox_crop";
-                            // _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
-                            // std::cerr<<"\n Returs from look up";
-                            // _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
-                            // std::cerr<<"\n Returnds from update random bbox meta data";
+                            // std::cerr<<"\n Im master graph output routine comes to is_random_bbox_crop";
+                            _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
+                            _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
                         }
                         else
                         {
@@ -883,14 +884,13 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
 }
 
 
-void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, int all_boxes_overlap, int no_crop, int has_shape, int crop_width, int crop_height)
+void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts)
 {
     if( _randombboxcrop_meta_data_reader)
         THROW("A metadata reader has already been created")
     _is_random_bbox_crop = true;
-    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
+    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts);
     _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
-    // _randombboxcrop_meta_data_reader->init(config);
     _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
     _randombboxcrop_meta_data_reader->read_all();
     if (_random_bbox_crop_cords_data)

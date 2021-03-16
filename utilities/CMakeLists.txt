@@ -18,28 +18,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.0)
 project(utilities)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
-find_package(OpenCL QUIET)
+if(OPENCL_SUPPORT)
+    find_package(OpenCL QUIET)
+else()
+	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+endif()
 find_package(FFmpeg QUIET)
 
+add_subdirectory(runvx)
+message("-- ${Green}MIVisionX Utilities -- runvx module added${ColourReset}")
+
 if(OpenCL_FOUND)
-    add_subdirectory(runvx)
     add_subdirectory(runcl)
-    #add_subdirectory(loom_shell)
     if(FFMPEG_FOUND)
         add_subdirectory(mv_deploy)
-        message("-- ${Green}MIVisionX Utilities -- runvx, runcl, loom_shell, & mv_deploy modules added${ColourReset}")
+        message("-- ${Green}MIVisionX Utilities -- runcl, & mv_deploy modules added${ColourReset}")
         install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION include)
         install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION model_compiler)
         install (FILES ./mv_deploy/mv_extras_postproc.cpp DESTINATION model_compiler)
     else()
-        message("-- ${Green}MIVisionX Utilities -- runvx, runcl, & loom_shell modules added${ColourReset}")
+        message("-- ${Green}MIVisionX Utilities -- runcl modules added${ColourReset}")
         message("-- ${Red}WARNING:FFMPEG Not Found -- mv_deploy module excluded${ColourReset}")
     endif(FFMPEG_FOUND)
 else()
-    message("-- ${Red}WARNING:OpenCL/FFMPEG Not Found -- runvx, runcl, loom_shell, & mv_deploy modules excluded${ColourReset}")
+    message("-- ${Red}WARNING:OpenCL/FFMPEG Not Found -- runcl, loom_shell, & mv_deploy modules excluded${ColourReset}")
 endif(OpenCL_FOUND)

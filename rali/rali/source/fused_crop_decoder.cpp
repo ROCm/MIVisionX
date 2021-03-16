@@ -84,13 +84,14 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     // You need get the output of random bbox crop 
     // check the vector size for bounding box. If its more than zero go for random bbox crop
     // else go to random crop
-    unsigned int crop_width, crop_height, x1, y1;
+    unsigned int crop_width, crop_height, x1, y1, x1_diff, crop_width_diff;
     if(_bbox_coord.size() != 0)
     {
         x1 = _bbox_coord[0];
         y1 = _bbox_coord[1];
         crop_width = _bbox_coord[2];
         crop_height = _bbox_coord[3];
+        // std::cerr<<"\n FusedCropTJDecoder::decode Crop:: x1 "<<x1<<"\t y1 "<<y1<<"\t cw "<<crop_width<<"\t ch "<<crop_height;
         // std::cerr<<"\n Original Image width :: "<<original_image_width<<"\t Crop width :: "<<crop_width;
         // std::cerr<<"\n Original Image Height :: "<<original_image_height<<"\t Crop height :: "<<crop_height;
     }
@@ -149,19 +150,27 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                       max_decoded_width * planes,
                       max_decoded_height,
                       tjpf,
-                      TJFLAG_FASTDCT,
+                      TJFLAG_FASTDCT, &x1_diff, &crop_width_diff,
 		              x1, y1, crop_width, crop_height) != 0)
 
     {
         WRN("Jpeg image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
         return Status::CONTENT_DECODE_FAILED;
-    }    
+    }
 
     unsigned char *src_ptr_temp, *dst_ptr_temp;
 
     unsigned int elements_in_row = max_decoded_width * planes;
     unsigned int elements_in_crop_row = crop_width * planes;
     unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
+
+    if(_bbox_coord.size() != 0)
+    {
+        elements_in_crop_row = crop_width_diff * planes;
+        _bbox_coord[0] = x1_diff;
+        _bbox_coord[2] = crop_width_diff;
+        // std::cerr<<"\n FusedCropTJDecoder::decode Value changes:: "<<x1_diff<<" "<<crop_width_diff;
+    }
 
     src_ptr_temp = output_buffer + (y1 *  elements_in_row);
     dst_ptr_temp = output_buffer;
@@ -180,7 +189,10 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         dst_ptr_temp +=  elements_in_row;
     }
 
-    actual_decoded_width = crop_width;
+    if(_bbox_coord.size() != 0)
+        actual_decoded_width = crop_width_diff;
+    else
+        actual_decoded_width = crop_width;
     actual_decoded_height = crop_height;
 
     return Status::OK;

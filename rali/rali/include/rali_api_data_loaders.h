@@ -125,6 +125,37 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegCOCOFileSourcePartial(RaliContext p
                                                             RaliFloatParam area_factor = NULL, RaliFloatParam aspect_ratio = NULL,
                                                             RaliFloatParam y_drift_factor = NULL, RaliFloatParam x_drift_factor = NULL );
 
+/// Creates JPEG image reader and partial decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
+/// If images are not Jpeg compressed they will be ignored.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param json_path Path to the COCO Json File
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param shard_id Shard id for this loader
+/// \param shard_count Defines the parallelism level by internally sharding the input dataset and load/decode using multiple decoder/loader instances. Using shard counts bigger than 1 improves the load/decode performance if compute resources (CPU cores) are available.
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param decode_size_policy
+/// \param max_width The maximum width of the decoded images, larger or smaller will be resized to closest
+/// \param max_height The maximum height of the decoded images, larger or smaller will be resized to closest
+/// \param area_factor Determines how much area to be cropped. Ranges from from 0.08 - 1.
+/// \param aspect_ratio Determines the aspect ration of crop. Ranges from 0.75 to 1.33.
+/// \param y_drift_factor - Determines from top left corder to height (crop_height), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
+/// \param x_drift_factor - Determines from top left corder to width (crop_width), where to start cropping other wise try for a central crop or take image dims. Ranges from 0 to 1.
+/// \return Reference to the output image
+extern "C"  RaliImage  RALI_API_CALL raliJpegCOCOFileSourcePartialSingleShard(RaliContext p_context,
+                                                            const char* source_path,
+                                                            const char* json_path,
+                                                            RaliImageColor rali_color_format,
+                                                            unsigned shard_id,
+                                                            unsigned shard_count,
+                                                            bool is_output,
+                                                            bool shuffle = false,
+                                                            bool loop = false,
+                                                            RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MAX_SIZE,
+                                                            unsigned max_width = 0, unsigned max_height = 0,
+                                                            RaliFloatParam area_factor = NULL, RaliFloatParam aspect_ratio = NULL,
+                                                            RaliFloatParam y_drift_factor = NULL, RaliFloatParam x_drift_factor = NULL );
+
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It accepts external sharding information to load a singe shard. only
 /// \param rali_context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk
@@ -343,6 +374,50 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegTFRecordSourceSingleShard(RaliConte
                                                                         bool loop = false,
                                                                         RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                                         unsigned max_width = 0, unsigned max_height = 0);
+/// Creates Raw image loader. It allocates the resources and objects required to load images stored on the file systems.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param is_output Determines if the user wants the loaded images to be part of the output or not.
+/// \param shuffle: to shuffle dataset
+/// \param loop: repeat data loading
+/// \param out_width The output_width of raw image
+/// \param out_height The output height of raw image
+/// \return
+
+extern "C"  RaliImage  RALI_API_CALL raliRawTFRecordSource(RaliContext p_context,
+                                                           const char* source_path,
+                                                           const char* user_key_for_raw,
+                                                           const char* user_key_for_filename,
+                                                           RaliImageColor rali_color_format,
+                                                           bool is_output,
+                                                           bool shuffle = false,
+                                                           bool loop = false,
+                                                           unsigned out_width=0, unsigned out_height=0,
+                                                           const char* record_name_prefix = "");
+
+/// Creates Raw image loader. It allocates the resources and objects required to load images stored on the file systems.
+/// \param rali_context Rali context
+/// \param source_path A NULL terminated char string pointing to the location on the disk
+/// \param rali_color_format The color format the images will be decoded to.
+/// \param shard_id Shard id for this loader
+/// \param shard_count Total shard count
+/// \param shuffle: to shuffle dataset
+/// \param loop: repeat data loading
+/// \param out_width The output_width of raw image
+/// \param out_height The output height of raw image
+/// \param record_name_prefix : if nonempty reader will only read records with certain prefix
+/// \return
+extern "C"  RaliImage  RALI_API_CALL raliRawTFRecordSourceSingleShard(RaliContext p_context,
+                                                                      const char* source_path,
+                                                                      RaliImageColor rali_color_format,
+                                                                      unsigned shard_id,
+                                                                      unsigned shard_count,
+                                                                      bool is_output,
+                                                                      bool shuffle = false,
+                                                                      bool loop = false,
+                                                                      unsigned out_width=0, unsigned out_height=0,
+                                                                      const char* record_name_prefix = "");
 /// Creates a video reader and decoder as a source. It allocates the resources and objects required to read and decode H.264 videos stored on the file systems.
 /// \param context Rali context
 /// \param source_path A NULL terminated char string pointing to the location on the disk, multiple sources can be separated using the ":" delimiter

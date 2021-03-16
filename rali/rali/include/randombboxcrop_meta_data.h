@@ -65,12 +65,6 @@ struct CropCordBatch
     }
     int size()
     {
-        pCropCord temp;
-        std::cerr<<"\n temp :: "<<temp->crop_x<<"\t "<<temp->crop_y<<"\t "<<temp->crop_width<<"\t "<<temp->crop_height;
-        _crop_cords.push_back(temp);
-        std::cerr<<"\n Inserted temp in crop cords";
-        // _crop_cords.resize(2);
-        std::cerr<<"\n _crop_cords.size():: "<<_crop_cords.size();
         return _crop_cords.size();
     }
     CropCordBatch&  operator += (CropCordBatch& other)

@@ -30,11 +30,11 @@ find_path(OPENCL_INCLUDE_DIRS
     $ENV{AMDAPPSDKROOT}/include
     $ENV{CUDA_PATH}/include
     PATHS
+    ${ROCM_PATH}/opencl/include
     /usr/include
     /usr/local/include
     /usr/local/cuda/include
     /opt/cuda/include
-    ${ROCM_PATH}/opencl/include
     DOC "OpenCL header file path"
     )
 mark_as_advanced( OPENCL_INCLUDE_DIRS )
@@ -49,10 +49,10 @@ if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
         DOC "OpenCL dynamic library path"
         PATH_SUFFIXES x86_64 x64 x86_64/sdk
         PATHS
+        ${ROCM_PATH}/opencl/lib/
         /usr/lib
         /usr/local/cuda/lib
         /opt/cuda/lib
-        ${ROCM_PATH}/opencl/lib
         )
 else( )
     find_library( OPENCL_LIBRARIES
@@ -63,8 +63,8 @@ else( )
         $ENV{CUDA_PATH}/lib
         DOC "OpenCL dynamic library path"
         PATH_SUFFIXES x86 Win32
-
         PATHS
+        ${ROCM_PATH}/opencl/lib/
         /usr/lib
         /usr/local/cuda/lib
         /opt/cuda/lib
@@ -79,6 +79,16 @@ set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
 set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
 set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
 
+if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+    if(NOT "${OPENCL_LIBRARIES}" STREQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+        message("-- ${Magenta}ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL${ColourReset}")
+        set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
+        set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
+    endif()
+    message("-- ${Magenta}ROCm OpenCL Found - Set CL_TARGET_OPENCL_VERSION=220${ColourReset}")
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
+endif()
+
 if( NOT OPENCL_FOUND )
-    message( STATUS "FindOpenCL looked for libraries named: OpenCL" )
+    message( STATUS "FindOpenCL failed to find libraries named: OpenCL" )
 endif()

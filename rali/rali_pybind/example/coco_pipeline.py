@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from math import ceil, sqrt
+from math import sqrt
 import torch
 import ctypes
 import logging
@@ -38,6 +38,14 @@ class COCOPipeline(Pipeline):
         self.decode = ops.ImageDecoder(
             device=decoder_device, output_type=types.RGB)
         self.crop = ops.SSDRandomCrop(num_attempts=5)
+        self.decode_slice = ops.ImageDecoderSlice(device=decoder_device, output_type = types.RGB)
+        self.random_bbox_crop = ops.RandomBBoxCrop(device="cpu",
+                                       aspect_ratio=[0.5, 2.0],
+                                       thresholds=[0, 0.1, 0.3, 0.5, 0.7, 0.9],
+                                       scaling=[0.3, 1.0],
+                                       ltrb=True,
+                                       allow_no_crop=True,
+                                       num_attempts=1)
         self.res = ops.Resize(device=rali_device, resize_x=crop, resize_y=crop)
         self.twist = ops.ColorTwist(device=rali_device)
         self.bbflip = ops.BBFlip(device=rali_device, ltrb=True)
@@ -58,7 +66,7 @@ class COCOPipeline(Pipeline):
         self.rng1 = ops.Uniform(range=[0.5, 1.5])
         self.rng2 = ops.Uniform(range=[0.875, 1.125])
         self.rng3 = ops.Uniform(range=[-0.5, 0.5])
-        self.coin_flip = ops.CoinFlip(probability=0.5) 
+        self.coin_flip = ops.CoinFlip(probability=0.5)
         print('rali "{0}" variant'.format(rali_device))
 
     def define_graph(self):
@@ -67,16 +75,20 @@ class COCOPipeline(Pipeline):
         brightness = self.rng2()
         hue = self.rng3()
         self.jpegs, self.bb, self.labels = self.input(name="Reader")
-        encoded_bboxes, encoded_labels = self.boxEncoder(self.bb, self.labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
-        images = self.decode(self.jpegs)
-        images = self.crop(images)
+        # images = self.decode(self.jpegs)
+        # images = self.crop(images)
+        crop_begin, crop_size, bboxes, labels= self.random_bbox_crop(self.bb, self.labels)
+        bboxes = self.bbflip(bboxes, horizontal=self.coin_flip)
+        images = self.decode_slice(self.jpegs, crop_begin, crop_size)
         images = self.res(images)
         images = self.twist(images, saturation=saturation,
                             contrast=contrast, brightness=brightness, hue=hue)
         output = self.cmnp(images)
+        encoded_bboxes, encoded_labels = self.boxEncoder(bboxes, labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
+        encoded_labels = self.cast(encoded_labels)
         return [output, encoded_bboxes, encoded_labels] #Encoded Bbox and labels output in "ltrb" format
         # return [output,  self.bb, self.labels]
-
+        
 
 class RALICOCOIterator(object):
     """
@@ -186,13 +198,13 @@ class RALICOCOIterator(object):
             
             if(self.loader._BoxEncoder == True):
                 
-                # Converting from "xywh" to "ltrb" format , 
-                # where the values of l, t, r, b always lie between 0 & 1 
+                # Converting from "xywh" to "ltrb" format ,
+                # where the values of l, t, r, b always lie between 0 & 1
+                # Box Encoder input & output:
                 # input : N x 4 , "xywh" format
-                # output : 8732 x 4 , "ltrb" format and normalized
+                # output : 8732 x 4 , "xywh" format and normalized
                 htot, wtot = 300, 300
                 bbox_sizes = []
-                bbox_labels = []
                 i=0
                 for (l,t,w,h) in self.bb_2d_numpy:
                     
@@ -266,7 +278,7 @@ def main():
     nt = 1
     di = 0
     crop_size = 300
-    def coco_anchors():
+    def coco_anchors(): # Should be Tensor of floats in ltrb format - input - Mx4 where M="No of anchor boxes"
         fig_size = 300
         feat_size = [38, 19, 10, 5, 3, 1]
         steps = [8, 16, 32, 64, 100, 300]
@@ -292,8 +304,16 @@ def main():
                 for i, j in itertools.product(range(sfeat), repeat=2):
                     cx, cy = (j+0.5)/fk[idx], (i+0.5)/fk[idx]
                     default_boxes.append((cx, cy, w, h))
-
-        return default_boxes
+        dboxes = torch.tensor(default_boxes, dtype=torch.float)
+        dboxes.clamp_(min=0, max=1)
+        # For IoU calculation
+        dboxes_ltrb = dboxes.clone()
+        dboxes_ltrb[:, 0] = dboxes[:, 0] - 0.5 * dboxes[:, 2]
+        dboxes_ltrb[:, 1] = dboxes[:, 1] - 0.5 * dboxes[:, 3]
+        dboxes_ltrb[:, 2] = dboxes[:, 0] + 0.5 * dboxes[:, 2]
+        dboxes_ltrb[:, 3] = dboxes[:, 1] + 0.5 * dboxes[:, 3]
+        
+        return dboxes_ltrb
 
     dboxes = coco_anchors()
 

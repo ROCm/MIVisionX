@@ -90,24 +90,16 @@ void TFMetaDataReader::read_record(std::ifstream &file_contents, uint file_size,
 {
     // std::cerr << "The user_label_key is " << user_label_key << ", and the user_filename_key is " << user_filename_key << "\n";
     uint length;
-    length = file_contents.tellg();
-    std::string temp;
-    size_t uint64_size, uint32_size;
     uint64_t data_length;
     uint32_t length_crc, data_crc;
-    uint64_size = sizeof(uint64_t); 
-    uint32_size = sizeof(uint32_t); 
-    char * header_length = new char [uint64_size];
-    char * header_crc = new char [uint32_size];
-    char * footer_crc = new char [uint32_size];
-    file_contents.read(header_length, uint64_size);
+
+    length = file_contents.tellg();
+    file_contents.read((char *)&data_length, sizeof(data_length));
     if(!file_contents)
         THROW("TFMetaDataReader: Error in reading TF records")
-    file_contents.read(header_crc, uint32_size);
+    file_contents.read((char *)&length_crc, sizeof(length_crc));
     if(!file_contents)
         THROW("TFMetaDataReader: Error in reading TF records")
-    memcpy(&data_length, header_length, sizeof(data_length));
-    memcpy(&length_crc, header_crc, sizeof(length_crc));
     if(length + data_length + 16 == file_size){
         _last_rec = true;
     }
@@ -124,20 +116,24 @@ void TFMetaDataReader::read_record(std::ifstream &file_contents, uint file_size,
 //..............
     auto feature = features.feature();
     tensorflow::Feature single_feature;
-    single_feature = feature.at(user_filename_key);
-    std::string fname = single_feature.bytes_list().value()[0];
+    std::string fname;
+    if (!user_filename_key.empty()) {
+        single_feature = feature.at(user_filename_key);
+        fname = single_feature.bytes_list().value()[0];
+    } else {
+        // adding for raw images
+        fname = std::to_string(_file_id);
+        incremenet_file_id();
+    }
     _image_name.push_back(fname);
     uint label;
     single_feature = feature.at(user_label_key);
     label = single_feature.int64_list().value()[0];
+    //std::cout << "TFMeta read record <name, label>" << fname << " " << label << std::endl;
     add(fname, label);
-    file_contents.read(footer_crc, sizeof(data_crc));
+    file_contents.read((char *)&data_crc, sizeof(data_crc));
     if(!file_contents)
         THROW("TFMetaDataReader: Error in reading TF records")
-    memcpy(&data_crc, footer_crc, sizeof(data_crc));
-    delete[] header_length;
-    delete[] header_crc;
-    delete[] footer_crc;
     delete[] data;
 }
 
@@ -151,10 +147,10 @@ void TFMetaDataReader::read_all(const std::string &path)
     read_files(path);
     for(unsigned i = 0; i < _file_names.size(); i++)
     {
-        std::string fname = path + _file_names[i];
+        std::string fname = path + "/" + _file_names[i];
         uint length;
         std::cerr<< "Reading for image classification - file_name:: "<<fname<<std::endl;
-        std::ifstream file_contents(fname.c_str(),std::ios::binary);
+        std::ifstream file_contents(fname.c_str(), std::ios::binary);
         file_contents.seekg (0, std::ifstream::end);
         length = file_contents.tellg();
         file_contents.seekg (0, std::ifstream::beg);
@@ -165,9 +161,6 @@ void TFMetaDataReader::read_all(const std::string &path)
         _last_rec = false;
         file_contents.close();
     }
-  //google::protobuf::ShutdownProtobufLibrary();
-    // print_map_contents();
-
 }
 
 void TFMetaDataReader::release(std::string _image_name)

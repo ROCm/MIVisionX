@@ -16,7 +16,7 @@ class NormalizedBBox
     public:
     bool has_size;
     float xmin, ymin,xmax,ymax;
-    bool set_size(float value){size_ = value;}
+    bool set_size(float value){size_ = value; return true;}
     float size() const {return size_;}
 };
 

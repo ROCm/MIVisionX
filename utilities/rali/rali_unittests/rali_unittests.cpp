@@ -35,9 +35,9 @@ THE SOFTWARE.
 
 using namespace cv;
 
- //#define PARTIAL_DECODE
+//#define PARTIAL_DECODE
 // #define COCO_READER
-#define COCO_READER_PARTIAL
+//#define COCO_READER_PARTIAL
 // #define TF_READER
 // #define TF_READER_DETECTION
 // #define CAFFE2_READER
@@ -45,18 +45,18 @@ using namespace cv;
 //  #define CAFFE_READER
 // #define CAFFE_READER_DETECTION
 
-#define RANDOMBBOXCROP
+//#define RANDOMBBOXCROP
 
 using namespace std::chrono;
 
-int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height);
+int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height,int num_of_classes);
 int main(int argc, const char **argv)
 {
     // check command-line usage
     const size_t MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
-        printf("Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0  \n");
+        printf("Usage: rali_unittests <image-dataset-folder> output_image_name <width> <height> test_case gpu=1/cpu=0 rgb=1/grayscale=0 one_hot_labels=num_of_classes/0 \n");
         return -1;
     }
 
@@ -69,6 +69,7 @@ int main(int argc, const char **argv)
     int rgb = 1; // process color images
     bool gpu = 1;
     int test_case = 3; // For Rotate
+    int num_of_classes = 0;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         test_case = atoi(argv[++argIdx]);
@@ -79,12 +80,15 @@ int main(int argc, const char **argv)
     if (argc >= argIdx + MIN_ARG_COUNT)
         rgb = atoi(argv[++argIdx]);
 
-    test(test_case, path, outName, rgb, gpu, width, height);
+    if (argc >= argIdx + MIN_ARG_COUNT)
+         num_of_classes = atoi(argv[++argIdx]);
+
+    test(test_case, path, outName, rgb, gpu, width, height, num_of_classes);
 
     return 0;
 }
 
-int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height)
+int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes)
 {
     size_t num_threads = 1;
     int inputBatchSize = 2;
@@ -143,15 +147,15 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     char key8[25] = "image/filename";
 
 #if defined RANDOMBBOXCROP
-    int all_boxes_overlap = 1;
-    int no_crop = 1;
-    int has_shape = 0;
+    bool all_boxes_overlap = true;
+    bool no_crop = false;
+    int has_shape = false;
     int crop_width = 500;
     int crop_height = 500;
 #endif
 
 #if defined COCO_READER || defined COCO_READER_PARTIAL
-    char *json_path = "/home/shobana/sample_test/coco_10_samples/10_instances_train2017.json";
+    char *json_path = "";
     if (strcmp(json_path, "") == 0)
     {
         std::cout << "\n json_path has to be set in rali_unit test manually";
@@ -175,7 +179,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #endif
 
 #ifdef RANDOMBBOXCROP
-    raliRandomBBoxCrop(handle, all_boxes_overlap, no_crop, has_shape, crop_width, crop_height);
+    raliRandomBBoxCrop(handle, all_boxes_overlap, no_crop);
 #endif
 
     RaliImage input1;
@@ -645,7 +649,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
-        int numOfClasses = 2;
+        int numOfClasses = 0;
         int image_name_length[inputBatchSize];
 #if defined COCO_READER || defined COCO_READER_PARTIAL || defined CAFFE_READER_DETECTION || defined CAFFE2_READER_DETECTION || defined TF_READER_DETECTION
         int img_size = raliGetImageNameLen(handle, image_name_length);
@@ -672,14 +676,20 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         raliGetImageLabels(handle, label_id);
         int img_size = raliGetImageNameLen(handle, image_name_length);
         char img_name[img_size];
-        raliGetImageName(handle, img_name);
+        numOfClasses = num_of_classes;
         int label_one_hot_encoded[inputBatchSize * numOfClasses];
+        raliGetImageName(handle, img_name);
+        if(num_of_classes != 0)
+        {
         raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+        }
         std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
         for (int i = 0; i < inputBatchSize; i++)
 
         {   
             std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
+            if(num_of_classes != 0)
+            {
             std::cout << "One Hot Encoded labels:"<<"\t";
             for (int j = 0; j < numOfClasses; j++)
             {
@@ -691,6 +701,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                     std::cout << idx_value;
                 }
 
+            }
             }
             std::cout << "\n";
         }

@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 
+
 class Pipeline(object):
 
     """Pipeline class internally calls RaliCreate which returns context which will have all
@@ -90,7 +91,7 @@ class Pipeline(object):
             raise Exception("Failed creating the pipeline")
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
-        self._check_ops_decoder = ["ImageDecoder", "ImageDecoderRandomCrop"]
+        self._check_ops_decoder = ["ImageDecoder", "ImageDecoderSlice" , "ImageDecoderRandomCrop", "ImageDecoderRaw"]
         self._check_ops_reader = ["FileReader", "TFRecordReaderClassification", "TFRecordReaderDetection",
             "COCOReader", "Caffe2Reader", "Caffe2ReaderDetection", "CaffeReader", "CaffeReaderDetection"]
         self._batch_size = batch_size
@@ -127,9 +128,11 @@ class Pipeline(object):
         if(operator.data in self._check_ops):
             self._tensor_layout = operator._output_layout
             self._tensor_dtype = operator._output_dtype
-            self._multiplier = list(map(lambda x: 1/x, operator._std))
-            self._offset = list(
-                map(lambda x, y: -(x/y), operator._mean, operator._std))
+            self._multiplier = list(map(lambda x: 1/x ,operator._std))
+            self._offset = list(map(lambda x,y: -(x/y), operator._mean, operator._std))
+            #changing operator std and mean to (1,0) to make sure there is no double normalization
+            operator._std = [1.0]
+            operator._mean = [0.0]
             if operator._crop_h != 0 and operator._crop_w != 0:
                 self._img_w = operator._crop_w
                 self._img_h = operator._crop_h
@@ -178,14 +181,15 @@ class Pipeline(object):
 
         #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
         if(len(outputs)==3):
-            if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
-                if(outputs[2].prev.data == "Cast") :
-                    self._castLabels = True
-                    if(outputs[2].prev.prev.prev.data is not None):
-                        if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
-                            self._BoxEncoder = True
-                            self._anchors = outputs[2].prev.prev.data
-                            self._encode_tensor = outputs[2].prev.prev
+            if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
+                if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
+                    if(outputs[2].prev.data == "Cast") :
+                        self._castLabels = True
+                        if(outputs[2].prev.prev.prev.data is not None):
+                            if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
+                                self._BoxEncoder = True
+                                self._anchors = outputs[2].prev.prev.data
+                                self._encode_tensor = outputs[2].prev.prev
         #Checks for Box Encoding as the Last Node
         if(len(outputs)==3):
             if(isinstance(outputs[1],list)== False):
@@ -259,6 +263,7 @@ class Pipeline(object):
     
     def GetOneHotEncodedLabels(self, array):
         return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
+
 
     def GetImageNameLen(self, array):
         return b.getImageNameLen(self._handle, array)

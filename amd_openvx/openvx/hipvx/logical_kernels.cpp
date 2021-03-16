@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "hip_common.h"
+#include "hip_common_funcs.h"
 #include "hip_host_decls.h"
 
 // ----------------------------------------------------------------------------
@@ -48,9 +48,7 @@ Hip_And_U8_U8U8(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst = src1 & src2;
-
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    *((uint2 *)(&pDstImage[dstIdx])) = src1 & src2;
 }
 int HipExec_And_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -340,11 +338,8 @@ Hip_And_U1_U1U1(uint dstWidth, uint dstHeight,
 
     uchar src1 = *((uchar *)(&pSrcImage1[src1Idx]));
     uchar src2 = *((uchar *)(&pSrcImage2[src2Idx]));
-    uchar dst;
 
-    dst = src1 & src2;
-
-    *((uchar *)(&pDstImage[dstIdx])) = dst;
+    *((uchar *)(&pDstImage[dstIdx])) = src1 & src2;
 }
 int HipExec_And_U1_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -385,11 +380,8 @@ Hip_Or_U8_U8U8(uint dstWidth, uint dstHeight,
 
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
-    uint2 dst;
 
-    dst = src1 | src2;
-
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    *((uint2 *)(&pDstImage[dstIdx])) = src1 | src2;
 }
 int HipExec_Or_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -679,11 +671,8 @@ Hip_Or_U1_U1U1(uint dstWidth, uint dstHeight,
 
     uchar src1 = *((uchar *)(&pSrcImage1[src1Idx]));
     uchar src2 = *((uchar *)(&pSrcImage2[src2Idx]));
-    uchar dst;
 
-    dst = src1 | src2;
-
-    *((uchar *)(&pDstImage[dstIdx])) = dst;
+    *((uchar *)(&pDstImage[dstIdx])) = src1 | src2;
 }
 int HipExec_Or_U1_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -724,11 +713,8 @@ Hip_Xor_U8_U8U8(uint dstWidth, uint dstHeight,
 
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
-    uint2 dst;
 
-    dst = src1 ^ src2;
-
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    *((uint2 *)(&pDstImage[dstIdx])) = src1 ^ src2;
 }
 int HipExec_Xor_U8_U8U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1018,11 +1004,8 @@ Hip_Xor_U1_U1U1(uint dstWidth, uint dstHeight,
 
     uchar src1 = *((uchar *)(&pSrcImage1[src1Idx]));
     uchar src2 = *((uchar *)(&pSrcImage2[src2Idx]));
-    uchar dst;
 
-    dst = src1 ^ src2;
-
-    *((uchar *)(&pDstImage[dstIdx])) = dst;
+    *((uchar *)(&pDstImage[dstIdx])) = src1 ^ src2;
 }
 int HipExec_Xor_U1_U1U1(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
@@ -1060,11 +1043,7 @@ Hip_Not_U8_U8(uint dstWidth, uint dstHeight,
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
     uint2 src1 = *((uint2 *)(&pSrcImage1[src1Idx]));
-    uint2 dst;
-
-    dst = ~src1;
-
-    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+    *((uint2 *)(&pDstImage[dstIdx])) = ~src1;
 }
 int HipExec_Not_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,

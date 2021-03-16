@@ -1357,7 +1357,7 @@ raliVideoFileSource(
                                                                           source_path, "",
 									  std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
-                                                                          DecoderType::FFMPEG_VIDEO,
+                                                                          VideoDecoderType::FFMPEG_VIDEO,
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),

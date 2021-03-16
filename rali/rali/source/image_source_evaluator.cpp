@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #include "image_source_evaluator.h"
 #include "decoder_factory.h"
+#include "video_decoder_factory.h"
 #include "reader_factory.h"
 void ImageSourceEvaluator::set_size_evaluation_policy(MaxSizeEvaluationPolicy arg)
 {
@@ -51,6 +52,21 @@ ImageSourceEvaluator::create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg)
     _decoder = create_decoder(std::move(decoder_cfg));
     _reader = create_reader(std::move(reader_cfg));
     find_max_dimension();
+    return status;
+}
+
+ImageSourceEvaluatorStatus
+ImageSourceEvaluator::create(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg)
+{
+    ImageSourceEvaluatorStatus status = ImageSourceEvaluatorStatus::OK;
+
+    // Can initialize it to any decoder types if needed
+
+
+    // _header_buff.resize(COMPRESSED_SIZE);
+    _video_decoder = create_video_decoder(std::move(decoder_cfg));
+    _reader = create_reader(std::move(reader_cfg));
+    //find_max_dimension();
     return status;
 }
 

@@ -119,6 +119,7 @@ private:
     const RaliAffinity _affinity;
     const int _gpu_id;//!< Defines the device id used for processing
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
+    pVideoLoaderModule _video_loader_module;
     TimingDBG _convert_time;
     const size_t _user_batch_size;//!< Batch size provided by the user
     const size_t _cpu_threads;//!< Not in use
@@ -251,10 +252,10 @@ template<> inline std::shared_ptr<Cifar10LoaderNode> MasterGraph::add_node(const
  */
 template<> inline std::shared_ptr<VideoLoaderNode> MasterGraph::add_node(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs)
 {
-    if(_loader_module)
+    if(_video_loader_module)
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<VideoLoaderNode>(outputs[0], _device.resources());
-    _loader_module = node->get_loader_module();
+    _video_loader_module = node->get_loader_module();
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));

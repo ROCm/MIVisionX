@@ -23,22 +23,22 @@ THE SOFTWARE.
 
 #include <iterator>
 #include <cstring>
-#include "decoder_factory.h"
+#include "video_decoder_factory.h"
 #include "video_read_and_decode.h"
 
 
-std::tuple<Decoder::ColorFormat, unsigned > 
+std::tuple<VideoDecoder::ColorFormat, unsigned > 
 video_interpret_color_format(RaliColorFormat color_format ) 
 {
     switch (color_format) {
         case RaliColorFormat::RGB24:
-            return  std::make_tuple(Decoder::ColorFormat::RGB, 3);
+            return  std::make_tuple(VideoDecoder::ColorFormat::RGB, 3);
 
         case RaliColorFormat::BGR24:
-            return  std::make_tuple(Decoder::ColorFormat::BGR, 3);
+            return  std::make_tuple(VideoDecoder::ColorFormat::BGR, 3);
 
         case RaliColorFormat::U8:
-            return  std::make_tuple(Decoder::ColorFormat::GRAY, 1);
+            return  std::make_tuple(VideoDecoder::ColorFormat::GRAY, 1);
 
         default:
             throw std::invalid_argument("Invalid color format\n");
@@ -64,16 +64,16 @@ VideoReadAndDecode::VideoReadAndDecode():
 VideoReadAndDecode::~VideoReadAndDecode()
 {
     _reader = nullptr;
-    _decoder.clear();
+    _video_decoder.clear();
 }   
 
 void
-VideoReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size)
+VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
     // Can initialize it to any decoder types if needed
     _batch_size = batch_size;
     _compressed_buff.resize(batch_size);
-    _decoder.resize(batch_size);
+    _video_decoder.resize(batch_size);
     _actual_read_size.resize(batch_size);
     _image_names.resize(batch_size);
     _compressed_image_size.resize(batch_size);
@@ -82,12 +82,12 @@ VideoReadAndDecode::create(ReaderConfig reader_config, DecoderConfig decoder_con
     _actual_decoded_height.resize(_batch_size);
     _original_height.resize(_batch_size);
     _original_width.resize(_batch_size);
-    _decoder_config = decoder_config;
+    _video_decoder_config = decoder_config;
 
     for(int i = 0; i < batch_size; i++)
     {
         _compressed_buff[i].resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
-        _decoder[i] = create_decoder(decoder_config);
+        _video_decoder[i] = create_video_decoder(decoder_config);
     }
     _reader = create_reader(reader_config);
 }
@@ -106,7 +106,7 @@ VideoReadAndDecode::count()
 }
 
 
-LoaderModuleStatus 
+VideoLoaderModuleStatus 
 VideoReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
                          const size_t max_decoded_width,
@@ -123,11 +123,11 @@ VideoReadAndDecode::load(unsigned char* buff,
     if(!buff)
         THROW("Null pointer passed as output buffer")
     if(_reader->count() < _batch_size)
-        return LoaderModuleStatus::NO_MORE_DATA_TO_READ;
+        return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
     // load images/frames from the disk and push them as a large image onto the buff
     unsigned file_counter = 0;
     const auto ret = video_interpret_color_format(output_color_format);
-    const Decoder::ColorFormat decoder_color_format = std::get<0>(ret);
+    const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
     const bool keep_original = decoder_keep_original;
 
@@ -167,10 +167,10 @@ VideoReadAndDecode::load(unsigned char* buff,
         _actual_decoded_height[i] = max_decoded_height;
         
         int original_width, original_height, jpeg_sub_samp;
-        if(_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height, &jpeg_sub_samp ) != Decoder::Status::OK)
+        /*if(_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height, &jpeg_sub_samp ) != Decoder::Status::OK)
         {
             continue;
-        }
+        }*/
         _original_height[i] = original_height;
         _original_width[i]  = original_width;
 #if 0
@@ -181,14 +181,14 @@ VideoReadAndDecode::load(unsigned char* buff,
 
         // decode the image and get the actual decoded image width and height
         size_t scaledw, scaledh;
-        if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
+        /*if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,
                                scaledw, scaledh,
                                decoder_color_format,_decoder_config, keep_original) != Decoder::Status::OK)
         {
             continue;
-        }
+        }*/
         _actual_decoded_width[i] = scaledw;
         _actual_decoded_height[i] = scaledh;
     }
@@ -203,5 +203,5 @@ VideoReadAndDecode::load(unsigned char* buff,
 
     _decode_time.end();// Debug timing
 
-    return LoaderModuleStatus::OK;
+    return VideoLoaderModuleStatus::OK;
 }

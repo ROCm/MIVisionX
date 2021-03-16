@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include "ffmpeg_video_decoder.h"
 #include "reader_factory.h"
 #include "timing_debug.h"
-#include "loader_module.h"
+#include "video_loader_module.h"
 
 class VideoReadAndDecode
 {
@@ -37,7 +37,7 @@ public:
     ~VideoReadAndDecode();
     size_t count();
     void reset();
-    void create(ReaderConfig reader_config, DecoderConfig decoder_config, int batch_size);
+    void create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size);
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     /// \param buff User's buffer provided to be filled with decoded image samples
@@ -47,7 +47,7 @@ public:
     /// \param roi_width is set by the load() function tp the width of the region that decoded image is located. It's less than max_width and is either equal to the original image width if original image width is smaller than max_width or downscaled if necessary to fit the max_width criterion.
     /// \param roi_height  is set by the load() function tp the width of the region that decoded image is located.It's less than max_height and is either equal to the original image height if original image height is smaller than max_height or downscaled if necessary to fit the max_height criterion.
     /// \param output_color_format defines what color format user expects decoder to decode images into if capable of doing so supported is
-    LoaderModuleStatus load(
+    VideoLoaderModuleStatus load(
             unsigned char* buff,
             std::vector<std::string>& names,
             const size_t  max_decoded_width,
@@ -63,7 +63,7 @@ public:
     Timing timing();
 
 private:
-    std::vector<std::shared_ptr<Decoder>> _decoder;
+    std::vector<std::shared_ptr<VideoDecoder>> _video_decoder;
     std::shared_ptr<Reader> _reader;
     std::vector<std::vector<unsigned char>> _compressed_buff;
     std::vector<size_t> _actual_read_size;
@@ -77,7 +77,7 @@ private:
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
-    DecoderConfig _decoder_config;
+    VideoDecoderConfig _video_decoder_config;
     bool decoder_keep_original;
 };
 

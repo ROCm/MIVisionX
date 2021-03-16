@@ -23,7 +23,6 @@ THE SOFTWARE.
 #pragma  once
 #include <memory>
 #include "reader.h"
-#include "decoder.h"
 #include "video_decoder.h"
 #include "commons.h"
 #include "image.h"
@@ -31,7 +30,7 @@ THE SOFTWARE.
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
 
-enum class LoaderModuleStatus
+enum class VideoLoaderModuleStatus
 {
     OK = 0,
     DEVICE_BUFFER_SWAP_FAILED,
@@ -42,22 +41,21 @@ enum class LoaderModuleStatus
     NOT_INITIALIZED
 };
 
-/*! \class LoaderModule The interface defining the API and requirements of loader modules*/
-class LoaderModule 
+/*! \class VideoLoaderModule The interface defining the API and requirements of loader modules*/
+class VideoLoaderModule 
 {
 public:
-    virtual void initialize(ReaderConfig reader_config, DecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
+    virtual void initialize(ReaderConfig reader_config, VideoDecoderConfig decoder_config, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size) = 0;
     virtual void set_output_image(Image* output_image) = 0;
-    virtual LoaderModuleStatus load_next() = 0; // Loads the next image data into the Image's buffer set by calling into the set_output_image
+    virtual VideoLoaderModuleStatus load_next() = 0; // Loads the next image data into the Image's buffer set by calling into the set_output_image
     virtual void reset() = 0; // Resets the loader to load from the beginning of the media
     virtual size_t remaining_count() = 0; // Returns the number of available images to be loaded
-    virtual ~LoaderModule()= default;
+    virtual ~VideoLoaderModule()= default;
     virtual Timing timing() = 0;// Returns timing info
     virtual std::vector<std::string> get_id() = 0; // returns the id of the last batch of images/frames loaded
     virtual void start_loading() = 0; // starts internal loading thread
     virtual decoded_image_info get_decode_image_info() = 0;
     // introduce meta data reader
-    virtual void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader) = 0;
 };
 
-using pLoaderModule = std::shared_ptr<LoaderModule>;
+using pVideoLoaderModule = std::shared_ptr<VideoLoaderModule>;

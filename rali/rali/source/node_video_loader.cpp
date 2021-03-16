@@ -75,7 +75,7 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
 }*/
 
 void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
+VideoDecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;
@@ -89,7 +89,7 @@ DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, Rali
     auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, feature_key_map, shuffle, loop);
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
-    _loader_module->initialize(reader_cfg, DecoderConfig(decoder_type),
+    _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
              mem_type,
              _batch_size);
     _loader_module->start_loading();
@@ -103,7 +103,7 @@ DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, Rali
         THROW("Video batch size " + TOSTR(_batch_size)+" is bigger than " + TOSTR(MAXIMUM_VIDEO_CONCURRENT_DECODE))
 }*/
 
-std::shared_ptr<LoaderModule> VideoLoaderNode::get_loader_module()
+std::shared_ptr<VideoLoaderModule> VideoLoaderNode::get_loader_module()
 {
     if(!_loader_module)
         WRN("VideoLoaderNode's loader module is null, not initialized")

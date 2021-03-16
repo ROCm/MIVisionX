@@ -55,10 +55,10 @@ VideoLoaderSharded::fast_forward_through_empty_loaders()
         increment_loader_idx();
 }
 
-LoaderModuleStatus VideoLoaderSharded::load_next()
+VideoLoaderModuleStatus VideoLoaderSharded::load_next()
 {
     if(!_initialized)
-        return LoaderModuleStatus::NOT_INITIALIZED;
+        return VideoLoaderModuleStatus::NOT_INITIALIZED;
 
     increment_loader_idx();
 
@@ -71,7 +71,7 @@ LoaderModuleStatus VideoLoaderSharded::load_next()
     return ret;
 }
 void
-VideoLoaderSharded::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type,
+VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type,
                                unsigned batch_size, bool keep_orig_size)
 {
     if(_initialized)

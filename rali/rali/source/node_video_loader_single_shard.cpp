@@ -32,7 +32,7 @@ VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceReso
 
 void
 VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count,  const std::string &source_path, const std::string &json_path, StorageType storage_type,
-DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
+VideoDecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;
@@ -49,13 +49,13 @@ DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, Rali
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
     reader_cfg.set_batch_count(load_batch_count);
-    _loader_module->initialize(reader_cfg, DecoderConfig(decoder_type),
+    _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
                                mem_type,
                                _batch_size);
     _loader_module->start_loading();
 }
 
-std::shared_ptr<LoaderModule> VideoLoaderSingleShardNode::get_loader_module()
+std::shared_ptr<VideoLoaderModule> VideoLoaderSingleShardNode::get_loader_module()
 {
     if(!_loader_module)
         WRN("VideoLoaderSingleShardNode's loader module is null, not initialized")

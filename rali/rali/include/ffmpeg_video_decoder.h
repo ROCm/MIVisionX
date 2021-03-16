@@ -22,10 +22,13 @@ THE SOFTWARE.
 
 #pragma once
 
-#include "decoder.h"
-//#include <turbojpeg.h>
+#include "video_decoder.h"
+#include <libavutil/imgutils.h>
+#include <libavutil/samplefmt.h>
+#include <libavutil/timestamp.h>
+#include <libavformat/avformat.h>
 
-class FFMPEG_VIDEO_DECODER : public Decoder {
+class FFMPEG_VIDEO_DECODER : public VideoDecoder {
 public:
     //! Default constructor
     FFMPEG_VIDEO_DECODER();
@@ -38,7 +41,7 @@ public:
      \param height pointer to the user's buffer to write the height of the compressed image to 
      \param color_comps pointer to the user's buffer to write the number of color components of the compressed image to 
     */
-    Status decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) override;
+    //Status decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) override;
     
     //! Decodes the actual image data
     /*! 
@@ -50,13 +53,31 @@ public:
       \param original_image_width The actual width of the compressed image. decoded width will be equal to this if this is smaller than max_decoded_width
       \param original_image_height The actual height of the compressed image. decoded height will be equal to this if this is smaller than max_decoded_height
     */
-    Decoder::Status decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
+    /*Decoder::Status decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
                            size_t max_decoded_width, size_t max_decoded_height,
                            size_t original_image_width, size_t original_image_height,
                            size_t &actual_decoded_width, size_t &actual_decoded_height,
-                           Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false) override;
-
+                           Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false) override;*/
     ~FFMPEG_VIDEO_DECODER() override;
 private:
+	AVFormatContext *fmt_ctx = NULL;
+	AVCodecContext *video_dec_ctx = NULL, *audio_dec_ctx;
+	int width, height;
+	enum AVPixelFormat pix_fmt;
+	AVStream *video_stream = NULL, *audio_stream = NULL;
+	const char *src_filename = NULL;
+	const char *video_dst_filename = NULL;
+	const char *audio_dst_filename = NULL;
+	FILE *video_dst_file = NULL;
+	FILE *audio_dst_file = NULL;
 
+	uint8_t *video_dst_data[4] = {NULL};
+	int      video_dst_linesize[4];
+	int video_dst_bufsize;
+
+	int video_stream_idx = -1, audio_stream_idx = -1;
+	AVFrame *frame = NULL;
+	AVPacket pkt;
+	int video_frame_count = 0;
+	int audio_frame_count = 0;
 };

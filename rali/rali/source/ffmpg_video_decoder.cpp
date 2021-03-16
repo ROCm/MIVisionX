@@ -27,21 +27,5 @@ THE SOFTWARE.
 FFMPEG_VIDEO_DECODER::FFMPEG_VIDEO_DECODER(){
 };
 
-Decoder::Status FFMPEG_VIDEO_DECODER::decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) 
-{
-   
-    return Status::OK;
-}
-
-Decoder::Status FFMPEG_VIDEO_DECODER::decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
-                                  size_t max_decoded_width, size_t max_decoded_height,
-                                  size_t original_image_width, size_t original_image_height,
-                                  size_t &actual_decoded_width, size_t &actual_decoded_height,
-                                  Decoder::ColorFormat desired_decoded_color_format,DecoderConfig config, bool keep_original_size)
-{
-
-    return Status::OK;
-}
-
 FFMPEG_VIDEO_DECODER::~FFMPEG_VIDEO_DECODER() {
 }

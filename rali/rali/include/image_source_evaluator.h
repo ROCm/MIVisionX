@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include "reader_factory.h"
 #include "timing_debug.h"
 #include "loader_module.h"
+#include "video_loader_module.h"
 enum class ImageSourceEvaluatorStatus
 {
     OK = 0,
@@ -43,6 +44,7 @@ class ImageSourceEvaluator
 {
 public:
     ImageSourceEvaluatorStatus create(ReaderConfig reader_cfg, DecoderConfig decoder_cfg);
+    ImageSourceEvaluatorStatus create(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg);
     void find_max_dimension();
     void set_size_evaluation_policy(MaxSizeEvaluationPolicy arg);
     size_t max_width();
@@ -64,6 +66,7 @@ private:
     FindMaxSize _width_max; 
     FindMaxSize _height_max;
     std::shared_ptr<Decoder> _decoder;
+    std::shared_ptr<VideoDecoder> _video_decoder;
     std::shared_ptr<Reader> _reader;
     std::vector<unsigned char> _header_buff;
     static const size_t COMPRESSED_SIZE = 1024 * 1024; // 1 MB

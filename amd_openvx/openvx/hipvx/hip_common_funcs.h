@@ -116,11 +116,7 @@ __device__ __forceinline__ float hip_median3(float src0, float src1, float src2)
 }
 
 __device__ __forceinline__ uint hip_lerp(uint src0, uint src1, uint src2) {
-    uint dst = ((((src0          & 0xff) + (src1         & 0xff) + (src2         & 1)) >> 1)) +
-                (((((src0 >>  8) & 0xff) + ((src1 >>  8) & 0xff) + ((src2 >>  8) & 1)) >> 1) <<  8) +
-                (((((src0 >> 16) & 0xff) + ((src1 >> 16) & 0xff) + ((src2 >> 16) & 1)) >> 1) << 16) +
-                (((((src0 >> 24) & 0xff) + ((src1 >> 24) & 0xff) + ((src2 >> 24) & 1)) >> 1) << 24);
-    return dst;
+    return __builtin_amdgcn_lerp(src0, src1, src2);
 }
 
 __device__ __forceinline__ float4 hip_fabs4(float4 src) {

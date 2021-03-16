@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#include "hip_common.h"
+#include "hip_common_funcs.h"
 #include "hip_host_decls.h"
 
 // ----------------------------------------------------------------------------
@@ -48,8 +48,8 @@ Hip_AbsDiff_U8_U8U8(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst.x = pack_((fabs4(unpack_(src1.x) - unpack_(src2.x))));
-    dst.y = pack_((fabs4(unpack_(src1.y) - unpack_(src2.y))));
+    dst.x = hip_pack((hip_fabs4(hip_unpack(src1.x) - hip_unpack(src2.x))));
+    dst.y = hip_pack((hip_fabs4(hip_unpack(src1.y) - hip_unpack(src2.y))));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -190,8 +190,8 @@ Hip_Add_U8_U8U8_Sat(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst.x = pack_((unpack_(src1.x) + unpack_(src2.x)));
-    dst.y = pack_((unpack_(src1.y) + unpack_(src2.y)));
+    dst.x = hip_pack((hip_unpack(src1.x) + hip_unpack(src2.x)));
+    dst.y = hip_pack((hip_unpack(src1.y) + hip_unpack(src2.y)));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -328,14 +328,14 @@ Hip_Add_S16_S16U8_Sat(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (int)(hip_clamp((float)(((int)(src1.x) << 16) >> 16) + unpack0_(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.x |= (int)(hip_clamp((float)( (int)(src1.x)        >> 16) + unpack1_(src2.x), -32768.0f, 32767.0f)) << 16;
-    dst.y  = (int)(hip_clamp((float)(((int)(src1.y) << 16) >> 16) + unpack2_(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.y |= (int)(hip_clamp((float)( (int)(src1.y)        >> 16) + unpack3_(src2.x), -32768.0f, 32767.0f)) << 16;
-    dst.z  = (int)(hip_clamp((float)(((int)(src1.z) << 16) >> 16) + unpack0_(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.z |= (int)(hip_clamp((float)( (int)(src1.z)        >> 16) + unpack1_(src2.y), -32768.0f, 32767.0f)) << 16;
-    dst.w  = (int)(hip_clamp((float)(((int)(src1.w) << 16) >> 16) + unpack2_(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.w |= (int)(hip_clamp((float)( (int)(src1.w)        >> 16) + unpack3_(src2.y), -32768.0f, 32767.0f)) << 16;
+    dst.x  = (int)(hip_clamp((float)(((int)(src1.x) << 16) >> 16) + hip_unpack0(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.x |= (int)(hip_clamp((float)( (int)(src1.x)        >> 16) + hip_unpack1(src2.x), -32768.0f, 32767.0f)) << 16;
+    dst.y  = (int)(hip_clamp((float)(((int)(src1.y) << 16) >> 16) + hip_unpack2(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.y |= (int)(hip_clamp((float)( (int)(src1.y)        >> 16) + hip_unpack3(src2.x), -32768.0f, 32767.0f)) << 16;
+    dst.z  = (int)(hip_clamp((float)(((int)(src1.z) << 16) >> 16) + hip_unpack0(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.z |= (int)(hip_clamp((float)( (int)(src1.z)        >> 16) + hip_unpack1(src2.y), -32768.0f, 32767.0f)) << 16;
+    dst.w  = (int)(hip_clamp((float)(((int)(src1.w) << 16) >> 16) + hip_unpack2(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.w |= (int)(hip_clamp((float)( (int)(src1.w)        >> 16) + hip_unpack3(src2.y), -32768.0f, 32767.0f)) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -451,7 +451,6 @@ int HipExec_Add_S16_S16S16_Sat(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
     return VX_SUCCESS;
 }
 
-
 // ----------------------------------------------------------------------------
 // VxSub kernels for hip backend
 // ----------------------------------------------------------------------------
@@ -525,8 +524,8 @@ Hip_Sub_U8_U8U8_Sat(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst.x = pack_((unpack_(src1.x) - unpack_(src2.x)));
-    dst.y = pack_((unpack_(src1.y) - unpack_(src2.y)));
+    dst.x = hip_pack((hip_unpack(src1.x) - hip_unpack(src2.x)));
+    dst.y = hip_pack((hip_unpack(src1.y) - hip_unpack(src2.y)));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -663,14 +662,14 @@ Hip_Sub_S16_S16U8_Sat(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (int)(hip_clamp((float)(((int)(src1.x) << 16) >> 16) - unpack0_(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.x |= (int)(hip_clamp((float)( (int)(src1.x)        >> 16) - unpack1_(src2.x), -32768.0f, 32767.0f)) << 16;
-    dst.y  = (int)(hip_clamp((float)(((int)(src1.y) << 16) >> 16) - unpack2_(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.y |= (int)(hip_clamp((float)( (int)(src1.y)        >> 16) - unpack3_(src2.x), -32768.0f, 32767.0f)) << 16;
-    dst.z  = (int)(hip_clamp((float)(((int)(src1.z) << 16) >> 16) - unpack0_(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.z |= (int)(hip_clamp((float)( (int)(src1.z)        >> 16) - unpack1_(src2.y), -32768.0f, 32767.0f)) << 16;
-    dst.w  = (int)(hip_clamp((float)(((int)(src1.w) << 16) >> 16) - unpack2_(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.w |= (int)(hip_clamp((float)( (int)(src1.w)        >> 16) - unpack3_(src2.y), -32768.0f, 32767.0f)) << 16;
+    dst.x  = (int)(hip_clamp((float)(((int)(src1.x) << 16) >> 16) - hip_unpack0(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.x |= (int)(hip_clamp((float)( (int)(src1.x)        >> 16) - hip_unpack1(src2.x), -32768.0f, 32767.0f)) << 16;
+    dst.y  = (int)(hip_clamp((float)(((int)(src1.y) << 16) >> 16) - hip_unpack2(src2.x), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.y |= (int)(hip_clamp((float)( (int)(src1.y)        >> 16) - hip_unpack3(src2.x), -32768.0f, 32767.0f)) << 16;
+    dst.z  = (int)(hip_clamp((float)(((int)(src1.z) << 16) >> 16) - hip_unpack0(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.z |= (int)(hip_clamp((float)( (int)(src1.z)        >> 16) - hip_unpack1(src2.y), -32768.0f, 32767.0f)) << 16;
+    dst.w  = (int)(hip_clamp((float)(((int)(src1.w) << 16) >> 16) - hip_unpack2(src2.y), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.w |= (int)(hip_clamp((float)( (int)(src1.w)        >> 16) - hip_unpack3(src2.y), -32768.0f, 32767.0f)) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -759,14 +758,14 @@ Hip_Sub_S16_U8S16_Sat(uint dstWidth, uint dstHeight,
     int4 src2 = *((int4 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (int)(hip_clamp(unpack0_(src1.x) - (float)(((int)(src2.x) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.x |= (int)(hip_clamp(unpack1_(src1.x) - (float)( (int)(src2.x)        >> 16), -32768.0f, 32767.0f)) << 16;
-    dst.y  = (int)(hip_clamp(unpack2_(src1.x) - (float)(((int)(src2.y) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.y |= (int)(hip_clamp(unpack3_(src1.x) - (float)( (int)(src2.y)        >> 16), -32768.0f, 32767.0f)) << 16;
-    dst.z  = (int)(hip_clamp(unpack0_(src1.y) - (float)(((int)(src2.z) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.z |= (int)(hip_clamp(unpack1_(src1.y) - (float)( (int)(src2.z)        >> 16), -32768.0f, 32767.0f)) << 16;
-    dst.w  = (int)(hip_clamp(unpack2_(src1.y) - (float)(((int)(src2.w) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
-    dst.w |= (int)(hip_clamp(unpack3_(src1.y) - (float)( (int)(src2.w)        >> 16), -32768.0f, 32767.0f)) << 16;
+    dst.x  = (int)(hip_clamp(hip_unpack0(src1.x) - (float)(((int)(src2.x) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.x |= (int)(hip_clamp(hip_unpack1(src1.x) - (float)( (int)(src2.x)        >> 16), -32768.0f, 32767.0f)) << 16;
+    dst.y  = (int)(hip_clamp(hip_unpack2(src1.x) - (float)(((int)(src2.y) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.y |= (int)(hip_clamp(hip_unpack3(src1.x) - (float)( (int)(src2.y)        >> 16), -32768.0f, 32767.0f)) << 16;
+    dst.z  = (int)(hip_clamp(hip_unpack0(src1.y) - (float)(((int)(src2.z) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.z |= (int)(hip_clamp(hip_unpack1(src1.y) - (float)( (int)(src2.z)        >> 16), -32768.0f, 32767.0f)) << 16;
+    dst.w  = (int)(hip_clamp(hip_unpack2(src1.y) - (float)(((int)(src2.w) << 16) >> 16), -32768.0f, 32767.0f)) & 0x0000ffff;
+    dst.w |= (int)(hip_clamp(hip_unpack3(src1.y) - (float)( (int)(src2.w)        >> 16), -32768.0f, 32767.0f)) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -908,14 +907,14 @@ Hip_Mul_U8_U8U8_Wrap_Trunc(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst.x  = ((int)(scale * unpack0_(src1.x) * unpack0_(src2.x)) & 0x000000ff)      ;
-    dst.x |= ((int)(scale * unpack1_(src1.x) * unpack1_(src2.x)) & 0x000000ff) <<  8;
-    dst.x |= ((int)(scale * unpack2_(src1.x) * unpack2_(src2.x)) & 0x000000ff) << 16;
-    dst.x |= ((int)(scale * unpack3_(src1.x) * unpack3_(src2.x))             ) << 24;
-    dst.y  = ((int)(scale * unpack0_(src1.y) * unpack0_(src2.y)) & 0x000000ff)      ;
-    dst.y |= ((int)(scale * unpack1_(src1.y) * unpack1_(src2.y)) & 0x000000ff) <<  8;
-    dst.y |= ((int)(scale * unpack2_(src1.y) * unpack2_(src2.y)) & 0x000000ff) << 16;
-    dst.y |= ((int)(scale * unpack3_(src1.y) * unpack3_(src2.y))             ) << 24;
+    dst.x  = ((int)(scale * hip_unpack0(src1.x) * hip_unpack0(src2.x)) & 0x000000ff)      ;
+    dst.x |= ((int)(scale * hip_unpack1(src1.x) * hip_unpack1(src2.x)) & 0x000000ff) <<  8;
+    dst.x |= ((int)(scale * hip_unpack2(src1.x) * hip_unpack2(src2.x)) & 0x000000ff) << 16;
+    dst.x |= ((int)(scale * hip_unpack3(src1.x) * hip_unpack3(src2.x))             ) << 24;
+    dst.y  = ((int)(scale * hip_unpack0(src1.y) * hip_unpack0(src2.y)) & 0x000000ff)      ;
+    dst.y |= ((int)(scale * hip_unpack1(src1.y) * hip_unpack1(src2.y)) & 0x000000ff) <<  8;
+    dst.y |= ((int)(scale * hip_unpack2(src1.y) * hip_unpack2(src2.y)) & 0x000000ff) << 16;
+    dst.y |= ((int)(scale * hip_unpack3(src1.y) * hip_unpack3(src2.y))             ) << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -959,14 +958,14 @@ Hip_Mul_U8_U8U8_Wrap_Round(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst.x  = ((int)(scale * unpack0_(src1.x) * unpack0_(src2.x) + (0.5f - 0.00006103515625f)) & 0x000000ff)      ;
-    dst.x |= ((int)(scale * unpack1_(src1.x) * unpack1_(src2.x) + (0.5f - 0.00006103515625f)) & 0x000000ff) <<  8;
-    dst.x |= ((int)(scale * unpack2_(src1.x) * unpack2_(src2.x) + (0.5f - 0.00006103515625f)) & 0x000000ff) << 16;
-    dst.x |= ((int)(scale * unpack3_(src1.x) * unpack3_(src2.x) + (0.5f - 0.00006103515625f))             ) << 24;
-    dst.y  = ((int)(scale * unpack0_(src1.y) * unpack0_(src2.y) + (0.5f - 0.00006103515625f)) & 0x000000ff)      ;
-    dst.y |= ((int)(scale * unpack1_(src1.y) * unpack1_(src2.y) + (0.5f - 0.00006103515625f)) & 0x000000ff) <<  8;
-    dst.y |= ((int)(scale * unpack2_(src1.y) * unpack2_(src2.y) + (0.5f - 0.00006103515625f)) & 0x000000ff) << 16;
-    dst.y |= ((int)(scale * unpack3_(src1.y) * unpack3_(src2.y) + (0.5f - 0.00006103515625f))             ) << 24;
+    dst.x  = ((int)(scale * hip_unpack0(src1.x) * hip_unpack0(src2.x) + (0.5f - 0.00006103515625f)) & 0x000000ff)      ;
+    dst.x |= ((int)(scale * hip_unpack1(src1.x) * hip_unpack1(src2.x) + (0.5f - 0.00006103515625f)) & 0x000000ff) <<  8;
+    dst.x |= ((int)(scale * hip_unpack2(src1.x) * hip_unpack2(src2.x) + (0.5f - 0.00006103515625f)) & 0x000000ff) << 16;
+    dst.x |= ((int)(scale * hip_unpack3(src1.x) * hip_unpack3(src2.x) + (0.5f - 0.00006103515625f))             ) << 24;
+    dst.y  = ((int)(scale * hip_unpack0(src1.y) * hip_unpack0(src2.y) + (0.5f - 0.00006103515625f)) & 0x000000ff)      ;
+    dst.y |= ((int)(scale * hip_unpack1(src1.y) * hip_unpack1(src2.y) + (0.5f - 0.00006103515625f)) & 0x000000ff) <<  8;
+    dst.y |= ((int)(scale * hip_unpack2(src1.y) * hip_unpack2(src2.y) + (0.5f - 0.00006103515625f)) & 0x000000ff) << 16;
+    dst.y |= ((int)(scale * hip_unpack3(src1.y) * hip_unpack3(src2.y) + (0.5f - 0.00006103515625f))             ) << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1011,16 +1010,16 @@ Hip_Mul_U8_U8U8_Sat_Trunc(uint dstWidth, uint dstHeight,
     uint2 dst;
 
     float4 f;
-    f.x = scale * unpack0_(src1.x) * unpack0_(src2.x) - (0.5f - 0.00006103515625f);
-    f.y = scale * unpack1_(src1.x) * unpack1_(src2.x) - (0.5f - 0.00006103515625f);
-    f.z = scale * unpack2_(src1.x) * unpack2_(src2.x) - (0.5f - 0.00006103515625f);
-    f.w = scale * unpack3_(src1.x) * unpack3_(src2.x) - (0.5f - 0.00006103515625f);
-    dst.x = pack_(f);
-    f.x = scale * unpack0_(src1.y) * unpack0_(src2.y) - (0.5f - 0.00006103515625f);
-    f.y = scale * unpack1_(src1.y) * unpack1_(src2.y) - (0.5f - 0.00006103515625f);
-    f.z = scale * unpack2_(src1.y) * unpack2_(src2.y) - (0.5f - 0.00006103515625f);
-    f.w = scale * unpack3_(src1.y) * unpack3_(src2.y) - (0.5f - 0.00006103515625f);
-    dst.y = pack_(f);
+    f.x = scale * hip_unpack0(src1.x) * hip_unpack0(src2.x) - (0.5f - 0.00006103515625f);
+    f.y = scale * hip_unpack1(src1.x) * hip_unpack1(src2.x) - (0.5f - 0.00006103515625f);
+    f.z = scale * hip_unpack2(src1.x) * hip_unpack2(src2.x) - (0.5f - 0.00006103515625f);
+    f.w = scale * hip_unpack3(src1.x) * hip_unpack3(src2.x) - (0.5f - 0.00006103515625f);
+    dst.x = hip_pack(f);
+    f.x = scale * hip_unpack0(src1.y) * hip_unpack0(src2.y) - (0.5f - 0.00006103515625f);
+    f.y = scale * hip_unpack1(src1.y) * hip_unpack1(src2.y) - (0.5f - 0.00006103515625f);
+    f.z = scale * hip_unpack2(src1.y) * hip_unpack2(src2.y) - (0.5f - 0.00006103515625f);
+    f.w = scale * hip_unpack3(src1.y) * hip_unpack3(src2.y) - (0.5f - 0.00006103515625f);
+    dst.y = hip_pack(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1065,16 +1064,16 @@ Hip_Mul_U8_U8U8_Sat_Round(uint dstWidth, uint dstHeight,
     uint2 dst;
 
     float4 f;
-    f.x = scale * unpack0_(src1.x) * unpack0_(src2.x);
-    f.y = scale * unpack1_(src1.x) * unpack1_(src2.x);
-    f.z = scale * unpack2_(src1.x) * unpack2_(src2.x);
-    f.w = scale * unpack3_(src1.x) * unpack3_(src2.x);
-    dst.x = pack_(f);
-    f.x = scale * unpack0_(src1.y) * unpack0_(src2.y);
-    f.y = scale * unpack1_(src1.y) * unpack1_(src2.y);
-    f.z = scale * unpack2_(src1.y) * unpack2_(src2.y);
-    f.w = scale * unpack3_(src1.y) * unpack3_(src2.y);
-    dst.y = pack_(f);
+    f.x = scale * hip_unpack0(src1.x) * hip_unpack0(src2.x);
+    f.y = scale * hip_unpack1(src1.x) * hip_unpack1(src2.x);
+    f.z = scale * hip_unpack2(src1.x) * hip_unpack2(src2.x);
+    f.w = scale * hip_unpack3(src1.x) * hip_unpack3(src2.x);
+    dst.x = hip_pack(f);
+    f.x = scale * hip_unpack0(src1.y) * hip_unpack0(src2.y);
+    f.y = scale * hip_unpack1(src1.y) * hip_unpack1(src2.y);
+    f.z = scale * hip_unpack2(src1.y) * hip_unpack2(src2.y);
+    f.w = scale * hip_unpack3(src1.y) * hip_unpack3(src2.y);
+    dst.y = hip_pack(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1118,14 +1117,14 @@ Hip_Mul_S16_U8U8_Wrap_Trunc(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (((int)(scale * unpack0_(src1.x) * unpack0_(src2.x))) & 0x0000ffff)      ;
-    dst.x |= (((int)(scale * unpack1_(src1.x) * unpack1_(src2.x)))             ) << 16;
-    dst.y  = (((int)(scale * unpack2_(src1.x) * unpack2_(src2.x))) & 0x0000ffff)      ;
-    dst.y |= (((int)(scale * unpack3_(src1.x) * unpack3_(src2.x)))             ) << 16;
-    dst.z  = (((int)(scale * unpack0_(src1.y) * unpack0_(src2.y))) & 0x0000ffff)      ;
-    dst.z |= (((int)(scale * unpack1_(src1.y) * unpack1_(src2.y)))             ) << 16;
-    dst.w  = (((int)(scale * unpack2_(src1.y) * unpack2_(src2.y))) & 0x0000ffff)      ;
-    dst.w |= (((int)(scale * unpack3_(src1.y) * unpack3_(src2.y)))             ) << 16;
+    dst.x  = (((int)(scale * hip_unpack0(src1.x) * hip_unpack0(src2.x))) & 0x0000ffff)      ;
+    dst.x |= (((int)(scale * hip_unpack1(src1.x) * hip_unpack1(src2.x)))             ) << 16;
+    dst.y  = (((int)(scale * hip_unpack2(src1.x) * hip_unpack2(src2.x))) & 0x0000ffff)      ;
+    dst.y |= (((int)(scale * hip_unpack3(src1.x) * hip_unpack3(src2.x)))             ) << 16;
+    dst.z  = (((int)(scale * hip_unpack0(src1.y) * hip_unpack0(src2.y))) & 0x0000ffff)      ;
+    dst.z |= (((int)(scale * hip_unpack1(src1.y) * hip_unpack1(src2.y)))             ) << 16;
+    dst.w  = (((int)(scale * hip_unpack2(src1.y) * hip_unpack2(src2.y))) & 0x0000ffff)      ;
+    dst.w |= (((int)(scale * hip_unpack3(src1.y) * hip_unpack3(src2.y)))             ) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1169,14 +1168,14 @@ Hip_Mul_S16_U8U8_Wrap_Round(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (((int)(scale * unpack0_(src1.x) * unpack0_(src2.x) + 0.5f)) & 0x0000ffff)      ;
-    dst.x |= (((int)(scale * unpack1_(src1.x) * unpack1_(src2.x) + 0.5f))             ) << 16;
-    dst.y  = (((int)(scale * unpack2_(src1.x) * unpack2_(src2.x) + 0.5f)) & 0x0000ffff)      ;
-    dst.y |= (((int)(scale * unpack3_(src1.x) * unpack3_(src2.x) + 0.5f))             ) << 16;
-    dst.z  = (((int)(scale * unpack0_(src1.y) * unpack0_(src2.y) + 0.5f)) & 0x0000ffff)      ;
-    dst.z |= (((int)(scale * unpack1_(src1.y) * unpack1_(src2.y) + 0.5f))             ) << 16;
-    dst.w  = (((int)(scale * unpack2_(src1.y) * unpack2_(src2.y) + 0.5f)) & 0x0000ffff)      ;
-    dst.w |= (((int)(scale * unpack3_(src1.y) * unpack3_(src2.y) + 0.5f))             ) << 16;
+    dst.x  = (((int)(scale * hip_unpack0(src1.x) * hip_unpack0(src2.x) + 0.5f)) & 0x0000ffff)      ;
+    dst.x |= (((int)(scale * hip_unpack1(src1.x) * hip_unpack1(src2.x) + 0.5f))             ) << 16;
+    dst.y  = (((int)(scale * hip_unpack2(src1.x) * hip_unpack2(src2.x) + 0.5f)) & 0x0000ffff)      ;
+    dst.y |= (((int)(scale * hip_unpack3(src1.x) * hip_unpack3(src2.x) + 0.5f))             ) << 16;
+    dst.z  = (((int)(scale * hip_unpack0(src1.y) * hip_unpack0(src2.y) + 0.5f)) & 0x0000ffff)      ;
+    dst.z |= (((int)(scale * hip_unpack1(src1.y) * hip_unpack1(src2.y) + 0.5f))             ) << 16;
+    dst.w  = (((int)(scale * hip_unpack2(src1.y) * hip_unpack2(src2.y) + 0.5f)) & 0x0000ffff)      ;
+    dst.w |= (((int)(scale * hip_unpack3(src1.y) * hip_unpack3(src2.y) + 0.5f))             ) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1220,14 +1219,14 @@ Hip_Mul_S16_U8U8_Sat_Trunc(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (((int)(hip_clamp(scale * unpack0_(src1.x) * unpack0_(src2.x), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.x |= (((int)(hip_clamp(scale * unpack1_(src1.x) * unpack1_(src2.x), -32768.0f, 32767.0f)))             ) << 16;
-    dst.y  = (((int)(hip_clamp(scale * unpack2_(src1.x) * unpack2_(src2.x), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.y |= (((int)(hip_clamp(scale * unpack3_(src1.x) * unpack3_(src2.x), -32768.0f, 32767.0f)))             ) << 16;
-    dst.z  = (((int)(hip_clamp(scale * unpack0_(src1.y) * unpack0_(src2.y), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.z |= (((int)(hip_clamp(scale * unpack1_(src1.y) * unpack1_(src2.y), -32768.0f, 32767.0f)))             ) << 16;
-    dst.w  = (((int)(hip_clamp(scale * unpack2_(src1.y) * unpack2_(src2.y), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.w |= (((int)(hip_clamp(scale * unpack3_(src1.y) * unpack3_(src2.y), -32768.0f, 32767.0f)))             ) << 16;
+    dst.x  = (((int)(hip_clamp(scale * hip_unpack0(src1.x) * hip_unpack0(src2.x), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.x |= (((int)(hip_clamp(scale * hip_unpack1(src1.x) * hip_unpack1(src2.x), -32768.0f, 32767.0f)))             ) << 16;
+    dst.y  = (((int)(hip_clamp(scale * hip_unpack2(src1.x) * hip_unpack2(src2.x), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.y |= (((int)(hip_clamp(scale * hip_unpack3(src1.x) * hip_unpack3(src2.x), -32768.0f, 32767.0f)))             ) << 16;
+    dst.z  = (((int)(hip_clamp(scale * hip_unpack0(src1.y) * hip_unpack0(src2.y), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.z |= (((int)(hip_clamp(scale * hip_unpack1(src1.y) * hip_unpack1(src2.y), -32768.0f, 32767.0f)))             ) << 16;
+    dst.w  = (((int)(hip_clamp(scale * hip_unpack2(src1.y) * hip_unpack2(src2.y), -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.w |= (((int)(hip_clamp(scale * hip_unpack3(src1.y) * hip_unpack3(src2.y), -32768.0f, 32767.0f)))             ) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1271,14 +1270,14 @@ Hip_Mul_S16_U8U8_Sat_Round(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (((int)(hip_clamp(scale * unpack0_(src1.x) * unpack0_(src2.x) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.x |= (((int)(hip_clamp(scale * unpack1_(src1.x) * unpack1_(src2.x) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
-    dst.y  = (((int)(hip_clamp(scale * unpack2_(src1.x) * unpack2_(src2.x) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.y |= (((int)(hip_clamp(scale * unpack3_(src1.x) * unpack3_(src2.x) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
-    dst.z  = (((int)(hip_clamp(scale * unpack0_(src1.y) * unpack0_(src2.y) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.z |= (((int)(hip_clamp(scale * unpack1_(src1.y) * unpack1_(src2.y) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
-    dst.w  = (((int)(hip_clamp(scale * unpack2_(src1.y) * unpack2_(src2.y) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
-    dst.w |= (((int)(hip_clamp(scale * unpack3_(src1.y) * unpack3_(src2.y) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
+    dst.x  = (((int)(hip_clamp(scale * hip_unpack0(src1.x) * hip_unpack0(src2.x) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.x |= (((int)(hip_clamp(scale * hip_unpack1(src1.x) * hip_unpack1(src2.x) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
+    dst.y  = (((int)(hip_clamp(scale * hip_unpack2(src1.x) * hip_unpack2(src2.x) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.y |= (((int)(hip_clamp(scale * hip_unpack3(src1.x) * hip_unpack3(src2.x) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
+    dst.z  = (((int)(hip_clamp(scale * hip_unpack0(src1.y) * hip_unpack0(src2.y) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.z |= (((int)(hip_clamp(scale * hip_unpack1(src1.y) * hip_unpack1(src2.y) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
+    dst.w  = (((int)(hip_clamp(scale * hip_unpack2(src1.y) * hip_unpack2(src2.y) + 0.5f, -32768.0f, 32767.0f))) & 0x0000ffff)      ;
+    dst.w |= (((int)(hip_clamp(scale * hip_unpack3(src1.y) * hip_unpack3(src2.y) + 0.5f, -32768.0f, 32767.0f)))             ) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1322,14 +1321,14 @@ Hip_Mul_S16_S16U8_Wrap_Trunc(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (((int)(scale * (float)(((int)(src1.x) << 16) >> 16) * unpack0_(src2.x))) & 0x0000ffff)      ;
-    dst.x |= (((int)(scale * (float)( (int)(src1.x)        >> 16) * unpack1_(src2.x)))             ) << 16;
-    dst.y  = (((int)(scale * (float)(((int)(src1.y) << 16) >> 16) * unpack2_(src2.x))) & 0x0000ffff)      ;
-    dst.y |= (((int)(scale * (float)( (int)(src1.y)        >> 16) * unpack3_(src2.x)))             ) << 16;
-    dst.z  = (((int)(scale * (float)(((int)(src1.z) << 16) >> 16) * unpack0_(src2.y))) & 0x0000ffff)      ;
-    dst.z |= (((int)(scale * (float)( (int)(src1.z)        >> 16) * unpack1_(src2.y)))             ) << 16;
-    dst.w  = (((int)(scale * (float)(((int)(src1.w) << 16) >> 16) * unpack2_(src2.y))) & 0x0000ffff)      ;
-    dst.w |= (((int)(scale * (float)( (int)(src1.w)        >> 16) * unpack3_(src2.y)))             ) << 16;
+    dst.x  = (((int)(scale * (float)(((int)(src1.x) << 16) >> 16) * hip_unpack0(src2.x))) & 0x0000ffff)      ;
+    dst.x |= (((int)(scale * (float)( (int)(src1.x)        >> 16) * hip_unpack1(src2.x)))             ) << 16;
+    dst.y  = (((int)(scale * (float)(((int)(src1.y) << 16) >> 16) * hip_unpack2(src2.x))) & 0x0000ffff)      ;
+    dst.y |= (((int)(scale * (float)( (int)(src1.y)        >> 16) * hip_unpack3(src2.x)))             ) << 16;
+    dst.z  = (((int)(scale * (float)(((int)(src1.z) << 16) >> 16) * hip_unpack0(src2.y))) & 0x0000ffff)      ;
+    dst.z |= (((int)(scale * (float)( (int)(src1.z)        >> 16) * hip_unpack1(src2.y)))             ) << 16;
+    dst.w  = (((int)(scale * (float)(((int)(src1.w) << 16) >> 16) * hip_unpack2(src2.y))) & 0x0000ffff)      ;
+    dst.w |= (((int)(scale * (float)( (int)(src1.w)        >> 16) * hip_unpack3(src2.y)))             ) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1373,14 +1372,14 @@ Hip_Mul_S16_S16U8_Wrap_Round(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.x) << 16) >> 16) * unpack0_(src2.x))) & 0x0000ffff)      ;
-    dst.x |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.x)        >> 16) * unpack1_(src2.x)))             ) << 16;
-    dst.y  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.y) << 16) >> 16) * unpack2_(src2.x))) & 0x0000ffff)      ;
-    dst.y |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.y)        >> 16) * unpack3_(src2.x)))             ) << 16;
-    dst.z  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.z) << 16) >> 16) * unpack0_(src2.y))) & 0x0000ffff)      ;
-    dst.z |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.z)        >> 16) * unpack1_(src2.y)))             ) << 16;
-    dst.w  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.w) << 16) >> 16) * unpack2_(src2.y))) & 0x0000ffff)      ;
-    dst.w |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.w)        >> 16) * unpack3_(src2.y)))             ) << 16;
+    dst.x  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.x) << 16) >> 16) * hip_unpack0(src2.x))) & 0x0000ffff)      ;
+    dst.x |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.x)        >> 16) * hip_unpack1(src2.x)))             ) << 16;
+    dst.y  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.y) << 16) >> 16) * hip_unpack2(src2.x))) & 0x0000ffff)      ;
+    dst.y |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.y)        >> 16) * hip_unpack3(src2.x)))             ) << 16;
+    dst.z  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.z) << 16) >> 16) * hip_unpack0(src2.y))) & 0x0000ffff)      ;
+    dst.z |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.z)        >> 16) * hip_unpack1(src2.y)))             ) << 16;
+    dst.w  = (((int)hip_convert_short_rte(scale * (float)(((int)(src1.w) << 16) >> 16) * hip_unpack2(src2.y))) & 0x0000ffff)      ;
+    dst.w |= (((int)hip_convert_short_rte(scale * (float)( (int)(src1.w)        >> 16) * hip_unpack3(src2.y)))             ) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1425,14 +1424,14 @@ Hip_Mul_S16_S16U8_Sat_Trunc(uint dstWidth, uint dstHeight,
     int4 dst;
 
     float f;
-    f = hip_clamp(scale * (float)(((int)(src1.x) << 16) >> 16) * unpack0_(src2.x), -32768.0f, 32767.0f); dst.x  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.x)        >> 16) * unpack1_(src2.x), -32768.0f, 32767.0f); dst.x |= ((int)(f)             ) << 16;
-    f = hip_clamp(scale * (float)(((int)(src1.y) << 16) >> 16) * unpack2_(src2.x), -32768.0f, 32767.0f); dst.y  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.y)        >> 16) * unpack3_(src2.x), -32768.0f, 32767.0f); dst.y |= ((int)(f)             ) << 16;
-    f = hip_clamp(scale * (float)(((int)(src1.z) << 16) >> 16) * unpack0_(src2.y), -32768.0f, 32767.0f); dst.z  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.z)        >> 16) * unpack1_(src2.y), -32768.0f, 32767.0f); dst.z |= ((int)(f)             ) << 16;
-    f = hip_clamp(scale * (float)(((int)(src1.w) << 16) >> 16) * unpack2_(src2.y), -32768.0f, 32767.0f); dst.w  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.w)        >> 16) * unpack3_(src2.y), -32768.0f, 32767.0f); dst.w |= ((int)(f)             ) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.x) << 16) >> 16) * hip_unpack0(src2.x), -32768.0f, 32767.0f); dst.x  = ((int)(f) & 0x0000ffff)      ;
+    f = hip_clamp(scale * (float)( (int)(src1.x)        >> 16) * hip_unpack1(src2.x), -32768.0f, 32767.0f); dst.x |= ((int)(f)             ) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.y) << 16) >> 16) * hip_unpack2(src2.x), -32768.0f, 32767.0f); dst.y  = ((int)(f) & 0x0000ffff)      ;
+    f = hip_clamp(scale * (float)( (int)(src1.y)        >> 16) * hip_unpack3(src2.x), -32768.0f, 32767.0f); dst.y |= ((int)(f)             ) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.z) << 16) >> 16) * hip_unpack0(src2.y), -32768.0f, 32767.0f); dst.z  = ((int)(f) & 0x0000ffff)      ;
+    f = hip_clamp(scale * (float)( (int)(src1.z)        >> 16) * hip_unpack1(src2.y), -32768.0f, 32767.0f); dst.z |= ((int)(f)             ) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.w) << 16) >> 16) * hip_unpack2(src2.y), -32768.0f, 32767.0f); dst.w  = ((int)(f) & 0x0000ffff)      ;
+    f = hip_clamp(scale * (float)( (int)(src1.w)        >> 16) * hip_unpack3(src2.y), -32768.0f, 32767.0f); dst.w |= ((int)(f)             ) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1476,14 +1475,14 @@ Hip_Mul_S16_S16U8_Sat_Round(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     int4 dst;
 
-    dst.x =  (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.x) << 16) >> 16) * unpack0_(src2.x)))) & 0x0000ffff)      ;
-    dst.x |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.x)  >> 16)	     * unpack1_(src2.x))))             ) << 16;
-    dst.y  = (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.y) << 16) >> 16) * unpack2_(src2.x)))) & 0x0000ffff)      ;
-    dst.y |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.y)  >> 16)        * unpack3_(src2.x)))))              << 16;
-    dst.z  = (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.z) << 16) >> 16) * unpack0_(src2.y)))) & 0x0000ffff)      ;
-    dst.z |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.z)  >> 16)        * unpack1_(src2.y)))))              << 16;
-    dst.w  = (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.w) << 16) >> 16) * unpack2_(src2.y)))) & 0x0000ffff)      ;
-    dst.w |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.w)  >> 16)        * unpack3_(src2.y)))))              << 16;
+    dst.x =  (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.x) << 16) >> 16) * hip_unpack0(src2.x)))) & 0x0000ffff)      ;
+    dst.x |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.x)  >> 16)        * hip_unpack1(src2.x))))             ) << 16;
+    dst.y  = (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.y) << 16) >> 16) * hip_unpack2(src2.x)))) & 0x0000ffff)      ;
+    dst.y |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.y)  >> 16)        * hip_unpack3(src2.x)))))              << 16;
+    dst.z  = (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.z) << 16) >> 16) * hip_unpack0(src2.y)))) & 0x0000ffff)      ;
+    dst.z |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.z)  >> 16)        * hip_unpack1(src2.y)))))              << 16;
+    dst.w  = (((int)(hip_convert_short_sat_rte(scale * (float)(((int)(src1.w) << 16) >> 16) * hip_unpack2(src2.y)))) & 0x0000ffff)      ;
+    dst.w |= (((int)(hip_convert_short_sat_rte(scale * (float)((int)(src1.w)  >> 16)        * hip_unpack3(src2.y)))))              << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1528,13 +1527,13 @@ Hip_Mul_S16_S16S16_Wrap_Trunc(uint dstWidth, uint dstHeight,
     int4 dst;
 
     dst.x  = ((int)(scale * (double)((((int)(src1.x)) << 16) >> 16) * (double)((((int)(src2.x)) << 16) >> 16))) & 0x0000ffff;
-    dst.x |= ((int)(scale * (double)(( (int)(src1.x)) >> 16)        * (double)(( (int)(src2.x)) >> 16)))		  << 16;
+    dst.x |= ((int)(scale * (double)(( (int)(src1.x)) >> 16)        * (double)(( (int)(src2.x)) >> 16)))        << 16;
     dst.y  = ((int)(scale * (double)((((int)(src1.y)) << 16) >> 16) * (double)((((int)(src2.y)) << 16) >> 16))) & 0x0000ffff;
-    dst.y |= ((int)(scale * (double)(( (int)(src1.y)) >> 16)        * (double)(( (int)(src2.y)) >> 16)))		  << 16;
+    dst.y |= ((int)(scale * (double)(( (int)(src1.y)) >> 16)        * (double)(( (int)(src2.y)) >> 16)))        << 16;
     dst.z  = ((int)(scale * (double)((((int)(src1.z)) << 16) >> 16) * (double)((((int)(src2.z)) << 16) >> 16))) & 0x0000ffff;
-    dst.z |= ((int)(scale * (double)(( (int)(src1.z)) >> 16)        * (double)(( (int)(src2.z)) >> 16)))		  << 16;
+    dst.z |= ((int)(scale * (double)(( (int)(src1.z)) >> 16)        * (double)(( (int)(src2.z)) >> 16)))        << 16;
     dst.w  = ((int)(scale * (double)((((int)(src1.w)) << 16) >> 16) * (double)((((int)(src2.w)) << 16) >> 16))) & 0x0000ffff;
-    dst.w |= ((int)(scale * (double)(( (int)(src1.w)) >> 16)        * (double)(( (int)(src2.w)) >> 16)))		  << 16;
+    dst.w |= ((int)(scale * (double)(( (int)(src1.w)) >> 16)        * (double)(( (int)(src2.w)) >> 16)))        << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1579,13 +1578,13 @@ Hip_Mul_S16_S16S16_Wrap_Round(uint dstWidth, uint dstHeight,
     int4 dst;
 
     dst.x  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.x)) << 16) >> 16) * (float)((((int)(src2.x)) << 16) >> 16))) & 0x0000ffff;
-    dst.x |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.x)) >> 16)        * (float)(( (int)(src2.x)) >> 16)))		  << 16;
+    dst.x |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.x)) >> 16)        * (float)(( (int)(src2.x)) >> 16)))        << 16;
     dst.y  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.y)) << 16) >> 16) * (float)((((int)(src2.y)) << 16) >> 16))) & 0x0000ffff;
-    dst.y |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.y)) >> 16)        * (float)(( (int)(src2.y)) >> 16)))		  << 16;
+    dst.y |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.y)) >> 16)        * (float)(( (int)(src2.y)) >> 16)))        << 16;
     dst.z  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.z)) << 16) >> 16) * (float)((((int)(src2.z)) << 16) >> 16))) & 0x0000ffff;
-    dst.z |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.z)) >> 16)        * (float)(( (int)(src2.z)) >> 16)))		  << 16;
+    dst.z |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.z)) >> 16)        * (float)(( (int)(src2.z)) >> 16)))        << 16;
     dst.w  = ((int)hip_convert_short_rte(scale * (float)((((int)(src1.w)) << 16) >> 16) * (float)((((int)(src2.w)) << 16) >> 16))) & 0x0000ffff;
-    dst.w |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.w)) >> 16)        * (float)(( (int)(src2.w)) >> 16)))		  << 16;
+    dst.w |= ((int)hip_convert_short_rte(scale * (float)(( (int)(src1.w)) >> 16)        * (float)(( (int)(src2.w)) >> 16)))        << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1735,8 +1734,8 @@ Hip_WeightedAverage_U8_U8U8(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst.x = pack_((unpack_(src1.x) * alpha_f4 + unpack_(src2.x) * invAlpha_f4));
-    dst.y = pack_((unpack_(src1.y) * alpha_f4 + unpack_(src2.y) * invAlpha_f4));
+    dst.x = hip_pack((hip_unpack(src1.x) * alpha_f4 + hip_unpack(src2.x) * invAlpha_f4));
+    dst.y = hip_pack((hip_unpack(src1.y) * alpha_f4 + hip_unpack(src2.y) * invAlpha_f4));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1923,7 +1922,7 @@ Hip_Phase_U8_S16S16(uint dstWidth, uint dstHeight,
     p4.w *= 128.0f;
 
     p4 = HIPSELECT(p4, make_float4(0.0f, 0.0f, 0.0f, 0.0f), ((p4.x > 255.5f) && (p4.y > 255.5f) && (p4.z > 255.5f) && (p4.w > 255.5f)));
-    dst.x = pack_(p4);
+    dst.x = hip_pack(p4);
     f.x = (float)((((int)(src1.z)) << 16) >> 16);
     f.y = (float)((((int)(src2.z)) << 16) >> 16);
     p4.x = atan2f(f.y, f.x) * inv_pi;
@@ -1949,7 +1948,7 @@ Hip_Phase_U8_S16S16(uint dstWidth, uint dstHeight,
     p4.w *= 128.0f;
 
     p4 = HIPSELECT(p4, make_float4(0.0f, 0.0f, 0.0f, 0.0f), ((p4.x > 255.5f) && (p4.y > 255.5f) && (p4.z > 255.5f) && (p4.w > 255.5f)));
-    dst.y = pack_(p4);
+    dst.y = hip_pack(p4);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }

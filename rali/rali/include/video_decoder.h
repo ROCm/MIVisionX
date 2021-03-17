@@ -67,11 +67,11 @@ public:
     };
     
     virtual VideoDecoder::Status Initialize() = 0;
-    virtual VideoDecoder::Status open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) = 0;
+    virtual int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) = 0;
     virtual VideoDecoder::Status Decode(const char *src_filename, const char *video_dst_filename) = 0;
-    virtual VideoDecoder::Status decode_packet(AVCodecContext *dec, const AVPacket *pkt) = 0;
+    virtual int decode_packet(AVCodecContext *dec, const AVPacket *pkt) = 0;
     virtual void release() = 0;
-    //virtual VideoDecoder::Status output_video_frame(AVFrame *frame) = 0;
+    virtual int output_video_frame(AVFrame *frame) = 0;
 
     virtual ~VideoDecoder() = default;
 };

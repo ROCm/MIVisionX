@@ -34,11 +34,11 @@ public:
     FFMPEG_VIDEO_DECODER();
 
     virtual VideoDecoder::Status Initialize() override;
-    virtual VideoDecoder::Status open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) override;
+    virtual int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) override;
     virtual VideoDecoder::Status Decode(const char *src_filename, const char *video_dst_filename) override;
-    virtual VideoDecoder::Status decode_packet(AVCodecContext *dec, const AVPacket *pkt) override;
+    virtual int decode_packet(AVCodecContext *dec, const AVPacket *pkt) override;
     virtual void release() override;
-    //virtual VideoDecoder::Status output_video_frame(AVFrame *frame) override;
+    virtual int output_video_frame(AVFrame *frame) override;
 
     ~FFMPEG_VIDEO_DECODER() override;
 private:

@@ -622,31 +622,98 @@ Hip_WarpAffine_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     dstWidth -= 2;
     dstHeight -= 2;
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x = v;
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 8;
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 16;
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= v << 24;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x = v;
 
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    x = (uint)(int)sx;
+    y = (uint)(int)sy;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= v << 8;
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y = v;
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 8;
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 16;
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; x = (uint)(int)sx; y = (uint)(int)sy;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= v << 24;
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    x = (uint)(int)sx;
+    y = (uint)(int)sy;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= v << 16;
+
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    x = (uint)(int)sx;
+    y = (uint)(int)sy;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= v << 24;
+
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    x = (uint)(int)sx;
+    y = (uint)(int)sy;
+
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y = v;
+
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    x = (uint)(int)sx;
+    y = (uint)(int)sy;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= v << 8;
+
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    x = (uint)(int)sx;
+    y = (uint)(int)sy;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= v << 16;
+
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    x = (uint)(int)sx;
+    y = (uint)(int)sy;
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= v << 24;
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -767,17 +834,30 @@ Hip_WarpAffine_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     sy = fmaf(dx, affineMatrix->m[0][1], sy);
 
     f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
     dst.x = hip_pack(f);
 
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1];
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
 
     f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
-    sx += affineMatrix->m[0][0]; sy += affineMatrix->m[0][1]; f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
+    sx += affineMatrix->m[0][0];
+    sy += affineMatrix->m[0][1];
+    f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx, sy, borderValue);
     dst.y = hip_pack(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -921,31 +1001,112 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x = v;
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 8);
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 16);
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.x |= (v << 24);
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x = v;
 
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
+    x = (uint)(int)(sx * isz);
+    y = (uint)(int)(sy * isz);
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= (v << 8);
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y = v;
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 8);
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 16);
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz; x = (uint)(int)(sx * isz); y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31; mask = ~mask;
-    x &= mask; y &= mask; v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)]; v = HIPSELECT(borderValue, v, mask); dst.y |= (v << 24);
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
+    x = (uint)(int)(sx * isz);
+    y = (uint)(int)(sy * isz);
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= (v << 16);
+
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
+    x = (uint)(int)(sx * isz);
+    y = (uint)(int)(sy * isz);
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.x |= (v << 24);
+
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
+    x = (uint)(int)(sx * isz);
+    y = (uint)(int)(sy * isz);
+
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y = v;
+
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
+    x = (uint)(int)(sx * isz);
+    y = (uint)(int)(sy * isz);
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= (v << 8);
+
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
+    x = (uint)(int)(sx * isz);
+    y = (uint)(int)(sy * isz);
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= (v << 16);
+
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
+    x = (uint)(int)(sx * isz);
+    y = (uint)(int)(sy * isz);
+    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ~mask;
+    x &= mask;
+    y &= mask;
+    v = pSrcImage[hip_mad24(srcImageStrideInBytes, y, x)];
+    v = HIPSELECT(borderValue, v, mask);
+    dst.y |= (v << 24);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }

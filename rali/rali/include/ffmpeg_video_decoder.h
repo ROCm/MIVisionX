@@ -23,10 +23,10 @@ THE SOFTWARE.
 #pragma once
 
 #include "video_decoder.h"
-#include <libavutil/imgutils.h>
+/*#include <libavutil/imgutils.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
-#include <libavformat/avformat.h>
+#include <libavformat/avformat.h>*/
 
 class FFMPEG_VIDEO_DECODER : public VideoDecoder {
 public:
@@ -35,11 +35,10 @@ public:
 
     virtual VideoDecoder::Status Initialize() override;
     virtual VideoDecoder::Status open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) override;
-    virtual VideoDecoder::Status Decode() override;
-    virtual VideoDecoder::Status get_format_from_sample_fmt(const char **fmt,
-                                      enum AVSampleFormat sample_fmt) override;
+    virtual VideoDecoder::Status Decode(const char *src_filename, const char *video_dst_filename) override;
     virtual VideoDecoder::Status decode_packet(AVCodecContext *dec, const AVPacket *pkt) override;
-    virtual VideoDecoder::Status output_video_frame(AVFrame *frame) override;
+    virtual void release() override;
+    //virtual VideoDecoder::Status output_video_frame(AVFrame *frame) override;
 
     ~FFMPEG_VIDEO_DECODER() override;
 private:
@@ -50,7 +49,6 @@ private:
 	AVStream *video_stream = NULL, *audio_stream = NULL;
 	const char *src_filename = NULL;
 	const char *video_dst_filename = NULL;
-	const char *audio_dst_filename = NULL;
 	FILE *video_dst_file = NULL;
 	FILE *audio_dst_file = NULL;
 

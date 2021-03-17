@@ -22,17 +22,17 @@ THE SOFTWARE.
 
 #include <stdio.h>
 #include <commons.h>
+#include "log.h"
+#include "exception.h"
 #include "ffmpeg_video_decoder.h"
 
 FFMPEG_VIDEO_DECODER::FFMPEG_VIDEO_DECODER(){
 };
 
-VideoDecoder::Status output_video_frame(AVFrame *frame)
+/*VideoDecoder::Status FFMPEG_VIDEO_DECODER::output_video_frame(AVFrame *frame)
 {
     if (frame->width != width || frame->height != height ||
         frame->format != pix_fmt) {
-        /* To handle this change, one could call av_image_alloc again and
-         * decode the following frames into another rawvideo file. */
         fprintf(stderr, "Error: Width, height and pixel format have to be "
                 "constant in a rawvideo file, but the width, height or "
                 "pixel format of the input video changed:\n"
@@ -47,18 +47,15 @@ VideoDecoder::Status output_video_frame(AVFrame *frame)
     printf("video_frame n:%d coded_n:%d\n",
            video_frame_count++, frame->coded_picture_number);
 
-    /* copy decoded frame to destination buffer:
-     * this is required since rawvideo expects non aligned data */
     av_image_copy(video_dst_data, video_dst_linesize,
                   (const uint8_t **)(frame->data), frame->linesize,
                   pix_fmt, width, height);
 
-    /* write to rawvideo file */
     fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);
     return 0;
-}
+}*/
 
-VideoDecoder::Status decode_packet(AVCodecContext *dec, const AVPacket *pkt)
+VideoDecoder::Status FFMPEG_VIDEO_DECODER::decode_packet(AVCodecContext *dec, const AVPacket *pkt)
 {
     int ret = 0;
 
@@ -67,8 +64,8 @@ VideoDecoder::Status decode_packet(AVCodecContext *dec, const AVPacket *pkt)
     // submit the packet to the decoder
     ret = avcodec_send_packet(dec, pkt);
     if (ret < 0) {
-        fprintf(stderr, "Error submitting a packet for decoding (%s)\n", av_err2str(ret));
-        return ret;
+        THROW("Error submitting a packet for decoding " + TOSTR(av_err2str(ret)));
+        return Status::FAILED;
     }
 
     // get all the available frames from the decoder
@@ -78,10 +75,10 @@ VideoDecoder::Status decode_packet(AVCodecContext *dec, const AVPacket *pkt)
             // those two return values are special and mean there is no output
             // frame available, but there were no errors during decoding
             if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN))
-                return 0;
+		return Status::OK;
 
-            fprintf(stderr, "Error during decoding (%s)\n", av_err2str(ret));
-            return ret;
+            THROW("Error during decoding " + TOSTR(av_err2str(ret)));
+            return Status::FAILED;
         }
 
         // write the frame data to output file
@@ -89,42 +86,13 @@ VideoDecoder::Status decode_packet(AVCodecContext *dec, const AVPacket *pkt)
             ret = output_video_frame(frame);
 	av_frame_unref(frame);
         if (ret < 0)
-            return ret;
+           return Status::FAILED;
     }
 
-    return 0;
+    return Status::OK;
 }
 
-VideoDecoder::Status get_format_from_sample_fmt(const char **fmt,
-                                      enum AVSampleFormat sample_fmt)
-{
-    int i;
-    struct sample_fmt_entry {
-        enum AVSampleFormat sample_fmt; const char *fmt_be, *fmt_le;
-    } sample_fmt_entries[] = {
-        { AV_SAMPLE_FMT_U8,  "u8",    "u8"    },
-        { AV_SAMPLE_FMT_S16, "s16be", "s16le" },
-        { AV_SAMPLE_FMT_S32, "s32be", "s32le" },
-        { AV_SAMPLE_FMT_FLT, "f32be", "f32le" },
-        { AV_SAMPLE_FMT_DBL, "f64be", "f64le" },
-    };
-    *fmt = NULL;
-
-    for (i = 0; i < FF_ARRAY_ELEMS(sample_fmt_entries); i++) {
-        struct sample_fmt_entry *entry = &sample_fmt_entries[i];
-        if (sample_fmt == entry->sample_fmt) {
-            *fmt = AV_NE(entry->fmt_be, entry->fmt_le);
-            return 0;
-        }
-    }
-
-    fprintf(stderr,
-            "sample format %s is not supported as output format\n",
-            av_get_sample_fmt_name(sample_fmt));
-    return -1;
-}
-
-VideoDecoder::Status open_codec_context(int *stream_idx,
+VideoDecoder::Status FFMPEG_VIDEO_DECODER::open_codec_context(int *stream_idx,
                               AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx)
 {
     int ret, stream_index;
@@ -134,74 +102,71 @@ VideoDecoder::Status open_codec_context(int *stream_idx,
 
     ret = av_find_best_stream(fmt_ctx, type, -1, -1, NULL, 0);
     if (ret < 0) {
-        fprintf(stderr, "Could not find %s stream in input file '%s'\n",
-                av_get_media_type_string(type), src_filename);
-        return ret;
-    } else {
+        THROW("Could not find " + TOSTR(av_get_media_type_string(type)) +" stream in input file " + TOSTR(src_filename));
+        return Status::FAILED;
+    }
+    else {
         stream_index = ret;
         st = fmt_ctx->streams[stream_index];
 
         /* find decoder for the stream */
         dec = avcodec_find_decoder(st->codecpar->codec_id);
         if (!dec) {
-            fprintf(stderr, "Failed to find %s codec\n",
-                    av_get_media_type_string(type));
-            return AVERROR(EINVAL);
+            THROW("Failed to find" + TOSTR(av_get_media_type_string(type)) + "codec\n");
+	    return Status::FAILED;
         }
 
         /* Allocate a codec context for the decoder */
         *dec_ctx = avcodec_alloc_context3(dec);
         if (!*dec_ctx) {
-            fprintf(stderr, "Failed to allocate the %s codec context\n",
-                    av_get_media_type_string(type));
-            return AVERROR(ENOMEM);
+            THROW("Failed to allocate the " + TOSTR(av_get_media_type_string(type)) + "codec context\n");
+	    return Status::NO_MEMORY;
         }
 
         /* Copy codec parameters from input stream to output codec context */
         if ((ret = avcodec_parameters_to_context(*dec_ctx, st->codecpar)) < 0) {
-            fprintf(stderr, "Failed to copy %s codec parameters to decoder context\n",
-                    av_get_media_type_string(type));
-            return ret;
+            THROW("Failed to copy" + TOSTR(av_get_media_type_string(type)) + " codec parameters to decoder context\n");
+            return Status::FAILED;
         }
 
         /* Init the decoders */
         if ((ret = avcodec_open2(*dec_ctx, dec, &opts)) < 0) {
-            fprintf(stderr, "Failed to open %s codec\n",
-                    av_get_media_type_string(type));
-            return ret;
+            THROW("Failed to open " + TOSTR(av_get_media_type_string(type)) + " codec\n");
+            return Status::FAILED;
         }
         *stream_idx = stream_index;
     }
 
-    return 0;
+    return Status::OK;
 }
 
-VideoDecoder::Status Decode()
+VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, const char *video_dst_filename)
 {
-    src_filename = argv[1];
-    video_dst_filename = argv[2];
-    audio_dst_filename = argv[3];
-
+    VideoDecoder::Status status;
+    int ret;
     /* open input file, and allocate format context */
-    if (avformat_open_input(&fmt_ctx, src_filename, NULL, NULL) < 0) {
-        fprintf(stderr, "Could not open source file %s\n", src_filename);
-        exit(1);
+    int err = avformat_open_input(&fmt_ctx, src_filename, NULL, NULL);
+    if(err)
+    {
+	THROW("ERROR: avformat_open_input failed"+ TOSTR(err));
+        return Status::FAILED;
     }
 
     /* retrieve stream information */
-    if (avformat_find_stream_info(fmt_ctx, NULL) < 0) {
-        fprintf(stderr, "Could not find stream information\n");
-        exit(1);
+    err = avformat_find_stream_info(fmt_ctx, NULL);
+    if(err)
+    {
+	THROW("ERROR: avformat_find_stream_info() failed " + TOSTR(err));
+	return Status::FAILED;
     }
 
-    if (open_codec_context(&video_stream_idx, &video_dec_ctx, fmt_ctx, AVMEDIA_TYPE_VIDEO) >= 0) {
+    if (open_codec_context(&video_stream_idx, &video_dec_ctx, fmt_ctx) >= 0) {
         video_stream = fmt_ctx->streams[video_stream_idx];
 
         video_dst_file = fopen(video_dst_filename, "wb");
         if (!video_dst_file) {
-            fprintf(stderr, "Could not open destination file %s\n", video_dst_filename);
-            ret = 1;
-            goto end;
+            THROW("Could not open destination file " + TOSTR(video_dst_filename));
+            release();
         }
 
         /* allocate image where the decoded image will be put */
@@ -211,8 +176,9 @@ VideoDecoder::Status Decode()
         ret = av_image_alloc(video_dst_data, video_dst_linesize,
                              width, height, pix_fmt, 1);
         if (ret < 0) {
-            fprintf(stderr, "Could not allocate raw video buffer\n");
-            goto end;
+            THROW("Could not allocate raw video buffer\n");
+            status = Status::NO_MEMORY;
+	    release();
         }
         video_dst_bufsize = ret;
     }
@@ -220,26 +186,22 @@ VideoDecoder::Status Decode()
     /* dump input information to stderr */
     av_dump_format(fmt_ctx, 0, src_filename, 0);
 
-    if (!audio_stream && !video_stream) {
-        fprintf(stderr, "Could not find audio or video stream in the input, aborting\n");
-        ret = 1;
-        goto end;
+    if (!video_stream) {
+        THROW("Could not find audio or video stream in the input, aborting\n");
+        release();
     }
 
     frame = av_frame_alloc();
     if (!frame) {
-        fprintf(stderr, "Could not allocate frame\n");
-        ret = AVERROR(ENOMEM);
-        goto end;
+        THROW("Could not allocate frame\n");
+        status = Status::NO_MEMORY;
+        release();
     }
 
     /* initialize packet, set data to NULL, let the demuxer fill it */
     av_init_packet(&pkt);
     pkt.data = NULL;
     pkt.size = 0;
-
-    if (video_stream)
-        printf("Demuxing video from file '%s' into '%s'\n", src_filename, video_dst_filename);
 
     /* read frames from the file */
     while (av_read_frame(fmt_ctx, &pkt) >= 0) {
@@ -256,22 +218,24 @@ VideoDecoder::Status Decode()
     if (video_dec_ctx)
         decode_packet(video_dec_ctx, NULL);
 
-    printf("Demuxing succeeded.\n");
+    std::cout << "Demuxing succeeded" << std::endl;
 
     if (video_stream) {
-        printf("Play the output video file with the command:\n"
-               "ffplay -f rawvideo -pix_fmt %s -video_size %dx%d %s\n",
-               av_get_pix_fmt_name(pix_fmt), width, height,
-               video_dst_filename);
+        std::cout << "Play the output video file with the command:";
+        std::cout << "ffplay -f rawvideo -pix_fmt " << av_get_pix_fmt_name(pix_fmt) << "-video_size " << width << "x" 
+		<< height << " " << video_dst_filename;
     }
-
+    release();
+    return status;
 }
 
-VideoDecoder::Status Initialize()
+VideoDecoder::Status FFMPEG_VIDEO_DECODER::Initialize()
 {
+//Yet to Add
 }
 
-FFMPEG_VIDEO_DECODER::~FFMPEG_VIDEO_DECODER() 
+void FFMPEG_VIDEO_DECODER::release()
+{
     avcodec_free_context(&video_dec_ctx);
     avcodec_free_context(&audio_dec_ctx);
     avformat_close_input(&fmt_ctx);
@@ -279,4 +243,8 @@ FFMPEG_VIDEO_DECODER::~FFMPEG_VIDEO_DECODER()
         fclose(video_dst_file);
     av_frame_free(&frame);
     av_free(video_dst_data[0]);
+}
+
+FFMPEG_VIDEO_DECODER::~FFMPEG_VIDEO_DECODER() 
+{
 }

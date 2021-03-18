@@ -192,12 +192,12 @@ void RandomBBoxCropReader::read_all()
             coords_buf[m + 2] = bb_coords[j].w;
             coords_buf[m + 3] = bb_coords[j].h;
         }
-
-        crop_success = false;
+     
 
         int count = 0;
         while (true)
         {
+            crop_success = false;
             sample_option = dis(gen);
             min_iou = sample_options[sample_option];
             Parameter<float> *x_factor_param, *y_factor_param; 
@@ -305,8 +305,7 @@ void RandomBBoxCropReader::read_all()
                         break;
 
                     crop_success = true;
-                    if (crop_success == true)
-                        break;
+                    break;
                 }
             }
 

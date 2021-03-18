@@ -498,23 +498,7 @@ rm -rvf generatedGDFsOCL
 mkdir generatedGDFsOCL
 GENERATED_GDF_PATH="generatedGDFsOCL"
 
-# Running OCL - MCW-Dev/MIVISION:hip-porting - not working currently
-# cd ../../../
-# if [ "$CLEAN_BUILD" -eq 1 ]; then
-#     rm -rvf build_ocl
-#     mkdir build_ocl
-#     cd build_ocl
-#     cmake ..
-#     sudo make -j20 install
-# else
-#     cd build_ocl
-#     sudo make -j20 install
-# fi
-# cd ../samples/hip_samples/hipvx_runvx_tests
-
-# Running OCL - GPUOpen-ProfessionalCompute-Libraries/MIVisionX:master - working - to be removed after MCW-Dev/MIVISION:hip-porting OCL is fixed
-# cd ../../../../../MIVisionX/    # change path manually to your clone of GPUOpen-ProfessionalCompute-Libraries/MIVisionX
-cd ../../../../../kiritiForks/MIVisionX/
+cd ../../../
 if [ "$CLEAN_BUILD" -eq 1 ]; then
     rm -rvf build_ocl
     mkdir build_ocl
@@ -525,7 +509,7 @@ else
     cd build_ocl
     sudo make -j20 install
 fi
-cd $cwd
+cd ../samples/hip_samples/hipvx_runvx_tests
 
 if [ "$KERNEL_NAME" = "" ]; then
     mkdir generatedGDFsOCL/arithmetic generatedGDFsOCL/logical generatedGDFsOCL/color generatedGDFsOCL/filter generatedGDFsOCL/geometric generatedGDFsOCL/statistical generatedGDFsOCL/vision

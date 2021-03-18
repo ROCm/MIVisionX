@@ -79,6 +79,7 @@ CVxEngine::CVxEngine()
 	m_graphVerified = false;
 	m_dumpDataEnabled = false;
 	m_dumpDataCount = 0;
+	m_setBorderMode = false;
 }
 
 CVxEngine::~CVxEngine()
@@ -173,18 +174,24 @@ int CVxEngine::SetParameter(int index, const char * param)
 		RemoveVirtualKeywordFromParamDescription(paramDesc);
 		param = paramDesc.c_str();
 	}
-	CVxParameter * parameter = CreateDataObject(m_context, m_graph, &m_paramMap, &m_userStructMap, param, m_frameStart);
-	if (!parameter) {
-		printf("ERROR: unable to create parameter# %d\nCheck syntax: %s\n", index, param);
-		return -1;
+	if(!_strnicmp(param, "attr:border_mode:", 17)){
+		m_setBorderMode = true;
+		m_cmdBorderMode = param;
 	}
-
-	vx_reference ref;
-	char name[16];
-	sprintf(name, "$%d", index+1);
-	m_paramMap.insert(pair<string, CVxParameter *>(name, parameter));
-	ref = m_paramMap[name]->GetVxObject();
-	vxSetReferenceName(ref, name);
+	else{
+		CVxParameter * parameter = CreateDataObject(m_context, m_graph, &m_paramMap, &m_userStructMap, param, m_frameStart);
+		if (!parameter) {
+			printf("ERROR: unable to create parameter# %d\nCheck syntax: %s\n", index, param);
+			return -1;
+		}
+	
+		vx_reference ref;
+		char name[16];
+		sprintf(name, "$%d", index+1);
+		m_paramMap.insert(pair<string, CVxParameter *>(name, parameter));
+		ref = m_paramMap[name]->GetVxObject();
+		vxSetReferenceName(ref, name);
+	}
 	return 0;
 }
 
@@ -923,6 +930,35 @@ int CVxEngine::BuildAndProcessGraphFromLine(int level, char * line)
 		if (status != VX_SUCCESS)
 			ReportError("ERROR: vxCreateGenericNode(graph,node(\"%s\")) failed (%d:%s)\n", kernelName, status, ovxEnum2Name(status));
 		ERROR_CHECK(vxReleaseKernel(&kernel));
+		if(m_setBorderMode){
+			wordList.pop_back();
+			const char * paramDesc = m_cmdBorderMode.c_str();
+			if (!_strnicmp(paramDesc, "attr:border_mode:", 17)) {
+				char mode[128];
+				const char * p = ScanParameters(&paramDesc[17], "<border-mode>", "s", mode);
+				if (!_stricmp(mode, "UNDEFINED") || !_stricmp(mode, "REPLICATE") || !_stricmp(mode, "CONSTANT")) {
+					char item[256];
+					sprintf(item, "VX_BORDER_MODE_%s", mode);
+					strcpy(mode, item);
+				}
+				vx_border_mode_t border_mode = { 0 };
+				border_mode.mode = ovxName2Enum(mode);
+				if (*p == ',') {
+					if (p[1] == '{') {
+						p++;
+						for (int index = 0; index < 4 && (*p == '{' || *p == ';');) {
+							int value = 0;
+							p = ScanParameters(&p[1], "<byte>", "d", &value);
+							border_mode.constant_value.reserved[index++] = (vx_uint8)value;
+						}
+					}
+					else (void)sscanf(p + 1, "%i", &border_mode.constant_value.U32);
+				}
+				status = vxSetNodeAttribute(node, VX_NODE_ATTRIBUTE_BORDER_MODE, &border_mode, sizeof(border_mode));
+				if (status != VX_SUCCESS)
+					ReportError("ERROR: vxSetNodeAttribute(node(\"%s\"), VX_NODE_ATTRIBUTE_BORDER_MODE, \"%s\") failed (%d:%s)\n", kernelName, &paramDesc[17], status, ovxEnum2Name(status));
+			}		
+		}
 		// set node arguments
 		vx_uint32 index = 0;
 		for (size_t arg = 2; arg < wordList.size(); arg++) {

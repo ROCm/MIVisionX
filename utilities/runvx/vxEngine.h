@@ -95,6 +95,8 @@ private:
 	std::string m_dumpDataObjectList;
 	int m_dumpDataCount;
 	std::string m_discardCommandList;
+	bool m_setBorderMode;
+	std::string m_cmdBorderMode;
 };
 
 void PrintHelpGDF(const char * command = nullptr);

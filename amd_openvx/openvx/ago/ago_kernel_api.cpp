@@ -17024,10 +17024,13 @@ int agoKernel_HarrisScore_HVC_HG3_3x3(AgoNode * node, AgoKernelCommand cmd)
             vx_float32 sensitivity = node->paramList[2]->u.scalar.u.f;
             vx_int32 gradient_size = node->paramList[4]->u.scalar.u.i;
             vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
-            vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * 3;
-            normFactor = normFactor * normFactor * normFactor * normFactor;
+            int N = 0;
+            if (node->akernel->id == VX_KERNEL_AMD_HARRIS_SCORE_HVC_HG3_3x3) N = 3;
+            int border = (gradient_size >> 1) + (N >> 1);
+            vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * N;
+            normFactor = 1 / (normFactor * normFactor * normFactor * normFactor);
             if (HipExec_HarrisScore_HVC_HG3_3x3(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_float32 *)(oImg->hip_memory + oImg->opencl_buffer_offset), oImg->u.img.stride_in_bytes,
-                (vx_float32 *)(iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, normFactor)) {
+                (vx_float32 *)(iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, border, normFactor)) {
                 status = VX_FAILURE;
             }
         }
@@ -18296,10 +18299,25 @@ int agoKernel_NonMaxSupp_XY_ANY_3x3(AgoNode * node, AgoKernelCommand cmd)
             | AGO_KERNEL_FLAG_DEVICE_CPU
 #if ENABLE_OPENCL
             | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_FULL
+#elif ENABLE_HIP
+                    | AGO_KERNEL_FLAG_DEVICE_GPU
 #endif
             ;
         status = VX_SUCCESS;
     }
+#if ENABLE_HIP
+    else if (cmd == ago_kernel_cmd_hip_execute) {
+        status = VX_SUCCESS;
+        AgoData * oList = node->paramList[0];
+        AgoData * iImg = node->paramList[1];
+        if (HipExec_NonMaxSupp_XY_ANY_3x3(
+            node->hip_stream0, (vx_uint32)oList->u.arr.capacity, (ago_keypoint_xys_t *)(oList->hip_memory + oList->opencl_buffer_offset),
+            iImg->u.img.width, iImg->u.img.height, (vx_float32 *)(iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes)) {
+
+            status = VX_FAILURE;
+        }
+    }
+#endif
     return status;
 }
 

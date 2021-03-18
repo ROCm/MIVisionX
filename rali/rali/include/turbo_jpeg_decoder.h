@@ -77,4 +77,5 @@ private:
             { 1, 4 },
             { 1, 8 }
     };
+    const static unsigned _max_scaling_factor = 8;
 };

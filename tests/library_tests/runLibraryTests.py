@@ -43,14 +43,13 @@ def write_formatted(output, f):
     f.write("%s\n\n" % output)
     f.write("````\n")
 
-
 # get data
 platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'mivisionx_libraries_report_%s_%s.md' % (
+reportFilename = 'libraries_report_%s_%s.md' % (
     platform_name, file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')
@@ -233,4 +232,8 @@ with open(reportFilename, 'w') as f:
 # report file
 reportFileDir = os.path.abspath(reportFilename)
 print("STATUS: Output Report File - "+reportFileDir)
+if warning == 1:
+    print("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
+else:
+    print("SUCCESS: All modules of MIVisionX built")
 print("runLibraryTests.py completed - V:"+__version__+"\n")

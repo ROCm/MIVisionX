@@ -949,96 +949,614 @@ int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityO
     return VX_SUCCESS;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// OLD working VxHarrisCorners
-
 // ----------------------------------------------------------------------------
 // VxHarrisCorners kernels for hip backend
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_HarrisSobel_HG3_U8_3x3(
-    unsigned int  dstWidth, unsigned int  dstHeight,
-    float * pDstGxy_,unsigned int  dstGxyStrideInBytes,
-    const unsigned char  * pSrcImage ,unsigned int srcImageStrideInBytes,
-    float * gx, float *gy
-    ) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
+    uchar *pDstGxy, uint dstGxyStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint dstWidthComp1, uint dstWidthComp2) {
+
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) << 3;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-    if ((x >dstWidth) || (x<0)|| (y >= dstHeight) || y<=0)	return;
-    unsigned int dstIdx = y * (dstGxyStrideInBytes /sizeof(ago_harris_Gxy_t)) + x;
-    unsigned int srcIdx = y * (srcImageStrideInBytes) + x;
-    ago_harris_Gxy_t * pDstGxy = (ago_harris_Gxy_t *)( pDstGxy_ );
-    float div_factor = 1; // 4.0f * 255;
 
-    int srcIdxTopRow = srcIdx - srcImageStrideInBytes;
-    int srcIdxBottomRow = srcIdx + srcImageStrideInBytes;
-    float sum_x = 0;
-    sum_x += (gx[4] * (float)*(pSrcImage + srcIdx) + gx[1] * (float)*(pSrcImage + srcIdxTopRow) + gx[7] * (float)*(pSrcImage + srcIdxBottomRow));
-    sum_x += (gx[3] * (float)*(pSrcImage + srcIdx - 1) + gx[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gx[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
-    sum_x += (gx[5] * (float)*(pSrcImage + srcIdx + 1) + gx[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gx[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
-    float sum_y = 0;
-    sum_y += (gy[4] * (float)*(pSrcImage + srcIdx) + gy[1] * (float)*(pSrcImage + srcIdxTopRow) + gy[7] * (float)*(pSrcImage + srcIdxBottomRow));
-    sum_y += (gy[3] * (float)*(pSrcImage + srcIdx - 1) + gy[0] * (float)*(pSrcImage + srcIdxTopRow - 1) + gy[6] * (float)*(pSrcImage + srcIdxBottomRow - 1));
-    sum_y += (gy[5] * (float)*(pSrcImage + srcIdx + 1) + gy[2] * (float)*(pSrcImage + srcIdxTopRow + 1) + gy[8] * (float)*(pSrcImage + srcIdxBottomRow + 1));
+    __shared__ uchar lbuf[2448]; // 136x18 bytes
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    { // load 136x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    d_float8 sum1 = {0.0f};
+    d_float8 sum2 = {0.0f};
+    uint2 pix;
+    float fval;
+    __shared__ uint2 * lbufptr;
+    lbufptr = (uint2 *) (&lbuf[ly * 136 + (lx << 3)]);
+    // filterRow = 0
+    pix = lbufptr[0];
+    fval = hip_unpack3(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] -= fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0] = fmaf(fval, -2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] -= fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] -= fval;
+    sum2.data[1] = fmaf(fval, -2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] -= fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] -= fval;
+    sum2.data[2] = fmaf(fval, -2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] -= fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[2] += fval;
+    sum2.data[2] -= fval;
+    sum2.data[3] = fmaf(fval, -2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] -= fval;
+    pix = lbufptr[1];
+    fval = hip_unpack0(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] -= fval;
+    sum2.data[4] = fmaf(fval, -2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] -= fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] -= fval;
+    sum2.data[5] = fmaf(fval, -2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] -= fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] -= fval;
+    sum2.data[6] = fmaf(fval, -2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] -= fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[6] += fval;
+    sum2.data[6] -= fval;
+    sum2.data[7] = fmaf(fval, -2.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] -= fval;
+    // filterRow = 1
+    pix = lbufptr[17];
+    fval = hip_unpack3(pix.x);
+    sum1.data[0] = fmaf(fval, -2.000000000000e+00f, sum1.data[0]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[1] = fmaf(fval, -2.000000000000e+00f, sum1.data[1]);
+    fval = hip_unpack1(pix.y);
+    sum1.data[0] = fmaf(fval, 2.000000000000e+00f, sum1.data[0]);
+    sum1.data[2] = fmaf(fval, -2.000000000000e+00f, sum1.data[2]);
+    fval = hip_unpack2(pix.y);
+    sum1.data[1] = fmaf(fval, 2.000000000000e+00f, sum1.data[1]);
+    sum1.data[3] = fmaf(fval, -2.000000000000e+00f, sum1.data[3]);
+    fval = hip_unpack3(pix.y);
+    sum1.data[2] = fmaf(fval, 2.000000000000e+00f, sum1.data[2]);
+    sum1.data[4] = fmaf(fval, -2.000000000000e+00f, sum1.data[4]);
+    pix = lbufptr[18];
+    fval = hip_unpack0(pix.x);
+    sum1.data[3] = fmaf(fval, 2.000000000000e+00f, sum1.data[3]);
+    sum1.data[5] = fmaf(fval, -2.000000000000e+00f, sum1.data[5]);
+    fval = hip_unpack1(pix.x);
+    sum1.data[4] = fmaf(fval, 2.000000000000e+00f, sum1.data[4]);
+    sum1.data[6] = fmaf(fval, -2.000000000000e+00f, sum1.data[6]);
+    fval = hip_unpack2(pix.x);
+    sum1.data[5] = fmaf(fval, 2.000000000000e+00f, sum1.data[5]);
+    sum1.data[7] = fmaf(fval, -2.000000000000e+00f, sum1.data[7]);
+    fval = hip_unpack3(pix.x);
+    sum1.data[6] = fmaf(fval, 2.000000000000e+00f, sum1.data[6]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[7] = fmaf(fval, 2.000000000000e+00f, sum1.data[7]);
+    // filterRow = 2
+    pix = lbufptr[34];
+    fval = hip_unpack3(pix.x);
+    sum1.data[0] -= fval;
+    sum2.data[0] += fval;
+    fval = hip_unpack0(pix.y);
+    sum2.data[0] = fmaf(fval, 2.000000000000e+00f, sum2.data[0]);
+    sum1.data[1] -= fval;
+    sum2.data[1] += fval;
+    fval = hip_unpack1(pix.y);
+    sum1.data[0] += fval;
+    sum2.data[0] += fval;
+    sum2.data[1] = fmaf(fval, 2.000000000000e+00f, sum2.data[1]);
+    sum1.data[2] -= fval;
+    sum2.data[2] += fval;
+    fval = hip_unpack2(pix.y);
+    sum1.data[1] += fval;
+    sum2.data[1] += fval;
+    sum2.data[2] = fmaf(fval, 2.000000000000e+00f, sum2.data[2]);
+    sum1.data[3] -= fval;
+    sum2.data[3] += fval;
+    fval = hip_unpack3(pix.y);
+    sum1.data[2] += fval;
+    sum2.data[2] += fval;
+    sum2.data[3] = fmaf(fval, 2.000000000000e+00f, sum2.data[3]);
+    sum1.data[4] -= fval;
+    sum2.data[4] += fval;
+    pix = lbufptr[35];
+    fval = hip_unpack0(pix.x);
+    sum1.data[3] += fval;
+    sum2.data[3] += fval;
+    sum2.data[4] = fmaf(fval, 2.000000000000e+00f, sum2.data[4]);
+    sum1.data[5] -= fval;
+    sum2.data[5] += fval;
+    fval = hip_unpack1(pix.x);
+    sum1.data[4] += fval;
+    sum2.data[4] += fval;
+    sum2.data[5] = fmaf(fval, 2.000000000000e+00f, sum2.data[5]);
+    sum1.data[6] -= fval;
+    sum2.data[6] += fval;
+    fval = hip_unpack2(pix.x);
+    sum1.data[5] += fval;
+    sum2.data[5] += fval;
+    sum2.data[6] = fmaf(fval, 2.000000000000e+00f, sum2.data[6]);
+    sum1.data[7] -= fval;
+    sum2.data[7] += fval;
+    fval = hip_unpack3(pix.x);
+    sum1.data[6] += fval;
+    sum2.data[6] += fval;
+    sum2.data[7] = fmaf(fval, 2.000000000000e+00f, sum2.data[7]);
+    fval = hip_unpack0(pix.y);
+    sum1.data[7] += fval;
+    sum2.data[7] += fval;
 
-    pDstGxy[dstIdx].GxGx = sum_x*sum_x;
-    pDstGxy[dstIdx].GxGy = sum_x*sum_y;
-    pDstGxy[dstIdx].GyGy = sum_y*sum_y;
+    if ((x < dstWidth) && (y < dstHeight)) {
+        uint dstIdx =  y * dstGxyStrideInBytes + (x << 2);
+
+        float4 sum1X, sum1Y, sum2X, sum2Y;
+        sum1X = make_float4(sum1.data[0], sum1.data[1], sum1.data[2], sum1.data[3]);
+        sum1Y = make_float4(sum1.data[4], sum1.data[5], sum1.data[6], sum1.data[7]);
+        sum2X = make_float4(sum2.data[0], sum2.data[1], sum2.data[2], sum2.data[3]);
+        sum2Y = make_float4(sum2.data[4], sum2.data[5], sum2.data[6], sum2.data[7]);
+
+        d_float8 dst;
+
+        *(float4 *)(&dst.data[0]) = sum1X * sum1X;
+        *(float4 *)(&dst.data[4]) = sum1Y * sum1Y;
+        *((d_float8 *)(&pDstGxy[dstIdx])) = dst;
+
+        *(float4 *)(&dst.data[0]) = sum1X * sum2X;
+        *(float4 *)(&dst.data[4]) = sum1Y * sum2Y;
+        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp1])) = dst;
+
+        *(float4 *)(&dst.data[0]) = sum2X * sum2X;
+        *(float4 *)(&dst.data[4]) = sum2Y * sum2Y;
+        *((d_float8 *)(&pDstGxy[dstIdx + dstWidthComp2])) = dst;
+    }
+
 }
-int HipExec_HarrisSobel_HG3_U8_3x3(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
-    vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = (dstWidth),   globalThreads_y = dstHeight;
+int HipExec_HarrisSobel_HG3_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_float32 *pHipDstGxy, vx_uint32 dstGxyStrideInBytes,
+    vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
 
-    float gx[9] = {-1,0,1,-2,0,2,-1,0,1};
-    float gy[9] = {-1,-2,-1,0,0,0,1,2,1};
-    float *hipGx, *hipGy;
-    hipMalloc(&hipGx, 144);
-    hipMalloc(&hipGy, 144);
-    hipMemcpy(hipGx, gx, 144, hipMemcpyHostToDevice);
-    hipMemcpy(hipGy, gy, 144, hipMemcpyHostToDevice);
+    vx_uint32 dstWidthComp1 = dstWidth * 4;
+    vx_uint32 dstWidthComp2 = dstWidth * 8;
 
-    hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_3x3,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream,
-                    dstWidth, dstHeight,
-                    (float *)pDstGxy_ , dstGxyStrideInBytes,
-                    (const unsigned char *)pSrcImage, srcImageStrideInBytes,
-                    (float *)hipGx, (float *)hipGy);
+    hipLaunchKernelGGL(Hip_HarrisSobel_HG3_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstGxy, dstGxyStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        dstWidthComp1, dstWidthComp2);
 
     return VX_SUCCESS;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_HarrisScore_HVC_HG3_3x3(uint dstWidth, uint dstHeight,
+    uchar *pDstVc, uint dstVcStrideInBytes,
+    uchar *pSrcGxy, uint srcGxyStrideInBytes,
+    float sensitivity, float strength_threshold,
+    int border, float normFactor,
+    uint dstWidthComp1, uint dstWidthComp2) {
+
+    int gx = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int gy = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    __shared__ uchar lbuf[4896];
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+
+    int gstride = srcGxyStrideInBytes;
+    uint dstIdx =  gy * dstVcStrideInBytes + (gx << 4);
+
+    uchar *gbuf;
+    gbuf = pSrcGxy;
+    __shared__ uchar *lbuf_ptr;
+    float2 v2;
+
+    { // load 272x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 272 + (lx << 4);
+        int goffset = (gy - 1) * gstride + (gx << 4) - 8;
+        *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 272;
+            goffset += 16 * gstride;
+            doExtraLoad = true;
+        }
+        else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 272 + 256;
+            goffset = (gy - ly + id - 1) * gstride + ((gx - lx) << 4) + 248;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
+        }
+        __syncthreads();
+    }
+
+    float4 sum0;
+    lbuf_ptr = &lbuf[ly * 272 + (lx << 4)];
+    v2 = *(float2 *)(&lbuf_ptr[4]);
+    sum0.x  = v2.x;
+    sum0.x += v2.y;
+    sum0.y  = v2.y;
+    v2 = *(float2 *)(&lbuf_ptr[12]);
+    sum0.x += v2.x;
+    sum0.y += v2.x;
+    sum0.z  = v2.x;
+    sum0.y += v2.y;
+    sum0.z += v2.y;
+    sum0.w  = v2.y;
+    v2 = *(float2 *)(&lbuf_ptr[20]);
+    sum0.z += v2.x;
+    sum0.w += v2.x;
+    sum0.w += v2.y;
+    *(float4 *)lbuf_ptr = sum0;
+    if (ly < 2) {
+        v2 = *(float2 *)(&lbuf_ptr[4356]);
+        sum0.x  = v2.x;
+        sum0.x += v2.y;
+        sum0.y  = v2.y;
+        v2 = *(float2 *)(&lbuf_ptr[4364]);
+        sum0.x += v2.x;
+        sum0.y += v2.x;
+        sum0.z  = v2.x;
+        sum0.y += v2.y;
+        sum0.z += v2.y;
+        sum0.w  = v2.y;
+        v2 = *(float2 *)(&lbuf_ptr[4372]);
+        sum0.z += v2.x;
+        sum0.w += v2.x;
+        sum0.w += v2.y;
+        *((float4 *)&lbuf_ptr[4352]) = sum0;
+    }
+
+    __syncthreads();
+
+    sum0  = *(float4 *)lbuf_ptr;
+    sum0 += *(float4 *)&lbuf_ptr[272];
+    sum0 += *(float4 *)&lbuf_ptr[544];
+
+    __syncthreads();
+
+    gbuf = pSrcGxy + dstWidthComp1;
+
+    { // load 272x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 272 + (lx << 4);
+        int goffset = (gy - 1) * gstride + (gx << 4) - 8;
+        *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 272;
+            goffset += 16 * gstride;
+            doExtraLoad = true;
+        }
+        else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 272 + 256;
+            goffset = (gy - ly + id - 1) * gstride + ((gx - lx) << 4) + 248;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
+        }
+        __syncthreads();
+    }
+
+    float4 sum1;
+    lbuf_ptr = &lbuf[ly * 272 + (lx << 4)];
+    v2 = *(float2 *)(&lbuf_ptr[4]);
+    sum1.x  = v2.x;
+    sum1.x += v2.y;
+    sum1.y  = v2.y;
+    v2 = *(float2 *)(&lbuf_ptr[12]);
+    sum1.x += v2.x;
+    sum1.y += v2.x;
+    sum1.z  = v2.x;
+    sum1.y += v2.y;
+    sum1.z += v2.y;
+    sum1.w  = v2.y;
+    v2 = *(float2 *)(&lbuf_ptr[20]);
+    sum1.z += v2.x;
+    sum1.w += v2.x;
+    sum1.w += v2.y;
+    *(float4 *)lbuf_ptr = sum1;
+    if (ly < 2) {
+        v2 = *(float2 *)(&lbuf_ptr[4356]);
+        sum1.x  = v2.x;
+        sum1.x += v2.y;
+        sum1.y  = v2.y;
+        v2 = *(float2 *)(&lbuf_ptr[4364]);
+        sum1.x += v2.x;
+        sum1.y += v2.x;
+        sum1.z  = v2.x;
+        sum1.y += v2.y;
+        sum1.z += v2.y;
+        sum1.w  = v2.y;
+        v2 = *(float2 *)(&lbuf_ptr[4372]);
+        sum1.z += v2.x;
+        sum1.w += v2.x;
+        sum1.w += v2.y;
+        *(float4 *)&lbuf_ptr[4352] = sum1;
+    }
+
+    __syncthreads();
+
+    sum1  = *(float4 *)lbuf_ptr;
+    sum1 += *(float4 *)&lbuf_ptr[272];
+    sum1 += *(float4 *)&lbuf_ptr[544];
+
+    __syncthreads();
+
+    gbuf = pSrcGxy + dstWidthComp2;
+
+    { // load 272x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 272 + (lx << 4);
+        int goffset = (gy - 1) * gstride + (gx << 4) - 8;
+        *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 272;
+            goffset += 16 * gstride;
+            doExtraLoad = true;
+        }
+        else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 272 + 256;
+            goffset = (gy - ly + id - 1) * gstride + ((gx - lx) << 4) + 248;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint4 *)(&lbuf[loffset])) = *((uint4 *)(&gbuf[goffset]));
+        }
+        __syncthreads();
+    }
+
+    float4 sum2;
+    lbuf_ptr = &lbuf[ly * 272 + (lx << 4)];
+    v2 = *(float2 *)(&lbuf_ptr[4]);
+    sum2.x  = v2.x;
+    sum2.x += v2.y;
+    sum2.y  = v2.y;
+    v2 = *(float2 *)(&lbuf_ptr[12]);
+    sum2.x += v2.x;
+    sum2.y += v2.x;
+    sum2.z  = v2.x;
+    sum2.y += v2.y;
+    sum2.z += v2.y;
+    sum2.w  = v2.y;
+    v2 = *(float2 *)(&lbuf_ptr[20]);
+    sum2.z += v2.x;
+    sum2.w += v2.x;
+    sum2.w += v2.y;
+    *(float4 *)lbuf_ptr = sum2;
+    if (ly < 2) {
+        v2 = *(float2 *)(&lbuf_ptr[4356]);
+        sum2.x  = v2.x;
+        sum2.x += v2.y;
+        sum2.y  = v2.y;
+        v2 = *(float2 *)(&lbuf_ptr[4364]);
+        sum2.x += v2.x;
+        sum2.y += v2.x;
+        sum2.z  = v2.x;
+        sum2.y += v2.y;
+        sum2.z += v2.y;
+        sum2.w  = v2.y;
+        v2 = *(float2 *)(&lbuf_ptr[4372]);
+        sum2.z += v2.x;
+        sum2.w += v2.x;
+        sum2.w += v2.y;
+        *(float4 *)&lbuf_ptr[4352] = sum2;
+    }
+
+    __syncthreads();
+
+    sum2  = *(float4 *)lbuf_ptr;
+    sum2 += *(float4 *)&lbuf_ptr[272];
+    sum2 += *(float4 *)&lbuf_ptr[544];
+
+    gx = gx << 2;
+    if ((gx < dstWidth) && (gy < dstHeight)) {
+        float4 score = (float4)0.0f;
+        if ((gy >= border) && (gy < dstHeight - border)) {
+            score = sum0 * sum2 - sum1 * sum1;
+            sum0 += sum2;
+            sum0 *= sum0;
+            score.x = fmaf(sum0.x, -sensitivity, score.x);
+            score.y = fmaf(sum0.y, -sensitivity, score.y);
+            score.z = fmaf(sum0.z, -sensitivity, score.z);
+            score.w = fmaf(sum0.w, -sensitivity, score.w);
+            score *= (float4)normFactor;
+            score = HIPSELECT((float4)0.0f, score, (
+                score.x > strength_threshold &&
+                score.y > strength_threshold &&
+                score.z > strength_threshold &&
+                score.w > strength_threshold));
+            score.x = HIPSELECT(score.x, 0.0f, gx < border);
+            score.y = HIPSELECT(score.y, 0.0f, gx < border - 1);
+            score.z = HIPSELECT(score.z, 0.0f, gx < border - 2);
+            score.w = HIPSELECT(score.w, 0.0f, gx < border - 3);
+            score.x = HIPSELECT(score.x, 0.0f, gx > dstWidth - 1 - border);
+            score.y = HIPSELECT(score.y, 0.0f, gx > dstWidth - 2 - border);
+            score.z = HIPSELECT(score.z, 0.0f, gx > dstWidth - 3 - border);
+            score.w = HIPSELECT(score.w, 0.0f, gx > dstWidth - 4 - border);
+        }
+        *((float4 *)(&pDstVc[dstIdx])) = score;
+    }
+}
+int HipExec_HarrisScore_HVC_HG3_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes, vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
+    vx_float32 sensitivity, vx_float32 strength_threshold, vx_int32 border, vx_float32 normFactor) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 3) >> 2;
+    int globalThreads_y = dstHeight;
+
+    vx_uint32 dstWidthComp1 = dstWidth * 4;
+    vx_uint32 dstWidthComp2 = dstWidth * 8;
+
+    hipLaunchKernelGGL(Hip_HarrisScore_HVC_HG3_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstVc, dstVcStrideInBytes,
+                        (uchar *)pHipSrcGxy, srcGxyStrideInBytes, sensitivity, strength_threshold, border, normFactor,
+                        dstWidthComp1, dstWidthComp2);
+
+    return VX_SUCCESS;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_NonMaxSupp_XY_ANY_3x3(char *pDstList, uint capacityOfList,
+    uint srcWidth, uint srcHeight,
+    uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint srcWidthComp1, uint srcWidthComp2) {
+
+    int lx = hipThreadIdx_x;
+    int ly = hipThreadIdx_y;
+    int gx = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
+    int gy = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    int gstride = srcImageStrideInBytes;
+    uchar *gbuf = pSrcImage;
+    __shared__ uchar lbuf[2448];
+    { // load 136x18 bytes into local memory using 16x16 workgroup
+        int loffset = ly * 136 + (lx << 3);
+        int goffset = (gy - 1) * srcImageStrideInBytes + gx - 4;
+        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        bool doExtraLoad = false;
+        if (ly < 2) {
+            loffset += 16 * 136;
+            goffset += 16 * srcImageStrideInBytes;
+            doExtraLoad = true;
+        } else {
+            int id = (ly - 2) * 16 + lx;
+            loffset = id * 136 + 128;
+            goffset = (gy - ly + id - 1) * srcImageStrideInBytes + (((gx >> 3) - lx) << 3) + 124;
+            doExtraLoad = (id < 18) ? true : false;
+        }
+        if (doExtraLoad) {
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        }
+        __syncthreads();
+    }
+    __shared__ uchar *lbuf_ptr;
+    lbuf_ptr = lbuf + ly * 136 + (lx << 3);
+    float4 L0 = *(float4 *)lbuf_ptr;
+    float4 L1 = *(float4 *)&lbuf_ptr[136];
+    float4 L2 = *(float4 *)&lbuf_ptr[272];
+    float2 T = *(float2 *)&L1;
+    T.x = HIPSELECT(0.0f, T.x, T.x >= L1.x);
+    T.x = HIPSELECT(0.0f, T.x, T.x >  L1.z);
+    T.x = HIPSELECT(0.0f, T.x, T.x >= L0.x);
+    T.x = HIPSELECT(0.0f, T.x, T.x >= L0.y);
+    T.x = HIPSELECT(0.0f, T.x, T.x >= L0.z);
+    T.x = HIPSELECT(0.0f, T.x, T.x >  L2.x);
+    T.x = HIPSELECT(0.0f, T.x, T.x >  L2.y);
+    T.x = HIPSELECT(0.0f, T.x, T.x >  L2.z);
+    T.y = HIPSELECT(0.0f, T.y, T.y >= L1.y);
+    T.y = HIPSELECT(0.0f, T.y, T.y >  L1.w);
+    T.y = HIPSELECT(0.0f, T.y, T.y >= L0.y);
+    T.y = HIPSELECT(0.0f, T.y, T.y >= L0.z);
+    T.y = HIPSELECT(0.0f, T.y, T.y >= L0.w);
+    T.y = HIPSELECT(0.0f, T.y, T.y >  L2.y);
+    T.y = HIPSELECT(0.0f, T.y, T.y >  L2.z);
+    T.y = HIPSELECT(0.0f, T.y, T.y >  L2.w);
+    T.x = HIPSELECT(0.0f, T.x, gx < srcWidthComp1);
+    T.y = HIPSELECT(0.0f, T.y, gx < srcWidthComp2);
+    T.x = HIPSELECT(0.0f, T.x, gy < srcHeight);
+    T.y = HIPSELECT(0.0f, T.y, gy < srcHeight);
+    gx = gx + gx + HIPSELECT(0, 1, T.y > 0.0f);
+    T.x = HIPSELECT(T.x, T.y, T.y > 0.0f);
+    if (T.x > 0.0f) {
+        uint pos = atomicInc((uint *)pDstList, 1);
+        if(pos < capacityOfList) {
+            *((uint2 *)(&pDstList[pos << 3])) = make_uint2(gx | (gy << 16), (uint)(T.x));
+        }
+    }
+}
+int HipExec_NonMaxSupp_XY_ANY_3x3(hipStream_t stream, vx_uint32 capacityOfList, ago_keypoint_xys_t *pHipDstList,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, vx_float32 *pHipSrcImage, vx_uint32 srcImageStrideInBytes) {
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = srcWidth;
+    int globalThreads_y = srcHeight;
+
+    vx_uint32 srcWidthComp1 = (srcWidth + 1) / 2;
+    vx_uint32 srcWidthComp2 = srcWidth / 2;
+
+    hipLaunchKernelGGL(Hip_NonMaxSupp_XY_ANY_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, (char *)pHipDstList, capacityOfList,
+                        srcWidth, srcHeight, (uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        srcWidthComp1, srcWidthComp2);
+
+    return VX_SUCCESS;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// VxHarrisCorners old kernels
 
 __global__ void __attribute__((visibility("default")))
 Hip_HarrisSobel_HG3_U8_5x5(
@@ -1105,7 +1623,6 @@ int HipExec_HarrisSobel_HG3_U8_5x5(
 
     return VX_SUCCESS;
 }
-
 
 __global__ void __attribute__((visibility("default")))
 Hip_HarrisSobel_HG3_U8_7x7(
@@ -1174,80 +1691,6 @@ int HipExec_HarrisSobel_HG3_U8_7x7(
                     (float *)pDstGxy_ , (dstGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
                     (const unsigned char *)pSrcImage, srcImageStrideInBytes,
                     (float *)hipGx, (float *)hipGy);
-
-    return VX_SUCCESS;
-}
-
-__global__ void __attribute__((visibility("default")))
-Hip_HarrisScore_HVC_HG3_3x3(
-    unsigned int dstWidth, unsigned int dstHeight,
-    float *pDstVc, unsigned int dstVcStrideInBytes,
-    float *pSrcGxy_, unsigned int srcGxyStrideInBytes,
-    float sensitivity, float strength_threshold,
-    float normalization_factor
-    ) {
-    int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
-    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
-
-    unsigned int dstIdx = y * (dstVcStrideInBytes) + x;
-    unsigned int srcIdx = y * (srcGxyStrideInBytes) + x;
-
-    if ((x >= dstWidth-1) || (x <= 0) || (y >= dstHeight-1 ) || y <= 0) {
-        pDstVc[dstIdx] = (float)0;
-        return;
-    }
-
-    float gx2 = 0, gy2 = 0, gxy2 = 0;
-    float traceA =0, detA =0, Mc =0;
-    ago_harris_Gxy_t * pSrcGxy = (ago_harris_Gxy_t *)pSrcGxy_;
-    //Prev Row + Current Row + Next Row sum of gx2, gxy2, gy2
-    int srcIdxTopRow1, srcIdxBottomRow1;
-    srcIdxTopRow1 = srcIdx - srcGxyStrideInBytes;
-    srcIdxBottomRow1 = srcIdx + srcGxyStrideInBytes;
-    gx2 =
-    (float)pSrcGxy[srcIdxTopRow1 - 1].GxGx + (float)pSrcGxy[srcIdxTopRow1].GxGx +(float)pSrcGxy[srcIdxTopRow1 + 1].GxGx +
-    (float)pSrcGxy[srcIdx-1].GxGx + (float)pSrcGxy[srcIdx].GxGx + (float)pSrcGxy[srcIdx+1].GxGx +
-    (float)pSrcGxy[srcIdxBottomRow1 -1].GxGx + (float)pSrcGxy[srcIdxBottomRow1].GxGx + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGx;
-
-    gxy2 =
-    (float)pSrcGxy[srcIdxTopRow1 - 1].GxGy + (float)pSrcGxy[srcIdxTopRow1].GxGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GxGy +
-    (float)pSrcGxy[srcIdx-1].GxGy + (float)pSrcGxy[srcIdx].GxGy + (float)pSrcGxy[srcIdx+1].GxGy +
-    (float)pSrcGxy[srcIdxBottomRow1 -1].GxGy + (float)pSrcGxy[srcIdxBottomRow1].GxGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GxGy ;
-
-    gy2 =
-    (float)pSrcGxy[srcIdxTopRow1 - 1].GyGy + (float)pSrcGxy[srcIdxTopRow1].GyGy + (float)pSrcGxy[srcIdxTopRow1 + 1].GyGy +
-    (float)pSrcGxy[srcIdx-1].GyGy + (float)pSrcGxy[srcIdx].GyGy + (float)pSrcGxy[srcIdx+1].GyGy +
-    (float)pSrcGxy[srcIdxBottomRow1 -1].GyGy + (float)pSrcGxy[srcIdxBottomRow1].GyGy + (float)pSrcGxy[srcIdxBottomRow1 + 1].GyGy;
-
-    traceA = gx2 + gy2;
-    detA = (gx2 * gy2) - (gxy2 * gxy2);
-    Mc = detA - (sensitivity * traceA * traceA);
-    Mc /= normalization_factor;
-    if(Mc > strength_threshold){
-        pDstVc[dstIdx] = (float)Mc;
-    }
-    else{
-        pDstVc[dstIdx] = (float)0;
-    }
-}
-int HipExec_HarrisScore_HVC_HG3_3x3(
-    hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-    vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
-    vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
-    vx_float32 sensitivity, vx_float32 strength_threshold,
-    vx_float32 normalization_factor
-    ) {
-    int localThreads_x = 16, localThreads_y = 16;
-    int globalThreads_x = dstWidth,   globalThreads_y = dstHeight;
-
-    hipLaunchKernelGGL(Hip_HarrisScore_HVC_HG3_3x3,
-                    dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                    dim3(localThreads_x, localThreads_y),
-                    0, stream,
-                    dstWidth, dstHeight,
-                    (float *)pDstVc , (dstVcStrideInBytes/sizeof(float)),
-                    (float *)pSrcGxy_, (srcGxyStrideInBytes/sizeof(ago_harris_Gxy_t)),
-                    sensitivity, strength_threshold,normalization_factor );
 
     return VX_SUCCESS;
 }
@@ -1333,7 +1776,6 @@ int HipExec_HarrisScore_HVC_HG3_5x5(
 
     return VX_SUCCESS;
 }
-
 
 __global__ void __attribute__((visibility("default")))
 Hip_HarrisScore_HVC_HG3_7x7(

@@ -827,8 +827,8 @@ int HipExec_Remap_U8_U8_Bilinear_Constant(
 
 int HipExec_HarrisSobel_HG3_U8_3x3(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
-        vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes);
+        vx_float32 *pHipDstGxy, vx_uint32 dstGxyStrideInBytes,
+        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
 int HipExec_HarrisSobel_HG3_U8_5x5(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
@@ -839,10 +839,10 @@ int HipExec_HarrisSobel_HG3_U8_7x7(
         vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes);
 int HipExec_HarrisScore_HVC_HG3_3x3(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
-        vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
+        vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes,
+        vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
         vx_float32 sensitivity, vx_float32 strength_threshold,
-        vx_float32 normalization_factor);
+        vx_int32 border, vx_float32 normFactor);
 int HipExec_HarrisScore_HVC_HG3_5x5(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
@@ -855,6 +855,10 @@ int HipExec_HarrisScore_HVC_HG3_7x7(
         vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
         vx_float32 sensitivity, vx_float32 strength_threshold,
         vx_float32 normalization_factor);
+int HipExec_NonMaxSupp_XY_ANY_3x3(
+        hipStream_t stream, vx_uint32 capacityOfList, ago_keypoint_xys_t *pHipDstList,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        vx_float32 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
 int HipExec_FastCorners_XY_U8_Supression(
         hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
         vx_uint32 srcWidth, vx_uint32 srcHeight,

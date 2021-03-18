@@ -75,7 +75,7 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
 }*/
 
 void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-VideoDecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
+VideoDecoderType decoder_type, unsigned sequence_length, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;
@@ -89,6 +89,7 @@ VideoDecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count,
     auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, feature_key_map, shuffle, loop);
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
+    reader_cfg.set_sequence_length(sequence_length);
     _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
              mem_type,
              _batch_size);

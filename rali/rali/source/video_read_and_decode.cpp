@@ -71,11 +71,12 @@ void
 VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
     // Can initialize it to any decoder types if needed
+    // find video_count resize newly introduced video wrt video count
     _batch_size = batch_size;
     _compressed_buff.resize(batch_size);
-    _video_decoder.resize(batch_size);
+    _video_decoder.resize(batch_size); // It should not be for batch size but for every video in the path
     _actual_read_size.resize(batch_size);
-    _image_names.resize(batch_size);
+    _video_names.resize(batch_size);
     _compressed_image_size.resize(batch_size);
     _decompressed_buff_ptrs.resize(_batch_size);
     _actual_decoded_width.resize(_batch_size);
@@ -83,6 +84,9 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _original_height.resize(_batch_size);
     _original_width.resize(_batch_size);
     _video_decoder_config = decoder_config;
+    // get the width and height for every video _actual_decoded & original
+    // fill the _video_frame_start_idx & _video_idx  based on sequence length and frame count
+    // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
 
     for(int i = 0; i < batch_size; i++)
     {
@@ -146,7 +150,7 @@ VideoReadAndDecode::load(unsigned char* buff,
         _compressed_buff[file_counter].reserve(fsize);
 
         _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
-        _image_names[file_counter] = _reader->id();
+        _video_names[file_counter] = _reader->id();
         _reader->close();
         _compressed_image_size[file_counter] = fsize;
         file_counter++;
@@ -194,7 +198,7 @@ VideoReadAndDecode::load(unsigned char* buff,
     }
     for(size_t i = 0; i < _batch_size; i++)
     {
-        names[i] = _image_names[i];
+        names[i] = _video_names[i];
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
         actual_width[i] = _original_width[i];

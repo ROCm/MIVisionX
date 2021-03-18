@@ -1322,10 +1322,9 @@ raliVideoFileSource(
         const char* source_path,
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
+        unsigned sequence_length,
         bool shuffle,
         bool is_output,
-        unsigned width,
-        unsigned height,
         bool loop)
 {
     Image* output = nullptr;
@@ -1333,16 +1332,11 @@ raliVideoFileSource(
     try
     {
 #ifdef RALI_VIDEO
-        bool decoder_keep_original = false;
-        if(width == 0 || height == 0)
-        {
-            THROW("Invalid video input width and height");
-        }
-        else
-        {
-            LOG("User input size " + TOSTR(width) + " x " + TOSTR(height));
-        }
-
+        // Add code to get width and height of frames in video. 
+        // In case of multiple videos find the max width and height
+        unsigned width , height;
+        width = 300;
+        height = 300;
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         //auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
@@ -1355,9 +1349,10 @@ raliVideoFileSource(
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",
-									  std::map<std::string, std::string>(),
+									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
+                                                                          sequence_length,
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),

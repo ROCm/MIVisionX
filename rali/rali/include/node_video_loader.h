@@ -45,7 +45,7 @@ public:
     /// The loader will repeat images if necessary to be able to have images in multiples of the load_batch_count,
     /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
     void init(unsigned internal_shard_count, const std::string &source_path,const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-              VideoDecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig = false);
+              VideoDecoderType decoder_type, unsigned sequence_length, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig = false);
 
     std::shared_ptr<VideoLoaderModule> get_loader_module();
 
@@ -58,6 +58,7 @@ private:
     unsigned _video_stream_count;
     std::vector<std::string> _path_to_videos;
     unsigned _batch_size;
+    unsigned _sequence_length;
     std::unique_ptr<Image> _interm_output = nullptr;
     std::string _source_path;
     vx_node _copy_node;

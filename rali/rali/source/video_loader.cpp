@@ -121,7 +121,8 @@ VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg,
     _mem_type = mem_type;
     _batch_size = batch_size;
     _loop = reader_cfg.loop();
-    _decoder_keep_original = decoder_keep_original;
+    _sequence_length = reader_cfg.get_sequence_length();
+    _decoder_keep_original = decoder_keep_original; // Not needed check
     _image_loader = std::make_shared<VideoReadAndDecode>();
     try
     {

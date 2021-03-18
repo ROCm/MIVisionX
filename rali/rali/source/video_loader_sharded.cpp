@@ -87,7 +87,7 @@ VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decod
     for(size_t idx = 0; idx < _shard_count; idx++)
     {
         _loaders[idx]->set_output_image(_output_image);
-        reader_cfg.set_shard_count(_shard_count);
+        reader_cfg.set_shard_count(_shard_count); // check if it is needed
         reader_cfg.set_shard_id(idx);
         _loaders[idx]->initialize(reader_cfg, decoder_cfg, mem_type, batch_size, keep_orig_size);
     }

@@ -88,7 +88,6 @@ endif()
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
-add_subdirectory(apps)
 add_subdirectory(utilities)
 if(RALI)
   add_subdirectory(rali)

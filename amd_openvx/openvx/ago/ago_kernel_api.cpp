@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include "ago_internal.h"
 #include "ago_kernel_api.h"
 #include "ago_haf_gpu.h"
+
 #if ENABLE_HIP
 #include "../hipvx/hip_host_decls.h"
 #endif
@@ -871,17 +872,14 @@ int ovxKernel_Threshold(AgoNode * node, AgoKernelCommand cmd)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
-        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[1]->u.thr.data_type != VX_TYPE_BOOL)
+        if (node->paramList[1]->u.thr.data_type != VX_TYPE_UINT8)
             return VX_ERROR_INVALID_TYPE;
         // set output image sizes are same as input image size
         vx_meta_format meta;
         meta = &node->metaList[2];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        if (node->paramList[2]->u.img.format == VX_DF_IMAGE_U8)
-            meta->data.u.img.format = VX_DF_IMAGE_U8;
-        else if (node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
-            meta->data.u.img.format = VX_DF_IMAGE_U1;
+        meta->data.u.img.format = VX_DF_IMAGE_U8;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -948,7 +946,7 @@ int ovxKernel_Dilate3x3(AgoNode * node, AgoKernelCommand cmd)
         // validate parameters
         vx_uint32 width = node->paramList[0]->u.img.width;
         vx_uint32 height = node->paramList[0]->u.img.height;
-        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
+        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
@@ -957,10 +955,7 @@ int ovxKernel_Dilate3x3(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[1];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
-            meta->data.u.img.format = VX_DF_IMAGE_U8;
-        else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
-            meta->data.u.img.format = VX_DF_IMAGE_U1;
+        meta->data.u.img.format = VX_DF_IMAGE_U8;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -989,7 +984,7 @@ int ovxKernel_Erode3x3(AgoNode * node, AgoKernelCommand cmd)
         // validate parameters
         vx_uint32 width = node->paramList[0]->u.img.width;
         vx_uint32 height = node->paramList[0]->u.img.height;
-        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
+        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
@@ -998,10 +993,7 @@ int ovxKernel_Erode3x3(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[1];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
-            meta->data.u.img.format = VX_DF_IMAGE_U8;
-        else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
-            meta->data.u.img.format = VX_DF_IMAGE_U1;
+        meta->data.u.img.format = VX_DF_IMAGE_U8;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1489,7 +1481,7 @@ int ovxKernel_And(AgoNode * node, AgoKernelCommand cmd)
         // validate parameters
         vx_uint32 width = node->paramList[0]->u.img.width;
         vx_uint32 height = node->paramList[0]->u.img.height;
-        if ((node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1) || (node->paramList[1]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U1))
+        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height || width != node->paramList[1]->u.img.width || height != node->paramList[1]->u.img.height)
             return VX_ERROR_INVALID_DIMENSION;
@@ -1498,12 +1490,7 @@ int ovxKernel_And(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[2];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U8)
-            meta->data.u.img.format = VX_DF_IMAGE_U8;
-        else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
-            meta->data.u.img.format = VX_DF_IMAGE_U1;
-        else if((node->paramList[2]->u.img.format == VX_DF_IMAGE_VIRT) && (node->paramList[0]->u.img.format == node->paramList[1]->u.img.format))
-            meta->data.u.img.format = node->paramList[0]->u.img.format;
+        meta->data.u.img.format = VX_DF_IMAGE_U8;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1532,7 +1519,7 @@ int ovxKernel_Or(AgoNode * node, AgoKernelCommand cmd)
         // validate parameters
         vx_uint32 width = node->paramList[0]->u.img.width;
         vx_uint32 height = node->paramList[0]->u.img.height;
-        if ((node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1) || (node->paramList[1]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U1))
+        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height || width != node->paramList[1]->u.img.width || height != node->paramList[1]->u.img.height)
             return VX_ERROR_INVALID_DIMENSION;
@@ -1541,12 +1528,7 @@ int ovxKernel_Or(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[2];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U8)
-            meta->data.u.img.format = VX_DF_IMAGE_U8;
-        else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
-            meta->data.u.img.format = VX_DF_IMAGE_U1;
-        else if((node->paramList[2]->u.img.format == VX_DF_IMAGE_VIRT) && (node->paramList[0]->u.img.format == node->paramList[1]->u.img.format))
-            meta->data.u.img.format = node->paramList[0]->u.img.format;
+        meta->data.u.img.format = VX_DF_IMAGE_U8;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1575,7 +1557,7 @@ int ovxKernel_Xor(AgoNode * node, AgoKernelCommand cmd)
         // validate parameters
         vx_uint32 width = node->paramList[0]->u.img.width;
         vx_uint32 height = node->paramList[0]->u.img.height;
-        if ((node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1) || (node->paramList[1]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[1]->u.img.format != VX_DF_IMAGE_U1))
+        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 || node->paramList[1]->u.img.format != VX_DF_IMAGE_U8)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height || width != node->paramList[1]->u.img.width || height != node->paramList[1]->u.img.height)
             return VX_ERROR_INVALID_DIMENSION;
@@ -1584,12 +1566,7 @@ int ovxKernel_Xor(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[2];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U8)
-            meta->data.u.img.format = VX_DF_IMAGE_U8;
-        else if(node->paramList[2]->u.img.format == VX_DF_IMAGE_U1)
-            meta->data.u.img.format = VX_DF_IMAGE_U1;
-        else if((node->paramList[2]->u.img.format == VX_DF_IMAGE_VIRT) && (node->paramList[0]->u.img.format == node->paramList[1]->u.img.format))
-            meta->data.u.img.format = node->paramList[0]->u.img.format;
+        meta->data.u.img.format = VX_DF_IMAGE_U8;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -1618,7 +1595,7 @@ int ovxKernel_Not(AgoNode * node, AgoKernelCommand cmd)
         // validate parameters
         vx_uint32 width = node->paramList[0]->u.img.width;
         vx_uint32 height = node->paramList[0]->u.img.height;
-        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8 && node->paramList[0]->u.img.format != VX_DF_IMAGE_U1)
+        if (node->paramList[0]->u.img.format != VX_DF_IMAGE_U8)
             return VX_ERROR_INVALID_FORMAT;
         else if (!width || !height)
             return VX_ERROR_INVALID_DIMENSION;
@@ -1627,12 +1604,7 @@ int ovxKernel_Not(AgoNode * node, AgoKernelCommand cmd)
         meta = &node->metaList[1];
         meta->data.u.img.width = width;
         meta->data.u.img.height = height;
-        if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U8)
-            meta->data.u.img.format = VX_DF_IMAGE_U8;
-        else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_U1)
-            meta->data.u.img.format = VX_DF_IMAGE_U1;
-        else if(node->paramList[1]->u.img.format == VX_DF_IMAGE_VIRT)
-            meta->data.u.img.format = node->paramList[0]->u.img.format;
+        meta->data.u.img.format = VX_DF_IMAGE_U8;
         status = VX_SUCCESS;
     }
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
@@ -2423,14 +2395,14 @@ static void agoCodeGenOpenCL_Threshold_U8_U8_Range(std::string& opencl_code)
 
 static void agoCodeGenOpenCL_Threshold_S16_S16_Binary(std::string& opencl_code)
 {
-	opencl_code += OPENCL_FORMAT(
-		"#ifndef Threshold_S16_S16_Binary_\n"
-		"#define Threshold_S16_S16_Binary_\n"
-		"void Threshold_S16_S16_Binary(S16x8 * p0, S16x8 p1, uint p2)\n"
-		"{\n"
-		"  S16x8 r;\n"
+    opencl_code += OPENCL_FORMAT(
+        "#ifndef Threshold_S16_S16_Binary_\n"
+        "#define Threshold_S16_S16_Binary_\n"
+        "void Threshold_S16_S16_Binary(S16x8 * p0, S16x8 p1, uint p2)\n"
+        "{\n"
+        "  S16x8 r;\n"
         "  short2 p;\n"
-		"  float4 thr = (float4)amd_unpack0(p2);\n"
+        "  float4 thr = (float4)amd_unpack0(p2);\n"
         "  p.s0 = ((((int)p1.s0)  << 16) >> 16) & 0xffff;\n"
         "  p.s1 = ((int)p1.s0 >> 16) & 0xffff;\n"
         "  r.s0 = (p.s0 > thr.s0) ? 0xffff:0;\n"
@@ -2448,20 +2420,20 @@ static void agoCodeGenOpenCL_Threshold_S16_S16_Binary(std::string& opencl_code)
         "  r.s3 = (p.s0 > thr.s0) ? 0xffff:0;\n"
         "  r.s3 |= ((p.s1 > thr.s0) ? 0xffff0000:0);\n"
         "  *p0 = r;\n"
-		"}\n"
-		"#endif\n"
-		);
+        "}\n"
+        "#endif\n"
+        );
 }
 static void agoCodeGenOpenCL_Threshold_S16_S16_Range(std::string& opencl_code)
 {
-	opencl_code += OPENCL_FORMAT(
-		"#ifndef Threshold_S16_S16_Range_\n"
-		"#define Threshold_S16_S16_Range_\n"
-		"void Threshold_S16_S16_Range(S16x8 * p0, S16x8 p1, uint2 p2)\n"
-		"{\n"
-		"  S16x8 r;\n"
-		"  float4 thr0 = (float4)(amd_unpack0(p2.s0) - 1.0f);\n"
-		"  float4 thr1 = (float4)(amd_unpack0(p2.s1) + 1.0f);\n"
+    opencl_code += OPENCL_FORMAT(
+        "#ifndef Threshold_S16_S16_Range_\n"
+        "#define Threshold_S16_S16_Range_\n"
+        "void Threshold_S16_S16_Range(S16x8 * p0, S16x8 p1, uint2 p2)\n"
+        "{\n"
+        "  S16x8 r;\n"
+        "  float4 thr0 = (float4)(amd_unpack0(p2.s0) - 1.0f);\n"
+        "  float4 thr1 = (float4)(amd_unpack0(p2.s1) + 1.0f);\n"
         "  short2 p;\n"
         "  p.s0 = ((((int)p1.s0)  << 16) >> 16) & 0xffff;\n"
         "  p.s1 = ((int)p1.s0 >> 16) & 0xffff;\n"
@@ -2479,10 +2451,10 @@ static void agoCodeGenOpenCL_Threshold_S16_S16_Range(std::string& opencl_code)
         "  p.s1 = ((int)p1.s3 >> 16) & 0xffff;\n"
         "  r.s3 = (p.s0 > thr0.s0 && thr1.s0 > p.s0) ? 0xffff:0;\n"
         "  r.s3 |= ((p.s1 > thr0.s0 && thr1.s0 > p.s1) ? 0xffff0000:0);\n"
-		"  *p0 = r;\n"
-		"}\n"
-		"#endif\n"
-		);
+        "  *p0 = r;\n"
+        "}\n"
+        "#endif\n"
+        );
 }
 static void agoCodeGenOpenCL_Add_S16_S16U8_Sat(std::string& opencl_code)
 {
@@ -3406,28 +3378,29 @@ int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
     }
-//TBD: add support for S16. This is the U8 version
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         status = VX_SUCCESS;
         node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
         char textBuffer[2048];
         sprintf(textBuffer, OPENCL_FORMAT(
-            "void %s (U8x8 * p0, U8x8 p1, __read_only image1d_t lut)\n"
+            "void %s (S16x8 * p0, S16x8 p1, __global short * p2_buf, uint p2_count, uint p2_offset)\n"
             "{\n"
-            "    U8x8 r;\n"
-            "    float4 f;\n"
-            "    f.s0 = read_imagef(lut, (int)( p1.s0        & 255)).s0 * 255.0f;\n"
-            "    f.s1 = read_imagef(lut, (int)((p1.s0 >>  8) & 255)).s0 * 255.0f;\n"
-            "    f.s2 = read_imagef(lut, (int)((p1.s0 >> 16) & 255)).s0 * 255.0f;\n"
-            "    f.s3 = read_imagef(lut, (int)( p1.s0 >> 24       )).s0 * 255.0f;\n"
-            "    r.s0 = amd_pack(f);\n"
-            "    f.s0 = read_imagef(lut, (int)( p1.s1        & 255)).s0 * 255.0f;\n"
-            "    f.s1 = read_imagef(lut, (int)((p1.s1 >>  8) & 255)).s0 * 255.0f;\n"
-            "    f.s2 = read_imagef(lut, (int)((p1.s1 >> 16) & 255)).s0 * 255.0f;\n"
-            "    f.s3 = read_imagef(lut, (int)( p1.s1 >> 24       )).s0 * 255.0f;\n"
-            "    r.s1 = amd_pack(f);\n"
-            "    *p0 = r;\n"
+            "   S16x8 r;\n"
+            "   int2 temp;\n"
+            "   temp.s0 = (int)(p2_buf[(short)(p1.s0            & 0xffff) + p2_offset]) & 0x0000ffff;\n"
+            "   temp.s1 = (int)(p2_buf[(short)((p1.s0 >> 16)    & 0xffff) + p2_offset]) << 16;\n"
+            "   r.s0 = (int)(temp.s0 | temp.s1);\n"
+            "   temp.s0 = (int)(p2_buf[(short)(p1.s1            & 0xffff) + p2_offset]) & 0x0000ffff;\n"
+            "   temp.s1 = (int)(p2_buf[(short)((p1.s1 >> 16)    & 0xffff) + p2_offset]) << 16;\n"
+            "   r.s1 = (int)(temp.s0 | temp.s1);\n"
+            "   temp.s0 = (int)(p2_buf[(short)(p1.s2            & 0xffff) + p2_offset]) & 0x0000ffff;\n"
+            "   temp.s1 = (int)(p2_buf[(short)((p1.s2 >> 16)    & 0xffff) + p2_offset]) << 16;\n"
+            "   r.s2 = (int)(temp.s0 | temp.s1);\n"
+            "   temp.s0 = (int)(p2_buf[(short)(p1.s3            & 0xffff) + p2_offset]) & 0x0000ffff;\n"
+            "   temp.s1 = (int)(p2_buf[(short)((p1.s3 >> 16)    & 0xffff) + p2_offset]) << 16;\n"
+            "   r.s3 = (int)(temp.s0 | temp.s1);\n"
+            "   *p0 = r;\n"
             "}\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -3605,7 +3578,7 @@ int agoKernel_Threshold_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd)
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U1_AMD, VX_DF_IMAGE_U8))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8 && node->paramList[2]->u.thr.data_type != VX_TYPE_BOOL))
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_BINARY || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
                 return VX_ERROR_INVALID_TYPE;
         }
     }
@@ -3673,14 +3646,13 @@ int agoKernel_Threshold_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg = node->paramList[1];
         AgoData * iThr = node->paramList[2];
-        if (HafCpu_Threshold_U1_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
+        if (HafCpu_Threshold_U1_U8_Range(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg->buffer, iImg->u.img.stride_in_bytes, iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
             status = VX_FAILURE;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
         if (!(status = ValidateArguments_Img_1OUT_1IN(node, VX_DF_IMAGE_U1_AMD, VX_DF_IMAGE_U8))) {
-            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || (node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8&& node->paramList[2]->u.thr.data_type != VX_TYPE_BOOL))
+            if (node->paramList[2]->u.thr.thresh_type != VX_THRESHOLD_TYPE_RANGE || node->paramList[2]->u.thr.data_type != VX_TYPE_UINT8)
                 return VX_ERROR_INVALID_TYPE;
         }
     }
@@ -6738,8 +6710,7 @@ int agoKernel_Xor_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Xor_U1_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Xor_U1_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -6808,9 +6779,7 @@ int agoKernel_Nand_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nand_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer,
-            oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes,
-            iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -6865,8 +6834,7 @@ int agoKernel_Nand_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nand_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -6922,8 +6890,7 @@ int agoKernel_Nand_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[2];
         AgoData * iImg1 = node->paramList[1];
-        if (HafCpu_Nand_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -6979,8 +6946,7 @@ int agoKernel_Nand_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nand_U8_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U8_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7037,8 +7003,7 @@ int agoKernel_Nand_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nand_U1_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U1_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7094,8 +7059,7 @@ int agoKernel_Nand_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nand_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7150,8 +7114,7 @@ int agoKernel_Nand_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[2];
         AgoData * iImg1 = node->paramList[1];
-        if (HafCpu_Nand_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7206,8 +7169,7 @@ int agoKernel_Nand_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nand_U1_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nand_U1_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7260,8 +7222,7 @@ int agoKernel_Nor_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nor_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7315,8 +7276,7 @@ int agoKernel_Nor_U8_U8U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nor_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7371,8 +7331,7 @@ int agoKernel_Nor_U8_U1U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[2];
         AgoData * iImg1 = node->paramList[1];
-        if (HafCpu_Nor_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U8_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7427,8 +7386,7 @@ int agoKernel_Nor_U8_U1U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nor_U8_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U8_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7484,8 +7442,7 @@ int agoKernel_Nor_U1_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nor_U1_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U1_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7540,8 +7497,7 @@ int agoKernel_Nor_U1_U8U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nor_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7596,8 +7552,7 @@ int agoKernel_Nor_U1_U1U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[2];
         AgoData * iImg1 = node->paramList[1];
-        if (HafCpu_Nor_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U1_U8U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -7652,8 +7607,7 @@ int agoKernel_Nor_U1_U1U1(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oImg = node->paramList[0];
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
-        if (HafCpu_Nor_U1_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes,
-            iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
+        if (HafCpu_Nor_U1_U1U1(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
     }
@@ -8142,7 +8096,7 @@ int agoKernel_AbsDiff_U8_U8U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iImg0 = node->paramList[1];
         AgoData * iImg1 = node->paramList[2];
         if (HafCpu_AbsDiff_U8_U8U8(oImg->u.img.width, oImg->u.img.height, oImg->buffer, oImg->u.img.stride_in_bytes, iImg0->buffer, iImg0->u.img.stride_in_bytes, iImg1->buffer, iImg1->u.img.stride_in_bytes)) {
-        status = VX_FAILURE;
+            status = VX_FAILURE;
         }
     }
     else if (cmd == ago_kernel_cmd_validate) {
@@ -10125,14 +10079,14 @@ int agoKernel_Mul_S16_S16S16_Wrap_Round(AgoNode * node, AgoKernelCommand cmd)
             "void %s (S16x8 * p0, S16x8 p1, S16x8 p2, float p3)\n"
             "{\n"
             "  S16x8 r;\n"
-            "  r.s0  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s0)) << 16) >> 16) * (float)((((int)(p2.s0)) << 16) >> 16)) & 0x0000ffff)      ;\n"
-            "  r.s0 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s0))  >> 16)        * (float)(((int)(p2.s0))  >> 16))                    ) << 16;\n"
-            "  r.s1  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s1)) << 16) >> 16) * (float)((((int)(p2.s1)) << 16) >> 16)) & 0x0000ffff);\n"
-            "  r.s1 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s1))  >> 16)        * (float)(((int)(p2.s1))  >> 16))                    ) << 16;\n"
-            "  r.s2  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s2)) << 16) >> 16) * (float)((((int)(p2.s2)) << 16) >> 16)) & 0x0000ffff)      ;\n"
-            "  r.s2 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s2))  >> 16)        * (float)(((int)(p2.s2))  >> 16))                    ) << 16;\n"
-            "  r.s3  = ((int)convert_short_rte(p3 * (float)((((int)(p1.s3)) << 16) >> 16) * (float)((((int)(p2.s3)) << 16) >> 16)) & 0x0000ffff)      ;\n"
-            "  r.s3 |= ((int)convert_short_rte(p3 * (float)(((int)(p1.s3))  >> 16)        * (float)(((int)(p2.s3))  >> 16))                    ) << 16;\n"
+            "  r.s0  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s0)) << 16) >> 16) * (float)((((int)(p2.s0)) << 16) >> 16)) & 0x0000ffff)      ;\n"
+            "  r.s0 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s0))  >> 16)        * (float)(((int)(p2.s0))  >> 16))                    ) << 16;\n"
+            "  r.s1  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s1)) << 16) >> 16) * (float)((((int)(p2.s1)) << 16) >> 16)) & 0x0000ffff);\n"
+            "  r.s1 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s1))  >> 16)        * (float)(((int)(p2.s1))  >> 16))                    ) << 16;\n"
+            "  r.s2  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s2)) << 16) >> 16) * (float)((((int)(p2.s2)) << 16) >> 16)) & 0x0000ffff)      ;\n"
+            "  r.s2 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s2))  >> 16)        * (float)(((int)(p2.s2))  >> 16))                    ) << 16;\n"
+            "  r.s3  = ((int)convert_int_rte(p3 * (float)((((int)(p1.s3)) << 16) >> 16) * (float)((((int)(p2.s3)) << 16) >> 16)) & 0x0000ffff)      ;\n"
+            "  r.s3 |= ((int)convert_int_rte(p3 * (float)(((int)(p1.s3))  >> 16)        * (float)(((int)(p2.s3))  >> 16))                    ) << 16;\n"
             "  *p0 = r;\n"
             "}\n"
             ), node->opencl_name);
@@ -10523,7 +10477,7 @@ int agoKernel_ChannelCopy_U8_U8(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_OPENCL || ENABLE_HIP
+#if ENABLE_OPENCL
                     | AGO_KERNEL_FLAG_DEVICE_GPU | AGO_KERNEL_FLAG_GPU_INTEG_R2R
 #elif ENABLE_HIP
                     | AGO_KERNEL_FLAG_DEVICE_GPU
@@ -11834,12 +11788,14 @@ int agoKernel_ChannelCombine_U24_U8U8U8_RGB(AgoNode * node, AgoKernelCommand cmd
         sprintf(textBuffer, OPENCL_FORMAT(
             "void %s (U24x8 * p0, U8x8 p1, U8x8 p2, U8x8 p3)\n"
             "{\n"
-            "  (*p0).s0 = amd_pack((float4)(amd_unpack0(p1.s0), amd_unpack0(p2.s0), amd_unpack0(p3.s0), amd_unpack1(p1.s0)));\n"
-            "  (*p0).s1 = amd_pack((float4)(amd_unpack1(p2.s0), amd_unpack1(p3.s0), amd_unpack2(p1.s0), amd_unpack2(p2.s0)));\n"
-            "  (*p0).s2 = amd_pack((float4)(amd_unpack2(p3.s0), amd_unpack3(p1.s0), amd_unpack3(p2.s0), amd_unpack3(p3.s0)));\n"
-            "  (*p0).s3 = amd_pack((float4)(amd_unpack0(p1.s1), amd_unpack0(p2.s1), amd_unpack0(p3.s1), amd_unpack1(p1.s1)));\n"
-            "  (*p0).s4 = amd_pack((float4)(amd_unpack1(p2.s1), amd_unpack1(p3.s1), amd_unpack2(p1.s1), amd_unpack2(p2.s1)));\n"
-            "  (*p0).s5 = amd_pack((float4)(amd_unpack2(p3.s1), amd_unpack3(p1.s1), amd_unpack3(p2.s1), amd_unpack3(p3.s1)));\n"
+            "  U24x8 r;\n"
+            "  r.s0 = amd_pack((float4)(amd_unpack0(p1.s0), amd_unpack0(p2.s0), amd_unpack0(p3.s0), amd_unpack1(p1.s0)));\n"
+            "  r.s1 = amd_pack((float4)(amd_unpack1(p2.s0), amd_unpack1(p3.s0), amd_unpack2(p1.s0), amd_unpack2(p2.s0)));\n"
+            "  r.s2 = amd_pack((float4)(amd_unpack2(p3.s0), amd_unpack3(p1.s0), amd_unpack3(p2.s0), amd_unpack3(p3.s0)));\n"
+            "  r.s3 = amd_pack((float4)(amd_unpack0(p1.s1), amd_unpack0(p2.s1), amd_unpack0(p3.s1), amd_unpack1(p1.s1)));\n"
+            "  r.s4 = amd_pack((float4)(amd_unpack1(p2.s1), amd_unpack1(p3.s1), amd_unpack2(p1.s1), amd_unpack2(p2.s1)));\n"
+            "  r.s5 = amd_pack((float4)(amd_unpack2(p3.s1), amd_unpack3(p1.s1), amd_unpack3(p2.s1), amd_unpack3(p3.s1)));\n"
+            "  *p0 = r;\n"
             "}\n"
             ), node->opencl_name);
         node->opencl_code += textBuffer;
@@ -21157,10 +21113,6 @@ int agoKernel_Histogram_DATA_U8(AgoNode * node, AgoKernelCommand cmd)
         vx_uint32 range = (vx_uint32)oDist->u.dist.range;
         vx_uint32 window = oDist->u.dist.window;
         vx_uint32 * histOut = (vx_uint32 *)oDist->buffer;
-        // printf("\nnumbins:%d\n",numbins);
-        // printf("\noffset:%d\n",offset);
-        // printf("\nrange:%d\n",range);
-        // printf("\nwindow:%d\n",window);
         if (HafCpu_HistogramFixedBins_DATA_U8(histOut, numbins, offset, range, window, iImg->u.img.width, iImg->u.img.height, iImg->buffer, iImg->u.img.stride_in_bytes)) {
             status = VX_FAILURE;
         }
@@ -21174,31 +21126,9 @@ int agoKernel_Histogram_DATA_U8(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-// #if ENABLE_HIP
-//         | AGO_KERNEL_FLAG_DEVICE_GPU
-// #endif
                     ;
         status = VX_SUCCESS;
     }
-// #if ENABLE_HIP
-// 	if (cmd == ago_kernel_cmd_hip_execute) {
-// 		status = VX_SUCCESS;
-// 		AgoData * oDist = node->paramList[0];
-// 		AgoData * iImg = node->paramList[1];
-// 		vx_uint32 numbins = (vx_uint32) oDist->u.dist.numbins;
-// 		vx_uint32 offset = (vx_uint32)oDist->u.dist.offset;
-// 		vx_uint32 range = (vx_uint32)oDist->u.dist.range;
-// 		vx_uint32 window = oDist->u.dist.window;
-// 		vx_uint32 * histOut = (vx_uint32 *)oDist->buffer;
-// 		printf("\nnumbins:%d\n",numbins);
-// 		printf("\noffset:%d\n",offset);
-// 		printf("\nrange:%d\n",range);
-// 		printf("\nwindow:%d\n",window);
-// 		if (HipExec_HistogramFixedBins_DATA_U8(node->hip_stream0, histOut, numbins, offset, range, window, iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes)) {
-// 			status = VX_FAILURE;
-// 		}
-// 	}
-// #endif
     return status;
 }
 
@@ -22565,6 +22495,14 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
     else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
         status = VX_SUCCESS;
     }
+    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
+        AgoData * out = node->paramList[0];
+        AgoData * inp = node->paramList[1];
+        out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
+        out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
+        out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
+        out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
+    }
 #if ENABLE_OPENCL
     else if (cmd == ago_kernel_cmd_opencl_codegen) {
         // TBD: not implemented yet
@@ -22581,14 +22519,6 @@ int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd)
 #endif
                     ;
         status = VX_SUCCESS;
-    }
-    else if (cmd == ago_kernel_cmd_valid_rect_callback) {
-        AgoData * out = node->paramList[0];
-        AgoData * inp = node->paramList[1];
-        out->u.img.rect_valid.start_x = inp->u.img.rect_valid.start_x;
-        out->u.img.rect_valid.start_y = inp->u.img.rect_valid.start_y;
-        out->u.img.rect_valid.end_x = inp->u.img.rect_valid.end_x;
-        out->u.img.rect_valid.end_y = inp->u.img.rect_valid.end_y;
     }
 #if ENABLE_HIP
     else if (cmd == ago_kernel_cmd_hip_execute) {

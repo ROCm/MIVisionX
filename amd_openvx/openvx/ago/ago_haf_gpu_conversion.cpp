@@ -703,10 +703,10 @@ int HafGpu_ColorConvert(AgoNode * node)
 			"  if ((gx < %d) && (gy < %d)) {\n" // (width+7)/8, (height+1)/2
 			"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
 			"    U24x8 pRGB0, pRGB1;\n"
-			"    pRGB0.s012 = *(__global uint3 *) pRGB_buf;\n"
-			"    pRGB0.s345 = *(__global uint3 *)&pRGB_buf[12];\n"
-			"    pRGB1.s012 = *(__global uint3 *)&pRGB_buf[%d];\n" // pRGB_stride
-			"    pRGB1.s345 = *(__global uint3 *)&pRGB_buf[%d+12];\n" // pRGB_stride
+			"    pRGB0.s0123 = *(__global uint4 *) pRGB_buf;\n"
+			"    pRGB0.s45 = *(__global uint2 *)&pRGB_buf[16];\n"
+			"    pRGB1.s0123 = *(__global uint4 *)&pRGB_buf[%d];\n" // pRGB_stride
+			"    pRGB1.s45 = *(__global uint2 *)&pRGB_buf[%d+16];\n" // pRGB_stride
 			), (width + 7) / 8, (height + 1) / 2, pRGB_stride * 2, pRGB_stride, pRGB_stride);
 		node->opencl_code += item;
 	}
@@ -1341,40 +1341,40 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    yuv.s0 = mad(amd_unpack0(pY0.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack0(pU0.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack0(pV0.s0),r2f.s2,r2f.s3);\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack1(pY0.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack1(pU0.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack1(pV0.s0),r2f.s2,r2f.s3);\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s0 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s0 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack2(pY0.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack2(pU0.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack2(pV0.s0),r2f.s2,r2f.s3);\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s1 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s1 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack3(pY0.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack3(pU0.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack3(pV0.s0),r2f.s2,r2f.s3);\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s2 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s2 = amd_pack(trunc(f));\n"
 					"    yuv.s0 = mad(amd_unpack0(pY0.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack0(pU0.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack0(pV0.s1),r2f.s2,r2f.s3);\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack1(pY0.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack1(pU0.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack1(pV0.s1),r2f.s2,r2f.s3);\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s3 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s3 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack2(pY0.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack2(pU0.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack2(pV0.s1),r2f.s2,r2f.s3);\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s4 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s4 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack3(pY0.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack3(pU0.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack3(pV0.s1),r2f.s2,r2f.s3);\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s5 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s5 = amd_pack(trunc(f));\n"
 					"    yuv.s0 = mad(amd_unpack0(pY1.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack0(pU1.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack0(pV1.s0),r2f.s2,r2f.s3);\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack1(pY1.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack1(pU1.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack1(pV1.s0),r2f.s2,r2f.s3);\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s0 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s0 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack2(pY1.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack2(pU1.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack2(pV1.s0),r2f.s2,r2f.s3);\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s1 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s1 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack3(pY1.s0),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack3(pU1.s0),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack3(pV1.s0),r2f.s2,r2f.s3);\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s2 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s2 = amd_pack(trunc(f));\n"
 					"    yuv.s0 = mad(amd_unpack0(pY1.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack0(pU1.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack0(pV1.s1),r2f.s2,r2f.s3);\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack1(pY1.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack1(pU1.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack1(pV1.s1),r2f.s2,r2f.s3);\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s3 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s3 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack2(pY1.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack2(pU1.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack2(pV1.s1),r2f.s2,r2f.s3);\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s4 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s4 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = mad(amd_unpack3(pY1.s1),r2f.s0,r2f.s1); yuv.s1 = mad(amd_unpack3(pU1.s1),r2f.s2,r2f.s3); yuv.s2 = mad(amd_unpack3(pV1.s1),r2f.s2,r2f.s3);\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(trunc(f));\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
-					"    *(__global uint3 *) pRGB_buf = pRGB0.s012;\n"
-					"    *(__global uint3 *)&pRGB_buf[12] = pRGB0.s345;\n"
-					"    *(__global uint3 *)&pRGB_buf[%d] = pRGB1.s012;\n" // pRGB_stride
-					"    *(__global uint3 *)&pRGB_buf[%d+12] = pRGB1.s345;\n" // pRGB_stride
+					"    *(__global uint4 *) pRGB_buf = pRGB0.s0123;\n"
+					"    *(__global uint2 *)&pRGB_buf[16] = pRGB0.s45;\n"
+					"    *(__global uint4 *)&pRGB_buf[%d] = pRGB1.s0123;\n" // pRGB_stride
+					"    *(__global uint2 *)&pRGB_buf[%d+16] = pRGB1.s45;\n" // pRGB_stride
 					), pRGB_stride * 2, pRGB_stride, pRGB_stride);
 			}
 			else { // VX_CHANNEL_RANGE_FULL
@@ -1384,40 +1384,40 @@ int HafGpu_ColorConvert(AgoNode * node)
 					"    yuv.s0 = amd_unpack0(pY0.s0); yuv.s1 = amd_unpack0(pU0.s0); yuv.s2 = amd_unpack0(pV0.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack1(pY0.s0); yuv.s1 = amd_unpack1(pU0.s0); yuv.s2 = amd_unpack1(pV0.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s0 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s0 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack2(pY0.s0); yuv.s1 = amd_unpack2(pU0.s0); yuv.s2 = amd_unpack2(pV0.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s1 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s1 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack3(pY0.s0); yuv.s1 = amd_unpack3(pU0.s0); yuv.s2 = amd_unpack3(pV0.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s2 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s2 = amd_pack(trunc(f));\n"
 					"    yuv.s0 = amd_unpack0(pY0.s1); yuv.s1 = amd_unpack0(pU0.s1); yuv.s2 = amd_unpack0(pV0.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack1(pY0.s1); yuv.s1 = amd_unpack1(pU0.s1); yuv.s2 = amd_unpack1(pV0.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s3 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB0.s3 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack2(pY0.s1); yuv.s1 = amd_unpack2(pU0.s1); yuv.s2 = amd_unpack2(pV0.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s4 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB0.s4 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack3(pY0.s1); yuv.s1 = amd_unpack3(pU0.s1); yuv.s2 = amd_unpack3(pV0.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s5 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB0.s5 = amd_pack(trunc(f));\n"
 					"    yuv.s0 = amd_unpack0(pY1.s0); yuv.s1 = amd_unpack0(pU1.s0); yuv.s2 = amd_unpack0(pV1.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack1(pY1.s0); yuv.s1 = amd_unpack1(pU1.s0); yuv.s2 = amd_unpack1(pV1.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s0 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s0 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack2(pY1.s0); yuv.s1 = amd_unpack2(pU1.s0); yuv.s2 = amd_unpack2(pV1.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s1 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s1 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack3(pY1.s0); yuv.s1 = amd_unpack3(pU1.s0); yuv.s2 = amd_unpack3(pV1.s0); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s2 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s2 = amd_pack(trunc(f));\n"
 					"    yuv.s0 = amd_unpack0(pY1.s1); yuv.s1 = amd_unpack0(pU1.s1); yuv.s2 = amd_unpack0(pV1.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
 					"    f.s0 = mad(cR.s1, yuv.s2, yuv.s0); f.s1 = mad(cG.s0, yuv.s1, yuv.s0); f.s1 = mad(cG.s1, yuv.s2, f.s1); f.s2 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack1(pY1.s1); yuv.s1 = amd_unpack1(pU1.s1); yuv.s2 = amd_unpack1(pV1.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s3 = amd_pack(f); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s3 = mad(cR.s1, yuv.s2, yuv.s0); pRGB1.s3 = amd_pack(trunc(f)); f.s0 = mad(cG.s0, yuv.s1, yuv.s0); f.s0 = mad(cG.s1, yuv.s2, f.s0); f.s1 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack2(pY1.s1); yuv.s1 = amd_unpack2(pU1.s1); yuv.s2 = amd_unpack2(pV1.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s4 = amd_pack(f); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
+					"    f.s2 = mad(cR.s1, yuv.s2, yuv.s0); f.s3 = mad(cG.s0, yuv.s1, yuv.s0); f.s3 = mad(cG.s1, yuv.s2, f.s3); pRGB1.s4 = amd_pack(trunc(f)); f.s0 = mad(cB.s0, yuv.s1, yuv.s0);\n"
 					"    yuv.s0 = amd_unpack3(pY1.s1); yuv.s1 = amd_unpack3(pU1.s1); yuv.s2 = amd_unpack3(pV1.s1); yuv.s1 -= 128.0f;; yuv.s2 -= 128.0f;\n"
-					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(f);\n"
+					"    f.s1 = mad(cR.s1, yuv.s2, yuv.s0); f.s2 = mad(cG.s0, yuv.s1, yuv.s0); f.s2 = mad(cG.s1, yuv.s2, f.s2); f.s3 = mad(cB.s0, yuv.s1, yuv.s0); pRGB1.s5 = amd_pack(trunc(f));\n"
 					"    pRGB_buf += pRGB_offset + (gy * %d) + (gx * 24);\n" // pRGB_stride * 2
-					"    *(__global uint3 *) pRGB_buf = pRGB0.s012;\n"
-					"    *(__global uint3 *)&pRGB_buf[12] = pRGB0.s345;\n"
-					"    *(__global uint3 *)&pRGB_buf[%d] = pRGB1.s012;\n" // pRGB_stride
-					"    *(__global uint3 *)&pRGB_buf[%d+12] = pRGB1.s345;\n" // pRGB_stride
+					"    *(__global uint4 *) pRGB_buf = pRGB0.s0123;\n"
+					"    *(__global uint2 *)&pRGB_buf[16] = pRGB0.s45;\n"
+					"    *(__global uint4 *)&pRGB_buf[%d] = pRGB1.s0123;\n" // pRGB_stride
+					"    *(__global uint2 *)&pRGB_buf[%d+16] = pRGB1.s45;\n" // pRGB_stride
 					), pRGB_stride * 2, pRGB_stride, pRGB_stride);
 			}
 			node->opencl_code += item;

@@ -24,6 +24,7 @@ import argparse
 import os
 import shutil
 import sys
+import platform
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Vision Test Full Report"
@@ -109,7 +110,7 @@ openvxNodes = [
     ('box_3x3-1080p-u8',
      'org.khronos.openvx.box_3x3 image:1920,1080,U008 image:1920,1080,U008'),
     ('canny_edge_detector-1080p-u8',
-     'org.khronos.openvx.canny_edge_detector image:1920,1080,U008 threshold:RANGE,UINT8:INIT,80,100 scalar:INT32,3 !NORM_L1 image:1920,1080,U008'),
+     'org.khronos.openvx.canny_edge_detector image:1920,1080,U008 threshold:RANGE,U008,U008:INIT,80,100 scalar:INT32,3 !NORM_L1 image:1920,1080,U008'),
     ('channel_combine-1080p-RGBA',
      'org.khronos.openvx.channel_combine image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,U008 image:1920,1080,RGBA'),
     ('channel_extract-1080p-u8',
@@ -164,7 +165,7 @@ openvxNodes = [
     ('table_lookup-1080p-u8',
      'org.khronos.openvx.table_lookup image:1920,1080,U008 lut:UINT8,256 image:1920,1080,U008'),
     ('threshold-1080p-u8',
-     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:BINARY,UINT8:INIT,127 image:1920,1080,U008'),
+     'org.khronos.openvx.threshold image:1920,1080,U008 threshold:BINARY,U008,U008:INIT,127 image:1920,1080,U008'),
     ('warp_affine-1080p-u8',
      'org.khronos.openvx.warp_affine image:1920,1080,U008 matrix:FLOAT32,2,3 !BILINEAR image:1920,1080,U008'),
     ('warp_perspective-1080p-u8',
@@ -272,14 +273,6 @@ if testFilter == 0 and functionalityTests == 'yes':
     print("\nSTATUS: Vision Accuracy Results - " +
           scriptPath+"/gdfs/openvx_test_results\n")
 
-#print("\nrunVisionTests - OpenVX Node Tests V-"+__version__+"\n")
-#os.system('mkdir openvx_node_results')
-# for i in range(len(openvxNodeTestConfig)):
-    #nodeTestName, nodeTest = openvxNodeTestConfig[i]
-    #print("Running OpenVX Node: "+nodeTestName)
-    #os.system(RunVXapp+' -frames:'+str(numFrames)+' -affinity:'+hardwareMode+' -dump-profile node '+nodeTest+' | tee -a openvx_node_results/nodeTestOutput.log')
-    # print("\n")
-
 print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
 if not os.path.exists(outputDirectory):
@@ -322,12 +315,12 @@ if hardwareMode == 'GPU':
     os.system(runAwk_csv)
 
 # get data
-platform_name = shell('hostname')
+platform_name = platform.platform()
 platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'mivisionx_vision_report_%s_%s_%s.md' % (
+reportFilename = 'vision_report_%s_%s_%s.md' % (
     platform_name, file_dtstr, hardwareMode)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')

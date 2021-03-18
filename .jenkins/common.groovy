@@ -21,7 +21,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo zypper ref && sudo zypper update && sudo zypper addrepo https://download.opensuse.org/repositories/openSUSE:Leap:15.2/standard/openSUSE:Leap:15.2.repo '
-        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4'
+        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4 inxi'
         cmake = 'cmake'
     }
     else {
@@ -52,7 +52,6 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 def runTestCommand (platform, project) {
     def command = """#!/usr/bin/env bash
                 set -x
-                ldd -v /opt/rocm/mivisionx/lib/libopenvx.so
                 cd ${project.paths.project_build_prefix}/build/release
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100
@@ -60,6 +59,7 @@ def runTestCommand (platform, project) {
                 """
 
     platform.runCommand(this, command)
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/*.md""")
 }
 
 def runPackageCommand(platform, project) {
@@ -86,10 +86,13 @@ def runPackageCommand(platform, project) {
                 mkdir -p package
                 mv *.${packageType} package/
                 ${packageInfo} package/*.${packageType}
+                python ../../tests/library_tests/runLibraryTests.py
+                mv *.md package/
                 """
 
     platform.runCommand(this, command)
     platform.archiveArtifacts(this, packageHelper[1])
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.md""")
 }
 
 return this

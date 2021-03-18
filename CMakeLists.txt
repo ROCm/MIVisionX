@@ -21,7 +21,7 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(MIVisionX)
-set(VERSION "1.9.7")
+set(VERSION "2.0.0")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
@@ -82,7 +82,6 @@ endif()
 
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
-add_subdirectory(apps)
 add_subdirectory(utilities)
 if(RALI)
   add_subdirectory(rali)

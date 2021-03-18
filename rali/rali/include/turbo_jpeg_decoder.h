@@ -82,4 +82,5 @@ private:
     };
     bool _is_partial_decoder = false;
     std::vector <float> _bbox_coord;
+    const static unsigned _max_scaling_factor = 8;
 };

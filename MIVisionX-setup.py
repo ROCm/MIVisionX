@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.6"
+__version__ = "1.8.8"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -43,8 +43,8 @@ parser.add_argument('--installer', 	type=str, default='apt-get',
                     help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--opencv',    	type=str, default='3.4.0',
                     help='OpenCV Version - optional (default:3.4.0)')
-parser.add_argument('--miopen',    	type=str, default='2.5.0',
-                    help='MIOpen Version - optional (default:2.5.0)')
+parser.add_argument('--miopen',    	type=str, default='2.9.0',
+                    help='MIOpen Version - optional (default:2.9.0)')
 parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
@@ -115,7 +115,7 @@ else:
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
               linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel libsqlite3x-devel.x86_64')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install openssl-devel hg autoconf automake pkg-config')
+              linuxSystemInstall_check+' install openssl-devel hg autoconf automake')
 
 # Delete previous install
 if(os.path.exists(deps_dir) and reinstall == 'yes'):
@@ -169,7 +169,7 @@ else:
     os.system('(cd '+deps_dir+'; mkdir build )')
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install cmake git wget unzip pkg-config')
+              linuxSystemInstall_check+' install cmake git wget unzip pkg-config inxi')
     # Get Installation Source
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
@@ -239,7 +239,7 @@ else:
         # Install MIOpen
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
-                  linuxFlag+' '+linuxCMake+' -P install_deps.cmake )')
+                  linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
         os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
                   ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
         os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
@@ -333,7 +333,7 @@ else:
                       linuxSystemInstall_check+' install clang')
             # turbo-JPEG
             os.system(
-                '(cd '+deps_dir+'; git clone -b 2.0.4 https://github.com/Indumathi31/libjpeg-turbo.git )')
+                '(cd '+deps_dir+'; git clone -b 2.0.6 https://github.com/rrawther/libjpeg-turbo.git )')
             os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake +
                       ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP

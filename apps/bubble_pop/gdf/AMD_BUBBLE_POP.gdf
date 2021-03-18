@@ -6,11 +6,11 @@ data canny_output = image:640,480,U008:view,canny_output
 data bubble_output = image:640,480,U008:view,Bubble_Pop_Output
 
 # threshold objects
-data thr95  = threshold:BINARY,UINT8:INIT,95 # threshold for computing R > 95
-data thr40  = threshold:BINARY,UINT8:INIT,40 # threshold for computing G > 40
-data thr20  = threshold:BINARY,UINT8:INIT,20 # threshold for computing B > 20
-data thr15  = threshold:BINARY,UINT8:INIT,15 # threshold for computing R-G > 15
-data thr0   = threshold:BINARY,UINT8:INIT,0  # threshold for computing R-B > 0
+data thr95  = threshold:BINARY,U008,U008:INIT,95 # threshold for computing R > 95
+data thr40  = threshold:BINARY,U008,U008:INIT,40 # threshold for computing G > 40
+data thr20  = threshold:BINARY,U008,U008:INIT,20 # threshold for computing B > 20
+data thr15  = threshold:BINARY,U008,U008:INIT,15 # threshold for computing R-G > 15
+data thr0   = threshold:BINARY,U008,U008:INIT,0  # threshold for computing R-B > 0
 
 # virtual image objects for intermediate results
 data R      = image-virtual:0,0,U008
@@ -54,7 +54,7 @@ node org.khronos.openvx.color_convert input inter_yuv
 data inter_luma = image-virtual:640,480,U008
 node org.khronos.openvx.channel_extract inter_yuv !CHANNEL_Y inter_luma
 
-data input_hyst = threshold:RANGE,UINT8:INIT,60,80
+data input_hyst = threshold:RANGE,U008,U008:INIT,60,80
 data input_gradient_size = scalar:INT32,3
 data inter_canny = image-virtual:640,480,U008
 node org.khronos.openvx.canny_edge_detector inter_luma input_hyst input_gradient_size !NORM_L1 inter_canny

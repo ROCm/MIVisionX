@@ -667,6 +667,7 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 	vx_uint32             srcImageStrideInBytes,
 	ago_affine_matrix_t * matrix,
 	vx_uint8              border,
+	vx_rectangle_t        rect_valid,
 	vx_uint8			* pLocalData
 )
 {
@@ -685,6 +686,12 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 	const __m128 srcbx = _mm_set1_ps((float)srcWidth);
 	const __m128 srcby = _mm_set1_ps((float)srcHeight);
 	const __m128 zero = _mm_set1_ps(0);
+
+	const __m128 vl = _mm_set1_ps((float)rect_valid.start_x);
+	const __m128 vr = _mm_set1_ps((float)rect_valid.end_x);
+	const __m128 vt = _mm_set1_ps((float)rect_valid.start_y);
+	const __m128 vb = _mm_set1_ps((float)rect_valid.end_y);
+
 	srcb = _mm_set1_epi32((srcHeight*srcImageStrideInBytes) - 1);
 	src_s = _mm_set1_epi32(srcImageStrideInBytes);
 	pborder = _mm_cvtsi32_si128((int)border);
@@ -736,6 +743,13 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(xmap, srcbx));
 				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(ymap, zero));
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(ymap, srcby));
+				
+				// mask for valid region rectangle
+				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(xmap, vl));
+				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(xmap, vr));
+				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(ymap, vt));
+				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(ymap, vb));
+
 				//int m = _mm_movemask_ps(mask.f);
 				//if (m){
 					// convert to integer with rounding towards zero

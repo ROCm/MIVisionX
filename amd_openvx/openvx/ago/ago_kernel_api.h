@@ -74,7 +74,10 @@ int ovxKernel_Remap(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_HalfScaleGaussian(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_Copy(AgoNode * node, AgoKernelCommand cmd);
 int ovxKernel_Select(AgoNode * node, AgoKernelCommand cmd);
-
+int ovxKernel_WeightedAverage(AgoNode * node, AgoKernelCommand cmd);
+int ovxKernel_NonLinearFilter(AgoNode * node, AgoKernelCommand cmd);
+int ovxKernel_LaplacianPyramid(AgoNode * node, AgoKernelCommand cmd);
+int ovxKernel_LaplacianReconstruct(AgoNode * node, AgoKernelCommand cmd);
 // AMD low-level kernels
 int agoKernel_Set00_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_SetFF_U8(AgoNode * node, AgoKernelCommand cmd);
@@ -83,14 +86,19 @@ int agoKernel_Not_U8_U1(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Not_U1_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Not_U1_U1(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Lut_U8_U8(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Threshold_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Threshold_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Threshold_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Threshold_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Threshold_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_Threshold_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ThresholdNot_U8_U8_Binary(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ThresholdNot_U8_U8_Range(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ThresholdNot_U1_U8_Binary(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ThresholdNot_U1_U8_Range(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_ThresholdNot_U8_S16_Binary(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_ThresholdNot_U8_S16_Range(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ColorDepth_U8_S16_Wrap(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ColorDepth_U8_S16_Sat(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_ColorDepth_S16_U8(AgoNode * node, AgoKernelCommand cmd);
@@ -296,6 +304,7 @@ int agoKernel_CannySobel_U16_U8_7x7_L1NORM(AgoNode * node, AgoKernelCommand cmd)
 int agoKernel_CannySobel_U16_U8_7x7_L2NORM(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_CannySuppThreshold_U8_U16_3x3(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_CannySuppThreshold_U8XY_U16_3x3(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_NonMaxSupp_XY_ANY_3x3(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Remap_U8_U8_Nearest(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Remap_U8_U8_Nearest_Constant(AgoNode * node, AgoKernelCommand cmd);
@@ -329,6 +338,7 @@ int agoKernel_CannyEdgeTrace_U8_U8XY(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_IntegralImage_U32_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Histogram_DATA_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MeanStdDev_DATA_U8(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_MeanStdDev_DATA_U1(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MinMax_DATA_U8(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_MinMax_DATA_S16(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Equalize_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
@@ -354,5 +364,9 @@ int agoKernel_MinMaxLoc_DATA_S16DATA_Loc_MinMax_Count_MinMax(AgoNode * node, Ago
 int agoKernel_MinMaxLocMerge_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Copy_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
 int agoKernel_Select_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
-
+int agoKernel_WeightedAverage_U8_U8_U8(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_NonLinearFilter_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_LaplacianPyramid_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
+int agoKernel_LaplacianReconstruct_DATA_DATA_DATA(AgoNode * node, AgoKernelCommand cmd);
 #endif // __ago_kernels_api_h__
+

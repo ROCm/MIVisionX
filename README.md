@@ -284,6 +284,8 @@ macOS [build instructions](https://github.com/GPUOpen-ProfessionalCompute-Librar
 
 MIVisionX provides developers with docker images for **Ubuntu** `18.04` / `20.04` and **CentOS** `7` / `8`. Using docker images developers can quickly prototype and build applications without having to be locked into a single system setup or lose valuable time figuring out the dependencies of the underlying software.
 
+Docker files to build MIVisionX containers are [available](docker#mivisionx-docker)
+
 ### MIVisionX Docker
 
 * [Ubuntu 18.04](https://hub.docker.com/r/mivisionx/ubuntu-18.04)
@@ -376,7 +378,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
-* ROCm: rocm-dkms - `3.10.0.31000-27`
+* ROCm: rocm-dkms - `4.0.0.40000-23`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.5.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.5.0)
@@ -384,7 +386,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.6](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.6)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.8.6`
+* MIVisionX Setup Script - `V1.8.7`
 
 ### Latest Release
 

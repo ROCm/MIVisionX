@@ -179,7 +179,6 @@ void RandomBBoxCropReader::read_all()
     for (auto &elem : _meta_bbox_map_content)
     {
         std::string image_name = elem.first;
-        // std::cerr<<"\n *****************************image_name:: "<<image_name<<"***************************************";
         BoundingBoxCords bb_coords = elem.second->get_bb_cords();
         ImgSizes img_sizes = elem.second->get_img_sizes();
         in_width[i] = img_sizes[i].w;
@@ -197,12 +196,11 @@ void RandomBBoxCropReader::read_all()
         crop_success = false;
 
         int count = 0;
-        // while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
         while (true)
         {
             sample_option = dis(gen);
             min_iou = sample_options[sample_option];
-            Parameter<float> *x_factor_param, *y_factor_param; // write in different lines
+            Parameter<float> *x_factor_param, *y_factor_param; 
             invalid_bboxes = false;
 
             //Condition for Original Image
@@ -217,12 +215,10 @@ void RandomBBoxCropReader::read_all()
 
             if (_has_shape)
             {
-                // Yet to be Handled -- Returns the original image always
-                // std::cerr<<"\n Coming to has_shape";
                 crop_box.x = 0;
                 crop_box.y = 0;
-                crop_box.w = in_width[i];  // Given By user
-                crop_box.h = in_height[i]; // Given By user
+                crop_box.w = in_width[i];  
+                crop_box.h = in_height[i]; 
                 break;
             }
             else // If it has no shape, then area and aspect ratio thing should be provided
@@ -230,30 +226,27 @@ void RandomBBoxCropReader::read_all()
                 for (int j = 0; j < 1; j++)
                 {
 
-                    // width_factor = raliCreateFloatUniformRand(0.3, 1.0);
-                    // std::cerr<<"\n Setting width factor btw 0.3 and 1.0";
+                    
+                    // Setting width factor btw 0.3 and 1.0";
                     width_factor_param->renew();
                     float width_factor = width_factor_param->get();
-                    // std::cerr << "\n Width_factor:: " << width_factor << " addrd:: " << width_factor_param;
 
-                    // height_factor = raliCreateFloatUniformRand(0.3, 1.0);
-                    // std::cerr<<"\n Setting height factor btw 0.3 and 1.0";
+                    
+                    // Setting height factor btw 0.3 and 1.0";
                     height_factor_param->renew();
-                    // height_factor_param->renew();
                     float height_factor = height_factor_param->get();
-                    // std::cerr << "\n height_factor:: " << height_factor << " addr:: " << height_factor_param;
 
                     if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
                     {
                         continue;
                     }
 
-                    // x_factor = raliCreateFloatUniformRand(0, 1 - width_factor);
+                    // Setting width factor btw 0 and 1 - width_factor
                     x_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - width_factor)->core;
                     x_factor_param->renew();
                     float x_factor = x_factor_param->get();
 
-                    // y_factor = raliCreateFloatUniformRand(0, 1 - height_factor);
+                     // Setting height factor btw 0 and 1 - width_factor
                     y_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - height_factor)->core;
                     y_factor_param->renew();
                     float y_factor = y_factor_param->get();
@@ -263,13 +256,13 @@ void RandomBBoxCropReader::read_all()
                     crop_box.w = width_factor * in_width[i];
                     crop_box.h = height_factor * in_height[i];
 
-                    bool entire_iou = !_overlap_iou; // Look at this Later ? Check if true/false
+                    bool entire_iou = !_overlap_iou; 
 
                     // All boxes should satisfy IOU criteria
 
                     if (_all_boxes_overlap)
                     {
-                        std::cerr << "ALL boxes should overlap";
+                        
                         for (uint j = 0; j < bb_count; j++)
                         {
                             int m = j * 4;
@@ -278,7 +271,6 @@ void RandomBBoxCropReader::read_all()
                             jth_box.w = coords_buf[m + 2];
                             jth_box.h = coords_buf[m + 3];
 
-                            // float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, entire_iou);
                             float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, true);
                             if (bb_iou < min_iou)
                             {

@@ -127,7 +127,7 @@ if(${BUILD_RALI})
 	else()
 		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
 	        target_compile_definitions(${PROJECT_NAME} PUBLIC -DRALI_VIDEO)
-		target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp avformat avcodec swscale avutil avfilter swresample avdevice postproc x264 lzma va rt)
+		target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp avformat avcodec swscale avutil avfilter swresample avdevice postproc x264 lzma rt)
 	endif()
 
 	install(TARGETS rali DESTINATION lib)

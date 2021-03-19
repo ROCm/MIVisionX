@@ -23,57 +23,54 @@ project(openvx)
 
 set(CMAKE_CXX_STANDARD 14)
 
-if( "${BACKEND}" STREQUAL "OPENCL")
-    find_package(OpenCL QUIET)
-elseif( "${BACKEND}" STREQUAL "HIP")
-    SET(OpenCL_FOUND FALSE)
-endif()
-
 include_directories(include ago api)
 
 list(APPEND SOURCES
-	ago/ago_drama.cpp
-	ago/ago_drama_alloc.cpp
-	ago/ago_drama_analyze.cpp
-	ago/ago_drama_divide.cpp
-	ago/ago_drama_merge.cpp
-	ago/ago_drama_remove.cpp
-	ago/ago_haf_cpu.cpp
-	ago/ago_haf_cpu_arithmetic.cpp
-	ago/ago_haf_cpu_canny.cpp
-	ago/ago_haf_cpu_ch_extract_combine.cpp
-	ago/ago_haf_cpu_color_convert.cpp
-	ago/ago_haf_cpu_fast_corners.cpp
-	ago/ago_haf_cpu_filter.cpp
-	ago/ago_haf_cpu_geometric.cpp
-	ago/ago_haf_cpu_generic_functions.cpp
-	ago/ago_haf_cpu_harris.cpp
-	ago/ago_haf_cpu_histogram.cpp
-	ago/ago_haf_cpu_logical.cpp
-	ago/ago_haf_cpu_opticalflow.cpp
-	ago/ago_haf_cpu_pyramid.cpp
-	ago/ago_haf_gpu_common.cpp
-	ago/ago_haf_gpu_conversion.cpp
-	ago/ago_haf_gpu_corners.cpp
-	ago/ago_haf_gpu_linear_filter.cpp
-	ago/ago_haf_gpu_special_filters.cpp
-	ago/ago_interface.cpp
-	ago/ago_kernel_api.cpp
-	ago/ago_kernel_list.cpp
-	ago/ago_platform.cpp
-	ago/ago_util.cpp
-	ago/ago_util_opencl.cpp
+    ago/ago_drama.cpp
+    ago/ago_drama_alloc.cpp
+    ago/ago_drama_analyze.cpp
+    ago/ago_drama_divide.cpp
+    ago/ago_drama_merge.cpp
+    ago/ago_drama_remove.cpp
+    ago/ago_haf_cpu.cpp
+    ago/ago_haf_cpu_arithmetic.cpp
+    ago/ago_haf_cpu_canny.cpp
+    ago/ago_haf_cpu_ch_extract_combine.cpp
+    ago/ago_haf_cpu_color_convert.cpp
+    ago/ago_haf_cpu_fast_corners.cpp
+    ago/ago_haf_cpu_filter.cpp
+    ago/ago_haf_cpu_geometric.cpp
+    ago/ago_haf_cpu_generic_functions.cpp
+    ago/ago_haf_cpu_harris.cpp
+    ago/ago_haf_cpu_histogram.cpp
+    ago/ago_haf_cpu_logical.cpp
+    ago/ago_haf_cpu_opticalflow.cpp
+    ago/ago_haf_cpu_pyramid.cpp
+    ago/ago_haf_gpu_common.cpp
+    ago/ago_haf_gpu_conversion.cpp
+    ago/ago_haf_gpu_corners.cpp
+    ago/ago_haf_gpu_linear_filter.cpp
+    ago/ago_haf_gpu_special_filters.cpp
+    ago/ago_interface.cpp
+    ago/ago_kernel_api.cpp
+    ago/ago_kernel_list.cpp
+    ago/ago_platform.cpp
+    ago/ago_util.cpp
+    ago/ago_util_opencl.cpp
     ago/ago_util_hip.cpp
-	api/vxu.cpp
-	api/vx_api.cpp
-	api/vx_nodes.cpp
+    api/vxu.cpp
+    api/vx_api.cpp
+    api/vx_nodes.cpp
 )
 
 
-#add_library(openvx SHARED ${SOURCES})
-
 # Backend Specific Settings
-if ("${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
+if (GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
+    find_package(OpenCL QUIET)
+    if(NOT OpenCL_FOUND)
+        message(FATAL_ERROR "Could'nt find OPENCL")
+    endif()
+
     add_library(openvx SHARED ${SOURCES})
     add_library(vxu SHARED api/vxu.cpp)
     target_compile_definitions(openvx PUBLIC ENABLE_OPENCL=1)
@@ -86,8 +83,8 @@ if ("${BACKEND}" STREQUAL "OPENCL"  AND OpenCL_FOUND)
     message("-- ${Green}AMD OpenVX -- OpenVX built with OpenCL Support${ColourReset}")
     message("-- ${Blue}Using OpenCL Library -- ${OpenCL_LIBRARIES}${ColourReset}")
 
-elseif ("${BACKEND}" STREQUAL "HIP")
-
+elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+    SET(OpenCL_FOUND FALSE)
     # HSA_PATH
     IF(NOT DEFINED ENV{HSA_PATH})
         SET(HSA_PATH ${ROCM_PATH}/hsa)
@@ -154,9 +151,9 @@ install (FILES
          DESTINATION include/VX)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /DVX_API_ENTRY=__declspec(dllexport)")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /DVX_API_ENTRY=__declspec(dllexport)")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd /DVX_API_ENTRY=__declspec(dllexport)")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
-	target_link_libraries(openvx dl m)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -std=c++11")
+    target_link_libraries(openvx dl m)
 endif()

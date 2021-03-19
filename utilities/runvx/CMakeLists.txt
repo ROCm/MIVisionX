@@ -23,11 +23,6 @@ project(runvx)
 
 set(CMAKE_CXX_STANDARD 14)
 
-if(OPENCL_SUPPORT)
-    find_package(OpenCL QUIET)
-else()
-    message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
-endif()
 find_package(OpenCV QUIET)
 
 include_directories(../../amd_openvx/openvx/include)
@@ -55,14 +50,19 @@ list(APPEND SOURCES
 #install(TARGETS runvx DESTINATION bin)
 #install(DIRECTORY ../../samples DESTINATION .)
 
-if("${BACKEND}" STREQUAL "OPENCL" AND OpenCL_FOUND)
+if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
+    find_package(OpenCL QUIET REQUIRED)
+    if(NOT OpenCL_FOUND)
+        message(FATAL_ERROR "Could'nt find OPENCL")
+    endif()
+
     add_executable(runvx ${SOURCES})
     target_link_libraries(runvx openvx pthread)
     target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=1)
     target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
     include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
     target_link_libraries(runvx ${OpenCL_LIBRARIES})
-elseif ("${BACKEND}" STREQUAL "HIP")
+elseif (GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     # HSA_PATH
     IF(NOT DEFINED ENV{HSA_PATH})
         SET(HSA_PATH ${ROCM_PATH}/hsa)
@@ -98,7 +98,7 @@ else()
     target_link_libraries(runvx openvx pthread)
     target_compile_definitions(runvx PUBLIC ENABLE_OPENCL=0)
     target_compile_definitions(runvx PUBLIC ENABLE_HIP=0)
-    message("-- ${Yellow}NOTE:OpenCL Not Found -- runVX built for CPU only${ColourReset}")
+    message("-- ${Yellow}NOTE:GPU Support Not Found -- runVX built for CPU only${ColourReset}")
 endif()
 
 if(OpenCV_FOUND)
@@ -114,16 +114,16 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 else()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-	find_path(SSL_INCLUDE
-			  NAMES openssl/hmac.h openssl/md5.h
-			  HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
-			 )
-	if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
-		include_directories(${SSL_INCLUDE})
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
-		target_link_libraries(runvx crypto)
-	endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    find_path(SSL_INCLUDE
+              NAMES openssl/hmac.h openssl/md5.h
+              HINTS /usr/local/opt/openssl/include /usr/include /usr/local/include /opt/local/include
+             )
+    if(NOT "${SSL_INCLUDE}" STREQUAL "SSL_INCLUDE-NOTFOUND")
+        include_directories(${SSL_INCLUDE})
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHAVE_OpenSSL=1")
+        target_link_libraries(runvx crypto)
+    endif()
 endif()
 if ("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
     target_link_libraries(runvx ${hip_library_name})

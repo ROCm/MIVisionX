@@ -24,7 +24,7 @@ project(utilities)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 #set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
 
-if(OPENCL_SUPPORT)  #need to rename this to GPU_SUPPORT
+if(GPU_SUPPORT)
     if("${BACKEND}" STREQUAL "OPENCL")
         SET(BUILD_OPENCL true)
         find_package(OpenCL QUIET)

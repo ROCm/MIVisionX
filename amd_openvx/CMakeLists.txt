@@ -28,7 +28,7 @@ if(NOT DEFINED HIP_PATH)
     endif()
 endif()
 
-if( "${BACKEND}" STREQUAL "HIP")
+if("${BACKEND}" STREQUAL "HIP")
     list(APPEND CMAKE_MODULE_PATH ${HIP_PATH}/cmake)
 endif()
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)

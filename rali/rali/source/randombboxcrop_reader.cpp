@@ -165,8 +165,6 @@ void RandomBBoxCropReader::read_all()
     float min_iou; // max_iou;
     bool invalid_bboxes;
     bool crop_success;
-    _entire_iou = true;
-    bool _overlap_iou = false;
     BoundingBoxCord crop_box, jth_box;
     uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
@@ -193,8 +191,6 @@ void RandomBBoxCropReader::read_all()
             coords_buf[m + 3] = bb_coords[j].h;
         }
      
-
-        int count = 0;
         while (true)
         {
             crop_success = false;
@@ -255,8 +251,6 @@ void RandomBBoxCropReader::read_all()
                     crop_box.y = y_factor * in_height[i];
                     crop_box.w = width_factor * in_width[i];
                     crop_box.h = height_factor * in_height[i];
-
-                    bool entire_iou = !_overlap_iou; 
 
                     // All boxes should satisfy IOU criteria
 

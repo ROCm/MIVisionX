@@ -15,19 +15,22 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     if (platform.jenkinsLabel.contains('centos')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y update'
-        installPackage = 'python MIVisionX-setup.py --installer yum --ffmpeg yes'
+        if (platform.jenkinsLabel.contains('centos7')) {
+            update = 'sudo yum -y update && scl enable devtoolset-7 bash'
+        }
+        installPackage = 'python MIVisionX-setup.py --reinstall yes --installer yum --ffmpeg yes'
         cmake = 'cmake3'
     }
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo zypper ref && sudo zypper update && sudo zypper addrepo https://download.opensuse.org/repositories/openSUSE:Leap:15.2/standard/openSUSE:Leap:15.2.repo '
-        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4 inxi'
+        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4 inxi && python MIVisionX-setup.py --reinstall yes --installer yum --ffmpeg yes'
         cmake = 'cmake'
     }
     else {
         osInfo = 'cat /etc/lsb-release && uname -r'
         update = 'sudo apt -y update && sudo apt -y install python'
-        installPackage = 'python MIVisionX-setup.py --ffmpeg yes'
+        installPackage = 'python MIVisionX-setup.py --reinstall yes --ffmpeg yes'
         cmake = 'cmake'
     }
 

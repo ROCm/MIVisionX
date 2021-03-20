@@ -655,7 +655,7 @@ platform_name_fq = shell('hostname --all-fqdns')
 platform_ip = shell('hostname -I')[0:-1]  # extra trailing space
 
 file_dtstr = datetime.now().strftime("%Y%m%d")
-reportFilename = 'mivisionx_nn_inference_report_%s_%s.md' % (
+reportFilename = 'inference_report_%s_%s.md' % (
     platform_name, file_dtstr)
 report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
 sys_info = shell('inxi -c0 -S')

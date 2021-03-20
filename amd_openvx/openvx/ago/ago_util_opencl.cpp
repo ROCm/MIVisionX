@@ -1713,7 +1713,11 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"{\n"
 		"  p += y*stride + x * 3;\n"
 		"  (*r).s0123 = *((__global uint4 *)(p + 0));\n"
+<<<<<<< HEAD
 		"  (*r).s45 = *((__global uint2 *)(p + 16));\n"
+=======
+		"  (*r).s45 = *((__global uint2 *)(p + 15));\n"
+>>>>>>> kiriti/master
 		"}\n"
 		"\n"
 		"void load_U32x8(U32x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
@@ -2046,6 +2050,10 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 						sprintf(item, ", p%d_buf, p%d_stride", (int)data_index, (int)data_index);
 						code += item;
 					}
+					else if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_INT16) {
+						sprintf(item, ", p%d_buf, p%d_count, p%d_offset", (int)data_index, (int)data_index, (int)data_index);
+						code += item;
+					}			
 					else {
 						sprintf(item, "%s%sp%d", i ? ", " : "", (node->akernel->argConfig[i] & AGO_KERNEL_ARG_OUTPUT_FLAG) ? "&" : "", (int)data_index);
 						code += item;

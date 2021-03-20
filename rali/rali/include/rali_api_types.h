@@ -105,4 +105,14 @@ enum RaliTensorOutputType
     RALI_FP32 = 0,
     RALI_FP16 = 1
 };
+
+enum RaliDecoderType
+{
+    RALI_DECODER_TJPEG = 0,
+    RALI_DECODER_OPENCV = 1,
+    RALI_DECODER_VIDEO_FFMPEG_SW = 2,
+    RALI_DECODER_VIDEO_FFMPEG_HW = 3
+};
+
+
 #endif //MIVISIONX_RALI_API_TYPES_H

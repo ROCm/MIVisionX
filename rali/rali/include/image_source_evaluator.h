@@ -63,6 +63,7 @@ private:
     }; 
     FindMaxSize _width_max; 
     FindMaxSize _height_max;
+    DecoderConfig _decoder_cfg_cv;
     std::shared_ptr<Decoder> _decoder;
     std::shared_ptr<Reader> _reader;
     std::vector<unsigned char> _header_buff;

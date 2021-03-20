@@ -16,7 +16,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y update'
         if (platform.jenkinsLabel.contains('centos7')) {
-            update = 'sudo yum -y update && scl enable devtoolset-7 bash'
+            update = 'scl enable devtoolset-7 bash && sudo yum -y update'
         }
         installPackage = 'python MIVisionX-setup.py --reinstall yes --installer yum --ffmpeg yes'
         cmake = 'cmake3'

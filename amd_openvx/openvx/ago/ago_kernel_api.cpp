@@ -3303,33 +3303,12 @@ int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
 	else if (cmd == ago_kernel_cmd_initialize || cmd == ago_kernel_cmd_shutdown) {
 		status = VX_SUCCESS;
 	}
-<<<<<<< HEAD
-//TBD: add support for S16. This is the U8 version
-=======
->>>>>>> kiriti/master
 #if ENABLE_OPENCL
 	else if (cmd == ago_kernel_cmd_opencl_codegen) {
 		status = VX_SUCCESS;
 		node->opencl_type = NODE_OPENCL_TYPE_REG2REG;
 		char textBuffer[2048];
 		sprintf(textBuffer, OPENCL_FORMAT(
-<<<<<<< HEAD
-			"void %s (U8x8 * p0, U8x8 p1, __read_only image1d_t lut)\n"
-			"{\n"
-			"    U8x8 r;\n"
-			"    float4 f;\n"
-			"    f.s0 = read_imagef(lut, (int)( p1.s0        & 255)).s0 * 255.0f;\n"
-			"    f.s1 = read_imagef(lut, (int)((p1.s0 >>  8) & 255)).s0 * 255.0f;\n"
-			"    f.s2 = read_imagef(lut, (int)((p1.s0 >> 16) & 255)).s0 * 255.0f;\n"
-			"    f.s3 = read_imagef(lut, (int)( p1.s0 >> 24       )).s0 * 255.0f;\n"
-			"    r.s0 = amd_pack(f);\n"
-			"    f.s0 = read_imagef(lut, (int)( p1.s1        & 255)).s0 * 255.0f;\n"
-			"    f.s1 = read_imagef(lut, (int)((p1.s1 >>  8) & 255)).s0 * 255.0f;\n"
-			"    f.s2 = read_imagef(lut, (int)((p1.s1 >> 16) & 255)).s0 * 255.0f;\n"
-			"    f.s3 = read_imagef(lut, (int)( p1.s1 >> 24       )).s0 * 255.0f;\n"
-			"    r.s1 = amd_pack(f);\n"
-			"    *p0 = r;\n"
-=======
 			"void %s (S16x8 * p0, S16x8 p1, __global short * p2_buf, uint p2_count, uint p2_offset)\n"
 			"{\n"
 			"   S16x8 r;\n"
@@ -3347,7 +3326,6 @@ int agoKernel_Lut_S16_S16(AgoNode * node, AgoKernelCommand cmd)
 			"   temp.s1 = (int)(p2_buf[(short)((p1.s3 >> 16)    & 0xffff) + p2_offset]) << 16;\n"
 			"   r.s3 = (int)(temp.s0 | temp.s1);\n"
 			"   *p0 = r;\n"
->>>>>>> kiriti/master
 			"}\n"
 			), node->opencl_name);
 		node->opencl_code += textBuffer;

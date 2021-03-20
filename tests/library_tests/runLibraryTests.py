@@ -232,11 +232,8 @@ with open(reportFilename, 'w') as f:
 # report file
 reportFileDir = os.path.abspath(reportFilename)
 print("STATUS: Output Report File - "+reportFileDir)
-<<<<<<< HEAD
-=======
 if warning == 1:
     print("WARNING: Not all modules of MIVisionX is built, check for missing dependencies")
 else:
     print("SUCCESS: All modules of MIVisionX built")
->>>>>>> kiriti/master
 print("runLibraryTests.py completed - V:"+__version__+"\n")

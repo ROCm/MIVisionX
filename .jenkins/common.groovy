@@ -16,7 +16,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo yum -y update'
         if (platform.jenkinsLabel.contains('centos7')) {
-            update = 'sudo echo \'scl enable devtoolset-7 bash\' > /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y update'
+            update = 'echo scl enable devtoolset-7 bash | sudo tee /etc/profile.d/ree.sh && sudo chmod +x /etc/profile.d/ree.sh && . /etc/profile && scl enable devtoolset-7 bash && sudo yum -y update'
         }
         installPackage = 'python MIVisionX-setup.py --reinstall yes --installer yum --ffmpeg yes'
         cmake = 'cmake3'

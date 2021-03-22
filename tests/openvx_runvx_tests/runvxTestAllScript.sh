@@ -498,7 +498,7 @@ rm -rvf generatedGDFsOCL
 mkdir generatedGDFsOCL
 GENERATED_GDF_PATH="generatedGDFsOCL"
 
-cd ../../../
+cd ../../
 if [ "$CLEAN_BUILD" -eq 1 ]; then
     rm -rvf build_ocl
     mkdir build_ocl
@@ -509,7 +509,7 @@ else
     cd build_ocl
     sudo make -j20 install
 fi
-cd ../samples/hip_samples/hipvx_runvx_tests
+cd ../tests/openvx_runvx_tests
 
 if [ "$KERNEL_NAME" = "" ]; then
     mkdir generatedGDFsOCL/arithmetic generatedGDFsOCL/logical generatedGDFsOCL/color generatedGDFsOCL/filter generatedGDFsOCL/geometric generatedGDFsOCL/statistical generatedGDFsOCL/vision
@@ -542,7 +542,7 @@ rm -rvf generatedGDFsHIP
 mkdir generatedGDFsHIP
 GENERATED_GDF_PATH="generatedGDFsHIP"
 
-cd ../../../
+cd ../../
 if [ "$CLEAN_BUILD" -eq 1 ]; then
     rm -rvf build_hip
     mkdir build_hip
@@ -553,7 +553,7 @@ else
     cd build_hip
     sudo make -j20 install
 fi
-cd ../samples/hip_samples/hipvx_runvx_tests
+cd ../tests/openvx_runvx_tests
 
 if [ "$KERNEL_NAME" = "" ]; then
     mkdir generatedGDFsHIP/arithmetic generatedGDFsHIP/logical generatedGDFsHIP/color generatedGDFsHIP/filter generatedGDFsHIP/geometric generatedGDFsHIP/statistical generatedGDFsHIP/vision

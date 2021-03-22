@@ -75,7 +75,7 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
 }*/
 
 void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-VideoDecoderType decoder_type, unsigned sequence_length, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
+VideoDecoderType decoder_type, unsigned sequence_length, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;

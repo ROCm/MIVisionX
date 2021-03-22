@@ -49,6 +49,8 @@ public:
     */
     size_t open() override;
 
+    size_t get_video_file_count() { return _video_file_count; }
+
     //! Resets the object's state to read from the first file in the folder
     void reset() override;
 
@@ -73,6 +75,7 @@ private:
     DIR *_sub_dir;
     struct dirent *_entity;
     std::vector<std::string> _video_file_names;
+    size_t _video_file_count;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
     unsigned _current_file_size;

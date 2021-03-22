@@ -25,10 +25,12 @@ THE SOFTWARE.
 #include <cstddef>
 #include <iostream>
 #include <vector>
+extern "C" {
 #include <libavutil/imgutils.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
+}
 #include "parameter_factory.h"
 enum class VideoDecoderType
 {

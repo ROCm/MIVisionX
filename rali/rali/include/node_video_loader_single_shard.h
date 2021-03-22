@@ -42,7 +42,7 @@ public:
     /// for example if there are 10 images in the dataset and load_batch_count is 3, the loader repeats 2 images as if there are 12 images available.
     void init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path,
               StorageType storage_type, VideoDecoderType decoder_type, bool shuffle, bool loop,
-              size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig = false);
+              size_t load_batch_count, RaliMemType mem_type);
 
     std::shared_ptr<VideoLoaderModule> get_loader_module();
 protected:

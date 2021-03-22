@@ -65,13 +65,14 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _loop = desc.loop();
     ret = subfolder_reading();
     std::cerr << "\n\n Reading video files ...";
+    _video_file_count = _video_file_names.size();
     // the following code is required to make every shard the same size:: required for multi-gpu training
-    if (_shard_count > 1 && _batch_count > 1) {
-        int _num_batches = _video_file_names.size()/_batch_count;
-        int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count;
-        max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count;
-        if (_num_batches < max_batches_per_shard) {
-            replicate_last_batch_to_pad_partial_shard();
+    if (_shard_count > 1 && _batch_count > 1) { // check needed
+        int _num_batches = _video_file_names.size()/_batch_count; // check needed
+        int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count; // check needed
+        max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count; // check needed
+        if (_num_batches < max_batches_per_shard) { // check needed
+            replicate_last_batch_to_pad_partial_shard(); // check needed
         }
     }
     if( ret==Reader::Status::OK && _shuffle)
@@ -211,6 +212,7 @@ Reader::Status VideoReader::open_folder()
         file_path.append(_entity->d_name);
         _last_file_name = file_path;
         _video_file_names.push_back(file_path);
+        std::cerr << "\nVideo file names : " << file_path;
         _file_count_all_shards++;
         incremenet_file_id();
     }

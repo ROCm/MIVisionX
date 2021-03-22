@@ -72,21 +72,54 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
 {
     // Can initialize it to any decoder types if needed
     // find video_count resize newly introduced video wrt video count
+    //_video_count = _reader.get_video_file_count(); // check if we can use this. if not we can find the number of files/
+    _sequence_length = reader_config.get_sequence_length();
+    _video_count = _reader->count();
     _batch_size = batch_size;
     _compressed_buff.resize(batch_size);
-    _video_decoder.resize(batch_size); // It should not be for batch size but for every video in the path
+    _video_decoder.resize(_video_count); // It should not be for batch size but for every video in the path
     _actual_read_size.resize(batch_size);
     _video_names.resize(batch_size);
     _compressed_image_size.resize(batch_size);
     _decompressed_buff_ptrs.resize(_batch_size);
-    _actual_decoded_width.resize(_batch_size);
-    _actual_decoded_height.resize(_batch_size);
-    _original_height.resize(_batch_size);
-    _original_width.resize(_batch_size);
+    _actual_decoded_width.resize(_video_count);
+    _actual_decoded_height.resize(_video_count);
+    _original_height.resize(_video_count);
+    _original_width.resize(_video_count);
+    _video_frame_count.resize(_video_count);
+    //Below vector sizes varies based on the video frame count.
+    //_video_frame_start_idx.resize(_video_count); 
+    //_video_idx.resize(_video_count);
     _video_decoder_config = decoder_config;
     // get the width and height for every video _actual_decoded & original
     // fill the _video_frame_start_idx & _video_idx  based on sequence length and frame count
     // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
+    //for sample test
+    //_video_frame_count[3] = {30, 25, 54}; 
+
+    std::cerr << "\nSize : " << _video_frame_start_idx.size();
+    for(int i = 0; i < _video_count; i++)
+    {
+        int count_sequence = 0;
+        std::cerr << "\n Frames per video : " << _video_frame_count[i];
+        int loop_index;
+        if(_video_frame_count[i] % _sequence_length == 0)
+            loop_index = (_video_frame_count[i] / _sequence_length) - 1;
+        else
+            loop_index = _video_frame_count[i] / _sequence_length;
+        for(int j = 0; j <= loop_index; j++)
+        {
+            _video_frame_start_idx.push_back(count_sequence);
+            _video_idx.push_back(i);
+            count_sequence = count_sequence + _sequence_length;
+        }
+    }
+    std::cerr << "\nSize : " << _video_frame_start_idx.size();
+    for(int i = 0; i < _video_frame_start_idx.size(); i++)
+    {
+        std::cerr << "\n Video start_idx : " << _video_frame_start_idx[i];
+        std::cerr << "\n Video idx : " << _video_idx[i];
+    }
 
     for(int i = 0; i < batch_size; i++)
     {
@@ -133,7 +166,7 @@ VideoReadAndDecode::load(unsigned char* buff,
     const auto ret = video_interpret_color_format(output_color_format);
     const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
-    const bool keep_original = decoder_keep_original;
+    const bool keep_original = decoder_keep_original; // check and remove
 
     // Decode with the height and size equal to a single image  
     // File read is done serially since I/O parallelization does not work very well.

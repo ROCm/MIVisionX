@@ -32,7 +32,7 @@ VideoLoaderSingleShardNode::VideoLoaderSingleShardNode(Image *output, DeviceReso
 
 void
 VideoLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count,  const std::string &source_path, const std::string &json_path, StorageType storage_type,
-VideoDecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig)
+VideoDecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;

@@ -87,9 +87,19 @@ if(${BUILD_RALI})
 		include/rali_api_meta_data.h 
 		DESTINATION ./include
 		)
+	if(FFMPEG_FOUND)
+		find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
+		find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
+		find_path(SWSCALE_INCLUDE_DIR libswscale/swscale.h)
+		find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
+	endif()
 	include_directories(
 			    ${OpenCL_INCLUDE_DIRS}
-			    ${OpenCL_INCLUDE_DIRS}/Headers	
+			    ${OpenCL_INCLUDE_DIRS}/Headers
+				${AVUTIL_INCLUDE_DIR} 
+				${AVCODEC_INCLUDE_DIR} 
+				${SWSCALE_INCLUDE_DIR} 
+				${AVFORMAT_INCLUDE_DIR}
 				${CMAKE_CURRENT_BINARY_DIR}
 			    ${TurboJpeg_INCLUDE_DIRS}
 				${PROTOBUF_INCLUDE_DIRS}
@@ -127,7 +137,7 @@ if(${BUILD_RALI})
 	else()
 		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
 	        target_compile_definitions(${PROJECT_NAME} PUBLIC -DRALI_VIDEO)
-		target_link_libraries(${PROJECT_NAME} ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp avformat avcodec swscale avutil avfilter swresample avdevice postproc x264 lzma rt)
+		target_link_libraries(${PROJECT_NAME}  ${FFMPEG_LIBRARIES} ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
 	endif()
 
 	install(TARGETS rali DESTINATION lib)

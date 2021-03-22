@@ -21,6 +21,12 @@ THE SOFTWARE.
 */
 
 #include <tuple>
+#include <assert.h>
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+}
 #include "rali_api.h"
 #include "commons.h"
 #include "context.h"
@@ -34,6 +40,43 @@ THE SOFTWARE.
 #include "node_copy.h"
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"
+
+std::tuple<unsigned, unsigned> evaluate_video_data_set(char *filename) {
+	AVFormatContext* pFormatCtx;
+	AVCodecContext* pCodecCtx;
+	int videoStream = -1;
+    int i = 0;
+
+	// open video file
+    int ret = avformat_open_input(&pFormatCtx, filename, NULL, NULL);
+    if (ret != 0) {
+        THROW("Unable to open video file :" + filename);
+    }
+
+    // Retrieve stream information
+    ret = avformat_find_stream_info(pFormatCtx, NULL);
+    assert(ret >= 0);
+
+    for(i = 0; i < pFormatCtx->nb_streams; i++) {
+        if (pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO && videoStream < 0) {
+            videoStream = i;            
+        }
+    } // end for i
+    assert(videoStream != -1);
+
+    // Get a pointer to the codec context for the video stream
+    pCodecCtx=pFormatCtx->streams[videoStream]->codec;
+    assert(pCodecCtx != NULL);
+
+    std::cout << "\nWidth : " << pCodecCtx->width;
+    std::cout << "\nHeight :" <<  pCodecCtx->height;
+
+    //Yet to add codes to calculate the max width and max_height
+    auto max_width = pCodecCtx->width;
+    auto max_height = pCodecCtx->height;
+
+    return std::make_tuple(max_width, max_height);
+}
 
 std::tuple<unsigned, unsigned>
 evaluate_image_data_set(RaliImageSizeEvaluationPolicy decode_size_policy, StorageType storage_type,
@@ -1356,7 +1399,7 @@ raliVideoFileSource(
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type(), decoder_keep_original);
+                                                                          context->master_graph->mem_type());
         context->master_graph->set_loop(loop);
 
         if(is_output)

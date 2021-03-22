@@ -35,6 +35,7 @@ if(GPU_SUPPORT)
         message("-- ${BoldBlue}amd_openvx_extensions BACKEND set to ${BACKEND}")
     else()
         SET(BUILD_OPENCL False)
+        message("-- ${BoldBlue}amd_openvx_extensions is currenlty not supported with BACKEND set to ${BACKEND}")
     endif()
 endif()
 

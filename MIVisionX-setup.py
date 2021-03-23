@@ -25,7 +25,7 @@ import argparse
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.8"
+__version__ = "1.8.9"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -380,14 +380,6 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
-            # FFMPEG 4
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-            os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-            os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
-                      linuxFlag+' make install )')
         else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
@@ -435,12 +427,12 @@ else:
             os.system('sudo -v')
             os.system('(cd '+deps_dir+'/fdk-aac; sudo ' +
                       linuxFlag+' make install )')
-            # FFMPEG 4
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-            os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --disable-shared --enable-static --enable-libx264 --enable-libx265 --enable-libass --enable-gpl --enable-nonfree)')
-            os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
-                      linuxFlag+' make install )')
+        # FFMPEG 4
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
+        os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
+        os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
+                  linuxFlag+' make install )')
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

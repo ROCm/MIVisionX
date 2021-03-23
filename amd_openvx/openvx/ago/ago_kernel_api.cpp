@@ -17045,19 +17045,22 @@ int agoKernel_HarrisScore_HVC_HG3_5x5(AgoNode * node, AgoKernelCommand cmd)
     }
 #if ENABLE_HIP
     else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * iImg = node->paramList[1];
-        vx_float32 sensitivity = node->paramList[2]->u.scalar.u.f;
-        vx_int32 gradient_size = node->paramList[4]->u.scalar.u.i;
-        vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
-        vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * 3;
-        normFactor = normFactor * normFactor * normFactor * normFactor;
-        if (HipExec_HarrisScore_HVC_HG3_5x5(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_float32 *)(oImg->hip_memory + oImg->opencl_buffer_offset), oImg->u.img.stride_in_bytes,
-            (vx_float32 *)(iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, normFactor)) {
-            status = VX_FAILURE;
+            status = VX_SUCCESS;
+            AgoData * oImg = node->paramList[0];
+            AgoData * iImg = node->paramList[1];
+            vx_float32 sensitivity = node->paramList[2]->u.scalar.u.f;
+            vx_int32 gradient_size = node->paramList[4]->u.scalar.u.i;
+            vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+            int N = 0;
+            if (node->akernel->id == VX_KERNEL_AMD_HARRIS_SCORE_HVC_HG3_5x5) N = 5;
+            int border = (gradient_size >> 1) + (N >> 1);
+            vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * N;
+            normFactor = 1 / (normFactor * normFactor * normFactor * normFactor);
+            if (HipExec_HarrisScore_HVC_HG3_5x5(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_float32 *)(oImg->hip_memory + oImg->opencl_buffer_offset), oImg->u.img.stride_in_bytes,
+                (vx_float32 *)(iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, border, normFactor)) {
+                status = VX_FAILURE;
+            }
         }
-    }
 #endif
     return status;
 }
@@ -17113,19 +17116,22 @@ int agoKernel_HarrisScore_HVC_HG3_7x7(AgoNode * node, AgoKernelCommand cmd)
     }
 #if ENABLE_HIP
     else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * iImg = node->paramList[1];
-        vx_float32 sensitivity = node->paramList[2]->u.scalar.u.f;
-        vx_int32 gradient_size = node->paramList[4]->u.scalar.u.i;
-        vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
-        vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * 3;
-        normFactor = normFactor * normFactor * normFactor * normFactor;
-        if (HipExec_HarrisScore_HVC_HG3_7x7(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_float32 *)(oImg->hip_memory + oImg->opencl_buffer_offset), oImg->u.img.stride_in_bytes,
-            (vx_float32 *)(iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, normFactor)) {
-            status = VX_FAILURE;
+            status = VX_SUCCESS;
+            AgoData * oImg = node->paramList[0];
+            AgoData * iImg = node->paramList[1];
+            vx_float32 sensitivity = node->paramList[2]->u.scalar.u.f;
+            vx_int32 gradient_size = node->paramList[4]->u.scalar.u.i;
+            vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
+            int N = 0;
+            if (node->akernel->id == VX_KERNEL_AMD_HARRIS_SCORE_HVC_HG3_7x7) N = 7;
+            int border = (gradient_size >> 1) + (N >> 1);
+            vx_float32 normFactor = 255.0f * (1 << (gradient_size - 1)) * N;
+            normFactor = 1 / (normFactor * normFactor * normFactor * normFactor);
+            if (HipExec_HarrisScore_HVC_HG3_7x7(node->hip_stream0, oImg->u.img.width, oImg->u.img.height, (vx_float32 *)(oImg->hip_memory + oImg->opencl_buffer_offset), oImg->u.img.stride_in_bytes,
+                (vx_float32 *)(iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes, sensitivity, strength_threshold, border, normFactor)) {
+                status = VX_FAILURE;
+            }
         }
-    }
 #endif
     return status;
 }
@@ -17282,9 +17288,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM(AgoNode * node, AgoKern
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_HIP
-        | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -17298,24 +17301,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM(AgoNode * node, AgoKern
         out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 1, 0);
         out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 1, 0);
     }
-#if ENABLE_HIP
-    else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * oStack = node->paramList[1];
-        AgoData * iImg = node->paramList[2];
-        AgoData * iThr = node->paramList[3];
-        oStack->u.cannystack.stackTop = 0;
-        if (HipExec_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height,
-            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
-            status = VX_FAILURE;
-        }
-    }
-#endif
     return status;
 }
 
@@ -17346,9 +17331,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(AgoNode * node, AgoKern
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_HIP
-        | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -17362,24 +17344,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(AgoNode * node, AgoKern
         out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 1, 0);
         out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 1, 0);
     }
-#if ENABLE_HIP
-    else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * oStack = node->paramList[1];
-        AgoData * iImg = node->paramList[2];
-        AgoData * iThr = node->paramList[3];
-        oStack->u.cannystack.stackTop = 0;
-        if (HipExec_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height,
-            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
-            status = VX_FAILURE;
-        }
-    }
-#endif
     return status;
 }
 
@@ -17410,9 +17374,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM(AgoNode * node, AgoKern
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_HIP
-        | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -17426,24 +17387,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM(AgoNode * node, AgoKern
         out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 2, 0);
         out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 2, 0);
     }
-#if ENABLE_HIP
-    else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * oStack = node->paramList[1];
-        AgoData * iImg = node->paramList[2];
-        AgoData * iThr = node->paramList[3];
-        oStack->u.cannystack.stackTop = 0;
-        if (HipExec_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height,
-            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
-            status = VX_FAILURE;
-        }
-    }
-#endif
     return status;
 }
 
@@ -17474,9 +17417,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM(AgoNode * node, AgoKern
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_HIP
-        | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -17490,24 +17430,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM(AgoNode * node, AgoKern
         out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 2, 0);
         out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 2, 0);
     }
-#if ENABLE_HIP
-    else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * oStack = node->paramList[1];
-        AgoData * iImg = node->paramList[2];
-        AgoData * iThr = node->paramList[3];
-        oStack->u.cannystack.stackTop = 0;
-        if (HipExec_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height,
-            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
-            status = VX_FAILURE;
-        }
-    }
-#endif
     return status;
 }
 
@@ -17538,9 +17460,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L1NORM(AgoNode * node, AgoKern
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_HIP
-        | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -17554,24 +17473,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L1NORM(AgoNode * node, AgoKern
         out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 3, 0);
         out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 3, 0);
     }
-#if ENABLE_HIP
-    else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * oStack = node->paramList[1];
-        AgoData * iImg = node->paramList[2];
-        AgoData * iThr = node->paramList[3];
-        oStack->u.cannystack.stackTop = 0;
-        if (HipExec_CannySobelSuppThreshold_U8XY_U8_7x7_L1NORM(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height,
-            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
-            status = VX_FAILURE;
-        }
-    }
-#endif
     return status;
 }
 
@@ -17602,9 +17503,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(AgoNode * node, AgoKern
     else if (cmd == ago_kernel_cmd_query_target_support) {
         node->target_support_flags = 0
                     | AGO_KERNEL_FLAG_DEVICE_CPU
-#if ENABLE_HIP
-        | AGO_KERNEL_FLAG_DEVICE_GPU
-#endif
                     ;
         status = VX_SUCCESS;
     }
@@ -17618,24 +17516,6 @@ int agoKernel_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(AgoNode * node, AgoKern
         out->u.img.rect_valid.end_x = max((int)inp->u.img.rect_valid.end_x - 3, 0);
         out->u.img.rect_valid.end_y = max((int)inp->u.img.rect_valid.end_y - 3, 0);
     }
-#if ENABLE_HIP
-    else if (cmd == ago_kernel_cmd_hip_execute) {
-        status = VX_SUCCESS;
-        AgoData * oImg = node->paramList[0];
-        AgoData * oStack = node->paramList[1];
-        AgoData * iImg = node->paramList[2];
-        AgoData * iThr = node->paramList[3];
-        oStack->u.cannystack.stackTop = 0;
-        if (HipExec_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height,
-            oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->opencl_buffer_offset, iImg->u.img.stride_in_bytes,
-            iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
-            status = VX_FAILURE;
-        }
-    }
-#endif
     return status;
 }
 
@@ -18200,7 +18080,7 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
         AgoData * iImg = node->paramList[2];
         AgoData * iThr = node->paramList[3];
         oStack->u.cannystack.stackTop = 0;
-        if (HipExec_CannySuppThreshold_U8XY_U16_7x7(
+        if (HipExec_CannySuppThreshold_U8XY_U16_3x3(
             node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
             oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
             (vx_uint16 *) (iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes,

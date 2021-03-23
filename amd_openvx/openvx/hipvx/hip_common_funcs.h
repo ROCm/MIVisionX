@@ -322,39 +322,4 @@ __device__ __forceinline__ uint hip_bfe(uint src0, uint src1, uint src2) {
     return __builtin_amdgcn_ubfe(src0, src1, src2);
 }
 
-// common device kernels - old ones, but still in use - can be removed once they aren't in use anywhere
-
-__device__ int FastAtan2_Canny(short int Gx, short int Gy) {
-    unsigned int ret;
-    unsigned short int ax, ay;
-    ax = std::abs(Gx), ay = std::abs(Gy); // todo:: check if math.h function is faster
-    float d1 = (float)ax*0.4142135623730950488016887242097f;
-    float d2 = (float)ax*2.4142135623730950488016887242097f;
-    ret = (Gx*Gy) < 0 ? 3 : 1;
-    if (ay <= d1)
-        ret = 0;
-    if (ay >= d2)
-        ret = 2;
-    return ret;
-}
-
-__device__ __forceinline__ int isCorner(int mask) {
-    int cornerMask = 0x1FF;// Nine 1's in the LSB
-    if (mask) {
-        mask = mask | (mask << 16);
-        for (int i = 0; i < 16; i++) {
-            if ((mask & cornerMask) == cornerMask)
-                return 1;
-            mask >>= 1;
-        }
-    }
-    return 0;
-}
-
-typedef struct {
-    float GxGx;
-    float GxGy;
-    float GyGy;
-} ago_harris_Gxy_t;
-
 #endif //MIVISIONX_HIP_COMMON_FUNCS_H

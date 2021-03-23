@@ -1,5 +1,0 @@
-agoKernel_Add_U8_U8U8_Wrap
-data input_1 = uniform-image:1920,1080,U008 
-data input_2 = uniform-image:1920,1080,U008 
-data output = image:1920,1080,U008
-node org.khronos.openvx.add input_1 input_2 !WRAP output

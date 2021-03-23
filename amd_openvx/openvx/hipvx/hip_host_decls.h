@@ -849,12 +849,13 @@ int HipExec_CannySobel_U16_U8_7x7_L2NORM(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_CannySuppThreshold_U8XY_U16_3x3(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
+int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
+    vx_uint32 dstWidth, vx_uint32 dstHeight,
+    vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+    const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint8* xyStack, vx_uint32 capacityOfXY,
+    vx_uint16 hyst_lower, vx_uint16 hyst_upper);
+
 int HipExec_FastCorners_XY_U8_NoSupression(
         hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
         vx_uint32 srcWidth, vx_uint32 srcHeight,

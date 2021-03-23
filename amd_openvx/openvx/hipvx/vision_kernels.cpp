@@ -660,10 +660,11 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
         }
     }
 }
-int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
+int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    vx_uint8* xyStack, vx_uint32 capacityOfXY,
     vx_uint16 hyst_lower, vx_uint16 hyst_upper) {
     int localThreads_x = 16;
     int localThreads_y = 16;

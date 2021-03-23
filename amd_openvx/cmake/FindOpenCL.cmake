@@ -90,5 +90,5 @@ if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
 endif()
 
 if( NOT OPENCL_FOUND )
-    message( STATUS "FindOpenCL failed to find libraries named: OpenCL" )
+    message( STATUS "FindOpenCL failed to find library named: OpenCL" )
 endif()

@@ -63,5 +63,5 @@ set(TurboJpeg_LIBRARIES_DIR ${TurboJpeg_LIBRARIES_DIR} CACHE INTERNAL "")
 
 
 if( NOT TurboJpeg_FOUND )
-    message( STATUS "FindTurboJpeg looked for libraries named: turbojpeg" )
+    message( STATUS "FindTurboJpeg failed to find library named: turbojpeg" )
 endif()

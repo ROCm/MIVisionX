@@ -1266,7 +1266,10 @@ Hip_WarpPerspective_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
     dst.x = hip_pack(f);
 
-    sx += perspectiveMatrix->m[0][0]; sy += perspectiveMatrix->m[0][1]; sz += perspectiveMatrix->m[0][2]; isz = 1.0f / sz;
+    sx += perspectiveMatrix->m[0][0];
+    sy += perspectiveMatrix->m[0][1];
+    sz += perspectiveMatrix->m[0][2];
+    isz = 1.0f / sz;
 
     f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
     sx += perspectiveMatrix->m[0][0];

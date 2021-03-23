@@ -825,55 +825,7 @@ int HipExec_Remap_U8_U8_Bilinear_Constant(
 
 // vision_kernels
 
-int HipExec_HarrisSobel_HG3_U8_3x3(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 *pHipDstGxy, vx_uint32 dstGxyStrideInBytes,
-        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_HarrisSobel_HG3_U8_5x5(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
-        vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_HarrisSobel_HG3_U8_7x7(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 * pDstGxy_, vx_uint32 dstGxyStrideInBytes,
-        vx_uint8 * pSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_HarrisScore_HVC_HG3_3x3(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes,
-        vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
-        vx_float32 sensitivity, vx_float32 strength_threshold,
-        vx_int32 border, vx_float32 normFactor);
-int HipExec_HarrisScore_HVC_HG3_5x5(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
-        vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
-        vx_float32 sensitivity, vx_float32 strength_threshold,
-        vx_float32 normalization_factor);
-int HipExec_HarrisScore_HVC_HG3_7x7(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_float32 *pDstVc, vx_uint32 dstVcStrideInBytes,
-        vx_float32 *pSrcGxy_, vx_uint32 srcGxyStrideInBytes,
-        vx_float32 sensitivity, vx_float32 strength_threshold,
-        vx_float32 normalization_factor);
-int HipExec_NonMaxSupp_XY_ANY_3x3(
-        hipStream_t stream, vx_uint32 capacityOfList, ago_keypoint_xys_t *pHipDstList,
-        vx_uint32 srcWidth, vx_uint32 srcHeight,
-        vx_float32 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_FastCorners_XY_U8_Supression(
-        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
-        vx_uint32 srcWidth, vx_uint32 srcHeight,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_float32 strength_threshold, vx_uint8 *pHipScratch);
-int HipExec_FastCorners_XY_U8_NoSupression(
-        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
-        vx_uint32 srcWidth, vx_uint32 srcHeight,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_float32 strength_threshold);
 int HipExec_CannySobel_U16_U8_3x3_L1NORM(
-        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_CannySobel_U16_U8_3x3_L2NORM(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
@@ -881,11 +833,15 @@ int HipExec_CannySobel_U16_U8_5x5_L1NORM(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_CannySobel_U16_U8_5x5_L2NORM(
+int HipExec_CannySobel_U16_U8_7x7_L1NORM(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
-int HipExec_CannySobel_U16_U8_7x7_L1NORM(
+int HipExec_CannySobel_U16_U8_3x3_L2NORM(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_CannySobel_U16_U8_5x5_L2NORM(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
@@ -899,47 +855,49 @@ int HipExec_CannySuppThreshold_U8XY_U16_3x3(
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
         const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
         vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannySuppThreshold_U8XY_U16_7x7(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannySobelSuppThreshold_U8XY_U8_3x3_L1NORM(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+int HipExec_FastCorners_XY_U8_NoSupression(
+        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannySobelSuppThreshold_U8XY_U8_3x3_L2NORM(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
+        vx_float32 strength_threshold);
+int HipExec_FastCorners_XY_U8_Supression(
+        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannySobelSuppThreshold_U8XY_U8_5x5_L1NORM(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannySobelSuppThreshold_U8XY_U8_5x5_L2NORM(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannySobelSuppThreshold_U8XY_U8_7x7_L1NORM(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
-int HipExec_CannySobelSuppThreshold_U8XY_U8_7x7_L2NORM(
-        hipStream_t stream, vx_uint32 capacityOfXY, ago_coord2d_ushort_t xyStack[], vx_uint32 *pxyStackTop,
-        vx_uint32 dstWidth, vx_uint32 dstHeight,
-        vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        vx_uint16 hyst_lower, vx_uint16 hyst_upper);
+        vx_float32 strength_threshold, vx_uint8 *pHipScratch);
+int HipExec_HarrisSobel_HG3_U8_3x3(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_float32 *pHipDstGxy, vx_uint32 dstGxyStrideInBytes,
+        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_HarrisSobel_HG3_U8_5x5(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_float32 *pHipDstGxy, vx_uint32 dstGxyStrideInBytes,
+        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_HarrisSobel_HG3_U8_7x7(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_float32 *pHipDstGxy, vx_uint32 dstGxyStrideInBytes,
+        vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
+int HipExec_HarrisScore_HVC_HG3_3x3(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes,
+        vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
+        vx_float32 sensitivity, vx_float32 strength_threshold,
+        vx_int32 border, vx_float32 normFactor);
+int HipExec_HarrisScore_HVC_HG3_5x5(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes,
+        vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
+        vx_float32 sensitivity, vx_float32 strength_threshold,
+        vx_int32 border, vx_float32 normFactor);
+int HipExec_HarrisScore_HVC_HG3_7x7(
+        hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
+        vx_float32 *pHipDstVc, vx_uint32 dstVcStrideInBytes,
+        vx_float32 *pHipSrcGxy, vx_uint32 srcGxyStrideInBytes,
+        vx_float32 sensitivity, vx_float32 strength_threshold,
+        vx_int32 border, vx_float32 normFactor);
+int HipExec_NonMaxSupp_XY_ANY_3x3(
+        hipStream_t stream, vx_uint32 capacityOfList, ago_keypoint_xys_t *pHipDstList,
+        vx_uint32 srcWidth, vx_uint32 srcHeight,
+        vx_float32 *pHipSrcImage, vx_uint32 srcImageStrideInBytes);
 
 #endif //MIVISIONX_HIP_HOST_DECLS_H

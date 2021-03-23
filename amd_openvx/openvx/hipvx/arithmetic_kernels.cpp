@@ -1424,14 +1424,22 @@ Hip_Mul_S16_S16U8_Sat_Trunc(uint dstWidth, uint dstHeight,
     int4 dst;
 
     float f;
-    f = hip_clamp(scale * (float)(((int)(src1.x) << 16) >> 16) * hip_unpack0(src2.x), -32768.0f, 32767.0f); dst.x  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.x)        >> 16) * hip_unpack1(src2.x), -32768.0f, 32767.0f); dst.x |= ((int)(f)             ) << 16;
-    f = hip_clamp(scale * (float)(((int)(src1.y) << 16) >> 16) * hip_unpack2(src2.x), -32768.0f, 32767.0f); dst.y  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.y)        >> 16) * hip_unpack3(src2.x), -32768.0f, 32767.0f); dst.y |= ((int)(f)             ) << 16;
-    f = hip_clamp(scale * (float)(((int)(src1.z) << 16) >> 16) * hip_unpack0(src2.y), -32768.0f, 32767.0f); dst.z  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.z)        >> 16) * hip_unpack1(src2.y), -32768.0f, 32767.0f); dst.z |= ((int)(f)             ) << 16;
-    f = hip_clamp(scale * (float)(((int)(src1.w) << 16) >> 16) * hip_unpack2(src2.y), -32768.0f, 32767.0f); dst.w  = ((int)(f) & 0x0000ffff)      ;
-    f = hip_clamp(scale * (float)( (int)(src1.w)        >> 16) * hip_unpack3(src2.y), -32768.0f, 32767.0f); dst.w |= ((int)(f)             ) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.x) << 16) >> 16) * hip_unpack0(src2.x), -32768.0f, 32767.0f);
+    dst.x  = ((int)(f) & 0x0000ffff);
+    f = hip_clamp(scale * (float)( (int)(src1.x)        >> 16) * hip_unpack1(src2.x), -32768.0f, 32767.0f);
+    dst.x |= ((int)(f)) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.y) << 16) >> 16) * hip_unpack2(src2.x), -32768.0f, 32767.0f);
+    dst.y  = ((int)(f) & 0x0000ffff);
+    f = hip_clamp(scale * (float)( (int)(src1.y)        >> 16) * hip_unpack3(src2.x), -32768.0f, 32767.0f);
+    dst.y |= ((int)(f)) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.z) << 16) >> 16) * hip_unpack0(src2.y), -32768.0f, 32767.0f);
+    dst.z  = ((int)(f) & 0x0000ffff);
+    f = hip_clamp(scale * (float)( (int)(src1.z)        >> 16) * hip_unpack1(src2.y), -32768.0f, 32767.0f);
+    dst.z |= ((int)(f)) << 16;
+    f = hip_clamp(scale * (float)(((int)(src1.w) << 16) >> 16) * hip_unpack2(src2.y), -32768.0f, 32767.0f);
+    dst.w  = ((int)(f) & 0x0000ffff);
+    f = hip_clamp(scale * (float)( (int)(src1.w)        >> 16) * hip_unpack3(src2.y), -32768.0f, 32767.0f);
+    dst.w |= ((int)(f)) << 16;
 
     *((int4 *)(&pDstImage[dstIdx])) = dst;
 }
@@ -1896,7 +1904,8 @@ Hip_Phase_U8_S16S16(uint dstWidth, uint dstHeight,
     int4 src2 = *((int4 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    float2 f; float4 p4;
+    float2 f;
+    float4 p4;
     f.x = (float)((((int)(src1.x)) << 16) >> 16);
     f.y = (float)((((int)(src2.x)) << 16) >> 16);
     p4.x = atan2f(f.y, f.x) * inv_pi;

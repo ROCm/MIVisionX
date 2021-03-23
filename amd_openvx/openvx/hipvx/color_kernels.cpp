@@ -2352,20 +2352,34 @@ Hip_ColorConvert_RGB_IYUV(uint dstWidth, uint dstHeight,
 
         uint2 pU0, pU1;
         uint2 pV0, pV1;
-        f.x = hip_unpack0(pUV.x); f.y = f.x;
-        f.z = hip_unpack1(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack1(pUV.x);
+        f.w = f.z;
         pU0.x = hip_pack(f);
-        f.x = hip_unpack2(pUV.x); f.y = f.x;
-        f.z = hip_unpack3(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack2(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.x);
+        f.w = f.z;
         pU0.y = hip_pack(f);
+
         pU1.x = pU0.x;
         pU1.y = pU0.y;
-        f.x = hip_unpack0(pUV.y); f.y = f.x;
-        f.z = hip_unpack1(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack1(pUV.y);
+        f.w = f.z;
         pV0.x = hip_pack(f);
-        f.x = hip_unpack2(pUV.y); f.y = f.x;
-        f.z = hip_unpack3(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack2(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.y);
+        f.w = f.z;
         pV0.y = hip_pack(f);
+
         pV1.x = pV0.x;
         pV1.y = pV0.y;
 
@@ -2594,20 +2608,34 @@ Hip_ColorConvert_RGB_NV12(uint dstWidth, uint dstHeight,
 
         uint2 pU0, pU1;
         uint2 pV0, pV1;
-        f.x = hip_unpack0(pUV.x); f.y = f.x;
-        f.z = hip_unpack2(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.x);
+        f.w = f.z;
         pU0.x = hip_pack(f);
-        f.x = hip_unpack0(pUV.y); f.y = f.x;
-        f.z = hip_unpack2(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.y);
+        f.w = f.z;
         pU0.y = hip_pack(f);
+
         pU1.x = pU0.x;
         pU1.y = pU0.y;
-        f.x = hip_unpack1(pUV.x); f.y = f.x;
-        f.z = hip_unpack3(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.x);
+        f.w = f.z;
         pV0.x = hip_pack(f);
-        f.x = hip_unpack1(pUV.y); f.y = f.x;
-        f.z = hip_unpack3(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.y);
+        f.w = f.z;
         pV0.y = hip_pack(f);
+
         pV1.x = pV0.x;
         pV1.y = pV0.y;
 
@@ -2835,20 +2863,34 @@ Hip_ColorConvert_RGB_NV21(uint dstWidth, uint dstHeight,
 
         uint2 pU0, pU1;
         uint2 pV0, pV1;
-        f.x = hip_unpack1(pUV.x); f.y = f.x;
-        f.z = hip_unpack3(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.x);
+        f.w = f.z;
         pU0.x = hip_pack(f);
-        f.x = hip_unpack1(pUV.y); f.y = f.x;
-        f.z = hip_unpack3(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.y);
+        f.w = f.z;
         pU0.y = hip_pack(f);
+
         pU1.x = pU0.x;
         pU1.y = pU0.y;
-        f.x = hip_unpack0(pUV.x); f.y = f.x;
-        f.z = hip_unpack2(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.x);
+        f.w = f.z;
         pV0.x = hip_pack(f);
-        f.x = hip_unpack0(pUV.y); f.y = f.x;
-        f.z = hip_unpack2(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.y);
+        f.w = f.z;
         pV0.y = hip_pack(f);
+
         pV1.x = pV0.x;
         pV1.y = pV0.y;
 
@@ -3085,20 +3127,34 @@ Hip_ColorConvert_RGBX_IYUV(uint dstWidth, uint dstHeight,
 
         uint2 pU0, pU1;
         uint2 pV0, pV1;
-        f.x = hip_unpack0(pUV.x); f.y = f.x;
-        f.z = hip_unpack1(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack1(pUV.x);
+        f.w = f.z;
         pU0.x = hip_pack(f);
-        f.x = hip_unpack2(pUV.x); f.y = f.x;
-        f.z = hip_unpack3(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack2(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.x);
+        f.w = f.z;
         pU0.y = hip_pack(f);
+
         pU1.x = pU0.x;
         pU1.y = pU0.y;
-        f.x = hip_unpack0(pUV.y); f.y = f.x;
-        f.z = hip_unpack1(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack1(pUV.y);
+        f.w = f.z;
         pV0.x = hip_pack(f);
-        f.x = hip_unpack2(pUV.y); f.y = f.x;
-        f.z = hip_unpack3(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack2(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.y);
+        f.w = f.z;
         pV0.y = hip_pack(f);
+
         pV1.x = pV0.x;
         pV1.y = pV0.y;
 
@@ -3336,20 +3392,34 @@ Hip_ColorConvert_RGBX_NV12(uint dstWidth, uint dstHeight,
 
         uint2 pU0, pU1;
         uint2 pV0, pV1;
-        f.x = hip_unpack0(pUV.x); f.y = f.x;
-        f.z = hip_unpack2(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.x);
+        f.w = f.z;
         pU0.x = hip_pack(f);
-        f.x = hip_unpack0(pUV.y); f.y = f.x;
-        f.z = hip_unpack2(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.y);
+        f.w = f.z;
         pU0.y = hip_pack(f);
+
         pU1.x = pU0.x;
         pU1.y = pU0.y;
-        f.x = hip_unpack1(pUV.x); f.y = f.x;
-        f.z = hip_unpack3(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.x);
+        f.w = f.z;
         pV0.x = hip_pack(f);
-        f.x = hip_unpack1(pUV.y); f.y = f.x;
-        f.z = hip_unpack3(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.y);
+        f.w = f.z;
         pV0.y = hip_pack(f);
+
         pV1.x = pV0.x;
         pV1.y = pV0.y;
 
@@ -3586,20 +3656,34 @@ Hip_ColorConvert_RGBX_NV21(uint dstWidth, uint dstHeight,
 
         uint2 pU0, pU1;
         uint2 pV0, pV1;
-        f.x = hip_unpack1(pUV.x); f.y = f.x;
-        f.z = hip_unpack3(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.x);
+        f.w = f.z;
         pU0.x = hip_pack(f);
-        f.x = hip_unpack1(pUV.y); f.y = f.x;
-        f.z = hip_unpack3(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack1(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack3(pUV.y);
+        f.w = f.z;
         pU0.y = hip_pack(f);
+
         pU1.x = pU0.x;
         pU1.y = pU0.y;
-        f.x = hip_unpack0(pUV.x); f.y = f.x;
-        f.z = hip_unpack2(pUV.x); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.x);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.x);
+        f.w = f.z;
         pV0.x = hip_pack(f);
-        f.x = hip_unpack0(pUV.y); f.y = f.x;
-        f.z = hip_unpack2(pUV.y); f.w = f.z;
+
+        f.x = hip_unpack0(pUV.y);
+        f.y = f.x;
+        f.z = hip_unpack2(pUV.y);
+        f.w = f.z;
         pV0.y = hip_pack(f);
+
         pV1.x = pV0.x;
         pV1.y = pV0.y;
 

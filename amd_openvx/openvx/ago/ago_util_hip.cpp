@@ -756,18 +756,28 @@ static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
         // update number of items and reset it for next use
         int64_t stime = agoGetClockCounter();
-        vx_uint8 * stack = nullptr;
+        vx_uint32 stack = 0;
         if (data->hip_memory) {
-            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), data->size);
+            hipError_t err = hipMemcpyDtoH((void *)&stack, data->hip_memory, sizeof(vx_uint32));
             if (err) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyDtoH() for stacktop => %d\n", err);
                 return -1;
             }
-            stack = (vx_uint8 *)data->buffer;
         }
         int64_t etime = agoGetClockCounter();
         graph->opencl_perf.buffer_read += etime - stime;
-        data->u.cannystack.stackTop = *(vx_uint32 *)stack;
+        data->u.cannystack.stackTop = stack;
+        if (data->u.cannystack.stackTop > 0) {
+            if (data->hip_memory) {
+                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), data->u.cannystack.stackTop * sizeof(ago_coord2d_ushort_t));
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyDtoH() for stacktop => %d\n", err);
+                    return -1;
+                }
+            }
+            int64_t etime = agoGetClockCounter();
+            graph->opencl_perf.buffer_read += etime - stime;
+        }
     }
     return 0;
 }

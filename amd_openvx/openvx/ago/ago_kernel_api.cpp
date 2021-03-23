@@ -18006,9 +18006,9 @@ int agoKernel_CannySuppThreshold_U8XY_U16_3x3(AgoNode * node, AgoKernelCommand c
         AgoData * iThr = node->paramList[3];
         oStack->u.cannystack.stackTop = 0;
         if (HipExec_CannySuppThreshold_U8XY_U16_3x3(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset, oImg->u.img.stride_in_bytes,
             (vx_uint16 *) (iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes,
+            oStack->hip_memory + oStack->opencl_buffer_offset, oStack->u.cannystack.count,
             iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
             status = VX_FAILURE;
         }
@@ -18081,9 +18081,9 @@ int agoKernel_CannySuppThreshold_U8XY_U16_7x7(AgoNode * node, AgoKernelCommand c
         AgoData * iThr = node->paramList[3];
         oStack->u.cannystack.stackTop = 0;
         if (HipExec_CannySuppThreshold_U8XY_U16_3x3(
-            node->hip_stream0, oStack->u.cannystack.count, (ago_coord2d_ushort_t *)(oStack->hip_memory + oStack->opencl_buffer_offset), &oStack->u.cannystack.stackTop,
-            oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset,oImg->u.img.stride_in_bytes,
+            node->hip_stream0, oImg->u.img.width, oImg->u.img.height, oImg->hip_memory + oImg->opencl_buffer_offset, oImg->u.img.stride_in_bytes,
             (vx_uint16 *) (iImg->hip_memory + iImg->opencl_buffer_offset), iImg->u.img.stride_in_bytes,
+            oStack->hip_memory + oStack->opencl_buffer_offset, oStack->u.cannystack.count,
             iThr->u.thr.threshold_lower.U1, iThr->u.thr.threshold_upper.U1)) {
             status = VX_FAILURE;
         }

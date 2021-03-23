@@ -34,6 +34,7 @@
 # FFMPEG_LIBAVUTIL
 #
 
+set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig")
 include(FindPackageHandleStandardArgs)
 
     find_package_handle_standard_args(FFmpeg
@@ -71,7 +72,6 @@ else()
     PATHS ${_FFMPEG_AVCODEC_LIBRARY_DIRS}
       /usr/local/lib
       /usr/lib
-      /usr/lib64
       /opt/local/lib
       /sw/lib)
 
@@ -80,7 +80,6 @@ else()
     PATHS ${_FFMPEG_AVFORMAT_LIBRARY_DIRS}
       /usr/local/lib
       /usr/lib
-      /usr/lib64
       /opt/local/lib
       /sw/lib)
 
@@ -89,7 +88,6 @@ else()
     PATHS ${_FFMPEG_AVUTIL_LIBRARY_DIRS}
       /usr/local/lib
       /usr/lib
-      /usr/lib64
       /opt/local/lib
       /sw/lib)
 

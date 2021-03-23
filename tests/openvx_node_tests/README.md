@@ -1,4 +1,4 @@
-## OpenVX runvx tests
+## OpenVX node tests
 
 ### Help
 

@@ -538,12 +538,12 @@ if [ "$BACKEND_TYPE" = "HOST" ]; then
         cmake ..
         sudo make -j20 install
         export LD_LIBRARY_PATH="/opt/rocm/mivisionx/lib:/opt/rocm/rpp/lib"
-        cd ../tests/openvx_runvx_tests
+        cd ../tests/openvx_node_tests
     elif [ "$OVERRIDE" = "1" ]; then
         cd ../../build_host
         sudo make -j20 install
         export LD_LIBRARY_PATH="/opt/rocm/mivisionx/lib:/opt/rocm/rpp/lib"
-        cd ../tests/openvx_runvx_tests
+        cd ../tests/openvx_node_tests
     else
         RUNVX_PATH="$PRIMARY_RUNVX_PATH/"
         export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib:/opt/rocm/rpp/lib"
@@ -591,12 +591,12 @@ if [ "$BACKEND_TYPE" = "OCL" ] || [ "$BACKEND_TYPE" = "OCLvsHIP" ]; then
         cmake ..
         sudo make -j20 install
         export LD_LIBRARY_PATH="/opt/rocm/mivisionx/lib:/opt/rocm/rpp/lib"
-        cd ../tests/openvx_runvx_tests
+        cd ../tests/openvx_node_tests
     elif [ "$OVERRIDE" = "1" ]; then
         cd ../../build_ocl
         sudo make -j20 install
         export LD_LIBRARY_PATH="/opt/rocm/mivisionx/lib:/opt/rocm/rpp/lib"
-        cd ../tests/openvx_runvx_tests
+        cd ../tests/openvx_node_tests
     else
         RUNVX_PATH="$PRIMARY_RUNVX_PATH/"
         export LD_LIBRARY_PATH="$PRIMARY_RUNVX_PATH/../lib:/opt/rocm/rpp/lib"
@@ -644,12 +644,12 @@ if [ "$BACKEND_TYPE" = "HIP" ] || [ "$BACKEND_TYPE" = "OCLvsHIP" ]; then
         cmake -DBACKEND=HIP ..
         sudo make -j20 install
         export LD_LIBRARY_PATH="/opt/rocm/mivisionx/lib:/opt/rocm/rpp/lib"
-        cd ../tests/openvx_runvx_tests
+        cd ../tests/openvx_node_tests
     elif [ "$OVERRIDE" = "1" ]; then
         cd ../../build_hip
         sudo make -j20 install
         export LD_LIBRARY_PATH="/opt/rocm/mivisionx/lib:/opt/rocm/rpp/lib"
-        cd ../tests/openvx_runvx_tests
+        cd ../tests/openvx_node_tests
     else
         if [ "$BACKEND_TYPE" = "HIP" ]; then
             RUNVX_PATH="$PRIMARY_RUNVX_PATH/"

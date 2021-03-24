@@ -388,7 +388,7 @@ else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install autoconf automake bzip2 bzip2-devel cmake freetype-devel')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                      ' install gcc gcc-c++ git libtool make pkgconfig zlib-devell')
+                      ' install gcc gcc-c++ git libtool make pkgconfig zlib-devel')
             # Nasm
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install nasm')

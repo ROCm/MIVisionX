@@ -1713,7 +1713,7 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"{\n"
 		"  p += y*stride + x * 3;\n"
 		"  (*r).s0123 = *((__global uint4 *)(p + 0));\n"
-		"  (*r).s45 = *((__global uint2 *)(p + 15));\n"
+		"  (*r).s45 = *((__global uint2 *)(p + 16));\n"
 		"}\n"
 		"\n"
 		"void load_U32x8(U32x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"

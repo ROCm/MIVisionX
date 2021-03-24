@@ -1118,12 +1118,14 @@ int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dst
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight) {
-    int localThreads_x = 16;
-    int localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 7) >> 3;
-    int globalThreads_y = dstHeight;
 
     if ((convolutionWidth == 3) && (convolutionHeight == 3)) {
+
+        int localThreads_x = 16;
+        int localThreads_y = 16;
+        int globalThreads_x = (dstWidth + 7) >> 3;
+        int globalThreads_y = dstHeight;
+
         hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,

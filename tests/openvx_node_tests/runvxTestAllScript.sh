@@ -35,8 +35,6 @@
 
 GDF_PATH="kernelGDFs/"
 
-KERNEL_GROUP_LIST="ARITHMETIC LOGICAL COLOR STATISTICAL FILTER GEOMETRIC VISION"
-
 GDF_ARITHMETIC_LIST="AbsDiff_U8_U8U8
 AbsDiff_S16_S16S16_Sat
 Add_U8_U8U8_Wrap
@@ -228,7 +226,7 @@ generator() {
     CATEGORY=$1
 
     if [ "$DUMP" -eq 0 ]; then
-        cp $GDF_PATH/$CATEGORY/$GDF.gdf $GENERATED_GDF_PATH/$CATEGORY/$GDF.gdf
+        cp "$GDF_PATH/$CATEGORY/$GDF.gdf" "$GENERATED_GDF_PATH/$CATEGORY/$GDF.gdf"
     else
         while IFS= read -r LINE || [[ -n "$LINE" ]]; do
 
@@ -279,7 +277,7 @@ case_tester() {
     do
         printf "\nRunning $GDF...\n"
         generator "arithmetic"
-        "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/arithmetic/$GDF.gdf
+        "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/arithmetic/"$GDF".gdf
     done
 
     printf "\n\n---------------------------------------------"
@@ -289,7 +287,7 @@ case_tester() {
     do
         printf "\nRunning $GDF...\n"
         generator "logical"
-        "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/logical/$GDF.gdf
+        "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/logical/"$GDF".gdf
     done
 
     printf "\n\n---------------------------------------------"
@@ -299,7 +297,7 @@ case_tester() {
     do
         printf "\nRunning $GDF...\n"
         generator "color"
-        "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/color/$GDF.gdf
+        "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/color/"$GDF".gdf
     done
 
     printf "\n\n---------------------------------------------"
@@ -309,7 +307,7 @@ case_tester() {
     do
         printf "\nRunning $GDF...\n"
         generator "filter"
-        "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/filter/$GDF.gdf
+        "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/filter/"$GDF".gdf
     done
 
     printf "\n\n---------------------------------------------"
@@ -319,7 +317,7 @@ case_tester() {
     do
         printf "\nRunning $GDF...\n"
         generator "statistical"
-        "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/statistical/$GDF.gdf
+        "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/statistical/"$GDF".gdf
     done
 
     printf "\n\n---------------------------------------------"
@@ -329,7 +327,7 @@ case_tester() {
     do
         printf "\nRunning $GDF...\n"
         generator "geometric"
-        "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/geometric/$GDF.gdf
+        "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/geometric/"$GDF".gdf
     done
 
     printf "\n\n---------------------------------------------"
@@ -339,7 +337,7 @@ case_tester() {
     do
         printf "\nRunning $GDF...\n"
         generator "vision"
-        "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/vision/$GDF.gdf
+        "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/vision/"$GDF".gdf
     done
 }
 
@@ -355,8 +353,8 @@ case_tester_single() {
 
     GDF=$KERNEL_NAME
     printf "\nRunning $GDF...\n"
-    generator $GROUP
-    "$RUNVX_PATH"runvx -frames:1 -affinity:$AFFINITY -dump-profile $GENERATED_GDF_PATH/$GROUP/$GDF.gdf
+    generator "$GROUP"
+    "$RUNVX_PATH"runvx -frames:1 -affinity:"$AFFINITY" -dump-profile "$GENERATED_GDF_PATH"/"$GROUP"/"$GDF".gdf
 }
 
 ############# Need not edit - Utility functions #############
@@ -504,9 +502,9 @@ if [ "$KERNEL_NAME" != "ALL" ]; then
     fi
 fi
 
-HALF_WIDTH=$(expr $WIDTH / 2)
-HALF_HEIGHT=$(expr $HEIGHT / 2)
-DOUBLE_WIDTH=$(expr $WIDTH \* 2)
+HALF_WIDTH=$(( "$WIDTH" / 2))
+HALF_HEIGHT=$(( "$HEIGHT" / 2))
+DOUBLE_WIDTH=$(( "$WIDTH" \* 2))
 STRING_I1="data input_1"
 STRING_I2="data input_2"
 STRING_I3="data input_3"
@@ -516,7 +514,6 @@ STRING_O2="data output_2"
 STRING_O3="data output_3"
 STRING_O4="data output_4"
 RUNVX_PATH=""
-cwd=$(pwd)
 
 
 
@@ -895,8 +892,8 @@ if [ "$BACKEND_TYPE" = "OCLvsHIP" ]; then
                 NUM_OF_OCTETS=$(($WIDTH * ($HEIGHT - 2)))
                 START=13
                 END=$((10 + $WIDTH * 2 + $WIDTH - 4))
-                xxd -g 1 -c $WIDTH -s $WIDTH -l $NUM_OF_OCTETS dumpsOCL/$OUTPUT_BIN | cut -c $START-$END > "dumpsOCL/$OUTPUT_BIN.roi.txt"
-                xxd -g 1 -c $WIDTH -s $WIDTH -l $NUM_OF_OCTETS dumpsHIP/$OUTPUT_BIN | cut -c $START-$END > "dumpsHIP/$OUTPUT_BIN.roi.txt"
+                xxd -g 1 -c "$WIDTH" -s "$WIDTH" -l "$NUM_OF_OCTETS" dumpsOCL/"$OUTPUT_BIN" | cut -c "$START"-"$END" > "dumpsOCL/$OUTPUT_BIN.roi.txt"
+                xxd -g 1 -c "$WIDTH" -s "$WIDTH" -l "$NUM_OF_OCTETS" dumpsHIP/"$OUTPUT_BIN" | cut -c "$START"-"$END" > "dumpsHIP/$OUTPUT_BIN.roi.txt"
                 DIFF=$(diff "dumpsHIP/$OUTPUT_BIN.roi.txt" "dumpsOCL/$OUTPUT_BIN.roi.txt")
             else
                 DIFF=$(diff "dumpsHIP/$OUTPUT_BIN" "dumpsOCL/$OUTPUT_BIN")

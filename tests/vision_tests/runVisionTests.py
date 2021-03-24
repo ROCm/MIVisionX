@@ -49,10 +49,7 @@ def strip_libtree_addresses(lib_tree):
     return lib_tree
 
 
-
-
 # Vision Accuracy Tests
-
 visionTestConfig = [
     '01_absDiff.gdf',
     '02_accumulate.gdf',
@@ -96,9 +93,6 @@ visionTestConfig = [
     '40_warpPerspective.gdf',
     '41_xor.gdf'
 ]
-
-
-
 
 # OpenVX Vision Functions 1080P
 
@@ -240,12 +234,8 @@ openvxNodes = [
 #     ('FastCorners_XY_U8_Supression',              'org.khronos.openvx.fast_corners image:1920,1080,U008 scalar:FLOAT32,80.0 scalar:BOOL,0 array:KEYPOINT,1000 scalar:SIZE,0'),
 ]
 
-
-
-
 #  Popular Video Sizes
 # { 2160p: 3840x2160, 1440p: 2560x1440, 1080p: 1920x1080, 720p: 1280x720, 480p: 854x480, 360p: 640x360, 240p: 426x240 }
-
 openvxNodeTestConfig = [
     # absdiff U8 - U8
     ('absdiff-240p-u8', 'org.khronos.openvx.absdiff image:426,240,U008 image:426,240,U008 image:426,240,U008'),
@@ -265,11 +255,7 @@ openvxNodeTestConfig = [
     ('absdiff-2160p-s16', 'org.khronos.openvx.absdiff image:3840,2160,S016 image:3840,2160,S016 image:3840,2160,S016')
 ]
 
-
-
-
 # Import arguments
-
 parser = argparse.ArgumentParser()
 parser.add_argument('--runvx_directory',    type=str, default='',
                     help='RunVX Executable Directory - required')
@@ -298,11 +284,7 @@ functionalityTests = args.functionality
 backendType = args.backend_type
 profilingOption = args.profiling
 
-
-
-
 # check arguments
-
 if hardwareMode not in ('CPU', 'GPU'):
     print("ERROR: OpenVX Hardware supported - CPU or GPU]")
     exit()
@@ -335,11 +317,7 @@ if hardwareMode == "GPU":
         print("For hardware_mode=GPU, the backend_type must be either 'HIP' or 'OCL'")
         exit()
 
-
-
-
 # List Vision Functionality tests
-
 if listTest == 'yes':
     print(" %-5s - %-30s\n" % ('Test ID', 'Test Name'))
     for i in range(len(openvxNodes)):
@@ -353,9 +331,6 @@ if runvxDir == '':
 
 print("\nMIVisionX runVisionTests V-"+__version__+"\n")
 
-
-
-
 # RunVX Application
 runVX_exe = runvxDir+'/runvx'
 RunVXapp = os.path.abspath(runVX_exe)
@@ -365,9 +340,6 @@ if(os.path.isfile(RunVXapp)):
 else:
     print("\nERROR: RunVX Executable Not Found\n")
     exit()
-
-
-
 
 # OpenVX Vision Functionality Tests
 
@@ -384,11 +356,7 @@ if testFilter == 0 and functionalityTests == 'yes':
     print("\nSTATUS: Vision Accuracy Results - " +
           scriptPath+"/gdfs/openvx_test_results\n")
 
-
-
-
 # OpenVX Performance Tests
-
 print("\nrunVisionTests - OpenVX Node Performance\n")
 outputDirectory = 'openvx_node_results'
 if not os.path.exists(outputDirectory):

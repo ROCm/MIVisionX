@@ -202,7 +202,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     sum2.data[7] += fval;
 
     uint mask = HIPSELECT(0xffffu, 0u, y < 1);
-    mask = HIPSELECT(0u, mask, y < (dstHeight -1));
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 1));
     uint4 dst;
     uint mp;
 
@@ -222,14 +222,14 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     mp = hip_canny_mag_phase_L1(sum1.data[4], sum2.data[4]) & mask;
     dst.z = mp;
     mp = hip_canny_mag_phase_L1(sum1.data[5], sum2.data[5]) & mask;
-    mp = HIPSELECT(0u, mp, x < (dstWidth-6));
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 6));
     dst.z |= (mp << 16);
 
     mp = hip_canny_mag_phase_L1(sum1.data[6], sum2.data[6]) & mask;
-    mp = HIPSELECT(0u, mp, x < (dstWidth-7));
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 7));
     dst.w  =  mp;
     mp = hip_canny_mag_phase_L1(sum1.data[7], sum2.data[7]) & mask;
-    mp = HIPSELECT(0u, mp, x < (dstWidth-8));
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
     dst.w |= (mp << 16);
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
@@ -447,7 +447,7 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
     sum2.data[7] += fval;
 
     uint mask = HIPSELECT(0xffffu, 0u, y < 1);
-    mask = HIPSELECT(0u, mask, y < (dstHeight -1));
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 1));
     uint4 dst;
     uint mp;
 
@@ -467,14 +467,14 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
     mp = hip_canny_mag_phase_L2(sum1.data[4], sum2.data[4]) & mask;
     dst.z = mp;
     mp = hip_canny_mag_phase_L2(sum1.data[5], sum2.data[5]) & mask;
-    mp = HIPSELECT(0u, mp, x < (dstWidth-6));
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 6));
     dst.z |= (mp << 16);
 
     mp = hip_canny_mag_phase_L2(sum1.data[6], sum2.data[6]) & mask;
-    mp = HIPSELECT(0u, mp, x < (dstWidth-7));
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 7));
     dst.w  =  mp;
     mp = hip_canny_mag_phase_L2(sum1.data[7], sum2.data[7]) & mask;
-    mp = HIPSELECT(0u, mp, x < (dstWidth-8));
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
     dst.w |= (mp << 16);
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;

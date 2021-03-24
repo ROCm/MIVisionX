@@ -410,7 +410,7 @@ else:
                           ' --enablerepo=forensics install fdk-aac')
                 # libASS
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                          ' yum -y install libass-devel')
+                          ' install libass-devel')
             else:
                 # Yasm
                 os.system(

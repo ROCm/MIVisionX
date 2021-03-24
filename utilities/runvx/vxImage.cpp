@@ -121,7 +121,19 @@ int CVxParamImage::Shutdown(void)
 			}
 		}
 	}
+#elif ENABLE_HIP
+    else if (m_memory_type == VX_MEMORY_TYPE_HIP) {
+		for (int active_handle = 0; active_handle < 2; active_handle++) {
+			for (vx_size plane = 0; plane < m_planes; plane++) {
+				if (m_memory_handle[active_handle][plane]) {
+				    hipFree(m_memory_handle[active_handle][plane]);
+				}
+				m_memory_handle[active_handle][plane] = nullptr;
+			}
+		}
+	}
 #endif
+
 	m_memory_type = VX_MEMORY_TYPE_NONE;
 
 #if ENABLE_OPENCV
@@ -307,6 +319,27 @@ int CVxParamImage::Initialize(vx_context context, vx_graph graph, const char * d
 						m_memory_handle[active_handle][plane] = clCreateBuffer(opencl_context, CL_MEM_READ_WRITE, size, NULL, &err);
 						if (!m_memory_handle[active_handle][plane] || err)
 							ReportError("ERROR: clCreateBuffer(*,CL_MEM_READ_WRITE,%d,NULL,*) failed (%d)\n", (int)size, err);
+					}
+				}
+			}
+		}
+#elif ENABLE_HIP
+            else if (m_memory_type == VX_MEMORY_TYPE_HIP) {
+			if (alloc_flags == 1) {
+				memset(m_memory_handle, 0, sizeof(m_memory_handle));
+			}
+			else {
+				// allocate all handles on opencl
+				int hip_device = -1;
+				vx_status status = vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &hip_device, sizeof(hip_device));
+				if (status || hip_device<0 )
+					ReportError("ERROR: vxQueryContext(*,VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE,...) failed (%d, %d)\n", status, hip_device);
+				for (int active_handle = 0; active_handle < 2; active_handle++) {
+					for (vx_size plane = 0; plane < m_planes; plane++) {
+						vx_size size = m_addr[plane].dim_y * m_addr[plane].stride_y;
+						hipError_t err = hipMalloc(&m_memory_handle[active_handle][plane], size);
+						if (!m_memory_handle[active_handle][plane] || err != hipSuccess)
+							ReportError("ERROR: hipMalloc(%d) failed (%d)\n", (int)size, err);
 					}
 				}
 			}

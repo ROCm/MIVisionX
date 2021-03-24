@@ -24,13 +24,17 @@ project(rali_pybind)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 set(ROCM_PATH /opt/rocm)
 
-find_package(OpenCL QUIET)
-find_package(AMDRPP QUIET)
-find_package(TurboJpeg QUIET)
-
 set(MIN_CMAKE_VER_REQUIRED 3.10)
 set(MIN_CXX_VER_REQUIRED 7.4)
 set(BUILD_RALI_PYBIND true)
+
+if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
+    find_package(OpenCL QUIET)
+    find_package(AMDRPP QUIET)
+    find_package(TurboJpeg QUIET)
+elseif(NOT GPU_SUPPORT OR "${BACKEND}" STREQUAL "HIP")
+    SET(BUILD_RALI_PYBIND false)
+endif()
 
 if(NOT OpenCL_FOUND)
     set(BUILD_RALI_PYBIND false)

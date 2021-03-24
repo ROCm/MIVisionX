@@ -204,6 +204,8 @@ int agoReleaseGraph(AgoGraph * agraph)
         #if ENABLE_OPENCL
                 // Releasing the command queue for the graph because it is not needed
                 agoGpuOclReleaseGraph(agraph);
+        #elif ENABLE_HIP
+                agoGpuHipReleaseGraph(agraph);
         #endif
                 LeaveCriticalSection(&agraph->cs);
                 // move graph to garbage list
@@ -1634,12 +1636,11 @@ int agoVerifyGraph(AgoGraph * graph)
 		return status;
 	}
 
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL || ENABLE_HIP)
 	// if all nodes run on GPU, clear enable_node_level_opencl_flush
 	bool cpuTargetBufferNodesExists = false;
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
-		if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU &&
-			!node->akernel->opencl_buffer_access_enable)
+		if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU && !node->akernel->opencl_buffer_access_enable)
 			cpuTargetBufferNodesExists = true;
 	}
 	if(!cpuTargetBufferNodesExists) {
@@ -2001,6 +2002,130 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
 	}
 	return 0;
 }
+#elif ENABLE_HIP
+static int agoWaitForNodesCompletion(AgoGraph * graph)
+{
+    int status = VX_SUCCESS;
+    if (!graph->opencl_nodeListQueued.empty()) {
+        for (vx_size i = 0; i < graph->opencl_nodeListQueued.size(); i++) {
+            AgoNode * node = graph->opencl_nodeListQueued[i];
+            if (node->supernode) {
+                if (!node->supernode->launched || agoGpuHipSuperNodeWait(graph, node->supernode) < 0) {
+                    agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: launched=%d supernode wait failed\n", node->supernode->launched);
+                    return VX_FAILURE;
+                }
+                agoPerfCaptureStop(&node->perf);
+                for (size_t index = 0; index < node->supernode->nodeList.size(); index++) {
+                    AgoNode * anode = node->supernode->nodeList[index];
+                    // node callback
+                    if (anode->callback) {
+                        vx_action action = anode->callback(anode);
+                        if (action == VX_ACTION_ABANDON) {
+                            status = VX_ERROR_GRAPH_ABANDONED;
+                            break;
+                        }
+                    }
+                }
+                //agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: supernode is not supported under HIP\n");
+                //return VX_FAILURE;
+            }
+            else {
+                if (agoGpuHipSingleNodeWait(graph, node) < 0) {
+                    agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: single node wait failed\n");
+                    return VX_FAILURE;
+                }
+                agoPerfCaptureStop(&node->perf);
+                // node callback
+                if (node->callback) {
+                    vx_action action = node->callback(node);
+                    if (action == VX_ACTION_ABANDON) {
+                        status = VX_ERROR_GRAPH_ABANDONED;
+                        break;
+                    }
+                }
+            }
+        }
+        graph->opencl_nodeListQueued.clear();
+    }
+    return status;
+}
+
+static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * dataToSync)
+{
+    //cl_command_queue opencl_cmdq = graph->opencl_cmdq ? graph->opencl_cmdq : graph->ref.context->opencl_cmdq;
+
+    if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+        if (node->flags & AGO_KERNEL_FLAG_DEVICE_GPU) {
+            if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
+                int64_t stime = agoGetClockCounter();
+                vx_size size = dataToSync->size;
+                if (dataToSync->ref.type == VX_TYPE_LUT) {
+                    hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->opencl_buffer_offset, dataToSync->buffer, size);
+                    if (err) {
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyHtoD(lut) => %d\n", err);
+                        return -1;
+                    }
+                }
+                else {
+                    if (size > 0) {
+                        hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->opencl_buffer_offset, dataToSync->buffer, size);
+                        if (err) {
+                            agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyHtoD() => %d\n", err);
+                            return -1;
+                        }
+                    }
+                }
+                dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                int64_t etime = agoGetClockCounter();
+                graph->opencl_perf.buffer_write += etime - stime;
+            }
+        }
+        else {
+            if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                if (dataToSync->ref.type == VX_TYPE_LUT) {
+                    int64_t stime = agoGetClockCounter();
+                    vx_size size = dataToSync->size;
+//                    size_t origin[3] = { 0, 0, 0 };
+//                    size_t region[3] = { 256, 1, 1 };
+                    hipError_t err = hipMemcpyDtoH(dataToSync->buffer, dataToSync->hip_memory+dataToSync->opencl_buffer_offset, size);
+//                    hipError_t err = hipMemcpy2D(dataToSync->buffer, 256, dataToSync->hip_memory, 256, 256, 1, hipMemcpyDeviceToHost);
+                    if (err) {
+                        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyDtoH(DtoH_lut) => %d\n", err);
+                        return -1;
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    int64_t etime = agoGetClockCounter();
+                    graph->opencl_perf.buffer_read += etime - stime;
+                }
+                else {
+                    vx_size size = dataToSync->size;
+                    if (dataToSync->ref.type == VX_TYPE_ARRAY) {
+                        // transfer only region that has valid data
+                        size = dataToSync->u.arr.numitems * dataToSync->u.arr.itemsize;
+                    }
+                    else if (node->akernel->opencl_buffer_access_enable) {
+                        // no need to transfer to CPU for this node
+                        size = 0;
+                    }
+                    if (size > 0) {
+                        int64_t stime = agoGetClockCounter();
+                        if (size > 0) {
+                            hipError_t err = hipMemcpyDtoH(dataToSync->buffer, dataToSync->hip_memory+dataToSync->opencl_buffer_offset, size);
+                            if (err) {
+                                agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyDtoH(0x%x,%s,%ld,%ld) => %d\n", dataToSync->ref.type, dataToSync->name.c_str(), dataToSync->opencl_buffer_offset, size, err);
+                                return -1;
+                            }
+                        }
+                        dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        int64_t etime = agoGetClockCounter();
+                        graph->opencl_perf.buffer_read += etime - stime;
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
 #endif
 
 int agoUpdateDelaySlots(AgoNode * node)
@@ -2052,7 +2177,7 @@ int agoExecuteGraph(AgoGraph * graph)
 		if (status != VX_SUCCESS)
 			return status;
 	}
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
 	for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
 		for (size_t arg = 0; arg < supernode->dataList.size(); arg++) {
 			AgoData * data = supernode->dataList[arg];
@@ -2088,6 +2213,12 @@ int agoExecuteGraph(AgoGraph * graph)
 			data->opencl_buffer = nullptr;
 		}
 	}
+#elif ENABLE_HIP
+    for (AgoData * data = graph->dataList.head; data; data = data->next) {
+        if (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferOpenCL) {
+            data->hip_memory = nullptr;
+        }
+    }
 #endif
 	// mark that none of the supernode has been launched
 	for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
@@ -2095,7 +2226,7 @@ int agoExecuteGraph(AgoGraph * graph)
 			node->supernode->launched = false;
 		}
 	}
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
 	graph->opencl_nodeListQueued.clear();
 	vx_uint32 nodeLaunchHierarchicalLevel = 0;
 	memset(&graph->opencl_perf, 0, sizeof(graph->opencl_perf));
@@ -2140,11 +2271,44 @@ int agoExecuteGraph(AgoGraph * graph)
 				agoPerfProfileEntry(graph, ago_profile_type_launch_end, &node->ref);
 			}
 		}
+#elif ENABLE_HIP
+        // process GPU nodes at current hierarchical level
+        for (auto node = snode; node != enode; node = node->next) {
+            if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU) {
+                bool launched = true;
+				node->hip_stream0 = graph->hip_stream0;
+                agoPerfProfileEntry(graph, ago_profile_type_launch_begin, &node->ref);
+                agoPerfCaptureStart(&node->perf);
+                if (!node->supernode) {
+                    // launch the single node
+                    if (agoGpuHipSingleNodeLaunch(graph, node) < 0) {
+                        return -1;
+                    }
+                }
+                else if (!node->supernode->launched) {
+                    // launch the super node
+                    if (agoGpuHipSuperNodeLaunch(graph, node->supernode) < 0) {
+                        return -1;
+                    }
+                    node->supernode->launched = true;
+                }
+                else {
+                    launched = false;
+                }
+                if (launched) {
+                    graph->opencl_nodeListQueued.push_back(node);
+                    if (nodeLaunchHierarchicalLevel == 0) {
+                        nodeLaunchHierarchicalLevel = node->hierarchical_level;
+                    }
+                }
+                agoPerfProfileEntry(graph, ago_profile_type_launch_end, &node->ref);
+            }
+        }
 #endif
 		// process CPU nodes at current hierarchical level
 		for (auto node = snode; node != enode; node = node->next) {
 			if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU) {
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
 				opencl_buffer_access_enable |= (node->akernel->opencl_buffer_access_enable ? true : false);
 				if (!node->akernel->opencl_buffer_access_enable) {
 					agoPerfProfileEntry(graph, ago_profile_type_wait_begin, &node->ref);
@@ -2157,11 +2321,19 @@ int agoExecuteGraph(AgoGraph * graph)
 						nodeLaunchHierarchicalLevel = 0;
 					}
 					if(opencl_buffer_access_enable) {
-						cl_int err = clFinish(graph->opencl_cmdq);
+#if ENABLE_OPENCL
+                        cl_int err = clFinish(graph->opencl_cmdq);
 						if (err) {
 							agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clFinish(graph) => %d\n", err);
 							return VX_FAILURE;
 						}
+#else
+                        hipError_t err = hipStreamSynchronize(graph->hip_stream0);
+                        if (err) {
+                            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamSynchronize(graph) => %d\n", err);
+                            return VX_FAILURE;
+                        }
+#endif
 						opencl_buffer_access_enable = false;
 					}
 					agoPerfProfileEntry(graph, ago_profile_type_wait_end, &node->ref);
@@ -2171,19 +2343,30 @@ int agoExecuteGraph(AgoGraph * graph)
 				if (node->akernel->opencl_buffer_access_enable) {
 					for (vx_uint32 i = 0; i < node->paramCount; i++) {
 						AgoData * data = node->paramList[i];
-						if (data && data->opencl_buffer &&
+                        if (data &&
 							(node->parameters[i].direction == VX_INPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
 						{
 							auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
 							if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT) &&
-							    dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
-							{
-								status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_OPENCL);
-								if(status != VX_SUCCESS) {
-									agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_OPENCL) failed (%d:%s)\n", status, agoEnum2Name(status));
-									return status;
-								}
-							}
+#if ENABLE_OPENCL
+                            dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
+                            {
+                                status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_OPENCL);
+                                if(status != VX_SUCCESS) {
+                                    agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_OPENCL) failed (%d:%s)\n", status, agoEnum2Name(status));
+                                    return status;
+                                }
+                            }
+#else
+                            dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED))
+                            {
+                                status = agoDirective((vx_reference)dataToSync, VX_DIRECTIVE_AMD_COPY_TO_HIPMEM);
+                                if(status != VX_SUCCESS) {
+                                    agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: agoDirective(*,VX_DIRECTIVE_AMD_COPY_TO_HIPMEM) failed (%d:%s)\n", status, agoEnum2Name(status));
+                                    return status;
+                                }
+                            }
+#endif
 						}
 					}
 				}
@@ -2226,12 +2409,12 @@ int agoExecuteGraph(AgoGraph * graph)
 				}
 				agoPerfCaptureStop(&node->perf);
 				agoPerfProfileEntry(graph, ago_profile_type_exec_end, &node->ref);
-#if ENABLE_OPENCL
 				// mark that node outputs are dirty
 				for (vx_uint32 i = 0; i < node->paramCount; i++) {
-					AgoData * data = node->paramList[i];
-					if (data && data->opencl_buffer &&
-						(node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+#if ENABLE_OPENCL
+                    AgoData * data = node->paramList[i];
+                    if (data && data->opencl_buffer &&
+                        (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
 					{
 						auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
 						dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -2240,9 +2423,21 @@ int agoExecuteGraph(AgoGraph * graph)
 								? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
 								: AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
 					}
-				}
+#elif ENABLE_HIP
+                    AgoData * data = node->paramList[i];
+                    if (data && data->hip_memory &&
+                            (node->parameters[i].direction == VX_OUTPUT || node->parameters[i].direction == VX_BIDIRECTIONAL))
+                    {
+                        auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
+                        dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        dataToSync->buffer_sync_flags |=
+                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferOpenCL)
+                                ? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
+                                : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
+                    }
 #endif
-				// node callback
+                }
+                // node callback
 				if (node->callback) {
 					vx_action action = node->callback(node);
 					if (action == VX_ACTION_ABANDON) {
@@ -2253,7 +2448,7 @@ int agoExecuteGraph(AgoGraph * graph)
 			}
 		}
 	}
-#if ENABLE_OPENCL
+#if (ENABLE_OPENCL||ENABLE_HIP)
 	agoPerfProfileEntry(graph, ago_profile_type_wait_begin, &graph->ref);
 	if (nodeLaunchHierarchicalLevel > 0) {
 		status = agoWaitForNodesCompletion(graph);
@@ -2262,13 +2457,21 @@ int agoExecuteGraph(AgoGraph * graph)
 			return status;
 		}
 	}
-	if(opencl_buffer_access_enable) {
-		cl_int err = clFinish(graph->opencl_cmdq);
+    if(opencl_buffer_access_enable) {
+#if ENABLE_OPENCL
+        cl_int err = clFinish(graph->opencl_cmdq);
 		if (err) {
 			agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clFinish(graph) => %d\n", err);
 			return VX_FAILURE;
 		}
-	}
+#else
+        hipError_t err = hipStreamSynchronize(graph->hip_stream0);
+        if (err) {
+            agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipStreamSynchronize(graph) => %d\n", err);
+            return VX_FAILURE;
+        }
+#endif
+    }
 	agoPerfProfileEntry(graph, ago_profile_type_wait_end, &graph->ref);
 	graph->opencl_perf_total.kernel_enqueue += graph->opencl_perf.kernel_enqueue;
 	graph->opencl_perf_total.kernel_wait += graph->opencl_perf.kernel_wait;

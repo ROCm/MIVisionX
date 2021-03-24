@@ -202,7 +202,7 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     sum2.data[7] += fval;
 
     uint mask = HIPSELECT(0xffffu, 0u, y < 1);
-    mask = HIPSELECT(0u, mask, y < 719);
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 1));
     uint4 dst;
     uint mp;
 
@@ -222,14 +222,14 @@ Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
     mp = hip_canny_mag_phase_L1(sum1.data[4], sum2.data[4]) & mask;
     dst.z = mp;
     mp = hip_canny_mag_phase_L1(sum1.data[5], sum2.data[5]) & mask;
-    mp = HIPSELECT(0u, mp, x < 1274u);
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 6));
     dst.z |= (mp << 16);
 
     mp = hip_canny_mag_phase_L1(sum1.data[6], sum2.data[6]) & mask;
-    mp = HIPSELECT(0u, mp, x < 1273u);
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 7));
     dst.w  =  mp;
     mp = hip_canny_mag_phase_L1(sum1.data[7], sum2.data[7]) & mask;
-    mp = HIPSELECT(0u, mp, x < 1272u);
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
     dst.w |= (mp << 16);
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
@@ -447,7 +447,7 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
     sum2.data[7] += fval;
 
     uint mask = HIPSELECT(0xffffu, 0u, y < 1);
-    mask = HIPSELECT(0u, mask, y < 719);
+    mask = HIPSELECT(0u, mask, y < (dstHeight - 1));
     uint4 dst;
     uint mp;
 
@@ -467,14 +467,14 @@ Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
     mp = hip_canny_mag_phase_L2(sum1.data[4], sum2.data[4]) & mask;
     dst.z = mp;
     mp = hip_canny_mag_phase_L2(sum1.data[5], sum2.data[5]) & mask;
-    mp = HIPSELECT(0u, mp, x < 1274u);
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 6));
     dst.z |= (mp << 16);
 
     mp = hip_canny_mag_phase_L2(sum1.data[6], sum2.data[6]) & mask;
-    mp = HIPSELECT(0u, mp, x < 1273u);
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 7));
     dst.w  =  mp;
     mp = hip_canny_mag_phase_L2(sum1.data[7], sum2.data[7]) & mask;
-    mp = HIPSELECT(0u, mp, x < 1272u);
+    mp = HIPSELECT(0u, mp, x < (dstWidth - 8));
     dst.w |= (mp << 16);
 
     uint dstIdx =  y * dstImageStrideInBytes + x + x;
@@ -521,7 +521,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    const uchar *xyStack, uint capacityOfXY, uint2 hyst,
+    const uchar *xyStack, uint xyStackOffset, uint capacityOfXY, uint2 hyst,
     uint dstWidthComp) {
 
     __shared__ uchar lbuf[2448];
@@ -618,8 +618,8 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
     M.w = HIPSELECT(0u, NB.y, NB.y > M1);
     M.w = HIPSELECT(0u, M.w, NB.y >= M2);
 
-    uint mask = HIPSELECT(0u, 0xffffffffu, x < 320u);
-    mask = HIPSELECT(0u, mask, y < 720u);
+    uint mask = HIPSELECT(0u, 0xffffffffu, x < dstWidthComp);
+    mask = HIPSELECT(0u, mask, y < dstHeight);
     M.x &= mask;
     M.y &= mask;
     M.z &= mask;
@@ -647,7 +647,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
         stack_icount += HIPSELECT(0u, 1u, P.w == 255u);
         if (stack_icount > 0) {
             uint pos = atomicAdd((uint *)xyStack, stack_icount);
-            uint *xyStackPtr = (uint *)&xyStack[0];
+            uint *xyStackPtr = (uint *)&xyStack[xyStackOffset];
             uint xyloc = (y << 16) + (x << 2);
             if(pos < capacityOfXY && P.x == 255u)
                 xyStackPtr[pos++] = xyloc;
@@ -664,11 +664,11 @@ int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
     vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     const vx_uint16 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    vx_uint8* xyStack, vx_uint32 capacityOfXY,
+    vx_uint8* xyStack, vx_uint32 xyStackOffset, vx_uint32 capacityOfXY,
     vx_uint16 hyst_lower, vx_uint16 hyst_upper) {
     int localThreads_x = 16;
     int localThreads_y = 16;
-    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_x = (dstWidth + 3) >> 2;
     int globalThreads_y = dstHeight;
 
     uint2 hyst;
@@ -680,7 +680,7 @@ int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
     hipLaunchKernelGGL(Hip_CannySuppThreshold_U8XY_U16_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        (const uchar *)xyStack, capacityOfXY, hyst,
+                        (const uchar *)xyStack, xyStackOffset, capacityOfXY, hyst,
                         dstWidthComp);
 
     return VX_SUCCESS;

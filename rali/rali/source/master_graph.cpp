@@ -759,7 +759,6 @@ void MasterGraph::output_routine()
                 {
                     if(node->_is_ssd)
                     {
-                        // std::cerr<<"\n Comes to set meta data in ssd random crop in output routine";
                         node->set_meta_data(_augmented_meta_data);
                     }
                 }
@@ -771,7 +770,6 @@ void MasterGraph::output_routine()
                     {
                         if(_is_random_bbox_crop)
                         {
-                            // std::cerr<<"\n Im master graph output routine comes to is_random_bbox_crop";
                             _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
                             _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
                         }

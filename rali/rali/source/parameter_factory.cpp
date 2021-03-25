@@ -82,7 +82,6 @@ ParameterFactory* ParameterFactory::instance() {
         std::lock_guard<std::mutex> lock(_mutex);
         if(_instance == nullptr) 
         {
-            std::cerr<<"\n Creating new paramter instance";
             _instance = new ParameterFactory();
         }
     }

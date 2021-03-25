@@ -40,17 +40,13 @@ public:
     void release() override;
     void print_map_contents();
     void update_meta_data();
-
     CropCordBatch * get_output() override { return _output; }
-    
     std::shared_ptr<RaliRandomCropParam> get_crop_param() { return _crop_param; }
     float get_threshold(){return _threshold;}
     std::vector<std::pair<bool, float>> get_iou_range(){return _iou_range;}
     bool is_entire_iou(){return _entire_iou;}
-
     void set_meta_data(std::shared_ptr<MetaDataReader> meta_data_reader) override;
     pCropCord get_crop_cord(const std::string &image_names) override;
-
     RandomBBoxCropReader();
     ~RandomBBoxCropReader() override {}
 private:

@@ -129,7 +129,6 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
             box.y = coords_buf[m + 1];
             box.w = coords_buf[m + 2];
             box.h = coords_buf[m + 3];
-
             auto x_c = 0.5f * (2 * box.x + box.w);
             auto y_c = 0.5f * (2 * box.y + box.h);
             if ((x_c > left) && (x_c < right) && (y_c > top) && (y_c < bottom))

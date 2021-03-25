@@ -62,7 +62,6 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
                                   size_t &actual_decoded_width, size_t &actual_decoded_height,
                                   Decoder::ColorFormat desired_decoded_color_format, DecoderConfig decoder_config, bool keep_original_size)
 {
-    // 
     int tjpf = TJPF_RGB;
     int planes = 1;
     switch (desired_decoded_color_format) {
@@ -91,9 +90,6 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         y1 = _bbox_coord[1];
         crop_width = _bbox_coord[2];
         crop_height = _bbox_coord[3];
-        // std::cerr<<"\n FusedCropTJDecoder::decode Crop:: x1 "<<x1<<"\t y1 "<<y1<<"\t cw "<<crop_width<<"\t ch "<<crop_height;
-        // std::cerr<<"\n Original Image width :: "<<original_image_width<<"\t Crop width :: "<<crop_width;
-        // std::cerr<<"\n Original Image Height :: "<<original_image_height<<"\t Crop height :: "<<crop_height;
     }
     else
     {
@@ -168,9 +164,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     {
         elements_in_crop_row = crop_width_diff * planes;
         _bbox_coord[0] = x1_diff;
-        _bbox_coord[2] = crop_width_diff;
-        // std::cerr<<"\n FusedCropTJDecoder::decode Value changes:: "<<x1_diff<<" "<<crop_width_diff;
-    }
+        _bbox_coord[2] = crop_width_diff;    }
 
     src_ptr_temp = output_buffer + (y1 *  elements_in_row);
     dst_ptr_temp = output_buffer;

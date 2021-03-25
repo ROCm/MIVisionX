@@ -679,13 +679,12 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         numOfClasses = num_of_classes;
         int label_one_hot_encoded[inputBatchSize * numOfClasses];
         raliGetImageName(handle, img_name);
-        if(num_of_classes != 0)
+        if (num_of_classes != 0)
         {
-        raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
+            raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
         }
         std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
         for (int i = 0; i < inputBatchSize; i++)
-
         {   
             std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
             if(num_of_classes != 0)
@@ -700,7 +699,6 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                 {
                     std::cout << idx_value;
                 }
-
             }
             }
             std::cout << "\n";

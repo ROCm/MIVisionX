@@ -53,5 +53,4 @@ private:
 
     Image *_output_image;
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
-
 };

@@ -2,14 +2,11 @@ import rali_pybind as b
 import amd.rali.types as types
 import torch
 
-
-
 class Node:
     def __init__(self):
         self.data = None
         self.prev = None
         self.next = None
-
 
 class OneHot(Node):
     """
@@ -47,7 +44,6 @@ class OneHot(Node):
         self.output.prev = self
         self.output.next = None
         self.output.data = self._num_classes
-
         return self.output
 
     def rali_c_func_call(self,handle):

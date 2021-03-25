@@ -190,13 +190,13 @@ void RandomBBoxCropReader::read_all()
             coords_buf[m + 2] = bb_coords[j].w;
             coords_buf[m + 3] = bb_coords[j].h;
         }
-     
+
         while (true)
         {
             crop_success = false;
             sample_option = dis(gen);
             min_iou = sample_options[sample_option];
-            Parameter<float> *x_factor_param, *y_factor_param; 
+            Parameter<float> *x_factor_param, *y_factor_param;
             invalid_bboxes = false;
 
             //Condition for Original Image
@@ -213,50 +213,39 @@ void RandomBBoxCropReader::read_all()
             {
                 crop_box.x = 0;
                 crop_box.y = 0;
-                crop_box.w = in_width[i];  
-                crop_box.h = in_height[i]; 
+                crop_box.w = in_width[i];
+                crop_box.h = in_height[i];
                 break;
             }
             else // If it has no shape, then area and aspect ratio thing should be provided
             {
                 for (int j = 0; j < 1; j++)
                 {
-
-                    
                     // Setting width factor btw 0.3 and 1.0";
                     width_factor_param->renew();
                     float width_factor = width_factor_param->get();
-
-                    
                     // Setting height factor btw 0.3 and 1.0";
                     height_factor_param->renew();
                     float height_factor = height_factor_param->get();
-
                     if ((width_factor / height_factor < 0.5) || (width_factor / height_factor > 2.))
                     {
                         continue;
                     }
-
                     // Setting width factor btw 0 and 1 - width_factor
                     x_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - width_factor)->core;
                     x_factor_param->renew();
                     float x_factor = x_factor_param->get();
-
-                     // Setting height factor btw 0 and 1 - width_factor
+                    // Setting height factor btw 0 and 1 - width_factor
                     y_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - height_factor)->core;
                     y_factor_param->renew();
                     float y_factor = y_factor_param->get();
-
                     crop_box.x = x_factor * in_width[i];
                     crop_box.y = y_factor * in_height[i];
                     crop_box.w = width_factor * in_width[i];
                     crop_box.h = height_factor * in_height[i];
-
                     // All boxes should satisfy IOU criteria
-
                     if (_all_boxes_overlap)
                     {
-                        
                         for (uint j = 0; j < bb_count; j++)
                         {
                             int m = j * 4;

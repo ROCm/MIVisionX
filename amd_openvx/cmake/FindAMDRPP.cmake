@@ -65,5 +65,5 @@ set(AMDRPP_LIBRARIES_DIR ${AMDRPP_LIBRARIES_DIR} CACHE INTERNAL "")
 
 
 if( NOT AMDRPP_FOUND )
-    message( STATUS "FindAMDRPP looked for libraries named: amd_rpp" )
+    message( STATUS "FindAMDRPP failed to find library named: amd_rpp" )
 endif()

@@ -34,6 +34,7 @@
 # FFMPEG_LIBAVUTIL
 #
 
+set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig")
 include(FindPackageHandleStandardArgs)
 
     find_package_handle_standard_args(FFmpeg

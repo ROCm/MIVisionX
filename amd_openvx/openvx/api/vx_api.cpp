@@ -9503,8 +9503,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size n
  * is undefined.
  * \param [in] mem_type A <tt>\ref vx_memory_type_e</tt> enumeration that
  * specifies the type of the memory where the tensor patch is requested to be mapped.
- * \param [in] flags An integer that allows passing options to the map operation.
- * Use the <tt>\ref vx_map_flag_e</tt> enumeration.
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_ERROR_OPTIMIZED_AWAY This is a reference to a virtual tensor that cannot be accessed by the application.
  * \retval VX_ERROR_INVALID_REFERENCE The tensor reference is not actually an tensor reference.
@@ -9512,7 +9510,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size n
  * \ingroup group_tensor
  * \post <tt>\ref vxUnmapTensorPatch </tt> with same (*map_id) value.
  */
-VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type, vx_uint32 flags)
+VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type)
 {
 	AgoData * data = (AgoData *)tensor;
 	vx_status status = VX_ERROR_INVALID_REFERENCE;

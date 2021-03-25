@@ -279,7 +279,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 
     vx_map_id map_id;
     void * ptr;
-    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0));
+    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     vx_size n = fread(ptr, itemsize, count, fp);
     if(n != count) {
         vxAddLogEntry((vx_reference)tensor, VX_FAILURE, "ERROR: expected char[%ld], but got char[%ld] in %s\\n", count*itemsize, n*itemsize, binaryFilename);
@@ -1366,7 +1366,7 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
             printf("ERROR: annCopyToInferenceInput: vxCopyTensorPatch: failed (%%d)\\n", status);
         }
     }
-    else if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS) {
+    else if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
         printf("ERROR: annCopyToInferenceInput: vxMapTensorPatch: failed (%%d)\\n", status);
     }
     else {
@@ -1415,7 +1415,7 @@ VX_API_ENTRY int VX_API_CALL annCopyToInferenceInput(pyif_ann_handle handle, flo
             printf("ERROR: annCopyToInferenceInput: vxCopyTensorPatch: failed (%%d)\\n", status);
         }
     }
-    else if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS) {
+    else if((status = vxMapTensorPatch(handle->input, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
         printf("ERROR: annCopyToInferenceInput: vxMapTensorPatch: failed (%%d)\\n", status);
     }
     else {
@@ -1486,7 +1486,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput(pyif_ann_handle handle, 
     }
     else if(handle->output[0])
     {
-        if((status = vxMapTensorPatch(handle->output[0], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS) {
+        if((status = vxMapTensorPatch(handle->output[0], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS) {
             printf("ERROR: annCopyFromInferenceOutput: vxMapTensorPatch: failed (%%d)\\n", status);
         }
         for(int i = 0; i < writeSize; i++) {
@@ -1541,7 +1541,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     }
     else if(handle->output)
     {
-        if((status = vxMapTensorPatch(handle->output[1], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
+        if((status = vxMapTensorPatch(handle->output[1], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS)
         {
             printf("ERROR: annCopyFromInferenceOutput: vxMapTensorPatch: failed (%%d)\\n", status);
         }
@@ -1598,7 +1598,7 @@ VX_API_ENTRY int VX_API_CALL annCopyFromInferenceOutput_%d(pyif_ann_handle handl
     }
     else if(handle->output)
     {
-        if((status = vxMapTensorPatch(handle->output[2], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0)) != VX_SUCCESS)
+        if((status = vxMapTensorPatch(handle->output[2], %d, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST)) != VX_SUCCESS)
         {
             printf("ERROR: annCopyFromInferenceOutput: vxMapTensorPatch: failed (%%d)\\n", status);
         }
@@ -1908,7 +1908,7 @@ static vx_status copyTensor(std::string tensorName, vx_tensor tensor, std::strin
     vx_size count = dims[0] * dims[1] * dims[2] * dims[3];
     vx_map_id map_id;
     void * ptr;
-    vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
     if(status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for " << fileName << std::endl;
         return -1;

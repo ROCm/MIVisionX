@@ -476,7 +476,7 @@ int CVxParamTensor::CompareFrame(int frameNumber)
 	vx_map_id map_id;
 	vx_size stride[MAX_TENSOR_DIMENSIONS];
 	vx_uint8 * ptr;
-	vx_status status = vxMapTensorPatch(m_tensor, m_num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+	vx_status status = vxMapTensorPatch(m_tensor, m_num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 	if (status != VX_SUCCESS)
 		ReportError("ERROR: vxMapTensorPatch: read failed (%d)\n", status);
 

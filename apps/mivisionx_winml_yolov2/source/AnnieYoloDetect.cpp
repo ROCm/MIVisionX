@@ -138,7 +138,7 @@ void AnnieYoloDetect::detect() {
 		ERROR_CHECK_STATUS(vxProcessGraph(graph));
 
 		ERROR_CHECK_STATUS(vxQueryTensor(output, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
-		ERROR_CHECK_STATUS(vxMapTensorPatch(output, num_of_dims, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
+		ERROR_CHECK_STATUS(vxMapTensorPatch(output, num_of_dims, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
 		mRegion->GetDetections(ptr, (int)out_dim[2], (int)out_dim[1], (int)out_dim[0], classes, input.cols, input.rows, threshold, nms, targetBlockwd, results);
 		ERROR_CHECK_STATUS(vxUnmapTensorPatch(output, map_id));
@@ -182,7 +182,7 @@ void AnnieYoloDetect::detect() {
 
 			ERROR_CHECK_STATUS(vxProcessGraph(graph));
 			ERROR_CHECK_STATUS(vxQueryTensor(output, VX_TENSOR_NUMBER_OF_DIMS, &num_of_dims, sizeof(num_of_dims)));
-			ERROR_CHECK_STATUS(vxMapTensorPatch(output, num_of_dims, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0));
+			ERROR_CHECK_STATUS(vxMapTensorPatch(output, num_of_dims, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 
 			mRegion->GetDetections(ptr, (int)out_dim[2], (int)out_dim[1], (int)out_dim[0], classes, input.cols, input.rows, (float)threshold, nms, targetBlockwd, results);
 			ERROR_CHECK_STATUS(vxUnmapTensorPatch(output, map_id));

@@ -1972,28 +1972,29 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     int x = hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
 
+    int srcStride = srcImageStrideInBytes;
     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
-    int srcIdx =  (((y - ly) << 1) + 1) * srcImageStrideInBytes + ((x - lx) << 3);
+    int srcIdx =  (((y - ly) << 1) + 1) * srcStride + ((x - lx) << 3);
     bool valid = ((x < dstWidthComp) && (y < dstHeight)) ? true : false;
 
     { // load 136x35 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (ly - 2) * srcImageStrideInBytes + (lx << 3) - 4;
+        int goffset = (ly - 2) * srcStride + (lx << 3) - 4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
         loffset += 16 * 136;
-        goffset += 16 * srcImageStrideInBytes;
+        goffset += 16 * srcStride;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
         if (ly < 3) {
             loffset += 16 * 136;
-            goffset += 16 * srcImageStrideInBytes;
+            goffset += 16 * srcStride;
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[srcIdx + goffset]));
         }
         __shared__ uchar *lbufptr;
         lbufptr = lbuf + 128;
-        goffset = -2 * srcImageStrideInBytes + 124;
+        goffset = -2 * srcStride + 124;
         int id = ly * 16 + lx;
         if (id < 35) {
-            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcImageStrideInBytes]));
+            *((uint2 *)(&lbufptr[id * 136])) = *((uint2 *)(&pSrcImage[srcIdx + goffset + id * srcStride]));
         }
         __syncthreads();
     }
@@ -2151,37 +2152,37 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     __syncthreads();
 
     lbuf_ptr += ly * 136;
-    uint2 *L0_01 = (uint2 *)(&L0);
+    uint2 L0_01;
 
-    *L0_01 = *((uint2 *)(&lbuf_ptr));
-    sum.x = (float)(L0.x & 0xffff);
-    sum.y = (float)(L0.x >> 16);
-    sum.z = (float)(L0.y & 0xffff);
-    sum.w = (float)(L0.y >> 16);
+    L0_01 = *((uint2 *)(&lbuf_ptr));
+    sum.x = (float)(L0_01.x & 0xffff);
+    sum.y = (float)(L0_01.x >> 16);
+    sum.z = (float)(L0_01.y & 0xffff);
+    sum.w = (float)(L0_01.y >> 16);
 
-    *L0_01 = *((uint2 *)(&lbuf_ptr[136]));
-    sum.x = fmaf((float)(L0.x & 0xffff), 4.0f, sum.x);
-    sum.y = fmaf((float)(L0.x >> 16), 4.0f, sum.y);
-    sum.z = fmaf((float)(L0.y & 0xffff), 4.0f, sum.z);
-    sum.w = fmaf((float)(L0.y >> 16), 4.0f, sum.w);
+    L0_01 = *((uint2 *)(&lbuf_ptr[136]));
+    sum.x = fmaf((float)(L0_01.x & 0xffff), 4.0f, sum.x);
+    sum.y = fmaf((float)(L0_01.x >> 16), 4.0f, sum.y);
+    sum.z = fmaf((float)(L0_01.y & 0xffff), 4.0f, sum.z);
+    sum.w = fmaf((float)(L0_01.y >> 16), 4.0f, sum.w);
 
-    *L0_01 = *((uint2 *)(&lbuf_ptr[272]));
-    sum.x = fmaf((float)(L0.x & 0xffff), 6.0f, sum.x);
-    sum.y = fmaf((float)(L0.x >> 16), 6.0f, sum.y);
-    sum.z = fmaf((float)(L0.y & 0xffff), 6.0f, sum.z);
-    sum.w = fmaf((float)(L0.y >> 16), 6.0f, sum.w);
+    L0_01 = *((uint2 *)(&lbuf_ptr[272]));
+    sum.x = fmaf((float)(L0_01.x & 0xffff), 6.0f, sum.x);
+    sum.y = fmaf((float)(L0_01.x >> 16), 6.0f, sum.y);
+    sum.z = fmaf((float)(L0_01.y & 0xffff), 6.0f, sum.z);
+    sum.w = fmaf((float)(L0_01.y >> 16), 6.0f, sum.w);
 
-    *L0_01 = *((uint2 *)(&lbuf_ptr[408]));
-    sum.x = fmaf((float)(L0.x & 0xffff), 4.0f, sum.x);
-    sum.y = fmaf((float)(L0.x >> 16), 4.0f, sum.y);
-    sum.z = fmaf((float)(L0.y & 0xffff), 4.0f, sum.z);
-    sum.w = fmaf((float)(L0.y >> 16), 4.0f, sum.w);
+    L0_01 = *((uint2 *)(&lbuf_ptr[408]));
+    sum.x = fmaf((float)(L0_01.x & 0xffff), 4.0f, sum.x);
+    sum.y = fmaf((float)(L0_01.x >> 16), 4.0f, sum.y);
+    sum.z = fmaf((float)(L0_01.y & 0xffff), 4.0f, sum.z);
+    sum.w = fmaf((float)(L0_01.y >> 16), 4.0f, sum.w);
 
-    *L0_01 = *((uint2 *)(&lbuf_ptr[544]));
-    sum.x += (float)(L0.x & 0xffff);
-    sum.y += (float)(L0.x >> 16);
-    sum.z += (float)(L0.y & 0xffff);
-    sum.w += (float)(L0.y >> 16);
+    L0_01 = *((uint2 *)(&lbuf_ptr[544]));
+    sum.x += (float)(L0_01.x & 0xffff);
+    sum.y += (float)(L0_01.x >> 16);
+    sum.z += (float)(L0_01.y & 0xffff);
+    sum.w += (float)(L0_01.y >> 16);
 
     sum = sum * (float4)0.00390625f;
     if (valid) {

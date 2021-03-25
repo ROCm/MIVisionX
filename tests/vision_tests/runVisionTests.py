@@ -341,6 +341,9 @@ else:
     print("\nERROR: RunVX Executable Not Found\n")
     exit()
 
+# Get cwd
+cwd = os.getcwd()
+
 # OpenVX Vision Functionality Tests
 
 if testFilter == 0 and functionalityTests == 'yes':
@@ -367,8 +370,8 @@ else:
 
 # Option A - All cases / single case with GPU profiling
 if hardwareMode == "GPU" and profilingOption == "yes":
-    os.system('rm -rvf rocprof_vision_tests_outputs')
-    os.system('mkdir rocprof_vision_tests_outputs')
+    os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')
+    os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')
     totalCount = 0
     if testFilter == 0:
         nodeList = range(len(openvxNodes[:]))
@@ -379,7 +382,7 @@ if hardwareMode == "GPU" and profilingOption == "yes":
         echo1 = 'Running OpenVX Node - '+nodeName
         os.system('echo '+echo1 +
                 ' | tee -a openvx_node_results/nodePerformanceOutput.log')
-        os.system('mkdir rocprof_vision_tests_outputs/case_'+str(i+1))
+        os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs/case_'+str(i+1))
         if backendType == "HIP":
             print('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
@@ -423,7 +426,7 @@ if hardwareMode == "GPU" and profilingOption == "yes":
                     if line.startswith('"OpenVX_kernel'):
                         new_file.write('Ocl_'+nodeName+","+line)
             case_file.close()
-        except:
+        except IOError:
             print("Unable to open case results")
             continue
     new_file.close()

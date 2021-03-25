@@ -889,9 +889,9 @@ if [ "$BACKEND_TYPE" = "OCLvsHIP" ]; then
                     WIDTH=$HALF_WIDTH
                     HEIGHT=$HALF_HEIGHT
                 fi
-                NUM_OF_OCTETS=$(($WIDTH * ($HEIGHT - 2)))
+                NUM_OF_OCTETS=$(("$WIDTH" * ("$HEIGHT" - 2)))
                 START=13
-                END=$((10 + $WIDTH * 2 + $WIDTH - 4))
+                END=$((10 + "$WIDTH" * 2 + "$WIDTH" - 4))
                 xxd -g 1 -c "$WIDTH" -s "$WIDTH" -l "$NUM_OF_OCTETS" dumpsOCL/"$OUTPUT_BIN" | cut -c "$START"-"$END" > "dumpsOCL/$OUTPUT_BIN.roi.txt"
                 xxd -g 1 -c "$WIDTH" -s "$WIDTH" -l "$NUM_OF_OCTETS" dumpsHIP/"$OUTPUT_BIN" | cut -c "$START"-"$END" > "dumpsHIP/$OUTPUT_BIN.roi.txt"
                 DIFF=$(diff "dumpsHIP/$OUTPUT_BIN.roi.txt" "dumpsOCL/$OUTPUT_BIN.roi.txt")

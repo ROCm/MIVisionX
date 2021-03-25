@@ -818,7 +818,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
         pLocalStrengthShare[lidy][lidx] = 0;
     }
 
-    int local_strength;
+    int local_strength = 0;
     if(doCompute) {
         int boundary[16];
         int pos_mask, neg_mask, offs;
@@ -1177,7 +1177,7 @@ Hip_HarrisSobel_HG3_U8_3x3(uint dstWidth, uint dstHeight,
         sum2X = make_float4(sum2.data[0], sum2.data[1], sum2.data[2], sum2.data[3]);
         sum2Y = make_float4(sum2.data[4], sum2.data[5], sum2.data[6], sum2.data[7]);
 
-        d_float8 dst;
+        d_float8 dst = {0};
 
         *(float4 *)(&dst.data[0]) = sum1X * sum1X;
         *(float4 *)(&dst.data[4]) = sum1Y * sum1Y;

@@ -751,7 +751,9 @@ static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
         int64_t etime = agoGetClockCounter();
         graph->opencl_perf.buffer_read += etime - stime;
         // read and reset the counter
-        data->u.arr.numitems = *pNumItems;
+        if (pNumItems != nullptr) {
+            data->u.arr.numitems = *pNumItems;
+        }
     }
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
         // update number of items and reset it for next use

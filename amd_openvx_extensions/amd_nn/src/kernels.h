@@ -36,6 +36,7 @@ THE SOFTWARE.
 // common header files
 #include <VX/vx.h>
 #include <VX/vx_khr_nn.h>
+#include <VX/vx_compatibility.h>
 #include <vx_ext_amd.h>
 #include <miopen/miopen.h>
 #include <iostream>

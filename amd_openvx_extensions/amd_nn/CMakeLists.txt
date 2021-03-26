@@ -51,7 +51,7 @@ list(APPEND SOURCES
     src/convolution_layer.cpp
     src/deconvolution_layer.cpp
     src/fully_connected_layer.cpp
-    #src/normalization_layer.cpp
+    src/normalization_layer.cpp
     src/local_response_normalization_layer.cpp
     src/pooling_layer.cpp
     src/roi_pooling_layer.cpp

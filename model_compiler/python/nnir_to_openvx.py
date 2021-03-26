@@ -244,6 +244,7 @@ def generateModuleCPP(graph,fileName,virtual_tensor_flag):
 """
 #include "annmodule.h"
 #include <VX/vx_khr_nn.h>
+#include <VX/vx_compatibility.h>
 #include <vx_amd_nn.h>
 #include <vx_ext_amd.h>
 #include <stdio.h>

@@ -2077,7 +2077,7 @@ void generateCopyTensorCode(std::ostream& ofsCodeC)
              << "    vx_size count = dims[0] * dims[1] * dims[2] * dims[3];" << std::endl
              << "    vx_map_id map_id;" << std::endl
              << "    float * ptr;" << std::endl
-             << "    vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);" << std::endl
+             << "    vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);" << std::endl
              << "    if(status) {" << std::endl
              << "        std::cerr << \"ERROR: vxMapTensorPatch() failed for \" << fileName << std::endl;" << std::endl
              << "        return -1;" << std::endl

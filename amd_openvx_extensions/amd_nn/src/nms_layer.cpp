@@ -212,7 +212,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     std::vector<std::vector<std::vector<float>>> scores(num_batches,std::vector<std::vector<float>>(num_classes, std::vector<float>(spatial_dimension)));
     
     //map openvx boxes tensor to vector
-    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
@@ -237,7 +237,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
     }
 
     //map openvx scores tensors to vector
-    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
@@ -282,7 +282,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
         int * ptr;
         vx_enum usage = VX_READ_ONLY;
         vx_status status;
-        status = vxMapTensorPatch((vx_tensor)parameters[4], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+        status = vxMapTensorPatch((vx_tensor)parameters[4], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
         if(status)
         {
             std::cerr << "ERROR: vxMapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
@@ -316,7 +316,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
         float * ptr;
         vx_enum usage = VX_READ_ONLY;
         vx_status status;
-        status = vxMapTensorPatch((vx_tensor)parameters[5], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+        status = vxMapTensorPatch((vx_tensor)parameters[5], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
         if(status)
         {
             std::cerr << "ERROR: vxMapTensorPatch() failed for input#5 (" << status << ")" << std::endl;
@@ -349,7 +349,7 @@ static vx_status VX_CALLBACK processNMSLayer(vx_node node, const vx_reference * 
         float * ptr;
         vx_enum usage = VX_READ_ONLY;
         vx_status status;
-        status = vxMapTensorPatch((vx_tensor)parameters[6], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+        status = vxMapTensorPatch((vx_tensor)parameters[6], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
         if(status)
         {
             std::cerr << "ERROR: vxMapTensorPatch() failed for input#5 (" << status << ")" << std::endl;

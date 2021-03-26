@@ -105,7 +105,7 @@ int DGtest::runInference(Mat &image) {
     vxQueryTensor(mInputTensor, VX_TENSOR_DIMS, &dims, sizeof(dims[0])*4);
  
     // copy image to input tensor
-    status = vxMapTensorPatch(mInputTensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch(mInputTensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     if(status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for " <<  std::endl;
         return -1;
@@ -133,7 +133,7 @@ int DGtest::runInference(Mat &image) {
     }
 
     // get the output result from output tensor
-    status = vxMapTensorPatch(mOutputTensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch(mOutputTensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     if(status) {
         std::cerr << "ERROR: vxMapTensorPatch() failed for "  << std::endl;
         return -1;

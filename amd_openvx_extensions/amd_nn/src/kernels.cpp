@@ -174,7 +174,7 @@ void nn_layer_test_dumpBuffer(const char * fileNameFormat, vx_tensor tensor)
     vx_enum usage = VX_READ_ONLY;
     
     vx_size count_tensor = tensor_dims[0]*tensor_dims[1]*tensor_dims[2]*tensor_dims[3];
-    status = vxMapTensorPatch(tensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch(tensor, 4, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for layer dump tensor (" << status << ")" << std::endl;

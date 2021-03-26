@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,11 @@ typedef uint32_t vx_bitfield;
 /*! \brief A 16-bit float value.
  * \ingroup group_basic_features
  */
+#if defined(__arm__) || defined(__arm64__)
+typedef __fp16   vx_float16;
+#else
 typedef hfloat   vx_float16;
+#endif
 #endif
 
 /*! \brief A 32-bit float value.
@@ -337,9 +341,7 @@ enum vx_type_e {
     VX_TYPE_ENUM            = 0x00C,/*!< \brief A <tt>\ref vx_enum</tt>. Equivalent in size to a <tt>\ref vx_int32</tt>. */
     VX_TYPE_SIZE            = 0x00D,/*!< \brief A <tt>\ref vx_size</tt>. */
     VX_TYPE_DF_IMAGE        = 0x00E,/*!< \brief A <tt>\ref vx_df_image</tt>. */
-#if defined(EXPERIMENTAL_PLATFORM_SUPPORTS_16_FLOAT)
     VX_TYPE_FLOAT16         = 0x00F,/*!< \brief A <tt>\ref vx_float16</tt>. */
-#endif
     VX_TYPE_BOOL            = 0x010,/*!< \brief A <tt>\ref vx_bool</tt>. */
 
     VX_TYPE_RECTANGLE       = 0x020,/*!< \brief A <tt>\ref vx_rectangle_t</tt>. */
@@ -367,11 +369,11 @@ enum vx_type_e {
     VX_TYPE_KHRONOS_OBJECT_START = 0x800,/*!< \brief A Khronos defined object base index. */
     VX_TYPE_VENDOR_OBJECT_START  = 0xC00,/*!< \brief A vendor defined object base index. */
 
-    VX_TYPE_KHRONOS_STRUCT_MAX   = VX_TYPE_USER_STRUCT_START - 1,/*!< \brief A value for comparison between Khronos defined structs and user structs. */
+    VX_TYPE_KHRONOS_STRUCT_MAX   = (vx_enum)VX_TYPE_USER_STRUCT_START - 1,/*!< \brief A value for comparison between Khronos defined structs and user structs. */
 
-    VX_TYPE_USER_STRUCT_END      = VX_TYPE_VENDOR_STRUCT_START - 1,/*!< \brief A value for comparison between user structs and vendor structs. */
-    VX_TYPE_VENDOR_STRUCT_END    = VX_TYPE_KHRONOS_OBJECT_START - 1,/*!< \brief A value for comparison between vendor structs and Khronos defined objects. */
-    VX_TYPE_KHRONOS_OBJECT_END   = VX_TYPE_VENDOR_OBJECT_START - 1,/*!< \brief A value for comparison between Khronos defined objects and vendor structs. */
+    VX_TYPE_USER_STRUCT_END      = (vx_enum)VX_TYPE_VENDOR_STRUCT_START - 1,/*!< \brief A value for comparison between user structs and vendor structs. */
+    VX_TYPE_VENDOR_STRUCT_END    = (vx_enum)VX_TYPE_KHRONOS_OBJECT_START - 1,/*!< \brief A value for comparison between vendor structs and Khronos defined objects. */
+    VX_TYPE_KHRONOS_OBJECT_END   = (vx_enum)VX_TYPE_VENDOR_OBJECT_START - 1,/*!< \brief A value for comparison between Khronos defined objects and vendor structs. */
     VX_TYPE_VENDOR_OBJECT_END    = 0xFFF,/*!< \brief A value used for bound checking of vendor objects */
 
 
@@ -407,32 +409,32 @@ enum vx_type_e {
  * \ingroup group_basic_features
  */
 enum vx_status_e {
-    VX_STATUS_MIN                       = -25,/*!< \brief Indicates the lower bound of status codes in VX. Used for bounds checks only. */
+    VX_STATUS_MIN                       = -(vx_int32)25,/*!< \brief Indicates the lower bound of status codes in VX. Used for bounds checks only. */
     /* add new codes here */
-    VX_ERROR_REFERENCE_NONZERO          = -24,/*!< \brief Indicates that an operation did not complete due to a reference count being non-zero. */
-    VX_ERROR_MULTIPLE_WRITERS           = -23,/*!< \brief Indicates that the graph has more than one node outputting to the same data object. This is an invalid graph structure. */
-    VX_ERROR_GRAPH_ABANDONED            = -22,/*!< \brief Indicates that the graph is stopped due to an error or a callback that abandoned execution. */
-    VX_ERROR_GRAPH_SCHEDULED            = -21,/*!< \brief Indicates that the supplied graph already has been scheduled and may be currently executing. */
-    VX_ERROR_INVALID_SCOPE              = -20,/*!< \brief Indicates that the supplied parameter is from another scope and cannot be used in the current scope. */
-    VX_ERROR_INVALID_NODE               = -19,/*!< \brief Indicates that the supplied node could not be created.*/
-    VX_ERROR_INVALID_GRAPH              = -18,/*!< \brief Indicates that the supplied graph has invalid connections (cycles). */
-    VX_ERROR_INVALID_TYPE               = -17,/*!< \brief Indicates that the supplied type parameter is incorrect. */
-    VX_ERROR_INVALID_VALUE              = -16,/*!< \brief Indicates that the supplied parameter has an incorrect value. */
-    VX_ERROR_INVALID_DIMENSION          = -15,/*!< \brief Indicates that the supplied parameter is too big or too small in dimension. */
-    VX_ERROR_INVALID_FORMAT             = -14,/*!< \brief Indicates that the supplied parameter is in an invalid format. */
-    VX_ERROR_INVALID_LINK               = -13,/*!< \brief Indicates that the link is not possible as specified. The parameters are incompatible. */
-    VX_ERROR_INVALID_REFERENCE          = -12,/*!< \brief Indicates that the reference provided is not valid. */
-    VX_ERROR_INVALID_MODULE             = -11,/*!< \brief This is returned from <tt>\ref vxLoadKernels</tt> when the module does not contain the entry point. */
-    VX_ERROR_INVALID_PARAMETERS         = -10,/*!< \brief Indicates that the supplied parameter information does not match the kernel contract. */
-    VX_ERROR_OPTIMIZED_AWAY             = -9,/*!< \brief Indicates that the object refered to has been optimized out of existence. */
-    VX_ERROR_NO_MEMORY                  = -8,/*!< \brief Indicates that an internal or implicit allocation failed. Typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph. */
-    VX_ERROR_NO_RESOURCES               = -7,/*!< \brief Indicates that an internal or implicit resource can not be acquired (not memory). This is typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph. */
-    VX_ERROR_NOT_COMPATIBLE             = -6,/*!< \brief Indicates that the attempt to link two parameters together failed due to type incompatibilty. */
-    VX_ERROR_NOT_ALLOCATED              = -5,/*!< \brief Indicates to the system that the parameter must be allocated by the system.  */
-    VX_ERROR_NOT_SUFFICIENT             = -4,/*!< \brief Indicates that the given graph has failed verification due to an insufficient number of required parameters, which cannot be automatically created. Typically this indicates required atomic parameters. \see vxVerifyGraph. */
-    VX_ERROR_NOT_SUPPORTED              = -3,/*!< \brief Indicates that the requested set of parameters produce a configuration that cannot be supported. Refer to the supplied documentation on the configured kernels. \see vx_kernel_e. This is also returned if a function to set an attribute is called on a Read-only attribute.*/
-    VX_ERROR_NOT_IMPLEMENTED            = -2,/*!< \brief Indicates that the requested kernel is missing. \see vx_kernel_e vxGetKernelByName. */
-    VX_FAILURE                          = -1,/*!< \brief Indicates a generic error code, used when no other describes the error. */
+    VX_ERROR_REFERENCE_NONZERO          = -(vx_int32)24,/*!< \brief Indicates that an operation did not complete due to a reference count being non-zero. */
+    VX_ERROR_MULTIPLE_WRITERS           = -(vx_int32)23,/*!< \brief Indicates that the graph has more than one node outputting to the same data object. This is an invalid graph structure. */
+    VX_ERROR_GRAPH_ABANDONED            = -(vx_int32)22,/*!< \brief Indicates that the graph is stopped due to an error or a callback that abandoned execution. */
+    VX_ERROR_GRAPH_SCHEDULED            = -(vx_int32)21,/*!< \brief Indicates that the supplied graph already has been scheduled and may be currently executing. */
+    VX_ERROR_INVALID_SCOPE              = -(vx_int32)20,/*!< \brief Indicates that the supplied parameter is from another scope and cannot be used in the current scope. */
+    VX_ERROR_INVALID_NODE               = -(vx_int32)19,/*!< \brief Indicates that the supplied node could not be created.*/
+    VX_ERROR_INVALID_GRAPH              = -(vx_int32)18,/*!< \brief Indicates that the supplied graph has invalid connections (cycles). */
+    VX_ERROR_INVALID_TYPE               = -(vx_int32)17,/*!< \brief Indicates that the supplied type parameter is incorrect. */
+    VX_ERROR_INVALID_VALUE              = -(vx_int32)16,/*!< \brief Indicates that the supplied parameter has an incorrect value. */
+    VX_ERROR_INVALID_DIMENSION          = -(vx_int32)15,/*!< \brief Indicates that the supplied parameter is too big or too small in dimension. */
+    VX_ERROR_INVALID_FORMAT             = -(vx_int32)14,/*!< \brief Indicates that the supplied parameter is in an invalid format. */
+    VX_ERROR_INVALID_LINK               = -(vx_int32)13,/*!< \brief Indicates that the link is not possible as specified. The parameters are incompatible. */
+    VX_ERROR_INVALID_REFERENCE          = -(vx_int32)12,/*!< \brief Indicates that the reference provided is not valid. */
+    VX_ERROR_INVALID_MODULE             = -(vx_int32)11,/*!< \brief This is returned from <tt>\ref vxLoadKernels</tt> when the module does not contain the entry point. */
+    VX_ERROR_INVALID_PARAMETERS         = -(vx_int32)10,/*!< \brief Indicates that the supplied parameter information does not match the kernel contract. */
+    VX_ERROR_OPTIMIZED_AWAY             = -(vx_int32)9,/*!< \brief Indicates that the object refered to has been optimized out of existence. */
+    VX_ERROR_NO_MEMORY                  = -(vx_int32)8,/*!< \brief Indicates that an internal or implicit allocation failed. Typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph. */
+    VX_ERROR_NO_RESOURCES               = -(vx_int32)7,/*!< \brief Indicates that an internal or implicit resource can not be acquired (not memory). This is typically catastrophic. After detection, deconstruct the context. \see vxVerifyGraph. */
+    VX_ERROR_NOT_COMPATIBLE             = -(vx_int32)6,/*!< \brief Indicates that the attempt to link two parameters together failed due to type incompatibilty. */
+    VX_ERROR_NOT_ALLOCATED              = -(vx_int32)5,/*!< \brief Indicates to the system that the parameter must be allocated by the system.  */
+    VX_ERROR_NOT_SUFFICIENT             = -(vx_int32)4,/*!< \brief Indicates that the given graph has failed verification due to an insufficient number of required parameters, which cannot be automatically created. Typically this indicates required atomic parameters. \see vxVerifyGraph. */
+    VX_ERROR_NOT_SUPPORTED              = -(vx_int32)3,/*!< \brief Indicates that the requested set of parameters produce a configuration that cannot be supported. Refer to the supplied documentation on the configured kernels. \see vx_kernel_e. This is also returned if a function to set an attribute is called on a Read-only attribute.*/
+    VX_ERROR_NOT_IMPLEMENTED            = -(vx_int32)2,/*!< \brief Indicates that the requested kernel is missing. \see vx_kernel_e vxGetKernelByName. */
+    VX_FAILURE                          = -(vx_int32)1,/*!< \brief Indicates a generic error code, used when no other describes the error. */
     VX_SUCCESS                          =  0,/*!< \brief No error. */
 };
 
@@ -461,81 +463,81 @@ typedef vx_action (VX_CALLBACK *vx_nodecomplete_f)(vx_node node);
  * the 4 bytes of an enumeration.
  * \ingroup group_basic_features
  */
-#define VX_VENDOR_MASK                      (0xFFF00000)
+#define VX_VENDOR_MASK                      (0xFFF00000U)
 
 /*! \brief A type mask removes the scalar/object type from the attribute.
  * It is 3 nibbles in size and is contained between the third and second byte.
  * \see vx_type_e
  * \ingroup group_basic_features
  */
-#define VX_TYPE_MASK                        (0x000FFF00)
+#define VX_TYPE_MASK                        (0x000FFF00U)
 
 /*! \brief A library is a set of vision kernels with its own ID supplied by a vendor.
  * The vendor defines the library ID. The range is \f$ [0,2^{8}-1] \f$ inclusive.
  * \ingroup group_basic_features
  */
-#define VX_LIBRARY_MASK                     (0x000FF000)
+#define VX_LIBRARY_MASK                     (0x000FF000U)
 
 /*! \brief An individual kernel in a library has its own unique ID within \f$ [0,2^{12}-1] \f$ (inclusive).
  * \ingroup group_basic_features
  */
-#define VX_KERNEL_MASK                      (0x00000FFF)
+#define VX_KERNEL_MASK                      (0x00000FFFU)
 
 /*! \brief An object's attribute ID is within the range of \f$ [0,2^{8}-1] \f$ (inclusive).
  * \ingroup group_basic_features
  */
-#define VX_ATTRIBUTE_ID_MASK                (0x000000FF)
+#define VX_ATTRIBUTE_ID_MASK                (0x000000FFU)
 
 /*! \brief A type of enumeration. The valid range is between \f$ [0,2^{8}-1] \f$ (inclusive).
  * \ingroup group_basic_features
  */
-#define VX_ENUM_TYPE_MASK                   (0x000FF000)
+#define VX_ENUM_TYPE_MASK                   (0x000FF000U)
 
 /*! \brief A generic enumeration list can have values between \f$ [0,2^{12}-1] \f$ (inclusive).
  * \ingroup group_basic_features
  */
-#define VX_ENUM_MASK                        (0x00000FFF)
+#define VX_ENUM_MASK                        (0x00000FFFU)
 
 /*! \brief A macro to extract the vendor ID from the enumerated value.
  * \ingroup group_basic_features
  */
-#define VX_VENDOR(e)                        (((vx_uint32)e & VX_VENDOR_MASK) >> 20)
+#define VX_VENDOR(e)                        (((vx_uint32)(e) & VX_VENDOR_MASK) >> 20)
 
 /*! \brief A macro to extract the type from an enumerated attribute value.
  * \ingroup group_basic_features
  */
-#define VX_TYPE(e)                          (((vx_uint32)e & VX_TYPE_MASK) >> 8)
+#define VX_TYPE(e)                          (((vx_uint32)(e) & VX_TYPE_MASK) >> 8)
 
 /*! \brief A macro to extract the enum type from an enumerated value.
  * \ingroup group_basic_features
  */
-#define VX_ENUM_TYPE(e)                     (((vx_uint32)e & VX_ENUM_TYPE_MASK) >> 12)
+#define VX_ENUM_TYPE(e)                     (((vx_uint32)(e) & VX_ENUM_TYPE_MASK) >> 12)
 
 /*! \brief A macro to extract the kernel library enumeration from a enumerated kernel value.
  * \ingroup group_basic_features
  */
-#define VX_LIBRARY(e)                       (((vx_uint32)e & VX_LIBRARY_MASK) >> 12)
+#define VX_LIBRARY(e)                       (((vx_uint32)(e) & VX_LIBRARY_MASK) >> 12)
 
 /*! \def VX_DF_IMAGE
  * \brief Converts a set of four chars into a \c uint32_t container of a VX_DF_IMAGE code.
  * \note Use a <tt>\ref vx_df_image</tt> variable to hold the value.
  * \ingroup group_basic_features
  */
-#define VX_DF_IMAGE(a,b,c,d)                  ((a) | (b << 8) | (c << 16) | (d << 24))
+#define VX_DF_IMAGE(a,b,c,d)                  ((vx_uint32)(vx_uint8)(a) | ((vx_uint32)(vx_uint8)(b) << 8U) | ((vx_uint32)(vx_uint8)(c) << 16U) | ((vx_uint32)(vx_uint8)(d) << 24U))
 
 /*! \def VX_ATTRIBUTE_BASE
  * \brief Defines the manner in which to combine the Vendor and Object IDs to get
  * the base value of the enumeration.
  * \ingroup group_basic_features
  */
-#define VX_ATTRIBUTE_BASE(vendor, object)   (((vendor) << 20) | (object << 8))
+#define VX_ATTRIBUTE_BASE(vendor, object)   ((vx_int32)(((vx_uint32)(vendor) << 20) | ((vx_uint32)(object) << 8)))
 
 /*! \def VX_KERNEL_BASE
  * \brief Defines the manner in which to combine the Vendor and Library IDs to get
  * the base value of the enumeration.
  * \ingroup group_basic_features
  */
-#define VX_KERNEL_BASE(vendor, lib)         (((vendor) << 20) | (lib << 12))
+#define VX_KERNEL_BASE(vendor, lib)         ((vx_int32)(((vx_uint32)(vendor) << 20) | ((vx_uint32)(lib) << 12)))
 
 /*! \def VX_ENUM_BASE
  * \brief Defines the manner in which to combine the Vendor and Object IDs to get
@@ -545,7 +547,7 @@ typedef vx_action (VX_CALLBACK *vx_nodecomplete_f)(vx_node node);
  * <tt>\ref vx_vendor_id_e</tt>, <tt>\ref vx_type_e</tt>, <tt>\ref vx_enum_e</tt>, <tt>\ref vx_df_image_e</tt>, and \c vx_bool.
  * \ingroup group_basic_features
  */
-#define VX_ENUM_BASE(vendor, id)            (((vendor) << 20) | (id << 12))
+#define VX_ENUM_BASE(vendor, id)            ((vx_int32)(((vx_uint32)(vendor) << 20) | ((vx_uint32)(id) << 12)))
 
 /*! \brief The set of supported enumerations in OpenVX.
  * \details These can be extracted from enumerated values using <tt>\ref VX_ENUM_TYPE</tt>.

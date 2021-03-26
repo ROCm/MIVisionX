@@ -1239,7 +1239,7 @@ protected:
              << std::endl
              << "    vx_map_id map_id;" << std::endl
              << "    float * ptr;" << std::endl
-             << "    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0));" << std::endl
+             << "    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));" << std::endl
              << "    vx_size n = fread(ptr, itemsize, count, fp);" << std::endl
              << "    if(n != count) {" << std::endl
              << "        vxAddLogEntry((vx_reference)tensor, VX_FAILURE, \"ERROR: expected char[%ld], but got char[%ld] in %s\\n\", count*itemsize, n*itemsize, binaryFilename);" << std::endl
@@ -1529,7 +1529,7 @@ protected:
              << "    vx_size count = dims[0] * dims[1] * dims[2] * dims[3];" << std::endl
              << "    vx_map_id map_id;" << std::endl
              << "    float * ptr;" << std::endl
-             << "    vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);" << std::endl
+             << "    vx_status status = vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);" << std::endl
              << "    if(status) {" << std::endl
              << "        std::cerr << \"ERROR: vxMapTensorPatch() failed for \" << fileName << std::endl;" << std::endl
              << "        return -1;" << std::endl

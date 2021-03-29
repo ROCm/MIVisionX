@@ -104,21 +104,21 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                 crop_width  = crop_height  * in_ratio;
                 if (crop_width > _max_scaling_factor*max_decoded_width) crop_width = _max_scaling_factor*max_decoded_width;
             }
-            // if( tjDecompress2_partial_scale(m_jpegDecompressor,
-            //                 input_buffer,
-            //                 input_size,
-            //                 output_buffer,
-            //                 max_decoded_width,
-            //                 max_decoded_width * planes,
-            //                 max_decoded_height,
-            //                 tjpf,
-            //                 TJFLAG_FASTDCT,
-            //                 crop_width, crop_height) != 0)
+            if( tjDecompress2_partial_scale(m_jpegDecompressor,
+                            input_buffer,
+                            input_size,
+                            output_buffer,
+                            max_decoded_width,
+                            max_decoded_width * planes,
+                            max_decoded_height,
+                            tjpf,
+                            TJFLAG_FASTDCT,
+                            crop_width, crop_height) != 0)
 
-            // {
-            //     WRN("Jpeg partial image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
-            //     return Status::CONTENT_DECODE_FAILED;
-            // }
+            {
+                WRN("Jpeg partial image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
+                return Status::CONTENT_DECODE_FAILED;
+            }
             // Find the decoded image size using the predefined scaling factors in the turbo jpeg decoder
             uint scaledw = max_decoded_width, scaledh = max_decoded_height;
             for (auto scaling_factor : SCALING_FACTORS) {
@@ -186,21 +186,21 @@ Decoder::Status TJDecoder::decode(unsigned char *input_buffer, size_t input_size
                 crop_width  = crop_height  * in_ratio;
                 if (crop_width > _max_scaling_factor*max_decoded_width) crop_width = _max_scaling_factor*max_decoded_width;
             }
-            // if( tjDecompress2_partial_scale(m_jpegDecompressor,
-            //                 input_buffer,
-            //                 input_size,
-            //                 output_buffer,
-            //                 actual_decoded_width,
-            //                 max_decoded_width * planes,
-            //                 max_decoded_height,
-            //                 tjpf,
-            //                 TJFLAG_FASTDCT,
-            //                 crop_width, crop_height) != 0)
+            if( tjDecompress2_partial_scale(m_jpegDecompressor,
+                            input_buffer,
+                            input_size,
+                            output_buffer,
+                            actual_decoded_width,
+                            max_decoded_width * planes,
+                            max_decoded_height,
+                            tjpf,
+                            TJFLAG_FASTDCT,
+                            crop_width, crop_height) != 0)
 
-            // {
-            //     WRN("Jpeg partial image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
-            //     return Status::CONTENT_DECODE_FAILED;
-            // }
+            {
+                WRN("Jpeg partial image decode failed " + STR(tjGetErrorStr2(m_jpegDecompressor)))
+                return Status::CONTENT_DECODE_FAILED;
+            }
             // Find the decoded image size using the predefined scaling factors in the turbo jpeg decoder
             uint scaledw = max_decoded_width, scaledh = max_decoded_height;
             for (auto scaling_factor : SCALING_FACTORS) {

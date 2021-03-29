@@ -389,15 +389,7 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         }
     }
     else if (data->ref.type == VX_TYPE_THRESHOLD) {
-        // need to do this at the kernel launch time
- #if 0
-        uint2 value;
-        value.x = data->u.thr.threshold_lower;
-        if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-            size = sizeof(uint2);
-            value.y = data->u.thr.threshold_upper;
-        }
-#endif
+        // nothing to do.. the node will
     }
     else if ((data->ref.type == VX_TYPE_SCALAR)) {
         // nothing to do.. the node will
@@ -525,10 +517,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                     int64_t etime = agoGetClockCounter();
                     graph->opencl_perf.buffer_write += etime - stime;
-#if ENABLE_DEBUG_DUMP_CL_BUFFERS
-                    char fileName[128]; sprintf(fileName, "input_%%04d_tensor.raw");
-                    clDumpBuffer(fileName, opencl_cmdq, dataToSync);
-#endif
                 }
             }
         }
@@ -837,54 +825,8 @@ int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node) {
 
 int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode)
 {
-    // make sure that all input buffers are synched and other arguments are updated
-    for (size_t index = 0; index < supernode->dataList.size(); index++) {
-        bool need_access = supernode->dataInfo[index].needed_as_a_kernel_argument;
-        bool need_read_access = supernode->dataInfo[index].argument_usage[VX_INPUT] || supernode->dataInfo[index].argument_usage[VX_BIDIRECTIONAL];
-        if (agoGpuHipDataInputSync(graph, supernode->dataList[index], supernode->dataInfo[index].data_type_flags, supernode->group, need_access, need_read_access) < 0) {
-            return -1;
-        }
-    }
-    // call execute kernel
-#if 0
-    AgoKernel * kernel = supernode->akernel;
-    status = VX_SUCCESS;
-    int64_t stime = agoGetClockCounter();
-    if (kernel->func) {
-        status = kernel->func(supernode, ago_kernel_cmd_execute);
-        if (status == AGO_ERROR_KERNEL_NOT_IMPLEMENTED)
-            status = VX_ERROR_NOT_IMPLEMENTED;
-    }
-    else if (kernel->kernel_f) {
-        status = kernel->kernel_f(supernode, (vx_reference *)supernode->paramList, node->paramCount);
-    }
-    if (status) {
-        agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
-        return status;
-    }
-    if(graph->enable_node_level_opencl_flush) {
-        hipError_t err = hipStreamSynchronize(graph->hip_stream0);
-        if (err) {
-            agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: hipStreamSynchronize(supernode) failed(%d) for %s\n", err, supernode->akernel->name);
-            return -1;
-        }
-    }
-    int64_t etime = agoGetClockCounter();
-    graph->opencl_perf.kernel_enqueue += etime - stime;
-
-#endif
-    // mark that supernode outputs are dirty
-    for (size_t index = 0; index < supernode->dataList.size(); index++) {
-        if (!(supernode->dataInfo[index].data_type_flags & DATA_HIP_FLAG_DISCARD_PARAM)) {
-            bool need_access = supernode->dataInfo[index].needed_as_a_kernel_argument;
-            bool need_write_access = supernode->dataInfo[index].argument_usage[VX_OUTPUT] || supernode->dataInfo[index].argument_usage[VX_BIDIRECTIONAL];
-            if (agoGpuHipDataOutputMarkDirty(graph, supernode->dataList[index], need_access, need_write_access) < 0) {
-                return -1;
-            }
-        }
-    }
-    return 0;
-
+    // Not implemented
+    return -1;
 }
 
 int agoGpuHipSingleNodeWait(AgoGraph * graph, AgoNode * node)

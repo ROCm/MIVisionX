@@ -25,7 +25,6 @@ import os
 import shutil
 import sys
 import platform
-import pandas as pd
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2021, AMD MIVisionX - Vision Test Full Report"
@@ -370,6 +369,11 @@ else:
 
 # Option A - All cases / single case with GPU profiling
 if hardwareMode == "GPU" and profilingOption == "yes":
+    pandasFlag = 1
+    try:
+        import pandas as pd
+    except ImportError:
+        pandasFlag = 0
     os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')
     os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')
     totalCount = 0
@@ -432,16 +436,19 @@ if hardwareMode == "GPU" and profilingOption == "yes":
     new_file.close()
     os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
 
-    pd.options.display.max_rows = None
-    df = pd.read_csv(CONSOLIDATED_FILE)
-    df["AverageMs"] = df["AverageNs"] / 1000000
-    if backendType == "HIP":
-        dfPrint = df.drop(['Percentage'], axis=1)
-        dfPrint["HIP Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Hip_")
-    elif backendType == "OCL":
-        dfPrint = df.drop(['Name', 'Percentage'], axis=1)
-        dfPrint["OCL Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Ocl_")
-    print(dfPrint)
+    if pandasFlag == 1:
+        pd.options.display.max_rows = None
+        df = pd.read_csv(CONSOLIDATED_FILE)
+        df["AverageMs"] = df["AverageNs"] / 1000000
+        if backendType == "HIP":
+            dfPrint = df.drop(['Percentage'], axis=1)
+            dfPrint["HIP Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Hip_")
+        elif backendType == "OCL":
+            dfPrint = df.drop(['Name', 'Percentage'], axis=1)
+            dfPrint["OCL Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Ocl_")
+        print(dfPrint)
+    else:
+        print("\nPandas not available! Results of GPU profiling experiment are available in " + CONSOLIDATED_FILE)
 
 # Option B - All cases / single case without GPU profiling
 else:

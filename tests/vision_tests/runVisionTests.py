@@ -370,20 +370,20 @@ else:
 # Option A - All cases / single case with GPU profiling
 if hardwareMode == "GPU" and profilingOption == "yes":
 
-    pandasFlag = 1
-    try:
-        import pandas as pd
-    except ImportError:
-        pandasFlag = 0
     os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')
     os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')
 
-    def multiCaseProfilerOCL():
-        totalCount = 0
-        if testFilter == 0:
-            nodeList = range(len(openvxNodes[:]))
-        else:
-            nodeList = range((testFilter - 1), testFilter, 1)
+    if testFilter == 0:
+        totalCount = len(openvxNodes[:])
+        nodeList = range(totalCount)
+        case_num_list = range(1, totalCount + 1, 1)
+    else:
+        totalCount = testFilter
+        nodeList = range((totalCount - 1), totalCount, 1)
+        case_num_list = range(totalCount, totalCount + 1, 1)
+
+    def multiCaseProfilerOCL(nodeList = nodeList, case_num_list = case_num_list):
+
         for i in nodeList:
             nodeName, nodeFormat = openvxNodes[i]
             echo1 = 'Running OpenVX Node - '+nodeName
@@ -395,16 +395,13 @@ if hardwareMode == "GPU" and profilingOption == "yes":
             os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
             print("\n")
-            totalCount = i+1
+
         RESULTS_DIR = "rocprof_vision_tests_outputs"
         print("RESULTS_DIR = " + RESULTS_DIR)
         CONSOLIDATED_FILE = RESULTS_DIR + "/consolidated_results.stats.csv"
         new_file = open(CONSOLIDATED_FILE,'w')
         new_file.write('"OCL Kernel Name","Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
-        if testFilter == 0:
-            case_num_list = range(1, totalCount + 1, 1)
-        else:
-            case_num_list = range(totalCount, totalCount + 1, 1)
+
         for case_num in case_num_list:
             nodeName, nodeFormat = openvxNodes[case_num-1]
             CASE_RESULTS_DIR = RESULTS_DIR + "/case_" + str(case_num)
@@ -421,25 +418,25 @@ if hardwareMode == "GPU" and profilingOption == "yes":
             except IOError:
                 print("Unable to open case results")
                 continue
+
         new_file.close()
         os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
 
-        if pandasFlag == 1:
+        try:
+            import pandas as pd
             pd.options.display.max_rows = None
             df = pd.read_csv(CONSOLIDATED_FILE)
             df["AverageMs"] = df["AverageNs"] / 1000000
             dfPrint = df.drop(['Name', 'Percentage'], axis=1)
             dfPrint["OCL Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Ocl_")
             print(dfPrint)
-        else:
+        except ImportError:
             print("\nPandas not available! Results of GPU profiling experiment are available in " + CONSOLIDATED_FILE)
+        except IOError:
+                print("Unable to open results in " + CONSOLIDATED_FILE)
 
-    def multiCaseProfilerHIP():
-        totalCount = 0
-        if testFilter == 0:
-            nodeList = range(len(openvxNodes[:]))
-        else:
-            nodeList = range((testFilter - 1), testFilter, 1)
+    def multiCaseProfilerHIP(nodeList = nodeList, case_num_list = case_num_list):
+
         for i in nodeList:
             nodeName, nodeFormat = openvxNodes[i]
             echo1 = 'Running OpenVX Node - '+nodeName
@@ -451,16 +448,13 @@ if hardwareMode == "GPU" and profilingOption == "yes":
             os.system('rocprof -o "rocprof_vision_tests_outputs/case_'+str(i+1)+'/output_case_'+str(i+1)+'.csv" --basenames on --timestamp on --stats  '+RunVXapp+' -frames:'+str(numFrames)+' -affinity:' +
                 hardwareMode+' -dump-profile node '+nodeFormat)
             print("\n")
-            totalCount = i+1
+
         RESULTS_DIR = "rocprof_vision_tests_outputs"
         print("RESULTS_DIR = " + RESULTS_DIR)
         CONSOLIDATED_FILE = RESULTS_DIR + "/consolidated_results.stats.csv"
         new_file = open(CONSOLIDATED_FILE,'w')
         new_file.write('"HIP Kernel Name","Calls","TotalDurationNs","AverageNs","Percentage"\n')
-        if testFilter == 0:
-            case_num_list = range(1, totalCount + 1, 1)
-        else:
-            case_num_list = range(totalCount, totalCount + 1, 1)
+
         for case_num in case_num_list:
             nodeName, nodeFormat = openvxNodes[case_num-1]
             CASE_RESULTS_DIR = RESULTS_DIR + "/case_" + str(case_num)
@@ -477,23 +471,27 @@ if hardwareMode == "GPU" and profilingOption == "yes":
             except IOError:
                 print("Unable to open case results")
                 continue
+
         new_file.close()
         os.system('chown $USER:$USER '+RESULTS_DIR+'/consolidated_results.stats.csv')
 
-        if pandasFlag == 1:
+        try:
+            import pandas as pd
             pd.options.display.max_rows = None
             df = pd.read_csv(CONSOLIDATED_FILE)
             df["AverageMs"] = df["AverageNs"] / 1000000
             dfPrint = df.drop(['Percentage'], axis=1)
             dfPrint["HIP Kernel Name"] = dfPrint.iloc[:,0].str.lstrip("Hip_")
             print(dfPrint)
-        else:
+        except ImportError:
             print("\nPandas not available! Results of GPU profiling experiment are available in " + CONSOLIDATED_FILE)
+        except IOError:
+                print("Unable to open results in " + CONSOLIDATED_FILE)
 
     if backendType == "OCL":
-        multiCaseProfilerOCL()
+        multiCaseProfilerOCL(nodeList = nodeList, case_num_list = case_num_list)
     elif backendType == "HIP":
-        multiCaseProfilerHIP()
+        multiCaseProfilerHIP(nodeList = nodeList, case_num_list = case_num_list)
 
 # Option B - All cases / single case without GPU profiling
 else:

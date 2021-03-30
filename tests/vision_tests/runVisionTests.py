@@ -378,7 +378,7 @@ else:
 nodeList = []
 case_num_list = []
 
-def multiCaseProfilerOCL(nodeList = nodeList, case_num_list = case_num_list):
+def multiCaseProfilerOCL(nodeList, case_num_list):
 
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]
@@ -431,7 +431,7 @@ def multiCaseProfilerOCL(nodeList = nodeList, case_num_list = case_num_list):
     except IOError:
             print("Unable to open results in " + CONSOLIDATED_FILE)
 
-def multiCaseProfilerHIP(nodeList = nodeList, case_num_list = case_num_list):
+def multiCaseProfilerHIP(nodeList, case_num_list):
 
     for i in nodeList:
         nodeName, nodeFormat = openvxNodes[i]

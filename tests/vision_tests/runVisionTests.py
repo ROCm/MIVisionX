@@ -316,6 +316,12 @@ if hardwareMode == "GPU":
         print("For hardware_mode=GPU, the backend_type must be either 'HIP' or 'OCL'")
         exit()
 
+backendTypeValue = 0
+if backendType == "OCL":
+    backendTypeValue = 0
+elif backendType == "HIP":
+    backendTypeValue = 1
+
 # List Vision Functionality tests
 if listTest == 'yes':
     print(" %-5s - %-30s\n" % ('Test ID', 'Test Name'))
@@ -368,7 +374,7 @@ else:
     os.makedirs(outputDirectory)
 
 # Option A - All cases / single case with GPU profiling
-if hardwareMode == "GPU" and profilingOption == "yes":
+if profilingOption == "yes":
 
     os.system('rm -rvf '+cwd+'/rocprof_vision_tests_outputs')
     os.system('mkdir '+cwd+'/rocprof_vision_tests_outputs')
@@ -488,10 +494,15 @@ if hardwareMode == "GPU" and profilingOption == "yes":
         except IOError:
                 print("Unable to open results in " + CONSOLIDATED_FILE)
 
-    if backendType == "OCL":
-        multiCaseProfilerOCL(nodeList = nodeList, case_num_list = case_num_list)
-    elif backendType == "HIP":
-        multiCaseProfilerHIP(nodeList = nodeList, case_num_list = case_num_list)
+    switcher = {
+        0 : multiCaseProfilerOCL,
+        1 : multiCaseProfilerHIP
+    }
+
+    def multiCaseProfiler(backendTypeValue = backendTypeValue):
+        return switcher.get(backendTypeValue, multiCaseProfilerOCL)(nodeList = nodeList, case_num_list = case_num_list)
+
+    multiCaseProfiler(backendTypeValue = backendTypeValue)
 
 # Option B - All cases / single case without GPU profiling
 else:

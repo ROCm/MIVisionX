@@ -22,6 +22,8 @@ THE SOFTWARE.
 
 #include <tuple>
 #include <assert.h>
+#include <boost/filesystem.hpp>
+
 extern "C"
 {
 #include <libavformat/avformat.h>
@@ -40,6 +42,105 @@ extern "C"
 #include "node_copy.h"
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"
+
+namespace filesys = boost::filesystem;
+
+std::vector<unsigned> find_video_properties(const char *source_path)
+{
+    // based on assumption that user can give single video file or path to folder containing
+    // multiple video files. 
+    std::vector<unsigned> props;
+    unsigned max_width = 0, max_height = 0;
+    {
+        std::string _full_path = source_path;
+        filesys::path pathObj(_full_path);
+        if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) // Single file as input
+        {
+            std::cerr<<"\n file name:: "<<_full_path;
+            AVFormatContext* pFormatCtx;
+            AVCodecContext* pCodecCtx;
+            int videoStream = -1;
+            int i = 0;
+            // open video file
+            int ret = avformat_open_input(&pFormatCtx, source_path, NULL, NULL);
+            if (ret != 0) {
+                std::cerr<<"Unable to open video file: %s\n"<<_full_path;
+                exit(0);
+            }
+
+            // Retrieve stream information
+            ret = avformat_find_stream_info(pFormatCtx, NULL);
+            assert(ret >= 0);
+
+            for(i = 0; i < pFormatCtx->nb_streams; i++) {
+                if (pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO && videoStream < 0) {
+                    videoStream = i;            
+                }
+            } // end for i
+            assert(videoStream != -1);
+
+            // Get a pointer to the codec context for the video stream
+            pCodecCtx=pFormatCtx->streams[videoStream]->codec;
+            assert(pCodecCtx != NULL);
+            std::cerr<<"\n width:: "<<pCodecCtx->width;
+            std::cerr<<"\n height:: "<<pCodecCtx->height;
+            props.push_back(pCodecCtx->width);
+            props.push_back(pCodecCtx->height);
+            props.push_back(1);
+
+        }
+        else
+        {
+            // YTD
+            // find number of videos and push it in props[2].
+            // find max width and height in all the video combined and push it in props[0] & props[1]
+            DIR *_sub_dir;
+            struct dirent *_entity;
+            std::string _full_path = source_path;
+            if ((_sub_dir = opendir (_full_path.c_str())) == nullptr)
+                THROW("VideoReader ShardID ERROR: Failed opening the directory at " + source_path);
+
+            std::vector<std::string> video_files;
+
+            while((_entity = readdir (_sub_dir)) != nullptr)
+            {
+                std::string entry_name(_entity->d_name);
+                std::cerr<<"\n entity->d_name:: "<<_entity->d_name;
+                if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
+                video_files.push_back(entry_name);
+            }
+            closedir(_sub_dir);
+            std::sort(video_files.begin(), video_files.end());
+        }
+
+            // auto ret = Reader::Status::OK;
+            // for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
+            //     std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
+            //     filesys::path pathObj(subfolder_path);
+            //     if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
+            //     {
+            //         // ignore files with extensions .tar, .zip, .7z
+            //         auto file_extension_idx = subfolder_path.find_last_of(".");
+            //         if (file_extension_idx  != std::string::npos) {
+            //             std::string file_extension = subfolder_path.substr(file_extension_idx+1);
+            //             for (auto & c: file_extension) c = toupper(c);
+            //             if (!((file_extension == "MP4") || (file_extension == "M4V") || (file_extension == "MPG") || (file_extension == "MPEG")))
+            //                 continue;
+            //         }
+            //         ret = open_folder();
+            //         break;  // assume directory has only files.
+            //     }
+            //     else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
+            //     {
+            //         _folder_path = subfolder_path;
+            //         if(open_folder() != Reader::Status::OK)
+            //             WRN("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] VideoReader cannot access the storage at " + _folder_path);
+            //     }
+            // }
+    }
+    return props;
+}
+
 
 std::tuple<unsigned, unsigned> evaluate_video_data_set(char *filename) {
 	AVFormatContext* pFormatCtx;
@@ -1370,6 +1471,8 @@ raliVideoFileSource(
         bool is_output,
         bool loop)
 {
+    std::cerr<<"\n Coming to raliVideoFileSource";
+    std::cerr<<"\n source_path:: "<<source_path;
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
@@ -1377,9 +1480,14 @@ raliVideoFileSource(
 #ifdef RALI_VIDEO
         // Add code to get width and height of frames in video. 
         // In case of multiple videos find the max width and height
-        unsigned width , height;
-        width = 300;
-        height = 300;
+        unsigned width , height, number_of_video_files;
+        std::vector<unsigned> video_prop;
+        video_prop.resize(3);
+        video_prop = find_video_properties(source_path);
+        std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1];
+        width = video_prop[0];
+        height = video_prop[1];
+        number_of_video_files = video_prop[2];
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         //auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
@@ -1389,6 +1497,7 @@ raliVideoFileSource(
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
+        std::cerr<<"\n context->user_batch_size() ::"<<context->user_batch_size();
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",
@@ -1396,6 +1505,7 @@ raliVideoFileSource(
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
                                                                           sequence_length,
+                                                                          number_of_video_files,
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),

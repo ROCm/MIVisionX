@@ -112,6 +112,7 @@ VideoLoader::stop_internal_thread()
 void
 VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool decoder_keep_original)
 {
+    std::cerr<<"\n VideoLoader::initialize ";
     if(_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")
 
@@ -123,10 +124,13 @@ VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg,
     _loop = reader_cfg.loop();
     _sequence_length = reader_cfg.get_sequence_length();
     _decoder_keep_original = decoder_keep_original; // Not needed check
+    std::cerr<<"\n _sequence_length ::"<<_sequence_length;
     _image_loader = std::make_shared<VideoReadAndDecode>();
     try
     {
         _image_loader->create(reader_cfg, decoder_cfg, _batch_size);
+
+        std::cerr<<"\n video VideoReadAndDecode created";
     }
     catch(const std::exception& e)
     {
@@ -138,6 +142,7 @@ VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg,
     _decoded_img_info._roi_width.resize(_batch_size);
     _decoded_img_info._original_height.resize(_batch_size);
     _decoded_img_info._original_width.resize(_batch_size);
+    std::cerr<<"\n _output_mem_size:: "<<_output_mem_size;
     _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
     LOG("Loader module initialized");

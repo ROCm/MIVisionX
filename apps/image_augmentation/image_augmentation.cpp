@@ -85,7 +85,7 @@ int main(int argc, const char ** argv)
         shuffle = atoi(argv[++argIdx]);
 
 
-    int inputBatchSize = 2;
+    int inputBatchSize = 1;
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
 

@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <dirent.h>
 #include <vector>
 #include <memory>
+#include <boost/filesystem.hpp>
 #include "commons.h"
 #include "ffmpeg_video_decoder.h"
 #include "reader_factory.h"

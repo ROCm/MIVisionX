@@ -75,11 +75,12 @@ VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources
 }*/
 
 void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-VideoDecoderType decoder_type, unsigned sequence_length, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
+VideoDecoderType decoder_type, unsigned sequence_length, unsigned video_count, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;
     _loop = loop;
+    _batch_size = load_batch_count;
     if(!_loader_module)
         THROW("ERROR: loader module is not set for VideoLoaderNode, cannot initialize")
     if(internal_shard_count < 1)
@@ -87,13 +88,17 @@ VideoDecoderType decoder_type, unsigned sequence_length, bool shuffle, bool loop
     _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the VideoLoaderNode
     auto reader_cfg = ReaderConfig(storage_type, source_path, json_path, feature_key_map, shuffle, loop);
+    std::cerr<<"\n reader_cfg";
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(load_batch_count);
     reader_cfg.set_sequence_length(sequence_length);
+    reader_cfg.set_video_count(video_count);
     _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
              mem_type,
-             _batch_size);
+             load_batch_count);
+    std::cerr<<"\n initialize";
     _loader_module->start_loading();
+    std::cerr<<"\n start loading";
 }
 
 /*VideoLoaderNode::VideoLoaderNode(const std::vector<Image*>& inputs, const std::vector<Image*>& outputs):

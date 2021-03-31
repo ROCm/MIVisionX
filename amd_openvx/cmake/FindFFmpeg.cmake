@@ -37,13 +37,12 @@
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig")
 include(FindPackageHandleStandardArgs)
 
-    find_package_handle_standard_args(FFmpeg
-        FOUND_VAR FFMPEG_FOUND
-        REQUIRED_VARS
-            FFMPEG_LIBRARY
-            FFMPEG_INCLUDE_DIR
-        VERSION_VAR FFMPEG_VERSION
-    )
+find_package_handle_standard_args(
+  FFmpeg
+  FOUND_VAR FFMPEG_FOUND
+  REQUIRED_VARS FFMPEG_LIBRARY FFMPEG_INCLUDE_DIR
+  VERSION_VAR FFMPEG_VERSION
+)
 
 if(FFMPEG_LIBRARIES AND FFMPEG_INCLUDE_DIR)
   # in cache already
@@ -97,11 +96,11 @@ else()
   
   if(_FFMPEG_AVCODEC_VERSION VERSION_LESS 58.18.100 OR _FFMPEG_AVFORMAT_VERSION VERSION_LESS 58.12.100 OR _FFMPEG_AVUTIL_VERSION VERSION_LESS 56.14.100)
     set(FFMPEG_FOUND FALSE)
-    message("-- AVCODEC  required min version - 58.18.100")
-    message("-- AVFORMAT required min version - 58.12.100")
-    message("-- AVUTIL   required min version - 56.14.100")
-    message("-- FFMPEG   required min version - 4.0.4")
-    message("-- FFMPEG Marked Not Found - MIVisionX Modules requiring FFMPEG turned off")
+    message("-- ${Yellow}FFMPEG   required min version - 4.0.4 Found:${FFMPEG_VERSION}")
+    message("-- ${Yellow}AVCODEC  required min version - 58.18.100 Found:${_FFMPEG_AVCODEC_VERSION}${ColourReset}")
+    message("-- ${Yellow}AVFORMAT required min version - 58.12.100 Found:${_FFMPEG_AVFORMAT_VERSION}${ColourReset}")
+    message("-- ${Yellow}AVUTIL   required min version - 56.14.100 Found:${_FFMPEG_AVUTIL_VERSION}${ColourReset}")
+    message("-- ${Red}WARNING: FFMPEG Marked Not Found - MIVisionX Modules requiring FFMPEG turned off${ColourReset}")
   endif()
   
   if(FFMPEG_FOUND)
@@ -114,13 +113,11 @@ else()
 
   if(FFMPEG_FOUND)
     if(NOT FFMPEG_FIND_QUIETLY)
-      message(STATUS
-      "Found FFMPEG or Libav: ${FFMPEG_LIBRARIES}, ${FFMPEG_INCLUDE_DIR}")
+      message("-- ${Blue}Using FFMPEG -- Libraries:${FFMPEG_LIBRARIES} Include directories:${FFMPEG_INCLUDE_DIR}${ColourReset}")
     endif()
   else()
     if(FFMPEG_FIND_REQUIRED)
-      message(FATAL_ERROR
-      "Could not find libavcodec or libavformat or libavutil")
+      message(FATAL_ERROR "{Red}FFMPEG_FIND:Could not find libavcodec or libavformat or libavutil${ColourReset}")
     endif()
   endif()
 endif()

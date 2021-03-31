@@ -26,7 +26,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.9.0"
+__version__ = "1.9.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -50,8 +50,8 @@ parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
-parser.add_argument('--rpp',   		type=str, default='0.6',
-                    help='RPP Version - optional (default:0.6)')
+parser.add_argument('--rpp',   		type=str, default='0.7',
+                    help='RPP Version - optional (default:0.7)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
@@ -337,7 +337,7 @@ else:
                       linuxSystemInstall_check+' install clang')
             # turbo-JPEG
             os.system(
-                '(cd '+deps_dir+'; git clone -b 2.0.6 https://github.com/rrawther/libjpeg-turbo.git )')
+                '(cd '+deps_dir+'; git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git )')
             os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake +
                       ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP

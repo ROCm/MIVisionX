@@ -56,6 +56,9 @@ public:
                            Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false) override;
 
     ~TJDecoder() override;
+    bool is_partial_decoder() { return _is_partial_decoder; };
+    void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord;};
+    std::vector <float> get_bbox_coords() { return _bbox_coord;}
 private:
     tjhandle m_jpegDecompressor;
     const static unsigned SCALING_FACTORS_COUNT =  16;
@@ -77,5 +80,7 @@ private:
             { 1, 4 },
             { 1, 8 }
     };
+    bool _is_partial_decoder = false;
+    std::vector <float> _bbox_coord;
     const static unsigned _max_scaling_factor = 8;
 };

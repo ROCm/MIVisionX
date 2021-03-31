@@ -69,7 +69,11 @@ class RALIGenericIterator(object):
             self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float32")
         elif self.tensor_dtype == types.FLOAT16:
             self.out = np.zeros(( self.bs*self.n, self.p, int(self.h/self.bs), self.w,), dtype = "float16")
-        self.labels = np.zeros((self.bs),dtype = "int32")
+        # self.labels = np.zeros((self.bs),dtype = "int32")
+        if(self.loader._oneHotEncoding == True):
+            self.labels = np.zeros((self.bs)*(self.loader._numOfClasses),dtype = "int32")
+        else:
+            self.labels = np.zeros((self.bs),dtype = "int32")
         if self.bs != 0:
             self.len = b.getRemainingImages(self.loader._handle)//self.bs
         else:
@@ -147,8 +151,13 @@ class RALIGenericIterator(object):
                 return torch.from_numpy(self.out.astype(np.float16)),self.bb_padded, self.labels_padded
 
         else:
-            self.loader.getImageLabels(self.labels)
-            self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
+            if(self.loader._oneHotEncoding == True):
+                self.loader.GetOneHotEncodedLabels(self.labels)
+                self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
+                self.labels_tensor = self.labels_tensor.view(-1, self.bs, self.loader._numOfClasses)
+            else:
+                self.loader.getImageLabels(self.labels)
+                self.labels_tensor = torch.from_numpy(self.labels).type(torch.LongTensor)
 
             if self.tensor_dtype == types.FLOAT:
                 return torch.from_numpy(self.out), self.labels_tensor

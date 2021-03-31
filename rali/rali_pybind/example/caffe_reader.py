@@ -29,6 +29,7 @@ class HybridTrainPipe(Pipeline):
 											image_type=types.RGB,
 											mean=[0.485 * 255,0.456 * 255,0.406 * 255],
 											std=[0.229 * 255,0.224 * 255,0.225 * 255])
+		self.one_hot_labels = ops.OneHot(num_classes=1000)
 		self.coin = ops.CoinFlip(probability=0.5)
 		print('rali "{0}" variant'.format(rali_device))
 
@@ -36,6 +37,7 @@ class HybridTrainPipe(Pipeline):
 		rng = self.coin()
 		if self.rali_type :
 			self.jpegs, self.labels = self.input(name="Reader") #Classification
+			self.labels = self.one_hot_labels(self.labels)
 		else:
 			self.jpegs,self.bb, self.labels = self.input(name="Reader") # Detection
 		images = self.decode(self.jpegs)
@@ -84,7 +86,8 @@ def main():
 				print("Images",image_batch)
 				print("Bboxes",bboxes)
 				print("Labels",labels)
-	print('Finished Training')
+	# print('Finished Training')
+	# print('Finished !!')
 
 if __name__ == '__main__':
 	main()

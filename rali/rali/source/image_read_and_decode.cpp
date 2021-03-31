@@ -115,6 +115,11 @@ ImageReadAndDecode::count()
     return _reader->count();
 }
 
+void ImageReadAndDecode::set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader)
+{
+    _randombboxcrop_meta_data_reader = randombboxcrop_meta_data_reader;
+}
+
 
 LoaderModuleStatus 
 ImageReadAndDecode::load(unsigned char* buff,
@@ -183,6 +188,17 @@ ImageReadAndDecode::load(unsigned char* buff,
 
             _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
             _image_names[file_counter] = _reader->id();
+            if(_randombboxcrop_meta_data_reader)
+            {
+                _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
+                std::vector<float> coords_buf(4);
+                coords_buf[0] = _CropCord->crop_x;
+                coords_buf[1] = _CropCord->crop_y;
+                coords_buf[2] = _CropCord->crop_width;
+                coords_buf[3] = _CropCord->crop_height;
+                _bbox_coords.push_back(coords_buf);
+                coords_buf.clear();
+            }
             _reader->close();
             _compressed_image_size[file_counter] = fsize;
             file_counter++;
@@ -197,7 +213,8 @@ ImageReadAndDecode::load(unsigned char* buff,
             _decompressed_buff_ptrs[i] = buff + image_size * i;
 
 #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
-        for (size_t i = 0; i < _batch_size; i++) {
+        for (size_t i = 0; i < _batch_size; i++)
+        {
             // initialize the actual decoded height and width with the maximum
             _actual_decoded_width[i] = max_decoded_width;
             _actual_decoded_height[i] = max_decoded_height;
@@ -226,6 +243,12 @@ ImageReadAndDecode::load(unsigned char* buff,
 
             // decode the image and get the actual decoded image width and height
             size_t scaledw, scaledh;
+            if(_decoder[i]->is_partial_decoder() && _randombboxcrop_meta_data_reader)
+            {
+                _decoder[i]->set_bbox_coords(_bbox_coords[i]);
+            }
+            
+
             if (_decoder[i]->decode(_compressed_buff[i].data(), _compressed_image_size[i], _decompressed_buff_ptrs[i],
                                     max_decoded_width, max_decoded_height,
                                     original_width, original_height,
@@ -239,23 +262,31 @@ ImageReadAndDecode::load(unsigned char* buff,
                                         original_width, original_height,
                                         scaledw, scaledh,
                                         decoder_color_format, _decoder_config, keep_original) != Decoder::Status::OK) {
-#endif
+
                     continue;
-#if 0//ENABLE_OPENCV
+
                 }
 #endif
+
             }
             _actual_decoded_width[i] = scaledw;
             _actual_decoded_height[i] = scaledh;
         }
         for (size_t i = 0; i < _batch_size; i++) {
             names[i] = _image_names[i];
+            if(_randombboxcrop_meta_data_reader)
+            {
+                _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);
+                _CropCord->crop_x = _decoder[i]->get_bbox_coords()[0];
+		        _CropCord->crop_width = _decoder[i]->get_bbox_coords()[2];
+            }
             roi_width[i] = _actual_decoded_width[i];
             roi_height[i] = _actual_decoded_height[i];
             actual_width[i] = _original_width[i];
             actual_height[i] = _original_height[i];
         }
     }
+    _bbox_coords.clear();
     _decode_time.end();// Debug timing
     return LoaderModuleStatus::OK;
 }

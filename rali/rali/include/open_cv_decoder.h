@@ -37,7 +37,7 @@ public:
      \param height pointer to the user's buffer to write the height of the compressed image to 
      \param color_comps pointer to the user's buffer to write the number of color components of the compressed image to 
     */
-    virtual Status decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) override;
+    Status decode_info(unsigned char* input_buffer, size_t input_size, int* width, int* height, int* color_comps) override;
     
     //! Decodes the actual image data
     //! Decodes the actual image data
@@ -50,18 +50,24 @@ public:
       \param original_image_width The actual width of the compressed image. decoded width will be equal to this if this is smaller than max_decoded_width
       \param original_image_height The actual height of the compressed image. decoded height will be equal to this if this is smaller than max_decoded_height
     */
-    virtual Status decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
+    Status decode(unsigned char *input_buffer, size_t input_size, unsigned char *output_buffer,
                            size_t max_decoded_width, size_t max_decoded_height,
                            size_t original_image_width, size_t original_image_height,
                            size_t &actual_decoded_width, size_t &actual_decoded_height,
                            Decoder::ColorFormat desired_decoded_color_format, DecoderConfig config, bool keep_original_size=false) override;
 
+    bool is_partial_decoder() override { return _is_partial_decoder; }
+    void set_bbox_coords(std::vector <float> bbox_coord) override { _bbox_coord = bbox_coord;}
+    std::vector <float> get_bbox_coords() override { return _bbox_coord;}
     //virtual Status decode(unsigned char* input_buffer, size_t input_size,  unsigned char* output_buffer,int desired_width, int desired_height, ColorFormat desired_color);
-    virtual ~CVDecoder() override;
+    ~CVDecoder() override;
+
 
 private:
   //cv::Mat m_mat_compressed;
   cv::Mat m_mat_scaled;
   cv::Mat m_mat_orig;
+  bool _is_partial_decoder = false;
+  std::vector <float> _bbox_coord;
 };
 #endif

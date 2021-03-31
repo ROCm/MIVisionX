@@ -127,8 +127,13 @@ class RALIGenericIteratorDetection(object):
             elif self.tensor_dtype == types.FLOAT16:
                 return self.out.astype(np.float16), self.res, self.l, self.num_bboxes_arr
         elif (self.loader._name == "TFRecordReaderClassification"):
-            self.labels = np.zeros((self.bs),dtype = "int32")
-            self.loader.getImageLabels(self.labels)
+            if(self.loader._oneHotEncoding == True):
+                self.labels = np.zeros((self.bs)*(self.loader._numOfClasses),dtype = "int32")
+                self.loader.GetOneHotEncodedLabels(self.labels)
+                self.labels = np.reshape(self.labels, (-1, self.bs, self.loader._numOfClasses))
+            else:
+                self.labels = np.zeros((self.bs),dtype = "int32")
+                self.loader.getImageLabels(self.labels)
         
             if self.tensor_dtype == types.FLOAT:
                 return self.out.astype(np.float32), self.labels

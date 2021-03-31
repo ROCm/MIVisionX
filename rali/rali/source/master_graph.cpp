@@ -31,6 +31,7 @@ THE SOFTWARE.
 #include "ocl_setup.h"
 #include "meta_data_reader_factory.h"
 #include "meta_data_graph_factory.h"
+#include "randombboxcrop_meta_data_reader_factory.h"
 
 using half_float::half;
 
@@ -617,8 +618,8 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
                             for (unsigned i = 0; i < channel_size; i++)
                                 output_tensor_16[dest_buf_offset + channel_idx * channel_size + i] =
                                         offset[channel_idx] + multiplier[channel_idx] *
-                                                              (reverse_channels ? (half) (in_buffer[c * i + c - channel_idx - 1])
-                                                                                : (half) (in_buffer[c * i + channel_idx]));
+                                                              (reverse_channels ? (half) (in_buffer[dest_buf_offset + (c*i+c-channel_idx-1)])
+                                                                                : (half) (in_buffer[dest_buf_offset + (c * i + channel_idx)]));
                         }
                         dest_buf_offset += (w * c * h);
                         in_buffer += (w * c * h);
@@ -758,7 +759,6 @@ void MasterGraph::output_routine()
                 {
                     if(node->_is_ssd)
                     {
-                        // std::cerr<<"\n Comes to set meta data in ssd random crop in output routine";
                         node->set_meta_data(_augmented_meta_data);
                     }
                 }
@@ -768,7 +768,15 @@ void MasterGraph::output_routine()
                 {
                     if (_meta_data_graph)
                     {
-                        _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
+                        if(_is_random_bbox_crop)
+                        {
+                            _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
+                            _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
+                        }
+                        else
+                        {
+                            _meta_data_graph->update_meta_data(_augmented_meta_data, decode_image_info);
+                        }
                         _meta_data_graph->process(_augmented_meta_data);
                     }
                     if (full_batch_meta_data)
@@ -871,6 +879,22 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     else
         _augmented_meta_data = _meta_data_reader->get_output();
     return _meta_data_reader->get_output();
+}
+
+
+void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts)
+{
+    if( _randombboxcrop_meta_data_reader)
+        THROW("A metadata reader has already been created")
+    _is_random_bbox_crop = true;
+    RandomBBoxCrop_MetaDataConfig config(label_type, reader_type, all_boxes_overlap, no_crop, aspect_ratio, has_shape, crop_width, crop_height, num_attempts, scaling, total_num_attempts);
+    _randombboxcrop_meta_data_reader = create_meta_data_reader(config);
+    _randombboxcrop_meta_data_reader->set_meta_data(_meta_data_reader);
+    _randombboxcrop_meta_data_reader->read_all();
+    if (_random_bbox_crop_cords_data)
+        THROW("Metadata can only have a single output")
+    else
+        _random_bbox_crop_cords_data = _randombboxcrop_meta_data_reader->get_output();
 }
 
 MetaDataBatch * MasterGraph::create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type , MetaDataType label_type)

@@ -120,5 +120,11 @@ extern "C" void RALI_API_CALL raliGetImageSizes(RaliContext rali_context, int* b
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
 extern "C" RaliMetaData RALI_API_CALL raliCreateTextCifar10LabelReader(RaliContext rali_context, const char* source_path, const char* file_prefix);
 
+/// \param meta_data RaliMetaData object that contains info about the images and labels
+/// \param numOfClasses the number of classes for a image dataset
+/// \param buf user's buffer that will be filled with labels. Its needs to be at least of size batch_size.
+extern "C" void RALI_API_CALL raliGetOneHotImageLabels(RaliContext rali_context,int *buf, int numOfClasses);
+extern "C" void RALI_API_CALL raliRandomBBoxCrop(RaliContext p_context, bool all_boxes_overlap, bool no_crop, RaliFloatParam aspect_ratio = NULL, bool has_shape = false, int crop_width = 0, int crop_height = 0, int num_attempts = 1, RaliFloatParam scaling = NULL, int total_num_attempts = 0);
+
 
 #endif //MIVISIONX_RALI_API_META_DATA_H

@@ -40,7 +40,9 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
   FFmpeg
   FOUND_VAR FFMPEG_FOUND
-  REQUIRED_VARS FFMPEG_LIBRARY FFMPEG_INCLUDE_DIR
+  REQUIRED_VARS
+    FFMPEG_LIBRARY
+    FFMPEG_INCLUDE_DIR
   VERSION_VAR FFMPEG_VERSION
 )
 
@@ -64,7 +66,8 @@ else()
       /usr/include
       /opt/local/include
       /sw/include
-    PATH_SUFFIXES ffmpeg libav)
+    PATH_SUFFIXES ffmpeg libav
+  )
 
   find_library(FFMPEG_LIBAVCODEC
     NAMES avcodec
@@ -72,7 +75,8 @@ else()
       /usr/local/lib
       /usr/lib
       /opt/local/lib
-      /sw/lib)
+      /sw/lib
+  )
 
   find_library(FFMPEG_LIBAVFORMAT
     NAMES avformat
@@ -80,7 +84,8 @@ else()
       /usr/local/lib
       /usr/lib
       /opt/local/lib
-      /sw/lib)
+      /sw/lib
+  )
 
   find_library(FFMPEG_LIBAVUTIL
     NAMES avutil
@@ -88,7 +93,8 @@ else()
       /usr/local/lib
       /usr/lib
       /opt/local/lib
-      /sw/lib)
+      /sw/lib
+  )
 
   if(FFMPEG_LIBAVCODEC AND FFMPEG_LIBAVFORMAT)
     set(FFMPEG_FOUND TRUE)
@@ -100,7 +106,7 @@ else()
     message("-- ${Yellow}AVCODEC  required min version - 58.18.100 Found:${_FFMPEG_AVCODEC_VERSION}${ColourReset}")
     message("-- ${Yellow}AVFORMAT required min version - 58.12.100 Found:${_FFMPEG_AVFORMAT_VERSION}${ColourReset}")
     message("-- ${Yellow}AVUTIL   required min version - 56.14.100 Found:${_FFMPEG_AVUTIL_VERSION}${ColourReset}")
-    message("-- ${Red}WARNING: FFMPEG Marked Not Found - MIVisionX Modules requiring FFMPEG turned off${ColourReset}")
+    message("-- ${Red}WARNING: FFMPEG Marked Not Found - MIVisionX Modules requiring FFMPEG will be turned off${ColourReset}")
   endif()
   
   if(FFMPEG_FOUND)

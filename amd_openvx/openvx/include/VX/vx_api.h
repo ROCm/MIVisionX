@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3345,7 +3345,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size n
  * \ingroup group_tensor
  * \post <tt>\ref vxUnmapTensorPatch </tt> with same (*map_id) value.
  */
-VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch_TBD(vx_tensor tensor, vx_size number_of_dims, const vx_size * view_start, const vx_size * view_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type);
+VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size number_of_dims, const vx_size * view_start, const vx_size * view_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type);
 
 /*! \brief Unmap and commit potential changes to a tensor object patch that was previously mapped.
  * Unmapping a tensor patch invalidates the memory location from which the patch could

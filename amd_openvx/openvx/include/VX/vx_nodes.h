@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxScaleImageNode(vx_graph graph, vx_image src, 
  * \param [in] graph The reference to the graph.
  * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt>.
  * \param [in] lut The LUT which is of type <tt>\ref VX_TYPE_UINT8</tt> if input image is <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_TYPE_INT16</tt> if input image is <tt>\ref VX_DF_IMAGE_S16</tt>.
- * \param [out] output The output image of the same type and size as the input image.
+ * \param [out] output The output image of the same size as the input image.
  * \ingroup group_vision_function_lut
  * \return <tt>\ref vx_node</tt>.
  * \retval vx_node A node reference. Any possible errors preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
@@ -537,7 +537,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxCannyEdgeDetectorNode(vx_graph graph, vx_imag
  * \param [in] matrix The affine matrix. Must be 2x3 of type \ref VX_TYPE_FLOAT32.
  * \param [in] type The interpolation type from <tt>\ref vx_interpolation_type_e</tt>.
  * <tt>\ref VX_INTERPOLATION_AREA</tt> is not supported.
- * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> image with the same dimensions and type as the input image.
+ * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> image with the same format as the input image.
  * \ingroup group_vision_function_warp_affine
  * \note The border modes <tt>\ref VX_NODE_BORDER</tt> value <tt>\ref VX_BORDER_UNDEFINED</tt> and
  * <tt>\ref VX_BORDER_CONSTANT</tt> are supported.
@@ -552,7 +552,7 @@ VX_API_ENTRY vx_node VX_API_CALL vxWarpAffineNode(vx_graph graph, vx_image input
  * \param [in] matrix The perspective matrix. Must be 3x3 of type <tt>\ref VX_TYPE_FLOAT32</tt>.
  * \param [in] type The interpolation type from <tt>\ref vx_interpolation_type_e</tt>.
  * <tt>\ref VX_INTERPOLATION_AREA</tt> is not supported.
- * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> image with the same dimensions as the input image.
+ * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> image.
  * \ingroup group_vision_function_warp_perspective
  * \note The border modes <tt>\ref VX_NODE_BORDER</tt> value <tt>\ref VX_BORDER_UNDEFINED</tt> and
  * <tt>\ref VX_BORDER_CONSTANT</tt> are supported.
@@ -939,32 +939,6 @@ VX_API_ENTRY vx_node VX_API_CALL vxTensorMatrixMultiplyNode(vx_graph graph, vx_t
  * \ingroup group_vision_function_copy
  */
 VX_API_ENTRY vx_node VX_API_CALL vxCopyNode(vx_graph graph, vx_reference input, vx_reference output);
-
-/*! \brief [Graph] Creates a weighted average node.
- * \param [in] graph The reference to the graph.
- * \param [in] img1 The first VX_DF_IMAGE_U8 image.
- * \param [in] alpha The input VX_TYPE_FLOAT32 scalar value with a value in the range of 0.0 ≤ α ≤ 1.0 
- * \param [in] img2 The second VX_DF_IMAGE_U8 image.
- * \param [out] output The output VX_DF_IMAGE_U8 image, which must have the same dimensions as the input images.
- * \ingroup group_vision_function_weighted_average
- * \return <tt>\ref vx_node</tt>.
- * \retval vx_node A node reference. Any possible errors preventing a successful creation
- * should be checked using <tt>\ref vxGetStatus</tt>
- */
-VX_API_ENTRY vx_node VX_API_CALL vxWeightedAverageNode(vx_graph graph, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
-
-/*! \brief [Graph] Creates a non-linear filter node.
- * \param [in] graph The reference to the graph.
- * \param [in] function The non-linear filter function.
- * \param [in] input The input image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format.
- * \param [in] mask The mask to be applied to the Non-linear function. VX_MATRIX_ORIGIN attribute is used to place the mask appropriately when computing the resulting image. See vxCreateMatrixFromPattern.
- * \param [out] output The output image in VX_DF_IMAGE_U8 or VX_DF_IMAGE_U1 format, which must have the same dimensions and format as the input image.
- * \ingroup group_vision_function_non_linear_filter
- * \return <tt>\ref vx_node</tt>.
- * \retval vx_node A node reference. Any possible errors preventing a successful creation
- * should be checked using <tt>\ref vxGetStatus</tt>
- */
-VX_API_ENTRY vx_node VX_API_CALL vxNonLinearFilterNode(vx_graph graph, vx_enum function, vx_image input, vx_matrix mask, vx_image output);
 
 #ifdef __cplusplus
 }

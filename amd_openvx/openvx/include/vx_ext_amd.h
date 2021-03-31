@@ -77,7 +77,7 @@ THE SOFTWARE.
 enum ago_type_public_e {
 	/*! \brief AMD data types
 	*/
-	VX_TYPE_FLOAT16             = 0x00F,                     // 16-bit float data type
+	/*VX_TYPE_FLOAT16             = 0x00F,                     // 16-bit float data type*/
 	VX_TYPE_STRING_AMD          = 0x011,                     // scalar data type for string
 
 	/*! \brief AMD data structs
@@ -442,7 +442,7 @@ extern "C" {
  * \ingroup group_tensor
  * \post <tt>\ref vxUnmapTensorPatch </tt> with same (*map_id) value.
  */
-VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type, vx_uint32 flags);
+/*VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type, vx_uint32 flags);*/
 
 /*! \brief Unmap and commit potential changes to a tensor object patch that was previously mapped.
  * Unmapping a tensor patch invalidates the memory location from which the patch could
@@ -457,7 +457,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size nu
  * \ingroup group_tensor
  * \pre <tt>\ref vxMapTensorPatch</tt> returning the same map_id value
  */
-VX_API_ENTRY vx_status VX_API_CALL vxUnmapTensorPatch(vx_tensor tensor, vx_map_id map_id);
+/*VX_API_ENTRY vx_status VX_API_CALL vxUnmapTensorPatch(vx_tensor tensor, vx_map_id map_id);*/
 
 /*==============================================================================
 MISCELLANEOUS

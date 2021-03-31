@@ -93,7 +93,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
 	float * ptr_input_0;
 	vx_size count_input_dims_0 = input_dims_0[0]*input_dims_0[1]*input_dims_0[2]*input_dims_0[3];
 
-	ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST, 0));
+	ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_0, usage, VX_MEMORY_TYPE_HOST));
 
 	memcpy(data->x_tensor_buffer, ptr_input_0, (count_input_dims_0*sizeof(float)));
 
@@ -105,7 +105,7 @@ static vx_status VX_CALLBACK processTopKLayer(vx_node node, const vx_reference *
 	int64_t * ptr_input_1;
 	vx_size count_input_dims_1 = input_dims_1[0]*input_dims_1[1]*input_dims_1[2]*input_dims_1[3];
 
-	ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_1, usage, VX_MEMORY_TYPE_HOST, 0));
+	ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input_1, usage, VX_MEMORY_TYPE_HOST));
 
 	memcpy(&data->k_tensor_buffer, ptr_input_1, (count_input_dims_1*sizeof(int64_t)));
 

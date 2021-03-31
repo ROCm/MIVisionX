@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuScaleImage(vx_context context, vx_image sr
  * \param [in] context The reference to the overall context.
  * \param [in] input The input image in <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_S16</tt>.
  * \param [in] lut The LUT which is of type <tt>\ref VX_TYPE_UINT8</tt> if input image is <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_TYPE_INT16</tt> if input image is <tt>\ref VX_DF_IMAGE_S16</tt>.
- * \param [out] output The output image of the same type as the input image.
+ * \param [out] output The output image of the same size as the input image.
  * \ingroup group_vision_function_lut
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -536,7 +536,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuSubtract(vx_context context, vx_image in1,
  * \param [in] type The interpolation type from \ref vx_interpolation_type_e.
  * \ref VX_INTERPOLATION_AREA is not supported.
  * \param [out] output The output <tt>\ref VX_DF_IMAGE_U1</tt> or <tt>\ref VX_DF_IMAGE_U8</tt> image of the same
- * format and dimensions as the input image.
+ * format as the input image.
  * \ingroup group_vision_function_warp_affine
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -550,8 +550,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxuWarpAffine(vx_context context, vx_image in
  * \param [in] matrix The perspective matrix. Must be 3x3 of type \ref VX_TYPE_FLOAT32.
  * \param [in] type The interpolation type from \ref vx_interpolation_type_e.
  * \ref VX_INTERPOLATION_AREA is not supported.
- * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> or <tt>\ref VX_DF_IMAGE_U1</tt> image with the same
- * dimensions and type as the input image.
+ * \param [out] output The output <tt>\ref VX_DF_IMAGE_U8</tt> image.
  * \ingroup group_vision_function_warp_perspective
  * \return A <tt>\ref vx_status_e</tt> enumeration.
  * \retval VX_SUCCESS Success
@@ -929,19 +928,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxuTensorMatrixMultiply(vx_context context, v
  * \ingroup group_vision_function_copy
  */
 VX_API_ENTRY vx_status VX_API_CALL vxuCopy(vx_context context, vx_reference input, vx_reference output);
-
-/*! \brief [Immediate] Computes a weighted average.
- * \param [in] context The reference to the overall context.
- * \param [in] img1 The first VX_DF_IMAGE_U8 image.
- * \param [in] alpha The input VX_TYPE_FLOAT32 scalar value with a value in the range of 0.0 ≤ α ≤ 1.0 
- * \param [in] img2 The second VX_DF_IMAGE_U8 image.
- * \param [out] output The output VX_DF_IMAGE_U8 image, which must have the same dimensions as the input images.
- * \ingroup group_vision_function_weighted_average
- * \return A <tt>\ref vx_status_e</tt> enumeration.
- * \retval VX_SUCCESS Success
- * \retval * An error occurred. See <tt>\ref vx_status_e</tt>.
- */
-VX_API_ENTRY vx_status VX_API_CALL vxuWeightedAverge(vx_context context, vx_image img1, vx_scalar alpha, vx_image img2, vx_image output);
 
 #ifdef __cplusplus
 }

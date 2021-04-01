@@ -55,7 +55,7 @@ unsigned VideoReader::count()
 
 Reader::Status VideoReader::initialize(ReaderConfig desc)
 {
-    std::cerr<<"\n Reader::Status VideoReader::initialize(ReaderConfig desc) ";
+    //std::cerr<<"\n Reader::Status VideoReader::initialize(ReaderConfig desc) ";
     auto ret = Reader::Status::OK;
     _file_id = 0;
     _folder_path = desc.path();
@@ -65,7 +65,7 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _shuffle = desc.shuffle();
     _loop = desc.loop();
     ret = subfolder_reading();
-    std::cerr << "\n\n Reading video files ...";
+    //std::cerr << "\n\n Reading video files ...";
     _video_file_count = _video_file_names.size();
     // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) { // check needed
@@ -96,6 +96,7 @@ size_t VideoReader::open()
 size_t VideoReader::read(unsigned char* buf, size_t read_size)
 {
     auto file_path = _video_file_names[_curr_file_idx];// Get next file name
+    _last_id = file_path;
     incremenet_read_ptr();
     // _current_fPtr = fopen(file_path.c_str(), "rb");// Open the file,
     // if (!_current_fPtr || read_size < file_path.size())

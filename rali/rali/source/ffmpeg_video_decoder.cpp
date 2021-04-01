@@ -24,6 +24,10 @@ THE SOFTWARE.
 #include <commons.h>
 #include "ffmpeg_video_decoder.h"
 
+// OpenCV
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+
 FFMPEG_VIDEO_DECODER::FFMPEG_VIDEO_DECODER(){
 };
 
@@ -48,6 +52,10 @@ int FFMPEG_VIDEO_DECODER::output_video_frame(AVFrame *frame)
                   (const uint8_t **)(frame->data), frame->linesize,
                   pix_fmt, width, height);
 
+    /*FILE *img_file;
+    img_file = fopen ("img_out.yuv", "wb");
+    fwrite(video_dst_data[0], 1, video_dst_bufsize, img_file);
+    exit(0);*/
     fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);
     return 0;
 }
@@ -56,7 +64,7 @@ int FFMPEG_VIDEO_DECODER::decode_packet(AVCodecContext *dec, const AVPacket *pkt
 {
     int ret = 0;
     //include fseek operation to point to the start of the file
-	
+
     // submit the packet to the decoder
     ret = avcodec_send_packet(dec, pkt);
     if (ret < 0)
@@ -145,21 +153,26 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, cons
     VideoDecoder::Status status;
     int ret;
     /* open input file, and allocate format context */
+    std::cerr << "\nSrc file name : " << src_filename << std::endl;
     int err = avformat_open_input(&fmt_ctx, src_filename, NULL, NULL);
+    std::cerr << "\nRead source file : " << std::endl;
     if(err)
     {
         fprintf(stderr, "Could not open source file %s\n", src_filename);
-	return Status::FAILED;
+	    return Status::FAILED;
     }
-
+    
+    std::cerr << "Before Retrieved stream info";
     /* retrieve stream information */
     err = avformat_find_stream_info(fmt_ctx, NULL);
+    std::cerr << "Retrieved stream info";
     if(err)
     {
 	fprintf(stderr, "Could not find stream information\n");	
 	return Status::FAILED;
     }
 
+    std::cerr << "\nBefore codec context: ";
     if (open_codec_context(&video_stream_idx, &video_dec_ctx, fmt_ctx) >= 0) {
         video_stream = fmt_ctx->streams[video_stream_idx];
 
@@ -173,6 +186,8 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, cons
         width = video_dec_ctx->width;
         height = video_dec_ctx->height;
         pix_fmt = video_dec_ctx->pix_fmt;
+        std::cerr << "\n Width : " << width;
+        std::cerr << "\n Height : " << height;
         ret = av_image_alloc(video_dst_data, video_dst_linesize,
                              width, height, pix_fmt, 1);
         if (ret < 0) {
@@ -182,6 +197,7 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, cons
         }
         video_dst_bufsize = ret;
     }
+    std::cerr << "\nAfter codec context";
 
     /* dump input information to stderr */
     av_dump_format(fmt_ctx, 0, src_filename, 0);
@@ -203,12 +219,23 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, cons
     pkt.data = NULL;
     pkt.size = 0;
 
+    std::cerr << "\nBefore reading a frame :" ;
     /* read frames from the file */
     while (av_read_frame(fmt_ctx, &pkt) >= 0) {
+
+        		/*status = av_read_frame(inputMediaFormatContext[mediaIndex], &avpkt);
+				if (status < 0) {
+                    if ((status == AVERROR_EOF) && LoopDec[mediaIndex]) {
+                        auto stream = inputMediaFormatContext[mediaIndex]->streams[videoStreamIndex[mediaIndex]];
+                        avio_seek(inputMediaFormatContext[mediaIndex]->pb, 0, SEEK_SET);
+                        avformat_seek_file(inputMediaFormatContext[mediaIndex], videoStreamIndex[mediaIndex], 0, 0, stream->duration, 0);
+                */
+
         // check if the packet belongs to a stream we are interested in, otherwise
         // skip it
-        if (pkt.stream_index == video_stream_idx)
+        if (pkt.stream_index == video_stream_idx) 
             ret = decode_packet(video_dec_ctx, &pkt);
+        std::cerr << "\nDecoding is done : " ;
         av_packet_unref(&pkt);
         if (ret < 0)
             break;

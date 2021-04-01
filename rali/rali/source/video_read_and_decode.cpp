@@ -66,130 +66,7 @@ VideoReadAndDecode::~VideoReadAndDecode()
 {
     _reader = nullptr;
     _video_decoder.clear();
-}   
-
-
-std::vector<size_t> get_frame_count(std::string source_path)
-{
-    std::vector<size_t> props;
-    unsigned max_width = 0, max_height = 0;
-    {
-            std::string _full_path = source_path;
-            filesys::path pathObj(_full_path);
-            if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) // Single file as input
-            {
-                std::cerr<<"\n file name:: "<<_full_path;
-                AVFormatContext* pFormatCtx;
-                AVCodecContext* pCodecCtx;
-                int videoStream = -1;
-                int i = 0;
-                // open video file
-                int ret = avformat_open_input(&pFormatCtx, source_path.c_str(), NULL, NULL);
-                if (ret != 0) {
-                    std::cerr<<"Unable to open video file: %s\n"<<_full_path;
-                    exit(0);
-                }
-
-                // Retrieve stream information
-                ret = avformat_find_stream_info(pFormatCtx, NULL);
-                assert(ret >= 0);
-
-                for(i = 0; i < pFormatCtx->nb_streams; i++) {
-                    if (pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO && videoStream < 0) {
-                        videoStream = i;            
-                    }
-                } // end for i
-                assert(videoStream != -1);
-
-                // Get a pointer to the codec context for the video stream
-                pCodecCtx=pFormatCtx->streams[videoStream]->codec;
-                assert(pCodecCtx != NULL);
-                std::cerr<<"\n width:: "<<pCodecCtx->width;
-                std::cerr<<"\n height:: "<<pCodecCtx->height;
-                props.push_back(pFormatCtx->streams[videoStream]->nb_frames);
-            }
-            else
-            {
-                DIR *_sub_dir;
-                struct dirent *_entity;
-                std::string _full_path = source_path;
-                if ((_sub_dir = opendir (_full_path.c_str())) == nullptr)
-                    THROW("VideoReader ShardID ERROR: Failed opening the directory at " + source_path);
-
-                std::vector<std::string> video_files;
-
-                while((_entity = readdir (_sub_dir)) != nullptr)
-                {
-                    std::string entry_name(_entity->d_name);
-                    std::cerr<<"\n entity->d_name:: "<<_entity->d_name;
-                    if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
-                    video_files.push_back(entry_name);
-                }
-                closedir(_sub_dir);
-                std::sort(video_files.begin(), video_files.end());
-            }
-
-            // auto ret = Reader::Status::OK;
-            // for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
-            //     std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
-            //     filesys::path pathObj(subfolder_path);
-            //     if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
-            //     {
-            //         // ignore files with extensions .tar, .zip, .7z
-            //         auto file_extension_idx = subfolder_path.find_last_of(".");
-            //         if (file_extension_idx  != std::string::npos) {
-            //             std::string file_extension = subfolder_path.substr(file_extension_idx+1);
-            //             for (auto & c: file_extension) c = toupper(c);
-            //             if (!((file_extension == "MP4") || (file_extension == "M4V") || (file_extension == "MPG") || (file_extension == "MPEG")))
-            //                 continue;
-            //         }
-            //         ret = open_folder();
-            //         break;  // assume directory has only files.
-            //     }
-            //     else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
-            //     {
-            //         _folder_path = subfolder_path;
-            //         if(open_folder() != Reader::Status::OK)
-            //             WRN("VideoReader ShardID ["+ TOSTR(_shard_id)+ "] VideoReader cannot access the storage at " + _folder_path);
-            //     }
-            // }
-    }
-    {
-
-            // AVFormatContext* pFormatCtx;
-            // AVCodecContext* pCodecCtx;
-            // int videoStream = -1;
-            // int i = 0;
-            // // open video file
-            // int ret = avformat_open_input(&pFormatCtx, filename, NULL, NULL);
-            // if (ret != 0) {
-            //     printf("Unable to open video file: %s\n", filename);
-            //     return;
-            // }
-
-            // // Retrieve stream information
-            // ret = avformat_find_stream_info(pFormatCtx, NULL);
-            // assert(ret >= 0);
-
-            // for(i = 0; i < pFormatCtx->nb_streams; i++) {
-            //     if (pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO && videoStream < 0) {
-            //         videoStream = i;            
-            //     }
-            // } // end for i
-            // assert(videoStream != -1);
-
-            // // Get a pointer to the codec context for the video stream
-            // pCodecCtx=pFormatCtx->streams[videoStream]->codec;
-            // assert(pCodecCtx != NULL);
-
-            // printf("\n");
-            // printf("Width: %d\n", pCodecCtx->width);
-            // printf("Height: %d\n", pCodecCtx->height);
-            // printf("\nTotal number of frames in a video : %d", pFormatCtx->streams[videoStream]->nb_frames);
-    }
-    return props;
 }
-
 
 void
 VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
@@ -215,7 +92,8 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _original_height.resize(_video_count);
     _original_width.resize(_video_count);
     _video_frame_count.resize(_video_count);
-    _video_frame_count = get_frame_count(reader_config.path());
+    std::cerr << "\n pritn ::::" <<  reader_config.get_frame_count();
+    _video_frame_count[0] = reader_config.get_frame_count();
     //Below vector sizes varies based on the video frame count.
     //_video_frame_start_idx.resize(_video_count); 
     //_video_idx.resize(_video_count);
@@ -226,7 +104,6 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     //for sample test
     //_video_frame_count[3] = {30, 25, 54}; 
 
-    std::cerr << "\nSize : " << _video_frame_start_idx.size();
     for(int i = 0; i < _video_count; i++)
     {
         int count_sequence = 0;
@@ -243,12 +120,12 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
             count_sequence = count_sequence + _sequence_length;
         }
     }
-    std::cerr << "\nSize : " << _video_frame_start_idx.size();
+    /*std::cerr << "\nSize : " << _video_frame_start_idx.size();
     for(int i = 0; i < _video_frame_start_idx.size(); i++)
     {
         std::cerr << "\n Video start_idx : " << _video_frame_start_idx[i];
         std::cerr << "\n Video idx : " << _video_idx[i];
-    }
+    }*/
 
     for(int i = 0; i < _video_count; i++)
     {
@@ -285,7 +162,6 @@ VideoReadAndDecode::load(unsigned char* buff,
                          RaliColorFormat output_color_format,
                          bool decoder_keep_original )
 {
-    std::cerr<<"\n VideoLoaderModuleStatus  VideoReadAndDecode::load";
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
     if(!buff)
@@ -349,7 +225,9 @@ VideoReadAndDecode::load(unsigned char* buff,
 
         // decode the image and get the actual decoded image width and height
         size_t scaledw, scaledh;
+        std::string out = "out.mp4";
         // if we process 3rd video then we need to call _decode[2]
+        _video_decoder[i]->Decode((_video_names[i]).c_str(), out.c_str());
         /*if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,

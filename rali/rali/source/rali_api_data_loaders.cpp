@@ -87,7 +87,9 @@ std::vector<unsigned> find_video_properties(const char *source_path)
             props.push_back(pCodecCtx->width);
             props.push_back(pCodecCtx->height);
             props.push_back(1);
-
+            props.push_back(pFormatCtx->streams[videoStream]->nb_frames);
+            avcodec_close(pCodecCtx);
+            avformat_close_input(&pFormatCtx);
         }
         else
         {
@@ -139,44 +141,6 @@ std::vector<unsigned> find_video_properties(const char *source_path)
             // }
     }
     return props;
-}
-
-
-std::tuple<unsigned, unsigned> evaluate_video_data_set(char *filename) {
-	AVFormatContext* pFormatCtx;
-	AVCodecContext* pCodecCtx;
-	int videoStream = -1;
-    int i = 0;
-
-	// open video file
-    int ret = avformat_open_input(&pFormatCtx, filename, NULL, NULL);
-    if (ret != 0) {
-        THROW("Unable to open video file :" + filename);
-    }
-
-    // Retrieve stream information
-    ret = avformat_find_stream_info(pFormatCtx, NULL);
-    assert(ret >= 0);
-
-    for(i = 0; i < pFormatCtx->nb_streams; i++) {
-        if (pFormatCtx->streams[i]->codec->codec_type==AVMEDIA_TYPE_VIDEO && videoStream < 0) {
-            videoStream = i;            
-        }
-    } // end for i
-    assert(videoStream != -1);
-
-    // Get a pointer to the codec context for the video stream
-    pCodecCtx=pFormatCtx->streams[videoStream]->codec;
-    assert(pCodecCtx != NULL);
-
-    std::cout << "\nWidth : " << pCodecCtx->width;
-    std::cout << "\nHeight :" <<  pCodecCtx->height;
-
-    //Yet to add codes to calculate the max width and max_height
-    auto max_width = pCodecCtx->width;
-    auto max_height = pCodecCtx->height;
-
-    return std::make_tuple(max_width, max_height);
 }
 
 std::tuple<unsigned, unsigned>
@@ -1480,14 +1444,15 @@ raliVideoFileSource(
 #ifdef RALI_VIDEO
         // Add code to get width and height of frames in video. 
         // In case of multiple videos find the max width and height
-        unsigned width , height, number_of_video_files;
+        unsigned width , height, number_of_video_files, frame_count;
         std::vector<unsigned> video_prop;
-        video_prop.resize(3);
+        video_prop.resize(4);// having width, height, num of video files & framecount
         video_prop = find_video_properties(source_path);
-        std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1];
+        std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop[0];
         height = video_prop[1];
         number_of_video_files = video_prop[2];
+        frame_count = video_prop[3];
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         //auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
@@ -1497,7 +1462,7 @@ raliVideoFileSource(
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
-        std::cerr<<"\n context->user_batch_size() ::"<<context->user_batch_size();
+        //std::cerr<<"\n context->user_batch_size() ::"<<context->user_batch_size();
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",
@@ -1506,6 +1471,7 @@ raliVideoFileSource(
                                                                           VideoDecoderType::FFMPEG_VIDEO,
                                                                           sequence_length,
                                                                           number_of_video_files,
+                                                                          frame_count,
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),

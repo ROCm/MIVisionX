@@ -85,7 +85,7 @@ private:
     size_t _batch_size;
     size_t _sequence_length;
     size_t _video_count; // based on video_count
+    size_t _frame_count;
     VideoDecoderConfig _video_decoder_config;
     bool decoder_keep_original;
 };
-

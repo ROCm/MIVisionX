@@ -54,13 +54,15 @@ struct ReaderConfig
     void set_loop( bool loop) { _loop = loop; }
     void set_sequence_length( unsigned sequence_length) { _sequence_length = sequence_length; }
     void set_video_count( unsigned video_count ) { _video_count = video_count; }
+    void set_frame_count( unsigned frame_count ) { _frame_count = frame_count; }
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
     size_t get_sequence_length() { return _sequence_length; }
     size_t get_video_count() { return _video_count; }
+    size_t get_frame_count() { return _frame_count; }
     std::string path() { return _path; }
-    std::string json_path() { return _json_path;}
+    std::string json_path() { return _json_path; }
     std::map<std::string, std::string> feature_key_map() {return _feature_key_map; }
     void set_file_prefix(const std::string &prefix) {_file_prefix = prefix;}
     std::string file_prefix() {return _file_prefix;}
@@ -74,6 +76,7 @@ private:
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     size_t _sequence_length = 1; // Video reader module sequence length
     unsigned _video_count;
+    unsigned _frame_count;
     bool _shuffle = false;
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader

@@ -93,7 +93,8 @@ static vx_status VX_CALLBACK validateTensorMatrixMultiply(vx_node node, const vx
 
 static vx_status VX_CALLBACK processTensorMatrixMultiply(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 {
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	TensorMatrixMultiplyLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     size_t arr_size;
@@ -101,22 +102,24 @@ static vx_status VX_CALLBACK processTensorMatrixMultiply(vx_node node, const vx_
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
 		refreshTensorMatrixMultiply(node, parameters, num, data);
-		status = rppi_tensor_matrix_multiply_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst,  data->tensorDimensionsValue1, data->tensorDimensionsValue2,data->rppHandle);
+		rpp_status = rppi_tensor_matrix_multiply_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst,  data->tensorDimensionsValue1, data->tensorDimensionsValue2,data->rppHandle);
         cl_command_queue theQueue;
         theQueue = data->handle.cmdq;
         cl_int err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
         clEnqueueReadBuffer(theQueue, data->cl_pDst, CL_TRUE, 0, bytes, data->pDst, 0, NULL, NULL );
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshTensorMatrixMultiply(node, parameters, num, data);
-		status = rppi_tensor_matrix_multiply_u8_host(data->pSrc1, data->pSrc2, data->pDst,  data->tensorDimensionsValue1, data->tensorDimensionsValue2,data->rppHandle);
+		rpp_status = rppi_tensor_matrix_multiply_u8_host(data->pSrc1, data->pSrc2, data->pDst,  data->tensorDimensionsValue1, data->tensorDimensionsValue2,data->rppHandle);
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 	}
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     vx_status copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u),data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    return status;
+    return return_status;
 }
 
 static vx_status VX_CALLBACK initializeTensorMatrixMultiply(vx_node node, const vx_reference *parameters, vx_uint32 num) 

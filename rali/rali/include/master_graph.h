@@ -36,6 +36,7 @@ THE SOFTWARE.
 #include "node_cifar10_loader.h"
 #include "meta_data_reader.h"
 #include "meta_data_graph.h"
+#include "randombboxcrop_meta_data_reader.h"
 
 class MasterGraph
 {
@@ -75,11 +76,14 @@ public:
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
+    void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
     bool empty() { return (remaining_images_count() < _user_batch_size); }
     size_t internal_batch_size() { return _internal_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
+    std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
+    bool is_random_bbox_crop() {return _is_random_bbox_crop; }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -96,6 +100,7 @@ private:
     bool no_more_processed_data();
     RingBuffer _ring_buffer;//!< The queue that keeps the images that have benn processed by the internal thread (_output_thread) asynchronous to the user's thread
     MetaDataBatch* _augmented_meta_data = nullptr;//!< The output of the meta_data_graph,
+    CropCordBatch* _random_bbox_crop_cords_data = nullptr;
     std::thread _output_thread;
     DeviceManager   _device;//!< Keeps the device related constructs needed for running on GPU
     ImageInfo _output_image_info;//!< Keeps the information about RALI's output image , it includes all images of a batch stacked on top of each other
@@ -118,6 +123,7 @@ private:
     TimingDBG _process_time;
     std::shared_ptr<MetaDataReader> _meta_data_reader = nullptr;
     std::shared_ptr<MetaDataGraph> _meta_data_graph = nullptr;
+    std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
     bool _first_run = true;
     bool _processing;//!< Indicates if internal processing thread should keep processing or not
     const static unsigned OUTPUT_RING_BUFFER_DEPTH = 3;
@@ -128,6 +134,7 @@ private:
     const size_t _internal_batch_size;//!< In the host processing case , internal batch size can be different than _user_batch_size. This batch size used internally throughout.
     const size_t _user_to_internal_batch_ratio;
     bool _output_routine_finished_processing = false;
+    bool _is_random_bbox_crop = false;
 };
 
 template <typename T>
@@ -196,6 +203,7 @@ template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -209,6 +217,7 @@ template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));

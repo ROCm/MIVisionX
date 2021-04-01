@@ -124,7 +124,8 @@ static vx_status VX_CALLBACK validateScalebatchPS(vx_node node, const vx_referen
 
 static vx_status VX_CALLBACK processScalebatchPS(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	ScalebatchPSLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -134,24 +135,27 @@ static vx_status VX_CALLBACK processScalebatchPS(vx_node node, const vx_referenc
 		cl_command_queue handle = data->handle.cmdq;
 		refreshScalebatchPS(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			status = rppi_scale_u8_pln1_batchPS_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
+ 			rpp_status = rppi_scale_u8_pln1_batchPS_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_scale_u8_pkd3_batchPS_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_scale_u8_pkd3_batchPS_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshScalebatchPS(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			status = rppi_scale_u8_pln1_batchPS_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_scale_u8_pln1_batchPS_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_scale_u8_pkd3_batchPS_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_scale_u8_pkd3_batchPS_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->percentage,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeScalebatchPS(vx_node node, const vx_reference *parameters, vx_uint32 num) 

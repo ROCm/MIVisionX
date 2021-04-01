@@ -129,7 +129,8 @@ static vx_status VX_CALLBACK validateFogbatchPDROID(vx_node node, const vx_refer
 
 static vx_status VX_CALLBACK processFogbatchPDROID(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	FogbatchPDROIDLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -139,24 +140,27 @@ static vx_status VX_CALLBACK processFogbatchPDROID(vx_node node, const vx_refere
 		cl_command_queue handle = data->handle.cmdq;
 		refreshFogbatchPDROID(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			// status = rppi_fog_u8_pln1_batchPD_ROID_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
+ 			// rpp_status = rppi_fog_u8_pln1_batchPD_ROID_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			// status = rppi_fog_u8_pkd3_batchPD_ROID_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
+			// rpp_status = rppi_fog_u8_pkd3_batchPD_ROID_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshFogbatchPDROID(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			// status = rppi_fog_u8_pln1_batchPD_ROID_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
+			// rpp_status = rppi_fog_u8_pln1_batchPD_ROID_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			// status = rppi_fog_u8_pkd3_batchPD_ROID_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
+			// rpp_status = rppi_fog_u8_pkd3_batchPD_ROID_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->fogValue,data->roiPoints,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeFogbatchPDROID(vx_node node, const vx_reference *parameters, vx_uint32 num) 

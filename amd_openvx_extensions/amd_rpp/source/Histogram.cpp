@@ -84,7 +84,8 @@ static vx_status VX_CALLBACK validateHistogram(vx_node node, const vx_reference 
 
 static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	HistogramLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -94,30 +95,31 @@ static vx_status VX_CALLBACK processHistogram(vx_node node, const vx_reference *
 		cl_command_queue handle = data->handle.cmdq;
 		refreshHistogram(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			// status = rppi_histogram_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
+ 			rpp_status = rppi_histogram_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			// status = rppi_histogram_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
+			// rpp_status = rppi_histogram_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
 		}
 		size_t arr_size;
 		STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
 		vx_status copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u),data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshHistogram(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			// status = rppi_histogram_u8_pln1_host(data->pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
+			rpp_status = rppi_histogram_u8_pln1_host(data->pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			// status = rppi_histogram_u8_pkd3_host(data->pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
+			// rpp_status = rppi_histogram_u8_pkd3_host(data->pSrc,data->srcDimensions,data->outputHistogram,data->bins,data->rppHandle);
 		}
 		size_t arr_size;
 		STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
 		vx_status copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp32u),data->outputHistogram, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeHistogram(vx_node node, const vx_reference *parameters, vx_uint32 num) 

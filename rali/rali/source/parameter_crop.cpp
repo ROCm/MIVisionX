@@ -49,7 +49,7 @@ void CropParam::get_crop_dimensions(std::vector<uint32_t> &crop_w_dim, std::vect
     crop_w_dim = cropw_arr_val;
 }
 
-void CropParam::create_array(std::shared_ptr<Graph> graph)
+void CropParam::array_init()
 {
     x1_arr_val.resize(batch_size);
     cropw_arr_val.resize(batch_size);
@@ -59,7 +59,11 @@ void CropParam::create_array(std::shared_ptr<Graph> graph)
     y2_arr_val.resize(batch_size);
     in_width.resize(batch_size);
     in_height.resize(batch_size);
+}
 
+void CropParam::create_array(std::shared_ptr<Graph> graph)
+{
+    array_init();
     x1_arr =    vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT32,batch_size);
     cropw_arr = vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT32,batch_size);
     y1_arr =    vxCreateArray(vxGetContext((vx_reference)graph->get()), VX_TYPE_UINT32,batch_size);

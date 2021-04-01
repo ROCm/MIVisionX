@@ -91,7 +91,8 @@ static vx_status VX_CALLBACK validateTensorLookup(vx_node node, const vx_referen
 
 static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 {
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	TensorLookupLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     size_t arr_size;
@@ -99,7 +100,7 @@ static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_referenc
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
 		refreshTensorLookup(node, parameters, num, data);
-		// status = rppi_tensor_look_up_table_u8_gpu((void *)data->cl_pSrc,(void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
+		// rpp_status = rppi_tensor_look_up_table_u8_gpu((void *)data->cl_pSrc,(void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
         cl_command_queue theQueue;
         theQueue = data->handle.cmdq;
         cl_int err;
@@ -110,11 +111,11 @@ static vx_status VX_CALLBACK processTensorLookup(vx_node node, const vx_referenc
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshTensorLookup(node, parameters, num, data);
-		// status = rppi_tensor_look_up_table_u8_host(data->pSrc, data->pDst, data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
+		// rpp_status = rppi_tensor_look_up_table_u8_host(data->pSrc, data->pDst, data->tensorDimensions, data->tensorDimensionsValue,data->luPtr,data->rppHandle);
 	}
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     vx_status copy_status = vxCopyArrayRange((vx_array)parameters[1], 0, arr_size, sizeof(Rpp8u),data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    return status;
+    return return_status;
 }
 
 static vx_status VX_CALLBACK initializeTensorLookup(vx_node node, const vx_reference *parameters, vx_uint32 num) 

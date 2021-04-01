@@ -73,6 +73,7 @@ static vx_status VX_CALLBACK validateCopy(vx_node node, const vx_reference param
 static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference * parameters, vx_uint32 num)
 {
     CopyLocalData * data = NULL;
+    vx_status return_status = VX_SUCCESS;
     STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     vx_df_image df_image = VX_DF_IMAGE_VIRT;
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
@@ -87,14 +88,12 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference * para
         unsigned size = data->dimensions.height* data->dimensions.width;
 
         if (df_image == VX_DF_IMAGE_U8 ){
-            //rppi_fisheye_u8_pln1_gpu((void *)data->cl_pSrc, data->dimensions, (void*)data->cl_pDst, (void *)handle);
             clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size, 0 , NULL, NULL);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
-            //rppi_fisheye_u8_pkd3_gpu((void *)data->cl_pSrc, data->dimensions, (void*)data->cl_pDst, (void *)handle);
             clEnqueueCopyBuffer(handle, data->cl_pSrc, data->cl_pDst, 0, 0, size*3, 0 , NULL, NULL);
         }
-        return VX_SUCCESS;
+        return_status = VX_SUCCESS;
 
 #endif
     } else if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
@@ -105,15 +104,14 @@ static vx_status VX_CALLBACK processCopy(vx_node node, const vx_reference * para
         unsigned size = data->dimensions.height* data->dimensions.width;
 
         if (df_image == VX_DF_IMAGE_U8 ){
-            //rppi_fisheye_u8_pln1_host((void *)data->pSrc, data->dimensions, (void*)data->pDst);
             memcpy(data->pDst, data->pSrc, size);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
-            //rppi_fisheye_u8_pkd3_host((void *)data->pSrc, data->dimensions, (void*)data->pDst);
             memcpy(data->pDst, data->pSrc, size*3);
         }
-        return VX_SUCCESS;
+        return_status = VX_SUCCESS;
     }
+    return return_status;
 }
 
 static vx_status VX_CALLBACK initializeCopy(vx_node node, const vx_reference *parameters, vx_uint32 num)

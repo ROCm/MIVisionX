@@ -104,7 +104,8 @@ static vx_status VX_CALLBACK validateBilateralFilter(vx_node node, const vx_refe
 
 static vx_status VX_CALLBACK processBilateralFilter(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	BilateralFilterLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -114,24 +115,27 @@ static vx_status VX_CALLBACK processBilateralFilter(vx_node node, const vx_refer
 		cl_command_queue handle = data->handle.cmdq;
 		refreshBilateralFilter(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			status = rppi_bilateral_filter_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
+ 			rpp_status = rppi_bilateral_filter_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_bilateral_filter_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
+			rpp_status = rppi_bilateral_filter_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,(void *)data->cl_pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshBilateralFilter(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			// status = rppi_bilateral_filter_u8_pln1_host(data->pSrc,data->srcDimensions,data->pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
+			// rpp_status = rppi_bilateral_filter_u8_pln1_host(data->pSrc,data->srcDimensions,data->pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			// status = rppi_bilateral_filter_u8_pkd3_host(data->pSrc,data->srcDimensions,data->pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
+			// rpp_status = rppi_bilateral_filter_u8_pkd3_host(data->pSrc,data->srcDimensions,data->pDst,data->kernelSize,data->sigmaI,data->sigmaS,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeBilateralFilter(vx_node node, const vx_reference *parameters, vx_uint32 num) 

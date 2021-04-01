@@ -147,6 +147,23 @@ namespace rali{
         return py::cast<py::none>(Py_None);
     }
 
+    py::object wrapper_one_hot_label_copy(RaliContext context, py::array_t<int> array , unsigned numOfClasses)
+    {
+        auto buf = array.request();
+        int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliGetOneHotImageLabels(context, ptr, numOfClasses);
+        return py::cast<py::none>(Py_None);
+    }
+
+    py::object wrapper_random_bbox_crop(RaliContext context, bool all_boxes_overlap, bool no_crop, RaliFloatParam p_aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attemps, RaliFloatParam p_scaling, int total_num_attempts )
+    {
+        // auto buf = array.request();
+        // int* ptr = (int*) buf.ptr;
+        // call pure C++ function
+        raliRandomBBoxCrop(context, all_boxes_overlap, no_crop, p_aspect_ratio, has_shape, crop_width, crop_height, num_attemps, p_scaling, total_num_attempts);
+        return py::cast<py::none>(Py_None);
+    }
 
 
     PYBIND11_MODULE(rali_pybind, m) {
@@ -219,12 +236,14 @@ namespace rali{
         m.def("Caffe2Reader",&raliCreateCaffe2LMDBLabelReader);
         m.def("CaffeReaderDetection",&raliCreateCaffeLMDBReaderDetection);
         m.def("Caffe2ReaderDetection",&raliCreateCaffe2LMDBReaderDetection);
+        m.def("RandomBBoxCrop",&wrapper_random_bbox_crop);
         m.def("COCOReader",&raliCreateCOCOReader);
         m.def("getImageLabels",&wrapper_label_copy);
         m.def("getBBLabels",&wrapper_BB_label_copy);
         m.def("getBBCords",&wrapper_BB_cord_copy);
         m.def("getImgSizes",&wrapper_img_sizes_copy);
         m.def("getBoundingBoxCount",&wrapper_labels_BB_count_copy);
+        m.def("getOneHotEncodedLabels",&wrapper_one_hot_label_copy );
         m.def("isEmpty",&raliIsEmpty);
         m.def("getTimingInfo",raliGetTimingInfo);
         // rali_api_parameter.h
@@ -243,6 +262,43 @@ namespace rali{
         m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
         m.def("raliCopyToOutputTensor16",&wrapper_tensor16);
         // rali_api_data_loaders.h
+         m.def("COCO_ImageDecoderSlice",&raliJpegCOCOFileSourcePartial,"Reads file from the source given and decodes it according to the policy",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("json_path"),
+            py::arg("color_format"),	
+            py::arg("num_threads"),	
+            py::arg("is_output"),	
+            py::arg("shuffle") = false,	
+            py::arg("loop") = false,	
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,	
+            py::arg("max_width") = 0,	
+            py::arg("max_height") = 0,
+            py::arg("area_factor") = NULL,	
+            py::arg("aspect_ratio") = NULL,
+            py::arg("x_drift_factor") = NULL,	
+            py::arg("y_drift_factor") = NULL
+            );
+         m.def("COCO_ImageDecoderSliceShard",&raliJpegCOCOFileSourcePartialSingleShard,"Reads file from the source given and decodes it according to the policy",
+            py::return_value_policy::reference,
+            py::arg("context"),
+            py::arg("source_path"),
+            py::arg("json_path"),
+            py::arg("color_format"),	
+            py::arg("shard_id"),
+            py::arg("shard_count"),	
+            py::arg("is_output"),	
+            py::arg("shuffle") = false,	
+            py::arg("loop") = false,	
+            py::arg("decode_size_policy") = RALI_USE_MOST_FREQUENT_SIZE,	
+            py::arg("max_width") = 0,	
+            py::arg("max_height") = 0,
+            py::arg("area_factor") = NULL,	
+            py::arg("aspect_ratio") = NULL,
+            py::arg("x_drift_factor") = NULL,	
+            py::arg("y_drift_factor") = NULL
+            );
         m.def("ImageDecoder",&raliJpegFileSource,"Reads file from the source given and decodes it according to the policy",
             py::return_value_policy::reference,
             py::arg("context"),

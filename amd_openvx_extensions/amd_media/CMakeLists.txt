@@ -27,14 +27,17 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
 find_package(OpenCL REQUIRED)
 
-find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
 find_path(AVCODEC_INCLUDE_DIR libavcodec/avcodec.h)
-find_path(SWSCALE_INCLUDE_DIR libswscale/swscale.h)
-find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
-find_library(AVUTIL_LIBRARY avutil)
 find_library(AVCODEC_LIBRARY avcodec)
-find_library(SWSCALE_LIBRARY swscale)
+
+find_path(AVFORMAT_INCLUDE_DIR libavformat/avformat.h)
 find_library(AVFORMAT_LIBRARY avformat)
+
+find_path(AVUTIL_INCLUDE_DIR libavutil/avutil.h)
+find_library(AVUTIL_LIBRARY avutil)
+
+find_path(SWSCALE_INCLUDE_DIR libswscale/swscale.h)
+find_library(SWSCALE_LIBRARY swscale)
 
 include_directories(${OpenCL_INCLUDE_DIRS} 
                     ${OpenCL_INCLUDE_DIRS}/Headers

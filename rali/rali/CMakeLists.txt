@@ -25,7 +25,11 @@ project(rali)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 		
-find_package(OpenCL QUIET)
+if(OPENCL_SUPPORT)
+    find_package(OpenCL QUIET)
+else()
+	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
+endif()
 find_package(AMDRPP QUIET)
 find_package(TurboJpeg QUIET)
 find_package(Protobuf QUIET)

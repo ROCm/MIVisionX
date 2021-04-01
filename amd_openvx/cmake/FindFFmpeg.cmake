@@ -29,10 +29,7 @@
 # FFMPEG_FOUND - system has ffmpeg or libav
 # FFMPEG_INCLUDE_DIR - the ffmpeg include directory
 # FFMPEG_LIBRARIES - Link these to use ffmpeg
-# FFMPEG_LIBAVCODEC
-# FFMPEG_LIBAVFORMAT
-# FFMPEG_LIBAVUTIL
-#
+################################################################################
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig")
 include(FindPackageHandleStandardArgs)
@@ -41,13 +38,20 @@ find_package_handle_standard_args(
   FFmpeg
   FOUND_VAR FFMPEG_FOUND
   REQUIRED_VARS
-    FFMPEG_LIBRARY
+    FFMPEG_LIBRARIES
     FFMPEG_INCLUDE_DIR
+    AVCODEC_INCLUDE_DIR
+    AVCODEC_LIBRARY
+    AVFORMAT_INCLUDE_DIR
+    AVFORMAT_LIBRARY
+    AVUTIL_INCLUDE_DIR
+    AVUTIL_LIBRARY
+    SWSCALE_INCLUDE_DIR
+    SWSCALE_LIBRARY
   VERSION_VAR FFMPEG_VERSION
 )
 
 if(FFMPEG_LIBRARIES AND FFMPEG_INCLUDE_DIR)
-  # in cache already
   set(FFMPEG_FOUND TRUE)
 else()
   # use pkg-config to get the directories and then use these values
@@ -59,7 +63,8 @@ else()
     pkg_check_modules(_FFMPEG_AVUTIL libavutil)
   endif()
 
-  find_path(FFMPEG_AVCODEC_INCLUDE_DIR
+  # AVCODEC
+  find_path(AVCODEC_INCLUDE_DIR 
     NAMES libavcodec/avcodec.h
     PATHS ${_FFMPEG_AVCODEC_INCLUDE_DIRS}
       /usr/local/include
@@ -68,8 +73,8 @@ else()
       /sw/include
     PATH_SUFFIXES ffmpeg libav
   )
-
-  find_library(FFMPEG_LIBAVCODEC
+  mark_as_advanced(AVCODEC_INCLUDE_DIR)
+  find_library(AVCODEC_LIBRARY
     NAMES avcodec
     PATHS ${_FFMPEG_AVCODEC_LIBRARY_DIRS}
       /usr/local/lib
@@ -77,8 +82,20 @@ else()
       /opt/local/lib
       /sw/lib
   )
+  mark_as_advanced(AVCODEC_LIBRARY)
 
-  find_library(FFMPEG_LIBAVFORMAT
+  # AVFORMAT
+  find_path(AVFORMAT_INCLUDE_DIR 
+    NAMES libavformat/avformat.h
+    PATHS ${_FFMPEG_AVFORMAT_INCLUDE_DIRS}
+      /usr/local/include
+      /usr/include
+      /opt/local/include
+      /sw/include
+    PATH_SUFFIXES ffmpeg libav
+  )
+  mark_as_advanced(AVFORMAT_INCLUDE_DIR)
+  find_library(AVFORMAT_LIBRARY
     NAMES avformat
     PATHS ${_FFMPEG_AVFORMAT_LIBRARY_DIRS}
       /usr/local/lib
@@ -86,8 +103,20 @@ else()
       /opt/local/lib
       /sw/lib
   )
+  mark_as_advanced(AVFORMAT_LIBRARY)
 
-  find_library(FFMPEG_LIBAVUTIL
+  # AVUTIL
+  find_path(AVUTIL_INCLUDE_DIR 
+    NAMES libavutil/avutil.h
+    PATHS ${_FFMPEG_AVUTIL_INCLUDE_DIRS}
+      /usr/local/include
+      /usr/include
+      /opt/local/include
+      /sw/include
+    PATH_SUFFIXES ffmpeg libav
+  )
+  mark_as_advanced(AVUTIL_INCLUDE_DIR)
+  find_library(AVUTIL_LIBRARY
     NAMES avutil
     PATHS ${_FFMPEG_AVUTIL_LIBRARY_DIRS}
       /usr/local/lib
@@ -95,8 +124,30 @@ else()
       /opt/local/lib
       /sw/lib
   )
+  mark_as_advanced(AVUTIL_LIBRARY)
 
-  if(FFMPEG_LIBAVCODEC AND FFMPEG_LIBAVFORMAT)
+  # SWSCALE  
+  find_path(SWSCALE_INCLUDE_DIR 
+    NAMES libswscale/swscale.h
+    PATHS ${_FFMPEG_SWSCALE_INCLUDE_DIRS}
+      /usr/local/include
+      /usr/include
+      /opt/local/include
+      /sw/include
+    PATH_SUFFIXES ffmpeg libav sw
+  )
+  mark_as_advanced(SWSCALE_INCLUDE_DIR)
+  find_library(SWSCALE_LIBRARY
+    NAMES swscale
+    PATHS ${_FFMPEG_SWSCALE_LIBRARY_DIRS}
+      /usr/local/lib
+      /usr/lib
+      /opt/local/lib
+      /sw/lib
+  )
+  mark_as_advanced(SWSCALE_LIBRARY)
+
+  if(AVCODEC_LIBRARY AND AVFORMAT_LIBRARY)
     set(FFMPEG_FOUND TRUE)
   endif()
   
@@ -112,16 +163,18 @@ else()
   endif()
   
   if(FFMPEG_FOUND)
-    set(FFMPEG_INCLUDE_DIR ${FFMPEG_AVCODEC_INCLUDE_DIR})
+    set(FFMPEG_INCLUDE_DIR ${AVFORMAT_INCLUDE_DIR})
     set(FFMPEG_LIBRARIES
-      ${FFMPEG_LIBAVCODEC}
-      ${FFMPEG_LIBAVFORMAT}
-      ${FFMPEG_LIBAVUTIL})
+      ${AVCODEC_LIBRARY}
+      ${AVFORMAT_LIBRARY}
+      ${AVUTIL_LIBRARY}
+      ${SWSCALE_LIBRARY}
+    )
   endif()
 
   if(FFMPEG_FOUND)
     if(NOT FFMPEG_FIND_QUIETLY)
-      message("-- ${Blue}Using FFMPEG -- Libraries:${FFMPEG_LIBRARIES} Include Dir:${FFMPEG_INCLUDE_DIR}${ColourReset}")
+      message("-- ${Blue}Using FFMPEG -- Libraries:${FFMPEG_LIBRARIES} Includes:${FFMPEG_INCLUDE_DIR}${ColourReset}")
     endif()
   else()
     if(FFMPEG_FIND_REQUIRED)

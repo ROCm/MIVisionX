@@ -16,7 +16,7 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.n
         yum -y install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm && \
         yum -y install ffmpeg ffmpeg-devel
 # install MIVisionX neural net dependency - Level 4
-RUN yum -y install libsqlite3x-devel bzip2-devel openssl-devel python-devel python3-devel autoconf automake libtool curl make g++ unzip && \
+RUN yum -y install libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip && \
         mkdir neuralNet && cd neuralNet && wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip && \
         unzip half-1.12.0.zip -d half-files && cp half-files/include/half.hpp /usr/local/include/ && \
         git clone https://github.com/RadeonOpenCompute/rocm-cmake.git && cd rocm-cmake && mkdir build && cd build && \

@@ -36,8 +36,8 @@ find_package_handle_standard_args(
 )
 
 if(OpenCL_LIBRARIES AND OpenCL_INCLUDE_DIRS)
-  # in cache already
-  set(OpenCL_FOUND TRUE)
+    set(OpenCL_FOUND TRUE)
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
 else()
     find_path(OPENCL_INCLUDE_DIRS
         NAMES OpenCL/cl.h CL/cl.h

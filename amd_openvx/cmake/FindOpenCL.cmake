@@ -90,5 +90,5 @@ if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
 endif()
 
 if( NOT OPENCL_FOUND )
-    message( "-- ${White}FindOpenCL failed to find: OpenCL{ColourReset}" )
+    message( "-- ${Yellow}FindOpenCL failed to find: OpenCL${ColourReset}" )
 endif()

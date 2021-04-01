@@ -108,7 +108,7 @@ else()
       message("-- ${White}AVUTIL   required min version - 56.14.100 Found:${_FFMPEG_AVUTIL_VERSION}${ColourReset}")
     endif()
     set(FFMPEG_FOUND FALSE)
-    message( "-- ${White}FindFFmpeg failed to find: FFMPEG{ColourReset}" )
+    message( "-- ${Yellow}FindFFmpeg failed to find: FFMPEG${ColourReset}" )
   endif()
   
   if(FFMPEG_FOUND)

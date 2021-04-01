@@ -411,6 +411,16 @@ else:
                 # libASS
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                           ' install libass-devel')
+            elif "centos-8" in platfromInfo:
+                # el8 x86_64 packages
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install ffmpeg ffmpeg-devel')
             else:
                 # Yasm
                 os.system(

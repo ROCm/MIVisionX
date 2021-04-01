@@ -31,6 +31,7 @@ find_package_handle_standard_args(
     REQUIRED_VARS
         OpenCL_LIBRARIES
         OpenCL_INCLUDE_DIRS
+        CL_TARGET_OPENCL_VERSION
     VERSION_VAR OpenCL_VERSION
 )
 
@@ -102,7 +103,8 @@ else()
             set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
         endif()
         message("-- ${Magenta}ROCm OpenCL Found - Set CL_TARGET_OPENCL_VERSION=220${ColourReset}")
-        add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
+        set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
+        add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
     endif()
 
     if( NOT OpenCL_FOUND )

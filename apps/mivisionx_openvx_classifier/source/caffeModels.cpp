@@ -58,7 +58,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 
     vx_map_id map_id;
     void * ptr;
-    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0));
+    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     vx_size n = fread(ptr, itemsize, count, fp);
     if(n != count) {
         vxAddLogEntry((vx_reference)tensor, VX_FAILURE, "ERROR: expected char[%ld], but got char[%ld] in %s\n", count*itemsize, n*itemsize, binaryFilename);

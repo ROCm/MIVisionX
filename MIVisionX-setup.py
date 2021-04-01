@@ -21,11 +21,12 @@
 import os
 import sys
 import argparse
+import platform
 
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.8.8"
+__version__ = "1.9.1"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -49,8 +50,8 @@ parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',
                     help='ProtoBuf Version - optional (default:3.12.0)')
-parser.add_argument('--rpp',   		type=str, default='0.6',
-                    help='RPP Version - optional (default:0.6)')
+parser.add_argument('--rpp',   		type=str, default='0.7',
+                    help='RPP Version - optional (default:0.7)')
 parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
@@ -72,6 +73,8 @@ ffmpegInstall = args.ffmpeg
 neuralNetInstall = args.neural_net
 raliInstall = args.rali
 reinstall = args.reinstall
+
+platfromInfo = platform.platform()
 
 # sudo requirement check
 sudoLocation = ''
@@ -123,6 +126,7 @@ if(os.path.exists(deps_dir) and reinstall == 'yes'):
     os.system('sudo rm -rf '+deps_dir)
 
 # MIVisionX setup
+print("\nMIVisionX Setup on "+platfromInfo+"\n")
 if(os.path.exists(deps_dir)):
     # opencv
     os.system('sudo -v')
@@ -255,7 +259,7 @@ else:
         #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
         #os.system('sudo -v')
         #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
-        #os.system('sudo -v') - App Requirement - Cloud Inference Client
+        #os.system('sudo -v') # App Requirement - Cloud Inference Client
         #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # Install ProtoBuf
@@ -333,7 +337,7 @@ else:
                       linuxSystemInstall_check+' install clang')
             # turbo-JPEG
             os.system(
-                '(cd '+deps_dir+'; git clone -b 2.0.6 https://github.com/rrawther/libjpeg-turbo.git )')
+                '(cd '+deps_dir+'; git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git )')
             os.system('(cd '+deps_dir+'/libjpeg-turbo; mkdir build; cd build; '+linuxCMake +
                       ' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP
@@ -380,67 +384,82 @@ else:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
-            # FFMPEG 4
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-            os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
-            os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
-                      linuxFlag+' make install )')
         else:
-            os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                      ' install autoconf automake bzip2 bzip2-devel cmake freetype-devel libass-devel')
-            os.system('sudo -v')
+                      ' install autoconf automake bzip2 bzip2-devel cmake freetype-devel')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                      ' install gcc gcc-c++ git libtool make mercurial pkgconfig zlib-devel')
+                      ' install gcc gcc-c++ git libtool make pkgconfig zlib-devel')
             # Nasm
-            os.system(
-                '(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
-            os.system('(cd '+deps_dir+'; tar xjvf nasm-2.14.02.tar.bz2 )')
-            os.system(
-                '(cd '+deps_dir+'/nasm-2.14.02; ./autogen.sh; ./configure; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/nasm-2.14.02; sudo ' +
-                      linuxFlag+' make install )')
-            # Yasm
-            os.system(
-                '(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
-            os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
-            os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo ' +
-                      linuxFlag+' make install )')
-            # libx264
-            os.system(
-                '(cd '+deps_dir+'; git clone --depth 1 https://code.videolan.org/videolan/x264.git )')
-            os.system(
-                '(cd '+deps_dir+'/x264; ./configure --enable-static --disable-opencl; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/x264; sudo ' +
-                      linuxFlag+' make install )')
-            # libx265
-            os.system('(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
-            os.system(
-                '(cd '+deps_dir+'/x265/build/linux; cmake -G "Unix Makefiles" ../../source; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/x265/build/linux; sudo ' +
-                      linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')
-            # libfdk_aac
-            os.system(
-                '(cd '+deps_dir+'; git clone https://github.com/mstorsjo/fdk-aac.git )')
-            os.system(
-                '(cd '+deps_dir+'/fdk-aac; autoreconf -fiv; ./configure --disable-shared; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/fdk-aac; sudo ' +
-                      linuxFlag+' make install )')
-            # FFMPEG 4
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
-            os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --disable-shared --enable-static --enable-libx264 --enable-libx265 --enable-libass --enable-gpl --enable-nonfree)')
-            os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
-            os.system('sudo -v')
-            os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
-                      linuxFlag+' make install )')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                      ' install nasm')
+            if "centos-7" in platfromInfo:
+                # Yasm
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' --enablerepo=extras install epel-release')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install yasm')
+                # libx264 & libx265
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install libx264-devel libx265-devel')
+                # libfdk_aac
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install https://forensics.cert.org/cert-forensics-tools-release-el7.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' --enablerepo=forensics install fdk-aac')
+                # libASS
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install libass-devel')
+            elif "centos-8" in platfromInfo:
+                # el8 x86_64 packages
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm')
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                          ' install ffmpeg ffmpeg-devel')
+            else:
+                # Yasm
+                os.system(
+                    '(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
+                os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
+                os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
+                os.system('sudo -v')
+                os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo ' +
+                          linuxFlag+' make install )')
+                # libx264
+                os.system(
+                    '(cd '+deps_dir+'; git clone --depth 1 https://code.videolan.org/videolan/x264.git )')
+                os.system(
+                    '(cd '+deps_dir+'/x264; ./configure --enable-static --disable-opencl; make -j8 )')
+                os.system('sudo -v')
+                os.system('(cd '+deps_dir+'/x264; sudo ' +
+                          linuxFlag+' make install )')
+                # libx265
+                os.system(
+                    '(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
+                os.system(
+                    '(cd '+deps_dir+'/x265/build/linux; cmake -G "Unix Makefiles" ../../source; make -j8 )')
+                os.system('sudo -v')
+                os.system('(cd '+deps_dir+'/x265/build/linux; sudo ' +
+                          linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')
+                # libfdk_aac
+                os.system(
+                    '(cd '+deps_dir+'; git clone https://github.com/mstorsjo/fdk-aac.git )')
+                os.system(
+                    '(cd '+deps_dir+'/fdk-aac; autoreconf -fiv; ./configure --disable-shared; make -j8 )')
+                os.system('sudo -v')
+                os.system('(cd '+deps_dir+'/fdk-aac; sudo ' +
+                          linuxFlag+' make install )')
+        # FFMPEG 4
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'/ffmpeg; sudo '+linuxFlag+' ldconfig )')
+        os.system('(cd '+deps_dir+'/ffmpeg; export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig/"; ./configure --enable-shared --disable-static --enable-libx264 --enable-libx265 --enable-libfdk-aac --enable-libass --enable-gpl --enable-nonfree)')
+        os.system('(cd '+deps_dir+'/ffmpeg; make -j8 )')
+        os.system('sudo -v')
+        os.system('(cd '+deps_dir+'/ffmpeg; sudo ' +
+                  linuxFlag+' make install )')
     print("\nMIVisionX Dependencies Installed with MIVisionX-setup.py V-"+__version__+"\n")

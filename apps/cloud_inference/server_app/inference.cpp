@@ -1076,7 +1076,7 @@ int InferenceEngine::run()
                     vx_size stride[4];
                     float * ptr = nullptr;
                     vx_status status;
-                    status = vxMapTensorPatch(openvx_input, 4, NULL, NULL, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+                    status = vxMapTensorPatch(openvx_input, 4, NULL, NULL, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
                     if(status != VX_SUCCESS) {
                         fatal("workDeviceProcess: vxMapTensorPatch(input)) failed(%d)", status);
                     }
@@ -1091,7 +1091,7 @@ int InferenceEngine::run()
                         fatal("workDeviceProcess: vxProcessGraph()) failed(%d)", status);
                     }
                     ptr = nullptr;
-                    status = vxMapTensorPatch(openvx_output, 4, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST, 0);
+                    status = vxMapTensorPatch(openvx_output, 4, NULL, NULL, &map_id, stride, (void **)&ptr, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
                     if(status != VX_SUCCESS) {
                         fatal("workDeviceProcess: vxMapTensorPatch(output)) failed(%d)", status);
                     }

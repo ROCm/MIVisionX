@@ -27,22 +27,6 @@ void RotateMetaNode::initialize()
     _src_width_val.resize(_batch_size);
     _angle_val.resize(_batch_size);
 }
-float calculate_rotate_point_x(float angle, float x, float cx, float cy)
-{
-    float rotate[2];
-    rotate[0] = cos(RAD(angle));
-    rotate[1] = -1 * sin(RAD(angle));
-    float trans_x = cx + (rotate[0] * cx) + (rotate[1] * cy);
-    return trans_x;
-}
-float calculate_rotate_point_y(float angle, float y, float cx, float cy)
-{
-    float rotate[2];
-    rotate[0] = sin(RAD(angle));
-    rotate[1] = cos(RAD(angle));
-    float trans_y = cy + (rotate[0] * cx) + (rotate[1] * cy);
-    return trans_y;
-}
 void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
 {
     initialize();
@@ -77,49 +61,50 @@ void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            float src_bb_x, src_bb_y, bb_w, bb_h, dest_bb_x, dest_bb_y;
-            float cx, cy;
+            float src_bb_x, src_bb_y, bb_w, bb_h;
+            float dest_cx, dest_cy, src_cx, src_cy;
             float x1, y1, x2, y2, x3, y3, x4, y4, min_x, min_y, max_x, max_y;
-            cx = _dst_width / 2;
-            cy = _dst_height / 2;
+            float rotate[4];
+            float radian = RAD(_angle_val[i]);
+            rotate[0] = rotate[3] = cos(radian);
+            rotate[1] = sin(radian);
+            rotate[2] = -1 * rotate[1];
+            dest_cx = _dst_width / 2;
+            dest_cy = _dst_height / 2;
+            src_cx = _src_width_val[i]/2;
+            src_cy = _src_height_val[i]/2;
             src_bb_x = (coords_buf[m++]);
             src_bb_y = (coords_buf[m++]);
             bb_w = (coords_buf[m++]);
             bb_h = (coords_buf[m++]);
-            dest_bb_x = (cx) - ((_src_width_val[i] / 2) - src_bb_x);
-            dest_bb_y = (cy) - ((_src_height_val[i] / 2) - src_bb_y);
-            x1 = calculate_rotate_point_x(dest_bb_x, _angle_val[i], cx, cy);
-            y1 = calculate_rotate_point_y(dest_bb_y, _angle_val[i], cx, cy);
-            x2 = calculate_rotate_point_x(dest_bb_x + bb_w, _angle_val[i], cx, cy);
-            y2 = calculate_rotate_point_y(dest_bb_y, _angle_val[i], cx, cy);
-            x3 = calculate_rotate_point_x(dest_bb_x, _angle_val[i], cx, cy);
-            y3 = calculate_rotate_point_y(dest_bb_y + bb_h, _angle_val[i], cx, cy);
-            x4 = calculate_rotate_point_x(dest_bb_x + bb_w, _angle_val[i], cx, cy);
-            y4 = calculate_rotate_point_y(dest_bb_y + bb_h, _angle_val[i], cx, cy);
+            x1 = (rotate[0] * (src_bb_x - src_cx)) + (rotate[1] * (src_bb_y - src_cy)) + dest_cx;
+            y1 = (rotate[2] * (src_bb_x - src_cx)) + (rotate[3] * (src_bb_y - src_cy)) + dest_cy;
+            x2 = (rotate[0] * ((src_bb_x + bb_w) - src_cx))+( rotate[1] * (src_bb_y - src_cy)) + dest_cx;
+            y2 = (rotate[2] * ((src_bb_x + bb_w) - src_cx))+( rotate[3] * (src_bb_y - src_cy)) + dest_cy;
+            x3 = (rotate[0] * (src_bb_x - src_cx)) + (rotate[1] * ((src_bb_y + bb_h) - src_cy)) + dest_cx;
+            y3 = (rotate[2] * (src_bb_x - src_cx)) + (rotate[3] * ((src_bb_y + bb_h) - src_cy)) + dest_cy;
+            x4 = (rotate[0] * ((src_bb_x + bb_w) - src_cx))+( rotate[1] * ((src_bb_y + bb_h) - src_cy)) + dest_cx;
+            y4 = (rotate[2] * ((src_bb_x + bb_w) - src_cx))+( rotate[3] * ((src_bb_y + bb_h) - src_cy)) + dest_cy;
             min_x = std::min(x1, std::min(x2, std::min(x3, x4)));
             min_y = std::min(y1, std::min(y2, std::min(y3, y4)));
             max_x = std::max(x1, std::max(x2, std::max(x3, x4)));
             max_y = std::max(y1, std::max(y2, std::max(y3, y4)));
             box.x = (min_x > 0) ? min_x : 0;
             box.y = (min_y > 0) ? min_y : 0;
-            box.w = max_x - min_x;
-            box.h = max_y - min_y;
-            if(((box.x + box.w) <= dest_image.w) ? ((box.y + box.h) <= dest_image.h) ? true : false : false)
+            box.w = max_x - box.x;
+            box.h = max_y - box.y;
+            if (BBoxIntersectionOverUnion(box, dest_image) >= _iou_threshold)
             {
-                    bb_coords.push_back(box);
-                    bb_labels.push_back(labels_buf[j]);
-            }
-            else
-            {
-                if (BBoxIntersectionOverUnion(box, dest_image) >= _iou_threshold)
-                {
-                    if ((box.x + box.w) > dest_image.w)
-                        box.w = dest_image.w - box.x;
-                    if ((box.y + box.h) > dest_image.h)
-                        box.h = dest_image.h - box.y;
-                    bb_coords.push_back(box);
-                    bb_labels.push_back(labels_buf[j]);
-                }
+                float xA = std::max(dest_image.x, box.x);
+                float yA = std::max(dest_image.y, box.y);
+                float xB = std::min(dest_image.x + dest_image.w, box.x + box.w);
+                float yB = std::min(dest_image.y + dest_image.h, box.y + box.h);
+                box.x = xA;
+                box.y = yA;
+                box.w = xB - xA;
+                box.h = yB - yA;
+                bb_coords.push_back(box);
+                bb_labels.push_back(labels_buf[j]);
             }
         }
         if(bb_coords.size() == 0)

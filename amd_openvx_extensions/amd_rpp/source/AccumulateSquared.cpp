@@ -88,7 +88,8 @@ static vx_status VX_CALLBACK validateAccumulateSquared(vx_node node, const vx_re
 
 static vx_status VX_CALLBACK processAccumulateSquared(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 { 
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	AccumulateSquaredLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
@@ -98,24 +99,27 @@ static vx_status VX_CALLBACK processAccumulateSquared(vx_node node, const vx_ref
 		cl_command_queue handle = data->handle.cmdq;
 		refreshAccumulateSquared(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			status = rppi_accumulate_squared_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,data->rppHandle);
+ 			rpp_status = rppi_accumulate_squared_u8_pln1_gpu((void *)data->cl_pSrc,data->srcDimensions,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_accumulate_squared_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,data->rppHandle);
+			rpp_status = rppi_accumulate_squared_u8_pkd3_gpu((void *)data->cl_pSrc,data->srcDimensions,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshAccumulateSquared(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			status = rppi_accumulate_squared_u8_pln1_host(data->pSrc,data->srcDimensions,data->rppHandle);
+			rpp_status = rppi_accumulate_squared_u8_pln1_host(data->pSrc,data->srcDimensions,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_accumulate_squared_u8_pkd3_host(data->pSrc,data->srcDimensions,data->rppHandle);
+			rpp_status = rppi_accumulate_squared_u8_pkd3_host(data->pSrc,data->srcDimensions,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeAccumulateSquared(vx_node node, const vx_reference *parameters, vx_uint32 num) 

@@ -123,6 +123,8 @@ ParameterFactory::set_seed(unsigned seed)
 
 IntParam* ParameterFactory::create_uniform_int_rand_param(int start, int end)
 {
+    std::random_device rd;
+    _seed = rd();
     auto gen = new UniformRand<int>(start, end, _seed);
     auto ret = new IntParam(gen, RaliParameterType::RANDOM_UNIFORM);
     _parameters.insert(gen);
@@ -131,6 +133,8 @@ IntParam* ParameterFactory::create_uniform_int_rand_param(int start, int end)
 
 FloatParam* ParameterFactory::create_uniform_float_rand_param(float start, float end)
 {
+    std::random_device rd;
+    _seed = rd();
     auto gen = new UniformRand<float>(start, end, _seed);
     auto ret = new FloatParam(gen, RaliParameterType::RANDOM_UNIFORM);
     _parameters.insert(gen);
@@ -140,6 +144,8 @@ FloatParam* ParameterFactory::create_uniform_float_rand_param(float start, float
 
 IntParam* ParameterFactory::create_custom_int_rand_param(const int *value, const double *frequencies, size_t size)
 {
+    std::random_device rd;
+    _seed = rd();
     auto gen = new CustomRand<int>(value, frequencies, size, _seed);
     auto ret = new IntParam(gen, RaliParameterType::RANDOM_CUSTOM);
     _parameters.insert(gen);
@@ -148,6 +154,8 @@ IntParam* ParameterFactory::create_custom_int_rand_param(const int *value, const
 
 FloatParam* ParameterFactory::create_custom_float_rand_param(const float *value, const double *frequencies, size_t size)
 {
+    std::random_device rd;
+    _seed = rd();
     auto gen = new CustomRand<float>(value, frequencies, size, _seed);
     auto ret = new FloatParam(gen, RaliParameterType::RANDOM_CUSTOM);
     _parameters.insert(gen);

@@ -65,8 +65,8 @@ void CropNode::init(unsigned int crop_h, unsigned int crop_w, float x_drift_, fl
 {
     _crop_param->crop_w = crop_w;
     _crop_param->crop_h = crop_h;
-    _crop_param->x1     = 0; 
-    _crop_param->y1     = 0;
+    _crop_param->x1     = x_drift_; 
+    _crop_param->y1     = y_drift_;
     FloatParam *x_drift  = ParameterFactory::instance()->create_single_value_float_param(x_drift_);
     FloatParam *y_drift  = ParameterFactory::instance()->create_single_value_float_param(y_drift_);
     _crop_param->set_x_drift_factor(core(x_drift));

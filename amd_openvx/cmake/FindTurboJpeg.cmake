@@ -27,25 +27,21 @@ find_path(TurboJpeg_INCLUDE_DIRS
     NAMES turbojpeg.h
     PATHS
     /usr/include/
-    )
-    
-
+)
 mark_as_advanced( TurboJpeg_INCLUDE_DIRS )
 
 find_library( TurboJpeg_LIBRARIES
     NAMES libturbojpeg.so
     PATHS
     /usr/lib
-    )
-
+)
 mark_as_advanced( TurboJpeg_LIBRARIES_DIR )
 
 find_path(TurboJpeg_LIBRARIES_DIR
     NAMES libturbojpeg.so
     PATHS
     /usr/lib
-    )
-    
+)
 
 include( FindPackageHandleStandardArgs )
 find_package_handle_standard_args( TurboJpeg 
@@ -54,14 +50,13 @@ find_package_handle_standard_args( TurboJpeg
         TurboJpeg_LIBRARIES 
         TurboJpeg_INCLUDE_DIRS
         TurboJpeg_LIBRARIES_DIR
-    )
+)
 
 set(TurboJpeg_FOUND ${TurboJpeg_FOUND} CACHE INTERNAL "")
 set(TurboJpeg_LIBRARIES ${TurboJpeg_LIBRARIES} CACHE INTERNAL "")
 set(TurboJpeg_INCLUDE_DIRS ${TurboJpeg_INCLUDE_DIRS} CACHE INTERNAL "")
 set(TurboJpeg_LIBRARIES_DIR ${TurboJpeg_LIBRARIES_DIR} CACHE INTERNAL "")
 
-
 if( NOT TurboJpeg_FOUND )
-    message( STATUS "FindTurboJpeg looked for libraries named: turbojpeg" )
+    message( "-- ${Yellow}FindTurboJpeg failed to find: turbojpeg${ColourReset}" )
 endif()

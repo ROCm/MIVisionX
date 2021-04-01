@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include "circular_buffer.h"
 #include "image_read_and_decode.h"
+#include "meta_data_reader.h"
 //
 // ImageLoader runs an internal thread for loading an decoding of images asynchronously
 // it uses a circular buffer to store decoded frames and images for the user
@@ -38,6 +39,7 @@ public:
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;
     void set_output_image (Image* output_image) override;
+    void set_random_bbox_data_reader(std::shared_ptr<RandomBBoxCrop_MetaDataReader> randombboxcrop_meta_data_reader) override;
     size_t remaining_count() override; // returns number of remaining items to be loaded
     void reset() override; // Resets the loader to load from the beginning of the media
     Timing timing() override;
@@ -56,6 +58,8 @@ private:
     Image* _output_image;
     std::vector<std::string> _output_names;//!< image name/ids that are stores in the _output_image
     size_t _output_mem_size;
+    MetaDataBatch* _meta_data = nullptr;//!< The output of the meta_data_graph,
+    std::vector<std::vector <float>> _bbox_coords;
     bool _internal_thread_running;
     size_t _batch_size;
     std::thread _load_thread;
@@ -71,5 +75,6 @@ private:
     size_t _image_counter = 0;//!< How many images have been loaded already
     size_t _remaining_image_count;//!< How many images are there yet to be loaded
     bool _decoder_keep_original = false;
+    std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr; 
 };
 

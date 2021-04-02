@@ -26,7 +26,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.9.1"
+__version__ = "1.9.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -202,17 +202,25 @@ else:
                   # linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-python-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
                   linuxSystemInstall_check+' install libssl-dev python-dev python3-dev')
         # Boost V 1.72.0 from source
-        os.system(
-            '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
-        os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
-        os.system(
-            '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python3 )')
-        os.system(
-            '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=shared )')
-        os.system(
-            '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=shared --with-system --with-filesystem)')
-        os.system(
-            '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=static --with-system --with-filesystem)')
+        if linuxSystemInstall == 'apt-get':
+            os.system(
+                '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
+            os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
+            os.system(
+                '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python3 )')
+            os.system(
+                '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=shared )')
+            os.system(
+                '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=shared --with-system --with-filesystem)')
+            os.system(
+                '(cd '+deps_dir+'/boost_1_72_0/; sudo ./b2 install threading=multi link=static --with-system --with-filesystem)')
+        else:
+            if "centos-7" in platfromInfo:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
+                          ' install llibsqlite3x-devel bzip2-devel openssl-devel python-devel python3-devel autoconf automake libtool curl make g++ unzip')
+            elif "centos-8" in platfromInfo:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
+                          ' install libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         # Install half.hpp
         os.system(
             '(cd '+deps_dir+'; wget https://sourceforge.net/projects/half/files/half/1.12.0/half-1.12.0.zip )')
@@ -259,7 +267,8 @@ else:
         #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
         #os.system('sudo -v')
         #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
-        #os.system('sudo -v') # App Requirement - Cloud Inference Client
+        # App Requirement - Cloud Inference Client
+        #os.system('sudo -v')
         #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # Install ProtoBuf

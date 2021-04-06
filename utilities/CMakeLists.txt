@@ -25,10 +25,10 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 
 if(OPENCL_SUPPORT)
     find_package(OpenCL QUIET)
+    find_package(FFmpeg QUIET)
 else()
 	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
 endif()
-find_package(FFmpeg QUIET)
 
 add_subdirectory(runvx)
 message("-- ${Green}MIVisionX Utilities -- runvx module added${ColourReset}")

@@ -26,7 +26,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.9.1"
+__version__ = "1.9.2"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -197,10 +197,17 @@ else:
     # Install
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # package dependencies
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  # linuxSystemInstall_check+' install libssl-dev libboost-all-dev libboost-python-dev libboost-dev libboost-system-dev libboost-filesystem-dev')
-                  linuxSystemInstall_check+' install libssl-dev python-dev python3-dev')
+        if linuxSystemInstall == 'apt-get':
+            os.system('sudo -v')
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                      linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev python3-dev autoconf automake libtool curl make g++ unzip')
+        else:
+            if "centos-7" in platfromInfo:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
+                          ' install llibsqlite3x-devel bzip2-devel openssl-devel python-devel python3-devel autoconf automake libtool curl make g++ unzip')
+            elif "centos-8" in platfromInfo:
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
+                          ' install libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         # Boost V 1.72.0 from source
         os.system(
             '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
@@ -220,55 +227,7 @@ else:
         os.system('sudo -v')
         os.system(
             '(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
-    if neuralNetInstall == 'yes':
-        os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen)')
-        # Install ROCm-CMake
-        os.system('(cd '+deps_dir+'/build/rocm-cmake; ' +
-                  linuxCMake+' ../../rocm-cmake )')
-        os.system('(cd '+deps_dir+'/build/rocm-cmake; make -j8 )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
-                  linuxFlag+' make install )')
-        # Install MIOpenGEMM
-        # package dependencies
-        os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                  linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev')
-        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake +
-                  ' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
-        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
-                  linuxFlag+' make install )')
-        # Install MIOpen
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
-                  linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
-        os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
-                  ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
-        os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
-        os.system('(cd '+deps_dir+'/build/MIOpen; make MIOpenDriver )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
-                  linuxFlag+' make install )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
-                  linuxFlag+' '+linuxSystemInstall+' autoremove )')
-        # Install Packages for NN Apps - Apps Requirement to be installed by Developer
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
-        #os.system('sudo -v') # App Requirement - Cloud Inference Client
-        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
-    if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # Install ProtoBuf
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion+'; sudo '+linuxFlag+' '+linuxSystemInstall +
-                  ' -y '+linuxSystemInstall_check+' install autoconf automake libtool curl make g++ unzip )')
-        os.system('sudo -v')
-        os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
-                  '; sudo '+linuxFlag+' '+linuxSystemInstall+' autoremove )')
         os.system('(cd '+deps_dir+'/protobuf-' +
                   ProtoBufVersion+'; ./autogen.sh )')
         os.system('(cd '+deps_dir+'/protobuf-' +
@@ -282,6 +241,38 @@ else:
         os.system('sudo -v')
         os.system('(cd '+deps_dir+'/protobuf-'+ProtoBufVersion +
                   '; sudo '+linuxFlag+' ldconfig )')
+    if neuralNetInstall == 'yes':
+        os.system('(cd '+deps_dir+'/build; mkdir rocm-cmake MIOpenGEMM MIOpen)')
+        # Install ROCm-CMake
+        os.system('(cd '+deps_dir+'/build/rocm-cmake; ' +
+                  linuxCMake+' ../../rocm-cmake )')
+        os.system('(cd '+deps_dir+'/build/rocm-cmake; make -j8 )')
+        os.system('(cd '+deps_dir+'/build/rocm-cmake; sudo ' +
+                  linuxFlag+' make install )')
+        # Install MIOpenGEMM
+        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; '+linuxCMake +
+                  ' ../../MIOpenGEMM-'+MIOpenGEMMVersion+' )')
+        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; make -j8 )')
+        os.system('(cd '+deps_dir+'/build/MIOpenGEMM; sudo ' +
+                  linuxFlag+' make install )')
+        # Install MIOpen
+        os.system('(cd '+deps_dir+'/MIOpen-'+MIOpenVersion+'; sudo ' +
+                  linuxFlag+' '+linuxCMake+' -P install_deps.cmake --minimum )')
+        os.system('(cd '+deps_dir+'/build/MIOpen; '+linuxCMake +
+                  ' -DMIOPEN_BACKEND=OpenCL -DMIOPEN_USE_MIOPENGEMM=On ../../MIOpen-'+MIOpenVersion+' )')
+        os.system('(cd '+deps_dir+'/build/MIOpen; make -j8 )')
+        os.system('(cd '+deps_dir+'/build/MIOpen; make MIOpenDriver )')
+        os.system('(cd '+deps_dir+'/build/MIOpen; sudo ' +
+                  linuxFlag+' make install )')
+        os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
+        # Install Packages for NN Apps - Apps Requirement to be installed by Developer
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
+        # App Requirement - Cloud Inference Client
+        #os.system('sudo -v')
+        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
         # Install Packages for Apps - App Dependencies to be installed by developer
         #os.system('sudo -v')
         #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install python-pip')
@@ -297,17 +288,17 @@ else:
     if linuxSystemInstall == 'apt-get':
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                  ' install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev')
+                  ' install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy ')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                  ' install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev')
+                  ' install libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip')
     else:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                   ' groupinstall \'Development Tools\'')
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                  ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394')
+                  ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
     # OpenCV 3.4.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
               ' -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../../opencv-'+opencvVersion+' )')

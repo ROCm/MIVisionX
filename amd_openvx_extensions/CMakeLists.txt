@@ -34,7 +34,6 @@ else()
 endif()
 find_package(OpenCV QUIET)
 
-
 if(OpenCL_FOUND)
     if(AMDRPP_FOUND)
         add_subdirectory(amd_rpp)

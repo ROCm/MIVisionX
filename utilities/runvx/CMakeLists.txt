@@ -25,8 +25,6 @@ set(CMAKE_CXX_STANDARD 11)
 
 if(OPENCL_SUPPORT)
     find_package(OpenCL QUIET)
-else()
-	message("-- ${Cyan}OpenCL Modules turned OFF by user option -D OPENCL_SUPPORT=OFF ${ColourReset}")
 endif()
 find_package(OpenCV QUIET)
 

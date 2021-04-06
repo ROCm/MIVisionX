@@ -80,6 +80,7 @@ if(APPLE)
   message("-- ${Magenta}Apple macOS Detected -- OpenCL Support turned OFF${ColourReset}")
 endif()
 
+add_subdirectory(apps)
 add_subdirectory(amd_openvx)
 add_subdirectory(amd_openvx_extensions)
 add_subdirectory(utilities)

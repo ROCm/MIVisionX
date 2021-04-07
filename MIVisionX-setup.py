@@ -162,9 +162,10 @@ else:
     os.system('mkdir '+deps_dir)
     # Create Build folder
     os.system('(cd '+deps_dir+'; mkdir build )')
+    # install pre-reqs
     os.system('sudo -v')
     os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install cmake git wget unzip pkg-config inxi')
+              linuxSystemInstall_check+' install gcc cmake git wget unzip pkg-config inxi')
     # Get Installation Source
     os.system(
         '(cd '+deps_dir+'; wget https://github.com/opencv/opencv/archive/'+opencvVersion+'.zip )')
@@ -192,10 +193,10 @@ else:
         if "centos" in platfromInfo:
             if "centos-7" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
-                          ' install llibsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
+                          ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
             elif "centos-8" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
-                          ' install libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
+                          ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
                       linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool curl make g++ unzip')
@@ -361,21 +362,21 @@ else:
         if "Ubuntu" in platfromInfo:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                      ' install autoconf automake build-essential cmake git-core libass-dev libfreetype6-dev')
+                      ' install autoconf automake build-essential git-core libass-dev libfreetype6-dev')
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev')
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                      ' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo wget zlib1g-dev')
+                      ' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo zlib1g-dev')
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
         else:
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                      ' install autoconf automake bzip2 bzip2-devel cmake freetype-devel')
+                      ' install autoconf automake bzip2 bzip2-devel freetype-devel')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
-                      ' install gcc gcc-c++ git libtool make pkgconfig zlib-devel')
+                      ' install gcc-c++ libtool make pkgconfig zlib-devel')
             # Nasm
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install nasm')
@@ -431,7 +432,7 @@ else:
                 os.system(
                     '(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
                 os.system(
-                    '(cd '+deps_dir+'/x265/build/linux; cmake -G "Unix Makefiles" ../../source; make -j8 )')
+                    '(cd '+deps_dir+'/x265/build/linux; '+linuxCMake+' -G "Unix Makefiles" ../../source; make -j8 )')
                 os.system('sudo -v')
                 os.system('(cd '+deps_dir+'/x265/build/linux; sudo ' +
                           linuxFlag+' make install; sudo '+linuxFlag+' ldconfig )')

@@ -24,7 +24,7 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
     else if (platform.jenkinsLabel.contains('sles')) {
         osInfo = 'cat /etc/os-release && uname -r'
         update = 'sudo zypper ref && sudo zypper update && sudo zypper addrepo https://download.opensuse.org/repositories/openSUSE:Leap:15.2/standard/openSUSE:Leap:15.2.repo '
-        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4 inxi && python MIVisionX-setup.py --reinstall yes --installer yum --ffmpeg yes'
+        installPackage = 'sudo zypper refresh && sudo zypper install cmake opencv ffmpeg-4 inxi && python MIVisionX-setup.py --reinstall yes --installer zypper --ffmpeg yes'
         cmake = 'cmake'
     }
     else {

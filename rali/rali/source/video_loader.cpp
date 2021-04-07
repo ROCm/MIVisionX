@@ -142,7 +142,7 @@ VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg,
     _decoded_img_info._roi_width.resize(_batch_size);
     _decoded_img_info._original_height.resize(_batch_size);
     _decoded_img_info._original_width.resize(_batch_size);
-    //std::cerr<<"\n _output_mem_size:: "<<_output_mem_size;
+    std::cerr<<"\n _output_mem_size:: "<<_output_mem_size;
     _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
     LOG("Loader module initialized");

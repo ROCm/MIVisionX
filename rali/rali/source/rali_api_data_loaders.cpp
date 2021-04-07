@@ -56,9 +56,8 @@ std::vector<unsigned> find_video_properties(const char *source_path)
         filesys::path pathObj(_full_path);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) // Single file as input
         {
-            std::cerr<<"\n file name:: "<<_full_path;
-            AVFormatContext* pFormatCtx;
-            AVCodecContext* pCodecCtx;
+            AVFormatContext* pFormatCtx = NULL;
+            AVCodecContext* pCodecCtx = NULL;
             int videoStream = -1;
             int i = 0;
             // open video file
@@ -82,8 +81,8 @@ std::vector<unsigned> find_video_properties(const char *source_path)
             // Get a pointer to the codec context for the video stream
             pCodecCtx=pFormatCtx->streams[videoStream]->codec;
             assert(pCodecCtx != NULL);
-            std::cerr<<"\n width:: "<<pCodecCtx->width;
-            std::cerr<<"\n height:: "<<pCodecCtx->height;
+            //std::cerr<<"\n width:: "<<pCodecCtx->width;
+            //std::cerr<<"\n height:: "<<pCodecCtx->height;
             props.push_back(pCodecCtx->width);
             props.push_back(pCodecCtx->height);
             props.push_back(1);
@@ -1436,7 +1435,6 @@ raliVideoFileSource(
         bool loop)
 {
     std::cerr<<"\n Coming to raliVideoFileSource";
-    std::cerr<<"\n source_path:: "<<source_path;
     Image* output = nullptr;
     auto context = static_cast<Context*>(p_context);
     try
@@ -1448,7 +1446,7 @@ raliVideoFileSource(
         std::vector<unsigned> video_prop;
         video_prop.resize(4);// having width, height, num of video files & framecount
         video_prop = find_video_properties(source_path);
-        std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
+        //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop[0];
         height = video_prop[1];
         number_of_video_files = video_prop[2];
@@ -1462,7 +1460,6 @@ raliVideoFileSource(
                               color_format );
 
         output = context->master_graph->create_loader_output_image(info);
-        //std::cerr<<"\n context->user_batch_size() ::"<<context->user_batch_size();
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",

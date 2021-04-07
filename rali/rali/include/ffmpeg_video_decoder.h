@@ -23,10 +23,6 @@ THE SOFTWARE.
 #pragma once
 
 #include "video_decoder.h"
-/*#include <libavutil/imgutils.h>
-#include <libavutil/samplefmt.h>
-#include <libavutil/timestamp.h>
-#include <libavformat/avformat.h>*/
 
 class FFMPEG_VIDEO_DECODER : public VideoDecoder {
 public:
@@ -43,10 +39,10 @@ public:
     ~FFMPEG_VIDEO_DECODER() override;
 private:
 	AVFormatContext *fmt_ctx = NULL;
-	AVCodecContext *video_dec_ctx = NULL, *audio_dec_ctx;
+	AVCodecContext *video_dec_ctx = NULL;
 	int width, height;
 	enum AVPixelFormat pix_fmt;
-	AVStream *video_stream = NULL, *audio_stream = NULL;
+	AVStream *video_stream = NULL;
 	const char *src_filename = NULL;
 	const char *video_dst_filename = NULL;
 	FILE *video_dst_file = NULL;
@@ -60,5 +56,4 @@ private:
 	AVFrame *frame = NULL;
 	AVPacket pkt;
 	int video_frame_count = 0;
-	int audio_frame_count = 0;
 };

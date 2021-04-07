@@ -104,7 +104,7 @@ int main(int argc, const char ** argv)
     /*>>>>>>>>>>>>>>>> Creating Rali parameters  <<<<<<<<<<<<<<<<*/
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
-    RaliFloatParam rand_crop_area = raliCreateFloatUniformRand( 0.3, 0.5 );
+    //RaliFloatParam rand_crop_area = raliCreateFloatUniformRand( 0.3, 0.5 );
     RaliIntParam color_temp_adj = raliCreateIntParameter(0);
 
     // Creating a custom random object to set a limited number of values to randomize the rotation angle
@@ -112,7 +112,7 @@ int main(int argc, const char ** argv)
     float values[num_values] = {0,10,135};
     double frequencies[num_values] = {1, 5, 5};
 
-    RaliFloatParam rand_angle =   raliCreateFloatRand( values , frequencies, num_values);
+    //RaliFloatParam rand_angle =   raliCreateFloatRand( values , frequencies, num_values);
 
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
@@ -157,6 +157,7 @@ int main(int argc, const char ** argv)
     {
         image0 = raliResize(handle, input1, resize_w, resize_h, true);
     }
+    /*
     RaliImage image1 = raliRain(handle, image0, false);
 
     RaliImage image11 = raliFishEye(handle, image1, false);
@@ -184,9 +185,9 @@ int main(int argc, const char ** argv)
 
     RaliImage image9 = raliBlend(handle, image7, image8, false);
 
-    RaliImage image10 = raliLensCorrection(handle, image9, false);
+    RaliImage image10 = raliLensCorrection(handle, image9, false);*/
 
-    raliExposure(handle, image10, true);
+    raliExposure(handle, image0, true);
 
     if(raliGetStatus(handle) != RALI_OK)
     {

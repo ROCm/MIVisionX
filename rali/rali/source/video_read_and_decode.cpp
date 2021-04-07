@@ -92,12 +92,10 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _original_height.resize(_video_count);
     _original_width.resize(_video_count);
     _video_frame_count.resize(_video_count);
-    std::cerr << "\n pritn ::::" <<  reader_config.get_frame_count();
+    std::cerr << "\n Frame count :: " <<  reader_config.get_frame_count();
     _video_frame_count[0] = reader_config.get_frame_count();
-    //Below vector sizes varies based on the video frame count.
-    //_video_frame_start_idx.resize(_video_count); 
-    //_video_idx.resize(_video_count);
     _video_decoder_config = decoder_config;
+
     // get the width and height for every video _actual_decoded & original
     // fill the _video_frame_start_idx & _video_idx  based on sequence length and frame count
     // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
@@ -181,7 +179,7 @@ VideoReadAndDecode::load(unsigned char* buff,
 
     while ((file_counter != _batch_size) && _reader->count() > 0)
     {
-        size_t fsize = 560 * 320 * 3; //_reader->open(); Have to set the max frame size
+        size_t fsize = 1280 * 720 * 3; //_reader->open(); Have to set the max frame size
         if (fsize == 0) {
             WRN("Opened file " + _reader->id() + " of size 0");
             continue;
@@ -228,6 +226,7 @@ VideoReadAndDecode::load(unsigned char* buff,
         std::string out = "out.mp4";
         // if we process 3rd video then we need to call _decode[2]
         _video_decoder[i]->Decode((_video_names[i]).c_str(), out.c_str());
+       
         /*if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
                                max_decoded_width, max_decoded_height,
                                original_width, original_height,

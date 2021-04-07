@@ -26,7 +26,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.9.2"
+__version__ = "1.9.3"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -97,28 +97,24 @@ else:
 # setup directory
 deps_dir = os.path.expanduser(setupDir_deps)
 
-# setup for CentOS or Ubuntu
-linuxSystemInstall_check = '--nogpgcheck'
-linuxCMake = 'cmake3'
+# setup for Linux
+linuxCMake = 'cmake'
+linuxSystemInstall_check = ''
 linuxFlag = ''
-if linuxSystemInstall == '' or linuxSystemInstall == 'apt-get':
+if "centos" in platfromInfo:
+    linuxSystemInstall = 'yum'
+    linuxSystemInstall_check = '--nogpgcheck'
+    if "centos-7" in platfromInfo:
+        linuxCMake = 'cmake3'
+        os.system('yum -y install cmake3')
+elif "Ubuntu" in platfromInfo:
     linuxSystemInstall = 'apt-get'
     linuxSystemInstall_check = '--allow-unauthenticated'
-    linuxCMake = 'cmake'
     linuxFlag = '-S'
-    if userName == 'root':
-        os.system('apt -y update')
-        os.system('apt -y install sudo')
-else:
-    if userName == 'root':
-        os.system('yum -y update')
-        os.system('yum -y install sudo')
-    os.system('sudo -v')
-    os.system('sudo yum -y update')
-    os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install cmake3 boost boost-thread boost-devel libsqlite3x-devel.x86_64')
-    os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-              linuxSystemInstall_check+' install openssl-devel hg autoconf automake')
+
+if userName == 'root':
+    os.system(linuxSystemInstall+' -y update')
+    os.system(linuxSystemInstall+' -y install sudo')
 
 # Delete previous install
 if(os.path.exists(deps_dir) and reinstall == 'yes'):
@@ -132,11 +128,6 @@ if(os.path.exists(deps_dir)):
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo ' +
               linuxFlag+' make install -j8)')
-    if raliInstall == 'yes' or neuralNetInstall == 'yes':
-        # half.hpp
-        os.system('sudo -v')
-        os.system(
-            '(cd '+deps_dir+'; sudo cp half-files/include/half.hpp /usr/local/include/ )')
     if neuralNetInstall == 'yes':
         # rocm-cmake
         os.system('sudo -v')
@@ -197,23 +188,27 @@ else:
     # Install
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # package dependencies
-        if linuxSystemInstall == 'apt-get':
-            os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
-                      linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python-dev python3-dev autoconf automake libtool curl make g++ unzip')
-        else:
+        os.system('sudo -v')
+        if "centos" in platfromInfo:
             if "centos-7" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
-                          ' install llibsqlite3x-devel bzip2-devel openssl-devel python-devel python3-devel autoconf automake libtool curl make g++ unzip')
+                          ' install llibsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
             elif "centos-8" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
                           ' install libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
+        else:
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                      linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool curl make g++ unzip')
         # Boost V 1.72.0 from source
         os.system(
             '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
         os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
-        os.system(
-            '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python3 )')
+        if "centos-8" in platfromInfo:
+            os.system(
+                '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python36 )')
+        else:
+            os.system(
+                '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python3 )')
         os.system(
             '(cd '+deps_dir+'/boost_1_72_0/; ./b2 stage -j16 threading=multi link=shared )')
         os.system(
@@ -266,26 +261,27 @@ else:
                   linuxFlag+' make install )')
         os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
+        # os.system('sudo -v')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
+        # os.system('sudo -v')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
         # App Requirement - Cloud Inference Client
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
+        # os.system('sudo -v')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
         # Install Packages for Apps - App Dependencies to be installed by developer
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install python-pip')
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' yes | pip install protobuf')
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' yes | pip install pytz')
-        #os.system('sudo -v')
-        #os.system('sudo '+linuxFlag+' yes | pip install numpy')
+        # os.system('sudo -v')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install python-pip')
+        # os.system('sudo -v')
+        # os.system('sudo '+linuxFlag+' yes | pip install protobuf')
+        # os.system('sudo -v')
+        # os.system('sudo '+linuxFlag+' yes | pip install pytz')
+        # os.system('sudo -v')
+        # os.system('sudo '+linuxFlag+' yes | pip install numpy')
     # Install OpenCV
     os.system('(cd '+deps_dir+'/build; mkdir OpenCV )')
     # Install pre-reqs
-    if linuxSystemInstall == 'apt-get':
+    os.system('sudo -v')
+    if "Ubuntu" in platfromInfo:
         os.system('sudo -v')
         os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                   ' install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy ')
@@ -309,7 +305,7 @@ else:
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' ldconfig )')
     if raliInstall == 'yes':
         # Install RPP
-        if linuxSystemInstall == 'apt-get':
+        if "Ubuntu" in platfromInfo:
             # Install Packages for RALI
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
@@ -337,32 +333,32 @@ else:
         # Turn off for CentOS - TBD: TURN ON when RPP is supported on CentOS
         # else:
             # Nasm
-            #os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
-            #os.system('(cd '+deps_dir+'; tar xjvf nasm-2.14.02.tar.bz2 )')
-            #os.system('(cd '+deps_dir+'/nasm-2.14.02; ./autogen.sh; ./configure; make -j8 )')
-            #os.system('sudo -v')
-            #os.system('(cd '+deps_dir+'/nasm-2.14.02; sudo '+linuxFlag+' make install )')
+            # os.system('(cd '+deps_dir+'; curl -O -L https://www.nasm.us/pub/nasm/releasebuilds/2.14.02/nasm-2.14.02.tar.bz2 )')
+            # os.system('(cd '+deps_dir+'; tar xjvf nasm-2.14.02.tar.bz2 )')
+            # os.system('(cd '+deps_dir+'/nasm-2.14.02; ./autogen.sh; ./configure; make -j8 )')
+            # os.system('sudo -v')
+            # os.system('(cd '+deps_dir+'/nasm-2.14.02; sudo '+linuxFlag+' make install )')
             # Yasm
-            #os.system('(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
-            #os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
-            #os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
-            #os.system('sudo -v')
-            #os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
+            # os.system('(cd '+deps_dir+'; curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz )')
+            # os.system('(cd '+deps_dir+'; tar xzvf yasm-1.3.0.tar.gz )')
+            # os.system('(cd '+deps_dir+'/yasm-1.3.0; ./configure; make -j8 )')
+            # os.system('sudo -v')
+            # os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
             # JSON-cpp
-            #os.system('sudo -v')
-            #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install jsoncpp')
+            # os.system('sudo -v')
+            # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install jsoncpp')
             # clang+boost
-            #os.system('sudo -v')
-            #os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install boost-devel clang')
+            # os.system('sudo -v')
+            # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install boost-devel clang')
             # turbo-JPEG
-            #os.system('(cd '+deps_dir+'; wget https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz )')
-            #os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
-            #os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
+            # os.system('(cd '+deps_dir+'; wget https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz )')
+            # os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
+            # os.system('(cd '+deps_dir+'/libjpeg-turbo-2.0.3; mkdir build; cd build; '+linuxCMake+' -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE=RELEASE -DENABLE_STATIC=FALSE -DCMAKE_INSTALL_DOCDIR=/usr/share/doc/libjpeg-turbo-2.0.3 -DCMAKE_INSTALL_DEFAULT_LIBDIR=lib ..; make -j 4; sudo make install )')
             # RPP
-            #os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
+            # os.system('(cd '+deps_dir+'; git clone -b '+rppVersion+' https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp.git; cd rpp; mkdir build; cd build; '+linuxCMake+' -DBACKEND=OCL ../; make -j4; sudo make install)')
     # Install ffmpeg
     if ffmpegInstall == 'yes':
-        if linuxSystemInstall == 'apt-get':
+        if "Ubuntu" in platfromInfo:
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
                       ' install autoconf automake build-essential cmake git-core libass-dev libfreetype6-dev')
@@ -430,6 +426,8 @@ else:
                 os.system('(cd '+deps_dir+'/x264; sudo ' +
                           linuxFlag+' make install )')
                 # libx265
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                          linuxSystemInstall_check+' install hg ')
                 os.system(
                     '(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')
                 os.system(

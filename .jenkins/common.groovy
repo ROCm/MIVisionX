@@ -57,7 +57,7 @@ def runTestCommand (platform, project) {
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
-                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100
+                python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
                 python ../../tests/neural_network_tests/runNeuralNetworkTests.py
                 """
 

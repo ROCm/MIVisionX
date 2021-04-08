@@ -66,18 +66,25 @@ ENDIF()
 option(NEURAL_NET "Build MIVisionX with Neural Net Support"   ON)
 option(RALI       "Build MIVisionX with RALI Support"         ON)
 option(LOOM       "Build MIVisionX with LOOM Support"         ON)
-option(OPENCL_SUPPORT "Build MIVisionX with OpenCL Support"   ON)
+
+if (NOT DEFINED BACKEND)
+    SET(BACKEND "OPENCL")   # set default backend to OPENCL
+    message("-- ${BoldBlue}MIVisionX Backend set to OPENCL")
+endif()
+
+option(GPU_SUPPORT "Build MIVisionX with GPU Support"   ON)
 
 message("-- ${Cyan}MIVisionX Developer Options${ColourReset}")
 message("-- ${Cyan}     -D NEURAL_NET=OFF [Turn OFF Neural Net Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D RALI=OFF [Turn OFF RALI Modules (default:ON)]${ColourReset}")
 message("-- ${Cyan}     -D LOOM=OFF [Turn OFF LOOM Modules (default:ON)]${ColourReset}")
-message("-- ${Cyan}     -D OPENCL_SUPPORT=OFF [Turn OFF OpenCL Modules (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D GPU_SUPPORT=OFF [Turn OFF GPU support (default:ON)]${ColourReset}")
+message("-- ${Cyan}     -D BACKEND=HIP/OPENCL [select backend for GPU support (HIP or OPENCL) (default:OPENCL)]${ColourReset}")
 
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
-  set(OPENCL_SUPPORT OFF)
-  message("-- ${Magenta}Apple macOS Detected -- OpenCL Support turned OFF${ColourReset}")
+  set(GPU_SUPPORT OFF)
+  message("-- ${Magenta}Apple macOS Detected -- GPU Support turned OFF${ColourReset}")
 endif()
 
 add_subdirectory(amd_openvx)

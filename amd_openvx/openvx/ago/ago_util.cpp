@@ -3400,7 +3400,7 @@ AgoContext::~AgoContext()
 
 	// unload modules
 	for (auto it = modules.begin(); it != modules.end(); it++) {
-		if (it->hmodule && it->module_internal_data_ptr) {
+		if (it->hmodule) {
 			vx_unpublish_kernels_f unpublish_kernels_f = (vx_unpublish_kernels_f)agoGetFunctionAddress(it->hmodule, "vxUnpublishKernels");
 			if (unpublish_kernels_f) {
 				vx_status status = unpublish_kernels_f(this);

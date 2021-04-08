@@ -89,7 +89,8 @@ static vx_status VX_CALLBACK validateTensorSubtract(vx_node node, const vx_refer
 
 static vx_status VX_CALLBACK processTensorSubtract(vx_node node, const vx_reference * parameters, vx_uint32 num) 
 {
-	RppStatus status = RPP_SUCCESS;
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	TensorSubtractLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
     size_t arr_size;
@@ -97,22 +98,24 @@ static vx_status VX_CALLBACK processTensorSubtract(vx_node node, const vx_refere
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
 		refreshTensorSubtract(node, parameters, num, data);
-		status = rppi_tensor_subtract_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->rppHandle);
+		rpp_status = rppi_tensor_subtract_u8_gpu((void *)data->cl_pSrc1, (void *)data->cl_pSrc2, (void *)data->cl_pDst, data->tensorDimensions, data->tensorDimensionsValue,data->rppHandle);
         cl_command_queue theQueue;
         theQueue = data->handle.cmdq;
         cl_int err;
         STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[1], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
         size_t bytes = arr_size * sizeof(Rpp8u);
         clEnqueueReadBuffer(theQueue, data->cl_pDst, CL_TRUE, 0, bytes, data->pDst, 0, NULL, NULL );
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshTensorSubtract(node, parameters, num, data);
-		status = rppi_tensor_subtract_u8_host(data->pSrc1, data->pSrc2, data->pDst, data->tensorDimensions, data->tensorDimensionsValue,data->rppHandle);
+		rpp_status = rppi_tensor_subtract_u8_host(data->pSrc1, data->pSrc2, data->pDst, data->tensorDimensions, data->tensorDimensionsValue,data->rppHandle);
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 	}
     STATUS_ERROR_CHECK(vxQueryArray((vx_array)parameters[2], VX_ARRAY_ATTRIBUTE_NUMITEMS, &arr_size, sizeof(arr_size)));
     vx_status copy_status = vxCopyArrayRange((vx_array)parameters[2], 0, arr_size, sizeof(Rpp8u),data->pDst, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    return status;
+	return return_status;
 }
 
 static vx_status VX_CALLBACK initializeTensorSubtract(vx_node node, const vx_reference *parameters, vx_uint32 num) 

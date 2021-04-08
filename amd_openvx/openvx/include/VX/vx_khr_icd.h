@@ -1,6 +1,5 @@
 /*
-
- * Copyright (c) 2017-2017 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +44,7 @@ extern "C" {
  * \retval VX_FAILURE If no platforms are found.
  * \ingroup group_icd
  */
-vx_status VX_API_CALL vxIcdGetPlatforms(vx_size capacity, vx_platform platform[], vx_size * pNumItems);
+VX_API_ENTRY vx_status VX_API_CALL vxIcdGetPlatforms(vx_size capacity, vx_platform platform[], vx_size * pNumItems);
 
 /*! \brief Queries the platform for some specific information.
  * \param [in] platform The platform handle.
@@ -63,7 +62,7 @@ vx_status VX_API_CALL vxIcdGetPlatforms(vx_size capacity, vx_platform platform[]
  * \retval VX_ERROR_NOT_SUPPORTED If the attribute is not supported on this implementation.
  * \ingroup group_icd
  */
-vx_status VX_API_CALL vxQueryPlatform(vx_platform platform, vx_enum attribute, void *ptr, vx_size size);
+VX_API_ENTRY vx_status VX_API_CALL vxQueryPlatform(vx_platform platform, vx_enum attribute, void *ptr, vx_size size);
 
 /*! \brief Creates a <tt>\ref vx_context</tt> from a <tt>\ref vx_platform</tt>.
  * \details This creates a top-level object context for OpenVX from a platform handle.
@@ -71,7 +70,7 @@ vx_status VX_API_CALL vxQueryPlatform(vx_platform platform, vx_enum attribute, v
  * preventing a successful creation should be checked using <tt>\ref vxGetStatus</tt>.
  * \ingroup group_icd
  */
-vx_context VX_API_CALL vxCreateContextFromPlatform(vx_platform platform);
+VX_API_ENTRY vx_context VX_API_CALL vxCreateContextFromPlatform(vx_platform platform);
 
 #ifdef __cplusplus
 }

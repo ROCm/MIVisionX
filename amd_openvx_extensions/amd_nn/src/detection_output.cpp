@@ -16,7 +16,7 @@ class NormalizedBBox
     public:
     bool has_size;
     float xmin, ymin,xmax,ymax;
-    bool set_size(float value){size_ = value;}
+    bool set_size(float value){size_ = value; return true;}
     float size() const {return size_;}
 };
 
@@ -542,7 +542,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
     float *confData = new float[count_tensor_conf];
     float *priorData = new float[count_tensor_prior];
 
-    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for input#1 (" << status << ")" << std::endl;
@@ -557,7 +557,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
         return -1;
     }
 
-    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch((vx_tensor)parameters[1], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for input#2(" << status << ")" << std::endl;
@@ -572,7 +572,7 @@ static vx_status VX_CALLBACK processDetectionOutput(vx_node node, const vx_refer
         return -1;
     }
 
-    status = vxMapTensorPatch((vx_tensor)parameters[2], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST, 0);
+    status = vxMapTensorPatch((vx_tensor)parameters[2], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, usage, VX_MEMORY_TYPE_HOST);
     if(status)
     {
         std::cerr << "ERROR: vxMapTensorPatch() failed for input#3(" << status << ")" << std::endl;

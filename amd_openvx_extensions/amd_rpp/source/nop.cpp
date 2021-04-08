@@ -85,9 +85,6 @@ static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference * param
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pDst, sizeof(data->cl_pDst)));
         unsigned size = data->dimensions.height* data->dimensions.width;
-
-        return VX_SUCCESS;
-
 #endif
     } else if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
@@ -95,9 +92,8 @@ static vx_status VX_CALLBACK processNop(vx_node node, const vx_reference * param
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
         STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
         unsigned size = data->dimensions.height* data->dimensions.width;
-
-        return VX_SUCCESS;
     }
+    return VX_SUCCESS;
 }
 
 static vx_status VX_CALLBACK initializeNop(vx_node node, const vx_reference *parameters, vx_uint32 num)

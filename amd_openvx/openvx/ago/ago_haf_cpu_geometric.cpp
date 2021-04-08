@@ -667,6 +667,7 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 	vx_uint32             srcImageStrideInBytes,
 	ago_affine_matrix_t * matrix,
 	vx_uint8              border,
+	vx_rectangle_t        rect_valid,
 	vx_uint8			* pLocalData
 )
 {
@@ -685,6 +686,12 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 	const __m128 srcbx = _mm_set1_ps((float)srcWidth);
 	const __m128 srcby = _mm_set1_ps((float)srcHeight);
 	const __m128 zero = _mm_set1_ps(0);
+
+	const __m128 vl = _mm_set1_ps((float)rect_valid.start_x);
+	const __m128 vr = _mm_set1_ps((float)rect_valid.end_x);
+	const __m128 vt = _mm_set1_ps((float)rect_valid.start_y);
+	const __m128 vb = _mm_set1_ps((float)rect_valid.end_y);
+
 	srcb = _mm_set1_epi32((srcHeight*srcImageStrideInBytes) - 1);
 	src_s = _mm_set1_epi32(srcImageStrideInBytes);
 	pborder = _mm_cvtsi32_si128((int)border);
@@ -736,6 +743,13 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(xmap, srcbx));
 				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(ymap, zero));
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(ymap, srcby));
+				
+				// mask for valid region rectangle
+				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(xmap, vl));
+				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(xmap, vr));
+				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(ymap, vt));
+				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(ymap, vb));
+
 				//int m = _mm_movemask_ps(mask.f);
 				//if (m){
 					// convert to integer with rounding towards zero
@@ -1121,7 +1135,7 @@ vx_uint8			* pLocalData
 
 	const __m128i p0mask = _mm_set1_epi32((int)0xFF);
 	const __m128 oneFloat = _mm_set1_ps(1.0);
-	srcb = _mm_set1_epi32((srcHeight-1)*srcImageStrideInBytes - 1);
+	srcb = _mm_set1_epi32((srcHeight)*srcImageStrideInBytes - 1);
 	src_s = _mm_set1_epi32(srcImageStrideInBytes);
 
 	XMM128 xint = { 0 }, yint = { 0 }, mask;
@@ -1173,8 +1187,8 @@ vx_uint8			* pLocalData
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(xmap, srcbx));
 				mask.f = _mm_and_ps(mask.f, _mm_cmpge_ps(ymap, zero));
 				mask.f = _mm_and_ps(mask.f, _mm_cmplt_ps(ymap, srcby));
-				int m = _mm_movemask_ps(mask.f);
-				if (m){
+				//int m = _mm_movemask_ps(mask.f);
+				//if (m){
 					// convert to integer with rounding towards zero
 					xint.i = _mm_cvttps_epi32(xmap);
 					yint.i = _mm_cvttps_epi32(ymap);
@@ -1248,11 +1262,11 @@ vx_uint8			* pLocalData
 					p0 = _mm_packus_epi32(p0, zeromask);
 					p0 = _mm_packus_epi16(p0, zeromask);
 					*dst++ = M128I(p0).m128i_i32[0];
-				}
+				/*}
 				else
 				{
 					*dst++ = u32_border;
-				}
+				}*/
 				x += 4;
 			}
 			y++;
@@ -1598,10 +1612,10 @@ vx_uint8				 * pLocalData
 	const __m128i srcbx = _mm_set1_epi32((int)srcWidth);
 	const __m128i srcby = _mm_set1_epi32((int)srcHeight);
 	const __m128i p0mask = _mm_set1_epi32((int)0xFF);
-	const __m128i srcb = _mm_set1_epi32((srcHeight-1)*srcImageStrideInBytes - 1);
+	const __m128i srcb = _mm_set1_epi32((srcHeight)*srcImageStrideInBytes - 1);
 	const __m128i src_s = _mm_set1_epi32(srcImageStrideInBytes);
-	const __m128i srcbx1 = _mm_set1_epi32((int)(srcWidth-1));
-	const __m128i srcby1 = _mm_set1_epi32((int)(srcHeight - 1));
+	const __m128i srcbx1 = _mm_set1_epi32((int)(srcWidth));
+	const __m128i srcby1 = _mm_set1_epi32((int)(srcHeight));
 	const __m128i negone = _mm_set1_epi32((int)-1);
 
 	unsigned int x;
@@ -2783,7 +2797,7 @@ int HafCpu_ScaleGaussianHalf_U8_U8_3x3
 
 		// do vertical convolution
 		x = 0;
-		for (; x <= W - 8; x += 8)
+		for (; x < W; x += 8)
 		{
 			__m128i s0 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(srow0 + x)), z);
 			__m128i s1 = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(srow1 + x)), z);
@@ -2794,7 +2808,7 @@ int HafCpu_ScaleGaussianHalf_U8_U8_3x3
 
 		// do horizontal convolution, interleave the results and store them to dst
 		x = 0;
-		for (; x <= W - 16; x += 16, pDst+=8)
+		for (; x < W; x += 16, pDst+=8)
 		{
 			__m128i s0 = _mm_loadu_si128((const __m128i*)(r0 + x - 1));
 			__m128i s1 = _mm_loadu_si128((const __m128i*)(r0 + x));

@@ -35,6 +35,7 @@ public:
     void release() override;
     void print_map_contents();
     MetaDataBatch * get_output() override { return _output; }
+    std::map<std::string, std::shared_ptr<BoundingBox>> get_map_content() { return _map_content;}
     COCOMetaDataReader();
     ~COCOMetaDataReader() override { delete _output; }
 private:

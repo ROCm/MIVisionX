@@ -149,6 +149,17 @@ int HafCpu_Lut_U8_U8
 		vx_uint32     srcImageStrideInBytes,
 		vx_uint8    * pLut
 	);
+int HafCpu_Lut_S16_S16
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_int16    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_int16    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_int16    * pLut,
+		vx_uint32     offset
+	);
 int HafCpu_Threshold_U8_U8_Binary
 	(
 		vx_uint32     dstWidth,
@@ -191,6 +202,27 @@ int HafCpu_Threshold_U1_U8_Range
 		vx_uint8      lower,
 		vx_uint8      upper
 	);
+int HafCpu_Threshold_U8_S16_Binary
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_int16    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_int16      threshold
+	);
+int HafCpu_Threshold_U8_S16_Range
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_int16    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_int16      lower,
+		vx_int16      upper
+	);
 int HafCpu_ThresholdNot_U8_U8_Binary
 	(
 		vx_uint32     dstWidth,
@@ -223,6 +255,27 @@ int HafCpu_ThresholdNot_U1_U8_Binary
 		vx_uint8      threshold
 	);
 int HafCpu_ThresholdNot_U1_U8_Range
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      lower,
+		vx_uint8      upper
+	);
+int HafCpu_ThresholdNot_U8_S16_Binary
+	(
+		vx_uint32     dstWidth,
+		vx_uint32     dstHeight,
+		vx_uint8    * pDstImage,
+		vx_uint32     dstImageStrideInBytes,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes,
+		vx_uint8      threshold
+	);
+int HafCpu_ThresholdNot_U8_S16_Range
 	(
 		vx_uint32     dstWidth,
 		vx_uint32     dstHeight,
@@ -2453,6 +2506,7 @@ int HafCpu_WarpAffine_U8_U8_Nearest_Constant
 		vx_uint32             srcImageStrideInBytes,
 		ago_affine_matrix_t * matrix,
 		vx_uint8              border,
+		vx_rectangle_t        rect_valid,
 		vx_uint8			* pLocalData
 	);
 int HafCpu_WarpAffine_U8_U8_Bilinear
@@ -2698,6 +2752,15 @@ int HafCpu_HistogramFixedBins_DATA_U8
 		vx_uint32     srcImageStrideInBytes
 	);
 int HafCpu_MeanStdDev_DATA_U8
+	(
+		vx_float32  * pSum,
+		vx_float32  * pSumOfSquared,
+		vx_uint32     srcWidth,
+		vx_uint32     srcHeight,
+		vx_uint8    * pSrcImage,
+		vx_uint32     srcImageStrideInBytes
+	);
+int HafCpu_MeanStdDev_DATA_U1
 	(
 		vx_float32  * pSum,
 		vx_float32  * pSumOfSquared,
@@ -3022,4 +3085,36 @@ int HafCpu_FastAtan2_Canny
 	vx_int16      Gy
 );
 
+int HafCpu_WeightedAverage_U8_U8U8
+(
+    vx_image img1, 
+    vx_float32 alpha, 
+    vx_image img2, 
+    vx_image output
+);
+
+int HafCpu_NonLinearFilter_DATA_DATADATA
+(
+	vx_int32 function, 
+	vx_image src, 
+	vx_matrix mask, 
+	vx_image dst, 
+	vx_border_t *border
+);
+
+int HafCpu_LaplacianPyramid_DATA_DATA_DATA
+(
+	vx_node node,
+	vx_image input, 
+	vx_pyramid laplacian,
+	vx_image output
+);
+
+int HafCpu_LaplacianReconstruct_DATA_DATA_DATA
+(
+	vx_node node, 
+	vx_pyramid laplacian,
+	vx_image input,
+	vx_image output
+);
 #endif // __ago_haf_cpu_h__

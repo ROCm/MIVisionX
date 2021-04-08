@@ -32,6 +32,11 @@ public:
     FlipNode() = delete;
     void init(int flip_axis);
     void init(IntParam *flip_axis);
+    unsigned int get_dst_width() { return _outputs[0]->info().width(); }
+    unsigned int get_dst_height() { return _outputs[0]->info().height_single(); }
+    vx_array get_src_width() { return _src_roi_width; }
+    vx_array get_src_height() { return _src_roi_height; }
+    vx_array get_flip_axis() { return _flip_axis.default_array(); }
 protected:
     void create_node() override;
     void update_node() override;

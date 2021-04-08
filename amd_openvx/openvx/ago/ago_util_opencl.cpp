@@ -686,31 +686,65 @@ static int agoGpuOclSetKernelArgs(cl_kernel opencl_kernel, vx_uint32& kernelArgI
 			return -1;
 		kernelArgIndex++;
 		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(data->opencl_buffer_offset), &data->opencl_buffer_offset);
-		if (err) { 
+		if (err) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,cannystack:offset) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
 			return -1; 
 		}
 		kernelArgIndex++;
 		// NOTE: count is used when cannystack is output and stacktop is used when cannystack is input
 		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, sizeof(vx_uint32), &data->u.cannystack.count);
-		if (err) { 
+		if (err) {
 			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,*,cannystack:count) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, err, group);
 			return -1; 
 		}
 		kernelArgIndex++;
 	}
 	else if (data->ref.type == VX_TYPE_THRESHOLD) {
-		size_t size = sizeof(cl_uint);
-		cl_uint2 value;
-		value.s0 = data->u.thr.threshold_lower;
-		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-			size = sizeof(cl_uint2);
-			value.s1 = data->u.thr.threshold_upper;
+		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
+            if (data->u.thr.data_type == VX_TYPE_INT16){
+                cl_int value;
+                size_t size = sizeof(cl_int);
+                value = data->u.thr.threshold_value.S16;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
+            if (data->u.thr.data_type == VX_TYPE_UINT8){
+                cl_uint value;
+                size_t size = sizeof(cl_uint);
+                value = data->u.thr.threshold_value.U8;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
 		}
-		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
-		if (err) { 
-			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
-			return -1; 
+		else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+            if (data->u.thr.data_type == VX_TYPE_INT16){
+                cl_int2 value;
+                size_t size = sizeof(cl_int2);
+                value.s0 = data->u.thr.threshold_lower.S16;
+                value.s1 = data->u.thr.threshold_upper.S16;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
+            if (data->u.thr.data_type == VX_TYPE_UINT8){
+                cl_uint2 value;
+                size_t size = sizeof(cl_uint2);
+                value.s0 = data->u.thr.threshold_lower.U8;
+                value.s1 = data->u.thr.threshold_upper.U8;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
 		}
 		kernelArgIndex++;
 	}
@@ -946,17 +980,51 @@ static int agoGpuOclDataInputSync(AgoGraph * graph, cl_kernel opencl_kernel, vx_
 		}
 	}
 	else if (data->ref.type == VX_TYPE_THRESHOLD) {
-		size_t size = sizeof(cl_uint);
-		cl_uint2 value;
-		value.s0 = data->u.thr.threshold_lower;
-		if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-			size = sizeof(cl_uint2);
-			value.s1 = data->u.thr.threshold_upper;
+        if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
+            if (data->u.thr.data_type == VX_TYPE_INT16){
+                cl_int value;
+                size_t size = sizeof(cl_int);
+                value = data->u.thr.threshold_value.S16;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
+            if (data->u.thr.data_type == VX_TYPE_UINT8){
+                cl_uint value;
+                size_t size = sizeof(cl_uint);
+                value = data->u.thr.threshold_value.U8;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
 		}
-		err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
-		if (err) { 
-			agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
-			return -1; 
+		else if (data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+            if (data->u.thr.data_type == VX_TYPE_INT16){
+                cl_int2 value;
+                size_t size = sizeof(cl_int2);
+                value.s0 = data->u.thr.threshold_lower.S16;
+                value.s1 = data->u.thr.threshold_upper.S16;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
+            if (data->u.thr.data_type == VX_TYPE_UINT8){
+                cl_uint2 value;
+                size_t size = sizeof(cl_uint2);
+                value.s0 = data->u.thr.threshold_lower.U8;
+                value.s1 = data->u.thr.threshold_upper.U8;
+                err = clSetKernelArg(opencl_kernel, (cl_uint)kernelArgIndex, size, &value);
+                if (err) {
+                    agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: clSetKernelArg(supernode,%d,%d,threshold) failed(%d) for group#%d\n", (cl_uint)kernelArgIndex, (int)size, err, group);
+                    return -1;
+                }
+            }
 		}
 		kernelArgIndex++;
 	}
@@ -1644,8 +1712,8 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"void load_U24x8(U24x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
 		"{\n"
 		"  p += y*stride + x * 3;\n"
-		"  (*r).s012 = *((__global uint3 *)(p + 0));\n"
-		"  (*r).s345 = *((__global uint3 *)(p + 12));\n"
+		"  (*r).s0123 = *((__global uint4 *)(p + 0));\n"
+		"  (*r).s45 = *((__global uint2 *)(p + 16));\n"
 		"}\n"
 		"\n"
 		"void load_U32x8(U32x8 * r, uint x, uint y, __global uchar * p, uint stride)\n"
@@ -1687,8 +1755,8 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"void store_U24x8(U24x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
 		"{\n"
 		"  p += y*stride + x * 3;\n"
-		"  *((__global uint3 *)(p + 0)) = r.s012;\n"
-		"  *((__global uint3 *)(p + 12)) = r.s345;\n"
+		"  *((__global uint4 *)(p + 0)) = r.s0123;\n"
+		"  *((__global uint2 *)(p + 16)) = r.s45;\n"
 		"}\n"
 		"\n"
 		"void store_U32x8(U32x8 r, uint x, uint y, __global uchar * p, uint stride)\n"
@@ -1729,6 +1797,20 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 		"	r |= (p1.s1 >> 10) &  64;\n"
 		"	r |= (p1.s1 >> 17) & 128;\n"
 		"	*p0 = r;\n"
+		"}\n"
+		"void Convert_U8_S16 (U8x8 *p0, S16x8 p1)\n"
+		"{\n"
+        "   U8x8 r;\n"
+        "   uint p2 = 16;\n"
+        "   r.s0  = ((((int)p1.s0)  << 16) >> p2) & 0xff;\n"
+        "   r.s0 |= ((((int)p1.s0)         >> p2) & 0xff) <<  8;\n"
+        "   r.s0 |= (((((int)p1.s1) << 16) >> p2) & 0xff) << 16;\n"
+        "   r.s0 |= ((((int)p1.s1)         >> p2) & 0xff) << 24;\n"
+        "   r.s1  = ((((int)p1.s2)  << 16) >> p2) & 0xff;\n"
+        "   r.s1 |= ((((int)p1.s2)         >> p2) & 0xff) <<  8;\n"
+        "   r.s1 |= (((((int)p1.s3) << 16) >> p2) & 0xff) << 16;\n"
+        "   r.s1 |= ((((int)p1.s3)         >> p2) & 0xff) << 24;\n"
+        "   *p0 = r;\n"
 		"}\n"
 		);
 	for (size_t index = 0; index < supernode->nodeList.size(); index++) {
@@ -1964,6 +2046,10 @@ int agoGpuOclSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode)
 						sprintf(item, ", p%d_buf, p%d_stride", (int)data_index, (int)data_index);
 						code += item;
 					}
+					else if (data->ref.type == VX_TYPE_LUT && data->u.lut.type == VX_TYPE_INT16) {
+						sprintf(item, ", p%d_buf, p%d_count, p%d_offset", (int)data_index, (int)data_index, (int)data_index);
+						code += item;
+					}			
 					else {
 						sprintf(item, "%s%sp%d", i ? ", " : "", (node->akernel->argConfig[i] & AGO_KERNEL_ARG_OUTPUT_FLAG) ? "&" : "", (int)data_index);
 						code += item;
@@ -2091,7 +2177,7 @@ int agoGpuOclSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode)
 		agoAddLogEntry(&graph->ref, VX_FAILURE, "ERROR: clFlush(supernode) failed(%d) for group#%d\n", err, supernode->group);
 		return -1; 
 	}
-	int64_t etime = agoGetClockCounter();
+    int64_t etime = agoGetClockCounter();
 	graph->opencl_perf.kernel_enqueue += etime - stime;
 	// mark that supernode outputs are dirty
 	for (size_t index = 0; index < supernode->dataList.size(); index++) {

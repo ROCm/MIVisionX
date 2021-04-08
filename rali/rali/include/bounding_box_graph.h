@@ -29,5 +29,6 @@ class BoundingBoxGraph : public MetaDataGraph
 public:
     void process(MetaDataBatch* meta_data) override;
     void update_meta_data(MetaDataBatch* meta_data, decoded_image_info decode_image_info) override;
+    void update_random_bbox_meta_data(CropCordBatch* random_bbox_crop_cords_data, MetaDataBatch* meta_data, decoded_image_info decoded_image_info) override;
 };
 

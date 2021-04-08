@@ -58,12 +58,26 @@ THE SOFTWARE.
  */
 #define VX_NN_ACTIVATION_LEAKY_RELU  (VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_NN_ACTIVATION_FUNCTION_TYPE) + 0x9)
 
+/*! \brief The attributes for vx_context
+ */
+#define VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION            VX_CONTEXT_NONLINEAR_MAX_DIMENSION
+#define VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_POLICY            VX_CONTEXT_IMMEDIATE_BORDER_POLICY
+
+/*! \brief The attributes for vx_graph
+ */
+#define VX_GRAPH_ATTRIBUTE_STATE            VX_GRAPH_STATE
+
+/*! \brief The attributes for vx_object_array
+ */
+#define VX_OBJECT_ARRAY_ATTRIBUTE_ITEMTYPE         VX_OBJECT_ARRAY_ITEMTYPE
+#define VX_OBJECT_ARRAY_ATTRIBUTE_NUMITEMS         VX_OBJECT_ARRAY_NUMITEMS
+
 /*! \brief The type enumeration lists all the AMD specific types in OpenVX.
 */
 enum ago_type_public_e {
 	/*! \brief AMD data types
 	*/
-	VX_TYPE_FLOAT16             = 0x00F,                     // 16-bit float data type
+	/*VX_TYPE_FLOAT16             = 0x00F,                     // 16-bit float data type*/
 	VX_TYPE_STRING_AMD          = 0x011,                     // scalar data type for string
 
 	/*! \brief AMD data structs
@@ -438,7 +452,7 @@ extern "C" {
  * \ingroup group_tensor
  * \post <tt>\ref vxUnmapTensorPatch </tt> with same (*map_id) value.
  */
-VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type, vx_uint32 flags);
+/*VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type, vx_uint32 flags);*/
 
 /*! \brief Unmap and commit potential changes to a tensor object patch that was previously mapped.
  * Unmapping a tensor patch invalidates the memory location from which the patch could
@@ -453,7 +467,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size nu
  * \ingroup group_tensor
  * \pre <tt>\ref vxMapTensorPatch</tt> returning the same map_id value
  */
-VX_API_ENTRY vx_status VX_API_CALL vxUnmapTensorPatch(vx_tensor tensor, vx_map_id map_id);
+/*VX_API_ENTRY vx_status VX_API_CALL vxUnmapTensorPatch(vx_tensor tensor, vx_map_id map_id);*/
 
 /*==============================================================================
 MISCELLANEOUS

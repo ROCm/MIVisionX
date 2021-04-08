@@ -1,6 +1,8 @@
 import rali_pybind as b
 import amd.rali.types as types
 import numpy as np
+import torch
+
 
 
 class Pipeline(object):
@@ -89,8 +91,9 @@ class Pipeline(object):
             raise Exception("Failed creating the pipeline")
         self._check_ops = ["CropMirrorNormalize"]
         self._check_crop_ops = ["Resize"]
-        self._check_ops_decoder = ["ImageDecoder","ImageDecoderRandomCrop", "ImageDecoderRaw"]
-        self._check_ops_reader = ["FileReader","TFRecordReaderClassification","TFRecordReaderDetection","COCOReader","Caffe2Reader","Caffe2ReaderDetection","CaffeReader","CaffeReaderDetection"]
+        self._check_ops_decoder = ["ImageDecoder", "ImageDecoderSlice" , "ImageDecoderRandomCrop", "ImageDecoderRaw"]
+        self._check_ops_reader = ["FileReader", "TFRecordReaderClassification", "TFRecordReaderDetection",
+            "COCOReader", "Caffe2Reader", "Caffe2ReaderDetection", "CaffeReader", "CaffeReaderDetection"]
         self._batch_size = batch_size
         self._num_threads = num_threads
         self._device_id = device_id
@@ -110,6 +113,12 @@ class Pipeline(object):
         self._img_w = None
         self._shuffle = None
         self._name = None
+        self._anchors = None
+        self._BoxEncoder = None
+        self._encode_tensor = None
+        self._numOfClasses = None
+        self._oneHotEncoding = False
+        self._castLabels = False
 
     def store_values(self, operator):
         """
@@ -169,6 +178,38 @@ class Pipeline(object):
         """
         outputs = self.define_graph()
         self.process_calls(outputs[0])
+
+        #Checks for Casting "Labels" as last node & Box Encoder as last Prev node
+        if(len(outputs)==3):
+            if((isinstance(outputs[1],list)== False) & (isinstance(outputs[2],list)== False)):
+                if((outputs[2].prev is not None) | (outputs[1].prev is not None)):
+                    if(outputs[2].prev.data == "Cast") :
+                        self._castLabels = True
+                        if(outputs[2].prev.prev.prev.data is not None):
+                            if(outputs[2].prev.prev.prev.data == "BoxEncoder"):
+                                self._BoxEncoder = True
+                                self._anchors = outputs[2].prev.prev.data
+                                self._encode_tensor = outputs[2].prev.prev
+        #Checks for Box Encoding as the Last Node
+        if(len(outputs)==3):
+            if(isinstance(outputs[1],list)== False):
+                if(outputs[1].prev is not None):
+                    if(outputs[2].prev is not None):
+                        if(outputs[2].prev.data == "BoxEncoder"):
+                            self._BoxEncoder = True
+                            self._anchors = outputs[2].data
+                            self._encode_tensor = outputs[2]
+
+        #Checks for One Hot Encoding as the last Node
+        if(isinstance(outputs[1],list)== False):
+            if(len(outputs)==2):
+                if(outputs[1].prev is not None):
+                    print(type(outputs[1]))
+                    if(outputs[1].prev.data == "OneHotLabel"):
+                        self._numOfClasses = outputs[1].prev.rali_c_func_call(self._handle)
+                        self._oneHotEncoding = True
+        
+            
         status = b.raliVerify(self._handle)
         if(status != types.OK):
             print("Verify graph failed")
@@ -215,6 +256,13 @@ class Pipeline(object):
             b.raliCopyToOutputTensor16(self._handle, np.ascontiguousarray(out, dtype=array.dtype), types.NCHW,
                                        multiplier[0], multiplier[1], multiplier[2], offset[0], offset[1], offset[2], (1 if reverse_channels else 0))
 
+    def encode(self, bboxes_in, labels_in):
+        bboxes_tensor = torch.tensor(bboxes_in).float()
+        labels_tensor=  torch.tensor(labels_in).long()
+        return self._encode_tensor.prev.rali_c_func_call(self._handle, bboxes_tensor , labels_tensor )
+    
+    def GetOneHotEncodedLabels(self, array):
+        return b.getOneHotEncodedLabels(self._handle, array, self._numOfClasses)
 
 
     def GetImageNameLen(self, array):

@@ -18,6 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+from future import standard_library
+standard_library.install_aliases()
+from builtins import *
+from builtins import str
+from builtins import range
 import os, sys, struct, subprocess
 import datetime, pytz
 from nnir import *
@@ -408,7 +417,7 @@ static vx_status initializeTensor(vx_context context, vx_tensor tensor, FILE * f
 
     vx_map_id map_id;
     void * ptr;
-    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0));
+    ERROR_CHECK_STATUS(vxMapTensorPatch(tensor, num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST));
     vx_size n = fread(ptr, itemsize, count, fp);
     if(n != count) {
         vxAddLogEntry((vx_reference)tensor, VX_FAILURE, "ERROR: expected char[%%ld], but got char[%%ld] in %%s\\n", count*itemsize, n*itemsize, binaryFilename);
@@ -1042,7 +1051,7 @@ MIVID_API_ENTRY mv_status MIVID_API_CALL mvCopyToTensorFromFile(mivid_handle han
             void * ptr;
             vx_map_id map_id;
             vx_size stride[4] = {%d, dims[0]*%d, dims[0]*dims[1]*%d, dims[0]*dims[1]*dims[2]*%d};
-            vx_status status = vxMapTensorPatch(handle->inputs[input_num], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST, 0);
+            vx_status status = vxMapTensorPatch(handle->inputs[input_num], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
             if(status) {
                 std::cerr << "ERROR: vxMapTensorPatch() failed for " << fileName << std::endl;
                 return MV_FAILURE;
@@ -1893,7 +1902,7 @@ def generateExtrasCPP(graph,extraFolder):
     cmd = "cp " + file_dir + "/../mv_extras_postproc.cpp " + "./" + extraFolder
     ret = subprocess.call(cmd, shell=True)
     if ret:
-        print('ERROR: generateExtrasCPP', ret)
+        print(('ERROR: generateExtrasCPP', ret))
     else:  
         print('OK: generateExtrasCPP')
 
@@ -1903,7 +1912,7 @@ def generateExtrasH(graph,extraFolder):
     cmd = "cp " + file_dir + "/../mv_extras_postproc.h " + "./" + extraFolder
     ret = subprocess.call(cmd, shell=True)
     if ret:
-        print('ERROR: generateExtrasCPP', ret)
+        print(('ERROR: generateExtrasCPP', ret))
     else:
         print('OK: generateExtrasCPP')
 

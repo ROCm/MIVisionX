@@ -572,12 +572,14 @@ int HafCpu_HistogramFixedBins_DATA_U8
 			}
 		}
 	}
-	else if (distBinCount == 8 && !useGeneral) {
-		status = HafCpu_Histogram8Bins_DATA_U8(dstHist, distOffset, distWindow, srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes);
-	}
-	else if (distBinCount == 9 && !useGeneral) {
-		status = HafCpu_Histogram9Bins_DATA_U8(dstHist, distOffset, distWindow, srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes);
-	}
+	// else if (distBinCount == 8 && !useGeneral) {
+	// 	printf("distbin 8 method called\n");
+	// 	status = HafCpu_Histogram8Bins_DATA_U8(dstHist, distOffset, distWindow, srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes);
+	// }
+	// else if (distBinCount == 9 && !useGeneral) {
+	// 	printf("distbin 9 method called\n");
+	// 	status = HafCpu_Histogram9Bins_DATA_U8(dstHist, distOffset, distWindow, srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes);
+	// }
 	else if (distBinCount == 16 && numSplits <= 16 && !useGeneral) {
 		status = HafCpu_Histogram16Bins_DATA_U8(dstHist, distOffset, distWindow, srcWidth, srcHeight, pSrcImage, srcImageStrideInBytes);
 	}
@@ -591,12 +593,9 @@ int HafCpu_HistogramFixedBins_DATA_U8
 				memcpy(dstHist, &histTmp[distOffset], distBinCount * sizeof(vx_uint32));
 			}
 			else {
-				for (vx_uint32 i = 0, j = distOffset; i < distBinCount; i++) {
-					vx_uint32 count = 0, end = distOffset + distRange;
-					for (vx_uint32 jend = ((j + distWindow) < end) ? (j + distWindow) : end; j < jend; j++) {
-						count += histTmp[j];
-					}
-					dstHist[i] = count;
+				for (vx_uint32 i = distOffset; i < (distOffset + distRange); i++) {
+					vx_size index = (i-distOffset) * distBinCount / distRange;
+					dstHist[index] += histTmp[i];
 				}
 			}
 		}

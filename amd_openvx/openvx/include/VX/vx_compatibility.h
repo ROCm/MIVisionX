@@ -1,6 +1,5 @@
 /*
-
- * Copyright (c) 2012-2017 The Khronos Group Inc.
+ * Copyright (c) 2012-2020 The Khronos Group Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +148,10 @@
 #define VX_TYPE_STRUCT_MAX      VX_TYPE_KHRONOS_STRUCT_MAX
 
 #define VX_KERNEL_INVALID (VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x0)
+#define VX_KERNEL_ACCUMULATE (VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x16)
+#define VX_KERNEL_ACCUMULATE_WEIGHTED (VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x17)
+#define VX_KERNEL_ACCUMULATE_SQUARE (VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_BASE) + 0x18)
+#define VX_KERNEL_NORMALIZATION_LAYER (VX_KERNEL_BASE(VX_ID_KHRONOS, VX_LIBRARY_KHR_NN_EXTENSION) + 0x4)
 
 #define VX_THRESHOLD_THRESHOLD_VALUE (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_THRESHOLD) + 0x1)
 #define VX_THRESHOLD_THRESHOLD_LOWER (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_THRESHOLD) + 0x2)
@@ -156,6 +159,9 @@
 #define VX_THRESHOLD_TRUE_VALUE (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_THRESHOLD) + 0x4)
 #define VX_THRESHOLD_FALSE_VALUE (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_THRESHOLD) + 0x5)
 #define VX_THRESHOLD_DATA_TYPE (VX_ATTRIBUTE_BASE(VX_ID_KHRONOS, VX_TYPE_THRESHOLD) + 0x6)
+
+#define VX_BIDIRECTIONAL (VX_ENUM_BASE(VX_ID_KHRONOS, VX_ENUM_DIRECTION) + 0x2)
+
 
 typedef vx_status(VX_CALLBACK *vx_kernel_input_validate_f)(vx_node node, vx_uint32 index);
 
@@ -228,6 +234,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetRemapPoint(vx_remap table, vx_uint32 dst
 VX_API_ENTRY vx_status VX_API_CALL vxGetRemapPoint(vx_remap table, vx_uint32 dst_x, vx_uint32 dst_y, vx_float32 *src_x, vx_float32 *src_y);
 
 VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThreshold(vx_context c, vx_enum thresh_type, vx_enum data_type);
+
+VX_API_ENTRY vx_node VX_API_CALL vxAccumulateImageNode(vx_graph graph, vx_image input, vx_image accum);
+
+VX_API_ENTRY vx_node VX_API_CALL vxAccumulateWeightedImageNode(vx_graph graph, vx_image input, vx_scalar alpha, vx_image accum);
+
+VX_API_ENTRY vx_node VX_API_CALL vxAccumulateSquareImageNode(vx_graph graph, vx_image input, vx_scalar shift, vx_image accum);
+
+VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateImage(vx_context context, vx_image input, vx_image accum);
+
+VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateWeightedImage(vx_context context, vx_image input, vx_scalar alpha, vx_image accum);
+
+VX_API_ENTRY vx_status VX_API_CALL vxuAccumulateSquareImage(vx_context context, vx_image input, vx_scalar shift, vx_image accum);
+
+VX_API_ENTRY vx_node VX_API_CALL vxNormalizationLayer(vx_graph graph, vx_tensor inputs, vx_enum type,
+        vx_size normalization_size,
+        vx_float32 alpha,
+        vx_float32 beta,
+        vx_tensor outputs);
 
 #ifdef __cplusplus
 }

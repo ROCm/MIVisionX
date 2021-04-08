@@ -33,4 +33,8 @@ THE SOFTWARE.
 #define LOG(X) ;
 #endif
 #define ERR(X) std::cerr << "[ERR] "  << " {" << __func__ <<"} " << " " << X << std::endl;
+#if WRNLOG
 #define WRN(X) std::clog << "[WRN] "  << " {" << __func__ <<"} " << " " << X << std::endl;
+#else
+#define WRN(X) ;
+#endif

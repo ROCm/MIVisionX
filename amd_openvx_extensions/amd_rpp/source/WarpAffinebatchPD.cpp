@@ -22,11 +22,11 @@ THE SOFTWARE.
 
 #include "internal_publishKernels.h"
 
-struct WarpAffinebatchPDLocalData { 
+struct WarpAffinebatchPDLocalData {
 	RPPCommonHandle handle;
 	rppHandle_t rppHandle;
-	Rpp32u device_type; 
-	Rpp32u nbatchSize; 
+	Rpp32u device_type;
+	Rpp32u nbatchSize;
 	RppiSize *srcDimensions;
 	RppiSize maxSrcDimensions;
 	RppiSize *dstDimensions;
@@ -40,7 +40,7 @@ struct WarpAffinebatchPDLocalData {
 #elif ENABLE_HIP
 	void *hip_pSrc;
 	void *hip_pDst;
-#endif 
+#endif
 };
 
 static vx_status VX_CALLBACK refreshWarpAffinebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num, WarpAffinebatchPDLocalData *data)
@@ -87,7 +87,7 @@ static vx_status VX_CALLBACK refreshWarpAffinebatchPD(vx_node node, const vx_ref
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pSrc, sizeof(vx_uint8)));
 		STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[3], VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER, &data->pDst, sizeof(vx_uint8)));
 	}
-	return status; 
+	return status;
 }
 
 static vx_status VX_CALLBACK validateWarpAffinebatchPD(vx_node node, const vx_reference parameters[], vx_uint32 num, vx_meta_format metas[])
@@ -98,27 +98,27 @@ static vx_status VX_CALLBACK validateWarpAffinebatchPD(vx_node node, const vx_re
  	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #7 type=%d (must be size)\n", scalar_type);
 	STATUS_ERROR_CHECK(vxQueryScalar((vx_scalar)parameters[8], VX_SCALAR_TYPE, &scalar_type, sizeof(scalar_type)));
  	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #8 type=%d (must be size)\n", scalar_type);
-	// Check for input parameters 
-	vx_parameter input_param; 
-	vx_image input; 
+	// Check for input parameters
+	vx_parameter input_param;
+	vx_image input;
 	vx_df_image df_image;
 	input_param = vxGetParameterByIndex(node,0);
 	STATUS_ERROR_CHECK(vxQueryParameter(input_param, VX_PARAMETER_ATTRIBUTE_REF, &input, sizeof(vx_image)));
-	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image))); 
-	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB) 
+	STATUS_ERROR_CHECK(vxQueryImage(input, VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
+	if(df_image != VX_DF_IMAGE_U8 && df_image != VX_DF_IMAGE_RGB)
 	{
 		return ERRMSG(VX_ERROR_INVALID_FORMAT, "validate: WarpAffinebatchPD: image: #0 format=%4.4s (must be RGB2 or U008)\n", (char *)&df_image);
 	}
 
-	// Check for output parameters 
-	vx_image output; 
-	vx_df_image format; 
-	vx_parameter output_param; 
-	vx_uint32  height, width; 
+	// Check for output parameters
+	vx_image output;
+	vx_df_image format;
+	vx_parameter output_param;
+	vx_uint32  height, width;
 	output_param = vxGetParameterByIndex(node,3);
-	STATUS_ERROR_CHECK(vxQueryParameter(output_param, VX_PARAMETER_ATTRIBUTE_REF, &output, sizeof(vx_image))); 
-	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width))); 
-	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height))); 
+	STATUS_ERROR_CHECK(vxQueryParameter(output_param, VX_PARAMETER_ATTRIBUTE_REF, &output, sizeof(vx_image)));
+	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)));
+	STATUS_ERROR_CHECK(vxQueryImage(output, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[3], VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[3], VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)));
 	STATUS_ERROR_CHECK(vxSetMetaFormatAttribute(metas[3], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
@@ -129,48 +129,52 @@ static vx_status VX_CALLBACK validateWarpAffinebatchPD(vx_node node, const vx_re
 	return status;
 }
 
-static vx_status VX_CALLBACK processWarpAffinebatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num) 
-{ 
-	RppStatus status = RPP_SUCCESS;
+static vx_status VX_CALLBACK processWarpAffinebatchPD(vx_node node, const vx_reference * parameters, vx_uint32 num)
+{
+	RppStatus rpp_status = RPP_SUCCESS;
+	vx_status return_status = VX_SUCCESS;
 	WarpAffinebatchPDLocalData * data = NULL;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 	vx_df_image df_image = VX_DF_IMAGE_VIRT;
+	vx_int32 output_format_toggle = 0;
 	STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_FORMAT, &df_image, sizeof(df_image)));
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU) {
 #if ENABLE_OPENCL
 		cl_command_queue handle = data->handle.cmdq;
 		refreshWarpAffinebatchPD(node, parameters, num, data);
-		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			status = rppi_warp_affine_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+		if (df_image == VX_DF_IMAGE_U8 ){
+ 			rpp_status = rppi_warp_affine_u8_pln1_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_warp_affine_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_warp_affine_u8_pkd3_batchPD_gpu((void *)data->cl_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->cl_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
 		refreshWarpAffinebatchPD(node, parameters, num, data);
-		if (df_image == VX_DF_IMAGE_U8 ){ 
- 			status = rppi_warp_affine_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+		if (df_image == VX_DF_IMAGE_U8 ){
+ 			rpp_status = rppi_warp_affine_u8_pln1_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_warp_affine_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_warp_affine_u8_pkd3_batchPD_gpu((void *)data->hip_pSrc,data->srcDimensions,data->maxSrcDimensions,(void *)data->hip_pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #endif
 	}
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU) {
 		refreshWarpAffinebatchPD(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8 ){
-			status = rppi_warp_affine_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_warp_affine_u8_pln1_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
 		else if(df_image == VX_DF_IMAGE_RGB) {
-			status = rppi_warp_affine_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,data->nbatchSize,data->rppHandle);
+			rpp_status = rppi_warp_affine_u8_pkd3_batchPD_host(data->pSrc,data->srcDimensions,data->maxSrcDimensions,data->pDst,data->dstDimensions,data->maxDstDimensions,data->affine,output_format_toggle,data->nbatchSize,data->rppHandle);
 		}
-		return status;
+		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
+
 	}
+	return return_status;
 }
 
-static vx_status VX_CALLBACK initializeWarpAffinebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num) 
+static vx_status VX_CALLBACK initializeWarpAffinebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
 	WarpAffinebatchPDLocalData * data = new WarpAffinebatchPDLocalData;
 	memset(data, 0, sizeof(*data));
@@ -197,7 +201,7 @@ static vx_status VX_CALLBACK initializeWarpAffinebatchPD(vx_node node, const vx_
 
 static vx_status VX_CALLBACK uninitializeWarpAffinebatchPD(vx_node node, const vx_reference *parameters, vx_uint32 num)
 {
-	WarpAffinebatchPDLocalData * data; 
+	WarpAffinebatchPDLocalData * data;
 	STATUS_ERROR_CHECK(vxQueryNode(node, VX_NODE_LOCAL_DATA_PTR, &data, sizeof(data)));
 #if ENABLE_OPENCL || ENABLE_HIP
 	if(data->device_type == AGO_TARGET_AFFINITY_GPU)
@@ -206,7 +210,7 @@ static vx_status VX_CALLBACK uninitializeWarpAffinebatchPD(vx_node node, const v
 	if(data->device_type == AGO_TARGET_AFFINITY_CPU)
 		rppDestroyHost(data->rppHandle);
 	delete(data);
-	return VX_SUCCESS; 
+	return VX_SUCCESS;
 }
 
 vx_status WarpAffinebatchPD_Register(vx_context context)
@@ -246,7 +250,7 @@ vx_status WarpAffinebatchPD_Register(vx_context context)
 	}
 	if (status != VX_SUCCESS)
 	{
-	exit:	vxRemoveKernel(kernel);	return VX_FAILURE; 
+	exit:	vxRemoveKernel(kernel);	return VX_FAILURE;
  	}
 	return status;
 }

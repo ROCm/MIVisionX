@@ -28,9 +28,7 @@ find_path(AMDRPP_INCLUDE_DIRS
     PATHS
     /usr/include
     ${ROCM_PATH}/rpp/include
-    )
-    
-
+)
 mark_as_advanced( AMDRPP_INCLUDE_DIRS )
 
 find_library( AMDRPP_LIBRARIES
@@ -38,8 +36,7 @@ find_library( AMDRPP_LIBRARIES
     PATHS
     /usr/lib
     ${ROCM_PATH}/rpp/lib
-    )
-
+)
 mark_as_advanced( AMDRPP_LIBRARIES_DIR )
 
 find_path(AMDRPP_LIBRARIES_DIR
@@ -47,23 +44,21 @@ find_path(AMDRPP_LIBRARIES_DIR
     PATHS
     /usr/lib
     ${ROCM_PATH}/rpp/lib
-    )
+)
     
-
 include( FindPackageHandleStandardArgs )
 find_package_handle_standard_args( AMDRPP 
     FOUND_VAR  AMDRPP_FOUND 
     REQUIRED_VARS
         AMDRPP_LIBRARIES 
         AMDRPP_INCLUDE_DIRS 
-    )
+)
 
 set(AMDRPP_FOUND ${AMDRPP_FOUND} CACHE INTERNAL "")
 set(AMDRPP_LIBRARIES ${AMDRPP_LIBRARIES} CACHE INTERNAL "")
 set(AMDRPP_INCLUDE_DIRS ${AMDRPP_INCLUDE_DIRS} CACHE INTERNAL "")
 set(AMDRPP_LIBRARIES_DIR ${AMDRPP_LIBRARIES_DIR} CACHE INTERNAL "")
 
-
 if( NOT AMDRPP_FOUND )
-    message( STATUS "FindAMDRPP looked for libraries named: amd_rpp" )
+    message( "-- ${Yellow}FindAMDRPP failed to find: amd_rpp${ColourReset}" )
 endif()

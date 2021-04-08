@@ -68,7 +68,7 @@ static vx_status VX_CALLBACK processReduceMin(vx_node node, const vx_reference *
     
     float * ptr_input;
     vx_size count_input_dims = input_dims[0]*input_dims[1]*input_dims[2]*input_dims[3];
-    ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input, usage, VX_MEMORY_TYPE_HOST, 0));
+    ERROR_CHECK_STATUS(vxMapTensorPatch((vx_tensor)parameters[0], num_of_dims, nullptr, nullptr, &map_id, stride, (void **)&ptr_input, usage, VX_MEMORY_TYPE_HOST));
     memcpy(data_reduce->input_data, ptr_input, (count_input_dims*sizeof(float)));
     ERROR_CHECK_STATUS(vxUnmapTensorPatch((vx_tensor)parameters[0], map_id));
 

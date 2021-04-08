@@ -1,15 +1,15 @@
 # Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-#  
+#
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-#  
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -24,10 +24,15 @@ project(utilities)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../amd_openvx/cmake)
 #set(ROCM_PATH /opt/rocm CACHE PATH " default ROCm installation path")
 
-if(OPENCL_SUPPORT)  #need to rename this to GPU_SUPPORT
+if(GPU_SUPPORT)
     if("${BACKEND}" STREQUAL "OPENCL")
-        SET(BUILD_OPENCL true)
         find_package(OpenCL QUIET)
+        if(OpenCL_FOUND)
+            set(BUILD_OPENCL true)
+        else()
+            set(BUILD_OPENCL false)
+            set(GPU_SUPPORT false)
+        endif()
     elseif ("${BACKEND}" STREQUAL "HIP")
         if(NOT DEFINED HIP_PATH)
             if(NOT DEFINED ENV{HIP_PATH})
@@ -40,7 +45,7 @@ if(OPENCL_SUPPORT)  #need to rename this to GPU_SUPPORT
         find_package(HIP QUIET)
         SET(BUILD_OPENCL false)
     endif()
- endif()   
+endif()
 
 find_package(FFmpeg QUIET)
 add_subdirectory(runvx)
@@ -55,7 +60,7 @@ if(OpenCL_FOUND AND BUILD_OPENCL)
         message("-- ${Cyan}Loom Shell Module turned OFF by user option -D LOOM=OFF ${ColourReset}")
     endif()
     if(FFMPEG_FOUND)
-        add_subdirectory(mv_deploy)    
+        add_subdirectory(mv_deploy)
         message("-- ${Green}MIVisionX Utilities -- runvx, runcl, loom_shell, & mv_deploy modules added${ColourReset}")
         install (FILES ./mv_deploy/mvdeploy_api.h DESTINATION include)
         install (FILES ./mv_deploy/mv_extras_postproc.h DESTINATION model_compiler)
@@ -66,7 +71,7 @@ if(OpenCL_FOUND AND BUILD_OPENCL)
     endif(FFMPEG_FOUND)
 elseif (HIP_FOUND)
     message("-- ${Green}MIVisionX Utilities -- runvx module added with HIP support${ColourReset}")
-    message(STATUS "Found HIP: " ${HIP_VERSION})
+    message(STATUS "Found HIP: " ${HIP_PATH} " version: " ${HIP_VERSION})
 else()
     message("-- ${Green}MIVisionX Utilities -- runvx module added with CPU support${ColourReset}")
     message("-- ${Red}WARNING:OpenCL/FFMPEG Not Found -- runcl, loom_shell, & mv_deploy modules excluded${ColourReset}")

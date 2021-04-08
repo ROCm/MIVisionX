@@ -102,19 +102,19 @@ linuxCMake = 'cmake'
 linuxSystemInstall_check = ''
 linuxFlag = ''
 if "centos" in platfromInfo:
-    linuxSystemInstall = 'yum'
+    linuxSystemInstall = 'yum -y'
     linuxSystemInstall_check = '--nogpgcheck'
     if "centos-7" in platfromInfo:
         linuxCMake = 'cmake3'
-        os.system('yum -y install cmake3')
+        os.system(linuxSystemInstall+' install cmake3')
 elif "Ubuntu" in platfromInfo:
-    linuxSystemInstall = 'apt-get'
+    linuxSystemInstall = 'apt-get -y'
     linuxSystemInstall_check = '--allow-unauthenticated'
     linuxFlag = '-S'
 
 if userName == 'root':
-    os.system(linuxSystemInstall+' -y update')
-    os.system(linuxSystemInstall+' -y install sudo')
+    os.system(linuxSystemInstall+' update')
+    os.system(linuxSystemInstall+' install sudo')
 
 # Delete previous install
 if(os.path.exists(deps_dir) and reinstall == 'yes'):
@@ -164,7 +164,7 @@ else:
     os.system('(cd '+deps_dir+'; mkdir build )')
     # install pre-reqs
     os.system('sudo -v')
-    os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+    os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
               linuxSystemInstall_check+' install gcc cmake git wget unzip pkg-config inxi')
     # Get Installation Source
     os.system(
@@ -192,13 +192,13 @@ else:
         os.system('sudo -v')
         if "centos" in platfromInfo:
             if "centos-7" in platfromInfo:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
                           ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
             elif "centos-8" in platfromInfo:
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' + linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
                           ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         else:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool curl make g++ unzip')
         # Boost V 1.72.0 from source
         os.system(
@@ -263,15 +263,15 @@ else:
         os.system('sudo ' + linuxFlag+' '+linuxSystemInstall+' autoremove ')
         # Install Packages for NN Apps - Apps Requirement to be installed by Developer
         # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install inxi aha build-essential')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install inxi aha build-essential')
         # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +' install python-matplotlib python-numpy python-pil python-scipy python-skimage cython')
         # App Requirement - Cloud Inference Client
         # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install qt5-default qtcreator')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install qt5-default qtcreator')
         # Install Packages for Apps - App Dependencies to be installed by developer
         # os.system('sudo -v')
-        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +linuxSystemInstall_check+' install python-pip')
+        # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install python-pip')
         # os.system('sudo -v')
         # os.system('sudo '+linuxFlag+' yes | pip install protobuf')
         # os.system('sudo -v')
@@ -284,17 +284,17 @@ else:
     os.system('sudo -v')
     if "Ubuntu" in platfromInfo:
         os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' install build-essential libgtk2.0-dev libavcodec-dev libavformat-dev libswscale-dev python-dev python-numpy ')
         os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' install libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev unzip')
     else:
         os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' groupinstall \'Development Tools\'')
         os.system('sudo -v')
-        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+        os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                   ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
     # OpenCV 3.4.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
@@ -309,19 +309,19 @@ else:
         if "Ubuntu" in platfromInfo:
             # Install Packages for RALI
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')
             # Yasm/Nasm for TurboJPEG
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall +
-                      ' -y '+linuxSystemInstall_check+' install nasm yasm')
+                      ' '+linuxSystemInstall_check+' install nasm yasm')
             # json-cpp
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install libjsoncpp-dev')
             # clang
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install clang')
             # turbo-JPEG
             os.system(
@@ -347,10 +347,10 @@ else:
             # os.system('(cd '+deps_dir+'/yasm-1.3.0; sudo '+linuxFlag+' make install )')
             # JSON-cpp
             # os.system('sudo -v')
-            # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install jsoncpp')
+            # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install jsoncpp')
             # clang+boost
             # os.system('sudo -v')
-            # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check+' install boost-devel clang')
+            # os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check+' install boost-devel clang')
             # turbo-JPEG
             # os.system('(cd '+deps_dir+'; wget https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz )')
             # os.system('(cd '+deps_dir+'; tar xf libjpeg-turbo-2.0.3.tar.gz )')
@@ -361,53 +361,53 @@ else:
     if ffmpegInstall == 'yes':
         if "Ubuntu" in platfromInfo:
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install autoconf automake build-essential git-core libass-dev libfreetype6-dev')
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install libsdl2-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev')
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo zlib1g-dev')
             os.system('sudo -v')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install nasm yasm libx264-dev libx265-dev libnuma-dev libfdk-aac-dev')
         else:
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install autoconf automake bzip2 bzip2-devel freetype-devel')
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install gcc-c++ libtool make pkgconfig zlib-devel')
             # Nasm
-            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+            os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install nasm')
             if "centos-7" in platfromInfo:
                 # Yasm
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm')
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' --enablerepo=extras install epel-release')
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install yasm')
                 # libx264 & libx265
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install libx264-devel libx265-devel')
                 # libfdk_aac
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install https://forensics.cert.org/cert-forensics-tools-release-el7.rpm')
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' --enablerepo=forensics install fdk-aac')
                 # libASS
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install libass-devel')
             elif "centos-8" in platfromInfo:
                 # el8 x86_64 packages
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm')
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install https://download1.rpmfusion.org/free/el/rpmfusion-free-release-8.noarch.rpm https://download1.rpmfusion.org/nonfree/el/rpmfusion-nonfree-release-8.noarch.rpm')
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install http://mirror.centos.org/centos/8/PowerTools/x86_64/os/Packages/SDL2-2.0.10-2.el8.x86_64.rpm')
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y '+linuxSystemInstall_check +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install ffmpeg ffmpeg-devel')
             else:
                 # Yasm
@@ -427,7 +427,7 @@ else:
                 os.system('(cd '+deps_dir+'/x264; sudo ' +
                           linuxFlag+' make install )')
                 # libx265
-                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' -y ' +
+                os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                           linuxSystemInstall_check+' install hg ')
                 os.system(
                     '(cd '+deps_dir+'; hg clone http://hg.videolan.org/x265 )')

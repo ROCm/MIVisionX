@@ -25,7 +25,11 @@ THE SOFTWARE.
 #include "cifar10_data_loader.h"
 #include "vx_ext_amd.h"
 
+#if ENABLE_HIP
+CIFAR10DataLoader::CIFAR10DataLoader(DeviceResourcesHip dev_resources):
+#else
 CIFAR10DataLoader::CIFAR10DataLoader(DeviceResources dev_resources):
+#endif
 _circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
 _file_load_time("file load time", DBG_TIMING),
 _swap_handle_time("Swap_handle_time", DBG_TIMING)

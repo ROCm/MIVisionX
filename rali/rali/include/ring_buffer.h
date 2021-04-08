@@ -29,6 +29,7 @@ THE SOFTWARE.
 #include "meta_data.h"
 #include "device_manager.h"
 #include "commons.h"
+#include "device_manager_hip.h"
 
 using MetaDataNamePair = std::pair<ImageNameBatch,pMetaDataBatch>;
 class RingBuffer
@@ -43,6 +44,9 @@ public:
     ///\param sub_buffer_size
     ///\param sub_buffer_count
     void init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
+#if ENABLE_HIP
+    void initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
+#endif    
     std::vector<void*> get_read_buffers() ;
     void* get_host_master_read_buffer();
     std::vector<void*> get_write_buffers();
@@ -76,6 +80,9 @@ private:
     bool _dont_block = false;
     RaliMemType _mem_type;
     DeviceResources _dev;
+#if ENABLE_HIP    
+    DeviceResourcesHip _devhip;
+#endif    
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;

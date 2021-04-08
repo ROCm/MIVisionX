@@ -34,12 +34,14 @@ raliRelease(RaliContext p_context)
     delete context;
     return RALI_OK;
 }
+
 RaliContext RALI_API_CALL
 raliCreate(
         size_t batch_size,
         RaliProcessMode affinity,
         int gpu_id,
-        size_t cpu_thread_count)
+        size_t cpu_thread_count,
+        RaliTensorOutputType output_tensor_data_type)
 {
     RaliContext context = nullptr;
     try
@@ -53,10 +55,22 @@ raliCreate(
                 case RALI_PROCESS_CPU:
                     return RaliAffinity::CPU;
                 default:
-                    THROW("Unkown Rali process mode")
+                    THROW("Unkown Rali data type")
             }
         };
-        context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count);
+        auto translate_output_data_type = [](RaliTensorOutputType data_type)
+        {
+            switch(data_type)
+            {
+                case RALI_FP32:
+                    return RaliTensorDataType::FP32;
+                case RALI_FP16:
+                    return RaliTensorDataType::FP16;
+                default:
+                    THROW("Unkown Rali data type")
+            }
+        };
+        context = new Context(batch_size, translate_process_mode(affinity), gpu_id, cpu_thread_count, translate_output_data_type(output_tensor_data_type));
         // Reset seed in case it's being randomized during context creation
     }
     catch(const std::exception& e)

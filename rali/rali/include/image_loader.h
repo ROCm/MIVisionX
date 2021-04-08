@@ -34,7 +34,11 @@ THE SOFTWARE.
 // it uses a circular buffer to store decoded frames and images for the user
 class ImageLoader : public LoaderModule {
 public:
+#if ENABLE_HIP
+    explicit ImageLoader(DeviceResourcesHip dev_resources);
+#else
     explicit ImageLoader(DeviceResources dev_resources);
+#endif    
     ~ImageLoader() override;
     LoaderModuleStatus load_next() override;
     void initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool keep_orig_size=false) override;

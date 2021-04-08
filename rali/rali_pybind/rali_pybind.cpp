@@ -174,7 +174,8 @@ namespace rali{
                 py::arg("batch_size"),
                 py::arg("affinity"),
                 py::arg("gpu_id") = 0, 
-                py::arg("cpu_thread_count") = 1);
+                py::arg("cpu_thread_count") = 1,
+                py::arg("output_data_type") = 0);
         m.def("raliVerify",&raliVerify);
         m.def("raliRun",&raliRun);
         m.def("raliRelease",&raliRelease);

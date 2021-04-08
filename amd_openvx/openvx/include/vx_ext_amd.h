@@ -156,6 +156,7 @@ enum vx_node_attribute_amd_e {
 	VX_NODE_ATTRIBUTE_AMD_AFFINITY                      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x01,
 	/*! \brief OpenCL command queue. Use a <tt>\ref cl_command_queue</tt> parameter.*/
 	VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE          = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x02,
+	VX_NODE_ATTRIBUTE_AMD_HIP_STREAM                    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x03,
 };
 
 /*! \brief The AMD image attributes list.
@@ -200,7 +201,7 @@ enum vx_array_attribute_amd_e {
 	/*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
 	VX_ARRAY_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x9,
 	VX_ARRAY_BUFFER_HIP   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x10,
-        VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11
+    VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11
 };
 
 /*! \brief These enumerations are given to the \c vxDirective API to enable/disable

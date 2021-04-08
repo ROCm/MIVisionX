@@ -26,8 +26,13 @@ THE SOFTWARE.
 #include "image_read_and_decode.h"
 #include "vx_ext_amd.h"
 
-ImageLoader::ImageLoader(DeviceResources dev_resources) : _circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
-                                                          _swap_handle_time("Swap_handle_time", DBG_TIMING)
+#if ENABLE_HIP
+ImageLoader::ImageLoader(DeviceResourcesHip dev_resources):
+#else
+ImageLoader::ImageLoader(DeviceResources dev_resources):
+#endif
+_circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
+_swap_handle_time("Swap_handle_time", DBG_TIMING)
 {
     _output_image = nullptr;
     _mem_type = RaliMemType::HOST;
@@ -172,7 +177,7 @@ ImageLoader::load_routine()
                                               _decoded_img_info._roi_height,
                                               _decoded_img_info._original_width,
                                               _decoded_img_info._original_height,
-                                              _output_image->info().color_format(), _decoder_keep_original);          
+                                              _output_image->info().color_format(), _decoder_keep_original);
 
 
             if (load_status == LoaderModuleStatus::OK)
@@ -226,7 +231,7 @@ ImageLoader::update_output_image()
         return LoaderModuleStatus::OK;
 
     // _circ_buff.get_read_buffer_x() is blocking and puts the caller on sleep until new images are written to the _circ_buff
-    if (_mem_type == RaliMemType::OCL)
+    if((_mem_type== RaliMemType::OCL) || (_mem_type== RaliMemType::HIP))
     {
         auto data_buffer = _circ_buff.get_read_buffer_dev();
         _swap_handle_time.start();

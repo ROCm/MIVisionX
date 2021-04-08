@@ -130,6 +130,8 @@ profileLevel = args.profiler_level
 miopenFind = args.miopen_find
 testInfo = args.test_info
 
+platfromInfo = platform.platform()
+
 # check arguments
 if not 0 <= profileMode <= 9:
     print(
@@ -173,8 +175,12 @@ if not os.path.exists(modelCompilerDeps):
     print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
     os.makedirs(modelCompilerDeps)
     os.system('sudo -v')
-    os.system(
-        'sudo apt -y install python3 python3-pip protobuf-compiler libprotoc-dev')
+    if "Ubuntu" in platfromInfo:
+        os.system(
+            'sudo apt-get -y install inxi python3 python3-pip protobuf-compiler libprotoc-dev')
+    elif "centos" in platfromInfo:
+        os.system(
+            'sudo yum -y install inxi python3-devel python3-pip protobuf-compiler protobuf-devel')
     os.system('pip3 install future pytz numpy')
     # Install CAFFE Deps
     os.system('pip3 install google protobuf')

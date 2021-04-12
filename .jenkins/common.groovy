@@ -53,6 +53,19 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 }
 
 def runTestCommand (platform, project) {
+
+    String conformace_cpu = ''
+    String conformace_gpu = ''
+
+    if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
+        conformace_cpu = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance'
+        conformace_gpu = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.*'
+    }
+    else {
+        conformace_cpu = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
+        conformace_gpu = 'echo OpenVX 1.3 Conformance - GPU - NOT TESTED ON THIS PLATFORM'
+    }
+
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
@@ -70,9 +83,9 @@ def runTestCommand (platform, project) {
                 cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;\$OPENVX_DIR/lib/libvxu.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
                 echo MIVisionX OpenVX 1.3 Conformance - CPU
-                AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance
+                ${conformace_cpu}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
-                AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.*
+                ${conformace_gpu}
                 """
 
     platform.runCommand(this, command)

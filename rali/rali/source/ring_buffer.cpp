@@ -62,7 +62,7 @@ std::vector<void*> RingBuffer::get_read_buffers()
 
 void *RingBuffer::get_host_master_read_buffer() {
     block_if_empty();
-    if((_mem_type == RaliMemType::OCL) || (_mem_type == RaliMemType::HIP)) 
+    if((_mem_type == RaliMemType::OCL) || (_mem_type == RaliMemType::HIP))
         return nullptr;
 
     return _host_master_buffers[_read_ptr];
@@ -102,6 +102,8 @@ void RingBuffer::unblock_writer()
     // Wake up the writer thread in case it's waiting for an unload
     _wait_for_unload.notify_all();
 }
+
+#if !ENABLE_HIP
 void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count)
 {
     _mem_type = mem_type;
@@ -111,7 +113,6 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
     if(BUFF_DEPTH < 2)
         THROW ("Error internal buffer size for the ring buffer should be greater than one")
 
-#if !ENABLE_HIP     
     // Allocating buffers
     if(mem_type== RaliMemType::OCL)
     {
@@ -141,28 +142,7 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
 
         }
     }
-#else     
-    if (mem_type== RaliMemType::HIP)
-    {
-        if(_devhip.hip_stream == nullptr || _devhip.device_id == -1 )
-            THROW("Error HIP device resource is not initialized");
-
-        for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
-        {
-            _dev_sub_buffer[buffIdx].resize(_sub_buffer_count);
-            for(unsigned sub_idx = 0; sub_idx < _sub_buffer_count; sub_idx++)
-            {
-                hipError_t err = hipMalloc(&_dev_sub_buffer[buffIdx][sub_idx],sub_buffer_size);
-                if(err != hipSuccess)
-                {
-                    THROW("hipMalloc of size " + TOSTR(sub_buffer_size) + " index " + TOSTR(sub_idx) +
-                          " failed " + TOSTR(err));
-                }
-            }
-        }
-    }
-#endif    
-    else
+   else
     {
         _host_sub_buffers.resize(BUFF_DEPTH);
         for(size_t buffIdx = 0; buffIdx < BUFF_DEPTH; buffIdx++)
@@ -177,7 +157,7 @@ void RingBuffer::init(RaliMemType mem_type, DeviceResources dev, unsigned sub_bu
     }
 }
 
-#if ENABLE_HIP
+#else
 void RingBuffer::initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count)
 {
     _mem_type = mem_type;
@@ -267,7 +247,7 @@ RingBuffer::~RingBuffer()
         _host_master_buffers.clear();
         _host_sub_buffers.clear();
     }
-#if ENABLE_HIP    
+#if ENABLE_HIP
     else if (_mem_type == RaliMemType::HIP) {
         for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
             for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
@@ -276,7 +256,7 @@ RingBuffer::~RingBuffer()
                         ERR("Could not release hip memory in the ring buffer")
         _dev_sub_buffer.clear();
     }
-#else    
+#else
     else if (_mem_type == RaliMemType::OCL) {
         for (size_t buffIdx = 0; buffIdx < _dev_sub_buffer.size(); buffIdx++)
             for (unsigned sub_buf_idx = 0; sub_buf_idx < _dev_sub_buffer[buffIdx].size(); sub_buf_idx++)
@@ -285,7 +265,7 @@ RingBuffer::~RingBuffer()
                         ERR("Could not release ocl memory in the ring buffer")
         _dev_sub_buffer.clear();
     }
-#endif    
+#endif
 }
 
 bool RingBuffer::empty()

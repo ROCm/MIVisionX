@@ -19,8 +19,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-
+#if !ENABLE_HIP
 #include <CL/cl.h>
+#endif
 #include <vx_ext_amd.h>
 #include <VX/vx_types.h>
 #include <cstring>
@@ -96,11 +97,11 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _convert_time("Conversion Time", DBG_TIMING),
         _user_batch_size(batch_size),
         _cpu_threads(cpu_threads),
-#if ENABLE_HIP        
+#if ENABLE_HIP
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::HIP : RaliMemType::HOST),
 #else
         _mem_type ((_affinity == RaliAffinity::GPU) ? RaliMemType::OCL : RaliMemType::HOST),
-#endif        
+#endif
         _process_time("Process Time", DBG_TIMING),
         _first_run(true),
         _processing(false),
@@ -119,6 +120,7 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
 
         if(affinity == RaliAffinity::GPU)
         {
+#if !ENABLE_HIP
             if (_mem_type == RaliMemType::OCL){
                 cl_context _cl_context = nullptr;
                 cl_device_id _cl_device_id = nullptr;
@@ -128,8 +130,8 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
                         &_cl_context, sizeof(cl_context)) != VX_SUCCESS))
                     THROW("vxSetContextAttribute for CL_CONTEXT failed " + TOSTR(status))
             }
-#if ENABLE_HIP             
-            else {
+#else
+            if (_mem_type == RaliMemType::HIP) {
                 hipError_t err = hipInit(0);
                 if (err != hipSuccess) {
                     THROW("ERROR: hipInit(0) => %d (failed)" + TOSTR(err));
@@ -154,9 +156,9 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
                     _mem_type = RaliMemType::HOST;
                     auto vx_affinity = get_ago_affinity_info(_affinity, 0, -1);
                 }
-            #endif    
+            #endif
             }
-#endif            
+#endif
         }
 
         // Setting attribute to run on CPU or GPU should be called before load kernel module
@@ -181,9 +183,9 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         if(_affinity == RaliAffinity::GPU) {
 #if ENABLE_HIP
             _device.init_hip(_context);
-#else            
+#else
             _device.init_ocl(_context);
-#endif            
+#endif
         }
     }
     catch(const std::exception& e)
@@ -265,9 +267,9 @@ MasterGraph::build()
     allocate_output_tensor();
 #if ENABLE_HIP
     _ring_buffer.initHip(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
-#else    
+#else
     _ring_buffer.init(_mem_type, _device.resources(), output_byte_size(), _output_images.size());
-#endif    
+#endif
     create_single_graph();
     start_processing();
     return Status::OK;
@@ -387,7 +389,7 @@ MasterGraph::allocate_output_tensor()
 
         _output_tensor = clImgFloat;
     }
-#else    
+#else
     if (processing_on_device_hip())
     {
         void *hipMemory = nullptr;
@@ -398,21 +400,22 @@ MasterGraph::allocate_output_tensor()
 
         _output_tensor = hipMemory;
     }
-#endif    
+#endif
     return Status::OK;
 }
 
 MasterGraph::Status
 MasterGraph::deallocate_output_tensor()
 {
+#if !ENABLE_HIP
     if(processing_on_device_ocl() && _output_tensor != nullptr)
         clReleaseMemObject((cl_mem)_output_tensor );
-#if ENABLE_HIP
+#else
     if(processing_on_device_hip() && _output_tensor != nullptr) {
         hipFree(_output_tensor );
         _output_tensor = nullptr;
     }
-#endif    
+#endif
 
     return Status::OK;
 }
@@ -461,7 +464,7 @@ MasterGraph::timing()
 
 MasterGraph::Status
 MasterGraph::copy_output(
-        cl_mem out_ptr,
+        void* out_ptr,
         size_t out_size)
 {
     if(no_more_processed_data())
@@ -529,7 +532,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset1))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_float), (void*)& offset2))
             CHECK_CL_CALL_RET(clSetKernelArg( kernel, argIdx++, sizeof(cl_uint), (void*)& reverse_chnl))
-           
+
             if((status = clEnqueueNDRangeKernel(queue,
                                                 kernel,
                                                 1,
@@ -555,7 +558,7 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
     if(_output_image_info.mem_type() == RaliMemType::HIP)
     {
         unsigned int fp16 = (output_data_type == RaliTensorDataType::FP16);
-            
+
         auto output_buffers =_ring_buffer.get_read_buffers();
         unsigned dest_buf_offset = 0;
         for( auto&& out_image: output_buffers)
@@ -563,18 +566,18 @@ MasterGraph::copy_out_tensor(void *out_ptr, RaliTensorFormat format, float multi
             auto img_buffer = out_image;
             if (format == RaliTensorFormat::NHWC)
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w,
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
 
             }else
             {
-                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w, 
+                HipExecCopyInt8ToNHWC(_device.resources().hip_stream, (const void *)img_buffer, _output_tensor, dest_buf_offset, n, c, h, w,
                                         multiplier0, multiplier1, multiplier2, offset0, offset1, offset2, reverse_channels, fp16);
             }
             dest_buf_offset += single_output_image_size;
         }
         // copy hip buffer to output.
-        // todo:: add callback routing to exchange memory pointer to avoid extra copy  
+        // todo:: add callback routing to exchange memory pointer to avoid extra copy
     }
 #endif
     if(_output_image_info.mem_type() == RaliMemType::HOST)
@@ -787,14 +790,14 @@ MasterGraph::copy_output(unsigned char *out_ptr)
             if (err) {
                 THROW("hipMemcpyDtoHAsync failed: " + TOSTR(err))
             }
-            dest_buf_offset += size;            
+            dest_buf_offset += size;
         }
         // sync to finish copy
         if (hipStreamSynchronize(_device.resources().hip_stream) != hipSuccess)
             THROW("hipStreamSynchronize failed for hipMemcpy ")
 
     }
-#endif    
+#endif
     else
     {
         // get_host_master_read_buffer is blocking if _ring_buffer is empty, and blocks this thread till internal processing thread process a new batch and store in the _ring_buffer
@@ -813,10 +816,10 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 void MasterGraph::output_routine()
 {
     INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
-#if !ENABLE_HIP    
+#if !ENABLE_HIP
     if(processing_on_device_ocl() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
-#else        
+#else
     if(processing_on_device_hip() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
 #endif
@@ -827,7 +830,7 @@ void MasterGraph::output_routine()
 
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
-            pMetaDataBatch augmented_batch_meta_data = nullptr; 
+            pMetaDataBatch augmented_batch_meta_data = nullptr;
 
             if (_loader_module->remaining_count() < _user_batch_size)
             {
@@ -856,7 +859,7 @@ void MasterGraph::output_routine()
                     break;
 
                 auto this_cycle_names =  _loader_module->get_id();
-                auto decode_image_info = _loader_module->get_decode_image_info();                
+                auto decode_image_info = _loader_module->get_decode_image_info();
 
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -1063,7 +1066,7 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);    
+    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
@@ -1090,7 +1093,7 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
 
     if(affinity == RaliAffinity::GPU)
         return user_batch_size;
-    
+
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
         INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")

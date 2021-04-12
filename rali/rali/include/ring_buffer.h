@@ -24,7 +24,9 @@ THE SOFTWARE.
 #include "commons.h"
 #include <vector>
 #include <condition_variable>
+#if !ENABLE_HIP
 #include <CL/cl.h>
+#endif
 #include <queue>
 #include "meta_data.h"
 #include "device_manager.h"
@@ -43,10 +45,11 @@ public:
     ///\param dev
     ///\param sub_buffer_size
     ///\param sub_buffer_count
-    void init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
 #if ENABLE_HIP
     void initHip(RaliMemType mem_type, DeviceResourcesHip dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
-#endif    
+#else
+    void init(RaliMemType mem_type, DeviceResources dev, unsigned sub_buffer_size, unsigned sub_buffer_count);
+#endif
     std::vector<void*> get_read_buffers() ;
     void* get_host_master_read_buffer();
     std::vector<void*> get_write_buffers();
@@ -79,10 +82,11 @@ private:
     std::vector<std::vector<void*>> _host_sub_buffers;
     bool _dont_block = false;
     RaliMemType _mem_type;
-    DeviceResources _dev;
-#if ENABLE_HIP    
+#if ENABLE_HIP
     DeviceResourcesHip _devhip;
-#endif    
+#else
+    DeviceResources _dev;
+#endif
     size_t _write_ptr;
     size_t _read_ptr;
     size_t _level;

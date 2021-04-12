@@ -23,7 +23,7 @@ THE SOFTWARE.
 //
 // Created by svcbuild on 11/4/19.
 //
-
+#if !ENABLE_HIP
 #include <vector>
 #include "log.h"
 #include "exception.h"
@@ -145,3 +145,4 @@ int get_device_and_context(int devIdx, cl_context *pContext, cl_device_id *pDevi
 
     return error;
 }
+#endif

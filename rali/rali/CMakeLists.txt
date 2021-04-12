@@ -29,7 +29,7 @@ set(BUILD_RALI true)
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../../amd_openvx/cmake)
 
-if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
+if(GPU_SUPPORT)
     find_package(OpenCL QUIET)
     find_package(AMDRPP QUIET)
     find_package(TurboJpeg QUIET)
@@ -37,7 +37,8 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     # If FFMPEG is found, vx_amd_media is expected to be built as well
     find_package(FFmpeg QUIET)
     find_package(OpenCV QUIET)
-elseif( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
+endif()
+if( GPU_SUPPORT AND "${BACKEND}" STREQUAL "HIP")
     if(NOT DEFINED HIP_PATH)
         if(NOT DEFINED ENV{HIP_PATH})
             set(HIP_PATH ${ROCM_PATH}/hip CACHE PATH "Path to which HIP has been installed")
@@ -122,8 +123,8 @@ if(${BUILD_RALI})
         DESTINATION ./include
         )
     include_directories(
-                ${OpenCL_INCLUDE_DIRS}
-                ${OpenCL_INCLUDE_DIRS}/Headers
+                # ${OpenCL_INCLUDE_DIRS}
+                # ${OpenCL_INCLUDE_DIRS}/Headers
                 ${CMAKE_CURRENT_BINARY_DIR}
                 ${TurboJpeg_INCLUDE_DIRS}
                 ${PROTOBUF_INCLUDE_DIRS}
@@ -151,6 +152,7 @@ if(${BUILD_RALI})
         target_compile_definitions(${PROJECT_NAME} PRIVATE __HIP_PLATFORM_HCC__)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=1)
     else()
+        include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers)
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_HIP=0)
     endif()
 
@@ -166,16 +168,16 @@ if(${BUILD_RALI})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC ENABLE_OPENCV=0)
     endif()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fopenmp -msse4.2 -mavx2 -Wall -ljsoncpp -fPIC -pg -pthread -Wno-unused-result")
     add_definitions(-ljsoncpp)
     message("-- ${Green}${PROJECT_NAME} - CMAKE_CXX_FLAGS:${CMAKE_CXX_FLAGS}")
 
     if(NOT FFMPEG_FOUND)
         message("-- ${Yellow}rali library is going to be built without video decode functionality ${ColourReset}")
-        target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp jsoncpp)
+        target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx openvx_hip vx_rpp jsoncpp)
     else()
         message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
-        target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
+        target_link_libraries(${PROJECT_NAME} -DRALI_VIDEO -fPIC ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx openvx_hip vx_rpp vx_amd_media jsoncpp)
     endif()
     if("${BACKEND}" STREQUAL "HIP" AND HIP_FOUND)
         target_link_libraries(${PROJECT_NAME} rali_hip ${hip_library_name})

@@ -54,16 +54,16 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 
 def runTestCommand (platform, project) {
 
-    String conformace_cpu = ''
-    String conformace_gpu = ''
+    String conformaceCPU = ''
+    String conformaceGPU = ''
 
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
-        conformace_cpu = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance'
-        conformace_gpu = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.*'
+        conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance'
+        conformaceGPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.*'
     }
     else {
-        conformace_cpu = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
-        conformace_gpu = 'echo OpenVX 1.3 Conformance - GPU - NOT TESTED ON THIS PLATFORM'
+        conformaceCPU = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
+        conformaceGPU = 'echo OpenVX 1.3 Conformance - GPU - NOT TESTED ON THIS PLATFORM'
     }
 
     def command = """#!/usr/bin/env bash
@@ -83,9 +83,9 @@ def runTestCommand (platform, project) {
                 cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;\$OPENVX_DIR/lib/libvxu.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
                 echo MIVisionX OpenVX 1.3 Conformance - CPU
-                ${conformace_cpu}
+                ${conformaceCPU}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
-                ${conformace_gpu}
+                ${conformaceGPU}
                 """
 
     platform.runCommand(this, command)

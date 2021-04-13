@@ -1,6 +1,6 @@
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![doc](https://img.shields.io/badge/doc-readthedocs-blueviolet)](https://gpuopen-professionalcompute-libraries.github.io/MIVisionX/)
-[![Build Status](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.org/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
+[![Build Status](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX.svg?branch=master)](https://travis-ci.com/GPUOpen-ProfessionalCompute-Libraries/MIVisionX)
 
 <p align="center"><img width="70%" src="docs/images/MIVisionX.png" /></p>
 

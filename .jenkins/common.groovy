@@ -53,12 +53,35 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 }
 
 def runTestCommand (platform, project) {
+
+    String conformaceCPU = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
+    String conformaceGPU = 'echo OpenVX 1.3 Conformance - GPU - NOT TESTED ON THIS PLATFORM'
+
+    if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
+        conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance'
+        conformaceGPU = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.*'
+    }
+
     def command = """#!/usr/bin/env bash
                 set -x
                 cd ${project.paths.project_build_prefix}/build/release
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100
                 python ../../tests/neural_network_tests/runNeuralNetworkTests.py
+                export OPENVX_DIR=\$(pwd)/.
+                export OPENVX_INC=\$(pwd)/../../amd_openvx/openvx
+                mkdir conformance_tests
+                cd conformance_tests
+                git clone -b openvx_1.3 https://github.com/KhronosGroup/OpenVX-cts.git
+                export VX_TEST_DATA_PATH=\$(pwd)/OpenVX-cts/test_data/
+                mkdir build-cts
+                cd build-cts
+                cmake -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so\\;\$OPENVX_DIR/lib/libvxu.so\\;pthread\\;dl\\;m\\;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
+                cmake --build .
+                echo MIVisionX OpenVX 1.3 Conformance - CPU
+                ${conformaceCPU}
+                echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
+                ${conformaceGPU}
                 """
 
     platform.runCommand(this, command)

@@ -54,16 +54,12 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 
 def runTestCommand (platform, project) {
 
-    String conformaceCPU = ''
-    String conformaceGPU = ''
+    String conformaceCPU = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
+    String conformaceGPU = 'echo OpenVX 1.3 Conformance - GPU - NOT TESTED ON THIS PLATFORM'
 
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
         conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance'
         conformaceGPU = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.*'
-    }
-    else {
-        conformaceCPU = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
-        conformaceGPU = 'echo OpenVX 1.3 Conformance - GPU - NOT TESTED ON THIS PLATFORM'
     }
 
     def command = """#!/usr/bin/env bash

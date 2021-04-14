@@ -77,6 +77,12 @@ THE SOFTWARE.
 #endif
 #endif
 
+#if ENABLE_HIP
+#define __HIP_PLATFORM_HCC__
+#include "hip/hip_runtime.h"
+#include "hip/hip_runtime_api.h"
+#endif
+
 #if ENABLE_OPENCV
 #include <opencv2/opencv.hpp>
 #include <opencv/cv.h>

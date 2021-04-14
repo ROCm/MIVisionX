@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -27,11 +27,11 @@ THE SOFTWARE.
 static inline vx_uint32 vxComputePatchOffset(vx_uint32 x, vx_uint32 y, const vx_imagepatch_addressing_t *addr)
 {
 #if VX_SCALE_UNITY == (1024u)
-	return ((addr->stride_y * ((addr->scale_y * y) >> 10)) +
-		(addr->stride_x * ((addr->scale_x * x) >> 10)));
+    return ((addr->stride_y * ((addr->scale_y * y) >> 10)) +
+        (addr->stride_x * ((addr->scale_x * x) >> 10)));
 #else
-	return ((addr->stride_y * ((addr->scale_y * y) / VX_SCALE_UNITY)) +
-		(addr->stride_x * ((addr->scale_x * x) / VX_SCALE_UNITY)));
+    return ((addr->stride_y * ((addr->scale_y * y) / VX_SCALE_UNITY)) +
+        (addr->stride_x * ((addr->scale_x * x) / VX_SCALE_UNITY)));
 #endif
 }
 
@@ -46,8 +46,8 @@ static inline vx_uint32 vxComputePatchOffset(vx_uint32 x, vx_uint32 y, const vx_
 */
 VX_API_ENTRY vx_context VX_API_CALL vxCreateContext()
 {
-	vx_context context = agoCreateContextFromPlatform(nullptr);
-	return context;
+    vx_context context = agoCreateContextFromPlatform(nullptr);
+    return context;
 }
 
 /*! \brief Releases the OpenVX object context.
@@ -66,12 +66,12 @@ VX_API_ENTRY vx_context VX_API_CALL vxCreateContext()
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseContext(vx_context *context)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (context && !agoReleaseContext(*context)) {
-		*context = NULL;
-		status = VX_SUCCESS;
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (context && !agoReleaseContext(*context)) {
+        *context = NULL;
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 /**
@@ -90,14 +90,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseContext(vx_context *context)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetContextImageFormatDescription(vx_context context, vx_df_image format, const AgoImageFormatDescription * desc)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context)) {
-		status = VX_ERROR_INVALID_FORMAT;
-		if (desc->planes == 1 && !agoSetImageComponentsAndPlanes(context, format, desc->components, desc->planes, (vx_uint32)desc->pixelSizeInBitsNum, (vx_uint32)(desc->pixelSizeInBitsDenom ? desc->pixelSizeInBitsDenom : 1), desc->colorSpace, desc->channelRange)) {
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context)) {
+        status = VX_ERROR_INVALID_FORMAT;
+        if (desc->planes == 1 && !agoSetImageComponentsAndPlanes(context, format, desc->components, desc->planes, (vx_uint32)desc->pixelSizeInBitsNum, (vx_uint32)(desc->pixelSizeInBitsDenom ? desc->pixelSizeInBitsDenom : 1), desc->colorSpace, desc->channelRange)) {
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /**
@@ -113,17 +113,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextImageFormatDescription(vx_context
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetContextImageFormatDescription(vx_context context, vx_df_image format, AgoImageFormatDescription * desc)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context)) {
-		status = VX_ERROR_INVALID_FORMAT;
-		vx_uint32 pixelSizeInBitsNum, pixelSizeInBitsDenom;
-		if (!agoGetImageComponentsAndPlanes(context, format, &desc->components, &desc->planes, &pixelSizeInBitsNum, &pixelSizeInBitsDenom, &desc->colorSpace, &desc->channelRange)) {
-			desc->pixelSizeInBitsNum = pixelSizeInBitsNum;
-			desc->pixelSizeInBitsDenom = pixelSizeInBitsDenom;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context)) {
+        status = VX_ERROR_INVALID_FORMAT;
+        vx_uint32 pixelSizeInBitsNum, pixelSizeInBitsDenom;
+        if (!agoGetImageComponentsAndPlanes(context, format, &desc->components, &desc->planes, &pixelSizeInBitsNum, &pixelSizeInBitsDenom, &desc->colorSpace, &desc->channelRange)) {
+            desc->pixelSizeInBitsNum = pixelSizeInBitsNum;
+            desc->pixelSizeInBitsDenom = pixelSizeInBitsDenom;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Retrieves the context from any reference from within a context.
@@ -134,11 +134,11 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetContextImageFormatDescription(vx_context
 */
 VX_API_ENTRY vx_context VX_API_CALL vxGetContext(vx_reference reference)
 {
-	vx_context context = NULL;
-	if (agoIsValidReference(reference)) {
-		context = reference->context;
-	}
-	return context;
+    vx_context context = NULL;
+    if (agoIsValidReference(reference)) {
+        context = reference->context;
+    }
+    return context;
 }
 
 /*! \brief Queries the context for some specific information.
@@ -155,145 +155,163 @@ VX_API_ENTRY vx_context VX_API_CALL vxGetContext(vx_reference reference)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryContext(vx_context context, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			CAgoLock lock(context->cs);
-			switch (attribute)
-			{
-			case VX_CONTEXT_ATTRIBUTE_VENDOR_ID:
-				if (size == sizeof(vx_uint16)) {
-					*(vx_uint16 *)ptr = VX_ID_AMD;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_VERSION:
-				if (size == sizeof(vx_uint16)) {
-					*(vx_uint16 *)ptr = (vx_uint16)VX_VERSION;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_MODULES:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = (vx_uint32)context->num_active_modules;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_REFERENCES:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = (vx_uint32)context->num_active_references;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_IMPLEMENTATION:
-				if (size <= VX_MAX_IMPLEMENTATION_NAME) {
-					strncpy((char *)ptr, "AMD OpenVX " AGO_VERSION, VX_MAX_IMPLEMENTATION_NAME);
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_EXTENSIONS_SIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = strlen(context->extensions) + 1;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_EXTENSIONS:
-				if (size >= strlen(context->extensions) + 1) {
-					strcpy((char *)ptr, context->extensions);
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_CONVOLUTION_MAXIMUM_DIMENSION:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = AGO_MAX_CONVOLUTION_DIM;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = AGO_MAX_NONLINEAR_FILTER_DIM;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_OPTICAL_FLOW_WINDOW_MAXIMUM_DIMENSION:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = AGO_OPTICALFLOWPYRLK_MAX_DIM;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
-				if (size == sizeof(vx_border_mode_t)) {
-					*(vx_border_mode_t *)ptr = context->immediate_border_mode;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_POLICY:
-			if (size == sizeof(vx_border_mode_policy_e)) {
-					*(vx_border_mode_policy_e *)ptr = context->immediate_border_policy;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_UNIQUE_KERNELS:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = (vx_uint32)context->kernelList.count;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_UNIQUE_KERNEL_TABLE:
-				if (size == (context->kernelList.count * sizeof(vx_kernel_info_t))) {
-					vx_kernel_info_t * table = (vx_kernel_info_t *)ptr;
-					for (AgoKernel * kernel = context->kernelList.head; kernel; kernel = kernel->next, table++) {
-						table->enumeration = kernel->id;
-						strncpy(table->name, kernel->name, VX_MAX_KERNEL_NAME);
-					}
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY:
-				if (size == sizeof(AgoTargetAffinityInfo_)) {
-					*(AgoTargetAffinityInfo_ *)ptr = context->attr_affinity;
-					status = VX_SUCCESS;
-				}
-				break;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            CAgoLock lock(context->cs);
+            switch (attribute)
+            {
+            case VX_CONTEXT_ATTRIBUTE_VENDOR_ID:
+                if (size == sizeof(vx_uint16)) {
+                    *(vx_uint16 *)ptr = VX_ID_AMD;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_VERSION:
+                if (size == sizeof(vx_uint16)) {
+                    *(vx_uint16 *)ptr = (vx_uint16)VX_VERSION;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_MODULES:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)context->num_active_modules;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_REFERENCES:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)context->num_active_references;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_IMPLEMENTATION:
+                if (size <= VX_MAX_IMPLEMENTATION_NAME) {
+                    strncpy((char *)ptr, "AMD OpenVX " AGO_VERSION, VX_MAX_IMPLEMENTATION_NAME);
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_EXTENSIONS_SIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = strlen(context->extensions) + 1;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_EXTENSIONS:
+                if (size >= strlen(context->extensions) + 1) {
+                    strcpy((char *)ptr, context->extensions);
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_CONVOLUTION_MAXIMUM_DIMENSION:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = AGO_MAX_CONVOLUTION_DIM;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_NONLINEAR_MAX_DIMENSION:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = AGO_MAX_NONLINEAR_FILTER_DIM;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_OPTICAL_FLOW_WINDOW_MAXIMUM_DIMENSION:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = AGO_OPTICALFLOWPYRLK_MAX_DIM;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
+                if (size == sizeof(vx_border_mode_t)) {
+                    *(vx_border_mode_t *)ptr = context->immediate_border_mode;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_POLICY:
+            if (size == sizeof(vx_border_mode_policy_e)) {
+                    *(vx_border_mode_policy_e *)ptr = context->immediate_border_policy;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_UNIQUE_KERNELS:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)context->kernelList.count;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_UNIQUE_KERNEL_TABLE:
+                if (size == (context->kernelList.count * sizeof(vx_kernel_info_t))) {
+                    vx_kernel_info_t * table = (vx_kernel_info_t *)ptr;
+                    for (AgoKernel * kernel = context->kernelList.head; kernel; kernel = kernel->next, table++) {
+                        table->enumeration = kernel->id;
+                        strncpy(table->name, kernel->name, VX_MAX_KERNEL_NAME);
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY:
+                if (size == sizeof(AgoTargetAffinityInfo_)) {
+                    *(AgoTargetAffinityInfo_ *)ptr = context->attr_affinity;
+                    status = VX_SUCCESS;
+                }
+                break;
 #if ENABLE_OPENCL
-			case VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT:
-				if (size == sizeof(cl_context)) {
-					if (!context->opencl_context && agoGpuOclCreateContext(context, nullptr) != VX_SUCCESS) {
-						status = VX_FAILURE;
-					}
-					else {
-						*(cl_context *)ptr = context->opencl_context;
-						status = VX_SUCCESS;
-					}
-				}
-				else if (size == 0) {
-					// special case to just request internal context without creating one
-					// when not available
-					*(cl_context *)ptr = context->opencl_context;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONTEXT_CL_QUEUE_PROPERTIES:
-				if (size == sizeof(cl_command_queue_properties)) {
-					*(cl_command_queue_properties *)ptr = context->opencl_cmdq_properties;
-					status = VX_SUCCESS;
-				}
-				break;
+            case VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT:
+                if (size == sizeof(cl_context)) {
+                    if (!context->opencl_context && agoGpuOclCreateContext(context, nullptr) != VX_SUCCESS) {
+                        status = VX_FAILURE;
+                    }
+                    else {
+                        *(cl_context *)ptr = context->opencl_context;
+                        status = VX_SUCCESS;
+                    }
+                }
+                else if (size == 0) {
+                    // special case to just request internal context without creating one
+                    // when not available
+                    *(cl_context *)ptr = context->opencl_context;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONTEXT_CL_QUEUE_PROPERTIES:
+                if (size == sizeof(cl_command_queue_properties)) {
+                    *(cl_command_queue_properties *)ptr = context->opencl_cmdq_properties;
+                    status = VX_SUCCESS;
+                }
+                break;
+#elif ENABLE_HIP
+            case VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE:
+                if (size == sizeof(int)) {
+                    if (context->hip_device_id < 0 && agoGpuHipCreateContext(context, -1) != VX_SUCCESS) {
+                        status = VX_FAILURE;
+                    }
+                    else {
+                        *(int *)ptr = context->hip_device_id;
+                        status = VX_SUCCESS;
+                    }
+                }
+                else if (size == 0) {
+                    // special case to just request internal context without creating one
+                    // when not available
+                    *(int *)ptr = context->hip_device_id;
+                    status = VX_SUCCESS;
+                }
+                break;
 #endif
-			case VX_CONTEXT_MAX_TENSOR_DIMS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = AGO_MAX_TENSOR_DIMENSIONS;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+            case VX_CONTEXT_MAX_TENSOR_DIMS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = AGO_MAX_TENSOR_DIMENSIONS;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets an attribute on the context.
@@ -310,92 +328,92 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryContext(vx_context context, vx_enum at
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_enum attribute, const void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		CAgoLock lock(context->cs);
-		switch (attribute)
-		{
-		case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
-			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
-			if (size == sizeof(vx_border_mode_t)) {
-				vx_border_mode_t immediate_border_mode = *(vx_border_mode_t *)ptr;
-				if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_CONSTANT || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE) {
-					context->immediate_border_mode = immediate_border_mode;
-					if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE)
-						memset(&context->immediate_border_mode.constant_value, 0, sizeof(context->immediate_border_mode.constant_value));
-					status = VX_SUCCESS;
-				}
-				else
-					status = VX_ERROR_INVALID_VALUE;
-			}
-			break;
-		case VX_CONTEXT_ATTRIBUTE_AMD_SET_TEXT_MACRO:
-			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
-			if (size == sizeof(AgoContextTextMacroInfo)) {
-				status = VX_SUCCESS;
-				AgoContextTextMacroInfo * info = (AgoContextTextMacroInfo *)ptr;
-				for (auto it = context->macros.begin(); it != context->macros.end(); ++it) {
-					if (!strcmp(it->name, info->macroName)) {
-						status = VX_FAILURE;
-						agoAddLogEntry(&context->ref, status, "ERROR: vxSetContextAttribute: macro already exists: %s\n", info->macroName);
-						break;
-					}
-				}
-				if (status == VX_SUCCESS) {
-					MacroData macro;
-					macro.text = macro.text_allocated = (char *)calloc(1, strlen(info->text) + 1);
-					if (!macro.text) {
-						status = VX_ERROR_NO_MEMORY;
-					}
-					else {
-						strncpy(macro.name, info->macroName, sizeof(macro.name) - 1);
-						strcpy(macro.text, info->text);
-						context->macros.push_back(macro);
-					}
-				}
-			}
-			break;
-		case VX_CONTEXT_ATTRIBUTE_AMD_SET_MERGE_RULE:
-			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
-			if (size == sizeof(AgoNodeMergeRule)) {
-				status = VX_SUCCESS;
-				context->merge_rules.push_back(*(AgoNodeMergeRule *)ptr);
-			}
-			break;
-		case VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY:
-			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
-			if (size == sizeof(AgoTargetAffinityInfo_)) {
-				status = VX_SUCCESS;
-				context->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
-			}
-			break;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        CAgoLock lock(context->cs);
+        switch (attribute)
+        {
+        case VX_CONTEXT_ATTRIBUTE_IMMEDIATE_BORDER_MODE:
+            if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+            if (size == sizeof(vx_border_mode_t)) {
+                vx_border_mode_t immediate_border_mode = *(vx_border_mode_t *)ptr;
+                if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_CONSTANT || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE) {
+                    context->immediate_border_mode = immediate_border_mode;
+                    if (immediate_border_mode.mode == VX_BORDER_MODE_UNDEFINED || immediate_border_mode.mode == VX_BORDER_MODE_REPLICATE)
+                        memset(&context->immediate_border_mode.constant_value, 0, sizeof(context->immediate_border_mode.constant_value));
+                    status = VX_SUCCESS;
+                }
+                else
+                    status = VX_ERROR_INVALID_VALUE;
+            }
+            break;
+        case VX_CONTEXT_ATTRIBUTE_AMD_SET_TEXT_MACRO:
+            if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+            if (size == sizeof(AgoContextTextMacroInfo)) {
+                status = VX_SUCCESS;
+                AgoContextTextMacroInfo * info = (AgoContextTextMacroInfo *)ptr;
+                for (auto it = context->macros.begin(); it != context->macros.end(); ++it) {
+                    if (!strcmp(it->name, info->macroName)) {
+                        status = VX_FAILURE;
+                        agoAddLogEntry(&context->ref, status, "ERROR: vxSetContextAttribute: macro already exists: %s\n", info->macroName);
+                        break;
+                    }
+                }
+                if (status == VX_SUCCESS) {
+                    MacroData macro;
+                    macro.text = macro.text_allocated = (char *)calloc(1, strlen(info->text) + 1);
+                    if (!macro.text) {
+                        status = VX_ERROR_NO_MEMORY;
+                    }
+                    else {
+                        strncpy(macro.name, info->macroName, sizeof(macro.name) - 1);
+                        strcpy(macro.text, info->text);
+                        context->macros.push_back(macro);
+                    }
+                }
+            }
+            break;
+        case VX_CONTEXT_ATTRIBUTE_AMD_SET_MERGE_RULE:
+            if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+            if (size == sizeof(AgoNodeMergeRule)) {
+                status = VX_SUCCESS;
+                context->merge_rules.push_back(*(AgoNodeMergeRule *)ptr);
+            }
+            break;
+        case VX_CONTEXT_ATTRIBUTE_AMD_AFFINITY:
+            if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+            if (size == sizeof(AgoTargetAffinityInfo_)) {
+                status = VX_SUCCESS;
+                context->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
+            }
+            break;
 #if ENABLE_OPENCL
-		case VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT:
-			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
-			if (size == sizeof(cl_context)) {
-				if (!context->opencl_context) {
-					status = agoGpuOclCreateContext(context, *(cl_context *)ptr);
-				}
-				else {
-					status = VX_FAILURE;
-				}
-			}
-			break;
-		case VX_CONTEXT_CL_QUEUE_PROPERTIES:
-			if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
-			if (size == sizeof(cl_command_queue_properties)) {
-				context->opencl_cmdq_properties = *(cl_command_queue_properties *)ptr;
-				status = VX_SUCCESS;
-			}
-			break;
+        case VX_CONTEXT_ATTRIBUTE_AMD_OPENCL_CONTEXT:
+            if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+            if (size == sizeof(cl_context)) {
+                if (!context->opencl_context) {
+                    status = agoGpuOclCreateContext(context, *(cl_context *)ptr);
+                }
+                else {
+                    status = VX_FAILURE;
+                }
+            }
+            break;
+        case VX_CONTEXT_CL_QUEUE_PROPERTIES:
+            if(!ptr) return VX_ERROR_INVALID_PARAMETERS;
+            if (size == sizeof(cl_command_queue_properties)) {
+                context->opencl_cmdq_properties = *(cl_command_queue_properties *)ptr;
+                status = VX_SUCCESS;
+            }
+            break;
 #endif
-		default:
-			status = VX_ERROR_NOT_SUPPORTED;
-			break;
-		}
-	}
-	return status;
+        default:
+            status = VX_ERROR_NOT_SUPPORTED;
+            break;
+        }
+    }
+    return status;
 }
 
 /*! \brief Provides a generic API to give platform-specific hints to the implementation.
@@ -412,24 +430,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetContextAttribute(vx_context context, vx_
 */
 VX_API_ENTRY vx_status VX_API_CALL vxHint(vx_reference reference, vx_enum hint, const void* data, vx_size data_size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(reference)) {
-		vx_context context = reference->context;
-		if (agoIsValidContext(context)) {
-			CAgoLock lock(context->cs);
-			status = VX_SUCCESS;
-			switch (hint)
-			{
-			case VX_HINT_SERIALIZE:
-				reference->hint_serialize = true;
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidReference(reference)) {
+        vx_context context = reference->context;
+        if (agoIsValidContext(context)) {
+            CAgoLock lock(context->cs);
+            status = VX_SUCCESS;
+            switch (hint)
+            {
+            case VX_HINT_SERIALIZE:
+                reference->hint_serialize = true;
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Provides a generic API to give platform-specific directives to the implementations.
@@ -445,7 +463,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxHint(vx_reference reference, vx_enum hint, 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxDirective(vx_reference reference, vx_enum directive)
 {
-	return agoDirective(reference, directive);
+    return agoDirective(reference, directive);
 }
 
 /*! \brief Provides a generic API to return status values from Object constructors if they
@@ -468,13 +486,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxDirective(vx_reference reference, vx_enum d
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetStatus(vx_reference reference)
 {
-	if(reference == NULL)
-		return VX_ERROR_NO_RESOURCES;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(reference)) {
-		status = reference->status;
-	}
-	return status;
+    if(reference == NULL)
+        return VX_ERROR_NO_RESOURCES;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidReference(reference)) {
+        status = reference->status;
+    }
+    return status;
 }
 
 /*!
@@ -493,12 +511,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetStatus(vx_reference reference)
 */
 VX_API_ENTRY vx_enum VX_API_CALL vxRegisterUserStruct(vx_context context, vx_size size)
 {
-	vx_enum type = VX_TYPE_INVALID;
-	if (agoIsValidContext(context) && (size > 0)) {
-		CAgoLock lock(context->cs);
-		type = agoAddUserStruct(context, size, NULL);
-	}
-	return type;
+    vx_enum type = VX_TYPE_INVALID;
+    if (agoIsValidContext(context) && (size > 0)) {
+        CAgoLock lock(context->cs);
+        type = agoAddUserStruct(context, size, NULL);
+    }
+    return type;
 }
 
 /*!
@@ -520,13 +538,13 @@ VX_API_ENTRY vx_enum VX_API_CALL vxRegisterUserStruct(vx_context context, vx_siz
  */
 VX_API_ENTRY vx_enum VX_API_CALL vxRegisterUserStructWithName(vx_context context, vx_size size,  const vx_char* type_name)
 {
-	vx_enum type = VX_TYPE_INVALID;
-	if (agoIsValidContext(context) && (size > 0)) {
-		CAgoLock lock(context->cs);
-		if((sizeof(char)*strlen(type_name)) < VX_MAX_REFERENCE_NAME || type_name == NULL) 
-			type = agoAddUserStruct(context, size, (vx_char*)type_name);
-	}
-	return type;
+    vx_enum type = VX_TYPE_INVALID;
+    if (agoIsValidContext(context) && (size > 0)) {
+        CAgoLock lock(context->cs);
+        if((sizeof(char)*strlen(type_name)) < VX_MAX_REFERENCE_NAME || type_name == NULL)
+            type = agoAddUserStruct(context, size, (vx_char*)type_name);
+    }
+    return type;
 }
 
 /*!
@@ -545,19 +563,19 @@ VX_API_ENTRY vx_enum VX_API_CALL vxRegisterUserStructWithName(vx_context context
  */
 VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructNameByEnum(vx_context context, vx_enum user_struct_type, vx_char* type_name, vx_size name_size)
 {
-	vx_status status = VX_ERROR_INVALID_PARAMETERS;
-	if (agoIsValidContext(context) && (user_struct_type!= VX_TYPE_INVALID)) {
-		status = VX_FAILURE;
-		const char* temp_type_name = (agoGetUserStructName(context, user_struct_type));
-		if(temp_type_name != NULL) {
-			status = VX_ERROR_NO_MEMORY;
-			if((strlen(temp_type_name) + 1) <= name_size) {
-				memcpy(type_name, temp_type_name, strlen(temp_type_name) + 1);
-				status = VX_SUCCESS;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_PARAMETERS;
+    if (agoIsValidContext(context) && (user_struct_type!= VX_TYPE_INVALID)) {
+        status = VX_FAILURE;
+        const char* temp_type_name = (agoGetUserStructName(context, user_struct_type));
+        if(temp_type_name != NULL) {
+            status = VX_ERROR_NO_MEMORY;
+            if((strlen(temp_type_name) + 1) <= name_size) {
+                memcpy(type_name, temp_type_name, strlen(temp_type_name) + 1);
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 /*!
@@ -574,16 +592,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructNameByEnum(vx_context context,
  */
 VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructEnumByName(vx_context context, const vx_char* type_name, vx_enum *user_struct_type)
 {
-	vx_status status = VX_FAILURE;
-	if (agoIsValidContext(context) && type_name) {
-		if((strlen(type_name)) < VX_MAX_REFERENCE_NAME) {
-			*user_struct_type = agoGetUserStructType(context, (vx_char*)type_name);
-			if(*user_struct_type != 0){
-				status = VX_SUCCESS;	
-			}
-		}
-	}
-	return status; 
+    vx_status status = VX_FAILURE;
+    if (agoIsValidContext(context) && type_name) {
+        if((strlen(type_name)) < VX_MAX_REFERENCE_NAME) {
+            *user_struct_type = agoGetUserStructType(context, (vx_char*)type_name);
+            if(*user_struct_type != 0){
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 /*!
@@ -598,17 +616,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetUserStructEnumByName(vx_context context,
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAllocateUserKernelId(vx_context context, vx_enum * pKernelEnumId)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context) && pKernelEnumId)
-	{
-		status = VX_ERROR_NO_RESOURCES;
-		if (context->nextUserKernelId <= VX_KERNEL_MASK)
-		{
-			*pKernelEnumId = VX_KERNEL_BASE(VX_ID_USER, 0) + context->nextUserKernelId++;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context) && pKernelEnumId)
+    {
+        status = VX_ERROR_NO_RESOURCES;
+        if (context->nextUserKernelId <= VX_KERNEL_MASK)
+        {
+            *pKernelEnumId = VX_KERNEL_BASE(VX_ID_USER, 0) + context->nextUserKernelId++;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*!
@@ -631,17 +649,17 @@ VX_API_ENTRY vx_status VX_API_CALL vxAllocateUserKernelId(vx_context context, vx
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAllocateUserKernelLibraryId(vx_context context, vx_enum * pLibraryId)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context) && pLibraryId)
-	{
-		status = VX_ERROR_NO_RESOURCES;
-		if (context->nextUserLibraryId <= VX_LIBRARY(VX_LIBRARY_MASK))
-		{
-			*pLibraryId = context->nextUserLibraryId++;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context) && pLibraryId)
+    {
+        status = VX_ERROR_NO_RESOURCES;
+        if (context->nextUserLibraryId <= VX_LIBRARY(VX_LIBRARY_MASK))
+        {
+            *pLibraryId = context->nextUserLibraryId++;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets the default target of the immediate mode. Upon successful execution of this
@@ -660,24 +678,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxAllocateUserKernelLibraryId(vx_context cont
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetImmediateModeTarget(vx_context context, vx_enum target_enum, const char* target_string)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context))
-	{
-		status = VX_ERROR_NOT_SUPPORTED;
-		if (target_enum == VX_TARGET_ANY) {
-			status = VX_SUCCESS;
-		}
-		else if (target_enum == VX_TARGET_STRING) {
-			if (!target_string) {
-				status = VX_ERROR_INVALID_REFERENCE;
-			}
-			else if (!_stricmp(target_string, "any") || !_stricmp(target_string, "cpu")) {
-				// only cpu mode is supported as immediate mode target
-				status = VX_SUCCESS;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context))
+    {
+        status = VX_ERROR_NOT_SUPPORTED;
+        if (target_enum == VX_TARGET_ANY) {
+            status = VX_SUCCESS;
+        }
+        else if (target_enum == VX_TARGET_STRING) {
+            if (!target_string) {
+                status = VX_ERROR_INVALID_REFERENCE;
+            }
+            else if (!_stricmp(target_string, "any") || !_stricmp(target_string, "cpu")) {
+                // only cpu mode is supported as immediate mode target
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -696,23 +714,23 @@ IMAGE
 */
 VX_API_ENTRY vx_image VX_API_CALL vxCreateImage(vx_context context, vx_uint32 width, vx_uint32 height, vx_df_image color)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context)) {
-		CAgoLock lock(context->cs);
-		char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), width, height);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "image", data->name);
-			agoAddData(&context->dataList, data);
-			// if data has children, add them too
-			if (data->children) {
-				for (vx_uint32 i = 0; i < data->numChildren; i++) {
-					agoAddData(&context->dataList, data->children[i]);
-				}
-			}
-		}
-	}
-	return (vx_image)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context)) {
+        CAgoLock lock(context->cs);
+        char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), width, height);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "image", data->name);
+            agoAddData(&context->dataList, data);
+            // if data has children, add them too
+            if (data->children) {
+                for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                    agoAddData(&context->dataList, data->children[i]);
+                }
+            }
+        }
+    }
+    return (vx_image)data;
 }
 
 /*! \brief Creates an image from another image given a rectangle. This second
@@ -727,25 +745,25 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImage(vx_context context, vx_uint32 wi
 */
 VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromROI(vx_image img, const vx_rectangle_t *rect)
 {
-	AgoData * master_img = (AgoData *)img;
-	AgoData * data = NULL;
-	if (agoIsValidData(master_img, VX_TYPE_IMAGE)) {
-		vx_context context = master_img->ref.context;
-		CAgoLock lock(context->cs);
-		char desc[128]; sprintf(desc, "image-roi:%s,%d,%d,%d,%d", master_img->name.c_str(), rect->start_x, rect->start_y, rect->end_x, rect->end_y);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "image-roi", data->name);
-			agoAddData(&context->dataList, data);
-			// if data has children, add them too
-			if (data->children) {
-				for (vx_uint32 i = 0; i < data->numChildren; i++) {
-					agoAddData(&context->dataList, data->children[i]);
-				}
-			}
-		}
-	}
-	return (vx_image)data;
+    AgoData * master_img = (AgoData *)img;
+    AgoData * data = NULL;
+    if (agoIsValidData(master_img, VX_TYPE_IMAGE)) {
+        vx_context context = master_img->ref.context;
+        CAgoLock lock(context->cs);
+        char desc[128]; sprintf(desc, "image-roi:%s,%d,%d,%d,%d", master_img->name.c_str(), rect->start_x, rect->start_y, rect->end_x, rect->end_y);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "image-roi", data->name);
+            agoAddData(&context->dataList, data);
+            // if data has children, add them too
+            if (data->children) {
+                for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                    agoAddData(&context->dataList, data->children[i]);
+                }
+            }
+        }
+    }
+    return (vx_image)data;
 }
 
 /*! \brief Creates a reference to an image object that has a singular,
@@ -776,38 +794,38 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromROI(vx_image img, const vx_re
 */
 VX_API_ENTRY vx_image VX_API_CALL vxCreateUniformImage(vx_context context, vx_uint32 width, vx_uint32 height, vx_df_image color, const vx_pixel_value_t *value)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context)) {
-		CAgoLock lock(context->cs);
-		char desc[128];
-		if (color == VX_DF_IMAGE_S16) {
-			sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S16);
-		}
-		else if (color == VX_DF_IMAGE_U16) {
-			sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U16);
-		}
-		else if (color == VX_DF_IMAGE_S32) {
-			sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S32);
-		}
-		else if (color == VX_DF_IMAGE_U32) {
-			sprintf(desc, "image-uniform:%4.4s,%d,%d,%u", FORMAT_STR(color), width, height, value->U32);
-		}
-		else {
-			sprintf(desc, "image-uniform:%4.4s,%d,%d,%d,%d,%d,%d", FORMAT_STR(color), width, height, value->reserved[0], value->reserved[1], value->reserved[2], value->reserved[3]);
-		}
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "image-uniform", data->name);
-			agoAddData(&context->dataList, data);
-			// if data has children, add them too
-			if (data->children) {
-				for (vx_uint32 i = 0; i < data->numChildren; i++) {
-					agoAddData(&context->dataList, data->children[i]);
-				}
-			}
-		}
-	}
-	return (vx_image)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context)) {
+        CAgoLock lock(context->cs);
+        char desc[128];
+        if (color == VX_DF_IMAGE_S16) {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S16);
+        }
+        else if (color == VX_DF_IMAGE_U16) {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->U16);
+        }
+        else if (color == VX_DF_IMAGE_S32) {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d", FORMAT_STR(color), width, height, value->S32);
+        }
+        else if (color == VX_DF_IMAGE_U32) {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%u", FORMAT_STR(color), width, height, value->U32);
+        }
+        else {
+            sprintf(desc, "image-uniform:%4.4s,%d,%d,%d,%d,%d,%d", FORMAT_STR(color), width, height, value->reserved[0], value->reserved[1], value->reserved[2], value->reserved[3]);
+        }
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "image-uniform", data->name);
+            agoAddData(&context->dataList, data);
+            // if data has children, add them too
+            if (data->children) {
+                for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                    agoAddData(&context->dataList, data->children[i]);
+                }
+            }
+        }
+    }
+    return (vx_image)data;
 }
 
 /*! \brief Creates an opaque reference to an image buffer with no direct
@@ -840,24 +858,24 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateUniformImage(vx_context context, vx_ui
 */
 VX_API_ENTRY vx_image VX_API_CALL vxCreateVirtualImage(vx_graph graph, vx_uint32 width, vx_uint32 height, vx_df_image color)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph)) {
-		vx_context context = graph->ref.context;
-		CAgoLock lock(graph->cs);
-		char desc[128]; sprintf(desc, "image-virtual:%4.4s,%d,%d", FORMAT_STR(color), width, height);
-		data = agoCreateDataFromDescription(context, graph, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "image", data->name);
-			agoAddData(&graph->dataList, data);
-			// if data has children, add them too
-			if (data->children) {
-				for (vx_uint32 i = 0; i < data->numChildren; i++) {
-					agoAddData(&graph->dataList, data->children[i]);
-				}
-			}
-		}
-	}
-	return (vx_image)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        vx_context context = graph->ref.context;
+        CAgoLock lock(graph->cs);
+        char desc[128]; sprintf(desc, "image-virtual:%4.4s,%d,%d", FORMAT_STR(color), width, height);
+        data = agoCreateDataFromDescription(context, graph, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "image", data->name);
+            agoAddData(&graph->dataList, data);
+            // if data has children, add them too
+            if (data->children) {
+                for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                    agoAddData(&graph->dataList, data->children[i]);
+                }
+            }
+        }
+    }
+    return (vx_image)data;
 }
 
 /*! \brief Creates a reference to an image object that was externally allocated.
@@ -892,75 +910,107 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateVirtualImage(vx_graph graph, vx_uint32
 */
 VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx_df_image color, const vx_imagepatch_addressing_t addrs[], void *const ptrs[], vx_enum memory_type)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context)) {
-		if (memory_type == VX_MEMORY_TYPE_HOST) {
-			char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if (data) {
-				agoGenerateDataName(context, "image-host", data->name);
-				agoAddData(&context->dataList, data);
-				// if data has children, add them too
-				if (data->children) {
-					for (vx_uint32 i = 0; i < data->numChildren; i++) {
-						agoAddData(&context->dataList, data->children[i]);
-					}
-				}
-				// set host allocated pointers
-				if (data->children) {
-					data->import_type = VX_MEMORY_TYPE_HOST;
-					for (vx_uint32 i = 0; i < data->numChildren; i++) {
-						data->children[i]->import_type = VX_MEMORY_TYPE_HOST;
-						data->children[i]->buffer = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
-						data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
-						data->children[i]->opencl_buffer_offset = 0;
-					}
-				}
-				else {
-					data->import_type = VX_MEMORY_TYPE_HOST;
-					data->buffer = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
-					data->u.img.stride_in_bytes = addrs[0].stride_y;
-					data->opencl_buffer_offset = 0;
-				}
-				data->u.img.mem_handle = vx_false_e;
-			}
-		}
+    AgoData * data = NULL;
+    if (agoIsValidContext(context)) {
+        if (memory_type == VX_MEMORY_TYPE_HOST) {
+            char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "image-host", data->name);
+                agoAddData(&context->dataList, data);
+                // if data has children, add them too
+                if (data->children) {
+                    for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                        agoAddData(&context->dataList, data->children[i]);
+                    }
+                }
+                // set host allocated pointers
+                if (data->children) {
+                    data->import_type = VX_MEMORY_TYPE_HOST;
+                    for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                        data->children[i]->import_type = VX_MEMORY_TYPE_HOST;
+                        data->children[i]->buffer = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
+                        data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
+                        data->children[i]->opencl_buffer_offset = 0;
+                    }
+                }
+                else {
+                    data->import_type = VX_MEMORY_TYPE_HOST;
+                    data->buffer = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
+                    data->u.img.stride_in_bytes = addrs[0].stride_y;
+                    data->opencl_buffer_offset = 0;
+                }
+                data->u.img.mem_handle = vx_false_e;
+            }
+        }
 #if ENABLE_OPENCL
-		else if (memory_type == VX_MEMORY_TYPE_OPENCL) {
-			char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if (data) {
-				agoGenerateDataName(context, "image-opencl", data->name);
-				agoAddData(&context->dataList, data);
-				// if data has children, add them too
-				if (data->children) {
-					for (vx_uint32 i = 0; i < data->numChildren; i++) {
-						agoAddData(&context->dataList, data->children[i]);
-					}
-				}
-				// set host allocated pointers
-				if (data->children) {
-					data->import_type = VX_MEMORY_TYPE_OPENCL;
-					for (vx_uint32 i = 0; i < data->numChildren; i++) {
-						data->children[i]->import_type = VX_MEMORY_TYPE_OPENCL;
-						data->children[i]->opencl_buffer = (cl_mem)(ptrs ? ptrs[i] : nullptr);
-						data->children[i]->opencl_buffer_offset = 0;
-						data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
-						data->children[i]->opencl_buffer_offset = 0;
-					}
-				}
-				else {
-					data->import_type = VX_MEMORY_TYPE_OPENCL;
-					data->opencl_buffer = (cl_mem)(ptrs ? ptrs[0] : nullptr);
-					data->u.img.stride_in_bytes = addrs[0].stride_y;
-					data->opencl_buffer_offset = 0;
-				}
-				data->u.img.mem_handle = vx_false_e;
-			}
-		}
+        else if (memory_type == VX_MEMORY_TYPE_OPENCL) {
+            char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "image-opencl", data->name);
+                agoAddData(&context->dataList, data);
+                // if data has children, add them too
+                if (data->children) {
+                    for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                        agoAddData(&context->dataList, data->children[i]);
+                    }
+                }
+                // set host allocated pointers
+                if (data->children) {
+                    data->import_type = VX_MEMORY_TYPE_OPENCL;
+                    for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                        data->children[i]->import_type = VX_MEMORY_TYPE_OPENCL;
+                        data->children[i]->opencl_buffer = (cl_mem)(ptrs ? ptrs[i] : nullptr);
+                        data->children[i]->opencl_buffer_offset = 0;
+                        data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
+                        data->children[i]->opencl_buffer_offset = 0;
+                    }
+                }
+                else {
+                    data->import_type = VX_MEMORY_TYPE_OPENCL;
+                    data->opencl_buffer = (cl_mem)(ptrs ? ptrs[0] : nullptr);
+                    data->u.img.stride_in_bytes = addrs[0].stride_y;
+                    data->opencl_buffer_offset = 0;
+                }
+                data->u.img.mem_handle = vx_false_e;
+            }
+        }
+#elif ENABLE_HIP
+        else if (memory_type == VX_MEMORY_TYPE_HIP) {
+            char desc[128]; sprintf(desc, "image:%4.4s,%d,%d", FORMAT_STR(color), addrs[0].dim_x, addrs[0].dim_y);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "image-hip", data->name);
+                agoAddData(&context->dataList, data);
+                // if data has children, add them too
+                if (data->children) {
+                    for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                        agoAddData(&context->dataList, data->children[i]);
+                    }
+                }
+                // set host allocated pointers
+                if (data->children) {
+                    data->import_type = VX_MEMORY_TYPE_HIP;
+                    for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                        data->children[i]->import_type = VX_MEMORY_TYPE_HIP;
+                        data->children[i]->hip_memory = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
+                        data->children[i]->opencl_buffer_offset = 0;
+                        data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
+                        data->children[i]->opencl_buffer_offset = 0;
+                    }
+                }
+                else {
+                    data->import_type = VX_MEMORY_TYPE_HIP;
+                    data->hip_memory = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
+                    data->u.img.stride_in_bytes = addrs[0].stride_y;
+                    data->opencl_buffer_offset = 0;
+                }
+            }
+        }
 #endif
-	}
-	return (vx_image)data;
+    }
+    return (vx_image)data;
 }
 
 /*! \brief Swaps the image handle of an image previously created from handle.
@@ -1011,94 +1061,124 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSwapImageHandle(vx_image image_, void* const new_ptrs[], void* prev_ptrs[], vx_size num_planes)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
-		CAgoLock lock(image->ref.context->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if(image->u.img.roiMasterImage) {
-			return status;
-		}		
-		if (image->import_type == VX_MEMORY_TYPE_HOST && num_planes == image->u.img.planes) {
-			status = VX_SUCCESS;
-			if (image->children) {
-				for (vx_uint32 i = 0; i < image->numChildren; i++) {
-					if (prev_ptrs) prev_ptrs[i] = image->children[i]->buffer;
-					image->children[i]->buffer = (vx_uint8 *)(new_ptrs ? new_ptrs[i] : nullptr);
-					if (image->children[i]->buffer) {
-						image->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-						image->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-					}
-					// propagate to ROIs
-					for (auto roi = image->children[i]->roiDepList.begin(); roi != image->children[i]->roiDepList.end(); roi++) {
-						if(image->buffer) {
-							(*roi)->buffer = image->children[i]->buffer +
-								(*roi)->children[i]->u.img.rect_roi.start_y * (*roi)->children[i]->u.img.stride_in_bytes +
-								ImageWidthInBytesFloor((*roi)->children[i]->u.img.rect_roi.start_x, (*roi)->children[i]);
-						}
-						else {
-							(*roi)->buffer = nullptr;
-						}
-					}
-					image->children[i]->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
-				}
-			}
-			else {
-				if (prev_ptrs) prev_ptrs[0] = image->buffer;
-				image->buffer = (vx_uint8 *)(new_ptrs ? new_ptrs[0] : nullptr);
-				if (image->buffer) {
-					image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-				// propagate to ROIs
-				for (auto roi = image->roiDepList.begin(); roi != image->roiDepList.end(); roi++) {
-					if(image->buffer) {
-						(*roi)->buffer = image->buffer +
-							(*roi)->u.img.rect_roi.start_y * image->u.img.stride_in_bytes +
-							ImageWidthInBytesFloor((*roi)->u.img.rect_roi.start_x, image);
-					}
-					else {
-						(*roi)->buffer = nullptr;
-					}
-				}
-				image->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
-			}
-		}
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE)) {
+        CAgoLock lock(image->ref.context->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if(image->u.img.roiMasterImage) {
+            return status;
+        }
+        if (image->import_type == VX_MEMORY_TYPE_HOST && num_planes == image->u.img.planes) {
+            status = VX_SUCCESS;
+            if (image->children) {
+                for (vx_uint32 i = 0; i < image->numChildren; i++) {
+                    if (prev_ptrs) prev_ptrs[i] = image->children[i]->buffer;
+                    image->children[i]->buffer = (vx_uint8 *)(new_ptrs ? new_ptrs[i] : nullptr);
+                    if (image->children[i]->buffer) {
+                        image->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        image->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                    }
+                    // propagate to ROIs
+                    for (auto roi = image->children[i]->roiDepList.begin(); roi != image->children[i]->roiDepList.end(); roi++) {
+                        if(image->buffer) {
+                            (*roi)->buffer = image->children[i]->buffer +
+                                (*roi)->children[i]->u.img.rect_roi.start_y * (*roi)->children[i]->u.img.stride_in_bytes +
+                                ImageWidthInBytesFloor((*roi)->children[i]->u.img.rect_roi.start_x, (*roi)->children[i]);
+                        }
+                        else {
+                            (*roi)->buffer = nullptr;
+                        }
+                    }
+                    image->children[i]->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
+                }
+            }
+            else {
+                if (prev_ptrs) prev_ptrs[0] = image->buffer;
+                image->buffer = (vx_uint8 *)(new_ptrs ? new_ptrs[0] : nullptr);
+                if (image->buffer) {
+                    image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+                // propagate to ROIs
+                for (auto roi = image->roiDepList.begin(); roi != image->roiDepList.end(); roi++) {
+                    if(image->buffer) {
+                        (*roi)->buffer = image->buffer +
+                            (*roi)->u.img.rect_roi.start_y * image->u.img.stride_in_bytes +
+                            ImageWidthInBytesFloor((*roi)->u.img.rect_roi.start_x, image);
+                    }
+                    else {
+                        (*roi)->buffer = nullptr;
+                    }
+                }
+                image->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
+            }
+        }
 #if ENABLE_OPENCL
-		else if (image->import_type == VX_MEMORY_TYPE_OPENCL && num_planes == image->u.img.planes) {
-			status = VX_SUCCESS;
-			if (image->children) {
-				for (vx_uint32 i = 0; i < image->numChildren; i++) {
-					if (prev_ptrs) prev_ptrs[i] = image->children[i]->opencl_buffer;
-					image->children[i]->opencl_buffer = (cl_mem)(new_ptrs ? new_ptrs[i] : nullptr);
-					if (image->children[i]->opencl_buffer) {
-						image->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-						image->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
-					}
-					// propagate to ROIs
-					for (auto roi = image->children[i]->roiDepList.begin(); roi != image->children[i]->roiDepList.end(); roi++) {
-						(*roi)->opencl_buffer = image->children[i]->opencl_buffer;
-					}
-					image->children[i]->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
-				}
-			}
-			else {
-				if (prev_ptrs) prev_ptrs[0] = image->opencl_buffer;
-				image->opencl_buffer = (cl_mem)(new_ptrs ? new_ptrs[0] : nullptr);
-				if (image->opencl_buffer) {
-					image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
-				}
-				// propagate to ROIs
-				for (auto roi = image->roiDepList.begin(); roi != image->roiDepList.end(); roi++) {
-					(*roi)->opencl_buffer = image->opencl_buffer;
-				}
-				image->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
-			}
-		}
+        else if (image->import_type == VX_MEMORY_TYPE_OPENCL && num_planes == image->u.img.planes) {
+            status = VX_SUCCESS;
+            if (image->children) {
+                for (vx_uint32 i = 0; i < image->numChildren; i++) {
+                    if (prev_ptrs) prev_ptrs[i] = image->children[i]->opencl_buffer;
+                    image->children[i]->opencl_buffer = (cl_mem)(new_ptrs ? new_ptrs[i] : nullptr);
+                    if (image->children[i]->opencl_buffer) {
+                        image->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        image->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+                    }
+                    // propagate to ROIs
+                    for (auto roi = image->children[i]->roiDepList.begin(); roi != image->children[i]->roiDepList.end(); roi++) {
+                        (*roi)->opencl_buffer = image->children[i]->opencl_buffer;
+                    }
+                    image->children[i]->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
+                }
+            }
+            else {
+                if (prev_ptrs) prev_ptrs[0] = image->opencl_buffer;
+                image->opencl_buffer = (cl_mem)(new_ptrs ? new_ptrs[0] : nullptr);
+                if (image->opencl_buffer) {
+                    image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+                }
+                // propagate to ROIs
+                for (auto roi = image->roiDepList.begin(); roi != image->roiDepList.end(); roi++) {
+                    (*roi)->opencl_buffer = image->opencl_buffer;
+                }
+                image->u.img.mem_handle = (new_ptrs == NULL) ?  vx_true_e : vx_false_e;
+            }
+        }
+#elif ENABLE_HIP
+        else if (image->import_type == VX_MEMORY_TYPE_HIP && num_planes == image->u.img.planes) {
+            status = VX_SUCCESS;
+            if (image->children) {
+                for (vx_uint32 i = 0; i < image->numChildren; i++) {
+                    if (prev_ptrs) prev_ptrs[i] = (void *)image->children[i]->hip_memory;
+                    image->children[i]->hip_memory = (vx_uint8 *)(new_ptrs ? new_ptrs[i] : nullptr);
+                    if (image->children[i]->hip_memory) {
+                        image->children[i]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        image->children[i]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+                    }
+                    // propagate to ROIs
+                    for (auto roi = image->children[i]->roiDepList.begin(); roi != image->children[i]->roiDepList.end(); roi++) {
+                        (*roi)->hip_memory = image->children[i]->hip_memory;
+                    }
+                }
+            }
+            else {
+                if (prev_ptrs) prev_ptrs[0] = image->hip_memory;
+                image->hip_memory = (vx_uint8 *)(new_ptrs ? new_ptrs[0] : nullptr);
+                if (image->hip_memory) {
+                    image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+                }
+                // propagate to ROIs
+                for (auto roi = image->roiDepList.begin(); roi != image->roiDepList.end(); roi++) {
+                    (*roi)->hip_memory = image->hip_memory;
+                }
+            }
+        }
 #endif
-	}
-	return status;
+    }
+    return status;
 }
 
 /*! \brief Retrieves various attributes of an image.
@@ -1115,135 +1195,159 @@ VX_API_ENTRY vx_status VX_API_CALL vxSwapImageHandle(vx_image image_, void* cons
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribute, void *ptr, vx_size size)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
-		CAgoLock lock(image->ref.context->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_IMAGE_WIDTH:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = image->u.img.width;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_HEIGHT:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = image->u.img.height;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_FORMAT:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_df_image *)ptr = image->u.img.format;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_PLANES:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = image->u.img.planes;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_SPACE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = image->u.img.color_space;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_RANGE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = image->u.img.channel_range;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_MEMORY_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = image->import_type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_SIZE:
-				if (size == sizeof(vx_size)) {
-					status = VX_SUCCESS;
-					if (image->numChildren) {
-						size = 0;
-						for (vx_uint32 plane = 0; plane < image->u.img.planes; plane++) {
-							if (!image->children[plane]->size) {
-								if (image->children[plane]->isNotFullyConfigured || agoDataSanityCheckAndUpdate(image->children[plane])) {
-									status = VX_ERROR_INVALID_REFERENCE;
-								}
-							}
-							size += image->children[plane]->size;
-						}
-						if (status == VX_SUCCESS)
-							*(vx_size *)ptr = size;
-					}
-					else {
-						if (!image->size) {
-							if (image->isNotFullyConfigured || agoDataSanityCheckAndUpdate(image)) {
-								status = VX_ERROR_INVALID_REFERENCE;
-							}
-						}
-						if (status == VX_SUCCESS)
-							*(vx_size *)ptr = image->size;
-					}
-				}
-				break;
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE)) {
+        CAgoLock lock(image->ref.context->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_IMAGE_WIDTH:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = image->u.img.width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_HEIGHT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = image->u.img.height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_FORMAT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_df_image *)ptr = image->u.img.format;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_PLANES:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = image->u.img.planes;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_SPACE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = image->u.img.color_space;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_RANGE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = image->u.img.channel_range;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_MEMORY_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = image->import_type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_SIZE:
+                if (size == sizeof(vx_size)) {
+                    status = VX_SUCCESS;
+                    if (image->numChildren) {
+                        size = 0;
+                        for (vx_uint32 plane = 0; plane < image->u.img.planes; plane++) {
+                            if (!image->children[plane]->size) {
+                                if (image->children[plane]->isNotFullyConfigured || agoDataSanityCheckAndUpdate(image->children[plane])) {
+                                    status = VX_ERROR_INVALID_REFERENCE;
+                                }
+                            }
+                            size += image->children[plane]->size;
+                        }
+                        if (status == VX_SUCCESS)
+                            *(vx_size *)ptr = size;
+                    }
+                    else {
+                        if (!image->size) {
+                            if (image->isNotFullyConfigured || agoDataSanityCheckAndUpdate(image)) {
+                                status = VX_ERROR_INVALID_REFERENCE;
+                            }
+                        }
+                        if (status == VX_SUCCESS)
+                            *(vx_size *)ptr = image->size;
+                    }
+                }
+                break;
 #if ENABLE_OPENCL
-			case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
-				if (size == sizeof(cl_mem)) {
-					if (image->opencl_buffer) {
-						*(cl_mem *)ptr = image->opencl_buffer;
-					}
-					else {
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
+                if (size == sizeof(cl_mem)) {
+                    if (image->opencl_buffer) {
+                        *(cl_mem *)ptr = image->opencl_buffer;
+                    }
+                    else {
 #if defined(CL_VERSION_2_0)
-						*(vx_uint8 **)ptr = image->opencl_svm_buffer;
+                        *(vx_uint8 **)ptr = image->opencl_svm_buffer;
 #else
-						*(vx_uint8 **)ptr = NULL;
+                        *(vx_uint8 **)ptr = NULL;
 #endif
-					}
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
-				if (size == sizeof(cl_uint)) {
-					*(cl_uint *)ptr = image->opencl_buffer_offset;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE:
-				if (size == sizeof(cl_uint)) {
-					*(cl_uint *)ptr = image->u.img.stride_in_bytes;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
-				if (size == sizeof(vx_bool)) {
-					*(vx_bool *)ptr = image->u.img.enableUserBufferOpenCL;
-					status = VX_SUCCESS;
-				}
-				break;
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
+                if (size == sizeof(cl_uint)) {
+                    *(cl_uint *)ptr = image->opencl_buffer_offset;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE:
+                if (size == sizeof(cl_uint)) {
+                    *(cl_uint *)ptr = image->u.img.stride_in_bytes;
+                    status = VX_SUCCESS;
+                }
+                break;
+#elif ENABLE_HIP
+            case VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER:
+                if (image->hip_memory) {
+                    *(vx_uint8 **)ptr = image->hip_memory;
+                }
+                else {
+                    *(vx_uint8 **)ptr = NULL;
+                }
+                status = VX_SUCCESS;
+                break;
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = image->opencl_buffer_offset;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = image->u.img.stride_in_bytes;
+                    status = VX_SUCCESS;
+                }
+                break;
 #endif
-			case VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER:
-				if (size == sizeof(vx_uint8)) {
-					if (image->buffer) {
-						vx_uint8** temp  = static_cast< vx_uint8 **>(ptr);
-						*temp = image->buffer;
-						status = VX_SUCCESS;
-					}
-				}
-				break;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
+                if (size == sizeof(vx_bool)) {
+                    *(vx_bool *)ptr = image->u.img.enableUserBufferOpenCL;
+                    status = VX_SUCCESS;
+                }
+                break;
+#endif
+            case VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER:
+                if (size == sizeof(vx_uint8)) {
+                    if (image->buffer) {
+                        vx_uint8** temp  = static_cast< vx_uint8 **>(ptr);
+                        *temp = image->buffer;
+                        status = VX_SUCCESS;
+                    }
+                }
+                break;
 
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows setting attributes on the image.
@@ -1259,51 +1363,72 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum attribute, const void *ptr, vx_size size)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
-		CAgoLock lock(image->ref.context->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_IMAGE_ATTRIBUTE_SPACE:
-				if (size == sizeof(vx_enum)) {
-					image->u.img.color_space = *(vx_color_space_e *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_ATTRIBUTE_RANGE:
-				if (size == sizeof(vx_enum)) {
-					image->u.img.channel_range = *(vx_channel_range_e *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE)) {
+        CAgoLock lock(image->ref.context->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_IMAGE_ATTRIBUTE_SPACE:
+                if (size == sizeof(vx_enum)) {
+                    image->u.img.color_space = *(vx_color_space_e *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_ATTRIBUTE_RANGE:
+                if (size == sizeof(vx_enum)) {
+                    image->u.img.channel_range = *(vx_channel_range_e *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
 #if ENABLE_OPENCL
-			case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
-				if (size == sizeof(cl_mem) && image->u.img.enableUserBufferOpenCL) {
-					image->opencl_buffer = *(cl_mem *)ptr;
-					if (image->opencl_buffer) {
-						image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-						image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
-					}
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
-				if (size == sizeof(cl_uint) && image->u.img.enableUserBufferOpenCL) {
-					image->opencl_buffer_offset = *(cl_uint *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
+                if (size == sizeof(cl_mem) && image->u.img.enableUserBufferOpenCL) {
+                    image->opencl_buffer = *(cl_mem *)ptr;
+                    if (image->opencl_buffer) {
+                        image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
+                if (size == sizeof(cl_uint) && image->u.img.enableUserBufferOpenCL) {
+                    image->opencl_buffer_offset = *(cl_uint *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+#elif ENABLE_HIP
+            case VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER:
+                if (image->u.img.enableUserBufferOpenCL) {
+                    image->hip_memory = *(vx_uint8 **)ptr;
+                    if (image->hip_memory) {
+                        image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        image->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+
+            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
+                if (size == sizeof(vx_uint32) && image->u.img.enableUserBufferOpenCL) {
+                    image->opencl_buffer_offset = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+
 #endif
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Initialize an image with the given pixel value.
@@ -1320,26 +1445,26 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
  */
 VX_API_ENTRY vx_status VX_API_CALL vxSetImagePixelValues(vx_image image, const vx_pixel_value_t *pixel_value)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * image_data = (AgoData *)image;
-	if (agoIsValidData(image_data, VX_TYPE_IMAGE))
-	{
-		CAgoLock lock(image_data->ref.context->cs);
-	   	status = VX_ERROR_INVALID_PARAMETERS;
-		vx_uint32 x, y, p, width, height;
-	    vx_size planes = 0;
-	    vx_rectangle_t rect = {0,0,0,0};
-	    vxGetValidRegionImage(image, &rect);
-	    vx_df_image format = 0;
-	    vxQueryImage(image, VX_IMAGE_FORMAT, &format, sizeof(format));
-	    vxQueryImage(image, VX_IMAGE_PLANES, &planes, sizeof(planes));
-	    for (p = 0; p < planes; p++)
-    	{
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * image_data = (AgoData *)image;
+    if (agoIsValidData(image_data, VX_TYPE_IMAGE))
+    {
+        CAgoLock lock(image_data->ref.context->cs);
+           status = VX_ERROR_INVALID_PARAMETERS;
+        vx_uint32 x, y, p, width, height;
+        vx_size planes = 0;
+        vx_rectangle_t rect = {0,0,0,0};
+        vxGetValidRegionImage(image, &rect);
+        vx_df_image format = 0;
+        vxQueryImage(image, VX_IMAGE_FORMAT, &format, sizeof(format));
+        vxQueryImage(image, VX_IMAGE_PLANES, &planes, sizeof(planes));
+        for (p = 0; p < planes; p++)
+        {
             vx_imagepatch_addressing_t addr;
             void *base = NULL;
             if (vxAccessImagePatch(image, &rect, p, &addr, &base, VX_WRITE_ONLY) == VX_SUCCESS)
             {
-            	status = VX_SUCCESS;
+                status = VX_SUCCESS;
                 width  = (format == VX_DF_IMAGE_U1) ? addr.dim_x - rect.start_x % 8 : addr.dim_x;
                 height = addr.dim_y;
                 for (y = 0; y < height; y+=addr.step_y)
@@ -1460,10 +1585,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImagePixelValues(vx_image image, const v
             {
                 status = VX_FAILURE;
                 break;
-            }     
+            }
         }
-	}
-	return status;
+    }
+    return status;
 }
 
 /*! \brief Releases a reference to an image object.
@@ -1477,14 +1602,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImagePixelValues(vx_image image, const v
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseImage(vx_image *image)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (image && agoIsValidData((AgoData*)*image, VX_TYPE_IMAGE)) {
-		if (!agoReleaseData((AgoData*)*image, true)) {
-			*image = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (image && agoIsValidData((AgoData*)*image, VX_TYPE_IMAGE)) {
+        if (!agoReleaseData((AgoData*)*image, true)) {
+            *image = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief This computes the size needed to retrieve an image patch from an image.
@@ -1496,20 +1621,20 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseImage(vx_image *image)
 * \ingroup group_image
 */
 VX_API_ENTRY vx_size VX_API_CALL vxComputeImagePatchSize(vx_image image_,
-	const vx_rectangle_t *rect,
-	vx_uint32 plane_index)
+    const vx_rectangle_t *rect,
+    vx_uint32 plane_index)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_size size = 0;
-	if (agoIsValidData(image, VX_TYPE_IMAGE) && !image->isVirtual && rect && (plane_index < image->u.img.planes)) {
-		AgoData * img = image;
-		if (image->children) {
-			img = image->children[plane_index];
-		}
-		size = (vx_size)((unsigned long) ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img) *
-			    ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2));
-	}
-	return size;
+    AgoData * image = (AgoData *)image_;
+    vx_size size = 0;
+    if (agoIsValidData(image, VX_TYPE_IMAGE) && !image->isVirtual && rect && (plane_index < image->u.img.planes)) {
+        AgoData * img = image;
+        if (image->children) {
+            img = image->children[plane_index];
+        }
+        size = (vx_size)((unsigned long) ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img) *
+                ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2));
+    }
+    return size;
 }
 
 /*! \brief Allows the User to extract a rectangular patch (subset) of an image from a single plane.
@@ -1539,92 +1664,107 @@ VX_API_ENTRY vx_size VX_API_CALL vxComputeImagePatchSize(vx_image image_,
 * \include vx_imagepatch.c
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
-	const vx_rectangle_t *rect,
-	vx_uint32 plane_index,
-	vx_imagepatch_addressing_t *addr,
-	void **ptr,
-	vx_enum usage)
+    const vx_rectangle_t *rect,
+    vx_uint32 plane_index,
+    vx_imagepatch_addressing_t *addr,
+    void **ptr,
+    vx_enum usage)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (image->isVirtual && !image->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if ((plane_index < image->u.img.planes) && addr && ptr && rect && 
-				 rect->start_x < rect->end_x && rect->start_y < rect->end_y &&
-				 rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height &&
-				 (!image->u.img.isUniform || usage == VX_READ_ONLY) && !image->isNotFullyConfigured)
-		{
-			AgoData * img = image;
-			if (image->children) {
-				img = image->children[plane_index];
-			}
-			if (!img->buffer) {
-				CAgoLock lock(img->ref.context->cs);
-				if (agoAllocData(img)) {
-					return VX_ERROR_NO_MEMORY;
-				}
-			}
-			if (!*ptr) {
-				addr->dim_x = (rect->end_x - rect->start_x);
-				addr->dim_y = (rect->end_y - rect->start_y);
-				addr->scale_x = VX_SCALE_UNITY >> img->u.img.x_scale_factor_is_2;
-				addr->scale_y = VX_SCALE_UNITY >> img->u.img.y_scale_factor_is_2;
-				addr->step_x = 1 << img->u.img.x_scale_factor_is_2;
-				addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
-				addr->stride_x = ((img->u.img.pixel_size_in_bits_num & 7) || (img->u.img.pixel_size_in_bits_denom > 1)) ?
-					0 : (img->u.img.pixel_size_in_bits_num >> 3);
-				addr->stride_y = img->u.img.stride_in_bytes;
-			}
-			vx_uint8 * ptr_internal = img->buffer + 
-				(rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes + 
-				ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
-			vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
-			// save the pointer and usage for use in vxCommitImagePatch
-			status = VX_SUCCESS;
-			for (auto i = img->mapped.begin(); i != img->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessImagePatch() more than once with same pointer
-					// the application needs to call vxCommitImagePatch() before calling vxAccessImagePatch()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				MappedData item = { img->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false };
-				img->mapped.push_back(item);
-				*ptr = ptr_returned;
-				if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (image->isVirtual && !image->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((plane_index < image->u.img.planes) && addr && ptr && rect &&
+                 rect->start_x < rect->end_x && rect->start_y < rect->end_y &&
+                 rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height &&
+                 (!image->u.img.isUniform || usage == VX_READ_ONLY) && !image->isNotFullyConfigured)
+        {
+            AgoData * img = image;
+            if (image->children) {
+                img = image->children[plane_index];
+            }
+            if (!img->buffer) {
+                CAgoLock lock(img->ref.context->cs);
+                if (agoAllocData(img)) {
+                    return VX_ERROR_NO_MEMORY;
+                }
+            }
+            if (!*ptr) {
+                addr->dim_x = (rect->end_x - rect->start_x);
+                addr->dim_y = (rect->end_y - rect->start_y);
+                addr->scale_x = VX_SCALE_UNITY >> img->u.img.x_scale_factor_is_2;
+                addr->scale_y = VX_SCALE_UNITY >> img->u.img.y_scale_factor_is_2;
+                addr->step_x = 1 << img->u.img.x_scale_factor_is_2;
+                addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
+                addr->stride_x = ((img->u.img.pixel_size_in_bits_num & 7) || (img->u.img.pixel_size_in_bits_denom > 1)) ?
+                    0 : (img->u.img.pixel_size_in_bits_num >> 3);
+                addr->stride_y = img->u.img.stride_in_bytes;
+            }
+            vx_uint8 * ptr_internal = img->buffer +
+                (rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes +
+                ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
+            vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
+            // save the pointer and usage for use in vxCommitImagePatch
+            status = VX_SUCCESS;
+            for (auto i = img->mapped.begin(); i != img->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessImagePatch() more than once with same pointer
+                    // the application needs to call vxCommitImagePatch() before calling vxAccessImagePatch()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                MappedData item = { img->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false };
+                img->mapped.push_back(item);
+                *ptr = ptr_returned;
+                if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
 #if ENABLE_OPENCL
-					auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
-					if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-						// make sure dirty OpenCL buffers are synched before giving access for read
-						if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-							cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&image->ref, status, "ERROR: vxAccessImagePatch: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-							dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-						}
-					}
+                    auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                    if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&image->ref, status, "ERROR: vxAccessImagePatch: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
+#elif ENABLE_HIP
+                    auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                    if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        // copy from Device to Host
+                        if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&image->ref, status, "ERROR: vxAccessImagePatch: hipMemcpyDtoH() => %d\n", err);
+                                return status;
+                            }
+                            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
 #endif
-					if (item.used_external_ptr) {
-						// copy if read is requested with explicit external buffer
-						if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
-							HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2, img),
-								((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), ptr_returned, addr->stride_y, ptr_internal, img->u.img.stride_in_bytes);
-						else
-							HafCpu_BufferCopyDisperseInDst(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2),
-							    (img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom + 7) >> 3, ptr_returned, addr->stride_y, addr->stride_x, ptr_internal, img->u.img.stride_in_bytes);
-					}
-				}
-			}
-		}
-	}
-	return status;
+                    if (item.used_external_ptr) {
+                        // copy if read is requested with explicit external buffer
+                        if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
+                            HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2, img),
+                                ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), ptr_returned, addr->stride_y, ptr_internal, img->u.img.stride_in_bytes);
+                        else
+                            HafCpu_BufferCopyDisperseInDst(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2),
+                                (img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom + 7) >> 3, ptr_returned, addr->stride_y, addr->stride_x, ptr_internal, img->u.img.stride_in_bytes);
+                    }
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief This allows the User to commit a rectangular patch (subset) of an image from a single plane.
@@ -1652,68 +1792,68 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
 * within the bounds of the original image dimensions.
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCommitImagePatch(vx_image image_,
-	const vx_rectangle_t *rect,
-	vx_uint32 plane_index,
-	const vx_imagepatch_addressing_t *addr,
-	const void *ptr)
+    const vx_rectangle_t *rect,
+    vx_uint32 plane_index,
+    const vx_imagepatch_addressing_t *addr,
+    const void *ptr)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
-		// check for ZERO AREA and mark rect as NULL for ZERO AREA
-		if (rect && ((rect->start_x == rect->end_x) || (rect->start_y == rect->end_y)))
-			rect = NULL;
-		// check for valid arguments
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (image->isVirtual && !image->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if ((plane_index < image->u.img.planes) && addr && ptr && 
-				 (!rect || (rect->start_x < rect->end_x && rect->start_y < rect->end_y && rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height)))
-		{
-			status = VX_SUCCESS;
-			AgoData * img = image;
-			if (image->children) {
-				img = image->children[plane_index];
-			}
-			if (!img->buffer) {
-				status = VX_FAILURE;
-			}
-			else if (!img->mapped.empty()) {
-				vx_enum usage = VX_READ_ONLY;
-				bool used_external_ptr = false;
-				for (auto i = img->mapped.begin(); i != img->mapped.end(); i++) {
-					if (i->ptr == ptr) {
-						if (rect) {
-							usage = i->usage;
-							used_external_ptr = i->used_external_ptr;
-						}
-						img->mapped.erase(i);
-						break;
-					}
-				}
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					if (used_external_ptr) {
-						// copy from external buffer
-						vx_uint8 * buffer = img->buffer + (rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes + 
-							ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE)) {
+        // check for ZERO AREA and mark rect as NULL for ZERO AREA
+        if (rect && ((rect->start_x == rect->end_x) || (rect->start_y == rect->end_y)))
+            rect = NULL;
+        // check for valid arguments
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (image->isVirtual && !image->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((plane_index < image->u.img.planes) && addr && ptr &&
+                 (!rect || (rect->start_x < rect->end_x && rect->start_y < rect->end_y && rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height)))
+        {
+            status = VX_SUCCESS;
+            AgoData * img = image;
+            if (image->children) {
+                img = image->children[plane_index];
+            }
+            if (!img->buffer) {
+                status = VX_FAILURE;
+            }
+            else if (!img->mapped.empty()) {
+                vx_enum usage = VX_READ_ONLY;
+                bool used_external_ptr = false;
+                for (auto i = img->mapped.begin(); i != img->mapped.end(); i++) {
+                    if (i->ptr == ptr) {
+                        if (rect) {
+                            usage = i->usage;
+                            used_external_ptr = i->used_external_ptr;
+                        }
+                        img->mapped.erase(i);
+                        break;
+                    }
+                }
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    if (used_external_ptr) {
+                        // copy from external buffer
+                        vx_uint8 * buffer = img->buffer + (rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes +
+                            ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
 
-						if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
-							HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img),
-								((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), buffer, img->u.img.stride_in_bytes, (vx_uint8 *)ptr, addr->stride_y);
-						else
-							HafCpu_BufferCopyDisperseInSrc(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2) * addr->stride_x, ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2),
-							(img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom + 7) >> 3, buffer, img->u.img.stride_in_bytes, (vx_uint8 *)ptr, addr->stride_y, addr->stride_x);
-					}
-					// update sync flags
-					auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
-					dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-			}
-		}
-	}
-	return status;
+                        if (addr->stride_x == 0 || ((addr->stride_x << 3) == img->u.img.pixel_size_in_bits_num && img->u.img.pixel_size_in_bits_denom == 1))
+                            HafCpu_ChannelCopy_U8_U8(ImageWidthInBytesFloor(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2), img),
+                                ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2), buffer, img->u.img.stride_in_bytes, (vx_uint8 *)ptr, addr->stride_y);
+                        else
+                            HafCpu_BufferCopyDisperseInSrc(((rect->end_x - rect->start_x) >> img->u.img.x_scale_factor_is_2) * addr->stride_x, ((rect->end_y - rect->start_y) >> img->u.img.y_scale_factor_is_2),
+                            (img->u.img.pixel_size_in_bits_num / img->u.img.pixel_size_in_bits_denom + 7) >> 3, buffer, img->u.img.stride_in_bytes, (vx_uint8 *)ptr, addr->stride_y, addr->stride_x);
+                    }
+                    // update sync flags
+                    auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                    dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*!
@@ -1728,16 +1868,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxCommitImagePatch(vx_image image_,
 */
 VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress1d(void *ptr, vx_uint32 index, const vx_imagepatch_addressing_t *addr)
 {
-	vx_uint8 *new_ptr = NULL;
-	if (ptr && index < addr->dim_x*addr->dim_y)
-	{
-		vx_uint32 x = index % addr->dim_x;
-		vx_uint32 y = index / addr->dim_x;
-		vx_uint32 offset = vxComputePatchOffset(x, y, addr);
-		new_ptr = (vx_uint8 *)ptr;
-		new_ptr = &new_ptr[offset];
-	}
-	return new_ptr;
+    vx_uint8 *new_ptr = NULL;
+    if (ptr && index < addr->dim_x*addr->dim_y)
+    {
+        vx_uint32 x = index % addr->dim_x;
+        vx_uint32 y = index / addr->dim_x;
+        vx_uint32 offset = vxComputePatchOffset(x, y, addr);
+        new_ptr = (vx_uint8 *)ptr;
+        new_ptr = &new_ptr[offset];
+    }
+    return new_ptr;
 }
 
 /*!
@@ -1753,14 +1893,14 @@ VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress1d(void *ptr, vx_uint32
 */
 VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress2d(void *ptr, vx_uint32 x, vx_uint32 y, const vx_imagepatch_addressing_t *addr)
 {
-	vx_uint8 *new_ptr = NULL;
-	if (ptr && x < addr->dim_x && y < addr->dim_y)
-	{
-		vx_uint32 offset = vxComputePatchOffset(x, y, addr);
-		new_ptr = (vx_uint8 *)ptr;
-		new_ptr = &new_ptr[offset];
-	}
-	return new_ptr;
+    vx_uint8 *new_ptr = NULL;
+    if (ptr && x < addr->dim_x && y < addr->dim_y)
+    {
+        vx_uint32 offset = vxComputePatchOffset(x, y, addr);
+        new_ptr = (vx_uint8 *)ptr;
+        new_ptr = &new_ptr[offset];
+    }
+    return new_ptr;
 }
 
 /*! \brief Retrieves the valid region of the image as a rectangle.
@@ -1783,17 +1923,17 @@ VX_API_ENTRY void * VX_API_CALL vxFormatImagePatchAddress2d(void *ptr, vx_uint32
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetValidRegionImage(vx_image image_, vx_rectangle_t *rect)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (rect) {
-			*rect = image->u.img.rect_valid;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (rect) {
+            *rect = image->u.img.rect_valid;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy a rectangular patch from/into an image object plane.
@@ -1833,21 +1973,21 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetValidRegionImage(vx_image image_, vx_rec
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyImagePatch(vx_image image_, const vx_rectangle_t *image_rect, vx_uint32 image_plane_index, const vx_imagepatch_addressing_t *user_addr, void * user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
-			vx_rectangle_t rect = *image_rect;
-			vx_imagepatch_addressing_t addr = *user_addr;
-			status = vxAccessImagePatch(image_, &rect, image_plane_index, &addr, &user_ptr, usage);
-			if (status == VX_SUCCESS) {
-				status = vxCommitImagePatch(image_, &rect, image_plane_index, &addr, user_ptr);
-			}
-		}
-	}
-	return status;
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
+            vx_rectangle_t rect = *image_rect;
+            vx_imagepatch_addressing_t addr = *user_addr;
+            status = vxAccessImagePatch(image_, &rect, image_plane_index, &addr, &user_ptr, usage);
+            if (status == VX_SUCCESS) {
+                status = vxCommitImagePatch(image_, &rect, image_plane_index, &addr, user_ptr);
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to get direct access to a rectangular patch of an image object plane.
@@ -1912,75 +2052,90 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyImagePatch(vx_image image_, const vx_re
 */
 VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rectangle_t *rect, vx_uint32 plane_index, vx_map_id *map_id, vx_imagepatch_addressing_t *addr, void **ptr, vx_enum usage, vx_enum mem_type, vx_uint32 flags)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (image->isVirtual && !image->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if ((mem_type == VX_MEMORY_TYPE_HOST) && (plane_index < image->u.img.planes) && addr && ptr && rect &&
-			rect->start_x < rect->end_x && rect->start_y < rect->end_y &&
-			rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height &&
-			(!image->u.img.isUniform || usage == VX_READ_ONLY) && !image->isNotFullyConfigured)
-		{
-			AgoData * img = image;
-			if (image->children) {
-				img = image->children[plane_index];
-			}
-			if (!img->buffer) {
-				CAgoLock lock(img->ref.context->cs);
-				if (agoAllocData(img) || img->u.img.mem_handle) {
-					return VX_ERROR_NO_MEMORY;
-				}
-			}
-			vx_uint8 * ptr_returned = img->buffer +
-				(rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes +
-				ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
-			// save the pointer and usage for use in vxCommitImagePatch
-			status = VX_SUCCESS;
-			for (auto i = img->mapped.begin(); i != img->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessImagePatch() more than once with same pointer
-					// the application needs to call vxCommitImagePatch() before calling vxAccessImagePatch()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (image->isVirtual && !image->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if ((mem_type == VX_MEMORY_TYPE_HOST) && (plane_index < image->u.img.planes) && addr && ptr && rect &&
+            rect->start_x < rect->end_x && rect->start_y < rect->end_y &&
+            rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height &&
+            (!image->u.img.isUniform || usage == VX_READ_ONLY) && !image->isNotFullyConfigured)
+        {
+            AgoData * img = image;
+            if (image->children) {
+                img = image->children[plane_index];
+            }
+            if (!img->buffer) {
+                CAgoLock lock(img->ref.context->cs);
+                if (agoAllocData(img) || img->u.img.mem_handle) {
+                    return VX_ERROR_NO_MEMORY;
+                }
+            }
+            vx_uint8 * ptr_returned = img->buffer +
+                (rect->start_y >> img->u.img.y_scale_factor_is_2) * img->u.img.stride_in_bytes +
+                ImageWidthInBytesFloor((rect->start_x >> img->u.img.x_scale_factor_is_2), img);
+            // save the pointer and usage for use in vxCommitImagePatch
+            status = VX_SUCCESS;
+            for (auto i = img->mapped.begin(); i != img->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessImagePatch() more than once with same pointer
+                    // the application needs to call vxCommitImagePatch() before calling vxAccessImagePatch()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
 #if ENABLE_OPENCL
-				if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
-					auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
-					if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-						// make sure dirty OpenCL buffers are synched before giving access for read
-						if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-							cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&image->ref, status, "ERROR: vxMapImagePatch: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-							dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-						}
-					}
-				}
+                if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
+                    auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                    if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&image->ref, status, "ERROR: vxMapImagePatch: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
+                }
+#elif ENABLE_HIP
+                    auto dataToSync = img->u.img.isROI ? img->u.img.roiMasterImage : img;
+                    if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        // copy from Device to Host
+                        if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&image->ref, status, "ERROR: vxAccessImagePatch: hipMemcpyDtoH() => %d\n", err);
+                                return status;
+                            }
+                            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
 #endif
-				// get map id and set returned pointer
-				MappedData item = { img->nextMapId++, ptr_returned, usage, false, 0, plane_index };
-				image->mapped.push_back(item);
-				*map_id = item.map_id;
-				*ptr = ptr_returned;
-				addr->dim_x = rect->end_x - rect->start_x;
-				addr->dim_y = rect->end_y - rect->start_y;
-				addr->scale_x = VX_SCALE_UNITY >> img->u.img.x_scale_factor_is_2;
-				addr->scale_y = VX_SCALE_UNITY >> img->u.img.y_scale_factor_is_2;
-				addr->step_x = 1 << img->u.img.x_scale_factor_is_2;
-				addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
-				addr->stride_x = (img->u.img.pixel_size_in_bits_denom > 1 || (img->u.img.pixel_size_in_bits_num & 7)) ? 0 : (img->u.img.pixel_size_in_bits_num >> 3);
-				addr->stride_y = img->u.img.stride_in_bytes;
-			}
-		}
-	}
-	return status;
+                // get map id and set returned pointer
+                MappedData item = { img->nextMapId++, ptr_returned, usage, false, 0, plane_index };
+                image->mapped.push_back(item);
+                *map_id = item.map_id;
+                *ptr = ptr_returned;
+                addr->dim_x = rect->end_x - rect->start_x;
+                addr->dim_y = rect->end_y - rect->start_y;
+                addr->scale_x = VX_SCALE_UNITY >> img->u.img.x_scale_factor_is_2;
+                addr->scale_y = VX_SCALE_UNITY >> img->u.img.y_scale_factor_is_2;
+                addr->step_x = 1 << img->u.img.x_scale_factor_is_2;
+                addr->step_y = 1 << img->u.img.y_scale_factor_is_2;
+                addr->stride_x = (img->u.img.pixel_size_in_bits_denom > 1 || (img->u.img.pixel_size_in_bits_num & 7)) ? 0 : (img->u.img.pixel_size_in_bits_num >> 3);
+                addr->stride_y = img->u.img.stride_in_bytes;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Unmap and commit potential changes to a image object patch that were previously mapped.
@@ -1997,31 +2152,31 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
 */
 VX_API_ENTRY vx_status VX_API_CALL vxUnmapImagePatch(vx_image image_, vx_map_id map_id)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		for (auto i = image->mapped.begin(); i != image->mapped.end(); i++) {
-			if (i->map_id == map_id) {
-				vx_enum usage = i->usage;
-				vx_uint32 plane = i->plane;
-				image->mapped.erase(i);
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					// update sync flags
-					auto dataToSync = image->u.img.isROI ? image->u.img.roiMasterImage : image;
-					dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-					if (dataToSync->numChildren > 0 && plane < dataToSync->numChildren && dataToSync->children[plane]) {
-						dataToSync->children[plane]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-						dataToSync->children[plane]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-					}
-				}
-				status = VX_SUCCESS;
-				break;
-			}
-		}
-	}
-	return status;
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        for (auto i = image->mapped.begin(); i != image->mapped.end(); i++) {
+            if (i->map_id == map_id) {
+                vx_enum usage = i->usage;
+                vx_uint32 plane = i->plane;
+                image->mapped.erase(i);
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // update sync flags
+                    auto dataToSync = image->u.img.isROI ? image->u.img.roiMasterImage : image;
+                    dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                    if (dataToSync->numChildren > 0 && plane < dataToSync->numChildren && dataToSync->children[plane]) {
+                        dataToSync->children[plane]->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                        dataToSync->children[plane]->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                    }
+                }
+                status = VX_SUCCESS;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Create a sub-image from a single plane channel of another image.
@@ -2044,35 +2199,35 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnmapImagePatch(vx_image image_, vx_map_id 
 */
 VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromChannel(vx_image img, vx_enum channel)
 {
-	AgoData * image = (AgoData *)img, * subImage = nullptr;
-	if (agoIsValidData(image, VX_TYPE_IMAGE))
-	{
-		if (image->numChildren > 0) {
-			if (channel == VX_CHANNEL_Y && 
-				(image->u.img.format == VX_DF_IMAGE_YUV4 || image->u.img.format == VX_DF_IMAGE_IYUV ||
-				 image->u.img.format == VX_DF_IMAGE_NV12 || image->u.img.format == VX_DF_IMAGE_NV21))
-			{
-				subImage = image->children[0];
-			}
-			else if (channel == VX_CHANNEL_U && (image->u.img.format == VX_DF_IMAGE_YUV4 || image->u.img.format == VX_DF_IMAGE_IYUV))
-			{
-				subImage = image->children[1];
-			}
-			else if (channel == VX_CHANNEL_V && (image->u.img.format == VX_DF_IMAGE_YUV4 || image->u.img.format == VX_DF_IMAGE_IYUV))
-			{
-				subImage = image->children[2];
-			}
-			else if ((channel == VX_CHANNEL_U || channel == VX_CHANNEL_V) && (image->u.img.format == VX_DF_IMAGE_NV12 || image->u.img.format == VX_DF_IMAGE_NV21))
-			{
-				subImage = image->children[1];
-			}
-		}
-	}
-	if (subImage) {
-		subImage->ref.external_count++;
-		subImage->ref.context->num_active_references++;
-	}
-	return (vx_image)subImage;
+    AgoData * image = (AgoData *)img, * subImage = nullptr;
+    if (agoIsValidData(image, VX_TYPE_IMAGE))
+    {
+        if (image->numChildren > 0) {
+            if (channel == VX_CHANNEL_Y &&
+                (image->u.img.format == VX_DF_IMAGE_YUV4 || image->u.img.format == VX_DF_IMAGE_IYUV ||
+                 image->u.img.format == VX_DF_IMAGE_NV12 || image->u.img.format == VX_DF_IMAGE_NV21))
+            {
+                subImage = image->children[0];
+            }
+            else if (channel == VX_CHANNEL_U && (image->u.img.format == VX_DF_IMAGE_YUV4 || image->u.img.format == VX_DF_IMAGE_IYUV))
+            {
+                subImage = image->children[1];
+            }
+            else if (channel == VX_CHANNEL_V && (image->u.img.format == VX_DF_IMAGE_YUV4 || image->u.img.format == VX_DF_IMAGE_IYUV))
+            {
+                subImage = image->children[2];
+            }
+            else if ((channel == VX_CHANNEL_U || channel == VX_CHANNEL_V) && (image->u.img.format == VX_DF_IMAGE_NV12 || image->u.img.format == VX_DF_IMAGE_NV21))
+            {
+                subImage = image->children[1];
+            }
+        }
+    }
+    if (subImage) {
+        subImage->ref.external_count++;
+        subImage->ref.context->num_active_references++;
+    }
+    return (vx_image)subImage;
 }
 
 /*! \brief Sets the valid rectangle for an image according to a supplied rectangle.
@@ -2089,27 +2244,27 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromChannel(vx_image img, vx_enum
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetImageValidRectangle(vx_image image_, const vx_rectangle_t *rect)
 {
-	AgoData * image = (AgoData *)image_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(image, VX_TYPE_IMAGE) && !image->isVirtual)
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (!rect) {
-			image->u.img.rect_valid.start_x = 0;
-			image->u.img.rect_valid.start_y = 0;
-			image->u.img.rect_valid.end_x = image->u.img.width;
-			image->u.img.rect_valid.end_y = image->u.img.height;
-			status = VX_SUCCESS;
-		}
-		else if (rect->start_x < rect->end_x && rect->start_y < rect->end_y && rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height) {
-			image->u.img.rect_valid = *rect;
-			status = VX_SUCCESS;
-		}
-		if (status == VX_SUCCESS) {
-			// TBD: inform graphs for take this image as input, to re-computed output valid regions
-		}
-	}
-	return status;
+    AgoData * image = (AgoData *)image_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(image, VX_TYPE_IMAGE) && !image->isVirtual)
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (!rect) {
+            image->u.img.rect_valid.start_x = 0;
+            image->u.img.rect_valid.start_y = 0;
+            image->u.img.rect_valid.end_x = image->u.img.width;
+            image->u.img.rect_valid.end_y = image->u.img.height;
+            status = VX_SUCCESS;
+        }
+        else if (rect->start_x < rect->end_x && rect->start_y < rect->end_y && rect->end_x <= image->u.img.width && rect->end_y <= image->u.img.height) {
+            image->u.img.rect_valid = *rect;
+            status = VX_SUCCESS;
+        }
+        if (status == VX_SUCCESS) {
+            // TBD: inform graphs for take this image as input, to re-computed output valid regions
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -2137,7 +2292,7 @@ KERNEL
 */
 VX_API_ENTRY vx_status VX_API_CALL vxLoadKernels(vx_context context, const vx_char *module)
 {
-	return agoLoadModule(context, module);
+    return agoLoadModule(context, module);
 }
 
 /*! \brief Unloads all kernels from the OpenVX context that had been loaded from
@@ -2160,7 +2315,7 @@ incorrect.
 */
 VX_API_ENTRY vx_status VX_API_CALL vxUnloadKernels(vx_context context, const vx_char *module)
 {
-	return agoUnloadModule(context, module);
+    return agoUnloadModule(context, module);
 }
 
 /*! \brief Obtains a reference to a kernel using a string to specify the name.
@@ -2176,15 +2331,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnloadKernels(vx_context context, const vx_
 */
 VX_API_ENTRY vx_kernel VX_API_CALL vxGetKernelByName(vx_context context, const vx_char *name)
 {
-	vx_kernel akernel = NULL;
-	if (agoIsValidContext(context)) {
-		CAgoLock lock(context->cs);
-		akernel = agoFindKernelByName(context, name);
-		if (akernel) {
-			akernel->ref.external_count++;
-		}
-	}
-	return akernel;
+    vx_kernel akernel = NULL;
+    if (agoIsValidContext(context)) {
+        CAgoLock lock(context->cs);
+        akernel = agoFindKernelByName(context, name);
+        if (akernel) {
+            akernel->ref.external_count++;
+        }
+    }
+    return akernel;
 }
 
 /*! \brief Obtains a reference to the kernel using the <tt>\ref vx_kernel_e</tt> enumeration.
@@ -2200,15 +2355,15 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxGetKernelByName(vx_context context, const v
 */
 VX_API_ENTRY vx_kernel VX_API_CALL vxGetKernelByEnum(vx_context context, vx_enum kernel)
 {
-	vx_kernel akernel = NULL;
-	if (agoIsValidContext(context)) {
-		CAgoLock lock(context->cs);
-		akernel = agoFindKernelByEnum(context, kernel);
-		if (akernel) {
-			akernel->ref.external_count++;
-		}
-	}
-	return akernel;
+    vx_kernel akernel = NULL;
+    if (agoIsValidContext(context)) {
+        CAgoLock lock(context->cs);
+        akernel = agoFindKernelByEnum(context, kernel);
+        if (akernel) {
+            akernel->ref.external_count++;
+        }
+    }
+    return akernel;
 }
 
 /*! \brief This allows the client to query the kernel to get information about
@@ -2226,44 +2381,44 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxGetKernelByEnum(vx_context context, vx_enum
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryKernel(vx_kernel kernel, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidKernel(kernel)) {
-		CAgoLock lock(kernel->ref.context->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_KERNEL_ATTRIBUTE_PARAMETERS:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = kernel->argCount;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_NAME:
-				if (ptr != NULL && size >= VX_MAX_KERNEL_NAME) {
-					strncpy((char *)ptr, kernel->name, size);
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_ENUM:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = kernel->id;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_LOCAL_DATA_SIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = kernel->localDataSize;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidKernel(kernel)) {
+        CAgoLock lock(kernel->ref.context->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_KERNEL_ATTRIBUTE_PARAMETERS:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = kernel->argCount;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_NAME:
+                if (ptr != NULL && size >= VX_MAX_KERNEL_NAME) {
+                    strncpy((char *)ptr, kernel->name, size);
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_ENUM:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = kernel->id;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_LOCAL_DATA_SIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = kernel->localDataSize;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Release the reference to the kernel.
@@ -2277,14 +2432,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryKernel(vx_kernel kernel, vx_enum attri
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseKernel(vx_kernel *kernel)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (kernel && agoIsValidKernel(*kernel)) {
-		if (!agoReleaseKernel(*kernel, true)) {
-			*kernel = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (kernel && agoIsValidKernel(*kernel)) {
+        if (!agoReleaseKernel(*kernel, true)) {
+            *kernel = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows users to add custom kernels to the known kernel
@@ -2307,45 +2462,45 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseKernel(vx_kernel *kernel)
 * \retval * Kernel added to OpenVX.
 */
 VX_API_ENTRY vx_kernel VX_API_CALL vxAddKernel(vx_context context,
-	const vx_char name[VX_MAX_KERNEL_NAME],
-	vx_enum enumeration,
-	vx_kernel_f func_ptr,
-	vx_uint32 numParams,
-	vx_kernel_input_validate_f input,
-	vx_kernel_output_validate_f output,
-	vx_kernel_initialize_f init,
-	vx_kernel_deinitialize_f deinit)
+    const vx_char name[VX_MAX_KERNEL_NAME],
+    vx_enum enumeration,
+    vx_kernel_f func_ptr,
+    vx_uint32 numParams,
+    vx_kernel_input_validate_f input,
+    vx_kernel_output_validate_f output,
+    vx_kernel_initialize_f init,
+    vx_kernel_deinitialize_f deinit)
 {
-	vx_kernel kernel = NULL;
-	if (agoIsValidContext(context) && numParams > 0 && numParams <= AGO_MAX_PARAMS && func_ptr && input && output) {
-		CAgoLock lock(context->cs);
-		// make sure there are no kernels with the same name
-		if (!agoFindKernelByEnum(context, enumeration) && !agoFindKernelByName(context, name)) {
-			kernel = new AgoKernel;
-			// initialize references
-			agoResetReference(&kernel->ref, VX_TYPE_KERNEL, context, NULL);
-			for (vx_uint32 index = 0; index < AGO_MAX_PARAMS; index++) {
-				agoResetReference(&kernel->parameters[index].ref, VX_TYPE_PARAMETER, kernel->ref.context, &kernel->ref);
-				kernel->parameters[index].scope = &kernel->ref;
-			}
-			// add kernel object to context
-			kernel->external_kernel = true;
-			kernel->ref.external_count++;
-			kernel->id = enumeration;
-			kernel->flags = AGO_KERNEL_FLAG_GROUP_USER | AGO_KERNEL_FLAG_DEVICE_CPU | AGO_KERNEL_FLAG_VALID_RECT_RESET;
-			strcpy(kernel->name, name);
-			kernel->argCount = numParams;
-			kernel->kernel_f = func_ptr;
-			kernel->input_validate_f = input;
-			kernel->output_validate_f = output;
-			kernel->initialize_f = init;
-			kernel->deinitialize_f = deinit;
-			kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
-			kernel->user_kernel = vx_false_e;
-			agoAddKernel(&context->kernelList, kernel);
-		}
-	}
-	return kernel;
+    vx_kernel kernel = NULL;
+    if (agoIsValidContext(context) && numParams > 0 && numParams <= AGO_MAX_PARAMS && func_ptr && input && output) {
+        CAgoLock lock(context->cs);
+        // make sure there are no kernels with the same name
+        if (!agoFindKernelByEnum(context, enumeration) && !agoFindKernelByName(context, name)) {
+            kernel = new AgoKernel;
+            // initialize references
+            agoResetReference(&kernel->ref, VX_TYPE_KERNEL, context, NULL);
+            for (vx_uint32 index = 0; index < AGO_MAX_PARAMS; index++) {
+                agoResetReference(&kernel->parameters[index].ref, VX_TYPE_PARAMETER, kernel->ref.context, &kernel->ref);
+                kernel->parameters[index].scope = &kernel->ref;
+            }
+            // add kernel object to context
+            kernel->external_kernel = true;
+            kernel->ref.external_count++;
+            kernel->id = enumeration;
+            kernel->flags = AGO_KERNEL_FLAG_GROUP_USER | AGO_KERNEL_FLAG_DEVICE_CPU | AGO_KERNEL_FLAG_VALID_RECT_RESET;
+            strcpy(kernel->name, name);
+            kernel->argCount = numParams;
+            kernel->kernel_f = func_ptr;
+            kernel->input_validate_f = input;
+            kernel->output_validate_f = output;
+            kernel->initialize_f = init;
+            kernel->deinitialize_f = deinit;
+            kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
+            kernel->user_kernel = vx_false_e;
+            agoAddKernel(&context->kernelList, kernel);
+        }
+    }
+    return kernel;
 }
 
 /*! \brief Allows users to add custom kernels to the known kernel
@@ -2367,43 +2522,43 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddKernel(vx_context context,
 * \retval * Kernel added to OpenVX.
 */
 VX_API_ENTRY vx_kernel VX_API_CALL vxAddUserKernel(vx_context context,
-	const vx_char name[VX_MAX_KERNEL_NAME],
-	vx_enum enumeration,
-	vx_kernel_f func_ptr,
-	vx_uint32 numParams,
-	vx_kernel_validate_f validate,
-	vx_kernel_initialize_f init,
-	vx_kernel_deinitialize_f deinit)
+    const vx_char name[VX_MAX_KERNEL_NAME],
+    vx_enum enumeration,
+    vx_kernel_f func_ptr,
+    vx_uint32 numParams,
+    vx_kernel_validate_f validate,
+    vx_kernel_initialize_f init,
+    vx_kernel_deinitialize_f deinit)
 {
-	vx_kernel kernel = NULL;
-	if (agoIsValidContext(context) && numParams > 0 && numParams <= AGO_MAX_PARAMS && func_ptr && validate) {
-		CAgoLock lock(context->cs);
-		// make sure there are no kernels with the same name
-		if (!agoFindKernelByEnum(context, enumeration) && !agoFindKernelByName(context, name)) {
-			kernel = new AgoKernel;
-			// initialize references
-			agoResetReference(&kernel->ref, VX_TYPE_KERNEL, context, NULL);
-			for (vx_uint32 index = 0; index < AGO_MAX_PARAMS; index++) {
-				agoResetReference(&kernel->parameters[index].ref, VX_TYPE_PARAMETER, kernel->ref.context, &kernel->ref);
-				kernel->parameters[index].scope = &kernel->ref;
-			}
-			// add kernel object to context
-			kernel->external_kernel = true;
-			kernel->ref.external_count++;
-			kernel->id = enumeration;
-			kernel->flags = AGO_KERNEL_FLAG_GROUP_USER | AGO_KERNEL_FLAG_DEVICE_CPU | AGO_KERNEL_FLAG_VALID_RECT_RESET;
-			strcpy(kernel->name, name);
-			kernel->argCount = numParams;
-			kernel->kernel_f = func_ptr;
-			kernel->validate_f = validate;
-			kernel->initialize_f = init;
-			kernel->deinitialize_f = deinit;
-			kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
-			kernel->user_kernel = vx_true_e;
-			agoAddKernel(&context->kernelList, kernel);
-		}
-	}
-	return kernel;
+    vx_kernel kernel = NULL;
+    if (agoIsValidContext(context) && numParams > 0 && numParams <= AGO_MAX_PARAMS && func_ptr && validate) {
+        CAgoLock lock(context->cs);
+        // make sure there are no kernels with the same name
+        if (!agoFindKernelByEnum(context, enumeration) && !agoFindKernelByName(context, name)) {
+            kernel = new AgoKernel;
+            // initialize references
+            agoResetReference(&kernel->ref, VX_TYPE_KERNEL, context, NULL);
+            for (vx_uint32 index = 0; index < AGO_MAX_PARAMS; index++) {
+                agoResetReference(&kernel->parameters[index].ref, VX_TYPE_PARAMETER, kernel->ref.context, &kernel->ref);
+                kernel->parameters[index].scope = &kernel->ref;
+            }
+            // add kernel object to context
+            kernel->external_kernel = true;
+            kernel->ref.external_count++;
+            kernel->id = enumeration;
+            kernel->flags = AGO_KERNEL_FLAG_GROUP_USER | AGO_KERNEL_FLAG_DEVICE_CPU | AGO_KERNEL_FLAG_VALID_RECT_RESET;
+            strcpy(kernel->name, name);
+            kernel->argCount = numParams;
+            kernel->kernel_f = func_ptr;
+            kernel->validate_f = validate;
+            kernel->initialize_f = init;
+            kernel->deinitialize_f = deinit;
+            kernel->importing_module_index_plus1 = context->importing_module_index_plus1;
+            kernel->user_kernel = vx_true_e;
+            agoAddKernel(&context->kernelList, kernel);
+        }
+    }
+    return kernel;
 }
 
 /*! \brief This API is called after all parameters have been added to the
@@ -2417,25 +2572,25 @@ VX_API_ENTRY vx_kernel VX_API_CALL vxAddUserKernel(vx_context context,
 */
 VX_API_ENTRY vx_status VX_API_CALL vxFinalizeKernel(vx_kernel kernel)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidKernel(kernel)) {
-		CAgoLock lock(kernel->ref.context->cs);
-		if (kernel->external_kernel && !kernel->finalized && kernel->argCount > 0) {
-			status = VX_SUCCESS;
-			// check if kernel has been initialized properly
-			for (vx_uint32 i = 0; i < kernel->argCount; i++) {
-				if (!kernel->argType[i] || !kernel->argConfig[i] || !kernel->parameters[i].scope) {
-					status = VX_ERROR_INVALID_REFERENCE;
-					break;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				// mark that kernel has been finalized
-				kernel->finalized = true;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidKernel(kernel)) {
+        CAgoLock lock(kernel->ref.context->cs);
+        if (kernel->external_kernel && !kernel->finalized && kernel->argCount > 0) {
+            status = VX_SUCCESS;
+            // check if kernel has been initialized properly
+            for (vx_uint32 i = 0; i < kernel->argCount; i++) {
+                if (!kernel->argType[i] || !kernel->argConfig[i] || !kernel->parameters[i].scope) {
+                    status = VX_ERROR_INVALID_REFERENCE;
+                    break;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                // mark that kernel has been finalized
+                kernel->finalized = true;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows users to set the signatures of the custom kernel.
@@ -2452,36 +2607,36 @@ VX_API_ENTRY vx_status VX_API_CALL vxFinalizeKernel(vx_kernel kernel)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAddParameterToKernel(vx_kernel kernel, vx_uint32 index, vx_enum dir, vx_enum data_type, vx_enum state)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidKernel(kernel)) {
-		CAgoLock lock(kernel->ref.context->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		// add parameter if the kernel is not finalized and not a built-in kernel and not initialized earlier
-		if((data_type == VX_TYPE_DELAY && dir != VX_INPUT))
-				return VX_ERROR_INVALID_PARAMETERS;
-		if (kernel->external_kernel && !kernel->finalized && 
-			index < AGO_MAX_PARAMS &&
-			(dir == VX_INPUT || dir == VX_OUTPUT || dir == VX_BIDIRECTIONAL) && 
-			(state == VX_PARAMETER_STATE_REQUIRED || state == VX_PARAMETER_STATE_OPTIONAL))
-		{
-			status = VX_SUCCESS;
-			// save parameter details
-			kernel->parameters[index].index = index;
-			kernel->parameters[index].direction = (vx_direction_e)dir;
-			kernel->argConfig[index] = (dir == VX_INPUT) ? AGO_KERNEL_ARG_INPUT_FLAG : 
-				((dir == VX_OUTPUT) ? AGO_KERNEL_ARG_OUTPUT_FLAG : (AGO_KERNEL_ARG_INPUT_FLAG | AGO_KERNEL_ARG_OUTPUT_FLAG));
-			kernel->parameters[index].type = data_type;
-			kernel->argType[index] = data_type;
-			kernel->parameters[index].state = (vx_parameter_state_e)state;
-			if (state == VX_PARAMETER_STATE_OPTIONAL)
-				kernel->argConfig[index] |= AGO_KERNEL_ARG_OPTIONAL_FLAG;
-			kernel->parameters[index].scope = &kernel->ref;
-			// update argument count
-			if (index >= kernel->argCount)
-				kernel->argCount = index + 1;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidKernel(kernel)) {
+        CAgoLock lock(kernel->ref.context->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        // add parameter if the kernel is not finalized and not a built-in kernel and not initialized earlier
+        if((data_type == VX_TYPE_DELAY && dir != VX_INPUT))
+                return VX_ERROR_INVALID_PARAMETERS;
+        if (kernel->external_kernel && !kernel->finalized &&
+            index < AGO_MAX_PARAMS &&
+            (dir == VX_INPUT || dir == VX_OUTPUT || dir == VX_BIDIRECTIONAL) &&
+            (state == VX_PARAMETER_STATE_REQUIRED || state == VX_PARAMETER_STATE_OPTIONAL))
+        {
+            status = VX_SUCCESS;
+            // save parameter details
+            kernel->parameters[index].index = index;
+            kernel->parameters[index].direction = (vx_direction_e)dir;
+            kernel->argConfig[index] = (dir == VX_INPUT) ? AGO_KERNEL_ARG_INPUT_FLAG :
+                ((dir == VX_OUTPUT) ? AGO_KERNEL_ARG_OUTPUT_FLAG : (AGO_KERNEL_ARG_INPUT_FLAG | AGO_KERNEL_ARG_OUTPUT_FLAG));
+            kernel->parameters[index].type = data_type;
+            kernel->argType[index] = data_type;
+            kernel->parameters[index].state = (vx_parameter_state_e)state;
+            if (state == VX_PARAMETER_STATE_OPTIONAL)
+                kernel->argConfig[index] |= AGO_KERNEL_ARG_OPTIONAL_FLAG;
+            kernel->parameters[index].scope = &kernel->ref;
+            // update argument count
+            if (index >= kernel->argCount)
+                kernel->argCount = index + 1;
+        }
+    }
+    return status;
 }
 
 /*! \brief Removes a non-finalized <tt>\ref vx_kernel</tt> from the <tt>\ref vx_context</tt>.
@@ -2497,22 +2652,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddParameterToKernel(vx_kernel kernel, vx_u
 */
 VX_API_ENTRY vx_status VX_API_CALL vxRemoveKernel(vx_kernel kernel)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidKernel(kernel)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		// release if the kernel is not finalized and not a built-in kernel or user kernel with validate_f without external references
-		if (!kernel->finalized ||
-			(kernel->validate_f && kernel->external_kernel && (kernel->flags & AGO_KERNEL_FLAG_GROUP_USER) /*&& 
-			 kernel->ref.internal_count < 2 && kernel->ref.external_count == 0*/))
-		{
-			CAgoLock lock(kernel->ref.context->cs);
-			kernel->finalized = false;
-			if (!agoReleaseKernel(kernel, true)) {
-				status = VX_SUCCESS;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidKernel(kernel)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        // release if the kernel is not finalized and not a built-in kernel or user kernel with validate_f without external references
+        if (!kernel->finalized ||
+            (kernel->validate_f && kernel->external_kernel && (kernel->flags & AGO_KERNEL_FLAG_GROUP_USER) /*&&
+             kernel->ref.internal_count < 2 && kernel->ref.external_count == 0*/))
+        {
+            CAgoLock lock(kernel->ref.context->cs);
+            kernel->finalized = false;
+            if (!agoReleaseKernel(kernel, true)) {
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets kernel attributes.
@@ -2527,108 +2682,108 @@ VX_API_ENTRY vx_status VX_API_CALL vxRemoveKernel(vx_kernel kernel)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enum attribute, const void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidKernel(kernel)) {
-		CAgoLock lock(kernel->ref.context->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_KERNEL_ATTRIBUTE_LOCAL_DATA_SIZE:
-				if (size == sizeof(vx_size)) {
-					kernel->localDataSize = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_AMD_NODE_REGEN_CALLBACK:
-				if (size == sizeof(void *)) {
-					if (!kernel->finalized) {
-						*((void **)&kernel->regen_callback_f) = *(void **)ptr;
-						status = VX_SUCCESS;
-					}
-					else {
-						status = VX_ERROR_NOT_SUPPORTED;
-					}
-				}
-				break;
-#if ENABLE_OPENCL
-			case VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT:
-				if (size == sizeof(void *)) {
-					if (!kernel->finalized) {
-						*((void **)&kernel->query_target_support_f) = *(void **)ptr;
-						status = VX_SUCCESS;
-					}
-					else {
-						status = VX_ERROR_NOT_SUPPORTED;
-					}
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK:
-				if (size == sizeof(void *)) {
-					if (!kernel->finalized) {
-						*((void **)&kernel->opencl_codegen_callback_f) = *(void **)ptr;
-						status = VX_SUCCESS;
-					}
-					else {
-						status = VX_ERROR_NOT_SUPPORTED;
-					}
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_GLOBAL_WORK_UPDATE_CALLBACK:
-				if (size == sizeof(void *)) {
-					if (!kernel->finalized) {
-						*((void **)&kernel->opencl_global_work_update_callback_f) = *(void **)ptr;
-						status = VX_SUCCESS;
-					}
-					else {
-						status = VX_ERROR_NOT_SUPPORTED;
-					}
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE:
-				if (size == sizeof(vx_bool)) {
-					if (!kernel->finalized && !kernel->opencl_buffer_update_callback_f) {
-						kernel->opencl_buffer_access_enable = *(vx_bool *)ptr;
-						status = VX_SUCCESS;
-					}
-					else {
-						status = VX_ERROR_NOT_SUPPORTED;
-					}
-				}
-				break;
-			case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK:
-				if (size == sizeof(AgoKernelOpenclBufferUpdateInfo)) {
-					if (!kernel->finalized) {
-						AgoKernelOpenclBufferUpdateInfo * info = (AgoKernelOpenclBufferUpdateInfo *)ptr;
-						if (info->opencl_buffer_update_param_index >= kernel->argCount ||
-							info->opencl_buffer_update_callback_f == nullptr ||
-							kernel->parameters[info->opencl_buffer_update_param_index].direction != VX_INPUT ||
-							kernel->parameters[info->opencl_buffer_update_param_index].type != VX_TYPE_IMAGE ||
-							kernel->parameters[info->opencl_buffer_update_param_index].state != VX_PARAMETER_STATE_REQUIRED)
-						{
-							// param index has to point to required input images only
-							status = VX_ERROR_INVALID_PARAMETERS;
-						}
-						else {
-							kernel->opencl_buffer_update_callback_f = info->opencl_buffer_update_callback_f;
-							kernel->opencl_buffer_update_param_index = info->opencl_buffer_update_param_index;
-							kernel->opencl_buffer_access_enable = vx_true_e;
-							status = VX_SUCCESS;
-						}
-					}
-					else {
-						status = VX_ERROR_NOT_SUPPORTED;
-					}
-				}
-				break;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidKernel(kernel)) {
+        CAgoLock lock(kernel->ref.context->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_KERNEL_ATTRIBUTE_LOCAL_DATA_SIZE:
+                if (size == sizeof(vx_size)) {
+                    kernel->localDataSize = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_AMD_NODE_REGEN_CALLBACK:
+                if (size == sizeof(void *)) {
+                    if (!kernel->finalized) {
+                        *((void **)&kernel->regen_callback_f) = *(void **)ptr;
+                        status = VX_SUCCESS;
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
+                }
+                break;
+#if (ENABLE_OPENCL || ENABLE_HIP)
+            case VX_KERNEL_ATTRIBUTE_AMD_QUERY_TARGET_SUPPORT:
+                if (size == sizeof(void *)) {
+                    if (!kernel->finalized) {
+                        *((void **)&kernel->query_target_support_f) = *(void **)ptr;
+                        status = VX_SUCCESS;
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_CODEGEN_CALLBACK:
+                if (size == sizeof(void *)) {
+                    if (!kernel->finalized) {
+                        *((void **)&kernel->opencl_codegen_callback_f) = *(void **)ptr;
+                        status = VX_SUCCESS;
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_GLOBAL_WORK_UPDATE_CALLBACK:
+                if (size == sizeof(void *)) {
+                    if (!kernel->finalized) {
+                        *((void **)&kernel->opencl_global_work_update_callback_f) = *(void **)ptr;
+                        status = VX_SUCCESS;
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE:
+                if (size == sizeof(vx_bool)) {
+                    if (!kernel->finalized && !kernel->opencl_buffer_update_callback_f) {
+                        kernel->opencl_buffer_access_enable = *(vx_bool *)ptr;
+                        status = VX_SUCCESS;
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
+                }
+                break;
+            case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK:
+                if (size == sizeof(AgoKernelOpenclBufferUpdateInfo)) {
+                    if (!kernel->finalized) {
+                        AgoKernelOpenclBufferUpdateInfo * info = (AgoKernelOpenclBufferUpdateInfo *)ptr;
+                        if (info->opencl_buffer_update_param_index >= kernel->argCount ||
+                            info->opencl_buffer_update_callback_f == nullptr ||
+                            kernel->parameters[info->opencl_buffer_update_param_index].direction != VX_INPUT ||
+                            kernel->parameters[info->opencl_buffer_update_param_index].type != VX_TYPE_IMAGE ||
+                            kernel->parameters[info->opencl_buffer_update_param_index].state != VX_PARAMETER_STATE_REQUIRED)
+                        {
+                            // param index has to point to required input images only
+                            status = VX_ERROR_INVALID_PARAMETERS;
+                        }
+                        else {
+                            kernel->opencl_buffer_update_callback_f = info->opencl_buffer_update_callback_f;
+                            kernel->opencl_buffer_update_param_index = info->opencl_buffer_update_param_index;
+                            kernel->opencl_buffer_access_enable = vx_true_e;
+                            status = VX_SUCCESS;
+                        }
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
+                }
+                break;
 #endif
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Retrieves a <tt>\ref vx_parameter</tt> from a <tt>\ref vx_kernel</tt>.
@@ -2641,12 +2796,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
 */
 VX_API_ENTRY vx_parameter VX_API_CALL vxGetKernelParameterByIndex(vx_kernel kernel, vx_uint32 index)
 {
-	vx_parameter parameter = NULL;
-	if (agoIsValidKernel(kernel) && index < kernel->argCount) {
-		parameter = &kernel->parameters[index];
-		parameter->ref.external_count++;
-	}
-	return parameter;
+    vx_parameter parameter = NULL;
+    if (agoIsValidKernel(kernel) && index < kernel->argCount) {
+        parameter = &kernel->parameters[index];
+        parameter->ref.external_count++;
+    }
+    return parameter;
 }
 
 /*==============================================================================
@@ -2661,11 +2816,11 @@ GRAPH
 */
 VX_API_ENTRY vx_graph VX_API_CALL vxCreateGraph(vx_context context)
 {
-	vx_graph graph = NULL;
-	if (agoIsValidContext(context)) {
-		graph = agoCreateGraph(context);
-	}
-	return graph;
+    vx_graph graph = NULL;
+    if (agoIsValidContext(context)) {
+        graph = agoCreateGraph(context);
+    }
+    return graph;
 }
 
 /*! \brief Releases a reference to a graph.
@@ -2682,14 +2837,14 @@ VX_API_ENTRY vx_graph VX_API_CALL vxCreateGraph(vx_context context)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseGraph(vx_graph *graph)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (graph && agoIsValidGraph(*graph)) {
-		if (!agoReleaseGraph(*graph)) {
-			*graph = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (graph && agoIsValidGraph(*graph)) {
+        if (!agoReleaseGraph(*graph)) {
+            *graph = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Verifies the state of the graph before it is executed.
@@ -2718,56 +2873,56 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseGraph(vx_graph *graph)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidGraph(graph)) {
-		CAgoLock lock(graph->cs);
-		CAgoLock lock2(graph->ref.context->cs);
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        CAgoLock lock2(graph->ref.context->cs);
 
-		// mark that graph is not verified and can't be executed
-		//graph->verified = vx_false_e;
-		graph->isReadyToExecute = vx_false_e;
+        // mark that graph is not verified and can't be executed
+        //graph->verified = vx_false_e;
+        graph->isReadyToExecute = vx_false_e;
         graph->state = VX_GRAPH_STATE_UNVERIFIED;
 
-		// check to see if user requested for graph dump
-		vx_uint32 ago_graph_dump = 0;
-		char textBuffer[256];
-		if (agoGetEnvironmentVariable("AGO_DUMP_GRAPH", textBuffer, sizeof(textBuffer))) {
-			ago_graph_dump = atoi(textBuffer);
-		}
-		if (ago_graph_dump) {
-			agoWriteGraph(graph, NULL, 0, stdout, "*INPUT*");
-		}
+        // check to see if user requested for graph dump
+        vx_uint32 ago_graph_dump = 0;
+        char textBuffer[256];
+        if (agoGetEnvironmentVariable("AGO_DUMP_GRAPH", textBuffer, sizeof(textBuffer))) {
+            ago_graph_dump = atoi(textBuffer);
+        }
+        if (ago_graph_dump) {
+            agoWriteGraph(graph, NULL, 0, stdout, "*INPUT*");
+        }
 
-		// verify graph per OpenVX specification
-		status = agoVerifyGraph(graph);
-		if (status == VX_SUCCESS) {
-			// run graph optimizer
-			if (agoOptimizeGraph(graph)) {
-				status = VX_FAILURE;
-			}
-			// initialize graph
-			else if (agoInitializeGraph(graph)) {
-				status = VX_FAILURE;
-			}
-			// graph is ready to execute
-			else {
-				graph->isReadyToExecute = vx_true_e;
-			}
-			graph->verified = vx_true_e;
-			graph->state = VX_GRAPH_STATE_VERIFIED;
-		}
+        // verify graph per OpenVX specification
+        status = agoVerifyGraph(graph);
+        if (status == VX_SUCCESS) {
+            // run graph optimizer
+            if (agoOptimizeGraph(graph)) {
+                status = VX_FAILURE;
+            }
+            // initialize graph
+            else if (agoInitializeGraph(graph)) {
+                status = VX_FAILURE;
+            }
+            // graph is ready to execute
+            else {
+                graph->isReadyToExecute = vx_true_e;
+            }
+            graph->verified = vx_true_e;
+            graph->state = VX_GRAPH_STATE_VERIFIED;
+        }
 
-		if (ago_graph_dump) {
-			if (status == VX_SUCCESS) {
-				agoWriteGraph(graph, NULL, 0, stdout, "*FINAL*");
-			}
-		}
-	}
-	if (status == VX_SUCCESS)
-		graph->verified = vx_true_e;
-	else
-		graph->verified = vx_false_e;
-	return status;
+        if (ago_graph_dump) {
+            if (status == VX_SUCCESS) {
+                agoWriteGraph(graph, NULL, 0, stdout, "*FINAL*");
+            }
+        }
+    }
+    if (status == VX_SUCCESS)
+        graph->verified = vx_true_e;
+    else
+        graph->verified = vx_false_e;
+    return status;
 }
 
 /*! \brief This function causes the synchronous processing of a graph. If the graph
@@ -2788,8 +2943,8 @@ VX_API_ENTRY vx_status VX_API_CALL vxVerifyGraph(vx_graph graph)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxProcessGraph(vx_graph graph)
 {
-	vx_status status = agoProcessGraph(graph);
-	return status;
+    vx_status status = agoProcessGraph(graph);
+    return status;
 }
 
 /*! \brief Schedules a graph for future execution.
@@ -2804,7 +2959,7 @@ forced verification.
 */
 VX_API_ENTRY vx_status VX_API_CALL vxScheduleGraph(vx_graph graph)
 {
-	return agoScheduleGraph(graph);
+    return agoScheduleGraph(graph);
 }
 
 /*! \brief Waits for a specific graph to complete.
@@ -2817,7 +2972,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxScheduleGraph(vx_graph graph)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxWaitGraph(vx_graph graph)
 {
-	return agoWaitGraph(graph);
+    return agoWaitGraph(graph);
 }
 
 /*! \brief Allows the user to query attributes of the Graph.
@@ -2830,107 +2985,107 @@ VX_API_ENTRY vx_status VX_API_CALL vxWaitGraph(vx_graph graph)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryGraph(vx_graph graph, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidGraph(graph)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			CAgoLock lock(graph->cs);
-			switch (attribute)
-			{
-			case VX_GRAPH_ATTRIBUTE_NUMNODES:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = graph->nodeList.count;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_STATUS:
-				if (size == sizeof(vx_status)) {
-					*(vx_status *)ptr = graph->status;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_PERFORMANCE:
-				if (size == sizeof(vx_perf_t)) {
-					agoPerfCopyNormalize(graph->ref.context, (vx_perf_t *)ptr, &graph->perf);
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_STATE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_status *)ptr = graph->state;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_NUMPARAMETERS:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = (vx_uint32)graph->parameters.size();
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_OPTIMIZER_FLAGS:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = graph->optimizer_flags;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_AFFINITY:
-				if (size == sizeof(AgoTargetAffinityInfo_)) {
-					*(AgoTargetAffinityInfo_ *)ptr = graph->attr_affinity;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_PERFORMANCE_INTERNAL_LAST:
-				if (size == sizeof(AgoGraphPerfInternalInfo)) {
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidGraph(graph)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            CAgoLock lock(graph->cs);
+            switch (attribute)
+            {
+            case VX_GRAPH_ATTRIBUTE_NUMNODES:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = graph->nodeList.count;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_STATUS:
+                if (size == sizeof(vx_status)) {
+                    *(vx_status *)ptr = graph->status;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_PERFORMANCE:
+                if (size == sizeof(vx_perf_t)) {
+                    agoPerfCopyNormalize(graph->ref.context, (vx_perf_t *)ptr, &graph->perf);
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_STATE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_status *)ptr = graph->state;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_NUMPARAMETERS:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = (vx_uint32)graph->parameters.size();
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_OPTIMIZER_FLAGS:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = graph->optimizer_flags;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_AFFINITY:
+                if (size == sizeof(AgoTargetAffinityInfo_)) {
+                    *(AgoTargetAffinityInfo_ *)ptr = graph->attr_affinity;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_PERFORMANCE_INTERNAL_LAST:
+                if (size == sizeof(AgoGraphPerfInternalInfo)) {
 #if ENABLE_OPENCL
-					// normalize all time units into nanoseconds
-					uint64_t num = 1000000000, denom = (uint64_t)agoGetClockFrequency();
-					((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = graph->opencl_perf.kernel_enqueue * num / denom;
-					((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = graph->opencl_perf.kernel_wait * num / denom;
-					((AgoGraphPerfInternalInfo *)ptr)->buffer_read = graph->opencl_perf.buffer_read * num / denom;
-					((AgoGraphPerfInternalInfo *)ptr)->buffer_write = graph->opencl_perf.buffer_write * num / denom;
+                    // normalize all time units into nanoseconds
+                    uint64_t num = 1000000000, denom = (uint64_t)agoGetClockFrequency();
+                    ((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = graph->opencl_perf.kernel_enqueue * num / denom;
+                    ((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = graph->opencl_perf.kernel_wait * num / denom;
+                    ((AgoGraphPerfInternalInfo *)ptr)->buffer_read = graph->opencl_perf.buffer_read * num / denom;
+                    ((AgoGraphPerfInternalInfo *)ptr)->buffer_write = graph->opencl_perf.buffer_write * num / denom;
 #else
-					memset(ptr, 0, size);
+                    memset(ptr, 0, size);
 #endif
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_PERFORMANCE_INTERNAL_AVG:
-				if (size == sizeof(AgoGraphPerfInternalInfo)) {
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_PERFORMANCE_INTERNAL_AVG:
+                if (size == sizeof(AgoGraphPerfInternalInfo)) {
 #if ENABLE_OPENCL
-					if (graph->perf.num > 0) {
-						// normalize all time units into nanoseconds
-						uint64_t num = 1000000000, denom = (uint64_t)agoGetClockFrequency();
-						((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = (graph->opencl_perf_total.kernel_enqueue / graph->perf.num) * num / denom;
-						((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = (graph->opencl_perf_total.kernel_wait / graph->perf.num) * num / denom;
-						((AgoGraphPerfInternalInfo *)ptr)->buffer_read = (graph->opencl_perf_total.buffer_read / graph->perf.num) * num / denom;
-						((AgoGraphPerfInternalInfo *)ptr)->buffer_write = (graph->opencl_perf_total.buffer_write / graph->perf.num) * num / denom;
-					}
-					else
+                    if (graph->perf.num > 0) {
+                        // normalize all time units into nanoseconds
+                        uint64_t num = 1000000000, denom = (uint64_t)agoGetClockFrequency();
+                        ((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = (graph->opencl_perf_total.kernel_enqueue / graph->perf.num) * num / denom;
+                        ((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = (graph->opencl_perf_total.kernel_wait / graph->perf.num) * num / denom;
+                        ((AgoGraphPerfInternalInfo *)ptr)->buffer_read = (graph->opencl_perf_total.buffer_read / graph->perf.num) * num / denom;
+                        ((AgoGraphPerfInternalInfo *)ptr)->buffer_write = (graph->opencl_perf_total.buffer_write / graph->perf.num) * num / denom;
+                    }
+                    else
 #endif
-					{
-						memset(ptr, 0, size);
-					}
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_PERFORMANCE_INTERNAL_PROFILE:
-				status = agoGraphDumpPerformanceProfile(graph, (const char *)ptr);
-				break;
+                    {
+                        memset(ptr, 0, size);
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_PERFORMANCE_INTERNAL_PROFILE:
+                status = agoGraphDumpPerformanceProfile(graph, (const char *)ptr);
+                break;
 #if ENABLE_OPENCL
-			case VX_GRAPH_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE:
-				if (size == sizeof(cl_command_queue)) {
-					*(cl_command_queue *)ptr = graph->opencl_cmdq;
-					status = VX_SUCCESS;
-				}
-				break;
+            case VX_GRAPH_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE:
+                if (size == sizeof(cl_command_queue)) {
+                    *(cl_command_queue *)ptr = graph->opencl_cmdq;
+                    status = VX_SUCCESS;
+                }
+                break;
 #endif
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the set to attributes on the Graph.
@@ -2943,61 +3098,61 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryGraph(vx_graph graph, vx_enum attribut
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetGraphAttribute(vx_graph graph, vx_enum attribute, const void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidGraph(graph)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			CAgoLock lock(graph->cs);
-			switch (attribute)
-			{
-			case VX_GRAPH_ATTRIBUTE_AMD_IMPORT_FROM_TEXT:
-				if (size == sizeof(AgoGraphImportInfo)) {
-					status = VX_SUCCESS;
-					AgoGraphImportInfo * info = (AgoGraphImportInfo *)ptr;
-					if (agoReadGraphFromString(graph, info->ref, info->num_ref, info->data_registry_callback_f, info->data_registry_callback_obj, info->text, info->dumpToConsole)) {
-						status = VX_FAILURE;
-					}
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_EXPORT_TO_TEXT:
-				if (size == sizeof(AgoGraphExportInfo)) {
-					status = VX_SUCCESS;
-					AgoGraphExportInfo * info = (AgoGraphExportInfo *)ptr;
-					FILE * fp = stdout;
-					if (strcmp(info->fileName, "stdout") != 0) {
-						fp = fopen(info->fileName, "w");
-						if (!fp) {
-							status = VX_FAILURE;
-							agoAddLogEntry(&graph->ref, status, "ERROR: vxSetGraphAttribute: unable to create: %s\n", info->fileName);
-						}
-					}
-					else if (agoWriteGraph(graph, info->ref, info->num_ref, fp, info->comment)) {
-						status = VX_FAILURE;
-					}
-					if (fp && fp != stdout) {
-						fclose(fp);
-					}
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_OPTIMIZER_FLAGS:
-				if (size == sizeof(vx_uint32)) {
-					graph->optimizer_flags = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_GRAPH_ATTRIBUTE_AMD_AFFINITY:
-				if (size == sizeof(AgoTargetAffinityInfo_)) {
-					status = VX_SUCCESS;
-					graph->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidGraph(graph)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            CAgoLock lock(graph->cs);
+            switch (attribute)
+            {
+            case VX_GRAPH_ATTRIBUTE_AMD_IMPORT_FROM_TEXT:
+                if (size == sizeof(AgoGraphImportInfo)) {
+                    status = VX_SUCCESS;
+                    AgoGraphImportInfo * info = (AgoGraphImportInfo *)ptr;
+                    if (agoReadGraphFromString(graph, info->ref, info->num_ref, info->data_registry_callback_f, info->data_registry_callback_obj, info->text, info->dumpToConsole)) {
+                        status = VX_FAILURE;
+                    }
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_EXPORT_TO_TEXT:
+                if (size == sizeof(AgoGraphExportInfo)) {
+                    status = VX_SUCCESS;
+                    AgoGraphExportInfo * info = (AgoGraphExportInfo *)ptr;
+                    FILE * fp = stdout;
+                    if (strcmp(info->fileName, "stdout") != 0) {
+                        fp = fopen(info->fileName, "w");
+                        if (!fp) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&graph->ref, status, "ERROR: vxSetGraphAttribute: unable to create: %s\n", info->fileName);
+                        }
+                    }
+                    else if (agoWriteGraph(graph, info->ref, info->num_ref, fp, info->comment)) {
+                        status = VX_FAILURE;
+                    }
+                    if (fp && fp != stdout) {
+                        fclose(fp);
+                    }
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_OPTIMIZER_FLAGS:
+                if (size == sizeof(vx_uint32)) {
+                    graph->optimizer_flags = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_GRAPH_ATTRIBUTE_AMD_AFFINITY:
+                if (size == sizeof(AgoTargetAffinityInfo_)) {
+                    status = VX_SUCCESS;
+                    graph->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Adds the given parameter extracted from a <tt>\ref vx_node</tt> to the graph.
@@ -3012,15 +3167,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphAttribute(vx_graph graph, vx_enum a
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAddParameterToGraph(vx_graph graph, vx_parameter parameter)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidGraph(graph) && !graph->verified) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (!parameter || (agoIsValidParameter(parameter) && parameter->scope->type == VX_TYPE_NODE)) {
-			graph->parameters.push_back(parameter);
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidGraph(graph) && !graph->verified) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (!parameter || (agoIsValidParameter(parameter) && parameter->scope->type == VX_TYPE_NODE)) {
+            graph->parameters.push_back(parameter);
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets a reference to the parameter on the graph. The implementation
@@ -3037,22 +3192,22 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddParameterToGraph(vx_graph graph, vx_para
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetGraphParameterByIndex(vx_graph graph, vx_uint32 index, vx_reference value)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidGraph(graph) && !graph->verified) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((index < graph->parameters.size()) && graph->parameters[index] && (!value || agoIsValidReference(value))) {
-			vx_parameter parameter = graph->parameters[index];
-			if (((vx_node)parameter->scope)->paramList[parameter->index]) {
-				agoReleaseData(((vx_node)parameter->scope)->paramList[parameter->index], false);
-			}
-			((vx_node)parameter->scope)->paramList[parameter->index] = (AgoData *)value;
-			if (((vx_node)parameter->scope)->paramList[parameter->index]) {
-				agoRetainData(graph, ((vx_node)parameter->scope)->paramList[parameter->index], false);
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidGraph(graph) && !graph->verified) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((index < graph->parameters.size()) && graph->parameters[index] && (!value || agoIsValidReference(value))) {
+            vx_parameter parameter = graph->parameters[index];
+            if (((vx_node)parameter->scope)->paramList[parameter->index]) {
+                agoReleaseData(((vx_node)parameter->scope)->paramList[parameter->index], false);
+            }
+            ((vx_node)parameter->scope)->paramList[parameter->index] = (AgoData *)value;
+            if (((vx_node)parameter->scope)->paramList[parameter->index]) {
+                agoRetainData(graph, ((vx_node)parameter->scope)->paramList[parameter->index], false);
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Retrieves a <tt>\ref vx_parameter</tt> from a <tt>\ref vx_graph</tt>.
@@ -3065,12 +3220,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetGraphParameterByIndex(vx_graph graph, vx
 */
 VX_API_ENTRY vx_parameter VX_API_CALL vxGetGraphParameterByIndex(vx_graph graph, vx_uint32 index)
 {
-	vx_parameter parameter = NULL;
-	if (agoIsValidGraph(graph) && (index < graph->parameters.size())) {
-		parameter = graph->parameters[index];
-		parameter->ref.external_count++;
-	}
-	return parameter;
+    vx_parameter parameter = NULL;
+    if (agoIsValidGraph(graph) && (index < graph->parameters.size())) {
+        parameter = graph->parameters[index];
+        parameter->ref.external_count++;
+    }
+    return parameter;
 }
 
 /*! \brief Returns a Boolean to indicate the state of graph verification.
@@ -3084,11 +3239,11 @@ VX_API_ENTRY vx_parameter VX_API_CALL vxGetGraphParameterByIndex(vx_graph graph,
 */
 VX_API_ENTRY vx_bool VX_API_CALL vxIsGraphVerified(vx_graph graph)
 {
-	vx_bool verified = vx_false_e;
-	if (agoIsValidGraph(graph)) {
-		verified = graph->verified ? vx_true_e : vx_false_e;
-	}
-	return verified;
+    vx_bool verified = vx_false_e;
+    if (agoIsValidGraph(graph)) {
+        verified = graph->verified ? vx_true_e : vx_false_e;
+    }
+    return verified;
 }
 
 /*==============================================================================
@@ -3110,16 +3265,16 @@ NODE
 */
 VX_API_ENTRY vx_node VX_API_CALL vxCreateGenericNode(vx_graph graph, vx_kernel kernel)
 {
-	vx_node node = NULL;
-	if (agoIsValidGraph(graph) && agoIsValidKernel(kernel) && /*!graph->verified &&*/ kernel->finalized) {
-		CAgoLock lock(graph->cs);
-		// graph->reverify = graph->verified;
-		// graph->verified = vx_false_e;
-		// graph->state = VX_GRAPH_STATE_UNVERIFIED;
-		node = agoCreateNode(graph, kernel);
-		node->ref.external_count++;
-	}
-	return node;
+    vx_node node = NULL;
+    if (agoIsValidGraph(graph) && agoIsValidKernel(kernel) && /*!graph->verified &&*/ kernel->finalized) {
+        CAgoLock lock(graph->cs);
+        // graph->reverify = graph->verified;
+        // graph->verified = vx_false_e;
+        // graph->state = VX_GRAPH_STATE_UNVERIFIED;
+        node = agoCreateNode(graph, kernel);
+        node->ref.external_count++;
+    }
+    return node;
 }
 
 /*! \brief Allows a user to query information out of a node.
@@ -3134,85 +3289,85 @@ VX_API_ENTRY vx_node VX_API_CALL vxCreateGenericNode(vx_graph graph, vx_kernel k
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidNode(node)) {
-		CAgoLock lock(((vx_graph)node->ref.scope)->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_NODE_STATUS:
-				if (size == sizeof(vx_status)) {
-					*(vx_status *)ptr = node->status;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_PERFORMANCE:
-				if (size == sizeof(vx_perf_t)) {
-					vx_perf_t * perf = &node->perf;
-					if (node->perf.num == 0) {
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidNode(node)) {
+        CAgoLock lock(((vx_graph)node->ref.scope)->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_NODE_STATUS:
+                if (size == sizeof(vx_status)) {
+                    *(vx_status *)ptr = node->status;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_PERFORMANCE:
+                if (size == sizeof(vx_perf_t)) {
+                    vx_perf_t * perf = &node->perf;
+                    if (node->perf.num == 0) {
                         // TBD: need mapping of node performance into its subsets or superset
                         // For now, nodes that doesn't exist in the graph will report the overall graph
                         // performance because the nodes might have got morphed into other nodes have
                         // no accountability
-						perf = &((AgoGraph *)node->ref.scope)->perf;
-					}
-					agoPerfCopyNormalize(node->ref.context, (vx_perf_t *)ptr, perf);
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_BORDER:
-				if (size == sizeof(vx_border_mode_t) || size == sizeof(vx_border_t)) {
-					*(vx_border_mode_t *)ptr = node->attr_border_mode;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_LOCAL_DATA_SIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = node->localDataSize;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_LOCAL_DATA_PTR:
-				if (size == sizeof(void *)) {
-					*(void **)ptr = node->localDataPtr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_PARAMETERS:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = node->paramCount;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_VALID_RECT_RESET:
-				if (size == sizeof(vx_bool)) {
-					*(vx_bool *)ptr = node->valid_rect_reset;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
-				if (size == sizeof(AgoTargetAffinityInfo_)) {
-					*(AgoTargetAffinityInfo_ *)ptr = node->attr_affinity;
-					status = VX_SUCCESS;
-				}
-				break;
+                        perf = &((AgoGraph *)node->ref.scope)->perf;
+                    }
+                    agoPerfCopyNormalize(node->ref.context, (vx_perf_t *)ptr, perf);
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_BORDER:
+                if (size == sizeof(vx_border_mode_t) || size == sizeof(vx_border_t)) {
+                    *(vx_border_mode_t *)ptr = node->attr_border_mode;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_LOCAL_DATA_SIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = node->localDataSize;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_LOCAL_DATA_PTR:
+                if (size == sizeof(void *)) {
+                    *(void **)ptr = node->localDataPtr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_PARAMETERS:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = node->paramCount;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_VALID_RECT_RESET:
+                if (size == sizeof(vx_bool)) {
+                    *(vx_bool *)ptr = node->valid_rect_reset;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
+                if (size == sizeof(AgoTargetAffinityInfo_)) {
+                    *(AgoTargetAffinityInfo_ *)ptr = node->attr_affinity;
+                    status = VX_SUCCESS;
+                }
+                break;
 #if ENABLE_OPENCL
-			case VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE:
-				if (size == sizeof(cl_command_queue)) {
-					AgoGraph * graph = (AgoGraph *)node->ref.scope;
-					*(cl_command_queue *)ptr = graph->opencl_cmdq;
-					status = VX_SUCCESS;
-				}
-				break;
+            case VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE:
+                if (size == sizeof(cl_command_queue)) {
+                    AgoGraph * graph = (AgoGraph *)node->ref.scope;
+                    *(cl_command_queue *)ptr = graph->opencl_cmdq;
+                    status = VX_SUCCESS;
+                }
+                break;
 #endif
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows a user to set attribute of a node before Graph Validation.
@@ -3231,58 +3386,58 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryNode(vx_node node, vx_enum attribute, 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetNodeAttribute(vx_node node, vx_enum attribute, const void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidNode(node)) {
-		CAgoLock lock(((vx_graph)node->ref.scope)->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_NODE_ATTRIBUTE_BORDER_MODE:
-				if (size == sizeof(vx_border_mode_t) || size == sizeof(vx_border_t)) {
-					node->attr_border_mode = *(vx_border_mode_t *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_NODE_ATTRIBUTE_LOCAL_DATA_SIZE:
-				if (node->local_data_change_is_enabled) {
-					if (size == sizeof(vx_size)) {
-						node->localDataSize = *(vx_size *)ptr;
-						node->local_data_set_by_implementation = vx_false_e;
-						status = VX_SUCCESS;
-					}
-				}
-				else
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidNode(node)) {
+        CAgoLock lock(((vx_graph)node->ref.scope)->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_NODE_ATTRIBUTE_BORDER_MODE:
+                if (size == sizeof(vx_border_mode_t) || size == sizeof(vx_border_t)) {
+                    node->attr_border_mode = *(vx_border_mode_t *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_NODE_ATTRIBUTE_LOCAL_DATA_SIZE:
+                if (node->local_data_change_is_enabled) {
+                    if (size == sizeof(vx_size)) {
+                        node->localDataSize = *(vx_size *)ptr;
+                        node->local_data_set_by_implementation = vx_false_e;
+                        status = VX_SUCCESS;
+                    }
+                }
+                else
                 {
                     status = VX_ERROR_NOT_SUPPORTED;
                 }
-				break;
-			case VX_NODE_ATTRIBUTE_LOCAL_DATA_PTR:
-				if(node->local_data_change_is_enabled) {
-					if (size == sizeof(void *)) {
-						node->localDataPtr = *(vx_uint8 **)ptr;
-						node->local_data_set_by_implementation = vx_false_e;
-						status = VX_SUCCESS;
-					}
-				}
-				else
-            	{
+                break;
+            case VX_NODE_ATTRIBUTE_LOCAL_DATA_PTR:
+                if(node->local_data_change_is_enabled) {
+                    if (size == sizeof(void *)) {
+                        node->localDataPtr = *(vx_uint8 **)ptr;
+                        node->local_data_set_by_implementation = vx_false_e;
+                        status = VX_SUCCESS;
+                    }
+                }
+                else
+                {
                     status = VX_ERROR_NOT_SUPPORTED;
-	            }
-				break;
-			case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
-				if (size == sizeof(AgoTargetAffinityInfo_)) {
-					node->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+                }
+                break;
+            case VX_NODE_ATTRIBUTE_AMD_AFFINITY:
+                if (size == sizeof(AgoTargetAffinityInfo_)) {
+                    node->attr_affinity = *(AgoTargetAffinityInfo_ *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Releases a reference to a Node object.
@@ -3296,14 +3451,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeAttribute(vx_node node, vx_enum attr
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseNode(vx_node *node)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (node && agoIsValidNode(*node)) {
-		if (!agoReleaseNode(*node)) {
-			*node = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (node && agoIsValidNode(*node)) {
+        if (!agoReleaseNode(*node)) {
+            *node = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Removes a Node from its parent Graph and releases it.
@@ -3313,24 +3468,24 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseNode(vx_node *node)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxRemoveNode(vx_node *node)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (node && agoIsValidNode(*node)) {
-		vx_node anode = *node;
-		vx_graph graph = (vx_graph)anode->ref.scope;
-		CAgoLock lock(graph->cs);
-		if (!graph->verified && anode->ref.external_count == 1) {
-			// only remove the kernels that are created externally
-			if (agoRemoveNode(&graph->nodeList, anode, true)) {
-				status = VX_FAILURE;
-				agoAddLogEntry(&anode->ref, status, "ERROR: vxRemoveNode: failed for %s\n", anode->akernel->name);
-			}
-			else {
-				*node = NULL;
-				status = VX_SUCCESS;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (node && agoIsValidNode(*node)) {
+        vx_node anode = *node;
+        vx_graph graph = (vx_graph)anode->ref.scope;
+        CAgoLock lock(graph->cs);
+        if (!graph->verified && anode->ref.external_count == 1) {
+            // only remove the kernels that are created externally
+            if (agoRemoveNode(&graph->nodeList, anode, true)) {
+                status = VX_FAILURE;
+                agoAddLogEntry(&anode->ref, status, "ERROR: vxRemoveNode: failed for %s\n", anode->akernel->name);
+            }
+            else {
+                *node = NULL;
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Assigns a callback to a node.
@@ -3348,15 +3503,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxRemoveNode(vx_node *node)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAssignNodeCallback(vx_node node, vx_nodecomplete_f callback)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidNode(node)) {
-		node->callback = callback;
-		if (node->newchildnode) {
-			node->newchildnode->callback = callback;
-		}
-		status = VX_SUCCESS;
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidNode(node)) {
+        node->callback = callback;
+        if (node->newchildnode) {
+            node->newchildnode->callback = callback;
+        }
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 /*! \brief Retrieves the current node callback function pointer set on the node.
@@ -3368,12 +3523,12 @@ VX_API_ENTRY vx_status VX_API_CALL vxAssignNodeCallback(vx_node node, vx_nodecom
 */
 VX_API_ENTRY vx_nodecomplete_f VX_API_CALL vxRetrieveNodeCallback(vx_node node)
 {
-	vx_nodecomplete_f callback = NULL;
-	if (agoIsValidNode(node)) {
-		callback = node->callback;
-	}
+    vx_nodecomplete_f callback = NULL;
+    if (agoIsValidNode(node)) {
+        callback = node->callback;
+    }
 
-	return callback;
+    return callback;
 }
 
 /*! \brief Sets the node target to the provided value. A success invalidates the graph
@@ -3391,34 +3546,34 @@ VX_API_ENTRY vx_nodecomplete_f VX_API_CALL vxRetrieveNodeCallback(vx_node node)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetNodeTarget(vx_node node, vx_enum target_enum, const char* target_string)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidNode(node)) {
-		status = VX_ERROR_NOT_SUPPORTED;
-		if (target_enum == VX_TARGET_ANY) {
-			status = VX_SUCCESS;
-		}
-		else if (target_enum == VX_TARGET_STRING) {
-			if (!target_string) {
-				status = VX_ERROR_INVALID_REFERENCE;
-			}
-			else if (!_stricmp(target_string, "any")) {
-				status = VX_SUCCESS;
-			}
-			else if (!_stricmp(target_string, "cpu")) {
-				if (node->attr_affinity.device_type == 0) {
-					node->attr_affinity.device_type = AGO_TARGET_AFFINITY_CPU;
-					status = VX_SUCCESS;
-				}
-			}
-			else if (!_stricmp(target_string, "gpu")) {
-				if (node->attr_affinity.device_type == 0) {
-					node->attr_affinity.device_type = AGO_TARGET_AFFINITY_GPU;
-					status = VX_SUCCESS;
-				}
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidNode(node)) {
+        status = VX_ERROR_NOT_SUPPORTED;
+        if (target_enum == VX_TARGET_ANY) {
+            status = VX_SUCCESS;
+        }
+        else if (target_enum == VX_TARGET_STRING) {
+            if (!target_string) {
+                status = VX_ERROR_INVALID_REFERENCE;
+            }
+            else if (!_stricmp(target_string, "any")) {
+                status = VX_SUCCESS;
+            }
+            else if (!_stricmp(target_string, "cpu")) {
+                if (node->attr_affinity.device_type == 0) {
+                    node->attr_affinity.device_type = AGO_TARGET_AFFINITY_CPU;
+                    status = VX_SUCCESS;
+                }
+            }
+            else if (!_stricmp(target_string, "gpu")) {
+                if (node->attr_affinity.device_type == 0) {
+                    node->attr_affinity.device_type = AGO_TARGET_AFFINITY_GPU;
+                    status = VX_SUCCESS;
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Creates replicas of the same node first_node to process a set of objects
@@ -3444,57 +3599,57 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetNodeTarget(vx_node node, vx_enum target_
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReplicateNode(vx_graph graph, vx_node first_node, vx_bool replicate[], vx_uint32 number_of_parameters)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidGraph(graph) && agoIsValidNode(first_node)) {
-		status = VX_FAILURE;
-		if (first_node->ref.scope == &graph->ref && first_node->paramCount == number_of_parameters) {
-			status = VX_SUCCESS;
-			AgoData ** paramList = first_node->paramList;
-			vx_uint32 num_levels = 0;
-			for (vx_uint32 i = 0; i < number_of_parameters; i++) {
-				if (replicate[i]) {
-					if (paramList[i] && paramList[i]->parent && paramList[i]->siblingIndex == 0 && (paramList[i]->parent->ref.type == VX_TYPE_PYRAMID || paramList[i]->parent->ref.type == VX_TYPE_OBJECT_ARRAY)) {
-						if (num_levels != paramList[i]->parent->numChildren) {
-							if (num_levels == 0) {
-								num_levels = paramList[i]->parent->numChildren;
-							}
-							else {
-								status = VX_FAILURE;
-								break;
-							}
-						}
-					}
-					else {
-						status = VX_ERROR_NOT_COMPATIBLE;
-						break;
-					}
-				}
-			}
-			if (num_levels < 2)
-				status = VX_ERROR_NOT_COMPATIBLE;
-			for (vx_uint32 level = 1; level < num_levels && status == VX_SUCCESS; level++) {
-				vx_node node = vxCreateGenericNode(graph, first_node->akernel);
-				status = vxGetStatus((vx_reference)node);
-				if (status == VX_SUCCESS) {
-					for (vx_uint32 i = 0; i < number_of_parameters && status == VX_SUCCESS; i++) {
-						if (replicate[i]) {
-							AgoData * param = paramList[i]->parent->children[level];
-							if (param) {
-								status = vxSetParameterByIndex(node, i, &paramList[i]->parent->children[level]->ref);
-							}
-							else {
-								status = VX_FAILURE;
-							}
-						}
-						else if (paramList[i]) {
-							status = vxSetParameterByIndex(node, i, &paramList[i]->ref);
-						}
-					}
-				}
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidGraph(graph) && agoIsValidNode(first_node)) {
+        status = VX_FAILURE;
+        if (first_node->ref.scope == &graph->ref && first_node->paramCount == number_of_parameters) {
+            status = VX_SUCCESS;
+            AgoData ** paramList = first_node->paramList;
+            vx_uint32 num_levels = 0;
+            for (vx_uint32 i = 0; i < number_of_parameters; i++) {
+                if (replicate[i]) {
+                    if (paramList[i] && paramList[i]->parent && paramList[i]->siblingIndex == 0 && (paramList[i]->parent->ref.type == VX_TYPE_PYRAMID || paramList[i]->parent->ref.type == VX_TYPE_OBJECT_ARRAY)) {
+                        if (num_levels != paramList[i]->parent->numChildren) {
+                            if (num_levels == 0) {
+                                num_levels = paramList[i]->parent->numChildren;
+                            }
+                            else {
+                                status = VX_FAILURE;
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        status = VX_ERROR_NOT_COMPATIBLE;
+                        break;
+                    }
+                }
+            }
+            if (num_levels < 2)
+                status = VX_ERROR_NOT_COMPATIBLE;
+            for (vx_uint32 level = 1; level < num_levels && status == VX_SUCCESS; level++) {
+                vx_node node = vxCreateGenericNode(graph, first_node->akernel);
+                status = vxGetStatus((vx_reference)node);
+                if (status == VX_SUCCESS) {
+                    for (vx_uint32 i = 0; i < number_of_parameters && status == VX_SUCCESS; i++) {
+                        if (replicate[i]) {
+                            AgoData * param = paramList[i]->parent->children[level];
+                            if (param) {
+                                status = vxSetParameterByIndex(node, i, &paramList[i]->parent->children[level]->ref);
+                            }
+                            else {
+                                status = VX_FAILURE;
+                            }
+                        }
+                        else if (paramList[i]) {
+                            status = vxSetParameterByIndex(node, i, &paramList[i]->ref);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -3509,14 +3664,14 @@ PARAMETER
 */
 VX_API_ENTRY vx_parameter VX_API_CALL vxGetParameterByIndex(vx_node node, vx_uint32 index)
 {
-	vx_parameter parameter = NULL;
-	if (agoIsValidNode(node) && (index < node->paramCount)) {
-		if (agoUpdateDelaySlots(node) == VX_SUCCESS) {
-			parameter = &node->parameters[index];
-			parameter->ref.external_count++;
-		}
-	}
-	return parameter;
+    vx_parameter parameter = NULL;
+    if (agoIsValidNode(node) && (index < node->paramCount)) {
+        if (agoUpdateDelaySlots(node) == VX_SUCCESS) {
+            parameter = &node->parameters[index];
+            parameter->ref.external_count++;
+        }
+    }
+    return parameter;
 }
 
 /*! \brief Releases a reference to a parameter object.
@@ -3530,15 +3685,15 @@ VX_API_ENTRY vx_parameter VX_API_CALL vxGetParameterByIndex(vx_node node, vx_uin
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseParameter(vx_parameter *param)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (param && agoIsValidParameter(*param)) {
-		if ((*param)->ref.external_count > 0) {
-			(*param)->ref.external_count--;
-			*param = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (param && agoIsValidParameter(*param)) {
+        if ((*param)->ref.external_count > 0) {
+            (*param)->ref.external_count--;
+            *param = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets the specified parameter data for a kernel on the node.
@@ -3551,38 +3706,38 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseParameter(vx_parameter *param)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetParameterByIndex(vx_node node, vx_uint32 index, vx_reference value)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidNode(node)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		vx_graph graph = (AgoGraph *)node->ref.scope;
-		if (graph->verified) {
-			status = VX_ERROR_NOT_SUPPORTED;
-		}
-		else if (node->parameters[index].state == VX_PARAMETER_STATE_REQUIRED && !value) {
-			status = VX_ERROR_INVALID_REFERENCE;
-		}
-		else if ((index < node->paramCount) && (!node->parameters[index].type || !value || node->parameters[index].type == value->type || node->parameters[index].type == VX_TYPE_REFERENCE)) {
-			if (node->paramList[index]) {
-				agoReleaseData(node->paramList[index], false);
-			}
-			AgoData * data = (AgoData *)value;
-			if (data && agoIsPartOfDelay(data)) {
-				// get the trace to delay object from original node parameter without vxAgeDelay changes
-				int siblingTrace[AGO_MAX_DEPTH_FROM_DELAY_OBJECT], siblingTraceCount = 0;
-				AgoData * delay = agoGetSiblingTraceToDelayForInit(data, siblingTrace, siblingTraceCount);
-				if (delay) {
-					// get the data 
-					data = agoGetDataFromTrace(delay, siblingTrace, siblingTraceCount);
-				}
-			}
-			node->paramList[index] = node->paramListForAgeDelay[index] = data;
-			if (node->paramList[index]) {
-				agoRetainData((AgoGraph *)node->ref.scope, node->paramList[index], false);
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidNode(node)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        vx_graph graph = (AgoGraph *)node->ref.scope;
+        if (graph->verified) {
+            status = VX_ERROR_NOT_SUPPORTED;
+        }
+        else if (node->parameters[index].state == VX_PARAMETER_STATE_REQUIRED && !value) {
+            status = VX_ERROR_INVALID_REFERENCE;
+        }
+        else if ((index < node->paramCount) && (!node->parameters[index].type || !value || node->parameters[index].type == value->type || node->parameters[index].type == VX_TYPE_REFERENCE)) {
+            if (node->paramList[index]) {
+                agoReleaseData(node->paramList[index], false);
+            }
+            AgoData * data = (AgoData *)value;
+            if (data && agoIsPartOfDelay(data)) {
+                // get the trace to delay object from original node parameter without vxAgeDelay changes
+                int siblingTrace[AGO_MAX_DEPTH_FROM_DELAY_OBJECT], siblingTraceCount = 0;
+                AgoData * delay = agoGetSiblingTraceToDelayForInit(data, siblingTrace, siblingTraceCount);
+                if (delay) {
+                    // get the data
+                    data = agoGetDataFromTrace(delay, siblingTrace, siblingTraceCount);
+                }
+            }
+            node->paramList[index] = node->paramListForAgeDelay[index] = data;
+            if (node->paramList[index]) {
+                agoRetainData((AgoGraph *)node->ref.scope, node->paramList[index], false);
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Associates a parameter reference and a data reference with a kernel
@@ -3595,13 +3750,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetParameterByIndex(vx_node node, vx_uint32
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetParameterByReference(vx_parameter parameter, vx_reference value)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidParameter(parameter) && parameter->scope->type == VX_TYPE_NODE && parameter->ref.external_count > 0) {
-		vx_node node = (vx_node)parameter->scope;
-		vx_uint32 index = parameter->index;
-		status = vxSetParameterByIndex(node, index, value);
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidParameter(parameter) && parameter->scope->type == VX_TYPE_NODE && parameter->ref.external_count > 0) {
+        vx_node node = (vx_node)parameter->scope;
+        vx_uint32 index = parameter->index;
+        status = vxSetParameterByIndex(node, index, value);
+    }
+    return status;
 }
 
 /*! \brief Allows the client to query a parameter to determine its meta-information.
@@ -3614,63 +3769,63 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetParameterByReference(vx_parameter parame
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryParameter(vx_parameter param, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidParameter(param)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_PARAMETER_ATTRIBUTE_DIRECTION:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = param->direction;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PARAMETER_ATTRIBUTE_INDEX:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = param->index;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PARAMETER_ATTRIBUTE_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = param->type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PARAMETER_ATTRIBUTE_STATE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = param->state;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PARAMETER_ATTRIBUTE_REF:
-				if (size == sizeof(vx_reference)) {
-					vx_node node = (vx_node)param->scope;
-					if (agoIsValidNode(node)) {
-						if (param->index < node->paramCount) {
-							vx_reference ref = (vx_reference)node->paramList[param->index];
-							*(vx_reference *)ptr = ref;
-							// TBD: handle optimized buffers and kernels
-							if (ref) {
-								ref->external_count++;
-								ref->context->num_active_references++;
-							}
-							status = VX_SUCCESS;
-						}
-					}
-					else {
-						status = VX_ERROR_NOT_SUPPORTED;
-					}
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidParameter(param)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_PARAMETER_ATTRIBUTE_DIRECTION:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = param->direction;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PARAMETER_ATTRIBUTE_INDEX:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = param->index;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PARAMETER_ATTRIBUTE_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = param->type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PARAMETER_ATTRIBUTE_STATE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = param->state;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PARAMETER_ATTRIBUTE_REF:
+                if (size == sizeof(vx_reference)) {
+                    vx_node node = (vx_node)param->scope;
+                    if (agoIsValidNode(node)) {
+                        if (param->index < node->paramCount) {
+                            vx_reference ref = (vx_reference)node->paramList[param->index];
+                            *(vx_reference *)ptr = ref;
+                            // TBD: handle optimized buffers and kernels
+                            if (ref) {
+                                ref->external_count++;
+                                ref->context->num_active_references++;
+                            }
+                            status = VX_SUCCESS;
+                        }
+                    }
+                    else {
+                        status = VX_ERROR_NOT_SUPPORTED;
+                    }
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -3702,7 +3857,7 @@ VX_API_ENTRY vx_scalar VX_API_CALL vxCreateScalar(vx_context context, vx_enum da
 
 /*! \brief Creates an opaque reference to a scalar object with no direct user access.
 * \param [in] graph The reference to the parent graph.
-* \param [in] data_type The type of data to hold. Must be greater than VX_TYPE_INVALID and less than or equal to VX_TYPE_VENDOR_STRUCT_END. 
+* \param [in] data_type The type of data to hold. Must be greater than VX_TYPE_INVALID and less than or equal to VX_TYPE_VENDOR_STRUCT_END.
 * Or must be a vx_enum returned from vxRegisterUserStruct.
 * \return A scalar reference vx_scalar. Any possible errors preventing a successful creation should be checked using vxGetStatus.
 */
@@ -3712,19 +3867,19 @@ VX_API_ENTRY vx_scalar VX_API_CALL vxCreateVirtualScalar(vx_graph graph, vx_enum
     if (agoIsValidGraph(graph)) {
         CAgoLock lock(graph->cs);
         const char * desc_type = agoEnum2Name(data_type);
-		if (data_type && !desc_type) {
-			desc_type = agoGetUserStructName(graph->ref.context, data_type);
-		}
+        if (data_type && !desc_type) {
+            desc_type = agoGetUserStructName(graph->ref.context, data_type);
+        }
         if(!data_type || desc_type) {
-			char desc[512]; 
-			if (desc_type) sprintf(desc, "scalar-virtual:%s,0", desc_type);
-			else sprintf(desc, "scalar-virtual:0,0");
-			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-			if (data) {
-				agoGenerateVirtualDataName(graph, "scalar", data->name);
-				agoAddData(&graph->dataList, data);
-			}
-		}
+            char desc[512];
+            if (desc_type) sprintf(desc, "scalar-virtual:%s,0", desc_type);
+            else sprintf(desc, "scalar-virtual:0,0");
+            data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+            if (data) {
+                agoGenerateVirtualDataName(graph, "scalar", data->name);
+                agoAddData(&graph->dataList, data);
+            }
+        }
     }
     return (vx_scalar)data;
 }
@@ -3850,14 +4005,14 @@ VX_API_ENTRY vx_scalar VX_API_CALL vxCreateScalarWithSize(vx_context context, vx
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseScalar(vx_scalar *scalar)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (scalar && agoIsValidData((AgoData *)*scalar, VX_TYPE_SCALAR)) {
-		if (!agoReleaseData((AgoData *)*scalar, true)) {
-			*scalar = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (scalar && agoIsValidData((AgoData *)*scalar, VX_TYPE_SCALAR)) {
+        if (!agoReleaseData((AgoData *)*scalar, true)) {
+            *scalar = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries attributes from a scalar.
@@ -3870,26 +4025,26 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseScalar(vx_scalar *scalar)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryScalar(vx_scalar scalar, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)scalar;
-	if (agoIsValidData(data, VX_TYPE_SCALAR)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_SCALAR_ATTRIBUTE_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.scalar.type;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)scalar;
+    if (agoIsValidData(data, VX_TYPE_SCALAR)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_SCALAR_ATTRIBUTE_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.scalar.type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Gets the scalar value out of a reference.
@@ -3907,73 +4062,73 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryScalar(vx_scalar scalar, vx_enum attri
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReadScalarValue(vx_scalar ref, void *ptr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)ref;
-	if (agoIsValidData(data, VX_TYPE_SCALAR)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			status = VX_SUCCESS;
-			switch (data->u.scalar.type)
-			{
-			case VX_TYPE_ENUM:
-				*(vx_enum *)ptr = data->u.scalar.u.e;
-				break;
-			case VX_TYPE_UINT32:
-				*(vx_uint32 *)ptr = data->u.scalar.u.u;
-				break;
-			case VX_TYPE_INT32:
-				*(vx_int32 *)ptr = data->u.scalar.u.i;
-				break;
-			case VX_TYPE_UINT16:
-				*(vx_uint16 *)ptr = data->u.scalar.u.u;
-				break;
-			case VX_TYPE_INT16:
-				*(vx_int16 *)ptr = data->u.scalar.u.i;
-				break;
-			case VX_TYPE_UINT8:
-				*(vx_uint8 *)ptr = data->u.scalar.u.u;
-				break;
-			case VX_TYPE_INT8:
-				*(vx_int8 *)ptr = data->u.scalar.u.i;
-				break;
-			case VX_TYPE_CHAR:
-				*(vx_char *)ptr = data->u.scalar.u.i;
-				break;
-			case VX_TYPE_FLOAT32:
-				*(vx_float32 *)ptr = data->u.scalar.u.f;
-				break;
-			case VX_TYPE_SIZE:
-				*(vx_size *)ptr = data->u.scalar.u.s;
-				break;
-			case VX_TYPE_BOOL:
-				*(vx_bool *)ptr = data->u.scalar.u.u ? vx_true_e : vx_false_e;
-				break;
-			case VX_TYPE_DF_IMAGE:
-				*(vx_df_image *)ptr = data->u.scalar.u.df;
-				break;
-			case VX_TYPE_FLOAT64:
-				*(vx_float64 *)ptr = data->u.scalar.u.f64;
-				break;
-			case VX_TYPE_UINT64:
-				*(vx_uint64 *)ptr = data->u.scalar.u.u64;
-				break;
-			case VX_TYPE_INT64:
-				*(vx_int64 *)ptr = data->u.scalar.u.i64;
-				break;
-			case VX_TYPE_STRING_AMD:
-				strcpy((char *)ptr, (const char *)data->buffer);
-				break;
-			default:
-				if (data->buffer) {
-					memcpy(ptr, data->buffer, data->size);
-					break;
-				}
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)ref;
+    if (agoIsValidData(data, VX_TYPE_SCALAR)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            status = VX_SUCCESS;
+            switch (data->u.scalar.type)
+            {
+            case VX_TYPE_ENUM:
+                *(vx_enum *)ptr = data->u.scalar.u.e;
+                break;
+            case VX_TYPE_UINT32:
+                *(vx_uint32 *)ptr = data->u.scalar.u.u;
+                break;
+            case VX_TYPE_INT32:
+                *(vx_int32 *)ptr = data->u.scalar.u.i;
+                break;
+            case VX_TYPE_UINT16:
+                *(vx_uint16 *)ptr = data->u.scalar.u.u;
+                break;
+            case VX_TYPE_INT16:
+                *(vx_int16 *)ptr = data->u.scalar.u.i;
+                break;
+            case VX_TYPE_UINT8:
+                *(vx_uint8 *)ptr = data->u.scalar.u.u;
+                break;
+            case VX_TYPE_INT8:
+                *(vx_int8 *)ptr = data->u.scalar.u.i;
+                break;
+            case VX_TYPE_CHAR:
+                *(vx_char *)ptr = data->u.scalar.u.i;
+                break;
+            case VX_TYPE_FLOAT32:
+                *(vx_float32 *)ptr = data->u.scalar.u.f;
+                break;
+            case VX_TYPE_SIZE:
+                *(vx_size *)ptr = data->u.scalar.u.s;
+                break;
+            case VX_TYPE_BOOL:
+                *(vx_bool *)ptr = data->u.scalar.u.u ? vx_true_e : vx_false_e;
+                break;
+            case VX_TYPE_DF_IMAGE:
+                *(vx_df_image *)ptr = data->u.scalar.u.df;
+                break;
+            case VX_TYPE_FLOAT64:
+                *(vx_float64 *)ptr = data->u.scalar.u.f64;
+                break;
+            case VX_TYPE_UINT64:
+                *(vx_uint64 *)ptr = data->u.scalar.u.u64;
+                break;
+            case VX_TYPE_INT64:
+                *(vx_int64 *)ptr = data->u.scalar.u.i64;
+                break;
+            case VX_TYPE_STRING_AMD:
+                strcpy((char *)ptr, (const char *)data->buffer);
+                break;
+            default:
+                if (data->buffer) {
+                    memcpy(ptr, data->buffer, data->size);
+                    break;
+                }
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets the scalar value in a reference.
@@ -3991,91 +4146,91 @@ VX_API_ENTRY vx_status VX_API_CALL vxReadScalarValue(vx_scalar ref, void *ptr)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxWriteScalarValue(vx_scalar ref, const void *ptr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)ref;
-	if (agoIsValidData(data, VX_TYPE_SCALAR) && !data->isVirtual) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			// TBD: need sem-lock for thread safety
-			status = VX_SUCCESS;
-			switch (data->u.scalar.type)
-			{
-			case VX_TYPE_ENUM:
-				data->u.scalar.u.e = *(vx_enum *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_UINT32:
-				data->u.scalar.u.u = *(vx_uint32 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_INT32:
-				data->u.scalar.u.i = *(vx_int32 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_UINT16:
-				data->u.scalar.u.u = *(vx_uint16 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_INT16:
-				data->u.scalar.u.i = *(vx_int16 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_UINT8:
-				data->u.scalar.u.u = *(vx_uint8 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_INT8:
-				data->u.scalar.u.i = *(vx_int8 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_CHAR:
-				data->u.scalar.u.i = *(vx_char *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_FLOAT32:
-				data->u.scalar.u.f = *(vx_float32 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_SIZE:
-				data->u.scalar.u.s = *(vx_size *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_BOOL:
-				data->u.scalar.u.u = *(vx_bool *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_DF_IMAGE:
-				data->u.scalar.u.df = *(vx_df_image *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_FLOAT64:
-				data->u.scalar.u.f64 = *(vx_float64 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_UINT64:
-				data->u.scalar.u.u64 = *(vx_uint64 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_INT64:
-				data->u.scalar.u.i64 = *(vx_int64 *)ptr;
-				data->isInitialized = vx_true_e;
-				break;
-			case VX_TYPE_STRING_AMD:
-				strncpy((char *)data->buffer, (const char *)ptr, VX_MAX_STRING_BUFFER_SIZE_AMD);
-				data->buffer[VX_MAX_STRING_BUFFER_SIZE_AMD - 1] = 0; // NUL terminate string in case of overflow
-				data->isInitialized = vx_true_e;
-				break;
-			default:
-				if (ptr) {
-					memcpy(data->buffer,ptr, data->size);
-					break;
-				}
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)ref;
+    if (agoIsValidData(data, VX_TYPE_SCALAR) && !data->isVirtual) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            // TBD: need sem-lock for thread safety
+            status = VX_SUCCESS;
+            switch (data->u.scalar.type)
+            {
+            case VX_TYPE_ENUM:
+                data->u.scalar.u.e = *(vx_enum *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_UINT32:
+                data->u.scalar.u.u = *(vx_uint32 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_INT32:
+                data->u.scalar.u.i = *(vx_int32 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_UINT16:
+                data->u.scalar.u.u = *(vx_uint16 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_INT16:
+                data->u.scalar.u.i = *(vx_int16 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_UINT8:
+                data->u.scalar.u.u = *(vx_uint8 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_INT8:
+                data->u.scalar.u.i = *(vx_int8 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_CHAR:
+                data->u.scalar.u.i = *(vx_char *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_FLOAT32:
+                data->u.scalar.u.f = *(vx_float32 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_SIZE:
+                data->u.scalar.u.s = *(vx_size *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_BOOL:
+                data->u.scalar.u.u = *(vx_bool *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_DF_IMAGE:
+                data->u.scalar.u.df = *(vx_df_image *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_FLOAT64:
+                data->u.scalar.u.f64 = *(vx_float64 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_UINT64:
+                data->u.scalar.u.u64 = *(vx_uint64 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_INT64:
+                data->u.scalar.u.i64 = *(vx_int64 *)ptr;
+                data->isInitialized = vx_true_e;
+                break;
+            case VX_TYPE_STRING_AMD:
+                strncpy((char *)data->buffer, (const char *)ptr, VX_MAX_STRING_BUFFER_SIZE_AMD);
+                data->buffer[VX_MAX_STRING_BUFFER_SIZE_AMD - 1] = 0; // NUL terminate string in case of overflow
+                data->isInitialized = vx_true_e;
+                break;
+            default:
+                if (ptr) {
+                    memcpy(data->buffer,ptr, data->size);
+                    break;
+                }
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy from/into a scalar object.
@@ -4100,36 +4255,36 @@ VX_API_ENTRY vx_status VX_API_CALL vxWriteScalarValue(vx_scalar ref, const void 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyScalar(vx_scalar scalar_, void *user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * scalar = (AgoData *)scalar_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(scalar, VX_TYPE_SCALAR))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
-			if (usage == VX_READ_ONLY)
-				status = vxReadScalarValue(scalar_, user_ptr);
-			else if (usage == VX_WRITE_ONLY)
-				status = vxWriteScalarValue(scalar_, user_ptr);
-		}
-	}
-	return status;
+    AgoData * scalar = (AgoData *)scalar_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(scalar, VX_TYPE_SCALAR))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
+            if (usage == VX_READ_ONLY)
+                status = vxReadScalarValue(scalar_, user_ptr);
+            else if (usage == VX_WRITE_ONLY)
+                status = vxWriteScalarValue(scalar_, user_ptr);
+        }
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_status VX_API_CALL vxCopyScalarWithSize(vx_scalar scalar_, vx_size size, void *user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * scalar = (AgoData *)scalar_;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(scalar, VX_TYPE_SCALAR))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (scalar->u.scalar.itemsize == size)) {
-			if (usage == VX_READ_ONLY)
-				status = vxReadScalarValue(scalar_, user_ptr);
-			else if (usage == VX_WRITE_ONLY)
-				status = vxWriteScalarValue(scalar_, user_ptr);
-		}
-	}
-	return status;
+    AgoData * scalar = (AgoData *)scalar_;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(scalar, VX_TYPE_SCALAR))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (scalar->u.scalar.itemsize == size)) {
+            if (usage == VX_READ_ONLY)
+                status = vxReadScalarValue(scalar_, user_ptr);
+            else if (usage == VX_WRITE_ONLY)
+                status = vxWriteScalarValue(scalar_, user_ptr);
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -4146,49 +4301,49 @@ REFERENCE
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(ref)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_REFERENCE_COUNT:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = ref->external_count;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REFERENCE_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = ref->type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REFERENCE_NAME:			
-				if (size == sizeof(vx_char*)) {
-					if(ref->type == VX_TYPE_GRAPH)
-					{
-						AgoGraph * graph = (AgoGraph *)ref;
-						//strncpy((char *)ptr, data->name.c_str(), size);
-						*(vx_char**)ptr = &graph->name[0];
-						status = VX_SUCCESS;
-					}
-					else
-					{
-						AgoData * data = (AgoData *)ref;
-						//strncpy((char *)ptr, data->name.c_str(), size);
-						*(vx_char**)ptr = &data->name[0];
-						status = VX_SUCCESS;
-					}
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidReference(ref)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_REFERENCE_COUNT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = ref->external_count;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REFERENCE_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = ref->type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REFERENCE_NAME:
+                if (size == sizeof(vx_char*)) {
+                    if(ref->type == VX_TYPE_GRAPH)
+                    {
+                        AgoGraph * graph = (AgoGraph *)ref;
+                        //strncpy((char *)ptr, data->name.c_str(), size);
+                        *(vx_char**)ptr = &graph->name[0];
+                        status = VX_SUCCESS;
+                    }
+                    else
+                    {
+                        AgoData * data = (AgoData *)ref;
+                        //strncpy((char *)ptr, data->name.c_str(), size);
+                        *(vx_char**)ptr = &data->name[0];
+                        status = VX_SUCCESS;
+                    }
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Releases a reference. The reference may potentially refer to multiple OpenVX objects of different types.
@@ -4203,69 +4358,69 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryReference(vx_reference ref, vx_enum at
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseReference(vx_reference* ref_ptr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (ref_ptr) {
-		vx_reference ref = *ref_ptr;
-		if (agoIsValidReference(ref)) {
-			switch (ref->type) {
-			case VX_TYPE_CONTEXT:
-				status = vxReleaseContext((vx_context *)ref_ptr);
-				break;
-			case VX_TYPE_GRAPH:
-				status = vxReleaseGraph((vx_graph *)ref_ptr);
-				break;
-			case VX_TYPE_NODE:
-				status = vxReleaseNode((vx_node *)ref_ptr);
-				break;
-			case VX_TYPE_KERNEL:
-				status = vxReleaseKernel((vx_kernel *)ref_ptr);
-				break;
-			case VX_TYPE_PARAMETER:
-				status = vxReleaseParameter((vx_parameter *)ref_ptr);
-				break;
-			case VX_TYPE_DELAY:
-				status = vxReleaseDelay((vx_delay *)ref_ptr);
-				break;
-			case VX_TYPE_LUT:
-				status = vxReleaseLUT((vx_lut *)ref_ptr);
-				break;
-			case VX_TYPE_DISTRIBUTION:
-				status = vxReleaseDistribution((vx_distribution *)ref_ptr);
-				break;
-			case VX_TYPE_PYRAMID:
-				status = vxReleasePyramid((vx_pyramid *)ref_ptr);
-				break;
-			case VX_TYPE_THRESHOLD:
-				status = vxReleaseThreshold((vx_threshold *)ref_ptr);
-				break;
-			case VX_TYPE_MATRIX:
-				status = vxReleaseMatrix((vx_matrix *)ref_ptr);
-				break;
-			case VX_TYPE_CONVOLUTION:
-				status = vxReleaseConvolution((vx_convolution *)ref_ptr);
-				break;
-			case VX_TYPE_SCALAR:
-				status = vxReleaseScalar((vx_scalar *)ref_ptr);
-				break;
-			case VX_TYPE_ARRAY:
-				status = vxReleaseArray((vx_array *)ref_ptr);
-				break;
-			case VX_TYPE_OBJECT_ARRAY:
-				status = vxReleaseObjectArray((vx_object_array *)ref_ptr);
-				break;
-			case VX_TYPE_IMAGE:
-				status = vxReleaseImage((vx_image *)ref_ptr);
-				break;
-			case VX_TYPE_REMAP:
-				status = vxReleaseRemap((vx_remap *)ref_ptr);
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (ref_ptr) {
+        vx_reference ref = *ref_ptr;
+        if (agoIsValidReference(ref)) {
+            switch (ref->type) {
+            case VX_TYPE_CONTEXT:
+                status = vxReleaseContext((vx_context *)ref_ptr);
+                break;
+            case VX_TYPE_GRAPH:
+                status = vxReleaseGraph((vx_graph *)ref_ptr);
+                break;
+            case VX_TYPE_NODE:
+                status = vxReleaseNode((vx_node *)ref_ptr);
+                break;
+            case VX_TYPE_KERNEL:
+                status = vxReleaseKernel((vx_kernel *)ref_ptr);
+                break;
+            case VX_TYPE_PARAMETER:
+                status = vxReleaseParameter((vx_parameter *)ref_ptr);
+                break;
+            case VX_TYPE_DELAY:
+                status = vxReleaseDelay((vx_delay *)ref_ptr);
+                break;
+            case VX_TYPE_LUT:
+                status = vxReleaseLUT((vx_lut *)ref_ptr);
+                break;
+            case VX_TYPE_DISTRIBUTION:
+                status = vxReleaseDistribution((vx_distribution *)ref_ptr);
+                break;
+            case VX_TYPE_PYRAMID:
+                status = vxReleasePyramid((vx_pyramid *)ref_ptr);
+                break;
+            case VX_TYPE_THRESHOLD:
+                status = vxReleaseThreshold((vx_threshold *)ref_ptr);
+                break;
+            case VX_TYPE_MATRIX:
+                status = vxReleaseMatrix((vx_matrix *)ref_ptr);
+                break;
+            case VX_TYPE_CONVOLUTION:
+                status = vxReleaseConvolution((vx_convolution *)ref_ptr);
+                break;
+            case VX_TYPE_SCALAR:
+                status = vxReleaseScalar((vx_scalar *)ref_ptr);
+                break;
+            case VX_TYPE_ARRAY:
+                status = vxReleaseArray((vx_array *)ref_ptr);
+                break;
+            case VX_TYPE_OBJECT_ARRAY:
+                status = vxReleaseObjectArray((vx_object_array *)ref_ptr);
+                break;
+            case VX_TYPE_IMAGE:
+                status = vxReleaseImage((vx_image *)ref_ptr);
+                break;
+            case VX_TYPE_REMAP:
+                status = vxReleaseRemap((vx_remap *)ref_ptr);
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*!
@@ -4282,14 +4437,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseReference(vx_reference* ref_ptr)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxRetainReference(vx_reference ref)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(ref)) {
-		ref->external_count++;
-		if (ref->type != VX_TYPE_KERNEL && ref->type != VX_TYPE_NODE && ref->type != VX_TYPE_PARAMETER)
-			ref->context->num_active_references++;
-		status = VX_SUCCESS;
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidReference(ref)) {
+        ref->external_count++;
+        if (ref->type != VX_TYPE_KERNEL && ref->type != VX_TYPE_NODE && ref->type != VX_TYPE_PARAMETER)
+            ref->context->num_active_references++;
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 /*! \brief Name a reference
@@ -4316,32 +4471,32 @@ VX_API_ENTRY vx_status VX_API_CALL vxRetainReference(vx_reference ref)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetReferenceName(vx_reference ref, const vx_char *name)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(ref) && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || 
-		(ref->type == VX_TYPE_TENSOR) ||
-		(ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)))
-	{
-		AgoData * data = (AgoData *)ref;
-		//printf("%s %s %lu\n", data->name.c_str(), name, strlen(name));
-		//printf("before:::strlen(data name) = %lu\n", data->name.length());
-		//data->name.assign(name, strlen(name));
-		data->name = name;
-		//std::copy(name, name + strlen(name), std::back_inserter(data->name));
-		//strncpy((char *)data->name.c_str(), name, strnlen(name, VX_MAX_REFERENCE_NAME));
-		//data->name.assign("name", 4);
-		//sscanf(name, "%s", (char *)data->name.c_str());
-		//printf("after:::strlen(data name) = %lu\n", data->name.length());
-		//printf("after == %s\n", data->name.c_str());
-		
-		status = VX_SUCCESS;
-	}
-	else if(agoIsValidReference(ref) && (ref->type == VX_TYPE_GRAPH))
-	{
-		AgoGraph * graph = (AgoGraph *)ref;
-		graph->name = name;
-		status = VX_SUCCESS;
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidReference(ref) && ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) ||
+        (ref->type == VX_TYPE_TENSOR) ||
+        (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)))
+    {
+        AgoData * data = (AgoData *)ref;
+        //printf("%s %s %lu\n", data->name.c_str(), name, strlen(name));
+        //printf("before:::strlen(data name) = %lu\n", data->name.length());
+        //data->name.assign(name, strlen(name));
+        data->name = name;
+        //std::copy(name, name + strlen(name), std::back_inserter(data->name));
+        //strncpy((char *)data->name.c_str(), name, strnlen(name, VX_MAX_REFERENCE_NAME));
+        //data->name.assign("name", 4);
+        //sscanf(name, "%s", (char *)data->name.c_str());
+        //printf("after:::strlen(data name) = %lu\n", data->name.length());
+        //printf("after == %s\n", data->name.c_str());
+
+        status = VX_SUCCESS;
+    }
+    else if(agoIsValidReference(ref) && (ref->type == VX_TYPE_GRAPH))
+    {
+        AgoGraph * graph = (AgoGraph *)ref;
+        graph->name = name;
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -4358,32 +4513,32 @@ DELAY
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryDelay(vx_delay delay, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)delay;
-	if (agoIsValidData(data, VX_TYPE_DELAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_DELAY_ATTRIBUTE_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.delay.type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DELAY_ATTRIBUTE_SLOTS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.delay.count;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)delay;
+    if (agoIsValidData(data, VX_TYPE_DELAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_DELAY_ATTRIBUTE_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.delay.type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DELAY_ATTRIBUTE_SLOTS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.delay.count;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Releases a reference to a delay object.
@@ -4397,14 +4552,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryDelay(vx_delay delay, vx_enum attribut
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseDelay(vx_delay *delay)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (delay && agoIsValidData((AgoData*)*delay, VX_TYPE_DELAY)) {
-		if (!agoReleaseData((AgoData*)*delay, true)) {
-			*delay = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (delay && agoIsValidData((AgoData*)*delay, VX_TYPE_DELAY)) {
+        if (!agoReleaseData((AgoData*)*delay, true)) {
+            *delay = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Creates a Delay object.
@@ -4418,35 +4573,35 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseDelay(vx_delay *delay)
 * \ingroup group_delay
 */
 VX_API_ENTRY vx_delay VX_API_CALL vxCreateDelay(vx_context context,
-	vx_reference exemplar,
-	vx_size slots)
+    vx_reference exemplar,
+    vx_size slots)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && agoIsValidReference(exemplar) && slots > 0) {
-		CAgoLock lock(context->cs);
-		char desc_exemplar[1024]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
-		char desc[2048]; sprintf(desc, "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "delay", data->name);
-			agoAddData(&context->dataList, data);
-			// add the children too
-			for (vx_uint32 i = 0; i < data->numChildren; i++) {
-				agoAddData(&context->dataList, data->children[i]);
-				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
-					if (data->children[i]->children[j]) {
-						agoAddData(&context->dataList, data->children[i]->children[j]);
-						for (vx_uint32 k = 0; k < data->children[i]->children[j]->numChildren; k++) {
-							if (data->children[i]->children[j]->children[k]) {
-								agoAddData(&context->dataList, data->children[i]->children[j]->children[k]);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return (vx_delay)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && agoIsValidReference(exemplar) && slots > 0) {
+        CAgoLock lock(context->cs);
+        char desc_exemplar[1024]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc[2048]; sprintf(desc, "delay:" VX_FMT_SIZE ",[%s]", slots, desc_exemplar);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "delay", data->name);
+            agoAddData(&context->dataList, data);
+            // add the children too
+            for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                agoAddData(&context->dataList, data->children[i]);
+                for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+                    if (data->children[i]->children[j]) {
+                        agoAddData(&context->dataList, data->children[i]->children[j]);
+                        for (vx_uint32 k = 0; k < data->children[i]->children[j]->numChildren; k++) {
+                            if (data->children[i]->children[j]->children[k]) {
+                                agoAddData(&context->dataList, data->children[i]->children[j]->children[k]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return (vx_delay)data;
 }
 
 /*! \brief Retrieves a reference from a delay object.
@@ -4462,16 +4617,16 @@ VX_API_ENTRY vx_delay VX_API_CALL vxCreateDelay(vx_context context,
 */
 VX_API_ENTRY vx_reference VX_API_CALL vxGetReferenceFromDelay(vx_delay delay, vx_int32 index)
 {
-	AgoData * data = (AgoData *)delay;
-	AgoData * item = NULL;
-	if (agoIsValidData(data, VX_TYPE_DELAY)) {
-		// convert the index from 0..-(N-1) to 0..N-1
-		vx_uint32 index_inverted = (vx_uint32)-index;
-		if (index_inverted < data->u.delay.count) {
-			item = data->children[index_inverted];
-		}
-	}
-	return (vx_reference)item;
+    AgoData * data = (AgoData *)delay;
+    AgoData * item = NULL;
+    if (agoIsValidData(data, VX_TYPE_DELAY)) {
+        // convert the index from 0..-(N-1) to 0..N-1
+        vx_uint32 index_inverted = (vx_uint32)-index;
+        if (index_inverted < data->u.delay.count) {
+            item = data->children[index_inverted];
+        }
+    }
+    return (vx_reference)item;
 }
 
 /*! \brief Ages the internal delay ring by one. This means that once this API is
@@ -4486,12 +4641,12 @@ VX_API_ENTRY vx_reference VX_API_CALL vxGetReferenceFromDelay(vx_delay delay, vx
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAgeDelay(vx_delay delay)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)delay;
-	if (agoIsValidData(data, VX_TYPE_DELAY)) {
-		status = agoAgeDelay(data);
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)delay;
+    if (agoIsValidData(data, VX_TYPE_DELAY)) {
+        status = agoAgeDelay(data);
+    }
+    return status;
 }
 
 /*! \brief Register a delay for auto-aging.
@@ -4516,23 +4671,23 @@ VX_API_ENTRY vx_status VX_API_CALL vxAgeDelay(vx_delay delay)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxRegisterAutoAging(vx_graph graph, vx_delay delay_)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * delay = (AgoData *)delay_;
-	if (agoIsValidGraph(graph) && agoIsValidData(delay, VX_TYPE_DELAY))
-	{
-		for (auto it = graph->autoAgeDelayList.begin(); it != graph->autoAgeDelayList.end(); it++) {
-			if (*it == delay) {
-				delay = nullptr;
-				break;
-			}
-		}
-		if (delay) {
-			delay->ref.internal_count++;
-			graph->autoAgeDelayList.push_back(delay);
-		}
-		status = VX_SUCCESS;
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * delay = (AgoData *)delay_;
+    if (agoIsValidGraph(graph) && agoIsValidData(delay, VX_TYPE_DELAY))
+    {
+        for (auto it = graph->autoAgeDelayList.begin(); it != graph->autoAgeDelayList.end(); it++) {
+            if (*it == delay) {
+                delay = nullptr;
+                break;
+            }
+        }
+        if (delay) {
+            delay->ref.internal_count++;
+            graph->autoAgeDelayList.push_back(delay);
+        }
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -4549,21 +4704,21 @@ LOGGING
 */
 VX_API_ENTRY void VX_API_CALL vxAddLogEntry(vx_reference ref, vx_status status, const char *message, ...)
 {
-	va_list ap;
-	if (agoIsValidReference(ref) && ref->enable_logging && ref->context->callback_log) {
-		vx_char string[VX_MAX_LOG_MESSAGE_LEN];
-		va_start(ap, message);
-		vsnprintf(string, VX_MAX_LOG_MESSAGE_LEN, message, ap);
-		string[VX_MAX_LOG_MESSAGE_LEN - 1] = 0; // for MSVC which is not C99 compliant
-		va_end(ap);
-		if (!ref->context->callback_reentrant) {
-			CAgoLock lock(ref->context->cs); // TBD: create a separate lock object for log_callback
-			ref->context->callback_log(ref->context, ref, status, string);
-		}
-		else {
-			ref->context->callback_log(ref->context, ref, status, string);
-		}
-	}
+    va_list ap;
+    if (agoIsValidReference(ref) && ref->enable_logging && ref->context->callback_log) {
+        vx_char string[VX_MAX_LOG_MESSAGE_LEN];
+        va_start(ap, message);
+        vsnprintf(string, VX_MAX_LOG_MESSAGE_LEN, message, ap);
+        string[VX_MAX_LOG_MESSAGE_LEN - 1] = 0; // for MSVC which is not C99 compliant
+        va_end(ap);
+        if (!ref->context->callback_reentrant) {
+            CAgoLock lock(ref->context->cs); // TBD: create a separate lock object for log_callback
+            ref->context->callback_log(ref->context, ref, status, string);
+        }
+        else {
+            ref->context->callback_log(ref->context, ref, status, string);
+        }
+    }
 }
 
 /*! \brief Registers a callback facility to the OpenVX implementation to receive error logs.
@@ -4575,7 +4730,7 @@ VX_API_ENTRY void VX_API_CALL vxAddLogEntry(vx_reference ref, vx_status status, 
 */
 VX_API_ENTRY void VX_API_CALL vxRegisterLogCallback(vx_context context, vx_log_callback_f callback, vx_bool reentrant)
 {
-	agoRegisterLogCallback(context, callback, reentrant);
+    agoRegisterLogCallback(context, callback, reentrant);
 }
 
 /*==============================================================================
@@ -4597,17 +4752,17 @@ LUT
 */
 VX_API_ENTRY vx_lut VX_API_CALL vxCreateLUT(vx_context context, vx_enum data_type, vx_size count)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context)) {
-		CAgoLock lock(context->cs);
-		char desc[512]; sprintf(desc, "lut:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "lut", data->name);
-			agoAddData(&context->dataList, data);
-		}
-	}
-	return (vx_lut)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context)) {
+        CAgoLock lock(context->cs);
+        char desc[512]; sprintf(desc, "lut:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "lut", data->name);
+            agoAddData(&context->dataList, data);
+        }
+    }
+    return (vx_lut)data;
 }
 
 /*! \brief Creates an opaque reference to a LUT object with no direct user access
@@ -4619,17 +4774,17 @@ VX_API_ENTRY vx_lut VX_API_CALL vxCreateLUT(vx_context context, vx_enum data_typ
 */
 VX_API_ENTRY vx_lut VX_API_CALL vxCreateVirtualLUT(vx_graph graph, vx_enum data_type, vx_size count)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph)) {
-		CAgoLock lock(graph->cs);
-		char desc[512]; sprintf(desc, "lut-virtual:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
-		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "lut", data->name);
-			agoAddData(&graph->dataList, data);
-		}
-	}
-	return (vx_lut)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        char desc[512]; sprintf(desc, "lut-virtual:%s," VX_FMT_SIZE "", agoEnum2Name(data_type), count);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "lut", data->name);
+            agoAddData(&graph->dataList, data);
+        }
+    }
+    return (vx_lut)data;
 }
 
 /*! \brief Releases a reference to a LUT object.
@@ -4643,14 +4798,14 @@ VX_API_ENTRY vx_lut VX_API_CALL vxCreateVirtualLUT(vx_graph graph, vx_enum data_
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseLUT(vx_lut *lut)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (lut && agoIsValidData((AgoData*)*lut, VX_TYPE_LUT)) {
-		if (!agoReleaseData((AgoData*)*lut, true)) {
-			*lut = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (lut && agoIsValidData((AgoData*)*lut, VX_TYPE_LUT)) {
+        if (!agoReleaseData((AgoData*)*lut, true)) {
+            *lut = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries attributes from a LUT.
@@ -4663,44 +4818,44 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseLUT(vx_lut *lut)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryLUT(vx_lut lut, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)lut;
-	if (agoIsValidData(data, VX_TYPE_LUT)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_LUT_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.lut.type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_LUT_COUNT:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.lut.count;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_LUT_SIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->size;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_LUT_OFFSET:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = data->u.lut.offset;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)lut;
+    if (agoIsValidData(data, VX_TYPE_LUT)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_LUT_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.lut.type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_LUT_COUNT:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.lut.count;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_LUT_SIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->size;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_LUT_OFFSET:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = data->u.lut.offset;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Gets direct access to the LUT table data.
@@ -4724,61 +4879,78 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryLUT(vx_lut lut, vx_enum attribute, voi
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAccessLUT(vx_lut lut, void **ptr, vx_enum usage)
 {
-	AgoData * data = (AgoData *)lut;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_LUT)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_uint8 * ptr_internal = data->buffer;
-			vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
-			// save the pointer and usage for use in vxCommitXXX
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessXXX() more than once with same pointer, the application
-					// needs to call vxCommitXXX() before calling vxAccessXXX()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				MappedData item = { data->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false };
-				data->mapped.push_back(item);
-				*ptr = ptr_returned;
-				if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
+    AgoData * data = (AgoData *)lut;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_LUT)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_uint8 * ptr_internal = data->buffer;
+            vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
+            // save the pointer and usage for use in vxCommitXXX
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessXXX() more than once with same pointer, the application
+                    // needs to call vxCommitXXX() before calling vxAccessXXX()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                MappedData item = { data->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false };
+                data->mapped.push_back(item);
+                *ptr = ptr_returned;
+                if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
 #if ENABLE_OPENCL
-					if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-						// make sure dirty OpenCL buffers are synched before giving access for read
-						if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-							size_t origin[3] = { 0, 0, 0 };
-							size_t region[3] = { 256, 1, 1 };
-							cl_int err = clEnqueueReadImage(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, origin, region, 256, 0, data->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&data->ref, status, "ERROR: vxAccessLUT: clEnqueueWriteImage() => %d\n", err);
-								return status;
-							}
-							data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-						}
-					}
+                    if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            size_t origin[3] = { 0, 0, 0 };
+                            size_t region[3] = { 256, 1, 1 };
+                            cl_int err = clEnqueueReadImage(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, origin, region, 256, 0, data->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxAccessLUT: clEnqueueWriteImage() => %d\n", err);
+                                return status;
+                            }
+                            data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
+#elif ENABLE_HIP
+                    if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            // transfer only valid data
+                            vx_size size = data->size;
+                            if (size > 0 && data->hip_memory) {
+                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                                if (err) {
+                                    status = VX_FAILURE;
+                                    agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: hipMemcpyDtoH() => %d\n", err);
+                                    return status;
+                                }
+                            }
+                            data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
 #endif
-					if (item.used_external_ptr) {
-						// copy if read is requested with explicit external buffer
-						HafCpu_BinaryCopy_U8_U8(data->size, ptr_returned, ptr_internal);
-					}
-				}
-			}
-		}
-	}
-	return status;
+                    if (item.used_external_ptr) {
+                        // copy if read is requested with explicit external buffer
+                        HafCpu_BinaryCopy_U8_U8(data->size, ptr_returned, ptr_internal);
+                    }
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Commits the Lookup Table.
@@ -4796,43 +4968,43 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessLUT(vx_lut lut, void **ptr, vx_enum u
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCommitLUT(vx_lut lut, const void *ptr)
 {
-	AgoData * data = (AgoData *)lut;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_LUT)) {
-		// check for valid arguments
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr) {
-			status = VX_SUCCESS;
-			if (!data->buffer) {
-				status = VX_FAILURE;
-			}
-			else if (!data->mapped.empty()) {
-				vx_enum usage = VX_READ_ONLY;
-				bool used_external_ptr = false;
-				for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-					if (i->ptr == ptr) {
-						usage = i->usage;
-						used_external_ptr = i->used_external_ptr;
-						data->mapped.erase(i);
-						break;
-					}
-				}
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					if (used_external_ptr) {
-						// copy from external buffer
-						HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)ptr);
-					}
-					// update sync flags
-					data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)lut;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_LUT)) {
+        // check for valid arguments
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr) {
+            status = VX_SUCCESS;
+            if (!data->buffer) {
+                status = VX_FAILURE;
+            }
+            else if (!data->mapped.empty()) {
+                vx_enum usage = VX_READ_ONLY;
+                bool used_external_ptr = false;
+                for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                    if (i->ptr == ptr) {
+                        usage = i->usage;
+                        used_external_ptr = i->used_external_ptr;
+                        data->mapped.erase(i);
+                        break;
+                    }
+                }
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    if (used_external_ptr) {
+                        // copy from external buffer
+                        HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)ptr);
+                    }
+                    // update sync flags
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy from/into a LUT object.
@@ -4860,19 +5032,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxCommitLUT(vx_lut lut, const void *ptr)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyLUT(vx_lut lut, void *user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)lut;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_LUT))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
-			status = vxAccessLUT(lut, &user_ptr, usage);
-			if (status == VX_SUCCESS) {
-				status = vxCommitLUT(lut, user_ptr);
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)lut;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_LUT))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
+            status = vxAccessLUT(lut, &user_ptr, usage);
+            if (status == VX_SUCCESS) {
+                status = vxCommitLUT(lut, user_ptr);
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to get direct access to LUT object.
@@ -4915,56 +5087,75 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyLUT(vx_lut lut, void *user_ptr, vx_enum
 */
 VX_API_ENTRY vx_status VX_API_CALL vxMapLUT(vx_lut lut, vx_map_id *map_id, void **ptr, vx_enum usage, vx_enum mem_type, vx_bitfield flags)
 {
-	AgoData * data = (AgoData *)lut;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_LUT)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_uint8 * ptr_returned = data->buffer;
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessXXX() more than once with same pointer, the application
-					// needs to call vxCommitXXX() before calling vxAccessXXX()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
+    AgoData * data = (AgoData *)lut;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_LUT)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_uint8 * ptr_returned = data->buffer;
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessXXX() more than once with same pointer, the application
+                    // needs to call vxCommitXXX() before calling vxAccessXXX()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
 #if ENABLE_OPENCL
-				if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
-					if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-						// make sure dirty OpenCL buffers are synched before giving access for read
-						if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-							size_t origin[3] = { 0, 0, 0 };
-							size_t region[3] = { 256, 1, 1 };
-							cl_int err = clEnqueueReadImage(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, origin, region, 256, 0, data->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: clEnqueueWriteImage() => %d\n", err);
-								return status;
-							}
-							data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-						}
-					}
-				}
+                if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
+                    if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            size_t origin[3] = { 0, 0, 0 };
+                            size_t region[3] = { 256, 1, 1 };
+                            cl_int err = clEnqueueReadImage(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, origin, region, 256, 0, data->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: clEnqueueWriteImage() => %d\n", err);
+                                return status;
+                            }
+                            data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
+                }
+#elif ENABLE_HIP
+                if (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE) {
+                    if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                            vx_size size = data->size;
+                            if (size > 0 && data->hip_memory) {
+                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                                if (err) {
+                                    status = VX_FAILURE;
+                                    agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: hipMemcpyDtoH() => %d\n", err);
+                                    return status;
+                                }
+                            }
+                            data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
+                }
 #endif
-				MappedData item = { data->nextMapId++, ptr_returned, usage, false };
-				data->mapped.push_back(item);
-				*map_id = item.map_id;
-				*ptr = ptr_returned;
-			}
-		}
-	}
-	return status;
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false };
+                data->mapped.push_back(item);
+                *map_id = item.map_id;
+                *ptr = ptr_returned;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Unmap and commit potential changes to LUT object that was previously mapped.
@@ -4982,25 +5173,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapLUT(vx_lut lut, vx_map_id *map_id, void 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxUnmapLUT(vx_lut lut, vx_map_id map_id)
 {
-	AgoData * data = (AgoData *)lut;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_LUT)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-			if (i->map_id == map_id) {
-				vx_enum usage = i->usage;
-				data->mapped.erase(i);
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					// update sync flags
-					data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-				status = VX_SUCCESS;
-				break;
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)lut;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_LUT)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+            if (i->map_id == map_id) {
+                vx_enum usage = i->usage;
+                data->mapped.erase(i);
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // update sync flags
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+                status = VX_SUCCESS;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -5017,17 +5208,17 @@ DISTRIBUTION
 */
 VX_API_ENTRY vx_distribution VX_API_CALL vxCreateDistribution(vx_context context, vx_size numBins, vx_int32 offset, vx_uint32 range)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && numBins > 0 && range > 0) {
-		CAgoLock lock(context->cs);
-		char desc[512]; sprintf(desc, "distribution:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "dist", data->name);
-			agoAddData(&context->dataList, data);
-		}
-	}
-	return (vx_distribution)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && numBins > 0 && range > 0) {
+        CAgoLock lock(context->cs);
+        char desc[512]; sprintf(desc, "distribution:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "dist", data->name);
+            agoAddData(&context->dataList, data);
+        }
+    }
+    return (vx_distribution)data;
 }
 
 /*! \brief Creates an opaque reference to a 1D Distribution object without direct user access.
@@ -5040,17 +5231,17 @@ VX_API_ENTRY vx_distribution VX_API_CALL vxCreateDistribution(vx_context context
 */
 VX_API_ENTRY vx_distribution VX_API_CALL vxCreateVirtualDistribution(vx_graph graph, vx_size numBins, vx_int32 offset, vx_uint32 range)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph) && numBins > 0 && range > 0) {
-		CAgoLock lock(graph->cs);
-		char desc[512]; sprintf(desc, "distribution-virtual:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
-		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "dist", data->name);
-			agoAddData(&graph->dataList, data);
-		}
-	}
-	return (vx_distribution)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph) && numBins > 0 && range > 0) {
+        CAgoLock lock(graph->cs);
+        char desc[512]; sprintf(desc, "distribution-virtual:" VX_FMT_SIZE ",%d,%u", numBins, offset, range);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "dist", data->name);
+            agoAddData(&graph->dataList, data);
+        }
+    }
+    return (vx_distribution)data;
 }
 
 /*! \brief Releases a reference to a distribution object.
@@ -5064,14 +5255,14 @@ VX_API_ENTRY vx_distribution VX_API_CALL vxCreateVirtualDistribution(vx_graph gr
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseDistribution(vx_distribution *distribution)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (distribution && agoIsValidData((AgoData*)*distribution, VX_TYPE_DISTRIBUTION)) {
-		if (!agoReleaseData((AgoData*)*distribution, true)) {
-			*distribution = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (distribution && agoIsValidData((AgoData*)*distribution, VX_TYPE_DISTRIBUTION)) {
+        if (!agoReleaseData((AgoData*)*distribution, true)) {
+            *distribution = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries a Distribution object.
@@ -5084,57 +5275,57 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseDistribution(vx_distribution *distri
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryDistribution(vx_distribution distribution, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)distribution;
-	if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_DISTRIBUTION_ATTRIBUTE_DIMENSIONS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = 1;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_ATTRIBUTE_OFFSET:
-				if (size == sizeof(vx_int32)) {
-					*(vx_int32 *)ptr = data->u.dist.offset;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_ATTRIBUTE_RANGE:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = data->u.dist.range;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_ATTRIBUTE_BINS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.dist.numbins;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_ATTRIBUTE_WINDOW:
-				if (size == sizeof(vx_uint32)) {
-					vx_uint32 window = (data->u.dist.window * data->u.dist.numbins == data->u.dist.range) ? data->u.dist.window : 0;
-					*(vx_uint32 *)ptr = window;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_ATTRIBUTE_SIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->size;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)distribution;
+    if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_DISTRIBUTION_ATTRIBUTE_DIMENSIONS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = 1;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_ATTRIBUTE_OFFSET:
+                if (size == sizeof(vx_int32)) {
+                    *(vx_int32 *)ptr = data->u.dist.offset;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_ATTRIBUTE_RANGE:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = data->u.dist.range;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_ATTRIBUTE_BINS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.dist.numbins;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_ATTRIBUTE_WINDOW:
+                if (size == sizeof(vx_uint32)) {
+                    vx_uint32 window = (data->u.dist.window * data->u.dist.numbins == data->u.dist.range) ? data->u.dist.window : 0;
+                    *(vx_uint32 *)ptr = window;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_ATTRIBUTE_SIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->size;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Gets direct access to a Distribution in memory.
@@ -5152,43 +5343,43 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryDistribution(vx_distribution distribut
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAccessDistribution(vx_distribution distribution, void **ptr, vx_enum usage)
 {
-	AgoData * data = (AgoData *)distribution;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_uint8 * ptr_internal = data->buffer;
-			vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
-			// save the pointer and usage for use in vxCommitXXX
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessXXX() more than once with same pointer, the application
-					// needs to call vxCommitXXX() before calling vxAccessXXX()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				MappedData item = { data->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false };
-				data->mapped.push_back(item);
-				*ptr = ptr_returned;
-				if (item.used_external_ptr && (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE)) {
-					// copy if read is requested with explicit external buffer
-					HafCpu_BinaryCopy_U8_U8(data->size, ptr_returned, ptr_internal);
-				}
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)distribution;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_uint8 * ptr_internal = data->buffer;
+            vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
+            // save the pointer and usage for use in vxCommitXXX
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessXXX() more than once with same pointer, the application
+                    // needs to call vxCommitXXX() before calling vxAccessXXX()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                MappedData item = { data->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false };
+                data->mapped.push_back(item);
+                *ptr = ptr_returned;
+                if (item.used_external_ptr && (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE)) {
+                    // copy if read is requested with explicit external buffer
+                    HafCpu_BinaryCopy_U8_U8(data->size, ptr_returned, ptr_internal);
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets the Distribution back to the memory. The memory must be
@@ -5201,40 +5392,40 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessDistribution(vx_distribution distribu
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCommitDistribution(vx_distribution distribution, const void * ptr)
 {
-	AgoData * data = (AgoData *)distribution;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
-		// check for valid arguments
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr) {
-			status = VX_SUCCESS;
-			if (!data->buffer) {
-				status = VX_FAILURE;
-			}
-			else if (!data->mapped.empty()) {
-				vx_enum usage = VX_READ_ONLY;
-				bool used_external_ptr = false;
-				for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-					if (i->ptr == ptr) {
-						usage = i->usage;
-						used_external_ptr = i->used_external_ptr;
-						data->mapped.erase(i);
-						break;
-					}
-				}
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					if (used_external_ptr) {
-						// copy from external buffer
-						HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)ptr);
-					}
-				}
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)distribution;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
+        // check for valid arguments
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr) {
+            status = VX_SUCCESS;
+            if (!data->buffer) {
+                status = VX_FAILURE;
+            }
+            else if (!data->mapped.empty()) {
+                vx_enum usage = VX_READ_ONLY;
+                bool used_external_ptr = false;
+                for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                    if (i->ptr == ptr) {
+                        usage = i->usage;
+                        used_external_ptr = i->used_external_ptr;
+                        data->mapped.erase(i);
+                        break;
+                    }
+                }
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    if (used_external_ptr) {
+                        // copy from external buffer
+                        HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)ptr);
+                    }
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy from/into a distribution object.
@@ -5261,19 +5452,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxCommitDistribution(vx_distribution distribu
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyDistribution(vx_distribution distribution, void *user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)distribution;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_DISTRIBUTION))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
-			status = vxAccessDistribution(distribution, &user_ptr, usage);
-			if (status == VX_SUCCESS) {
-				status = vxCommitDistribution(distribution, user_ptr);
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)distribution;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_DISTRIBUTION))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
+            status = vxAccessDistribution(distribution, &user_ptr, usage);
+            if (status == VX_SUCCESS) {
+                status = vxCommitDistribution(distribution, user_ptr);
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to get direct access to distribution object.
@@ -5317,39 +5508,39 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyDistribution(vx_distribution distributi
 */
 VX_API_ENTRY vx_status VX_API_CALL vxMapDistribution(vx_distribution distribution, vx_map_id *map_id, void **ptr, vx_enum usage, vx_enum mem_type, vx_bitfield flags)
 {
-	AgoData * data = (AgoData *)distribution;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_uint8 * ptr_returned = data->buffer;
-			// save the pointer and usage for use in vxCommitXXX
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessXXX() more than once with same pointer, the application
-					// needs to call vxCommitXXX() before calling vxAccessXXX()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				MappedData item = { data->nextMapId++, ptr_returned, usage, false };
-				data->mapped.push_back(item);
-				*map_id = item.map_id;
-				*ptr = ptr_returned;
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)distribution;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_uint8 * ptr_returned = data->buffer;
+            // save the pointer and usage for use in vxCommitXXX
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessXXX() more than once with same pointer, the application
+                    // needs to call vxCommitXXX() before calling vxAccessXXX()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false };
+                data->mapped.push_back(item);
+                *map_id = item.map_id;
+                *ptr = ptr_returned;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Unmap and commit potential changes to distribution object that was previously mapped.
@@ -5367,25 +5558,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapDistribution(vx_distribution distributio
 */
 VX_API_ENTRY vx_status VX_API_CALL vxUnmapDistribution(vx_distribution distribution, vx_map_id map_id)
 {
-	AgoData * data = (AgoData *)distribution;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-			if (i->map_id == map_id) {
-				vx_enum usage = i->usage;
-				data->mapped.erase(i);
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					// update sync flags
-					data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-				status = VX_SUCCESS;
-				break;
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)distribution;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_DISTRIBUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+            if (i->map_id == map_id) {
+                vx_enum usage = i->usage;
+                data->mapped.erase(i);
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // update sync flags
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+                status = VX_SUCCESS;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -5404,18 +5595,18 @@ THRESHOLD
 */
 VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThreshold(vx_context context, vx_enum thresh_type, vx_enum data_type)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
-		(((data_type >= VX_TYPE_INT8) && (data_type <= VX_TYPE_INT32)) || data_type == VX_TYPE_BOOL))
-	{
-		CAgoLock lock(context->cs);
-		char desc[512]; sprintf(desc, "threshold:%s,%s", agoEnum2Name(thresh_type), agoEnum2Name(data_type));
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
+        (((data_type >= VX_TYPE_INT8) && (data_type <= VX_TYPE_INT32)) || data_type == VX_TYPE_BOOL))
+    {
+        CAgoLock lock(context->cs);
+        char desc[512]; sprintf(desc, "threshold:%s,%s", agoEnum2Name(thresh_type), agoEnum2Name(data_type));
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
 
-		if (data) {
-			agoGenerateDataName(context, "thr", data->name);
-			agoAddData(&context->dataList, data);
-			switch(data_type)
+        if (data) {
+            agoGenerateDataName(context, "thr", data->name);
+            agoAddData(&context->dataList, data);
+            switch(data_type)
             {
             case VX_TYPE_BOOL:
                 data->u.thr.true_value.U1 = AGO_U1_THRESHOLD_TRUE_VALUE;
@@ -5448,9 +5639,9 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThreshold(vx_context context, vx_e
             default:
                 break;
             }
-		}
-	}
-	return (vx_threshold)data;
+        }
+    }
+    return (vx_threshold)data;
 }
 
 /*! \brief Creates a threshold object and returns a reference to it.
@@ -5459,138 +5650,138 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThreshold(vx_context context, vx_e
 * \param [in] input_format  The format of images that will be used as input of the thresholding operation.
 *                           The input image formats <tt>\ref VX_DF_IMAGE_U8</tt> and <tt>\ref VX_DF_IMAGE_S16</tt> shall be supported.
 * \param [in] output_format The format of images that will be generated by the thresholding operation.
-*                           The output image format <tt>\ref VX_DF_IMAGE_U8</tt> shall be supported. 
+*                           The output image format <tt>\ref VX_DF_IMAGE_U8</tt> shall be supported.
 *							If other output formats are supported, the true/false values listed above must be used.
 * \return                   A threshold reference <tt>\ref vx_threshold</tt>.
 *
-* \note The threshold object defines the parameters of a thresholding operation to an input image, that generates an output image that can have a different format. 
-* The thresholding 'false' or 'true' output values are specified per pixel channels of the output format and can be modified with <tt>\ref vxCopyThresholdOutput<tt>. 
+* \note The threshold object defines the parameters of a thresholding operation to an input image, that generates an output image that can have a different format.
+* The thresholding 'false' or 'true' output values are specified per pixel channels of the output format and can be modified with <tt>\ref vxCopyThresholdOutput<tt>.
 * The default 'false' output value of pixels channels should be 0, and the default 'true' value should be non-zero.
 *
 * \ingroup group_threshold
 */
 VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context context, vx_enum thresh_type, vx_df_image input_format, vx_df_image output_format)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE)) 
-	{
-		/*if((input_format == VX_DF_IMAGE_RGB  || input_format == VX_DF_IMAGE_RGBX || input_format == VX_DF_IMAGE_NV12 || 
-			input_format == VX_DF_IMAGE_NV21 || input_format == VX_DF_IMAGE_UYVY || input_format == VX_DF_IMAGE_YUYV || 
-			input_format == VX_DF_IMAGE_IYUV || input_format == VX_DF_IMAGE_YUV4) && (output_format == VX_DF_IMAGE_RGB  || 
-			output_format == VX_DF_IMAGE_RGBX || output_format == VX_DF_IMAGE_NV12 || output_format == VX_DF_IMAGE_NV21 || 
-			output_format == VX_DF_IMAGE_UYVY || output_format == VX_DF_IMAGE_YUYV || output_format == VX_DF_IMAGE_IYUV || 
-			output_format == VX_DF_IMAGE_YUV4)) {*/
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE))
+    {
+        /*if((input_format == VX_DF_IMAGE_RGB  || input_format == VX_DF_IMAGE_RGBX || input_format == VX_DF_IMAGE_NV12 ||
+            input_format == VX_DF_IMAGE_NV21 || input_format == VX_DF_IMAGE_UYVY || input_format == VX_DF_IMAGE_YUYV ||
+            input_format == VX_DF_IMAGE_IYUV || input_format == VX_DF_IMAGE_YUV4) && (output_format == VX_DF_IMAGE_RGB  ||
+            output_format == VX_DF_IMAGE_RGBX || output_format == VX_DF_IMAGE_NV12 || output_format == VX_DF_IMAGE_NV21 ||
+            output_format == VX_DF_IMAGE_UYVY || output_format == VX_DF_IMAGE_YUYV || output_format == VX_DF_IMAGE_IYUV ||
+            output_format == VX_DF_IMAGE_YUV4)) {*/
 
-			CAgoLock lock(context->cs);
+            CAgoLock lock(context->cs);
 
-			/*vx_enum data_type;
-			if(output_format == VX_DF_IMAGE_U8)
-				data_type = VX_TYPE_UINT8;
-			else if(output_format == VX_DF_IMAGE_U1)
-				data_type = VX_TYPE_BOOL;
-			*/
-			const char * desc_type = agoEnum2Name(thresh_type);
-			if(desc_type){
-				char desc[512]; sprintf(desc, "threshold:%s,%u,%u", desc_type, input_format, output_format);
-				data = agoCreateDataFromDescription(context, NULL, desc, true);
-				if (data) {
-					agoGenerateDataName(context, "thr", data->name);
-					agoAddData(&context->dataList, data);
+            /*vx_enum data_type;
+            if(output_format == VX_DF_IMAGE_U8)
+                data_type = VX_TYPE_UINT8;
+            else if(output_format == VX_DF_IMAGE_U1)
+                data_type = VX_TYPE_BOOL;
+            */
+            const char * desc_type = agoEnum2Name(thresh_type);
+            if(desc_type){
+                char desc[512]; sprintf(desc, "threshold:%s,%u,%u", desc_type, input_format, output_format);
+                data = agoCreateDataFromDescription(context, NULL, desc, true);
+                if (data) {
+                    agoGenerateDataName(context, "thr", data->name);
+                    agoAddData(&context->dataList, data);
 
-					switch (output_format)
-		        	{
-			            case VX_DF_IMAGE_RGB:
-			            {
-			                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
-			                data->u.thr.true_value.RGB[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.true_value.RGB[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.true_value.RGB[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.RGB[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                data->u.thr.false_value.RGB[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                data->u.thr.false_value.RGB[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_RGBX:
-			            {
-			                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
-			                data->u.thr.true_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.true_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.true_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.true_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                data->u.thr.false_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                data->u.thr.false_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                data->u.thr.false_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_NV12:
-			            case VX_DF_IMAGE_NV21:
-			            case VX_DF_IMAGE_UYVY:
-			            case VX_DF_IMAGE_YUYV:
-			            case VX_DF_IMAGE_IYUV:
-			            case VX_DF_IMAGE_YUV4:
-			            {
-			                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
-			                data->u.thr.true_value.YUV[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.true_value.YUV[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.true_value.YUV[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.YUV[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                data->u.thr.false_value.YUV[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                data->u.thr.false_value.YUV[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_U1:
-			            {
-			                data->u.thr.data_type = VX_TYPE_BOOL;
-			                data->u.thr.true_value.U1  = AGO_U1_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.U1 = AGO_U1_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_U8:
-			            {
-			                data->u.thr.data_type = VX_TYPE_UINT8;
-			                data->u.thr.true_value.U8  = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_S16:
-			            {
-			                data->u.thr.data_type = VX_TYPE_INT16;
-			                data->u.thr.true_value.S16  = AGO_S16_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.S16 = AGO_S16_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_U16:
-			            {
-			                data->u.thr.data_type = VX_TYPE_UINT16;
-			                data->u.thr.true_value.U16  = AGO_U16_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.U16 = AGO_U16_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_S32:
-			            {
-			                data->u.thr.data_type = VX_TYPE_INT32;
-			                data->u.thr.true_value.S32  = AGO_S32_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.S32 = AGO_S32_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            case VX_DF_IMAGE_U32:
-			            {
-			                data->u.thr.data_type = VX_TYPE_UINT32;
-			                data->u.thr.true_value.U32  = AGO_U32_THRESHOLD_TRUE_VALUE;
-			                data->u.thr.false_value.U32 = AGO_U32_THRESHOLD_FALSE_VALUE;
-			                break;
-			            }
-			            default:
-			            {
-			                break;
-			            }
-			        }
-				//}
-			}
-		}
-	}
-	return (vx_threshold)data;
+                    switch (output_format)
+                    {
+                        case VX_DF_IMAGE_RGB:
+                        {
+                            data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+                            data->u.thr.true_value.RGB[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.true_value.RGB[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.true_value.RGB[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.RGB[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            data->u.thr.false_value.RGB[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            data->u.thr.false_value.RGB[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_RGBX:
+                        {
+                            data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+                            data->u.thr.true_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.true_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.true_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.true_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            data->u.thr.false_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            data->u.thr.false_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            data->u.thr.false_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_NV12:
+                        case VX_DF_IMAGE_NV21:
+                        case VX_DF_IMAGE_UYVY:
+                        case VX_DF_IMAGE_YUYV:
+                        case VX_DF_IMAGE_IYUV:
+                        case VX_DF_IMAGE_YUV4:
+                        {
+                            data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+                            data->u.thr.true_value.YUV[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.true_value.YUV[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.true_value.YUV[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.YUV[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            data->u.thr.false_value.YUV[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            data->u.thr.false_value.YUV[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_U1:
+                        {
+                            data->u.thr.data_type = VX_TYPE_BOOL;
+                            data->u.thr.true_value.U1  = AGO_U1_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.U1 = AGO_U1_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_U8:
+                        {
+                            data->u.thr.data_type = VX_TYPE_UINT8;
+                            data->u.thr.true_value.U8  = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_S16:
+                        {
+                            data->u.thr.data_type = VX_TYPE_INT16;
+                            data->u.thr.true_value.S16  = AGO_S16_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.S16 = AGO_S16_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_U16:
+                        {
+                            data->u.thr.data_type = VX_TYPE_UINT16;
+                            data->u.thr.true_value.U16  = AGO_U16_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.U16 = AGO_U16_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_S32:
+                        {
+                            data->u.thr.data_type = VX_TYPE_INT32;
+                            data->u.thr.true_value.S32  = AGO_S32_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.S32 = AGO_S32_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        case VX_DF_IMAGE_U32:
+                        {
+                            data->u.thr.data_type = VX_TYPE_UINT32;
+                            data->u.thr.true_value.U32  = AGO_U32_THRESHOLD_TRUE_VALUE;
+                            data->u.thr.false_value.U32 = AGO_U32_THRESHOLD_FALSE_VALUE;
+                            break;
+                        }
+                        default:
+                        {
+                            break;
+                        }
+                    }
+                //}
+            }
+        }
+    }
+    return (vx_threshold)data;
 }
 
 /*! \brief Creates an opaque reference to a threshold object without direct user access.
@@ -5605,128 +5796,128 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateThresholdForImage(vx_context conte
 */
 VX_API_ENTRY vx_threshold VX_API_CALL vxCreateVirtualThresholdForImage(vx_graph graph, vx_enum thresh_type, vx_df_image input_format, vx_df_image output_format)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
-		(input_format == VX_DF_IMAGE_U8 || input_format == VX_DF_IMAGE_S16) && (output_format == VX_DF_IMAGE_U8 || output_format == VX_DF_IMAGE_U1)) {
-		CAgoLock lock(graph->cs);
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph) && (thresh_type == VX_THRESHOLD_TYPE_BINARY || thresh_type == VX_THRESHOLD_TYPE_RANGE) &&
+        (input_format == VX_DF_IMAGE_U8 || input_format == VX_DF_IMAGE_S16) && (output_format == VX_DF_IMAGE_U8 || output_format == VX_DF_IMAGE_U1)) {
+        CAgoLock lock(graph->cs);
 
-		const char * desc_type = agoEnum2Name(thresh_type);
+        const char * desc_type = agoEnum2Name(thresh_type);
 
-		/*vx_enum data_type;
-		if(output_format == VX_DF_IMAGE_U8)
-			data_type = VX_TYPE_UINT8;
-		else if(output_format == VX_DF_IMAGE_U1)
-			data_type = VX_TYPE_BOOL;
-		*/
-		if (desc_type) {
-			char desc[512]; 
-			sprintf(desc, "threshold-virtual:%s,%u,%u", desc_type, input_format, output_format);
-			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-			if (data) {
-				agoGenerateVirtualDataName(graph, "thr", data->name);
-				agoAddData(&graph->dataList, data);
-				switch (output_format)
-	        	{
-		            case VX_DF_IMAGE_RGB:
-		            {
-		                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
-		                data->u.thr.true_value.RGB[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.true_value.RGB[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.true_value.RGB[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.RGB[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                data->u.thr.false_value.RGB[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                data->u.thr.false_value.RGB[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_RGBX:
-		            {
-		                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
-		                data->u.thr.true_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.true_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.true_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.true_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                data->u.thr.false_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                data->u.thr.false_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                data->u.thr.false_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_NV12:
-		            case VX_DF_IMAGE_NV21:
-		            case VX_DF_IMAGE_UYVY:
-		            case VX_DF_IMAGE_YUYV:
-		            case VX_DF_IMAGE_IYUV:
-		            case VX_DF_IMAGE_YUV4:
-		            {
-		                data->u.thr.data_type = VX_TYPE_DF_IMAGE;
-		                data->u.thr.true_value.YUV[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.true_value.YUV[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.true_value.YUV[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.YUV[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                data->u.thr.false_value.YUV[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                data->u.thr.false_value.YUV[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_U1:
-		            {
-		                data->u.thr.data_type = VX_TYPE_BOOL;
-		                data->u.thr.true_value.U1  = AGO_U1_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.U1 = AGO_U1_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_U8:
-		            {
-		                data->u.thr.data_type = VX_TYPE_UINT8;
-		                data->u.thr.true_value.U8  = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_S16:
-		            {
-		                data->u.thr.data_type = VX_TYPE_INT16;
-		                data->u.thr.true_value.S16  = AGO_S16_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.S16 = AGO_S16_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_U16:
-		            {
-		                data->u.thr.data_type = VX_TYPE_UINT16;
-		                data->u.thr.true_value.U16  = AGO_U16_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.U16 = AGO_U16_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_S32:
-		            {
-		                data->u.thr.data_type = VX_TYPE_INT32;
-		                data->u.thr.true_value.S32  = AGO_S32_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.S32 = AGO_S32_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            case VX_DF_IMAGE_U32:
-		            {
-		                data->u.thr.data_type = VX_TYPE_UINT32;
-		                data->u.thr.true_value.U32  = AGO_U32_THRESHOLD_TRUE_VALUE;
-		                data->u.thr.false_value.U32 = AGO_U32_THRESHOLD_FALSE_VALUE;
-		                break;
-		            }
-		            default:
-		            {
-		                break;
-		            }
-		        }
-			}
-		}
-	}
-	return (vx_threshold)data;
+        /*vx_enum data_type;
+        if(output_format == VX_DF_IMAGE_U8)
+            data_type = VX_TYPE_UINT8;
+        else if(output_format == VX_DF_IMAGE_U1)
+            data_type = VX_TYPE_BOOL;
+        */
+        if (desc_type) {
+            char desc[512];
+            sprintf(desc, "threshold-virtual:%s,%u,%u", desc_type, input_format, output_format);
+            data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+            if (data) {
+                agoGenerateVirtualDataName(graph, "thr", data->name);
+                agoAddData(&graph->dataList, data);
+                switch (output_format)
+                {
+                    case VX_DF_IMAGE_RGB:
+                    {
+                        data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+                        data->u.thr.true_value.RGB[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.true_value.RGB[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.true_value.RGB[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.RGB[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        data->u.thr.false_value.RGB[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        data->u.thr.false_value.RGB[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_RGBX:
+                    {
+                        data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+                        data->u.thr.true_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.true_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.true_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.true_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.RGBX[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        data->u.thr.false_value.RGBX[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        data->u.thr.false_value.RGBX[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        data->u.thr.false_value.RGBX[3] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_NV12:
+                    case VX_DF_IMAGE_NV21:
+                    case VX_DF_IMAGE_UYVY:
+                    case VX_DF_IMAGE_YUYV:
+                    case VX_DF_IMAGE_IYUV:
+                    case VX_DF_IMAGE_YUV4:
+                    {
+                        data->u.thr.data_type = VX_TYPE_DF_IMAGE;
+                        data->u.thr.true_value.YUV[0] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.true_value.YUV[1] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.true_value.YUV[2] = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.YUV[0] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        data->u.thr.false_value.YUV[1] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        data->u.thr.false_value.YUV[2] = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_U1:
+                    {
+                        data->u.thr.data_type = VX_TYPE_BOOL;
+                        data->u.thr.true_value.U1  = AGO_U1_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.U1 = AGO_U1_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_U8:
+                    {
+                        data->u.thr.data_type = VX_TYPE_UINT8;
+                        data->u.thr.true_value.U8  = AGO_DEFAULT_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.U8 = AGO_DEFAULT_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_S16:
+                    {
+                        data->u.thr.data_type = VX_TYPE_INT16;
+                        data->u.thr.true_value.S16  = AGO_S16_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.S16 = AGO_S16_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_U16:
+                    {
+                        data->u.thr.data_type = VX_TYPE_UINT16;
+                        data->u.thr.true_value.U16  = AGO_U16_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.U16 = AGO_U16_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_S32:
+                    {
+                        data->u.thr.data_type = VX_TYPE_INT32;
+                        data->u.thr.true_value.S32  = AGO_S32_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.S32 = AGO_S32_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    case VX_DF_IMAGE_U32:
+                    {
+                        data->u.thr.data_type = VX_TYPE_UINT32;
+                        data->u.thr.true_value.U32  = AGO_U32_THRESHOLD_TRUE_VALUE;
+                        data->u.thr.false_value.U32 = AGO_U32_THRESHOLD_FALSE_VALUE;
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    return (vx_threshold)data;
 }
 
 /*! \brief Allows the application to copy the thresholding value from/into a threshold object with type <tt>\ref VX_THRESHOLD_TYPE_BINARY<\tt>.
 * \param [in] thresh    	The reference to the threshold object that is the source or the destination of the copy.
-* \param [in,out] value_ptr 	The address of the memory location where to store the thresholding value if the copy was requested in read mode, 
+* \param [in,out] value_ptr 	The address of the memory location where to store the thresholding value if the copy was requested in read mode,
 *							or from where to get the thresholding value to store into the threshold object if the copy was requested in write mode.
-* \param [in] usage     	This declares the effect of the copy with regard to the threshold object using the <tt>\ref vx_accessor_e</tt> enumeration. 
+* \param [in] usage     	This declares the effect of the copy with regard to the threshold object using the <tt>\ref vx_accessor_e</tt> enumeration.
 *							Only VX_READ_ONLY and VX_WRITE_ONLY are supported:
-* \arg VX_READ_ONLY 		Means that the thresholding value is copied from the threshold object into the user memory. 
+* \arg VX_READ_ONLY 		Means that the thresholding value is copied from the threshold object into the user memory.
 *							After the copy, only the field of the (*value_ptr) union that corresponds to the input image format of the threshold object is meaningful.
 * \arg VX_WRITE_ONLY 		Means the field of the (value_ptr) union corresponding to the input format of the threshold object is copied into the threshold object.
 * \param [in] user_mem_type A <tt>\ref vx_memory_type_e</tt> enumeration that specifies the type of the memory referenced by value_ptr.
@@ -5742,57 +5933,57 @@ VX_API_ENTRY vx_threshold VX_API_CALL vxCreateVirtualThresholdForImage(vx_graph 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_pixel_value_t *value_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)thresh;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && value_ptr) {
-			status = VX_ERROR_NOT_COMPATIBLE;
-			if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
-				status = VX_ERROR_NO_MEMORY;
-				AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+    AgoData * data = (AgoData *)thresh;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && value_ptr) {
+            status = VX_ERROR_NOT_COMPATIBLE;
+            if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
+                status = VX_ERROR_NO_MEMORY;
+                AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
 #if ENABLE_OPENCL
-			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				// make sure dirty OpenCL buffers are synched before giving access for read
-				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-					// transfer only valid data
-					if (dataToSync->size > 0) {
-						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-						if (err) {
-							status = VX_FAILURE;
-							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
-							return status;
-						}
-					}
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-				}
-			}
+            if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty OpenCL buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
-				if (usage == VX_READ_ONLY){
-					//*(vx_int32 *)value_ptr = data->u.thr.threshold_lower;
-					memcpy(value_ptr, &data->u.thr.threshold_value, sizeof(vx_pixel_value_t));
-					status = VX_SUCCESS;
-				}
-				else if (usage == VX_WRITE_ONLY){
-					//data->u.thr.threshold_lower = *(vx_int32 *)value_ptr;
-					memcpy(&data->u.thr.threshold_value, value_ptr, sizeof(vx_pixel_value_t));
-					status = VX_SUCCESS;
-				}
-			}
-		}
-	}
-	return status;
+                if (usage == VX_READ_ONLY){
+                    //*(vx_int32 *)value_ptr = data->u.thr.threshold_lower;
+                    memcpy(value_ptr, &data->u.thr.threshold_value, sizeof(vx_pixel_value_t));
+                    status = VX_SUCCESS;
+                }
+                else if (usage == VX_WRITE_ONLY){
+                    //data->u.thr.threshold_lower = *(vx_int32 *)value_ptr;
+                    memcpy(&data->u.thr.threshold_value, value_ptr, sizeof(vx_pixel_value_t));
+                    status = VX_SUCCESS;
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy thresholding values from/into a threshold object with type <tt>\ref VX_THRESHOLD_TYPE_RANGE</tt>.
  * \param [in] thresh 			   	The reference to the threshold object that is the source or the destination of the copy.
  * \param [in,out] lower_value_ptr 	The address of the memory location where to store the lower thresholding value if the copy was requested in read mode,
  * 									or from where to get the lower thresholding value to store into the threshold object if the copy was requested in write mode.
- * \param [in,out] upper_value_ptr 	The address of the memory location where to store the upper thresholding value if the copy was requested in read mode, 
+ * \param [in,out] upper_value_ptr 	The address of the memory location where to store the upper thresholding value if the copy was requested in read mode,
  *									or from where to get the upper thresholding value to store into the threshold object if the copy was requested in write mode.
- * \param [in] usage 				This declares the effect of the copy with regard to the threshold object using the <tt>\ref vx_accessor_e</tt> enumeration. 
+ * \param [in] usage 				This declares the effect of the copy with regard to the threshold object using the <tt>\ref vx_accessor_e</tt> enumeration.
  * 									Only <tt>\ref VX_READ_ONLY</tt> and <tt>\ref VX_WRITE_ONLY</tt> are supported:
- * \arg <tt>\ref VX_READ_ONLY</tt> 	Means that thresholding values are copied from the threshold object into the user memory. 
+ * \arg <tt>\ref VX_READ_ONLY</tt> 	Means that thresholding values are copied from the threshold object into the user memory.
  * 									After the copy, only the field of (*lower_value_ptr) and (*upper_value_ptr) unions that corresponds
  * 									to the input image format of the threshold object is meaningful.
  * \arg <tt>\ref VX_WRITE_ONLY</tt> Means the field of the (*lower_value_ptr) and (*upper_value_ptr) unions corresponding to the input format of the
@@ -5811,46 +6002,46 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_
  */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_pixel_value_t * lower_value_ptr, vx_pixel_value_t * upper_value_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)thresh;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && lower_value_ptr && upper_value_ptr) {
-			status = VX_ERROR_NOT_COMPATIBLE;
-			if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-				status = VX_ERROR_NO_MEMORY;
-				AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+    AgoData * data = (AgoData *)thresh;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && lower_value_ptr && upper_value_ptr) {
+            status = VX_ERROR_NOT_COMPATIBLE;
+            if(data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+                status = VX_ERROR_NO_MEMORY;
+                AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
 #if ENABLE_OPENCL
-			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				// make sure dirty OpenCL buffers are synched before giving access for read
-				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-					// transfer only valid data
-					if (dataToSync->size > 0) {
-						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-						if (err) {
-							status = VX_FAILURE;
-							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
-							return status;
-						}
-					}
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-				}
-			}
+            if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty OpenCL buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
-				if (usage == VX_READ_ONLY){
-					memcpy(lower_value_ptr, &data->u.thr.threshold_lower, sizeof(vx_pixel_value_t));
-					memcpy(upper_value_ptr, &data->u.thr.threshold_upper, sizeof(vx_pixel_value_t));
-					status = VX_SUCCESS;
-				}
-				else if (usage == VX_WRITE_ONLY){
-					memcpy(&data->u.thr.threshold_lower, lower_value_ptr, sizeof(vx_pixel_value_t));
-					memcpy(&data->u.thr.threshold_upper, upper_value_ptr, sizeof(vx_pixel_value_t));
-					status = VX_SUCCESS;
-				}
-			}
-		}
-	}
-	return status;
+                if (usage == VX_READ_ONLY){
+                    memcpy(lower_value_ptr, &data->u.thr.threshold_lower, sizeof(vx_pixel_value_t));
+                    memcpy(upper_value_ptr, &data->u.thr.threshold_upper, sizeof(vx_pixel_value_t));
+                    status = VX_SUCCESS;
+                }
+                else if (usage == VX_WRITE_ONLY){
+                    memcpy(&data->u.thr.threshold_lower, lower_value_ptr, sizeof(vx_pixel_value_t));
+                    memcpy(&data->u.thr.threshold_upper, upper_value_ptr, sizeof(vx_pixel_value_t));
+                    status = VX_SUCCESS;
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy the true and false output values from/into a threshold object.
@@ -5859,7 +6050,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
  * 									or from where to get the true output value to store into the threshold object if the copy was requested in write mode.
  * \param [in,out] false_value_ptr 	The address of the memory location where to store the false output value if the copy was requested in read mode, or
  * 									from where to get the false output value to store into the threshold object if the copy was requested in write mode.
- * \param [in] usage 				This declares the effect of the copy with regard to the threshold object using the <tt>\ref vx_accessor_e</tt> enumeration. 
+ * \param [in] usage 				This declares the effect of the copy with regard to the threshold object using the <tt>\ref vx_accessor_e</tt> enumeration.
  * 									Only <tt>\ref VX_READ_ONLY</tt> and <tt>\ref VX_WRITE_ONLY</tt> are supported:
  * \arg <tt>\ref VX_READ_ONLY</tt> 	Means that true and false output values are copied from the threshold object into the user memory. After the copy,
  * 									only the field of (*true_value_ptr) and (*false_value_ptr) unions that corresponds to the output image format of the threshold object is meaningful.
@@ -5877,43 +6068,43 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
  */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx_pixel_value_t * true_value_ptr, vx_pixel_value_t * false_value_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)thresh;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && true_value_ptr && false_value_ptr) {
-			status = VX_ERROR_NO_MEMORY;
-				AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+    AgoData * data = (AgoData *)thresh;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && true_value_ptr && false_value_ptr) {
+            status = VX_ERROR_NO_MEMORY;
+                AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
 #if ENABLE_OPENCL
-			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				// make sure dirty OpenCL buffers are synched before giving access for read
-				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-					// transfer only valid data
-					if (dataToSync->size > 0) {
-						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-						if (err) {
-							status = VX_FAILURE;
-							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
-							return status;
-						}
-					}
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-				}
-			}
+            if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty OpenCL buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
-			if (usage == VX_READ_ONLY){
-				memcpy(true_value_ptr, &data->u.thr.true_value, sizeof(vx_pixel_value_t));
-				memcpy(false_value_ptr, &data->u.thr.false_value, sizeof(vx_pixel_value_t));
-				status = VX_SUCCESS;
-			}
-			else if (usage == VX_WRITE_ONLY){
-				memcpy(&data->u.thr.true_value, true_value_ptr, sizeof(vx_pixel_value_t));
-				memcpy(&data->u.thr.false_value, false_value_ptr, sizeof(vx_pixel_value_t));
-				status = VX_SUCCESS;
-			}
-		}
-	}
-	return status;
+            if (usage == VX_READ_ONLY){
+                memcpy(true_value_ptr, &data->u.thr.true_value, sizeof(vx_pixel_value_t));
+                memcpy(false_value_ptr, &data->u.thr.false_value, sizeof(vx_pixel_value_t));
+                status = VX_SUCCESS;
+            }
+            else if (usage == VX_WRITE_ONLY){
+                memcpy(&data->u.thr.true_value, true_value_ptr, sizeof(vx_pixel_value_t));
+                memcpy(&data->u.thr.false_value, false_value_ptr, sizeof(vx_pixel_value_t));
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Releases a reference to a threshold object.
@@ -5927,14 +6118,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseThreshold(vx_threshold *thresh)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (thresh && agoIsValidData((AgoData*)*thresh, VX_TYPE_THRESHOLD)) {
-		if (!agoReleaseData((AgoData*)*thresh, true)) {
-			*thresh = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (thresh && agoIsValidData((AgoData*)*thresh, VX_TYPE_THRESHOLD)) {
+        if (!agoReleaseData((AgoData*)*thresh, true)) {
+            *thresh = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets attributes on the threshold object.
@@ -5947,56 +6138,56 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseThreshold(vx_threshold *thresh)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, vx_enum attribute, const void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)thresh;
-	if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
-				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
-					data->u.thr.threshold_value = *(vx_pixel_value_t *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_TYPE:
-				if (size == sizeof(vx_enum)) {
-					data->u.thr.thresh_type = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_INPUT_FORMAT:
-				if (size == sizeof(vx_df_image)) {
-					data->u.thr.input_format = *(vx_df_image *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_OUTPUT_FORMAT:
-				if (size == sizeof(vx_df_image)) {
-					data->u.thr.output_format = *(vx_df_image *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
-				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					data->u.thr.threshold_lower = *(vx_pixel_value_t *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER:
-				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					data->u.thr.threshold_upper = *(vx_pixel_value_t *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)thresh;
+    if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
+                if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
+                    data->u.thr.threshold_value = *(vx_pixel_value_t *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    data->u.thr.thresh_type = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_INPUT_FORMAT:
+                if (size == sizeof(vx_df_image)) {
+                    data->u.thr.input_format = *(vx_df_image *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_OUTPUT_FORMAT:
+                if (size == sizeof(vx_df_image)) {
+                    data->u.thr.output_format = *(vx_df_image *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
+                if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+                    data->u.thr.threshold_lower = *(vx_pixel_value_t *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER:
+                if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+                    data->u.thr.threshold_upper = *(vx_pixel_value_t *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries an attribute on the threshold object.
@@ -6009,74 +6200,74 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetThresholdAttribute(vx_threshold thresh, 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryThreshold(vx_threshold thresh, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)thresh;
-	if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_THRESHOLD_ATTRIBUTE_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.thr.thresh_type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_INPUT_FORMAT:
-				if (size == sizeof(vx_df_image)) {
-					*(vx_df_image *)ptr = data->u.thr.input_format;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_OUTPUT_FORMAT:
-				if (size == sizeof(vx_df_image)) {
-					*(vx_df_image *)ptr = data->u.thr.output_format;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_DATA_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.thr.data_type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
-				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
-					*(vx_pixel_value_t *)ptr = data->u.thr.threshold_value;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
-				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					*(vx_pixel_value_t *)ptr = data->u.thr.threshold_lower;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER:
-				if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
-					*(vx_pixel_value_t *)ptr = data->u.thr.threshold_upper;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_TRUE_VALUE:
-				if (size == sizeof(vx_int32)) {
-					*(vx_pixel_value_t *)ptr = data->u.thr.true_value;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_THRESHOLD_ATTRIBUTE_FALSE_VALUE:
-				if (size == sizeof(vx_int32)) {
-					*(vx_pixel_value_t *)ptr = data->u.thr.false_value;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)thresh;
+    if (agoIsValidData(data, VX_TYPE_THRESHOLD)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_THRESHOLD_ATTRIBUTE_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.thr.thresh_type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_INPUT_FORMAT:
+                if (size == sizeof(vx_df_image)) {
+                    *(vx_df_image *)ptr = data->u.thr.input_format;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_OUTPUT_FORMAT:
+                if (size == sizeof(vx_df_image)) {
+                    *(vx_df_image *)ptr = data->u.thr.output_format;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_DATA_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.thr.data_type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_VALUE:
+                if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_BINARY) {
+                    *(vx_pixel_value_t *)ptr = data->u.thr.threshold_value;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_LOWER:
+                if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+                    *(vx_pixel_value_t *)ptr = data->u.thr.threshold_lower;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_THRESHOLD_UPPER:
+                if (size == sizeof(vx_int32) && data->u.thr.thresh_type == VX_THRESHOLD_TYPE_RANGE) {
+                    *(vx_pixel_value_t *)ptr = data->u.thr.threshold_upper;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_TRUE_VALUE:
+                if (size == sizeof(vx_int32)) {
+                    *(vx_pixel_value_t *)ptr = data->u.thr.true_value;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_THRESHOLD_ATTRIBUTE_FALSE_VALUE:
+                if (size == sizeof(vx_int32)) {
+                    *(vx_pixel_value_t *)ptr = data->u.thr.false_value;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -6094,17 +6285,17 @@ MATRIX
 */
 VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrix(vx_context context, vx_enum data_type, vx_size columns, vx_size rows)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
-		CAgoLock lock(context->cs);
-		char desc[512]; sprintf(desc, "matrix:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "matrix", data->name);
-			agoAddData(&context->dataList, data);
-		}
-	}
-	return (vx_matrix)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
+        CAgoLock lock(context->cs);
+        char desc[512]; sprintf(desc, "matrix:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "matrix", data->name);
+            agoAddData(&context->dataList, data);
+        }
+    }
+    return (vx_matrix)data;
 }
 
 /*! \brief Creates an opaque reference to a matrix object without direct user access.
@@ -6118,17 +6309,17 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrix(vx_context context, vx_enum da
 */
 VX_API_ENTRY vx_matrix VX_API_CALL vxCreateVirtualMatrix(vx_graph graph, vx_enum data_type, vx_size columns, vx_size rows)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
-		CAgoLock lock(graph->cs);
-		char desc[512]; sprintf(desc, "matrix-virtual:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
-		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "matrix", data->name);
-			agoAddData(&graph->dataList, data);
-		}
-	}
-	return (vx_matrix)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph) && (data_type == VX_TYPE_INT32 || data_type == VX_TYPE_FLOAT32 || data_type == VX_TYPE_UINT8) && columns > 0 && rows > 0) {
+        CAgoLock lock(graph->cs);
+        char desc[512]; sprintf(desc, "matrix-virtual:%s," VX_FMT_SIZE "," VX_FMT_SIZE "", agoEnum2Name(data_type), columns, rows);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "matrix", data->name);
+            agoAddData(&graph->dataList, data);
+        }
+    }
+    return (vx_matrix)data;
 }
 
 /*! \brief Releases a reference to a matrix object.
@@ -6142,14 +6333,14 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateVirtualMatrix(vx_graph graph, vx_enum
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseMatrix(vx_matrix *mat)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (mat && agoIsValidData((AgoData*)*mat, VX_TYPE_MATRIX)) {
-		if (!agoReleaseData((AgoData*)*mat, true)) {
-			*mat = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (mat && agoIsValidData((AgoData*)*mat, VX_TYPE_MATRIX)) {
+        if (!agoReleaseData((AgoData*)*mat, true)) {
+            *mat = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries an attribute on the matrix object.
@@ -6162,56 +6353,56 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseMatrix(vx_matrix *mat)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryMatrix(vx_matrix mat, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)mat;
-	if (agoIsValidData(data, VX_TYPE_MATRIX)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_MATRIX_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.mat.type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_MATRIX_ROWS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.mat.rows;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_MATRIX_COLUMNS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.mat.columns;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_MATRIX_SIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->size;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_MATRIX_PATTERN:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.mat.pattern ? data->u.mat.pattern : VX_PATTERN_OTHER;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_MATRIX_ORIGIN:
-				if (size == sizeof(vx_coordinates2d_t)) {
-					*(vx_coordinates2d_t *)ptr = data->u.mat.origin;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)mat;
+    if (agoIsValidData(data, VX_TYPE_MATRIX)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_MATRIX_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.mat.type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_ROWS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.mat.rows;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_COLUMNS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.mat.columns;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_SIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->size;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_PATTERN:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.mat.pattern ? data->u.mat.pattern : VX_PATTERN_OTHER;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_ORIGIN:
+                if (size == sizeof(vx_coordinates2d_t)) {
+                    *(vx_coordinates2d_t *)ptr = data->u.mat.origin;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Gets the matrix data (copy).
@@ -6225,46 +6416,63 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryMatrix(vx_matrix mat, vx_enum attribut
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReadMatrix(vx_matrix mat, void *array)
 {
-	AgoData * data = (AgoData *)mat;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_MATRIX)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else {
-			if (array) {
-				if (!data->buffer) {
-					CAgoLock lock(data->ref.context->cs);
-					if (agoAllocData(data)) {
-						return VX_FAILURE;
-					}
-				}
+    AgoData * data = (AgoData *)mat;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_MATRIX)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else {
+            if (array) {
+                if (!data->buffer) {
+                    CAgoLock lock(data->ref.context->cs);
+                    if (agoAllocData(data)) {
+                        return VX_FAILURE;
+                    }
+                }
 #if ENABLE_OPENCL
-				if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-					// make sure dirty OpenCL buffers are synched before giving access for read
-					if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-						// transfer only valid data
-						vx_size size = data->size;
-						if (size > 0) {
-							cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, 0, size, data->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&data->ref, status, "ERROR: vxReadMatrix: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-						}
-						data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					}
-				}
+                if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->size;
+                        if (size > 0) {
+                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, 0, size, data->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxReadMatrix: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#elif ENABLE_HIP
+                if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->size;
+                        if (size > 0 && data->hip_memory) {
+                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxReadMatrix: hipMemcpyDtoH() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
 #endif
-				// copy to external buffer
-				HafCpu_BinaryCopy_U8_U8(data->size, (vx_uint8 *)array, data->buffer);
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+                // copy to external buffer
+                HafCpu_BinaryCopy_U8_U8(data->size, (vx_uint8 *)array, data->buffer);
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets the matrix data (copy)
@@ -6278,34 +6486,34 @@ VX_API_ENTRY vx_status VX_API_CALL vxReadMatrix(vx_matrix mat, void *array)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxWriteMatrix(vx_matrix mat, const void *array)
 {
-	AgoData * data = (AgoData *)mat;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_MATRIX)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (data->ref.read_only) {
-			status = VX_ERROR_NOT_SUPPORTED;
-		}
-		else {
-			if (array) {
-				if (!data->buffer) {
-					CAgoLock lock(data->ref.context->cs);
-					if (agoAllocData(data)) {
-						return VX_FAILURE;
-					}
-				}
-				// copy from external buffer
-				HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)array);
-				// update sync flags
-				data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-				data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)mat;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_MATRIX)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (data->ref.read_only) {
+            status = VX_ERROR_NOT_SUPPORTED;
+        }
+        else {
+            if (array) {
+                if (!data->buffer) {
+                    CAgoLock lock(data->ref.context->cs);
+                    if (agoAllocData(data)) {
+                        return VX_FAILURE;
+                    }
+                }
+                // copy from external buffer
+                HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)array);
+                // update sync flags
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy from/into a matrix object.
@@ -6334,19 +6542,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxWriteMatrix(vx_matrix mat, const void *arra
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyMatrix(vx_matrix matrix, void *user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)matrix;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_MATRIX))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
-			if (usage == VX_READ_ONLY)
-				status = vxReadMatrix(matrix, user_ptr);
-			else if (usage == VX_WRITE_ONLY)
-				status = vxWriteMatrix(matrix, user_ptr);
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)matrix;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_MATRIX))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
+            if (usage == VX_READ_ONLY)
+                status = vxReadMatrix(matrix, user_ptr);
+            else if (usage == VX_WRITE_ONLY)
+                status = vxWriteMatrix(matrix, user_ptr);
+        }
+    }
+    return status;
 }
 
 /*! \brief Creates a reference to a matrix object from a boolean pattern.
@@ -6376,59 +6584,59 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyMatrix(vx_matrix matrix, void *user_ptr
 */
 VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrixFromPattern(vx_context context, vx_enum pattern, vx_size columns, vx_size rows)
 {
-	vx_matrix mat = nullptr;
-	// check for supported patterns
-	if (pattern == VX_PATTERN_BOX || pattern == VX_PATTERN_CROSS || pattern == VX_PATTERN_DISK || pattern == VX_PATTERN_OTHER)
-	{
-		// create a matrix object
-		mat = vxCreateMatrix(context, VX_TYPE_UINT8, columns, rows);
-		vx_status status = vxGetStatus((vx_reference)mat);
-		if (status == VX_SUCCESS) {
-			// initialize with the pattern and mark it
-			AgoData * data = (AgoData *)mat;
-			data->u.mat.pattern = pattern;
-			if (pattern != VX_PATTERN_OTHER) {
-				vx_uint8 * buf = new vx_uint8[columns * rows];
-				if (!buf) {
-					vxReleaseMatrix(&mat);
-					return mat;
-				}
-				if (pattern == VX_PATTERN_CROSS) {
-					// cross pattern
-					memset(buf, 0, columns * rows);
-					for (vx_size x = 0; x < columns; x++)
-						buf[columns * (rows / 2) + x] = 255;
-					for (vx_size y = 0; y < rows; y++)
-						buf[(columns / 2) + y * columns] = 255;
-				}
-				else if (pattern == VX_PATTERN_DISK) {
-					// disk pattern
-					for (vx_size r = 0; r < rows; r++) {
-						float y = ((r - rows*0.5f + 0.5f) / (rows*0.5f));
-						float y2 = y * y;
-						for (vx_size c = 0; c < columns; c++) {
-							float x = ((c - columns*0.5f + 0.5f) / (columns*0.5f));
-							float x2 = x * x;
-							buf[c + r * columns] = ((x2 + y2) <= 1.0f) ? 255 : 0;
-						}
-					}
-				}
-				else {
-					// box pattern
-					memset(buf, 255, columns * rows);
-				}
-				status = vxCopyMatrix(mat, buf, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-				if (status) {
-					vxReleaseMatrix(&mat);
-					return mat;
-				}
-				delete[] buf;
-			}
-			// mark the matrix read-only
-			data->ref.read_only = true;
-		}
-	}
-	return mat;
+    vx_matrix mat = nullptr;
+    // check for supported patterns
+    if (pattern == VX_PATTERN_BOX || pattern == VX_PATTERN_CROSS || pattern == VX_PATTERN_DISK || pattern == VX_PATTERN_OTHER)
+    {
+        // create a matrix object
+        mat = vxCreateMatrix(context, VX_TYPE_UINT8, columns, rows);
+        vx_status status = vxGetStatus((vx_reference)mat);
+        if (status == VX_SUCCESS) {
+            // initialize with the pattern and mark it
+            AgoData * data = (AgoData *)mat;
+            data->u.mat.pattern = pattern;
+            if (pattern != VX_PATTERN_OTHER) {
+                vx_uint8 * buf = new vx_uint8[columns * rows];
+                if (!buf) {
+                    vxReleaseMatrix(&mat);
+                    return mat;
+                }
+                if (pattern == VX_PATTERN_CROSS) {
+                    // cross pattern
+                    memset(buf, 0, columns * rows);
+                    for (vx_size x = 0; x < columns; x++)
+                        buf[columns * (rows / 2) + x] = 255;
+                    for (vx_size y = 0; y < rows; y++)
+                        buf[(columns / 2) + y * columns] = 255;
+                }
+                else if (pattern == VX_PATTERN_DISK) {
+                    // disk pattern
+                    for (vx_size r = 0; r < rows; r++) {
+                        float y = ((r - rows*0.5f + 0.5f) / (rows*0.5f));
+                        float y2 = y * y;
+                        for (vx_size c = 0; c < columns; c++) {
+                            float x = ((c - columns*0.5f + 0.5f) / (columns*0.5f));
+                            float x2 = x * x;
+                            buf[c + r * columns] = ((x2 + y2) <= 1.0f) ? 255 : 0;
+                        }
+                    }
+                }
+                else {
+                    // box pattern
+                    memset(buf, 255, columns * rows);
+                }
+                status = vxCopyMatrix(mat, buf, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+                if (status) {
+                    vxReleaseMatrix(&mat);
+                    return mat;
+                }
+                delete[] buf;
+            }
+            // mark the matrix read-only
+            data->ref.read_only = true;
+        }
+    }
+    return mat;
 }
 
 /*! \brief Creates a reference to a matrix object from a boolean pattern, with a user-specified origin.
@@ -6458,61 +6666,61 @@ VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrixFromPattern(vx_context context,
  */
 VX_API_ENTRY vx_matrix VX_API_CALL vxCreateMatrixFromPatternAndOrigin(vx_context context, vx_enum pattern, vx_size columns, vx_size rows, vx_size origin_col, vx_size origin_row)
 {
-	vx_matrix mat = nullptr;
-	// check for supported patterns
-	if (pattern == VX_PATTERN_BOX || pattern == VX_PATTERN_CROSS || pattern == VX_PATTERN_DISK || pattern == VX_PATTERN_OTHER)
-	{
-		// create a matrix object
-		mat = vxCreateMatrix(context, VX_TYPE_UINT8, columns, rows);
-		vx_status status = vxGetStatus((vx_reference)mat);
-		if (status == VX_SUCCESS) {
-			// initialize with the pattern and mark it
-			AgoData * data = (AgoData *)mat;
-			data->u.mat.pattern = pattern;
-			data->u.mat.origin.x = (vx_uint32)origin_col;
-			data->u.mat.origin.y = (vx_uint32)origin_row;
-			if (pattern != VX_PATTERN_OTHER) {
-				vx_uint8 * buf = new vx_uint8[columns * rows];
-				if (!buf) {
-					vxReleaseMatrix(&mat);
-					return mat;
-				}
-				if (pattern == VX_PATTERN_CROSS) {
-					// cross pattern
-					memset(buf, 0, columns * rows);
-					for (vx_size x = 0; x < columns; x++)
-						buf[columns * (rows / 2) + x] = 255;
-					for (vx_size y = 0; y < rows; y++)
-						buf[(columns / 2) + y * columns] = 255;
-				}
-				else if (pattern == VX_PATTERN_DISK) {
-					// disk pattern
-					for (vx_size r = 0; r < rows; r++) {
-						float y = ((r - rows*0.5f + 0.5f) / (rows*0.5f));
-						float y2 = y * y;
-						for (vx_size c = 0; c < columns; c++) {
-							float x = ((c - columns*0.5f + 0.5f) / (columns*0.5f));
-							float x2 = x * x;
-							buf[c + r * columns] = ((x2 + y2) <= 1.0f) ? 255 : 0;
-						}
-					}
-				}
-				else {
-					// box pattern
-					memset(buf, 255, columns * rows);
-				}
-				status = vxCopyMatrix(mat, buf, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-				if (status) {
-					vxReleaseMatrix(&mat);
-					return mat;
-				}
-				delete[] buf;
-			}
-			// mark the matrix read-only
-			data->ref.read_only = true;
-		}
-	}
-	return mat;
+    vx_matrix mat = nullptr;
+    // check for supported patterns
+    if (pattern == VX_PATTERN_BOX || pattern == VX_PATTERN_CROSS || pattern == VX_PATTERN_DISK || pattern == VX_PATTERN_OTHER)
+    {
+        // create a matrix object
+        mat = vxCreateMatrix(context, VX_TYPE_UINT8, columns, rows);
+        vx_status status = vxGetStatus((vx_reference)mat);
+        if (status == VX_SUCCESS) {
+            // initialize with the pattern and mark it
+            AgoData * data = (AgoData *)mat;
+            data->u.mat.pattern = pattern;
+            data->u.mat.origin.x = (vx_uint32)origin_col;
+            data->u.mat.origin.y = (vx_uint32)origin_row;
+            if (pattern != VX_PATTERN_OTHER) {
+                vx_uint8 * buf = new vx_uint8[columns * rows];
+                if (!buf) {
+                    vxReleaseMatrix(&mat);
+                    return mat;
+                }
+                if (pattern == VX_PATTERN_CROSS) {
+                    // cross pattern
+                    memset(buf, 0, columns * rows);
+                    for (vx_size x = 0; x < columns; x++)
+                        buf[columns * (rows / 2) + x] = 255;
+                    for (vx_size y = 0; y < rows; y++)
+                        buf[(columns / 2) + y * columns] = 255;
+                }
+                else if (pattern == VX_PATTERN_DISK) {
+                    // disk pattern
+                    for (vx_size r = 0; r < rows; r++) {
+                        float y = ((r - rows*0.5f + 0.5f) / (rows*0.5f));
+                        float y2 = y * y;
+                        for (vx_size c = 0; c < columns; c++) {
+                            float x = ((c - columns*0.5f + 0.5f) / (columns*0.5f));
+                            float x2 = x * x;
+                            buf[c + r * columns] = ((x2 + y2) <= 1.0f) ? 255 : 0;
+                        }
+                    }
+                }
+                else {
+                    // box pattern
+                    memset(buf, 255, columns * rows);
+                }
+                status = vxCopyMatrix(mat, buf, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+                if (status) {
+                    vxReleaseMatrix(&mat);
+                    return mat;
+                }
+                delete[] buf;
+            }
+            // mark the matrix read-only
+            data->ref.read_only = true;
+        }
+    }
+    return mat;
 }
 
 /*==============================================================================
@@ -6532,41 +6740,41 @@ CONVOLUTION
 */
 VX_API_ENTRY vx_convolution VX_API_CALL vxCreateConvolution(vx_context context, vx_size columns, vx_size rows)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && columns > 0 && rows > 0) {
-		CAgoLock lock(context->cs);
-		char desc[512]; sprintf(desc, "convolution:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "conv", data->name);
-			agoAddData(&context->dataList, data);
-		}
-	}
-	return (vx_convolution)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && columns > 0 && rows > 0) {
+        CAgoLock lock(context->cs);
+        char desc[512]; sprintf(desc, "convolution:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "conv", data->name);
+            agoAddData(&context->dataList, data);
+        }
+    }
+    return (vx_convolution)data;
 }
 
 /*! \brief Creates an opaque reference to a convolution matrix object without direct user access.
 * \param [in] graph - The reference to the parent graph.
 * \param [in] columns - The columns dimension of the convolution. Must be odd and greater than or equal to 3 and less than the value returned from VX_CONTEXT_CONVOLUTION_MAX_DIMENSION
-* \param [in] rows - The rows dimension of the convolution. Must be odd and greater than or equal to 3 and less than the value returned from VX_CONTEXT_CONVOLUTION_MAX_DIMENSION 
+* \param [in] rows - The rows dimension of the convolution. Must be odd and greater than or equal to 3 and less than the value returned from VX_CONTEXT_CONVOLUTION_MAX_DIMENSION
 * \return <tt>\ref vx_convolution</tt>
 * Any possible errors preventing a successful creation should be checked using vxGetStatus.
 */
 VX_API_ENTRY vx_convolution VX_API_CALL vxCreateVirtualConvolution(vx_graph graph, vx_size columns, vx_size rows)
 {
-	AgoData * data = NULL;
+    AgoData * data = NULL;
     if (agoIsValidGraph(graph)) {
         CAgoLock lock(graph->cs);
         if(columns >= 3 && rows >= 3 && (columns % 2 == 1) && (rows % 2 == 1)) {
-			char desc[512]; sprintf(desc, "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
-			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-			if (data) {
-				agoGenerateVirtualDataName(graph, "conv", data->name);
-				agoAddData(&graph->dataList, data);
-			}
-		}
+            char desc[512]; sprintf(desc, "convolution-virtual:" VX_FMT_SIZE "," VX_FMT_SIZE "", columns, rows);
+            data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+            if (data) {
+                agoGenerateVirtualDataName(graph, "conv", data->name);
+                agoAddData(&graph->dataList, data);
+            }
+        }
     }
-	return (vx_convolution)data;
+    return (vx_convolution)data;
 }
 
 /*! \brief Releases the reference to a convolution matrix.
@@ -6580,14 +6788,14 @@ VX_API_ENTRY vx_convolution VX_API_CALL vxCreateVirtualConvolution(vx_graph grap
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseConvolution(vx_convolution *conv)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (conv && agoIsValidData((AgoData*)*conv, VX_TYPE_CONVOLUTION)) {
-		if (!agoReleaseData((AgoData*)*conv, true)) {
-			*conv = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (conv && agoIsValidData((AgoData*)*conv, VX_TYPE_CONVOLUTION)) {
+        if (!agoReleaseData((AgoData*)*conv, true)) {
+            *conv = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries an attribute on the convolution matrix object.
@@ -6600,44 +6808,44 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseConvolution(vx_convolution *conv)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryConvolution(vx_convolution conv, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)conv;
-	if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_CONVOLUTION_ATTRIBUTE_ROWS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.conv.rows;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONVOLUTION_ATTRIBUTE_COLUMNS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.conv.columns;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONVOLUTION_ATTRIBUTE_SCALE:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = 1u << data->u.conv.shift;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_CONVOLUTION_ATTRIBUTE_SIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->size;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)conv;
+    if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_CONVOLUTION_ATTRIBUTE_ROWS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.conv.rows;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONVOLUTION_ATTRIBUTE_COLUMNS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.conv.columns;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONVOLUTION_ATTRIBUTE_SCALE:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = 1u << data->u.conv.shift;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_CONVOLUTION_ATTRIBUTE_SIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->size;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets attributes on the convolution object.
@@ -6650,42 +6858,42 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryConvolution(vx_convolution conv, vx_en
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetConvolutionAttribute(vx_convolution conv, vx_enum attribute, const void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)conv;
-	if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_CONVOLUTION_ATTRIBUTE_SCALE:
-				if (size == sizeof(vx_uint32)) {
-					status = VX_ERROR_INVALID_VALUE;
-					vx_uint32 scale = *(vx_uint32 *)ptr;
-					for (vx_uint32 shift = 0; shift < 32; shift++) {
-						if (scale == (1u << shift)) {
-							data->u.conv.shift = shift;
-							status = VX_SUCCESS;
-							if (data->buffer && data->reserved) {
-								// update float values
-								vx_uint32 N = (vx_uint32)data->u.conv.columns * (vx_uint32)data->u.conv.rows;
-								float scale = 1.0f / (float)(1 << data->u.conv.shift);
-								short * ps = (short *)data->buffer;
-								float * pf = (float *)data->reserved;
-								for (vx_uint32 i = 0; i < N; i++)
-									pf[N - 1 - i] = scale * ps[i]; // NOTE: the reversing of coefficients order required to be able to re-use linear filter
-							}
-							break;
-						}
-					}
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)conv;
+    if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_CONVOLUTION_ATTRIBUTE_SCALE:
+                if (size == sizeof(vx_uint32)) {
+                    status = VX_ERROR_INVALID_VALUE;
+                    vx_uint32 scale = *(vx_uint32 *)ptr;
+                    for (vx_uint32 shift = 0; shift < 32; shift++) {
+                        if (scale == (1u << shift)) {
+                            data->u.conv.shift = shift;
+                            status = VX_SUCCESS;
+                            if (data->buffer && data->reserved) {
+                                // update float values
+                                vx_uint32 N = (vx_uint32)data->u.conv.columns * (vx_uint32)data->u.conv.rows;
+                                float scale = 1.0f / (float)(1 << data->u.conv.shift);
+                                short * ps = (short *)data->buffer;
+                                float * pf = (float *)data->reserved;
+                                for (vx_uint32 i = 0; i < N; i++)
+                                    pf[N - 1 - i] = scale * ps[i]; // NOTE: the reversing of coefficients order required to be able to re-use linear filter
+                            }
+                            break;
+                        }
+                    }
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Gets the convolution data (copy).
@@ -6699,28 +6907,28 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetConvolutionAttribute(vx_convolution conv
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReadConvolutionCoefficients(vx_convolution conv, vx_int16 *array)
 {
-	AgoData * data = (AgoData *)conv;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else {
-			if (array) {
-				if (!data->buffer) {
-					CAgoLock lock(data->ref.context->cs);
-					if (agoAllocData(data)) {
-						return VX_FAILURE;
-					}
-				}
-				// copy to external buffer
-				HafCpu_BinaryCopy_U8_U8(data->size, (vx_uint8 *)array, data->buffer);
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)conv;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else {
+            if (array) {
+                if (!data->buffer) {
+                    CAgoLock lock(data->ref.context->cs);
+                    if (agoAllocData(data)) {
+                        return VX_FAILURE;
+                    }
+                }
+                // copy to external buffer
+                HafCpu_BinaryCopy_U8_U8(data->size, (vx_uint8 *)array, data->buffer);
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Sets the convolution data (copy),
@@ -6734,43 +6942,43 @@ VX_API_ENTRY vx_status VX_API_CALL vxReadConvolutionCoefficients(vx_convolution 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxWriteConvolutionCoefficients(vx_convolution conv, const vx_int16 *array)
 {
-	AgoData * data = (AgoData *)conv;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (data->ref.read_only) {
-			status = VX_ERROR_NOT_SUPPORTED;
-		}
-		else {
-			if (array) {
-				if (!data->buffer) {
-					CAgoLock lock(data->ref.context->cs);
-					if (agoAllocData(data)) {
-						return VX_FAILURE;
-					}
-				}
-				// copy from external buffer
-				HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)array);
-				// update float values
-				vx_uint32 N = (vx_uint32)data->u.conv.columns * (vx_uint32)data->u.conv.rows;
-				float scale = 1.0f / (float)(1 << data->u.conv.shift);
-				if (data->buffer && data->reserved) {
-					short * ps = (short *)data->buffer;
-					float * pf = (float *)data->reserved;
-					for (vx_uint32 i = 0; i < N; i++)
-						pf[N - 1 - i] = scale * ps[i]; // NOTE: the reversing of coefficients order required to be able to re-use linear filter
-				}
-				// update sync flags
-				data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-				data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)conv;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_CONVOLUTION)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (data->ref.read_only) {
+            status = VX_ERROR_NOT_SUPPORTED;
+        }
+        else {
+            if (array) {
+                if (!data->buffer) {
+                    CAgoLock lock(data->ref.context->cs);
+                    if (agoAllocData(data)) {
+                        return VX_FAILURE;
+                    }
+                }
+                // copy from external buffer
+                HafCpu_BinaryCopy_U8_U8(data->size, data->buffer, (vx_uint8 *)array);
+                // update float values
+                vx_uint32 N = (vx_uint32)data->u.conv.columns * (vx_uint32)data->u.conv.rows;
+                float scale = 1.0f / (float)(1 << data->u.conv.shift);
+                if (data->buffer && data->reserved) {
+                    short * ps = (short *)data->buffer;
+                    float * pf = (float *)data->reserved;
+                    for (vx_uint32 i = 0; i < N; i++)
+                        pf[N - 1 - i] = scale * ps[i]; // NOTE: the reversing of coefficients order required to be able to re-use linear filter
+                }
+                // update sync flags
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy coefficients from/into a convolution object.
@@ -6799,19 +7007,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxWriteConvolutionCoefficients(vx_convolution
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyConvolutionCoefficients(vx_convolution conv, void *user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)conv;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_CONVOLUTION))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
-			if (usage == VX_READ_ONLY)
-				status = vxReadConvolutionCoefficients(conv, (vx_int16 *)user_ptr);
-			else if (usage == VX_WRITE_ONLY)
-				status = vxWriteConvolutionCoefficients(conv, (const vx_int16 *)user_ptr);
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)conv;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_CONVOLUTION))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr) {
+            if (usage == VX_READ_ONLY)
+                status = vxReadConvolutionCoefficients(conv, (vx_int16 *)user_ptr);
+            else if (usage == VX_WRITE_ONLY)
+                status = vxWriteConvolutionCoefficients(conv, (const vx_int16 *)user_ptr);
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -6835,30 +7043,30 @@ PYRAMID
 */
 VX_API_ENTRY vx_pyramid VX_API_CALL vxCreatePyramid(vx_context context, vx_size levels, vx_float32 scale, vx_uint32 width, vx_uint32 height, vx_df_image format)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context)) {
-		CAgoLock lock(context->cs);
-		char desc_scale[64];
-		if (scale == VX_SCALE_PYRAMID_HALF) sprintf(desc_scale, "HALF");
-		else if (scale == VX_SCALE_PYRAMID_ORB) sprintf(desc_scale, "ORB");
-		else sprintf(desc_scale, "%.12g", scale);
-		char desc[512]; sprintf(desc, "pyramid:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "pyramid", data->name);
-			agoAddData(&context->dataList, data);
-			// add the children too
-			for (vx_uint32 i = 0; i < data->numChildren; i++) {
-				agoAddData(&context->dataList, data->children[i]);
-				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
-					if (data->children[i]->children[j]) {
-						agoAddData(&context->dataList, data->children[i]->children[j]);
-					}
-				}
-			}
-		}
-	}
-	return (vx_pyramid)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context)) {
+        CAgoLock lock(context->cs);
+        char desc_scale[64];
+        if (scale == VX_SCALE_PYRAMID_HALF) sprintf(desc_scale, "HALF");
+        else if (scale == VX_SCALE_PYRAMID_ORB) sprintf(desc_scale, "ORB");
+        else sprintf(desc_scale, "%.12g", scale);
+        char desc[512]; sprintf(desc, "pyramid:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "pyramid", data->name);
+            agoAddData(&context->dataList, data);
+            // add the children too
+            for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                agoAddData(&context->dataList, data->children[i]);
+                for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+                    if (data->children[i]->children[j]) {
+                        agoAddData(&context->dataList, data->children[i]->children[j]);
+                    }
+                }
+            }
+        }
+    }
+    return (vx_pyramid)data;
 }
 
 /*! \brief Creates a reference to a virtual pyramid object of the supplied number of levels.
@@ -6892,30 +7100,30 @@ VX_API_ENTRY vx_pyramid VX_API_CALL vxCreatePyramid(vx_context context, vx_size 
 */
 VX_API_ENTRY vx_pyramid VX_API_CALL vxCreateVirtualPyramid(vx_graph graph, vx_size levels, vx_float32 scale, vx_uint32 width, vx_uint32 height, vx_df_image format)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph)) {
-		CAgoLock lock(graph->cs);
-		char desc_scale[64];
-		if (scale == VX_SCALE_PYRAMID_HALF) sprintf(desc_scale, "HALF");
-		else if (scale == VX_SCALE_PYRAMID_ORB) sprintf(desc_scale, "ORB");
-		else sprintf(desc_scale, "%.12g", scale);
-		char desc[512]; sprintf(desc, "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
-		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "pyramid", data->name);
-			agoAddData(&graph->dataList, data);
-			// add the children too
-			for (vx_uint32 i = 0; i < data->numChildren; i++) {
-				agoAddData(&graph->dataList, data->children[i]);
-				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
-					if (data->children[i]->children[j]) {
-						agoAddData(&graph->dataList, data->children[i]->children[j]);
-					}
-				}
-			}
-		}
-	}
-	return (vx_pyramid)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        char desc_scale[64];
+        if (scale == VX_SCALE_PYRAMID_HALF) sprintf(desc_scale, "HALF");
+        else if (scale == VX_SCALE_PYRAMID_ORB) sprintf(desc_scale, "ORB");
+        else sprintf(desc_scale, "%.12g", scale);
+        char desc[512]; sprintf(desc, "pyramid-virtual:%4.4s,%d,%d," VX_FMT_SIZE ",%s", FORMAT_STR(format), width, height, levels, desc_scale);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "pyramid", data->name);
+            agoAddData(&graph->dataList, data);
+            // add the children too
+            for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                agoAddData(&graph->dataList, data->children[i]);
+                for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+                    if (data->children[i]->children[j]) {
+                        agoAddData(&graph->dataList, data->children[i]->children[j]);
+                    }
+                }
+            }
+        }
+    }
+    return (vx_pyramid)data;
 }
 
 
@@ -6930,14 +7138,14 @@ VX_API_ENTRY vx_pyramid VX_API_CALL vxCreateVirtualPyramid(vx_graph graph, vx_si
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleasePyramid(vx_pyramid *pyr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (pyr && agoIsValidData((AgoData*)*pyr, VX_TYPE_PYRAMID)) {
-		if (!agoReleaseData((AgoData*)*pyr, true)) {
-			*pyr = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (pyr && agoIsValidData((AgoData*)*pyr, VX_TYPE_PYRAMID)) {
+        if (!agoReleaseData((AgoData*)*pyr, true)) {
+            *pyr = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries an attribute from an image pyramid.
@@ -6950,50 +7158,50 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleasePyramid(vx_pyramid *pyr)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryPyramid(vx_pyramid pyr, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)pyr;
-	if (agoIsValidData(data, VX_TYPE_PYRAMID)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_PYRAMID_ATTRIBUTE_LEVELS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.pyr.levels;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_ATTRIBUTE_SCALE:
-				if (size == sizeof(vx_float32)) {
-					*(vx_float32 *)ptr = data->u.pyr.scale;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_ATTRIBUTE_WIDTH:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = data->u.pyr.width;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_ATTRIBUTE_HEIGHT:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32  *)ptr = data->u.pyr.height;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_ATTRIBUTE_FORMAT:
-				if (size == sizeof(vx_df_image)) {
-					*(vx_df_image *)ptr = data->u.pyr.format;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)pyr;
+    if (agoIsValidData(data, VX_TYPE_PYRAMID)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_PYRAMID_ATTRIBUTE_LEVELS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.pyr.levels;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_ATTRIBUTE_SCALE:
+                if (size == sizeof(vx_float32)) {
+                    *(vx_float32 *)ptr = data->u.pyr.scale;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_ATTRIBUTE_WIDTH:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = data->u.pyr.width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_ATTRIBUTE_HEIGHT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32  *)ptr = data->u.pyr.height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_ATTRIBUTE_FORMAT:
+                if (size == sizeof(vx_df_image)) {
+                    *(vx_df_image *)ptr = data->u.pyr.format;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Retrieves a level of the pyramid as a <tt>\ref vx_image</tt>, which can be used
@@ -7006,14 +7214,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryPyramid(vx_pyramid pyr, vx_enum attrib
 */
 VX_API_ENTRY vx_image VX_API_CALL vxGetPyramidLevel(vx_pyramid pyr, vx_uint32 index)
 {
-	AgoData * data = (AgoData *)pyr;
-	AgoData * img = NULL;
-	if (agoIsValidData(data, VX_TYPE_PYRAMID) && (index < data->u.pyr.levels) && !data->isNotFullyConfigured) {
-		img = data->children[index];
-		agoRetainData((AgoGraph *)data->ref.scope, img, true);
-		data->ref.context->num_active_references++;
-	}
-	return (vx_image)img;
+    AgoData * data = (AgoData *)pyr;
+    AgoData * img = NULL;
+    if (agoIsValidData(data, VX_TYPE_PYRAMID) && (index < data->u.pyr.levels) && !data->isNotFullyConfigured) {
+        img = data->children[index];
+        agoRetainData((AgoGraph *)data->ref.scope, img, true);
+        data->ref.context->num_active_references++;
+    }
+    return (vx_image)img;
 }
 
 /*==============================================================================
@@ -7032,22 +7240,22 @@ REMAP
 * \retval * Object was created.
 */
 VX_API_ENTRY vx_remap VX_API_CALL vxCreateRemap(vx_context context,
-	vx_uint32 src_width,
-	vx_uint32 src_height,
-	vx_uint32 dst_width,
-	vx_uint32 dst_height)
+    vx_uint32 src_width,
+    vx_uint32 src_height,
+    vx_uint32 dst_width,
+    vx_uint32 dst_height)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && src_width > 0 && src_height > 0 && dst_width > 0 && dst_height > 0) {
-		CAgoLock lock(context->cs);
-		char desc[512]; sprintf(desc, "remap:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "remap", data->name);
-			agoAddData(&context->dataList, data);
-		}
-	}
-	return (vx_remap)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && src_width > 0 && src_height > 0 && dst_width > 0 && dst_height > 0) {
+        CAgoLock lock(context->cs);
+        char desc[512]; sprintf(desc, "remap:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "remap", data->name);
+            agoAddData(&context->dataList, data);
+        }
+    }
+    return (vx_remap)data;
 }
 
 /*! \brief Creates an opaque reference to a remap table object without direct user access.
@@ -7067,18 +7275,18 @@ VX_API_ENTRY vx_remap VX_API_CALL vxCreateVirtualRemap(vx_graph graph,
                               vx_uint32 dst_width,
                               vx_uint32 dst_height)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph) && src_width > 0 && src_height > 0 && dst_width > 0 && dst_height > 0) {
-		CAgoLock lock(graph->cs);
-		char desc[512]; 
-		sprintf(desc, "remap-virtual:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
-		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "remap", data->name);
-			agoAddData(&graph->dataList, data);
-		}
-	}
-	return (vx_remap)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph) && src_width > 0 && src_height > 0 && dst_width > 0 && dst_height > 0) {
+        CAgoLock lock(graph->cs);
+        char desc[512];
+        sprintf(desc, "remap-virtual:%u,%u,%u,%u", src_width, src_height, dst_width, dst_height);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "remap", data->name);
+            agoAddData(&graph->dataList, data);
+        }
+    }
+    return (vx_remap)data;
 }
 
 /*! \brief Allows the application to copy a rectangular patch from/into a remap object.
@@ -7145,99 +7353,99 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                                                     vx_enum usage,
                                                     vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)remap;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_REMAP))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		vx_uint32 start_x = rect ? rect->start_x : 0u;
-	    vx_uint32 start_y = rect ? rect->start_y : 0u;
-	    vx_uint32 end_x = rect ? rect->end_x : 0u;
-	    vx_uint32 end_y = rect ? rect->end_y : 0u;
-	    vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
-		bool paramsValid = true;
+    AgoData * data = (AgoData *)remap;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_REMAP))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        vx_uint32 start_x = rect ? rect->start_x : 0u;
+        vx_uint32 start_y = rect ? rect->start_y : 0u;
+        vx_uint32 end_x = rect ? rect->end_x : 0u;
+        vx_uint32 end_y = rect ? rect->end_y : 0u;
+        vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
+        bool paramsValid = true;
 
-		if(user_coordinate_type != VX_TYPE_COORDINATES2DF)
-			paramsValid = false;
-		if(user_stride_y < sizeof(vx_coordinates2df_t)*(rect->end_x - rect->start_x))
-			paramsValid = false;
-		if(user_mem_type != VX_MEMORY_TYPE_HOST && user_mem_type != VX_MEMORY_TYPE_NONE)
-			paramsValid = false;
-		if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (user_ptr == NULL))
-			paramsValid = false;
-		if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
-			paramsValid = false;
+        if(user_coordinate_type != VX_TYPE_COORDINATES2DF)
+            paramsValid = false;
+        if(user_stride_y < sizeof(vx_coordinates2df_t)*(rect->end_x - rect->start_x))
+            paramsValid = false;
+        if(user_mem_type != VX_MEMORY_TYPE_HOST && user_mem_type != VX_MEMORY_TYPE_NONE)
+            paramsValid = false;
+        if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (user_ptr == NULL))
+            paramsValid = false;
+        if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
+            paramsValid = false;
 
-		if(paramsValid){
-			status = VX_ERROR_NO_MEMORY;
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_size stride = user_stride_y / sizeof(vx_coordinates2df_t);
-			AgoData * dataToSync = data;
+        if(paramsValid){
+            status = VX_ERROR_NO_MEMORY;
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_size stride = user_stride_y / sizeof(vx_coordinates2df_t);
+            AgoData * dataToSync = data;
 #if ENABLE_OPENCL
-			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				// make sure dirty OpenCL buffers are synched before giving access for read
-				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-					// transfer only valid data
-					if (dataToSync->size > 0) {
-						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-						if (err) {
-							status = VX_FAILURE;
-							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyRemapPatch: clEnqueueReadBuffer() => %d\n", err);
-							return status;
-						}
-					}
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-				}
-			}
+            if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty OpenCL buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyRemapPatch: clEnqueueReadBuffer() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
-			if (usage == VX_READ_ONLY) {
-				vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
-		        vx_uint32 i;
-		        vx_uint32 j;
-		        for (i = start_y; i < end_y; i++)
-		        {
-		            for (j = start_x; j < end_x; j++)
-		            {
-		                vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
-		                status = vxGetRemapPoint(remap, j, i, &coord_ptr->x, &coord_ptr->y);
-		                if(status != VX_SUCCESS)
-		                {
-		                    break;
-		                }
+            if (usage == VX_READ_ONLY) {
+                vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
+                vx_uint32 i;
+                vx_uint32 j;
+                for (i = start_y; i < end_y; i++)
+                {
+                    for (j = start_x; j < end_x; j++)
+                    {
+                        vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
+                        status = vxGetRemapPoint(remap, j, i, &coord_ptr->x, &coord_ptr->y);
+                        if(status != VX_SUCCESS)
+                        {
+                            break;
+                        }
 
-		            }
-		        }
-			}
-			else {
-				vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
-		        vx_uint32 i;
-		        vx_uint32 j;
-		        for (i = start_y; i < end_y; i++)
-		        {
-		            for (j = start_x; j < end_x; j++)
-		            {
-		                vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
-		                status = vxSetRemapPoint(remap, j, i, coord_ptr->x, coord_ptr->y);
-		                if(status != VX_SUCCESS)
-		                {
-		                    break;
-		                }
+                    }
+                }
+            }
+            else {
+                vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
+                vx_uint32 i;
+                vx_uint32 j;
+                for (i = start_y; i < end_y; i++)
+                {
+                    for (j = start_x; j < end_x; j++)
+                    {
+                        vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
+                        status = vxSetRemapPoint(remap, j, i, coord_ptr->x, coord_ptr->y);
+                        if(status != VX_SUCCESS)
+                        {
+                            break;
+                        }
 
-		            }
-		        }
-			}
-			// update sync flags
-			dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-			dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-			status = VX_SUCCESS;
-		}	
-	}
-	return status;
+                    }
+                }
+            }
+            // update sync flags
+            dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to get direct access to a rectangular patch of a remap object.
@@ -7320,83 +7528,83 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                                                    vx_enum usage,
                                                    vx_enum mem_type)
 {
-	AgoData * data = (AgoData *)remap;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_REMAP))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		vx_uint32 start_x = rect ? rect->start_x : 0u;
-	    vx_uint32 start_y = rect ? rect->start_y : 0u;
-	    vx_uint32 end_x = rect ? rect->end_x : 0u;
-	    vx_uint32 end_y = rect ? rect->end_y : 0u;
-	    vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
-		bool paramsValid = true;
+    AgoData * data = (AgoData *)remap;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_REMAP))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        vx_uint32 start_x = rect ? rect->start_x : 0u;
+        vx_uint32 start_y = rect ? rect->start_y : 0u;
+        vx_uint32 end_x = rect ? rect->end_x : 0u;
+        vx_uint32 end_y = rect ? rect->end_y : 0u;
+        vx_bool zero_area = ((((end_x - start_x) == 0) || ((end_y - start_y) == 0)) ? vx_true_e : vx_false_e);
+        bool paramsValid = true;
 
-		if(coordinate_type != VX_TYPE_COORDINATES2DF)
-			paramsValid = false;
-		if(mem_type != VX_MEMORY_TYPE_HOST && mem_type != VX_MEMORY_TYPE_NONE)
-			paramsValid = false;
-		if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (ptr == NULL) || (map_id == NULL))
-			paramsValid = false;
-		if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
-			paramsValid = false;
+        if(coordinate_type != VX_TYPE_COORDINATES2DF)
+            paramsValid = false;
+        if(mem_type != VX_MEMORY_TYPE_HOST && mem_type != VX_MEMORY_TYPE_NONE)
+            paramsValid = false;
+        if((usage != VX_READ_ONLY && usage != VX_WRITE_ONLY) || (rect == NULL) || (ptr == NULL) || (map_id == NULL))
+            paramsValid = false;
+        if (zero_area == vx_false_e && ((start_x >= end_x) || (start_y >= end_y)))
+            paramsValid = false;
 
 
-		if (paramsValid) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
+        if (paramsValid) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
 #if ENABLE_OPENCL
-			vx_enum mem_type_requested = mem_type;
-		    if (mem_type == VX_MEMORY_TYPE_OPENCL)
-		    {
-		        mem_type = VX_MEMORY_TYPE_HOST;
-		    }
-#endif	
-
-			vx_size stride = (end_x - start_x);
-		    vx_size size = (stride * (end_y - start_y)) * sizeof(vx_coordinates2df_t);
-			vx_uint8 * ptr_returned = data->buffer + size;
-
-			// save the pointer and usage for use in vxUnmapRemapPatch
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxMapRemapPatch() more than once with same pointer
-					// the application needs to call vxUnmapTensorPatch() before calling vxMapRemapPatch()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				AgoData * dataToSync = data;
-#if ENABLE_OPENCL
-				if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-					// make sure dirty OpenCL buffers are synched before giving access for read
-					if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-						// transfer only valid data
-						if (dataToSync->size > 0) {
-							cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapRemapPatch: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-						}
-						dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					}
-				}
+            vx_enum mem_type_requested = mem_type;
+            if (mem_type == VX_MEMORY_TYPE_OPENCL)
+            {
+                mem_type = VX_MEMORY_TYPE_HOST;
+            }
 #endif
-				MappedData item = { data->nextMapId++, ptr_returned, usage, false };
-				data->mapped.push_back(item);
-				*map_id = item.map_id;
-				*ptr = ptr_returned;
-			}
-		}
-	}
-	return status;
+
+            vx_size stride = (end_x - start_x);
+            vx_size size = (stride * (end_y - start_y)) * sizeof(vx_coordinates2df_t);
+            vx_uint8 * ptr_returned = data->buffer + size;
+
+            // save the pointer and usage for use in vxUnmapRemapPatch
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxMapRemapPatch() more than once with same pointer
+                    // the application needs to call vxUnmapTensorPatch() before calling vxMapRemapPatch()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                AgoData * dataToSync = data;
+#if ENABLE_OPENCL
+                if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        if (dataToSync->size > 0) {
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapRemapPatch: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#endif
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false };
+                data->mapped.push_back(item);
+                *map_id = item.map_id;
+                *ptr = ptr_returned;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Unmap and commit potential changes to a remap object patch that was previously mapped.
@@ -7415,26 +7623,26 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
 */
 VX_API_ENTRY vx_status VX_API_CALL vxUnmapRemapPatch(vx_remap remap, vx_map_id map_id)
 {
-	AgoData * data = (AgoData *)remap;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_REMAP)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-			if (i->map_id == map_id) {
-				vx_enum usage = i->usage;
-				data->mapped.erase(i);
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					// update sync flags
-					AgoData * dataToSync = data;
-					dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-				status = VX_SUCCESS;
-				break;
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)remap;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_REMAP)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+            if (i->map_id == map_id) {
+                vx_enum usage = i->usage;
+                data->mapped.erase(i);
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // update sync flags
+                    AgoData * dataToSync = data;
+                    dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+                status = VX_SUCCESS;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Releases a reference to a remap table object. The object may not be
@@ -7448,14 +7656,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxUnmapRemapPatch(vx_remap remap, vx_map_id m
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseRemap(vx_remap *table)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (table && agoIsValidData((AgoData*)*table, VX_TYPE_REMAP)) {
-		if (!agoReleaseData((AgoData*)*table, true)) {
-			*table = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (table && agoIsValidData((AgoData*)*table, VX_TYPE_REMAP)) {
+        if (!agoReleaseData((AgoData*)*table, true)) {
+            *table = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Assigns a destination pixel mapping to the source pixel.
@@ -7468,38 +7676,38 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseRemap(vx_remap *table)
 * \return A <tt>\ref vx_status_e</tt> enumeration.
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetRemapPoint(vx_remap table,
-	vx_uint32 dst_x, vx_uint32 dst_y,
-	vx_float32 src_x, vx_float32 src_y)
+    vx_uint32 dst_x, vx_uint32 dst_y,
+    vx_float32 src_x, vx_float32 src_y)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)table;
-	if (agoIsValidData(data, VX_TYPE_REMAP)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (!data->buffer) {
-			CAgoLock lock(data->ref.context->cs);
-			if (agoAllocData(data)) {
-				return VX_FAILURE;
-			}
-		}
-		if (dst_x < data->u.remap.dst_width && dst_y < data->u.remap.dst_height && data->buffer && data->reserved) {
-			ago_coord2d_ushort_t * item_fixed = ((ago_coord2d_ushort_t *)data->buffer) + (dst_y * data->u.remap.dst_width) + dst_x;
-			ago_coord2d_float_t * item_float = ((ago_coord2d_float_t *)data->reserved) + (dst_y * data->u.remap.dst_width) + dst_x;
-			item_float->x = src_x;
-			item_float->y = src_y;
-			item_fixed->x = (vx_uint16)(src_x * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
-			item_fixed->y = (vx_uint16)(src_y * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
-			// special handing for border cases
-			if (src_x < 0.0f || src_y < 0.0f || src_x >= (vx_float32)(data->u.remap.src_width-1) || src_y >= (vx_float32)(data->u.remap.src_height-1)) {
-				item_fixed->x = 0xffff;
-				item_fixed->y = 0xffff;
-			}
-			status = VX_SUCCESS;
-			// update sync flags
-			data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-			data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)table;
+    if (agoIsValidData(data, VX_TYPE_REMAP)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (!data->buffer) {
+            CAgoLock lock(data->ref.context->cs);
+            if (agoAllocData(data)) {
+                return VX_FAILURE;
+            }
+        }
+        if (dst_x < data->u.remap.dst_width && dst_y < data->u.remap.dst_height && data->buffer && data->reserved) {
+            ago_coord2d_ushort_t * item_fixed = ((ago_coord2d_ushort_t *)data->buffer) + (dst_y * data->u.remap.dst_width) + dst_x;
+            ago_coord2d_float_t * item_float = ((ago_coord2d_float_t *)data->reserved) + (dst_y * data->u.remap.dst_width) + dst_x;
+            item_float->x = src_x;
+            item_float->y = src_y;
+            item_fixed->x = (vx_uint16)(src_x * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
+            item_fixed->y = (vx_uint16)(src_y * (vx_float32)(1 << data->u.remap.remap_fractional_bits) + 0.5f); // convert to fixed-point with rounding
+            // special handing for border cases
+            if (src_x < 0.0f || src_y < 0.0f || src_x >= (vx_float32)(data->u.remap.src_width-1) || src_y >= (vx_float32)(data->u.remap.src_height-1)) {
+                item_fixed->x = 0xffff;
+                item_fixed->y = 0xffff;
+            }
+            status = VX_SUCCESS;
+            // update sync flags
+            data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+            data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+        }
+    }
+    return status;
 }
 
 /*! \brief Retrieves the source pixel point from a destination pixel.
@@ -7512,21 +7720,21 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetRemapPoint(vx_remap table,
 * \return A <tt>\ref vx_status_e</tt> enumeration.
 */
 VX_API_ENTRY vx_status VX_API_CALL vxGetRemapPoint(vx_remap table,
-	vx_uint32 dst_x, vx_uint32 dst_y,
-	vx_float32 *src_x, vx_float32 *src_y)
+    vx_uint32 dst_x, vx_uint32 dst_y,
+    vx_float32 *src_x, vx_float32 *src_y)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)table;
-	if (agoIsValidData(data, VX_TYPE_REMAP) && data->buffer && data->reserved) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (src_x && src_y && dst_x < data->u.remap.dst_width && dst_y < data->u.remap.dst_height) {
-			ago_coord2d_float_t * item = ((ago_coord2d_float_t *)data->reserved) + (dst_y * data->u.remap.dst_width) + dst_x;
-			*src_x = item->x;
-			*src_y = item->y;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)table;
+    if (agoIsValidData(data, VX_TYPE_REMAP) && data->buffer && data->reserved) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (src_x && src_y && dst_x < data->u.remap.dst_width && dst_y < data->u.remap.dst_height) {
+            ago_coord2d_float_t * item = ((ago_coord2d_float_t *)data->reserved) + (dst_y * data->u.remap.dst_width) + dst_x;
+            *src_x = item->x;
+            *src_y = item->y;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Queries attributes from a Remap table.
@@ -7539,44 +7747,44 @@ VX_API_ENTRY vx_status VX_API_CALL vxGetRemapPoint(vx_remap table,
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryRemap(vx_remap r, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)r;
-	if (agoIsValidData(data, VX_TYPE_REMAP)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_REMAP_ATTRIBUTE_SOURCE_WIDTH:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = data->u.remap.src_width;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REMAP_ATTRIBUTE_SOURCE_HEIGHT:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = data->u.remap.src_height;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REMAP_ATTRIBUTE_DESTINATION_WIDTH:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32 *)ptr = data->u.remap.dst_width;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REMAP_ATTRIBUTE_DESTINATION_HEIGHT:
-				if (size == sizeof(vx_uint32)) {
-					*(vx_uint32  *)ptr = data->u.remap.dst_height;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)r;
+    if (agoIsValidData(data, VX_TYPE_REMAP)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_REMAP_ATTRIBUTE_SOURCE_WIDTH:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = data->u.remap.src_width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_ATTRIBUTE_SOURCE_HEIGHT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = data->u.remap.src_height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_ATTRIBUTE_DESTINATION_WIDTH:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32 *)ptr = data->u.remap.dst_width;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_ATTRIBUTE_DESTINATION_HEIGHT:
+                if (size == sizeof(vx_uint32)) {
+                    *(vx_uint32  *)ptr = data->u.remap.dst_height;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -7605,23 +7813,23 @@ ARRAY
 */
 VX_API_ENTRY vx_array VX_API_CALL vxCreateArray(vx_context context, vx_enum item_type, vx_size capacity)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && capacity > 0) {
-		CAgoLock lock(context->cs);
-		const char * desc_type = agoEnum2Name(item_type);
-		if (!desc_type) {
-			desc_type = agoGetUserStructName(context, item_type);
-		}
-		if (desc_type) {
-			char desc[512]; sprintf(desc, "array:%s," VX_FMT_SIZE "", desc_type, capacity);
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if (data) {
-				agoGenerateDataName(context, "array", data->name);
-				agoAddData(&context->dataList, data);
-			}
-		}
-	}
-	return (vx_array)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && capacity > 0) {
+        CAgoLock lock(context->cs);
+        const char * desc_type = agoEnum2Name(item_type);
+        if (!desc_type) {
+            desc_type = agoGetUserStructName(context, item_type);
+        }
+        if (desc_type) {
+            char desc[512]; sprintf(desc, "array:%s," VX_FMT_SIZE "", desc_type, capacity);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "array", data->name);
+                agoAddData(&context->dataList, data);
+            }
+        }
+    }
+    return (vx_array)data;
 }
 
 /*!
@@ -7655,25 +7863,25 @@ VX_API_ENTRY vx_array VX_API_CALL vxCreateArray(vx_context context, vx_enum item
 */
 VX_API_ENTRY vx_array VX_API_CALL vxCreateVirtualArray(vx_graph graph, vx_enum item_type, vx_size capacity)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph)) {
-		CAgoLock lock(graph->cs);
-		const char * desc_type = agoEnum2Name(item_type);
-		if (item_type && !desc_type) {
-			desc_type = agoGetUserStructName(graph->ref.context, item_type);
-		}
-		if (!item_type || desc_type) {
-			char desc[512]; 
-			if (desc_type) sprintf(desc, "array-virtual:%s," VX_FMT_SIZE "", desc_type, capacity);
-			else sprintf(desc, "array-virtual:0," VX_FMT_SIZE "", capacity);
-			data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-			if (data) {
-				agoGenerateVirtualDataName(graph, "array", data->name);
-				agoAddData(&graph->dataList, data);
-			}
-		}
-	}
-	return (vx_array)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph)) {
+        CAgoLock lock(graph->cs);
+        const char * desc_type = agoEnum2Name(item_type);
+        if (item_type && !desc_type) {
+            desc_type = agoGetUserStructName(graph->ref.context, item_type);
+        }
+        if (!item_type || desc_type) {
+            char desc[512];
+            if (desc_type) sprintf(desc, "array-virtual:%s," VX_FMT_SIZE "", desc_type, capacity);
+            else sprintf(desc, "array-virtual:0," VX_FMT_SIZE "", capacity);
+            data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+            if (data) {
+                agoGenerateVirtualDataName(graph, "array", data->name);
+                agoAddData(&graph->dataList, data);
+            }
+        }
+    }
+    return (vx_array)data;
 }
 
 /*!
@@ -7688,14 +7896,14 @@ VX_API_ENTRY vx_array VX_API_CALL vxCreateVirtualArray(vx_graph graph, vx_enum i
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseArray(vx_array *arr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (arr && agoIsValidData((AgoData*)*arr, VX_TYPE_ARRAY)) {
-		if (!agoReleaseData((AgoData*)*arr, true)) {
-			*arr = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (arr && agoIsValidData((AgoData*)*arr, VX_TYPE_ARRAY)) {
+        if (!agoReleaseData((AgoData*)*arr, true)) {
+            *arr = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*!
@@ -7716,44 +7924,44 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseArray(vx_array *arr)
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryArray(vx_array arr, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)arr;
-	if (agoIsValidData(data, VX_TYPE_ARRAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_ARRAY_ATTRIBUTE_ITEMTYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.arr.itemtype;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_ARRAY_ATTRIBUTE_NUMITEMS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.arr.numitems;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_ARRAY_ATTRIBUTE_CAPACITY:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.arr.capacity;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_ARRAY_ATTRIBUTE_ITEMSIZE:
-				if (size == sizeof(vx_size)) {
-					*(vx_size  *)ptr = data->u.arr.itemsize;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)arr;
+    if (agoIsValidData(data, VX_TYPE_ARRAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_ARRAY_ATTRIBUTE_ITEMTYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.arr.itemtype;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_ARRAY_ATTRIBUTE_NUMITEMS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.arr.numitems;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_ARRAY_ATTRIBUTE_CAPACITY:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.arr.capacity;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_ARRAY_ATTRIBUTE_ITEMSIZE:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size  *)ptr = data->u.arr.itemsize;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*!
@@ -7781,59 +7989,59 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryArray(vx_array arr, vx_enum attribute,
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAddArrayItems(vx_array arr, vx_size count, const void *ptr, vx_size stride)
 {
-	AgoData * data = (AgoData *)arr;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_ARRAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr && (data->u.arr.numitems + count <= data->u.arr.capacity)) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			if (count > 0) {
+    AgoData * data = (AgoData *)arr;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_ARRAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr && (data->u.arr.numitems + count <= data->u.arr.capacity)) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            if (count > 0) {
 #if ENABLE_OPENCL
-				if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-					// make sure dirty OpenCL buffers are synched before giving access for read
-					if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-						// transfer only valid data
-						vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
-						if (size > 0) {
-							cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-						}
-						data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					}
-				}
+                if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
+                        if (size > 0) {
+                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
 #endif
-				// add items at the end of the array
-				vx_uint8 * pSrc = (vx_uint8 *)ptr;
-				vx_uint8 * pDst = data->buffer + data->u.arr.itemsize * data->u.arr.numitems;
-				if (stride == data->u.arr.itemsize) {
-					HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize * count, pDst, pSrc);
-				}
-				else {
-					for (vx_size i = 0; i < count; i++, pSrc += stride, pDst += data->u.arr.itemsize) {
-						HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize, pDst, pSrc);
-					}
-				}
-				data->u.arr.numitems += count;
-				// update sync flags
-				data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-				data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+                // add items at the end of the array
+                vx_uint8 * pSrc = (vx_uint8 *)ptr;
+                vx_uint8 * pDst = data->buffer + data->u.arr.itemsize * data->u.arr.numitems;
+                if (stride == data->u.arr.itemsize) {
+                    HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize * count, pDst, pSrc);
+                }
+                else {
+                    for (vx_size i = 0; i < count; i++, pSrc += stride, pDst += data->u.arr.itemsize) {
+                        HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize, pDst, pSrc);
+                    }
+                }
+                data->u.arr.numitems += count;
+                // update sync flags
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*!
@@ -7851,16 +8059,16 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddArrayItems(vx_array arr, vx_size count, 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxTruncateArray(vx_array arr, vx_size new_num_items)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)arr;
-	if (agoIsValidData(data, VX_TYPE_ARRAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (new_num_items <= data->u.arr.numitems) {
-			data->u.arr.numitems = new_num_items;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)arr;
+    if (agoIsValidData(data, VX_TYPE_ARRAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (new_num_items <= data->u.arr.numitems) {
+            data->u.arr.numitems = new_num_items;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*!
@@ -7887,71 +8095,88 @@ VX_API_ENTRY vx_status VX_API_CALL vxTruncateArray(vx_array arr, vx_size new_num
 */
 VX_API_ENTRY vx_status VX_API_CALL vxAccessArrayRange(vx_array arr, vx_size start, vx_size end, vx_size *stride, void **ptr, vx_enum usage)
 {
-	AgoData * data = (AgoData *)arr;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_ARRAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr && stride && start < end && end <= data->u.arr.numitems) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_uint8 * ptr_internal = data->buffer + data->u.arr.itemsize * start;
-			vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
-			// save the pointer and usage for use in vxCommitXXX
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessXXX() more than once with same pointer
-					// the application needs to call vxCommitXXX() before calling vxAccessXXX()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				MappedData item = { data->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false, (ptr_returned != ptr_internal) ? *stride : data->u.arr.itemsize };
-				data->mapped.push_back(item);
-				*ptr = ptr_returned;
-				*stride = item.stride;
+    AgoData * data = (AgoData *)arr;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_ARRAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr && stride && start < end && end <= data->u.arr.numitems) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_uint8 * ptr_internal = data->buffer + data->u.arr.itemsize * start;
+            vx_uint8 * ptr_returned = *ptr ? (vx_uint8 *)*ptr : ptr_internal;
+            // save the pointer and usage for use in vxCommitXXX
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessXXX() more than once with same pointer
+                    // the application needs to call vxCommitXXX() before calling vxAccessXXX()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                MappedData item = { data->nextMapId++, ptr_returned, usage, (ptr_returned != ptr_internal) ? true : false, (ptr_returned != ptr_internal) ? *stride : data->u.arr.itemsize };
+                data->mapped.push_back(item);
+                *ptr = ptr_returned;
+                *stride = item.stride;
 #if ENABLE_OPENCL
-				if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-					// make sure dirty OpenCL buffers are synched before giving access for read
-					if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-						// transfer only valid data
-						vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
-						if (size > 0) {
-							cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-						}
-						data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					}
-				}
+                if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
+                        if (size > 0) {
+                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#elif ENABLE_HIP
+                if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty GPU buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
+                        if (size > 0) {
+                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: hipMemcpyDtoH() => %d\n", err);
+                                return status;
+                            }
+                        }
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                   }
+                }
 #endif
-				if (item.used_external_ptr && (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE)) {
-					// copy if read is requested with explicit external buffer
-					vx_uint8 * pSrc = ptr_internal;
-					vx_uint8 * pDst = ptr_returned;
-					if (item.stride == data->u.arr.itemsize) {
-						HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize * (end - start), ptr_returned, ptr_internal);
-					}
-					else {
-						for (vx_size i = start; i < end; i++, pSrc += data->u.arr.itemsize, pDst += item.stride) {
-							HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize, pDst, pSrc);
-						}
-					}
-				}
-			}
-		}
-	}
-	return status;
+                if (item.used_external_ptr && (usage == VX_READ_ONLY || usage == VX_READ_AND_WRITE)) {
+                    // copy if read is requested with explicit external buffer
+                    vx_uint8 * pSrc = ptr_internal;
+                    vx_uint8 * pDst = ptr_returned;
+                    if (item.stride == data->u.arr.itemsize) {
+                        HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize * (end - start), ptr_returned, ptr_internal);
+                    }
+                    else {
+                        for (vx_size i = start; i < end; i++, pSrc += data->u.arr.itemsize, pDst += item.stride) {
+                            HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize, pDst, pSrc);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*!
@@ -7974,56 +8199,56 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessArrayRange(vx_array arr, vx_size star
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCommitArrayRange(vx_array arr, vx_size start, vx_size end, const void *ptr)
 {
-	AgoData * data = (AgoData *)arr;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_ARRAY)) {
-		// check for valid arguments
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr && start <= end && end <= data->u.arr.numitems) {
-			status = VX_SUCCESS;
-			if (!data->buffer) {
-				status = VX_FAILURE;
-			}
-			else if (!data->mapped.empty()) {
-				vx_enum usage = VX_READ_ONLY;
-				bool used_external_ptr = false;
-				vx_size stride = data->u.arr.itemsize;
-				for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-					if (i->ptr == ptr) {
-						if (start < end) {
-							usage = i->usage;
-							used_external_ptr = i->used_external_ptr;
-							stride = i->stride;
-						}
-						data->mapped.erase(i);
-						break;
-					}
-				}
-				if ((start < end) && (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE)) {
-					if (used_external_ptr) {
-						// copy from external buffer
-						vx_uint8 * pSrc = (vx_uint8 *)ptr;
-						vx_uint8 * pDst = data->buffer + start * data->u.arr.itemsize;
-						if (stride == data->u.arr.itemsize) {
-							HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize * (end - start), pDst, pSrc);
-						}
-						else {
-							for (vx_size i = start; i < end; i++, pSrc += stride, pDst += data->u.arr.itemsize) {
-								HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize, pDst, pSrc);
-							}
-						}
-					}
-					// update sync flags
-					data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)arr;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_ARRAY)) {
+        // check for valid arguments
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr && start <= end && end <= data->u.arr.numitems) {
+            status = VX_SUCCESS;
+            if (!data->buffer) {
+                status = VX_FAILURE;
+            }
+            else if (!data->mapped.empty()) {
+                vx_enum usage = VX_READ_ONLY;
+                bool used_external_ptr = false;
+                vx_size stride = data->u.arr.itemsize;
+                for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                    if (i->ptr == ptr) {
+                        if (start < end) {
+                            usage = i->usage;
+                            used_external_ptr = i->used_external_ptr;
+                            stride = i->stride;
+                        }
+                        data->mapped.erase(i);
+                        break;
+                    }
+                }
+                if ((start < end) && (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE)) {
+                    if (used_external_ptr) {
+                        // copy from external buffer
+                        vx_uint8 * pSrc = (vx_uint8 *)ptr;
+                        vx_uint8 * pDst = data->buffer + start * data->u.arr.itemsize;
+                        if (stride == data->u.arr.itemsize) {
+                            HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize * (end - start), pDst, pSrc);
+                        }
+                        else {
+                            for (vx_size i = start; i < end; i++, pSrc += stride, pDst += data->u.arr.itemsize) {
+                                HafCpu_BinaryCopy_U8_U8(data->u.arr.itemsize, pDst, pSrc);
+                            }
+                        }
+                    }
+                    // update sync flags
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy a range from/into an array object.
@@ -8059,19 +8284,19 @@ VX_API_ENTRY vx_status VX_API_CALL vxCommitArrayRange(vx_array arr, vx_size star
 */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyArrayRange(vx_array array, vx_size range_start, vx_size range_end, vx_size user_stride, void *user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)array;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_ARRAY))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
-			status = vxAccessArrayRange(array, range_start, range_end, &user_stride, &user_ptr, usage);
-			if (status == VX_SUCCESS) {
-				status = vxCommitArrayRange(array, range_start, range_end, user_ptr);
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)array;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_ARRAY))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if ((user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
+            status = vxAccessArrayRange(array, range_start, range_end, &user_stride, &user_ptr, usage);
+            if (status == VX_SUCCESS) {
+                status = vxCommitArrayRange(array, range_start, range_end, user_ptr);
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to get direct access to a range of an array object.
@@ -8127,58 +8352,75 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyArrayRange(vx_array array, vx_size rang
 */
 VX_API_ENTRY vx_status VX_API_CALL vxMapArrayRange(vx_array array, vx_size range_start, vx_size range_end, vx_map_id *map_id, vx_size *stride, void **ptr, vx_enum usage, vx_enum mem_type, vx_uint32 flags)
 {
-	AgoData * data = (AgoData *)array;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_ARRAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (ptr && stride && range_start < range_end && range_end <= data->u.arr.numitems) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_uint8 * ptr_returned = data->buffer + data->u.arr.itemsize * range_start;
-			// save the pointer and usage for use in vxCommitXXX
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxAccessXXX() more than once with same pointer
-					// the application needs to call vxCommitXXX() before calling vxAccessXXX()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
+    AgoData * data = (AgoData *)array;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_ARRAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (ptr && stride && range_start < range_end && range_end <= data->u.arr.numitems) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_uint8 * ptr_returned = data->buffer + data->u.arr.itemsize * range_start;
+            // save the pointer and usage for use in vxCommitXXX
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxAccessXXX() more than once with same pointer
+                    // the application needs to call vxCommitXXX() before calling vxAccessXXX()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
 #if ENABLE_OPENCL
-				if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-					// make sure dirty OpenCL buffers are synched before giving access for read
-					if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-						// transfer only valid data
-						vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
-						if (size > 0) {
-							cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&data->ref, status, "ERROR: vxMapArrayRange: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-						}
-						data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					}
-				}
+                if (data->opencl_buffer && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
+                        if (size > 0) {
+                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxMapArrayRange: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#elif ENABLE_HIP
+                if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
+                        if (size > 0) {
+                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&data->ref, status, "ERROR: vxMapArrayRange: hipMemcpyDtoH() => %d\n", err);
+                                return status;
+                            }
+                        }
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                   }
+                }
 #endif
-				MappedData item = { data->nextMapId++, ptr_returned, usage, false, data->u.arr.itemsize };
-				data->mapped.push_back(item);
-				*map_id = item.map_id;
-				*ptr = ptr_returned;
-				*stride = item.stride;
-			}
-		}
-	}
-	return status;
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false, data->u.arr.itemsize };
+                data->mapped.push_back(item);
+                *map_id = item.map_id;
+                *ptr = ptr_returned;
+                *stride = item.stride;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Unmap and commit potential changes to an array object range that was previously mapped.
@@ -8196,25 +8438,25 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapArrayRange(vx_array array, vx_size range
 */
 VX_API_ENTRY vx_status VX_API_CALL vxUnmapArrayRange(vx_array array, vx_map_id map_id)
 {
-	AgoData * data = (AgoData *)array;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_ARRAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-			if (i->map_id == map_id) {
-				vx_enum usage = i->usage;
-				data->mapped.erase(i);
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					// update sync flags
-					data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-				status = VX_SUCCESS;
-				break;
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)array;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_ARRAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+            if (i->map_id == map_id) {
+                vx_enum usage = i->usage;
+                data->mapped.erase(i);
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // update sync flags
+                    data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+                status = VX_SUCCESS;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -8239,73 +8481,73 @@ OBJECTARRAY
 */
 VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context, vx_reference exemplar, vx_size count)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && agoIsValidReference(exemplar) && count > 0) {
-		CAgoLock lock(context->cs);
-		char desc_exemplar[512]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
-		char desc[512]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "objectarray", data->name);
-			agoAddData(&context->dataList, data);
-			// add the children too
-			for (vx_uint32 i = 0; i < data->numChildren; i++) {
-				agoAddData(&context->dataList, data->children[i]);
-				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
-					if (data->children[i]->children[j]) {
-						agoAddData(&context->dataList, data->children[i]->children[j]);
-					}
-				}
-			}
-		}
-	}
-	/*AgoData * data = NULL;
-	if (agoIsValidContext(context) && agoIsValidReference(exemplar) && exemplar->type != VX_TYPE_DELAY && exemplar->type != VX_TYPE_OBJECT_ARRAY && count > 0) {
-		CAgoLock lock(context->cs);
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && agoIsValidReference(exemplar) && count > 0) {
+        CAgoLock lock(context->cs);
+        char desc_exemplar[512]; agoGetDescriptionFromData(context, desc_exemplar, (AgoData *)exemplar);
+        char desc[512]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "objectarray", data->name);
+            agoAddData(&context->dataList, data);
+            // add the children too
+            for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                agoAddData(&context->dataList, data->children[i]);
+                for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+                    if (data->children[i]->children[j]) {
+                        agoAddData(&context->dataList, data->children[i]->children[j]);
+                    }
+                }
+            }
+        }
+    }
+    /*AgoData * data = NULL;
+    if (agoIsValidContext(context) && agoIsValidReference(exemplar) && exemplar->type != VX_TYPE_DELAY && exemplar->type != VX_TYPE_OBJECT_ARRAY && count > 0) {
+        CAgoLock lock(context->cs);
 
-		vx_enum item_type = exemplar->type;
-		vx_status status = VX_SUCCESS;
+        vx_enum item_type = exemplar->type;
+        vx_status status = VX_SUCCESS;
 
-		const char * desc_type = agoEnum2Name(item_type);
-		if (!desc_type) {
-			desc_type = agoGetUserStructName(context, item_type);
-		}
-		if(desc_type){
-			char desc[512]; sprintf(desc, "objectarray:%s," VX_FMT_SIZE "", desc_type, count);
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if(data) {
-				agoGenerateDataName(context, "objectarray", data->name);
-				agoAddData(&context->dataList, data);
-			} 
-		}
+        const char * desc_type = agoEnum2Name(item_type);
+        if (!desc_type) {
+            desc_type = agoGetUserStructName(context, item_type);
+        }
+        if(desc_type){
+            char desc[512]; sprintf(desc, "objectarray:%s," VX_FMT_SIZE "", desc_type, count);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if(data) {
+                agoGenerateDataName(context, "objectarray", data->name);
+                agoAddData(&context->dataList, data);
+            }
+        }
 
-		vx_uint32 image_width, image_height;
-	    vx_df_image image_format;
-	    vx_size array_capacity;
-	    vx_enum array_itemtype;
-	    vx_uint32 pyramid_width, pyramid_height;
-	    vx_df_image pyramid_format;
-	    vx_size pyramid_levels;
-	    vx_float32 pyramid_scale;
-	    vx_enum scalar_type;
-	    vx_enum matrix_type;
-	    vx_size matrix_rows, matrix_cols;
-	    vx_size distribution_bins;
-	    vx_int32 distribution_offset;
-	    vx_uint32 distribution_range;
-	    vx_uint32 remap_srcwidth, remap_srcheight;
-	    vx_uint32 remap_dstwidth, remap_dstheight;
-	    vx_enum lut_type;
-	    vx_size lut_count;
-	    vx_enum threshold_type, threshold_data_type;
-	    vx_df_image threshold_input_format, threshold_output_format;
-	    vx_size tensor_num_dims, tensor_dims[VX_MAX_TENSOR_DIMENSIONS];
-	    vx_enum tensor_type;
-	    vx_int8 tensor_fpp;
+        vx_uint32 image_width, image_height;
+        vx_df_image image_format;
+        vx_size array_capacity;
+        vx_enum array_itemtype;
+        vx_uint32 pyramid_width, pyramid_height;
+        vx_df_image pyramid_format;
+        vx_size pyramid_levels;
+        vx_float32 pyramid_scale;
+        vx_enum scalar_type;
+        vx_enum matrix_type;
+        vx_size matrix_rows, matrix_cols;
+        vx_size distribution_bins;
+        vx_int32 distribution_offset;
+        vx_uint32 distribution_range;
+        vx_uint32 remap_srcwidth, remap_srcheight;
+        vx_uint32 remap_dstwidth, remap_dstheight;
+        vx_enum lut_type;
+        vx_size lut_count;
+        vx_enum threshold_type, threshold_data_type;
+        vx_df_image threshold_input_format, threshold_output_format;
+        vx_size tensor_num_dims, tensor_dims[VX_MAX_TENSOR_DIMENSIONS];
+        vx_enum tensor_type;
+        vx_int8 tensor_fpp;
 
-		switch(item_type)
-		{
-			case VX_TYPE_IMAGE:
+        switch(item_type)
+        {
+            case VX_TYPE_IMAGE:
                 if (vxQueryImage((vx_image)exemplar, VX_IMAGE_WIDTH, &image_width, sizeof(image_width)) != VX_SUCCESS ||
                     vxQueryImage((vx_image)exemplar, VX_IMAGE_HEIGHT, &image_height, sizeof(image_height)) != VX_SUCCESS ||
                     vxQueryImage((vx_image)exemplar, VX_IMAGE_FORMAT, &image_format, sizeof(image_format)) != VX_SUCCESS)
@@ -8370,77 +8612,77 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
             default:
                 status =  VX_ERROR_INVALID_TYPE;
                 break;
-		}
-		if(status == VX_SUCCESS)
-		{
-			for (vx_uint32 i = 0u; i < count; i++)
-	        {
-	            vx_reference ref = NULL;
+        }
+        if(status == VX_SUCCESS)
+        {
+            for (vx_uint32 i = 0u; i < count; i++)
+            {
+                vx_reference ref = NULL;
 
-	            switch (item_type)
-	            {
-	                case VX_TYPE_IMAGE:
-	                    ref = (vx_reference)vxCreateImage(context, image_width, image_height, image_format);
-	                    break;
-	                case VX_TYPE_ARRAY:
-	                    ref = (vx_reference)vxCreateArray(context, array_itemtype, array_capacity);
-	                    break;
-	                case VX_TYPE_PYRAMID:
-	                    ref = (vx_reference)vxCreatePyramid(context, pyramid_levels, pyramid_scale, pyramid_width, pyramid_height, pyramid_format);
-	                    break;
-	                case VX_TYPE_SCALAR:
-	                    ref = (vx_reference)vxCreateScalar(context, scalar_type, NULL);
-	                    break;
-	                case VX_TYPE_MATRIX:
-	                    ref = (vx_reference)vxCreateMatrix(context, matrix_type, matrix_cols, matrix_rows);
-	                    break;
-	                case VX_TYPE_DISTRIBUTION:
-	                    ref = (vx_reference)vxCreateDistribution(context, distribution_bins, distribution_offset, distribution_range);
-	                    break;
-	                case VX_TYPE_REMAP:
-	                    ref = (vx_reference)vxCreateRemap(context, remap_srcwidth, remap_srcheight, remap_dstwidth, remap_dstheight);
-	                    break;
-	                case VX_TYPE_LUT:
-	                    ref = (vx_reference)vxCreateLUT(context, lut_type, lut_count);
-	                    break;
-	                case VX_TYPE_THRESHOLD:
-	                    ref = (vx_reference)vxCreateThresholdForImage(context, threshold_type, threshold_input_format, threshold_output_format);
-	                    break;
-	            	case VX_TYPE_TENSOR:
-	                    ref = (vx_reference)vxCreateTensor(context, tensor_num_dims, tensor_dims, tensor_type, tensor_fpp);
-	                    break;
-	                default:
-	                    ref = NULL;
-	                    break;
-	            }
-	            if(agoIsValidReference(ref)){
-		            printf("ref type = %u\n", ref->type);
-		            //data->u.objarr.items[i] = (vx_reference)malloc(sizeof(ref));
-		            //data->u.objarr.items[i] = ref;
-		            //ref->scope = (vx_reference)data;
-		            memcpy(&data->u.objarr.items[i], &ref, sizeof(ref));
-		            printf("i ,data item type %u : %u\n", i, data->u.objarr.items[i]->type);
-		        }
-		        else
-		        {
-		        	for(vx_uint32 j = 0u; j < i; j++)
-		        		vxReleaseReference(&(data->u.objarr.items[j]));
-		        }
-	        }
-		}
-	}*/
-	return (vx_object_array)data;
+                switch (item_type)
+                {
+                    case VX_TYPE_IMAGE:
+                        ref = (vx_reference)vxCreateImage(context, image_width, image_height, image_format);
+                        break;
+                    case VX_TYPE_ARRAY:
+                        ref = (vx_reference)vxCreateArray(context, array_itemtype, array_capacity);
+                        break;
+                    case VX_TYPE_PYRAMID:
+                        ref = (vx_reference)vxCreatePyramid(context, pyramid_levels, pyramid_scale, pyramid_width, pyramid_height, pyramid_format);
+                        break;
+                    case VX_TYPE_SCALAR:
+                        ref = (vx_reference)vxCreateScalar(context, scalar_type, NULL);
+                        break;
+                    case VX_TYPE_MATRIX:
+                        ref = (vx_reference)vxCreateMatrix(context, matrix_type, matrix_cols, matrix_rows);
+                        break;
+                    case VX_TYPE_DISTRIBUTION:
+                        ref = (vx_reference)vxCreateDistribution(context, distribution_bins, distribution_offset, distribution_range);
+                        break;
+                    case VX_TYPE_REMAP:
+                        ref = (vx_reference)vxCreateRemap(context, remap_srcwidth, remap_srcheight, remap_dstwidth, remap_dstheight);
+                        break;
+                    case VX_TYPE_LUT:
+                        ref = (vx_reference)vxCreateLUT(context, lut_type, lut_count);
+                        break;
+                    case VX_TYPE_THRESHOLD:
+                        ref = (vx_reference)vxCreateThresholdForImage(context, threshold_type, threshold_input_format, threshold_output_format);
+                        break;
+                    case VX_TYPE_TENSOR:
+                        ref = (vx_reference)vxCreateTensor(context, tensor_num_dims, tensor_dims, tensor_type, tensor_fpp);
+                        break;
+                    default:
+                        ref = NULL;
+                        break;
+                }
+                if(agoIsValidReference(ref)){
+                    printf("ref type = %u\n", ref->type);
+                    //data->u.objarr.items[i] = (vx_reference)malloc(sizeof(ref));
+                    //data->u.objarr.items[i] = ref;
+                    //ref->scope = (vx_reference)data;
+                    memcpy(&data->u.objarr.items[i], &ref, sizeof(ref));
+                    printf("i ,data item type %u : %u\n", i, data->u.objarr.items[i]->type);
+                }
+                else
+                {
+                    for(vx_uint32 j = 0u; j < i; j++)
+                        vxReleaseReference(&(data->u.objarr.items[j]));
+                }
+            }
+        }
+    }*/
+    return (vx_object_array)data;
 }
 
 /*!
 * \brief Creates an opaque reference to a virtual ObjectArray with no direct user access.
 *
-* This function creates an ObjectArray of count objects with similar behavior as vxCreateObjectArray. 
+* This function creates an ObjectArray of count objects with similar behavior as vxCreateObjectArray.
 * The only difference is that the objects that are created are virtual in the given graph.
 *
 * \param [in] graph        Reference to the graph where to create the virtual ObjectArray.
 * \param [in] exemplar     The exemplar object that defines the type of object in the ObjectArray.
-*                          Only exemplar type of vx_image, vx_array and vx_pyramid are allowed. 
+*                          Only exemplar type of vx_image, vx_array and vx_pyramid are allowed.
 * \param [in] count        Number of Objects to create in the ObjectArray.
 *
 * \return <tt>\ref vx_object_array</tt>.
@@ -8452,57 +8694,57 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateObjectArray(vx_context context,
 */
 VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph graph, vx_reference exemplar, vx_size count)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
-		CAgoLock lock(graph->cs);
-		char desc_exemplar[512]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
-		char desc[512]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
-		data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "objectarray", data->name);
-			agoAddData(&graph->ref.context->dataList, data);
-			// add the children too
-			for (vx_uint32 i = 0; i < data->numChildren; i++) {
-				agoAddData(&graph->ref.context->dataList, data->children[i]);
-				for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
-					if (data->children[i]->children[j]) {
-						agoAddData(&graph->ref.context->dataList, data->children[i]->children[j]);
-					}
-				}
-			}
-		}
-	}
-	/*AgoData * data = NULL;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && count > 0) {
+        CAgoLock lock(graph->cs);
+        char desc_exemplar[512]; agoGetDescriptionFromData(graph->ref.context, desc_exemplar, (AgoData *)exemplar);
+        char desc[512]; sprintf(desc, "objectarray:" VX_FMT_SIZE ",[%s]", count, desc_exemplar);
+        data = agoCreateDataFromDescription(graph->ref.context, NULL, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "objectarray", data->name);
+            agoAddData(&graph->ref.context->dataList, data);
+            // add the children too
+            for (vx_uint32 i = 0; i < data->numChildren; i++) {
+                agoAddData(&graph->ref.context->dataList, data->children[i]);
+                for (vx_uint32 j = 0; j < data->children[i]->numChildren; j++) {
+                    if (data->children[i]->children[j]) {
+                        agoAddData(&graph->ref.context->dataList, data->children[i]->children[j]);
+                    }
+                }
+            }
+        }
+    }
+    /*AgoData * data = NULL;
 
-	if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && exemplar->type != VX_TYPE_DELAY && exemplar->type != VX_TYPE_OBJECT_ARRAY  && count > 0) {
-		CAgoLock lock(graph->cs);
+    if (agoIsValidGraph(graph) && agoIsValidReference(exemplar) && exemplar->type != VX_TYPE_DELAY && exemplar->type != VX_TYPE_OBJECT_ARRAY  && count > 0) {
+        CAgoLock lock(graph->cs);
 
-		vx_enum item_type = exemplar->type;
-		vx_status status = VX_SUCCESS;
+        vx_enum item_type = exemplar->type;
+        vx_status status = VX_SUCCESS;
 
-		const char * desc_type = agoEnum2Name(item_type);
-		if (!desc_type) {
-			desc_type = agoGetUserStructName(graph->ref.context, item_type);
-		}
-		char desc[512];
-		if (desc_type) sprintf(desc, "objectarray-virtual:%s," VX_FMT_SIZE "", desc_type, count);
-		else sprintf(desc, "objectarray-virtual:," VX_FMT_SIZE "", count);
-		data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
-		if(data) {
-			agoGenerateVirtualDataName(graph, "objectarray", data->name);
-			agoAddData(&graph->dataList, data);
-		}
+        const char * desc_type = agoEnum2Name(item_type);
+        if (!desc_type) {
+            desc_type = agoGetUserStructName(graph->ref.context, item_type);
+        }
+        char desc[512];
+        if (desc_type) sprintf(desc, "objectarray-virtual:%s," VX_FMT_SIZE "", desc_type, count);
+        else sprintf(desc, "objectarray-virtual:," VX_FMT_SIZE "", count);
+        data = agoCreateDataFromDescription(graph->ref.context, graph, desc, true);
+        if(data) {
+            agoGenerateVirtualDataName(graph, "objectarray", data->name);
+            agoAddData(&graph->dataList, data);
+        }
 
-		vx_uint32 image_width, image_height;
-	    vx_df_image image_format;
-	    vx_size array_capacity;
-	    vx_enum array_itemtype;
-	    vx_uint32 pyramid_width, pyramid_height;
-	    vx_df_image pyramid_format;
-	    vx_size pyramid_levels;
-	    vx_float32 pyramid_scale;
+        vx_uint32 image_width, image_height;
+        vx_df_image image_format;
+        vx_size array_capacity;
+        vx_enum array_itemtype;
+        vx_uint32 pyramid_width, pyramid_height;
+        vx_df_image pyramid_format;
+        vx_size pyramid_levels;
+        vx_float32 pyramid_scale;
 
-	    switch (item_type)
+        switch (item_type)
         {
             case VX_TYPE_IMAGE:
                 if (vxQueryImage((vx_image)exemplar, VX_IMAGE_WIDTH, &image_width, sizeof(image_width)) != VX_SUCCESS ||
@@ -8529,31 +8771,31 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
         }
 
         if(status == VX_SUCCESS)
-		{
-			for (vx_uint32 i = 0u; i < count; i++)
-	        {
-	            vx_reference ref = NULL;
+        {
+            for (vx_uint32 i = 0u; i < count; i++)
+            {
+                vx_reference ref = NULL;
 
-	            switch (item_type)
-	            {
-	            	case VX_TYPE_IMAGE:
-	                    ref = (vx_reference)vxCreateVirtualImage(graph, image_width, image_height, image_format);
-	                    break;
-	                case VX_TYPE_ARRAY:
-	                    ref = (vx_reference)vxCreateVirtualArray(graph, array_itemtype, array_capacity);
-	                    break;
-	                case VX_TYPE_PYRAMID:
-	                    ref = (vx_reference)vxCreateVirtualPyramid(graph, pyramid_levels, pyramid_scale, pyramid_width, pyramid_height, pyramid_format);
-	                    break;
-	                default:
-	                    ref = NULL;
-	                    break;
-	            }
-	            data->u.objarr.items[i] = ref;
-	        }
-	    }
-	}*/
-	return (vx_object_array)data;
+                switch (item_type)
+                {
+                    case VX_TYPE_IMAGE:
+                        ref = (vx_reference)vxCreateVirtualImage(graph, image_width, image_height, image_format);
+                        break;
+                    case VX_TYPE_ARRAY:
+                        ref = (vx_reference)vxCreateVirtualArray(graph, array_itemtype, array_capacity);
+                        break;
+                    case VX_TYPE_PYRAMID:
+                        ref = (vx_reference)vxCreateVirtualPyramid(graph, pyramid_levels, pyramid_scale, pyramid_width, pyramid_height, pyramid_format);
+                        break;
+                    default:
+                        ref = NULL;
+                        break;
+                }
+                data->u.objarr.items[i] = ref;
+            }
+        }
+    }*/
+    return (vx_object_array)data;
 }
 
 /*!
@@ -8575,32 +8817,32 @@ VX_API_ENTRY vx_object_array VX_API_CALL vxCreateVirtualObjectArray(vx_graph gra
 */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryObjectArray(vx_object_array arr, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)arr;
-	if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_OBJECT_ARRAY_ATTRIBUTE_ITEMTYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.arr.itemtype;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_OBJECT_ARRAY_ATTRIBUTE_NUMITEMS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.arr.numitems;
-					status = VX_SUCCESS;
-				}
-				break;
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)arr;
+    if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_OBJECT_ARRAY_ATTRIBUTE_ITEMTYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.arr.itemtype;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_OBJECT_ARRAY_ATTRIBUTE_NUMITEMS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.arr.numitems;
+                    status = VX_SUCCESS;
+                }
+                break;
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Retrieves the reference to the OpenVX Object in location index of the ObjectArray.
@@ -8609,7 +8851,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryObjectArray(vx_object_array arr, vx_en
 * \param [in] index  The index of the object in the ObjectArray.
 * \return            A <tt>\ref vx_reference</tt> to an OpenVX data object.
 *
-* \note This is a <tt>\refvx_reference</tt>, which can be used elsewhere in OpenVX. 
+* \note This is a <tt>\refvx_reference</tt>, which can be used elsewhere in OpenVX.
 * A call to vxRelease<Object> or vxReleaseReference is necessary to release the Object for each call to this function.
 *
 * \ingroup group_object_array
@@ -8617,26 +8859,26 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryObjectArray(vx_object_array arr, vx_en
 */
 VX_API_ENTRY vx_reference VX_API_CALL vxGetObjectArrayItem(vx_object_array arr, vx_uint32 index)
 {
-	/*AgoData * data = (AgoData *)arr;
-	vx_reference item = NULL;
-	if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
-		if (index < data->u.objarr.numitems) {
-			item = data->u.objarr.items[index];
-			//printf("in Get!!!!data type =  %u\n", data->u.objarr.items);
-		}
-	}
-	return item;*/
-	AgoData * data = (AgoData *)arr;
-	AgoData * item = NULL;
-	if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
-		// convert the index from 0..-(N-1) to 0..N-1
-		if (index < data->u.objarr.numitems) {
-			item = data->children[index];
-			agoRetainData((AgoGraph *)data->ref.scope, item, true);
-			data->ref.context->num_active_references++;
-		}
-	}
-	return (vx_reference)item;
+    /*AgoData * data = (AgoData *)arr;
+    vx_reference item = NULL;
+    if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
+        if (index < data->u.objarr.numitems) {
+            item = data->u.objarr.items[index];
+            //printf("in Get!!!!data type =  %u\n", data->u.objarr.items);
+        }
+    }
+    return item;*/
+    AgoData * data = (AgoData *)arr;
+    AgoData * item = NULL;
+    if (agoIsValidData(data, VX_TYPE_OBJECT_ARRAY)) {
+        // convert the index from 0..-(N-1) to 0..N-1
+        if (index < data->u.objarr.numitems) {
+            item = data->children[index];
+            agoRetainData((AgoGraph *)data->ref.scope, item, true);
+            data->ref.context->num_active_references++;
+        }
+    }
+    return (vx_reference)item;
 }
 
 /*!
@@ -8646,7 +8888,7 @@ VX_API_ENTRY vx_reference VX_API_CALL vxGetObjectArrayItem(vx_object_array arr, 
 *
 * \param [in] arr          The pointer to the ObjectArray to release.
 * \return A <tt>\ref vx_status_e</tt> enumeration.
-* \retval VX_SUCCESS No errors; any other value indicates failure 
+* \retval VX_SUCCESS No errors; any other value indicates failure
 * \retval VX_ERROR_INVALID_REFERENCE If arr is not a <tt>\ref vx_object_array</tt>.
 *
 * \ingroup group_object_array
@@ -8654,14 +8896,14 @@ VX_API_ENTRY vx_reference VX_API_CALL vxGetObjectArrayItem(vx_object_array arr, 
 */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseObjectArray(vx_object_array *arr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (arr && agoIsValidData((AgoData*)*arr, VX_TYPE_OBJECT_ARRAY)) {
-		if (!agoReleaseData((AgoData*)*arr, true)) {
-			*arr = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (arr && agoIsValidData((AgoData*)*arr, VX_TYPE_OBJECT_ARRAY)) {
+        if (!agoReleaseData((AgoData*)*arr, true)) {
+            *arr = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -8669,8 +8911,8 @@ META FORMAT
 =============================================================================*/
 
 /*! \brief This function allows a user to set the attributes of a <tt>\ref vx_meta_format</tt> object in a kernel output validator.
- * 
- * The \ref vx_meta_format object contains two types of information : data object meta data and 
+ *
+ * The \ref vx_meta_format object contains two types of information : data object meta data and
  * some specific information that defines how the valid region of an image changes
  *
  * The meta data attributes that can be set are identified by this list:
@@ -8686,7 +8928,7 @@ META FORMAT
  * - \ref VX_VALID_RECT_CALLBACK
  * \note For vx_image, a specific attribute can be used to specify the valid region evolution. This information is not a meta data.
  *
- * \param [in] meta The reference to the \ref vx_meta_format struct to set 
+ * \param [in] meta The reference to the \ref vx_meta_format struct to set
  * \param [in] attribute Use the subset of data object attributes that define the meta data of this object or attributes from <tt>\ref vx_meta_format</tt>.
  * \param [in] ptr The input pointer of the value to set on the meta format object.
  * \param [in] size The size in bytes of the object to which \a ptr points.
@@ -8700,232 +8942,232 @@ META FORMAT
  */
 VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta, vx_enum attribute, const void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (meta && agoIsValidReference(&meta->data.ref)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			/**********************************************************************/
-			case VX_VALID_RECT_CALLBACK:
-				if (size == sizeof(vx_kernel_image_valid_rectangle_f)) {
-					meta->set_valid_rectangle_callback = *(vx_kernel_image_valid_rectangle_f*)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_IMAGE_FORMAT:
-				if (size == sizeof(vx_df_image) && meta->data.ref.type == VX_TYPE_IMAGE) {
-					meta->data.u.img.format = *(vx_df_image *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_HEIGHT:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_IMAGE) {
-					meta->data.u.img.height = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_IMAGE_WIDTH:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_IMAGE) {
-					meta->data.u.img.width = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (meta && agoIsValidReference(&meta->data.ref)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            /**********************************************************************/
+            case VX_VALID_RECT_CALLBACK:
+                if (size == sizeof(vx_kernel_image_valid_rectangle_f)) {
+                    meta->set_valid_rectangle_callback = *(vx_kernel_image_valid_rectangle_f*)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_IMAGE_FORMAT:
+                if (size == sizeof(vx_df_image) && meta->data.ref.type == VX_TYPE_IMAGE) {
+                    meta->data.u.img.format = *(vx_df_image *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_IMAGE) {
+                    meta->data.u.img.height = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_IMAGE_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_IMAGE) {
+                    meta->data.u.img.width = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
 #if ENABLE_OPENCL
-			case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
-				if (size == sizeof(vx_bool) && meta->data.ref.type == VX_TYPE_IMAGE) {
-					meta->data.u.img.enableUserBufferOpenCL = *(vx_bool *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
+            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
+                if (size == sizeof(vx_bool) && meta->data.ref.type == VX_TYPE_IMAGE) {
+                    meta->data.u.img.enableUserBufferOpenCL = *(vx_bool *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
 #endif
-			/**********************************************************************/
-			case VX_ARRAY_CAPACITY:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_ARRAY) {
-					meta->data.u.arr.capacity = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_ARRAY_ITEMTYPE:
-				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_ARRAY) {
-					meta->data.u.arr.itemtype = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_OBJECT_ARRAY_NUMITEMS:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
-					meta->data.u.objarr.numitems = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_OBJECT_ARRAY_ITEMTYPE:
-				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
-					meta->data.u.objarr.itemtype = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_REMAP_SOURCE_WIDTH:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
-					meta->data.u.remap.src_width = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REMAP_SOURCE_HEIGHT:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
-					meta->data.u.remap.src_height = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REMAP_DESTINATION_WIDTH:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
-					meta->data.u.remap.dst_width = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_REMAP_DESTINATION_HEIGHT:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
-					meta->data.u.remap.dst_height = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_LUT_TYPE:
-				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_LUT) {
-					meta->data.u.lut.type = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_LUT_COUNT:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_LUT) {
-					meta->data.u.lut.count = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_THRESHOLD_TYPE:
-				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_THRESHOLD) {
-					meta->data.u.thr.thresh_type = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_DISTRIBUTION_BINS:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
-					meta->data.u.dist.numbins = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_OFFSET:
-				if (size == sizeof(vx_int32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
-					meta->data.u.dist.offset = *(vx_int32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_RANGE:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
-					meta->data.u.dist.range = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_DISTRIBUTION_WINDOW:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
-					meta->data.u.dist.window = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_PYRAMID_FORMAT:
-				if (size == sizeof(vx_df_image) && meta->data.ref.type == VX_TYPE_PYRAMID) {
-					meta->data.u.pyr.format = *(vx_df_image *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_HEIGHT:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
-					meta->data.u.pyr.height = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_WIDTH:
-				if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
-					meta->data.u.pyr.width = *(vx_uint32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_LEVELS:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_PYRAMID) {
-					meta->data.u.pyr.levels = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_PYRAMID_SCALE:
-				if (size == sizeof(vx_float32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
-					meta->data.u.pyr.scale = *(vx_float32 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_SCALAR_TYPE:
-				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_SCALAR) {
-					meta->data.u.scalar.type = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_MATRIX_TYPE:
-				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_MATRIX) {
-					meta->data.u.mat.type = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_MATRIX_COLUMNS:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_MATRIX) {
-					meta->data.u.mat.columns = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_MATRIX_ROWS:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_MATRIX) {
-					meta->data.u.mat.rows = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			case VX_TENSOR_NUMBER_OF_DIMS:
-				if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_TENSOR) {
-					meta->data.u.tensor.num_dims = *(vx_size *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_DIMS:
-				if (size <= AGO_MAX_TENSOR_DIMENSIONS * sizeof(vx_size) && meta->data.ref.type == VX_TYPE_TENSOR) {
-					memcpy(&meta->data.u.tensor.dims, ptr, size);
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_DATA_TYPE:
-				if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_TENSOR) {
-					meta->data.u.tensor.data_type = *(vx_enum *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_FIXED_POINT_POSITION:
-				if (size == sizeof(vx_uint8) && meta->data.ref.type == VX_TYPE_TENSOR) {
-					meta->data.u.tensor.fixed_point_pos = *(vx_int8 *)ptr;
-					status = VX_SUCCESS;
-				}
-				break;
-			/**********************************************************************/
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+            /**********************************************************************/
+            case VX_ARRAY_CAPACITY:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_ARRAY) {
+                    meta->data.u.arr.capacity = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_ARRAY_ITEMTYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_ARRAY) {
+                    meta->data.u.arr.itemtype = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_OBJECT_ARRAY_NUMITEMS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+                    meta->data.u.objarr.numitems = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_OBJECT_ARRAY_ITEMTYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_OBJECT_ARRAY) {
+                    meta->data.u.objarr.itemtype = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_REMAP_SOURCE_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    meta->data.u.remap.src_width = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_SOURCE_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    meta->data.u.remap.src_height = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_DESTINATION_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    meta->data.u.remap.dst_width = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_REMAP_DESTINATION_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_REMAP) {
+                    meta->data.u.remap.dst_height = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_LUT_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_LUT) {
+                    meta->data.u.lut.type = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_LUT_COUNT:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_LUT) {
+                    meta->data.u.lut.count = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_THRESHOLD_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_THRESHOLD) {
+                    meta->data.u.thr.thresh_type = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_DISTRIBUTION_BINS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+                    meta->data.u.dist.numbins = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_OFFSET:
+                if (size == sizeof(vx_int32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+                    meta->data.u.dist.offset = *(vx_int32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_RANGE:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+                    meta->data.u.dist.range = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_DISTRIBUTION_WINDOW:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_DISTRIBUTION) {
+                    meta->data.u.dist.window = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_PYRAMID_FORMAT:
+                if (size == sizeof(vx_df_image) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    meta->data.u.pyr.format = *(vx_df_image *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_HEIGHT:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    meta->data.u.pyr.height = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_WIDTH:
+                if (size == sizeof(vx_uint32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    meta->data.u.pyr.width = *(vx_uint32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_LEVELS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    meta->data.u.pyr.levels = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_PYRAMID_SCALE:
+                if (size == sizeof(vx_float32) && meta->data.ref.type == VX_TYPE_PYRAMID) {
+                    meta->data.u.pyr.scale = *(vx_float32 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_SCALAR_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_SCALAR) {
+                    meta->data.u.scalar.type = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_MATRIX_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_MATRIX) {
+                    meta->data.u.mat.type = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_COLUMNS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_MATRIX) {
+                    meta->data.u.mat.columns = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_MATRIX_ROWS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_MATRIX) {
+                    meta->data.u.mat.rows = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            case VX_TENSOR_NUMBER_OF_DIMS:
+                if (size == sizeof(vx_size) && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    meta->data.u.tensor.num_dims = *(vx_size *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_DIMS:
+                if (size <= AGO_MAX_TENSOR_DIMENSIONS * sizeof(vx_size) && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    memcpy(&meta->data.u.tensor.dims, ptr, size);
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_DATA_TYPE:
+                if (size == sizeof(vx_enum) && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    meta->data.u.tensor.data_type = *(vx_enum *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_FIXED_POINT_POSITION:
+                if (size == sizeof(vx_uint8) && meta->data.ref.type == VX_TYPE_TENSOR) {
+                    meta->data.u.tensor.fixed_point_pos = *(vx_int8 *)ptr;
+                    status = VX_SUCCESS;
+                }
+                break;
+            /**********************************************************************/
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Set a meta format object from an exemplar data object reference
@@ -8941,69 +9183,69 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
 */
 VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatFromReference(vx_meta_format meta, vx_reference exemplar)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (meta && agoIsValidReference(&meta->data.ref) && agoIsValidReference(exemplar)) {
-		AgoData * ref = (AgoData *)exemplar;
-		status = VX_SUCCESS;
-		switch (exemplar->type)
-		{
-		case VX_TYPE_IMAGE:
-			meta->data.u.img.width = ref->u.img.width;
-			meta->data.u.img.height = ref->u.img.height;
-			meta->data.u.img.format = ref->u.img.format;
-			break;
-		case VX_TYPE_ARRAY:
-			meta->data.u.arr.capacity = ref->u.arr.capacity;
-			meta->data.u.arr.itemtype = ref->u.arr.itemtype;
-			break;
-		case VX_TYPE_PYRAMID:
-			meta->data.u.pyr.levels = ref->u.pyr.levels;
-			meta->data.u.pyr.scale = ref->u.pyr.scale;
-			meta->data.u.pyr.width = ref->u.pyr.width;
-			meta->data.u.pyr.height = ref->u.pyr.height;
-			meta->data.u.pyr.format = ref->u.pyr.format;
-			break;
-		case VX_TYPE_SCALAR:
-			meta->data.u.scalar.type = ref->u.scalar.type;
-			break;
-		case VX_TYPE_OBJECT_ARRAY:
-			meta->data.u.objarr.numitems = ref->u.objarr.numitems;
-			meta->data.u.objarr.itemtype = ref->u.objarr.itemtype;
-			break;
-		case VX_TYPE_REMAP:
-			meta->data.u.remap.src_width = ref->u.remap.src_width;
-			meta->data.u.remap.src_height = ref->u.remap.src_height;
-			meta->data.u.remap.dst_width = ref->u.remap.dst_width;
-			meta->data.u.remap.dst_height = ref->u.remap.dst_height;
-			break;
-		case VX_TYPE_LUT:
-			meta->data.u.lut.type = ref->u.lut.type;
-			meta->data.u.lut.count = ref->u.lut.count;
-			meta->data.u.lut.offset = ref->u.lut.offset;
-			break;
-		case VX_TYPE_DISTRIBUTION:
-			meta->data.u.dist.numbins = ref->u.dist.numbins;
-			meta->data.u.dist.offset = ref->u.dist.offset;
-			meta->data.u.dist.range = ref->u.dist.range;
-			meta->data.u.dist.window = ref->u.dist.window;
-			break;
-		case VX_TYPE_THRESHOLD:
-			meta->data.u.thr.thresh_type = ref->u.thr.thresh_type;
-			break;
-		case VX_TYPE_MATRIX:
-			meta->data.u.mat.type = ref->u.mat.type;
-			meta->data.u.mat.columns = ref->u.mat.columns;
-			meta->data.u.mat.rows = ref->u.mat.rows;
-			meta->data.u.mat.itemsize = ref->u.mat.itemsize;
-			meta->data.u.mat.pattern = ref->u.mat.pattern;
-			meta->data.u.mat.origin = ref->u.mat.origin;
-			break;
-		default:
-			status = VX_ERROR_INVALID_REFERENCE;
-			break;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (meta && agoIsValidReference(&meta->data.ref) && agoIsValidReference(exemplar)) {
+        AgoData * ref = (AgoData *)exemplar;
+        status = VX_SUCCESS;
+        switch (exemplar->type)
+        {
+        case VX_TYPE_IMAGE:
+            meta->data.u.img.width = ref->u.img.width;
+            meta->data.u.img.height = ref->u.img.height;
+            meta->data.u.img.format = ref->u.img.format;
+            break;
+        case VX_TYPE_ARRAY:
+            meta->data.u.arr.capacity = ref->u.arr.capacity;
+            meta->data.u.arr.itemtype = ref->u.arr.itemtype;
+            break;
+        case VX_TYPE_PYRAMID:
+            meta->data.u.pyr.levels = ref->u.pyr.levels;
+            meta->data.u.pyr.scale = ref->u.pyr.scale;
+            meta->data.u.pyr.width = ref->u.pyr.width;
+            meta->data.u.pyr.height = ref->u.pyr.height;
+            meta->data.u.pyr.format = ref->u.pyr.format;
+            break;
+        case VX_TYPE_SCALAR:
+            meta->data.u.scalar.type = ref->u.scalar.type;
+            break;
+        case VX_TYPE_OBJECT_ARRAY:
+            meta->data.u.objarr.numitems = ref->u.objarr.numitems;
+            meta->data.u.objarr.itemtype = ref->u.objarr.itemtype;
+            break;
+        case VX_TYPE_REMAP:
+            meta->data.u.remap.src_width = ref->u.remap.src_width;
+            meta->data.u.remap.src_height = ref->u.remap.src_height;
+            meta->data.u.remap.dst_width = ref->u.remap.dst_width;
+            meta->data.u.remap.dst_height = ref->u.remap.dst_height;
+            break;
+        case VX_TYPE_LUT:
+            meta->data.u.lut.type = ref->u.lut.type;
+            meta->data.u.lut.count = ref->u.lut.count;
+            meta->data.u.lut.offset = ref->u.lut.offset;
+            break;
+        case VX_TYPE_DISTRIBUTION:
+            meta->data.u.dist.numbins = ref->u.dist.numbins;
+            meta->data.u.dist.offset = ref->u.dist.offset;
+            meta->data.u.dist.range = ref->u.dist.range;
+            meta->data.u.dist.window = ref->u.dist.window;
+            break;
+        case VX_TYPE_THRESHOLD:
+            meta->data.u.thr.thresh_type = ref->u.thr.thresh_type;
+            break;
+        case VX_TYPE_MATRIX:
+            meta->data.u.mat.type = ref->u.mat.type;
+            meta->data.u.mat.columns = ref->u.mat.columns;
+            meta->data.u.mat.rows = ref->u.mat.rows;
+            meta->data.u.mat.itemsize = ref->u.mat.itemsize;
+            meta->data.u.mat.pattern = ref->u.mat.pattern;
+            meta->data.u.mat.origin = ref->u.mat.origin;
+            break;
+        default:
+            status = VX_ERROR_INVALID_REFERENCE;
+            break;
+        }
+    }
+    return status;
 }
 
 /*==============================================================================
@@ -9012,87 +9254,87 @@ MISCELLANEOUS
 
 VX_API_ENTRY vx_status VX_API_CALL vxGetReferenceName(vx_reference ref, vx_char name[], vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidReference(ref)) {
-		if ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || ref->type == VX_TYPE_TENSOR || (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)) {
-			strncpy(name, ((AgoData *)ref)->name.c_str(), size);
-			status = VX_SUCCESS;
-		}
-		else if (ref->type == VX_TYPE_KERNEL) {
-			strncpy(name, ((AgoKernel *)ref)->name, size);
-			status = VX_SUCCESS;
-		}
-		else if (ref->type == VX_TYPE_NODE) {
-			strncpy(name, ((AgoNode *)ref)->akernel->name, size);
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidReference(ref)) {
+        if ((ref->type >= VX_TYPE_DELAY && ref->type <= VX_TYPE_REMAP) || ref->type == VX_TYPE_TENSOR || (ref->type >= VX_TYPE_VENDOR_OBJECT_START && ref->type <= VX_TYPE_VENDOR_OBJECT_END)) {
+            strncpy(name, ((AgoData *)ref)->name.c_str(), size);
+            status = VX_SUCCESS;
+        }
+        else if (ref->type == VX_TYPE_KERNEL) {
+            strncpy(name, ((AgoKernel *)ref)->name, size);
+            status = VX_SUCCESS;
+        }
+        else if (ref->type == VX_TYPE_NODE) {
+            strncpy(name, ((AgoNode *)ref)->akernel->name, size);
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_status VX_API_CALL vxGetModuleInternalData(vx_context context, const vx_char * module, void ** ptr, vx_size * size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context)) {
-		for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
-			if (it->hmodule && !strcmp(it->module_name, module)) {
-				*ptr = it->module_internal_data_ptr;
-				*size = it->module_internal_data_size;
-				status = VX_SUCCESS;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context)) {
+        for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
+            if (it->hmodule && !strcmp(it->module_name, module)) {
+                *ptr = it->module_internal_data_ptr;
+                *size = it->module_internal_data_size;
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_status VX_API_CALL vxSetModuleInternalData(vx_context context, const vx_char * module, void * ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidContext(context)) {
-		for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
-			if (it->hmodule && !strcmp(it->module_name, module)) {
-				it->module_internal_data_ptr = (vx_uint8 *)ptr;
-				it->module_internal_data_size = size;
-				status = VX_SUCCESS;
-			}
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidContext(context)) {
+        for (auto it = context->modules.begin(); it != context->modules.end(); it++) {
+            if (it->hmodule && !strcmp(it->module_name, module)) {
+                it->module_internal_data_ptr = (vx_uint8 *)ptr;
+                it->module_internal_data_size = size;
+                status = VX_SUCCESS;
+            }
+        }
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_status VX_API_CALL vxGetModuleHandle(vx_node node, const vx_char * module, void ** ptr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidNode(node) && ptr) {
-		vx_graph graph = (AgoGraph *)node->ref.scope;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidNode(node) && ptr) {
+        vx_graph graph = (AgoGraph *)node->ref.scope;
         if(graph->moduleHandle.find(module) == graph->moduleHandle.end()) {
             *ptr = NULL;
         }
         else {
             *ptr = graph->moduleHandle[module];
         }
-	    status = VX_SUCCESS;
-	}
-	return status;
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_status VX_API_CALL vxSetModuleHandle(vx_node node, const vx_char * module, void * ptr)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidNode(node)) {
-		vx_graph graph = (AgoGraph *)node->ref.scope;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidNode(node)) {
+        vx_graph graph = (AgoGraph *)node->ref.scope;
         graph->moduleHandle[module] = ptr;
-	    status = VX_SUCCESS;
-	}
-	return status;
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 //! \brief Create context from specified platform -- needed for ICD support
 extern "C" VX_API_ENTRY vx_context VX_API_CALL vxCreateContextFromPlatform(struct _vx_platform * platform);
 VX_API_ENTRY vx_context VX_API_CALL vxCreateContextFromPlatform(struct _vx_platform * platform)
 {
-	vx_context context = agoCreateContextFromPlatform(platform);
-	return context;
+    vx_context context = agoCreateContextFromPlatform(platform);
+    return context;
 }
 
 /*==============================================================================
@@ -9111,21 +9353,21 @@ TENSOR DATA FUNCTIONS
  */
 VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensor(vx_context context, vx_size num_of_dims, const vx_size * dims, vx_enum data_format, vx_int8 fixed_point_pos)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && num_of_dims > 0 && num_of_dims <= AGO_MAX_TENSOR_DIMENSIONS) {
-		CAgoLock lock(context->cs);
-		char dimStr[256] = "";
-		for (vx_size i = 0; i < num_of_dims; i++)
-			sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
-		char desc[512];
-		sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
-		data = agoCreateDataFromDescription(context, NULL, desc, true);
-		if (data) {
-			agoGenerateDataName(context, "tensor", data->name);
-			agoAddData(&context->dataList, data);
-		}
-	}
-	return (vx_tensor)data;
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && num_of_dims > 0 && num_of_dims <= AGO_MAX_TENSOR_DIMENSIONS) {
+        CAgoLock lock(context->cs);
+        char dimStr[256] = "";
+        for (vx_size i = 0; i < num_of_dims; i++)
+            sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+        char desc[512];
+        sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
+        data = agoCreateDataFromDescription(context, NULL, desc, true);
+        if (data) {
+            agoGenerateDataName(context, "tensor", data->name);
+            agoAddData(&context->dataList, data);
+        }
+    }
+    return (vx_tensor)data;
 }
 
 /*! \brief Creates an opaque reference to a tensor data buffer with no direct
@@ -9149,22 +9391,22 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensor(vx_context context, vx_size nu
  */
 VX_API_ENTRY vx_tensor VX_API_CALL vxCreateVirtualTensor(vx_graph graph, vx_size num_of_dims, const vx_size * dims, vx_enum data_format, vx_int8 fixed_point_pos)
 {
-	AgoData * data = NULL;
-	if (agoIsValidGraph(graph) && num_of_dims > 0 && num_of_dims <= AGO_MAX_TENSOR_DIMENSIONS) {
-		vx_context context = graph->ref.context;
-		CAgoLock lock(context->cs);
-		char dimStr[256] = "";
-		for (vx_size i = 0; i < num_of_dims; i++)
-			sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
-		char desc[512];
-		sprintf(desc, "tensor-virtual:%u,{%s},%s,%i", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
-		data = agoCreateDataFromDescription(context, graph, desc, true);
-		if (data) {
-			agoGenerateVirtualDataName(graph, "tensor", data->name);
-			agoAddData(&graph->dataList, data);
-		}
-	}
-	return (vx_tensor)data;
+    AgoData * data = NULL;
+    if (agoIsValidGraph(graph) && num_of_dims > 0 && num_of_dims <= AGO_MAX_TENSOR_DIMENSIONS) {
+        vx_context context = graph->ref.context;
+        CAgoLock lock(context->cs);
+        char dimStr[256] = "";
+        for (vx_size i = 0; i < num_of_dims; i++)
+            sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+        char desc[512];
+        sprintf(desc, "tensor-virtual:%u,{%s},%s,%i", (vx_uint32)num_of_dims, dimStr, agoEnum2Name(data_format), fixed_point_pos);
+        data = agoCreateDataFromDescription(context, graph, desc, true);
+        if (data) {
+            agoGenerateVirtualDataName(graph, "tensor", data->name);
+            agoAddData(&graph->dataList, data);
+        }
+    }
+    return (vx_tensor)data;
 }
 
 /*! \brief Creates a tensor data from another tensor data given a view. This second
@@ -9181,39 +9423,39 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateVirtualTensor(vx_graph graph, vx_size
  */
 VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromView(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end)
 {
-	AgoData * master_tensor = (AgoData *)tensor;
-	AgoData * data = NULL;
-	if (agoIsValidData(master_tensor, VX_TYPE_TENSOR)) {
-		if (master_tensor->u.tensor.num_dims != num_of_dims) {
-			agoAddLogEntry(&master_tensor->ref, VX_ERROR_INVALID_PARAMETERS, "ERROR: vxCreateTensorFromROI: num_of_dims (%u) doesn't match tensor\n", (vx_uint32)num_of_dims);
-			return NULL;
-		}
-		vx_context context = master_tensor->ref.context;
-		CAgoLock lock(context->cs);
-		char startStr[256] = "", endStr[256] = "";
-		for (vx_size i = 0; i < num_of_dims; i++) {
-			sprintf(startStr + strlen(startStr), "%s%u", i ? "," : "", (vx_uint32)roi_start[i]);
-			sprintf(endStr + strlen(endStr), "%s%u", i ? "," : "", (vx_uint32)roi_end[i]);
-		}
-		char desc[1024];
-		sprintf(desc, "tensor-from-roi:%s,%u,{%s},{%s}", master_tensor->name.c_str(), (vx_uint32)num_of_dims, startStr, endStr);
-		if (master_tensor->isVirtual) {
-			vx_graph graph = (vx_graph)master_tensor->ref.scope;
-			data = agoCreateDataFromDescription(context, graph, desc, true);
-			if (data) {
-				agoGenerateVirtualDataName(graph, "tensor-from-roi", data->name);
-				agoAddData(&graph->dataList, data);
-			}
-		}
-		else {
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if (data) {
-				agoGenerateDataName(context, "tensor-from-roi", data->name);
-				agoAddData(&context->dataList, data);
-			}
-		}
-	}
-	return (vx_tensor)data;
+    AgoData * master_tensor = (AgoData *)tensor;
+    AgoData * data = NULL;
+    if (agoIsValidData(master_tensor, VX_TYPE_TENSOR)) {
+        if (master_tensor->u.tensor.num_dims != num_of_dims) {
+            agoAddLogEntry(&master_tensor->ref, VX_ERROR_INVALID_PARAMETERS, "ERROR: vxCreateTensorFromROI: num_of_dims (%u) doesn't match tensor\n", (vx_uint32)num_of_dims);
+            return NULL;
+        }
+        vx_context context = master_tensor->ref.context;
+        CAgoLock lock(context->cs);
+        char startStr[256] = "", endStr[256] = "";
+        for (vx_size i = 0; i < num_of_dims; i++) {
+            sprintf(startStr + strlen(startStr), "%s%u", i ? "," : "", (vx_uint32)roi_start[i]);
+            sprintf(endStr + strlen(endStr), "%s%u", i ? "," : "", (vx_uint32)roi_end[i]);
+        }
+        char desc[1024];
+        sprintf(desc, "tensor-from-roi:%s,%u,{%s},{%s}", master_tensor->name.c_str(), (vx_uint32)num_of_dims, startStr, endStr);
+        if (master_tensor->isVirtual) {
+            vx_graph graph = (vx_graph)master_tensor->ref.scope;
+            data = agoCreateDataFromDescription(context, graph, desc, true);
+            if (data) {
+                agoGenerateVirtualDataName(graph, "tensor-from-roi", data->name);
+                agoAddData(&graph->dataList, data);
+            }
+        }
+        else {
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "tensor-from-roi", data->name);
+                agoAddData(&context->dataList, data);
+            }
+        }
+    }
+    return (vx_tensor)data;
 }
 
 /*! \brief Releases a reference to a tensor data object.
@@ -9228,14 +9470,14 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromView(vx_tensor tensor, vx_s
  */
 VX_API_ENTRY vx_status VX_API_CALL vxReleaseTensor(vx_tensor *tensor)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (tensor && agoIsValidData((AgoData*)*tensor, VX_TYPE_TENSOR)) {
-		if (!agoReleaseData((AgoData*)*tensor, true)) {
-			*tensor = NULL;
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (tensor && agoIsValidData((AgoData*)*tensor, VX_TYPE_TENSOR)) {
+        if (!agoReleaseData((AgoData*)*tensor, true)) {
+            *tensor = NULL;
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Retrieves various attributes of a tensor data.
@@ -9251,60 +9493,61 @@ VX_API_ENTRY vx_status VX_API_CALL vxReleaseTensor(vx_tensor *tensor)
  */
 VX_API_ENTRY vx_status VX_API_CALL vxQueryTensor(vx_tensor tensor, vx_enum attribute, void *ptr, vx_size size)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * data = (AgoData *)tensor;
-	if (agoIsValidData(data, VX_TYPE_TENSOR)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (ptr) {
-			switch (attribute)
-			{
-			case VX_TENSOR_NUMBER_OF_DIMS:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.tensor.num_dims;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_DIMS:
-				if (size >= sizeof(vx_size)*data->u.tensor.num_dims) {
-					for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
-						((vx_size *)ptr)[i] = data->u.tensor.dims[i];
-					}
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_DATA_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->u.tensor.data_type;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_FIXED_POINT_POSITION:
-				if (size == sizeof(vx_uint8)) {
-					*(vx_int8 *)ptr = data->u.tensor.fixed_point_pos;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_MEMORY_TYPE:
-				if (size == sizeof(vx_enum)) {
-					*(vx_enum *)ptr = data->import_type;
-					status = VX_SUCCESS;
-				}
-				break;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * data = (AgoData *)tensor;
+    if (agoIsValidData(data, VX_TYPE_TENSOR)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (ptr) {
+            switch (attribute)
+            {
+            case VX_TENSOR_NUMBER_OF_DIMS:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.tensor.num_dims;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_DIMS:
+                if (size >= sizeof(vx_size)*data->u.tensor.num_dims) {
+                    for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
+                        ((vx_size *)ptr)[i] = data->u.tensor.dims[i];
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_DATA_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->u.tensor.data_type;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_FIXED_POINT_POSITION:
+                if (size == sizeof(vx_uint8)) {
+                    *(vx_int8 *)ptr = data->u.tensor.fixed_point_pos;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_MEMORY_TYPE:
+                if (size == sizeof(vx_enum)) {
+                    *(vx_enum *)ptr = data->import_type;
+                    status = VX_SUCCESS;
+                }
+                break;
+#if (ENABLE_OPENCL||ENABLE_HIP)
+            case VX_TENSOR_OFFSET_OPENCL:
+                if (size == sizeof(vx_size)) {
+                    *(vx_size *)ptr = data->u.tensor.offset;
+                    status = VX_SUCCESS;
+                }
+                break;
+            case VX_TENSOR_STRIDE_OPENCL:
+                if (size >= sizeof(vx_size)*data->u.tensor.num_dims) {
+                    for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
+                        ((vx_size *)ptr)[i] = data->u.tensor.stride[i];
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
 #if ENABLE_OPENCL
-			case VX_TENSOR_OFFSET_OPENCL:
-				if (size == sizeof(vx_size)) {
-					*(vx_size *)ptr = data->u.tensor.offset;
-					status = VX_SUCCESS;
-				}
-				break;
-			case VX_TENSOR_STRIDE_OPENCL:
-				if (size >= sizeof(vx_size)*data->u.tensor.num_dims) {
-					for (vx_size i = 0; i < data->u.tensor.num_dims; i++) {
-						((vx_size *)ptr)[i] = data->u.tensor.stride[i];
-					}
-					status = VX_SUCCESS;
-				}
-				break;
             case VX_TENSOR_BUFFER_OPENCL:
                 if (size == sizeof(cl_mem)) {
                     if (data->opencl_buffer) {
@@ -9320,14 +9563,28 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryTensor(vx_tensor tensor, vx_enum attri
                     status = VX_SUCCESS;
                 }
                 break;
+#else
+            case VX_TENSOR_BUFFER_HIP:
+                if (size == sizeof(vx_uint8 *)) {
+                    if (data->hip_memory) {
+                        *(vx_uint8 **)ptr = data->hip_memory;
+                    }
+                    else {
+                        *(vx_uint8 **)ptr = NULL;
+                    }
+                    status = VX_SUCCESS;
+                }
+                break;
+
 #endif
-			default:
-				status = VX_ERROR_NOT_SUPPORTED;
-				break;
-			}
-		}
-	}
-	return status;
+#endif
+            default:
+                status = VX_ERROR_NOT_SUPPORTED;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to copy a view patch from/into an tensor object .
@@ -9357,118 +9614,132 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryTensor(vx_tensor tensor, vx_enum attri
  */
 VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, const vx_size * user_stride, void * user_ptr, vx_enum usage, vx_enum user_mem_type)
 {
-	AgoData * data = (AgoData *)tensor;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_TENSOR))
-	{
-		status = VX_ERROR_INVALID_PARAMETERS;
-		bool paramsValid = false;
-		bool singleCopy = true;
-		vx_size size = 0, start[AGO_MAX_TENSOR_DIMENSIONS], end[AGO_MAX_TENSOR_DIMENSIONS];
-		memset(start, 0, sizeof(start));
-		memcpy(end, data->u.tensor.dims, sizeof(end));
-		if (num_of_dims == data->u.tensor.num_dims) {
-			paramsValid = true;
-			size = data->u.tensor.stride[0];
-			for (vx_size i = 0; i < num_of_dims; i++) {
-				if (roi_start)
-					start[i] = roi_start[i];
-				if (roi_end)
-					end[i] = roi_end[i];
-				if (start[i] >= end[i] || end[i] > data->u.tensor.dims[i])
-					paramsValid = false;
-				if (((i == 0) && (user_stride[i] != size)) || ((i > 0) && (user_stride[i] < size)))
-					paramsValid = false; // stride[0] must match and other strides shouldn't be smaller than actual dimensions
-				if (user_stride[i] != data->u.tensor.stride[i] || start[i] != 0 || end[i] != data->u.tensor.dims[i] || data->u.tensor.start[i] != 0 || data->u.tensor.end[i] != data->u.tensor.dims[i])
-					singleCopy = false;
-				size *= (end[i] - start[i]);
-			}
-		}
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (paramsValid && (user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+    AgoData * data = (AgoData *)tensor;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_TENSOR))
+    {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        bool paramsValid = false;
+        bool singleCopy = true;
+        vx_size size = 0, start[AGO_MAX_TENSOR_DIMENSIONS], end[AGO_MAX_TENSOR_DIMENSIONS];
+        memset(start, 0, sizeof(start));
+        memcpy(end, data->u.tensor.dims, sizeof(end));
+        if (num_of_dims == data->u.tensor.num_dims) {
+            paramsValid = true;
+            size = data->u.tensor.stride[0];
+            for (vx_size i = 0; i < num_of_dims; i++) {
+                if (roi_start)
+                    start[i] = roi_start[i];
+                if (roi_end)
+                    end[i] = roi_end[i];
+                if (start[i] >= end[i] || end[i] > data->u.tensor.dims[i])
+                    paramsValid = false;
+                if (((i == 0) && (user_stride[i] != size)) || ((i > 0) && (user_stride[i] < size)))
+                    paramsValid = false; // stride[0] must match and other strides shouldn't be smaller than actual dimensions
+                if (user_stride[i] != data->u.tensor.stride[i] || start[i] != 0 || end[i] != data->u.tensor.dims[i] || data->u.tensor.start[i] != 0 || data->u.tensor.end[i] != data->u.tensor.dims[i])
+                    singleCopy = false;
+                size *= (end[i] - start[i]);
+            }
+        }
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (paramsValid && (user_mem_type == VX_MEMORY_TYPE_HOST) && user_ptr && (usage == VX_READ_ONLY || usage == VX_WRITE_ONLY)) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
 #if ENABLE_OPENCL
-			if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-				// make sure dirty OpenCL buffers are synched before giving access for read
-				if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-					// transfer only valid data
-					if (dataToSync->size > 0) {
-						cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-						if (err) {
-							status = VX_FAILURE;
-							agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyTensorPatch: clEnqueueReadBuffer() => %d\n", err);
-							return status;
-						}
-					}
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-				}
-			}
+            if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty OpenCL buffers are synched before giving access for read
+                if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    // transfer only valid data
+                    if (dataToSync->size > 0) {
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        if (err) {
+                            status = VX_FAILURE;
+                            agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyTensorPatch: clEnqueueReadBuffer() => %d\n", err);
+                            return status;
+                        }
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
+#elif ENABLE_HIP
+            if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                // make sure dirty GPU buffers are synched before giving access for read
+                // copy from Device to Host
+                if (dataToSync->size > 0 && dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                    hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                    if (err) {
+                        status = VX_FAILURE;
+                        agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyTensorPatch: hipMemcpyDtoH() => %d\n", err);
+                        return status;
+                    }
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                }
+            }
 #endif
-			if (usage == VX_READ_ONLY) {
-				if (singleCopy) {
-					memcpy(user_ptr, data->buffer, size);
-				}
-				else {
-					vx_size size0 = data->u.tensor.stride[0] * data->u.tensor.dims[0];
-					for (vx_size d3 = start[3]; d3 < end[3]; d3++) {
-						for (vx_size d2 = start[2]; d2 < end[2]; d2++) {
-							for (vx_size d1 = start[1]; d1 < end[1]; d1++) {
-								vx_size offset =
-									data->u.tensor.stride[3] * d3 +
-									data->u.tensor.stride[2] * d2 +
-									data->u.tensor.stride[1] * d1 +
-									data->u.tensor.stride[0] * start[0];
-								vx_size uoffset =
-									user_stride[3] * d3 +
-									user_stride[2] * d2 +
-									user_stride[1] * d1 +
-									user_stride[0] * start[0];
-								memcpy(((vx_uint8 *)user_ptr) + uoffset, data->buffer + offset, size0);
-							}
-						}
-					}
-				}
-			}
-			else {
-				if (singleCopy) {
-					memcpy(data->buffer, user_ptr, size);
-				}
-				else {
-					vx_size size0 = data->u.tensor.stride[0] * data->u.tensor.dims[0];
-					for (vx_size d3 = start[3]; d3 < end[3]; d3++) {
-						for (vx_size d2 = start[2]; d2 < end[2]; d2++) {
-							for (vx_size d1 = start[1]; d1 < end[1]; d1++) {
-								vx_size offset =
-									data->u.tensor.stride[3] * d3 +
-									data->u.tensor.stride[2] * d2 +
-									data->u.tensor.stride[1] * d1 +
-									data->u.tensor.stride[0] * start[0];
-								vx_size uoffset =
-									user_stride[3] * d3 +
-									user_stride[2] * d2 +
-									user_stride[1] * d1 +
-									user_stride[0] * start[0];
-								memcpy(data->buffer + offset, ((vx_uint8 *)user_ptr) + uoffset, size0);
-							}
-						}
-					}
-				}
-				// update sync flags
-				dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-				dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-			}
-			status = VX_SUCCESS;
-		}
-	}
-	return status;
+            if (usage == VX_READ_ONLY) {
+                if (singleCopy) {
+                    memcpy(user_ptr, data->buffer, size);
+                }
+                else {
+                    vx_size size0 = data->u.tensor.stride[0] * data->u.tensor.dims[0];
+                    for (vx_size d3 = start[3]; d3 < end[3]; d3++) {
+                        for (vx_size d2 = start[2]; d2 < end[2]; d2++) {
+                            for (vx_size d1 = start[1]; d1 < end[1]; d1++) {
+                                vx_size offset =
+                                    data->u.tensor.stride[3] * d3 +
+                                    data->u.tensor.stride[2] * d2 +
+                                    data->u.tensor.stride[1] * d1 +
+                                    data->u.tensor.stride[0] * start[0];
+                                vx_size uoffset =
+                                    user_stride[3] * d3 +
+                                    user_stride[2] * d2 +
+                                    user_stride[1] * d1 +
+                                    user_stride[0] * start[0];
+                                memcpy(((vx_uint8 *)user_ptr) + uoffset, data->buffer + offset, size0);
+                            }
+                        }
+                    }
+                }
+            }
+            else {
+                if (singleCopy) {
+                    memcpy(data->buffer, user_ptr, size);
+                }
+                else {
+                    vx_size size0 = data->u.tensor.stride[0] * data->u.tensor.dims[0];
+                    for (vx_size d3 = start[3]; d3 < end[3]; d3++) {
+                        for (vx_size d2 = start[2]; d2 < end[2]; d2++) {
+                            for (vx_size d1 = start[1]; d1 < end[1]; d1++) {
+                                vx_size offset =
+                                    data->u.tensor.stride[3] * d3 +
+                                    data->u.tensor.stride[2] * d2 +
+                                    data->u.tensor.stride[1] * d1 +
+                                    data->u.tensor.stride[0] * start[0];
+                                vx_size uoffset =
+                                    user_stride[3] * d3 +
+                                    user_stride[2] * d2 +
+                                    user_stride[1] * d1 +
+                                    user_stride[0] * start[0];
+                                memcpy(data->buffer + offset, ((vx_uint8 *)user_ptr) + uoffset, size0);
+                            }
+                        }
+                    }
+                }
+                // update sync flags
+                dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            }
+            status = VX_SUCCESS;
+        }
+    }
+    return status;
 }
 
 /*! \brief Allows the application to get direct access to a patch of tensor object.
@@ -9512,77 +9783,91 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size n
  */
 VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size num_of_dims, const vx_size * roi_start, const vx_size * roi_end, vx_map_id * map_id, vx_size * stride, void ** ptr, vx_enum usage, vx_enum mem_type)
 {
-	AgoData * data = (AgoData *)tensor;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_TENSOR)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		bool paramsValid = false;
-		vx_size start[AGO_MAX_TENSOR_DIMENSIONS], end[AGO_MAX_TENSOR_DIMENSIONS];
-		memset(start, 0, sizeof(start));
-		memcpy(end, data->u.tensor.dims, sizeof(end));
-		if (num_of_dims == data->u.tensor.num_dims) {
-			paramsValid = true;
-			for (vx_size i = 0; i < num_of_dims; i++) {
-				if (roi_start)
-					start[i] = roi_start[i];
-				if (roi_end)
-					end[i] = roi_end[i];
-				if (start[i] >= end[i] || end[i] > data->u.tensor.dims[i])
-					paramsValid = false;
-			}
-		}
-		if (data->isVirtual && !data->buffer) {
-			status = VX_ERROR_OPTIMIZED_AWAY;
-		}
-		else if (paramsValid && ptr && stride && map_id) {
-			if (!data->buffer) {
-				CAgoLock lock(data->ref.context->cs);
-				if (agoAllocData(data)) {
-					return VX_FAILURE;
-				}
-			}
-			vx_size offset = 0;
-			for (vx_size i = 0; i < num_of_dims; i++) {
-				stride[i] = data->u.tensor.stride[i];
-				offset += start[i] * stride[i];
-			}
-			vx_uint8 * ptr_returned = data->buffer + offset;
-			// save the pointer and usage for use in vxUnmapTensorPatch
-			status = VX_SUCCESS;
-			for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-				if (i->ptr == ptr_returned) {
-					// can't support vxMapTensorPatch() more than once with same pointer
-					// the application needs to call vxUnmapTensorPatch() before calling vxMapTensorPatch()
-					status = VX_FAILURE;
-				}
-			}
-			if (status == VX_SUCCESS) {
-				AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+    AgoData * data = (AgoData *)tensor;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_TENSOR)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        bool paramsValid = false;
+        vx_size start[AGO_MAX_TENSOR_DIMENSIONS], end[AGO_MAX_TENSOR_DIMENSIONS];
+        memset(start, 0, sizeof(start));
+        memcpy(end, data->u.tensor.dims, sizeof(end));
+        if (num_of_dims == data->u.tensor.num_dims) {
+            paramsValid = true;
+            for (vx_size i = 0; i < num_of_dims; i++) {
+                if (roi_start)
+                    start[i] = roi_start[i];
+                if (roi_end)
+                    end[i] = roi_end[i];
+                if (start[i] >= end[i] || end[i] > data->u.tensor.dims[i])
+                    paramsValid = false;
+            }
+        }
+        if (data->isVirtual && !data->buffer) {
+            status = VX_ERROR_OPTIMIZED_AWAY;
+        }
+        else if (paramsValid && ptr && stride && map_id) {
+            if (!data->buffer) {
+                CAgoLock lock(data->ref.context->cs);
+                if (agoAllocData(data)) {
+                    return VX_FAILURE;
+                }
+            }
+            vx_size offset = 0;
+            for (vx_size i = 0; i < num_of_dims; i++) {
+                stride[i] = data->u.tensor.stride[i];
+                offset += start[i] * stride[i];
+            }
+            vx_uint8 * ptr_returned = data->buffer + offset;
+            // save the pointer and usage for use in vxUnmapTensorPatch
+            status = VX_SUCCESS;
+            for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+                if (i->ptr == ptr_returned) {
+                    // can't support vxMapTensorPatch() more than once with same pointer
+                    // the application needs to call vxUnmapTensorPatch() before calling vxMapTensorPatch()
+                    status = VX_FAILURE;
+                }
+            }
+            if (status == VX_SUCCESS) {
+                AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
 #if ENABLE_OPENCL
-				if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
-					// make sure dirty OpenCL buffers are synched before giving access for read
-					if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-						// transfer only valid data
-						if (dataToSync->size > 0) {
-							cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
-							if (err) {
-								status = VX_FAILURE;
-								agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapTensorPatch: clEnqueueReadBuffer() => %d\n", err);
-								return status;
-							}
-						}
-						dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
-					}
-				}
+                if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    // make sure dirty OpenCL buffers are synched before giving access for read
+                    if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                        // transfer only valid data
+                        if (dataToSync->size > 0) {
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapTensorPatch: clEnqueueReadBuffer() => %d\n", err);
+                                return status;
+                            }
+                        }
+                        dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                    }
+                }
+#elif ENABLE_HIP
+                    if (dataToSync->hip_memory && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                        // make sure dirty OpenCL buffers are synched before giving access for read
+                        // copy from Device to Host
+                        if (dataToSync->size > 0 && dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                            if (err) {
+                                status = VX_FAILURE;
+                                agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapTensorPatch: hipMemcpyDtoH() => %d\n", err);
+                                return status;
+                            }
+                            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                        }
+                    }
 #endif
-				MappedData item = { data->nextMapId++, ptr_returned, usage, false };
-				data->mapped.push_back(item);
-				*map_id = item.map_id;
-				*ptr = ptr_returned;
-			}
-		}
-	}
-	return status;
+                MappedData item = { data->nextMapId++, ptr_returned, usage, false };
+                data->mapped.push_back(item);
+                *map_id = item.map_id;
+                *ptr = ptr_returned;
+            }
+        }
+    }
+    return status;
 }
 
 /*! \brief Unmap and commit potential changes to a tensor object patch that was previously mapped.
@@ -9600,149 +9885,186 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size nu
  */
 VX_API_ENTRY vx_status VX_API_CALL vxUnmapTensorPatch(vx_tensor tensor, vx_map_id map_id)
 {
-	AgoData * data = (AgoData *)tensor;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_TENSOR)) {
-		status = VX_ERROR_INVALID_PARAMETERS;
-		for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
-			if (i->map_id == map_id) {
-				vx_enum usage = i->usage;
-				data->mapped.erase(i);
-				if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
-					// update sync flags
-					AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
-					dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-					dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-				}
-				status = VX_SUCCESS;
-				break;
-			}
-		}
-	}
-	return status;
+    AgoData * data = (AgoData *)tensor;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_TENSOR)) {
+        status = VX_ERROR_INVALID_PARAMETERS;
+        for (auto i = data->mapped.begin(); i != data->mapped.end(); i++) {
+            if (i->map_id == map_id) {
+                vx_enum usage = i->usage;
+                data->mapped.erase(i);
+                if (usage == VX_WRITE_ONLY || usage == VX_READ_AND_WRITE) {
+                    // update sync flags
+                    AgoData * dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
+                    dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                    dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+                }
+                status = VX_SUCCESS;
+                break;
+            }
+        }
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, vx_size number_of_dims, const vx_size * dims, vx_enum data_type, vx_int8 fixed_point_position, const vx_size * stride, void * ptr, vx_enum memory_type)
 {
-	AgoData * data = NULL;
-	if (agoIsValidContext(context) && number_of_dims > 0 && number_of_dims <= AGO_MAX_TENSOR_DIMENSIONS) {
-		CAgoLock lock(context->cs);
-		if (memory_type == VX_MEMORY_TYPE_HOST) {
-			char dimStr[256] = "";
-			for (vx_size i = 0; i < number_of_dims; i++)
-				sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
-			char desc[512];
-			sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if (data) {
-				agoGenerateDataName(context, "tensor", data->name);
-				agoAddData(&context->dataList, data);
-			}
-			data->import_type = VX_MEMORY_TYPE_HOST;
-			data->buffer = (vx_uint8 *)ptr;
-			data->opencl_buffer_offset = 0;
-			for (vx_size i = 0; i < number_of_dims; i++) {
-				if(data->u.tensor.stride[i] != stride[i]) {
-					agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);
-					vxReleaseTensor((vx_tensor *)&data);
-					break;
-				}
-			}
-		}
+    AgoData * data = NULL;
+    if (agoIsValidContext(context) && number_of_dims > 0 && number_of_dims <= AGO_MAX_TENSOR_DIMENSIONS) {
+        CAgoLock lock(context->cs);
+        if (memory_type == VX_MEMORY_TYPE_HOST) {
+            char dimStr[256] = "";
+            for (vx_size i = 0; i < number_of_dims; i++)
+                sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+            char desc[512];
+            sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "tensor", data->name);
+                agoAddData(&context->dataList, data);
+            }
+            data->import_type = VX_MEMORY_TYPE_HOST;
+            data->buffer = (vx_uint8 *)ptr;
+            data->opencl_buffer_offset = 0;
+            for (vx_size i = 0; i < number_of_dims; i++) {
+                if(data->u.tensor.stride[i] != stride[i]) {
+                    agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);
+                    vxReleaseTensor((vx_tensor *)&data);
+                    break;
+                }
+            }
+        }
 #if ENABLE_OPENCL
-		else if (memory_type == VX_MEMORY_TYPE_OPENCL) {
-			char dimStr[256] = "";
-			for (vx_size i = 0; i < number_of_dims; i++)
-				sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
-			char desc[512];
-			sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
-			data = agoCreateDataFromDescription(context, NULL, desc, true);
-			if (data) {
-				agoGenerateDataName(context, "tensor", data->name);
-				agoAddData(&context->dataList, data);
-			}
-			data->import_type = VX_MEMORY_TYPE_OPENCL;
-			data->opencl_buffer = (cl_mem)ptr;
-			data->opencl_buffer_offset = 0;
-			for (vx_size i = 0; i < number_of_dims; i++) {
-				if(data->u.tensor.stride[i] != stride[i]) {
-					agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);
-					vxReleaseTensor((vx_tensor *)&data);
-					break;
-				}
-			}
-		}
+        else if (memory_type == VX_MEMORY_TYPE_OPENCL) {
+            char dimStr[256] = "";
+            for (vx_size i = 0; i < number_of_dims; i++)
+                sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+            char desc[512];
+            sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "tensor", data->name);
+                agoAddData(&context->dataList, data);
+            }
+            data->import_type = VX_MEMORY_TYPE_OPENCL;
+            data->opencl_buffer = (cl_mem)ptr;
+            data->opencl_buffer_offset = 0;
+            for (vx_size i = 0; i < number_of_dims; i++) {
+                if(data->u.tensor.stride[i] != stride[i]) {
+                    agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);
+                    vxReleaseTensor((vx_tensor *)&data);
+                    break;
+                }
+            }
+        }
+#elif ENABLE_HIP
+        else if (memory_type == VX_MEMORY_TYPE_HIP) {
+            char dimStr[256] = "";
+            for (vx_size i = 0; i < number_of_dims; i++)
+                sprintf(dimStr + strlen(dimStr), "%s%u", i ? "," : "", (vx_uint32)dims[i]);
+            char desc[512];
+            sprintf(desc, "tensor:%u,{%s},%s,%d", (vx_uint32)number_of_dims, dimStr, agoEnum2Name(data_type), fixed_point_position);
+            data = agoCreateDataFromDescription(context, NULL, desc, true);
+            if (data) {
+                agoGenerateDataName(context, "tensor", data->name);
+                agoAddData(&context->dataList, data);
+            }
+            data->import_type = VX_MEMORY_TYPE_HIP;
+            data->hip_memory = (vx_uint8 *)ptr;
+            data->opencl_buffer_offset = 0;
+            for (vx_size i = 0; i < number_of_dims; i++) {
+                if(data->u.tensor.stride[i] != stride[i]) {
+                    agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);
+                    vxReleaseTensor((vx_tensor *)&data);
+                    break;
+                }
+            }
+        }
 #endif
-	}
-	return (vx_tensor)data;
+    }
+    return (vx_tensor)data;
 }
 
 VX_API_ENTRY vx_status VX_API_CALL vxSwapTensorHandle(vx_tensor tensor, void * new_ptr, void** prev_ptr)
 {
-	AgoData * data = (AgoData *)tensor;
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	if (agoIsValidData(data, VX_TYPE_TENSOR) && !data->u.tensor.roiMaster) {
-		CAgoLock lock(data->ref.context->cs);
-		status = VX_ERROR_INVALID_PARAMETERS;
-		if (data->import_type == VX_MEMORY_TYPE_HOST) {
-			status = VX_SUCCESS;
-			if (prev_ptr) *prev_ptr = data->buffer;
-			data->buffer = (vx_uint8 *)new_ptr;
-			if (data->buffer) {
-				data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-				data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-			}
-			// propagate to ROIs
-			for (auto roi = data->roiDepList.begin(); roi != data->roiDepList.end(); roi++) {
-				(*roi)->buffer = data->buffer + (*roi)->u.tensor.offset;
-			}
-		}
+    AgoData * data = (AgoData *)tensor;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    if (agoIsValidData(data, VX_TYPE_TENSOR) && !data->u.tensor.roiMaster) {
+        CAgoLock lock(data->ref.context->cs);
+        status = VX_ERROR_INVALID_PARAMETERS;
+        if (data->import_type == VX_MEMORY_TYPE_HOST) {
+            status = VX_SUCCESS;
+            if (prev_ptr) *prev_ptr = data->buffer;
+            data->buffer = (vx_uint8 *)new_ptr;
+            if (data->buffer) {
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
+            }
+            // propagate to ROIs
+            for (auto roi = data->roiDepList.begin(); roi != data->roiDepList.end(); roi++) {
+                (*roi)->buffer = data->buffer + (*roi)->u.tensor.offset;
+            }
+        }
 #if ENABLE_OPENCL
-		else if (data->import_type == VX_MEMORY_TYPE_OPENCL) {
-			status = VX_SUCCESS;
-			if (prev_ptr) *prev_ptr = data->opencl_buffer;
-			data->opencl_buffer = (cl_mem)new_ptr;
-			if (data->opencl_buffer) {
-				data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-				data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
-			}
-			// propagate to ROIs
-			for (auto roi = data->roiDepList.begin(); roi != data->roiDepList.end(); roi++) {
-				(*roi)->opencl_buffer = data->opencl_buffer;
-			}
-		}
+        else if (data->import_type == VX_MEMORY_TYPE_OPENCL) {
+            status = VX_SUCCESS;
+            if (prev_ptr) *prev_ptr = data->opencl_buffer;
+            data->opencl_buffer = (cl_mem)new_ptr;
+            if (data->opencl_buffer) {
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+            }
+            // propagate to ROIs
+            for (auto roi = data->roiDepList.begin(); roi != data->roiDepList.end(); roi++) {
+                (*roi)->opencl_buffer = data->opencl_buffer;
+            }
+        }
+#elif ENABLE_HIP
+        else if (data->import_type == VX_MEMORY_TYPE_HIP) {
+            status = VX_SUCCESS;
+            if (prev_ptr) *prev_ptr = data->hip_memory;
+            data->hip_memory = (vx_uint8 *)new_ptr;
+            if (data->hip_memory) {
+                data->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
+                data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL;
+            }
+            // propagate to ROIs
+            for (auto roi = data->roiDepList.begin(); roi != data->roiDepList.end(); roi++) {
+                (*roi)->hip_memory = data->hip_memory;
+            }
+        }
 #endif
-	}
-	return status;
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_status VX_API_CALL vxAliasTensor(vx_tensor tensorMaster, vx_size offset, vx_tensor tensor)
 {
-	vx_status status = VX_ERROR_INVALID_REFERENCE;
-	AgoData * dataMaster = (AgoData *)tensorMaster;
-	AgoData * data = (AgoData *)tensor;
-	if (agoIsValidData(dataMaster, VX_TYPE_TENSOR) && agoIsValidData(data, VX_TYPE_TENSOR) &&
-	    !dataMaster->u.tensor.roiMaster && !data->u.tensor.roiMaster &&
-	    dataMaster->isVirtual && data->isVirtual)
-	{
-		data->alias_data = dataMaster;
-		data->alias_offset = offset;
-		status = VX_SUCCESS;
-	}
-	return status;
+    vx_status status = VX_ERROR_INVALID_REFERENCE;
+    AgoData * dataMaster = (AgoData *)tensorMaster;
+    AgoData * data = (AgoData *)tensor;
+    if (agoIsValidData(dataMaster, VX_TYPE_TENSOR) && agoIsValidData(data, VX_TYPE_TENSOR) &&
+        !dataMaster->u.tensor.roiMaster && !data->u.tensor.roiMaster &&
+        dataMaster->isVirtual && data->isVirtual)
+    {
+        data->alias_data = dataMaster;
+        data->alias_offset = offset;
+        status = VX_SUCCESS;
+    }
+    return status;
 }
 
 VX_API_ENTRY vx_bool VX_API_CALL vxIsTensorAliased(vx_tensor tensorMaster, vx_size offset, vx_tensor tensor)
 {
-	bool status = vx_false_e;
-	AgoData * dataMaster = (AgoData *)tensorMaster;
-	AgoData * data = (AgoData *)tensor;
-	if (agoIsValidData(dataMaster, VX_TYPE_TENSOR) && agoIsValidData(data, VX_TYPE_TENSOR) &&
-	    !dataMaster->u.tensor.roiMaster && !data->u.tensor.roiMaster &&
-	    dataMaster->isVirtual && data->isVirtual &&
-	    dataMaster == data->alias_data && offset == data->alias_offset)
-	{
-		status = vx_true_e;
-	}
-	return status;
+    bool status = vx_false_e;
+    AgoData * dataMaster = (AgoData *)tensorMaster;
+    AgoData * data = (AgoData *)tensor;
+    if (agoIsValidData(dataMaster, VX_TYPE_TENSOR) && agoIsValidData(data, VX_TYPE_TENSOR) &&
+        !dataMaster->u.tensor.roiMaster && !data->u.tensor.roiMaster &&
+        dataMaster->isVirtual && data->isVirtual &&
+        dataMaster == data->alias_data && offset == data->alias_offset)
+    {
+        status = vx_true_e;
+    }
+    return status;
 }

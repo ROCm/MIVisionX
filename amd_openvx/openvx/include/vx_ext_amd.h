@@ -165,12 +165,12 @@ enum vx_image_attribute_amd_e {
     VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER             = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x01,
     /*! \brief GPU buffer offset. Use a <tt>\ref cl_uint</tt> parameter.*/
     VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x02,
-    /*! \brief Enable user kernel's own OpenCL buffer for virtual images. Supports only images with
+    /*! \brief Enable user kernel's own GPU buffer for virtual images. Supports only images with
     * single color plane and stride should match framework's internal alignment. image ROI not supported.
     * Use a <tt>\ref vx_bool</tt> parameter.*/
-    VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x03,
-    /*! \brief OpenCL buffer stride. Use a <tt>\ref cl_uint</tt> parameter.*/
-    VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x04,
+    VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x03,
+    /*! \brief GPU buffer stride. Use a <tt>\ref cl_uint</tt> parameter.*/
+    VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x04,
     /*! \brief sync with user specified host buffer. Use a <tt>\ref cl_mem</tt> parameter.*/
     VX_IMAGE_ATTRIBUTE_AMD_HOST_BUFFER               = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_IMAGE) + 0x05,
     /*! \brief sync with user specified hip memory. */
@@ -219,7 +219,7 @@ enum vx_directive_amd_e {
     VX_DIRECTIVE_AMD_ENABLE_PROFILE_CAPTURE  = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x03,
     VX_DIRECTIVE_AMD_DISABLE_PROFILE_CAPTURE = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x04,
     /*! \brief disable node level flush for a graph. */
-    VX_DIRECTIVE_AMD_DISABLE_OPENCL_FLUSH    = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x05,
+    VX_DIRECTIVE_AMD_DISABLE_GPU_FLUSH    = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x05,
     /*! \brief data object copy to HIP memory. */
     VX_DIRECTIVE_AMD_COPY_TO_HIPMEM = VX_ENUM_BASE(VX_ID_AMD, VX_ENUM_DIRECTIVE) + 0x02,
 };
@@ -398,7 +398,7 @@ typedef vx_status(VX_CALLBACK * amd_kernel_opencl_buffer_update_callback_f) (
 /*! \brief AMD data structure for use by VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK.
 */
 typedef struct {
-    amd_kernel_opencl_buffer_update_callback_f opencl_buffer_update_callback_f;
+    amd_kernel_opencl_buffer_update_callback_f gpu_buffer_update_callback_f;
     vx_uint32 opencl_buffer_update_param_index;
 } AgoKernelOpenclBufferUpdateInfo;
 #endif

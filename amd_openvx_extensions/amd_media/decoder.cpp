@@ -773,10 +773,10 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_WIDTH, &width, sizeof(width)));
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_HEIGHT, &height, sizeof(height)));
     ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_FORMAT, &format, sizeof(format)));
-    vx_bool enableUserBufferOpenCL = false;
+    vx_bool enableUserBufferGPU = false;
     if (parameters[4]) {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferOpenCL, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE, &stride, sizeof(stride)));
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferGPU, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE, &stride, sizeof(stride)));
         ERROR_CHECK_STATUS(vxQueryImage((vx_image)parameters[1], VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET, &offset, sizeof(offset)));
     }
 
@@ -799,7 +799,7 @@ static vx_status VX_CALLBACK amd_media_decode_initialize(vx_node node, const vx_
         ERROR_CHECK_STATUS(decoder->SetRepeatMode(loop));
     }
     if (parameters[4]) {
-        ERROR_CHECK_STATUS(decoder->SetEnableUserBufferOpenCLMode(enableUserBufferOpenCL));
+        ERROR_CHECK_STATUS(decoder->SetEnableUserBufferOpenCLMode(enableUserBufferGPU));
     }
     ERROR_CHECK_STATUS(decoder->Initialize());
 
@@ -841,11 +841,11 @@ static vx_status VX_CALLBACK amd_media_decode_validate(vx_node node, const vx_re
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_WIDTH, &width, sizeof(width)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_HEIGHT, &height, sizeof(height)));
     ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_FORMAT, &format, sizeof(format)));
-    vx_bool enableUserBufferOpenCL = false;
+    vx_bool enableUserBufferGPU = false;
     if (parameters[4]) {
-        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferOpenCL, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-        ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL, &enableUserBufferOpenCL, sizeof(enableUserBufferOpenCL)));
-        printf("decoder validate:: set enableUserBufferOpenCL: %d\n", enableUserBufferOpenCL);
+        ERROR_CHECK_STATUS(vxCopyScalar((vx_scalar)parameters[4], &enableUserBufferGPU, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+        ERROR_CHECK_STATUS(vxSetMetaFormatAttribute(metas[1], VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU, &enableUserBufferGPU, sizeof(enableUserBufferGPU)));
+        printf("decoder validate:: set enableUserBufferGPU: %d\n", enableUserBufferGPU);
     }
 
     // check aux data parameter
@@ -879,7 +879,7 @@ vx_status amd_media_decode_publish(vx_context context)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED)); // output image
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 2, VX_OUTPUT, VX_TYPE_ARRAY, VX_PARAMETER_STATE_OPTIONAL)); // output auxiliary data (optional)
     ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input repeat decoding at eof (optional)
-    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input: to set enableUserBufferOpenCL flag
+    ERROR_CHECK_STATUS(vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_OPTIONAL)); // input: to set enableUserBufferGPU flag
 
     // finalize and release kernel object
     ERROR_CHECK_STATUS(vxFinalizeKernel(kernel));

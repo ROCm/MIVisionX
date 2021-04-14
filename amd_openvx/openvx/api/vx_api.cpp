@@ -1294,7 +1294,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE:
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE:
                 if (size == sizeof(cl_uint)) {
                     *(cl_uint *)ptr = image->u.img.stride_in_bytes;
                     status = VX_SUCCESS;
@@ -1316,7 +1316,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE:
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE:
                 if (size == sizeof(vx_uint32)) {
                     *(vx_uint32 *)ptr = image->u.img.stride_in_bytes;
                     status = VX_SUCCESS;
@@ -1324,9 +1324,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                 break;
 #endif
 #if (ENABLE_OPENCL || ENABLE_HIP)
-            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
+            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU:
                 if (size == sizeof(vx_bool)) {
-                    *(vx_bool *)ptr = image->u.img.enableUserBufferOpenCL;
+                    *(vx_bool *)ptr = image->u.img.enableUserBufferGPU;
                     status = VX_SUCCESS;
                 }
                 break;
@@ -1385,7 +1385,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                 break;
 #if ENABLE_OPENCL
             case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
-                if (size == sizeof(cl_mem) && image->u.img.enableUserBufferOpenCL) {
+                if (size == sizeof(cl_mem) && image->u.img.enableUserBufferGPU) {
                     image->opencl_buffer = *(cl_mem *)ptr;
                     if (image->opencl_buffer) {
                         image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -1396,14 +1396,14 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                 break;
 
             case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET:
-                if (size == sizeof(cl_uint) && image->u.img.enableUserBufferOpenCL) {
+                if (size == sizeof(cl_uint) && image->u.img.enableUserBufferGPU) {
                     image->gpu_buffer_offset = *(cl_uint *)ptr;
                     status = VX_SUCCESS;
                 }
                 break;
 #elif ENABLE_HIP
             case VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER:
-                if (image->u.img.enableUserBufferOpenCL) {
+                if (image->u.img.enableUserBufferGPU) {
                     image->hip_memory = *(vx_uint8 **)ptr;
                     if (image->hip_memory) {
                         image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -1414,7 +1414,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                 break;
 
             case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET:
-                if (size == sizeof(vx_uint32) && image->u.img.enableUserBufferOpenCL) {
+                if (size == sizeof(vx_uint32) && image->u.img.enableUserBufferGPU) {
                     image->gpu_buffer_offset = *(vx_uint32 *)ptr;
                     status = VX_SUCCESS;
                 }
@@ -2742,7 +2742,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                 break;
             case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE:
                 if (size == sizeof(vx_bool)) {
-                    if (!kernel->finalized && !kernel->opencl_buffer_update_callback_f) {
+                    if (!kernel->finalized && !kernel->gpu_buffer_update_callback_f) {
                         kernel->opencl_buffer_access_enable = *(vx_bool *)ptr;
                         status = VX_SUCCESS;
                     }
@@ -2756,7 +2756,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     if (!kernel->finalized) {
                         AgoKernelOpenclBufferUpdateInfo * info = (AgoKernelOpenclBufferUpdateInfo *)ptr;
                         if (info->opencl_buffer_update_param_index >= kernel->argCount ||
-                            info->opencl_buffer_update_callback_f == nullptr ||
+                            info->gpu_buffer_update_callback_f == nullptr ||
                             kernel->parameters[info->opencl_buffer_update_param_index].direction != VX_INPUT ||
                             kernel->parameters[info->opencl_buffer_update_param_index].type != VX_TYPE_IMAGE ||
                             kernel->parameters[info->opencl_buffer_update_param_index].state != VX_PARAMETER_STATE_REQUIRED)
@@ -2765,7 +2765,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                             status = VX_ERROR_INVALID_PARAMETERS;
                         }
                         else {
-                            kernel->opencl_buffer_update_callback_f = info->opencl_buffer_update_callback_f;
+                            kernel->gpu_buffer_update_callback_f = info->gpu_buffer_update_callback_f;
                             kernel->opencl_buffer_update_param_index = info->opencl_buffer_update_param_index;
                             kernel->opencl_buffer_access_enable = vx_true_e;
                             status = VX_SUCCESS;
@@ -8975,9 +8975,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
                 }
                 break;
 #if ENABLE_OPENCL
-            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
+            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU:
                 if (size == sizeof(vx_bool) && meta->data.ref.type == VX_TYPE_IMAGE) {
-                    meta->data.u.img.enableUserBufferOpenCL = *(vx_bool *)ptr;
+                    meta->data.u.img.enableUserBufferGPU = *(vx_bool *)ptr;
                     status = VX_SUCCESS;
                 }
                 break;

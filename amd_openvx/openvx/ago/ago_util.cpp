@@ -3162,7 +3162,7 @@ AgoData::AgoData()
       isVirtual{ vx_false_e }, isDelayed{ vx_false_e }, isNotFullyConfigured{ vx_false_e }, isInitialized{ vx_false_e }, siblingIndex{ 0 },
       numChildren{ 0 }, children{ nullptr }, parent{ nullptr }, inputUsageCount{ 0 }, outputUsageCount{ 0 }, inoutUsageCount{ 0 },
       initialization_flags{ 0 }, device_type_unused{ 0 },
-      nextMapId{ 0 }, hierarchical_level{ 0 }, hierarchical_life_start{ 0 }, hierarchical_life_end{ 0 }, ownerOfUserBufferOpenCL{ nullptr }
+      nextMapId{ 0 }, hierarchical_level{ 0 }, hierarchical_life_start{ 0 }, hierarchical_life_end{ 0 }, ownerOfUserBufferGPU{ nullptr }
 {
     memset(&u, 0, sizeof(u));
 }
@@ -3198,7 +3198,7 @@ AgoKernel::AgoKernel()
       localDataSize{ 0 }, localDataPtr{ nullptr }, external_kernel{ false }, finalized{ false },
       kernel_f{ nullptr }, validate_f{ nullptr }, input_validate_f{ nullptr }, output_validate_f{ nullptr }, initialize_f{ nullptr }, deinitialize_f{ nullptr },
       query_target_support_f{ nullptr }, opencl_codegen_callback_f{ nullptr }, regen_callback_f{ nullptr }, opencl_global_work_update_callback_f{ nullptr },
-      opencl_buffer_update_callback_f{ nullptr }, opencl_buffer_update_param_index{ 0 },
+      gpu_buffer_update_callback_f{ nullptr }, opencl_buffer_update_param_index{ 0 },
       opencl_buffer_access_enable{ vx_false_e }, importing_module_index_plus1{ 0 }
 {
     memset(&name, 0, sizeof(name));
@@ -3285,7 +3285,7 @@ AgoGraph::AgoGraph()
       virtualDataGenerationCount{ 0 }, optimizer_flags{ AGO_GRAPH_OPTIMIZER_FLAGS_DEFAULT }, verified{ false }, enable_performance_profiling{ false }, execFrameCount{ 0 }
 #if ENABLE_OPENCL
     , supernodeList{ nullptr }, opencl_cmdq{ nullptr }, opencl_device{ nullptr }
-    , enable_node_level_opencl_flush{ true }
+    , enable_node_level_gpu_flush{ true }
 #elif ENABLE_HIP
     , supernodeList{ nullptr }, hip_stream0{ nullptr }
 #endif

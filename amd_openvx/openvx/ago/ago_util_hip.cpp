@@ -144,7 +144,7 @@ int agoGpuHipAllocBuffer(AgoData * data) {
     if (data->ref.type == VX_TYPE_IMAGE) {
         // to handle image ROI
         AgoData * dataMaster = data->u.img.roiMasterImage ? data->u.img.roiMasterImage : data;
-        if (!dataMaster->hip_memory && !dataMaster->u.img.enableUserBufferOpenCL && !(dataMaster->import_type == VX_MEMORY_TYPE_HIP)) {
+        if (!dataMaster->hip_memory && !dataMaster->u.img.enableUserBufferGPU && !(dataMaster->import_type == VX_MEMORY_TYPE_HIP)) {
             hipError_t err = hipSuccess;
             {
                 // allocate hip_memory
@@ -182,10 +182,10 @@ int agoGpuHipAllocBuffer(AgoData * data) {
         hipError_t err = hipSuccess;
         if (!data->hip_memory) {
             // first few bytes reserved for numitems/stacktop
-            data->gpu_buffer_offset = DATA_OPENCL_ARRAY_OFFSET;
+            data->gpu_buffer_offset = DATA_GPU_ARRAY_OFFSET;
             err = hipSuccess;
             {
-                // normal opencl_buffer allocation
+                // normal hip buffer allocation
                 data->hip_memory = 0;
                 agoGpuHipCreateBuffer(context, (void **)&data->hip_memory, data->size + data->gpu_buffer_offset, err);
                 data->hip_memory_allocated = data->hip_memory;
@@ -314,20 +314,20 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     if (data->ref.type == VX_TYPE_IMAGE) {
         // only use image objects that need read access
         if (need_access) {
-            if (!data->hip_memory && data->isVirtual && data->ownerOfUserBufferOpenCL &&
-                data->ownerOfUserBufferOpenCL->akernel->opencl_buffer_update_callback_f)
+            if (!data->hip_memory && data->isVirtual && data->ownerOfUserBufferGPU &&
+                data->ownerOfUserBufferGPU->akernel->gpu_buffer_update_callback_f)
             { // need to update hip_memory from user kernel
-                vx_status status = data->ownerOfUserBufferOpenCL->akernel->opencl_buffer_update_callback_f(data->ownerOfUserBufferOpenCL,
-                    (vx_reference *)data->ownerOfUserBufferOpenCL->paramList, data->ownerOfUserBufferOpenCL->paramCount);
+                vx_status status = data->ownerOfUserBufferGPU->akernel->gpu_buffer_update_callback_f(data->ownerOfUserBufferGPU,
+                    (vx_reference *)data->ownerOfUserBufferGPU->paramList, data->ownerOfUserBufferGPU->paramCount);
                 if (status || !data->hip_memory) {
-                    agoAddLogEntry(&data->ownerOfUserBufferOpenCL->ref, status, "ERROR: opencl_buffer_update_callback_f: failed(%d:%p)\n", status, data->hip_memory);
+                    agoAddLogEntry(&data->ownerOfUserBufferGPU->ref, status, "ERROR: gpu_buffer_update_callback_f: failed(%d:%p)\n", status, data->hip_memory);
                     return -1;
                 }
             }
             if (data->isDelayed) {
                 data->hip_need_as_argument = 1;
             }
-            else if ((data->u.img.enableUserBufferOpenCL || data->import_type == VX_MEMORY_TYPE_HIP) && data->hip_memory) {
+            else if ((data->u.img.enableUserBufferGPU || data->import_type == VX_MEMORY_TYPE_HIP) && data->hip_memory) {
                 data->hip_need_as_argument = 1;
             }
             if (need_read_access) {
@@ -370,9 +370,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                     data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                     int64_t etime = agoGetClockCounter();
                     graph->gpu_perf.buffer_write += etime - stime;
-#if ENABLE_DEBUG_DUMP_CL_BUFFERS
-                    clDumpBuffer("input_%04d.bin", opencl_cmdq, data);
-#endif
                 }
             }
         }
@@ -616,26 +613,7 @@ int agoGpuHipSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode) {
     }
     int64_t etime = agoGetClockCounter();
     graph->gpu_perf.kernel_wait += etime - stime;
-#if 0 // TODO::ENABLE_DEBUG_DUMP_HIP_BUFFERS implement to dump hip buffers
-    // dump supernode outputs
-    for (size_t index = 0; index < supernode->dataList.size(); index++) {
-        if (!(supernode->dataInfo[index].data_type_flags & DATA_OPENCL_FLAG_DISCARD_PARAM)) {
-            bool need_access = supernode->dataInfo[index].needed_as_a_kernel_argument;
-            bool need_write_access = supernode->dataInfo[index].argument_usage[VX_OUTPUT] || supernode->dataInfo[index].argument_usage[VX_BIDIRECTIONAL];
-            auto data = supernode->dataList[index];
-            if (data->ref.type == VX_TYPE_IMAGE) {
-                if (need_access) { // only use image objects that need write access
-                    if (need_write_access) {
-                        auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
-                        char fileName[128]; sprintf(fileName, "output_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
-                        clDumpBuffer(fileName, opencl_cmdq, dataToSync);
-                        //printf("Press ENTER to continue... ");  char line[256]; gets(line);
-                    }
-                }
-            }
-        }
-    }
-#endif
+    // TODO::ENABLE_DEBUG_DUMP_HIP_BUFFERS implement to dump hip buffers
     return 0;
 }
 
@@ -673,13 +651,6 @@ int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode) {
         if (node->akernel->func) {
             node->hip_code = "";
             status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
-        #if 0
-            for(vx_size dim = node->opencl_work_dim; dim < 3; dim++) {
-                node->opencl_global_work[dim] = 1;
-                node->opencl_local_work[dim] = 1;
-            }
-            node->opencl_work_dim = 3;
-        #endif
         }
         else if (node->akernel->opencl_codegen_callback_f) {
         // TODO:: not supported in HIP yet
@@ -801,7 +772,7 @@ int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node) {
         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: kernel %s exec failed (%d:%s)\n", kernel->name, status, agoEnum2Name(status));
         return -1;
     }
-    if(graph->enable_node_level_opencl_flush) {
+    if(graph->enable_node_level_gpu_flush) {
         hipError_t err = hipStreamSynchronize(graph->hip_stream0);
         if (err) {
             agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: hipStreamSynchronize(singlenode) failed(%d) for %s\n", err, node->akernel->name);
@@ -858,7 +829,7 @@ int agoGpuHipSingleNodeWait(AgoGraph * graph, AgoNode * node)
     for (size_t index = 0; index < node->paramCount; index++) {
         if (node->paramList[index]) {
             bool need_write_access = node->parameters[index].direction != VX_INPUT ? true : false;
-            if (need_write_access /*&& node->opencl_param_atomic_mask & (1 << index)*/) {
+            if (need_write_access) {
                 if (node->paramList[index]->ref.type == VX_TYPE_ARRAY) {
                     node->paramList[index]->u.arr.numitems = min(node->paramList[index]->u.arr.numitems, node->paramList[index]->u.arr.capacity);
                 }

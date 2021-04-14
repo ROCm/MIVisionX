@@ -1250,17 +1250,17 @@ vx_status agoVerifyNode(AgoNode * node)
     }
 
     // mark the kernels with VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_UPDATE_CALLBACK
-    // with enableUserBufferOpenCL
-    if (kernel->opencl_buffer_update_callback_f) {
+    // with enableUserBufferGPU
+    if (kernel->gpu_buffer_update_callback_f) {
         AgoData * data = node->paramList[kernel->opencl_buffer_update_param_index];
-        if (!data || !data->isVirtual || data->ref.type != VX_TYPE_IMAGE || data->u.img.planes != 1 || data->ownerOfUserBufferOpenCL || data->u.img.enableUserBufferOpenCL) {
+        if (!data || !data->isVirtual || data->ref.type != VX_TYPE_IMAGE || data->u.img.planes != 1 || data->ownerOfUserBufferGPU || data->u.img.enableUserBufferGPU) {
             status = VX_ERROR_INVALID_PARAMETERS;
             agoAddLogEntry(&kernel->ref, status, "ERROR: agoVerifyGraph: kernel %s: unexpected/unsupported argument#%d -- needs virtual image with single-plane\n", kernel->name, kernel->opencl_buffer_update_param_index);
             return status;
         }
         // mark that the buffer gets initialized a node
-        data->u.img.enableUserBufferOpenCL = vx_true_e;
-        data->ownerOfUserBufferOpenCL = node;
+        data->u.img.enableUserBufferGPU = vx_true_e;
+        data->ownerOfUserBufferGPU = node;
     }
     // check if node arguments are valid
     if (kernel->func) {
@@ -1371,14 +1371,14 @@ vx_status agoVerifyNode(AgoNode * node)
                         data->u.img.rect_valid.end_x = data->u.img.width;
                     if (data->u.img.rect_valid.end_y == INT_MAX)
                         data->u.img.rect_valid.end_y = data->u.img.height;
-                    // check for VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL attribute
-                    if (meta->data.u.img.enableUserBufferOpenCL) {
+                    // check for VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU attribute
+                    if (meta->data.u.img.enableUserBufferGPU) {
                         // supports only virtual images with single color plane and without ROI
-                        if (!data->isVirtual || data->u.img.planes != 1 || data->u.img.isROI || data->ownerOfUserBufferOpenCL) {
-                            agoAddLogEntry(&kernel->ref, VX_ERROR_NOT_SUPPORTED, "ERROR: agoVerifyGraph: kernel %s: VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL is not supported for argument#%d\n", kernel->name, arg);
+                        if (!data->isVirtual || data->u.img.planes != 1 || data->u.img.isROI || data->ownerOfUserBufferGPU) {
+                            agoAddLogEntry(&kernel->ref, VX_ERROR_NOT_SUPPORTED, "ERROR: agoVerifyGraph: kernel %s: VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU is not supported for argument#%d\n", kernel->name, arg);
                             return VX_ERROR_NOT_SUPPORTED;
                         }
-                        data->u.img.enableUserBufferOpenCL = vx_true_e;
+                        data->u.img.enableUserBufferGPU = vx_true_e;
                     }
                 }
                 else if (meta->data.ref.type == VX_TYPE_PYRAMID) {
@@ -1611,7 +1611,7 @@ int agoVerifyGraph(AgoGraph * graph)
             if (data) {
                 if (data->ref.type == VX_TYPE_IMAGE) {
                     if (data->isVirtual) {
-                        data->ownerOfUserBufferOpenCL = nullptr;
+                        data->ownerOfUserBufferGPU = nullptr;
                     }
                 }
             }
@@ -1638,14 +1638,14 @@ int agoVerifyGraph(AgoGraph * graph)
     }
 
 #if (ENABLE_OPENCL || ENABLE_HIP)
-    // if all nodes run on GPU, clear enable_node_level_opencl_flush
+    // if all nodes run on GPU, clear enable_node_level_gpu_flush
     bool cpuTargetBufferNodesExists = false;
     for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
         if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_CPU && !node->akernel->opencl_buffer_access_enable)
             cpuTargetBufferNodesExists = true;
     }
     if(!cpuTargetBufferNodesExists) {
-        graph->enable_node_level_opencl_flush = false;
+        graph->enable_node_level_gpu_flush = false;
     }
 #endif
 
@@ -2201,15 +2201,15 @@ int agoExecuteGraph(AgoGraph * graph)
 #endif
 
 #if ENABLE_OPENCL
-    // clear opencl_buffer for all virtual images with enableUserBufferOpenCL == true
+    // clear opencl_buffer for all virtual images with enableUserBufferGPU == true
     for (AgoData * data = graph->dataList.head; data; data = data->next) {
-        if (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferOpenCL) {
+        if (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferGPU) {
             data->opencl_buffer = nullptr;
         }
     }
 #elif ENABLE_HIP
     for (AgoData * data = graph->dataList.head; data; data = data->next) {
-        if (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferOpenCL) {
+        if (data->ref.type == VX_TYPE_IMAGE && data->u.img.enableUserBufferGPU) {
             data->hip_memory = nullptr;
         }
     }
@@ -2413,7 +2413,7 @@ int agoExecuteGraph(AgoGraph * graph)
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                         dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
                         dataToSync->buffer_sync_flags |=
-                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferOpenCL)
+                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferGPU)
                                 ? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
                                 : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
                     }
@@ -2425,7 +2425,7 @@ int agoExecuteGraph(AgoGraph * graph)
                         auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
                         dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
                         dataToSync->buffer_sync_flags |=
-                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferOpenCL)
+                            ((node->akernel->opencl_buffer_access_enable || data->u.img.enableUserBufferGPU)
                                 ? AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL
                                 : AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE);
                     }
@@ -2615,9 +2615,9 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
                 }
                 break;
 #if ENABLE_OPENCL
-            case VX_DIRECTIVE_AMD_DISABLE_OPENCL_FLUSH:
+            case VX_DIRECTIVE_AMD_DISABLE_GPU_FLUSH:
                 if (reference->type == VX_TYPE_GRAPH) {
-                    ((AgoGraph *)reference)->enable_node_level_opencl_flush = false;
+                    ((AgoGraph *)reference)->enable_node_level_gpu_flush = false;
                 }
                 else {
                     status = VX_ERROR_NOT_SUPPORTED;

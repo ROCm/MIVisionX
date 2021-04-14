@@ -456,7 +456,7 @@ struct AgoData {
     vx_uint8*     hip_memory_allocated;
     vx_bool       hip_need_as_argument;
 #endif
-    vx_uint32  opencl_buffer_offset;
+    vx_uint32  gpu_buffer_offset;
     vx_bool isVirtual;
     vx_bool isDelayed;
     vx_bool isNotFullyConfigured;
@@ -678,7 +678,7 @@ struct AgoGraph {
         vx_uint64 buffer_read;
         vx_uint64 buffer_write;
     };
-    AgoGraphPerfInternalInfo_ opencl_perf, opencl_perf_total;
+    AgoGraphPerfInternalInfo_ gpu_perf, gpu_perf_total;
     vx_uint32 virtualDataGenerationCount;
     vx_uint32 optimizer_flags;
     bool verified;

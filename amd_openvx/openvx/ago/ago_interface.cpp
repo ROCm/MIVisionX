@@ -1947,7 +1947,7 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                         size = dataToSync->u.arr.itemsize * dataToSync->u.arr.numitems;
                     }
                     if (size > 0) {
-                        cl_int err = clEnqueueWriteBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
+                        cl_int err = clEnqueueWriteBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
                         if (err) {
                             agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueWriteBuffer() => %d\n", err);
                             return -1;
@@ -1956,7 +1956,7 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                 }
                 dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                 int64_t etime = agoGetClockCounter();
-                graph->opencl_perf.buffer_write += etime - stime;
+                graph->gpu_perf.buffer_write += etime - stime;
             }
         }
         else {
@@ -1972,7 +1972,7 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                     }
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                     int64_t etime = agoGetClockCounter();
-                    graph->opencl_perf.buffer_read += etime - stime;
+                    graph->gpu_perf.buffer_read += etime - stime;
                 }
                 else {
                     vx_size size = dataToSync->size;
@@ -1987,15 +1987,15 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                     if (size > 0) {
                         int64_t stime = agoGetClockCounter();
                         if (size > 0) {
-                            cl_int err = clEnqueueReadBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
                             if (err) {
-                                agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadBuffer(0x%x,%s,%ld,%ld) => %d\n", dataToSync->ref.type, dataToSync->name.c_str(), dataToSync->opencl_buffer_offset, size, err);
+                                agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: clEnqueueReadBuffer(0x%x,%s,%ld,%ld) => %d\n", dataToSync->ref.type, dataToSync->name.c_str(), dataToSync->gpu_buffer_offset, size, err);
                                 return -1;
                             }
                         }
                         dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                         int64_t etime = agoGetClockCounter();
-                        graph->opencl_perf.buffer_read += etime - stime;
+                        graph->gpu_perf.buffer_read += etime - stime;
                     }
                 }
             }
@@ -2057,7 +2057,7 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                 int64_t stime = agoGetClockCounter();
                 vx_size size = dataToSync->size;
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
-                    hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->opencl_buffer_offset, dataToSync->buffer, size);
+                    hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->gpu_buffer_offset, dataToSync->buffer, size);
                     if (err) {
                         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyHtoD(lut) => %d\n", err);
                         return -1;
@@ -2065,7 +2065,7 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                 }
                 else {
                     if (size > 0) {
-                        hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->opencl_buffer_offset, dataToSync->buffer, size);
+                        hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory+dataToSync->gpu_buffer_offset, dataToSync->buffer, size);
                         if (err) {
                             agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyHtoD() => %d\n", err);
                             return -1;
@@ -2074,7 +2074,7 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                 }
                 dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                 int64_t etime = agoGetClockCounter();
-                graph->opencl_perf.buffer_write += etime - stime;
+                graph->gpu_perf.buffer_write += etime - stime;
             }
         }
         else {
@@ -2082,14 +2082,14 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                 if (dataToSync->ref.type == VX_TYPE_LUT) {
                     int64_t stime = agoGetClockCounter();
                     vx_size size = dataToSync->size;
-                    hipError_t err = hipMemcpyDtoH(dataToSync->buffer, dataToSync->hip_memory+dataToSync->opencl_buffer_offset, size);
+                    hipError_t err = hipMemcpyDtoH(dataToSync->buffer, dataToSync->hip_memory+dataToSync->gpu_buffer_offset, size);
                     if (err) {
                         agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyDtoH(DtoH_lut) => %d\n", err);
                         return -1;
                     }
                     dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                     int64_t etime = agoGetClockCounter();
-                    graph->opencl_perf.buffer_read += etime - stime;
+                    graph->gpu_perf.buffer_read += etime - stime;
                 }
                 else {
                     vx_size size = dataToSync->size;
@@ -2104,15 +2104,15 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                     if (size > 0) {
                         int64_t stime = agoGetClockCounter();
                         if (size > 0) {
-                            hipError_t err = hipMemcpyDtoH(dataToSync->buffer, dataToSync->hip_memory+dataToSync->opencl_buffer_offset, size);
+                            hipError_t err = hipMemcpyDtoH(dataToSync->buffer, dataToSync->hip_memory+dataToSync->gpu_buffer_offset, size);
                             if (err) {
-                                agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyDtoH(0x%x,%s,%ld,%ld) => %d\n", dataToSync->ref.type, dataToSync->name.c_str(), dataToSync->opencl_buffer_offset, size, err);
+                                agoAddLogEntry((vx_reference)graph, VX_FAILURE, "ERROR: hipMemcpyDtoH(0x%x,%s,%ld,%ld) => %d\n", dataToSync->ref.type, dataToSync->name.c_str(), dataToSync->gpu_buffer_offset, size, err);
                                 return -1;
                             }
                         }
                         dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                         int64_t etime = agoGetClockCounter();
-                        graph->opencl_perf.buffer_read += etime - stime;
+                        graph->gpu_perf.buffer_read += etime - stime;
                     }
                 }
             }
@@ -2223,7 +2223,7 @@ int agoExecuteGraph(AgoGraph * graph)
 #if (ENABLE_OPENCL||ENABLE_HIP)
     graph->opencl_nodeListQueued.clear();
     vx_uint32 nodeLaunchHierarchicalLevel = 0;
-    memset(&graph->opencl_perf, 0, sizeof(graph->opencl_perf));
+    memset(&graph->gpu_perf, 0, sizeof(graph->gpu_perf));
 #endif
     // execute one nodes in one hierarchical level at a time
     bool opencl_buffer_access_enable = false;
@@ -2467,10 +2467,10 @@ int agoExecuteGraph(AgoGraph * graph)
 #endif
     }
     agoPerfProfileEntry(graph, ago_profile_type_wait_end, &graph->ref);
-    graph->opencl_perf_total.kernel_enqueue += graph->opencl_perf.kernel_enqueue;
-    graph->opencl_perf_total.kernel_wait += graph->opencl_perf.kernel_wait;
-    graph->opencl_perf_total.buffer_read += graph->opencl_perf.buffer_read;
-    graph->opencl_perf_total.buffer_write += graph->opencl_perf.buffer_write;
+    graph->gpu_perf_total.kernel_enqueue += graph->gpu_perf.kernel_enqueue;
+    graph->gpu_perf_total.kernel_wait += graph->gpu_perf.kernel_wait;
+    graph->gpu_perf_total.buffer_read += graph->gpu_perf.buffer_read;
+    graph->gpu_perf_total.buffer_write += graph->gpu_perf.buffer_write;
 #endif
 
     // auto age delays
@@ -2569,7 +2569,7 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
                             AgoData * img = dataToSync->children[plane];
                             if (img) {
                                 if (img->opencl_buffer) {
-                                    cl_int err = clEnqueueWriteBuffer(img->ref.context->opencl_cmdq, img->opencl_buffer, CL_TRUE, img->opencl_buffer_offset, img->size, img->buffer, 0, NULL, NULL);
+                                    cl_int err = clEnqueueWriteBuffer(img->ref.context->opencl_cmdq, img->opencl_buffer, CL_TRUE, img->gpu_buffer_offset, img->size, img->buffer, 0, NULL, NULL);
                                     if (err) {
                                         agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clEnqueueWriteBuffer() => %d\n", err);
                                         return VX_FAILURE;
@@ -2588,7 +2588,7 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
                                 size = dataToSync->u.arr.itemsize * dataToSync->u.arr.numitems;
                             }
                             if (size > 0) {
-                                cl_int err = clEnqueueWriteBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
+                                cl_int err = clEnqueueWriteBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, size, dataToSync->buffer, 0, NULL, NULL);
                                 if (err) {
                                     agoAddLogEntry(NULL, VX_FAILURE, "ERROR: clEnqueueWriteBuffer() => %d\n", err);
                                     return VX_FAILURE;

@@ -26,7 +26,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.9.3"
+__version__ = "1.9.4"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -44,8 +44,8 @@ parser.add_argument('--installer', 	type=str, default='apt-get',
                     help='Linux system installer - optional (default:apt-get) [options: Ubuntu - apt-get; CentOS - yum]')
 parser.add_argument('--opencv',    	type=str, default='3.4.0',
                     help='OpenCV Version - optional (default:3.4.0)')
-parser.add_argument('--miopen',    	type=str, default='2.9.0',
-                    help='MIOpen Version - optional (default:2.9.0)')
+parser.add_argument('--miopen',    	type=str, default='2.10.0',
+                    help='MIOpen Version - optional (default:2.10.0)')
 parser.add_argument('--miopengemm',	type=str, default='1.1.5',
                     help='MIOpenGEMM Version - optional (default:1.1.5)')
 parser.add_argument('--protobuf',  	type=str, default='3.12.0',

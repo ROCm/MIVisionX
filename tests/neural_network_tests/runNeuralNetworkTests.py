@@ -168,6 +168,7 @@ modelCompilerDir = os.path.expanduser(
 pythonScript = modelCompilerDir+'/caffe_to_nnir.py'
 modelCompilerScript = os.path.abspath(pythonScript)
 if(os.path.isfile(modelCompilerScript)):
+    print("\nMIVisionX Neural Net Tests on "+platfromInfo+"\n")
     print("STATUS: Model Compiler Scripts Used from - "+modelCompilerDir+"\n")
 else:
     print("ERROR: Model Compiler Scripts Not Found at - "+modelCompilerDir)
@@ -217,7 +218,7 @@ if not os.path.exists(modelCompilerDeps):
     elif "centos" in platfromInfo:
         os.system(
             'sudo '+linuxSystemInstall+' ' +
-            linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf-compiler protobuf-devel')
+            linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
     os.system('pip3 install future pytz numpy')
     # Install CAFFE Deps
     os.system('pip3 install google protobuf')

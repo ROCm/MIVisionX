@@ -177,6 +177,7 @@ else:
 
 # Install Model Compiler Deps
 modelCompilerDeps = os.path.expanduser('~/.mivisionx-model-compiler-deps')
+linuxCMake = 'cmake'
 if not os.path.exists(modelCompilerDeps):
     print("STATUS: Model Compiler Deps Install - "+modelCompilerDeps+"\n")
     # sudo requirement check
@@ -193,7 +194,6 @@ if not os.path.exists(modelCompilerDeps):
 
     linuxSystemInstall = ''
     linuxSystemInstall_check = ''
-    linuxCMake = 'cmake'
     if "centos" in platfromInfo:
         linuxSystemInstall = 'yum -y'
         linuxSystemInstall_check = '--nogpgcheck'
@@ -234,6 +234,9 @@ if not os.path.exists(modelCompilerDeps):
         '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
+    if "centos-7" in platfromInfo:
+        linuxCMake = 'cmake3'
+
 
 # Create working directory
 outputDirectory = scriptPath+'/models/develop'

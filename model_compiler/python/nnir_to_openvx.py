@@ -109,28 +109,36 @@ def generateCMakeFiles(graph,outputFolder):
         f.write( \
 """
 cmake_minimum_required (VERSION 3.0)
+
 project (annmodule)
-set (CMAKE_CXX_STANDARD 11)
-set (ROCM_PATH /opt/rocm CACHE PATH "ROCm installation path")
+
+set(CMAKE_CXX_STANDARD 11)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package(OpenCL REQUIRED)
 find_package(OpenCV QUIET)
-include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
-include_directories (/opt/rocm/mivisionx/include)
-link_directories    (/opt/rocm/mivisionx/lib)
+
+include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+include_directories(/opt/rocm/mivisionx/include)
+
+link_directories(/opt/rocm/mivisionx/lib)
+
 list(APPEND SOURCES annmodule.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
+
 target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread)
 
 add_executable(anntest anntest.cpp)
-if (OpenCV_FOUND)
+if(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=1)
   include_directories(${OpenCV_INCLUDE_DIRS})
   target_link_libraries(anntest ${OpenCV_LIBRARIES})
 else(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
+
 target_link_libraries(anntest openvx vx_nn pthread ${PROJECT_NAME})
 
 add_library(annpython SHARED annpython.cpp)
@@ -167,7 +175,7 @@ else()
         $ENV{AMDAPPSDKROOT}/include
         $ENV{CUDA_PATH}/include
         PATHS
-        ${ROCM_PATH}/opencl/include
+        /opt/rocm/opencl/include
         /usr/include
         /usr/local/include
         /usr/local/cuda/include
@@ -186,7 +194,7 @@ else()
             DOC "OpenCL dynamic library path"
             PATH_SUFFIXES x86_64 x64 x86_64/sdk
             PATHS
-            ${ROCM_PATH}/opencl/lib/
+            /opt/rocm/opencl/lib/
             /usr/lib
             /usr/local/cuda/lib
             /opt/cuda/lib
@@ -201,7 +209,7 @@ else()
             DOC "OpenCL dynamic library path"
             PATH_SUFFIXES x86 Win32
             PATHS
-            ${ROCM_PATH}/opencl/lib/
+            /opt/rocm/opencl/lib/
             /usr/lib
             /usr/local/cuda/lib
             /opt/cuda/lib
@@ -217,11 +225,11 @@ else()
     set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
     set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
 
-    if(EXISTS "${ROCM_PATH}/opencl/lib/libOpenCL.so")
-        if(NOT "${OPENCL_LIBRARIES}" STREQUAL "${ROCM_PATH}/opencl/lib/libOpenCL.so")
+    if(EXISTS "/opt/rocm/opencl/lib/libOpenCL.so")
+        if(NOT "${OPENCL_LIBRARIES}" STREQUAL "/opt/rocm/opencl/lib/libOpenCL.so")
             message("-- ${Magenta}ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL${ColourReset}")
-            set(OpenCL_LIBRARIES ${ROCM_PATH}/opencl/lib/libOpenCL.so CACHE INTERNAL "")
-            set(OpenCL_INCLUDE_DIRS ${ROCM_PATH}/opencl/include CACHE INTERNAL "")
+            set(OpenCL_LIBRARIES /opt/rocm/opencl/lib/libOpenCL.so CACHE INTERNAL "")
+            set(OpenCL_INCLUDE_DIRS $/opt/rocm/opencl/include CACHE INTERNAL "")
         endif()
         set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
         add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})

@@ -153,87 +153,51 @@ target_link_libraries(annpython ${PROJECT_NAME} openvx vx_nn pthread)
         generateLicenseForScript(f)
         f.write( \
 """
-include( FindPackageHandleStandardArgs )
-find_package_handle_standard_args(
-    OpenCL
-    FOUND_VAR OpenCL_FOUND
-    REQUIRED_VARS
-        OpenCL_LIBRARIES
-        OpenCL_INCLUDE_DIRS
-        CL_TARGET_OPENCL_VERSION
-    VERSION_VAR OpenCL_VERSION
-)
-
 find_path(OPENCL_INCLUDE_DIRS
     NAMES OpenCL/cl.h CL/cl.h
     HINTS
-        ${OPENCL_ROOT}/include
-        $ENV{AMDAPPSDKROOT}/include
-        $ENV{CUDA_PATH}/include
+    ${OPENCL_ROOT}/include
+    $ENV{AMDAPPSDKROOT}/include
     PATHS
-        /opt/rocm/opencl/include
-        /usr/include
-        /usr/local/include
-        /usr/local/cuda/include
-        /opt/cuda/include
-        DOC "OpenCL header file path"
-)
+    /usr/include
+    /usr/local/include
+    /opt/rocm/opencl/include
+    DOC "OpenCL header file path"
+    )
 mark_as_advanced( OPENCL_INCLUDE_DIRS )
-
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
     find_library( OPENCL_LIBRARIES
         NAMES OpenCL
         HINTS
-            ${OPENCL_ROOT}/lib
-            $ENV{AMDAPPSDKROOT}/lib
-            $ENV{CUDA_PATH}/lib
-            DOC "OpenCL dynamic library path"
-            PATH_SUFFIXES x86_64 x64 x86_64/sdk
+        ${OPENCL_ROOT}/lib
+        $ENV{AMDAPPSDKROOT}/lib
+        DOC "OpenCL dynamic library path"
+        PATH_SUFFIXES x86_64 x64 x86_64/sdk
         PATHS
-            /opt/rocm/opencl/lib/
-            /usr/lib
-            /usr/local/cuda/lib
-            /opt/cuda/lib
-    )
+        /usr/lib
+        /opt/rocm/opencl/lib
+        )
 else( )
     find_library( OPENCL_LIBRARIES
-         NAMES OpenCL
+        NAMES OpenCL
         HINTS
-            ${OPENCL_ROOT}/lib
-            $ENV{AMDAPPSDKROOT}/lib
-            $ENV{CUDA_PATH}/lib
-            DOC "OpenCL dynamic library path"
-            PATH_SUFFIXES x86 Win32
+        ${OPENCL_ROOT}/lib
+        $ENV{AMDAPPSDKROOT}/lib
+        DOC "OpenCL dynamic library path"
+        PATH_SUFFIXES x86 Win32
         PATHS
-            /opt/rocm/opencl/lib/
-            /usr/lib
-            /usr/local/cuda/lib
-            /opt/cuda/lib
-    )
+        /usr/lib
+        )
 endif( )
 mark_as_advanced( OPENCL_LIBRARIES )
-
-if(OPENCL_LIBRARIES AND OPENCL_INCLUDE_DIRS)
-    set(OPENCL_FOUND TRUE)
-endif( )
-
+include( FindPackageHandleStandardArgs )
+find_package_handle_standard_args( OPENCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_INCLUDE_DIRS )
 set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
 set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
 set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
 
-if(EXISTS "/opt/rocm/opencl/lib/libOpenCL.so")
-    if(NOT "${OPENCL_LIBRARIES}" STREQUAL "/opt/rocm/opencl/lib/libOpenCL.so")
-        message("-- ${Magenta}ROCm OpenCL Found - Force OpenCL_LIBRARIES & OpenCL_INCLUDE_DIRS to use ROCm OpenCL${ColourReset}")
-        set(OpenCL_LIBRARIES /opt/rocm/opencl/lib/libOpenCL.so CACHE INTERNAL "")
-        set(OpenCL_INCLUDE_DIRS $/opt/rocm/opencl/include CACHE INTERNAL "")
-    endif()
-    set(CL_TARGET_OPENCL_VERSION 220 CACHE INTERNAL "")
-    add_definitions(-DCL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
-    message("-- ${Magenta}ROCm OpenCL Found - Setting CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION}${ColourReset}")
-endif()
-
-if( NOT OpenCL_FOUND )
-    message( "-- ${Yellow}FindOpenCL failed to find: OpenCL${ColourReset}" )
+if( NOT OPENCL_FOUND )
+    message( "-- FindOpenCL failed to find: OpenCL" )
 endif()
 """)
 

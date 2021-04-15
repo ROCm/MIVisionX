@@ -111,6 +111,7 @@ def generateCMakeFiles(graph,outputFolder):
 cmake_minimum_required (VERSION 3.0)
 project (annmodule)
 set (CMAKE_CXX_STANDARD 11)
+set (ROCM_PATH /opt/rocm CACHE PATH "ROCm installation path")
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(OpenCL REQUIRED)
 find_package(OpenCV QUIET)

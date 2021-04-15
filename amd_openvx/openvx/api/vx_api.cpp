@@ -931,14 +931,14 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                         data->children[i]->import_type = VX_MEMORY_TYPE_HOST;
                         data->children[i]->buffer = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
                         data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
-                        data->children[i]->opencl_buffer_offset = 0;
+                        data->children[i]->gpu_buffer_offset = 0;
                     }
                 }
                 else {
                     data->import_type = VX_MEMORY_TYPE_HOST;
                     data->buffer = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
                     data->u.img.stride_in_bytes = addrs[0].stride_y;
-                    data->opencl_buffer_offset = 0;
+                    data->gpu_buffer_offset = 0;
                 }
                 data->u.img.mem_handle = vx_false_e;
             }
@@ -962,16 +962,16 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                     for (vx_uint32 i = 0; i < data->numChildren; i++) {
                         data->children[i]->import_type = VX_MEMORY_TYPE_OPENCL;
                         data->children[i]->opencl_buffer = (cl_mem)(ptrs ? ptrs[i] : nullptr);
-                        data->children[i]->opencl_buffer_offset = 0;
+                        data->children[i]->gpu_buffer_offset = 0;
                         data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
-                        data->children[i]->opencl_buffer_offset = 0;
+                        data->children[i]->gpu_buffer_offset = 0;
                     }
                 }
                 else {
                     data->import_type = VX_MEMORY_TYPE_OPENCL;
                     data->opencl_buffer = (cl_mem)(ptrs ? ptrs[0] : nullptr);
                     data->u.img.stride_in_bytes = addrs[0].stride_y;
-                    data->opencl_buffer_offset = 0;
+                    data->gpu_buffer_offset = 0;
                 }
                 data->u.img.mem_handle = vx_false_e;
             }
@@ -995,16 +995,16 @@ VX_API_ENTRY vx_image VX_API_CALL vxCreateImageFromHandle(vx_context context, vx
                     for (vx_uint32 i = 0; i < data->numChildren; i++) {
                         data->children[i]->import_type = VX_MEMORY_TYPE_HIP;
                         data->children[i]->hip_memory = (vx_uint8 *)(ptrs ? ptrs[i] : nullptr);
-                        data->children[i]->opencl_buffer_offset = 0;
+                        data->children[i]->gpu_buffer_offset = 0;
                         data->children[i]->u.img.stride_in_bytes = addrs[i].stride_y;
-                        data->children[i]->opencl_buffer_offset = 0;
+                        data->children[i]->gpu_buffer_offset = 0;
                     }
                 }
                 else {
                     data->import_type = VX_MEMORY_TYPE_HIP;
                     data->hip_memory = (vx_uint8 *)(ptrs ? ptrs[0] : nullptr);
                     data->u.img.stride_in_bytes = addrs[0].stride_y;
-                    data->opencl_buffer_offset = 0;
+                    data->gpu_buffer_offset = 0;
                 }
             }
         }
@@ -1288,13 +1288,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET:
                 if (size == sizeof(cl_uint)) {
-                    *(cl_uint *)ptr = image->opencl_buffer_offset;
+                    *(cl_uint *)ptr = image->gpu_buffer_offset;
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE:
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE:
                 if (size == sizeof(cl_uint)) {
                     *(cl_uint *)ptr = image->u.img.stride_in_bytes;
                     status = VX_SUCCESS;
@@ -1310,13 +1310,13 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                 }
                 status = VX_SUCCESS;
                 break;
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET:
                 if (size == sizeof(vx_uint32)) {
-                    *(vx_uint32 *)ptr = image->opencl_buffer_offset;
+                    *(vx_uint32 *)ptr = image->gpu_buffer_offset;
                     status = VX_SUCCESS;
                 }
                 break;
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_STRIDE:
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_STRIDE:
                 if (size == sizeof(vx_uint32)) {
                     *(vx_uint32 *)ptr = image->u.img.stride_in_bytes;
                     status = VX_SUCCESS;
@@ -1324,9 +1324,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryImage(vx_image image_, vx_enum attribu
                 break;
 #endif
 #if (ENABLE_OPENCL || ENABLE_HIP)
-            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
+            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU:
                 if (size == sizeof(vx_bool)) {
-                    *(vx_bool *)ptr = image->u.img.enableUserBufferOpenCL;
+                    *(vx_bool *)ptr = image->u.img.enableUserBufferGPU;
                     status = VX_SUCCESS;
                 }
                 break;
@@ -1385,7 +1385,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                 break;
 #if ENABLE_OPENCL
             case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER:
-                if (size == sizeof(cl_mem) && image->u.img.enableUserBufferOpenCL) {
+                if (size == sizeof(cl_mem) && image->u.img.enableUserBufferGPU) {
                     image->opencl_buffer = *(cl_mem *)ptr;
                     if (image->opencl_buffer) {
                         image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -1395,15 +1395,15 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                 }
                 break;
 
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
-                if (size == sizeof(cl_uint) && image->u.img.enableUserBufferOpenCL) {
-                    image->opencl_buffer_offset = *(cl_uint *)ptr;
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET:
+                if (size == sizeof(cl_uint) && image->u.img.enableUserBufferGPU) {
+                    image->gpu_buffer_offset = *(cl_uint *)ptr;
                     status = VX_SUCCESS;
                 }
                 break;
 #elif ENABLE_HIP
             case VX_IMAGE_ATTRIBUTE_AMD_HIP_BUFFER:
-                if (image->u.img.enableUserBufferOpenCL) {
+                if (image->u.img.enableUserBufferGPU) {
                     image->hip_memory = *(vx_uint8 **)ptr;
                     if (image->hip_memory) {
                         image->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
@@ -1413,9 +1413,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetImageAttribute(vx_image image_, vx_enum 
                 }
                 break;
 
-            case VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER_OFFSET:
-                if (size == sizeof(vx_uint32) && image->u.img.enableUserBufferOpenCL) {
-                    image->opencl_buffer_offset = *(vx_uint32 *)ptr;
+            case VX_IMAGE_ATTRIBUTE_AMD_GPU_BUFFER_OFFSET:
+                if (size == sizeof(vx_uint32) && image->u.img.enableUserBufferGPU) {
+                    image->gpu_buffer_offset = *(vx_uint32 *)ptr;
                     status = VX_SUCCESS;
                 }
                 break;
@@ -1726,7 +1726,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
                     if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                         // make sure dirty OpenCL buffers are synched before giving access for read
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&image->ref, status, "ERROR: vxAccessImagePatch: clEnqueueReadBuffer() => %d\n", err);
@@ -1741,7 +1741,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessImagePatch(vx_image image_,
                         // make sure dirty OpenCL buffers are synched before giving access for read
                         // copy from Device to Host
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->gpu_buffer_offset), dataToSync->size);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&image->ref, status, "ERROR: vxAccessImagePatch: hipMemcpyDtoH() => %d\n", err);
@@ -2093,7 +2093,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                     if (dataToSync->opencl_buffer && !(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                         // make sure dirty OpenCL buffers are synched before giving access for read
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&image->ref, status, "ERROR: vxMapImagePatch: clEnqueueReadBuffer() => %d\n", err);
@@ -2109,7 +2109,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapImagePatch(vx_image image_, const vx_rec
                         // make sure dirty OpenCL buffers are synched before giving access for read
                         // copy from Device to Host
                         if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->gpu_buffer_offset), dataToSync->size);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&image->ref, status, "ERROR: vxAccessImagePatch: hipMemcpyDtoH() => %d\n", err);
@@ -2742,7 +2742,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                 break;
             case VX_KERNEL_ATTRIBUTE_AMD_OPENCL_BUFFER_ACCESS_ENABLE:
                 if (size == sizeof(vx_bool)) {
-                    if (!kernel->finalized && !kernel->opencl_buffer_update_callback_f) {
+                    if (!kernel->finalized && !kernel->gpu_buffer_update_callback_f) {
                         kernel->opencl_buffer_access_enable = *(vx_bool *)ptr;
                         status = VX_SUCCESS;
                     }
@@ -2756,7 +2756,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                     if (!kernel->finalized) {
                         AgoKernelOpenclBufferUpdateInfo * info = (AgoKernelOpenclBufferUpdateInfo *)ptr;
                         if (info->opencl_buffer_update_param_index >= kernel->argCount ||
-                            info->opencl_buffer_update_callback_f == nullptr ||
+                            info->gpu_buffer_update_callback_f == nullptr ||
                             kernel->parameters[info->opencl_buffer_update_param_index].direction != VX_INPUT ||
                             kernel->parameters[info->opencl_buffer_update_param_index].type != VX_TYPE_IMAGE ||
                             kernel->parameters[info->opencl_buffer_update_param_index].state != VX_PARAMETER_STATE_REQUIRED)
@@ -2765,7 +2765,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetKernelAttribute(vx_kernel kernel, vx_enu
                             status = VX_ERROR_INVALID_PARAMETERS;
                         }
                         else {
-                            kernel->opencl_buffer_update_callback_f = info->opencl_buffer_update_callback_f;
+                            kernel->gpu_buffer_update_callback_f = info->gpu_buffer_update_callback_f;
                             kernel->opencl_buffer_update_param_index = info->opencl_buffer_update_param_index;
                             kernel->opencl_buffer_access_enable = vx_true_e;
                             status = VX_SUCCESS;
@@ -3039,10 +3039,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryGraph(vx_graph graph, vx_enum attribut
 #if ENABLE_OPENCL
                     // normalize all time units into nanoseconds
                     uint64_t num = 1000000000, denom = (uint64_t)agoGetClockFrequency();
-                    ((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = graph->opencl_perf.kernel_enqueue * num / denom;
-                    ((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = graph->opencl_perf.kernel_wait * num / denom;
-                    ((AgoGraphPerfInternalInfo *)ptr)->buffer_read = graph->opencl_perf.buffer_read * num / denom;
-                    ((AgoGraphPerfInternalInfo *)ptr)->buffer_write = graph->opencl_perf.buffer_write * num / denom;
+                    ((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = graph->gpu_perf.kernel_enqueue * num / denom;
+                    ((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = graph->gpu_perf.kernel_wait * num / denom;
+                    ((AgoGraphPerfInternalInfo *)ptr)->buffer_read = graph->gpu_perf.buffer_read * num / denom;
+                    ((AgoGraphPerfInternalInfo *)ptr)->buffer_write = graph->gpu_perf.buffer_write * num / denom;
 #else
                     memset(ptr, 0, size);
 #endif
@@ -3055,10 +3055,10 @@ VX_API_ENTRY vx_status VX_API_CALL vxQueryGraph(vx_graph graph, vx_enum attribut
                     if (graph->perf.num > 0) {
                         // normalize all time units into nanoseconds
                         uint64_t num = 1000000000, denom = (uint64_t)agoGetClockFrequency();
-                        ((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = (graph->opencl_perf_total.kernel_enqueue / graph->perf.num) * num / denom;
-                        ((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = (graph->opencl_perf_total.kernel_wait / graph->perf.num) * num / denom;
-                        ((AgoGraphPerfInternalInfo *)ptr)->buffer_read = (graph->opencl_perf_total.buffer_read / graph->perf.num) * num / denom;
-                        ((AgoGraphPerfInternalInfo *)ptr)->buffer_write = (graph->opencl_perf_total.buffer_write / graph->perf.num) * num / denom;
+                        ((AgoGraphPerfInternalInfo *)ptr)->kernel_enqueue = (graph->gpu_perf_total.kernel_enqueue / graph->perf.num) * num / denom;
+                        ((AgoGraphPerfInternalInfo *)ptr)->kernel_wait = (graph->gpu_perf_total.kernel_wait / graph->perf.num) * num / denom;
+                        ((AgoGraphPerfInternalInfo *)ptr)->buffer_read = (graph->gpu_perf_total.buffer_read / graph->perf.num) * num / denom;
+                        ((AgoGraphPerfInternalInfo *)ptr)->buffer_write = (graph->gpu_perf_total.buffer_write / graph->perf.num) * num / denom;
                     }
                     else
 #endif
@@ -4931,7 +4931,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessLUT(vx_lut lut, void **ptr, vx_enum u
                             // transfer only valid data
                             vx_size size = data->size;
                             if (size > 0 && data->hip_memory) {
-                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->gpu_buffer_offset), size);
                                 if (err) {
                                     status = VX_FAILURE;
                                     agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: hipMemcpyDtoH() => %d\n", err);
@@ -5136,7 +5136,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapLUT(vx_lut lut, vx_map_id *map_id, void 
                         // transfer only valid data
                             vx_size size = data->size;
                             if (size > 0 && data->hip_memory) {
-                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                                hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->gpu_buffer_offset), size);
                                 if (err) {
                                     status = VX_FAILURE;
                                     agoAddLogEntry(&data->ref, status, "ERROR: vxMapLUT: hipMemcpyDtoH() => %d\n", err);
@@ -5948,7 +5948,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdValue(vx_threshold thresh, vx_
                 if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                     // transfer only valid data
                     if (dataToSync->size > 0) {
-                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                         if (err) {
                             status = VX_FAILURE;
                             agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
@@ -6017,7 +6017,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdRange(vx_threshold thresh, vx_
                 if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                     // transfer only valid data
                     if (dataToSync->size > 0) {
-                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                         if (err) {
                             status = VX_FAILURE;
                             agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
@@ -6081,7 +6081,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyThresholdOutput(vx_threshold thresh, vx
                 if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                     // transfer only valid data
                     if (dataToSync->size > 0) {
-                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                         if (err) {
                             status = VX_FAILURE;
                             agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyThresholdValue: clEnqueueReadBuffer() => %d\n", err);
@@ -6455,7 +6455,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxReadMatrix(vx_matrix mat, void *array)
                         // transfer only valid data
                         vx_size size = data->size;
                         if (size > 0 && data->hip_memory) {
-                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->gpu_buffer_offset), size);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&data->ref, status, "ERROR: vxReadMatrix: hipMemcpyDtoH() => %d\n", err);
@@ -7392,7 +7392,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
                 if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                     // transfer only valid data
                     if (dataToSync->size > 0) {
-                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                         if (err) {
                             status = VX_FAILURE;
                             agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyRemapPatch: clEnqueueReadBuffer() => %d\n", err);
@@ -7586,7 +7586,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapRemapPatch(vx_remap remap,
                     if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                         // transfer only valid data
                         if (dataToSync->size > 0) {
-                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapRemapPatch: clEnqueueReadBuffer() => %d\n", err);
@@ -8011,7 +8011,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAddArrayItems(vx_array arr, vx_size count, 
                         // transfer only valid data
                         vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
                         if (size > 0) {
-                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->gpu_buffer_offset, size, data->buffer, 0, NULL, NULL);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: clEnqueueReadBuffer() => %d\n", err);
@@ -8132,7 +8132,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessArrayRange(vx_array arr, vx_size star
                         // transfer only valid data
                         vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
                         if (size > 0) {
-                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->gpu_buffer_offset, size, data->buffer, 0, NULL, NULL);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: clEnqueueReadBuffer() => %d\n", err);
@@ -8149,7 +8149,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxAccessArrayRange(vx_array arr, vx_size star
                         // transfer only valid data
                         vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
                         if (size > 0) {
-                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->gpu_buffer_offset), size);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&data->ref, status, "ERROR: vxAccessArrayRange: hipMemcpyDtoH() => %d\n", err);
@@ -8384,7 +8384,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapArrayRange(vx_array array, vx_size range
                         // transfer only valid data
                         vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
                         if (size > 0) {
-                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->opencl_buffer_offset, size, data->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(data->ref.context->opencl_cmdq, data->opencl_buffer, CL_TRUE, data->gpu_buffer_offset, size, data->buffer, 0, NULL, NULL);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&data->ref, status, "ERROR: vxMapArrayRange: clEnqueueReadBuffer() => %d\n", err);
@@ -8401,7 +8401,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapArrayRange(vx_array array, vx_size range
                         // transfer only valid data
                         vx_size size = data->u.arr.itemsize * data->u.arr.numitems;
                         if (size > 0) {
-                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->opencl_buffer_offset), size);
+                            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->gpu_buffer_offset), size);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&data->ref, status, "ERROR: vxMapArrayRange: hipMemcpyDtoH() => %d\n", err);
@@ -8975,9 +8975,9 @@ VX_API_ENTRY vx_status VX_API_CALL vxSetMetaFormatAttribute(vx_meta_format meta,
                 }
                 break;
 #if ENABLE_OPENCL
-            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_OPENCL:
+            case VX_IMAGE_ATTRIBUTE_AMD_ENABLE_USER_BUFFER_GPU:
                 if (size == sizeof(vx_bool) && meta->data.ref.type == VX_TYPE_IMAGE) {
-                    meta->data.u.img.enableUserBufferOpenCL = *(vx_bool *)ptr;
+                    meta->data.u.img.enableUserBufferGPU = *(vx_bool *)ptr;
                     status = VX_SUCCESS;
                 }
                 break;
@@ -9658,7 +9658,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size n
                 if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                     // transfer only valid data
                     if (dataToSync->size > 0) {
-                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                        cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                         if (err) {
                             status = VX_FAILURE;
                             agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyTensorPatch: clEnqueueReadBuffer() => %d\n", err);
@@ -9673,7 +9673,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyTensorPatch(vx_tensor tensor, vx_size n
                 // make sure dirty GPU buffers are synched before giving access for read
                 // copy from Device to Host
                 if (dataToSync->size > 0 && dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-                    hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                    hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->gpu_buffer_offset), dataToSync->size);
                     if (err) {
                         status = VX_FAILURE;
                         agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxCopyTensorPatch: hipMemcpyDtoH() => %d\n", err);
@@ -9835,7 +9835,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size nu
                     if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
                         // transfer only valid data
                         if (dataToSync->size > 0) {
-                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->opencl_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
+                            cl_int err = clEnqueueReadBuffer(dataToSync->ref.context->opencl_cmdq, dataToSync->opencl_buffer, CL_TRUE, dataToSync->gpu_buffer_offset, dataToSync->size, dataToSync->buffer, 0, NULL, NULL);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapTensorPatch: clEnqueueReadBuffer() => %d\n", err);
@@ -9850,7 +9850,7 @@ VX_API_ENTRY vx_status VX_API_CALL vxMapTensorPatch(vx_tensor tensor, vx_size nu
                         // make sure dirty OpenCL buffers are synched before giving access for read
                         // copy from Device to Host
                         if (dataToSync->size > 0 && dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE_CL)) {
-                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->opencl_buffer_offset), dataToSync->size);
+                            hipError_t err = hipMemcpyDtoH((void *)dataToSync->buffer, (dataToSync->hip_memory + dataToSync->gpu_buffer_offset), dataToSync->size);
                             if (err) {
                                 status = VX_FAILURE;
                                 agoAddLogEntry(&dataToSync->ref, status, "ERROR: vxMapTensorPatch: hipMemcpyDtoH() => %d\n", err);
@@ -9925,7 +9925,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
             }
             data->import_type = VX_MEMORY_TYPE_HOST;
             data->buffer = (vx_uint8 *)ptr;
-            data->opencl_buffer_offset = 0;
+            data->gpu_buffer_offset = 0;
             for (vx_size i = 0; i < number_of_dims; i++) {
                 if(data->u.tensor.stride[i] != stride[i]) {
                     agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);
@@ -9948,7 +9948,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
             }
             data->import_type = VX_MEMORY_TYPE_OPENCL;
             data->opencl_buffer = (cl_mem)ptr;
-            data->opencl_buffer_offset = 0;
+            data->gpu_buffer_offset = 0;
             for (vx_size i = 0; i < number_of_dims; i++) {
                 if(data->u.tensor.stride[i] != stride[i]) {
                     agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);
@@ -9971,7 +9971,7 @@ VX_API_ENTRY vx_tensor VX_API_CALL vxCreateTensorFromHandle(vx_context context, 
             }
             data->import_type = VX_MEMORY_TYPE_HIP;
             data->hip_memory = (vx_uint8 *)ptr;
-            data->opencl_buffer_offset = 0;
+            data->gpu_buffer_offset = 0;
             for (vx_size i = 0; i < number_of_dims; i++) {
                 if(data->u.tensor.stride[i] != stride[i]) {
                     agoAddLogEntry(&context->ref, VX_ERROR_INVALID_VALUE, "ERROR: vxCreateTensorFromHandle: invalid stride[%ld]=%ld (must be %ld)\n", i, stride[i], data->u.tensor.stride[i]);

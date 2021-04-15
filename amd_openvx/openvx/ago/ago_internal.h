@@ -143,7 +143,7 @@ THE SOFTWARE.
 // kernel name
 #define NODE_OPENCL_KERNEL_NAME  "OpenVX_kernel"
 // opencl related constants
-#define DATA_OPENCL_ARRAY_OFFSET             16  // first 16 bytes of array buffer will be used for numitems
+#define DATA_GPU_ARRAY_OFFSET             16  // first 16 bytes of array buffer will be used for numitems
 // opencl configuration flags
 #define CONFIG_OPENCL_USE_1_2              0x0001  // use OpenCL 1.2
 #if defined(CL_VERSION_2_0)
@@ -167,7 +167,7 @@ THE SOFTWARE.
 #define DATA_HIP_FLAG_PASS_BY_VALUE (1 << 13) // marks that the data needs to be passed by value
 #endif
 // opencl related constants
-#define DATA_OPENCL_ARRAY_OFFSET             16  // first 16 bytes of array buffer will be used for numitems
+#define DATA_GPU_ARRAY_OFFSET             16  // first 16 bytes of array buffer will be used for numitems
 // opencl image fixed byte offset
 #define OPENCL_IMAGE_FIXED_OFFSET             256
 
@@ -326,8 +326,8 @@ struct AgoConfigImage {
     vx_channel_range_e channel_range;
     vx_uint32 x_scale_factor_is_2; // will be 0 or 1
     vx_uint32 y_scale_factor_is_2; // will be 0 or 1
-    vx_bool enableUserBufferOpenCL;
-    vx_bool mem_handle; 		// false by default ; true if image created from handle and the handle is NULL
+    vx_bool enableUserBufferGPU;
+    vx_bool mem_handle;     // false by default ; true if image created from handle and the handle is NULL
 };
 struct AgoConfigLut {
     vx_enum type;
@@ -456,7 +456,7 @@ struct AgoData {
     vx_uint8*     hip_memory_allocated;
     vx_bool       hip_need_as_argument;
 #endif
-    vx_uint32  opencl_buffer_offset;
+    vx_uint32  gpu_buffer_offset;
     vx_bool isVirtual;
     vx_bool isDelayed;
     vx_bool isNotFullyConfigured;
@@ -469,7 +469,7 @@ struct AgoData {
     std::list<MappedData> mapped;
     vx_map_id nextMapId;
     vx_uint32 hierarchical_level;
-    struct AgoNode * ownerOfUserBufferOpenCL;
+    struct AgoNode * ownerOfUserBufferGPU;
     std::list<AgoData *> roiDepList;
     vx_uint32 hierarchical_life_start;
     vx_uint32 hierarchical_life_end;
@@ -533,7 +533,7 @@ struct AgoKernel {
     amd_kernel_opencl_codegen_callback_f opencl_codegen_callback_f;
     amd_kernel_node_regen_callback_f regen_callback_f;
     amd_kernel_opencl_global_work_update_callback_f opencl_global_work_update_callback_f;
-    amd_kernel_opencl_buffer_update_callback_f opencl_buffer_update_callback_f;
+    amd_kernel_opencl_buffer_update_callback_f gpu_buffer_update_callback_f;
     vx_uint32 opencl_buffer_update_param_index;
     vx_bool opencl_buffer_access_enable;
     vx_uint32 importing_module_index_plus1;
@@ -678,7 +678,7 @@ struct AgoGraph {
         vx_uint64 buffer_read;
         vx_uint64 buffer_write;
     };
-    AgoGraphPerfInternalInfo_ opencl_perf, opencl_perf_total;
+    AgoGraphPerfInternalInfo_ gpu_perf, gpu_perf_total;
     vx_uint32 virtualDataGenerationCount;
     vx_uint32 optimizer_flags;
     bool verified;
@@ -687,7 +687,7 @@ struct AgoGraph {
 #if (ENABLE_OPENCL||ENABLE_HIP)
     std::vector<AgoNode *> opencl_nodeListQueued;
     AgoSuperNode * supernodeList;
-    bool enable_node_level_opencl_flush;
+    bool enable_node_level_gpu_flush;
 #if ENABLE_OPENCL
     cl_command_queue opencl_cmdq;
     cl_device_id opencl_device;

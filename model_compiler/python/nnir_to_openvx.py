@@ -109,27 +109,36 @@ def generateCMakeFiles(graph,outputFolder):
         f.write( \
 """
 cmake_minimum_required (VERSION 3.0)
+
 project (annmodule)
-set (CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_CXX_STANDARD 11)
+
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
 find_package(OpenCL REQUIRED)
 find_package(OpenCV QUIET)
-include_directories (${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
-include_directories (/opt/rocm/mivisionx/include)
-link_directories    (/opt/rocm/mivisionx/lib)
+
+include_directories(${OpenCL_INCLUDE_DIRS} ${OpenCL_INCLUDE_DIRS}/Headers )
+include_directories(/opt/rocm/mivisionx/include)
+
+link_directories(/opt/rocm/mivisionx/lib)
+
 list(APPEND SOURCES annmodule.cpp)
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.2 -mf16c -std=c++11")
+
 target_link_libraries(${PROJECT_NAME} openvx vx_nn pthread)
 
 add_executable(anntest anntest.cpp)
-if (OpenCV_FOUND)
+if(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=1)
   include_directories(${OpenCV_INCLUDE_DIRS})
   target_link_libraries(anntest ${OpenCV_LIBRARIES})
 else(OpenCV_FOUND)
   target_compile_definitions(anntest PUBLIC ENABLE_OPENCV=0)
 endif(OpenCV_FOUND)
+
 target_link_libraries(anntest openvx vx_nn pthread ${PROJECT_NAME})
 
 add_library(annpython SHARED annpython.cpp)
@@ -156,7 +165,6 @@ find_path(OPENCL_INCLUDE_DIRS
     DOC "OpenCL header file path"
     )
 mark_as_advanced( OPENCL_INCLUDE_DIRS )
-
 if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
     find_library( OPENCL_LIBRARIES
         NAMES OpenCL
@@ -177,22 +185,19 @@ else( )
         $ENV{AMDAPPSDKROOT}/lib
         DOC "OpenCL dynamic library path"
         PATH_SUFFIXES x86 Win32
-
         PATHS
         /usr/lib
         )
 endif( )
 mark_as_advanced( OPENCL_LIBRARIES )
-
 include( FindPackageHandleStandardArgs )
 find_package_handle_standard_args( OPENCL DEFAULT_MSG OPENCL_LIBRARIES OPENCL_INCLUDE_DIRS )
-
 set(OpenCL_FOUND ${OPENCL_FOUND} CACHE INTERNAL "")
 set(OpenCL_LIBRARIES ${OPENCL_LIBRARIES} CACHE INTERNAL "")
 set(OpenCL_INCLUDE_DIRS ${OPENCL_INCLUDE_DIRS} CACHE INTERNAL "")
 
 if( NOT OPENCL_FOUND )
-    message( STATUS "FindOpenCL looked for libraries named: OpenCL" )
+    message( "-- FindOpenCL failed to find: OpenCL" )
 endif()
 """)
 

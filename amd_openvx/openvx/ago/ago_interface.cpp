@@ -2603,6 +2603,64 @@ vx_status agoDirective(vx_reference reference, vx_enum directive)
                     }
                 }
                 break;
+#elif ENABLE_HIP
+            case VX_DIRECTIVE_AMD_COPY_TO_HIPMEM:
+                status = VX_ERROR_NOT_SUPPORTED;
+                if (reference->context->hip_stream) {
+                    auto data = (AgoData *)reference;
+                    auto dataToSync = (data->ref.type == VX_TYPE_IMAGE && data->u.img.isROI) ? data->u.img.roiMasterImage : data;
+                    if (dataToSync->ref.type == VX_TYPE_LUT) {
+                        if (dataToSync->hip_memory) {
+                            hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->buffer, dataToSync->size);
+                            if (err) {
+                                agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipMemcpyHtoD failed => %d\n", err);
+                                return VX_FAILURE;
+                            }
+                            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                            status = VX_SUCCESS;
+                        }
+                        else {
+                            status = VX_ERROR_NOT_ALLOCATED;
+                        }
+                    } else if (dataToSync->ref.type == VX_TYPE_IMAGE && dataToSync->numChildren > 0) {
+                        status = VX_ERROR_NOT_ALLOCATED;
+                        for (vx_uint32 plane = 0; plane < dataToSync->numChildren; plane++) {
+                            AgoData * img = dataToSync->children[plane];
+                            if (img) {
+                                if (img->hip_memory) {
+                                    hipError_t err = hipMemcpyHtoD(img->hip_memory + img->gpu_buffer_offset, img->buffer, img->size);
+                                    if (err) {
+                                        agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipMemcpyHtoD failed => %d\n", err);
+                                        return VX_FAILURE;
+                                    }
+                                    img->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                                    status = VX_SUCCESS;
+                                }
+                            }
+                        }
+                    } else {
+                        if (dataToSync->hip_memory) {
+                            vx_size size = dataToSync->size;
+                            if (dataToSync->ref.type == VX_TYPE_ARRAY) {
+                                // transfer only valid data
+                                size = dataToSync->u.arr.itemsize * dataToSync->u.arr.numitems;
+                            }
+                            if (size > 0) {
+                                hipError_t err = hipMemcpyHtoD(dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->buffer, dataToSync->size);
+                                if (err) {
+                                    agoAddLogEntry(NULL, VX_FAILURE, "ERROR: hipMemcpyHtoD failed => %d\n", err);
+                                    return VX_FAILURE;
+                                }
+                            }
+                            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
+                            status = VX_SUCCESS;
+                        }
+                        else {
+                            status = VX_ERROR_NOT_ALLOCATED;
+                        }
+                    }
+                }
+            break;
 #endif
             case VX_DIRECTIVE_AMD_ENABLE_PROFILE_CAPTURE:
             case VX_DIRECTIVE_AMD_DISABLE_PROFILE_CAPTURE:

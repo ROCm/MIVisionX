@@ -194,10 +194,10 @@ if not os.path.exists(modelCompilerDeps):
 
     linuxSystemInstall = ''
     linuxSystemInstall_check = ''
-    if "centos" in platfromInfo:
+    if "centos" in platfromInfo or "redhat" in platfromInfo:
         linuxSystemInstall = 'yum -y'
         linuxSystemInstall_check = '--nogpgcheck'
-        if "centos-7" in platfromInfo:
+        if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
             linuxCMake = 'cmake3'
             os.system(linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install cmake3')
@@ -215,7 +215,7 @@ if not os.path.exists(modelCompilerDeps):
         os.system(
             'sudo '+linuxSystemInstall+' ' +
             linuxSystemInstall_check+' install git inxi python3 python3-pip protobuf-compiler libprotoc-dev')
-    elif "centos" in platfromInfo:
+    elif "centos" in platfromInfo or "redhat" in platfromInfo:
         os.system(
             'sudo '+linuxSystemInstall+' ' +
             linuxSystemInstall_check+' install git inxi python3-devel python3-pip protobuf python3-protobuf')
@@ -234,7 +234,7 @@ if not os.path.exists(modelCompilerDeps):
         '(cd '+modelCompilerDeps+'/nnef-deps/NNEF-Tools/parser/python; sudo python3 setup.py install)')
 else:
     print("STATUS: Model Compiler Deps Pre-Installed - "+modelCompilerDeps+"\n")
-    if "centos-7" in platfromInfo:
+    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
         linuxCMake = 'cmake3'
 
 

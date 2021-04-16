@@ -101,10 +101,10 @@ deps_dir = os.path.expanduser(setupDir_deps)
 linuxCMake = 'cmake'
 linuxSystemInstall_check = ''
 linuxFlag = ''
-if "centos" in platfromInfo:
+if "centos" in platfromInfo or "redhat" in platfromInfo:
     linuxSystemInstall = 'yum -y'
     linuxSystemInstall_check = '--nogpgcheck'
-    if "centos-7" in platfromInfo:
+    if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
         linuxCMake = 'cmake3'
         os.system(linuxSystemInstall+' install cmake3')
 elif "Ubuntu" in platfromInfo:
@@ -190,11 +190,11 @@ else:
     if raliInstall == 'yes' or neuralNetInstall == 'yes':
         # package dependencies
         os.system('sudo -v')
-        if "centos" in platfromInfo:
-            if "centos-7" in platfromInfo:
+        if "centos" in platfromInfo or "redhat" in platfromInfo:
+            if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
                           ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make g++ unzip')
-            elif "centos-8" in platfromInfo:
+            elif "centos-8" in platfromInfo or "redhat-8" in platfromInfo:
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' + linuxSystemInstall_check +
                           ' install kernel-devel libsqlite3x-devel bzip2-devel openssl-devel python3-devel autoconf automake libtool curl make gcc-c++ unzip')
         else:
@@ -204,7 +204,7 @@ else:
         os.system(
             '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
         os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
-        if "centos-8" in platfromInfo:
+        if "centos-8" in platfromInfo or "redhat-8" in platfromInfo:
             os.system(
                 '(cd '+deps_dir+'/boost_1_72_0/; ./bootstrap.sh --prefix=/usr/local --with-python=python36 )')
         else:
@@ -380,7 +380,7 @@ else:
             # Nasm
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                       ' install nasm')
-            if "centos-7" in platfromInfo:
+            if "centos-7" in platfromInfo or "redhat-7" in platfromInfo:
                 # Yasm
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install http://repo.okay.com.mx/centos/7/x86_64/release/okay-release-1-1.noarch.rpm')
@@ -399,7 +399,7 @@ else:
                 # libASS
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install libass-devel')
-            elif "centos-8" in platfromInfo:
+            elif "centos-8" in platfromInfo or "redhat-8" in platfromInfo:
                 # el8 x86_64 packages
                 os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' '+linuxSystemInstall_check +
                           ' install https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm')

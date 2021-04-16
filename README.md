@@ -378,7 +378,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * Linux distribution
   + Ubuntu - `18.04` / `20.04`
   + CentOS - `7` / `8`
-* ROCm: rocm-dkms - `4.0.0.40000-23`
+* ROCm: rocm-dkms - `4.1.0.40100-26`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
 * MIOpen - [2.10.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.10.0)
@@ -386,7 +386,7 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.7](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.7)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.9.4`
+* MIVisionX Setup Script - `V1.9.5`
 
 ### Latest Release
 

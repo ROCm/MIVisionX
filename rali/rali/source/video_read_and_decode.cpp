@@ -225,7 +225,7 @@ VideoReadAndDecode::load(unsigned char* buff,
         size_t scaledw, scaledh;
         std::string out = "out.mp4";
         // if we process 3rd video then we need to call _decode[2]
-        _video_decoder[i]->Decode((_video_names[i]).c_str(), out.c_str());
+        _video_decoder[i]->Decode(_decompressed_buff_ptrs[i], (_video_names[i]).c_str(), out.c_str());
        
         /*if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
                                max_decoded_width, max_decoded_height,

@@ -30,6 +30,10 @@ extern "C" {
 #include <libavutil/samplefmt.h>
 #include <libavutil/timestamp.h>
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/avutil.h>
+#include <libavutil/pixdesc.h>
+#include <libswscale/swscale.h>
 }
 #include "parameter_factory.h"
 enum class VideoDecoderType
@@ -70,7 +74,7 @@ public:
     
     virtual VideoDecoder::Status Initialize() = 0;
     virtual int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) = 0;
-    virtual VideoDecoder::Status Decode(const char *src_filename, const char *video_dst_filename) = 0;
+    virtual VideoDecoder::Status Decode(unsigned char* output_buffer, const char *src_filename, const char *video_dst_filename) = 0;
     virtual int decode_packet(AVCodecContext *dec, const AVPacket *pkt) = 0;
     virtual void release() = 0;
     virtual int output_video_frame(AVFrame *frame) = 0;

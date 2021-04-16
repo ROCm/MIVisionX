@@ -24,21 +24,25 @@ THE SOFTWARE.
 #include <commons.h>
 #include "ffmpeg_video_decoder.h"
 
+// OpenCV
+#include <opencv2/core.hpp>
+#include <opencv2/highgui.hpp>
+
 FFMPEG_VIDEO_DECODER::FFMPEG_VIDEO_DECODER(){};
 
 int FFMPEG_VIDEO_DECODER::output_video_frame(AVFrame *frame)
 {
-    if (frame->width != width || frame->height != height ||
+/*    if (frame->width != width || frame->height != height ||
         frame->format != pix_fmt)
     {
-        /*fprintf(stderr, "Error: Width, height and pixel format have to be "
+        fprintf(stderr, "Error: Width, height and pixel format have to be "
                 "constant in a rawvideo file, but the width, height or "
                 "pixel format of the input video changed:\n"
                 "old: width = %d, height = %d, format = %s\n"
                 "new: width = %d, height = %d, format = %s\n",
                 width, height, av_get_pix_fmt_name(pix_fmt),
                 frame->width, frame->height,
-                av_get_pix_fmt_name(frame->format));*/
+                av_get_pix_fmt_name(frame->format));
         return -1;
     }
 
@@ -58,13 +62,13 @@ int FFMPEG_VIDEO_DECODER::output_video_frame(AVFrame *frame)
 
     //fwrite(video_dst_data[0], 1, height*frame->linesize[0], img_file);
     //exit(0);
-    fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);
+    fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);*/
     return 0;
 }
 
 int FFMPEG_VIDEO_DECODER::decode_packet(AVCodecContext *dec, const AVPacket *pkt)
 {
-    int ret = 0;
+/*    int ret = 0;
     //include fseek operation to point to the start of the file
 
     // submit the packet to the decoder
@@ -94,7 +98,7 @@ int FFMPEG_VIDEO_DECODER::decode_packet(AVCodecContext *dec, const AVPacket *pkt
         av_frame_unref(frame);
         if (ret < 0)
             return ret;
-    }
+    }*/
     return 0;
 }
 
@@ -156,7 +160,7 @@ int FFMPEG_VIDEO_DECODER::open_codec_context(int *stream_idx,
     return 0;
 }
 
-VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, const char *video_dst_filename)
+VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char* output_buffer, const char *src_filename, const char *video_dst_filename)
 {
     VideoDecoder::Status status;
     int ret;
@@ -180,30 +184,31 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, cons
     {
         video_stream = fmt_ctx->streams[video_stream_idx];
 
-        video_dst_file = fopen(video_dst_filename, "wb");
-        if (!video_dst_file)
-        {
-            fprintf(stderr, "Could not open destination file %s\n", video_dst_filename);
-            release();
-        }
-
-        /* allocate image where the decoded image will be put */
-        width = video_dec_ctx->width;
-        height = video_dec_ctx->height;
-        pix_fmt = video_dec_ctx->pix_fmt;
-        ret = av_image_alloc(video_dst_data, video_dst_linesize,
-                             width, height, pix_fmt, 1);
-        if (ret < 0)
-        {
-            fprintf(stderr, "Could not allocate raw video buffer\n");
-            status = Status::NO_MEMORY;
-            release();
-        }
-        video_dst_bufsize = ret;
+        // print input video stream informataion
+        std::cout
+            << "source file: " << src_filename << "\n"
+            << "format: " << fmt_ctx->iformat->name << "\n"
+            //<< "vcodec: " << video_dec_ctx->name << "\n"
+            << "size:   " << video_stream->codec->width << 'x' << video_stream->codec->height << "\n"
+            << "fps:    " << av_q2d(video_stream->codec->framerate) << " [fps]\n"
+            << "length: " << av_rescale_q(video_stream->duration, video_stream->time_base, {1, 1000}) / 1000. << " [sec]\n"
+            << "pixfmt: " << av_get_pix_fmt_name(video_stream->codec->pix_fmt) << "\n"
+            << "frame:  " << video_stream->nb_frames << "\n"
+            << std::flush;
     }
 
-    /* dump input information to stderr */
-    av_dump_format(fmt_ctx, 0, src_filename, 0);
+    // initialize sample scaler
+    const int dst_width = video_stream->codec->width;
+    const int dst_height = video_stream->codec->height;
+    SwsContext *swsctx = sws_getCachedContext(
+        nullptr, video_stream->codec->width, video_stream->codec->height, video_stream->codec->pix_fmt,
+        dst_width, dst_height, dst_pix_fmt, SWS_BICUBIC, nullptr, nullptr, nullptr);
+    if (!swsctx)
+    {
+        std::cerr << "fail to sws_getCachedContext";
+        return Status::FAILED;
+    }
+    std::cout << "output: " << dst_width << 'x' << dst_height << ',' << av_get_pix_fmt_name(dst_pix_fmt) << std::endl;
 
     if (!video_stream)
     {
@@ -219,33 +224,57 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(const char *src_filename, cons
         release();
     }
 
-    /* initialize packet, set data to NULL, let the demuxer fill it */
-    av_init_packet(&pkt);
-    pkt.data = NULL;
-    pkt.size = 0;
+    std::vector<uint8_t> framebuf(avpicture_get_size(dst_pix_fmt, dst_width, dst_height));
+    avpicture_fill(reinterpret_cast<AVPicture *>(frame), framebuf.data(), dst_pix_fmt, dst_width, dst_height);
 
-    /* read frames from the file */
-    while (av_read_frame(fmt_ctx, &pkt) >= 0)
+    // decoding loop
+    decframe = av_frame_alloc();
+
+    do
     {
-        // check if the packet belongs to a stream we are interested in, otherwise
-        // skip it
-        if (pkt.stream_index == video_stream_idx)
-            ret = decode_packet(video_dec_ctx, &pkt);
-        av_packet_unref(&pkt);
-        if (ret < 0)
-            break;
-    }
+        if (!end_of_stream)
+        {
+            // read packet from input file
+            ret = av_read_frame(fmt_ctx, &pkt);
+            if (ret < 0 && ret != AVERROR_EOF)
+            {
+                std::cerr << "fail to av_read_frame: ret=" << ret;
+                return Status::FAILED;
+            }
+            if (ret == 0 && pkt.stream_index != video_stream_idx)
+                goto next_packet;
+            end_of_stream = (ret == AVERROR_EOF);
+        }
+        if (end_of_stream)
+        {
+            // null packet for bumping process
+            av_init_packet(&pkt);
+            pkt.data = nullptr;
+            pkt.size = 0;
+        }
+        // decode video frame
+        avcodec_decode_video2(video_dec_ctx, decframe, &got_pic, &pkt);
 
-    /* flush the decoders */
-    if (video_dec_ctx)
-        decode_packet(video_dec_ctx, NULL);
+        if (!got_pic)
+            goto next_packet;
+        // convert frame to OpenCV matrix
+        sws_scale(swsctx, decframe->data, decframe->linesize, 0, decframe->height, frame->data, frame->linesize);
+        //input_buffer = framebuf.data();
+        output_buffer = framebuf.data();
+        {
+            cv::Mat image(dst_height, dst_width, CV_8UC3, framebuf.data(), frame->linesize[0]);
+            //cv::imshow("press ESC to exit", image);
+            cv::imwrite("out.png", image);
+            if (cv::waitKey(1) == 0x1b)
+                break;
+        }
+        std::cout << nb_frames << '\r' << std::flush; // dump progress
+        ++nb_frames;
+    next_packet:
+        av_free_packet(&pkt);
+    } while (!end_of_stream || got_pic);
+    std::cout << nb_frames << " frames decoded" << std::endl;
 
-    if (video_stream)
-    {
-        std::cout << "Play the output video file with the command:";
-        std::cout << "ffplay -f rawvideo -pix_fmt " << av_get_pix_fmt_name(pix_fmt) << "-video_size " << width << "x"
-                  << height << " " << video_dst_filename;
-    }
     release();
     return status;
 }
@@ -258,11 +287,10 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Initialize()
 void FFMPEG_VIDEO_DECODER::release()
 {
     avcodec_free_context(&video_dec_ctx);
+    avcodec_close(video_stream->codec);
     avformat_close_input(&fmt_ctx);
-    if (video_dst_file)
-        fclose(video_dst_file);
     av_frame_free(&frame);
-    av_free(video_dst_data[0]);
+    av_frame_free(&decframe);
 }
 
 FFMPEG_VIDEO_DECODER::~FFMPEG_VIDEO_DECODER()

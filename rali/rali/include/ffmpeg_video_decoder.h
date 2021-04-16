@@ -31,7 +31,7 @@ public:
 
     virtual VideoDecoder::Status Initialize() override;
     virtual int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) override;
-    virtual VideoDecoder::Status Decode(const char *src_filename, const char *video_dst_filename) override;
+    virtual VideoDecoder::Status Decode(unsigned char* output_buffer, const char *src_filename, const char *video_dst_filename) override;
     virtual int decode_packet(AVCodecContext *dec, const AVPacket *pkt) override;
     virtual void release() override;
     virtual int output_video_frame(AVFrame *frame) override;
@@ -45,15 +45,17 @@ private:
 	AVStream *video_stream = NULL;
 	const char *src_filename = NULL;
 	const char *video_dst_filename = NULL;
-	FILE *video_dst_file = NULL;
-	FILE *audio_dst_file = NULL;
 
 	uint8_t *video_dst_data[4] = {NULL};
 	int      video_dst_linesize[4];
 	int video_dst_bufsize;
 
-	int video_stream_idx = -1, audio_stream_idx = -1;
-	AVFrame *frame = NULL;
+	int video_stream_idx = -1;
+	AVFrame *frame = NULL, *decframe = NULL;
 	AVPacket pkt;
 	int video_frame_count = 0;
+	unsigned nb_frames = 0;
+    bool end_of_stream = false;
+    int got_pic = 0;
+	const AVPixelFormat dst_pix_fmt = AV_PIX_FMT_BGR24;
 };

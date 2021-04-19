@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
 #include <vector>
+#include<string>
 
 #include "rali_api.h"
 
@@ -643,9 +644,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     printf("Going to process images\n");
     printf("Remaining images %d \n", raliGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    int index = 0;
 
     while (raliGetRemainingImages(handle) >= inputBatchSize)
     {
+        index++;
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
@@ -683,26 +686,26 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         {
             raliGetOneHotImageLabels(handle, label_one_hot_encoded, numOfClasses);
         }
-        std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
-        for (int i = 0; i < inputBatchSize; i++)
-        {   
-            std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
-            if(num_of_classes != 0)
-            {
-            std::cout << "One Hot Encoded labels:"<<"\t";
-            for (int j = 0; j < numOfClasses; j++)
-            {
-                int idx_value = label_one_hot_encoded[(i*numOfClasses)+j];
-                if(idx_value == 0)
-                std::cout << idx_value;
-                else
-                {
-                    std::cout << idx_value;
-                }
-            }
-            }
-            std::cout << "\n";
-        }
+        // std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
+        // for (int i = 0; i < inputBatchSize; i++)
+        // {
+        //     std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
+        //     if(num_of_classes != 0)
+        //     {
+        //     std::cout << "One Hot Encoded labels:"<<"\t";
+        //     for (int j = 0; j < numOfClasses; j++)
+        //     {
+        //         int idx_value = label_one_hot_encoded[(i*numOfClasses)+j];
+        //         if(idx_value == 0)
+        //         std::cout << idx_value;
+        //         else
+        //         {
+        //             std::cout << idx_value;
+        //         }
+        //     }
+        //     }
+        //     std::cout << "\n";
+        // }
 #endif
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
@@ -717,7 +720,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite(outName, mat_color, compression_params);
+            cv::imwrite(std::to_string(index)+outName, mat_color, compression_params);
         }
         else
         {

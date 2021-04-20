@@ -56,8 +56,8 @@ parser.add_argument('--ffmpeg',    	type=str, default='no',
                     help='FFMPEG Installation - optional (default:no) [options:yes/no]')
 parser.add_argument('--neural_net',	type=str, default='yes',
                     help='MIVisionX Neural Net Dependency Install - optional (default:yes) [options:yes/no]')
-parser.add_argument('--rali',	 	type=str, default='yes',
-                    help='MIVisionX RALI Dependency Install - optional (default:yes) [options:yes/no]')
+parser.add_argument('--rocal',	 	type=str, default='yes',
+                    help='MIVisionX rocAL Dependency Install - optional (default:yes) [options:yes/no]')
 parser.add_argument('--reinstall', 	type=str, default='no',
                     help='Remove previous setup and reinstall - optional (default:no) [options:yes/no]')
 args = parser.parse_args()
@@ -71,7 +71,7 @@ ProtoBufVersion = args.protobuf
 rppVersion = args.rpp
 ffmpegInstall = args.ffmpeg
 neuralNetInstall = args.neural_net
-raliInstall = args.rali
+raliInstall = args.rocal
 reinstall = args.reinstall
 
 platfromInfo = platform.platform()
@@ -307,7 +307,7 @@ else:
     if raliInstall == 'yes':
         # Install RPP
         if "Ubuntu" in platfromInfo:
-            # Install Packages for RALI
+            # Install Packages for rocAL
             os.system('sudo -v')
             os.system('sudo '+linuxFlag+' '+linuxSystemInstall+' ' +
                       linuxSystemInstall_check+' install libgflags-dev libgoogle-glog-dev liblmdb-dev')

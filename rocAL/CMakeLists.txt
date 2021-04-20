@@ -19,7 +19,7 @@
 # THE SOFTWARE.
 
 cmake_minimum_required(VERSION 3.0)
-project(amd_rali)
+project(amd_rocAL)
 
-add_subdirectory(rali)
-add_subdirectory(rali_pybind)
+add_subdirectory(rocAL)
+add_subdirectory(rocAL_pybind)

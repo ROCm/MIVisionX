@@ -38,23 +38,23 @@ endif()
 
 if(NOT OpenCL_FOUND)
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rali pybind requires OpenCL, Not Found${ColourReset}")
+    message("-- ${Yellow}rocAL pybind requires OpenCL, Not Found${ColourReset}")
 endif()
 if(NOT AMDRPP_FOUND)
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rali pybind requires AMDRPP, Not Found${ColourReset}")
+    message("-- ${Yellow}rocAL pybind requires AMDRPP, Not Found${ColourReset}")
 endif()
 if(NOT TurboJpeg_FOUND)
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rali pybind requires TurboJpeg, Not Found${ColourReset}")
+    message("-- ${Yellow}rocAL pybind requires TurboJpeg, Not Found${ColourReset}")
 endif()
 if(CMAKE_VERSION VERSION_LESS ${MIN_CMAKE_VER_REQUIRED})
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rali pybind required CMake Version Not Found${ColourReset}")
+    message("-- ${Yellow}rocAL pybind required CMake Version Not Found${ColourReset}")
 endif()
 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS ${MIN_CXX_VER_REQUIRED})
     set(BUILD_RALI_PYBIND false)
-    message("-- ${Yellow}rali pybind required C++ Version Not Found${ColourReset}")
+    message("-- ${Yellow}rocAL pybind required C++ Version Not Found${ColourReset}")
 endif()
 
 if(${BUILD_RALI_PYBIND})
@@ -64,7 +64,7 @@ if(${BUILD_RALI_PYBIND})
                  ${ROCM_PATH}/rpp/lib
                 )
 
-    include_directories(../rali/include/
+    include_directories(../rocAL/include/
                     third_party_lib/
                     ../../amd_openvx/openvx/include/
                     ${ROCM_PATH}/mivisionx/include/
@@ -78,5 +78,5 @@ if(${BUILD_RALI_PYBIND})
     install(TARGETS rali_pybind DESTINATION lib)
     message("-- ${Green}Radeon Augmentation Library Python Binding - rali_pybind module added ${ColourReset}")
 else()
-    message("-- ${Red}WARNING: RALI Pybind module excluded ${ColourReset}")
+    message("-- ${Red}WARNING: rocAL Pybind module excluded ${ColourReset}")
 endif()

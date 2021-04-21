@@ -22,7 +22,7 @@ This sample [application](./dg_test#amd-dgtest) is used to recognize hand writte
 
 ## Image Augmentation
 
-This sample [application](./image_augmentation#image-augmentation-application) demonstrates the basic usage of RALI's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
+This sample [application](./image_augmentation#image-augmentation-application) demonstrates the basic usage of rocAL's C API to load JPEG images from the disk and modify them in different possible ways and displays the output images.
 
 <p align="center"> <img width="90%" src="../docs/images/image_augmentation.png" /> </p>
 

@@ -78,7 +78,7 @@ script:
   # Level 4 - [MIOpenGEMM MIOpen ProtoBuf + Level 3] - CPU + OpenCL Components + OpenCV EXT + amd_media + Neural Net Components
   - docker exec mivisionx-4 cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
   - docker exec mivisionx-4 cmake --build /_build --clean-first -- -j8
-  # Level 5 - [AMD_RPP RALI Deps + Level 4] - CPU + OpenCL Components + OpenCV EXT + amd_media + Neural Net Components + RALI
+  # Level 5 - [AMD_RPP rocAL Deps + Level 4] - CPU + OpenCL Components + OpenCV EXT + amd_media + Neural Net Components + rocAL
   - docker exec mivisionx-5 cmake -H/MIVisionX -B/_build -DCMAKE_BUILD_TYPE=Release
   - docker exec mivisionx-5 cmake --build /_build --clean-first -- -j8
 

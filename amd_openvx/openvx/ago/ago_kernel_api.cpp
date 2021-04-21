@@ -15662,14 +15662,12 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iConv = node->paramList[2];
         vx_uint32 convolutionWidth = (vx_uint32)iConv->u.conv.columns;
         vx_uint32 convolutionHeight = (vx_uint32)iConv->u.conv.rows;
-        if ((convolutionWidth != 3) && (convolutionWidth != 5) && (convolutionWidth != 7) && (convolutionWidth != 9))
-            status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
-        else if (HipExec_Convolve_U8_U8(
-            node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
-            oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
-            (float *)(iConv->hip_memory + iConv->gpu_buffer_offset), convolutionWidth, convolutionHeight)) {
-            status = VX_FAILURE;
+        if (HipExec_Convolve_U8_U8(
+                node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
+                oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
+                iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
+                (float *)(iConv->hip_memory + iConv->gpu_buffer_offset), convolutionWidth, convolutionHeight)) {
+                    status = VX_FAILURE;
         }
     }
 #endif
@@ -15771,9 +15769,7 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
         AgoData * iConv = node->paramList[2];
         vx_uint32 convolutionWidth = (vx_uint32)iConv->u.conv.columns;
         vx_uint32 convolutionHeight = (vx_uint32)iConv->u.conv.rows;
-        if ((convolutionWidth != 3) && (convolutionWidth != 5) && (convolutionWidth != 7) && (convolutionWidth != 9))
-            status = AGO_ERROR_KERNEL_NOT_IMPLEMENTED;
-        else if (HipExec_Convolve_S16_U8(
+        if (HipExec_Convolve_S16_U8(
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             (vx_int16 *) (oImg->hip_memory + oImg->gpu_buffer_offset), oImg->u.img.stride_in_bytes,
             iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,

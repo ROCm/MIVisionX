@@ -171,7 +171,7 @@ static vx_status VX_CALLBACK processResizeCropbatchPD(vx_node node, const vx_ref
 		}
 		return_status = (rpp_status == RPP_SUCCESS) ? VX_SUCCESS : VX_FAILURE;
 #elif ENABLE_HIP
-		refreshCropPD(node, parameters, num, data);
+		refreshResizeCropbatchPD(node, parameters, num, data);
 		if (df_image == VX_DF_IMAGE_U8)
 		{
 			rpp_status = rppi_resize_crop_u8_pln1_batchPD_gpu((void *)data->hip_pSrc, data->srcDimensions, data->maxSrcDimensions, (void *)data->hip_pDst, data->dstDimensions, data->maxDstDimensions, data->x1, data->x2, data->y1, data->y2, output_format_toggle, data->nbatchSize, data->rppHandle);

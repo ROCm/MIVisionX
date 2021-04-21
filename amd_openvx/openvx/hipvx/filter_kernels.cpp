@@ -916,6 +916,15 @@ Hip_Gaussian_U8_U8_3x3(uint dstWidth, uint dstHeight,
     fval = hip_unpack0(pix.y);
     sum.data[7] = fmaf(fval, 6.250000000000e-02f, sum.data[7]);
 
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
+
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
     dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));

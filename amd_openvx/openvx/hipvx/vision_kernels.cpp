@@ -29,32 +29,29 @@ THE SOFTWARE.
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
 
-    uint x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
-    uint y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
     bool valid = (x < dstWidth) && (y < dstHeight);
 
     __shared__ uchar lbuf[2448]; // 136x18 bytes
     int lx = hipThreadIdx_x;
     int ly = hipThreadIdx_y;
-    int gx = x >> 3;
-    int gy = y;
-    int gstride = srcImageStrideInBytes;
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (y - 1) * gstride + (gx << 3) - 4;
+        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
             loffset += 16 * 136;
-            goffset += 16 * gstride;
+            goffset += 16 * srcImageStrideInBytes;
             doExtraLoad = true;
         } else {
             int id = (ly - 2) * 16 + lx;
             loffset = id * 136 + 128;
-            goffset = (gy - ly + id - 1) * gstride + ((gx - lx) << 3) + 124;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
         if (doExtraLoad) {
@@ -522,8 +519,8 @@ int HipExec_CannySobel_U16_U8_7x7_L2NORM(hipStream_t stream, vx_uint32 dstWidth,
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
     const uchar *xyStack, uint xyStackOffset, uint capacityOfXY, uint2 hyst,
     uint dstWidthComp) {
 
@@ -536,21 +533,19 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + (x << 2);
 
-    int gstride = srcImageStrideInBytes;
-
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (y - 1) * gstride + (x << 3) - 4;
+        int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
             loffset += 16 * 136;
-            goffset += 16 * gstride;
+            goffset += 16 * srcImageStrideInBytes;
             doExtraLoad = true;
         } else {
             int id = (ly - 2) * 16 + lx;
             loffset = id * 136 + 128;
-            goffset = (y - ly + id - 1) * gstride + ((x - lx) << 3) + 124;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + ((x - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
         if (doExtraLoad) {

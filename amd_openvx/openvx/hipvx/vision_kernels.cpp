@@ -274,8 +274,8 @@ int HipExec_CannySobel_U16_U8_7x7_L1NORM(hipStream_t stream, vx_uint32 dstWidth,
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;

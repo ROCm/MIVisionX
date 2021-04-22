@@ -56,10 +56,12 @@ def runTestCommand (platform, project) {
 
     String conformaceCPU = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
     String conformaceGPU = 'echo OpenVX 1.3 Conformance - GPU - NOT TESTED ON THIS PLATFORM'
+    String moveFiles = ''
 
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
-        conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance'
-        conformaceGPU = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.*'
+        conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log.md'
+        conformaceGPU = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.* | tee OpenVX-GPU-Conformance-log.md'
+        moveFiles = 'mv *.md ../../'
     }
 
     def command = """#!/usr/bin/env bash
@@ -82,6 +84,7 @@ def runTestCommand (platform, project) {
                 ${conformaceCPU}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
                 ${conformaceGPU}
+                ${moveFiles}
                 """
 
     platform.runCommand(this, command)
@@ -106,7 +109,7 @@ def runPackageCommand(platform, project) {
     def command = """#!/usr/bin/env bash
                 set -x
                 export HOME=/home/jenkins
-                echo Make RPP Package
+                echo Make MIVisionX Package
                 cd ${project.paths.project_build_prefix}/build/release
                 sudo make package
                 mkdir -p package

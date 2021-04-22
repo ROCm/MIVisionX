@@ -82,6 +82,7 @@ def runTestCommand (platform, project) {
                 ${conformaceCPU}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
                 ${conformaceGPU}
+                mv *.md ../../
                 """
 
     platform.runCommand(this, command)
@@ -106,7 +107,7 @@ def runPackageCommand(platform, project) {
     def command = """#!/usr/bin/env bash
                 set -x
                 export HOME=/home/jenkins
-                echo Make RPP Package
+                echo Make MIVisionX Package
                 cd ${project.paths.project_build_prefix}/build/release
                 sudo make package
                 mkdir -p package

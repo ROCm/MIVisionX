@@ -29,8 +29,8 @@ THE SOFTWARE.
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySobel_U16_U8_3x3_L1NORM(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -274,8 +274,8 @@ int HipExec_CannySobel_U16_U8_7x7_L1NORM(hipStream_t stream, vx_uint32 dstWidth,
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySobel_U16_U8_3x3_L2NORM(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -519,8 +519,8 @@ int HipExec_CannySobel_U16_U8_7x7_L2NORM(hipStream_t stream, vx_uint32 dstWidth,
 
 __global__ void __attribute__((visibility("default")))
 Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
     const uchar *xyStack, uint xyStackOffset, uint capacityOfXY, uint2 hyst,
     uint dstWidthComp) {
 
@@ -535,7 +535,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
 
     { // load 136x18 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
-        int goffset = (y - 1) * srcImageStrideInBytes + x - 4;
+        int goffset = (y - 1) * srcImageStrideInBytes + (x << 3) - 4;
         *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 2) {
@@ -545,7 +545,7 @@ Hip_CannySuppThreshold_U8XY_U16_3x3(uint dstWidth, uint dstHeight,
         } else {
             int id = (ly - 2) * 16 + lx;
             loffset = id * 136 + 128;
-            goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
+            goffset = (y - ly + id - 1) * srcImageStrideInBytes + ((x - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
         if (doExtraLoad) {

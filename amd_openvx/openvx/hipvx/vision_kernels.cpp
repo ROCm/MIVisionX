@@ -799,7 +799,7 @@ int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacit
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
+Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, uint pDstCornersOffset,
     uint srcWidth, uint srcHeight,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
     float strength_threshold) {
@@ -945,6 +945,10 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
     __syncthreads();
 
     bool writeCorner = doCompute &&
+                        (lidx > 0) &&
+                        (lidy > 0) &&
+                        (lidx < 15) &&
+                        (lidy < 15) &&
                         (local_strength >= pLocalStrengthShare[lidy-1][lidx-1]) &&
                         (local_strength >= pLocalStrengthShare[lidy-1][lidx]) &&
                         (local_strength >= pLocalStrengthShare[lidy-1][lidx+1]) &&
@@ -952,14 +956,10 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
                         (local_strength > pLocalStrengthShare[lidy][lidx+1]) &&
                         (local_strength > pLocalStrengthShare[lidy+1][lidx-1]) &&
                         (local_strength > pLocalStrengthShare[lidy+1][lidx]) &&
-                        (local_strength >= pLocalStrengthShare[lidy+1][lidx+1]) &&
-                        (lidx > 0) &&
-                        (lidy > 0) &&
-                        (lidx < 15) &&
-                        (lidy < 15);
+                        (local_strength >= pLocalStrengthShare[lidy+1][lidx+1]);
 
     uint *numKeypoints = (uint *) pDstCorners;
-    d_KeyPt *keypt_list = (d_KeyPt *) pDstCorners;
+    d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + pDstCornersOffset);
     if(writeCorner)	{
         uint old_idx = atomicInc(numKeypoints, 1);
         if(old_idx < capacityOfDstCorner) {
@@ -973,7 +973,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners,
         }
     }
 }
-int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 pHipDstCornerOffset, vx_uint32 *pHipDstCornerCount,
     vx_uint32 srcWidth, vx_uint32 srcHeight,
     const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     vx_float32 strength_threshold, vx_uint8 *pHipScratch) {
@@ -983,7 +983,7 @@ int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityO
     int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
 
     hipLaunchKernelGGL(Hip_FastCorners_XY_U8_Supression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner,
+                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner, pHipDstCornerOffset,
                         srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         strength_threshold);
 

@@ -691,7 +691,7 @@ int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
 // ----------------------------------------------------------------------------
 
 __global__ void __attribute__((visibility("default")))
-Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, uint pDstCornersOffset,
+Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, uint cornerBufferOffset,
     uint srcWidth, uint srcHeight,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
     float strength_threshold) {
@@ -767,7 +767,7 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, 
     }
 
     uint *numKeypoints = (uint *) pDstCorners;
-    d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + pDstCornersOffset);
+    d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + cornerBufferOffset);
     if(isCorner) {
         uint old_idx = atomicInc(numKeypoints, 1);
         if(old_idx < capacityOfDstCorner) {
@@ -799,7 +799,7 @@ int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacit
 }
 
 __global__ void __attribute__((visibility("default")))
-Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, uint pDstCornersOffset,
+Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, uint cornerBufferOffset,
     uint srcWidth, uint srcHeight,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
     float strength_threshold) {
@@ -959,7 +959,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
                         (local_strength >= pLocalStrengthShare[lidy+1][lidx+1]);
 
     uint *numKeypoints = (uint *) pDstCorners;
-    d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + pDstCornersOffset);
+    d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + cornerBufferOffset);
     if(writeCorner)	{
         uint old_idx = atomicInc(numKeypoints, 1);
         if(old_idx < capacityOfDstCorner) {

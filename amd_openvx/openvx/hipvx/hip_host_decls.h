@@ -856,12 +856,12 @@ int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
     vx_uint8* xyStack, vx_uint32 xyStackOffset, vx_uint32 capacityOfXY,
     vx_uint16 hyst_lower, vx_uint16 hyst_upper);
 int HipExec_FastCorners_XY_U8_NoSupression(
-        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 cornerBufferOffset, vx_uint32 *pHipDstCornerCount,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
         vx_float32 strength_threshold);
 int HipExec_FastCorners_XY_U8_Supression(
-        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 *pHipDstCornerCount,
+        hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 cornerBufferOffset, vx_uint32 *pHipDstCornerCount,
         vx_uint32 srcWidth, vx_uint32 srcHeight,
         const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
         vx_float32 strength_threshold, vx_uint8 *pHipScratch);

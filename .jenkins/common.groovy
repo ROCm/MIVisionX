@@ -47,13 +47,12 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 make -j\$(nproc)
                 sudo make install
                 sudo make package
-                cd ../
+                cd ../../
                 echo Build MIVisionX HIP - ${buildTypeDir}
                 mkdir -p build/${buildTypeDir}-hip && cd build/${buildTypeDir}-hip
                 ${cmake} ${buildTypeArg} -D BACKEND=HIP ../..
                 make -j\$(nproc)
                 sudo make package
-                cd ../
                 """
 
     platform.runCommand(this, command)

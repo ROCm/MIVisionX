@@ -119,6 +119,7 @@ def runPackageCommand(platform, project) {
                 echo Make MIVisionX Package
                 cd ${project.paths.project_build_prefix}/build/release-opencl
                 sudo make package
+                mkdir -p package
                 mv *.${packageType} package/
                 python ../../tests/library_tests/runLibraryTests.py
                 mv *.md package/
@@ -126,6 +127,7 @@ def runPackageCommand(platform, project) {
                 cd ${project.paths.project_build_prefix}/build/release-hip
                 sudo make package
                 mv *.${packageType} mivisionx-hip-${platform.jenkinsLabel}.${packageType}
+                mkdir -p package
                 mv *.${packageType} package/
                 ${packageInfo} package/*.${packageType}
                 """

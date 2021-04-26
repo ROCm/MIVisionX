@@ -41,12 +41,19 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 echo Install MIVisionX Prerequisites
                 cd ${project.paths.project_build_prefix}
                 ${installPackage}
-                echo Build MIVisionX - ${buildTypeDir}
-                mkdir -p build/${buildTypeDir} && cd build/${buildTypeDir}
+                echo Build MIVisionX OpenCL - ${buildTypeDir}
+                mkdir -p build/${buildTypeDir}-opencl && cd build/${buildTypeDir}-opencl
                 ${cmake} ${buildTypeArg} ../..
                 make -j\$(nproc)
                 sudo make install
                 sudo make package
+                cd ../
+                echo Build MIVisionX HIP - ${buildTypeDir}
+                mkdir -p build/${buildTypeDir}-hip && cd build/${buildTypeDir}-hip
+                ${cmake} ${buildTypeArg} -D BACKEND=HIP ../..
+                make -j\$(nproc)
+                sudo make package
+                cd ../
                 """
 
     platform.runCommand(this, command)
@@ -66,7 +73,7 @@ def runTestCommand (platform, project) {
 
     def command = """#!/usr/bin/env bash
                 set -x
-                cd ${project.paths.project_build_prefix}/build/release
+                cd ${project.paths.project_build_prefix}/build/release-opencl
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
                 python ../../tests/neural_network_tests/runNeuralNetworkTests.py
@@ -110,18 +117,23 @@ def runPackageCommand(platform, project) {
                 set -x
                 export HOME=/home/jenkins
                 echo Make MIVisionX Package
-                cd ${project.paths.project_build_prefix}/build/release
+                cd ${project.paths.project_build_prefix}/build/release-opencl
                 sudo make package
-                mkdir -p package
                 mv *.${packageType} package/
-                ${packageInfo} package/*.${packageType}
                 python ../../tests/library_tests/runLibraryTests.py
                 mv *.md package/
+                ${packageInfo} package/*.${packageType}
+                cd ${project.paths.project_build_prefix}/build/release-hip
+                sudo make package
+                mv *.${packageType} mivisionx-hip-${platform.jenkinsLabel}.${packageType}
+                mv *.${packageType} package/
+                ${packageInfo} package/*.${packageType}
                 """
 
     platform.runCommand(this, command)
     platform.archiveArtifacts(this, packageHelper[1])
-    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/package/*.md""")
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/package/*.md""")
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/package/*.${packageType}""")
 }
 
 return this

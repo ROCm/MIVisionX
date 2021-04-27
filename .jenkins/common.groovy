@@ -114,7 +114,8 @@ def runTestCommand (platform, project) {
                 """
 
     platform.runCommand(this, command)
-    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release/*.md""")
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/*.md""")
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/*.md""")
 }
 
 def runPackageCommand(platform, project) {

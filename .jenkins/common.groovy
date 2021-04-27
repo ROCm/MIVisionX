@@ -146,7 +146,7 @@ def runPackageCommand(platform, project) {
                 echo Make MIVisionX Package - with HIP support
                 cd ../release-hip
                 sudo make package
-                mv *.${packageType} mivisionx-hip-${platform.jenkinsLabel}.${packageType}
+                (for file in *.${packageType}; do mv "\$file" "HIP-\$file"; done;)
                 mkdir -p package
                 mv *.${packageType} package/
                 ${packageInfo} package/*.${packageType}

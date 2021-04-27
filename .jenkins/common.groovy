@@ -60,14 +60,14 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
 def runTestCommand (platform, project) {
 
     String conformaceCPU = 'echo OpenVX 1.3 Conformance - CPU - NOT TESTED ON THIS PLATFORM'
-    String conformaceGPU_OpenCL = 'echo OpenVX 1.3 Conformance - GPU OpenCL - NOT TESTED ON THIS PLATFORM'
-    String conformaceGPU_HIP = 'echo OpenVX 1.3 Conformance - GPU HIP - NOT TESTED ON THIS PLATFORM'
+    String conformaceOpenCL = 'echo OpenVX 1.3 Conformance - GPU OpenCL - NOT TESTED ON THIS PLATFORM'
+    String conformaceHIP = 'echo OpenVX 1.3 Conformance - GPU HIP - NOT TESTED ON THIS PLATFORM'
     String moveFiles = ''
 
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
         conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log.md'
-        conformaceGPU_OpenCL = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.* | tee OpenVX-GPU-OPENCL-Conformance-log.md'
-        conformaceGPU_HIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-*.VirtualArray:-FastCorners.*:-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.GraphState:-*.MapRandomRemap:-*.OnRandomAndNatural:-*.vxWeightedAverage:-Scale.GraphProcessing:-WarpPerspective.GraphProcessing:-Remap.GraphProcessing:-GaussianPyramid.GraphProcessing:-HalfScaleGaussian.GraphProcessing:*.* | tee OpenVX-GPU-HIP-Conformance-log.md'
+        conformaceOpenCL = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.* | tee OpenVX-GPU-OPENCL-Conformance-log.md'
+        conformaceHIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-*.VirtualArray:-FastCorners.*:-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.GraphState:-*.MapRandomRemap:-*.OnRandomAndNatural:-*.vxWeightedAverage:-Scale.GraphProcessing:-WarpPerspective.GraphProcessing:-Remap.GraphProcessing:-GaussianPyramid.GraphProcessing:-HalfScaleGaussian.GraphProcessing:*.* | tee OpenVX-GPU-HIP-Conformance-log.md'
         moveFiles = 'mv *.md ../../'
     }
 
@@ -91,7 +91,7 @@ def runTestCommand (platform, project) {
                 echo MIVisionX OpenVX 1.3 Conformance - CPU
                 ${conformaceCPU}
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
-                ${conformaceGPU_OpenCL}
+                ${conformaceOpenCL}
                 ${moveFiles}
                 echo MIVisionX - with HIP support Tests
                 cd ${project.paths.project_build_prefix}/build/release-hip
@@ -105,10 +105,10 @@ def runTestCommand (platform, project) {
                 export VX_TEST_DATA_PATH=\$(pwd)/OpenVX-cts/test_data/
                 mkdir build-cts
                 cd build-cts
-                make -DCMAKE_BUILD_TYPE=Debug -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so;\$OPENVX_DIR/lib/libopenvx_hip.so;/opt/rocm/hip/lib/libamdhip64.so;pthread;dl;m;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
+                cmake -DCMAKE_BUILD_TYPE=Debug -DOPENVX_INCLUDES=\$OPENVX_INC/include -DOPENVX_LIBRARIES=\$OPENVX_DIR/lib/libopenvx.so;\$OPENVX_DIR/lib/libopenvx_hip.so;/opt/rocm/hip/lib/libamdhip64.so;pthread;dl;m;rt -DOPENVX_CONFORMANCE_VISION=ON ../OpenVX-cts
                 cmake --build .
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - HIP
-                ${conformaceGPU_HIP}
+                ${conformaceHIP}
                 ${moveFiles}
                 """
 

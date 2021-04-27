@@ -535,7 +535,7 @@ else:
 
     file_dtstr = datetime.now().strftime("%Y%m%d")
     reportFilename = 'vision_report_%s_%s_%s.md' % (
-        platform_name, file_dtstr, hardwareMode)
+        platform_name, file_dtstr, backendType)
     report_dtstr = datetime.now().strftime("%Y-%m-%d %H:%M:%S %Z")
     sys_info = shell('inxi -c0 -S')
 

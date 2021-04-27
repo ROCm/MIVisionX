@@ -95,7 +95,7 @@ def runTestCommand (platform, project) {
                 ${conformaceOpenCL}
                 ${moveFiles}
                 echo MIVisionX - with HIP support Tests
-                cd ../release-hip
+                cd ../../../release-hip
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
                 export OPENVX_DIR=\$(pwd)/.
@@ -153,8 +153,8 @@ def runPackageCommand(platform, project) {
                 """
 
     platform.runCommand(this, command)
-    platform.archiveArtifacts(this, packageHelper[1])
     platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/package/*.md""")
+    platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-opencl/package/*.${packageType}""")
     platform.archiveArtifacts(this, """${project.paths.project_build_prefix}/build/release-hip/package/*.${packageType}""")
 }
 

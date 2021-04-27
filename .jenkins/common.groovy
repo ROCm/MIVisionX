@@ -95,7 +95,7 @@ def runTestCommand (platform, project) {
                 ${conformaceOpenCL}
                 ${moveFiles}
                 echo MIVisionX - with HIP support Tests
-                cd ${project.paths.project_build_prefix}/build/release-hip
+                cd ../release-hip
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
                 export OPENVX_DIR=\$(pwd)/.
@@ -144,7 +144,7 @@ def runPackageCommand(platform, project) {
                 mv *.md package/
                 ${packageInfo} package/*.${packageType}
                 echo Make MIVisionX Package - with HIP support
-                cd ${project.paths.project_build_prefix}/build/release-hip
+                cd ../release-hip
                 sudo make package
                 mv *.${packageType} mivisionx-hip-${platform.jenkinsLabel}.${packageType}
                 mkdir -p package

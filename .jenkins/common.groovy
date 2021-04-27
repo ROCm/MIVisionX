@@ -42,13 +42,14 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 cd ${project.paths.project_build_prefix}
                 ${installPackage}
                 echo Build MIVisionX OpenCL - ${buildTypeDir}
-                mkdir -p ${project.paths.project_build_prefix}/build/${buildTypeDir}-opencl && cd ${project.paths.project_build_prefix}/build/${buildTypeDir}-opencl
+                mkdir -p build/${buildTypeDir}-opencl && cd build/${buildTypeDir}-opencl
                 ${cmake} ${buildTypeArg} ../..
                 make -j\$(nproc)
                 sudo make install
                 sudo make package
+                cd ../
                 echo Build MIVisionX HIP - ${buildTypeDir}
-                mkdir -p ${project.paths.project_build_prefix}/build/${buildTypeDir}-hip && cd ${project.paths.project_build_prefix}/build/${buildTypeDir}-hip
+                mkdir -p ${buildTypeDir}-hip && cd ${buildTypeDir}-hip
                 ${cmake} ${buildTypeArg} -DBACKEND=HIP ../..
                 make -j\$(nproc)
                 sudo make package

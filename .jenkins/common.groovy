@@ -42,15 +42,14 @@ def runCompileCommand(platform, project, jobName, boolean debug=false, boolean s
                 cd ${project.paths.project_build_prefix}
                 ${installPackage}
                 echo Build MIVisionX OpenCL - ${buildTypeDir}
-                mkdir -p build/${buildTypeDir}-opencl && cd build/${buildTypeDir}-opencl
+                mkdir -p ${project.paths.project_build_prefix}/build/${buildTypeDir}-opencl && cd ${project.paths.project_build_prefix}/build/${buildTypeDir}-opencl
                 ${cmake} ${buildTypeArg} ../..
                 make -j\$(nproc)
                 sudo make install
                 sudo make package
-                cd ../../
                 echo Build MIVisionX HIP - ${buildTypeDir}
-                mkdir -p build/${buildTypeDir}-hip && cd build/${buildTypeDir}-hip
-                ${cmake} ${buildTypeArg} -D BACKEND=HIP ../..
+                mkdir -p ${project.paths.project_build_prefix}/build/${buildTypeDir}-hip && cd ${project.paths.project_build_prefix}/build/${buildTypeDir}-hip
+                ${cmake} ${buildTypeArg} -DBACKEND=HIP ../..
                 make -j\$(nproc)
                 sudo make package
                 """
@@ -74,6 +73,7 @@ def runTestCommand (platform, project) {
 
     def command = """#!/usr/bin/env bash
                 set -x
+                echo MIVisionX - with OpenCL support Tests
                 cd ${project.paths.project_build_prefix}/build/release-opencl
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type OCL
@@ -93,6 +93,7 @@ def runTestCommand (platform, project) {
                 echo MIVisionX OpenVX 1.3 Conformance - GPU - OpenCL
                 ${conformaceGPU_OpenCL}
                 ${moveFiles}
+                echo MIVisionX - with HIP support Tests
                 cd ${project.paths.project_build_prefix}/build/release-hip
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode CPU --num_frames 100
                 python ../../tests/vision_tests/runVisionTests.py --runvx_directory ./bin --hardware_mode GPU --num_frames 100 --backend_type HIP
@@ -133,7 +134,7 @@ def runPackageCommand(platform, project) {
     def command = """#!/usr/bin/env bash
                 set -x
                 export HOME=/home/jenkins
-                echo Make MIVisionX Package
+                echo Make MIVisionX Package - with OpenCL support
                 cd ${project.paths.project_build_prefix}/build/release-opencl
                 sudo make package
                 mkdir -p package
@@ -141,6 +142,7 @@ def runPackageCommand(platform, project) {
                 python ../../tests/library_tests/runLibraryTests.py
                 mv *.md package/
                 ${packageInfo} package/*.${packageType}
+                echo Make MIVisionX Package - with HIP support
                 cd ${project.paths.project_build_prefix}/build/release-hip
                 sudo make package
                 mv *.${packageType} mivisionx-hip-${platform.jenkinsLabel}.${packageType}

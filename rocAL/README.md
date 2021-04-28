@@ -71,9 +71,8 @@ Note: You need wget package to download the tar file.
 ```
 
 ``` 
-wget  https://downloads.sourceforge.net/libjpeg-turbo/libjpeg-turbo-2.0.3.tar.gz
-tar xf libjpeg-turbo-2.0.3.tar.gz
-cd libjpeg-turbo-2.0.3
+git clone -b 2.0.6.1 https://github.com/rrawther/libjpeg-turbo.git
+cd libjpeg-turbo
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr \

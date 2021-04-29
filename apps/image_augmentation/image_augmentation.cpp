@@ -250,7 +250,7 @@ int main(int argc, const char ** argv)
         {
             cv::imshow("output",mat_output);
         }
-        cv::waitKey(1);
+        cv::waitKey(-1);
         col_counter = (col_counter+1)%number_of_cols;
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();

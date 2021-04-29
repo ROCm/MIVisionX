@@ -17,7 +17,8 @@ import time
 import numpy
 import numpy as np
 from numpy.ctypeslib import ndpointer
-from inference_control import *
+from inference_control import inference_control
+from PyQt5 import QtWidgets, uic
 
 # global variables
 FP16inference = False

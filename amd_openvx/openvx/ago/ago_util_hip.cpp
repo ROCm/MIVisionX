@@ -700,7 +700,7 @@ static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
         vx_uint32 * pNumItems = nullptr;
 
         if (data->hip_memory) {
-            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->gpu_buffer_offset), data->size);
+            hipError_t err = hipMemcpyDtoH((void *)data->buffer, data->hip_memory, data->size + data->gpu_buffer_offset);
             if (err) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyDtoH() for numitems => %d\n", err);
                 return -1;

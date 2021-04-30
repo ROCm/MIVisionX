@@ -15664,8 +15664,8 @@ int agoKernel_Convolve_U8_U8(AgoNode * node, AgoKernelCommand cmd)
         vx_uint32 convolutionHeight = (vx_uint32)iConv->u.conv.rows;
         if (HipExec_Convolve_U8_U8(
                 node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
-                oImg->hip_memory + oImg->gpu_buffer_offset,oImg->u.img.stride_in_bytes,
-                iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
+                oImg->hip_memory + oImg->gpu_buffer_offset, oImg->u.img.stride_in_bytes,
+                iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size, iImg->gpu_buffer_offset,
                 (float *)(iConv->hip_memory + iConv->gpu_buffer_offset), convolutionWidth, convolutionHeight)) {
                     status = VX_FAILURE;
         }
@@ -15772,7 +15772,7 @@ int agoKernel_Convolve_S16_U8(AgoNode * node, AgoKernelCommand cmd)
         if (HipExec_Convolve_S16_U8(
             node->hip_stream0, oImg->u.img.width, oImg->u.img.height,
             (vx_int16 *) (oImg->hip_memory + oImg->gpu_buffer_offset), oImg->u.img.stride_in_bytes,
-            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes,
+            iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, iImg->size, iImg->gpu_buffer_offset,
             (float *)(iConv->hip_memory + iConv->gpu_buffer_offset), convolutionWidth, convolutionHeight)) {
             status = VX_FAILURE;
         }

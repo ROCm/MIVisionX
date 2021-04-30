@@ -956,9 +956,9 @@ int HipExec_Gaussian_U8_U8_3x3(hipStream_t stream, vx_uint32 dstWidth, vx_uint32
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -982,7 +982,7 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -1104,20 +1104,20 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
     fval = hip_unpack0(pix.y);
     sum.data[7] = fmaf(fval, conv[8], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
     dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));
 
-    uint dstIdx =  y * dstImageStrideInBytes + x;
+    uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -1126,8 +1126,8 @@ Hip_Convolve_U8_U8_3x3(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes, int srcImageBufferSize,
     float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
@@ -1152,7 +1152,7 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -1438,20 +1438,20 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
     fval = hip_unpack1(pix.y);
     sum.data[7] = fmaf(fval, conv[24], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
     dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));
 
-    uint dstIdx =  y * dstImageStrideInBytes + x;
+    uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -1460,9 +1460,9 @@ Hip_Convolve_U8_U8_5x5(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -1486,7 +1486,7 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -2008,20 +2008,20 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
     fval = hip_unpack2(pix.y);
     sum.data[7] = fmaf(fval, conv[48], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
     dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));
 
-    uint dstIdx =  y * dstImageStrideInBytes + x;
+    uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -2030,9 +2030,9 @@ Hip_Convolve_U8_U8_7x7(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -2056,7 +2056,7 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 4) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 24) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -2400,20 +2400,20 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
     fval = hip_unpack0(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
     dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));
 
-    uint dstIdx =  y * dstImageStrideInBytes + x;
+    uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -2422,9 +2422,9 @@ Hip_Convolve_U8_U8_3x9(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -2448,7 +2448,7 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -2732,20 +2732,20 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
     fval = hip_unpack3(pix.y);
     sum.data[7] = fmaf(fval, conv[26], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
     dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));
 
-    uint dstIdx =  y * dstImageStrideInBytes + x;
+    uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -2754,9 +2754,9 @@ Hip_Convolve_U8_U8_9x3(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, int srcImageBufferOffset, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -2768,7 +2768,8 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
     { // load 136x24 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 4) * srcImageStrideInBytes + x - 4;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (goffset > -srcImageBufferOffset && goffset < srcImageBufferSize)
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 8) {
             loffset += 16 * 136;
@@ -2780,9 +2781,9 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 4) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 24) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset > -srcImageBufferOffset && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
-        }
+       }
         __syncthreads();
     }
     d_float8 sum = {0.0f};
@@ -3610,20 +3611,20 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
     fval = hip_unpack3(pix.y);
     sum.data[7] = fmaf(fval, conv[80], sum.data[7]);
 
-    sum.data[0] = sum.data[0] + -4.999899864197e-01f;
-    sum.data[1] = sum.data[1] + -4.999899864197e-01f;
-    sum.data[2] = sum.data[2] + -4.999899864197e-01f;
-    sum.data[3] = sum.data[3] + -4.999899864197e-01f;
-    sum.data[4] = sum.data[4] + -4.999899864197e-01f;
-    sum.data[5] = sum.data[5] + -4.999899864197e-01f;
-    sum.data[6] = sum.data[6] + -4.999899864197e-01f;
-    sum.data[7] = sum.data[7] + -4.999899864197e-01f;
+    sum.data[0] += -4.999899864197e-01f;
+    sum.data[1] += -4.999899864197e-01f;
+    sum.data[2] += -4.999899864197e-01f;
+    sum.data[3] += -4.999899864197e-01f;
+    sum.data[4] += -4.999899864197e-01f;
+    sum.data[5] += -4.999899864197e-01f;
+    sum.data[6] += -4.999899864197e-01f;
+    sum.data[7] += -4.999899864197e-01f;
 
     uint2 dst;
     dst.x = hip_pack(make_float4(sum.data[0], sum.data[1], sum.data[2], sum.data[3]));
     dst.y = hip_pack(make_float4(sum.data[4], sum.data[5], sum.data[6], sum.data[7]));
 
-    uint dstIdx =  y * dstImageStrideInBytes + x;
+    uint dstIdx = y * dstImageStrideInBytes + x;
 
     if (valid) {
         *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -3632,44 +3633,44 @@ Hip_Convolve_U8_U8_9x9(uint dstWidth, uint dstHeight,
 
 int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight) {
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
+    vx_uint32 srcImageBufferOffset, float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight) {
 
-        int localThreads_x = 16;
-        int localThreads_y = 16;
-        int globalThreads_x = (dstWidth + 7) >> 3;
-        int globalThreads_y = dstHeight;
+    int localThreads_x = 16;
+    int localThreads_y = 16;
+    int globalThreads_x = (dstWidth + 7) >> 3;
+    int globalThreads_y = dstHeight;
 
     if (convolutionWidth == 3 && convolutionHeight == 3) {
         hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                            conv);
+                            srcImageBufferSize, conv);
     } else if (convolutionWidth == 5 && convolutionHeight == 5) {
         hipLaunchKernelGGL(Hip_Convolve_U8_U8_5x5, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                            conv);
+                            srcImageBufferSize, conv);
     } else if (convolutionWidth == 7 && convolutionHeight == 7) {
         hipLaunchKernelGGL(Hip_Convolve_U8_U8_7x7, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                            conv);
+                            srcImageBufferSize, conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 9) {
         hipLaunchKernelGGL(Hip_Convolve_U8_U8_9x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                            conv);
+                            srcImageBufferSize, srcImageBufferOffset, conv);
     } else if (convolutionWidth == 3 && convolutionHeight == 9) {
         hipLaunchKernelGGL(Hip_Convolve_U8_U8_3x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                            conv);
+                            srcImageBufferSize, conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 3) {
         hipLaunchKernelGGL(Hip_Convolve_U8_U8_9x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
                             (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                            conv);
+                            srcImageBufferSize, conv);
     } else {
         return VX_ERROR_NOT_IMPLEMENTED;
     }
@@ -3679,9 +3680,9 @@ int HipExec_Convolve_U8_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dst
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -3705,7 +3706,7 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -3837,7 +3838,7 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
     dst.w = ((int)hip_clamp(sum.data[6], -32768.0f, 32767.0f)) & 0xffff;
     dst.w |= ((int)hip_clamp(sum.data[7], -32768.0f, 32767.0f)) << 16;
 
-    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
         *((int4 *)(&pDstImage[dstIdx])) = dst;
@@ -3846,9 +3847,9 @@ Hip_Convolve_S16_U8_3x3(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -3872,7 +3873,7 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 2) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 20) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -4177,7 +4178,7 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
     dst.w = ((int)hip_clamp(sum.data[6], -32768.0f, 32767.0f)) & 0xffff;
     dst.w |= ((int)hip_clamp(sum.data[7], -32768.0f, 32767.0f)) << 16;
 
-    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
         *((int4 *)(&pDstImage[dstIdx])) = dst;
@@ -4186,9 +4187,9 @@ Hip_Convolve_S16_U8_5x5(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -4212,7 +4213,7 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 3) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 22) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -4752,7 +4753,7 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
     dst.w = ((int)hip_clamp(sum.data[6], -32768.0f, 32767.0f)) & 0xffff;
     dst.w |= ((int)hip_clamp(sum.data[7], -32768.0f, 32767.0f)) << 16;
 
-    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
         *((int4 *)(&pDstImage[dstIdx])) = dst;
@@ -4761,9 +4762,9 @@ Hip_Convolve_S16_U8_7x7(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -4787,7 +4788,7 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 4) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 24) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -5149,7 +5150,7 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
     dst.w = ((int)hip_clamp(sum.data[6], -32768.0f, 32767.0f)) & 0xffff;
     dst.w |= ((int)hip_clamp(sum.data[7], -32768.0f, 32767.0f)) << 16;
 
-    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
         *((int4 *)(&pDstImage[dstIdx])) = dst;
@@ -5158,9 +5159,9 @@ Hip_Convolve_S16_U8_3x9(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -5184,7 +5185,7 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 1) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 18) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -5487,7 +5488,7 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
     dst.w = ((int)hip_clamp(sum.data[6], -32768.0f, 32767.0f)) & 0xffff;
     dst.w |= ((int)hip_clamp(sum.data[7], -32768.0f, 32767.0f)) << 16;
 
-    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
         *((int4 *)(&pDstImage[dstIdx])) = dst;
@@ -5496,9 +5497,9 @@ Hip_Convolve_S16_U8_9x3(uint dstWidth, uint dstHeight,
 
 __global__ void __attribute__((visibility("default")))
 Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
-    uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float *conv) {
+    uchar *pDstImage, int dstImageStrideInBytes,
+    const uchar *pSrcImage, int srcImageStrideInBytes,
+    int srcImageBufferSize, int srcImageBufferOffset, float *conv) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -5510,7 +5511,8 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
     { // load 136x24 bytes into local memory using 16x16 workgroup
         int loffset = ly * 136 + (lx << 3);
         int goffset = (y - 4) * srcImageStrideInBytes + x - 4;
-        *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
+        if (goffset > -srcImageBufferOffset && goffset < srcImageBufferSize)
+            *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         bool doExtraLoad = false;
         if (ly < 8) {
             loffset += 16 * 136;
@@ -5522,7 +5524,7 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
             goffset = (y - ly + id - 4) * srcImageStrideInBytes + (((x >> 3) - lx) << 3) + 124;
             doExtraLoad = (id < 24) ? true : false;
         }
-        if (doExtraLoad) {
+        if (doExtraLoad && goffset > -srcImageBufferOffset && goffset < srcImageBufferSize) {
             *((uint2 *)(&lbuf[loffset])) = *((uint2 *)(&pSrcImage[goffset]));
         }
         __syncthreads();
@@ -6362,7 +6364,7 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
     dst.w  = ((int)hip_clamp(sum.data[6], -32768.0f, 32767.0f)) & 0xffff;
     dst.w |= ((int)hip_clamp(sum.data[7], -32768.0f, 32767.0f)) << 16;
 
-    uint dstIdx =  y * dstImageStrideInBytes + x + x;
+    uint dstIdx = y * dstImageStrideInBytes + x + x;
 
     if (valid) {
         *((int4 *)(&pDstImage[dstIdx])) = dst;
@@ -6371,7 +6373,7 @@ Hip_Convolve_S16_U8_9x9(uint dstWidth, uint dstHeight,
 
 int HipExec_Convolve_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize, vx_uint32 srcImageBufferOffset,
     float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight) {
 
     int localThreads_x = 16;
@@ -6382,32 +6384,32 @@ int HipExec_Convolve_S16_U8(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 ds
     if ((convolutionWidth == 3) && (convolutionHeight == 3)) {
         hipLaunchKernelGGL(Hip_Convolve_S16_U8_3x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 5 && convolutionHeight == 5) {
         hipLaunchKernelGGL(Hip_Convolve_S16_U8_5x5, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 7 && convolutionHeight == 7) {
         hipLaunchKernelGGL(Hip_Convolve_S16_U8_7x7, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 9) {
         hipLaunchKernelGGL(Hip_Convolve_S16_U8_9x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize, srcImageBufferOffset,
                             conv);
     } else if (convolutionWidth == 3 && convolutionHeight == 9) {
         hipLaunchKernelGGL(Hip_Convolve_S16_U8_3x9, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else if (convolutionWidth == 9 && convolutionHeight == 3) {
         hipLaunchKernelGGL(Hip_Convolve_S16_U8_9x3, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                             dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                            (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                            (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcImageBufferSize,
                             conv);
     } else {
         return VX_ERROR_NOT_IMPLEMENTED;

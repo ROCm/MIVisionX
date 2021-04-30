@@ -2466,7 +2466,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     def __init__(self, brightness=1.0, bytes_per_sample_hint=0, image_type=0,
                  preserve=False, seed=-1, device= None):
         Node().__init__()
-        self._brighness = brightness;
+        self._brighness = brightness
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
         self._preserve = preserve

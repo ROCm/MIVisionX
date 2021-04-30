@@ -264,7 +264,7 @@ int main(int argc, const char ** argv)
             mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
             cv::imshow("output",mat_output);
         }
-        cv::waitKey(-1);
+        cv::waitKey(1);
         col_counter = (col_counter+1)%number_of_cols;
     }
 

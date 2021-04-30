@@ -16642,14 +16642,9 @@ int agoKernel_FastCorners_XY_U8_Supression(AgoNode * node, AgoKernelCommand cmd)
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
-        vx_uint32 numXY = 0;
-        if (HipExec_FastCorners_XY_U8_Supression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, (vx_keypoint_t *)oXY->hip_memory, oXY->gpu_buffer_offset, &numXY,
-            iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold, node->localDataPtr)) {
+        if (HipExec_FastCorners_XY_U8_Supression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
+            iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;
-        }
-        else {
-            oXY->u.arr.numitems = min(numXY, (vx_uint32)oXY->u.arr.capacity);
-            if (oNumCorners) oNumCorners->u.scalar.u.s = numXY;
         }
     }
 #endif
@@ -16719,14 +16714,9 @@ int agoKernel_FastCorners_XY_U8_NoSupression(AgoNode * node, AgoKernelCommand cm
         AgoData * oNumCorners = node->paramList[1];
         AgoData * iImg = node->paramList[2];
         vx_float32 strength_threshold = node->paramList[3]->u.scalar.u.f;
-        vx_uint32 numXY = 0;
-        if (HipExec_FastCorners_XY_U8_NoSupression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, (vx_keypoint_t *)oXY->hip_memory, oXY->gpu_buffer_offset, &numXY,
+        if (HipExec_FastCorners_XY_U8_NoSupression(node->hip_stream0, (vx_uint32)oXY->u.arr.capacity, oXY->hip_memory, oXY->gpu_buffer_offset,
             iImg->u.img.width, iImg->u.img.height, iImg->hip_memory + iImg->gpu_buffer_offset, iImg->u.img.stride_in_bytes, strength_threshold)) {
             status = VX_FAILURE;
-        }
-        else {
-            oXY->u.arr.numitems = min(numXY, (vx_uint32)oXY->u.arr.capacity);
-            if (oNumCorners) oNumCorners->u.scalar.u.s = numXY;
         }
     }
 #endif

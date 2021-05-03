@@ -203,7 +203,6 @@ int main(int argc, const char ** argv)
     int iter_cnt = 0;
     float  pmul = 2.0f/255;
     float  padd = -1.0f;
-    unsigned imagename_size = 0;
     while (!raliIsEmpty(handle) && (iter_cnt < 100))
     {
         if(raliRun(handle) != 0)
@@ -215,7 +214,7 @@ int main(int argc, const char ** argv)
             raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
         raliGetImageLabels(handle, labels.data());
-        imagename_size = raliGetImageNameLen(handle,ImageNameLen);
+        unsigned imagename_size = raliGetImageNameLen(handle,ImageNameLen);
         char imageNames[imagename_size]; 
         raliGetImageName(handle,imageNames);
         std::string imageNamesStr(imageNames);

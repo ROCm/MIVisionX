@@ -617,7 +617,7 @@ class Cifar10DataReader(Node):
     tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
     """
 
-    def __init__(self, file_root, file_prefix, file_list='',  num_shards=1, random_shuffle=False, 
+    def __init__(self, file_root, file_prefix, file_list='',  num_shards=1, random_shuffle=False,
                  seed=-1, shard_id=0, shuffle_after_epoch=False, device=None):
 
         Node().__init__()
@@ -1309,7 +1309,7 @@ class Cifar10Decoder(Node):
         b.setSeed(self._seed)
         # for Cifar10 decoder, previous node has to be decoder
         if(self.prev.prev.data == "Cifar10DataReader"):
-            output_image = b.Cifar10Decoder(handle, input_image, types.RGB, is_output, decode_width, decode_height, self._file_prefix, false)
+            output_image = b.Cifar10Decoder(handle, input_image, types.RGB, is_output, decode_width, decode_height, self._file_prefix)
         #elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
         #    output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         #elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):

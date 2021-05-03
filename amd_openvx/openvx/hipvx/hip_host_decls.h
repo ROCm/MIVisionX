@@ -653,13 +653,13 @@ int HipExec_Gaussian_U8_U8_3x3(
 int HipExec_Convolve_U8_U8(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
+        vx_uint32 srcImageBufferOffset, float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
 int HipExec_Convolve_S16_U8(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_int16 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
-        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-        float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
+        const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_uint32 srcImageBufferSize,
+        vx_uint32 srcImageBufferOffset, float *conv, vx_uint32 convolutionWidth, vx_uint32 convolutionHeight);
 int HipExec_Sobel_S16S16_U8_3x3_GXY(
         hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
         vx_int16 *pHipDstImage1, vx_uint32 dstImage1StrideInBytes,

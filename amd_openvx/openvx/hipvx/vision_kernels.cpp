@@ -3407,9 +3407,7 @@ int HipExec_CannySuppThreshold_U8XY_U16_3x3(hipStream_t stream,
 
 __global__ void __attribute__((visibility("default")))
 Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, uint cornerBufferOffset,
-    uint srcWidth, uint srcHeight,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float strength_threshold) {
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes, float strength_threshold) {
 
     int idx = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) + 3;
     int idy = (hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y) + 3;
@@ -3425,7 +3423,7 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, 
     candn = pTempImg[-3];
     neg_mask = (candp < centerPixel_neg) | ((candn < centerPixel_neg) << 8);
     pos_mask = (candp > centerPixel_pos) | ((candn > centerPixel_pos) << 8);
-    int offs = -stride*3;
+    int offs = -stride * 3;
     candp = pTempImg[offs];
     candn = pTempImg[-offs];
     neg_mask |= (((candp < centerPixel_neg) << 4) | ((candn < centerPixel_neg) << 12));
@@ -3433,13 +3431,13 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, 
     if(((pos_mask | neg_mask) & MASK_EARLY_EXIT) == 0)
         return;
 
-    offs = -stride*3 + 1;
+    offs = -stride * 3 + 1;
     candp = pTempImg[offs];
     candn = pTempImg[-offs];
     neg_mask |= (((candp < centerPixel_neg) << 3) | ((candn < centerPixel_neg) << 11));
     pos_mask |= (((candp > centerPixel_pos) << 3) | ((candn > centerPixel_pos) << 11));
 
-    offs = -stride*3 - 1;
+    offs = -stride * 3 - 1;
     candp = pTempImg[offs];
     candn = pTempImg[-offs];
     neg_mask |= (((candp < centerPixel_neg) << 5) | ((candn < centerPixel_neg) << 13));
@@ -3474,18 +3472,18 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, 
 
     int cornerMask = 511, isCorner = 0;
 
-    for(int i = 0; i < 16; i++)	{
+    for(int i = 0; i < 16; i++) {
         isCorner += ((pos_mask & cornerMask) == cornerMask);
         isCorner += ((neg_mask & cornerMask) == cornerMask);
         pos_mask >>= 1;
         neg_mask >>= 1;
     }
 
-    uint *numKeypoints = (uint *) pDstCorners;
+    int *numKeypoints = (int *) pDstCorners;
     d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + cornerBufferOffset);
-    if(isCorner) {
-        uint old_idx = atomicInc(numKeypoints, 1);
-        if(old_idx < capacityOfDstCorner) {
+    if (isCorner) {
+        int old_idx = atomicAdd(numKeypoints, 1);
+        if (old_idx < capacityOfDstCorner) {
             keypt_list[old_idx].x = idx;
             keypt_list[old_idx].y = idy;
             keypt_list[old_idx].strength = strength_threshold;
@@ -3496,9 +3494,8 @@ Hip_FastCorners_XY_U8_NoSupression(uint capacityOfDstCorner, char *pDstCorners, 
         }
     }
 }
-int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 cornerBufferOffset, vx_uint32 *pHipDstCornerCount,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
+int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_uint8 *pDstCorner, vx_uint32 cornerBufferOffset,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
     vx_float32 strength_threshold) {
     int localThreads_x = 16;
     int localThreads_y = 16;
@@ -3506,7 +3503,7 @@ int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacit
     int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
 
     hipLaunchKernelGGL(Hip_FastCorners_XY_U8_NoSupression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner, cornerBufferOffset,
+                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pDstCorner, cornerBufferOffset,
                         srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         strength_threshold);
 
@@ -3515,9 +3512,7 @@ int HipExec_FastCorners_XY_U8_NoSupression(hipStream_t stream, vx_uint32 capacit
 
 __global__ void __attribute__((visibility("default")))
 Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, uint cornerBufferOffset,
-    uint srcWidth, uint srcHeight,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
-    float strength_threshold) {
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, int srcImageStrideInBytes, float strength_threshold) {
 
     int lidx = hipThreadIdx_x;
     int lidy = hipThreadIdx_y;
@@ -3525,8 +3520,8 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
     int gidy = hipBlockIdx_y;
     int xoffset = gidx * 14 + lidx + 2;
     int yoffset = gidy * 14 + lidy + 2;
-    const uchar *pTempImg = pSrcImage + hip_mad24(yoffset, (int)srcImageStrideInBytes, xoffset);
-    int pLocalStrengthShare[16][16];
+    const uchar *pTempImg = pSrcImage + hip_mad24(yoffset, srcImageStrideInBytes, xoffset);
+    __shared__ int pLocalStrengthShare[16][16];
     bool doCompute = true;
     if((xoffset > (int)srcWidth - 3) || (yoffset > (int)srcHeight - 3) || (xoffset < 3) || (yoffset < 3)) {
         doCompute = false;
@@ -3534,11 +3529,11 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
     }
 
     int local_strength = 0;
-    if(doCompute) {
+    if (doCompute) {
         int boundary[16];
         int pos_mask, neg_mask, offs;
         int centerPixel_neg = pTempImg[0];
-        for(int i = 0; i < 16; i++)
+        for (int i = 0; i < 16; i++)
             boundary[i] = centerPixel_neg;
         int centerPixel_pos = centerPixel_neg + (int)strength_threshold;
         centerPixel_neg -= (int) strength_threshold;
@@ -3558,9 +3553,8 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
         if(((pos_mask | neg_mask) & MASK_EARLY_EXIT) == 0) {
             pLocalStrengthShare[lidy][lidx] = 0;
             doCompute = false;
-        }
-        else {
-            offs = -srcImageStrideInBytes*3 + 1;
+        } else {
+            offs = -srcImageStrideInBytes * 3 + 1;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 3) | ((candn < centerPixel_neg) << 11));
@@ -3568,7 +3562,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
             boundary[3] -= candp;
             boundary[11] -= candn;
 
-            offs = -srcImageStrideInBytes*3 - 1;
+            offs = -srcImageStrideInBytes * 3 - 1;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 5) | ((candn < centerPixel_neg) << 13));
@@ -3576,7 +3570,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
             boundary[5] -= candp;
             boundary[13] -= candn;
 
-            offs = -(srcImageStrideInBytes<<1) + 2;
+            offs = -(srcImageStrideInBytes << 1) + 2;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 2) | ((candn < centerPixel_neg) << 10));
@@ -3584,7 +3578,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
             boundary[2] -= candp;
             boundary[10] -= candn;
 
-            offs = -(srcImageStrideInBytes<<1) - 2;
+            offs = -(srcImageStrideInBytes << 1) - 2;
             candp = pTempImg[offs];
             candn = pTempImg[-offs];
             neg_mask |= (((candp < centerPixel_neg) << 6) | ((candn < centerPixel_neg) << 14));
@@ -3624,8 +3618,7 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
             if(isCorner == 0) {
                 pLocalStrengthShare[lidy][lidx] = 0;
                 doCompute = false;
-            }
-            else {
+            } else {
                 int strength;
                 int tmp = 0;
                 for (int i = 0; i < 16; i += 2)	{
@@ -3660,24 +3653,24 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
     __syncthreads();
 
     bool writeCorner = doCompute &&
-                        (lidx > 0) &&
-                        (lidy > 0) &&
-                        (lidx < 15) &&
-                        (lidy < 15) &&
-                        (local_strength >= pLocalStrengthShare[lidy-1][lidx-1]) &&
-                        (local_strength >= pLocalStrengthShare[lidy-1][lidx]) &&
-                        (local_strength >= pLocalStrengthShare[lidy-1][lidx+1]) &&
-                        (local_strength >= pLocalStrengthShare[lidy][lidx-1]) &&
-                        (local_strength > pLocalStrengthShare[lidy][lidx+1]) &&
-                        (local_strength > pLocalStrengthShare[lidy+1][lidx-1]) &&
-                        (local_strength > pLocalStrengthShare[lidy+1][lidx]) &&
-                        (local_strength >= pLocalStrengthShare[lidy+1][lidx+1]);
+                       (lidx > 0) &&
+                       (lidy > 0) &&
+                       (lidx < 15) &&
+                       (lidy < 15) &&
+                       (local_strength >= pLocalStrengthShare[lidy - 1][lidx - 1]) &&
+                       (local_strength >= pLocalStrengthShare[lidy - 1][lidx]) &&
+                       (local_strength >= pLocalStrengthShare[lidy - 1][lidx + 1]) &&
+                       (local_strength >= pLocalStrengthShare[lidy][lidx - 1]) &&
+                       (local_strength >  pLocalStrengthShare[lidy][lidx + 1]) &&
+                       (local_strength >  pLocalStrengthShare[lidy + 1][lidx - 1]) &&
+                       (local_strength >  pLocalStrengthShare[lidy + 1][lidx]) &&
+                       (local_strength >= pLocalStrengthShare[lidy + 1][lidx + 1]);
 
-    uint *numKeypoints = (uint *) pDstCorners;
+    int *numKeypoints = (int *) pDstCorners;
     d_KeyPt *keypt_list = (d_KeyPt *) (pDstCorners + cornerBufferOffset);
-    if(writeCorner)	{
-        uint old_idx = atomicInc(numKeypoints, 1);
-        if(old_idx < capacityOfDstCorner) {
+    if (writeCorner) {
+        int old_idx = atomicAdd(numKeypoints, 1);
+        if (old_idx < capacityOfDstCorner) {
             keypt_list[old_idx].x = xoffset;
             keypt_list[old_idx].y = yoffset;
             keypt_list[old_idx].strength = (float) local_strength;
@@ -3688,17 +3681,15 @@ Hip_FastCorners_XY_U8_Supression(uint capacityOfDstCorner, char *pDstCorners, ui
         }
     }
 }
-int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_keypoint_t pHipDstCorner[], vx_uint32 cornerBufferOffset, vx_uint32 *pHipDstCornerCount,
-    vx_uint32 srcWidth, vx_uint32 srcHeight,
-    const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes,
-    vx_float32 strength_threshold, vx_uint8 *pHipScratch) {
+int HipExec_FastCorners_XY_U8_Supression(hipStream_t stream, vx_uint32 capacityOfDstCorner, vx_uint8* pDstCorner, vx_uint32 cornerBufferOffset,
+    vx_uint32 srcWidth, vx_uint32 srcHeight, const vx_uint8 *pHipSrcImage, vx_uint32 srcImageStrideInBytes, vx_float32 strength_threshold) {
     int localThreads_x = 16;
     int localThreads_y = 16;
     int globalThreads_x = ceil((srcWidth - 4) / 14) * 16;
     int globalThreads_y = ceil((srcHeight - 4) / 14) * 16;
 
     hipLaunchKernelGGL(Hip_FastCorners_XY_U8_Supression, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
-                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pHipDstCorner, cornerBufferOffset,
+                        dim3(localThreads_x, localThreads_y), 0, stream, capacityOfDstCorner, (char *) pDstCorner, cornerBufferOffset,
                         srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         strength_threshold);
 

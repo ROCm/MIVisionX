@@ -59,7 +59,7 @@ class inference_control(QtWidgets.QMainWindow):
 
     def browseFile(self):
         if self.format_comboBox.currentText() == 'nnef':
-            self.file_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))    
+            self.file_lineEdit.setText(QtWidgets.QFileDialog.getExistingDirectory(self, 'Open Folder', './'))
         else:
             self.file_lineEdit.setText(QtWidgets.QFileDialog.getOpenFileName(self, 'Open File', './', '*'))
 

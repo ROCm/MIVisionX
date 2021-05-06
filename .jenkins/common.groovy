@@ -68,7 +68,7 @@ def runTestCommand (platform, project) {
     if (platform.jenkinsLabel.contains('centos') || platform.jenkinsLabel.contains('ubuntu')) {
         conformaceCPU = 'AGO_DEFAULT_TARGET=CPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance | tee OpenVX-CPU-Conformance-log.md'
         conformaceOpenCL = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-HarrisCorners.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.OnRandomAndNatural:-*.vxWeightedAverage:-vxCanny.*:-*.MapRandomRemap:*.* | tee OpenVX-GPU-OPENCL-Conformance-log.md'
-        conformaceHIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-*.VirtualArray:-FastCorners.*:-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.GraphState:-*.MapRandomRemap:-*.OnRandomAndNatural:-*.vxWeightedAverage:-Scale.GraphProcessing:-WarpPerspective.GraphProcessing:-Remap.GraphProcessing:-GaussianPyramid.GraphProcessing:-HalfScaleGaussian.GraphProcessing:*.* | tee OpenVX-GPU-HIP-Conformance-log.md'
+        conformaceHIP = 'AGO_DEFAULT_TARGET=GPU LD_LIBRARY_PATH=./lib ./bin/vx_test_conformance --filter=-*.VirtualArray:-HarrisCorners.*:-vxCanny.*:-*.ReplicateNode:-*.ImageContainmentRelationship:-*.GraphState:-*.MapRandomRemap:-*.OnRandomAndNatural:-*.vxWeightedAverage:-Scale.GraphProcessing:-WarpPerspective.GraphProcessing:-Remap.GraphProcessing:-GaussianPyramid.GraphProcessing:-HalfScaleGaussian.GraphProcessing:*.* | tee OpenVX-GPU-HIP-Conformance-log.md'
         moveFiles = 'mv *.md ../../'
     }
 

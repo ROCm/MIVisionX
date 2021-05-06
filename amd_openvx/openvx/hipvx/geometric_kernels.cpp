@@ -445,7 +445,7 @@ int HipExec_ScaleImage_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dst
     hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Bilinear_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes, srcWidth, srcHeight,
-                        xscale, yscale, xoffset, yoffset, (uint) 0xaabbccdd);
+                        xscale, yscale, xoffset, yoffset, borderValue);
 
     return VX_SUCCESS;
 }

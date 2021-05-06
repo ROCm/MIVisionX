@@ -47,9 +47,9 @@ _shuffle_time("shuffle_time", DBG_TIMING)
 unsigned VideoReader::count()
 {
     if(_loop)
-        return _video_frame_count;
+        return _total_video_frames_count;
     
-    int ret = (int)(_video_frame_count - _read_counter);
+    int ret = (int)(_total_video_frames_count - _read_counter);
     return ((ret <= 0) ? 0 : ret);
 }
 
@@ -63,29 +63,58 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _batch_count = desc.get_batch_size();
     _shuffle = desc.shuffle();
     _loop = desc.loop();
-    ret = subfolder_reading();
-    _video_file_count = _video_file_names.size();
+    _video_count = desc.get_video_count();
+    // ret = subfolder_reading();
+    // _video_file_count = _video_file_names.size();
+    _video_file_names = desc.get_video_file_names();
     _sequence_length = desc.get_sequence_length();
-    // _video_frame_count = desc.get_frame_count();
-    _video_frame_count = desc.get_total_frames_count();
-    // the following code is required to make every shard the same size:: required for multi-gpu training
-    if (_shard_count > 1 && _batch_count > 1) { // check needed
-        int _num_batches = _video_file_names.size()/_batch_count; // check needed
-        int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count; // check needed
-        max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count; // check needed
-        if (_num_batches < max_batches_per_shard) { // check needed
-            replicate_last_batch_to_pad_partial_shard(); // check needed
+    _video_frame_count = desc.get_frame_count();
+    _total_video_frames_count = 0;
+
+    // get the width and height for every video _actual_decoded & original
+    // fill the _video_frame_start_idx & _video_idx  based on sequence length and frame count
+    // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
+    //for sample test
+    //_video_frame_count[3] = {30, 25, 54};
+
+    size_t count_sequence;
+    for(size_t i = 0; i < _video_count; i++)
+    {
+        count_sequence = 0;
+        // std::cerr << "\n Frames per video : " << _video_frame_count[i];
+        int loop_index;
+
+        loop_index = _video_frame_count[i] / _sequence_length;
+        for(int j = 0; j < loop_index; j++)
+        {
+            _frame_sequences.push_back(std::make_tuple(i, count_sequence));
+            count_sequence = count_sequence + _sequence_length;
         }
+        _total_video_frames_count += (loop_index * _sequence_length);
     }
+    
+
+    std::cerr << "The total frames count : " << _total_video_frames_count << "\n";
+    desc.set_total_frames_count(_total_video_frames_count);
+
+    // // the following code is required to make every shard the same size:: required for multi-gpu training
+    // if (_shard_count > 1 && _batch_count > 1) { // check needed
+    //     int _num_batches = _frame_sequences.size()/_batch_count; // check needed
+    //     int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count; // check needed
+    //     max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count; // check needed
+    //     if (_num_batches < max_batches_per_shard) { // check needed
+    //         replicate_last_batch_to_pad_partial_shard(); // check needed
+    //     }
+    // }
     if( ret==Reader::Status::OK && _shuffle)
-        std::random_shuffle(_video_file_names.begin(), _video_file_names.end());
+        std::random_shuffle(_frame_sequences.begin(), _frame_sequences.end());
     return ret;
 }
 
 void VideoReader::incremenet_read_ptr()
 {
-    _read_counter+= _sequence_length;
-    _curr_file_idx = (_curr_file_idx + 1) % _video_file_names.size();
+    _read_counter += _sequence_length;
+    _curr_file_idx = (_curr_file_idx + 1) % _frame_sequences.size();
 }
 
 size_t VideoReader::open()
@@ -96,8 +125,9 @@ size_t VideoReader::open()
 
 size_t VideoReader::read(unsigned char* buf, size_t read_size)
 {
-    auto file_path = _video_file_names[_curr_file_idx];// Get next file name
+    auto file_path = _video_file_names[std::get<0>(_frame_sequences[_curr_file_idx])];// Get next file name
     _last_id = file_path;
+    size_t start_frame = std::get<1>(_frame_sequences[_curr_file_idx]);
     incremenet_read_ptr();
     // _current_fPtr = fopen(file_path.c_str(), "rb");// Open the file,
     // if (!_current_fPtr || read_size < file_path.size())
@@ -105,8 +135,9 @@ size_t VideoReader::read(unsigned char* buf, size_t read_size)
     // fclose(_current_fPtr);
     // _current_fPtr = nullptr;
     // for video instead of reading the file, retun the filename instead
-    strcpy((char *)buf, file_path.c_str());
-    return file_path.size();
+    // strcpy((char *)buf, file_path.c_str());
+    // return file_path.size();
+    return start_frame;
 }
 
 
@@ -122,7 +153,7 @@ VideoReader::~VideoReader()
 
 void VideoReader::reset()
 {
-    if (_shuffle) std::random_shuffle(_video_file_names.begin(), _video_file_names.end());
+    if (_shuffle) std::random_shuffle(_frame_sequences.begin(), _frame_sequences.end());
     _read_counter = 0;
     _curr_file_idx = 0;
 }
@@ -188,7 +219,7 @@ Reader::Status VideoReader::subfolder_reading()
     return ret;
 }
 void VideoReader::replicate_last_image_to_fill_last_shard()
-{
+{ 
     for(size_t i = _in_batch_read_count; i < _batch_count; i++)
         _video_file_names.push_back(_last_file_name);
 }

@@ -23,6 +23,7 @@ THE SOFTWARE.
 
 #include <iterator>
 #include <cstring>
+#include <map>
 #include "video_decoder_factory.h"
 #include "video_read_and_decode.h"
 
@@ -72,72 +73,34 @@ void
 VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
 
-    std::cerr<<"\n ********************** VideoReadAndDecode::create ***************************** ";
+    // std::cerr<<"\n ********************** VideoReadAndDecode::create ***************************** ";
     _sequence_length = reader_config.get_sequence_length();
     _video_count = reader_config.get_video_count();
+    _video_names = reader_config.get_video_file_names();
     _batch_size = batch_size;
-    std::cerr<<"\n _sequence_length ::"<<_sequence_length;
-    std::cerr<<"\n _video_count:: "<<_video_count;
-    std::cerr<<"\n batchsize :: "<<_batch_size;
+    // std::cerr<<"\n _sequence_length ::"<<_sequence_length;
+    // std::cerr<<"\n _video_count:: "<<_video_count;
+    // std::cerr<<"\n batchsize :: "<<_batch_size;
 
-    _compressed_buff.resize(1);  
-    _video_decoder.resize(1);
-
-
+    _video_decoder.resize(_video_count);
     _video_names.resize(_sequence_length);
     _actual_decoded_width.resize(_sequence_length);
     _actual_decoded_height.resize(_sequence_length);
     _original_height.resize(_sequence_length);
     _original_width.resize(_sequence_length);
 
-    _video_frame_count.resize(_video_count);
-    // std::cerr << "\n Frame count :: " <<  reader_config.get_frame_count();
-    std::vector<size_t> frames_count_list;
-    frames_count_list.resize(_video_count);
-    frames_count_list = reader_config.get_frame_count();
- 
     _video_decoder_config = decoder_config;
-
-    // get the width and height for every video _actual_decoded & original
-    // fill the _video_frame_start_idx & _video_idx  based on sequence length and frame count
-    // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
-    //for sample test
-    //_video_frame_count[3] = {30, 25, 54};
-
-    for(int i = 0; i < _video_count; i++)
-    {
-        _video_frame_count[i] = frames_count_list[i];
-        int count_sequence = 0;
-        std::cerr << "\n Frames per video : " << _video_frame_count[i];
-        int loop_index;
-        if(_video_frame_count[i] % _sequence_length == 0)
-            loop_index = (_video_frame_count[i] / _sequence_length) - 1;
-        else
-            loop_index = _video_frame_count[i] / _sequence_length;
-        for(int j = 0; j <= loop_index; j++)
-        {
-            _video_frame_start_idx.push_back(count_sequence);
-            _video_idx.push_back(i);
-            count_sequence = count_sequence + _sequence_length;
-            // std::map<int, int>
-        }
-    }
-
     _index_start_frame = 0;
-    /*
-    std::cerr << "\nSize : " << _video_frame_start_idx.size();
-    for(int i = 0; i < _video_frame_start_idx.size(); i++)
-    {
-        std::cerr << "\n Video start_idx : " << _video_frame_start_idx[i];
-        std::cerr << "\t Video idx : " << _video_idx[i] << "\n";
-    }
-    */
 
-    _compressed_buff[0].resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
-    _video_decoder[0] = create_video_decoder(decoder_config);
-    
+    _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
+
+    for(int i=0; i < _video_count; i++)
+    {
+        _video_file_name_map.insert(std::pair<std::string, int>(_video_names[i], i));
+        _video_decoder[i] = create_video_decoder(decoder_config);  // Does it need to be created for each video ? 
+    }
     _reader = create_reader(reader_config);
-    std::cerr<<"\n=== The reader config is created  ====\n";
+    // std::cerr<<"\n=== The reader config is created  ====\n";
 }
 
 void
@@ -166,14 +129,14 @@ VideoReadAndDecode::load(unsigned char* buff,
                          RaliColorFormat output_color_format,
                          bool decoder_keep_original )
 {
+    // std::cerr << "\nHey is comes to load!!!!! - > " << _index_start_frame;
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
     if(!buff)
         THROW("Null pointer passed as output buffer")
     if(_reader->count() < _batch_size)
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
-    // load images/frames from the disk and push them as a large image onto the buff
-    unsigned file_counter = 0;
+
     const auto ret = video_interpret_color_format(output_color_format);
     const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
@@ -188,14 +151,13 @@ VideoReadAndDecode::load(unsigned char* buff,
         WRN("Opened file " + _reader->id() + " of size 0");
     }
 
-    _actual_read_size = _reader->read(_compressed_buff[file_counter].data(), fsize);
+    start_frame = _reader->read(_compressed_buff.data(), fsize);
     for(int s = 0; s < _sequence_length; s++)
     {
         _video_names[s] = _reader->id();
     }
 
     _reader->close();
-    _compressed_image_size = fsize;
 
     _file_load_time.end();// Debug timing
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
@@ -218,8 +180,8 @@ VideoReadAndDecode::load(unsigned char* buff,
             _original_width[s]  = original_width;
         }
 
-        index = (_index_start_frame >= _video_idx.size()) ? _index_start_frame - _video_idx.size() : _index_start_frame;
-        if(_video_decoder[i]->Decode(_decompressed_buff_ptrs, (_video_names[_video_idx[index]]).c_str(), _video_frame_start_idx[index], _sequence_length) != VideoDecoder::Status::OK)
+        // std::cerr << "\nThe source video is " << _video_names[0] << " MAP : "<<_video_file_name_map[_video_names[0]]<< "\tThe start index is : " << start_frame << "\n";
+        if(_video_decoder[_video_file_name_map[_video_names[0]]]->Decode(_decompressed_buff_ptrs, _video_names[0].c_str(), start_frame, _sequence_length) != VideoDecoder::Status::OK)
         {
             continue;
         }

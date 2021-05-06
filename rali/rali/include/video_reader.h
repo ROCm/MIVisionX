@@ -22,6 +22,7 @@ THE SOFTWARE.
 
 #pragma once
 #include <vector>
+#include <tuple>
 #include <string>
 #include <memory>
 #include <dirent.h>
@@ -75,8 +76,11 @@ private:
     DIR *_sub_dir;
     struct dirent *_entity;
     std::vector<std::string> _video_file_names;
+    size_t _video_count;
+    size_t _total_video_frames_count;
+    std::vector<size_t> _video_frame_count;
+    std::vector<std::tuple<size_t, size_t>> _frame_sequences;
     size_t _video_file_count;
-    size_t _video_frame_count;
     size_t _sequence_length;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;

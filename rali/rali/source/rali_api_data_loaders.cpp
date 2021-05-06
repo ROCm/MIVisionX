@@ -1354,6 +1354,7 @@ raliVideoFileSource(
         
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
+        std::vector<std::string> video_file_names;
 
         video_properties video_prop = find_video_properties(source_path);
         //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
@@ -1361,7 +1362,9 @@ raliVideoFileSource(
         height = video_prop.height ;
         number_of_video_files = video_prop.videos_count;
         frame_count.resize(number_of_video_files);
+        video_file_names.resize(number_of_video_files);
         frame_count = video_prop.frames_count; 
+        video_file_names = video_prop.video_file_names;
         std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
         std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";
         
@@ -1386,7 +1389,8 @@ raliVideoFileSource(
                                                                           shuffle,
                                                                           loop,
                                                                           context->user_batch_size(),
-                                                                          context->master_graph->mem_type());
+                                                                          context->master_graph->mem_type(),
+                                                                          video_file_names);
         context->master_graph->set_loop(loop);
 
         if(is_output)

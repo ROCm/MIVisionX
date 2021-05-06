@@ -1,3 +1,5 @@
+#include <tuple>
+#include <assert.h>
 #include <boost/filesystem.hpp>
 
 extern "C"

@@ -66,11 +66,9 @@ public:
 private:
     std::vector<std::shared_ptr<VideoDecoder>> _video_decoder;
     std::shared_ptr<Reader> _reader;
-    std::vector<std::vector<unsigned char>> _compressed_buff;
-    // std::vector<size_t> _actual_read_size;
+    std::vector<unsigned char> _compressed_buff;
     std::vector<std::string> _video_names; // based on video_count
-    // std::vector<size_t> _compressed_image_size;
-    // std::vector<unsigned char*> _decompressed_buff_ptrs;
+    std::map<std::string, int> _video_file_name_map;
     size_t _compressed_image_size;
     size_t _actual_read_size;
     unsigned char* _decompressed_buff_ptrs;
@@ -83,6 +81,7 @@ private:
     // [0,10,20,0,10,20,0,10,20,30,40,50] // for 3 videos with sequence_length 10 0video -  30 frames, 1video - 25 frames, 2video - 54 
     std::vector<size_t> _video_idx; 
     // [0,0,0,1,1,1,2,2,2,2,2,2] 
+    size_t start_frame;
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;

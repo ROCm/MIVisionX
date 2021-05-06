@@ -84,7 +84,7 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
 
 void VideoReader::incremenet_read_ptr()
 {
-    _read_counter++;
+    _read_counter+= _sequence_length;
     _curr_file_idx = (_curr_file_idx + 1) % _video_file_names.size();
 }
 

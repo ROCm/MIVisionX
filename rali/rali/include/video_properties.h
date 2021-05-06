@@ -101,7 +101,7 @@ video_properties find_video_properties(const char *source_path)
             {
                 _full_path.append(video_files[i]);
                 video_prop = open_video_context(_full_path.c_str());
-                if((video_prop[0] > max_width || video_prop[1] > max_height) && (max_width != 0 && max_height != 0))
+                if(video_prop[0] > max_width || video_prop[1] > max_height && (max_width != 0 && max_height != 0))
                 {
                     max_width = video_prop[0];
                     std::cerr << "[WARN] The given video files are of different resolution\n";

@@ -67,10 +67,13 @@ private:
     std::vector<std::shared_ptr<VideoDecoder>> _video_decoder;
     std::shared_ptr<Reader> _reader;
     std::vector<std::vector<unsigned char>> _compressed_buff;
-    std::vector<size_t> _actual_read_size;
+    // std::vector<size_t> _actual_read_size;
     std::vector<std::string> _video_names; // based on video_count
-    std::vector<size_t> _compressed_image_size;
-    std::vector<unsigned char*> _decompressed_buff_ptrs;
+    // std::vector<size_t> _compressed_image_size;
+    // std::vector<unsigned char*> _decompressed_buff_ptrs;
+    size_t _compressed_image_size;
+    size_t _actual_read_size;
+    unsigned char* _decompressed_buff_ptrs;
     std::vector<size_t> _actual_decoded_width; // check needed
     std::vector<size_t> _actual_decoded_height; // check needed
     std::vector<size_t> _original_width;// based on video_count
@@ -88,4 +91,6 @@ private:
     size_t _frame_count;
     VideoDecoderConfig _video_decoder_config;
     bool decoder_keep_original;
+    unsigned int _index_start_frame;
+    int index;
 };

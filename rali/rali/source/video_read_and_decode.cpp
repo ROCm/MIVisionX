@@ -28,8 +28,8 @@ THE SOFTWARE.
 
 namespace filesys = boost::filesystem;
 
-std::tuple<VideoDecoder::ColorFormat, unsigned > 
-video_interpret_color_format(RaliColorFormat color_format ) 
+std::tuple<VideoDecoder::ColorFormat, unsigned >
+video_interpret_color_format(RaliColorFormat color_format )
 {
     switch (color_format) {
         case RaliColorFormat::RGB24:
@@ -43,7 +43,7 @@ video_interpret_color_format(RaliColorFormat color_format )
 
         default:
             throw std::invalid_argument("Invalid color format\n");
-    }    
+    }
 }
 
 Timing
@@ -71,39 +71,42 @@ VideoReadAndDecode::~VideoReadAndDecode()
 void
 VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
-    // Can initialize it to any decoder types if needed
-    // find video_count resize newly introduced video wrt video count
-    //_video_count = _reader.get_video_file_count(); // check if we can use this. if not we can find the number of files/
+
     std::cerr<<"\n ********************** VideoReadAndDecode::create ***************************** ";
     _sequence_length = reader_config.get_sequence_length();
-    std::cerr<<"\n _sequence_length ::"<<_sequence_length;
     _video_count = reader_config.get_video_count();
-    std::cerr<<"\n _video_count:: "<<_video_count;
     _batch_size = batch_size;
+    std::cerr<<"\n _sequence_length ::"<<_sequence_length;
+    std::cerr<<"\n _video_count:: "<<_video_count;
     std::cerr<<"\n batchsize :: "<<_batch_size;
-    _compressed_buff.resize(batch_size);
-    _video_decoder.resize(_video_count); // It should not be for batch size but for every video in the path
-    _actual_read_size.resize(batch_size);
-    _video_names.resize(batch_size);
-    _compressed_image_size.resize(batch_size);
-    _decompressed_buff_ptrs.resize(_batch_size);
-    _actual_decoded_width.resize(_video_count);
-    _actual_decoded_height.resize(_video_count);
-    _original_height.resize(_video_count);
-    _original_width.resize(_video_count);
+
+    _compressed_buff.resize(1);  
+    _video_decoder.resize(1);
+
+
+    _video_names.resize(_sequence_length);
+    _actual_decoded_width.resize(_sequence_length);
+    _actual_decoded_height.resize(_sequence_length);
+    _original_height.resize(_sequence_length);
+    _original_width.resize(_sequence_length);
+
     _video_frame_count.resize(_video_count);
-    std::cerr << "\n Frame count :: " <<  reader_config.get_frame_count();
-    _video_frame_count[0] = reader_config.get_frame_count();
+    // std::cerr << "\n Frame count :: " <<  reader_config.get_frame_count();
+    std::vector<size_t> frames_count_list;
+    frames_count_list.resize(_video_count);
+    frames_count_list = reader_config.get_frame_count();
+ 
     _video_decoder_config = decoder_config;
 
     // get the width and height for every video _actual_decoded & original
     // fill the _video_frame_start_idx & _video_idx  based on sequence length and frame count
     // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
     //for sample test
-    //_video_frame_count[3] = {30, 25, 54}; 
+    //_video_frame_count[3] = {30, 25, 54};
 
     for(int i = 0; i < _video_count; i++)
     {
+        _video_frame_count[i] = frames_count_list[i];
         int count_sequence = 0;
         std::cerr << "\n Frames per video : " << _video_frame_count[i];
         int loop_index;
@@ -116,25 +119,28 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
             _video_frame_start_idx.push_back(count_sequence);
             _video_idx.push_back(i);
             count_sequence = count_sequence + _sequence_length;
+            // std::map<int, int>
         }
     }
-    /*std::cerr << "\nSize : " << _video_frame_start_idx.size();
+
+    _index_start_frame = 0;
+    /*
+    std::cerr << "\nSize : " << _video_frame_start_idx.size();
     for(int i = 0; i < _video_frame_start_idx.size(); i++)
     {
         std::cerr << "\n Video start_idx : " << _video_frame_start_idx[i];
-        std::cerr << "\n Video idx : " << _video_idx[i];
-    }*/
-
-    for(int i = 0; i < _video_count; i++)
-    {
-        _compressed_buff[i].resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
-        _video_decoder[i] = create_video_decoder(decoder_config);
-        // _video_decoder[i]->initialize() Is it gonna come here? 
+        std::cerr << "\t Video idx : " << _video_idx[i] << "\n";
     }
+    */
+
+    _compressed_buff[0].resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
+    _video_decoder[0] = create_video_decoder(decoder_config);
+    
     _reader = create_reader(reader_config);
+    std::cerr<<"\n=== The reader config is created  ====\n";
 }
 
-void 
+void
 VideoReadAndDecode::reset()
 {
     // TODO: Reload images from the folder if needed
@@ -148,7 +154,7 @@ VideoReadAndDecode::count()
 }
 
 
-VideoLoaderModuleStatus 
+VideoLoaderModuleStatus
 VideoReadAndDecode::load(unsigned char* buff,
                          std::vector<std::string>& names,
                          const size_t max_decoded_width,
@@ -173,72 +179,53 @@ VideoReadAndDecode::load(unsigned char* buff,
     const unsigned output_planes = std::get<1>(ret);
     const bool keep_original = decoder_keep_original; // check and remove
 
-    // Decode with the height and size equal to a single image  
+    // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start();// Debug timing
 
-    while ((file_counter != _batch_size) && _reader->count() > 0)
-    {
-        size_t fsize = 1280 * 720 * 3; //_reader->open(); Have to set the max frame size
-        if (fsize == 0) {
-            WRN("Opened file " + _reader->id() + " of size 0");
-            continue;
-        }
-
-        _compressed_buff[file_counter].reserve(fsize);
-
-        _actual_read_size[file_counter] = _reader->read(_compressed_buff[file_counter].data(), fsize);
-        _video_names[file_counter] = _reader->id();
-        _reader->close();
-        _compressed_image_size[file_counter] = fsize;
-        file_counter++;
+    size_t fsize = 1280 * 720 * 3;
+    if (fsize == 0) {
+        WRN("Opened file " + _reader->id() + " of size 0");
     }
+
+    _actual_read_size = _reader->read(_compressed_buff[file_counter].data(), fsize);
+    for(int s = 0; s < _sequence_length; s++)
+    {
+        _video_names[s] = _reader->id();
+    }
+
+    _reader->close();
+    _compressed_image_size = fsize;
 
     _file_load_time.end();// Debug timing
     const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
-    for(size_t i = 0; i < _batch_size; i++)
-        _decompressed_buff_ptrs[i] = buff + image_size * i;
+    _decompressed_buff_ptrs = buff;
 
     _decode_time.start();// Debug timing
 #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
-    for(size_t i= 0; i < _batch_size; i++)
+    
+    for(size_t i= 0; i < 1; i++)
     {
-        // initialize the actual decoded height and width with the maximum
-        _actual_decoded_width[i] = max_decoded_width;
-        _actual_decoded_height[i] = max_decoded_height;
-        
-        int original_width, original_height, jpeg_sub_samp;
-        /*if(_decoder[i]->decode_info(_compressed_buff[i].data(), _actual_read_size[i], &original_width, &original_height, &jpeg_sub_samp ) != Decoder::Status::OK)
-        {
-            continue;
-        }*/
-        _original_height[i] = original_height;
-        _original_width[i]  = original_width;
-#if 0
-        if((unsigned)original_width != max_decoded_width || (unsigned)original_height != max_decoded_height)
-            // Seeting the whole buffer to zero in case resizing to exact output dimension is not possible.
-            memset(_decompressed_buff_ptrs[i],0 , image_size);
-#endif
 
-        // decode the image and get the actual decoded image width and height
-        size_t scaledw, scaledh;
-        std::string out = "out.mp4";
-        // if we process 3rd video then we need to call _decode[2]
-        _video_decoder[i]->Decode(_decompressed_buff_ptrs[i], (_video_names[i]).c_str(), out.c_str());
-       
-        /*if(_decoder[i]->decode(_compressed_buff[i].data(),_compressed_image_size[i],_decompressed_buff_ptrs[i],
-                               max_decoded_width, max_decoded_height,
-                               original_width, original_height,
-                               scaledw, scaledh,
-                               decoder_color_format,_decoder_config, keep_original) != Decoder::Status::OK)
+        int original_width, original_height;
+
+        for(int s = 0; s < _sequence_length; s++)
+        {
+            _actual_decoded_width[s] = max_decoded_width;
+            _actual_decoded_height[s] = max_decoded_height;
+            _original_height[s] = original_height;
+            _original_width[s]  = original_width;
+        }
+
+        index = (_index_start_frame >= _video_idx.size()) ? _index_start_frame - _video_idx.size() : _index_start_frame;
+        if(_video_decoder[i]->Decode(_decompressed_buff_ptrs, (_video_names[_video_idx[index]]).c_str(), _video_frame_start_idx[index], _sequence_length) != VideoDecoder::Status::OK)
         {
             continue;
-        }*/
-        _actual_decoded_width[i] = scaledw;
-        _actual_decoded_height[i] = scaledh;
+        }
     }
-    for(size_t i = 0; i < _batch_size; i++)
+
+    for(size_t i = 0; i < _sequence_length ; i++)
     {
         names[i] = _video_names[i];
         roi_width[i] = _actual_decoded_width[i];
@@ -247,6 +234,7 @@ VideoReadAndDecode::load(unsigned char* buff,
         actual_height[i] = _original_height[i];
     }
 
+    ++ _index_start_frame; 
     _decode_time.end();// Debug timing
 
     return VideoLoaderModuleStatus::OK;

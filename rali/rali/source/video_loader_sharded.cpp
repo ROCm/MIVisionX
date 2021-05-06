@@ -78,7 +78,7 @@ VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decod
     if(_initialized)
         return;
     // _shard_count = reader_cfg.get_shard_count();
-    _shard_count = 1;
+    _shard_count = 1; // change the shard count to user given
     std::cerr<<"\n _shard_count:: "<<_shard_count;
     // Create loader modules
     for(size_t i = 0; i < _shard_count; i++)
@@ -86,7 +86,7 @@ VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decod
         auto loader = std::make_shared<VideoLoader>(_dev_resources);
         _loaders.push_back(loader);
     }
-    std::cerr<<"\n Finished creating loader module";
+    // std::cerr<<"\n Finished creating loader module";
     // Initialize loader modules
     for(size_t idx = 0; idx < _shard_count; idx++)
     {
@@ -95,7 +95,7 @@ VideoLoaderSharded::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decod
         reader_cfg.set_shard_id(idx);
         _loaders[idx]->initialize(reader_cfg, decoder_cfg, mem_type, batch_size, keep_orig_size);
     }
-    std::cerr<<"\n Finished initializing loader module";
+    // std::cerr<<"\n Finished initializing loader module\n";
     _initialized = true;
 }
 void VideoLoaderSharded::start_loading()

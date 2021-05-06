@@ -47,10 +47,10 @@ _shuffle_time("shuffle_time", DBG_TIMING)
 unsigned VideoReader::count()
 {
     if(_loop)
-        return _video_file_names.size();
-
-    int ret = ((int)_video_file_names.size() -_read_counter);
-    return ((ret < 0) ? 0 : ret);
+        return _video_frame_count;
+    
+    int ret = (int)(_video_frame_count - _read_counter);
+    return ((ret <= 0) ? 0 : ret);
 }
 
 Reader::Status VideoReader::initialize(ReaderConfig desc)
@@ -65,6 +65,9 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _loop = desc.loop();
     ret = subfolder_reading();
     _video_file_count = _video_file_names.size();
+    _sequence_length = desc.get_sequence_length();
+    // _video_frame_count = desc.get_frame_count();
+    _video_frame_count = desc.get_total_frames_count();
     // the following code is required to make every shard the same size:: required for multi-gpu training
     if (_shard_count > 1 && _batch_count > 1) { // check needed
         int _num_batches = _video_file_names.size()/_batch_count; // check needed
@@ -98,7 +101,7 @@ size_t VideoReader::read(unsigned char* buf, size_t read_size)
     incremenet_read_ptr();
     // _current_fPtr = fopen(file_path.c_str(), "rb");// Open the file,
     // if (!_current_fPtr || read_size < file_path.size())
-    //     return 0; 
+    //     return 0;
     // fclose(_current_fPtr);
     // _current_fPtr = nullptr;
     // for video instead of reading the file, retun the filename instead
@@ -218,7 +221,7 @@ Reader::Status VideoReader::open_folder()
         _in_batch_read_count++;
         _in_batch_read_count = (_in_batch_read_count%_batch_count == 0) ? 0 : _in_batch_read_count;
         std::string file_path = _folder_path;
-        file_path.append("/");
+        // file_path.append("/");
         file_path.append(_entity->d_name);
         _last_file_name = file_path;
         _video_file_names.push_back(file_path);

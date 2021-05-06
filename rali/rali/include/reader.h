@@ -23,6 +23,7 @@ THE SOFTWARE.
 #pragma once
 #include <string>
 #include <map>
+#include <vector>
 enum class StorageType
 {
     FILE_SYSTEM = 0,
@@ -36,7 +37,7 @@ enum class StorageType
 
 struct ReaderConfig
 {
-    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "", 
+    explicit ReaderConfig(StorageType type, std::string path = "", std::string json_path = "",
         const std::map<std::string, std::string> feature_key_map = std::map<std::string, std::string>(),
         bool shuffle = false, bool loop = false):_type(type), _path(path), _json_path(json_path), _feature_key_map(feature_key_map), _shuffle(shuffle), _loop(loop) {}
         virtual StorageType type() { return _type; };
@@ -54,13 +55,15 @@ struct ReaderConfig
     void set_loop( bool loop) { _loop = loop; }
     void set_sequence_length( unsigned sequence_length) { _sequence_length = sequence_length; }
     void set_video_count( unsigned video_count ) { _video_count = video_count; }
-    void set_frame_count( unsigned frame_count ) { _frame_count = frame_count; }
+    void set_frame_count( std::vector<size_t> frame_count ) { _frame_count = frame_count; }
+    void set_total_frames_count(size_t total) {_total_frames_count = total;}
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
     size_t get_sequence_length() { return _sequence_length; }
     size_t get_video_count() { return _video_count; }
-    size_t get_frame_count() { return _frame_count; }
+    std::vector<size_t> get_frame_count() { return _frame_count; }
+    size_t get_total_frames_count() {return _total_frames_count;}
     std::string path() { return _path; }
     std::string json_path() { return _json_path; }
     std::map<std::string, std::string> feature_key_map() {return _feature_key_map; }
@@ -76,7 +79,8 @@ private:
     size_t _batch_count = 1;//!< The reader will repeat images if necessary to be able to have images in multiples of the _batch_count.
     size_t _sequence_length = 1; // Video reader module sequence length
     unsigned _video_count;
-    unsigned _frame_count;
+    std::vector<size_t> _frame_count;
+    size_t _total_frames_count;
     bool _shuffle = false;
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader
@@ -100,20 +104,20 @@ public:
     virtual Status initialize(ReaderConfig desc) = 0;
     //! Reads the next resource item
     /*!
-     \param buf User's provided buffer to receive the loaded items	
+     \param buf User's provided buffer to receive the loaded items
      \return Size of the loaded resource
     */
- 
+
        //! Opens the next item and returns it's size
     /*!
      \return Size of the item, if 0 failed to access it
     */
     virtual size_t open() = 0;
-    
+
     //! Copies the data of the opened item to the buf
     virtual size_t read(unsigned char* buf, size_t read_size) = 0;
 
-    //! Closes the opened item 
+    //! Closes the opened item
     virtual int close() = 0;
 
     //! Starts reading from the first item in the resource

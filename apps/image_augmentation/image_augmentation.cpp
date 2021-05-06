@@ -27,6 +27,7 @@ THE SOFTWARE.
 #include <cstring>
 #include <chrono>
 #include <cstdio>
+#include <string>
 
 #include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
@@ -57,7 +58,7 @@ int main(int argc, const char ** argv)
     int decode_height = 0;
     bool processing_device = 1;
     size_t shard_count = 2;
-    unsigned sequence_length = 1;
+    unsigned sequence_length = 3;
     int shuffle = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
@@ -77,6 +78,7 @@ int main(int argc, const char ** argv)
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         display = atoi(argv[++argIdx]);
+        // display = 1;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         shard_count = atoi(argv[++argIdx]);
@@ -85,13 +87,15 @@ int main(int argc, const char ** argv)
         shuffle = atoi(argv[++argIdx]);
 
 
-    int inputBatchSize = 1;
+    int inputBatchSize = 10;
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
 
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24 : RaliImageColor::RALI_COLOR_U8;
 
-    auto handle = raliCreate(inputBatchSize, processing_device?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
+    RaliContext handle;
+
+    handle = raliCreate(inputBatchSize, processing_device?RaliProcessMode::RALI_PROCESS_GPU:RaliProcessMode::RALI_PROCESS_CPU, 0,1);
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -126,7 +130,7 @@ int main(int argc, const char ** argv)
             std::cout << "Output width and height is needed for video decode\n";
             return -1;
         }
-        input1 = raliVideoFileSource(handle, folderPath1, color_format, shard_count, sequence_length, false, true);
+        input1 = raliVideoFileSource(handle, folderPath1, color_format, shard_count, sequence_length, true, true, false);
     }
     else
     {
@@ -153,11 +157,11 @@ int main(int argc, const char ** argv)
         resize_w = decode_width;
         image0 = input1;
     }
-    else
+    /*else
     {
         image0 = raliResize(handle, input1, resize_w, resize_h, true);
     }
-    /*
+
     RaliImage image1 = raliRain(handle, image0, false);
 
     RaliImage image11 = raliFishEye(handle, image1, false);
@@ -185,9 +189,9 @@ int main(int argc, const char ** argv)
 
     RaliImage image9 = raliBlend(handle, image7, image8, false);
 
-    RaliImage image10 = raliLensCorrection(handle, image9, false);*/
+    RaliImage image10 = raliLensCorrection(handle, image9, false);
 
-    raliExposure(handle, image0, true);
+    raliExposure(handle, image0, true);*/
 
     if(raliGetStatus(handle) != RALI_OK)
     {
@@ -216,14 +220,16 @@ int main(int argc, const char ** argv)
     cv::Mat mat_input(h, w, cv_color_format);
     cv::Mat mat_color;
     int col_counter = 0;
-    if (display)
-        cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
+    // if (display)
+    //     cv::namedWindow( "output", CV_WINDOW_AUTOSIZE );
 
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
     int color_temp_increment = 1;
+    int count = 0;
     while (!raliIsEmpty(handle))
     {
+        count++;
         if(raliRun(handle) != 0)
             break;
 
@@ -240,14 +246,14 @@ int main(int argc, const char ** argv)
         mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
         if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
         {
-            cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imshow("output",mat_color);
+            // cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
+            cv::imwrite("output_"+std::to_string(count)+".png",mat_output);
         }
         else
         {
-            cv::imshow("output",mat_output);
+            cv::imwrite("output.png",mat_output);
         }
-        cv::waitKey(1);
+        // cv::waitKey(1);
         col_counter = (col_counter+1)%number_of_cols;
     }
     high_resolution_clock::time_point t2 = high_resolution_clock::now();

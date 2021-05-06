@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 
-#include <thread> 
+#include <thread>
 #include <chrono>
 #include "video_loader.h"
 #include "video_read_and_decode.h"
@@ -53,7 +53,7 @@ VideoLoader::remaining_count()
     return _remaining_image_count;
 }
 
-void 
+void
 VideoLoader::reset()
 {
     // stop the writer thread and empty the internal circular buffer
@@ -68,13 +68,13 @@ VideoLoader::reset()
 
     // resetting the reader thread to the start of the media
     _image_counter = 0;
-    _image_loader->reset();
+    _video_loader->reset();
 
     // Start loading (writer thread) again
     start_loading();
 }
 
-void 
+void
 VideoLoader::de_init()
 {
     // Set running to 0 and wait for the internal thread to join
@@ -124,11 +124,10 @@ VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg,
     _loop = reader_cfg.loop();
     _sequence_length = reader_cfg.get_sequence_length();
     _decoder_keep_original = decoder_keep_original; // Not needed check
-    //std::cerr<<"\n _sequence_length ::"<<_sequence_length;
-    _image_loader = std::make_shared<VideoReadAndDecode>();
+    _video_loader = std::make_shared<VideoReadAndDecode>();
     try
     {
-        _image_loader->create(reader_cfg, decoder_cfg, _batch_size);
+        _video_loader->create(reader_cfg, decoder_cfg, _batch_size);
 
         std::cerr<<"\n video VideoReadAndDecode created";
     }
@@ -137,11 +136,11 @@ VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg,
         de_init();
         throw;
     }
-    _decoded_img_info._image_names.resize(_batch_size);
-    _decoded_img_info._roi_height.resize(_batch_size);
-    _decoded_img_info._roi_width.resize(_batch_size);
-    _decoded_img_info._original_height.resize(_batch_size);
-    _decoded_img_info._original_width.resize(_batch_size);
+    _decoded_img_info._image_names.resize(_sequence_length);
+    _decoded_img_info._roi_height.resize(_sequence_length);
+    _decoded_img_info._roi_width.resize(_sequence_length);
+    _decoded_img_info._original_height.resize(_sequence_length);
+    _decoded_img_info._original_width.resize(_sequence_length);
     std::cerr<<"\n _output_mem_size:: "<<_output_mem_size;
     _circ_buff.init(_mem_type, _output_mem_size);
     _is_initialized = true;
@@ -154,13 +153,13 @@ VideoLoader::start_loading()
     if(!_is_initialized)
         THROW("start_loading() should be called after initialize() function is called")
 
-    _remaining_image_count = _image_loader->count();
+    _remaining_image_count = _video_loader->count();
     _internal_thread_running = true;
     _load_thread = std::thread(&VideoLoader::load_routine, this);
 }
 
 
-VideoLoaderModuleStatus 
+VideoLoaderModuleStatus
 VideoLoader::load_routine()
 {
     LOG("Started the internal loader thread");
@@ -175,7 +174,7 @@ VideoLoader::load_routine()
 
         auto load_status = VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
         {
-            load_status = _image_loader->load(data,
+            load_status = _video_loader->load(data,
                                              _decoded_img_info._image_names,
                                              _output_image->info().width(),
                                              _output_image->info().height_single(),
@@ -208,8 +207,8 @@ VideoLoader::load_routine()
                 last_load_status = load_status;
             }
 
-            // Here it sets the out-of-data flag and signal the circular buffer's internal 
-            // read semaphore using release() call 
+            // Here it sets the out-of-data flag and signal the circular buffer's internal
+            // read semaphore using release() call
             // , and calls the release() allows the reader thread to wake up and handle
             // the out-of-data case properly
             // It also slows down the reader thread since there is no more data to read,
@@ -222,12 +221,12 @@ VideoLoader::load_routine()
     return VideoLoaderModuleStatus::OK;
 }
 
-bool 
+bool
 VideoLoader::is_out_of_data()
 {
     return (remaining_count() < _batch_size) ;
 }
-VideoLoaderModuleStatus 
+VideoLoaderModuleStatus
 VideoLoader::update_output_image()
 {
     VideoLoaderModuleStatus status = VideoLoaderModuleStatus::OK;
@@ -245,8 +244,8 @@ VideoLoader::update_output_image()
         if(_output_image->swap_handle(data_buffer)!= 0)
             return VideoLoaderModuleStatus ::DEVICE_BUFFER_SWAP_FAILED;
         _swap_handle_time.end();
-    } 
-    else 
+    }
+    else
     {
         auto data_buffer = _circ_buff.get_read_buffer_host();
         _swap_handle_time.start();
@@ -270,7 +269,7 @@ VideoLoader::update_output_image()
 
 Timing VideoLoader::timing()
 {
-    auto t = _image_loader->timing();
+    auto t = _video_loader->timing();
     t.image_process_time = _swap_handle_time.get_timing();
     return t;
 }
@@ -315,8 +314,8 @@ decoded_image_info VideoLoader::get_decode_image_info()
 
 /*size_t VideoLoader::count()
 {
-    // TODO: use FFMPEG to find the total number of frames and keep counting 
-    // how many times laod_next() is called successfully, subtract them and 
+    // TODO: use FFMPEG to find the total number of frames and keep counting
+    // how many times laod_next() is called successfully, subtract them and
     // that would be the count of frames remained to be decoded
     return 9999999;
 }*/

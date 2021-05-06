@@ -118,8 +118,12 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     raliSetSeed(0);
 
     // Creating uniformly distributed random objects to override some of the default augmentation parameters
+#ifdef VIDEO_READER
+    /* dO NOTHING*/
+#else
     RaliFloatParam rand_crop_area = raliCreateFloatUniformRand(0.3, 0.5);
     RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
+
 
     // Creating a custom random object to set a limited number of values to randomize the rotation angle
     const size_t num_values = 3;
@@ -133,7 +137,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     double new_freq[2] = {40, 60};
     RaliIntParam rand_mirror = raliCreateIntRand(new_values, new_freq, 2);
 
-    /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
+#endif 
+   /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
 
     RaliMetaData meta_data;
     char key1[25] = "image/encoded";
@@ -217,7 +222,9 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #elif defined COCO_READER_PARTIAL
         input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
 #elif defined VIDEO_READER
+    int sequence_length = 1;
     input1 = raliVideoFileSource(handle, path, color_format, decode_device, 1, decode_max_width, decode_max_height,0);
+    // input1 = raliVideoFileSource(handle, path, color_format, decode_device, sequence_length, false, true);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
@@ -234,12 +241,13 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
     int resize_w = width, resize_h = height; // height and width
 
-    RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
+    // RaliImage image0 = input1;
+    //RaliImage image0 = raliResize(handle, input1, resize_w, resize_h, false);
 
     RaliFlipAxis axis_h = RALI_FLIP_HORIZONTAL;
     RaliFlipAxis axis_v = RALI_FLIP_VERTICAL;
 
-    RaliImage image1;
+    RaliImage image0, image1;
 
     switch (test_case)
     {
@@ -248,7 +256,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         std::cout << ">>>>>>> Running "
                   << "raliResize" << std::endl;
         //auto image_int = raliResize(handle, image0, resize_w , resize_h , false);
-        image1 = raliResize(handle, image0, resize_w, resize_h, true);
+        // image1 = raliResize(handle, image0, resize_w, resize_h, true);
+        image1 = image0;
     }
     break;
     case 1:
@@ -711,6 +720,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
             std::cout << "\n";
         }
 #endif
+    RaliIntParam color_temp_adj = raliCreateIntParameter(-50);
+
         auto last_colot_temp = raliGetIntValue(color_temp_adj);
         raliUpdateIntParameter(last_colot_temp + 1, color_temp_adj);
 

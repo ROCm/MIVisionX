@@ -76,6 +76,8 @@ private:
     struct dirent *_entity;
     std::vector<std::string> _video_file_names;
     size_t _video_file_count;
+    size_t _video_frame_count;
+    size_t _sequence_length;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
     unsigned _current_file_size;

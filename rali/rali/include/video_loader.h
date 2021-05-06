@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 
-#pragma once 
+#pragma once
 
 #include <string>
 #include <thread>
@@ -54,7 +54,7 @@ private:
     bool is_out_of_data();
     void de_init();
     void stop_internal_thread();
-    std::shared_ptr<VideoReadAndDecode> _image_loader;
+    std::shared_ptr<VideoReadAndDecode> _video_loader;
     VideoLoaderModuleStatus update_output_image();
     VideoLoaderModuleStatus load_routine();
     Image* _output_image;

@@ -25,6 +25,7 @@ THE SOFTWARE.
 #include <list>
 #include <variant>
 #include <map>
+#include <iostream>
 #include "graph.h"
 #include "ring_buffer.h"
 #include "timing_debug.h"
@@ -76,14 +77,20 @@ public:
     Image *create_loader_output_image(const ImageInfo &info);
     MetaDataBatch *create_label_reader(const char *source_path, MetaDataReaderType reader_type);
     MetaDataBatch *create_coco_meta_data_reader(const char *source_path, bool is_output);
-    MetaDataBatch *create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type, const std::map<std::string, std::string> feature_key_map);   
+    MetaDataBatch *create_tf_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type, const std::map<std::string, std::string> feature_key_map);
     MetaDataBatch *create_caffe_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch *create_caffe2_lmdb_record_meta_data_reader(const char *source_path, MetaDataReaderType reader_type,  MetaDataType label_type);
     MetaDataBatch* create_cifar10_label_reader(const char *source_path, const char *file_prefix);
     void create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts);
     const std::pair<ImageNameBatch,pMetaDataBatch>& meta_data();
     void set_loop(bool val) { _loop = val; }
-    bool empty() { return (remaining_images_count() < _user_batch_size); }
+    bool empty() {
+        // std::cerr<<"\n *************Remaining images count::"<<remaining_images_count()<<"\t_user_batch_size::"<<_user_batch_size<<"****************";
+         return (remaining_images_count() < _user_batch_size); }
+    void set_user_internal_batch_size(size_t user_internal_batch_size) {_internal_batch_size = user_internal_batch_size;}
+    void set_user_batch_size(size_t new_user_batch_size) {_user_batch_size = new_user_batch_size;}
+    void set_user_internal_batch_ratio() {_user_to_internal_batch_ratio = _user_batch_size/_internal_batch_size; }
+    size_t user_batch_size() {return _user_batch_size;}
     size_t internal_batch_size() { return _internal_batch_size; }
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
@@ -121,7 +128,7 @@ private:
     pLoaderModule _loader_module; //!< Keeps the loader module used to feed the input the images of the graph
     pVideoLoaderModule _video_loader_module;
     TimingDBG _convert_time;
-    const size_t _user_batch_size;//!< Batch size provided by the user
+    size_t _user_batch_size;//!< Batch size provided by the user
     const size_t _cpu_threads;//!< Not in use
     vx_context _context;
     const RaliMemType _mem_type;//!< Is set according to the _affinity, if GPU, is set to CL, otherwise host
@@ -136,8 +143,8 @@ private:
     int _remaining_images_count;//!< Keeps the count of remaining images yet to be processed for the user,
     bool _loop;//!< Indicates if user wants to indefinitely loops through images or not
     static size_t compute_optimum_internal_batch_size(size_t user_batch_size, RaliAffinity affinity);
-    const size_t _internal_batch_size;//!< In the host processing case , internal batch size can be different than _user_batch_size. This batch size used internally throughout.
-    const size_t _user_to_internal_batch_ratio;
+    size_t _internal_batch_size;//!< In the host processing case , internal batch size can be different than _user_batch_size. This batch size used internally throughout.
+    size_t _user_to_internal_batch_ratio;
     bool _output_routine_finished_processing = false;
     bool _is_random_bbox_crop = false;
 };

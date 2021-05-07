@@ -972,7 +972,7 @@ int HipExec_WarpPerspective_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth
 __global__ void __attribute__((visibility("default")))
 Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
     d_perspective_matrix_t *perspectiveMatrix, uint borderValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
@@ -984,6 +984,8 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
 
     uint dstIdx =  y * dstImageStrideInBytes + x;
 
+    srcWidth -= 2;
+    srcHeight -= 2;
     uint2 dst;
     float sx, sy, sz, isz;
     uint mask, v;
@@ -1001,7 +1003,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1015,7 +1017,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     isz = 1.0f / sz;
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1029,7 +1031,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     isz = 1.0f / sz;
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1043,7 +1045,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     isz = 1.0f / sz;
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1058,7 +1060,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
 
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1072,7 +1074,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     isz = 1.0f / sz;
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1086,7 +1088,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     isz = 1.0f / sz;
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1100,7 +1102,7 @@ Hip_WarpPerspective_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     isz = 1.0f / sz;
     x = (uint)(int)(sx * isz);
     y = (uint)(int)(sy * isz);
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1122,7 +1124,7 @@ int HipExec_WarpPerspective_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32
 
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Nearest_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         (d_perspective_matrix_t *) perspectiveMatrix, (uint) borderValue);
 
     return VX_SUCCESS;
@@ -1221,7 +1223,7 @@ int HipExec_WarpPerspective_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidt
 __global__ void __attribute__((visibility("default")))
 Hip_WarpPerspective_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
     d_perspective_matrix_t *perspectiveMatrix, uint borderValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
@@ -1248,22 +1250,22 @@ Hip_WarpPerspective_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
 
     isz = 1.0f / sz;
 
-    f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     sx += perspectiveMatrix->m[0][0];
     sy += perspectiveMatrix->m[0][1];
     sz += perspectiveMatrix->m[0][2];
     isz = 1.0f / sz;
-    f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     sx += perspectiveMatrix->m[0][0];
     sy += perspectiveMatrix->m[0][1];
     sz += perspectiveMatrix->m[0][2];
     isz = 1.0f / sz;
-    f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     sx += perspectiveMatrix->m[0][0];
     sy += perspectiveMatrix->m[0][1];
     sz += perspectiveMatrix->m[0][2];
     isz = 1.0f / sz;
-    f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     dst.x = hip_pack(f);
 
     sx += perspectiveMatrix->m[0][0];
@@ -1271,22 +1273,22 @@ Hip_WarpPerspective_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     sz += perspectiveMatrix->m[0][2];
     isz = 1.0f / sz;
 
-    f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.x = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     sx += perspectiveMatrix->m[0][0];
     sy += perspectiveMatrix->m[0][1];
     sz += perspectiveMatrix->m[0][2];
     isz = 1.0f / sz;
-    f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.y = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     sx += perspectiveMatrix->m[0][0];
     sy += perspectiveMatrix->m[0][1];
     sz += perspectiveMatrix->m[0][2];
     isz = 1.0f / sz;
-    f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.z = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     sx += perspectiveMatrix->m[0][0];
     sy += perspectiveMatrix->m[0][1];
     sz += perspectiveMatrix->m[0][2];
     isz = 1.0f / sz;
-    f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, sx * isz, sy * isz, borderValue);
+    f.w = hip_bilinear_sample_FXY_constant(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, sx * isz, sy * isz, borderValue);
     dst.y = hip_pack(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -1303,7 +1305,7 @@ int HipExec_WarpPerspective_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint3
 
     hipLaunchKernelGGL(Hip_WarpPerspective_U8_U8_Bilinear_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         (d_perspective_matrix_t *) perspectiveMatrixLoc, (uint) borderValue);
 
     return VX_SUCCESS;

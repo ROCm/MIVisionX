@@ -454,7 +454,7 @@ __global__ void __attribute__((visibility("default")))
 Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
     const uchar *pSrcImage, uint srcImageStrideInBytes,
-    int Nx, int Ny) {
+    int Nx, int Ny, float iSxSy) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
     int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
@@ -492,11 +492,232 @@ Hip_ScaleImage_U8_U8_Area(uint dstWidth, uint dstHeight,
     }
 
     uint2 dst;
-    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * (float4)(0.250000000000f));
-    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * (float4)(0.250000000000f));
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * (float4)(iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * (float4)(iSxSy));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }
+
+__global__ void __attribute__((visibility("default")))
+Hip_ScaleImage_U8_U8_Area_Sad(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    int Nx, int Ny, float iSxSy) {
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    uint offset = srcImageStrideInBytes * (y * Ny) + (x * Nx);
+    pSrcImage += offset;
+
+    d_uint8 sum = {0};
+    for (uint iy = 0; iy < 4; iy++) {
+        uint4 dw;
+        dw = *((uint4 *)&pSrcImage[0]);
+        sum.data[0] = hip_sad(dw.x, 0u, sum.data[0]);
+        sum.data[1] = hip_sad(dw.y, 0u, sum.data[1]);
+        sum.data[2] = hip_sad(dw.z, 0u, sum.data[2]);
+        sum.data[3] = hip_sad(dw.w, 0u, sum.data[3]);
+        dw = *((uint4 *)&pSrcImage[16]);
+        sum.data[4] = hip_sad(dw.x, 0u, sum.data[4]);
+        sum.data[5] = hip_sad(dw.y, 0u, sum.data[5]);
+        sum.data[6] = hip_sad(dw.z, 0u, sum.data[6]);
+        sum.data[7] = hip_sad(dw.w, 0u, sum.data[7]);
+        pSrcImage += srcImageStrideInBytes;
+    }
+
+    d_float8 f;
+    uint2 dst;
+    f.data[0] = (float)sum.data[0];
+    f.data[1] = (float)sum.data[1];
+    f.data[2] = (float)sum.data[2];
+    f.data[3] = (float)sum.data[3];
+    f.data[4] = (float)sum.data[4];
+    f.data[5] = (float)sum.data[5];
+    f.data[6] = (float)sum.data[6];
+    f.data[7] = (float)sum.data[7];
+
+    dst.x = hip_pack(make_float4(f.data[0], f.data[1], f.data[2], f.data[3]) * (float4)(iSxSy));
+    dst.y = hip_pack(make_float4(f.data[4], f.data[5], f.data[6], f.data[7]) * (float4)(iSxSy));
+
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+}
+
+__global__ void __attribute__((visibility("default")))
+Hip_ScaleImage_U8_U8_Area_Bytealign(uint dstWidth, uint dstHeight,
+    uchar *pDstImage, uint dstImageStrideInBytes,
+    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    float SX, float SY, float factorc, float iSxSy) {
+    int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
+    int y = hipBlockDim_y * hipBlockIdx_y + hipThreadIdx_y;
+
+    if (x >= dstWidth || y >= dstHeight) {
+        return;
+    }
+    uint dstIdx =  y * dstImageStrideInBytes + x;
+
+    float X = (float)x * SX;
+    float Y = (float)y * SY;
+    float fX = hip_fract(X, &X);
+    float fY = hip_fract(Y, &Y);
+    uint offset = srcImageStrideInBytes * (int)Y + (int)X;
+    uint align = offset & 3;
+    offset -= align;
+    pSrcImage += offset;
+    d_float8 ftotal{0.0f};
+    float Sy = SY;
+    float Syf = 1.0f - fY;
+    for (uint iy = 0; iy < 2; iy++) {
+        uint4 dw;
+        uint2 d2;
+        d_float8 f {0.0f};
+        float Xs = fX, factor, Xi, Xf;
+        uint offset, align;
+        Xf = hip_fract(Xs, &Xi);
+        offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+        Xs += SX;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[0] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[0] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+        Xf = hip_fract(Xs, &Xi);
+        offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+        Xs += SX;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[1] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[1] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+        Xf = hip_fract(Xs, &Xi);
+        offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+        Xs += SX;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[2] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[2] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+        Xf = hip_fract(Xs, &Xi); offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+        Xs += SX;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[3] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[3] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+        Xf = hip_fract(Xs, &Xi);
+        offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+        Xs += SX;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[4] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[4] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+        Xf = hip_fract(Xs, &Xi);
+        offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+        Xs += SX;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[5] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[5] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+        Xf = hip_fract(Xs, &Xi);
+        offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+        Xs += SX;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[6] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[6] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+        Xf = hip_fract(Xs, &Xi);
+        offset = (uint)Xi;
+        align = offset & 3;
+        offset -= align;
+
+        d2 = *((uint2 *)(&pSrcImage[offset]));
+        dw.x = d2.x;
+        dw.y = d2.y;
+
+        dw.x = hip_bytealign(dw.y, dw.x, align);
+        f.data[7] += hip_unpack0(dw.x) * (1.0f - Xf);
+        factor = factorc + Xf;
+        f.data[7] += hip_unpack1(dw.x) * hip_clamp(factor, 0.0f, 1.0f) + hip_unpack2(dw.x) * hip_clamp(factor - 1.0f, 0.0f, 1.0f);
+
+        f.data[0] *= Syf;
+        f.data[1] *= Syf;
+        f.data[2] *= Syf;
+        f.data[3] *= Syf;
+        f.data[4] *= Syf;
+        f.data[5] *= Syf;
+        f.data[6] *= Syf;
+        f.data[7] *= Syf;
+
+        ftotal.data[0] += f.data[0];
+        ftotal.data[1] += f.data[1];
+        ftotal.data[2] += f.data[2];
+        ftotal.data[3] += f.data[3];
+        ftotal.data[4] += f.data[4];
+        ftotal.data[5] += f.data[5];
+        ftotal.data[6] += f.data[6];
+        ftotal.data[7] += f.data[7];
+
+        Sy -= Syf;
+        Syf = hip_clamp(Sy, 0.0f, 1.0f);
+        pSrcImage += srcImageStrideInBytes;
+    }
+
+    uint2 dst;
+    dst.x = hip_pack(make_float4(ftotal.data[0], ftotal.data[1], ftotal.data[2], ftotal.data[3]) * (float4)(iSxSy));
+    dst.y = hip_pack(make_float4(ftotal.data[4], ftotal.data[5], ftotal.data[6], ftotal.data[7]) * (float4)(iSxSy));
+    *((uint2 *)(&pDstImage[dstIdx])) = dst;
+}
+
 int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uint32 dstHeight,
     vx_uint8 *pHipDstImage, vx_uint32 dstImageStrideInBytes,
     vx_uint32 srcWidth, vx_uint32 srcHeight,
@@ -511,10 +732,31 @@ int HipExec_ScaleImage_U8_U8_Area(hipStream_t stream, vx_uint32 dstWidth, vx_uin
     int Nx = (int)ceilf(Sx);
     int Ny = (int)ceilf(Sy);
 
-    hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+    bool need_align = ((Sx * 2.0f) != floorf(Sx * 2.0f)) ? true : false;
+    bool use_sad = (Nx % 4) ? false : true;
+    float iSxSy = 1.0 / (double)(Sx * Sy);
+    float factorc = Sx - (Nx - 1);
+
+    if ((srcWidth % dstWidth) > 0 || (srcHeight % dstHeight) > 0) {
+        use_sad = false;
+    }
+
+    if (use_sad) {
+        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Sad, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
                         (const uchar *)pHipSrcImage, srcImageStrideInBytes,
-                        Nx, Ny);
+                        Nx, Ny, iSxSy);
+    } else if (need_align) {
+        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area_Bytealign, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        Sx, Sy, factorc, iSxSy);
+    } else {
+        hipLaunchKernelGGL(Hip_ScaleImage_U8_U8_Area, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
+                        dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage , dstImageStrideInBytes,
+                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        Nx, Ny, iSxSy);
+    }
 
     return VX_SUCCESS;
 }

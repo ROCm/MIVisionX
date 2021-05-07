@@ -184,7 +184,6 @@ Reader::Status VideoReader::subfolder_reading()
         closedir(_sub_dir);
         std::sort(entry_name_list.begin(), entry_name_list.end());
 
-        auto ret = Reader::Status::OK;
         for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
             std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
             filesys::path pathObj(subfolder_path);

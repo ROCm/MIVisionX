@@ -94,10 +94,11 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
 
     _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
 
-    for(int i=0; i < _video_count; i++)
+    for(size_t i=0; i < _video_count; i++)
     {
         _video_file_name_map.insert(std::pair<std::string, int>(_video_names[i], i));
-        _video_decoder[i] = create_video_decoder(decoder_config);  // Does it need to be created for each video ? 
+        _video_decoder[i] = create_video_decoder(decoder_config);
+        _video_decoder[i]->Initialize(_video_names[i].c_str());
     }
     _reader = create_reader(reader_config);
     // std::cerr<<"\n=== The reader config is created  ====\n";
@@ -126,8 +127,7 @@ VideoReadAndDecode::load(unsigned char* buff,
                          std::vector<uint32_t> &roi_height,
                          std::vector<uint32_t> &actual_width,
                          std::vector<uint32_t> &actual_height,
-                         RaliColorFormat output_color_format,
-                         bool decoder_keep_original )
+                         RaliColorFormat output_color_format)
 {
     // std::cerr << "\nHey is comes to load!!!!! - > " << _index_start_frame;
     if(max_decoded_width == 0 || max_decoded_height == 0 )
@@ -140,7 +140,6 @@ VideoReadAndDecode::load(unsigned char* buff,
     const auto ret = video_interpret_color_format(output_color_format);
     const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
-    const bool keep_original = decoder_keep_original; // check and remove
 
     // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.
@@ -152,7 +151,7 @@ VideoReadAndDecode::load(unsigned char* buff,
     }
 
     start_frame = _reader->read(_compressed_buff.data(), fsize);
-    for(int s = 0; s < _sequence_length; s++)
+    for(size_t s = 0; s < _sequence_length; s++)
     {
         _video_names[s] = _reader->id();
     }
@@ -172,7 +171,7 @@ VideoReadAndDecode::load(unsigned char* buff,
 
         int original_width, original_height;
 
-        for(int s = 0; s < _sequence_length; s++)
+        for(size_t s = 0; s < _sequence_length; s++)
         {
             _actual_decoded_width[s] = max_decoded_width;
             _actual_decoded_height[s] = max_decoded_height;
@@ -181,7 +180,8 @@ VideoReadAndDecode::load(unsigned char* buff,
         }
 
         // std::cerr << "\nThe source video is " << _video_names[0] << " MAP : "<<_video_file_name_map[_video_names[0]]<< "\tThe start index is : " << start_frame << "\n";
-        if(_video_decoder[_video_file_name_map[_video_names[0]]]->Decode(_decompressed_buff_ptrs, _video_names[0].c_str(), start_frame, _sequence_length) != VideoDecoder::Status::OK)
+        int video_idx_map = _video_file_name_map[_video_names[0]];
+        if(_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length) != VideoDecoder::Status::OK)
         {
             continue;
         }

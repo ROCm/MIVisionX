@@ -29,34 +29,35 @@ public:
     //! Default constructor
     FFMPEG_VIDEO_DECODER();
 
-    virtual VideoDecoder::Status Initialize() override;
+    virtual VideoDecoder::Status Initialize(const char *src_filename) override;
     virtual int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) override;
-    virtual VideoDecoder::Status Decode(unsigned char* output_buffer, const char *src_filename, unsigned seek_frame_number, size_t sequence_length) override;
+    virtual VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length) override;
     virtual int decode_packet(AVCodecContext *dec, const AVPacket *pkt) override;
     virtual void release() override;
     virtual int output_video_frame(AVFrame *frame) override;
 
     ~FFMPEG_VIDEO_DECODER() override;
 private:
-	AVFormatContext *fmt_ctx = NULL;
-	AVCodecContext *video_dec_ctx = NULL;
-	int width, height;
-	enum AVPixelFormat pix_fmt;
-	AVStream *video_stream = NULL;
-	const char *src_filename = NULL;
-	const char *video_dst_filename = NULL;
+	AVFormatContext *_fmt_ctx = NULL;
+	AVCodecContext *_video_dec_ctx = NULL;
+	int _width, _height;
+	enum AVPixelFormat _pix_fmt;
+	AVStream *_video_stream = NULL;
+	const char *_src_filename = NULL;
+	const char *_video_dst_filename = NULL;
 
-	uint8_t *video_dst_data[4] = {NULL};
-	int      video_dst_linesize[4] = {0};
-	int video_dst_bufsize;
+	uint8_t *_video_dst_data[4] = {NULL};
+	int      _video_dst_linesize[4] = {0};
+	int _video_dst_bufsize;
 
-	int video_stream_idx = -1;
-	AVFrame *frame = NULL, *decframe = NULL;
-	AVPacket pkt;
-	int video_frame_count = 0;
-	unsigned nb_frames = 0;
-	unsigned skipped_frames = 0;
-    bool end_of_stream = false;
-    int got_pic = 0;
-	const AVPixelFormat dst_pix_fmt = AV_PIX_FMT_BGR24;
+	int _video_stream_idx = -1;
+	AVFrame *_frame = NULL, *_decframe = NULL;
+	AVPacket _pkt;
+	int _video_frame_count = 0;
+	unsigned _video_count = 0;
+	unsigned _nb_frames = 0;
+	unsigned _skipped_frames = 0;
+    bool _end_of_stream = false;
+    int _got_pic = 0;
+	const AVPixelFormat _dst_pix_fmt = AV_PIX_FMT_BGR24;
 };

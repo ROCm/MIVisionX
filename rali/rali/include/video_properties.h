@@ -1,5 +1,3 @@
-#include <tuple>
-#include <assert.h>
 #include <boost/filesystem.hpp>
 
 extern "C"
@@ -23,7 +21,7 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     AVFormatContext* pFormatCtx = NULL;
     AVCodecContext* pCodecCtx = NULL;
     int videoStream = -1;
-    int i = 0;
+    unsigned int i = 0;
     // open video file
     std::cerr << "The video file path : " << video_file_path << "\n";
     int ret = avformat_open_input(&pFormatCtx, video_file_path, NULL, NULL);
@@ -99,7 +97,7 @@ video_properties find_video_properties(const char *source_path)
             }
             closedir(_sub_dir);         
             std::sort(video_files.begin(), video_files.end());
-            for(int i=0; i < video_count; i++)
+            for(unsigned i=0; i < video_count; i++)
             {
                 _full_path.append(video_files[i]);
                 video_prop = open_video_context(_full_path.c_str());

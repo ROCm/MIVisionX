@@ -182,7 +182,7 @@ VideoLoader::load_routine()
                                              _decoded_img_info._roi_height,
                                              _decoded_img_info._original_width,
                                              _decoded_img_info._original_height,
-                                             _output_image->info().color_format(), _decoder_keep_original );
+                                             _output_image->info().color_format());
 
             if(load_status == VideoLoaderModuleStatus::OK)
             {

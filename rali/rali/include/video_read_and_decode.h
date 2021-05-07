@@ -57,8 +57,7 @@ public:
             std::vector<uint32_t> &roi_height,
             std::vector<uint32_t> &actual_width,
             std::vector<uint32_t> &actual_height,
-            RaliColorFormat output_color_format,
-            bool decoder_keep_original=false);
+            RaliColorFormat output_color_format);
 
     //! returns timing info or other status information
     Timing timing();

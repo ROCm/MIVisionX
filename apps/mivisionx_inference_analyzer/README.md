@@ -267,4 +267,6 @@ usage: python3 mivisionx_inference_analyzer.py
 
 * **Preprocessing the model:** Use the --add/--multiply option to preprocess the input images
 
+    ```
 	% python3 mivisionx_inference_analyzer.py --model_format nnef --model_name VggNet-16-NNEF --model ~/sample-3/vgg16/ --model_input_dims 3,224,224 --model_output_dims 1000,1,1 --label ./sample/labels.txt --output_dir ~/sample-3/ --image_dir ../../data/images/AMD-tinyDataSet/ --image_val ./sample/AMD-tinyDataSet-val.txt --hierarchy ./sample/hierarchy.csv --replace yes --add [-2.1179,-2.0357,-1.8044] --multiply [0.0171,0.0175,0.0174]
+    ```

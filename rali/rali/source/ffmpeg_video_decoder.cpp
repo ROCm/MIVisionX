@@ -24,83 +24,7 @@ THE SOFTWARE.
 #include <commons.h>
 #include "ffmpeg_video_decoder.h"
 
-// OpenCV
-#include <opencv2/core.hpp>
-#include <opencv2/highgui.hpp>
-
 FFMPEG_VIDEO_DECODER::FFMPEG_VIDEO_DECODER(){};
-
-int FFMPEG_VIDEO_DECODER::output_video_frame(AVFrame *frame)
-{
-    /*    if (frame->width != width || frame->height != height ||
-        frame->format != pix_fmt)
-    {
-        fprintf(stderr, "Error: Width, height and pixel format have to be "
-                "constant in a rawvideo file, but the width, height or "
-                "pixel format of the input video changed:\n"
-                "old: width = %d, height = %d, format = %s\n"
-                "new: width = %d, height = %d, format = %s\n",
-                width, height, av_get_pix_fmt_name(pix_fmt),
-                frame->width, frame->height,
-                av_get_pix_fmt_name(frame->format));
-        return -1;
-    }
-
-    std::cout << "video_frame n:" << video_frame_count++ << " coded_n:" << frame->coded_picture_number << std::endl;
-
-    av_image_copy(video_dst_data, video_dst_linesize,
-                  (const uint8_t **)(frame->data), frame->linesize,
-                  pix_fmt, width, height);
-
-    FILE *img_file;
-    img_file = fopen("img_out.yuv", "wb");
-
-    int y_size = frame->width * frame->height;
-    fwrite(video_dst_data[0], 1, y_size, img_file);     //Y
-    fwrite(video_dst_data[1], 1, y_size / 4, img_file); //U
-    fwrite(video_dst_data[2], 1, y_size / 4, img_file); //V
-
-    //fwrite(video_dst_data[0], 1, height*frame->linesize[0], img_file);
-    //exit(0);
-    fwrite(video_dst_data[0], 1, video_dst_bufsize, video_dst_file);*/
-    return 0;
-}
-
-int FFMPEG_VIDEO_DECODER::decode_packet(AVCodecContext *dec, const AVPacket *pkt)
-{
-    /*    int ret = 0;
-    //include fseek operation to point to the start of the file
-
-    // submit the packet to the decoder
-    ret = avcodec_send_packet(dec, pkt);
-    if (ret < 0)
-    {
-        fprintf(stderr, "Error submitting a packet for decoding\n");
-        return ret;
-    }
-
-    // get all the available frames from the decoder
-    while (ret >= 0)
-    {
-        ret = avcodec_receive_frame(dec, frame);
-        if (ret < 0)
-        {
-            // those two return values are special and mean there is no output
-            // frame available, but there were no errors during decoding
-            if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN))
-                return 0;
-
-            fprintf(stderr, "Error during decoding\n");
-            return ret;
-        }
-        // write the frame data to output file
-        ret = output_video_frame(frame);
-        av_frame_unref(frame);
-        if (ret < 0)
-            return ret;
-    }*/
-    return 0;
-}
 
 int FFMPEG_VIDEO_DECODER::open_codec_context(int *stream_idx,
                                              AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx)
@@ -196,7 +120,7 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
         release();
     }
 
-    _frame = av_frame_alloc(); // check the format, _height & _width & linesize
+    _frame = av_frame_alloc();
     if (!_frame)
     {
         fprintf(stderr, "Could not allocate _frame\n");
@@ -220,10 +144,6 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
     if (ret < 0) {
         std::cerr << "\n Error in seeking _frame..Unable to seek the given _frame in a video" << std::endl;
     }
-    
-//    int64_t select_frame_pts = seek_frame(_fmt_ctx, _video_stream->avg_frame_rate, _video_stream->time_base, seek_frame_number); -> Function call to seek frame
-
-// has to be changed to decode only the part which we need seek operations ll come here
     _skipped_frames = 0;
     do
     {
@@ -257,27 +177,8 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
             goto next_packet;
         }
 
-        //convert _frame to OpenCV matrix
         _frame->data[0] = out_buffer;
         sws_scale(swsctx, _decframe->data, _decframe->linesize, 0, _decframe->height, _frame->data, _frame->linesize);
-
-        /*  OpenCV image writer module
-        std::cerr << "\n Frame line size :" << _frame->linesize[0];
-        // memcpy(out_buffer, _frame->data, dst_height * _frame->linesize[0]);
-        {
-            // cv::Mat image_1(dst_height, dst_width, CV_8UC3, _video_dst_data, _video_dst_linesize[0]);
-            cv::Mat image(dst_height, dst_width, CV_8UC3, _frame->data[0], _frame->linesize[0]);
-            //cv::imshow("press ESC to exit", image);
-            std::string filename = "output_swssmallout_image";
-            filename.append(std::to_string(_nb_frames));
-            filename.append(".png");
-            cv::imwrite(filename.c_str(), image);
-            // cv::imwrite("_frame.png", image_1);
-            // if (cv::waitKey(1) == 0x1b)
-                // break;
-        }
-        std::cout << _nb_frames << '\r' << std::flush; // dump progress
-        */
 
         ++_nb_frames;
         ++fcount;
@@ -289,9 +190,7 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
         out_buffer = out_buffer + (dst_height * dst_width * 3 * sizeof(unsigned char));
     next_packet:
         av_free_packet(&_pkt);
-    } while (!_end_of_stream || _got_pic);
-    // std::cout << _nb_frames << " frames decoded" << std::endl;
-    
+    } while (!_end_of_stream || _got_pic);    
     return status;
 }
 
@@ -325,7 +224,6 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Initialize(const char *src_filename)
         std::cout
             << "source file: " << src_filename << "\n"
             << "format: " << _fmt_ctx->iformat->name << "\n"
-            //<< "vcodec: " << _video_dec_ctx->name << "\n"
             << "size:   " << _video_stream->codec->width << 'x' << _video_stream->codec->height << "\n"
             << "fps:    " << av_q2d(_video_stream->codec->framerate) << " [fps]\n"
             << "length: " << av_rescale_q(_video_stream->duration, _video_stream->time_base, {1, 1000}) / 1000. << " [sec]\n"

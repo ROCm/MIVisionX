@@ -202,7 +202,7 @@ else:
                       linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool curl make g++ unzip')
         # Boost V 1.72.0 from source
         os.system(
-            '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
+            '(cd '+deps_dir+'; wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
         os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
         if "centos-8" in platfromInfo or "redhat-8" in platfromInfo:
             os.system(

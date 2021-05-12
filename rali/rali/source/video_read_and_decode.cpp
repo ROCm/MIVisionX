@@ -99,6 +99,7 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
         _video_file_name_map.insert(std::pair<std::string, int>(_video_names[i], i));
         _video_decoder[i] = create_video_decoder(decoder_config);
         _video_decoder[i]->Initialize(_video_names[i].c_str());
+
     }
     _reader = create_reader(reader_config);
     // std::cerr<<"\n=== The reader config is created  ====\n";
@@ -168,15 +169,10 @@ VideoReadAndDecode::load(unsigned char* buff,
     
     for(size_t i= 0; i < 1; i++)
     {
-
-        int original_width, original_height;
-
         for(size_t s = 0; s < _sequence_length; s++)
         {
             _actual_decoded_width[s] = max_decoded_width;
             _actual_decoded_height[s] = max_decoded_height;
-            _original_height[s] = original_height;
-            _original_width[s]  = original_width;
         }
 
         // std::cerr << "\nThe source video is " << _video_names[0] << " MAP : "<<_video_file_name_map[_video_names[0]]<< "\tThe start index is : " << start_frame << "\n";
@@ -192,8 +188,6 @@ VideoReadAndDecode::load(unsigned char* buff,
         names[i] = _video_names[i];
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
-        actual_width[i] = _original_width[i];
-        actual_height[i] = _original_height[i];
     }
 
     ++ _index_start_frame; 

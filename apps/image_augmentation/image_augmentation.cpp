@@ -58,7 +58,7 @@ int main(int argc, const char ** argv)
     int decode_height = 0;
     bool processing_device = 1;
     size_t shard_count = 2;
-    unsigned sequence_length = 3;
+    unsigned sequence_length = 2;
     int shuffle = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
@@ -87,7 +87,7 @@ int main(int argc, const char ** argv)
         shuffle = atoi(argv[++argIdx]);
 
 
-    int inputBatchSize = 10;
+    int inputBatchSize = 3;
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
 

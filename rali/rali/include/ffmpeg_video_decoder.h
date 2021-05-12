@@ -29,33 +29,29 @@ public:
     //! Default constructor
     FFMPEG_VIDEO_DECODER();
 
-    virtual VideoDecoder::Status Initialize(const char *src_filename) override;
-    virtual int open_codec_context(int *stream_idx, AVCodecContext **dec_ctx, AVFormatContext *fmt_ctx) override;
-    virtual VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length) override;
-    virtual void release() override;
+    VideoDecoder::Status Initialize(const char *src_filename) override;
+    VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length) override;
+    void release() override;
 
     ~FFMPEG_VIDEO_DECODER() override;
 private:
+	const char *_src_filename = NULL;
 	AVFormatContext *_fmt_ctx = NULL;
 	AVCodecContext *_video_dec_ctx = NULL;
-	int _width, _height;
-	enum AVPixelFormat _pix_fmt;
 	AVStream *_video_stream = NULL;
-	const char *_src_filename = NULL;
-	const char *_video_dst_filename = NULL;
-
-	uint8_t *_video_dst_data[4] = {NULL};
-	int      _video_dst_linesize[4] = {0};
-	int _video_dst_bufsize;
-
 	int _video_stream_idx = -1;
+	SwsContext *_swsctx = NULL;
+
 	AVFrame *_frame = NULL, *_decframe = NULL;
 	AVPacket _pkt;
 	int _video_frame_count = 0;
-	unsigned _video_count = 0;
 	unsigned _nb_frames = 0;
 	unsigned _skipped_frames = 0;
     bool _end_of_stream = false;
     int _got_pic = 0;
 	const AVPixelFormat _dst_pix_fmt = AV_PIX_FMT_BGR24;
+
+    AVStream *_video;
+	AVCodec *_decoder = NULL;
+    AVDictionary *_opts = NULL;
 };

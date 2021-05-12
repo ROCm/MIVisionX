@@ -697,22 +697,17 @@ static int agoGpuHipDataOutputAtomicSync(AgoGraph * graph, AgoData * data) {
     if (data->ref.type == VX_TYPE_ARRAY) {
         // update number of items
         int64_t stime = agoGetClockCounter();
-        vx_uint32 * pNumItems = nullptr;
-
+        vx_uint32 numItems = 0;
         if (data->hip_memory) {
-            hipError_t err = hipMemcpyDtoH((void *)data->buffer, (data->hip_memory + data->gpu_buffer_offset), data->size);
+            hipError_t err = hipMemcpyDtoH((void *)&numItems, data->hip_memory, sizeof(vx_uint32));
             if (err) {
                 agoAddLogEntry(&data->ref, VX_FAILURE, "ERROR: hipMemcpyDtoH() for numitems => %d\n", err);
                 return -1;
             }
-            pNumItems = (vx_uint32 *) data->buffer;
         }
         int64_t etime = agoGetClockCounter();
         graph->gpu_perf.buffer_read += etime - stime;
-        // read and reset the counter
-        if (pNumItems != nullptr) {
-            data->u.arr.numitems = *pNumItems;
-        }
+        data->u.arr.numitems = numItems;
     }
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
         // update number of items and reset it for next use

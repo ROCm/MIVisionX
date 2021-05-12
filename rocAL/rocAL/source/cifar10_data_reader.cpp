@@ -57,7 +57,7 @@ Reader::Status CIFAR10DataReader::initialize(ReaderConfig desc)
     _folder_path = desc.path();
     _batch_count = desc.get_batch_size();
     _loop = desc.loop();
-   // _file_name_prefix = "data_batch_";
+    _file_name_prefix = desc.file_prefix();
     return subfolder_reading();
 }
 

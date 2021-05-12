@@ -153,10 +153,10 @@ int main(int argc, const char ** argv)
     raliExposure(handle, image10, true);
 #else
     // uncomment the following to add augmentation if needed
-    // RaliImage image0;
-    // image0 = input1;
+     RaliImage image0;
+     image0 = input1;
     // just do one augmentation to test
-    //raliExposure(handle, image0, true);
+    // image1 = raliRain(handle, image0, true);
 #endif
 
     if(raliGetStatus(handle) != RALI_OK)
@@ -195,8 +195,9 @@ int main(int argc, const char ** argv)
  
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
     int counter = 0;
-    std::vector<std::vector<char>> names;
+    std::vector<std::string> names;
     std::vector<int> labels;
+    int ImageNameLen[inputBatchSize];
     names.resize(inputBatchSize);
     labels.resize(inputBatchSize);
     int iter_cnt = 0;
@@ -204,8 +205,6 @@ int main(int argc, const char ** argv)
     float  padd = -1.0f;
     while (!raliIsEmpty(handle) && (iter_cnt < 100))
     {
-       // if ((iter_cnt %16) == 0)
-            printf("Processing iter: %d\n", iter_cnt);
         if(raliRun(handle) != 0)
             break;
 
@@ -215,14 +214,19 @@ int main(int argc, const char ** argv)
             raliCopyToOutputTensor32(handle, out_tensor, RaliTensorLayout::RALI_NCHW, pmul, pmul, pmul, padd, padd, padd, 0);
         counter += inputBatchSize;
         raliGetImageLabels(handle, labels.data());
+        unsigned imagename_size = raliGetImageNameLen(handle,ImageNameLen);
+        char imageNames[imagename_size]; 
+        raliGetImageName(handle,imageNames);
+        std::string imageNamesStr(imageNames);
+
+        int pos = 0;
         for(int i = 0; i < inputBatchSize; i++)
         {
-            names[i] = std::move(std::vector<char>(raliGetImageNameLen(handle, 0), '\n'));
-            raliGetImageName(handle, names[i].data(), i);
-            std::string id(names[i].begin(), names[i].end());
-           // std::cout << "name "<< id << " label "<< labels[i] << " - ";
+            names[i] = imageNamesStr.substr(pos, ImageNameLen[i]);
+            pos += ImageNameLen[i];
+            std::cout << "name "<< names[i] << " label "<< labels[i] << " - ";
         }
-        //std::cout << std::endl;
+        std::cout << std::endl;
         iter_cnt ++;
 
         if(!display)

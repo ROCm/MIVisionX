@@ -26,7 +26,7 @@ import platform
 __author__ = "Kiriti Nagesh Gowda"
 __copyright__ = "Copyright 2018 - 2020, AMD Radeon MIVisionX setup"
 __license__ = "MIT"
-__version__ = "1.9.5"
+__version__ = "1.9.6"
 __maintainer__ = "Kiriti Nagesh Gowda"
 __email__ = "Kiriti.NageshGowda@amd.com"
 __status__ = "Shipping"
@@ -202,7 +202,7 @@ else:
                       linuxSystemInstall_check+' install sqlite3 libsqlite3-dev libbz2-dev libssl-dev python3-dev autoconf automake libtool curl make g++ unzip')
         # Boost V 1.72.0 from source
         os.system(
-            '(cd '+deps_dir+'; wget https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
+            '(cd '+deps_dir+'; wget https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2 )')
         os.system('(cd '+deps_dir+'; tar xjvf boost_1_72_0.tar.bz2 )')
         if "centos-8" in platfromInfo or "redhat-8" in platfromInfo:
             os.system(
@@ -298,7 +298,7 @@ else:
                   ' install gtk2-devel libjpeg-devel libpng-devel libtiff-devel libavc1394 wget unzip')
     # OpenCV 3.4.0
     os.system('(cd '+deps_dir+'/build/OpenCV; '+linuxCMake +
-              ' -DWITH_OPENCL=OFF -DWITH_OPENCLAMDFFT=OFF -DWITH_OPENCLAMDBLAS=OFF -DWITH_VA_INTEL=OFF -DWITH_OPENCL_SVM=OFF ../../opencv-'+opencvVersion+' )')
+              ' -D WITH_OPENCL=OFF -D WITH_OPENCLAMDFFT=OFF -D WITH_OPENCLAMDBLAS=OFF -D WITH_VA_INTEL=OFF -D WITH_OPENCL_SVM=OFF  -D CMAKE_INSTALL_PREFIX=/usr/local ../../opencv-'+opencvVersion+' )')
     os.system('(cd '+deps_dir+'/build/OpenCV; make -j8 )')
     os.system('sudo -v')
     os.system('(cd '+deps_dir+'/build/OpenCV; sudo '+linuxFlag+' make install )')

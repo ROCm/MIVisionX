@@ -596,6 +596,56 @@ class COCOReader(Node):
         # b.labelReader(handle,self._file_root)
         return self._file_root
 
+class Cifar10DataReader(Node):
+    """
+    file_root (str) – Path to a directory containing data files. FileReader supports flat directory structure. file_root directory should contain directories with images in them. To obtain labels FileReader sorts directories in file_root in alphabetical order and takes an index in this order as a class label.
+
+    file_list (str, optional, default = '') – Path to the file with a list of pairs file label (leave empty to traverse the file_root directory to obtain files and labels)
+
+    num_shards (int, optional, default = 1) – Partition the data into this many parts (used for multiGPU training).
+
+    pad_last_batch (bool, optional, default = False) – If set to true, the Loader will pad the last batch with the last image when the batch size is not aligned with the shard size.
+
+    random_shuffle (bool, optional, default = False) – Whether to randomly shuffle data. Prefetch buffer of initial_fill size is used to sequentially read data and then randomly sample it to form a batch.
+
+    seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+
+    shard_id (int, optional, default = 0) – Id of the part to read.
+
+    shuffle_after_epoch (bool, optional, default = False) – If true, reader shuffles whole dataset after each epoch. It is exclusive with stick_to_shard and random_shuffle.
+
+    tensor_init_bytes (int, optional, default = 1048576) – Hint for how much memory to allocate per image.
+    """
+
+    def __init__(self, file_root, file_prefix, file_list='',  num_shards=1, random_shuffle=False,
+                 seed=-1, shard_id=0, shuffle_after_epoch=False, device=None):
+
+        Node().__init__()
+        self._file_root = file_root
+        self._file_prefix = file_prefix
+        self._file_list = file_list
+        self._num_shards = num_shards
+        self._random_shuffle = random_shuffle
+        self._seed = seed
+        self._shard_id = shard_id
+        self._shuffle_after_epoch = shuffle_after_epoch
+        self._labels = []
+        self.output = Node()
+
+    def __call__(self, name=""):
+        self.data = "Cifar10DataReader"
+        self.prev = None
+        self.next = self.output
+        self.output.prev = self
+        self.output.next = None
+        self.output.data = self._file_root
+        return self.output, self._labels
+
+    def rali_c_func_call(self, handle):
+        b.Cifar10LabelReader(handle, self._file_root, self._file_prefix)
+        return self._file_root
+
+
 class BBFlip(Node):
 
     """
@@ -1228,6 +1278,48 @@ class ImageDecoderRaw(Node):
         #else:
         #    output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
         return output_image
+
+class Cifar10Decoder(Node):
+    """
+        output_type (int, optional, default = 0) – The color space of output image.
+
+        preserve (bool, optional, default = False) – Do not remove the Op from the graph even if its outputs are unused.
+
+        seed (int, optional, default = -1) – Random seed (If not provided it will be populated based on the global seed of the pipeline)
+    """
+    def __init__(self,  output_type = 0, preserve = False, seed = -1, device = None):
+        Node().__init__()
+        self._output_type = output_type
+        self._preserve = preserve
+        self._seed = seed
+        self._file_prefix = ""
+        self.output = Node()
+
+    def __call__(self,input, num_threads=1):
+        input.next = self
+        self.data = "Cifar10Decoder"
+        self.prev = input
+        self.next = self.output
+        self._file_prefix = self.prev._file_prefix
+        self.output.prev = self
+        self.output.next = None
+        return self.output
+
+    def rali_c_func_call(self, handle, input_image, decode_width, decode_height, shuffle, shard_id, num_shards, is_output):
+        b.setSeed(self._seed)
+        # for Cifar10 decoder, previous node has to be decoder
+        if(self.prev.prev.data == "Cifar10DataReader"):
+            output_image = b.Cifar10Decoder(handle, input_image, types.RGB, is_output, decode_width, decode_height, self._file_prefix)
+        #elif((self.prev.prev.data == "Caffe2Reader") or (self.prev.prev.data == "Caffe2ReaderDetection")):
+        #    output_image = b.Caffe2_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        #elif((self.prev.prev.data == "CaffeReader") or (self.prev.prev.data == "CaffeReaderDetection")):
+        #    output_image = b.Caffe_ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        #elif(self.prev.prev.data == "COCOReader") :
+        #    output_image = b.COCO_ImageDecoderShard(handle, input_image[0], input_image[1], types.RGB, shard_id, num_shards, is_output, shuffle, False,types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        #else:
+        #    output_image = b.ImageDecoderShard(handle, input_image, types.RGB, shard_id, num_shards,  is_output, shuffle, False, types.USER_GIVEN_SIZE, multiplier*decode_width, multiplier*decode_height)
+        return output_image
+
 
 class SSDRandomCrop(Node):
     """
@@ -2374,7 +2466,7 @@ seed (int, optional, default = -1) – Random seed (If not provided it will be p
     def __init__(self, brightness=1.0, bytes_per_sample_hint=0, image_type=0,
                  preserve=False, seed=-1, device= None):
         Node().__init__()
-        self._brightness = brightness
+        self._brighness = brightness
         self._bytes_per_sample_hint = bytes_per_sample_hint
         self._image_type = image_type
         self._preserve = preserve

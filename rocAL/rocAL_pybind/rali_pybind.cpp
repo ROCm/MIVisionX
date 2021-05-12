@@ -212,6 +212,7 @@ namespace rali{
             .value("RGB",RALI_COLOR_RGB24)
             .value("BGR",RALI_COLOR_BGR24)
             .value("GRAY",RALI_COLOR_U8)
+            .value("RGB_PLANAR", RALI_COLOR_RGB_PLANAR)
             .export_values();
         py::enum_<RaliTensorLayout>(types_m,"RaliTensorLayout","Tensor layout type")
             .value("NHWC",RALI_NHWC)
@@ -236,6 +237,7 @@ namespace rali{
         m.def("Caffe2Reader",&raliCreateCaffe2LMDBLabelReader);
         m.def("CaffeReaderDetection",&raliCreateCaffeLMDBReaderDetection);
         m.def("Caffe2ReaderDetection",&raliCreateCaffe2LMDBReaderDetection);
+        m.def("Cifar10LabelReader",&raliCreateTextCifar10LabelReader);
         m.def("RandomBBoxCrop",&wrapper_random_bbox_crop);
         m.def("COCOReader",&raliCreateCOCOReader);
         m.def("getImageLabels",&wrapper_label_copy);
@@ -257,6 +259,10 @@ namespace rali{
         m.def("CreateFloatRand",&raliCreateFloatRand);
         m.def("CreateIntParameter",&raliCreateIntParameter);
         m.def("CreateFloatParameter",&raliCreateFloatParameter);
+        m.def("UpdateIntRand", &raliUpdateIntUniformRand);
+        m.def("UpdateFloatRand", &raliUpdateFloatUniformRand);
+        m.def("UpdateIntParameter", &raliUpdateIntParameter);
+        m.def("UpdateFloatParameter", &raliUpdateFloatParameter);
         // rali_api_data_transfer.h 
         m.def("raliCopyToOutput",&wrapper);
         m.def("raliCopyToOutputTensor32",&wrapper_tensor32);
@@ -462,6 +468,16 @@ namespace rali{
               py::arg("out_width") = 0,
               py::arg("out_height") = 0,
               py::arg("record_name_prefix") = "");
+        m.def("Cifar10Decoder",&raliRawCIFAR10Source,"Reads file from the source given and decodes it according to the policy only for TFRecords",
+              py::return_value_policy::reference,
+              py::arg("p_context"),
+              py::arg("source_path"),
+              py::arg("rali_color_format"),
+              py::arg("is_output"),
+              py::arg("out_width") = 0,
+              py::arg("out_height") = 0,
+              py::arg("file_name_prefix") = "",
+              py::arg("loop") = false);
 
         m.def("raliResetLoaders",&raliResetLoaders);
         // rali_api_augmentation.h

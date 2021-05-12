@@ -119,6 +119,14 @@ __device__ __forceinline__ uint hip_lerp(uint src0, uint src1, uint src2) {
     return __builtin_amdgcn_lerp(src0, src1, src2);
 }
 
+__device__ __forceinline__ uint hip_sad(uint a, uint b, uint c) {
+    return __builtin_amdgcn_sad_u8(a, b, c);
+}
+
+__device__ __forceinline__ uint hip_bytealign(uint a, uint b, uint c) {
+    return __builtin_amdgcn_alignbyte(a, b, c);
+}
+
 __device__ __forceinline__ float4 hip_fabs4(float4 src) {
     return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
 }

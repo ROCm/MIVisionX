@@ -31,6 +31,8 @@ public:
 
     VideoDecoder::Status Initialize(const char *src_filename) override;
     VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length) override;
+	int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) override;
+
     void release() override;
 
     ~FFMPEG_VIDEO_DECODER() override;

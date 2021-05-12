@@ -74,6 +74,7 @@ public:
     
     virtual VideoDecoder::Status Initialize(const char *src_filename) = 0;
     virtual VideoDecoder::Status Decode(unsigned char* output_buffer, unsigned seek_frame_number, size_t sequence_length) = 0;
+    virtual int seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number) = 0;
     virtual void release() = 0;
 
     virtual ~VideoDecoder() = default;

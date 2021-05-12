@@ -26,18 +26,19 @@ THE SOFTWARE.
 
 FFMPEG_VIDEO_DECODER::FFMPEG_VIDEO_DECODER(){};
 
-/* int64_t FFMPEG_VIDEO_DECODER::seek_frame(AVFormatContext fmt_ctx, AVRational avg_frame_rate, AVRational time_base, AV, unsigned frame_number)
+int FFMPEG_VIDEO_DECODER::seek_frame(AVRational avg_frame_rate, AVRational time_base, unsigned frame_number)
 {
     auto seek_time = av_rescale_q((int64_t)frame_number, av_inv_q(avg_frame_rate), AV_TIME_BASE_Q);
     int64_t select_frame_pts = av_rescale_q((int64_t)frame_number, av_inv_q(avg_frame_rate), time_base);
     // std::cerr << "Seeking to frame " << frame_number << " timestamp " << seek_time << std::endl;    
 
-    int ret = av_seek_frame(fmt_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
+    int ret = av_seek_frame(_fmt_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
     if (ret < 0) {
         std::cerr << "\n Error in seeking frame..Unable to seek the given frame in a video" << std::endl;
+        return ret;
     }
+    return select_frame_pts;
 }
-*/
 
 VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, unsigned seek_frame_number, size_t sequence_length)
 {
@@ -104,12 +105,8 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
     // decoding loop
     _decframe = av_frame_alloc();
     int fcount = 0;
+    int select_frame_pts = seek_frame(_video_stream->avg_frame_rate, _video_stream->time_base, seek_frame_number);
 
-    auto seek_time = av_rescale_q((int64_t)seek_frame_number, av_inv_q(_video_stream->avg_frame_rate), AV_TIME_BASE_Q);
-    int64_t select_frame_pts = av_rescale_q((int64_t)seek_frame_number, av_inv_q(_video_stream->avg_frame_rate), _video_stream->time_base);
-    // std::cerr << "Seeking to _frame " << seek_frame_number << " timestamp " << seek_time << std::endl;
-
-    ret = av_seek_frame(_fmt_ctx, -1, seek_time, AVSEEK_FLAG_BACKWARD);
     if (ret < 0)
     {
         std::cerr << "\n Error in seeking _frame..Unable to seek the given _frame in a video" << std::endl;

@@ -32,8 +32,8 @@ public:
     BrightnessNode(const std::vector<Image *> &inputs, const std::vector<Image *> &outputs);
     BrightnessNode() = delete;
 
-    void init( float alpha, int beta);
-    void init( FloatParam* alpha_param, IntParam* beta_param);
+    void init( float alpha, float beta);
+    void init( FloatParam* alpha_param, FloatParam* beta_param);
 
 protected:
     void create_node() override ;
@@ -41,7 +41,7 @@ protected:
 private:
 
     ParameterVX<float> _alpha;
-    ParameterVX<int> _beta;
+    ParameterVX<float> _beta;
     constexpr static float ALPHA_RANGE [2] = {0.1, 1.95};
-    constexpr static int   BETA_RANGE [2] = {0, 25};
+    constexpr static float   BETA_RANGE [2] = {0, 25};
 };

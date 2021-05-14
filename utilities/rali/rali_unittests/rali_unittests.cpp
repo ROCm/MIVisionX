@@ -182,6 +182,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     meta_data = raliCreateTFReader(handle, path, true, key2, key8);
 #elif defined TF_READER_DETECTION
     meta_data = raliCreateTFReaderDetection(handle, path, true, key2, key3, key4, key5, key6, key7, key8);
+#elif defined VIDEO_READER
+/*dO NOTHING*/
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
@@ -222,9 +224,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #elif defined COCO_READER_PARTIAL
         input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
 #elif defined VIDEO_READER
-    int sequence_length = 1;
-    input1 = raliVideoFileSource(handle, path, color_format, decode_device, 1, decode_max_width, decode_max_height,0);
-    // input1 = raliVideoFileSource(handle, path, color_format, decode_device, sequence_length, false, true);
+    int sequence_length = 2;
+    input1 = raliVideoFileSource(handle, path, color_format, num_threads, sequence_length, true, true, false);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
         input1 = raliJpegFileSource(handle, path, color_format, num_threads, false, true);
@@ -658,8 +659,10 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     printf("Remaining images %d \n", raliGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
 
+    int count = 0;
     while (raliGetRemainingImages(handle) >= inputBatchSize)
     {
+        count++;
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
@@ -685,7 +688,8 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
             std::cout<<"\nwidth:"<<img_sizes_batch[i*2];
             std::cout<<"\nHeight:"<<img_sizes_batch[(i*2)+1];
         }
-
+#elif defined VIDEO_READER
+/*Do nothing*/
 #else
         raliGetImageLabels(handle, label_id);
         int img_size = raliGetImageNameLen(handle, image_name_length);
@@ -732,6 +736,17 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         compression_params.push_back(9);
 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
+#if defined VIDEO_READER
+        if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
+        {
+            // cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
+            cv::imwrite("output_"+std::to_string(count)+".png",mat_output);
+        }
+        else
+        {
+            cv::imwrite("output.png",mat_output);
+        }
+#else
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
@@ -741,6 +756,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         {
             cv::imwrite(outName, mat_output, compression_params);
         }
+#endif
         col_counter = (col_counter + 1) % number_of_cols;
     }
 

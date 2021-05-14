@@ -749,6 +749,8 @@ void MasterGraph::output_routine()
 
 #ifdef RALI_VIDEO
                 auto this_cycle_names = _video_loader_module->get_id();
+                for(unsigned i = 0; i < this_cycle_names.size(); i++)
+                    std::cerr << "\nThis cycle names ::" << this_cycle_names[i];
                 auto decode_image_info = _video_loader_module->get_decode_image_info();
 #else
                 auto this_cycle_names =  _loader_module->get_id();
@@ -915,6 +917,20 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     return _meta_data_reader->get_output();
 }
 
+MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, MetaDataReaderType reader_type)
+{
+    if( _meta_data_reader)
+        THROW("A metadata reader has already been created")
+    MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
+    _meta_data_reader = create_meta_data_reader(config);
+    _meta_data_reader->init(config);
+    _meta_data_reader->read_all(source_path);
+    if (_augmented_meta_data)
+        THROW("Metadata can only have a single output")
+    else
+        _augmented_meta_data = _meta_data_reader->get_output();
+    return _meta_data_reader->get_output();
+}
 
 void MasterGraph::create_randombboxcrop_reader(RandomBBoxCrop_MetaDataReaderType reader_type, RandomBBoxCrop_MetaDataType label_type, bool all_boxes_overlap, bool no_crop, FloatParam* aspect_ratio, bool has_shape, int crop_width, int crop_height, int num_attempts, FloatParam* scaling, int total_num_attempts)
 {

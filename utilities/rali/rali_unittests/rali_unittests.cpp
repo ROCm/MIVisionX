@@ -183,7 +183,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #elif defined TF_READER_DETECTION
     meta_data = raliCreateTFReaderDetection(handle, path, true, key2, key3, key4, key5, key6, key7, key8);
 #elif defined VIDEO_READER
-/*dO NOTHING*/
+    meta_data = raliCreateVideoLabelReader(handle, path);
 #else
     meta_data = raliCreateLabelReader(handle, path);
 #endif
@@ -737,6 +737,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 
         mat_input.copyTo(mat_output(cv::Rect(col_counter * w, 0, w, h)));
 #if defined VIDEO_READER
+        mkdir(count.c_str());
         if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
         {
             // cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);

@@ -32,7 +32,7 @@ ImageLoaderSingleShardNode::ImageLoaderSingleShardNode(Image *output, DeviceReso
 
 void
 ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const std::string &source_path, const std::string &json_path,
-                                 StorageType storage_type, DecoderType decoder_type, bool shuffle, bool loop,
+                                 unsigned sequence_length, StorageType storage_type, DecoderType decoder_type, bool shuffle, bool loop,
                                  size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_original, const std::map<std::string, std::string> feature_key_map)
 {
     if(!_loader_module)
@@ -47,6 +47,7 @@ ImageLoaderSingleShardNode::init(unsigned shard_id, unsigned shard_count, const 
     reader_cfg.set_shard_count(shard_count);
     reader_cfg.set_shard_id(shard_id);
     reader_cfg.set_batch_count(load_batch_count);
+    reader_cfg.set_sequence_length(sequence_length);
     _loader_module->initialize(reader_cfg, DecoderConfig(decoder_type),
                                mem_type,
                                _batch_size, decoder_keep_original);

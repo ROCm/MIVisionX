@@ -32,7 +32,8 @@ enum class StorageType
     CAFFE_LMDB_RECORD = 3,
     CAFFE2_LMDB_RECORD = 4,
     COCO_FILE_SYSTEM = 5,
-    VIDEO_FILE_SYSTEM = 6
+    VIDEO_FILE_SYSTEM = 6,
+    SEQUENCE_FILE_SYSTEM = 7
 };
 
 struct ReaderConfig

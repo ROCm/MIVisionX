@@ -72,6 +72,28 @@ extern "C"  RaliImage  RALI_API_CALL raliJpegFileSourceSingleShard(RaliContext c
                                                                    RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
                                                                    unsigned max_width = 0, unsigned max_height = 0);
 
+extern "C"  RaliImage  RALI_API_CALL raliSequenceReader(RaliContext context,
+                                                        const char* source_path,
+                                                        RaliImageColor rali_color_format,
+                                                        unsigned internal_shard_count,
+                                                        unsigned sequence_length,
+                                                        bool is_output,
+                                                        bool shuffle = false,
+                                                        bool loop = false,
+                                                        RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
+                                                        unsigned max_width = 0, unsigned max_height = 0);
+
+extern "C"  RaliImage  RALI_API_CALL raliSequenceReaderSingleShard(RaliContext context,
+                                                                   const char* source_path,
+                                                                   RaliImageColor rali_color_format,
+                                                                   unsigned shard_id,
+                                                                   unsigned shard_count,
+                                                                   unsigned sequence_length,
+                                                                   bool is_output ,
+                                                                   bool shuffle = false,
+                                                                   bool loop = false,
+                                                                   RaliImageSizeEvaluationPolicy decode_size_policy = RALI_USE_MOST_FREQUENT_SIZE,
+                                                                   unsigned max_width = 0, unsigned max_height = 0);
 
 /// Creates JPEG image reader and decoder. It allocates the resources and objects required to read and decode COCO Jpeg images stored on the file systems. It has internal sharding capability to load/decode in parallel is user wants.
 /// If images are not Jpeg compressed they will be ignored.

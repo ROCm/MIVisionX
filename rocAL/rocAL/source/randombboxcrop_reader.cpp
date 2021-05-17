@@ -31,26 +31,9 @@ THE SOFTWARE.
 
 void RandomBBoxCropReader::init(const RandomBBoxCrop_MetaDataConfig &cfg)
 {
-    _crop_param = std::make_shared<RaliRandomCropParam>(_batch_size);
-    _crop_param->set_x_drift_factor(core(x_drift));
-    _crop_param->set_y_drift_factor(core(y_drift));
-    _crop_param->set_area_factor(core(cfg.scaling()));
-    _crop_param->set_aspect_ratio(core(cfg.aspect_ratio()));
     _all_boxes_overlap = cfg.all_boxes_overlap();
     _no_crop = cfg.no_crop();
     _has_shape = cfg.has_shape();
-    _crop_width = cfg.crop_width();
-    _crop_height = cfg.crop_height();
-    _crop_width_val.resize(_batch_size);
-    _crop_height_val.resize(_batch_size);
-    _x1_val.resize(_batch_size);
-    _y1_val.resize(_batch_size);
-    _x2_val.resize(_batch_size);
-    _y2_val.resize(_batch_size);
-    _iou_range.resize(_batch_size);
-    in_width.resize(_batch_size);
-    in_height.resize(_batch_size);
-    _crop_param->array_init();
     if (cfg.num_attempts() > 1)
     {
         _num_of_attempts = cfg.num_attempts();
@@ -168,7 +151,6 @@ void RandomBBoxCropReader::read_all()
     BoundingBoxCord crop_box, jth_box;
     uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();
-    int i = 0;
     Parameter<float> *width_factor_param, *height_factor_param;
     // srand here
     width_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0.3, 1.0)->core;
@@ -179,8 +161,9 @@ void RandomBBoxCropReader::read_all()
         std::string image_name = elem.first;
         BoundingBoxCords bb_coords = elem.second->get_bb_cords();
         ImgSizes img_sizes = elem.second->get_img_sizes();
-        in_width[i] = img_sizes[i].w;
-        in_height[i] = img_sizes[i].h;
+        uint32_t in_width, in_height;
+        in_width = img_sizes[0].w;
+        in_height = img_sizes[0].h;
         bb_count = bb_coords.size();
         std::vector<float> coords_buf(bb_count * 4);
         for (unsigned int j = 0, m = 0; j < bb_count; j++, m += 4)
@@ -204,8 +187,8 @@ void RandomBBoxCropReader::read_all()
             {
                 crop_box.x = 0;
                 crop_box.y = 0;
-                crop_box.w = in_width[i];
-                crop_box.h = in_height[i];
+                crop_box.w = in_width;
+                crop_box.h = in_height;
                 break;
             }
 
@@ -213,8 +196,8 @@ void RandomBBoxCropReader::read_all()
             {
                 crop_box.x = 0;
                 crop_box.y = 0;
-                crop_box.w = in_width[i];
-                crop_box.h = in_height[i];
+                crop_box.w = in_width;
+                crop_box.h = in_height;
                 break;
             }
             else // If it has no shape, then area and aspect ratio thing should be provided
@@ -239,10 +222,10 @@ void RandomBBoxCropReader::read_all()
                     y_factor_param = ParameterFactory::instance()->create_uniform_float_rand_param(0, 1 - height_factor)->core;
                     y_factor_param->renew();
                     float y_factor = y_factor_param->get();
-                    crop_box.x = x_factor * in_width[i];
-                    crop_box.y = y_factor * in_height[i];
-                    crop_box.w = width_factor * in_width[i];
-                    crop_box.h = height_factor * in_height[i];
+                    crop_box.x = x_factor * in_width;
+                    crop_box.y = y_factor * in_height;
+                    crop_box.w = width_factor * in_width;
+                    crop_box.h = height_factor * in_height;
                     // All boxes should satisfy IOU criteria
                     if (_all_boxes_overlap)
                     {

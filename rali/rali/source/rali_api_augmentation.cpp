@@ -60,11 +60,50 @@ THE SOFTWARE.
 #include "meta_node_rotate.h"
 #include "meta_node_ssd_random_crop.h"
 #include "meta_node_flip.h"
+#include "node_sequence_rearrange.h"
 
 #include "commons.h"
 #include "context.h"
 #include "rali_api.h"
 
+RaliImage  RALI_API_CALL
+raliSequenceRearrange(
+            RaliContext p_context,
+            RaliImage p_input,
+            unsigned int* new_order,
+            unsigned int sequence_length,
+            bool is_output )
+{
+    if(!p_input || !p_context)
+        THROW("Null values passed as input")
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
+        std::cerr<<"\n internal batch size:: "<<                              context->master_graph->internal_batch_size();
+        std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
+        // context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        auto info = ImageInfo(input->info().width(), input->info().height_single(),
+        //                       context->master_graph->user_batch_size(),
+                              context->master_graph->internal_batch_size(),
+                            // 3,
+                              input->info().color_plane_count(),
+                              context->master_graph->mem_type(),
+                              input->info().color_format() );
+        // ImageInfo info = input->info();
+        output = context->master_graph->create_image(info, is_output);
+        std::shared_ptr<SequenceRearrangeNode> sequence_rearrange_node =  context->master_graph->add_node<SequenceRearrangeNode>({input}, {output});
+        sequence_rearrange_node->init(new_order, sequence_length);
+        // if (context->master_graph->meta_data_graph())
+        //     context->master_graph->meta_add_node<FlipMetaNode,FlipNode>(flip_node);
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+}
 
 
 RaliImage  RALI_API_CALL
@@ -1671,7 +1710,7 @@ raliResizeCropMirrorFixed(
 extern "C"  RaliImage  RALI_API_CALL raliResizeCropMirror( RaliContext p_context, RaliImage p_input,
                                                            unsigned dest_width, unsigned dest_height,
                                                             bool is_output, RaliFloatParam p_crop_height,
-                                                            RaliFloatParam p_crop_width, RaliIntParam p_mirror 
+                                                            RaliFloatParam p_crop_width, RaliIntParam p_mirror
                                                             )
 {
     if(!p_context || !p_input)
@@ -1788,50 +1827,50 @@ raliSSDRandomCrop(
     return output;
 }
 
-RaliImage  RALI_API_CALL	
-raliCopy(	
-        RaliContext p_context,	
-        RaliImage p_input,	
-        bool is_output)	
+RaliImage  RALI_API_CALL
+raliCopy(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output)
 {
     if(!p_context || !p_input)
         THROW("Null values passed as input")
     Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);	
-    auto input = static_cast<Image*>(p_input);	
-    try	
-    {	
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
         output = context->master_graph->create_image(input->info(), is_output);
         context->master_graph->add_node<CopyNode>({input}, {output});
-    }	
-    catch(const std::exception& e)	
-    {	
-        context->capture_error(e.what());	
-        ERR(e.what())	
-    }	
-    return output;	
-}	
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
+}
 
-RaliImage  RALI_API_CALL	
-raliNop(	
-        RaliContext p_context,	
-        RaliImage p_input,	
-        bool is_output)	
+RaliImage  RALI_API_CALL
+raliNop(
+        RaliContext p_context,
+        RaliImage p_input,
+        bool is_output)
 {
     if(!p_context || !p_input)
         THROW("Null values passed as input")
     Image* output = nullptr;
-    auto context = static_cast<Context*>(p_context);	
-    auto input = static_cast<Image*>(p_input);	
-    try	
-    {	
+    auto context = static_cast<Context*>(p_context);
+    auto input = static_cast<Image*>(p_input);
+    try
+    {
         output = context->master_graph->create_image(input->info(), is_output);
         context->master_graph->add_node<NopNode>({input}, {output});
-    }	
-    catch(const std::exception& e)	
-    {	
-        context->capture_error(e.what());	
-        ERR(e.what())	
-    }	
-    return output;	
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        ERR(e.what())
+    }
+    return output;
 }

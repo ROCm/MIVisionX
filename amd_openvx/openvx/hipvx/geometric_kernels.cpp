@@ -1648,7 +1648,7 @@ int HipExec_Remap_U8_U8_Nearest(hipStream_t stream, vx_uint32 dstWidth, vx_uint3
 __global__ void __attribute__((visibility("default")))
 Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
     uchar *remap_, uint remapStrideInBytes, uint borderValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
@@ -1664,13 +1664,13 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     uint2 dst;
     int map;
     uint mask, v;
-    dstWidth -= 1;
-    dstHeight -= 1;
+    srcWidth -= 1;
+    srcHeight -= 1;
 
     map = remap[0];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1681,7 +1681,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     map = remap[1];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1692,7 +1692,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     map = remap[2];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1703,7 +1703,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     map = remap[3];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1714,7 +1714,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     map = remap[4];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1725,7 +1725,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     map = remap[5];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1736,7 +1736,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     map = remap[6];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1747,7 +1747,7 @@ Hip_Remap_U8_U8_Nearest_Constant(uint dstWidth, uint dstHeight,
     map = remap[7];
     x = ((map & 0xffff) + 4) >> 3;
     y = (map + 0x00040000) >> 19;
-    mask = ((int)(x | (dstWidth - x) | y | (dstHeight - y))) >> 31;
+    mask = ((int)(x | (srcWidth - x) | y | (srcHeight - y))) >> 31;
     mask = ~mask;
     x &= mask;
     y &= mask;
@@ -1769,7 +1769,7 @@ int HipExec_Remap_U8_U8_Nearest_Constant(hipStream_t stream, vx_uint32 dstWidth,
 
     hipLaunchKernelGGL(Hip_Remap_U8_U8_Nearest_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         (uchar *) remap, remapStrideInBytes, (uint) borderValue);
 
     return VX_SUCCESS;
@@ -1838,7 +1838,7 @@ int HipExec_Remap_U8_U8_Bilinear(hipStream_t stream, vx_uint32 dstWidth, vx_uint
 __global__ void __attribute__((visibility("default")))
 Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     uchar *pDstImage, uint dstImageStrideInBytes,
-    const uchar *pSrcImage, uint srcImageStrideInBytes,
+    uint srcWidth, uint srcHeight, const uchar *pSrcImage, uint srcImageStrideInBytes,
     uchar *remap_, uint remapStrideInBytes, uint borderValue) {
 
     int x = (hipBlockDim_x * hipBlockIdx_x + hipThreadIdx_x) * 8;
@@ -1856,23 +1856,23 @@ Hip_Remap_U8_U8_Bilinear_Constant(uint dstWidth, uint dstHeight,
     int map;
 
     map = remap[0];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[1];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[2];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[3];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.x = hip_pack(f);
 
     map = remap[4];
-    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.x = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[5];
-    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.y = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[6];
-    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.z = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     map = remap[7];
-    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, dstWidth, dstHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
+    f.w = hip_bilinear_sample_FXY_constant_for_remap(pSrcImage, srcImageStrideInBytes, srcWidth, srcHeight, ((map << 16) >> 16) * 0.125f, (map >> 16) * 0.125f, borderValue);
     dst.y = hip_pack(f);
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
@@ -1889,7 +1889,7 @@ int HipExec_Remap_U8_U8_Bilinear_Constant(hipStream_t stream, vx_uint32 dstWidth
 
     hipLaunchKernelGGL(Hip_Remap_U8_U8_Bilinear_Constant, dim3(ceil((float)globalThreads_x/localThreads_x), ceil((float)globalThreads_y/localThreads_y)),
                         dim3(localThreads_x, localThreads_y), 0, stream, dstWidth, dstHeight, (uchar *)pHipDstImage, dstImageStrideInBytes,
-                        (const uchar *)pHipSrcImage, srcImageStrideInBytes,
+                        srcWidth, srcHeight, (const uchar *)pHipSrcImage, srcImageStrideInBytes,
                         (uchar *) remap, remapStrideInBytes, (uint) borderValue);
 
     return VX_SUCCESS;

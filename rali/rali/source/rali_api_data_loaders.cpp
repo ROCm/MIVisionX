@@ -42,6 +42,8 @@ extern "C"
 #include "node_copy.h"
 #include "node_fused_jpeg_crop.h"
 #include "node_fused_jpeg_crop_single_shard.h"
+#include "node_resize.h"
+#include "meta_node_resize.h"
 #include "video_properties.h"
 
 namespace filesys = boost::filesystem;
@@ -1556,6 +1558,108 @@ raliVideoFileSource(
         {
             auto actual_output = context->master_graph->create_image(info, is_output);
             context->master_graph->add_node<CopyNode>({output}, {actual_output});
+        }
+#else
+        THROW("Video decoder is not enabled since amd media decoder is not present")
+#endif
+    }
+    catch(const std::exception& e)
+    {
+        context->capture_error(e.what());
+        std::cerr << e.what() << '\n';
+    }
+    return output;
+
+}
+
+RaliImage  RALI_API_CALL
+raliVideoFileResize(
+        RaliContext p_context,
+        const char* source_path,
+        RaliImageColor rali_color_format,
+        unsigned internal_shard_count,
+        unsigned sequence_length,
+        unsigned dest_width,
+        unsigned dest_height,
+        bool shuffle,
+        bool is_output,
+        bool loop)
+{
+    Image* resize_output = nullptr;
+    if(!p_context || dest_width == 0 || dest_height == 0)
+        THROW("Null values passed as input")
+
+    std::cerr<<"\n Coming to raliVideoFileResize";
+    Image* output = nullptr;
+    auto context = static_cast<Context*>(p_context);
+    try
+    {
+#ifdef RALI_VIDEO
+        /* The internal batch size and user batch size are modified here in master graph */
+        context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
+        context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->master_graph->set_user_internal_batch_ratio();
+        std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
+        // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
+
+        unsigned width , height, number_of_video_files;
+        std::vector<size_t> frame_count;
+        std::vector<std::string> video_file_names;
+
+        video_properties video_prop = find_video_properties(source_path);
+        //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
+        width = video_prop.width;
+        height = video_prop.height ;
+        number_of_video_files = video_prop.videos_count;
+        frame_count.resize(number_of_video_files);
+        video_file_names.resize(number_of_video_files);
+        frame_count = video_prop.frames_count; 
+        video_file_names = video_prop.video_file_names;
+        std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
+        std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";
+        auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
+        //auto decoder_mode = convert_decoder_mode(rali_decode_device);
+        auto info = ImageInfo(width, height,
+                              context->master_graph->internal_batch_size(),
+                              num_of_planes,
+                              context->master_graph->mem_type(),
+                              color_format );
+
+        output = context->master_graph->create_loader_output_image(info);
+
+                // For the resize node, user can create an image with a different width and height
+        ImageInfo output_info = info;
+        output_info.width(dest_width);
+        output_info.height(dest_height);
+
+        resize_output = context->master_graph->create_image(output_info, is_output);
+
+        context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
+                                                                          source_path, "",
+									                                      std::map<std::string, std::string>(),
+                                                                          StorageType::VIDEO_FILE_SYSTEM,
+                                                                          VideoDecoderType::FFMPEG_VIDEO,
+                                                                          sequence_length,
+                                                                          number_of_video_files,
+                                                                          frame_count,
+                                                                          shuffle,
+                                                                          loop,
+                                                                          context->user_batch_size(),
+                                                                          context->master_graph->mem_type(),
+                                                                          video_file_names);
+        context->master_graph->set_loop(loop);
+
+        // For the nodes that user provides the output size the dimension of all the images after this node will be fixed and equal to that size
+        resize_output->reset_image_roi();
+
+        std::shared_ptr<ResizeNode> resize_node =  context->master_graph->add_node<ResizeNode>({output}, {resize_output});
+        if (context->master_graph->meta_data_graph())
+            context->master_graph->meta_add_node<ResizeMetaNode,ResizeNode>(resize_node);
+
+        if(is_output)
+        {
+            auto actual_output = context->master_graph->create_image(output_info, is_output);
+            context->master_graph->add_node<CopyNode>({resize_output}, {actual_output});
         }
 #else
         THROW("Video decoder is not enabled since amd media decoder is not present")

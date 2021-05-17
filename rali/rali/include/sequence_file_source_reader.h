@@ -73,6 +73,7 @@ private:
     DIR *_sub_dir;
     struct dirent *_entity;
     std::vector<std::string> _file_names;
+    std::vector<std::string> _sequence_frames;
     std::vector<std::vector< std::string>> _video_file_names;
     std::vector<std::vector< std::string>>_sequence_frame_names;
     unsigned  _curr_file_idx;

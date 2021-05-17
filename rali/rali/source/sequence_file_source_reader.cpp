@@ -46,9 +46,9 @@ _shuffle_time("shuffle_time", DBG_TIMING)
 unsigned SequenceFileSourceReader::count()
 {
     if(_loop)
-        return _sequence_frame_names.size();
+        return _sequence_frames.size();
 
-    int ret = ((int)_sequence_frame_names.size() -_read_counter);
+    int ret = ((int)_sequence_frames.size() -_read_counter);
     return ((ret < 0) ? 0 : ret);
 }
 
@@ -85,14 +85,17 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
         }
     }
 
+    /*for(unsigned i = 0; i < _sequence_frames.size(); i++)
+    {
+        std::cerr << "\n Sequence names : " << _sequence_frames[i];
+    }
     for (int i = 0; i < _sequence_frame_names.size(); i++)
     {
         std::cerr << "\n Id: " << i << std::endl;
         for (int j = 0; j < _sequence_frame_names[i].size(); j++) {
             std::cerr << "\t Video files : " << _sequence_frame_names[i][j] << std::endl;
         }
-    }
-    //exit(0);
+    }*/
 
     // the following code is required to make every shard the same size:: required for multi-gpu training
     /*if (_shard_count > 1 && _batch_count > 1) {
@@ -108,20 +111,27 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
     if( ret==Reader::Status::OK && _shuffle)
         std::random_shuffle(_sequence_frame_names.begin(), _sequence_frame_names.end());
     _shuffle_time.end();
+
+    for (int i = 0; i < _sequence_frame_names.size(); i++)
+    {
+        for (int j = 0; j < _sequence_frame_names[i].size(); j++) {
+            _sequence_frames.push_back(_sequence_frame_names[i][j]);
+        }
+    }
     return ret;
 
 }
 
 void SequenceFileSourceReader::incremenet_read_ptr()
 {
-    //_read_counter++;
-    //_curr_file_idx = (_curr_file_idx + 1) % _file_names.size();
-    _read_counter += _sequence_length;
-    _curr_file_idx = (_curr_file_idx + 1) % _sequence_frame_names.size();
+    _read_counter++;
+    _curr_file_idx = (_curr_file_idx + 1) % _sequence_frames.size();
+    //_read_counter += _sequence_length;
+    //_curr_file_idx = (_curr_file_idx + 1) % _sequence_frame_names.size();
 }
 size_t SequenceFileSourceReader::open()
 {
-    auto file_path = _sequence_frame_names[_curr_file_idx][0];// Get next file name
+    auto file_path = _sequence_frames[_curr_file_idx];// Get next file name
     incremenet_read_ptr();
     _last_id= file_path;
     auto last_slash_idx = _last_id.find_last_of("\\/");

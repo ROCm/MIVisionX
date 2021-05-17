@@ -78,7 +78,7 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _video_count = reader_config.get_video_count();
     _video_names = reader_config.get_video_file_names();
     _batch_size = batch_size;
-    // std::cerr<<"\n _sequence_length ::"<<_sequence_length;
+    std::cerr<<"\n _sequence_length ::"<<_sequence_length;
     // std::cerr<<"\n _video_count:: "<<_video_count;
     // std::cerr<<"\n batchsize :: "<<_batch_size;
 

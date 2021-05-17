@@ -457,6 +457,17 @@ extern "C"  RaliImage  RALI_API_CALL raliVideoFileSource(RaliContext context,
                                                         bool is_output = false,
                                                         bool loop = false );
 
+extern "C"  RaliImage  RALI_API_CALL raliVideoFileResize(RaliContext context,
+                                                        const char* source_path,
+                                                        RaliImageColor color_format,
+                                                        unsigned internal_shard_count,
+                                                        unsigned sequence_length ,
+                                                        unsigned dest_width,
+                                                        unsigned dest_height,
+                                                        bool shuffle = false,
+                                                        bool is_output = false,
+                                                        bool loop = false );
+
 extern "C"  RaliImage  RALI_API_CALL raliVideoFileSourceSingleShard(RaliContext context,
                                                         const char* source_path,
                                                         RaliImageColor color_format,

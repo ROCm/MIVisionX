@@ -749,12 +749,13 @@ void MasterGraph::output_routine()
 
 #ifdef RALI_VIDEO
                 auto this_cycle_names = _video_loader_module->get_id();
-                for(unsigned i = 0; i < this_cycle_names.size(); i++)
-                    std::cerr << "\nThis cycle names ::" << this_cycle_names[i];
                 auto decode_image_info = _video_loader_module->get_decode_image_info();
 #else
                 auto this_cycle_names =  _loader_module->get_id();
-                auto decode_image_info = _loader_module->get_decode_image_info(); 
+                auto decode_image_info = _loader_module->get_decode_image_info();
+                /*for(unsigned i = 0; i < this_cycle_names.size(); i++)
+                    std::cerr << "\nThis cycle names ::" << this_cycle_names[i]; 
+                std::cerr << "\nInternal batch size : " << _internal_batch_size;*/
 #endif
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))

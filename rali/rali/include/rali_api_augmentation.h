@@ -24,6 +24,10 @@ THE SOFTWARE.
 #define MIVISIONX_RALI_API_AUGMENTATION_H
 #include "rali_api_types.h"
 
+extern "C"  RaliImage  RALI_API_CALL raliSequenceRearrange(RaliContext context, RaliImage input,
+                                                unsigned int* new_order, unsigned int  new_sequence_length,
+                                                unsigned int sequence_length, bool is_output );
+
 /// Accepts U8 and RGB24 input.
 /// \param context
 /// \param input
@@ -516,7 +520,7 @@ extern "C" RaliImage  RALI_API_CALL raliCrop(RaliContext context, RaliImage inpu
                                              RaliFloatParam crop_depth = NULL,
                                              RaliFloatParam crop_pox_x = NULL,
                                              RaliFloatParam crop_pos_y = NULL,
-                                             RaliFloatParam crop_pos_z = NULL); 
+                                             RaliFloatParam crop_pos_z = NULL);
 
 extern "C"  RaliImage  RALI_API_CALL raliCropFixed(RaliContext context, RaliImage  input,
                                                    unsigned crop_width,

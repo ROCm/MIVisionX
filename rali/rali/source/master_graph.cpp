@@ -178,8 +178,10 @@ MasterGraph::create_single_graph()
 {
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations
     _graph = std::make_shared<Graph>(_context, _affinity, 0, _gpu_id);
+    int node_index = 0;
     for(auto& node: _nodes)
     {
+        std::cerr<<"\n Node number:: "<<++node_index;
         // Any image not yet created can be created as virtual image
         for(auto& image: node->output())
             if(image->info().type() == ImageInfo::Type::UNKNOWN)
@@ -705,7 +707,7 @@ void MasterGraph::output_routine()
 
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
-            pMetaDataBatch augmented_batch_meta_data = nullptr; 
+            pMetaDataBatch augmented_batch_meta_data = nullptr;
 #ifdef RALI_VIDEO
     int _count = _video_loader_module->remaining_count();
 #else
@@ -974,7 +976,7 @@ MetaDataBatch * MasterGraph::create_cifar10_label_reader(const char *source_path
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
-    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);    
+    MetaDataConfig config(MetaDataType::Label, MetaDataReaderType::CIFAR10_META_DATA_READER, source_path, std::map<std::string, std::string>(), file_prefix);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
     _meta_data_reader->read_all(source_path);
@@ -1001,7 +1003,7 @@ size_t MasterGraph::compute_optimum_internal_batch_size(size_t user_batch_size, 
 
     if(affinity == RaliAffinity::GPU)
         return user_batch_size;
-    
+
     unsigned THREAD_COUNT = std::thread::hardware_concurrency();
     if(THREAD_COUNT >= MINIMUM_CPU_THREAD_COUNT)
         INFO("Can run " + TOSTR(THREAD_COUNT) + " threads simultaneously on this machine")

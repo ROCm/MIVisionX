@@ -272,6 +272,7 @@ vx_status Scale_Register(vx_context);
 vx_status ScalebatchPD_Register(vx_context);
 vx_status ScalebatchPDROID_Register(vx_context);
 vx_status ScalebatchPS_Register(vx_context);
+vx_status SequenceRearrange_Register(vx_context);
 vx_status Snow_Register(vx_context);
 vx_status SnowbatchPD_Register(vx_context);
 vx_status SnowbatchPDROID_Register(vx_context);
@@ -576,6 +577,7 @@ vx_status WarpPerspectivebatchPS_Register(vx_context);
 #define VX_KERNEL_RPP_CROPMIRRORNORMALIZEBATCHPD_NAME        	"org.rpp.CropMirrorNormalizebatchPD"
 #define VX_KERNEL_RPP_CROPPD_NAME   							"org.rpp.CropPD"
 #define VX_KERNEL_RPP_RESIZECROPMIRRORPD_NAME      				"org.rpp.ResizeCropMirrorPD"
+#define VX_KERNEL_RPP_SEQUENCEREARRANGE_NAME                       "org.rpp.SequenceRearrange"
 // #define VX_KERNEL_RPP_COLORTWISTBATCHPS_NAME        "org.rpp.ColorTwistPS"
 // #define VX_KERNEL_RPP_COLORTWISTBATCHPDROID_NAME    "org.rpp.ColorTwistPDROID"
 

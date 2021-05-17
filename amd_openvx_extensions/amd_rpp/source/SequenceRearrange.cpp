@@ -120,7 +120,15 @@ static vx_status VX_CALLBACK processSequenceRearrange(vx_node node, const vx_ref
             memcpy(data->pDst, data->pSrc, size);
         }
         else if(df_image == VX_DF_IMAGE_RGB) {
-            memcpy(data->pDst, data->pSrc, size*3);
+            int src_index;
+            unsigned elem_size = (size / data->sequence_length) * 3;
+            for(unsigned dst_index=0; dst_index < data->new_sequence_length ; dst_index++)
+            {
+                src_index = data->new_order[dst_index];
+                void * dst_address = data->pDst + (dst_index * elem_size);
+                void * src_address = data->pSrc + (src_index * elem_size);
+                memcpy(dst_address, src_address, elem_size);
+            }
         }
         return_status = VX_SUCCESS;
     }
@@ -139,9 +147,10 @@ static vx_status VX_CALLBACK initializeSequenceRearrange(vx_node node, const vx_
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_HEIGHT, &data->dimensions.height, sizeof(data->dimensions.height)));
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_WIDTH, &data->dimensions.width, sizeof(data->dimensions.width)));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->new_sequence_length, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[3], &data->sequence_length, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
+    STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[4], &data->sequence_length, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
     STATUS_ERROR_CHECK(vxCopyScalar((vx_scalar)parameters[5], &data->device_type, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
-
+    data->new_order = (vx_uint32*)malloc(sizeof(vx_uint32) * data->new_sequence_length);
+    STATUS_ERROR_CHECK(vxCopyArrayRange((vx_array)parameters[2], 0, data->new_sequence_length, sizeof(vx_uint32), data->new_order, VX_READ_ONLY, VX_MEMORY_TYPE_HOST));
 #if ENABLE_OPENCL
     STATUS_ERROR_CHECK(vxQueryImage((vx_image)parameters[0], VX_IMAGE_ATTRIBUTE_AMD_OPENCL_BUFFER, &data->cl_pSrc, sizeof(data->cl_pSrc)));
 #else

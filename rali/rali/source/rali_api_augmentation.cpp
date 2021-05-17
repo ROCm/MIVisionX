@@ -81,13 +81,14 @@ raliSequenceRearrange(
     auto input = static_cast<Image*>(p_input);
     try
     {
-        std::cerr<<"\n internal batch size:: "<<                              context->master_graph->internal_batch_size();
+        std::cerr<<"\n internal batch size:: "<<context->master_graph->internal_batch_size();
         std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
-        // context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
         auto info = ImageInfo(input->info().width(), input->info().height_single(),
         //                       context->master_graph->user_batch_size(),
-                              context->master_graph->internal_batch_size(),
-                            // 3,
+                            //   context->master_graph->internal_batch_size(),
+                            sequence_length,
                               input->info().color_plane_count(),
                               context->master_graph->mem_type(),
                               input->info().color_format() );

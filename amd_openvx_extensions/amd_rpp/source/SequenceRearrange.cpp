@@ -58,7 +58,7 @@ static vx_status VX_CALLBACK validateSequenceRearrange(vx_node node, const vx_re
  	if(scalar_type != VX_TYPE_UINT32) return ERRMSG(VX_ERROR_INVALID_TYPE, "validate: Paramter: #3 type=%d (must be size)\n", scalar_type);
 
 
-    vx_parameter param = vxGetParameterByIndex(node, 0);
+    vx_parameter param = vxGetParameterByIndex(node, 1);
 
     vx_image image;
     vx_df_image df_image = VX_DF_IMAGE_VIRT;

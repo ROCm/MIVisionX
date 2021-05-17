@@ -64,6 +64,7 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _shuffle = desc.shuffle();
     _loop = desc.loop();
     _video_count = desc.get_video_count();
+    //set master graph flag to decide video reader
     // ret = subfolder_reading();
     // _video_file_count = _video_file_names.size();
     _video_file_names = desc.get_video_file_names();

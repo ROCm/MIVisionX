@@ -307,7 +307,7 @@ raliSequenceReader(
         INFO("Internal buffer size width = "+ TOSTR(width)+ " height = "+ TOSTR(height) + " depth = "+ TOSTR(num_of_planes))
 
         auto info = ImageInfo(width, height,
-                              context->internal_batch_size(),
+                              context->master_graph->internal_batch_size(),
                               num_of_planes,
                               context->master_graph->mem_type(),
                               color_format );

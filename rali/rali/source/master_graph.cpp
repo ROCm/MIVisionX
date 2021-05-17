@@ -202,9 +202,7 @@ MasterGraph::build()
     _output_image_info = _output_images.front()->info();
     for(auto&& output_image : _output_images)
         if(!(output_image->info() == _output_image_info)) {
-            std::cerr << "\n output image->info :  W : " << output_image->info().width() << "\t H: " << output_image->info().height_single();
-            std::cerr << "\n _output_image_info :  W : " << _output_image_info.width() << "\t H: " << _output_image_info.height_single();
-            THROW("Dimension of the output images do not match")
+              THROW("Dimension of the output images do not match")
         }
 
     allocate_output_tensor();
@@ -696,7 +694,6 @@ ImageNameBatch& operator+=(ImageNameBatch& dest, const ImageNameBatch& src)
 
 void MasterGraph::output_routine()
 {
-    std::cerr << "\nInside output routine : " << std::endl;
     INFO("Output routine started with "+TOSTR(_remaining_images_count) + " to load");
     if(processing_on_device() && _user_to_internal_batch_ratio != 1)
         THROW("Internal failure, in the GPU processing case, user and input batch size must be equal")
@@ -753,9 +750,6 @@ void MasterGraph::output_routine()
 #else
                 auto this_cycle_names =  _loader_module->get_id();
                 auto decode_image_info = _loader_module->get_decode_image_info();
-                /*for(unsigned i = 0; i < this_cycle_names.size(); i++)
-                    std::cerr << "\nThis cycle names ::" << this_cycle_names[i]; 
-                std::cerr << "\nInternal batch size : " << _internal_batch_size;*/
 #endif
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
@@ -788,7 +782,6 @@ void MasterGraph::output_routine()
                 {
                     if(node->_is_ssd)
                     {
-                        // std::cerr<<"\n Comes to set meta data in ssd random crop in output routine";
                         node->set_meta_data(_augmented_meta_data);
                     }
                 }
@@ -800,7 +793,6 @@ void MasterGraph::output_routine()
                     {
                         if(_is_random_bbox_crop)
                         {
-                            // std::cerr<<"\n Im master graph output routine comes to is_random_bbox_crop";
                             _randombboxcrop_meta_data_reader->lookup(this_cycle_names);
                             _meta_data_graph->update_random_bbox_meta_data(_random_bbox_crop_cords_data ,_augmented_meta_data, decode_image_info);
                         }
@@ -836,13 +828,11 @@ void MasterGraph::output_routine()
 void MasterGraph::start_processing()
 {
     _processing = true;
-    std::cerr << "\nbefore output routine : " << std::endl;
 #ifdef RALI_VIDEO
     _remaining_images_count = _video_loader_module->remaining_count();
 #else
     _remaining_images_count = _loader_module->remaining_count();
 #endif
-    std::cerr << "\nafter output routine : remaining count:  " << _remaining_images_count << std::endl;
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else

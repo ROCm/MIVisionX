@@ -63,7 +63,6 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
     _shuffle = desc.shuffle();
     _loop = desc.loop();
     _sequence_length =  desc.get_sequence_length();
-    std::cerr << "\nSequence_length : " << _sequence_length;
 
     ret = subfolder_reading();
     for(unsigned i = 0 ; i < _video_file_names.size(); i++)
@@ -74,38 +73,24 @@ Reader::Status SequenceFileSourceReader::initialize(ReaderConfig desc)
         }
         for(unsigned j = 0; (j+_sequence_length) <= _video_file_names[i].size(); j++)
         {
-            std::cerr << "\n";
             std::vector< std::string> temp;
             for(unsigned x=0, k = j; x < _sequence_length; x++, k++)
             {                   
-                std::cerr << "\t "<< _video_file_names[i][k];
                 temp.push_back(_video_file_names[i][k]);
             }
             _sequence_frame_names.push_back(temp);
         }
     }
 
-    /*for(unsigned i = 0; i < _sequence_frames.size(); i++)
-    {
-        std::cerr << "\n Sequence names : " << _sequence_frames[i];
-    }
-    for (int i = 0; i < _sequence_frame_names.size(); i++)
-    {
-        std::cerr << "\n Id: " << i << std::endl;
-        for (int j = 0; j < _sequence_frame_names[i].size(); j++) {
-            std::cerr << "\t Video files : " << _sequence_frame_names[i][j] << std::endl;
-        }
-    }*/
-
     // the following code is required to make every shard the same size:: required for multi-gpu training
-    /*if (_shard_count > 1 && _batch_count > 1) {
-        int _num_batches = _file_names.size()/_batch_count;
+    if (_shard_count > 1 && _batch_count > 1) {
+        int _num_batches = _sequence_frames.size()/_batch_count;
         int max_batches_per_shard = (_file_count_all_shards + _shard_count-1)/_shard_count;
         max_batches_per_shard = (max_batches_per_shard + _batch_count-1)/_batch_count;
         if (_num_batches < max_batches_per_shard) {
             replicate_last_batch_to_pad_partial_shard();
         }
-    }*/
+    }
     //shuffle dataset if set
     _shuffle_time.start();
     if( ret==Reader::Status::OK && _shuffle)
@@ -222,7 +207,6 @@ Reader::Status SequenceFileSourceReader::subfolder_reading()
     auto ret = Reader::Status::OK;
     for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count) {
         std::string subfolder_path = _full_path + "/" + entry_name_list[dir_count];
-        std::cerr << "\n Subfoler path : " << subfolder_path;
         filesys::path pathObj(subfolder_path);
         if(filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
         {
@@ -237,26 +221,26 @@ Reader::Status SequenceFileSourceReader::subfolder_reading()
             _file_names.clear();
         }
     }
-    /*if(_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
+    if(_in_batch_read_count > 0 && _in_batch_read_count < _batch_count)
     {
         replicate_last_image_to_fill_last_shard();
         LOG("FileReader ShardID [" + TOSTR(_shard_id) + "] Replicated " + _folder_path+_last_file_name + " " + TOSTR((_batch_count - _in_batch_read_count) ) + " times to fill the last batch")
     }
     if(!_file_names.empty())
-        LOG("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Total of " + TOSTR(_file_names.size()) + " images loaded from " + _full_path )*/
+        LOG("FileReader ShardID ["+ TOSTR(_shard_id)+ "] Total of " + TOSTR(_file_names.size()) + " images loaded from " + _full_path )
     return ret;
 }
 void SequenceFileSourceReader::replicate_last_image_to_fill_last_shard()
 {
     for(size_t i = _in_batch_read_count; i < _batch_count; i++)
-        _file_names.push_back(_last_file_name);
+        _sequence_frames.push_back(_last_file_name);
 }
 
 void SequenceFileSourceReader::replicate_last_batch_to_pad_partial_shard()
 {
-    if (_file_names.size() >=  _batch_count) {
+    if (_sequence_frames.size() >=  _batch_count) {
         for (size_t i = 0; i < _batch_count; i++)
-            _file_names.push_back(_file_names[i - _batch_count]);
+            _sequence_frames.push_back(_sequence_frames[i - _batch_count]);
     }
 }
 

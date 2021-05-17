@@ -136,7 +136,7 @@ if(${BUILD_RALI})
 		target_link_libraries(${PROJECT_NAME} -fPIC ${PROTOBUF_LIBRARIES} lmdb boost_system boost_filesystem turbojpeg openvx vx_rpp jsoncpp)
 	else()
 		message("-- ${Green}rali library is going to be built with video decode functionality ${ColourReset}")
-	        target_compile_definitions(${PROJECT_NAME} PUBLIC -DRALI_VIDEO)
+	        target_compile_definitions(${PROJECT_NAME} PUBLIC)
 		target_link_libraries(${PROJECT_NAME}  ${FFMPEG_LIBRARIES} ${PROTOBUF_LIBRARIES} lmdb turbojpeg openvx vx_rpp vx_amd_media jsoncpp)
 	endif()
 

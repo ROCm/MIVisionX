@@ -46,8 +46,8 @@ using namespace cv;
 // #define CAFFE_READER_DETECTION
 
 //#define VIDEO_READER
-#define VIDEO_READER_RESIZE
-//#define SEQUENCE_READER
+//#define VIDEO_READER_RESIZE
+#define SEQUENCE_READER
 
 //#define RANDOMBBOXCROP
 
@@ -96,7 +96,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 {
     size_t num_threads = 1;
     int inputBatchSize = 2;
-    int sequence_length = 2;
+    int sequence_length = 4;
     int decode_max_width = width;
     int decode_max_height = height;
     std::cout << ">>> test case " << test_case << std::endl;

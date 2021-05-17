@@ -75,7 +75,7 @@ private:
     std::vector<std::string> _file_names;
     std::vector<std::string> _sequence_frames;
     std::vector<std::vector< std::string>> _video_file_names;
-    std::vector<std::vector< std::string>>_sequence_frame_names;
+    std::vector<std::vector< std::string>> _sequence_frame_names;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
     unsigned _current_file_size;

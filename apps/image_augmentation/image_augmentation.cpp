@@ -134,7 +134,7 @@ int main(int argc, const char ** argv)
         // unsigned int new_order[2] = {0,1};
         // RaliImage input_seq =raliSequenceRearrange(handle, input1,new_order,sequence_length,true );
         unsigned int new_order[3] = {0,1,2};
-        RaliImage input_seq =raliSequenceRearrange(handle, input1,new_order,3,true );
+        RaliImage input_seq = raliSequenceRearrange(handle, input1,new_order,3, sequence_length,true );
 
     }
     else

@@ -59,21 +59,22 @@ void SequenceRearrangeNode::create_node()
     //     THROW(" vxAddArrayItems failed in the rotate (vxExtrppNode_SequenceRearrangePD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
 
     vx_status status;
-    _sequence_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _sequence_length);
-    status = vxAddArrayItems(_sequence_array,_sequence_length, _new_order.data(), sizeof(vx_uint32));
-    _node = vxExtrppNode_SequenceRearrange(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _sequence_array, _sequence_length);
+    _sequence_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _new_sequence_length);
+    status = vxAddArrayItems(_sequence_array,_new_sequence_length, _new_order.data(), sizeof(vx_uint32));
+    _node = vxExtrppNode_SequenceRearrange(_graph->get(), _inputs[0]->handle(), _outputs[0]->handle(), _sequence_array, _new_sequence_length, _sequence_length);
 
     if((status = vxGetStatus((vx_reference)_node)) != VX_SUCCESS)
         THROW("Adding the sequence rearrange (vxExtrppNode_SequenceRearrange) node failed: "+ TOSTR(status))
 }
 
-void SequenceRearrangeNode::init(unsigned int* new_order, unsigned int sequence_length)
+void SequenceRearrangeNode::init(unsigned int* new_order, unsigned int new_sequence_length, unsigned int sequence_length)
 {
+    _new_sequence_length = new_sequence_length;
     _sequence_length = sequence_length;
-    _new_order.resize(_sequence_length);
-    std::copy(new_order, new_order + _sequence_length, _new_order.begin());
-    std::cerr<<"\n new sequence order of sequence length"<<_sequence_length;
-    for(int i =0 ; i < _sequence_length; i++)
+    _new_order.resize(_new_sequence_length);
+    std::copy(new_order, new_order + _new_sequence_length, _new_order.begin());
+    std::cerr<<"\n new sequence order of sequence length"<<_new_sequence_length;
+    for(int i =0 ; i < _new_sequence_length; i++)
     {
         std::cerr<<"\n  "<<new_order[i];
     }

@@ -25,8 +25,8 @@ THE SOFTWARE.
 #include "rali_api_types.h"
 
 extern "C"  RaliImage  RALI_API_CALL raliSequenceRearrange(RaliContext context, RaliImage input,
-                                                unsigned int* new_order, unsigned int sequence_length,
-                                                bool is_output );
+                                                unsigned int* new_order, unsigned int  new_sequence_length,
+                                                unsigned int sequence_length, bool is_output );
 
 /// Accepts U8 and RGB24 input.
 /// \param context

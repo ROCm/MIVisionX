@@ -42,18 +42,14 @@ private:
 	AVCodecContext *_video_dec_ctx = NULL;
 	AVStream *_video_stream = NULL;
 	int _video_stream_idx = -1;
-	SwsContext *_swsctx = NULL;
 
 	AVFrame *_frame = NULL, *_decframe = NULL;
 	AVPacket _pkt;
 	int _video_frame_count = 0;
 	unsigned _nb_frames = 0;
-	unsigned _skipped_frames = 0;
-    bool _end_of_stream = false;
-    int _got_pic = 0;
 	const AVPixelFormat _dst_pix_fmt = AV_PIX_FMT_BGR24;
 
-    AVStream *_video;
+    // AVStream *_video;
 	AVCodec *_decoder = NULL;
     AVDictionary *_opts = NULL;
 };

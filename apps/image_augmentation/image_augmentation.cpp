@@ -131,10 +131,9 @@ int main(int argc, const char ** argv)
             return -1;
         }
         input1 = raliVideoFileSource(handle, folderPath1, color_format, shard_count, sequence_length, true, false, false);
-        // unsigned int new_order[2] = {0,1};
-        // RaliImage input_seq =raliSequenceRearrange(handle, input1,new_order,sequence_length,true );
-        unsigned int new_order[5] = {1,0,4,0,3};
-        RaliImage input_seq = raliSequenceRearrange(handle, input1,new_order,5, sequence_length,true );
+        unsigned int new_order[] = {1,0};
+        unsigned new_sequence_length = sizeof(new_order) / sizeof(new_order[0]);
+        RaliImage input_seq = raliSequenceRearrange(handle, input1,new_order,new_sequence_length, sequence_length,true );
 
     }
     else

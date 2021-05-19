@@ -462,25 +462,6 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
             }
 #elif ENABLE_HIP
             node->hip_stream0 = graph->hip_stream0;
-            if (node->akernel->func) {
-                // generate kernel function code
-                int status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
-                if (status == VX_SUCCESS) {
-                    node->hip_kernel_name = "Hip_Kernel";
-                }
-                else if (status != AGO_ERROR_KERNEL_NOT_IMPLEMENTED) {
-                    agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: kernel %s failed to generate HIP code (error %d)\n", node->akernel->name, status);
-                    return -1;
-                }
-            }
-            else if (node->akernel->opencl_codegen_callback_f) {
-                agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: codegen callback is not supported for HIP GPU\n", node->akernel->name);
-                return -1;
-            }
-            else {
-                agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: doesn't support kernel %s on GPU\n", node->akernel->name);
-                return -1;
-            }
 #endif
         }
     }

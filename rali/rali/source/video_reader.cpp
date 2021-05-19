@@ -77,12 +77,6 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
     //for sample test
     //_video_frame_count[3] = {30, 25, 54};
-    std::cerr << "\n inside initialize";
-
-    std::cerr<<"\n _sequence_length ::"<< _sequence_length;
-    std::cerr<<"\n _video_count:: "<< _video_count;
-    for(unsigned i = 0 ; i < _video_frame_count.size(); i++)
-        std::cerr<<"\n _video_frames:: "<< _video_frame_count[i];
 
     size_t count_sequence;
     for(size_t i = 0; i < _video_count; i++)

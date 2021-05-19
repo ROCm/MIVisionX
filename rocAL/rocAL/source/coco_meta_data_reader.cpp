@@ -81,18 +81,15 @@ void COCOMetaDataReader::print_map_contents()
     BoundingBoxLabels bb_labels;
     ImgSizes img_sizes;
 
-    std::cerr << "\nMap contents: \n";
+    std::cout << "\nBBox Annotations List: \n";
     for (auto& elem : _map_content) {
-        std::cerr << "Name :\t " << elem.first;
+        std::cout << "\nName :\t " << elem.first;
         bb_coords = elem.second->get_bb_cords() ;
         bb_labels = elem.second->get_bb_labels();
         img_sizes = elem.second->get_img_sizes();
-
-        std::cerr << "\nsize of the element  : "<< bb_coords.size() << std::endl;
-        std::cerr << "\nImage original width::\t<<    : "<<img_sizes[0].w<< "\nImage original height::\t<<    : "<<img_sizes[0].h;
+        std::cout << "<wxh, num of bboxes>: "<< img_sizes[0].w << " X " << img_sizes[0].h << " , "  << bb_coords.size() << std::endl;
         for(unsigned int i = 0; i < bb_coords.size(); i++){
-            std::cerr << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << std::endl;
-            std::cerr  << "Label Id : " << bb_labels[i] << std::endl;
+            std::cout << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << "Label Id : " << bb_labels[i] << std::endl;
         }
     }
 }

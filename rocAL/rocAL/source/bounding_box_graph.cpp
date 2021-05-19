@@ -119,9 +119,9 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
             int m = j * 4; // change if required
 
             //Mask Criteria
-            auto left = int(crop_box.x);
+            auto left = crop_box.x;
             auto top = crop_box.y;
-            auto right = int(crop_box.x) + int(crop_box.w);
+            auto right = crop_box.x + crop_box.w;
             auto bottom = crop_box.y + crop_box.h;
 
             BoundingBoxCord box;
@@ -129,8 +129,8 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
             box.y = coords_buf[m + 1];
             box.w = coords_buf[m + 2];
             box.h = coords_buf[m + 3];
-            auto x_c = 0.5f * (2 * box.x + box.w);
-            auto y_c = 0.5f * (2 * box.y + box.h);
+            auto x_c = box.x + 0.5f * box.w;
+            auto y_c = box.y + 0.5f * box.h;
             if ((x_c > left) && (x_c < right) && (y_c > top) && (y_c < bottom))
             {
                 float xA = std::max(crop_box.x, box.x);
@@ -143,7 +143,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
                 box.h = yB - yA;
 
                 bb_coords.push_back(box);
-                bb_labels.push_back(labels_buf[j]);                
+                bb_labels.push_back(labels_buf[j]);
             }
         }
         if (bb_coords.size() == 0)

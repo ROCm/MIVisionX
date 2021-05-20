@@ -238,7 +238,7 @@ void RandomBBoxCropReader::read_all()
                 break;
         } // while loop
 
-        std::cout << image_name << " wxh: " << in_width << "X" << in_height << " crop<x,y, w, h>: " << crop_box.x << " X " << crop_box.y << " X " << crop_box.w << " X " << crop_box.h << std::endl;  
+//        std::cout << image_name << " wxh: " << in_width << "X" << in_height << " crop<x,y, w, h>: " << crop_box.x << " X " << crop_box.y << " X " << crop_box.w << " X " << crop_box.h << std::endl;  
         add(image_name, crop_box);
         sample++;
     }

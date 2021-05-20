@@ -1644,7 +1644,7 @@ raliVideoFileResize(
                                                                           frame_count,
                                                                           shuffle,
                                                                           loop,
-                                                                          context->user_batch_size(),
+                                                                          context->master_graph->internal_batch_size(),
                                                                           context->master_graph->mem_type(),
                                                                           video_file_names);
         context->master_graph->set_loop(loop);

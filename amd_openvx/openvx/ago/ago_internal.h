@@ -232,7 +232,7 @@ typedef enum {
 #endif
     ago_kernel_cmd_valid_rect_callback        =  7,
 #if ENABLE_HIP
-    ago_kernel_cmd_hip_execute                =  8,     // adding it for HIP kernels to execute without codegen
+    ago_kernel_cmd_hip_execute                =  8,
 #endif
 } AgoKernelCommand;
 typedef enum {
@@ -923,7 +923,6 @@ int agoGpuHipAllocBuffer(AgoData * data);
 int agoGpuHipSingleNodeWait(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeMerge(AgoGraph * graph, AgoSuperNode * supernode, AgoNode * node);
 int agoGpuHipSuperNodeUpdate(AgoGraph * graph, AgoSuperNode * supernode);
-int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode);
 int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode);

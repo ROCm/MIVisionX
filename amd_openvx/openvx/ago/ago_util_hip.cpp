@@ -617,11 +617,6 @@ int agoGpuHipSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode) {
     return 0;
 }
 
-int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node) {
-    // nothing is needed for HIP here.
-    return 0;
-}
-
 int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode) {
     // Super node is not fully supported in hip yet
     // clear the data flags

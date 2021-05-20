@@ -114,7 +114,7 @@ pCropCord RandomBBoxCropReader::get_crop_cord(const std::string &image_name)
 
 void RandomBBoxCropReader::add(std::string image_name, BoundingBoxCord crop_box)
 {
-    pCropCord random_bbox_cords = std::make_shared<CropCord>(std::round(crop_box.x), std::round(crop_box.y), std::round(crop_box.w), std::round(crop_box.h));
+    pCropCord random_bbox_cords = std::make_shared<CropCord>(crop_box.x, crop_box.y, crop_box.w, crop_box.h);
     if (exists(image_name))
     {
         return;

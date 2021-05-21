@@ -171,7 +171,7 @@ void
 MasterGraph::decrease_image_count()
 {
     if(!_loop)
-        _remaining_images_count -= _user_batch_size;
+        _remaining_images_count -= ((_sequence_rearrange_batch_decremter >= 0)? _sequence_rearrange_batch_decremter:_user_batch_size);
 }
 void
 MasterGraph::create_single_graph()
@@ -720,6 +720,7 @@ void MasterGraph::output_routine()
             if(is_video_loader())
             {
                 _count = _video_loader_module->remaining_count();
+                // std::cerr<<"\n _count:: "<<_count;
             }
             else
             {
@@ -853,6 +854,7 @@ void MasterGraph::start_processing()
     if(is_video_loader())
     {
         _remaining_images_count = _video_loader_module->remaining_count();
+        // std::cerr<<"\n _remaining_images_count:: "<<_remaining_images_count;
     }
     else
     {

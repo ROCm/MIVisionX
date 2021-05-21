@@ -98,6 +98,7 @@ public:
     bool is_random_bbox_crop() {return _is_random_bbox_crop; }
     void set_video_loader_flag() { _is_video_loader = true; }
     bool is_video_loader() {return _is_video_loader; }
+    void set_sequence_rearrange_batch_decremter(size_t batch_size) {_sequence_rearrange_batch_decremter = batch_size;}
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -153,6 +154,7 @@ private:
     bool _output_routine_finished_processing = false;
     bool _is_random_bbox_crop = false;
     bool _is_video_loader = false;
+    size_t _sequence_rearrange_batch_decremter = -1;
 };
 
 template <typename T>

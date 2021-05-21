@@ -82,6 +82,8 @@ private:
     std::vector<std::tuple<size_t, size_t>> _frame_sequences;
     size_t _video_file_count;
     size_t _sequence_length;
+    size_t _step;
+    size_t _stride;
     unsigned  _curr_file_idx;
     FILE* _current_fPtr;
     unsigned _current_file_size;

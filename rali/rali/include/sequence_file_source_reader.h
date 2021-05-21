@@ -82,6 +82,8 @@ private:
     std::string _last_id;
     std::string _last_file_name;
     size_t _sequence_length;
+    size_t _step;
+    size_t _stride;
     size_t _shard_id = 0;
     size_t _shard_count = 1;// equivalent of batch size
     //!< _batch_count Defines the quantum count of the images to be read. It's usually equal to the user's batch size.

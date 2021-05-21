@@ -75,6 +75,7 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
 
     // std::cerr<<"\n ********************** VideoReadAndDecode::create ***************************** ";
     _sequence_length = reader_config.get_sequence_length();
+    _stride = reader_config.get_frame_stride();
     _video_count = reader_config.get_video_count();
     _video_names = reader_config.get_video_file_names();
     _batch_size = batch_size;
@@ -177,7 +178,7 @@ VideoReadAndDecode::load(unsigned char* buff,
 
         // std::cerr << "\nThe source video is " << _video_names[0] << " MAP : "<<_video_file_name_map[_video_names[0]]<< "\tThe start index is : " << start_frame << "\n";
         int video_idx_map = _video_file_name_map[_video_names[0]];
-        if(_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length) != VideoDecoder::Status::OK)
+        if(_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride) != VideoDecoder::Status::OK)
         {
             continue;
         }

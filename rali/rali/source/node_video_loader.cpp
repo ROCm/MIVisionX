@@ -31,21 +31,20 @@ THE SOFTWARE.
 #ifdef RALI_VIDEO
 //#include "video_loader_module.h"
 
-VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources):
-        Node({}, {output})
+VideoLoaderNode::VideoLoaderNode(Image *output, DeviceResources device_resources) : Node({}, {output})
 {
     _loader_module = std::make_shared<VideoLoaderSharded>(device_resources);
 }
 
 void VideoLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
-VideoDecoderType decoder_type, unsigned sequence_length, unsigned video_count, std::vector<size_t> frame_count, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names)
+                           VideoDecoderType decoder_type, unsigned sequence_length, unsigned step, unsigned stride, unsigned video_count, std::vector<size_t> frame_count, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, std::vector<std::string> video_file_names)
 {
     //_decode_mode = decoder_mode;
     _source_path = source_path;
     _loop = loop;
-    if(!_loader_module)
+    if (!_loader_module)
         THROW("ERROR: loader module is not set for VideoLoaderNode, cannot initialize")
-    if(internal_shard_count < 1)
+    if (internal_shard_count < 1)
         THROW("Shard count should be greater than or equal to one")
     _loader_module->set_output_image(_outputs[0]);
     // Set reader and decoder config accordingly for the VideoLoaderNode
@@ -53,6 +52,8 @@ VideoDecoderType decoder_type, unsigned sequence_length, unsigned video_count, s
     reader_cfg.set_shard_count(internal_shard_count);
     reader_cfg.set_batch_count(_batch_size);
     reader_cfg.set_sequence_length(sequence_length);
+    step > 0 ? reader_cfg.set_frame_step(step) : reader_cfg.set_frame_step(sequence_length);
+    reader_cfg.set_frame_stride(stride);
     reader_cfg.set_video_count(video_count);
     reader_cfg.set_frame_count(frame_count);
     reader_cfg.set_video_file_names(video_file_names);
@@ -60,16 +61,15 @@ VideoDecoderType decoder_type, unsigned sequence_length, unsigned video_count, s
     total_frames = std::accumulate(frame_count.begin(), frame_count.end(), 0);
     reader_cfg.set_total_frames_count(total_frames);
     _loader_module->initialize(reader_cfg, VideoDecoderConfig(decoder_type),
-             mem_type,
-             _batch_size);
+                               mem_type,
+                               _batch_size);
 
     _loader_module->start_loading();
-
 }
 
 std::shared_ptr<VideoLoaderModule> VideoLoaderNode::get_loader_module()
 {
-    if(!_loader_module)
+    if (!_loader_module)
         WRN("VideoLoaderNode's loader module is null, not initialized")
     return _loader_module;
 }

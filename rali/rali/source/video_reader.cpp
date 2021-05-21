@@ -69,6 +69,8 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     // _video_file_count = _video_file_names.size();
     _video_file_names = desc.get_video_file_names();
     _sequence_length = desc.get_sequence_length();
+    _step = desc.get_frame_step();
+    _stride = desc.get_frame_stride();
     _video_frame_count = desc.get_frame_count();
     _total_video_frames_count = 0;
 
@@ -78,24 +80,20 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     //for sample test
     //_video_frame_count[3] = {30, 25, 54};
 
-    size_t count_sequence;
     for(size_t i = 0; i < _video_count; i++)
     {
-        count_sequence = 0;
-        // std::cerr << "\n Frames per video : " << _video_frame_count[i];
-        int loop_index;
-
-        loop_index = _video_frame_count[i] / _sequence_length;
+        size_t count_sequence = 0;
+        int loop_index = 0;
+        loop_index = ((_video_frame_count[i] - (_stride * _sequence_length))/ _step) + 1;
         for(int j = 0; j < loop_index; j++)
         {
             _frame_sequences.push_back(std::make_tuple(i, count_sequence));
-            count_sequence = count_sequence + _sequence_length;
+            count_sequence = count_sequence + _step;
         }
         _total_video_frames_count += (loop_index * _sequence_length);
     }
     
 
-    std::cerr << "The total frames count : " << _total_video_frames_count << "\n";
     desc.set_total_frames_count(_total_video_frames_count);
 
     // // the following code is required to make every shard the same size:: required for multi-gpu training

@@ -164,11 +164,7 @@ VideoReadAndDecode::load(unsigned char* buff,
     }
 
     start_frame = _reader->read(_compressed_buff.data(), fsize);
-    for(size_t s = 0; s < _sequence_length; s++)
-    {
-        _video_names[s] = _reader->id();
-    }
-
+    _video_path = _reader->id();
     _reader->close();
 
     _file_load_time.end();// Debug timing
@@ -187,8 +183,8 @@ VideoReadAndDecode::load(unsigned char* buff,
             _actual_decoded_height[s] = max_decoded_height;
         }
 
-        // std::cerr << "\nThe source video is " << _video_names[0] << " MAP : "<<_video_file_name_map[_video_names[0]]<< "\tThe start index is : " << start_frame << "\n";
-        int video_idx_map = _video_file_name_map[_video_names[0]];
+        // std::cerr << "\nThe source video is " << _video_path << " MAP : "<<_video_file_name_map[_video_path]<< "\tThe start index is : " << start_frame << "\n";
+        int video_idx_map = _video_file_name_map[_video_path];
         if(_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride) != VideoDecoder::Status::OK)
         {
             continue;
@@ -197,13 +193,13 @@ VideoReadAndDecode::load(unsigned char* buff,
 
     std::vector<std::string> substrings;
     char delim = '/';
-    substring_extraction(_video_names[0], delim, substrings);
+    substring_extraction(_video_path, delim, substrings);
 
     std::string file_name = substrings[substrings.size()- 1];
 
     for(size_t i = 0; i < _sequence_length ; i++)
     {
-        names[i] =  file_name +"_"+  std::to_string(start_frame+i);
+        names[i] =  file_name +"_"+  std::to_string(start_frame+ (i*_stride));
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
     }

@@ -36,28 +36,6 @@ void SequenceRearrangeNode::create_node()
     if(_node)
         return;
 
-    // _affine.resize(6 * _batch_size);
-
-    // uint batch_size = _batch_size;
-    // for (uint i=0; i < batch_size; i++ )
-    // {
-    //      _affine[i*6 + 0] = _x0.renew();
-    //      _affine[i*6 + 1] = _y0.renew();
-    //      _affine[i*6 + 2] = _x1.renew();
-    //      _affine[i*6 + 3] = _y1.renew();
-    //      _affine[i*6 + 4] = _o0.renew();
-    //      _affine[i*6 + 5] = _o1.renew();
-
-    // }
-    // _dst_roi_width = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
-    // _dst_roi_height = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _batch_size);
-    // std::vector<uint32_t> dst_roi_width(_batch_size,_outputs[0]->info().width());
-    // std::vector<uint32_t> dst_roi_height(_batch_size, _outputs[0]->info().height_single());
-    // // width_status = vxAddArrayItems(_dst_roi_width, _batch_size, dst_roi_width.data(), sizeof(vx_uint32));
-    // // height_status = vxAddArrayItems(_dst_roi_height, _batch_size, dst_roi_height.data(), sizeof(vx_uint32));
-    // if(width_status != 0 || height_status != 0)
-    //     THROW(" vxAddArrayItems failed in the rotate (vxExtrppNode_SequenceRearrangePD) node: "+ TOSTR(width_status) + "  "+ TOSTR(height_status))
-
     vx_status status;
     _sequence_array = vxCreateArray(vxGetContext((vx_reference)_graph->get()), VX_TYPE_UINT32, _new_sequence_length);
     status = vxAddArrayItems(_sequence_array,_new_sequence_length, _new_order.data(), sizeof(vx_uint32));

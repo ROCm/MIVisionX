@@ -82,9 +82,11 @@ raliSequenceRearrange(
     auto input = static_cast<Image*>(p_input);
     try
     {
+#ifdef RALI_VIDEO
         std::cerr<<"\n internal batch size:: "<<context->master_graph->internal_batch_size();
         std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
-        context->master_graph->set_user_batch_size((size_t)(new_sequence_length * context->user_batch_size()));
+        std::cerr<<"\n new sequence length:: "<<new_sequence_length;
+        context->master_graph->set_user_batch_size((size_t)(new_sequence_length * (context->user_batch_size()/context->master_graph->internal_batch_size())));
         std::cerr<<"\n user batch size:: "<<context->master_graph->user_batch_size();
         auto info = ImageInfo(input->info().width(), input->info().height_single(),
         //                       context->master_graph->user_batch_size(),
@@ -99,6 +101,9 @@ raliSequenceRearrange(
         sequence_rearrange_node->init(new_order, new_sequence_length, sequence_length);
         // if (context->master_graph->meta_data_graph())
         //     context->master_graph->meta_add_node<FlipMetaNode,FlipNode>(flip_node);
+#else
+        THROW("Video decoder is not enabled since amd media decoder is not present")
+#endif
     }
     catch(const std::exception& e)
     {

@@ -119,6 +119,17 @@ VideoReadAndDecode::count()
     return _reader->count();
 }
 
+void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out)
+{
+    size_t start;
+    size_t end = 0;
+
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
+    {
+        end = str.find(delim, start);
+        out.push_back(str.substr(start, end - start));
+    }
+}
 
 VideoLoaderModuleStatus
 VideoReadAndDecode::load(unsigned char* buff,
@@ -166,9 +177,9 @@ VideoReadAndDecode::load(unsigned char* buff,
     _decompressed_buff_ptrs = buff;
 
     _decode_time.start();// Debug timing
-#pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
-    
-    for(size_t i= 0; i < 1; i++)
+// #pragma omp parallel for num_threads(_batch_size)  // default(none) TBD: option disabled in Ubuntu 20.04
+
+    for(int i = 0; i < 1; i++)
     {
         for(size_t s = 0; s < _sequence_length; s++)
         {
@@ -184,14 +195,20 @@ VideoReadAndDecode::load(unsigned char* buff,
         }
     }
 
+    std::vector<std::string> substrings;
+    char delim = '/';
+    substring_extraction(_video_names[0], delim, substrings);
+
+    std::string file_name = substrings[substrings.size()- 1];
+
     for(size_t i = 0; i < _sequence_length ; i++)
     {
-        names[i] = _video_names[i];
+        names[i] =  file_name +"_"+  std::to_string(start_frame+i);
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
     }
 
-    ++ _index_start_frame; 
+    ++ _index_start_frame;
     _decode_time.end();// Debug timing
 
     return VideoLoaderModuleStatus::OK;

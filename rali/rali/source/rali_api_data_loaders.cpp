@@ -23,19 +23,21 @@ THE SOFTWARE.
 #include <tuple>
 #include <assert.h>
 #include <boost/filesystem.hpp>
-
-extern "C"
-{
-#include <libavformat/avformat.h>
-#include <libavcodec/avcodec.h>
-}
+#ifdef RALI_VIDEO
+    extern "C"
+    {
+    #include <libavformat/avformat.h>
+    #include <libavcodec/avcodec.h>
+    }
+    #include "node_video_loader.h"
+    #include "node_video_loader_single_shard.h"
+#include "video_properties.h"
+#endif
 #include "rali_api.h"
 #include "commons.h"
 #include "context.h"
 #include "node_image_loader.h"
 #include "node_image_loader_single_shard.h"
-#include "node_video_loader.h"
-#include "node_video_loader_single_shard.h"
 #include "node_cifar10_loader.h"
 #include "image_source_evaluator.h"
 #include "node_fisheye.h"
@@ -44,7 +46,7 @@ extern "C"
 #include "node_fused_jpeg_crop_single_shard.h"
 #include "node_resize.h"
 #include "meta_node_resize.h"
-#include "video_properties.h"
+
 
 namespace filesys = boost::filesystem;
 

@@ -26,6 +26,12 @@ THE SOFTWARE.
 #include "commons.h"
 #include "meta_data.h"
 #include "meta_data_reader.h"
+extern "C"
+{
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
+}
+// #include "video_properties.h"
 
 class VideoLabelReaderFolders: public MetaDataReader
 {
@@ -42,7 +48,8 @@ public :
 private:
     void read_files(const std::string& _path);
     bool exists(const std::string &image_name);
-    void add(std::string image_name, int label);
+    void add(std::string image_name);
+    void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out);
     std::map<std::string, std::shared_ptr<Label>> _map_content;
     std::map<std::string, std::shared_ptr<Label>>::iterator _itr;
     std::string _path;
@@ -50,5 +57,5 @@ private:
     DIR *_src_dir, *_sub_dir;
     struct dirent *_entity;
     std::vector<std::string> _file_names;
-    std::vector<std::string> _subfolder_file_names;
+    std::vector<std::string> _subfolder_video_file_names;
 };

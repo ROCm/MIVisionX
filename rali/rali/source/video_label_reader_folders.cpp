@@ -28,6 +28,7 @@ THE SOFTWARE.
 #include "commons.h"
 #include "exception.h"
 #include "video_label_reader_folders.h"
+#include "video_properties.h"
 
 
 using namespace std;
@@ -50,15 +51,53 @@ bool VideoLabelReaderFolders::exists(const std::string& image_name)
 {
     return _map_content.find(image_name) != _map_content.end();
 }
-void VideoLabelReaderFolders::add(std::string image_name, int label)
+
+
+void VideoLabelReaderFolders::substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out)
 {
-    pMetaData info = std::make_shared<Label>(label);
-    if(exists(image_name))
+    size_t start;
+    size_t end = 0;
+
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
     {
-        WRN("Entity with the same name exists")
-        return;
+        end = str.find(delim, start);
+        out.push_back(str.substr(start, end - start));
     }
-    _map_content.insert(pair<std::string, std::shared_ptr<Label>>(image_name, info));
+}
+
+
+void VideoLabelReaderFolders::add(std::string image_name)
+{
+    // string processing on image name
+    // Delimiter is /
+    // check for mp4
+    // String before mp4 string is label
+    // get the properties of mp4 and get frame number
+    // populate the filename_framenumber.jpg label
+    std::vector<unsigned> video_prop;
+    video_prop.resize(3);
+    video_prop = open_video_context(image_name.c_str());
+    size_t frame_count = video_prop[2];
+    // std::cerr<<"\n video frame count:: "<<frame_count;
+    std::vector<std::string> substrings;
+    char delim = '/';
+    substring_extraction(image_name, delim, substrings);
+    std::string file_name = substrings[substrings.size()- 1];
+    int label = atoi(substrings[substrings.size()- 2].c_str());
+    for(uint i = 0; i < frame_count; i++)
+    {
+        pMetaData info = std::make_shared<Label>(label);
+        // std::cerr<<"\n label:: "<<label;
+        std::string frame_name = file_name +"_"+  std::to_string(i);
+        // std::cerr<<"\n frame_name ::"<<frame_name;
+        if(exists(frame_name))
+        {
+            WRN("Entity with the same name exists")
+            return;
+        }
+        _map_content.insert(pair<std::string, std::shared_ptr<Label>>(frame_name, info));
+    }
+
 }
 
 void VideoLabelReaderFolders::print_map_contents()
@@ -91,15 +130,16 @@ void VideoLabelReaderFolders::lookup(const std::vector<std::string>& image_names
         WRN("No image names passed")
         return;
     }
-    if(image_names.size() != (unsigned)_output->size())   
+    if(image_names.size() != (unsigned)_output->size())
         _output->resize(image_names.size());
 
     for(unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
+        // std::cerr<<"\n lookup image_name :: "<<image_name;
         auto it = _map_content.find(image_name);
         if(_map_content.end() == it)
-            THROW("ERROR: Given name not present in the map"+ image_name )
+            THROW("ERROR: Video label reader folders Given name not present in the map"+ image_name )
         _output->get_label_batch()[i] = it->second->get_label();
     }
 }
@@ -113,12 +153,12 @@ void VideoLabelReaderFolders::read_all(const std::string& _path)
     std::vector<std::string> entry_name_list;
     std::string _full_path = _folder_path;
 
-    while((_entity = readdir (_sub_dir)) != nullptr) 
+    while((_entity = readdir (_sub_dir)) != nullptr)
     {
         std::string entry_name(_entity->d_name);
         if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
         entry_name_list.push_back(entry_name);
-        std::cerr << "\nEntry name : " << _entity->d_name;
+        // std::cerr << "\nEntry name : " << _entity->d_name;
     }
     std::sort(entry_name_list.begin(), entry_name_list.end());
     closedir(_sub_dir);
@@ -136,18 +176,20 @@ void VideoLabelReaderFolders::read_all(const std::string& _path)
                     continue;
             }
             read_files(_folder_path);
-            for(unsigned i = 0; i < _subfolder_file_names.size(); i++) {
-                add(_subfolder_file_names[i], 0);
+            for(unsigned i = 0; i < _subfolder_video_file_names.size(); i++) {
+                // std::cerr<<"\n subfolder_file_name:: "<<_subfolder_video_file_names[i];
+                add(_subfolder_video_file_names[i]);
             }
             break;  // assume directory has only files.
         }
         else if(filesys::exists(pathObj) && filesys::is_directory(pathObj))
         {
             _folder_path = subfolder_path;
-            _subfolder_file_names.clear();
+            _subfolder_video_file_names.clear();
             read_files(_folder_path);
-            for(unsigned i = 0; i < _subfolder_file_names.size(); i++) {
-                add(_subfolder_file_names[i], dir_count);
+            for(unsigned i = 0; i < _subfolder_video_file_names.size(); i++) {
+                std::cerr<<"\n subfolder_file_name:: "<<_subfolder_video_file_names[i];
+                add(_subfolder_video_file_names[i]);
             }
         }
     }
@@ -168,8 +210,8 @@ void VideoLabelReaderFolders::read_files(const std::string& _path)
         file_path.append("/");
         file_path.append(_entity->d_name);
         _file_names.push_back(file_path);
-        //_subfolder_file_names.push_back(_entity->d_name);
-        _subfolder_file_names.push_back(file_path);
+        //_subfolder_video_file_names.push_back(_entity->d_name);
+        _subfolder_video_file_names.push_back(file_path);
         std::cerr << "\nRead files : " << _entity->d_name;
         std::cerr << "\nfile path : " << file_path;
     }

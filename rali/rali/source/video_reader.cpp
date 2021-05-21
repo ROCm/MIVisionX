@@ -80,7 +80,6 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     //for sample test
     //_video_frame_count[3] = {30, 25, 54};
 
-    // size_t count_sequence;
     for(size_t i = 0; i < _video_count; i++)
     {
         size_t count_sequence = 0;

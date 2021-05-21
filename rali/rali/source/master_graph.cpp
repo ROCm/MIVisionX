@@ -351,12 +351,16 @@ MasterGraph::reset()
         _output_thread.join();
     _ring_buffer.reset();
     // clearing meta ring buffer
-#ifdef RALI_VIDEO
-    _video_loader_module->reset();
-#else
+    if(is_video_loader())
+    {
+        _video_loader_module->reset();
+    }
+    else
+    {
     // resetting loader module to start from the beginning of the media and clear it's internal state/buffers
-    _loader_module->reset();
-#endif
+        _loader_module->reset();
+    }
+
     // restart processing of the images
     _first_run = true;
     _output_routine_finished_processing = false;
@@ -379,11 +383,15 @@ MasterGraph::mem_type()
 Timing
 MasterGraph::timing()
 {
-#ifdef RALI_VIDEO
-    Timing t = _video_loader_module->timing();
-#else
-    Timing t = _loader_module->timing();
-#endif
+    Timing t;
+    if(is_video_loader())
+    {
+        t = _video_loader_module->timing();
+    }
+    else
+    {
+        t  = _loader_module->timing();
+    }
     t.image_process_time += _process_time.get_timing();
     t.copy_to_output += _convert_time.get_timing();
     return t;
@@ -708,11 +716,15 @@ void MasterGraph::output_routine()
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
             pMetaDataBatch augmented_batch_meta_data = nullptr;
-#ifdef RALI_VIDEO
-    int _count = _video_loader_module->remaining_count();
-#else
-    int _count = _loader_module->remaining_count();
-#endif
+            int _count ;
+            if(is_video_loader())
+            {
+                _count = _video_loader_module->remaining_count();
+            }
+            else
+            {
+                _count = _loader_module->remaining_count();
+            }
             if (_count < _user_batch_size)
             {
                 // If the internal process routine ,output_routine(), has finished processing all the images, and last
@@ -731,28 +743,36 @@ void MasterGraph::output_routine()
             // Multiple cycles worth of internal_batch_size images should be processed to complete a full _user_batch_size
             for(unsigned cycle_idx = 0; cycle_idx< _user_to_internal_batch_ratio; cycle_idx++)
             {
-#ifdef RALI_VIDEO
-                auto load_ret = _video_loader_module->load_next();
-                if (load_ret != VideoLoaderModuleStatus::OK)
-                    THROW("Video Loader module failed to load next batch of images, status " + TOSTR(load_ret))
-#else
-                // Swap handles on the input image, so that new image is loaded to be processed
-                auto load_ret = _loader_module->load_next();
-                if (load_ret != LoaderModuleStatus::OK)
-                    THROW("Loader module failed to load next batch of images, status " + TOSTR(load_ret))
-#endif
+                if(is_video_loader())
+                {
+                    auto load_ret = _video_loader_module->load_next();
+                    if (load_ret != VideoLoaderModuleStatus::OK)
+                        THROW("Video Loader module failed to load next batch of images, status " + TOSTR(load_ret))
+                }
+                else
+                {
+                     // Swap handles on the input image, so that new image is loaded to be processed
+                    auto load_ret = _loader_module->load_next();
+                    if (load_ret != LoaderModuleStatus::OK)
+                        THROW("Loader module failed to load next batch of images, status " + TOSTR(load_ret))
+                }
 
 
                 if (!_processing)
                     break;
 
-#ifdef RALI_VIDEO
-                auto this_cycle_names = _video_loader_module->get_id();
-                auto decode_image_info = _video_loader_module->get_decode_image_info();
-#else
-                auto this_cycle_names =  _loader_module->get_id();
-                auto decode_image_info = _loader_module->get_decode_image_info();
-#endif
+                decoded_image_info decode_image_info;
+                std::vector<std::string> this_cycle_names;
+                if(is_video_loader())
+                {
+                    this_cycle_names = _video_loader_module->get_id();
+                    decode_image_info = _video_loader_module->get_decode_image_info();
+                }
+                else
+                {
+                    this_cycle_names =  _loader_module->get_id();
+                    decode_image_info = _loader_module->get_decode_image_info();
+                }
                 if(this_cycle_names.size() != _internal_batch_size)
                     WRN("Internal problem: names count "+ TOSTR(this_cycle_names.size()))
 
@@ -830,11 +850,14 @@ void MasterGraph::output_routine()
 void MasterGraph::start_processing()
 {
     _processing = true;
-#ifdef RALI_VIDEO
-    _remaining_images_count = _video_loader_module->remaining_count();
-#else
-    _remaining_images_count = _loader_module->remaining_count();
-#endif
+    if(is_video_loader())
+    {
+        _remaining_images_count = _video_loader_module->remaining_count();
+    }
+    else
+    {
+        _remaining_images_count = _loader_module->remaining_count();
+    }
     _output_thread = std::thread(&MasterGraph::output_routine, this);
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32) && !defined(__CYGWIN__)
 #else

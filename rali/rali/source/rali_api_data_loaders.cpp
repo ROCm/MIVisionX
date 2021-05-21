@@ -285,6 +285,8 @@ raliSequenceReader(
         context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
         context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
         context->master_graph->set_user_internal_batch_ratio();
+        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->set_internal_batch_size((size_t)sequence_length);
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
@@ -365,6 +367,8 @@ raliSequenceReaderSingleShard(
         context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
         context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
         context->master_graph->set_user_internal_batch_ratio();
+        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->set_internal_batch_size((size_t)sequence_length);
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         bool use_input_dimension = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE) || (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED);
         bool decoder_keep_original = (decode_size_policy == RALI_USE_USER_GIVEN_SIZE_RESTRICTED) || (decode_size_policy == RALI_USE_MAX_SIZE_RESTRICTED);
@@ -404,7 +408,7 @@ raliSequenceReaderSingleShard(
                                                                                         DecoderType::TURBO_JPEG,
                                                                                         shuffle,
                                                                                         loop,
-                                                                                        context->user_batch_size(),
+                                                                                        context->master_graph->internal_batch_size(),
                                                                                         context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
@@ -1512,12 +1516,15 @@ raliVideoFileSource(
     {
 #ifdef RALI_VIDEO
         /* The internal batch size and user batch size are modified here in master graph */
+        context->master_graph->set_video_loader_flag();
         context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
         context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
         context->master_graph->set_user_internal_batch_ratio();
+        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->set_internal_batch_size((size_t)sequence_length);
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
-        
+
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
         std::vector<std::string> video_file_names;
@@ -1529,11 +1536,11 @@ raliVideoFileSource(
         number_of_video_files = video_prop.videos_count;
         frame_count.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
-        frame_count = video_prop.frames_count; 
+        frame_count = video_prop.frames_count;
         video_file_names = video_prop.video_file_names;
         std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
         std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";
-        
+
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
         //auto decoder_mode = convert_decoder_mode(rali_decode_device);
         auto info = ImageInfo(width, height,
@@ -1556,7 +1563,7 @@ raliVideoFileSource(
                                                                           frame_count,
                                                                           shuffle,
                                                                           loop,
-                                                                          context->user_batch_size(),
+                                                                          context->master_graph->internal_batch_size(),
                                                                           context->master_graph->mem_type(),
                                                                           video_file_names);
         context->master_graph->set_loop(loop);
@@ -1605,9 +1612,12 @@ raliVideoFileResize(
     {
 #ifdef RALI_VIDEO
         /* The internal batch size and user batch size are modified here in master graph */
+        context->master_graph->set_video_loader_flag();
         context->master_graph->set_user_internal_batch_size((size_t)sequence_length);
         context->master_graph->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
         context->master_graph->set_user_internal_batch_ratio();
+        context->set_user_batch_size((size_t)(sequence_length * context->user_batch_size()));
+        context->set_internal_batch_size((size_t)sequence_length);
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
 
@@ -1622,7 +1632,7 @@ raliVideoFileResize(
         number_of_video_files = video_prop.videos_count;
         frame_count.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
-        frame_count = video_prop.frames_count; 
+        frame_count = video_prop.frames_count;
         video_file_names = video_prop.video_file_names;
         std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
         std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";

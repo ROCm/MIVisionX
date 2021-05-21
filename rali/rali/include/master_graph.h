@@ -96,6 +96,8 @@ public:
     std::shared_ptr<MetaDataGraph> meta_data_graph() { return _meta_data_graph; }
     std::shared_ptr<MetaDataReader> meta_data_reader() { return _meta_data_reader; }
     bool is_random_bbox_crop() {return _is_random_bbox_crop; }
+    void set_video_loader_flag() { _is_video_loader = true; }
+    bool is_video_loader() {return _is_video_loader; }
 private:
     Status update_node_parameters();
     Status allocate_output_tensor();
@@ -150,6 +152,7 @@ private:
     size_t _user_to_internal_batch_ratio;
     bool _output_routine_finished_processing = false;
     bool _is_random_bbox_crop = false;
+    bool _is_video_loader = false;
 };
 
 template <typename T>

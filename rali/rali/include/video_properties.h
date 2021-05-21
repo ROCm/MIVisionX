@@ -74,10 +74,8 @@ video_properties find_video_properties(const char *source_path)
     {
         std::string _full_path = source_path;
         filesys::path pathObj(_full_path);
-        std::cerr << "\n full path:: " << _full_path << "\n";
         if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj)) // Single file as input
         {
-            std::cerr << "\nInside if ..." << std::endl;
             video_prop = open_video_context(source_path);
             props.width = video_prop[0];
             props.height = video_prop[1];

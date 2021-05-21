@@ -181,7 +181,7 @@ MasterGraph::create_single_graph()
     int node_index = 0;
     for(auto& node: _nodes)
     {
-        std::cerr<<"\n Node number:: "<<++node_index;
+        // std::cerr<<"\n Node number:: "<<++node_index;
         // Any image not yet created can be created as virtual image
         for(auto& image: node->output())
             if(image->info().type() == ImageInfo::Type::UNKNOWN)

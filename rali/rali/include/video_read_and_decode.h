@@ -85,6 +85,7 @@ private:
     TimingDBG _file_load_time, _decode_time;
     size_t _batch_size;
     size_t _sequence_length;
+    size_t _stride;
     size_t _video_count; // based on video_count
     size_t _frame_count;
     VideoDecoderConfig _video_decoder_config;

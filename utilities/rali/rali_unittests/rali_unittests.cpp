@@ -46,8 +46,8 @@ using namespace cv;
 // #define CAFFE_READER_DETECTION
 
 //#define VIDEO_READER
-//#define VIDEO_READER_RESIZE
-#define SEQUENCE_READER
+#define VIDEO_READER_RESIZE
+// #define SEQUENCE_READER
 
 //#define RANDOMBBOXCROP
 
@@ -95,10 +95,12 @@ int main(int argc, const char **argv)
 int test(int test_case, const char *path, const char *outName, int rgb, int gpu, int width, int height, int num_of_classes)
 {
     size_t num_threads = 1;
-    int inputBatchSize = 2;
-    int sequence_length = 4;
+    int inputBatchSize = 1;
+    int sequence_length = 3;
     int decode_max_width = width;
     int decode_max_height = height;
+    unsigned frame_step = 10;
+    unsigned frame_stride = 2;
     std::cout << ">>> test case " << test_case << std::endl;
     std::cout << ">>> Running on " << (gpu ? "GPU" : "CPU") << " , " << (rgb ? " Color " : " Grayscale ") << std::endl;
 
@@ -230,15 +232,15 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
 #elif defined COCO_READER_PARTIAL
         input1 = raliJpegCOCOFileSourcePartial(handle, path, json_path, color_format, num_threads, false, true, false);
 #elif defined VIDEO_READER
-    input1 = raliVideoFileSource(handle, path, color_format, num_threads, sequence_length, true, true, false);
+    input1 = raliVideoFileSource(handle, path, color_format, num_threads, sequence_length, frame_step, frame_stride, true, true, false);
 #elif defined VIDEO_READER_RESIZE
-    input1 = raliVideoFileResize(handle, path, color_format, num_threads, sequence_length, 300, 300, true, true, false);
+    input1 = raliVideoFileResize(handle, path, color_format, num_threads, sequence_length, frame_step, frame_stride, 300, 300, false, true, false);
 
 #elif defined SEQUENCE_READER
     if (decode_max_height <= 0 || decode_max_width <= 0)
-        input1 = raliSequenceReader(handle, path, color_format, num_threads, sequence_length, true, false);
+        input1 = raliSequenceReader(handle, path, color_format, num_threads, sequence_length,frame_step, frame_stride, true, false);
     else
-        input1 = raliSequenceReader(handle, path, color_format, num_threads, sequence_length, true, false, false,
+        input1 = raliSequenceReader(handle, path, color_format, num_threads, sequence_length, frame_step, frame_stride, true, false, false,
                                     RALI_USE_USER_GIVEN_SIZE, decode_max_width, decode_max_height);
 #else
     if (decode_max_height <= 0 || decode_max_width <= 0)
@@ -272,7 +274,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
                   << "raliResize" << std::endl;
         //auto image_int = raliResize(handle, image0, resize_w , resize_h , false);
         // image1 = raliResize(handle, image0, resize_w, resize_h, true);
-        image1 = image0;
+        image1 = input1;
     }
     break;
     case 1:

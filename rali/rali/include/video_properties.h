@@ -24,7 +24,7 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     int videoStream = -1;
     unsigned int i = 0;
     // open video file
-    std::cerr << "The video file path : " << video_file_path << "\n";
+    // std::cerr << "The video file path : " << video_file_path << "\n";
     int ret = avformat_open_input(&pFormatCtx, video_file_path, NULL, NULL);
     if (ret != 0)
     {
@@ -112,11 +112,10 @@ video_properties find_video_properties(const char *source_path)
             for (unsigned dir_count = 0; dir_count < entry_name_list.size(); ++dir_count)
             {
                 std::string subfolder_path = _folder_path + "/" + entry_name_list[dir_count];
-                std::cerr << "\nSubfodlerfile/ path :" << subfolder_path.c_str();
+                // std::cerr << "\nSubfodlerfile/ path :" << subfolder_path.c_str();
                 filesys::path pathObj(subfolder_path);
                 if (filesys::exists(pathObj) && filesys::is_regular_file(pathObj))
                 {
-                    std::cerr << "\nInside else if  - IF file..." << std::endl;
                     video_prop = open_video_context(subfolder_path.c_str());
                     max_width = video_prop[0];
                     max_height = video_prop[1];
@@ -138,7 +137,7 @@ video_properties find_video_properties(const char *source_path)
                         if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0)
                             continue;
                         video_files.push_back(entry_name);
-                        std::cerr << "\n  Inside video files : " << entry_name;
+                        // std::cerr << "\n  Inside video files : " << entry_name;
                         //++video_count;
                     }
                     closedir(_sub_dir);
@@ -150,7 +149,7 @@ video_properties find_video_properties(const char *source_path)
                         file_path.append(video_files[i]);
                         _full_path = file_path;
 
-                        std::cerr << "\n Props file name : " << _full_path;
+                        // std::cerr << "\n Props file name : " << _full_path;
 
                         video_prop = open_video_context(_full_path.c_str());
                         if (video_prop[0] > max_width || video_prop[1] > max_height && (max_width != 0 && max_height != 0))

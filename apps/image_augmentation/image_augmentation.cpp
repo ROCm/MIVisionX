@@ -58,8 +58,10 @@ int main(int argc, const char ** argv)
     int decode_height = 0;
     bool processing_device = 1;
     size_t shard_count = 2;
-    unsigned sequence_length = 5;
-    int shuffle = 0;
+    unsigned sequence_length = 3;
+    unsigned frame_step = 3;
+    unsigned frame_stride = 1;
+    bool shuffle = 0;
 
     if(argc >= argIdx+MIN_ARG_COUNT)
         processing_device = atoi(argv[++argIdx]);
@@ -84,10 +86,10 @@ int main(int argc, const char ** argv)
         shard_count = atoi(argv[++argIdx]);
 
     if(argc >= argIdx+MIN_ARG_COUNT)
-        shuffle = atoi(argv[++argIdx]);
+        shuffle = atoi(argv[++argIdx]) ? true : false;
 
 
-    int inputBatchSize = 3;
+    int inputBatchSize = 1;
 
     std::cout << ">>> Running on " << (processing_device?"GPU":"CPU") << std::endl;
 
@@ -120,7 +122,7 @@ int main(int argc, const char ** argv)
 
 
     /*>>>>>>>>>>>>>>>>>>> Graph description <<<<<<<<<<<<<<<<<<<*/
-    RaliImage input1;
+    RaliImage input1, seq_img;
 
 
     if(video_mode != 0)
@@ -130,10 +132,13 @@ int main(int argc, const char ** argv)
             std::cout << "Output width and height is needed for video decode\n";
             return -1;
         }
-        input1 = raliVideoFileSource(handle, folderPath1, color_format, shard_count, sequence_length, true, false, false);
-        unsigned int new_order[] = {1,0};
-        unsigned new_sequence_length = sizeof(new_order) / sizeof(new_order[0]);
-        RaliImage input_seq = raliSequenceRearrange(handle, input1,new_order,new_sequence_length, sequence_length,true );
+        input1 = raliVideoFileSource(handle, folderPath1, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, true, false);
+        // input1 = raliSequenceReader(handle, folderPath1, color_format, shard_count, sequence_length, frame_step, frame_stride, true, shuffle, false);
+        // input1 = raliResize(handle, seq_img, 1280, 720, true);
+        // input1 = raliVideoFileResize(handle, folderPath1, color_format, shard_count, sequence_length, frame_step, frame_stride, 500, 300, false, true, false);
+        // unsigned int new_order[] = {0, 2, 0};
+        // unsigned new_sequence_length = sizeof(new_order) / sizeof(new_order[0]);
+        // RaliImage input_seq = raliSequenceRearrange(handle, input1,new_order,new_sequence_length, sequence_length,true );
 
     }
     else
@@ -250,7 +255,7 @@ int main(int argc, const char ** argv)
         mat_input.copyTo(mat_output(cv::Rect(  col_counter*w, 0, w, h)));
         if(color_format ==  RaliImageColor::RALI_COLOR_RGB24 )
         {
-            // cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
+            cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
             cv::imwrite("output_"+std::to_string(count)+".png",mat_output);
         }
         else

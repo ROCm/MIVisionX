@@ -236,7 +236,7 @@ raliJpegFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "", 0,
+                                                                          source_path, "", 0, 0, 0,
                                                                           std::map<std::string, std::string>(),
                                                                           StorageType::FILE_SYSTEM,
                                                                           DecoderType::TURBO_JPEG,
@@ -268,6 +268,8 @@ raliSequenceReader(
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         unsigned sequence_length,
+        unsigned step,
+        unsigned stride,
         bool is_output,
         bool shuffle,
         bool loop,
@@ -315,12 +317,13 @@ raliSequenceReader(
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "", sequence_length,
+                                                                          step, stride,
                                                                           std::map<std::string, std::string>(),
                                                                           StorageType::SEQUENCE_FILE_SYSTEM,
                                                                           DecoderType::TURBO_JPEG,
                                                                           shuffle,
                                                                           loop,
-                                                                          context->user_batch_size(),
+                                                                          context->master_graph->internal_batch_size(),
                                                                           context->master_graph->mem_type(), decoder_keep_original);
         context->master_graph->set_loop(loop);
 
@@ -467,7 +470,7 @@ raliJpegCaffe2LMDBRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0,
+                                                                             source_path, "", 0, 0, 0,
                                                                              std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE2_LMDB_RECORD,
                                                                              DecoderType::TURBO_JPEG,
@@ -614,7 +617,7 @@ raliJpegCaffeLMDBRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0,
+                                                                             source_path, "", 0, 0, 0,
                                                                              std::map<std::string, std::string>(),
                                                                              StorageType::CAFFE_LMDB_RECORD,
                                                                              DecoderType::TURBO_JPEG,
@@ -763,7 +766,7 @@ raliJpegCOCOFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                            source_path, json_path, 0,
+                                                                            source_path, json_path, 0, 0, 0,
                                                                             std::map<std::string, std::string>(),
                                                                             StorageType::COCO_FILE_SYSTEM,
                                                                             DecoderType::TURBO_JPEG,
@@ -1168,7 +1171,7 @@ raliJpegTFRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0,
+                                                                             source_path, "", 0, 0, 0,
                                                                              feature_key_map,
                                                                              StorageType::TF_RECORD,
                                                                              DecoderType::TURBO_JPEG,
@@ -1312,7 +1315,7 @@ raliRawTFRecordSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<ImageLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                             source_path, "", 0,
+                                                                             source_path, "", 0, 0, 0,
                                                                              feature_key_map,
                                                                              StorageType::TF_RECORD,
                                                                              DecoderType::SKIP_DECODE,
@@ -1496,6 +1499,8 @@ raliVideoFileSource(
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         unsigned sequence_length,
+        unsigned step,
+        unsigned stride,
         bool shuffle,
         bool is_output,
         bool loop)
@@ -1545,6 +1550,8 @@ raliVideoFileSource(
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
                                                                           sequence_length,
+                                                                          step,
+                                                                          stride,
                                                                           number_of_video_files,
                                                                           frame_count,
                                                                           shuffle,
@@ -1579,6 +1586,8 @@ raliVideoFileResize(
         RaliImageColor rali_color_format,
         unsigned internal_shard_count,
         unsigned sequence_length,
+        unsigned step,
+        unsigned stride,
         unsigned dest_width,
         unsigned dest_height,
         bool shuffle,
@@ -1632,7 +1641,7 @@ raliVideoFileResize(
         output_info.width(dest_width);
         output_info.height(dest_height);
 
-        resize_output = context->master_graph->create_image(output_info, is_output);
+        resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
                                                                           source_path, "",
@@ -1640,11 +1649,13 @@ raliVideoFileResize(
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
                                                                           sequence_length,
+                                                                          step,
+                                                                          stride,
                                                                           number_of_video_files,
                                                                           frame_count,
                                                                           shuffle,
                                                                           loop,
-                                                                          context->user_batch_size(),
+                                                                          context->master_graph->internal_batch_size(),
                                                                           context->master_graph->mem_type(),
                                                                           video_file_names);
         context->master_graph->set_loop(loop);
@@ -1670,7 +1681,7 @@ raliVideoFileResize(
         context->capture_error(e.what());
         std::cerr << e.what() << '\n';
     }
-    return output;
+    return resize_output;
 
 }
 

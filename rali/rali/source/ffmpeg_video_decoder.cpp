@@ -40,7 +40,7 @@ int FFMPEG_VIDEO_DECODER::seek_frame(AVRational avg_frame_rate, AVRational time_
     return select_frame_pts;
 }
 
-VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, unsigned seek_frame_number, size_t sequence_length)
+VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, unsigned seek_frame_number, size_t sequence_length, size_t stride)
 {
 
     VideoDecoder::Status status = Status::OK;
@@ -146,18 +146,21 @@ VideoDecoder::Status FFMPEG_VIDEO_DECODER::Decode(unsigned char *out_buffer, uns
                 ++skipped_frames;
             goto next_packet;
         }
-
-        _frame->data[0] = out_buffer;
-        sws_scale(swsctx, _decframe->data, _decframe->linesize, 0, _decframe->height, _frame->data, _frame->linesize);
+        if(fcount % stride == 0)
+        {
+            _frame->data[0] = out_buffer;
+            sws_scale(swsctx, _decframe->data, _decframe->linesize, 0, _decframe->height, _frame->data, _frame->linesize);
+            out_buffer = out_buffer + (dst_height * dst_width * 3 * sizeof(unsigned char));
+        }
 
         ++_nb_frames;
         ++fcount;
-        if (fcount == sequence_length)
+        if (fcount == sequence_length * stride)
         {
             av_free_packet(&_pkt);
             break;
         }
-        out_buffer = out_buffer + (dst_height * dst_width * 3 * sizeof(unsigned char));
+
     next_packet:
         av_free_packet(&_pkt);
     } while (!end_of_stream || got_pic);

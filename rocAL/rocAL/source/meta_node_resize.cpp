@@ -41,8 +41,6 @@ void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
     _dst_height = _node->get_dst_height();
     for(int i = 0; i < _batch_size; i++)
     {
-        _dst_to_src_width_ratio = _dst_width / float(_src_width_val[i]);
-        _dst_to_src_height_ratio = _dst_height / float(_src_height_val[i]);
         auto bb_count = input_meta_data->get_bb_labels_batch()[i].size();
         int labels_buf[bb_count];
         float coords_buf[bb_count*4];
@@ -55,10 +53,10 @@ void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            box.x = (coords_buf[m++] * _dst_to_src_width_ratio);
-            box.y = (coords_buf[m++] * _dst_to_src_height_ratio);
-            box.w = (coords_buf[m++] * _dst_to_src_width_ratio);
-            box.h = (coords_buf[m++] * _dst_to_src_height_ratio);
+            box.x = (coords_buf[m++] );
+            box.y = (coords_buf[m++] );
+            box.w = (coords_buf[m++] );
+            box.h = (coords_buf[m++] );
             bb_coords.push_back(box);
             bb_labels.push_back(labels_buf[j]);
         }

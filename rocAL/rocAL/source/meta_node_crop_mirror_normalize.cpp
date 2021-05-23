@@ -29,6 +29,8 @@ void CropMirrorNormalizeMetaNode::initialize()
     _x1_val.resize(_batch_size);
     _y1_val.resize(_batch_size);
     _mirror_val.resize(_batch_size);
+    _src_height_val.resize(_batch_size);
+    _src_width_val.resize(_batch_size);
 }
 void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
 {
@@ -43,6 +45,10 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
     _dstImgHeight = _meta_crop_param->croph_arr;
     _x1 = _meta_crop_param->x1_arr;
     _y1 = _meta_crop_param->y1_arr;
+    _src_width = _node->get_src_width();
+    _src_height = _node->get_src_height();
+    vxCopyArrayRange((vx_array)_src_width, 0, _batch_size, sizeof(uint),_src_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    vxCopyArrayRange((vx_array)_src_height, 0, _batch_size, sizeof(uint),_src_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_dstImgWidth, 0, _batch_size, sizeof(uint),_width_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_dstImgHeight, 0, _batch_size, sizeof(uint),_height_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     vxCopyArrayRange((vx_array)_x1, 0, _batch_size, sizeof(uint),_x1_val.data(), VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
@@ -59,10 +65,11 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
         BoundingBoxCord temp_box;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
-        crop_box.x = _x1_val[i];
-        crop_box.y = _y1_val[i];
-        crop_box.w = _width_val[i];
-        crop_box.h = _height_val[i];
+        crop_box.x = _x1_val[i]/_src_width_val[i];
+        crop_box.y = _y1_val[i]/_src_height_val[i];
+        crop_box.w = _width_val[i]/_src_width_val[i];
+        crop_box.h = _height_val[i]/_src_height_val[i];
+        
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
@@ -80,9 +87,9 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
                 box.y = yA - _y1_val[i];
                 box.w = xB - xA;
                 box.h = yB - yA;
-                if(_mirror_val[i] == 1)
+                if (_mirror_val[i] == 1)
                 {
-                    float centre_x = _width_val[i] / 2;
+                    float centre_x = 0.5;
                     box.x += ((centre_x - box.x) * 2) - box.w;
                 }
                 bb_coords.push_back(box);

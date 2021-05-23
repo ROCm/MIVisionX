@@ -171,8 +171,8 @@ void RandomBBoxCropReader::read_all()
             {
                 crop_box.x = 0;
                 crop_box.y = 0;
-                crop_box.w = in_width;
-                crop_box.h = in_height;
+                crop_box.w = 1;
+                crop_box.h = 1;
                 break;
             }
 
@@ -190,10 +190,10 @@ void RandomBBoxCropReader::read_all()
                 std::uniform_real_distribution<float> l_dis(0.0, 1.0 - width_factor), t_dis(0.0, 1.0-height_factor);
                 float x_factor = l_dis(_rngs[sample]);
                 float y_factor = t_dis(_rngs[sample]);
-                crop_box.x = x_factor*in_width;
-                crop_box.y = y_factor*in_height;
-                crop_box.w = width_factor*in_width;
-                crop_box.h = height_factor*in_height;
+                crop_box.x = x_factor;
+                crop_box.y = y_factor;
+                crop_box.w = width_factor;
+                crop_box.h = height_factor;
                 //std::cout << "random crop params < option, xfactor, yfactor, wf, hf>: " << sample_option << " " << x_factor << " " << y_factor << " " << width_factor << " " << height_factor << std::endl;
                 // All boxes should satisfy IOU criteria
                 if (_all_boxes_overlap)
@@ -239,6 +239,11 @@ void RandomBBoxCropReader::read_all()
         } // while loop
 
 //        std::cout << image_name << " wxh: " << in_width << "X" << in_height << " crop<x,y, w, h>: " << crop_box.x << " X " << crop_box.y << " X " << crop_box.w << " X " << crop_box.h << std::endl;  
+        crop_box.x = crop_box.x*in_width;
+        crop_box.y = crop_box.y*in_height;
+        crop_box.w = crop_box.w*in_width;
+        crop_box.h = crop_box.h*in_height;
+        
         add(image_name, crop_box);
         sample++;
     }

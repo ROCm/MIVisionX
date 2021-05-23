@@ -54,7 +54,7 @@ class COCOPipeline(Pipeline):
                                             output_layout=types.NCHW,
                                             crop=(crop, crop),
                                             image_type=types.RGB,
-                                            mirror=0,
+                                            mirror=1,
                                             mean=[0.485 * 255, 0.456 *
                                                   255, 0.406 * 255],
                                             std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
@@ -70,6 +70,7 @@ class COCOPipeline(Pipeline):
         print('rali "{0}" variant'.format(rali_device))
 
     def define_graph(self):
+        coin = self.coin_flip()
         saturation = self.rng1()
         contrast = self.rng1()
         brightness = self.rng2()
@@ -177,6 +178,7 @@ class RALICOCOIterator(object):
         self.img_size = np.zeros((self.bs * 2), dtype="int32")
         self.loader.GetImgSizes(self.img_size)
         print("Image sizes:", self.img_size)
+        img = torch.from_numpy(self.out)
         count = 0
         sum_count = 0
         for i in range(self.bs):
@@ -195,7 +197,8 @@ class RALICOCOIterator(object):
                     self.label_2d_numpy, (-1, 1)).tolist()
             self.bb_2d_numpy = (self.bboxes[sum_count*4: (sum_count+count)*4])
             self.bb_2d_numpy = np.reshape(self.bb_2d_numpy, (-1, 4)).tolist()
-            
+            # Draw images
+            draw_patches(img[i],self.img_name, self.bb_2d_numpy)
             if(self.loader._BoxEncoder == True):
                 
                 # Converting from "xywh" to "ltrb" format ,
@@ -203,7 +206,7 @@ class RALICOCOIterator(object):
                 # Box Encoder input & output:
                 # input : N x 4 , "xywh" format
                 # output : 8732 x 4 , "xywh" format and normalized
-                htot, wtot = 300, 300
+                htot, wtot = 1, 1
                 bbox_sizes = []
                 i=0
                 for (l,t,w,h) in self.bb_2d_numpy:
@@ -262,6 +265,26 @@ class RALICOCOIterator(object):
         self.loader.raliResetLoaders()
         return self
 
+def draw_patches(img,idx, bboxes):
+    #image is expected as a tensor, bboxes as numpy
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import cv2
+    image = img.detach().numpy()
+    image = image.transpose([1,2,0])
+ 
+    htot, wtot,_ = img.shape
+    for (l, t ,w , h) in bboxes:
+        r = l+ w
+        b = t + h
+        loc_ = [l, t ,r, b]
+        color = (255, 0, 0)
+        thickness = 2
+        start_point=(loc_[0] * wtot, loc_[1] * htot)
+        end_point= ((loc_[2] - loc_[0]) * wtot ,(loc_[3] - loc_[1]) * htot)
+        image = cv2.UMat(image).get()
+        image = cv2.rectangle(image, (int(loc_[0]*300 ),int( loc_[1] *300)),(int((loc_[2] *300) ) ,int((loc_[3] *300) )) , color, thickness)  
+        cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
 
 def main():
     if len(sys.argv) < 5:

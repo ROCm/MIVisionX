@@ -147,6 +147,12 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         auto it = _map_img_sizes.find(file_name);
         ImgSizes image_size = it->second;        
 
+        //Normalizing the co-ordinates
+        box.x/=image_size[0].w;
+        box.y/=image_size[0].h;
+        box.w/=image_size[0].w;
+        box.h/=image_size[0].h;
+        
         bb_coords.push_back(box);
         bb_labels.push_back(label);
         add(file_name, bb_coords, bb_labels,image_size);

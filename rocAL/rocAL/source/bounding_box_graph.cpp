@@ -110,10 +110,10 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
-        crop_box.x = crop_cords[i]->crop_x;
-        crop_box.y = crop_cords[i]->crop_y;
-        crop_box.w = crop_cords[i]->crop_width;
-        crop_box.h = crop_cords[i]->crop_height;
+        crop_box.x = (crop_cords[i]->crop_x) / float(original_width[i]);
+        crop_box.y = (crop_cords[i]->crop_y) / float(original_height[i]);
+        crop_box.w = (crop_cords[i]->crop_width) / float(original_width[i]);
+        crop_box.h = (crop_cords[i]->crop_height) / float(original_height[i]);
         for (uint j = 0; j < bb_count; j++)
         {
             int m = j * 4; // change if required
@@ -137,10 +137,10 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
                 float yA = std::max(crop_box.y, box.y);
                 float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
                 float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-                box.x = xA - crop_box.x;
-                box.y = yA - crop_box.y;
-                box.w = xB - xA;
-                box.h = yB - yA;
+                box.x = (xA - crop_box.x) / crop_box.w;
+                box.y = (yA - crop_box.y) / crop_box.h;
+                box.w = (xB - xA) / crop_box.w;
+                box.h = (yB - yA) / crop_box.h;
 
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
@@ -149,6 +149,7 @@ void BoundingBoxGraph::update_random_bbox_meta_data(CropCordBatch *_random_bbox_
         if (bb_coords.size() == 0)
         {
             std::cerr << "Bounding box co-ordinates not found in the image";
+	    break;
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
         input_meta_data->get_bb_labels_batch()[i] = bb_labels;

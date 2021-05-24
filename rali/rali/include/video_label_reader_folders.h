@@ -59,4 +59,5 @@ private:
     struct dirent *_entity;
     std::vector<std::string> _file_names;
     std::vector<std::string> _subfolder_video_file_names;
+    int _video_idx = 0;
 };

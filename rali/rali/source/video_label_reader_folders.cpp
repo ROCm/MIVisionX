@@ -86,7 +86,7 @@ void VideoLabelReaderFolders::add(std::string image_name, int label, int video_f
     {
         pMetaData info = std::make_shared<Label>(label);
         // std::cerr<<"\n label:: "<<label;
-        std::string frame_name = file_name +"_"+  std::to_string(i);
+        std::string frame_name = std::to_string(_video_idx) + "#" + file_name +"_"+  std::to_string(i);
         // std::cerr<<"\n frame_name ::"<<frame_name;
         if(exists(frame_name))
         {
@@ -95,7 +95,7 @@ void VideoLabelReaderFolders::add(std::string image_name, int label, int video_f
         }
         _map_content.insert(pair<std::string, std::shared_ptr<Label>>(frame_name, info));
     }
-
+    _video_idx++;
 }
 
 void VideoLabelReaderFolders::print_map_contents()

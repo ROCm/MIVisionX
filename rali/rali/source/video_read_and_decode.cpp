@@ -69,6 +69,18 @@ VideoReadAndDecode::~VideoReadAndDecode()
     _video_decoder.clear();
 }
 
+void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out)
+{
+    size_t start;
+    size_t end = 0;
+
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
+    {
+        end = str.find(delim, start);
+        out.push_back(str.substr(start, end - start));
+    }
+}
+
 void
 VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
@@ -97,9 +109,13 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
 
     for(size_t i=0; i < _video_count; i++)
     {
-        _video_file_name_map.insert(std::pair<std::string, int>(_video_names[i], i));
         _video_decoder[i] = create_video_decoder(decoder_config);
-        _video_decoder[i]->Initialize(_video_names[i].c_str());
+        std::vector<std::string> substrings;
+        char delim = '#';
+        substring_extraction(_video_names[i], delim, substrings);
+        int map_idx = atoi(substrings[0].c_str());
+        _video_file_name_map.insert(std::pair<std::string, int>(_video_names[i], map_idx));
+        _video_decoder[i]->Initialize(substrings[1].c_str());
 
     }
     _reader = create_reader(reader_config);
@@ -116,18 +132,6 @@ size_t
 VideoReadAndDecode::count()
 {
     return _reader->count();
-}
-
-void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out)
-{
-    size_t start;
-    size_t end = 0;
-
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-    {
-        end = str.find(delim, start);
-        out.push_back(str.substr(start, end - start));
-    }
 }
 
 VideoLoaderModuleStatus
@@ -152,7 +156,7 @@ VideoReadAndDecode::load(unsigned char* buff,
     const auto ret = video_interpret_color_format(output_color_format);
     const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
     const unsigned output_planes = std::get<1>(ret);
-
+    int video_idx_map;
     // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.
     _file_load_time.start();// Debug timing
@@ -183,7 +187,7 @@ VideoReadAndDecode::load(unsigned char* buff,
         }
 
         // std::cerr << "\nThe source video is " << _video_path << " MAP : "<<_video_file_name_map[_video_path]<< "\tThe start index is : " << start_frame << "\n";
-        int video_idx_map = _video_file_name_map[_video_path];
+        video_idx_map = _video_file_name_map[_video_path];
         if(_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride) != VideoDecoder::Status::OK)
         {
             continue;
@@ -198,7 +202,7 @@ VideoReadAndDecode::load(unsigned char* buff,
 
     for(size_t i = 0; i < _sequence_length ; i++)
     {
-        names[i] =  file_name +"_"+  std::to_string(start_frame+ (i*_stride));
+        names[i] =  std::to_string(video_idx_map) + "#" + file_name +"_"+  std::to_string(start_frame+ (i*_stride));
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
     }

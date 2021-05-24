@@ -67,11 +67,14 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     //set master graph flag to decide video reader
     // ret = subfolder_reading();
     // _video_file_count = _video_file_names.size();
+    _video_file_names.resize(_video_count);
+    _start_end_frame.resize(_video_count);
     _video_file_names = desc.get_video_file_names();
     _sequence_length = desc.get_sequence_length();
     _step = desc.get_frame_step();
     _stride = desc.get_frame_stride();
     _video_frame_count = desc.get_frame_count();
+    _start_end_frame = desc.get_start_end_frame_vector();
     _total_video_frames_count = 0;
 
     // get the width and height for every video _actual_decoded & original
@@ -82,7 +85,11 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
 
     for(size_t i = 0; i < _video_count; i++)
     {
-        size_t count_sequence = 0;
+        int start = std::get<0>(_start_end_frame[i]);
+        int end = std::get<1>(_start_end_frame[i]);
+        // std::cerr << "\n Starting frame : " << std::get<0>(_start_end_frame[i]) << " End frame : " << std::get<1>(_start_end_frame[i]) << "\n";
+
+        size_t count_sequence = (size_t)start;
         int loop_index = 0;
         loop_index = ((_video_frame_count[i] - (_stride * _sequence_length))/ _step) + 1;
         for(int j = 0; j < loop_index; j++)

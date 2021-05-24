@@ -47,8 +47,9 @@ public :
     ~VideoLabelReaderFolders() override { delete _output; }
 private:
     void read_files(const std::string& _path);
+    void read_text_file(const std::string& _path);
     bool exists(const std::string &image_name);
-    void add(std::string image_name);
+    void add(std::string image_name, int label, int video_frame_count = 0, int start_frame = 0);
     void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out);
     std::map<std::string, std::shared_ptr<Label>> _map_content;
     std::map<std::string, std::shared_ptr<Label>>::iterator _itr;

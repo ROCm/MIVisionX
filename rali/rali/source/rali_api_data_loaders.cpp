@@ -1509,7 +1509,10 @@ raliVideoFileSource(
         unsigned stride,
         bool shuffle,
         bool is_output,
-        bool loop)
+        bool loop,
+        const char* text_file_path,
+        bool enable_frame_num,
+        bool enable_timestamps)
 {
     std::cerr<<"\n Coming to raliVideoFileSource";
     Image* output = nullptr;
@@ -1527,19 +1530,30 @@ raliVideoFileSource(
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
 
+        const char * file_path;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
         std::vector<std::string> video_file_names;
+        std::vector<std::tuple<int, int>> start_end_frame;
 
-        video_properties video_prop = find_video_properties(source_path);
+        if ( source_path != NULL && text_file_path == NULL)
+            file_path = source_path;
+        else if ( text_file_path != NULL )
+            file_path = text_file_path;
+        else
+            THROW("Invalid input passed");
+
+        video_properties video_prop = find_video_properties(file_path, enable_timestamps);
         //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop.width;
         height = video_prop.height ;
         number_of_video_files = video_prop.videos_count;
         frame_count.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
+        start_end_frame.resize(number_of_video_files);
         frame_count = video_prop.frames_count;
         video_file_names = video_prop.video_file_names;
+        start_end_frame = video_prop.start_end_frame_num;
         std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
         std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";
 
@@ -1554,7 +1568,7 @@ raliVideoFileSource(
         output = context->master_graph->create_loader_output_image(info);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "",
+                                                                          file_path, "",
 									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,
@@ -1563,6 +1577,7 @@ raliVideoFileSource(
                                                                           stride,
                                                                           number_of_video_files,
                                                                           frame_count,
+                                                                          start_end_frame,
                                                                           shuffle,
                                                                           loop,
                                                                           context->master_graph->internal_batch_size(),
@@ -1601,7 +1616,10 @@ raliVideoFileResize(
         unsigned dest_height,
         bool shuffle,
         bool is_output,
-        bool loop)
+        bool loop,
+        const char* text_file_path,
+        bool enable_frame_num,
+        bool enable_timestamps)
 {
     Image* resize_output = nullptr;
     if(!p_context || dest_width == 0 || dest_height == 0)
@@ -1623,19 +1641,28 @@ raliVideoFileResize(
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
 
+        const char * file_path;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
         std::vector<std::string> video_file_names;
+        std::vector<std::tuple<int, int>> start_end_frame;
+        
+        if ( source_path != NULL )
+            file_path = source_path;
+        else if ( text_file_path != NULL)
+            file_path = text_file_path;
 
-        video_properties video_prop = find_video_properties(source_path);
+        video_properties video_prop = find_video_properties(file_path, enable_timestamps);
         //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop.width;
         height = video_prop.height ;
         number_of_video_files = video_prop.videos_count;
         frame_count.resize(number_of_video_files);
         video_file_names.resize(number_of_video_files);
+        start_end_frame.resize(number_of_video_files);
         frame_count = video_prop.frames_count;
         video_file_names = video_prop.video_file_names;
+        start_end_frame = video_prop.start_end_frame_num;
         std::cerr<<"\n Width:: "<<width<<"\t Height:: "<<height;
         std::cerr<<"\n number_of_video_files:: "<<number_of_video_files<<"\t";
         auto [color_format, num_of_planes] = convert_color_format(rali_color_format);
@@ -1665,6 +1692,7 @@ raliVideoFileResize(
                                                                           stride,
                                                                           number_of_video_files,
                                                                           frame_count,
+                                                                          start_end_frame,
                                                                           shuffle,
                                                                           loop,
                                                                           context->master_graph->internal_batch_size(),

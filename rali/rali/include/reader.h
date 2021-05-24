@@ -24,6 +24,7 @@ THE SOFTWARE.
 #include <string>
 #include <map>
 #include <vector>
+#include<tuple>
 enum class StorageType
 {
     FILE_SYSTEM = 0,
@@ -61,6 +62,7 @@ struct ReaderConfig
     void set_frame_count(std::vector<size_t> frame_count) { _frame_count = frame_count; }
     void set_total_frames_count(size_t total) { _total_frames_count = total; }
     void set_video_file_names(std::vector<std::string> video_file_names) { _video_file_names = video_file_names; }
+    void set_start_end_frame_vector(std::vector<std::tuple<int, int>> start_end_frame) {_start_end_frame_vector = start_end_frame;}
     size_t get_shard_count() { return _shard_count; }
     size_t get_shard_id() { return _shard_id; }
     size_t get_batch_size() { return _batch_count; }
@@ -71,6 +73,7 @@ struct ReaderConfig
     std::vector<size_t> get_frame_count() { return _frame_count; }
     size_t get_total_frames_count() { return _total_frames_count; }
     std::vector<std::string> get_video_file_names() { return _video_file_names; }
+    std::vector<std::tuple<int, int>> get_start_end_frame_vector() { return _start_end_frame_vector; }
     std::string path() { return _path; }
     std::string json_path() { return _json_path; }
     std::map<std::string, std::string> feature_key_map() { return _feature_key_map; }
@@ -92,6 +95,7 @@ private:
     std::vector<size_t> _frame_count;
     size_t _total_frames_count;
     std::vector<std::string> _video_file_names;
+    std::vector<std::tuple<int, int>> _start_end_frame_vector;
     bool _shuffle = false;
     bool _loop = false;
     std::string _file_prefix = ""; //!< to read only files with prefix. supported only for cifar10_data_reader and tf_record_reader

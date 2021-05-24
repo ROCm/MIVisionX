@@ -80,6 +80,7 @@ private:
     size_t _total_video_frames_count;
     std::vector<size_t> _video_frame_count;
     std::vector<std::tuple<size_t, size_t>> _frame_sequences;
+    std::vector<std::tuple<int, int>> _start_end_frame;
     size_t _video_file_count;
     size_t _sequence_length;
     size_t _step;

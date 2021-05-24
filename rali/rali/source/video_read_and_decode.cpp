@@ -84,7 +84,7 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     // std::cerr<<"\n batchsize :: "<<_batch_size;
 
     _video_decoder.resize(_video_count);
-    _video_names.resize(_sequence_length);
+    _video_names.resize(_video_count);
     _actual_decoded_width.resize(_sequence_length);
     _actual_decoded_height.resize(_sequence_length);
     _original_height.resize(_sequence_length);
@@ -103,7 +103,6 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
 
     }
     _reader = create_reader(reader_config);
-    // std::cerr<<"\n=== The reader config is created  ====\n";
 }
 
 void

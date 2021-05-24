@@ -151,17 +151,38 @@ void VideoLabelReaderFolders::read_text_file(const std::string& _path)
         std::string line;
         int label;
         int start, end;
+        float start_time, end_time;
         std::string video_file_name;
+        std::vector<unsigned> props;
         while (std::getline(text_file, line)) {
             start = end = 0;
             std::istringstream line_ss(line);
             if (!(line_ss >> video_file_name >> label))
                 continue;
-            if (line_ss >> start) {
-                if (line_ss >> end) {
-                    if (start >= end) {
-                        std::cerr << "[WRN] Start and end time/frame are the same, skipping the file " << video_file_name << "\n";
-                        continue;
+            props = open_video_context(video_file_name.c_str());
+            if(_enable_timestamps) {
+                if (line_ss >> start_time) {
+                    if (line_ss >> end_time) {
+                        if (start_time >= end_time) {
+                            std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
+                            continue;
+                        }
+                        // std::cerr << "Start time : " << start_time << " : " << end_time << "\n";
+                        start = start_time * props[3];
+                        end = end_time * props[3];
+                        end = end ?end : props[2];
+                        // std::cerr << start<< " : " << end<< "\n";
+                    }
+                }
+            }
+            else {
+                if (line_ss >> start) {
+                    if (line_ss >> end) {
+                        if (start >= end) {
+                            std::cerr << "[WRN] Start and end time/frame are the same, skipping the file " << video_file_name << "\n";
+                            continue;
+                        }
+                        end = end ?end : props[2];
                     }
                 }
             }

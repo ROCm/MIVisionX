@@ -83,12 +83,12 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
                             std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
                             continue;
                         }
-                        std::cerr << start_time << " : " << end_time << "\n";
-                        std::cerr << "Frame rate : "  << props[3];
+                        // std::cerr << start_time << " : " << end_time << "\n";
+                        // std::cerr << "Frame rate : "  << props[3];
                         start = start_time * props[3];
                         end = end_time * props[3];
                         end = end ?end : props[2];
-                        std::cerr << start<< " : " << end<< "\n";
+                        // std::cerr << start<< " : " << end<< "\n";
                     }
                 }
                 video_props.start_end_timestamps.push_back(std::make_tuple(start_time, end_time)); 

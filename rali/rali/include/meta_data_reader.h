@@ -81,5 +81,6 @@ public:
     virtual void release() = 0; // Deletes the loaded information
     virtual MetaDataBatch * get_output()= 0;
     virtual bool exists(const std::string &image_name) = 0;
+    virtual void set_timestamps_bool() = 0;
 };
 

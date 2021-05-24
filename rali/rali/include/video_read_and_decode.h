@@ -92,5 +92,4 @@ private:
     VideoDecoderConfig _video_decoder_config;
     bool decoder_keep_original;
     unsigned int _index_start_frame;
-    int index;
 };

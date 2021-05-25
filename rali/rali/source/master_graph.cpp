@@ -178,10 +178,8 @@ MasterGraph::create_single_graph()
 {
     // Actual graph creating and calls into adding nodes to graph is deferred and is happening here to enable potential future optimizations
     _graph = std::make_shared<Graph>(_context, _affinity, 0, _gpu_id);
-    int node_index = 0;
     for(auto& node: _nodes)
     {
-        // std::cerr<<"\n Node number:: "<<++node_index;
         // Any image not yet created can be created as virtual image
         for(auto& image: node->output())
             if(image->info().type() == ImageInfo::Type::UNKNOWN)
@@ -716,7 +714,7 @@ void MasterGraph::output_routine()
             ImageNameBatch full_batch_image_names = {};
             pMetaDataBatch full_batch_meta_data = nullptr;
             pMetaDataBatch augmented_batch_meta_data = nullptr;
-            int _count ;
+            size_t _count ;
             if(is_video_loader())
             {
                 _count = _video_loader_module->remaining_count();

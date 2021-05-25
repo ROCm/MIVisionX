@@ -196,7 +196,7 @@ void RandomBBoxCropReader::read_all()
 
         crop_success = false;
 
-        int count = 0;
+        // int count = 0;
         // while (!crop_success && (_total_num_of_attempts == 0 || count < _total_num_of_attempts))
         while (true)
         {
@@ -263,7 +263,7 @@ void RandomBBoxCropReader::read_all()
                     crop_box.w = width_factor * in_width[i];
                     crop_box.h = height_factor * in_height[i];
 
-                    bool entire_iou = !_overlap_iou; // Look at this Later ? Check if true/false
+                    // bool entire_iou = !_overlap_iou; // Look at this Later ? Check if true/false
 
                     // All boxes should satisfy IOU criteria
 

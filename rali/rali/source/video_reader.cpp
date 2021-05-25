@@ -77,17 +77,10 @@ Reader::Status VideoReader::initialize(ReaderConfig desc)
     _start_end_frame = desc.get_start_end_frame_vector();
     _total_video_frames_count = 0;
 
-    // get the width and height for every video _actual_decoded & original
-    // fill the _video_frame_start_idx & _video_idx  based on sequence length and frame count
-    // shuffle both _video_frame_start_idx & _video_idx ( can do this later)
-    //for sample test
-    //_video_frame_count[3] = {30, 25, 54};
-
     for(size_t i = 0; i < _video_count; i++)
     {
         int start = std::get<0>(_start_end_frame[i]);
-        int end = std::get<1>(_start_end_frame[i]);
-        // std::cerr << "\n Starting frame : " << std::get<0>(_start_end_frame[i]) << " End frame : " << std::get<1>(_start_end_frame[i]) << "\n";
+        // int end = std::get<1>(_start_end_frame[i]);
 
         size_t count_sequence = (size_t)start;
         int loop_index = 0;

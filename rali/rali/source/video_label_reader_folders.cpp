@@ -28,7 +28,6 @@ THE SOFTWARE.
 #include "commons.h"
 #include "exception.h"
 #include "video_label_reader_folders.h"
-#include "video_properties.h"
 
 
 using namespace std;
@@ -52,32 +51,14 @@ bool VideoLabelReaderFolders::exists(const std::string& image_name)
     return _map_content.find(image_name) != _map_content.end();
 }
 
-
-void VideoLabelReaderFolders::substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out)
-{
-    size_t start;
-    size_t end = 0;
-
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-    {
-        end = str.find(delim, start);
-        out.push_back(str.substr(start, end - start));
-    }
-}
-
-
-void VideoLabelReaderFolders::add(std::string image_name, int label, int video_frame_count, int start_frame)
+void VideoLabelReaderFolders::add(std::string image_name, int label, unsigned int video_frame_count, unsigned int start_frame)
 {
 
-    // check for mp4
-    // String before mp4 string is label
-    // populate the filename_framenumber.jpg label
     std::vector<unsigned> video_prop;
     video_prop = open_video_context(image_name.c_str());
     size_t frame_count = video_frame_count ? video_frame_count : video_prop[2];
     if ( video_frame_count + start_frame > video_prop[2] )
         THROW("The given frame numbers in txt file exceeds the maximum frames in the video" + image_name) 
-    // std::cerr<<"\n video frame count:: "<<frame_count;
     std::vector<std::string> substrings;
     char delim = '/';
     substring_extraction(image_name, delim, substrings);
@@ -85,9 +66,7 @@ void VideoLabelReaderFolders::add(std::string image_name, int label, int video_f
     for(uint i = start_frame; i < (start_frame + frame_count); i++)
     {
         pMetaData info = std::make_shared<Label>(label);
-        // std::cerr<<"\n label:: "<<label;
         std::string frame_name = std::to_string(_video_idx) + "#" + file_name +"_"+  std::to_string(i);
-        // std::cerr<<"\n frame_name ::"<<frame_name;
         if(exists(frame_name))
         {
             WRN("Entity with the same name exists")
@@ -134,7 +113,6 @@ void VideoLabelReaderFolders::lookup(const std::vector<std::string>& image_names
     for(unsigned i = 0; i < image_names.size(); i++)
     {
         auto image_name = image_names[i];
-        // std::cerr<<"\n lookup image_name :: "<<image_name;
         auto it = _map_content.find(image_name);
         if(_map_content.end() == it)
             THROW("ERROR: Video label reader folders Given name not present in the map"+ image_name )
@@ -149,8 +127,7 @@ void VideoLabelReaderFolders::read_text_file(const std::string& _path)
     if (text_file.good()) {
         //_text_file.open(path.c_str(), std::ifstream::in);
         std::string line;
-        int label;
-        int start, end;
+        int label, start, end;
         float start_time, end_time;
         std::string video_file_name;
         std::vector<unsigned> props;
@@ -167,11 +144,9 @@ void VideoLabelReaderFolders::read_text_file(const std::string& _path)
                             std::cerr << "[WRN] Start and end time/frame are not satisfying the condition, skipping the file " << video_file_name << "\n";
                             continue;
                         }
-                        // std::cerr << "Start time : " << start_time << " : " << end_time << "\n";
                         start = start_time * props[3];
                         end = end_time * props[3];
                         end = end ?end : props[2];
-                        // std::cerr << start<< " : " << end<< "\n";
                     }
                 }
             }
@@ -220,7 +195,6 @@ void VideoLabelReaderFolders::read_all(const std::string& _path)
             std::string entry_name(_entity->d_name);
             if (strcmp(_entity->d_name, ".") == 0 || strcmp(_entity->d_name, "..") == 0) continue;
             entry_name_list.push_back(entry_name);
-            // std::cerr << "\nEntry name : " << _entity->d_name;
         }
         std::sort(entry_name_list.begin(), entry_name_list.end());
         closedir(_sub_dir);
@@ -239,7 +213,6 @@ void VideoLabelReaderFolders::read_all(const std::string& _path)
                 }
                 read_files(_folder_path);
                 for(unsigned i = 0; i < _subfolder_video_file_names.size(); i++) {
-                    std::cerr<<"\n subfolder_file_name files-> "<< i << ":: "<<_subfolder_video_file_names[i];
                     add(_subfolder_video_file_names[i], i);
                 }
                 break;  // assume directory has only files.
@@ -250,12 +223,10 @@ void VideoLabelReaderFolders::read_all(const std::string& _path)
                 _subfolder_video_file_names.clear();
                 read_files(_folder_path);
                 for(unsigned i = 0; i < _subfolder_video_file_names.size(); i++) {
-                    std::cerr<<"\n subfolder_file_name directory -> :: "<< i << ":: "<<_subfolder_video_file_names[i];
                     std::vector<std::string> substrings;
                     char delim = '/';
                     substring_extraction(_subfolder_video_file_names[i], delim, substrings);
                     int label = atoi(substrings[substrings.size()- 2].c_str());
-                    std::cerr << "The label : " << label << "\n";
                     add(_subfolder_video_file_names[i], label);
                 }
             }
@@ -278,10 +249,7 @@ void VideoLabelReaderFolders::read_files(const std::string& _path)
         file_path.append("/");
         file_path.append(_entity->d_name);
         _file_names.push_back(file_path);
-        //_subfolder_video_file_names.push_back(_entity->d_name);
         _subfolder_video_file_names.push_back(file_path);
-        std::cerr << "\nRead files : " << _entity->d_name;
-        std::cerr << "\nfile path : " << file_path;
     }
     if(_file_names.empty())
         WRN("LabelReader: Could not find any file in " + _path)

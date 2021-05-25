@@ -69,23 +69,10 @@ VideoReadAndDecode::~VideoReadAndDecode()
     _video_decoder.clear();
 }
 
-void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out)
-{
-    size_t start;
-    size_t end = 0;
-
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-    {
-        end = str.find(delim, start);
-        out.push_back(str.substr(start, end - start));
-    }
-}
-
 void
 VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size)
 {
 
-    // std::cerr<<"\n ********************** VideoReadAndDecode::create ***************************** ";
     _sequence_length = reader_config.get_sequence_length();
     _stride = reader_config.get_frame_stride();
     _video_count = reader_config.get_video_count();
@@ -93,8 +80,6 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _batch_size = batch_size;
     set_video_process_count(_video_count);
     std::cerr<<"\n _sequence_length ::"<<_sequence_length;
-    // std::cerr<<"\n _video_count:: "<<_video_count;
-    // std::cerr<<"\n batchsize :: "<<_batch_size;
 
     _video_decoder.resize(_video_process_count);
     _video_names.resize(_video_count);
@@ -104,7 +89,6 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _original_width.resize(_sequence_length);
 
     _video_decoder_config = decoder_config;
-    _index_start_frame = 0;
 
     _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
     size_t i=0;
@@ -163,7 +147,6 @@ VideoReadAndDecode::load(unsigned char* buff,
                          std::vector<uint32_t> &actual_height,
                          RaliColorFormat output_color_format)
 {
-    // std::cerr << "\nHey is comes to load!!!!! - > " << _index_start_frame;
     if(max_decoded_width == 0 || max_decoded_height == 0 )
         THROW("Zero image dimension is not valid")
     if(!buff)
@@ -171,9 +154,9 @@ VideoReadAndDecode::load(unsigned char* buff,
     if(_reader->count() < _batch_size)
         return VideoLoaderModuleStatus::NO_MORE_DATA_TO_READ;
 
-    const auto ret = video_interpret_color_format(output_color_format);
-    const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
-    const unsigned output_planes = std::get<1>(ret);
+    // const auto ret = video_interpret_color_format(output_color_format);
+    // const VideoDecoder::ColorFormat decoder_color_format = std::get<0>(ret);
+    // const unsigned output_planes = std::get<1>(ret);
     int video_idx_map;
     // Decode with the height and size equal to a single image
     // File read is done serially since I/O parallelization does not work very well.
@@ -189,7 +172,7 @@ VideoReadAndDecode::load(unsigned char* buff,
     _reader->close();
 
     _file_load_time.end();// Debug timing
-    const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
+    // const size_t image_size = max_decoded_width * max_decoded_height * output_planes * sizeof(unsigned char);
 
     _decompressed_buff_ptrs = buff;
 
@@ -249,7 +232,6 @@ VideoReadAndDecode::load(unsigned char* buff,
         roi_height[i] = _actual_decoded_height[i];
     }
 
-    ++ _index_start_frame;
     _decode_time.end();// Debug timing
 
     return VideoLoaderModuleStatus::OK;

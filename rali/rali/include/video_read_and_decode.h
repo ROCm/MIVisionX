@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include "reader_factory.h"
 #include "timing_debug.h"
 #include "video_loader_module.h"
+#include "video_properties.h"
 
 class VideoReadAndDecode
 {
@@ -103,5 +104,4 @@ private:
     size_t _frame_count;
     VideoDecoderConfig _video_decoder_config;
     bool decoder_keep_original;
-    unsigned int _index_start_frame;
 };

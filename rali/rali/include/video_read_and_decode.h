@@ -39,6 +39,10 @@ public:
     size_t count();
     void reset();
     void create(ReaderConfig reader_config, VideoDecoderConfig decoder_config, int batch_size);
+    void set_video_process_count(size_t video_count)
+    {
+       _video_process_count = (video_count <= _max_video_count)? video_count: _max_video_count;
+    }
 
     //! Loads a decompressed batch of images into the buffer indicated by buff
     /// \param buff User's buffer provided to be filled with decoded image samples
@@ -63,11 +67,19 @@ public:
     Timing timing();
 
 private:
+    struct video_map
+    {
+        int _video_map_idx;
+        bool _is_decoder_instance;
+    };
     std::vector<std::shared_ptr<VideoDecoder>> _video_decoder;
     std::shared_ptr<Reader> _reader;
+    size_t _max_video_count = 50;
+    size_t _video_process_count;
     std::vector<unsigned char> _compressed_buff;
     std::vector<std::string> _video_names; // based on video_count
-    std::map<std::string, int> _video_file_name_map;
+    std::map<std::string, video_map> _video_file_name_map;
+    std::map<std::string, video_map>::iterator itr;
     size_t _compressed_image_size;
     size_t _actual_read_size;
     unsigned char* _decompressed_buff_ptrs;
@@ -77,9 +89,9 @@ private:
     std::vector<size_t> _original_height;// based on video_count
     std::vector<size_t> _video_frame_count; // based on video_count
     std::vector<size_t> _video_frame_start_idx; // add frame start index depending on the batch size and sequencelength
-    // [0,10,20,0,10,20,0,10,20,30,40,50] // for 3 videos with sequence_length 10 0video -  30 frames, 1video - 25 frames, 2video - 54 
-    std::vector<size_t> _video_idx; 
-    // [0,0,0,1,1,1,2,2,2,2,2,2] 
+    // [0,10,20,0,10,20,0,10,20,30,40,50] // for 3 videos with sequence_length 10 0video -  30 frames, 1video - 25 frames, 2video - 54
+    std::vector<size_t> _video_idx;
+    // [0,0,0,1,1,1,2,2,2,2,2,2]
     std::string _video_path;
     size_t start_frame;
     static const size_t MAX_COMPRESSED_SIZE = 1*1024*1024; // 1 Meg

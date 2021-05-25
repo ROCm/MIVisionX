@@ -91,11 +91,12 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _video_count = reader_config.get_video_count();
     _video_names = reader_config.get_video_file_names();
     _batch_size = batch_size;
+    set_video_process_count(_video_count);
     std::cerr<<"\n _sequence_length ::"<<_sequence_length;
     // std::cerr<<"\n _video_count:: "<<_video_count;
     // std::cerr<<"\n batchsize :: "<<_batch_size;
 
-    _video_decoder.resize(_video_count);
+    _video_decoder.resize(_video_process_count);
     _video_names.resize(_video_count);
     _actual_decoded_width.resize(_sequence_length);
     _actual_decoded_height.resize(_sequence_length);
@@ -106,17 +107,34 @@ VideoReadAndDecode::create(ReaderConfig reader_config, VideoDecoderConfig decode
     _index_start_frame = 0;
 
     _compressed_buff.resize(MAX_COMPRESSED_SIZE); // If we don't need MAX_COMPRESSED_SIZE we can remove this & resize in load module
-
-    for(size_t i=0; i < _video_count; i++)
+    size_t i=0;
+    for(; i < _video_process_count; i++)
     {
         _video_decoder[i] = create_video_decoder(decoder_config);
         std::vector<std::string> substrings;
         char delim = '#';
         substring_extraction(_video_names[i], delim, substrings);
-        int map_idx = atoi(substrings[0].c_str());
-        _video_file_name_map.insert(std::pair<std::string, int>(_video_names[i], map_idx));
+
+        video_map video_instance;
+        video_instance._video_map_idx  = atoi(substrings[0].c_str());
+        video_instance._is_decoder_instance = false;
+        _video_file_name_map.insert(std::pair<std::string, video_map>(_video_names[i], video_instance));
         _video_decoder[i]->Initialize(substrings[1].c_str());
 
+    }
+    if(_video_process_count != _video_count)
+    {
+        while(i < _video_count)
+        {
+            std::vector<std::string> substrings;
+            char delim = '#';
+            substring_extraction(_video_names[i], delim, substrings);
+            video_map video_instance;
+            video_instance._video_map_idx  = atoi(substrings[0].c_str());
+            video_instance._is_decoder_instance = false;
+            _video_file_name_map.insert(std::pair<std::string, video_map>(_video_names[i], video_instance));
+            i++;
+        }
     }
     _reader = create_reader(reader_config);
 }
@@ -187,7 +205,28 @@ VideoReadAndDecode::load(unsigned char* buff,
         }
 
         // std::cerr << "\nThe source video is " << _video_path << " MAP : "<<_video_file_name_map[_video_path]<< "\tThe start index is : " << start_frame << "\n";
-        video_idx_map = _video_file_name_map[_video_path];
+        // video_idx_map = _video_file_name_map[_video_path];
+        itr = _video_file_name_map.find(_video_path);
+        if (itr->second._is_decoder_instance == false)
+        {
+            std::map<std::string, video_map>::iterator temp_itr;
+            for(temp_itr = _video_file_name_map.begin(); temp_itr != _video_file_name_map.end(); ++temp_itr)
+            {
+                if(temp_itr->second._is_decoder_instance == true)
+                {
+                    video_idx_map = temp_itr->second._video_map_idx;
+                    std::vector<std::string> substrings;
+                    char delim = '#';
+                    substring_extraction(itr->first, delim, substrings);
+                    int map_idx = atoi(substrings[0].c_str());
+                    _video_decoder[video_idx_map]->Initialize(substrings[1].c_str());
+                    itr->second._video_map_idx = video_idx_map;
+                    itr->second._is_decoder_instance = true;
+                    temp_itr->second._is_decoder_instance = false;
+                }
+            }
+        }
+        video_idx_map = itr->second._is_decoder_instance;
         if(_video_decoder[video_idx_map]->Decode(_decompressed_buff_ptrs, start_frame, _sequence_length, _stride) != VideoDecoder::Status::OK)
         {
             continue;
@@ -199,10 +238,13 @@ VideoReadAndDecode::load(unsigned char* buff,
     substring_extraction(_video_path, delim, substrings);
 
     std::string file_name = substrings[substrings.size()- 1];
-
+    delim = '#';
+    substring_extraction(_video_path, delim, substrings);
+    std::string video_idx = substrings[0];
     for(size_t i = 0; i < _sequence_length ; i++)
     {
-        names[i] =  std::to_string(video_idx_map) + "#" + file_name +"_"+  std::to_string(start_frame+ (i*_stride));
+        names[i] =  video_idx   + "#" + file_name +"_"+  std::to_string(start_frame+ (i*_stride));
+        // std::cerr<<"\n name: "<<names[i];
         roi_width[i] = _actual_decoded_width[i];
         roi_height[i] = _actual_decoded_height[i];
     }

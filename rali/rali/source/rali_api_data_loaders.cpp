@@ -1530,7 +1530,7 @@ raliVideoFileSource(
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
 
-        const char * file_path;
+        const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
         std::vector<std::string> video_file_names;
@@ -1641,13 +1641,13 @@ raliVideoFileResize(
         std::cout << "\nThe internal batch size has been set to : " << context->master_graph->internal_batch_size() << "\n";
         // std::cout << "\nThe user batch size has been set to : " << context->master_graph->user_batch_size() << "\n";
 
-        const char * file_path;
+        const char * file_path = NULL;
         unsigned width , height, number_of_video_files;
         std::vector<size_t> frame_count;
         std::vector<std::string> video_file_names;
         std::vector<std::tuple<int, int>> start_end_frame;
         
-        if ( source_path != NULL )
+        if ( source_path != NULL && text_file_path == NULL )
             file_path = source_path;
         else if ( text_file_path != NULL)
             file_path = text_file_path;

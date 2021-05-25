@@ -111,6 +111,7 @@ raliSequenceRearrange(
         context->capture_error(e.what());
         ERR(e.what())
     }
+    return output;
 }
 
 

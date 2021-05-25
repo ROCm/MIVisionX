@@ -25,6 +25,7 @@ typedef struct video_properties
     std::vector<int> labels;
 } video_properties;
 
+void substring_extraction(std::string const &str, const char delim,  std::vector<std::string> &out);
 std::vector<unsigned> open_video_context(const char *video_file_path);
 video_properties get_video_properties_from_txt_file(const char *file_path, bool enable_timestamps);
 video_properties find_video_properties(const char *source_path, bool enable_timestamps);

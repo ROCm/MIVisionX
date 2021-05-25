@@ -112,7 +112,7 @@ VideoLoader::stop_internal_thread()
 void
 VideoLoader::initialize(ReaderConfig reader_cfg, VideoDecoderConfig decoder_cfg, RaliMemType mem_type, unsigned batch_size, bool decoder_keep_original)
 {
-    std::cerr<<"\n VideoLoader::initialize ";
+    // std::cerr<<"\n VideoLoader::initialize ";
     if(_is_initialized)
         WRN("initialize() function is already called and loader module is initialized")
 

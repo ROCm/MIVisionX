@@ -40,11 +40,10 @@ int get_extension(std::string file_name)
 int main(int argc, const char **argv)
 {
     // check command-line usage
-    const int MIN_ARG_COUNT = 4;
+    const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
-        printf("Usage: rali_video_unittests <video_file/video_dataset_folder/text file> <processing_device=1/cpu=0> <video_mode> <batch_size> <sequence_length> <frame_step> <frame_stride> \
-        <gray_scale/rgb> <display_on_off> <shuffle:0/1> <enable_meta_data:0/1> <decode_width> <decode_height> <enable_timestamps:0/1> <enable_sequence_rearrange:0/1>\n");
+        printf("Usage: rali_video_unittests <video_file/video_dataset_folder/text file> <processing_device=1/cpu=0> <video_mode> <batch_size> <sequence_length> <frame_step> <frame_stride> <gray_scale/rgb> <display_on_off> <shuffle:0/1> <enable_meta_data:0/1> <decode_width> <decode_height> <enable_timestamps:0/1> <enable_sequence_rearrange:0/1>\n");
         return -1;
     }
 
@@ -125,6 +124,13 @@ int main(int argc, const char **argv)
     {
         is_output = false;
     }
+
+    std::cerr << "Batch size : " << input_batch_size << std::endl;
+    std::cerr << "Sequence length : " << sequence_length << std::endl;
+    std::cerr << "Frame step : " << frame_step << std::endl;
+    std::cerr << "Frame stride : " << frame_stride << std::endl;
+    std::cerr << "Decode Width : " << decode_width << std::endl;
+    std::cerr << "Decode height : " << decode_height << std::endl;
 
     RaliImageColor color_format = (rgb != 0) ? RaliImageColor::RALI_COLOR_RGB24 : RaliImageColor::RALI_COLOR_U8;
     RaliContext handle;
@@ -243,7 +249,7 @@ int main(int argc, const char **argv)
         count++;
         if (raliRun(handle) != 0)
             break;
-        if (enable_metadata)
+        if (0)
         {
             raliGetImageLabels(handle, label_id);
             int img_size = raliGetImageNameLen(handle, image_name_length);

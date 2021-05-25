@@ -49,31 +49,35 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
+        //YTD
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            box.x = coords_buf[m++];
-            box.y = coords_buf[m++];
-            box.w = coords_buf[m++];
-            box.h = coords_buf[m++];
-            if(_flip_axis_val[i] == 0)
-            {
-                float centre_x = _src_width_val[i] / 2;
-                box.x += ((centre_x - box.x) * 2) - box.w;
-            }
-            else if(_flip_axis_val[i] == 1)
-            {
-                float centre_y = _src_height_val[i] / 2;
-                box.y += ((centre_y - box.y) * 2) - box.h;
+            box.l = coords_buf[m++];
+            box.t = coords_buf[m++];
+            box.r = coords_buf[m++];
+            box.b = coords_buf[m++];
+            //YTD: The commented code has to be re-written--
+            // if(_flip_axis_val[i] == 0)
+            // {
+            //     float centre_x = _src_width_val[i] / 2;
+            //     box.x += ((centre_x - box.x) * 2) - box.w;
+            // }
+            // else if(_flip_axis_val[i] == 1)
+            // {
+            //     float centre_y = _src_height_val[i] / 2;
+            //     box.y += ((centre_y - box.y) * 2) - box.h;
 
-            }
+            // }
+            //YTD
             bb_coords.push_back(box);
             bb_labels.push_back(labels_buf[j]);
         }
         if(bb_coords.size() == 0)
         {
             BoundingBoxCord temp_box;
-            temp_box.x = temp_box.y = temp_box.w = temp_box.h = 0;
+            //YTD
+            temp_box.l = temp_box.t = temp_box.r = temp_box.b = 0;
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

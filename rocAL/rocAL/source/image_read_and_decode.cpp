@@ -192,10 +192,10 @@ ImageReadAndDecode::load(unsigned char* buff,
             {
                 _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[file_counter]);
                 std::vector<float> coords_buf(4);
-                coords_buf[0] = _CropCord->crop_x;
-                coords_buf[1] = _CropCord->crop_y;
-                coords_buf[2] = _CropCord->crop_width;
-                coords_buf[3] = _CropCord->crop_height;
+                coords_buf[0] = _CropCord->crop_left ;
+                coords_buf[1] = _CropCord->crop_top;
+                coords_buf[2] = _CropCord->crop_right- _CropCord->crop_left ;
+                coords_buf[3] = _CropCord->crop_bottom- _CropCord->crop_top;
                 _bbox_coords.push_back(coords_buf);
                 coords_buf.clear();
             }
@@ -278,8 +278,10 @@ ImageReadAndDecode::load(unsigned char* buff,
             if(_randombboxcrop_meta_data_reader)
             {
                 _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);
-                _CropCord->crop_x = _decoder[i]->get_bbox_coords()[0];
-		            _CropCord->crop_width = _decoder[i]->get_bbox_coords()[2];
+                _CropCord->crop_left = _decoder[i]->get_bbox_coords()[0];
+		        _CropCord->crop_top = _decoder[i]->get_bbox_coords()[1];
+                _CropCord->crop_right = _decoder[i]->get_bbox_coords()[2];
+		        _CropCord->crop_bottom = _decoder[i]->get_bbox_coords()[3];
             }
 #endif            
             roi_width[i] = _actual_decoded_width[i];

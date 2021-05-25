@@ -89,7 +89,7 @@ void COCOMetaDataReader::print_map_contents()
         img_sizes = elem.second->get_img_sizes();
         std::cout << "<wxh, num of bboxes>: "<< img_sizes[0].w << " X " << img_sizes[0].h << " , "  << bb_coords.size() << std::endl;
         for(unsigned int i = 0; i < bb_coords.size(); i++){
-            std::cout << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << "Label Id : " << bb_labels[i] << std::endl;
+            std::cout << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << "Label Id : " << bb_labels[i] << std::endl;
         }
     }
 }
@@ -117,7 +117,7 @@ void COCOMetaDataReader::read_all(const std::string &path) {
 
     BoundingBoxCord box;
     ImgSize img_size;
-    
+    float box_x, box_y, box_w, box_h;
     for (auto iterator = image.begin(); iterator != image.end(); iterator++)
     {
         // std::map<int, int,int> id_img_sizes;
@@ -133,10 +133,10 @@ void COCOMetaDataReader::read_all(const std::string &path) {
     
     for (auto iterator = annotation.begin(); iterator != annotation.end(); iterator++)
     {
-        box.x = (*iterator)["bbox"][0].asFloat();
-        box.y = (*iterator)["bbox"][1].asFloat();
-        box.w = (*iterator)["bbox"][2].asFloat();
-        box.h = (*iterator)["bbox"][3].asFloat();
+        box_x = (*iterator)["bbox"][0].asFloat();
+        box_y = (*iterator)["bbox"][1].asFloat();
+        box_w = (*iterator)["bbox"][2].asFloat();
+        box_h = (*iterator)["bbox"][3].asFloat();
         int label = (*iterator)["category_id"].asInt();
         int id = (*iterator)["image_id"].asInt();
         char buffer[13];
@@ -147,11 +147,11 @@ void COCOMetaDataReader::read_all(const std::string &path) {
         auto it = _map_img_sizes.find(file_name);
         ImgSizes image_size = it->second;        
 
-        //Normalizing the co-ordinates
-        box.x/=image_size[0].w;
-        box.y/=image_size[0].h;
-        box.w/=image_size[0].w;
-        box.h/=image_size[0].h;
+        //Normalizing the co-ordinates & convert to "ltrb" format
+        box.l = box_x/ image_size[0].w;
+        box.t = box_y/ image_size[0].h;
+        box.r = (box_x + box_w) / image_size[0].w;
+        box.b = (box_y + box_h) / image_size[0].h;
         
         bb_coords.push_back(box);
         bb_labels.push_back(label);

@@ -65,33 +65,43 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
         BoundingBoxCord temp_box;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord crop_box;
-        crop_box.x = _x1_val[i]/_src_width_val[i];
-        crop_box.y = _y1_val[i]/_src_height_val[i];
-        crop_box.w = _width_val[i]/_src_width_val[i];
-        crop_box.h = _height_val[i]/_src_height_val[i];
+        crop_box.l = (_x1_val[i]) / _src_width_val[i];
+        crop_box.t = (_y1_val[i]) / _src_height_val[i];
+        crop_box.r = (_x1_val[i] + _width_val[i]) / _src_width_val[i];
+        crop_box.b = (_y1_val[i] + _height_val[i]) / _src_height_val[i];
+        // std::cout<<"CROP Co-ordinates in CMN: lxtxrxb::\t"<<crop_box.l<<"x"<<crop_box.t<<"x"<<crop_box.r<<"x"<<crop_box.b<<"x";
         
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            box.x = coords_buf[m++];
-            box.y = coords_buf[m++];
-            box.w = coords_buf[m++];
-            box.h = coords_buf[m++];
+            box.l = coords_buf[m++];
+            box.t = coords_buf[m++];
+            box.r = coords_buf[m++];
+            box.b = coords_buf[m++];
+            // std::cout<<"\nIn BEFORE CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
+
             if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
             {
-                float xA = std::max(crop_box.x, box.x);
-                float yA = std::max(crop_box.y, box.y);
-                float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
-                float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-                box.x = xA - _x1_val[i];
-                box.y = yA - _y1_val[i];
-                box.w = xB - xA;
-                box.h = yB - yA;
+                float xA = std::max(crop_box.l, box.l);
+                float yA = std::max(crop_box.t, box.t);
+                float xB = std::min(crop_box.r, box.r);
+                float yB = std::min(crop_box.b, box.b);
+                box.l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
+                box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
+                box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
+                box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
+                // std::cout<<"\n AFTER IN CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
+
                 if (_mirror_val[i] == 1)
                 {
-                    float centre_x = 0.5;
-                    box.x += ((centre_x - box.x) * 2) - box.w;
+
+                    float l = 1 - box.r;
+                    float r = 1 - box.l;
+                    box.l = l;
+                    box.r = r;
                 }
+                // std::cout<<"\n AFTER MIRROR IN CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
+
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }
@@ -99,10 +109,10 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
         if(bb_coords.size() == 0)
         {
 	        //std::cout << "Crop mirror Normalize - Zero Bounding boxes" << std::endl;
-            temp_box.x = 0;
-            temp_box.y = 0;
-	        temp_box.w =  crop_box.w - 1;
-	        temp_box.h =  crop_box.h - 1;
+            temp_box.l = 0;
+            temp_box.t = 0;
+	        temp_box.r = 1;
+	        temp_box.b = 1;
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

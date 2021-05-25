@@ -48,20 +48,22 @@ void ResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxCord temp_box;
-        temp_box.x = temp_box.y = temp_box.w = temp_box.h = 0;
+        temp_box.l = temp_box.t= 0;
+        temp_box.r = temp_box.b = 1;
         BoundingBoxLabels bb_labels;
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
-            box.x = (coords_buf[m++] );
-            box.y = (coords_buf[m++] );
-            box.w = (coords_buf[m++] );
-            box.h = (coords_buf[m++] );
+            box.l = (coords_buf[m++] );
+            box.t = (coords_buf[m++] );
+            box.r = (coords_buf[m++] );
+            box.b = (coords_buf[m++] );
             bb_coords.push_back(box);
             bb_labels.push_back(labels_buf[j]);
         }
         if(bb_coords.size() == 0)
         {
+            std::cout<<"Zero BBoxes in Meta Node Resize";
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

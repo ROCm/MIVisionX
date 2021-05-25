@@ -51,13 +51,14 @@ void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxCord temp_box;
-        temp_box.x = temp_box.y = temp_box.w = temp_box.h = 0;
+        temp_box.l = temp_box.t =0;
+        temp_box.r = temp_box.b = 1;
         BoundingBoxLabels bb_labels;
         BoundingBoxCord dest_image;
-        dest_image.x = 0;
-        dest_image.y = 0;
-        dest_image.w = _dst_width;
-        dest_image.h = _dst_height;
+        dest_image.l = 0;
+        dest_image.t = 0;
+        dest_image.r = _dst_width;
+        dest_image.b = _dst_height;
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
@@ -89,20 +90,20 @@ void RotateMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             min_y = std::min(y1, std::min(y2, std::min(y3, y4)));
             max_x = std::max(x1, std::max(x2, std::max(x3, x4)));
             max_y = std::max(y1, std::max(y2, std::max(y3, y4)));
-            box.x = (min_x > 0) ? min_x : 0;
-            box.y = (min_y > 0) ? min_y : 0;
-            box.w = max_x - box.x;
-            box.h = max_y - box.y;
+            box.l = (min_x > 0) ? min_x : 0;
+            box.t = (min_y > 0) ? min_y : 0;
+            box.r = max_x ;
+            box.b = max_y ;
             if (BBoxIntersectionOverUnion(box, dest_image) >= _iou_threshold)
             {
-                float xA = std::max(dest_image.x, box.x);
-                float yA = std::max(dest_image.y, box.y);
-                float xB = std::min(dest_image.x + dest_image.w, box.x + box.w);
-                float yB = std::min(dest_image.y + dest_image.h, box.y + box.h);
-                box.x = xA;
-                box.y = yA;
-                box.w = xB - xA;
-                box.h = yB - yA;
+                float xA = std::max(dest_image.l, box.l);
+                float yA = std::max(dest_image.t, box.t);
+                float xB = std::min(dest_image.r, box.r);
+                float yB = std::min(dest_image.b, box.b);
+                box.l = xA;
+                box.t = yA;
+                box.r = xB ;
+                box.b = yB ;
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
             }

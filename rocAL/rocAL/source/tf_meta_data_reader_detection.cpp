@@ -84,7 +84,8 @@ void TFMetaDataReaderDetection::lookup(const std::vector<std::string> &image_nam
             ImgSize img_size;
 
 
-            box.x = box.y = box.w = box.h = 0;
+            box.l = box.t = 0;
+            box.r = box.b = 1;
             img_size.w = img_size.h =0;
             bb_coords.push_back(box);
             bb_labels.push_back(0);
@@ -118,7 +119,7 @@ void TFMetaDataReaderDetection::print_map_contents()
         bb_labels = elem.second->get_bb_labels();
         std::cerr << "\nsize of the element  : "<< bb_coords.size() << std::endl;
         for(unsigned int i = 0; i < bb_coords.size(); i++){
-            std::cerr << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << std::endl;
+            std::cerr << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << std::endl;
             std::cerr  << "Label Id : " << bb_labels[i] << std::endl;
         }
     }
@@ -205,10 +206,10 @@ void TFMetaDataReaderDetection::read_record(std::ifstream &file_contents, uint f
       bbox_ymin = sf_ymin.float_list().value()[i];
       bbox_xmax = sf_xmax.float_list().value()[i];
       bbox_ymax = sf_ymax.float_list().value()[i]; 
-      box.x = bbox_xmin * image_width;
-      box.w = (bbox_xmax * image_width) - box.x;
-      box.y = bbox_ymin * image_height;
-      box.h = (bbox_ymax * image_height) - box.y;
+      box.l = bbox_xmin * image_width;
+      box.t = (bbox_xmax * image_width) - box.l;
+      box.r = bbox_ymin * image_height;
+      box.b = (bbox_ymax * image_height) - box.t;
       bb_coords.push_back(box);
       bb_labels.push_back(label);
       add(fname, bb_coords, bb_labels,img_sizes);

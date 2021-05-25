@@ -94,7 +94,7 @@ void CaffeMetaDataReaderDetection::print_map_contents()
         std::cerr << "\nsize of the element  : " << bb_coords.size() << std::endl;
         for (unsigned int i = 0; i < bb_coords.size(); i++)
         {
-            std::cerr << " x : " << bb_coords[i].x << " y: :" << bb_coords[i].y << " width : " << bb_coords[i].w << " height: :" << bb_coords[i].h << std::endl;
+            std::cerr << " l : " << bb_coords[i].l << " t: :" << bb_coords[i].t << " r : " << bb_coords[i].r << " b: :" << bb_coords[i].b << std::endl;
             std::cerr << "Label Id : " << bb_labels[i] << std::endl;
         }
     }
@@ -168,11 +168,11 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
                 caffe_protos::Annotation annot_protos = annotGrp_protos.annotation(i);
                 caffe_protos::NormalizedBBox bbox_protos = annot_protos.bbox();
 
-                // Parsing the bounding box points using Iterator
-                box.x = bbox_protos.xmin();
-                box.y = bbox_protos.ymin();
-                box.w = bbox_protos.xmax();
-                box.h = bbox_protos.ymax();
+                // Parsing the bounding box points using Iterator & normalizing the bbox values between 0 & 1
+                box.l = bbox_protos.xmin() / img_size.w;
+                box.t = bbox_protos.ymin() / img_size.h;
+                box.r = bbox_protos.xmax() / img_size.w;
+                box.b = bbox_protos.ymax() / img_size.h;
 
                 int label = bbox_protos.label();
                 
@@ -185,7 +185,8 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
         }
         else
         {
-            box.x = box.y = box.w = box.h = 0;
+            box.l = box.t = 0;
+            box.r = box.b = 1;
             bb_coords.push_back(box);
             bb_labels.push_back(0);
             add(file_name.c_str(), bb_coords, bb_labels, img_sizes);

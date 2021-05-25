@@ -274,9 +274,8 @@ def draw_patches(img,idx, bboxes):
     image = image.transpose([1,2,0])
  
     htot, wtot,_ = img.shape
-    for (l, t ,w , h) in bboxes:
-        r = l+ w
-        b = t + h
+    for (l, t ,r,b) in bboxes:
+        
         loc_ = [l, t ,r, b]
         color = (255, 0, 0)
         thickness = 2

@@ -1683,7 +1683,7 @@ raliVideoFileResize(
         resize_output = context->master_graph->create_image(output_info, false);
 
         context->master_graph->add_node<VideoLoaderNode>({}, {output})->init(internal_shard_count,
-                                                                          source_path, "",
+                                                                          file_path, "",
 									                                      std::map<std::string, std::string>(),
                                                                           StorageType::VIDEO_FILE_SYSTEM,
                                                                           VideoDecoderType::FFMPEG_VIDEO,

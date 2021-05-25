@@ -193,7 +193,7 @@ int main(int argc, const char **argv)
     case 5:
     {
         std::cout << "\n>>>> SEQUENCE READER\n";
-        input1 = raliSequenceReader(handle, folder_path, color_format, shard_count, sequence_length, frame_step, frame_stride, is_output, shuffle, false);
+        input1 = raliSequenceReader(handle, folder_path, color_format, shard_count, sequence_length, frame_step, frame_stride, is_output, shuffle, false, RALI_USE_USER_GIVEN_SIZE, decode_width, decode_height);
         break;
     }
     }
@@ -249,7 +249,7 @@ int main(int argc, const char **argv)
         count++;
         if (raliRun(handle) != 0)
             break;
-        if (0)
+        if (enable_metadata)
         {
             raliGetImageLabels(handle, label_id);
             int img_size = raliGetImageNameLen(handle, image_name_length);

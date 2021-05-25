@@ -201,7 +201,6 @@ VideoReadAndDecode::load(unsigned char* buff,
                     std::vector<std::string> substrings;
                     char delim = '#';
                     substring_extraction(itr->first, delim, substrings);
-                    int map_idx = atoi(substrings[0].c_str());
                     _video_decoder[video_idx_map]->Initialize(substrings[1].c_str());
                     itr->second._video_map_idx = video_idx_map;
                     itr->second._is_decoder_instance = true;

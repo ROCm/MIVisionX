@@ -166,7 +166,6 @@ void RandomBBoxCropReader::read_all()
     bool invalid_bboxes;
     bool crop_success;
     _entire_iou = true;
-    bool _overlap_iou = false;
     BoundingBoxCord crop_box, jth_box;
     uint bb_count;
     _meta_bbox_map_content = _meta_data_reader->get_map_content();

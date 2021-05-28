@@ -1879,9 +1879,9 @@ int agoInitializeGraph(AgoGraph * graph)
 static int agoWaitForNodesCompletion(AgoGraph * graph)
 {
     int status = VX_SUCCESS;
-    if (!graph->opencl_nodeListQueued.empty()) {
-        for (vx_size i = 0; i < graph->opencl_nodeListQueued.size(); i++) {
-            AgoNode * node = graph->opencl_nodeListQueued[i];
+    if (!graph->gpu_nodeListQueued.empty()) {
+        for (vx_size i = 0; i < graph->gpu_nodeListQueued.size(); i++) {
+            AgoNode * node = graph->gpu_nodeListQueued[i];
             if (node->supernode) {
                 if (!node->supernode->launched || agoGpuOclSuperNodeWait(graph, node->supernode) < 0) {
                     agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: launched=%d supernode wait failed\n", node->supernode->launched);
@@ -1918,7 +1918,7 @@ static int agoWaitForNodesCompletion(AgoGraph * graph)
                 }
             }
         }
-        graph->opencl_nodeListQueued.clear();
+        graph->gpu_nodeListQueued.clear();
     }
     return status;
 }
@@ -2007,9 +2007,9 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
 static int agoWaitForNodesCompletion(AgoGraph * graph)
 {
     int status = VX_SUCCESS;
-    if (!graph->opencl_nodeListQueued.empty()) {
-        for (vx_size i = 0; i < graph->opencl_nodeListQueued.size(); i++) {
-            AgoNode * node = graph->opencl_nodeListQueued[i];
+    if (!graph->gpu_nodeListQueued.empty()) {
+        for (vx_size i = 0; i < graph->gpu_nodeListQueued.size(); i++) {
+            AgoNode * node = graph->gpu_nodeListQueued[i];
             if (node->supernode) {
                 if (!node->supernode->launched || agoGpuHipSuperNodeWait(graph, node->supernode) < 0) {
                     agoAddLogEntry(&node->ref, VX_FAILURE, "ERROR: agoWaitForNodesCompletion: launched=%d supernode wait failed\n", node->supernode->launched);
@@ -2045,7 +2045,7 @@ static int agoWaitForNodesCompletion(AgoGraph * graph)
                 }
             }
         }
-        graph->opencl_nodeListQueued.clear();
+        graph->gpu_nodeListQueued.clear();
     }
     return status;
 }
@@ -2222,7 +2222,7 @@ int agoExecuteGraph(AgoGraph * graph)
         }
     }
 #if (ENABLE_OPENCL||ENABLE_HIP)
-    graph->opencl_nodeListQueued.clear();
+    graph->gpu_nodeListQueued.clear();
     vx_uint32 nodeLaunchHierarchicalLevel = 0;
     memset(&graph->gpu_perf, 0, sizeof(graph->gpu_perf));
 #endif
@@ -2258,7 +2258,7 @@ int agoExecuteGraph(AgoGraph * graph)
                     launched = false;
                 }
                 if (launched) {
-                    graph->opencl_nodeListQueued.push_back(node);
+                    graph->gpu_nodeListQueued.push_back(node);
                     if (nodeLaunchHierarchicalLevel == 0) {
                         nodeLaunchHierarchicalLevel = node->hierarchical_level;
                     }
@@ -2291,7 +2291,7 @@ int agoExecuteGraph(AgoGraph * graph)
                     launched = false;
                 }
                 if (launched) {
-                    graph->opencl_nodeListQueued.push_back(node);
+                    graph->gpu_nodeListQueued.push_back(node);
                     if (nodeLaunchHierarchicalLevel == 0) {
                         nodeLaunchHierarchicalLevel = node->hierarchical_level;
                     }

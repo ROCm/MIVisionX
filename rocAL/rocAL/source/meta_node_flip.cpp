@@ -49,7 +49,7 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         memcpy(coords_buf, input_meta_data->get_bb_cords_batch()[i].data(), input_meta_data->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
         BoundingBoxCords bb_coords;
         BoundingBoxLabels bb_labels;
-        //YTD
+        
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
@@ -69,8 +69,8 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             {
                 float t = 1 - box.b;
                 float b = 1 - box.t;
-                box.t = l;
-                box.b = r;
+                box.t = t;
+                box.b = b;
             }
             
             bb_coords.push_back(box);
@@ -79,7 +79,6 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         if(bb_coords.size() == 0)
         {
             BoundingBoxCord temp_box;
-            //YTD
             temp_box.l = temp_box.t = 0;
             temp_box.r = temp_box.b = 1;
             bb_coords.push_back(temp_box);

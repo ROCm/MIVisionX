@@ -137,7 +137,7 @@ void CircularBuffer::sync()
 #else
     else if (_output_mem_type== RaliMemType::HIP){
         // copy memory to host only if needed
-        if (!_dev_prop->canMapHostMemory) {
+        if (_dev_prop->canMapHostMemory) {
             hipError_t err = hipMemcpyAsync((void *)(_dev_buffer[_write_ptr]), _host_buffer_ptrs[_write_ptr], _output_mem_size, hipMemcpyHostToDevice, _hip_stream);
             if (err != hipSuccess) {
                 THROW("hipMemcpyAsync of size "+ TOSTR(_output_mem_size) + " failed " + TOSTR(err));

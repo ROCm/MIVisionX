@@ -86,6 +86,8 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     unsigned int crop_width, crop_height, x1, y1, x1_diff, crop_width_diff;
     if(_bbox_coord.size() != 0)
     {
+        // Random bbox crop returns normalized crop cordinates
+        // hence bringing it back to absolute cordinates 
         x1 = _bbox_coord[0] * original_image_width;
         y1 = _bbox_coord[1] * original_image_height;
         crop_width = (_bbox_coord[2]) * original_image_width;

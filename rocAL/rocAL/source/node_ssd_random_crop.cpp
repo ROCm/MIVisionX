@@ -75,6 +75,7 @@ void SSDRandomCropNode::update_node()
     int sample_option;
     std::pair<float, float> iou;
     float min_iou, max_iou;
+    float w_factor = 0.0f, h_factor = 0.0f;
     in_width = _crop_param->in_width;
     in_height = _crop_param->in_height;
     bool invalid_bboxes = true;
@@ -93,9 +94,9 @@ void SSDRandomCropNode::update_node()
         memcpy(labels_buf.data(), _meta_data_info->get_bb_labels_batch()[i].data(), sizeof(int) * bb_count);
         std::vector<float> coords_buf(bb_count * 4);
         memcpy(coords_buf.data(), _meta_data_info->get_bb_cords_batch()[i].data(), _meta_data_info->get_bb_cords_batch()[i].size() * sizeof(BoundingBoxCord));
-        //YTD
+
         crop_box.b = _y1_val[i] + _crop_height_val[i];
-        crop_box.r = _x1_val[i]+ _crop_width_val[i];
+        crop_box.r = _x1_val[i] + _crop_width_val[i];
         crop_box.l = _x1_val[i];
         crop_box.t = _y1_val[i];
 
@@ -119,27 +120,28 @@ void SSDRandomCropNode::update_node()
             {
                 x_drift_factor->renew();
                 float factor = 0.3f;
-                auto w_factor = factor + (x_drift_factor->get() * (1 - factor));
-                //YTD
-                crop_box.r = w_factor * in_width[i];
+                w_factor = factor + (x_drift_factor->get() * (1 - factor));
+                // crop_box.w = w_factor * in_width[i];
                 y_drift_factor->renew();
                 y_drift_factor->renew();
-                auto h_factor = factor + (y_drift_factor->get() * (1 - factor));
-                //YTD
-                crop_box.r = h_factor * in_height[i];
+                h_factor = factor + (y_drift_factor->get() * (1 - factor));
+                // crop_box.h = h_factor * in_height[i];
                 //aspect ratio check
-                if ((crop_box.r / crop_box.b < 0.5) || (crop_box.r / crop_box.b > 2.))
+                if ((w_factor / h_factor < 0.5) || (w_factor / h_factor > 2.))
                     continue;
                 break;
             }
-            if ((crop_box.r / crop_box.b < 0.5) || (crop_box.r / crop_box.b > 2.))
+            if ((w_factor / h_factor < 0.5) || (w_factor / h_factor > 2.))
                 continue;
             //Got the crop;
             x_drift_factor->renew();
             x_drift_factor->renew();
             y_drift_factor->renew();
-            crop_box.l = static_cast<size_t>(x_drift_factor->get() * (in_width[i] - crop_box.r));
-            crop_box.t = static_cast<size_t>(y_drift_factor->get() * (in_height[i] - crop_box.b));
+            crop_box.l = static_cast<size_t>(x_drift_factor->get() * (1 - w_factor));
+            crop_box.t = static_cast<size_t>(y_drift_factor->get() * (1 - h_factor));
+            crop_box.r = crop_box.l + w_factor;
+            crop_box.b = crop_box.t + h_factor;
+
             invalid_bboxes = false;
 
             for (int j = 0; j < bb_count; j++)
@@ -149,7 +151,6 @@ void SSDRandomCropNode::update_node()
                 jth_box.t = coords_buf[m + 1];
                 jth_box.r = coords_buf[m + 2];
                 jth_box.b = coords_buf[m + 3];
-                
                 float bb_iou = ssd_BBoxIntersectionOverUnion(jth_box, crop_box, _entire_iou); 
                 if (bb_iou < min_iou || bb_iou > max_iou )
                 {
@@ -161,10 +162,7 @@ void SSDRandomCropNode::update_node()
             if (invalid_bboxes)
                 continue;
             int valid_bbox_count = 0;
-            auto left = crop_box.l;
-            auto top = crop_box.t;
-            auto right = crop_box.r;
-            auto bottom = crop_box.b;
+            auto left = crop_box.l, top = crop_box.t, right = crop_box.r, bottom = crop_box.b;
             for (int j = 0; j < bb_count; j++)
             {
                 int m = j * 4;
@@ -177,12 +175,12 @@ void SSDRandomCropNode::update_node()
                 continue;
             break;
         } // while loop
-        _x1_val[i] = crop_box.l;
-        _y1_val[i] = crop_box.t;
-        _crop_width_val[i] = crop_box.l;
-        _crop_height_val[i] = crop_box.l;
-        _x2_val[i] = crop_box.r;
-        _y2_val[i] = crop_box.b;
+        _x1_val[i] = (crop_box.l) * in_width[i];
+        _y1_val[i] = (crop_box.t) * in_height[i];
+        _crop_width_val[i] = (crop_box.r - crop_box.l) * in_width[i];
+        _crop_height_val[i] = (crop_box.b - crop_box.t) * in_height[i];
+        _x2_val[i] =  (crop_box.r) * in_width[i];
+        _y2_val[i] =  (crop_box.b) * in_height[i];
 
     }
     vxCopyArrayRange((vx_array)_crop_param->cropw_arr, 0, _batch_size, sizeof(uint), _crop_width_val.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);

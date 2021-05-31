@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include "commons.h"
 
 
-DeviceManagerHip::~DeviceManagerHip() 
+DeviceManagerHip::~DeviceManagerHip()
 {
     hipError_t err;
     if(_resources.hip_stream != nullptr) {
@@ -47,7 +47,7 @@ DeviceManagerHip::~DeviceManagerHip()
 }
 
 hipError_t DeviceManagerHip::initialize() {
-    // TODO:: do any HIP specific initialization here    
+    // TODO:: do any HIP specific initialization here
     return hipSuccess;
 }
 
@@ -59,7 +59,7 @@ DeviceResourcesHip DeviceManagerHip::resources()
 void DeviceManagerHip::init_hip(vx_context context)
 {
     hipError_t err;
-    hipDevice_t dev_id;
+    hipDevice_t dev_id = -1;
     vx_status vxstatus = vxQueryContext(context, VX_CONTEXT_ATTRIBUTE_AMD_HIP_DEVICE, &dev_id, sizeof(hipDevice_t));
 
     if (vxstatus != VX_SUCCESS)

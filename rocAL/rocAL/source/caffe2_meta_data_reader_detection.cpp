@@ -182,11 +182,11 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
                 for (int i = 0; i < boundBox_size / 4; i++)
                 {
                     // Parsing the bounding box points using Iterator 
-                    //YTD: Normalize the Bboxes
-                    box.l = boundingBox_proto.dims(boundIter);
-                    box.t = boundingBox_proto.dims(boundIter + 1);
-                    box.r = boundingBox_proto.dims(boundIter + 2);
-                    box.b = boundingBox_proto.dims(boundIter + 3);
+                    // && Normalizing the box Co-ordinates
+                    box.l = boundingBox_proto.dims(boundIter) / img_size.w;
+                    box.t = boundingBox_proto.dims(boundIter + 1) / img_size.h;
+                    box.r = boundingBox_proto.dims(boundIter + 2) / img_size.w;
+                    box.b = boundingBox_proto.dims(boundIter + 3) / img_size.h;
 
                     boundIter += 4;
 
@@ -202,7 +202,8 @@ void Caffe2MetaDataReaderDetection::read_lmdb_record(std::string file_name, uint
             }
             else
             {
-                box.l = box.t = box.r = box.b = 0;
+                box.l = box.t = 0;
+                box.r = box.b = 1;
                 bb_coords.push_back(box);
                 bb_labels.push_back(0);
                 add(str_key.c_str(), bb_coords, bb_labels,img_sizes);

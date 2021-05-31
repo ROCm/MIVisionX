@@ -111,8 +111,8 @@ void SSDRandomCropNode::update_node()
             {
                 crop_box.l = 0;
                 crop_box.t = 0;
-                crop_box.r = in_height[i];
-                crop_box.b = in_width[i];
+                crop_box.r = 1;
+                crop_box.b = 1;
                 break;
             }
             for (int j = 0; j < _num_of_attempts; j++)

@@ -24,7 +24,7 @@ class COCOPipeline(Pipeline):
         super(COCOPipeline, self).__init__(batch_size, num_threads,
                                            device_id, seed=12 + device_id, rali_cpu=rali_cpu)
         self.input = ops.COCOReader(
-            file_root=data_dir, annotations_file=ann_dir)
+            file_root=data_dir, annotations_file=ann_dir,random_shuffle=True)
         rali_device = 'cpu' if rali_cpu else 'gpu'
         decoder_device = 'cpu' if rali_cpu else 'mixed'
         # device_memory_padding = 211025920 if decoder_device == 'mixed' else 0
@@ -209,10 +209,8 @@ class RALICOCOIterator(object):
                 htot, wtot = 1, 1
                 bbox_sizes = []
                 i=0
-                for (l,t,w,h) in self.bb_2d_numpy:
+                for (l,t,r,b) in self.bb_2d_numpy:
                     
-                    r = l + w
-                    b = t + h
 
                     bbox_size = (l/wtot, t/htot, r/wtot, b/htot)
                     bbox_sizes.append(bbox_size)

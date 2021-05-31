@@ -64,8 +64,8 @@ void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         //TBD
         crop_box.l = _x1_val[i];
         crop_box.t = _y1_val[i];
-        crop_box.r = _crop_w;
-        crop_box.b = _crop_h;
+        crop_box.r = _x1_val[i]+_crop_w;
+        crop_box.b = _y1_val[i]+_crop_h;
         for(uint j = 0, m = 0; j < bb_count; j++)
         {
             BoundingBoxCord box;
@@ -73,26 +73,21 @@ void CropResizeMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             box.t = coords_buf[m++];
             box.r = coords_buf[m++];
             box.b = coords_buf[m++];
-            //TBD
-            // if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
-            // {
-            //     float xA = std::max(crop_box.x, box.x);
-            //     float yA = std::max(crop_box.y, box.y);
-            //     float xB = std::min(crop_box.x + crop_box.w, box.x + box.w);
-            //     float yB = std::min(crop_box.y + crop_box.h, box.y + box.h);
-            //     box.x = xA - _x1_val[i];
-            //     box.y = yA - _y1_val[i];
-            //     box.w = xB - xA;
-            //     box.h = yB - yA;
-            //     _dst_to_src_width_ratio = _dst_width / float(_crop_w);
-            //     _dst_to_src_height_ratio = _dst_height / float(_crop_h);
-            //     box.x *= _dst_to_src_width_ratio;
-            //     box.y *= _dst_to_src_height_ratio;
-            //     box.w *= _dst_to_src_width_ratio;
-            //     box.h *= _dst_to_src_height_ratio;
-            //     bb_coords.push_back(box);
-            //     bb_labels.push_back(labels_buf[j]);
-            // }
+            
+            if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
+            {
+                float xA = std::max(crop_box.l, box.l);
+                float yA = std::max(crop_box.t, box.t);
+                float xB = std::min(crop_box.r, box.r);
+                float yB = std::min(crop_box.b, box.b);
+                box.l = (xA - crop_box.l) / (crop_box.r - crop_box.l);
+                box.t = (yA - crop_box.t) / (crop_box.b - crop_box.t);
+                box.r = (xB - crop_box.l) / (crop_box.r - crop_box.l);
+                box.b = (yB - crop_box.t) / (crop_box.b - crop_box.t);
+                
+                bb_coords.push_back(box);
+                bb_labels.push_back(labels_buf[j]);
+            }
         }
         if(bb_coords.size() == 0)
         {

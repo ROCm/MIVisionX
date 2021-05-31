@@ -87,7 +87,7 @@ void ResizeCropMirrorMetaNode::update_parameters(MetaDataBatch* input_meta_data)
                 
                 if(_mirror_val[i] == 1)
                 {
-                   float l = 1 - box.r;
+                    float l = 1 - box.r;
                     float r = 1 - box.l;
                     box.l = l;
                     box.r = r;

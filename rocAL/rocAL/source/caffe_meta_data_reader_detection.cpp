@@ -54,7 +54,7 @@ void CaffeMetaDataReaderDetection::add(std::string image_name, BoundingBoxCords 
         it->second->get_bb_labels().push_back(bb_labels[0]);
         return;
     }
-    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels,image_size);
+    pMetaDataBox info = std::make_shared<BoundingBox>(bb_coords, bb_labels, image_size);
     _map_content.insert(pair<std::string, std::shared_ptr<BoundingBox>>(image_name, info));
 }
 
@@ -175,7 +175,7 @@ void CaffeMetaDataReaderDetection::read_lmdb_record(std::string file_name, uint 
                 box.b = bbox_protos.ymax() / img_size.h;
 
                 int label = bbox_protos.label();
-                
+
                 bb_coords.push_back(box);
                 bb_labels.push_back(label);
                 add(file_name.c_str(), bb_coords, bb_labels, img_sizes);

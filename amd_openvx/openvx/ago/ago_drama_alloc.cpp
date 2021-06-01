@@ -561,7 +561,7 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
     }
     for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
         if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU && node->attr_affinity.group == 0) {
-            if (agoGpuOclSingleNodeFinalize(graph, node) < 0) {
+            if (agoGpuHipSingleNodeFinalize(graph, node) < 0) {
                 return -1;
             }
         }

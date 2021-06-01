@@ -333,6 +333,9 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
             if (need_read_access) {
                 auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
                 if (!(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
+                    if (dataToSync->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
+                        int64_t stime = agoGetClockCounter();
+                        // HIP write HostToDevice
                         if (dataToSync->hip_memory) {
                             hipError_t err = hipMemcpy(dataToSync->hip_memory + dataToSync->gpu_buffer_offset, dataToSync->buffer, dataToSync->size, hipMemcpyHostToDevice);
                             if (err) {
@@ -343,6 +346,10 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                         dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                         int64_t etime = agoGetClockCounter();
                         graph->gpu_perf.buffer_write += etime - stime;
+                    }
+                }
+            }
+        }
     }
     else if (data->ref.type == VX_TYPE_ARRAY) {
         if (data->isDelayed) {

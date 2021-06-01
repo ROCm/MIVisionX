@@ -7468,35 +7468,6 @@ VX_API_ENTRY vx_status VX_API_CALL vxCopyRemapPatch(vx_remap remap,
     return status;
 }
 
-                    }
-                }
-            }
-            else {
-                vx_coordinates2df_t *ptr = (vx_coordinates2df_t*)user_ptr;
-                vx_uint32 i;
-                vx_uint32 j;
-                for (i = start_y; i < end_y; i++)
-                {
-                    for (j = start_x; j < end_x; j++)
-                    {
-                        vx_coordinates2df_t *coord_ptr = &(ptr[i * stride + j]);
-                        status = vxSetRemapPoint(remap, j, i, coord_ptr->x, coord_ptr->y);
-                        if(status != VX_SUCCESS)
-                        {
-                            break;
-                        }
-
-                    }
-                }
-            }
-            // update sync flags
-            dataToSync->buffer_sync_flags &= ~AGO_BUFFER_SYNC_FLAG_DIRTY_MASK;
-            dataToSync->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT;
-            status = VX_SUCCESS;
-        }
-    }
-    return status;
-}
 
 /*! \brief Allows the application to get direct access to a rectangular patch of a remap object.
  *

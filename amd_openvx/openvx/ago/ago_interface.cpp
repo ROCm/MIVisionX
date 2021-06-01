@@ -2115,7 +2115,11 @@ static int agoDataSyncFromGpuToCpu(AgoGraph * graph, AgoNode * node, AgoData * d
                         int64_t etime = agoGetClockCounter();
                         graph->gpu_perf.buffer_read += etime - stime;
                     }
+                }
+            }
+        }
     }
+    return 0;
 }
 #endif
 

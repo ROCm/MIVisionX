@@ -168,11 +168,11 @@ with open(reportFilename, 'w') as f:
     else:
         write_formatted(rpp_lib, f)
     f.write("\n")
-    # RALI Libraries
-    f.write("* RALI Library\n")
+    # rocAL Libraries
+    f.write("* rocAL Library\n")
     if not rali_lib:
-        f.write("WARNING: RALI Library Not Built\n")
-        print("WARNING: RALI Library Not Built\n")
+        f.write("WARNING: rocAL Library Not Built\n")
+        print("WARNING: rocAL Library Not Built\n")
         warning = 1
     else:
         write_formatted(rali_lib, f)

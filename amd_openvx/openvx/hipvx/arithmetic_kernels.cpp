@@ -1742,8 +1742,8 @@ Hip_WeightedAverage_U8_U8U8(uint dstWidth, uint dstHeight,
     uint2 src2 = *((uint2 *)(&pSrcImage2[src2Idx]));
     uint2 dst;
 
-    dst.x = hip_pack((hip_unpack(src1.x) * alpha_f4 + hip_unpack(src2.x) * invAlpha_f4));
-    dst.y = hip_pack((hip_unpack(src1.y) * alpha_f4 + hip_unpack(src2.y) * invAlpha_f4));
+    dst.x = hip_pack(hip_floorf4(hip_unpack(src1.x) * alpha_f4 + hip_unpack(src2.x) * invAlpha_f4));
+    dst.y = hip_pack(hip_floorf4(hip_unpack(src1.y) * alpha_f4 + hip_unpack(src2.y) * invAlpha_f4));
 
     *((uint2 *)(&pDstImage[dstIdx])) = dst;
 }

@@ -134,7 +134,7 @@ int CVxEngine::Initialize(int argCount, int defaultTargetAffinity, int defaultTa
 	    vxDirective((vx_reference)m_graph, VX_DIRECTIVE_AMD_ENABLE_PROFILE_CAPTURE);
 	}
 	if(disableNodeFlushForCL) {
-	    vxDirective((vx_reference)m_graph, VX_DIRECTIVE_AMD_DISABLE_OPENCL_FLUSH);
+	    vxDirective((vx_reference)m_graph, VX_DIRECTIVE_AMD_DISABLE_GPU_FLUSH);
 	}
 
 	return 0;

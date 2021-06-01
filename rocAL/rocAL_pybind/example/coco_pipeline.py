@@ -264,20 +264,19 @@ class RALICOCOIterator(object):
 
 def draw_patches(img,idx, bboxes):
     #image is expected as a tensor, bboxes as numpy
-    import matplotlib.pyplot as plt
-    import matplotlib.patches as patches
     import cv2
     image = img.detach().numpy()
     image = image.transpose([1,2,0])
  
-    htot, wtot,_ = img.shape
+    _,htot ,wtot = img.shape
+    
     for (l, t ,r,b) in bboxes:
         
         loc_ = [l, t ,r, b]
         color = (255, 0, 0)
         thickness = 2
         image = cv2.UMat(image).get()
-        image = cv2.rectangle(image, (int(loc_[0]*300 ),int( loc_[1] *300)),(int((loc_[2] *300) ) ,int((loc_[3] *300) )) , color, thickness)  
+        image = cv2.rectangle(image, (int(loc_[0]*wtot ),int( loc_[1] *htot)),(int((loc_[2] *wtot) ) ,int((loc_[3] *htot) )) , color, thickness)  
         cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)
 
 def main():

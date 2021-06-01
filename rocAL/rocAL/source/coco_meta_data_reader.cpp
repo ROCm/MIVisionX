@@ -117,7 +117,7 @@ void COCOMetaDataReader::read_all(const std::string &path) {
 
     BoundingBoxCord box;
     ImgSize img_size;
-    float box_x, box_y, box_w, box_h;
+    
     for (auto iterator = image.begin(); iterator != image.end(); iterator++)
     {
         // std::map<int, int,int> id_img_sizes;
@@ -133,10 +133,10 @@ void COCOMetaDataReader::read_all(const std::string &path) {
     
     for (auto iterator = annotation.begin(); iterator != annotation.end(); iterator++)
     {
-        box_x = (*iterator)["bbox"][0].asFloat();
-        box_y = (*iterator)["bbox"][1].asFloat();
-        box_w = (*iterator)["bbox"][2].asFloat();
-        box_h = (*iterator)["bbox"][3].asFloat();
+        float box_x = (*iterator)["bbox"][0].asFloat();
+        float box_y = (*iterator)["bbox"][1].asFloat();
+        float box_w = (*iterator)["bbox"][2].asFloat();
+        float box_h = (*iterator)["bbox"][3].asFloat();
         int label = (*iterator)["category_id"].asInt();
         int id = (*iterator)["image_id"].asInt();
         char buffer[13];

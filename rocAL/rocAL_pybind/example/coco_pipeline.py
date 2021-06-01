@@ -14,9 +14,6 @@ import amd.rali.types as types
 
 import sys
 import numpy as np
-from enum import Enum
-import cv2
-import time
 
 
 class COCOPipeline(Pipeline):

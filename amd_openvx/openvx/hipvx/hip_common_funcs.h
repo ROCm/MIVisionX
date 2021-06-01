@@ -131,6 +131,10 @@ __device__ __forceinline__ float4 hip_fabs4(float4 src) {
     return make_float4(fabsf(src.x), fabsf(src.y), fabsf(src.z), fabsf(src.w));
 }
 
+__device__ __forceinline__ float4 hip_floorf4(float4 src) {
+    return make_float4(floorf(src.x), floorf(src.y), floorf(src.z), floorf(src.w));
+}
+
 __device__ __forceinline__ uint hip_mul24(uint a, uint b) {
     return __ockl_mul24_u32(a, b);
 }

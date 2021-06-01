@@ -7250,7 +7250,7 @@ Hip_ScaleGaussianHalf_U8_U8_5x5(uint dstWidth, uint dstHeight,
     lbuf_ptr += ly * 136;
     uint2 L0_01;
 
-    L0_01 = *((uint2 *)(&lbuf_ptr));
+    L0_01 = *((uint2 *)(&lbuf_ptr[0]));
     sum.x = (float)(L0_01.x & 0xffff);
     sum.y = (float)(L0_01.x >> 16);
     sum.z = (float)(L0_01.y & 0xffff);

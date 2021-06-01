@@ -617,46 +617,12 @@ int agoGpuHipSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode) {
     return 0;
 }
 
-int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node) {
-    const char * hip_code = node->hip_code.c_str();
-    // dump Hip kernel if environment variable AGO_DUMP_GPU is specified with dump file path prefix
-    // the output file name will be "$(AGO_DUMP_GPU)-0.<counter>.cu"
-    if (hip_code) {
-        char textBuffer[1024];
-        if (agoGetEnvironmentVariable("AGO_DUMP_GPU", textBuffer, sizeof(textBuffer))) {
-            char fileName[1024]; static int counter = 0;
-            sprintf(fileName, "%s-0.%04d.cu", textBuffer, counter++);
-            FILE * fp = fopen(fileName, "w");
-            if (!fp) {
-                agoAddLogEntry(NULL, VX_FAILURE, "ERROR: unable to create: %s\n", fileName);
-            } else {
-                fprintf(fp, "%s", hip_code);
-                fclose(fp);
-                agoAddLogEntry(NULL, VX_SUCCESS, "OK: created %s\n", fileName);
-            }
-        }
-    }
-    return 0;
-}
-
 int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode) {
     // Super node is not fully supported in hip yet
     // clear the data flags
     for (size_t index = 0; index < supernode->dataList.size(); index++) {
         supernode->dataInfo[index].data_type_flags = 0;
     }
-    for (size_t index = 0; index < supernode->nodeList.size(); index++) {
-        AgoNode * node = supernode->nodeList[index];
-        int status = VX_ERROR_NOT_IMPLEMENTED;
-        if (node->akernel->func) {
-            node->hip_code = "";
-            status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
-        }
-        else if (node->akernel->opencl_codegen_callback_f) {
-        // TODO:: not supported in HIP yet
-        }
-    }
-
     return 0;
 }
 

@@ -54,7 +54,6 @@ class COCOPipeline(Pipeline):
                                             output_layout=types.NCHW,
                                             crop=(crop, crop),
                                             image_type=types.RGB,
-                                            mirror=1,
                                             mean=[0.485 * 255, 0.456 *
                                                   255, 0.406 * 255],
                                             std=[0.229 * 255, 0.224 * 255, 0.225 * 255])
@@ -84,7 +83,7 @@ class COCOPipeline(Pipeline):
         images = self.res(images)
         images = self.twist(images, saturation=saturation,
                             contrast=contrast, brightness=brightness, hue=hue)
-        output = self.cmnp(images)
+        output = self.cmnp(images, mirror=coin)
         encoded_bboxes, encoded_labels = self.boxEncoder(bboxes, labels) # Encodes the bbox and labels ,input:"xywh" format output:"ltrb" format
         encoded_labels = self.cast(encoded_labels)
         return [output, encoded_bboxes, encoded_labels] #Encoded Bbox and labels output in "ltrb" format
@@ -277,8 +276,6 @@ def draw_patches(img,idx, bboxes):
         loc_ = [l, t ,r, b]
         color = (255, 0, 0)
         thickness = 2
-        start_point=(loc_[0] * wtot, loc_[1] * htot)
-        end_point= ((loc_[2] - loc_[0]) * wtot ,(loc_[3] - loc_[1]) * htot)
         image = cv2.UMat(image).get()
         image = cv2.rectangle(image, (int(loc_[0]*300 ),int( loc_[1] *300)),(int((loc_[2] *300) ) ,int((loc_[3] *300) )) , color, thickness)  
         cv2.imwrite(str(idx)+"_"+"train"+".png", 255*image)

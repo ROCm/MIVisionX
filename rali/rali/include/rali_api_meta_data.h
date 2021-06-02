@@ -33,7 +33,7 @@ extern "C" RaliMetaData RALI_API_CALL raliCreateLabelReader(RaliContext rali_con
 /// \param rali_context
 /// \param source_path path to the folder that contains the dataset or metadata file
 /// \return RaliMetaData object, can be used to inquire about the rali's output (processed) tensors
-extern "C" RaliMetaData RALI_API_CALL raliCreateVideoLabelReader(RaliContext rali_context, const char* source_path, bool enable_timestamps = false);
+extern "C" RaliMetaData RALI_API_CALL raliCreateVideoLabelReader(RaliContext rali_context, const char* source_path, bool file_list_frame_num = true);
 
 ///
 /// \param rali_context

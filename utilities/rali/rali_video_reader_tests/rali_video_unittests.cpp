@@ -43,7 +43,7 @@ int main(int argc, const char **argv)
     const int MIN_ARG_COUNT = 2;
     if (argc < MIN_ARG_COUNT)
     {
-        printf("Usage: rali_video_unittests <video_file/video_dataset_folder/text file> <processing_device=1/cpu=0> <video_mode> <batch_size> <sequence_length> <frame_step> <frame_stride> <gray_scale/rgb> <display_on_off> <shuffle:0/1> <enable_meta_data:0/1> <decode_width> <decode_height> <enable_timestamps:0/1> <enable_sequence_rearrange:0/1>\n");
+        printf("Usage: rali_video_unittests <video_file/video_dataset_folder/text file> <processing_device=1/cpu=0> <video_mode> <batch_size> <sequence_length> <frame_step> <frame_stride> <gray_scale/rgb> <display_on_off> <shuffle:0/1> <enable_meta_data:0/1> <decode_width> <decode_height> <enable_framenum:0/1> <enable_sequence_rearrange:0/1>\n");
         return -1;
     }
 
@@ -61,7 +61,7 @@ int main(int argc, const char **argv)
     unsigned sequence_length = 1;
     unsigned frame_step = 1;
     unsigned frame_stride = 1;
-    bool enable_timestamps = false;
+    bool file_list_frame_num = true;
     bool enable_metadata = false;
     bool enable_sequence_rearrange = false;
     bool is_output = true;
@@ -103,7 +103,7 @@ int main(int argc, const char **argv)
         decode_height = atoi(argv[++argIdx]);
 
     if (argc >= argIdx + MIN_ARG_COUNT)
-        enable_timestamps = atoi(argv[++argIdx]) ? true : false;
+        file_list_frame_num = atoi(argv[++argIdx]) ? true : false;
 
     if (argc >= argIdx + MIN_ARG_COUNT)
         enable_sequence_rearrange = atoi(argv[++argIdx]) ? true : false;
@@ -152,7 +152,7 @@ int main(int argc, const char **argv)
         else
         {
             std::cout << "\n>>>> META DATA READER\n";
-            meta_data = raliCreateVideoLabelReader(handle, folder_path, enable_timestamps);
+            meta_data = raliCreateVideoLabelReader(handle, folder_path, file_list_frame_num);
         }
     }
 
@@ -170,7 +170,7 @@ int main(int argc, const char **argv)
     {
         std::cout << sizeof(folder_path) / sizeof(char);
         std::cout << "\n>>>> VIDEO READER with text file input\n";
-        input1 = raliVideoFileSource(handle, NULL, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, is_output, false, folder_path, !enable_timestamps, enable_timestamps);
+        input1 = raliVideoFileSource(handle, NULL, color_format, shard_count, sequence_length, frame_step, frame_stride, shuffle, is_output, false, folder_path, file_list_frame_num);
         break;
     }
     case 3:
@@ -187,7 +187,7 @@ int main(int argc, const char **argv)
     case 4:
     {
         std::cout << "\n>>>> VIDEO READER RESIZE with text file input\n";
-        input1 = raliVideoFileResize(handle, NULL, color_format, shard_count, sequence_length, frame_step, frame_stride, decode_width, decode_height, shuffle, is_output, false, folder_path, !enable_timestamps, enable_timestamps);
+        input1 = raliVideoFileResize(handle, NULL, color_format, shard_count, sequence_length, frame_step, frame_stride, decode_width, decode_height, shuffle, is_output, false, folder_path, file_list_frame_num);
         break;
     }
     case 5:

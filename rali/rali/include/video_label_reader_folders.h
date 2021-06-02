@@ -41,7 +41,7 @@ public :
     void read_all(const std::string& path) override;
     void release(std::string image_name);
     void release() override;
-    void set_timestamps_bool() override { _enable_timestamps = true; }
+    void set_timestamps_bool() override { _file_list_frame_num = false; }
     void print_map_contents();
     MetaDataBatch * get_output() override { return _output; }
     VideoLabelReaderFolders();
@@ -60,5 +60,5 @@ private:
     std::vector<std::string> _file_names;
     std::vector<std::string> _subfolder_video_file_names;
     int _video_idx = 0;
-    bool _enable_timestamps = false;
+    bool _file_list_frame_num = true;
 };

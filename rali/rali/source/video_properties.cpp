@@ -55,7 +55,7 @@ std::vector<unsigned> open_video_context(const char *video_file_path)
     return video_prop;
 }
 
-video_properties get_video_properties_from_txt_file(const char *file_path, bool enable_timestamps)
+video_properties get_video_properties_from_txt_file(const char *file_path, bool file_list_frame_num)
 {
     std::ifstream text_file(file_path);
 
@@ -87,7 +87,7 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
                     std::cerr << "[WARN] The given video files are of different resolution\n";
                 max_height = props[1];
             }
-            if(enable_timestamps) {
+            if(!file_list_frame_num) {
                 if (line_ss >> start_time) {
                     if (line_ss >> end_time) {
                         if (start_time >= end_time) {
@@ -132,7 +132,7 @@ video_properties get_video_properties_from_txt_file(const char *file_path, bool 
     }
 }
 
-video_properties find_video_properties(const char *source_path, bool enable_timestamps )
+video_properties find_video_properties(const char *source_path, bool file_list_frame_num)
 {
 
     DIR *_sub_dir;
@@ -149,7 +149,7 @@ video_properties find_video_properties(const char *source_path, bool enable_time
     {
         if (pathObj.has_extension() && pathObj.extension().string() == ".txt")
         {
-            props = get_video_properties_from_txt_file(source_path, enable_timestamps);
+            props = get_video_properties_from_txt_file(source_path, file_list_frame_num);
         }
         else
         {

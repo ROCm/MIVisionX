@@ -137,7 +137,7 @@ void VideoLabelReaderFolders::read_text_file(const std::string& _path)
             if (!(line_ss >> video_file_name >> label))
                 continue;
             props = open_video_context(video_file_name.c_str());
-            if(_enable_timestamps) {
+            if(!_file_list_frame_num) {
                 if (line_ss >> start_time) {
                     if (line_ss >> end_time) {
                         if (start_time >= end_time) {

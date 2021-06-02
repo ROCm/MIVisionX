@@ -1511,8 +1511,7 @@ raliVideoFileSource(
         bool is_output,
         bool loop,
         const char* text_file_path,
-        bool enable_frame_num,
-        bool enable_timestamps)
+        bool file_list_frame_num)
 {
     std::cerr<<"\n Coming to raliVideoFileSource";
     Image* output = nullptr;
@@ -1543,7 +1542,7 @@ raliVideoFileSource(
         else
             THROW("Invalid input passed");
 
-        video_properties video_prop = find_video_properties(file_path, enable_timestamps);
+        video_properties video_prop = find_video_properties(file_path, file_list_frame_num);
         //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop.width;
         height = video_prop.height ;
@@ -1618,8 +1617,7 @@ raliVideoFileResize(
         bool is_output,
         bool loop,
         const char* text_file_path,
-        bool enable_frame_num,
-        bool enable_timestamps)
+        bool file_list_frame_num)
 {
     Image* resize_output = nullptr;
     if(!p_context || dest_width == 0 || dest_height == 0)
@@ -1652,7 +1650,7 @@ raliVideoFileResize(
         else if ( text_file_path != NULL)
             file_path = text_file_path;
 
-        video_properties video_prop = find_video_properties(file_path, enable_timestamps);
+        video_properties video_prop = find_video_properties(file_path, file_list_frame_num);
         //std::cerr<<"\n width:: "<<video_prop[0]<<" height:: "<<video_prop[1] << " no of videos: " << video_prop[2] << " f.cnt : " << video_prop[3];
         width = video_prop.width;
         height = video_prop.height ;

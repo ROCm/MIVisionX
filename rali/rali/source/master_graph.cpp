@@ -933,14 +933,14 @@ MetaDataBatch * MasterGraph::create_label_reader(const char *source_path, MetaDa
     return _meta_data_reader->get_output();
 }
 
-MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, bool enable_timestamps)
+MetaDataBatch * MasterGraph::create_video_label_reader(const char *source_path, MetaDataReaderType reader_type, bool file_list_frame_num)
 {
     if( _meta_data_reader)
         THROW("A metadata reader has already been created")
     MetaDataConfig config(MetaDataType::Label, reader_type, source_path);
     _meta_data_reader = create_meta_data_reader(config);
     _meta_data_reader->init(config);
-    if(enable_timestamps)
+    if(!file_list_frame_num)
     {
         _meta_data_reader->set_timestamps_bool();
     }

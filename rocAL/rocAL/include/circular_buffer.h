@@ -43,12 +43,12 @@ class CircularBuffer
 {
 public:
 #if ENABLE_HIP
-    CircularBuffer(DeviceResourcesHip hipres, size_t buffer_depth );
+    CircularBuffer(DeviceResourcesHip hipres);
 #else
-    CircularBuffer(DeviceResources ocl, size_t buffer_depth );
+    CircularBuffer(DeviceResources ocl);
 #endif
     ~CircularBuffer();
-    void init(RaliMemType output_mem_type, size_t output_mem_size);
+    void init(RaliMemType output_mem_type, size_t output_mem_size, size_t buff_depth);
     void sync();// Syncs device buffers with host
     void unblock_reader();// Unblocks the thread currently waiting on a call to get_read_buffer
     void unblock_writer();// Unblocks the thread currently waiting on get_write_buffer
@@ -69,7 +69,7 @@ private:
     void increment_write_ptr();
     bool full();
     bool empty();
-    const size_t BUFF_DEPTH;
+    size_t BUFF_DEPTH;
     decoded_image_info _last_image_info;
     std::queue<decoded_image_info> _circ_image_info;//!< Stores the loaded images names, decoded_width and decoded_height(data is stored in the _circ_buff)
     std::mutex _names_buff_lock;

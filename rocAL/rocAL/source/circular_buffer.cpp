@@ -23,35 +23,25 @@ THE SOFTWARE.
 #include "circular_buffer.h"
 #include "log.h"
 #if !ENABLE_HIP
-CircularBuffer::CircularBuffer(DeviceResources ocl, size_t buffer_depth):
-        BUFF_DEPTH(buffer_depth),
+CircularBuffer::CircularBuffer(DeviceResources ocl):
         _cl_cmdq(ocl.cmd_queue),
         _cl_context(ocl.context),
         _device_id(ocl.device_id),
-        _dev_buffer(BUFF_DEPTH, nullptr),
-        _host_buffer_ptrs(BUFF_DEPTH, nullptr),
         _write_ptr(0),
         _read_ptr(0),
         _level(0)
 {
-    for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
-        _dev_buffer[bufIdx] = nullptr;
 
 }
 #else
-CircularBuffer::CircularBuffer(DeviceResourcesHip hipres, size_t buffer_depth):
-        BUFF_DEPTH(buffer_depth),
+CircularBuffer::CircularBuffer(DeviceResourcesHip hipres):
         _hip_stream(hipres.hip_stream),
         _hip_device_id(hipres.device_id),
         _dev_prop(&hipres.dev_prop),
-        _dev_buffer(BUFF_DEPTH, nullptr),
-        _host_buffer_ptrs(BUFF_DEPTH, nullptr),
         _write_ptr(0),
         _read_ptr(0),
         _level(0)
 {
-    for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
-        _dev_buffer[bufIdx] = nullptr;
 
 }
 #endif
@@ -173,8 +163,13 @@ void CircularBuffer::pop()
     increment_read_ptr();
     _circ_image_info.pop();
 }
-void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size)
+void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, size_t buffer_depth)
 {
+    BUFF_DEPTH = buffer_depth;
+    _dev_buffer.reserve(BUFF_DEPTH);
+    _host_buffer_ptrs.reserve(BUFF_DEPTH);
+    for(size_t bufIdx = 0; bufIdx < BUFF_DEPTH; bufIdx++)
+        _dev_buffer[bufIdx] = nullptr;
     if(_initialized)
         return;
     _output_mem_type = output_mem_type;

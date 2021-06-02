@@ -88,8 +88,8 @@ MasterGraph::~MasterGraph()
     release();
 }
 
-MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads, RaliTensorDataType output_tensor_data_type):
-        _ring_buffer(OUTPUT_RING_BUFFER_DEPTH),
+MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads, size_t prefetch_queue_depth, RaliTensorDataType output_tensor_data_type):
+        _ring_buffer(prefetch_queue_depth),
         _output_tensor(nullptr),
         _graph(nullptr),
         _affinity(affinity),
@@ -107,6 +107,7 @@ MasterGraph::MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, s
         _processing(false),
         _internal_batch_size(compute_optimum_internal_batch_size(batch_size, affinity)),
         _user_to_internal_batch_ratio (_user_batch_size/_internal_batch_size),
+        _prefetch_queue_depth(prefetch_queue_depth),
         _out_data_type(output_tensor_data_type)
 {
     try {

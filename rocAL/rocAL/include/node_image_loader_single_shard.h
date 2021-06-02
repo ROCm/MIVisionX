@@ -30,9 +30,9 @@ class ImageLoaderSingleShardNode: public Node
 public:
 #if ENABLE_HIP
     ImageLoaderSingleShardNode(Image *output, DeviceResourcesHip device_resources);
-#else    
+#else
     ImageLoaderSingleShardNode(Image *output, DeviceResources device_resources);
-#endif    
+#endif
     ~ImageLoaderSingleShardNode() override;
 
     /// \param user_shard_count shard count from user

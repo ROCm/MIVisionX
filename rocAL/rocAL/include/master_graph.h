@@ -45,7 +45,7 @@ class MasterGraph
 {
 public:
     enum class Status { OK = 0,  NOT_RUNNING = 1, NO_MORE_DATA = 2, NOT_IMPLEMENTED };
-    MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads, RaliTensorDataType output_tensor_data_type);
+    MasterGraph(size_t batch_size, RaliAffinity affinity, int gpu_id, size_t cpu_threads, size_t prefetch_queue_depth, RaliTensorDataType output_tensor_data_type);
     ~MasterGraph();
     Status reset();
     size_t remaining_images_count();
@@ -135,7 +135,6 @@ private:
     std::shared_ptr<RandomBBoxCrop_MetaDataReader> _randombboxcrop_meta_data_reader = nullptr;
     bool _first_run = true;
     bool _processing;//!< Indicates if internal processing thread should keep processing or not
-    const static unsigned OUTPUT_RING_BUFFER_DEPTH = 3;
     const static unsigned SAMPLE_SIZE = sizeof(unsigned char);
     int _remaining_images_count;//!< Keeps the count of remaining images yet to be processed for the user,
     bool _loop;//!< Indicates if user wants to indefinitely loops through images or not
@@ -145,6 +144,7 @@ private:
     bool _output_routine_finished_processing = false;
     const RaliTensorDataType _out_data_type;
     bool _is_random_bbox_crop = false;
+    size_t _prefetch_queue_depth;
 };
 
 template <typename T>
@@ -189,6 +189,7 @@ template<> inline std::shared_ptr<ImageLoaderNode> MasterGraph::add_node(const s
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<ImageLoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -201,6 +202,7 @@ template<> inline std::shared_ptr<ImageLoaderSingleShardNode> MasterGraph::add_n
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<ImageLoaderSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));
@@ -213,6 +215,7 @@ template<> inline std::shared_ptr<FusedJpegCropNode> MasterGraph::add_node(const
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
@@ -227,6 +230,7 @@ template<> inline std::shared_ptr<FusedJpegCropSingleShardNode> MasterGraph::add
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<FusedJpegCropSingleShardNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _loader_module->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
@@ -244,6 +248,7 @@ template<> inline std::shared_ptr<Cifar10LoaderNode> MasterGraph::add_node(const
         THROW("A loader already exists, cannot have more than one loader")
     auto node = std::make_shared<Cifar10LoaderNode>(outputs[0], _device.resources());
     _loader_module = node->get_loader_module();
+    _loader_module->set_prefetch_queue_depth(_prefetch_queue_depth);
     _root_nodes.push_back(node);
     for(auto& output: outputs)
         _image_map.insert(make_pair(output, node));

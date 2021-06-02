@@ -81,10 +81,10 @@ class Pipeline(object):
         if(rali_cpu):
             # print("comes to cpu")
             self._handle = b.raliCreate(
-                batch_size, types.CPU, device_id, num_threads,types.FLOAT)
+                batch_size, types.CPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         else:
             self._handle = b.raliCreate(
-                batch_size, types.GPU, device_id, num_threads,types.FLOAT)
+                batch_size, types.GPU, device_id, num_threads,prefetch_queue_depth,types.FLOAT)
         if(b.getStatus(self._handle) == types.OK):
             print("Pipeline has been created succesfully")
         else:

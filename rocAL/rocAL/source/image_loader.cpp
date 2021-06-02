@@ -31,9 +31,10 @@ ImageLoader::ImageLoader(DeviceResourcesHip dev_resources):
 #else
 ImageLoader::ImageLoader(DeviceResources dev_resources):
 #endif
-_circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
+_circ_buff(dev_resources),
 _swap_handle_time("Swap_handle_time", DBG_TIMING)
 {
+    // CIRC_BUFFER_DEPTH = prefetch_queue_depth;
     _output_image = nullptr;
     _mem_type = RaliMemType::HOST;
     _internal_thread_running = false;
@@ -47,6 +48,14 @@ ImageLoader::~ImageLoader()
 {
     de_init();
 }
+
+void ImageLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
+{
+    if(prefetch_queue_depth <= 0)
+        THROW("Prefetch quque depth value cannot be zero or negative");
+    CIRC_BUFFER_DEPTH = prefetch_queue_depth;
+}
+
 
 size_t
 ImageLoader::remaining_count()
@@ -138,7 +147,7 @@ void ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg,
     _decoded_img_info._roi_width.resize(_batch_size);
     _decoded_img_info._original_height.resize(_batch_size);
     _decoded_img_info._original_width.resize(_batch_size);
-    _circ_buff.init(_mem_type, _output_mem_size);
+    _circ_buff.init(_mem_type, _output_mem_size,CIRC_BUFFER_DEPTH );
     _is_initialized = true;
     _image_loader->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     LOG("Loader module initialized");

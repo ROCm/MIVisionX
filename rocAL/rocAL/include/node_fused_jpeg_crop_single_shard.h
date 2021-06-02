@@ -9,9 +9,9 @@ class FusedJpegCropSingleShardNode: public Node
 public:
 #if ENABLE_HIP
     FusedJpegCropSingleShardNode(Image *output, DeviceResourcesHip device_resources);
-#else    
+#else
     FusedJpegCropSingleShardNode(Image *output, DeviceResources device_resources);
-#endif    
+#endif
     ~FusedJpegCropSingleShardNode() override;
 
     /// \param user_shard_count shard count from user
@@ -35,8 +35,8 @@ private:
     Parameter<float>* _y_drift;
     Parameter<float>* _area_factor;
     Parameter<float>* _aspect_ratio;
-    constexpr static float X_DRIFT_RANGE [2]  = {0, 1}; 
+    constexpr static float X_DRIFT_RANGE [2]  = {0, 1};
     constexpr static float Y_DRIFT_RANGE [2]  = {0, 1};
-    constexpr static float AREA_FACTOR_RANGE[2]  = {0.08, 0.99}; 
+    constexpr static float AREA_FACTOR_RANGE[2]  = {0.08, 0.99};
     constexpr static float ASPECT_RATIO_RANGE[2] = {0.75, 1.33};
 };

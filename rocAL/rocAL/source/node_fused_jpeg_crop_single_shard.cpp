@@ -4,9 +4,9 @@
 
 #if ENABLE_HIP
 FusedJpegCropSingleShardNode::FusedJpegCropSingleShardNode(Image *output, DeviceResourcesHip device_resources):
-#else    
+#else
 FusedJpegCropSingleShardNode::FusedJpegCropSingleShardNode(Image *output, DeviceResources device_resources):
-#endif    
+#endif
         Node({}, {output})
 {
     _loader_module = std::make_shared<ImageLoader>(device_resources);

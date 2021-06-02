@@ -32,8 +32,6 @@ if(GPU_SUPPORT AND "${BACKEND}" STREQUAL "OPENCL")
     find_package(OpenCL QUIET)
     find_package(AMDRPP QUIET)
     find_package(TurboJpeg QUIET)
-elseif(NOT GPU_SUPPORT OR "${BACKEND}" STREQUAL "HIP")
-    SET(BUILD_RALI_PYBIND false)
 endif()
 
 if(NOT OpenCL_FOUND)

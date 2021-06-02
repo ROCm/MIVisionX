@@ -141,10 +141,10 @@ private:
     static size_t compute_optimum_internal_batch_size(size_t user_batch_size, RaliAffinity affinity);
     const size_t _internal_batch_size;//!< In the host processing case , internal batch size can be different than _user_batch_size. This batch size used internally throughout.
     const size_t _user_to_internal_batch_ratio;
+    size_t _prefetch_queue_depth;
     bool _output_routine_finished_processing = false;
     const RaliTensorDataType _out_data_type;
     bool _is_random_bbox_crop = false;
-    size_t _prefetch_queue_depth;
 };
 
 template <typename T>

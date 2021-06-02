@@ -227,7 +227,8 @@ void CircularBuffer::init(RaliMemType output_mem_type, size_t output_mem_size, s
                 THROW("hipHostMalloc of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
             }
             if (_dev_prop->canMapHostMemory) {
-                if (err = hipHostGetDevicePointer((void **)&_dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0 ))
+                err = hipHostGetDevicePointer((void **)&_dev_buffer[buffIdx], _host_buffer_ptrs[buffIdx], 0 );
+                if (err  != hipSuccess)
                 {
                     THROW("hipHostGetDevicePointer of size " + TOSTR(_output_mem_size) + " failed " + TOSTR(err));
                 }

@@ -454,7 +454,6 @@ struct AgoData {
 #elif ENABLE_HIP
     vx_uint8*     hip_memory;
     vx_uint8*     hip_memory_allocated;
-    vx_bool       hip_need_as_argument;
 #endif
     vx_uint32  gpu_buffer_offset;
     vx_bool isVirtual;

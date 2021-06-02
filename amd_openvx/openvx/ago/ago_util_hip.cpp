@@ -324,12 +324,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                     return -1;
                 }
             }
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
-            else if ((data->u.img.enableUserBufferGPU || data->import_type == VX_MEMORY_TYPE_HIP) && data->hip_memory) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
                 if (!(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
@@ -352,9 +346,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         }
     }
     else if (data->ref.type == VX_TYPE_ARRAY) {
-        if (data->isDelayed) {
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                 if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -378,9 +369,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         }
     }
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
-        if (data->isDelayed) {
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             agoAddLogEntry(&data->ref, VX_FAILURE,
                 "ERROR: agoGpuHipDataSyncInputs: doesn't support object type %s for read-access in group#%d for kernel arg setting\n",
@@ -395,10 +383,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         // nothing to do.. the node will
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
-        //data pass by value has to be decided inside the kernel implementation
-        if (data->isDelayed) {
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                 if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -420,9 +404,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     else if (data->ref.type == VX_TYPE_LUT) {
         // only use lut objects that need read access
         if (need_access) {
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -452,9 +433,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     else if (data->ref.type == VX_TYPE_CONVOLUTION) {
         // only use conv objects that need read access
         if (need_access) {
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -477,9 +455,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     else if (data->ref.type == VX_TYPE_REMAP) {
          // only use image objects that need read access
         if (need_access) {
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -498,10 +473,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         }
     }
     else if (data->ref.type == VX_TYPE_TENSOR) {
-        if (data->isDelayed) {
-            // needs to set hip buffer everytime when the buffer is part of a delay object
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             auto dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
             if (!(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {

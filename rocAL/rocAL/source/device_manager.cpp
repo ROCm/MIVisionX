@@ -19,13 +19,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-
+#if !ENABLE_HIP
 #include <iostream>
 #include <vx_ext_amd.h>
 #include "device_manager.h"
 #include "commons.h"
 
-DeviceManager::~DeviceManager() 
+DeviceManager::~DeviceManager()
 {
     if(_resources.cmd_queue != nullptr)
         clReleaseCommandQueue(_resources.cmd_queue);
@@ -50,13 +50,13 @@ cl_int CLProgram::runKernel(const std::string& kernel_name, const std::vector<vo
     cl_int status;
     if(argSize.size() != args.size()) return -1;
     cl_kernel kernel = (*this)[kernel_name];
-    for(unsigned argId = 0; argId < args.size(); argId++) 
-        if((status = clSetKernelArg( kernel, argId, argSize[argId], args[argId]))!= CL_SUCCESS) 
+    for(unsigned argId = 0; argId < args.size(); argId++)
+        if((status = clSetKernelArg( kernel, argId, argSize[argId], args[argId]))!= CL_SUCCESS)
             THROW("clSetKernelArg failed " + TOSTR(status));
-        
+
     if((status = clEnqueueNDRangeKernel(m_ocl->cmd_queue, kernel, 1, NULL, globalWorkSize.data(), localWorkSize.data(), 0 , NULL, NULL)) != CL_SUCCESS)
         THROW("clEnqueueNDRangeKernel failed on " + kernel_name + " error " + TOSTR(status));
-    
+
     return status;
 }
 
@@ -73,22 +73,22 @@ cl_int CLProgram::buildAll() {
 
     m_prog = clCreateProgramWithSource(m_ocl->context, 1, &code_src, &code_size, &clerr);
 
-    if(clerr != CL_SUCCESS) 
+    if(clerr != CL_SUCCESS)
         THROW("Building" + program_name + "program from source failed: " + TOSTR(clerr));
-        
+
 
     clerr = clBuildProgram(m_prog , 1, &m_ocl->device_id, NULL, NULL, NULL);
 
-    if(clerr != CL_SUCCESS) 
+    if(clerr != CL_SUCCESS)
         THROW("Building" + program_name + " failed: " + TOSTR(clerr));
 
     for(unsigned i =0; i < kernel_names.size(); ++i) {
         auto kernel = clCreateKernel(m_prog, kernel_names[i].c_str(), &clerr);
         clRetainKernel(kernel);
-        if(clerr != CL_SUCCESS) 
+        if(clerr != CL_SUCCESS)
             THROW("Building kernel" + kernel_names[i] + " failed");
 
-        m_kernels.insert(std::make_pair(kernel_names[i], kernel)); 	
+        m_kernels.insert(std::make_pair(kernel_names[i], kernel));
     }
     return clerr;
 }
@@ -101,22 +101,22 @@ const cl_kernel& CLProgram::operator[](const std::string& kernel_name) const {
 
     const auto it =  m_kernels.find(kernel_name);
     if(it != m_kernels.end())
-        return it->second; 
+        return it->second;
 
     THROW("Requested kernel" + kernel_name +  " does not exist");
 }
 
 cl_int DeviceManager::initialize() {
-    
+
     std::vector<DeviceCode> ocl_codes = {OCLUtility() };
-    for(auto& code: ocl_codes) 
+    for(auto& code: ocl_codes)
         m_programs.insert(make_pair(code.getName(), CLProgram(&_resources, code)));
 
-    
-    
+
+
     cl_int status = CL_SUCCESS;
     for(auto& e: m_programs)
-        if((status = e.second.buildAll()) != CL_SUCCESS) 
+        if((status = e.second.buildAll()) != CL_SUCCESS)
             THROW("Couldn't build " + e.first);
 
 
@@ -166,11 +166,12 @@ DeviceManager::init_ocl(vx_context context)
     LOG("OpenCL initialized ...")
 }
 
-const CLProgram& DeviceManager::operator[](const std::string& prog_name)  
+const CLProgram& DeviceManager::operator[](const std::string& prog_name)
 {
     auto it = m_programs.find(prog_name);
     if(  it != m_programs.end())
-        return it->second; 
+        return it->second;
 
     THROW("Requested kernel" + prog_name + "does not exist");
 }
+#endif

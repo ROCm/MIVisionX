@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -461,7 +461,25 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
                 return -1;
             }
 #elif ENABLE_HIP
-            node->hip_stream0 = graph->hip_stream0;
+            if (node->akernel->func) {
+                // generate kernel function code
+                int status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
+                if (status == VX_SUCCESS) {
+                    node->hip_kernel_name = "Hip_Kernel";
+                }
+                else if (status != AGO_ERROR_KERNEL_NOT_IMPLEMENTED) {
+                    agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: kernel %s failed to generate HIP code (error %d)\n", node->akernel->name, status);
+                    return -1;
+                }
+            }
+            else if (node->akernel->opencl_codegen_callback_f) {
+                agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: codegen callback is not supported for HIP GPU\n", node->akernel->name);
+                return -1;
+            }
+            else {
+                agoAddLogEntry(&node->akernel->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAllocGpuResources: doesn't support kernel %s on GPU\n", node->akernel->name);
+                return -1;
+            }
 #endif
         }
     }
@@ -539,6 +557,13 @@ static int agoOptimizeDramaAllocGpuResources(AgoGraph * graph)
     for (AgoSuperNode * supernode = graph->supernodeList; supernode; supernode = supernode->next) {
         if (agoGpuHipSuperNodeFinalize(graph, supernode) < 0) {
             return -1;
+        }
+    }
+    for (AgoNode * node = graph->nodeList.head; node; node = node->next) {
+        if (node->attr_affinity.device_type == AGO_KERNEL_FLAG_DEVICE_GPU && node->attr_affinity.group == 0) {
+            if (agoGpuHipSingleNodeFinalize(graph, node) < 0) {
+                return -1;
+            }
         }
     }
 #endif
@@ -762,7 +787,7 @@ static int agoOptimizeDramaAllocMergeSuperNodes(AgoGraph * graph)
     }
     // perform  one hierarchical level at a time
     for (auto enode = graph->nodeList.head; enode;) {
-        // get snode..enode with next hierarchical_level 
+        // get snode..enode with next hierarchical_level
         auto hierarchical_level = enode->hierarchical_level;
         auto snode = enode; enode = enode->next;
         while (enode && enode->hierarchical_level == hierarchical_level)
@@ -891,14 +916,14 @@ int agoOptimizeDramaAlloc(AgoGraph * agraph)
     // make sure all buffers are allocated and initialized
     for (AgoData * adata = agraph->dataList.head; adata; adata = adata->next) {
         if (agoAllocData(adata)) {
-            vx_char name[256]; agoGetDataName(name, adata); 
+            vx_char name[256]; agoGetDataName(name, adata);
             agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAlloc: data allocation failed for %s\n", name);
             return -1;
         }
     }
     for (AgoData * adata = agraph->ref.context->dataList.head; adata; adata = adata->next) {
         if (agoAllocData(adata)) {
-            vx_char name[256]; agoGetDataName(name, adata); 
+            vx_char name[256]; agoGetDataName(name, adata);
             agoAddLogEntry(&adata->ref, VX_FAILURE, "ERROR: agoOptimizeDramaAlloc: data allocation failed for %s\n", name);
             return -1;
         }

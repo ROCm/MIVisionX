@@ -12792,7 +12792,6 @@ int agoKernel_ColorConvert_RGBX_UYVY(AgoNode * node, AgoKernelCommand cmd)
         }
     }
 #endif
-    return status;
 }
 
 int agoKernel_ColorConvert_RGBX_YUYV(AgoNode * node, AgoKernelCommand cmd)

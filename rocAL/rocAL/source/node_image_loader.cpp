@@ -23,12 +23,16 @@ THE SOFTWARE.
 #include "node_image_loader.h"
 #include "exception.h"
 
-
+#if ENABLE_HIP
+ImageLoaderNode::ImageLoaderNode(Image *output, DeviceResourcesHip device_resources):
+#else
 ImageLoaderNode::ImageLoaderNode(Image *output, DeviceResources device_resources):
+#endif
         Node({}, {output})
 {
     _loader_module = std::make_shared<ImageLoaderSharded>(device_resources);
 }
+
 
 void ImageLoaderNode::init(unsigned internal_shard_count, const std::string &source_path, const std::string &json_path, const std::map<std::string, std::string> feature_key_map, StorageType storage_type,
                            DecoderType decoder_type, bool shuffle, bool loop, size_t load_batch_count, RaliMemType mem_type, bool decoder_keep_orig, const char* file_prefix)

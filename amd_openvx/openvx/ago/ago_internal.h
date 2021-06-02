@@ -229,10 +229,12 @@ typedef enum {
     ago_kernel_cmd_query_target_support       =  5,
 #if ENABLE_OPENCL
     ago_kernel_cmd_opencl_codegen             =  6,
+#elif ENABLE_HIP
+    ago_kernel_cmd_hip_codegen                =  6,
 #endif
     ago_kernel_cmd_valid_rect_callback        =  7,
 #if ENABLE_HIP
-    ago_kernel_cmd_hip_execute                =  8,
+    ago_kernel_cmd_hip_execute                =  8,     // adding it for HIP kernels to execute without codegen
 #endif
 } AgoKernelCommand;
 typedef enum {
@@ -452,7 +454,6 @@ struct AgoData {
 #elif ENABLE_HIP
     vx_uint8*     hip_memory;
     vx_uint8*     hip_memory_allocated;
-    vx_bool       hip_need_as_argument;
 #endif
     vx_uint32  gpu_buffer_offset;
     vx_bool isVirtual;
@@ -630,6 +631,9 @@ struct AgoNode {
     cl_event opencl_event;
 #elif ENABLE_HIP
     hipStream_t hip_stream0;
+    std::string hip_kernel_name;
+    std::string hip_code;
+    hiprtcProgram hip_program;
 #endif
 public:
     AgoNode();
@@ -923,6 +927,7 @@ int agoGpuHipAllocBuffer(AgoData * data);
 int agoGpuHipSingleNodeWait(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeMerge(AgoGraph * graph, AgoSuperNode * supernode, AgoNode * node);
 int agoGpuHipSuperNodeUpdate(AgoGraph * graph, AgoSuperNode * supernode);
+int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode);
 int agoGpuHipSingleNodeLaunch(AgoGraph * graph, AgoNode * node);
 int agoGpuHipSuperNodeLaunch(AgoGraph * graph, AgoSuperNode * supernode);

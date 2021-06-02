@@ -1,16 +1,16 @@
-/* 
+/*
 Copyright (c) 2015 - 2020 Advanced Micro Devices, Inc. All rights reserved.
- 
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
- 
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
+
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
@@ -47,7 +47,7 @@ THE SOFTWARE.
 #define AGO_TARGET_AFFINITY_GPU_INFO_SVM_AS_CLMEM      0x20
 #define AGO_TARGET_AFFINITY_GPU_INFO_SVM_NO_FGS        0x40
 
-/*! \brief Maximum size of scalar string buffer. The local buffers used for accessing scalar strings 
+/*! \brief Maximum size of scalar string buffer. The local buffers used for accessing scalar strings
 * should be of size VX_MAX_STRING_BUFFER_SIZE_AMD and the maximum allowed string length is
 * VX_MAX_STRING_BUFFER_SIZE_AMD-1.
 * \ingroup group_scalar
@@ -152,10 +152,11 @@ enum vx_graph_attribute_amd_e {
 /*! \brief The AMD node attributes list.
 */
 enum vx_node_attribute_amd_e {
-    /*! \brief node affinity. Use a <tt>\ref AgoTargetAffinityInfo</tt> parameter.*/
-    VX_NODE_ATTRIBUTE_AMD_AFFINITY                      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x01,
-    /*! \brief OpenCL command queue. Use a <tt>\ref cl_command_queue</tt> parameter.*/
-    VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE          = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x02,
+	/*! \brief node affinity. Use a <tt>\ref AgoTargetAffinityInfo</tt> parameter.*/
+	VX_NODE_ATTRIBUTE_AMD_AFFINITY                      = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x01,
+	/*! \brief OpenCL command queue. Use a <tt>\ref cl_command_queue</tt> parameter.*/
+	VX_NODE_ATTRIBUTE_AMD_OPENCL_COMMAND_QUEUE          = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x02,
+	VX_NODE_ATTRIBUTE_AMD_HIP_STREAM                    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_NODE) + 0x03,
 };
 
 /*! \brief The AMD image attributes list.
@@ -200,7 +201,7 @@ enum vx_array_attribute_amd_e {
     /*! \brief OpenCL buffer. <tt>cl_mem</tt>. */
     VX_ARRAY_BUFFER_OPENCL   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x9,
     VX_ARRAY_BUFFER_HIP   = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY) + 0x10,
-        VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11
+    VX_ARRAY_BUFFER    = VX_ATTRIBUTE_BASE(VX_ID_AMD, VX_TYPE_ARRAY ) + 0x11
 };
 
 /*! \brief These enumerations are given to the \c vxDirective API to enable/disable

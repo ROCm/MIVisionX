@@ -26,9 +26,15 @@ THE SOFTWARE.
 #include "image_read_and_decode.h"
 #include "vx_ext_amd.h"
 
-ImageLoader::ImageLoader(DeviceResources dev_resources) : _circ_buff(dev_resources, CIRC_BUFFER_DEPTH),
-                                                          _swap_handle_time("Swap_handle_time", DBG_TIMING)
+#if ENABLE_HIP
+ImageLoader::ImageLoader(DeviceResourcesHip dev_resources):
+#else
+ImageLoader::ImageLoader(DeviceResources dev_resources):
+#endif
+_circ_buff(dev_resources),
+_swap_handle_time("Swap_handle_time", DBG_TIMING)
 {
+    // CIRC_BUFFER_DEPTH = prefetch_queue_depth;
     _output_image = nullptr;
     _mem_type = RaliMemType::HOST;
     _internal_thread_running = false;
@@ -42,6 +48,14 @@ ImageLoader::~ImageLoader()
 {
     de_init();
 }
+
+void ImageLoader::set_prefetch_queue_depth(size_t prefetch_queue_depth)
+{
+    if(prefetch_queue_depth <= 0)
+        THROW("Prefetch quque depth value cannot be zero or negative");
+    CIRC_BUFFER_DEPTH = prefetch_queue_depth;
+}
+
 
 size_t
 ImageLoader::remaining_count()
@@ -133,7 +147,7 @@ void ImageLoader::initialize(ReaderConfig reader_cfg, DecoderConfig decoder_cfg,
     _decoded_img_info._roi_width.resize(_batch_size);
     _decoded_img_info._original_height.resize(_batch_size);
     _decoded_img_info._original_width.resize(_batch_size);
-    _circ_buff.init(_mem_type, _output_mem_size);
+    _circ_buff.init(_mem_type, _output_mem_size,CIRC_BUFFER_DEPTH );
     _is_initialized = true;
     _image_loader->set_random_bbox_data_reader(_randombboxcrop_meta_data_reader);
     LOG("Loader module initialized");
@@ -172,7 +186,7 @@ ImageLoader::load_routine()
                                               _decoded_img_info._roi_height,
                                               _decoded_img_info._original_width,
                                               _decoded_img_info._original_height,
-                                              _output_image->info().color_format(), _decoder_keep_original);          
+                                              _output_image->info().color_format(), _decoder_keep_original);
 
 
             if (load_status == LoaderModuleStatus::OK)
@@ -226,7 +240,7 @@ ImageLoader::update_output_image()
         return LoaderModuleStatus::OK;
 
     // _circ_buff.get_read_buffer_x() is blocking and puts the caller on sleep until new images are written to the _circ_buff
-    if (_mem_type == RaliMemType::OCL)
+    if((_mem_type== RaliMemType::OCL) || (_mem_type== RaliMemType::HIP))
     {
         auto data_buffer = _circ_buff.get_read_buffer_dev();
         _swap_handle_time.start();

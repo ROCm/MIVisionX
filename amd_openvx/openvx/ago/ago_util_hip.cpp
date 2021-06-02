@@ -324,12 +324,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                     return -1;
                 }
             }
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
-            else if ((data->u.img.enableUserBufferGPU || data->import_type == VX_MEMORY_TYPE_HIP) && data->hip_memory) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
                 if (!(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
@@ -352,9 +346,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         }
     }
     else if (data->ref.type == VX_TYPE_ARRAY) {
-        if (data->isDelayed) {
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                 if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -370,14 +361,14 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
                     data->buffer_sync_flags |= AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED;
                     int64_t etime = agoGetClockCounter();
                     graph->gpu_perf.buffer_write += etime - stime;
+#if ENABLE_DEBUG_DUMP_CL_BUFFERS
+                    clDumpBuffer("input_%04d.bin", opencl_cmdq, data);
+#endif
                 }
             }
         }
     }
     else if (data->ref.type == AGO_TYPE_CANNY_STACK) {
-        if (data->isDelayed) {
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             agoAddLogEntry(&data->ref, VX_FAILURE,
                 "ERROR: agoGpuHipDataSyncInputs: doesn't support object type %s for read-access in group#%d for kernel arg setting\n",
@@ -392,10 +383,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         // nothing to do.. the node will
     }
     else if (data->ref.type == VX_TYPE_MATRIX) {
-        //data pass by value has to be decided inside the kernel implementation
-        if (data->isDelayed) {
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                 if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -417,9 +404,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     else if (data->ref.type == VX_TYPE_LUT) {
         // only use lut objects that need read access
         if (need_access) {
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -449,9 +433,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     else if (data->ref.type == VX_TYPE_CONVOLUTION) {
         // only use conv objects that need read access
         if (need_access) {
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 if (!(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -474,9 +455,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
     else if (data->ref.type == VX_TYPE_REMAP) {
          // only use image objects that need read access
         if (need_access) {
-            if (data->isDelayed) {
-                data->hip_need_as_argument = 1;
-            }
             if (need_read_access) {
                 if (data->hip_memory && !(data->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
                     if (data->buffer_sync_flags & (AGO_BUFFER_SYNC_FLAG_DIRTY_BY_NODE | AGO_BUFFER_SYNC_FLAG_DIRTY_BY_COMMIT)) {
@@ -495,10 +473,6 @@ static int agoGpuHipDataInputSync(AgoGraph * graph, AgoData * data, vx_uint32 da
         }
     }
     else if (data->ref.type == VX_TYPE_TENSOR) {
-        if (data->isDelayed) {
-            // needs to set hip buffer everytime when the buffer is part of a delay object
-            data->hip_need_as_argument = 1;
-        }
         if (need_read_access) {
             auto dataToSync = data->u.tensor.roiMaster ? data->u.tensor.roiMaster : data;
             if (!(dataToSync->buffer_sync_flags & AGO_BUFFER_SYNC_FLAG_DIRTY_SYNCHED)) {
@@ -613,7 +587,48 @@ int agoGpuHipSuperNodeWait(AgoGraph * graph, AgoSuperNode * supernode) {
     }
     int64_t etime = agoGetClockCounter();
     graph->gpu_perf.kernel_wait += etime - stime;
-    // TODO::ENABLE_DEBUG_DUMP_HIP_BUFFERS implement to dump hip buffers
+#if 0 // TODO::ENABLE_DEBUG_DUMP_HIP_BUFFERS implement to dump hip buffers
+    // dump supernode outputs
+    for (size_t index = 0; index < supernode->dataList.size(); index++) {
+        if (!(supernode->dataInfo[index].data_type_flags & DATA_OPENCL_FLAG_DISCARD_PARAM)) {
+            bool need_access = supernode->dataInfo[index].needed_as_a_kernel_argument;
+            bool need_write_access = supernode->dataInfo[index].argument_usage[VX_OUTPUT] || supernode->dataInfo[index].argument_usage[VX_BIDIRECTIONAL];
+            auto data = supernode->dataList[index];
+            if (data->ref.type == VX_TYPE_IMAGE) {
+                if (need_access) { // only use image objects that need write access
+                    if (need_write_access) {
+                        auto dataToSync = data->u.img.isROI ? data->u.img.roiMasterImage : data;
+                        char fileName[128]; sprintf(fileName, "output_%%04d_%dx%d.yuv", dataToSync->u.img.width, dataToSync->u.img.height);
+                        clDumpBuffer(fileName, opencl_cmdq, dataToSync);
+                        //printf("Press ENTER to continue... ");  char line[256]; gets(line);
+                    }
+                }
+            }
+        }
+    }
+#endif
+    return 0;
+}
+
+int agoGpuHipSingleNodeFinalize(AgoGraph * graph, AgoNode * node) {
+    const char * hip_code = node->hip_code.c_str();
+    // dump Hip kernel if environment variable AGO_DUMP_GPU is specified with dump file path prefix
+    // the output file name will be "$(AGO_DUMP_GPU)-0.<counter>.cu"
+    if (hip_code) {
+        char textBuffer[1024];
+        if (agoGetEnvironmentVariable("AGO_DUMP_GPU", textBuffer, sizeof(textBuffer))) {
+            char fileName[1024]; static int counter = 0;
+            sprintf(fileName, "%s-0.%04d.cu", textBuffer, counter++);
+            FILE * fp = fopen(fileName, "w");
+            if (!fp) {
+                agoAddLogEntry(NULL, VX_FAILURE, "ERROR: unable to create: %s\n", fileName);
+            } else {
+                fprintf(fp, "%s", hip_code);
+                fclose(fp);
+                agoAddLogEntry(NULL, VX_SUCCESS, "OK: created %s\n", fileName);
+            }
+        }
+    }
     return 0;
 }
 
@@ -623,6 +638,25 @@ int agoGpuHipSuperNodeFinalize(AgoGraph * graph, AgoSuperNode * supernode) {
     for (size_t index = 0; index < supernode->dataList.size(); index++) {
         supernode->dataInfo[index].data_type_flags = 0;
     }
+    for (size_t index = 0; index < supernode->nodeList.size(); index++) {
+        AgoNode * node = supernode->nodeList[index];
+        int status = VX_ERROR_NOT_IMPLEMENTED;
+        if (node->akernel->func) {
+            node->hip_code = "";
+            status = node->akernel->func(node, ago_kernel_cmd_hip_codegen);
+        #if 0
+            for(vx_size dim = node->opencl_work_dim; dim < 3; dim++) {
+                node->opencl_global_work[dim] = 1;
+                node->opencl_local_work[dim] = 1;
+            }
+            node->opencl_work_dim = 3;
+        #endif
+        }
+        else if (node->akernel->opencl_codegen_callback_f) {
+        // TODO:: not supported in HIP yet
+        }
+    }
+
     return 0;
 }
 

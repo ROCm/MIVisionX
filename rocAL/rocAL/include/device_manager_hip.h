@@ -20,9 +20,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#pragma  once
-#if !ENABLE_HIP
-#include <CL/cl.h>
+// device manager functions for HIP backend
+#if ENABLE_HIP
+#pragma once
+#include "hip/hip_runtime_api.h"
+#include "hip/hip_runtime.h"
+#include <vx_ext_amd.h>
+#include <VX/vx_types.h>
 
-int get_device_and_context(int devIdx, cl_context *pContext, cl_device_id *pDevice, cl_device_type clDeviceType);
+struct DeviceResourcesHip {
+    hipStream_t hip_stream;
+    int device_id;
+    hipDeviceProp_t dev_prop;
+    DeviceResourcesHip() { hip_stream = nullptr; device_id = -1;}
+};
+
+class DeviceManagerHip {
+public:
+    DeviceManagerHip(){};
+
+    hipError_t initialize();
+    
+    DeviceResourcesHip resources();
+
+    void init_hip(vx_context context);
+
+    ~DeviceManagerHip();
+
+private:
+
+    DeviceResourcesHip _resources;
+
+};
+
+using pRaliHip = std::shared_ptr<DeviceManagerHip>;
+
 #endif

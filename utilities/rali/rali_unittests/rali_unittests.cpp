@@ -30,6 +30,7 @@ THE SOFTWARE.
 #include <opencv2/opencv.hpp>
 #include <opencv/highgui.h>
 #include <vector>
+#include<string>
 
 #include "rali_api.h"
 
@@ -631,9 +632,11 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
     printf("Going to process images\n");
     printf("Remaining images %lu \n", raliGetRemainingImages(handle));
     high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    int index = 0;
 
     while (raliGetRemainingImages(handle) >= inputBatchSize)
     {
+        index++;
         if (raliRun(handle) != 0)
             break;
         int label_id[inputBatchSize];
@@ -673,7 +676,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         }
         std::cerr << "\nPrinting image names of batch: " << img_name<<"\n";
         for (unsigned int i = 0; i < inputBatchSize; i++)
-        {   
+        {
             std::cerr<<"\t Printing label_id : " << label_id[i] << std::endl;
             if(num_of_classes != 0)
             {
@@ -705,7 +708,7 @@ int test(int test_case, const char *path, const char *outName, int rgb, int gpu,
         if (color_format == RaliImageColor::RALI_COLOR_RGB24)
         {
             cv::cvtColor(mat_output, mat_color, CV_RGB2BGR);
-            cv::imwrite(outName, mat_color, compression_params);
+            cv::imwrite(std::to_string(index)+outName, mat_color, compression_params);
         }
         else
         {

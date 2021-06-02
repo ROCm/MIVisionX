@@ -19,10 +19,45 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+// kernel definitions for HIP
 
-#pragma  once
-#if !ENABLE_HIP
-#include <CL/cl.h>
+#define ENABLE_EVENT_BASED_SYNC     0
+int HipExecCopyInt8ToNHWC
+(
+    hipStream_t stream,
+    const void*     inp_image_u8,
+    void*     output_tensor,
+    unsigned int     dst_buf_offset,
+    const unsigned int     n,
+    const unsigned int     c,
+    const unsigned int     h,
+    const unsigned int     w,
+    float     multiplier0,
+    float     multiplier1,
+    float     multiplier2,
+    float     offset0,
+    float     offset1,
+    float     offset2,
+    unsigned int reverse_channels,
+    unsigned int fp16
+);
 
-int get_device_and_context(int devIdx, cl_context *pContext, cl_device_id *pDevice, cl_device_type clDeviceType);
-#endif
+int HipExecCopyInt8ToNCHW
+(
+    hipStream_t stream,
+    void*     inp_image_u8,
+    void*     output_tensor,
+    unsigned int     dst_buf_offset,
+    const unsigned int     n,
+    const unsigned int     c,
+    const unsigned int     h,
+    const unsigned int     w,
+    float     multiplier0,
+    float     multiplier1,
+    float     multiplier2,
+    float     offset0,
+    float     offset1,
+    float     offset2,
+    unsigned int reverse_channels,
+    unsigned int fp16
+);

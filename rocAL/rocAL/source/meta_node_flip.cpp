@@ -61,16 +61,14 @@ void FlipMetaNode::update_parameters(MetaDataBatch* input_meta_data)
             if(_flip_axis_val[i] == 0)
             {
                 float l = 1 - box.r;
-                float r = 1 - box.l;
-                box.l = l;
-                box.r = r;
+                box.r = 1 - box.l;
+                box.l = l;     
             }
             else if(_flip_axis_val[i] == 1)
             {
                 float t = 1 - box.b;
-                float b = 1 - box.t;
+                box.b = 1 - box.t;
                 box.t = t;
-                box.b = b;
             }
             
             bb_coords.push_back(box);

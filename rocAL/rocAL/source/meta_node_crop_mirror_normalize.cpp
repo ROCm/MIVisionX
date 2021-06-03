@@ -79,7 +79,6 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
             box.r = coords_buf[m++];
             box.b = coords_buf[m++];
             // std::cout<<"\nIn BEFORE CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
-
             if (BBoxIntersectionOverUnion(box, crop_box) >= _iou_threshold)
             {
                 float xA = std::max(crop_box.l, box.l);
@@ -96,9 +95,8 @@ void CropMirrorNormalizeMetaNode::update_parameters(MetaDataBatch* input_meta_da
                 {
 
                     float l = 1 - box.r;
-                    float r = 1 - box.l;
+                    box.r = 1 - box.l;
                     box.l = l;
-                    box.r = r;
                 }
                 // std::cout<<"\n AFTER MIRROR IN CMN: Box Co-ordinates lxtxrxb::\t"<<box.l<<"x\t"<<box.t<<"x\t"<<box.r<<"x\t"<<box.b<<"x\t"<<std::endl;
 

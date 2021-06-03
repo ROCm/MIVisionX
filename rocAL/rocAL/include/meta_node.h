@@ -48,15 +48,8 @@ inline double MetaNode::BBoxIntersectionOverUnion(const BoundingBoxCord &box1, c
     float yB = std::min(box1.b, box2.b);
 
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
-    float box1_h, box1_w, box2_h, box2_w;
-    box1_w = box1.r - box1.l;
-    box2_w = box2.r - box2.l;
-    box1_h = box1.b - box1.t;
-    box2_h = box2.b - box2.t;
-
-
-    float box1_area = box1_h * box1_w;
-    float box2_area = box2_h * box2_w;
+    float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
+    float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
 
     if (is_iou)
         iou = intersection_area / float(box1_area + box2_area - intersection_area);

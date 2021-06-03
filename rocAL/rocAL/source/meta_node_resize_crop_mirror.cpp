@@ -88,9 +88,8 @@ void ResizeCropMirrorMetaNode::update_parameters(MetaDataBatch* input_meta_data)
                 if(_mirror_val[i] == 1)
                 {
                     float l = 1 - box.r;
-                    float r = 1 - box.l;
+                    box.r = 1 - box.l;
                     box.l = l;
-                    box.r = r;
                 }                  
                 bb_coords.push_back(box);
                 bb_labels.push_back(labels_buf[j]);
@@ -98,10 +97,8 @@ void ResizeCropMirrorMetaNode::update_parameters(MetaDataBatch* input_meta_data)
         }
         if(bb_coords.size() == 0)
         {
-            temp_box.l = 0;
-            temp_box.t = 0;
-            temp_box.r = 1;
-            temp_box.b = 1;
+            temp_box.l = temp_box.t = 0;
+            temp_box.r = temp_box.b = 1;
             bb_coords.push_back(temp_box);
             bb_labels.push_back(0);
         }

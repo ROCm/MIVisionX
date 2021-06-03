@@ -164,16 +164,6 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
     unsigned int remainingElements =  elements_in_row - elements_in_crop_row;
     unsigned int xoffs = (x1-x1_diff) * planes;   // in case x1 gets adjusted by tjpeg decoder
 
-#if 0
-    if(_bbox_coord.size() != 0)
-    {
-        elements_in_crop_row = crop_width_diff * planes;
-        _bbox_coord[0] = x1_diff;
-        _bbox_coord[2] = crop_width_diff;
-    }
-    std::cout<<"Fused Crop Decoder after crop<x,y, w, h>: " << x1_diff << " " << y1 << " " << crop_width_diff << " " << crop_height << std::endl;
-#endif
-
     src_ptr_temp = output_buffer + (y1 *  elements_in_row);
     dst_ptr_temp = output_buffer;
 
@@ -185,14 +175,7 @@ Decoder::Status FusedCropTJDecoder::decode(unsigned char *input_buffer, size_t i
         src_ptr_temp +=  elements_in_row;
         dst_ptr_temp +=  elements_in_row;
     }
-#if 0 // do we need this?    
-    for (; i < max_decoded_height; i++)
-    {
-        memset(dst_ptr_temp, 0,  elements_in_row * sizeof(unsigned char));
-        dst_ptr_temp +=  elements_in_row;
-    }
-#endif    
-
+    
     //if(_bbox_coord.size() != 0)
     //    actual_decoded_width = crop_width_diff;
     //else

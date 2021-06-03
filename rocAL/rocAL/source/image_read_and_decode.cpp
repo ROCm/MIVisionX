@@ -274,16 +274,7 @@ ImageReadAndDecode::load(unsigned char* buff,
         }
         for (size_t i = 0; i < _batch_size; i++) {
             names[i] = _image_names[i];
-#if 0   // decoder shouldn't change the crop coordinates
-            if(_randombboxcrop_meta_data_reader)
-            {
-                _CropCord = _randombboxcrop_meta_data_reader->get_crop_cord(_image_names[i]);
-                _CropCord->crop_left = _decoder[i]->get_bbox_coords()[0];
-		        _CropCord->crop_top = _decoder[i]->get_bbox_coords()[1];
-                _CropCord->crop_right = _decoder[i]->get_bbox_coords()[2];
-		        _CropCord->crop_bottom = _decoder[i]->get_bbox_coords()[3];
-            }
-#endif            
+           
             roi_width[i] = _actual_decoded_width[i];
             roi_height[i] = _actual_decoded_height[i];
             actual_width[i] = _original_width[i];

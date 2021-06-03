@@ -55,12 +55,11 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
             float temp_l, temp_t;
             temp_l = (coords_buf[m++] * _dst_to_src_width_ratio);
             temp_t = (coords_buf[m++] * _dst_to_src_height_ratio);
-            box.l = (temp_l > 0) ? temp_l : 0;
-            box.t = (temp_t > 0) ? temp_t : 0;
+            box.l = std::max(temp_l,0.0f);
+            box.t = std::max(temp_t,0.0f);
             box.r = (coords_buf[m++] * _dst_to_src_width_ratio);
             box.b = (coords_buf[m++] * _dst_to_src_height_ratio);
             bb_coords.push_back(box);
-            bb_labels.push_back(labels_buf[j]);
         }
         if (bb_coords.size() == 0)
         {
@@ -68,7 +67,6 @@ void BoundingBoxGraph::update_meta_data(MetaDataBatch *input_meta_data, decoded_
             bb_labels.push_back(0);
         }
         input_meta_data->get_bb_cords_batch()[i] = bb_coords;
-        input_meta_data->get_bb_labels_batch()[i] = bb_labels;
     }
 }
 
@@ -81,14 +79,8 @@ inline double ssd_BBoxIntersectionOverUnion(const BoundingBoxCord &box1, const B
     float yB = std::min(box1.b, box2.b);
 
     float intersection_area = std::max((float)0.0, xB - xA) * std::max((float)0.0, yB - yA);
-    float box1_h, box1_w, box2_h, box2_w;
-    box1_w = box1.r - box1.l;
-    box2_w = box2.r - box2.l;
-    box1_h = box1.b - box1.t;
-    box2_h = box2.b - box2.t;
-
-    float box1_area = box1_h * box1_w;
-    float box2_area = box2_h * box2_w;
+    float box1_area = (box1.b - box1.t) * (box1.r - box1.l);
+    float box2_area = (box2.b - box2.t) * (box2.r - box2.l);
 
     if (is_iou)
         iou = intersection_area / float(box1_area + box2_area - intersection_area);

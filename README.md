@@ -165,7 +165,7 @@ For the convenience of the developer, we here provide the setup script which wil
   python MIVisionX-setup.py --directory [setup directory - optional (default:~/)]
                             --installer [Package management tool - optional (default:apt-get) [options: Ubuntu:apt-get;CentOS:yum]]
                             --opencv    [OpenCV Version - optional (default:3.4.0)]
-                            --miopen    [MIOpen Version - optional (default:2.11.0)]
+                            --miopen    [MIOpen Version - optional (default:2.10.0)]
                             --miopengemm[MIOpenGEMM Version - optional (default:1.1.5)]
                             --protobuf  [ProtoBuf Version - optional (default:3.12.0)]
                             --rpp       [RPP Version - optional (default:0.7)]
@@ -381,12 +381,12 @@ sudo docker run -it --device=/dev/kfd --device=/dev/dri --cap-add=SYS_RAWIO --de
 * ROCm: rocm-dkms - `4.1.0.40100-26`
 * rocm-cmake - [github master:ac45c6e](https://github.com/RadeonOpenCompute/rocm-cmake/tree/master)
 * MIOpenGEMM - [1.1.5](https://github.com/ROCmSoftwarePlatform/MIOpenGEMM/releases/tag/1.1.5)
-* MIOpen - [2.11.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.11.0)
+* MIOpen - [2.10.0](https://github.com/ROCmSoftwarePlatform/MIOpen/releases/tag/2.10.0)
 * Protobuf - [V3.12.0](https://github.com/protocolbuffers/protobuf/releases/tag/v3.12.0)
 * OpenCV - [3.4.0](https://github.com/opencv/opencv/releases/tag/3.4.0)
 * RPP - [0.7](https://github.com/GPUOpen-ProfessionalCompute-Libraries/rpp/releases/tag/0.7)
 * Dependencies for all the above packages
-* MIVisionX Setup Script - `V1.9.6`
+* MIVisionX Setup Script - `V1.9.7`
 
 ### Latest Release
 

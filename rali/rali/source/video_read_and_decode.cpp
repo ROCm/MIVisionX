@@ -192,8 +192,7 @@ VideoReadAndDecode::load(unsigned char* buff,
 
     for(int i = 0; i < 1; i++)
     {
-        // std::cerr << "\nThe source video is " << _video_path << " MAP : "<<_video_file_name_map[_video_path]<< "\tThe start index is : " << start_frame << "\n";
-        // video_idx_map = _video_file_name_map[_video_path];
+        // std::cerr << "\nThe source video is " << _video_path << " MAP : "<<_video_file_name_map.find(_video_path)->second._video_map_idx << "\tThe start index is : " << start_frame << "\n";
         itr = _video_file_name_map.find(_video_path);
         if (itr->second._is_decoder_instance == false)
         {
@@ -213,7 +212,7 @@ VideoReadAndDecode::load(unsigned char* buff,
                 }
             }
         }
-        video_idx_map = itr->second._is_decoder_instance;
+        video_idx_map = itr->second._video_map_idx;
         sequence_start_framenum[i] = start_frame;
         for(size_t s = 0; s < _sequence_length; s++)
         {
